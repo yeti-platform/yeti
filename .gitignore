@@ -17,6 +17,7 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+__pycache__
 
 # Installer logs
 pip-log.txt
@@ -33,3 +34,19 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+
+# folders
+env-threatintel
+libs
+
+
+# MAC OS X stuff
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
