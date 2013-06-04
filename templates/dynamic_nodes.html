@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block main %}
+
+<div class='span9 graph'>
+</div>
+
+<script type="text/javascript">
+
+var radiusScale = 
+      d3.scale.log()
+  .domain([1, 20])
+  .range([1, 15]);
+
+var color = d3.scale.category20();
+
+var width = $('.graph').width(),
+    height = $('.graph').height();
+
+$('div.data').height(height);
+$('div.data').width($(window).width()-width-20);
+
+var nodes = [],
+    links = [];
+
+var force = d3.layout.force()
+    .nodes(nodes)
+    .links(links)
+    .charge(-400)
+    .friction(.6)
+    .linkDistance(120)
+    .size([width, height])
+    .on("tick", tick);
+
+var svg = d3.select(".graph").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var node = svg.selectAll(".node"),
+    link = svg.selectAll(".link");
+
+d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
+  
+   for (var i in graph.nodes) {
+     nodes.push(graph.nodes[i])
+   } 
+
+   for (var i in graph.edges) {
+    links.push(graph.edges[i])
+   }
+
+
+for (var i=0; i < nodes.length; i++) {
+                nodes[i].x = Math.random()*width;
+                nodes[i].y = Math.random()*height;
+            }
+
+
+  start();
+});
+
+
+
+</script>
+{%endblock%}
+{% block sidebar %}
+<div class='data span3'>
+  <h1>Highlight</h1>
+
+  <div class="input-append">
+      <input class="span2" id="query" type="text">
+      
+      <button class='btn btn-primary' type='button' onclick="javascript:highlight($('#query').val())">Go</button>
+      <button class='btn' type='button' onclick="javascript:highlight('clear'); $('#query').val('');">Clear</button>
+  </div>
+
+              
+
+  <h1>Info</h1>
+  <table class='table' id='node_info'></table>
+  <div class='whois'></div>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block main %}
+<script type="text/javascript" src='/static/custom_js/sniffer_websockets.js' charset="utf-8"></script>
+
+<div class='span9 graph'>
+</div>
+
+<script type="text/javascript">
+
+var radiusScale = 
+      d3.scale.log()
+  .domain([1, 20])
+  .range([1, 15]);
+
+var color = d3.scale.category20();
+
+var width = $('.graph').width(),
+    height = $('.graph').height();
+
+$('div.data').height(height);
+$('div.data').width($(window).width()-width-20);
+
+var nodes = [],
+    links = [];
+
+var force = d3.layout.force()
+    .nodes(nodes)
+    .links(links)
+    .charge(-400)
+    .friction(.6)
+    .linkDistance(120)
+    .size([width, height])
+    .on("tick", tick);
+
+var svg = d3.select(".graph").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var node = svg.selectAll(".node"),
+    link = svg.selectAll(".link");
+
+for (var i=0; i < nodes.length; i++) {
+                nodes[i].x = Math.random()*width;
+                nodes[i].y = Math.random()*height;
+            }
+
+  start();
+
+
+
+
+</script>
+<script>
+initSnifferWebSocket()
+ws_sniffer.onopen = snifferInterfaceInit
+</script>
+{%endblock%}
+{% block sidebar %}
+<div class='data span3'>
+  <h1 id='session_name'>{{session.name}}</h1>
+  Filter: {{session.filter}}
+  <!-- <label for='session_name'>Session name</label> -->
+  <!-- <input type="text" placeholder="" name='session_name' id='session_name' value="{{session.name}}">     -->          
+  <br />
+  <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">Start</button>
+  <button id='stopsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:stopsniff()">Stop</button>
+  <a href="{{url_for('pcap', session_name=session_name)}}">Get .pcap</a>
+  <h3>Info</h3>
+  <table class='table' id='node_info'></table>
+  <div class='whois'></div>
+  <h3>Sessions</h3>
+  <ul id='sessions'></ul>
+</div>
+{% endblock %}

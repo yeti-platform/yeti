@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block main %}
+<script type="text/javascript" src='/static/custom_js/sniffer_websockets.js' charset="utf-8"></script>
+<script>
+initSnifferWebSocket()
+ws_sniffer.onopen = snifferInterfaceInit
+</script>
+{%endblock%}
+{% block sidebar %}
+<div class='data span3'>
+  <h1>New sniffer session</h1>
+  <form method='POST' action=''>
+    <label for='session_name'>Session name</label>
+    <input type="text" placeholder="Session name" name='session_name' id='session_name' >
+    <label for='session_name'>BPF</label>
+    <input type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
+    <br />
+      <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Start new session</button>
+  </form>  
+  <br />
+  <h3>Sessions</h3>
+  <ul id='sessions'></ul>
+</div>
+{% endblock %}

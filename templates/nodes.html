@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+/*.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}*/
+
+</style>
+<head>
+  <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
+  <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+  
+  <style>
+
+
+
+    /*.node:hover text {
+      visibility:visible;
+    }*/
+
+</style>
+</head>
+<body>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+// taken from honeyproxy
+
+ var radiusScale = 
+      d3.scale.log()
+  .domain([1, 10])
+  .range([2, 10]);
+
+// end scam
+
+width = $(window).width() * 0.98;  //width
+height = $(window).height() * 0.98; //height
+
+var color = d3.scale.category20();
+
+var force = d3.layout.force()
+    .charge(-150)
+    .linkDistance(200)
+    .gravity(.05)
+    .linkStrength(2)
+    .size([width, height]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .on('mousedown',test);
+
+var nodes = force.nodes();
+var edges = force.links();
+node = svg.selectAll(".node"),
+link = svg.selectAll(".link");
+
+restart()
+
+function test() {
+  var point = d3.mouse(this),
+      node = {x: point[0], y: point[1], group:1},
+      n = nodes.push(node);
+
+  edges.push({source:node, target:nodes[35]})
+  restart()
+}
+
+function restart() {
+  
+  link = link.data(edges)
+  node = node.data(nodes)
+
+  link.enter().append("line",'.link')
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return 1; /*return Math.sqrt(d.value);*/ })
+      .style("stroke", function(d) { return color(d.attribs); });
+
+  node.enter().append("circle",'.node')
+      .attr('r', function(d){ return 5}) //radiusScale(d.incoming_links+1);} /*was 5*/)
+      .style('fill', function(d) { return color(d.type) } )
+      .style("stroke", function(d) { return d3.rgb(color(d.type)).darker(); })
+
+  force.start();
+}
+
+
+
+d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
+
+
+  nodes = graph.nodes
+  edges = graph.edges
+
+  force
+      .nodes(nodes)
+      .links(edges)
+      .start();
+
+  var link = svg.selectAll(".link")
+      .data(edges)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return 1; /*return Math.sqrt(d.value);*/ })
+      .style("stroke", function(d) { return color(d.attribs); }); // stroke color depends on attribs
+
+  var node = svg.selectAll(".node")
+      .data(nodes)
+    .enter().append("svg:g")
+      .attr("class", "node")
+      .call(force.drag);
+
+  node.append("circle")
+      .attr('r', function(d){ return radiusScale(d.incoming_links+1);} /*was 5*/)
+      .style('fill', function(d) { return color(d.type) } )
+      .style("stroke", function(d) { return d3.rgb(color(d.type)).darker(); })
+      
+     .on("mousedown", function(d) {
+         d.fixed = true;
+         d3.select(this).classed("sticky", true);
+     })
+     .on("click", function(d){
+      if (d.fixed == true) {
+          d.fixed = false
+          d.select(this).classed("sticky", false)
+        }
+     })
+     ;
+
+  node.append("text")
+      .attr("dx", 12)
+      .attr("dy", ".35em")
+      .text(function(d) { 
+        if (d['type'] == 'as') {
+          console.log(d)
+          return d['as_name'] + " ("+d['country']+")"
+        }
+        return d[d.type] 
+      });
+
+  path_text = svg.selectAll(".path").data(edges/*, function(d){return d.attribs}*/);     
+  path_text.enter().append("svg:text").attr("class","path-text").text(function(d) { return d.attribs; });
+
+
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    // node.attr("cx", function(d) { return d.x; })
+    //     .attr("cy", function(d) { return d.y; });
+
+    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+    //node.attr("cx", function(d) { return d.x; })
+    //  .attr("cy", function(d) { return d.y; });
+
+    // path_text.attr("transform", function(d) 
+    // {
+    //   var dx = (d.target.x - d.source.x),
+    //   dy = (d.target.y - d.source.y);
+    //   var dr = Math.sqrt(dx * dx + dy * dy);
+    //   var sinus = dy/dr;
+    //   var cosinus = dx/dr;
+    //   var l = d.attribs.length
+    //   var offset = (1 - (l / dr )) / 2;
+    //   var x=(d.source.x + dx*offset);
+    //   var y=(d.source.y + dy*offset);
+    //   //return "translate(" + dx + "," + dy + ")";
+    //   return "translate(" + x + "," + y + ") matrix("+cosinus+", "+sinus+", "+-sinus+", "+cosinus+", 0 , 0)";
+    // });
+
+  });
+
+  restart();
+
+});
+
+</script>
+<script type="text/javascript">
+// labelling links with text
+// Get the links
+ 
+// Add an attribute to them (this should be added to force.on("tick", tick) functionality
+</script>
+
+<script type="text/javascript">
+//document ready
+$(function(){
+  $(document).tooltip()
+})
+</script>

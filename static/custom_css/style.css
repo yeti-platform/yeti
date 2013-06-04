@@ -1,0 +1,93 @@
+/* Navbar */
+
+.analytics {
+	margin-left:5px;
+	margin-right:5px;
+}
+
+.interfaces {
+	color:#fff;
+	background-color: #111;
+	font-size: xx-small;
+	padding:0 10px;
+}
+
+.node text {
+  pointer-events: none;
+  font: 10px sans-serif;
+  
+}
+
+.path-text {
+  pointer-events: none;
+  font: 10px sans-serif;
+}
+
+.dim {
+	opacity: 0.15;
+}
+
+.link {
+	stroke: #000;
+	stroke-width: 1.5px;
+}
+
+.node {
+	stroke-width: 1.5px;
+}
+
+.node text, .path-text {
+	pointer-events: none;
+	font: 10px sans-serif;
+	color:black;
+}
+
+.graph {
+	width:72%;
+	height:550px;
+	border:1px solid #DDD;
+}
+
+svg {
+	
+}
+
+/* HTML */
+
+.span3 {
+	margin-left:20px;
+	width:280px;
+}
+
+.icon-remove {
+	cursor: pointer;
+}
+
+.toolbar .tab-content {
+	overflow: visible;
+}
+
+input[type="file"] {
+	height: 30px;
+	line-height: 16px;
+}
+
+div.data {
+	float:right;
+	font: 12px "Helvetica", sans-serif;
+}
+
+body {
+	font: 12px "Helvetica", sans-serif;
+}
+
+table th {
+	text-align: right;
+}
+
+table td {
+	text-align: left;
+}
+
+
+

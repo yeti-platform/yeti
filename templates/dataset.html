@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block main %}
+<div class='span9'>
+	<h1>Dataset</h1>
+	<table class='table table-condensed' id='dataset'>
+	</table>
+	<script>get_dataset("",'{{url_for('list')}}')</script>
+</div>
+
+
+
+{% endblock %}
+{%block sidebar %}
+<div class='span3 toolbar'>
+	<!-- <h1>Functions</h1> -->
+	<ul id='datasetTabs' class='nav nav-tabs'>
+		<li class='active'><a href='#search' data-toggle='tab'>Search</a></li>
+		<li><a href='#add' data-toggle='tab'>Add</a></li>
+	</ul>
+
+	<div id='datasetTabsContent' class='tab-content'>
+		
+
+		<div class='tab-pane active' id='search'>
+			<div class="input-append pull-left" >
+		      <input class="span2" id="query" placeholder='context=malware' type="text">
+		      <button class='btn btn-primary' type='button' onclick="javascript:get_dataset($('#query').val(), '{{url_for('list')}}')">Go</button>
+		  	</div>
+		</div>
+
+
+		<div class='tab-pane' id='add'>
+			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>
+			<!--   <fieldset> -->
+			    <!-- <legend>Element</legend> -->
+			    <label for='element'>Element</label>
+			    <input type="text" placeholder="" name='element' id='element'>
+			    <span class="help-block">i.e. http://google.com; tomchop.me; 127.0.0.1</span>
+			    <span class="help-block">Or choose file to upload (1 element / line)</span>
+			    <input type="file" placeholder="" name='element-list'>
+			  <!-- </fieldset>
+			  <fieldset>
+			  	<legend>Context</legend> -->
+			  	<label for='context'>Context</label>
+			    <input id='context' type="text" name="context" placeholder="">
+			    <label class="checkbox">
+			      <input type="checkbox" name='analyse'> Analyse after import
+			    </label>
+			  </fieldset>
+			</form>
+			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
+			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
+		</div>
+
+	</div>
+</div>
+{% endblock%}
