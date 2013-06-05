@@ -37,7 +37,7 @@ nosetests.xml
 
 
 # folders
-env-threatintel
+env-*
 libs
 
 
