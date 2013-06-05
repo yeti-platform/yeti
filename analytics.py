@@ -5,7 +5,6 @@ import dateutil
 import logging
 import time
 import threading
-from pyfaup.faup import Faup
 from model import Model
 from datatypes.element import Hostname, Ip, Url, As
 

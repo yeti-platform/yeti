@@ -12,7 +12,6 @@ from lxml import etree
 from dateutil.parser import parse
 import logging
 from subprocess import check_output, CalledProcessError, STDOUT
-from pyfaup.faup import Faup              # external
 from bson.json_util import dumps
 
 url_regex = r"""
@@ -42,7 +41,7 @@ def send_msg(ws, msg):
     except Exception, e:
         debug_output("Could not send message: %s" % e)
     
-    
+
 
 def find_ips(data):
     ips = []
@@ -54,23 +53,20 @@ def find_urls(data):
     urls = []
     _re = re.compile(url_regex,re.VERBOSE)
 
-    f = Faup()
-
     for i in re.finditer(_re,data):
         url = i.group(1)
-        f.decode(url)
         
-        if f.get()['host'] != url:
             
-            h = find_hostnames(data)
-            i = find_ips(data)
-            
-            if len(h) > 0 or len(i) > 0:
-                urls.append(url)
+        h = find_hostnames(data)
+        i = find_ips(data)
+        
+        if len(h) > 0 or len(i) > 0:
+            urls.append(url)
 
     return urls
 
 def find_hostnames(data):
+    # sends back an array of hostnames
     hostnames = []
     for i in re.finditer("((([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?", data):
         h = string.lower(i.group(1))
@@ -138,13 +134,28 @@ def is_hostname(hostname):
     else:
         return None
 
-    # f = Faup()
-    # f.decode(hostname)
-    # dec = f.get()
-    # if dec['host'] == hostname:
-    #     return string.lower(hostname)
-    # else:
-    #     return None
+def is_subdomain(hostname):
+    hostname = find_hostnames(hostname)
+    if len(hostname) > 0:
+        hostname = hostname[0]
+        tld = hostname.split('.')[-1:][0]
+        if tld in tlds:
+            tld = hostname.split('.')[-2:][0]
+            if tld in tlds:
+                domain = ".".join(hostname.split('.')[-3:])
+                if domain == hostname:
+                    return False
+                else:
+                    return domain
+            else:
+                domain = ".".join(hostname.split('.')[-2:])
+                if domain == hostname:
+                    return False
+                else:
+                    return domain
+
+    else:
+        return False
 
 
 def is_url(url):
@@ -174,23 +185,7 @@ def dns_dig_records(hostname):
     return records
 
 def url_get_hostname(url):
-    f = Faup()
-    f.decode(url)
-    hostname = f.get()['host']
-
-    return hostname
-
-# def url_get_domain(hostname):
-    
-#     print "Getting domain for %s" % hostname
-#     search = re.search('(\w+\.\w+$)',hostname)
-
-#     if search:
-#         print "domain for hostname %s is %s" % (hostname, search.group(1))
-#         return search.group(1)
-#     else:
-#         print "domain not found for %s" % hostname
-#         return None
+    return find_hostnames(url)[0]
 
 def url_check(url):
     try:

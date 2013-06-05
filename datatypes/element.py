@@ -1,8 +1,6 @@
 import toolbox
 import datetime
 import pygeoip
-from pyfaup.faup import Faup
-
 
 class Element(dict):
 	def __init__(self):
@@ -157,14 +155,10 @@ class Hostname(Element):
 								new.append((record, Ip(findings)))
 
 		# is _hostname a subdomain ?
-		if len(self.hostname.split(".")) > 2:
-			f = Faup()
-			f.decode(self['hostname'])  
-			domain = f.get()['domain']
-			if domain.split(".")[0] in ['co','com']:
-				domain = "".join(f.get()['host'].split('.')[:-2][0]) + "." + domain
 
-			if domain != self['hostname'] and domain not in new:
+		if len(self.hostname.split(".")) > 2:
+			domain = is_subdomain(self.hostname)
+			if domain:
 				new.append(('domain', Hostname(domain)))
 
 		self['last_analysis'] = datetime.datetime.utcnow()
