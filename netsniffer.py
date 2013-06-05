@@ -95,8 +95,8 @@ class Sniffer():
 		src = source['ip']
 		dst = dest['ip']
 
-		src = self.analytics.add_text([src], ['sniffer'])
-		elt = self.analytics.add_text([dst], ['sniffer'])
+		src = self.analytics.add_text([src], ['sniffer', self.name])
+		elt = self.analytics.add_text([dst], ['sniffer', self.name])
 
 		if src['_id'] not in self.nodes_ids:
 			self.nodes_ids.append(src['_id'])
@@ -147,8 +147,8 @@ class Sniffer():
 				if hname[-1:] == ".":
 					hname = hname[:-1]
 				
-				_hname = self.analytics.add_text([hname], ['sniffer'])
-				_ipaddr = self.analytics.add_text([ipaddr], ['sniffer'])
+				_hname = self.analytics.add_text([hname], ['sniffer', self.name])
+				_ipaddr = self.analytics.add_text([ipaddr], ['sniffer', self.name])
 
 				debug_output("Added %s, %s" %(hname, ipaddr))
 
@@ -179,7 +179,7 @@ class Sniffer():
 
 			# deal with the original request
 			question = pkt[DNS].qd.qname
-			_question = self.analytics.add_text([question], ['sniffer'])
+			_question = self.analytics.add_text([question], ['sniffer', self.name])
 
 			if _question:
 				if _question['_id'] not in self.nodes_ids:
