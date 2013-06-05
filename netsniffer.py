@@ -200,12 +200,16 @@ class Sniffer():
 		nodes = []
 
 		new_elts, new_edges = self.checkIP(pkt)
-		elts += new_elts
-		nodes += new_edges
+		if new_elts:
+			elts += new_elts
+		if new_edges:
+			nodes += new_edges
 
 		new_elts, new_edges = self.checkDNS(pkt)
-		elts += new_elts
-		nodes += new_edges
+		if new_elts:
+			elts += new_elts
+		if new_edges:
+			nodes += new_edges
 
 		self.send_nodes(elts, nodes)
 
