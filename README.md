@@ -24,6 +24,23 @@ In the near future, it will also become a collaborative tool (coming soon!)
 
 Malcom is written in python. Provided you have the necessary libraries, you should be able to run it on any platform.
 
+Start off by installing MongoDB and pymongo
+* [MongoDB installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-debian/) on Debian (and others)
+* [pymongo](http://api.mongodb.org/python/current/installation.html) - python bindings for MongoDB
+
+Go for Scapy
+* Get it from http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
+* Untar, build, and install from your virtualenv shell
+
+Set up your virtualenv
+* Get it from
+* `python virtualenv.py env-malcom`
+* Elevate your privileges to root and activate your new python environment with `source env-malcom/bin/activate`
+
+Then everything else can be installed with pip using requirements.txt: `pip install -r requirements.txt`
+
+Launch the webserver using `python server.py`. If you need to change default ports and/or listen interfaces, just edit the server.py file. Command line options will be available soon.
+
 ### Environment
 
 Malcom was designed and tested on a Debian Wheezy VM.
@@ -34,11 +51,9 @@ As long as it's getting layer-3 network data, Malcom can be deployed anywhere. A
 
 ### Packages
 
-Everything you need is in requirements.txt. Install using `pip install -r requirements.txt`
 
-* Scapy (won't install from pip)
-** Get it from http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-** Untar, build, and install from your virtualenv shell
+
+
 
 ## Technical specs
 
