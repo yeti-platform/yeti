@@ -55,12 +55,11 @@ def find_urls(data):
 
     for i in re.finditer(_re,data):
         url = i.group(1)
-        
-            
+
         h = find_hostnames(data)
         i = find_ips(data)
         
-        if len(h) > 0 or len(i) > 0:
+        if (len(h) > 0 or len(i) > 0) and url.find('/') != -1: # there's at least one IP or one hostname in the URL
             urls.append(url)
 
     return urls
@@ -137,7 +136,9 @@ def is_hostname(hostname):
 def is_subdomain(hostname):
     hostname = find_hostnames(hostname)
     if len(hostname) > 0:
+        print hostname
         hostname = hostname[0]
+
         tld = hostname.split('.')[-1:][0]
         if tld in tlds:
             tld = hostname.split('.')[-2:][0]
@@ -185,6 +186,9 @@ def dns_dig_records(hostname):
     return records
 
 def url_get_hostname(url):
+    print url
+    #hostnames = find_hostnames(url)
+    #if len(hostnames) > 0:
     return find_hostnames(url)[0]
 
 def url_check(url):

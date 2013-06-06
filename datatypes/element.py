@@ -157,7 +157,7 @@ class Hostname(Element):
 		# is _hostname a subdomain ?
 
 		if len(self.hostname.split(".")) > 2:
-			domain = is_subdomain(self.hostname)
+			domain = toolbox.is_subdomain(self.hostname)
 			if domain:
 				new.append(('domain', Hostname(domain)))
 

@@ -64,12 +64,12 @@ def index():
 
 # graph operations =============================================
 
-@app.route('/nodes/<field>/<value>')
+@app.route('/nodes/<field>/<path:value>')
 def nodes(field, value):
 	return render_template('dynamic_nodes.html', field=field, value=value)
 
 
-@app.route('/graph/<field>/<value>')
+@app.route('/graph/<field>/<path:value>')
 def graph(field, value):
 	a = g.a 
 	base_elts = [e for e in a.data.elements.find( { field: { "$regex": value } })]
