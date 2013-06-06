@@ -15,7 +15,7 @@ In the near future, it will also become a collaborative tool (coming soon!)
 ## Quick how-to
 
 * Install
-* Elevate your privileges to root (yeah, I know, see Disclaimer)
+* Elevate your privileges to root (yeah, I know, see [disclaimer](/README.md#Disclaimer))
 * Start the webserver with `python server.py`
 ** Default port is 8080
 ** If you want to change ports and stuff, just edit server.py directly
@@ -30,7 +30,7 @@ Malcom was designed and tested on a Debian Wheezy VM.
 
 If you're used to doing malware analysis, you probably already have tons of virtual machines running on a host OS. Just install Malcom on a new VM, and route your other VM's connections through Malcom. Use the `enable_routing.sh` to activate routing / NATing on the VM Malcom is running on. You'll need to add an extra network card to the guest OS.
 
-As long as it's getting layer-3 network data, Malcom can be deployed anywhere. Although it's not recommended to use it on high-availability networks (it wasn't designed to be fast, see disclaimer), you can have it running at the end of your switch's mirror port or on your gateway.
+As long as it's getting layer-3 network data, Malcom can be deployed anywhere. Although it's not recommended to use it on high-availability networks (it wasn't designed to be fast, see [disclaimer](/README.md#Disclaimer)), you can have it running at the end of your switch's mirror port or on your gateway.
 
 ### Packages
 
@@ -53,9 +53,9 @@ Malcom was written mostly from scratch, in Python. It uses the following framewo
 
 My todo list is a text file on my desktop, its items are written in three different languages and I don't really think anyone else than me could understand the acronyms.
 
-Collaboration - The **main** direction I want this tool to take is to become collaborative. I have a few ideas for this, and I think it will become 100x more useful once data sharing is implemented.
+**Collaboration** - The **main** direction I want this tool to take is to become collaborative. I have a few ideas for this, and I think it will become 100x more useful once data sharing is implemented.
 
-Extendability - The other thing I want to include in the tool is the ability to more easily extend it. I don't have the same needs as everyone else, and this tool was conceived having my needs in mind.
+**Extendability** - The other thing I want to include in the tool is the ability to more easily extend it. I don't have the same needs as everyone else, and this tool was conceived having my needs in mind.
 
 Once collaboration and extension are up and running, I think this will be helpful for more than one incident responder out there. :-)
 
