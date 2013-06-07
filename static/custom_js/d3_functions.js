@@ -1,4 +1,10 @@
-
+function resize() {
+    width = window.innerWidth - 400;//400;
+    height = window.innerHeight - 100;
+    $('.graph').width(width).height(height)
+    svg.attr("width", width).attr("height", height);
+    force.size([width, height]).resume();
+}
 
 function add_nodes(new_node) {
   push_nodes(new_node);
@@ -151,6 +157,9 @@ function start() {
   // text on links
 
   //path_text.enter().append("svg:text").attr("class","path-text").text(function(d) { return d.attribs; });
+
+  resize()
+  d3.select(window).on("resize", resize);
 
   force.start();
 }

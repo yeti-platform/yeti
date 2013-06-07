@@ -54,6 +54,14 @@ svg {
 
 /* HTML */
 
+.container {
+	width:95%;
+}
+
+.toolbar {
+	float:right;
+}
+
 .span3 {
 	margin-left:20px;
 	width:280px;

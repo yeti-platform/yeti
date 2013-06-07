@@ -44,7 +44,11 @@ for (var i=0; i < nodes.length; i++) {
                 nodes[i].y = Math.random()*height;
             }
 
-  start();
+
+
+
+start();
+
 
 
 
@@ -55,8 +59,9 @@ initSnifferWebSocket()
 ws_sniffer.onopen = snifferInterfaceInit
 </script>
 {%endblock%}
+
 {% block sidebar %}
-<div class='data span3'>
+<div class='data span3 toolbar'>
   <h1 id='session_name'>{{session.name}}</h1>
   Filter: {{session.filter}}
   <!-- <label for='session_name'>Session name</label> -->

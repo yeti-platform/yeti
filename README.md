@@ -33,8 +33,8 @@ Go for Scapy
 * Untar, build, and install from your virtualenv shell
 
 Set up your virtualenv
-* Get it from
-* `python virtualenv.py env-malcom`
+* Get it from [here](http://www.virtualenv.org/en/latest/)
+* Create your new python environment `python virtualenv.py env-malcom`
 * Elevate your privileges to root and activate your new python environment with `source env-malcom/bin/activate`
 
 Then everything else can be installed with pip using requirements.txt: `pip install -r requirements.txt`
@@ -45,7 +45,7 @@ Launch the webserver using `python server.py`. If you need to change default por
 
 Malcom was designed and tested on a Debian Wheezy VM.
 
-If you're used to doing malware analysis, you probably already have tons of virtual machines running on a host OS. Just install Malcom on a new VM, and route your other VM's connections through Malcom. Use the `enable_routing.sh` to activate routing / NATing on the VM Malcom is running on. You'll need to add an extra network card to the guest OS.
+If you're used to doing malware analysis, you probably already have tons of virtual machines running on a host OS. Just install Malcom on a new VM, and route your other VM's connections through Malcom. Use `enable_routing.sh` to activate routing / NATing on the VM Malcom is running on. You'll need to add an extra network card to the guest OS.
 
 As long as it's getting layer-3 network data, Malcom can be deployed anywhere. Although it's not recommended to use it on high-availability networks (it wasn't designed to be fast, see [disclaimer](/README.md#Disclaimer)), you can have it running at the end of your switch's mirror port or on your gateway.
 
