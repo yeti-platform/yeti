@@ -1,6 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+__description__ = 'Malcom - Malware communications analyzer'
+__author__ = '@tomchop_'
+__version__ = '0.3'
+__license__ = "GPL"
+
 
 # custom
 from toolbox import *
@@ -28,9 +33,6 @@ from flask import Flask, request, render_template, redirect, url_for, g, make_re
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
 
-__description__ = 'Malcom - Malware communications analyzer'
-__author__ = '@tomchop_'
-__version__ = '0.3'
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 
@@ -43,6 +45,8 @@ app.config['LISTEN_PORT'] = 8080
 
 sniffer_sessions = {}
 analytics_engine = Analytics()
+
+
 
 @app.errorhandler(404)
 def page_not_found(error):
