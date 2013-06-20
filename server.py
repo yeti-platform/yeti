@@ -1,3 +1,7 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
 # custom
 from toolbox import *
 from analytics import *
@@ -24,8 +28,10 @@ from flask import Flask, request, render_template, redirect, url_for, g, make_re
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
 
+__description__ = 'Malcom - Malware communications analyzer'
+__author__ = '@tomchop_'
+__version__ = '0.3'
 
-UPLOAD_FOLDER = '/home/tomchop/python/cifpy-flask/uploads'
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 
 app = Flask(__name__)
