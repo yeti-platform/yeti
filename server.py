@@ -39,18 +39,17 @@ ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 app = Flask(__name__)
 
 app.config['DEBUG'] = True
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['VERSION'] = "0.3"
+app.config['UPLOAD_FOLDER'] = ""
 app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
 
 sniffer_sessions = {}
 analytics_engine = Analytics()
 
-
-
 @app.errorhandler(404)
 def page_not_found(error):
-    return 'This page does not exist', 404
+	return 'This page does not exist', 404
 
 @app.after_request
 def after_request(response):
@@ -62,10 +61,11 @@ def after_request(response):
 
 @app.before_request
 def before_request():
-    g.a = analytics_engine
-    g.ifaces = {}
-    for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
-    	g.ifaces[i] = ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']
+	g.version = app.config['VERSION']
+	g.a = analytics_engine
+	g.ifaces = {}
+	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
+		g.ifaces[i] = ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']
 
 @app.route('/')
 def index():
@@ -332,7 +332,7 @@ def echo(ws):
 if __name__ == "__main__":
 	
 	os.system('clear')
-	sys.stderr.write("===== Malcom - Malware Communications Analyzer =====\n\n")
+	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
 	sys.stderr.write("Starting server...\n")
 	sys.stderr.write("Detected interfaces:\n")
 	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
