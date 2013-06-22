@@ -49,9 +49,23 @@ function get_dataset(query, url) {
 	  	for (var i in data) {
 	  		//console.log(data[i])
 	  		elt = data[i]
-	  	
-	  		context = elt['context'].join(", ")
-	  		dataset.append("<tr id='row_"+elt['_id']['$oid']+"'><td><a href='"+elt['link_value']+"'>"+elt[elt['type']]+"</a></td><td><a href='"+elt['link_type']+"'>"+elt['type']+"</a></td><td>"+context+"</td><td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td></tr>")
+
+	  		context_links = new Array()
+
+	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'><td><a href='/nodes/value/"+elt['value']+"'>"+elt['value']+"</a></td><td><a href='/nodes/type/"+elt['type']+"'>"+elt['type']+"</a></td><td class='context_links'></td><td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td></tr>")
+
+	  		context_links = row.find('.context_links')
+
+	  		for (var c in elt['context']) {
+	  			a = $('<a>')
+	  			a.attr('href','/nodes/context/'+elt['context'][c])
+	  			a.text(elt['context'][c])
+	  			if (c != 0)
+	  				context_links.append(', ')
+	  			context_links.append(a)
+	  		}
+	  		
+	  		dataset.append(row)
 	  	}
 	  }
 	});

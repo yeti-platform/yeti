@@ -78,7 +78,6 @@ def index():
 def nodes(field, value):
 	return render_template('dynamic_nodes.html', field=field, value=value)
 
-
 @app.route('/graph/<field>/<path:value>')
 def graph(field, value):
 	a = g.a 
@@ -139,7 +138,7 @@ def list(query={}):
 
 	
 	for elt in elts:
-		elt['link_value'] = url_for('nodes', field=elt['type'], value=elt[elt['type']])
+		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
 
 	return dumps(elts)

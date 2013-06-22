@@ -19,7 +19,7 @@ class Worker(threading.Thread):
 		
 
 	def run(self):
-		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt[self.elt['type']]))
+		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']))
 
 		etype = self.elt['type']
 		context = self.elt['context']
@@ -117,7 +117,7 @@ class Analytics:
 		debug_output("(getting ASNs for %s IPs)" % results.count())
 		for r in results:
 			elts.append(r)
-			ips.append(r['ip'])
+			ips.append(r['value'])
 
 		as_info = get_net_info(ips)
 		if not as_info:

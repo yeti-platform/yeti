@@ -94,11 +94,11 @@ class Model:
 			element['_id'] = elt['_id']
 			element.upgrade_context(elt['context'])
 			element['date_updated'] = datetime.datetime.utcnow()
-			print "(updated %s %s)" % (element.type, element[element['type']])
+			print "(updated %s %s)" % (element.type, element.value)
 		else:
 			#element['context'] = context
 			element['date_created'] = datetime.datetime.utcnow()
-			print "(added %s %s to DB)" % (element.type, element[element['type']])
+			print "(added %s %s to DB)" % (element.type, element.value)
 
 		saved = self.elements.save(element)
 
@@ -109,7 +109,7 @@ class Model:
 		return self.elements.remove({'_id' : ObjectId(element_id)})
 
 	def exists(self, element):
-		return self.elements.find_one({ element.type: element[element['type']] })
+		return self.elements.find_one({ 'value': element.value })
 
 
 

@@ -94,6 +94,7 @@ function start() {
   // create new links
   link.enter().insert("line", ".node")
     .attr("class", "link")
+    .attr("marker-end", function(d) { return "url(#arrow)"; })
     .attr("id", function(d) {return d._id.$oid })
     .style("stroke", function(d) { return color(d.attribs); })
 
@@ -120,9 +121,9 @@ function start() {
                   		return (dd.target._id.$oid == d._id.$oid);
                 }).length+2);
               })
-      .style('fill', function (d) { return color(d.type) } )
-      .style("stroke", function (d) { return d3.rgb(color(d.type)).darker(); })
-
+      // .style('fill', function (d) { return color(d.type) } )
+      // .style("stroke", function (d) { return d3.rgb(color(d.type)).darker(); })
+      .attr('class', function (d) { console.log(d.type); return d.type } )
       .on("mousedown", function (d) {
          d.fixed = true;
          d3.select(this).classed("sticky", true);
@@ -146,7 +147,7 @@ function start() {
         if (d['type'] == 'as') {
           return d['as_name'] + " ("+d['country']+")"
         }
-        return d[d['type']] 
+        return d['value'] 
       });
 
   // remove old nodes

@@ -1,0 +1,30 @@
+circle.hostname {
+	fill: #ff9896;
+	stroke: #b26a69;
+}
+
+circle.as {
+	fill: #98df8a;
+	stroke: #6a9c60;
+}
+
+circle.ip {
+	fill: #d62728;
+	stroke: #951b1c;
+}
+
+circle.url {
+	fill: #98df8a;
+	stroke: #6a9c60;
+}
+
+.brush .extent {
+  fill-opacity: .1;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+
+.node .selected {
+  stroke: red;
+  stroke-width:1.5px;
+}

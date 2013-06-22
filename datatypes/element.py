@@ -23,7 +23,7 @@ class Element(dict):
 class As(Element):
 
 	def __init__(self, _as="", context=[]):
-		self['as'] = ""
+		self['value'] = ""
 		self['type'] = 'as'
 		self['context'] = context
 
@@ -44,7 +44,7 @@ class Url(Element):
 		if toolbox.is_url(url) != url:
 			return None
 		else:
-			self['url'] = url
+			self['value'] = url
 			self['context'] = context
 			self['type'] = 'url'
 
@@ -56,11 +56,11 @@ class Url(Element):
 		return url 
 
 	def analytics(self):
-		print "(url analytics for %s)" % self['url']
+		print "(url analytics for %s)" % self['value']
 
 		new = []
 		# link with hostname
-		self['hostname'] = toolbox.url_get_hostname(self['url'])
+		self['hostname'] = toolbox.url_get_hostname(self['value'])
 
 		if toolbox.is_ip(self['hostname']):
 			new.append(('host', Ip(self['hostname'])))
@@ -80,7 +80,7 @@ class Ip(Element):
 		if toolbox.is_ip(ip) != ip:
 			return None
 		else:
-			self['ip'] = ip
+			self['value'] = ip
 			self['context'] = context
 			self['type'] = 'ip'
 
@@ -93,14 +93,14 @@ class Ip(Element):
 			
 
 	def analytics(self):
-		print "(ip analytics for %s)" % self['ip']
+		print "(ip analytics for %s)" % self['value']
 
 		# get geolocation info
 		try:
 			gi = pygeoip.GeoIP('geoIP/GeoLiteCity.dat')
-			self['geoinfo'] = gi.record_by_addr(self.ip)
+			self['geoinfo'] = gi.record_by_addr(self.value)
 		except Exception, e:
-			print "Could not get IP info for %s: %s" %(self.ip, e)
+			print "Could not get IP info for %s: %s" %(self.value, e)
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 
@@ -111,9 +111,9 @@ class Hostname(Element):
 	def __init__(self, hostname="", context=[]):
 		if toolbox.is_hostname(hostname) == hostname:
 			self['context'] = context
-			self['hostname'] = toolbox.is_hostname(hostname)
-			if self['hostname'][-1:] == ".":
-				self['hostname'] = self['hostname'][:-1]
+			self['value'] = toolbox.is_hostname(hostname)
+			if self['value'][-1:] == ".":
+				self['value'] = self['value'][:-1]
 			self['type'] = 'hostname'
 		else:
 			return None
@@ -128,16 +128,16 @@ class Hostname(Element):
 		
 	def analytics(self):
 
-		print "(host analytics for %s)" % self.hostname
+		print "(host analytics for %s)" % self.value
 
 		# this should get us a couple of IP addresses, or other hostnames
-		self['dns_info'] = toolbox.dns_dig_records(self.hostname)
+		self['dns_info'] = toolbox.dns_dig_records(self.value)
 		
 		new = []
 
 		#get Whois
 
-		self['whois'] = toolbox.whois(self['hostname'])
+		self['whois'] = toolbox.whois(self['value'])
 
 
 		# get DNS info
@@ -156,8 +156,8 @@ class Hostname(Element):
 
 		# is _hostname a subdomain ?
 
-		if len(self.hostname.split(".")) > 2:
-			domain = toolbox.is_subdomain(self.hostname)
+		if len(self.value.split(".")) > 2:
+			domain = toolbox.is_subdomain(self.value)
 			if domain:
 				new.append(('domain', Hostname(domain)))
 
