@@ -216,7 +216,7 @@ class Sniffer():
 
 	def send_nodes(self, elts=[], edges=[]):
 
-		debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % ([e['type']], e[e['type']]) for e in elts]), len(edges)))
+		debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % ([e['type']], e['value']) for e in elts]), len(edges)))
 
 
 		#data = { 'query': {}, 'nodes':self.nodes, 'edges': self.edges }

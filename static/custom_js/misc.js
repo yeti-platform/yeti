@@ -51,7 +51,7 @@ function get_dataset(query, url) {
 	  		elt = data[i]
 
 	  		context_links = new Array()
-
+	  		
 	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'><td><a href='/nodes/value/"+elt['value']+"'>"+elt['value']+"</a></td><td><a href='/nodes/type/"+elt['type']+"'>"+elt['type']+"</a></td><td class='context_links'></td><td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td></tr>")
 
 	  		context_links = row.find('.context_links')

@@ -76,10 +76,14 @@ def find_hostnames(data):
     return hostnames
 
 def whois(data):
-    cmd = ['/usr/bin/whois',data]
-    response = check_output(cmd, 
+    
+    try:
+        response = check_output(['whois',data],
                 shell=True,
                 stderr=STDOUT)
+    except Exception, e:
+        response = "Whois resolution failed"
+    
     return response
 
 
@@ -240,7 +244,8 @@ def parse_net_info(info):
         entries = {}
         columns = line.split("|")
 
-        entries['as'] = columns[0].lstrip().rstrip()
+        entries['value'] = columns[0].lstrip().rstrip()
+
         #entries['ip'] = columns[1].lstrip().rstrip()
         entries['bgp'] = columns[2].lstrip().rstrip()
         entries['country'] = columns[3].lstrip().rstrip()
@@ -250,6 +255,8 @@ def parse_net_info(info):
         
         
         results.append(entries)
+
+    print results
 
     return results
 

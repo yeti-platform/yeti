@@ -1,3 +1,33 @@
+function nudge(dx, dy) {
+  node.filter(function(d) { return d.selected; })
+      .attr("cx", function(d) { return d.x += dx; })
+      .attr("cy", function(d) { return d.y += dy; })
+
+  link.filter(function(d) { return d.source.selected; })
+      .attr("x1", function(d) { return d.source.x; })
+      .attr("y1", function(d) { return d.source.y; });
+
+  link.filter(function(d) { return d.target.selected; })
+      .attr("x2", function(d) { return d.target.x; })
+      .attr("y2", function(d) { return d.target.y; });
+
+  d3.event.preventDefault();
+}
+
+function keydown() {
+  if (!d3.event.metaKey) switch (d3.event.keyCode) {
+    case 38: nudge( 0, -1); break; // UP
+    case 40: nudge( 0, +1); break; // DOWN
+    case 37: nudge(-1,  0); break; // LEFT
+    case 39: nudge(+1,  0); break; // RIGHT
+  }
+  shiftKey = d3.event.shiftKey || d3.event.metaKey;
+}
+
+function keyup() {
+  shiftKey = d3.event.shiftKey || d3.event.metaKey;
+}
+
 function resize() {
     width = window.innerWidth - 400;//400;
     height = window.innerHeight - 100;
@@ -62,7 +92,10 @@ function push_links(edges) {
 
 function getneighbors(id, mouse) {
 
-  $.getJSON('/neighbors/'+id, function(data) {
+  url = '/neighbors/'+id;
+  console.log(url);
+
+  $.getJSON(url, function(data) {
 
     push_nodes(data.nodes)
     push_links(data.edges)
@@ -102,13 +135,44 @@ function start() {
   // remove old links
   link.exit().remove();
 
-
   // select nodes
   node = node.data(force.nodes(), function (d) { return d._id.$oid;});
+
+  // drag handler
+
+  var node_drag = d3.behavior.drag()
+        .on("dragstart", dragstart)
+        .on("drag", dragmove)
+        .on("dragend", dragend);
+
+  function dragstart(d, i) {
+      //force.stop() // stops the force auto positioning before you start dragging
+  }
+
+  function dragmove(d, i) {
+
+      sel = d3.selectAll('.selected').data()
+      for (var i in sel) {
+        sel[i].px += d3.event.dx;
+        sel[i].py += d3.event.dy;
+        sel[i].x += d3.event.dx;
+        sel[i].y += d3.event.dy;
+        sel[i].fixed = true;   
+      }
+
+      tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+      force.resume();
+  }
+
+  function dragend(d, i) {
+      d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
+      tick();
+      force.resume();
+  }
   
   // create new svg:g
   n = node.enter().append("svg:g")
-    .attr("class", "node").call(force.drag)
+    .attr("class", "node").call(node_drag)
     .attr("id", function (d) { return d._id.$oid })
 
   // append circles
@@ -127,6 +191,7 @@ function start() {
       .on("mousedown", function (d) {
          d.fixed = true;
          d3.select(this).classed("sticky", true);
+         d3.select(this.parentNode).classed("selected", !d3.select(this).classed("selected"));
      })
      .on("click", function(d){
       if (d.fixed == true) {
@@ -137,7 +202,7 @@ function start() {
       getneighbors(d._id.$oid, d3.mouse(this))
 
      })
-     .on('mouseover', function(d){display_data(d)});
+     .on('mouseover', function(d){display_data(d)})
 
   // append text
   n.append("text")

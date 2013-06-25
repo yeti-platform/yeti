@@ -51,11 +51,12 @@ function highlight(query) {
 
 function display_data(d)
 {
+
+	console.log(d)
 	$('#node_info').empty();
 	$(".whois").empty();
 
 	$('#node_info').append("<tr><th>Node type</th><td>"+d.type+"</td></tr>");
-
 
 	if (d.type == 'url')
 		display_data_url(d);
@@ -63,6 +64,8 @@ function display_data(d)
 		display_data_as(d);
 	if (d.type == 'ip')
 		display_data_ip(d);
+	if (d.type == 'hostname')
+		display_data_hostname(d);
 
 	$('#node_info').append("<tr><th>Date Updated</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
 	$('#node_info').append("<tr><th>Date Created</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
@@ -78,6 +81,7 @@ function display_data(d)
 
 function display_data_hostname(d) {
 
+	$('#node_info').append("<tr><th>Hostname</th><td>"+d.value+"</td></tr>");
 	if (d.domain != null)
 		$('#node_info').append("<tr><th>Domain</th><td>"+d.domain+"</td></tr>");
 	if (!jQuery.isEmptyObject(d.dns_info)) {
@@ -85,18 +89,19 @@ function display_data_hostname(d) {
 			$('#node_info').append("<tr><th>"+i+"</th><td>"+d.dns_info[i]+"</td></tr>");
 	}
 
-	$('.whois').text(d.whois.replace(/\n/g, "<br />"));
+	$('.whois').html('<small>'+d.whois.replace(/\n/g, "<br />")+'</small>');
+	console.log(d.whois)
 }
 
 function display_data_url(d) {
 	
-	$('#node_info').append("<tr><th>URL</th><td>"+d.url+"</td></tr>");
+	$('#node_info').append("<tr><th>URL</th><td>"+d.value+"</td></tr>");
 	$('#node_info').append("<tr><th>Hostname</th><td>"+d.hostname+"</td></tr>");
 }
 
 function display_data_as(d){
 	$('#node_info').append("<tr><th>AS name</th><td>"+d.as_name+"</td></tr>");
-	$('#node_info').append("<tr><th>ASN</th><td> AS"+d.as+"</td></tr>");
+	$('#node_info').append("<tr><th>ASN</th><td> AS"+d.value+"</td></tr>");
 	$('#node_info').append("<tr><th>Netblock</th><td>"+d.bgp+"</td></tr>");
 	$('#node_info').append("<tr><th>Country</th><td>"+d.country+"</td></tr>");
 	$('#node_info').append("<tr><th>Registry</th><td>"+d.registry+"</td></tr>");
@@ -105,12 +110,16 @@ function display_data_as(d){
 }
 
 function display_data_ip(d) {
-	$('#node_info').append("<tr><th>IP</th><td>"+d.ip+"</td></tr>");
-	geoloc_string = "";
-	if (d.geoinfo.city != "")
-		geoloc_string += d.geoinfo.city + ", ";
-	geoloc_string += d.geoinfo.country_name +" ("+d.geoinfo.latitude+", "+d.geoinfo.longitude+")";
-	$('#node_info').append("<tr><th>Geoloc</th><td>"+geoloc_string+"</td></tr>");
+	$('#node_info').append("<tr><th>IP</th><td>"+d.value+"</td></tr>");
+	
+	if (d.geoinfo) {
+		geoloc_string = "";
+		if (d.geoinfo.city != "")
+			geoloc_string += d.geoinfo.city + ", ";
+		geoloc_string += d.geoinfo.country_name +" ("+d.geoinfo.latitude+", "+d.geoinfo.longitude+")";
+		$('#node_info').append("<tr><th>Geoloc</th><td>"+geoloc_string+"</td></tr>");
+	}
+	
 	$('.whois').text(d.whois);
 }
 

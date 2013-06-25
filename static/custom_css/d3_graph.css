@@ -1,30 +1,41 @@
 circle.hostname {
-	fill: #ff9896;
-	stroke: #b26a69;
+	fill: #aec7e8;
+	stroke: #1f77b4;
 }
 
 circle.as {
-	fill: #98df8a;
-	stroke: #6a9c60;
+	fill: #ffbb78;
+	stroke: #ff7f0e;
 }
 
-circle.ip {
+circle.malware {
 	fill: #d62728;
 	stroke: #951b1c;
 }
 
-circle.url {
+
+circle.ip {
 	fill: #98df8a;
-	stroke: #6a9c60;
+	stroke: #2ca02c ;
+}
+
+circle.url {
+	fill: #dbdb8d;
+	stroke: #bcbd22;
 }
 
 .brush .extent {
-  fill-opacity: .1;
-  stroke: #fff;
+  stroke-opacity: 0.5;
+  fill-opacity: .05;
+  stroke: #03a2ff;
+  stroke-width:2px;
+  fill: #069bf1;
   shape-rendering: crispEdges;
 }
 
-.node .selected {
-  stroke: red;
-  stroke-width:1.5px;
+.selected circle {
+  stroke: #df1801;
+  stroke-width:3px;
+  cursor: move;
 }
+
