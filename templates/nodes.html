@@ -2,28 +2,12 @@
 <meta charset="utf-8">
 <style>
 
-/*.node {
-  stroke: #fff;
-  stroke-width: 1.5px;
-}
-
-.link {
-  stroke: #999;
-  stroke-opacity: .6;
-}*/
-
 </style>
 <head>
   <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
   <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
   
   <style>
-
-
-
-    /*.node:hover text {
-      visibility:visible;
-    }*/
 
 </style>
 </head>
@@ -157,28 +141,8 @@ d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
 
-    // node.attr("cx", function(d) { return d.x; })
-    //     .attr("cy", function(d) { return d.y; });
-
     node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
 
-    //node.attr("cx", function(d) { return d.x; })
-    //  .attr("cy", function(d) { return d.y; });
-
-    // path_text.attr("transform", function(d) 
-    // {
-    //   var dx = (d.target.x - d.source.x),
-    //   dy = (d.target.y - d.source.y);
-    //   var dr = Math.sqrt(dx * dx + dy * dy);
-    //   var sinus = dy/dr;
-    //   var cosinus = dx/dr;
-    //   var l = d.attribs.length
-    //   var offset = (1 - (l / dr )) / 2;
-    //   var x=(d.source.x + dx*offset);
-    //   var y=(d.source.y + dy*offset);
-    //   //return "translate(" + dx + "," + dy + ")";
-    //   return "translate(" + x + "," + y + ") matrix("+cosinus+", "+sinus+", "+-sinus+", "+cosinus+", 0 , 0)";
-    // });
 
   });
 
@@ -187,12 +151,7 @@ d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
 });
 
 </script>
-<script type="text/javascript">
-// labelling links with text
-// Get the links
- 
-// Add an attribute to them (this should be added to force.on("tick", tick) functionality
-</script>
+
 
 <script type="text/javascript">
 //document ready

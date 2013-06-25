@@ -11,7 +11,6 @@ function snifferInterfaceInit() {
             $('#stopsniff').attr('disabled','true');
         }
         else {
-            // $('#session_name').text(data.msg.session_name)
             $('#startsniff').attr('disabled','true');
             $('#stopsniff').removeAttr('disabled');
         }
@@ -70,8 +69,6 @@ function initSnifferWebSocket() {
     } else {
         console.log("WebSocket not supported");
     }
-
-    //setTimeout(interfaceInit, 500)
 }
 
 function startsniff(){

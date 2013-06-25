@@ -12,7 +12,6 @@
 {% endblock %}
 {%block sidebar %}
 <div class='span3 toolbar'>
-	<!-- <h1>Functions</h1> -->
 	<ul id='datasetTabs' class='nav nav-tabs'>
 		<li class='active'><a href='#search' data-toggle='tab'>Search</a></li>
 		<li><a href='#add' data-toggle='tab'>Add</a></li>
@@ -31,16 +30,13 @@
 
 		<div class='tab-pane' id='add'>
 			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>
-			<!--   <fieldset> -->
-			    <!-- <legend>Element</legend> -->
+			
 			    <label for='element'>Element</label>
 			    <input type="text" placeholder="" name='element' id='element'>
 			    <span class="help-block">i.e. http://google.com; tomchop.me; 127.0.0.1</span>
 			    <span class="help-block">Or choose file to upload (1 element / line)</span>
 			    <input type="file" placeholder="" name='element-list'>
-			  <!-- </fieldset>
-			  <fieldset>
-			  	<legend>Context</legend> -->
+			  
 			  	<label for='context'>Context</label>
 			    <input id='context' type="text" name="context" placeholder="">
 			    <label class="checkbox">

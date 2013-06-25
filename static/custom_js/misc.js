@@ -69,19 +69,4 @@ function get_dataset(query, url) {
 	  	}
 	  }
 	});
-	// $.getJSON(url, querydict, function(data) {
-	// 	console.log(data)
-	// })
-
-	// var jqxhr = $.getJSON(url, function() {
-	//   console.log( "success" );
-	// })
-	// .done(function() { console.log( "second success" ); })
-	// .fail(function(jqXHR, textStatus, errorThrown) { 
-	// 	console.log( jqXHR);
-	// 	console.log( textStatus);
-	// 	console.log( errorThrown); 
-	// })
-	// .always(function() { console.log( "complete" ); });
-	 
 }

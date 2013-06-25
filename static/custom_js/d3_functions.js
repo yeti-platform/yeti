@@ -49,8 +49,7 @@ function push_nodes(new_nodes) {
    for (var i in new_nodes) {
     
     if (ids.indexOf(new_nodes[i]._id.$oid) == -1) {
-      // new_nodes[i].x = width/2//nodes[0].x
-      // new_nodes[i].y = height/2//nodes[0].y
+      
       new_nodes[i].x = Math.random()*width;
       new_nodes[i].y = Math.random()*height;
 
@@ -119,7 +118,7 @@ function start() {
                 }).length+2);
               })
             svg.selectAll('g').attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-              // .attr('y', function(d) { d.y = height / 2; return d.y})
+              
 
   //select links
   link = link.data(force.links(), function(d) { return d._id.$oid })
@@ -141,13 +140,8 @@ function start() {
   // drag handler
 
   var node_drag = d3.behavior.drag()
-        .on("dragstart", dragstart)
         .on("drag", dragmove)
         .on("dragend", dragend);
-
-  function dragstart(d, i) {
-      //force.stop() // stops the force auto positioning before you start dragging
-  }
 
   function dragmove(d, i) {
 
@@ -185,8 +179,6 @@ function start() {
                   		return (dd.target._id.$oid == d._id.$oid);
                 }).length+2);
               })
-      // .style('fill', function (d) { return color(d.type) } )
-      // .style("stroke", function (d) { return d3.rgb(color(d.type)).darker(); })
       .attr('class', function (d) { console.log(d.type); return d.type } )
       .on("mousedown", function (d) {
          d.fixed = true;
@@ -218,12 +210,10 @@ function start() {
   // remove old nodes
   node.exit().remove();
 
+  // text on links
   path_text = svg.selectAll(".path-text").data(force.links(), function(d) { return d._id.$oid });   
   
-  // text on links
-
-  //path_text.enter().append("svg:text").attr("class","path-text").text(function(d) { return d.attribs; });
-
+  
   resize()
   d3.select(window).on("resize", resize);
 

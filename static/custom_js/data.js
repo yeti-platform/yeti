@@ -1,10 +1,11 @@
 function highlight(query) {
 
+	query = query.trim()
+
 	if (query == 'clear') {
 		node.classed('dim', false)
 		link.classed('dim', false)
 		path_text.classed('dim', false)
-
 		return
 	}
 
@@ -12,9 +13,16 @@ function highlight(query) {
 	link.classed('dim', true)
 	path_text.classed('dim', true)
 
+	if (query.search(':') != -1) {
+		args = query.split(':')
+		query = "(d." + args[0] + ".search('"+args[1]+"') != -1)"
+	}
+	else {
+		query = "(d.value.search('"+query+"') != -1)"
 
+	}
 
-	query = "(d." + query + ")"
+	console.log(query)
 	
 	ids = []
 	

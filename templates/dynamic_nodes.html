@@ -68,8 +68,6 @@ var brush = svg.append("g")
           d3.select(this).call(d3.event.target);
         }));
 
-
-
 var node = svg.selectAll(".node"),
     link = svg.selectAll(".link");
 
@@ -83,8 +81,6 @@ d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
     links.push(graph.edges[i])
    }
 
-
-
 for (var i=0; i < nodes.length; i++) {
                 nodes[i].x = Math.random()*width;
                 nodes[i].y = Math.random()*height;
@@ -95,7 +91,6 @@ for (var i=0; i < nodes.length; i++) {
 });
 
 
-
 </script>
 {%endblock%}
 {% block sidebar %}
@@ -103,11 +98,11 @@ for (var i=0; i < nodes.length; i++) {
   <h1>Highlight</h1>
 
   <div class="input-append">
-      <input class="span2" id="query" type="text">
-      
-      <button class='btn btn-primary' type='button' onclick="javascript:highlight($('#query').val())">Go</button>
+      <input class="span2" id="query" type="text" onkeyup="javascript:highlight($('#query').val())">
       <button class='btn' type='button' onclick="javascript:highlight('clear'); $('#query').val('');">Clear</button>
+
   </div>
+  <span class="help-block">e.g. 'type:ip', 'google.com'</span>
 
               
 

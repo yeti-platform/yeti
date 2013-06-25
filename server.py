@@ -93,7 +93,6 @@ def graph(field, value):
 
 @app.route('/neighbors/<id>')
 def neighbors(id):
-	#a = Analytics()
 	a = g.a
 	elt = a.data.elements.find_one({'_id': ObjectId(id) })
 
@@ -116,7 +115,6 @@ def dataset():
 
 @app.route('/dataset/clear')
 def clear():
-	#a = Analytics()
 	a = g.a
 	a.data.clear_db()
 	redirect(url_for('dataset.html'))
@@ -124,7 +122,6 @@ def clear():
 
 @app.route('/dataset/list/')
 def list(query={}):
-	#a = Analytics()
 	a = g.a
 	query = {}
 	for key in request.args:
@@ -142,7 +139,6 @@ def list(query={}):
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
 
 	return dumps(elts)
-	#return elements
 
 
 @app.route('/dataset/add', methods=['POST'])
@@ -178,7 +174,7 @@ def add_data():
 
 @app.route('/dataset/remove/<id>')
 def delete(id):
-	a = g.a #Analytics()
+	a = g.a 
 	result = a.data.remove(id)
 	return dumps(result)
 
@@ -288,7 +284,6 @@ def sniffer_api():
 
 			if cmd == 'sniffstart':
 				session.start(str(request.remote_addr))
-				#session.send_updates = True
 				send_msg(ws, "OK")
 				continue
 

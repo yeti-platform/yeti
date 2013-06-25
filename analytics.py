@@ -182,7 +182,6 @@ class Analytics:
 				t.join()
 
 			debug_output("################## used %s threads for this loop" % len(threads))
-			#time.sleep(3)
 
 			results = self.data.elements.find(
 				{ '$or': [

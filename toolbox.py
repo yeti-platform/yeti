@@ -78,7 +78,7 @@ def find_hostnames(data):
 def whois(data):
     
     try:
-        response = check_output(['whois',data],
+        response = check_output('whois %s' %data,
                 shell=True,
                 stderr=STDOUT)
     except Exception, e:
@@ -245,8 +245,6 @@ def parse_net_info(info):
         columns = line.split("|")
 
         entries['value'] = columns[0].lstrip().rstrip()
-
-        #entries['ip'] = columns[1].lstrip().rstrip()
         entries['bgp'] = columns[2].lstrip().rstrip()
         entries['country'] = columns[3].lstrip().rstrip()
         entries['registry'] = columns[4].lstrip().rstrip()
@@ -291,9 +289,4 @@ class XmlParser:
 
 if __name__ == "__main__":
     pass
-    #z = ZeusTrackerBinaries()
-    #z.get_info()
-    #z.print_normalized()
-    #z.print_json('md5_hash')
-   
         
