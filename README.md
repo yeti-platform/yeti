@@ -24,9 +24,10 @@ In the near future, it will also become a collaborative tool (coming soon!)
 
 Malcom is written in python. Provided you have the necessary libraries, you should be able to run it on any platform.
 
-Start off by installing MongoDB and pymongo
+Start off by installing required packages:
 * [MongoDB installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-debian/) on Debian (and others)
 * [pymongo](http://api.mongodb.org/python/current/installation.html) - python bindings for MongoDB
+* [libevent](http://libevent.org/) development libraries - `apt-get install libevent-dev`
 
 Go for Scapy
 * Get it from http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
