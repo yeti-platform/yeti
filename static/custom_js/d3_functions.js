@@ -1,17 +1,29 @@
 function nudge(dx, dy) {
-  node.filter(function(d) { return d.selected; })
-      .attr("cx", function(d) { return d.x += dx; })
-      .attr("cy", function(d) { return d.y += dy; })
+ if (shiftKey)
+    coef = 40
+  else
+    coef = 4
+     sel = d3.selectAll('.selected').data()
+      for (var i in sel) {
+        sel[i].px += coef*dx
+        sel[i].py += coef*dy
+        sel[i].x += coef*dx
+        sel[i].y += coef*dy
+        sel[i].fixed = true;   
+      }
 
-  link.filter(function(d) { return d.source.selected; })
-      .attr("x1", function(d) { return d.source.x; })
-      .attr("y1", function(d) { return d.source.y; });
+    tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+      force.resume();
 
-  link.filter(function(d) { return d.target.selected; })
-      .attr("x2", function(d) { return d.target.x; })
-      .attr("y2", function(d) { return d.target.y; });
+}
 
-  d3.event.preventDefault();
+function unfix() {
+  sel = d3.selectAll('.selected')
+  seldata = sel.data()
+  for (var i in seldata) {
+    seldata[i].fixed = false
+  }
+  sel.classed('selected', false)
 }
 
 function keydown() {
@@ -20,6 +32,7 @@ function keydown() {
     case 40: nudge( 0, +1); break; // DOWN
     case 37: nudge(-1,  0); break; // LEFT
     case 39: nudge(+1,  0); break; // RIGHT
+    case 85: unfix(); break;        // U
   }
   shiftKey = d3.event.shiftKey || d3.event.metaKey;
 }
@@ -156,6 +169,7 @@ function start() {
 
       tick(); // this is the key to make it work together with updating both px,py,x,y on d !
       force.resume();
+      
   }
 
   function dragend(d, i) {
@@ -171,7 +185,7 @@ function start() {
 
   // append circles
   n.append("circle")
-      .attr('r', function (d){
+     .attr('r', function (d){
                 return radiusScale(links.filter(function (dd) {
                 	if (dd.target._id == null)
                 		return (nodes[dd.target]._id.$oid == d._id.$oid);
@@ -179,20 +193,14 @@ function start() {
                   		return (dd.target._id.$oid == d._id.$oid);
                 }).length+2);
               })
-      .attr('class', function (d) { console.log(d.type); return d.type } )
-      .on("mousedown", function (d) {
-         d.fixed = true;
-         d3.select(this).classed("sticky", true);
-         d3.select(this.parentNode).classed("selected", !d3.select(this).classed("selected"));
+     .attr('class', function (d) { return d.type } )
+
+     .on("mousedown", function (d) { // this is what happens when we mousedown on a node
+          d.selected = true
+          d3.select(this.parentNode).classed('selected', true)
      })
      .on("click", function(d){
-      if (d.fixed == true) {
-          d.fixed = false
-          d3.select(this).classed("sticky", false)
-        }
-
-      getneighbors(d._id.$oid, d3.mouse(this))
-
+          getneighbors(d._id.$oid, d3.mouse(this))
      })
      .on('mouseover', function(d){display_data(d)})
 

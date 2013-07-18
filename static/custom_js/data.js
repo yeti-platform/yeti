@@ -60,7 +60,7 @@ function highlight(query) {
 function display_data(d)
 {
 
-	console.log(d)
+	// console.log(d)
 	$('#node_info').empty();
 	$(".whois").empty();
 
