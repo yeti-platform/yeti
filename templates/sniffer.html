@@ -2,8 +2,9 @@
 {% block main %}
 <script type="text/javascript" src='/static/custom_js/sniffer_websockets.js' charset="utf-8"></script>
 
-<div class='span9 graph'>
+<div class='span9 graph'> 
 </div>
+
 
 <script type="text/javascript">
 
@@ -68,13 +69,13 @@ var node = svg.selectAll(".node"),
         .x(d3.scale.identity().domain([0, width]))
         .y(d3.scale.identity().domain([0, height]))
         .on("brushstart", function(d) {
-        
+          console.log('brushstart')
            node.each(function(d) { 
              d.previouslySelected = shiftKey && d.selected; 
            });
         })
         .on("brush", function() {
-        
+          console.log('brush')
           var extent = d3.event.target.extent();
           node.classed("selected", function(d) {
              d.selected = d.previouslySelected ^
@@ -85,9 +86,10 @@ var node = svg.selectAll(".node"),
           });
         })
         .on("brushend", function() {
-          
+          console.log('brushend')
           d3.event.target.clear();
           d3.select(this).call(d3.event.target);
+
         }));
 
 for (var i=0; i < nodes.length; i++) {
@@ -118,4 +120,5 @@ ws_sniffer.onopen = snifferInterfaceInit
   <h3>Sessions</h3>
   <ul id='sessions'></ul>
 </div>
+<div style='clear:both' class='hotkeys'><small><strong>u</strong>: unfix selected; <strong>Shift</strong>: multiple selections; <strong>(shift+)arrows</strong>: nudge</small></div>
 {% endblock %}

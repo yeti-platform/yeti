@@ -15,9 +15,10 @@ ws_sniffer.onopen = snifferInterfaceInit
     <label for='session_name'>BPF</label>
     <input type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
     <br />
-      <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Start new session</button>
+    <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
+    <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Create new session</button>
   </form>  
-  <br />
+
   <h3>Sessions</h3>
   <ul id='sessions'></ul>
 </div>

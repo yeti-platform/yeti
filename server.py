@@ -197,6 +197,8 @@ def sniffer(session=""):
 		session_name = request.form['session_name']
 		debug_output("Creating session %s" % session_name)
 		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.ifaces)
+		if request.form['startnow']:
+			sniffer_sessions[session_name].start(str(request.remote_addr))
 		return redirect(url_for('sniffer_session', session_name=session_name))
 	return render_template('sniffer_new.html')
 
@@ -205,6 +207,8 @@ def sniffer_session(session_name):
 	# if session doesn't exist, create it
 	if session_name not in sniffer_sessions:
 		abort(404)
+
+	
 	return render_template('sniffer.html', session=sniffer_sessions[session_name], session_name=session_name)
 	
 

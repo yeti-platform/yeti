@@ -157,7 +157,7 @@ function start() {
         .on("dragend", dragend);
 
   function dragmove(d, i) {
-
+    //console.log('dragmove')
       sel = d3.selectAll('.selected').data()
       for (var i in sel) {
         sel[i].px += d3.event.dx;
@@ -173,6 +173,7 @@ function start() {
   }
 
   function dragend(d, i) {
+      //console.log('dragend')
       d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
       tick();
       force.resume();
@@ -196,13 +197,25 @@ function start() {
      .attr('class', function (d) { return d.type } )
 
      .on("mousedown", function (d) { // this is what happens when we mousedown on a node
-          d.selected = true
-          d3.select(this.parentNode).classed('selected', true)
+          //console.log('mousedown')
+
+          if (!d.selected) {
+            if (!shiftKey) {
+              node.classed('selected', function(p) { return p.selected = false; }) // deselect all others
+            }
+            d3.select(this.parentNode).classed("selected", true);
+            d.selected = true
+          }
+          
      })
      .on("click", function(d){
+          //console.log('click')
           getneighbors(d._id.$oid, d3.mouse(this))
      })
-     .on('mouseover', function(d){display_data(d)})
+     .on('mouseover', function(d){
+          //console.log('mouseover')
+          display_data(d)
+      })
 
   // append text
   n.append("text")
