@@ -21,6 +21,7 @@ function unfix() {
   sel = d3.selectAll('.selected')
   seldata = sel.data()
   for (var i in seldata) {
+    seldata[i].selected = false
     seldata[i].fixed = false
   }
   sel.classed('selected', false)
@@ -108,7 +109,7 @@ function getneighbors(id, mouse) {
   console.log(url);
 
   $.getJSON(url, function(data) {
-
+    console.log(data)
     push_nodes(data.nodes)
     push_links(data.edges)
 
