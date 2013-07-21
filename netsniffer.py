@@ -114,10 +114,8 @@ class Sniffer():
 		# conn = self.analytics.data.connect(src, elt, 'communication', True)
 
 		oid = "$oid"
-		conn = {'attribs': 'communication', 'src': src['_id'], 'dst': dst['_id'], '_id': { oid: str(src['_id'])+str(dst['_id'])}}
-		#conn = {'attribs': 'communication', 'src': {oid: str(src["_id"]) }, 'dst': {oid: str(dst["_id"]) }, '_id': { oid: str(src['_id'])+str(dst['_id'])}}
-		#{u'attribs': 'communication', u'src': ObjectId('518258e76e95520b2a98c8f4'), u'dst': ObjectId('5182bb186e9552196c60b3a7'), u'_id': ObjectId('5182bb186e9552196c60b3a8')}
-
+		conn = {'attribs': '%s > %s' %(source['port'], dest['port']), 'src': src['_id'], 'dst': dst['_id'], '_id': { oid: str(src['_id'])+str(dst['_id'])}}
+		
 		if conn not in self.edges:
 			self.edges.append(conn)
 			new_edges.append(conn)
@@ -199,7 +197,7 @@ class Sniffer():
 		
 	def handlePacket(self, pkt):
 		elts = []
-		nodes = []
+		edges = []
 
 		print pkt.summary()
 
@@ -207,25 +205,25 @@ class Sniffer():
 		if new_elts:
 			elts += new_elts
 		if new_edges:
-			nodes += new_edges
+			edges += new_edges
 
 		new_elts, new_edges = self.checkDNS(pkt)
 		if new_elts:
 			elts += new_elts
 		if new_edges:
-			nodes += new_edges
+			edges += new_edges
 
-		self.send_nodes(elts, nodes)
+		
+
+		self.send_nodes(elts, edges)
 
 
 	def send_nodes(self, elts=[], edges=[]):
 
 		debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % (e['type'], e['value']) for e in elts]), len(edges)))
 
-
 		#data = { 'query': {}, 'nodes':self.nodes, 'edges': self.edges }
 		data = { 'querya': {}, 'nodes':elts, 'edges': edges }
-		debug_output(dumps(data))
 		try:
 			if len(elts) > 0 or len(edges) > 0:
 				self.ws.send(dumps(data))

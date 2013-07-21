@@ -107,17 +107,6 @@ def neighbors():
 	return (dumps(data))
 
 
-# @app.route('/neighbors/<id>')
-# def neighbors(id):
-# 	a = g.a
-# 	elt = a.data.elements.find_one({'_id': ObjectId(id) })
-
-# 	nodes, edges = a.data.get_neighbors(elt)
-# 	data = { 'query': elt, 'nodes':nodes, 'edges': edges }
-
-# 	return (dumps(data))
-
-
 # dataset operations ======================================================
 
 def allowed_file(filename):
@@ -241,6 +230,10 @@ def pcap(session_name):
 
 	return response
 
+
+
+# APIs =========================================
+
 @app.route('/analytics_api')
 def analytics_api():
 	debug_output("Call to analytics API")
@@ -265,6 +258,10 @@ def analytics_api():
 					send_msg(ws, {'status': 0})
 
 			debug_output("Received: %s" % message)
+
+
+
+
 
 @app.route('/sniffer_api')
 def sniffer_api():
