@@ -24,6 +24,8 @@ class Sniffer():
 		for i in ifaces:
 			filter_ifaces += " and not host %s " % ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
+		#easier testing this way
+		self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False
@@ -96,30 +98,30 @@ class Sniffer():
 		dst = dest['ip']
 
 		src = self.analytics.add_text([src], ['sniffer', self.name])
-		elt = self.analytics.add_text([dst], ['sniffer', self.name])
+		dst = self.analytics.add_text([dst], ['sniffer', self.name])
 
 		if src['_id'] not in self.nodes_ids:
 			self.nodes_ids.append(src['_id'])
 			self.nodes.append(src)
 			new_elts.append(src)
 
-		if elt['_id'] not in self.nodes_ids:
-			self.nodes_ids.append(elt['_id'])
-			self.nodes.append(elt)
-			new_elts.append(elt)
+		if dst['_id'] not in self.nodes_ids:
+			self.nodes_ids.append(dst['_id'])
+			self.nodes.append(dst)
+			new_elts.append(dst)
 
-		# don't save sniffing sessions in the DB
+		# don't save sniffing relations to the DB
 		# conn = self.analytics.data.connect(src, elt, 'communication', True)
-		
+
 		oid = "$oid"
-		conn = {'attribs': 'communication', 'src': src['_id'], 'dst': elt['_id'], '_id': { oid: str(src['_id'])+str(elt['_id'])}}
+		conn = {'attribs': 'communication', 'src': src['_id'], 'dst': dst['_id'], '_id': { oid: str(src['_id'])+str(dst['_id'])}}
+		#conn = {'attribs': 'communication', 'src': {oid: str(src["_id"]) }, 'dst': {oid: str(dst["_id"]) }, '_id': { oid: str(src['_id'])+str(dst['_id'])}}
 		#{u'attribs': 'communication', u'src': ObjectId('518258e76e95520b2a98c8f4'), u'dst': ObjectId('5182bb186e9552196c60b3a7'), u'_id': ObjectId('5182bb186e9552196c60b3a8')}
 
-		
 		if conn not in self.edges:
 			self.edges.append(conn)
 			new_edges.append(conn)
-
+		
 		return new_elts, new_edges
 
 	def checkDNS(self, pkt):
@@ -127,7 +129,7 @@ class Sniffer():
 		new_elts = []
 		new_edges = []
 
-		# deal with DNS requests / responses
+		# intercept DNS responses
 		if DNS in pkt and pkt[IP].sport == 53:
 
 			debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
@@ -199,6 +201,8 @@ class Sniffer():
 		elts = []
 		nodes = []
 
+		print pkt.summary()
+
 		new_elts, new_edges = self.checkIP(pkt)
 		if new_elts:
 			elts += new_elts
@@ -216,11 +220,12 @@ class Sniffer():
 
 	def send_nodes(self, elts=[], edges=[]):
 
-		debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % ([e['type']], e['value']) for e in elts]), len(edges)))
+		debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % (e['type'], e['value']) for e in elts]), len(edges)))
 
 
 		#data = { 'query': {}, 'nodes':self.nodes, 'edges': self.edges }
-		data = { 'query': {}, 'nodes':elts, 'edges': edges }
+		data = { 'querya': {}, 'nodes':elts, 'edges': edges }
+		debug_output(dumps(data))
 		try:
 			if len(elts) > 0 or len(edges) > 0:
 				self.ws.send(dumps(data))

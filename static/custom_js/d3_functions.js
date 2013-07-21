@@ -17,7 +17,41 @@ function nudge(dx, dy) {
 
 }
 
-function unfix() {
+function getneighbors() {
+  datas = d3.selectAll('.selected').data()
+  ids = []
+  for (var i in datas) {
+    ids.push({'name': 'ids', 'value': datas[i]._id.$oid})
+  }
+  // url = '/neighbors/'+id;
+  // console.log(url);
+  console.log($.param(ids))
+  $.ajax({
+    type: 'post',
+    url: '/neighbors',
+    dataType: 'json',
+    data: ids,
+    success: function(data) {
+      console.log(data)
+    push_nodes(data.nodes)
+    push_links(data.edges)
+
+    start();  
+    }
+
+  })
+  
+  // $.ajax('/neighbors/', $.param(ids), function(data) {
+  //   console.log(data)
+  //   push_nodes(data.nodes)
+  //   push_links(data.edges)
+
+  //   start();
+
+  // }, 'json');
+}
+
+function unfix() { // unfixes and deselects selected ndoes
   sel = d3.selectAll('.selected')
   seldata = sel.data()
   for (var i in seldata) {
@@ -25,15 +59,52 @@ function unfix() {
     seldata[i].fixed = false
   }
   sel.classed('selected', false)
+  tick();
+  force.resume();
+}
+
+function hide_sniffer_nodes() { // hides nodes making them transparent
+  sel = d3.selectAll('.selected')
+  seldata = sel.data()
+  hide_nodes = []
+  show_nodes = []
+  sel.classed('dim', function(d) {
+    d.hidden = !(d.hidden == true)
+    if (d.hidden) {
+      hide_nodes.push(d._id.$oid);
+    }
+    else {
+      show_nodes.push(d._id.$oid);
+    }
+    return d.hidden
+  })
+
+  // update link visibility
+
+  link.classed('dim', function (d) {
+    hidden_nodes = node.filter(function (p) {
+      if (p._id == d.src || p._id == d.dst) {
+          if (p.hidden == false || (typeof p.hidden == 'undefined'))
+            return false;
+          else {
+            return true;
+          }
+        }
+    })
+    return (hidden_nodes[0].length > 0)
+  })
+
 }
 
 function keydown() {
   if (!d3.event.metaKey) switch (d3.event.keyCode) {
-    case 38: nudge( 0, -1); break; // UP
-    case 40: nudge( 0, +1); break; // DOWN
-    case 37: nudge(-1,  0); break; // LEFT
-    case 39: nudge(+1,  0); break; // RIGHT
-    case 85: unfix(); break;        // U
+    case 38: nudge( 0, -1); break;             // UP
+    case 40: nudge( 0, +1); break;             // DOWN
+    case 37: nudge(-1,  0); break;             // LEFT
+    case 39: nudge(+1,  0); break;             // RIGHT
+    case 85: unfix(); break;                   // u
+    case 72: hide_sniffer_nodes(); break;      // h
+    case 32: getneighbors(); break;            // space
   }
   shiftKey = d3.event.shiftKey || d3.event.metaKey;
 }
@@ -94,7 +165,7 @@ function push_links(edges) {
      edges[i].source = nodes[ids_nodes.indexOf(src_oid)]
      edges[i].target = nodes[ids_nodes.indexOf(dst_oid)]
      edges[i].src = edges[i].source._id
-     edges[i].src = edges[i].target._id
+     edges[i].dst = edges[i].target._id
 
 
      links.push(edges[i])
@@ -103,20 +174,7 @@ function push_links(edges) {
    }
 }
 
-function getneighbors(id, mouse) {
 
-  url = '/neighbors/'+id;
-  console.log(url);
-
-  $.getJSON(url, function(data) {
-    console.log(data)
-    push_nodes(data.nodes)
-    push_links(data.edges)
-
-    start();
-
-  });
-}
 
 
 function start() {
@@ -211,7 +269,7 @@ function start() {
      })
      .on("click", function(d){
           //console.log('click')
-          getneighbors(d._id.$oid, d3.mouse(this))
+          
      })
      .on('mouseover', function(d){
           //console.log('mouseover')

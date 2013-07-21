@@ -90,16 +90,32 @@ def graph(field, value):
 	debug_output("query: %s, edges: %s, nodes: %s, other: %s" % (len(base_elts), len(edges), len(nodes), len(other)))
 	return (dumps(data))
 
-
-@app.route('/neighbors/<id>')
-def neighbors(id):
+@app.route('/neighbors', methods=['POST'])
+def neighbors():
 	a = g.a
-	elt = a.data.elements.find_one({'_id': ObjectId(id) })
+	allnodes = []
+	alledges = []
 
-	nodes, edges = a.data.get_neighbors(elt)
-	data = { 'query': elt, 'nodes':nodes, 'edges': edges }
+	for id in request.form.getlist('ids'):
+		elt = a.data.elements.find_one({'_id': ObjectId(id) })
+		nodes, edges = a.data.get_neighbors(elt)
+		allnodes += [n for n in nodes if n not in allnodes]
+		alledges += [e for e in edges if e not in alledges]
+		
+	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges }
 
 	return (dumps(data))
+
+
+# @app.route('/neighbors/<id>')
+# def neighbors(id):
+# 	a = g.a
+# 	elt = a.data.elements.find_one({'_id': ObjectId(id) })
+
+# 	nodes, edges = a.data.get_neighbors(elt)
+# 	data = { 'query': elt, 'nodes':nodes, 'edges': edges }
+
+# 	return (dumps(data))
 
 
 # dataset operations ======================================================

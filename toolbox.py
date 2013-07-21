@@ -259,7 +259,7 @@ def parse_net_info(info):
     return results
 
 def debug_output(text, n=True):
-    sys.stderr.write(text)
+    sys.stderr.write(str(text))
     if n:
         sys.stderr.write('\n')        
 

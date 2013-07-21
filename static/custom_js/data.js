@@ -1,4 +1,9 @@
-function highlight(query) {
+function hide_sniffer_nodes(selected_nodes) {
+
+}
+
+
+function highlight_query(query) {
 
 	query = query.trim()
 
@@ -21,6 +26,12 @@ function highlight(query) {
 		query = "(d.value.search('"+query+"') != -1)"
 
 	}
+
+	change_opacity(query)
+
+}
+
+function change_opacity(query) {
 
 	console.log(query)
 	
