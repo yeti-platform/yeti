@@ -112,7 +112,6 @@ class Model:
 		return self.elements.find_one({ 'value': element.value })
 
 
-
 	def connect(self, src, dst, attribs="", commit=True):
 
 			if not src or not dst:
@@ -136,7 +135,7 @@ class Model:
 		for e in elts:
 			self.malware_add(e,e['context'])
 
-	def get_neighbors(self, elt):
+	def get_neighbors(self, elt, query={}):
 
 		if not elt:
 			return [], []
@@ -155,12 +154,17 @@ class Model:
 		ids = list(s_src | s_dst | set([elt['_id']]))
 		
 		# get the new node objects
-		nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
+		#nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
+		nodes = [node for node in self.elements.find( {'$and' : [{ "_id" : { '$in' : ids }}, query]})]
 
-		# get their links, in case we use them
-
+		# get nodes IDs
 		nodes_id = [n['_id'] for n in nodes]
 
+		# remove links for which a node was not compliant to query
+		print len(new_edges)
+		new_edges = [e for e in new_edges if e['src'] in nodes or e['dst'] in nodes_id]
+		print len(new_edges)
+		# get links for new nodes, in case we use them
 		more_edges = [edge for edge in self.graph.find({'$or' : [
 											{"src" : {'$in' : nodes_id }},
 											{"dst" : {'$in' : nodes_id }}

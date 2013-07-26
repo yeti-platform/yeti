@@ -16,9 +16,9 @@ In the near future, it will also become a collaborative tool (coming soon!)
 
 * Install
 * Elevate your privileges to root (yeah, I know, see [disclaimer](/README.md#Disclaimer))
-* Start the webserver with `python server.py`
+* Start the webserver with `python malcom.py`
 ** Default port is 8080
-** If you want to change ports and stuff, just edit server.py directly
+** If you want to change ports and stuff, just edit malcom.py directly
 
 ## Installation
 
@@ -29,14 +29,14 @@ Start off by installing required packages:
 * [pymongo](http://api.mongodb.org/python/current/installation.html) - python bindings for MongoDB
 * [libevent](http://libevent.org/) development libraries - `apt-get install libevent-dev`
 
-Go for Scapy
-* Get it from http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-* Untar, build, and install from your virtualenv shell
-
 Set up your virtualenv
 * Get it from [here](http://www.virtualenv.org/en/latest/)
 * Create your new python environment `python virtualenv.py env-malcom`
 * Elevate your privileges to root and activate your new python environment with `source env-malcom/bin/activate`
+
+Go for Scapy
+* Get it from http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
+* Untar, build, and run the install with your user (i.e. not root): `tomchop@malcom:~$ python setup.py install`
 
 Then everything else can be installed with pip using requirements.txt: `pip install -r requirements.txt`
 

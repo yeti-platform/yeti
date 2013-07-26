@@ -21,8 +21,8 @@ from pymongo import MongoClient
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
 
-#functions
-import os, datetime, time, sys, signal
+#system
+import os, datetime, time, sys, signal, argparse
 import netifaces as ni
 
 #flask stuff
@@ -343,6 +343,17 @@ def echo(ws):
 if __name__ == "__main__":
 	
 	os.system('clear')
+
+	# options
+	parser = argparse.ArgumentParser(description="Malcom - malware communications analyzer")
+	parser.add_argument("-i", "--interface", help="Listen interface", default=app.config['LISTEN_INTERFACE'])
+	parser.add_argument("-p", "--port", help="Listen port", type=int, default=app.config['LISTEN_PORT'])
+	args = parser.parse_args()
+
+	app.config['LISTEN_INTERFACE'] = args.interface
+	app.config['LISTEN_PORT'] = args.port
+
+
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
 	sys.stderr.write("Starting server...\n")
 	sys.stderr.write("Detected interfaces:\n")

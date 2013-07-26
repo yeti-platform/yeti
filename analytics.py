@@ -131,6 +131,21 @@ class Analytics:
 			#elts[i]['as'] = as_info[i]['as']
 			self.data.connect(elts[i], new, 'net_info')
 
+	def find_evil(self, elements):
+		evil_nodes = []
+		evil_links = []
+		for elt in elements:
+			en, el = self.data.get_neighbors(elt, {'context': {'$in': ['evil']}})
+
+			if len(evil_nodes) == 0:
+				pass # consider searching one step further ?
+
+			evil_nodes += [n for n in en if n not in elements and n not in evil_nodes]
+			evil_links += [l for l in el if l not in evil_links]
+
+		return evil_nodes, evil_links
+
+
 
 	def process(self):
 		if self.thread:
