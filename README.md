@@ -64,9 +64,9 @@ The following was tested on Ubuntu server 12.04 LTS:
 
 * still from your virtualenv, install necessary python packages
 
-
+        ```
         pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces
-
+        ```
 
 Launch the webserver using `python server.py`. Check `python server.py --help` for listen interface and ports.
 
