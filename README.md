@@ -29,43 +29,43 @@ The following was tested on Ubuntu server 12.04 LTS:
 * Install `git`, `python` and `libevent` libs, and `mongodb`
 
 
-    apt-get install git python-dev libevent-dev mongodb
+        apt-get install git python-dev libevent-dev mongodb
 
 
 * Get `virtualenv` and `scapy`
 
 
-    wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
-    wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-    tar xvzf virtualenv-1.9.tar.gz
-    tar xvzf scapy-latest.tar.gz
+        wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
+        wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
+        tar xvzf virtualenv-1.9.tar.gz
+        tar xvzf scapy-latest.tar.gz
 
 
 * Clone the Git repo
 
 
-    git clone https://github.com/tomchop/malcom.git malcom
+        git clone https://github.com/tomchop/malcom.git malcom
 
 
 * Create your virtualenv and activate it
 
 
-    cd malcom
-    python ../virtualenv-1.9/virtualenv.py env-malcom
-    source env-malcom/bin/activate
+        cd malcom
+        python ../virtualenv-1.9/virtualenv.py env-malcom
+        source env-malcom/bin/activate
 
 
 * Install scapy, without elevating your privs to root
 
 
-    cd ~/scapy-2.1.0
-    python setup.py install
+        cd ~/scapy-2.1.0
+        python setup.py install
 
 
 * still from your virtualenv, install necessary python packages
 
 
-    pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces
+        pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces
 
 
 Launch the webserver using `python server.py`. Check `python server.py --help` for listen interface and ports.
