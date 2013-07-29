@@ -10,7 +10,7 @@ __license__ = "GPL"
 # custom
 from toolbox import *
 from analytics import *
-from feeds import *
+#from feeds import *
 from datatypes.element import Hostname
 import netsniffer
 
@@ -113,19 +113,12 @@ def allowed_file(filename):
 	return '.' in filename and \
 		   filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-
-@app.route('/dataset/')
+@app.route('/dataset')
 def dataset():
 	return render_template("dataset.html")
 
-@app.route('/dataset/clear')
-def clear():
-	a = g.a
-	a.data.clear_db()
-	redirect(url_for('dataset.html'))
 
-
-@app.route('/dataset/list/')
+@app.route('/dataset/list')
 def list(query={}):
 	a = g.a
 	query = {}
@@ -188,14 +181,14 @@ def clear():
 	g.a.data.clear_db()
 	return redirect(url_for('dataset'))
 
-@app.route('/analytics/')
+@app.route('/analytics')
 def analytics():
 	g.a.process()
 	return "Analytics: Done."
 
 # Sniffer ============================================
 
-@app.route('/sniffer/',  methods=['GET', 'POST'])
+@app.route('/sniffer',  methods=['GET', 'POST'])
 def sniffer(session=""):
 	if request.method == 'POST':
 		filter = request.form['filter']
@@ -217,7 +210,7 @@ def sniffer_session(session_name):
 	return render_template('sniffer.html', session=sniffer_sessions[session_name], session_name=session_name)
 	
 
-@app.route('/sniffer/<session_name>/pcap/')
+@app.route('/sniffer/<session_name>/pcap')
 def pcap(session_name):
 	if session_name not in sniffer_sessions:
 		abort(404)

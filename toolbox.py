@@ -7,8 +7,8 @@ import socket
 import json
 import datetime
 import string
-from pyquery import PyQuery               # external 
-from lxml import etree
+#from pyquery import PyQuery               # external 
+#from lxml import etree
 from dateutil.parser import parse
 import logging
 from subprocess import check_output, CalledProcessError, STDOUT
@@ -264,27 +264,27 @@ def debug_output(text, n=True):
         sys.stderr.write('\n')        
 
 
-class XmlParser:      
+# class XmlParser:      
 
-    _main_node = None
-    _children = None
+#     _main_node = None
+#     _children = None
 
-    def __init__(self, main_node, children):
-        self._main_node = main_node
-        self._children = children
+#     def __init__(self, main_node, children):
+#         self._main_node = main_node
+#         self._children = children
 
-    def parse(self, data):
-        p = PyQuery(data)
-        items = p(self._main_node)
-        parsed = []
+#     def parse(self, data):
+#         p = PyQuery(data)
+#         items = p(self._main_node)
+#         parsed = []
 
-        for item in items:
-            item = PyQuery(item)
-            line = {}
-            for child in self._children:
-                line[child] = item.find(child).text()
-            parsed.append(line)
-        return parsed
+#         for item in items:
+#             item = PyQuery(item)
+#             line = {}
+#             for child in self._children:
+#                 line[child] = item.find(child).text()
+#             parsed.append(line)
+#         return parsed
 
 
 if __name__ == "__main__":

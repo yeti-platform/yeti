@@ -2,7 +2,7 @@ from scapy.all import *
 import threading
 import pwd, os, sys, time
 from bson.json_util import dumps
-from server import debug_output
+from malcom import debug_output
 from bson.objectid import ObjectId
 
 
