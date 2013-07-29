@@ -172,6 +172,7 @@ function push_links(edges) {
 function start() {
 
   function dragmove(d, i) {
+
     //console.log('dragmove')
       sel = d3.selectAll('.selected').data()
       for (var i in sel) {
@@ -213,11 +214,12 @@ function start() {
   //select links
   link = link.data(force.links(), function(d) { return d._id.$oid })
 
+  link.enter().insert('line', '.node')
+
   /* 
 
-  Links and lines separated  
+  Links and lines separated  */
 
-  create new links
   l = link.enter().insert("line", ".node")
     .attr("class", "link")
     .attr("marker-end", function(d) { return "url(#arrow)"; })
@@ -225,18 +227,17 @@ function start() {
     .style("stroke", function(d) { return color(d.attribs); })
 
   // text on links
-  path_text = svg.selectAll(".path-text").data(force.links(), function (d) { return d._id.$oid });   
-  path_text.enter().append('svg:text').attr('class','path-text').text(function (d) {return d.attribs})
+   path_text = svg.selectAll(".path-text").data(force.links(), function (d) { return d._id.$oid });   
+  // path_text.enter().append('svg:text').attr('class','path-text').text(function (d) {return d.attribs})
 
-  */
 
-  l = link.enter().append('svg:g').attr('class', 'link-container')
-  lines = l.append('line', '.node') .attr("class", "link")
-    .attr("marker-end", function(d) { return "url(#arrow)"; })
-    .attr("id", function(d) {return d._id.$oid })
-    .style("stroke", function(d) { return color(d.attribs); })
+  // l = link.enter().append('svg:g').attr('class', 'link-container')
+  // lines = l.append('line', '.node') .attr("class", "link")
+  //   .attr("marker-end", function(d) { return "url(#arrow)"; })
+  //   .attr("id", function(d) {return d._id.$oid })
+  //   .style("stroke", function(d) { return color(d.attribs); })
 
-  path_text = l.append("text").attr('class', 'path-text').text(function(d) { return d.attribs })
+  // path_text = l.append("text").attr('class', 'path-text').text(function(d) { return d.attribs })
 
   // remove old links
   link.exit().remove();
@@ -320,7 +321,7 @@ function tick(e) {
   	return "translate(" + Math.max(5, Math.min(width - 5, d.x)) + "," + Math.max(5, Math.min(height - 5, d.y)) + ")"; 
  });
 
-  lines.attr("x1", function(d) { return Math.max(5, Math.min(width - 5, d.source.x)); })
+  link.attr("x1", function(d) { return Math.max(5, Math.min(width - 5, d.source.x)); })
       .attr("y1", function(d) { return Math.max(5, Math.min(height - 5, d.source.y)); })
       .attr("x2", function(d) { return Math.max(5, Math.min(width - 5, d.target.x)); })
       .attr("y2", function(d) { return Math.max(5, Math.min(height - 5, d.target.y)); });
