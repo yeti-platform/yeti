@@ -24,36 +24,53 @@ In the near future, it will also become a collaborative tool (coming soon!)
 
 Malcom is written in python. Provided you have the necessary libraries, you should be able to run it on any platform.
 
-Start off by installing required packages:
-* [MongoDB installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-debian/) on Debian (and others)
-* [pymongo](http://api.mongodb.org/python/current/installation.html) - python bindings for MongoDB
-* [libevent](http://libevent.org/) development libraries - `apt-get install libevent-dev`
+The following was tested on Ubuntu server 12.04 LTS:
 
-Set up your virtualenv
-* Get it from [here](http://www.virtualenv.org/en/latest/)
-* Create your new python environment `python virtualenv.py env-malcom`
-* Elevate your privileges to root and activate your new python environment with `source env-malcom/bin/activate`
+* Install `git`, `python` and `libevent` libs, and `mongodb`
 
-Go for Scapy
-* Get it from http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-* Untar, build, and run the install with your user (i.e. not root): `tomchop@malcom:~$ python setup.py install`
+`apt-get install git python-dev libevent-dev mongodb`
 
-Then everything else can be installed with pip using requirements.txt: `pip install -r requirements.txt`
+* Get `virtualenv` and `scapy`
 
-Launch the webserver using `python server.py`. If you need to change default ports and/or listen interfaces, just edit the server.py file. Command line options will be available soon.
+`
+wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
+wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
+tar xvzf virtualenv-1.9.tar.gz
+tar xvzf scapy-latest.tar.gz
+`
+
+* Clone the Git repo
+
+`git clone https://github.com/tomchop/malcom.git malcom`
+
+* Create your virtualenv and activate it
+
+`
+cd malcom
+python ../virtualenv-1.9/virtualenv.py env-malcom
+source env-malcom/bin/activate
+`
+
+* Install scapy, without elevating your privs to root
+
+`
+cd ~/scapy-2.1.0
+python setup.py install
+`
+
+* still from your virtualenv, install necessary python packages
+
+`pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces`
+
+Launch the webserver using `python server.py`. Check `python server.py --help` for listen interface and ports.
 
 ### Environment
 
-Malcom was designed and tested on a Debian Wheezy VM.
+Malcom was designed and tested on a Ubuntu Server 12.04 LTS VM.
 
 If you're used to doing malware analysis, you probably already have tons of virtual machines running on a host OS. Just install Malcom on a new VM, and route your other VM's connections through Malcom. Use `enable_routing.sh` to activate routing / NATing on the VM Malcom is running on. You'll need to add an extra network card to the guest OS.
 
 As long as it's getting layer-3 network data, Malcom can be deployed anywhere. Although it's not recommended to use it on high-availability networks (it wasn't designed to be fast, see [disclaimer](/README.md#Disclaimer)), you can have it running at the end of your switch's mirror port or on your gateway.
-
-### Packages
-
-
-
 
 
 ## Technical specs
