@@ -131,7 +131,7 @@ class Analytics:
 			#elts[i]['as'] = as_info[i]['as']
 			self.data.connect(elts[i], new, 'net_info')
 
-	def find_evil(self, elt, depth=1, node_links=([],[])):
+	def find_evil(self, elt, depth=2, node_links=([],[])):
 		evil_nodes = []
 		evil_links = []
 		
