@@ -34,9 +34,9 @@ function initialize_graph() {
 		 force = d3.layout.force()
 		    .nodes(nodes)
 		    .links(links)
-		    .charge(-1000)
+		    .charge(-400)
 		    .friction(0.8)
-		    .linkDistance(180)
+		    .linkDistance(120)
 		    .size([width, height])
 		    .on("tick", tick);
 

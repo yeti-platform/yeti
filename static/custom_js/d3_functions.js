@@ -43,6 +43,32 @@ function getneighbors() {
   
 }
 
+function getevil() {
+  datas = d3.selectAll('.selected').data()
+  ids = []
+  for (var i in datas) {
+    ids.push({'name': 'ids', 'value': datas[i]._id.$oid})
+  }
+  // url = '/neighbors/'+id;
+  // console.log(url);
+  console.log($.param(ids))
+  $.ajax({
+    type: 'post',
+    url: '/evil',
+    dataType: 'json',
+    data: ids,
+    success: function(data) {
+      console.log(data)
+    push_nodes(data.nodes)
+    push_links(data.edges)
+
+    start();  
+    }
+
+  })
+  
+}
+
 function unfix() { // unfixes and deselects selected ndoes
   sel = d3.selectAll('.selected')
   seldata = sel.data()
@@ -97,6 +123,7 @@ function keydown() {
     case 85: unfix(); break;                   // u
     case 72: hide_sniffer_nodes(); break;      // h
     case 32: getneighbors(); break;            // space
+    case 69: getevil(); break;            // space
   }
   shiftKey = d3.event.shiftKey || d3.event.metaKey;
 }
