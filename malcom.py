@@ -106,6 +106,22 @@ def neighbors():
 
 	return (dumps(data))
 
+@app.route('/evil', methods=['POST'])
+def evil():
+	a = g.a
+	allnodes = []
+	alledges = []
+
+	for id in request.form.getlist('ids'):
+		elt = a.data.elements.find_one({'_id': ObjectId(id) })
+		nodes, edges = a.find_evil(elt)
+		allnodes += [n for n in nodes if n not in allnodes]
+		alledges += [e for e in edges if e not in alledges]
+		
+	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges }
+
+	return (dumps(data))
+
 
 # dataset operations ======================================================
 
@@ -176,7 +192,7 @@ def delete(id):
 	result = a.data.remove(id)
 	return dumps(result)
 
-@app.route('/dataset/clear')
+@app.route('/dataset/clear/')
 def clear():
 	g.a.data.clear_db()
 	return redirect(url_for('dataset'))
@@ -188,7 +204,7 @@ def analytics():
 
 # Sniffer ============================================
 
-@app.route('/sniffer',  methods=['GET', 'POST'])
+@app.route('/sniffer/',  methods=['GET', 'POST'])
 def sniffer(session=""):
 	if request.method == 'POST':
 		filter = request.form['filter']
@@ -200,7 +216,7 @@ def sniffer(session=""):
 		return redirect(url_for('sniffer_session', session_name=session_name))
 	return render_template('sniffer_new.html')
 
-@app.route('/sniffer/<session_name>')
+@app.route('/sniffer/<session_name>/')
 def sniffer_session(session_name):
 	# if session doesn't exist, create it
 	if session_name not in sniffer_sessions:
