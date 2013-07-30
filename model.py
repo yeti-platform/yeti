@@ -5,7 +5,7 @@ import pygeoip
 import threading
 from toolbox import *
 from bson.objectid import ObjectId
-from datatypes.element import Hostname, Url, Ip, As
+from datatypes.element import Hostname, Url, Ip, As, Evil
 
 def encode_datatype(datatype):
 	return datatype.to_dict()
@@ -26,6 +26,9 @@ def decode_custom_as(document):
 	assert document['type'] == "as"
 	return As.from_dict(document)
 
+def decode_custom_evil(document):
+	assert document['type'] == "evil"
+	return Evil.from_dict(document)
 
 class Transform(SONManipulator):
 	def transform_incoming(self, son, collection):
@@ -47,6 +50,8 @@ class Transform(SONManipulator):
 				return decode_custom_hostname(son)
 			if son['type'] == 'as':
 				return decode_custom_as(son)
+			if son['type'] == 'evil':
+				return decode_custom_evil(son)
 		else:
 			return son
 
@@ -161,9 +166,8 @@ class Model:
 		nodes_id = [n['_id'] for n in nodes]
 
 		# remove links for which a node was not compliant to query
-		print len(new_edges)
 		new_edges = [e for e in new_edges if e['src'] in nodes or e['dst'] in nodes_id]
-		print len(new_edges)
+		
 		# get links for new nodes, in case we use them
 		more_edges = [edge for edge in self.graph.find({'$or' : [
 											{"src" : {'$in' : nodes_id }},
