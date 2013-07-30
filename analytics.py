@@ -131,20 +131,45 @@ class Analytics:
 			#elts[i]['as'] = as_info[i]['as']
 			self.data.connect(elts[i], new, 'net_info')
 
-	def find_evil(self, elements):
+	def find_evil(self, elt, depth=1, node_links=([],[])):
 		evil_nodes = []
 		evil_links = []
-		for elt in elements:
-			en, el = self.data.get_neighbors(elt, {'context': {'$in': ['evil']}})
+		
 
-			if len(evil_nodes) == 0:
-				pass # consider searching one step further ?
-
-			evil_nodes += [n for n in en if n not in elements and n not in evil_nodes]
-			evil_links += [l for l in el if l not in evil_links]
+		if depth > 0:
+			#print "Searching evil for %s" % elt['value']
+			# get a node's neighbors
+			neighbors_n, neighbors_l = self.data.get_neighbors(elt)
+			for i, node in enumerate(neighbors_n):
+				#print (2-depth)*" "+"Digging into %s" % node['value']
+				# for each node, find evil (recursion)
+				en, el = self.find_evil(node, depth=depth-1, node_links=node_links)
+				
+				# if we found evil nodes, add them to the evil_nodes list
+				if len(en) > 0:
+					#print (4-depth)*" "+"(%s) Evil found! (%s)" % (len(en), en[0]['value'])
+					#for e in en:
+						#print (6-depth)*" "+e['value']
+					evil_nodes += [n for n in en if n not in evil_nodes] + [node]
+					evil_links += [l for l in el if l not in evil_links] + [neighbors_l[i]]
+		else:
+			
+			# if recursion ends, then search for evil neighbors
+			#print (4-depth)*" "+"Depth0! Searching for evil neighbors for %s" %elt['value']
+			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {'context': {'$in': ['evil']}})
+			
+			# return evil neighbors if found
+			if len(neighbors_n) > 0:
+				#print (6-depth)*" "+"Evil neighbor found! (%s)" % len(neighbors_n)
+				evil_nodes += [n for n in neighbors_n if n not in evil_nodes]
+				evil_links += [l for l in neighbors_l if l not in evil_links]
+				
+			# if not, return nothing
+			else:
+				evil_nodes = []
+				evil_links = []
 
 		return evil_nodes, evil_links
-
 
 
 	def process(self):
