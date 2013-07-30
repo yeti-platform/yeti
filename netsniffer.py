@@ -213,8 +213,6 @@ class Sniffer():
 		if new_edges:
 			edges += new_edges
 
-		#elts += self.analytics.find_evil(elts)
-
 		self.send_nodes(elts, edges)
 
 
