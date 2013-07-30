@@ -19,11 +19,28 @@ class Element(dict):
 		self['context'].extend(context)
 		self['context'] = list(set(self['context']))
 
+class Evil(Element):
+
+	def __init__(self, value='', type="malware", context=[]):
+		self['value'] = value
+		self['type'] = type
+		self['context'] = context + ['evil']
+
+	@staticmethod
+	def from_dict(d):
+		e = Evil()
+		for key in d:
+			e[key] = d[key]
+		return e
+
+	def analytics(self):
+		return []
+
 
 class As(Element):
 
 	def __init__(self, _as="", context=[]):
-		self['value'] = ""
+		self['value'] = _as
 		self['type'] = 'as'
 		self['context'] = context
 
