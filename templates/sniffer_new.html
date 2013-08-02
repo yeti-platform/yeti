@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block main %}
-<script type="text/javascript" src='/static/custom_js/sniffer_websockets.js' charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
 <script>
 initSnifferWebSocket()
 ws_sniffer.onopen = snifferInterfaceInit
