@@ -34,6 +34,7 @@ class Evil(Element):
 		return e
 
 	def analytics(self):
+		self['last_analysis'] = datetime.datetime.utcnow()
 		return []
 
 
@@ -52,7 +53,10 @@ class As(Element):
 		return _as
 
 	def analytics(self):
+		self['last_analysis'] = datetime.datetime.utcnow()
+
 		return []
+
 
 class Url(Element):
 
@@ -77,7 +81,11 @@ class Url(Element):
 
 		new = []
 		# link with hostname
-		self['hostname'] = toolbox.url_get_hostname(self['value'])
+		host = toolbox.url_get_host(self['value'])
+		if host == None:
+			self['hostname'] = "No hostname"
+		else:
+			self['hostname'] = host
 
 		if toolbox.is_ip(self['hostname']):
 			new.append(('host', Ip(self['hostname'])))

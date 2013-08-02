@@ -20,7 +20,7 @@ class Worker(threading.Thread):
 
 	def run(self):
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']))
-
+		print self.elt
 		etype = self.elt['type']
 		context = self.elt['context']
 		new = self.elt.analytics()
@@ -40,10 +40,6 @@ class Worker(threading.Thread):
 		self.engine.notify_progress()
 		self.engine.websocket_lock.release()
 		self.engine.max_threads.release()
-
-		
-
-
 
 class Analytics:
 
@@ -119,16 +115,26 @@ class Analytics:
 			elts.append(r)
 			ips.append(r['value'])
 
-		as_info = get_net_info(ips)
+		
+
+		as_info = get_net_info_shadowserver(ips)
+		
 		if not as_info:
 			return
 
 		for i in range(len(ips)):
-			_as = As.from_dict(as_info[i])
+
+			ip = ips[i]
+			_as = as_info[ips[i]]
+			
+			assert ip == _as['ip']
+			del _as['ip']
+			
+			_as = As.from_dict(_as)
 			_as['last_analysis'] = datetime.datetime.now()
 			_as['date_updated'] = datetime.datetime.now()
 			new = self.add(_as, elts[i]['context'])
-			#elts[i]['as'] = as_info[i]['as']
+			
 			self.data.connect(elts[i], new, 'net_info')
 
 	def find_evil(self, elt, depth=2, node_links=([],[])):

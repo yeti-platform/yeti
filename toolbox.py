@@ -189,11 +189,29 @@ def dns_dig_records(hostname):
             records[r['record_type']] = [r['record']]
     return records
 
+def url_get_host(url):
+    host = url_get_hostname(url)
+    if host:
+        return host
+    else:
+        host = url_get_ip(url)
+        if host:
+            return host
+        else:
+            return None
+
 def url_get_hostname(url):
-    print url
-    #hostnames = find_hostnames(url)
-    #if len(hostnames) > 0:
-    return find_hostnames(url)[0]
+    try:
+        return find_hostnames(url)[0]
+    except Exception, e:
+        return None
+
+def url_get_ip(url):
+    try:
+        return find_ips(url)[0]
+    except Exception, e:
+        return None
+    
 
 def url_check(url):
     try:
@@ -204,7 +222,62 @@ def url_check(url):
     except urllib2.URLError:
         return None
 
-def get_net_info(ips):  
+def get_net_info_shadowserver(ips):  
+    #from shadowserver
+    
+    query = "begin origin\r\n"
+    for ip in ips: query += str(ip) + "\r\n"
+    query +="end\r\n"
+
+    #open('query.txt', 'w+').write(query)
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect(("asn.shadowserver.org", 43))
+    except Exception, e:
+        debug_output("Failed to get AS data from asn.shadowserver.org: %s" % e)
+        return None
+    
+    s.send(query)
+
+    response = ''
+    while True:
+        data = s.recv(4096)
+        response += data
+        if not data: break
+    s.close()
+
+    parsed = parse_net_info_shadowserver(response)
+
+    return parsed
+
+    # Deal with responses like
+    #
+    #  IP            | AS  | BGP Prefix    | AS Name             | CC | Domain      | ISP 
+    #  17.112.152.32 | 714 | 17.112.0.0/16 | APPLE-ENGINEERING   | US | APPLE.COM   | APPLE COMPUTER INC
+    #
+
+def parse_net_info_shadowserver(info):
+    lines = info.split("\n")
+    lines = lines[:-1]
+    results = {}
+    for line in lines:
+        entry = {}
+        columns = line.split("|")
+
+        entry['ip'] = columns[0].lstrip().rstrip()
+        entry['asn'] = columns[1].lstrip().rstrip()
+        entry['bgp'] = columns[2].lstrip().rstrip()
+        entry['value'] = columns[3].lstrip().rstrip()
+        entry['country'] = columns[4].lstrip().rstrip()
+        entry['domain'] = columns[5].lstrip().rstrip()
+        entry['ISP'] = columns[6].lstrip().rstrip()
+
+        results[entry['ip']] = entry
+
+    return results
+
+def get_net_info_cymru(ips):  
     #from cymru
     
     query = "begin\r\nverbose\r\n"
@@ -236,7 +309,7 @@ def get_net_info(ips):
     # AS      | IP               | BGP Prefix          | CC | Registry | Allocated  | AS Name
     # 16276   | 213.251.173.198  | 213.251.128.0/18    | FR | ripencc  | 2004-05-18 | OVH OVH Systems
     #
-def parse_net_info(info):
+def parse_net_info_cymru(info):
     lines = info.split("\n")
     lines = lines[1:-1]
     results = []
@@ -264,27 +337,7 @@ def debug_output(text, n=True):
         sys.stderr.write('\n')        
 
 
-# class XmlParser:      
 
-#     _main_node = None
-#     _children = None
-
-#     def __init__(self, main_node, children):
-#         self._main_node = main_node
-#         self._children = children
-
-#     def parse(self, data):
-#         p = PyQuery(data)
-#         items = p(self._main_node)
-#         parsed = []
-
-#         for item in items:
-#             item = PyQuery(item)
-#             line = {}
-#             for child in self._children:
-#                 line[child] = item.find(child).text()
-#             parsed.append(line)
-#         return parsed
 
 
 if __name__ == "__main__":

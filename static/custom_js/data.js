@@ -79,12 +79,16 @@ function display_data(d)
 
 	if (d.type == 'url')
 		display_data_url(d);
-	if (d.type == 'as')
+	else if (d.type == 'as')
 		display_data_as(d);
-	if (d.type == 'ip')
+	else if (d.type == 'ip')
 		display_data_ip(d);
-	if (d.type == 'hostname')
+	else if (d.type == 'hostname')
 		display_data_hostname(d);
+	else if (d.type == 'evil')
+		display_data_evil(d);
+	else
+		display_generic(d);
 
 	$('#node_info').append("<tr><th>Date Updated</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
 	$('#node_info').append("<tr><th>Date Created</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
@@ -96,6 +100,19 @@ function display_data(d)
 
 	$('#node_info').append("<tr><th>Context</th><td>"+context_string+"</td></tr>");
 
+}
+
+
+
+function display_generic(d) {
+	console.log('display generic')
+	for (var key in d) {
+		$("#node_info").append("<tr><th>"+key+"</th><td>"+d[key]+"</td></tr>");
+	}
+}
+
+function display_data_evil(d) {
+	// to do !
 }
 
 function display_data_hostname(d) {
@@ -119,12 +136,12 @@ function display_data_url(d) {
 }
 
 function display_data_as(d){
-	$('#node_info').append("<tr><th>AS name</th><td>"+d.as_name+"</td></tr>");
-	$('#node_info').append("<tr><th>ASN</th><td> AS"+d.value+"</td></tr>");
+	$('#node_info').append("<tr><th>AS name</th><td>"+d.value+"</td></tr>");
+	$('#node_info').append("<tr><th>ASN</th><td>"+d.asn+"</td></tr>");
 	$('#node_info').append("<tr><th>Netblock</th><td>"+d.bgp+"</td></tr>");
 	$('#node_info').append("<tr><th>Country</th><td>"+d.country+"</td></tr>");
-	$('#node_info').append("<tr><th>Registry</th><td>"+d.registry+"</td></tr>");
-	$('#node_info').append("<tr><th>Allocated</th><td>"+format_date(new Date(d.allocated.$date))+"</td></tr>");
+	$('#node_info').append("<tr><th>ISP</th><td>"+d.ISP+"</td></tr>");
+	// $('#node_info').append("<tr><th>Allocated</th><td>"+format_date(new Date(d.allocated.$date))+"</td></tr>");
 
 }
 

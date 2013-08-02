@@ -325,9 +325,6 @@ function start() {
       .attr("dx", 12)
       .attr("dy", ".35em")
       .text(function(d) { 
-        if (d['type'] == 'as') {
-          return d['as_name'] + " ("+d['country']+")"
-        }
         return d['value'] 
       });
 

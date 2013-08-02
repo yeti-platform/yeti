@@ -1,6 +1,5 @@
 from scapy.all import *
-import threading
-import pwd, os, sys, time
+import pwd, os, sys, time, threading
 from bson.json_util import dumps
 from malcom import debug_output
 from bson.objectid import ObjectId
