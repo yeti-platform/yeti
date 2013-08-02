@@ -72,6 +72,20 @@ If you're used to doing malware analysis, you probably already have tons of virt
 
 As long as it's getting layer-3 network data, Malcom can be deployed anywhere. Although it's not recommended to use it on high-availability networks (it wasn't designed to be fast, see [disclaimer](/README.md#Disclaimer)), you can have it running at the end of your switch's mirror port or on your gateway.
 
+### Feeds (experimental)
+
+For now, feeds have to be ran manually.
+Source your virtualenv, and then launch a python shell (i.e. type `python`)
+
+        from analytics import Analytics
+        from feeds.zeustracker import ZeusTrackerBinaries
+        a = Analytics()
+        z = ZeusTrackerBinaries(a)
+        parsed = z.get_info()
+        z.analytics()
+
+Your database should be populated with the feed. If you can dig into the code, adding feeds is pretty straightforward (assuming you're generating `Evil` objects). You can find an example feed in `/feeds/zeustracker`.
+
 
 ## Technical specs
 
