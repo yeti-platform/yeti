@@ -65,7 +65,7 @@ function getSessionList() {
 
 function initSnifferWebSocket() {
     if ("WebSocket" in window) {
-        ws_sniffer = new WebSocket("ws://" + document.domain + ":8080/api/sniffer");
+        ws_sniffer = new WebSocket(url_websocket_prefix+"api/sniffer");
     } else {
         console.log("WebSocket not supported");
     }

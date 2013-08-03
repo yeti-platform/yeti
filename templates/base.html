@@ -19,6 +19,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='jquery/jquery-ui.css') }}" />
   
     <!-- custom scripts -->
+    <script type="text/javascript">
+      var url_static_prefix = "{{ url_for('index', _external=True) }}";
+      var url_websocket_prefix = url_static_prefix.replace('http','ws');
+    </script>
     <script src="{{ url_for('static', filename='d3js/d3.v3.min.js') }}"></script>
     <script src="{{ url_for('static', filename='jquery/jquery-1.9.1.js') }}"></script>
     <script src="{{ url_for('static', filename='jquery/jquery-ui.js') }}"></script>

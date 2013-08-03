@@ -41,25 +41,36 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.debug = True
 
+# This enables the server to be ran behind a reverse-proxy
+# Make sure you have an nginx configuraiton similar to this
+
+# location = /malcom { rewrite ^ /malcom/; }
+# location /malcom { try_files $uri @malcom; }
+
+# # proxy
+# location @malcom {
+# 	proxy_pass http://127.0.0.1:8080;
+# 	proxy_http_version 1.1;
+# 	proxy_set_header SCRIPT_NAME /malcom;
+# 	proxy_set_header Host $host;    
+# 	proxy_set_header X-Scheme $scheme;
+# 	proxy_set_header Upgrade $http_upgrade;
+# 	proxy_set_header Connection "upgrade";
+# }
+
 def malcom_app(environ, start_response):  
-    # for e in environ:
-    # 	print e, environ[e]
-    # print "\n\n"
-    if environ.get('HTTP_SCRIPT_NAME'):
-    	# update path info 
-    	environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
-    	# declare SCRIPT_NAME
-    	environ['SCRIPT_NAME'] = environ['HTTP_SCRIPT_NAME']
+	
+	if environ.get('HTTP_SCRIPT_NAME'):
+		# update path info 
+		environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
+		# declare SCRIPT_NAME
+		environ['SCRIPT_NAME'] = environ['HTTP_SCRIPT_NAME']
+	
+	if environ.get('HTTP_X_SCHEME'):	
+		# forward the scheme
+		environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME')
 
-    path = environ["PATH_INFO"]  
-
-    return app(environ, start_response)
-
-    # see if we really need this
-    if path.startswith("/websocket") == "/websocket":  
-        handle_websocket(environ["wsgi.websocket"])   
-    else:  
-        return app(environ, start_response)  
+	return app(environ, start_response)
 
 
 app.config['DEBUG'] = True
@@ -273,6 +284,7 @@ def analytics_api():
 	debug_output("Call to analytics API")
 
 	if request.environ.get('wsgi.websocket'):
+		debug_output("Got websocket")
 
 		ws = request.environ['wsgi.websocket']
 		g.a.websocket = ws
@@ -384,7 +396,6 @@ if __name__ == "__main__":
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port
 
-
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
 	sys.stderr.write("Starting server...\n")
 	sys.stderr.write("Detected interfaces:\n")
@@ -398,8 +409,6 @@ if __name__ == "__main__":
 # for f in feed_modules:
 # 	print "+ Importing %s" %f
 # 	__import__("feeds.%s" % f, fromlist=[f])
-
-
 
 	sys.stderr.write("Server running on %s:%s\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']))
 
