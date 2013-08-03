@@ -369,6 +369,16 @@ if __name__ == "__main__":
 	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
 		sys.stderr.write("%s:\t%s\n" % (i, ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']))
 
+
+# 	sys.stderr.write("Importing feeds...\n")
+
+# feed_modules = [f[:-3] for f in [filename for a, b, filename in os.walk('feeds')][0] if f.endswith('.py') and f != "__init__.py"]
+# for f in feed_modules:
+# 	print "+ Importing %s" %f
+# 	__import__("feeds.%s" % f, fromlist=[f])
+
+
+
 	sys.stderr.write("Server running on %s:%s\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']))
 
 	try:
