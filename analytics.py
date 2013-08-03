@@ -27,14 +27,14 @@ class Worker(threading.Thread):
 		for n in new:
 			elt = self.engine.data.exists(n[1])
 			if not elt:
-				added = self.engine.add(n[1], context)
+				added = self.engine.save_element(n[1])
 			else:
-				added = self.engine.add(elt, context)
+				added = self.engine.save_element(elt)
 
 			#do the link
 			self.engine.data.connect(self.elt, added, n[0])
 		
-		self.engine.add(self.elt,context)
+		self.engine.save_element(self.elt, context)
 		self.engine.progress += 1
 		self.engine.websocket_lock.acquire()
 		self.engine.notify_progress()
@@ -65,10 +65,10 @@ class Analytics:
 					elt = Hostname(t, [])
 
 				if elt:
-					return self.add(elt, context)
+					return self.save_element(elt, context)
 		
 
-	def add(self, element, context):
+	def save_element(self, element, context):
 
 		element.upgrade_context(context)
 		_id = self.data.save(element)
@@ -133,7 +133,7 @@ class Analytics:
 			_as = As.from_dict(_as)
 			_as['last_analysis'] = datetime.datetime.now()
 			_as['date_updated'] = datetime.datetime.now()
-			new = self.add(_as, elts[i]['context'])
+			new = self.save_element(_as, elts[i]['context'])
 			
 			self.data.connect(elts[i], new, 'net_info')
 
@@ -143,30 +143,23 @@ class Analytics:
 		
 
 		if depth > 0:
-			#print "Searching evil for %s" % elt['value']
 			# get a node's neighbors
 			neighbors_n, neighbors_l = self.data.get_neighbors(elt)
 			for i, node in enumerate(neighbors_n):
-				#print (2-depth)*" "+"Digging into %s" % node['value']
 				# for each node, find evil (recursion)
 				en, el = self.find_evil(node, depth=depth-1, node_links=node_links)
 				
 				# if we found evil nodes, add them to the evil_nodes list
 				if len(en) > 0:
-					#print (4-depth)*" "+"(%s) Evil found! (%s)" % (len(en), en[0]['value'])
-					#for e in en:
-						#print (6-depth)*" "+e['value']
 					evil_nodes += [n for n in en if n not in evil_nodes] + [node]
 					evil_links += [l for l in el if l not in evil_links] + [neighbors_l[i]]
 		else:
 			
 			# if recursion ends, then search for evil neighbors
-			#print (4-depth)*" "+"Depth0! Searching for evil neighbors for %s" %elt['value']
 			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {'context': {'$in': ['evil']}})
 			
 			# return evil neighbors if found
 			if len(neighbors_n) > 0:
-				#print (6-depth)*" "+"Evil neighbor found! (%s)" % len(neighbors_n)
 				evil_nodes += [n for n in neighbors_n if n not in evil_nodes]
 				evil_links += [l for l in neighbors_l if l not in evil_links]
 				
@@ -237,7 +230,7 @@ class Analytics:
 				}
 			)
 
-		# regroup ASN analytics to make only 1 query to Cymru
+		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
 		self.active = False
 
