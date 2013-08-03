@@ -34,9 +34,33 @@ from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
 
 
+
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
+app.debug = True
+
+def malcom_app(environ, start_response):  
+    # for e in environ:
+    # 	print e, environ[e]
+    # print "\n\n"
+    if environ.get('HTTP_SCRIPT_NAME'):
+    	# update path info 
+    	environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
+    	# declare SCRIPT_NAME
+    	environ['SCRIPT_NAME'] = environ['HTTP_SCRIPT_NAME']
+
+    path = environ["PATH_INFO"]  
+
+    return app(environ, start_response)
+
+    # see if we really need this
+    if path.startswith("/websocket") == "/websocket":  
+        handle_websocket(environ["wsgi.websocket"])   
+    else:  
+        return app(environ, start_response)  
+
 
 app.config['DEBUG'] = True
 app.config['VERSION'] = "0.3"
@@ -243,7 +267,8 @@ def pcap(session_name):
 
 # APIs =========================================
 
-@app.route('/analytics_api')
+
+@app.route('/api/analytics')
 def analytics_api():
 	debug_output("Call to analytics API")
 
@@ -269,10 +294,7 @@ def analytics_api():
 			debug_output("Received: %s" % message)
 
 
-
-
-
-@app.route('/sniffer_api')
+@app.route('/api/sniffer')
 def sniffer_api():
 	debug_output("call to sniffer API")
 
@@ -382,7 +404,7 @@ if __name__ == "__main__":
 	sys.stderr.write("Server running on %s:%s\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']))
 
 	try:
-		http_server = WSGIServer((app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']), app, handler_class=WebSocketHandler)
+		http_server = WSGIServer((app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']), malcom_app, handler_class=WebSocketHandler)
 		http_server.serve_forever()
 	except KeyboardInterrupt:
 

@@ -5,7 +5,7 @@ function sendmessage(websocket, data) {
 
 function initAnalyticsWebSocket() {
     if ("WebSocket" in window) {
-        ws_analytics = new WebSocket("ws://" + document.domain + ":8080/analytics_api");
+        ws_analytics = new WebSocket("ws://" + document.domain + ":8080/api/analytics");
     } else {
         console.log("WebSocket not supported");
     }
