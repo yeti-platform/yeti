@@ -10,7 +10,7 @@ __license__ = "GPL"
 # custom
 from toolbox import *
 from analytics import *
-#from feeds import *
+from feeds.feed import FeedEngine
 from datatypes.element import Hostname
 import netsniffer
 
@@ -34,7 +34,7 @@ from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
 
 
-
+# for file upload
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 
 app = Flask(__name__)
@@ -79,8 +79,11 @@ app.config['UPLOAD_FOLDER'] = ""
 app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
 
+
+# global avariables, used throughout malcom
 sniffer_sessions = {}
 analytics_engine = Analytics()
+feed_engine = FeedEngine(analytics_engine)
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -105,6 +108,17 @@ def before_request():
 @app.route('/')
 def index():
 	return redirect(url_for('dataset'))
+
+# feeds ========================================================
+
+@app.route('/feeds')
+def feeds():
+	return render_template('feeds.html', feeds=feed_engine.feeds)
+
+@app.route('/feeds/run/<feed_name>')
+def run_feed(feed_name):
+	feed_engine.run_feed(feed_name)
+	return redirect(url_for('feeds'))
 
 
 # graph operations =============================================
@@ -292,6 +306,7 @@ def analytics_api():
 		while True:
 			try:
 				message = loads(ws.receive())
+				debug_output("Received: %s" % message)
 			except Exception, e:
 				return ""
 
@@ -303,7 +318,7 @@ def analytics_api():
 				else:
 					send_msg(ws, {'status': 0})
 
-			debug_output("Received: %s" % message)
+			
 
 
 @app.route('/api/sniffer')
@@ -403,12 +418,8 @@ if __name__ == "__main__":
 		sys.stderr.write("%s:\t%s\n" % (i, ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']))
 
 
-# 	sys.stderr.write("Importing feeds...\n")
-
-# feed_modules = [f[:-3] for f in [filename for a, b, filename in os.walk('feeds')][0] if f.endswith('.py') and f != "__init__.py"]
-# for f in feed_modules:
-# 	print "+ Importing %s" %f
-# 	__import__("feeds.%s" % f, fromlist=[f])
+	sys.stderr.write("Importing feeds...\n")
+	feed_engine.load_feeds()
 
 	sys.stderr.write("Server running on %s:%s\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']))
 

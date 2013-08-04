@@ -1,21 +1,30 @@
 import urllib2
+import datetime, re
 from lxml import etree
-from toolbox import *
+import toolbox
 from bson.objectid import ObjectId
 from bson.json_util import dumps
 from datatypes.element import Evil, Url
+from feed import Feed
 
 
-class ZeusTrackerBinaries:
 
-    def __init__(self, analytics):
+class ZeusTrackerBinaries(Feed):
+
+    def __init__(self, name):
+        super(ZeusTrackerBinaries, self).__init__(name)
         self.normalized=[]
         self.parsed = None
         self.local_fields = ["url", "description", "status", "md5", "linkback", "type", "date_retreived"]
-        self.a = analytics
+
+
 
     def get_info(self):
-        feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries")
+        try:
+            feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries")
+        except Exception, e:
+            return e
+        
         children = ["title", "link", "description", "guid"]
         main_node = "item"
         
@@ -30,9 +39,9 @@ class ZeusTrackerBinaries:
 
         self.parsed = parsed
 
-        return parsed
+        return True
 
-    def analytics(self):
+    def analytics(self, analytics):
 
         for entry in self.parsed:
 
@@ -40,7 +49,7 @@ class ZeusTrackerBinaries:
 
             evil = Evil()
 
-            evil['url'] = find_urls(entry['description'])[0]
+            evil['url'] = toolbox.find_urls(entry['description'])[0]
             
             # description
             evil['description'] = entry['link'] + " " + entry['description'] 
@@ -77,19 +86,19 @@ class ZeusTrackerBinaries:
                 evil['value'] += " (URL: %s)" % evil['url']
 
             # commit to db
-            self.a.data.save(evil)
+            analytics.save_element(evil)
 
             # URL object
 
             url = Url(evil['url'], ['evil', 'zeus'])
 
             # commit to db
-            self.a.data.save(url)
+            analytics.save_element(url)
 
             # connect url with malware
-            self.a.data.connect(url, evil, ['hosting'])
+            analytics.data.connect(url, evil, ['hosting'])
 
-        self.a.process()
+        analytics.process()
 
     def print_json(self, field=None):
         for i in self.normalized:

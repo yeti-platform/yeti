@@ -1,3 +1,16 @@
+/* Feeds */
+
+tr.error .error-cause {
+	font-weight: bold;
+	color:red;
+}
+
+tr.success .error-cause {
+	font-weight: bold;
+	color:green;
+}
+
+
 /* Navbar */
 
 .analytics {

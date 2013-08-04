@@ -20,7 +20,6 @@ class Worker(threading.Thread):
 
 	def run(self):
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']))
-		print self.elt
 		etype = self.elt['type']
 		context = self.elt['context']
 		new = self.elt.analytics()
@@ -68,7 +67,7 @@ class Analytics:
 					return self.save_element(elt, context)
 		
 
-	def save_element(self, element, context):
+	def save_element(self, element, context=[]):
 
 		element.upgrade_context(context)
 		_id = self.data.save(element)
@@ -233,6 +232,7 @@ class Analytics:
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
 		self.active = False
+		self.notify_progress()
 
 
 		
