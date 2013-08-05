@@ -9,14 +9,14 @@ function clear_db() {
 	var r=confirm("You sure?");
 		if (r==true)
 		  {
-		 document.location.href='/dataset/clear';
+		 document.location.href=url_static_prefix+'/dataset/clear';
 		  }
 }
 
 function dataset_remove(id) {
 	$.ajax({
 		dataType: "json",
-		url: '/dataset/remove/'+id,
+		url: url_static_prefix+'/dataset/remove/'+id,
 		success:function(data){
 			if (data['n'] == 1)
 				$('#row_'+id).remove()
@@ -52,13 +52,13 @@ function get_dataset(query, url) {
 
 	  		context_links = new Array()
 	  		
-	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'><td><a href='/nodes/value/"+elt['value']+"'>"+elt['value']+"</a></td><td><a href='/nodes/type/"+elt['type']+"'>"+elt['type']+"</a></td><td class='context_links'></td><td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td></tr>")
+	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'><td><a href='"+url_static_prefix+"/nodes/value/"+elt['value']+"'>"+elt['value']+"</a></td><td><a href="+url_static_prefix+"'/nodes/type/"+elt['type']+"'>"+elt['type']+"</a></td><td class='context_links'></td><td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td></tr>")
 
 	  		context_links = row.find('.context_links')
 
 	  		for (var c in elt['context']) {
 	  			a = $('<a>')
-	  			a.attr('href','/nodes/context/'+elt['context'][c])
+	  			a.attr('href',url_static_prefix+'/nodes/context/'+elt['context'][c])
 	  			a.text(elt['context'][c])
 	  			if (c != 0)
 	  				context_links.append(', ')
