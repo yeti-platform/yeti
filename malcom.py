@@ -193,7 +193,6 @@ def list(query={}):
 	if 'pagination_start' in query and 'per_page' in query:
 		pagination_start = int(query['pagination_start'])
 		per_page = int(query['per_page'])
-
 		del query['pagination_start']
 		del query['per_page']
 	else:
@@ -204,7 +203,7 @@ def list(query={}):
 	debug_output("Search for %s" % query)
 	
 	elts = [e for e in a.data.find(query)]
-
+	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])

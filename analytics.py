@@ -55,14 +55,12 @@ class Analytics:
 		for t in text:
 			elt = None
 			if t.strip() != "":
-			
 				if is_ip(t):
-					elt = Ip(t, [])
+					elt = Ip(is_ip(t), [])
 				elif is_url(t):
-					elt = Url(t, [])
+					elt = Url(is_url(t), [])			
 				elif is_hostname(t):
-					elt = Hostname(t, [])
-
+					elt = Hostname(is_hostname(t), [])
 				if elt:
 					added.append(self.save_element(elt, context))
 
