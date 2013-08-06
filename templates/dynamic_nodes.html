@@ -9,7 +9,7 @@
 
 initialize_graph();
 
-d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
+d3.json(url_static_prefix+"/graph/{{field}}/{{value}}", function(error, graph) {
     
    for (var i in graph.nodes) {
      nodes.push(graph.nodes[i])

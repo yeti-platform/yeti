@@ -24,7 +24,7 @@ function snifferInterfaceInit() {
 
             for (var i in data.msg.session_list) {
                 ul = $('#sessions');
-                session_links = $('<a href="/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
+                session_links = $('<a href='+url_static_prefix+'"/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
                 li = $('<li></li>');
                 li.append(session_links);
                 ul.append(li);
@@ -55,7 +55,7 @@ function getSessionList() {
 
             for (var i in data.msg.session_list) {
                 ul = $('#sessions');
-                session_links = $('<a href="/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
+                session_links = $('<a href='+url_static_prefix+'"/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
                 li = $('<li></li>');
                 li.append(session_links);
                 ul.append(li);

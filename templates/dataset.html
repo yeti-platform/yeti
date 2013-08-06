@@ -2,9 +2,23 @@
 {% block main %}
 <div class='span9'>
 	<h1>Dataset</h1>
-	<table class='table table-condensed' id='dataset'>
-	</table>
-	<script>get_dataset("",'{{url_for('list')}}')</script>
+
+	<ul id='datasetTabs' class='nav nav-tabs'>
+		<li class='active'><a href='#all' data-toggle='tab'>All</a></li>
+		<!-- <li><a href='#ip' data-toggle='tab'>IPs</a></li> -->
+	</ul>
+
+	<div id='datasetTabsContent' class='tab-content'>
+		<div class='tab-pane active' id='all'>
+			<table class='table table-condensed' id='dataset'>
+			</table>
+			<script>get_dataset("",'{{url_for('list')}}')</script>
+		</div>
+
+		<!-- <div class='tab-pane' id='ip'>
+			Placeholder
+		</div> -->
+	</div>
 </div>
 
 
@@ -12,18 +26,19 @@
 {% endblock %}
 {%block sidebar %}
 <div class='span3 toolbar'>
-	<ul id='datasetTabs' class='nav nav-tabs'>
+	<ul id='datasetSideTabs' class='nav nav-tabs'>
 		<li class='active'><a href='#search' data-toggle='tab'>Search</a></li>
-		<li><a href='#add' data-toggle='tab'>Modify DB</a></li>
+		<li><a href='#add' data-toggle='tab'>Alter dataset</a></li>
 	</ul>
 
-	<div id='datasetTabsContent' class='tab-content'>
+	<div id='datasetSideTabsContent' class='tab-content'>
 		
 
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
-		      <input class="span2" id="query" placeholder='context=malware' type="text">
-		      <button class='btn btn-primary' type='button' onclick="javascript:get_dataset($('#query').val(), '{{url_for('list')}}')">Go</button>
+			      <input class="span2" id="query" placeholder='context=malware' type="text">
+			      <button class='btn btn-primary' type='button' onclick="javascript:get_dataset($('#query').val(), '{{url_for('list')}}')">Go</button>
+			      <button class='btn' type='button' onclick="javascript:get_dataset_csv($('#query').val(), '{{url_for('dataset_csv')}}')">.csv</button>
 		  	</div>
 		</div>
 

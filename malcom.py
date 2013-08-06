@@ -178,30 +178,83 @@ def allowed_file(filename):
 	return '.' in filename and \
 		   filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-@app.route('/dataset')
+@app.route('/dataset/')
 def dataset():
 	return render_template("dataset.html")
 
 
-@app.route('/dataset/list')
+@app.route('/dataset/list') # ajax method for populating dataset table
 def list(query={}):
 	a = g.a
 	query = {}
 	for key in request.args:
 		query[key] = request.args[key]
+
+	if 'pagination_start' in query and 'per_page' in query:
+		pagination_start = int(query['pagination_start'])
+		per_page = int(query['per_page'])
+
+		del query['pagination_start']
+		del query['per_page']
+	else:
+		pagination_start = 0
+		per_page = 50
+
 	
 	debug_output("Search for %s" % query)
-
-	datatypes = ['hostname', 'ip', 'as']
 	
 	elts = [e for e in a.data.find(query)]
 
-	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
 
-	return dumps(elts)
+	data = {}
+	if len(elts) > 0:
+		data['fields'] = elts[0].display_fields
+		data['elements'] = elts[pagination_start:pagination_start+per_page]
+	else:
+		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('context', 'Context')]
+		data['elements'] = []
+
+	print "Will display_fields: %s" % (data['fields'])
+	
+	data['pagination_start'] = pagination_start
+	data['per_page'] = per_page
+
+	return dumps(data)
+
+@app.route('/dataset/list/csv')
+def dataset_csv():
+	a = g.a
+	filename = []
+	query = {}
+	for key in request.args:
+		query[key] = request.args[key]
+		filename.append("%s_%s" % (key, query[key]))
+
+	filename = "-".join(filename)
+
+	print query, filename
+	
+	results = a.data.find(query)
+	
+	if results.count() == 0:
+		data = ""
+	else:
+		response = make_response()
+		response.headers['Cache-Control'] = 'no-cache'
+		response.headers['Content-Type'] = 'text/csv'
+		response.headers['Content-Disposition'] = 'attachment; filename='+filename+'-extract.csv'
+		fields = results[0].display_fields
+		data = ";".join([f[1] for f in fields ]) + "\n"
+		for e in results:
+			data += ";".join([list_to_str(e.get(f[0],"-")) for f in fields]) + "\n"
+
+	response.data = data
+	response.headers['Content-Length'] = len(response.data)
+
+	return response
 
 
 @app.route('/dataset/add', methods=['POST'])

@@ -34,6 +34,13 @@ url_regex = r"""
 
 tlds = [u'cx', u'cy', u'cz', u'ro', u'ke', u'kg', u'kh', u'ki', u'cr', u'cs', u'cu', u'cv', u'ch', u'ci', u'kr', u'ck', u'cl', u'cm', u'cn', u'co', u'rs', u'ca', u'kz', u'cc', u'cd', u'cf', u'cg', u'zw', u'iq', u'tk', u'za', u'info', u'nz', u'ua', u'name', u'ug', u'bz', u'by', u'uz', u'je', u'post', u'bs', u'br', u'bw', u'bv', u'jm', u'bt', u'bj', u'bi', u'bh', u'bo', u'bn', u'bm', u'bb', u'ba', u'jobs', u'bg', u'bf', u'be', u'bd', u'mo', u'kp', u'eh', u'eg', u'net', u'ec', u'tj', u'et', u'eu', u'er', u'travel', u'pm', u'pl', u'ee', u'in', u'io', u'il', u'im', u'pe', u'pg', u'kw', u'pa', u'id', u'ie', u'sk', u'py', u'yt', u'tg', u'ky', u'ir', u'is', u'pw', u'am', u'tz', u'it', u'lt', u'sd', u'pf', u'rw', u'ws', u'ru', u'tw', u'arpa', u'cat', u'pro', u'sh', u'si', u'sj', u'sc', u'sl', u'sm', u'sn', u'so', u'hm', u'sa', u'sb', u'hn', u'coop', u'se', u'hk', u'sg', u'hu', u'ht', u'sz', u'tv', u'hr', u'sr', u'ss', u'st', u'su', u'sv', u'sx', u'sy', u'mobi', u'wf', u'es', u'org', u'tel', u'ye', u'om', u'vu', u'priv', u'edu', u're', u'zm', u've', u'pn', u'vc', u'va', u'vn', u'tc', u'vi', u'ph', u'int', u'fo', u'fm', u'fk', u'fj', u'fi', u'fr', u'no', u'nl', u'SH', u'ni', u'ng', u'mz', u'ne', u'nc', u'biz', u'na', u'qa', u'com', u'nu', u'tc', u'nr', u'np', u'ac', u'test', u'af', u'ag', u'ad', u'ae', u'ai', u'an', u'ao', u'al', u'yu', u'ar', u'as', u'th', u'aq', u'aw', u'at', u'au', u'az', u'ax', u'pk', u'tl', u'mv', u'mw', u'mt', u'mu', u'mr', u'ms', u'mp', u'mq', u'tp', u'tn', u'km', u'tt', u'mx', u'my', u'mg', u'md', u'me', u'tm', u'mc', u'to', u'ma', u'mn', u'asia', u'ml', u'mm', u'mk', u'mh', u'tf', u'gt', u'dk', u'dj', u'dm', u'do', u'museum', u'kn', u'uy', u'de', u'dd', u'td', u'jp', u'dz', u'ps', u'nf', u'pt', u'pr', u'mil', u'ls', u'lr', u'lu', u'gr', u'lv', u'ly', u'jo', u'gov', u'vg', u'us', u'la', u'lc', u'lb', u'tm', u'li', u'lk', u'tr', u'gd', u'ge', u'gf', u'gg', u'ga', u'gb', u'gl', u'gm', u'gn', u'gh', u'gi', u'aero', u'gu', u'gw', u'gp', u'gq', u'xxx', u'gs', u'gy', u'la', u'uk']
 
+def list_to_str(obj):
+    if isinstance(obj, list):
+        return ", ".join([list_to_str(e) for e in obj])
+    else:
+        return str(obj)
+
+
 def send_msg(ws, msg):
     msg = {'type':'msg', 'msg': msg}
     try:
@@ -224,9 +231,9 @@ def url_check(url):
 
 def get_net_info_shadowserver(ips):  
     #from shadowserver
-    
+
     query = "begin origin\r\n"
-    for ip in ips: query += str(ip) + "\r\n"
+    for ip in ips: query += str(ip['value']) + "\r\n"
     query +="end\r\n"
 
     #open('query.txt', 'w+').write(query)

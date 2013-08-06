@@ -51,7 +51,7 @@ class Analytics:
 		self.websocket_lock = threading.Lock()
 
 	def add_text(self, text, context=[]):
-		
+		added = []
 		for t in text:
 			elt = None
 			if t.strip() != "":
@@ -64,7 +64,12 @@ class Analytics:
 					elt = Hostname(t, [])
 
 				if elt:
-					return self.save_element(elt, context)
+					added.append(self.save_element(elt, context))
+
+		if len(added) == 1:
+			return added[0]
+		else:
+			return added
 		
 
 	def save_element(self, element, context=[]):
@@ -107,34 +112,47 @@ class Analytics:
 
 	def bulk_asn(self):
 		results = self.data.elements.find({ 'type': 'ip' })
-		elts = []
+		
+		#elts = []
 		ips = []
 		debug_output("(getting ASNs for %s IPs)" % results.count())
-		for r in results:
-			elts.append(r)
-			ips.append(r['value'])
-
 		
+		for r in results:
+			#elts.append(r)
+			ips.append(r)
 
 		as_info = get_net_info_shadowserver(ips)
 		
 		if not as_info:
 			return
 
+		debug_file = open('as_debug_file.txt', 'w+')
+
 		for i in range(len(ips)):
 
-			ip = ips[i]
-			_as = as_info[ips[i]]
+			ip = ips[i]['value']
+			_as = as_info[ip]
 			
 			assert ip == _as['ip']
 			del _as['ip']
+
+			# copy keys from _as into IP
+			for key in _as:
+				if key not in ['type', 'value', 'context']:
+					ips[i][key] = _as[key]
 			
+			# remove the BGP key from the AS
+			del _as['bgp']
+
 			_as = As.from_dict(_as)
 			_as['last_analysis'] = datetime.datetime.now()
 			_as['date_updated'] = datetime.datetime.now()
-			new = self.save_element(_as, elts[i]['context'])
+			new = self.save_element(_as)
+			self.save_element(ips[i])
 			
-			self.data.connect(elts[i], new, 'net_info')
+			self.data.connect(ips[i], new, 'net_info')
+			debug_file.write("%s --> %s (%s)\n" %(ips[i]['value'], _as['value'], ips[i]['bgp']))
+
 
 	def find_evil(self, elt, depth=2, node_links=([],[])):
 		evil_nodes = []

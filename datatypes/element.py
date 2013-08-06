@@ -2,10 +2,15 @@ import toolbox
 import datetime
 import pygeoip
 
+default_fields = [('value', "Value"), ('type', "Type"), ('context', "Context")]
+
 class Element(dict):
+	
 	def __init__(self):
 		self['context'] = []
-
+		self['value'] = None
+		self['type'] = None
+		
 	def to_dict(self):
 		return self.__dict__
 
@@ -20,8 +25,9 @@ class Element(dict):
 		self['context'] = list(set(self['context']))
 
 class Evil(Element):
-
+	display_fields = default_fields + []
 	def __init__(self, value='', type="malware", context=[]):
+		super(Evil, self).__init__()
 		self['value'] = value
 		self['type'] = type
 		self['context'] = context + ['evil']
@@ -39,11 +45,19 @@ class Evil(Element):
 
 
 class As(Element):
-
+	display_fields = default_fields + [
+										('country', 'CN'),
+										('asn', 'ASN'),
+										('domain', 'Domain'), 
+										('ISP', 'ISP'),
+										]
 	def __init__(self, _as="", context=[]):
+		super(As, self).__init__()
 		self['value'] = _as
 		self['type'] = 'as'
 		self['context'] = context
+		
+
 
 	@staticmethod
 	def from_dict(d):
@@ -59,8 +73,12 @@ class As(Element):
 
 
 class Url(Element):
+	display_fields = default_fields + [
+							('hostname', 'Hostname'),
+							]
 
 	def __init__(self, url="", context=[]):
+		super(Url, self).__init__()
 		# check if url is valid
 		if toolbox.is_url(url) != url:
 			return None
@@ -68,6 +86,7 @@ class Url(Element):
 			self['value'] = url
 			self['context'] = context
 			self['type'] = 'url'
+			
 
 	@staticmethod
 	def from_dict(d):
@@ -100,7 +119,31 @@ class Url(Element):
 
 class Ip(Element):
 
+	display_fields = default_fields + [
+						('city', 'City'),
+						('bgp', 'BGP prefix'),
+						('ISP', 'AS'),
+						# 'region_name',
+						# 'area_code',
+						('time_zone', 'TZ'),
+						# 'dma_code',
+						# ('metro_code', 'Metro code'),
+						#'country_code3',
+						#'country_name',
+						('postal_code', "ZIP code"),
+						#'longitude',
+						('country_code', 'CN'),
+						#'latitude',
+						#'continent',
+						#'date_created',
+						#'date_updated',
+						#'last_analysis',
+						#'_id',
+						#'type',
+						]
+
 	def __init__(self, ip="", context=[]):
+		super(Ip, self).__init__()
 		# check if url is valid
 		if toolbox.is_ip(ip) != ip:
 			return None
@@ -108,6 +151,7 @@ class Ip(Element):
 			self['value'] = ip
 			self['context'] = context
 			self['type'] = 'ip'
+			
 
 	@staticmethod
 	def from_dict(d):
@@ -123,7 +167,9 @@ class Ip(Element):
 		# get geolocation info
 		try:
 			gi = pygeoip.GeoIP('geoIP/GeoLiteCity.dat')
-			self['geoinfo'] = gi.record_by_addr(self.value)
+			geoinfo = gi.record_by_addr(self.value)
+			for key in geoinfo:
+				self[key] = geoinfo[key]
 		except Exception, e:
 			print "Could not get IP info for %s: %s" %(self.value, e)
 
@@ -132,8 +178,11 @@ class Ip(Element):
 		return []
 
 class Hostname(Element):
-	"""docstring for Hostname"""
+	
+	display_fields = default_fields + []
+
 	def __init__(self, hostname="", context=[]):
+		super(Hostname, self).__init__()
 		if toolbox.is_hostname(hostname) == hostname:
 			self['context'] = context
 			self['value'] = toolbox.is_hostname(hostname)
