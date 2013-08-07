@@ -1,4 +1,5 @@
 from scapy.all import *
+from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading
 from bson.json_util import dumps
 from malcom import debug_output
@@ -37,6 +38,20 @@ class Sniffer():
 		self.nodes_pk = []
 		self.edges_ids = []
 
+	def load_pcap(self, pcap):
+		debug_output("Loading PCAP from file...")
+		timestamp = str(time.mktime(time.gmtime())).split('.')[0]
+		filename = '/tmp/load-%s.cap' % timestamp
+		try:
+			f = open(filename, 'wb')
+			f.write(pcap)
+			f.close()
+			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=filename)	
+			debug_output("Loaded %s packets from file." % len(self.pkts))
+		except Exception, e:
+			return e
+		
+		return True
 
 	def run(self):
 		debug_output("[+] Sniffing session %s started" % self.name)
@@ -126,13 +141,13 @@ class Sniffer():
 		new_elts = []
 		new_edges = []
 
-		# intercept DNS responses
-		if DNS in pkt and pkt[IP].sport == 53:
 
+
+		# intercept DNS responses (these contain names and IPs)
+		if DNS in pkt and pkt[IP].sport == 53:
 			debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
 			
 			for i in xrange(pkt[DNS].ancount): # cycle through responses and add records to graph
-				#pkt[DNS].show()
 
 				if pkt[DNS].an[i].type != 1:
 					debug_output('No A records in reply')
@@ -146,8 +161,8 @@ class Sniffer():
 				if hname[-1:] == ".":
 					hname = hname[:-1]
 				
-				_hname = self.analytics.add_text([hname], ['sniffer', self.name])
-				_ipaddr = self.analytics.add_text([ipaddr], ['sniffer', self.name])
+				_hname = self.analytics.add_text([hname], [self.name])		# log every discovery to db
+				_ipaddr = self.analytics.add_text([ipaddr], [self.name])
 
 				debug_output("Added %s, %s" %(hname, ipaddr))
 
@@ -165,20 +180,18 @@ class Sniffer():
 						self.nodes.append(_ipaddr)
 						new_elts.append(_ipaddr)
 
-					if pkt[DNS].an[i].type == 1: # A record
-						type = "A"
-					else:
-						type = "?"
+					# we can check for types using
+					# if pkt[DNS].an[i].type == 1: # A record
 
 					#conn = self.analytics.data.connect(_hname, _ipaddr, type, True)
-					conn = {'attribs': type, 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
+					conn = {'attribs': 'A', 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
 					if conn not in self.edges:
 						self.edges.append(conn)
 						new_edges.append(conn)
 
-			# deal with the original request
+			#deal with the original DNS request
 			question = pkt[DNS].qd.qname
-			_question = self.analytics.add_text([question], ['sniffer', self.name])
+			_question = self.analytics.add_text([question], [self.name]) # log it to db (for further reference)
 
 			if _question:
 				if _question['_id'] not in self.nodes_ids:
@@ -186,19 +199,19 @@ class Sniffer():
 						self.nodes.append(_question)
 						new_edges.append(_question)
 
+
+
 				#conn = self.analytics.data.connect(_question, elt, "resolve", True)
-				conn = {'attribs': type, 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
-				if conn not in self.edges:
-						self.edges.append(conn)
-						new_edges.append(conn)
+				# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id']) } }
+				# if conn not in self.edges:
+				# 		self.edges.append(conn)
+				# 		new_edges.append(conn)
 
 		return new_elts, new_edges
 		
 	def handlePacket(self, pkt):
 		elts = []
 		edges = []
-
-		print pkt.summary()
 
 		new_elts, new_edges = self.checkIP(pkt)
 		if new_elts:
@@ -217,7 +230,7 @@ class Sniffer():
 
 	def send_nodes(self, elts=[], edges=[]):
 
-		debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % (e['type'], e['value']) for e in elts]), len(edges)))
+		#debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % (e['type'], e['value']) for e in elts]), len(edges)))
 
 		#data = { 'query': {}, 'nodes':self.nodes, 'edges': self.edges }
 		data = { 'querya': {}, 'nodes':elts, 'edges': edges }

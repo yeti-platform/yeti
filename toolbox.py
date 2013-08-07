@@ -147,7 +147,6 @@ def is_hostname(hostname):
 def is_subdomain(hostname):
     hostname = find_hostnames(hostname)
     if len(hostname) > 0:
-        print hostname
         hostname = hostname[0]
 
         tld = hostname.split('.')[-1:][0]
@@ -331,20 +330,42 @@ def parse_net_info_cymru(info):
         entries['allocated'] = parse(columns[5].lstrip().rstrip())
         entries['as_name'] = columns[6].lstrip().rstrip()
         
-        
         results.append(entries)
-
-    print results
 
     return results
 
-def debug_output(text, n=True):
-    sys.stderr.write(str(text))
+def debug_output(text, type='debug', n=True):
+    if type == 'debug':
+        msg = bcolors.OKGREEN + '[DEBUG]'
+    if type == 'model':
+        msg = bcolors.HEADER + '[MODEL]'
+    if type == 'analytics':
+        msg = bcolors.OKBLUE + '[ANALYTICS]'
+    if type == 'error':
+        msg = bcolors.FAIL + '[ERROR]'
+    if type == 'info':
+        msg = bcolors.WARNING + '[INFO]'
+    msg += bcolors.ENDC
+    sys.stderr.write(str("%s - %s" % (msg, text)))
     if n:
         sys.stderr.write('\n')        
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
 
+    def disable(self):
+        self.HEADER = ''
+        self.OKBLUE = ''
+        self.OKGREEN = ''
+        self.WARNING = ''
+        self.FAIL = ''
+        self.ENDC = ''
 
 
 if __name__ == "__main__":

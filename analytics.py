@@ -19,7 +19,7 @@ class Worker(threading.Thread):
 		
 
 	def run(self):
-		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']))
+		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']), type='analytics')
 		etype = self.elt['type']
 		context = self.elt['context']
 		new = self.elt.analytics()
@@ -96,24 +96,12 @@ class Analytics:
 
 	# elements analytics
 
-	def malware_analytics(self, malware, context):
-		debug_output("(malware analytics for %s)" % malware['url'])
-
-		for c in context:
-			if c not in malware['context']:
-				malware['context'].append(c)
-
-		if 'url' in malware:
-			new = self.data.url_add(malware['url'], context)
-			self.data.connect(malware,new)
-
-
 	def bulk_asn(self):
 		results = self.data.elements.find({ 'type': 'ip' })
 		
 		#elts = []
 		ips = []
-		debug_output("(getting ASNs for %s IPs)" % results.count())
+		debug_output("(getting ASNs for %s IPs)" % results.count(), type='analytics')
 		
 		for r in results:
 			#elts.append(r)
@@ -215,7 +203,7 @@ class Analytics:
 			stack_lock = threading.Lock()
 
 			results = [r for r in results]
-			debug_output("################## Will deal with %s results" % len(results))
+			#debug_output("################## Will deal with %s results" % len(results))
 			threads = []
 
 			# status reporting
@@ -235,7 +223,7 @@ class Analytics:
 			for t in threads:
 				t.join()
 
-			debug_output("################## used %s threads for this loop" % len(threads))
+			#debug_output("################## used %s threads for this loop" % len(threads))
 
 			results = self.data.elements.find(
 				{ '$or': [

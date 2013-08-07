@@ -1,15 +1,22 @@
 {% extends "base.html" %}
 {% block main %}
+<div class='span9'>
+  <h1>Sniffer sessions</h1>
+  <table id='sessions' class='table table-condensed'>
+    <tr> <th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th></tr>
+  </table>
+</div>
+
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
-<script>
-initSnifferWebSocket()
-ws_sniffer.onopen = snifferInterfaceInit
-</script>
+<script type="text/javascript">getSessionList()</script>
 {%endblock%}
 {% block sidebar %}
 <div class='data span3'>
-  <h1>New sniffer session</h1>
-  <form method='POST' action=''>
+{%include "flash.html"%}
+  <form method='POST' action='' enctype='multipart/form-data'>
+    <h3>New sniffer session</h3>
+    <label for='pcap-upload'>Start from .pcap file</label>
+    <input type="file" placeholder="" id='pcap-upload' name='pcap-file'>
     <label for='session_name'>Session name</label>
     <input type="text" placeholder="Session name" name='session_name' id='session_name' >
     <label for='session_name'>BPF</label>
@@ -17,9 +24,10 @@ ws_sniffer.onopen = snifferInterfaceInit
     <br />
     <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
     <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Create new session</button>
+    
   </form>  
 
-  <h3>Sessions</h3>
-  <ul id='sessions'></ul>
+<h3>Sessions</h3>
+<ul id='sessions'></ul>  
 </div>
 {% endblock %}

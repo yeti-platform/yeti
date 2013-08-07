@@ -11,13 +11,19 @@ from feed import Feed
 
 class ZeusTrackerBinaries(Feed):
 
+    display = [ ("url", "URL"),
+                         ("description", "Description"),
+                         ("status", "Status"),
+                         ("md5", "MD5"),
+                         ("source", "Source"),
+                         ("type", "Type"),
+                         ("date_retreived", "Retrived")
+                        ]
+
     def __init__(self, name):
         super(ZeusTrackerBinaries, self).__init__(name)
         self.normalized=[]
         self.parsed = None
-        self.local_fields = ["url", "description", "status", "md5", "linkback", "type", "date_retreived"]
-
-
 
     def get_info(self):
         try:
@@ -46,9 +52,9 @@ class ZeusTrackerBinaries(Feed):
         for entry in self.parsed:
 
             # Evil object
-
             evil = Evil()
 
+            evil['feed'] = "ZeusTrackerBinaries"
             evil['url'] = toolbox.find_urls(entry['description'])[0]
             
             # description
@@ -74,10 +80,11 @@ class ZeusTrackerBinaries(Feed):
             evil['type'] = 'evil'
 
             # context
-            evil['context'] += ['zeus']
+            evil['context'] += ['evil', 'zeus']
 
             # date_retreived
             evil['date_retreived'] = datetime.datetime.utcnow()
+
 
             evil['value'] = "ZeuS bot"
             if md5:
@@ -85,8 +92,10 @@ class ZeusTrackerBinaries(Feed):
             else:
                 evil['value'] += " (URL: %s)" % evil['url']
 
+            evil['value'] = evil['md5']
+
             # commit to db
-            analytics.save_element(evil)
+            evil = analytics.save_element(evil)
 
             # URL object
 
@@ -99,13 +108,3 @@ class ZeusTrackerBinaries(Feed):
             analytics.data.connect(url, evil, ['hosting'])
 
         analytics.process()
-
-    def print_json(self, field=None):
-        for i in self.normalized:
-            if field != None: 
-                if field in i:
-                    print json.dumps(i[field])
-            else: print json.dumps(i)
-
-    def get_json(self, field=None):
-        return dumps(self.normalized)

@@ -68,7 +68,6 @@ class Model:
 
 		self.gi = pygeoip.GeoIP('geoIP/GeoLiteCity.dat')
 		self.db_lock = threading.Lock()
-		#print self.stats()
 
 	def stats(self):
 		stats = "DB loaded with %s elements\n" % self._db.elements.count()
@@ -88,7 +87,7 @@ class Model:
 	
 	def list_db(self):
 		for e in self.elements.find():
-			print e
+			debug_output(e)
 
 	
 	def save(self, element):
@@ -98,13 +97,12 @@ class Model:
 		if elt:
 			element['_id'] = elt['_id']
 			element.upgrade_context(elt['context'])
-			element['date_updated'] = datetime.datetime.utcnow()
-			print "(updated %s %s)" % (element.type, element.value)
+			debug_output("(updated %s %s)" % (element.type, element.value), type='model')
 		else:
-			#element['context'] = context
 			element['date_created'] = datetime.datetime.utcnow()
-			print "(added %s %s to DB)" % (element.type, element.value)
+			debug_output("(added %s %s to DB)" % (element.type, element.value), type='model')
 
+		element['date_updated'] = datetime.datetime.utcnow()
 		saved = self.elements.save(element)
 
 		self.db_lock.release()
@@ -129,7 +127,7 @@ class Model:
 				conn['src'] = src._id
 				conn['dst'] = dst._id
 				conn['attribs'] = attribs   
-				print "(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs)
+				debug_output("(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs), type='model')
 			if commit:
 				self.graph.save(conn)
 			return conn

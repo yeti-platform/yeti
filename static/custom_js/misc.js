@@ -1,8 +1,8 @@
 $(
-function navigation_highlight() {
-  section = location.href.split(url_static_prefix)[1].split('/')[0];
-  $('#'+section+"-nav").addClass('active');
-}
+	function navigation_highlight() {
+	  section = location.href.split(url_static_prefix)[1].split('/')[0];
+	  $('#'+section+"-nav").addClass('active');
+	}
 )
 
 function clear_db() {
@@ -51,7 +51,11 @@ function get_dataset(query, url) {
 	querydict = {};
 
 	for (var i in queries) {
-		querydict[queries[i].split('=')[0]] = queries[i].split('=')[1];	
+		splitted = queries[i].split('=')
+		if (splitted.length > 1)
+			querydict[splitted[0]] = splitted[1];	
+		else if (splitted[0] != "")
+			querydict['value'] = splitted[0]
 	}
 
 	// un # dans l'url
@@ -97,7 +101,7 @@ function get_dataset(query, url) {
 	  		context_links = new Array()
 	  		//create row
 	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'></tr>")
-	  		
+	  		console.log(data)
 	  		for (var key in data.fields) {
 	  				k = data.fields[key][0]
 	  				v = elt[k]

@@ -35,7 +35,6 @@ function getneighbors() {
       console.log(data)
     push_nodes(data.nodes)
     push_links(data.edges)
-
     start();  
     }
 
@@ -133,9 +132,9 @@ function keyup() {
 }
 
 function resize() {
-    width = window.innerWidth - 400;//400;
+    width = $('.span9').width();
     height = window.innerHeight - 100;
-    $('.graph').width(width).height(height)
+    $('.span9').height(height)
     svg.attr("width", width).attr("height", height);
     force.size([width, height]).resume();
 }

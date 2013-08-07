@@ -28,6 +28,8 @@
 {% endblock %}
 {%block sidebar %}
 <div class='span3 toolbar'>
+	{% include "flash.html" %}
+
 	<ul id='datasetSideTabs' class='nav nav-tabs'>
 		<li class='active'><a href='#search' data-toggle='tab'>Search</a></li>
 		<li><a href='#add' data-toggle='tab'>Alter dataset</a></li>
@@ -36,8 +38,8 @@
 	<div id='datasetSideTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
-			      <input class="span2" id="query" placeholder='context=malware' type="text">
-			      <button class='btn btn-primary' type='button' onclick="javascript:get_dataset('{{ url_for('list') }}')">Go</button>
+			      <input id="query" placeholder='context=malware' type="text">
+			      <button class='btn btn-primary' type='button' onclick="javascript:get_dataset($('#query').val(), '{{ url_for('list') }}')">Go</button>
 		  	</div>
 		  <br style='clear:both' />
 		<a href='#' onclick="javascript:get_dataset_csv($('#query').val(), '{{url_for('dataset_csv')}}')">Export filter results as csv</a>

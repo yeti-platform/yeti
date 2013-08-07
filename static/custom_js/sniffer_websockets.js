@@ -46,22 +46,47 @@ function snifferInterfaceInit() {
 }
 
 function getSessionList() {
-    sendmessage(ws_sniffer, {'cmd': 'sessionlist'});
-        console.log("sessionlist");
+    $.ajax({
+    type: 'get',
+    url: '/sniffer/sessionlist/',
+    success: function(data) {
+        data = $.parseJSON(data);
+        console.log(data);
 
-        ws_sniffer.onmessage = function(msg) {
-            data = $.parseJSON(msg.data);
-            console.log(data);
+        table = $('#sessions');
 
-            for (var i in data.msg.session_list) {
-                ul = $('#sessions');
-                session_links = $('<a href='+url_static_prefix+'"/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
-                li = $('<li></li>');
-                li.append(session_links);
-                ul.append(li);
-            }
+        for (var i in data.session_list) {    
+            
+            tr = $('<tr></tr>');
+            session_links = $('<a />').attr("href", url_static_prefix+'/sniffer/'+data.session_list[i]['name']).text(data.session_list[i]['name']);
+            tr.append($("<td />").append(session_links))
+            tr.append($("<td />").text(data.session_list[i]['packets']));
+            tr.append($("<td />").text(data.session_list[i]['nodes']));
+            tr.append($("<td />").text(data.session_list[i]['edges']));
+            table.append(tr);
         }
+    }
+  });
 }
+
+
+// function getSessionList() {
+//     sendmessage(ws_sniffer, {'cmd': 'sessionlist'});
+//         console.log("sessionlist");
+
+//         ws_sniffer.onmessage = function(msg) {
+//             data = $.parseJSON(msg.data);
+//             console.log(data);
+
+//             table = $('#sessions');
+//             for (var i in data.msg.session_list) {    
+//                 session_links = $('<a href='+url_static_prefix+'"/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
+//                 tr = $('<tr></tr>');
+//                 tr.append($("<td />").append(session_links));
+//                 table.append(tr);
+//             }
+//         }
+// }
 
 function initSnifferWebSocket() {
     if ("WebSocket" in window) {

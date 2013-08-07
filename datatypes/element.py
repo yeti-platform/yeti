@@ -1,6 +1,7 @@
 import toolbox
 import datetime
 import pygeoip
+from toolbox import debug_output
 
 default_fields = [('value', "Value"), ('type', "Type"), ('context', "Context")]
 
@@ -24,6 +25,12 @@ class Element(dict):
 		self['context'].extend(context)
 		self['context'] = list(set(self['context']))
 
+
+
+
+
+
+
 class Evil(Element):
 	display_fields = default_fields + []
 	def __init__(self, value='', type="malware", context=[]):
@@ -44,9 +51,16 @@ class Evil(Element):
 		return []
 
 
+
+
+
+
+
+
+
 class As(Element):
 	display_fields = default_fields + [
-										('country', 'country'),
+										('country', 'Country'),
 										('asn', 'ASN'),
 										('domain', 'Domain'), 
 										('ISP', 'ISP'),
@@ -70,6 +84,13 @@ class As(Element):
 		self['last_analysis'] = datetime.datetime.utcnow()
 
 		return []
+
+
+
+
+
+
+
 
 
 class Url(Element):
@@ -96,7 +117,7 @@ class Url(Element):
 		return url 
 
 	def analytics(self):
-		print "(url analytics for %s)" % self['value']
+		debug_output("(url analytics for %s)" % self['value'])
 
 		new = []
 		# link with hostname
@@ -115,6 +136,15 @@ class Url(Element):
 		
 		
 		return new
+
+
+
+
+
+
+
+
+
 
 
 class Ip(Element):
@@ -162,7 +192,7 @@ class Ip(Element):
 			
 
 	def analytics(self):
-		print "(ip analytics for %s)" % self['value']
+		debug_output( "(ip analytics for %s)" % self['value'])
 
 		# get geolocation info
 		try:
@@ -171,11 +201,20 @@ class Ip(Element):
 			for key in geoinfo:
 				self[key] = geoinfo[key]
 		except Exception, e:
-			print "Could not get IP info for %s: %s" %(self.value, e)
+			debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 
 		return []
+
+
+
+
+
+
+
+
+
 
 class Hostname(Element):
 	
@@ -202,7 +241,7 @@ class Hostname(Element):
 		
 	def analytics(self):
 
-		print "(host analytics for %s)" % self.value
+		debug_output( "(host analytics for %s)" % self.value)
 
 		# this should get us a couple of IP addresses, or other hostnames
 		self['dns_info'] = toolbox.dns_dig_records(self.value)

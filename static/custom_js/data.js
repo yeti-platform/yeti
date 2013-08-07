@@ -71,23 +71,23 @@ function change_opacity(query) {
 function display_data(d)
 {
 
-	// console.log(d)
+	 console.log(d)
 	$('#node_info').empty();
 	$(".whois").empty();
 
 	$('#node_info').append("<tr><th>Node type</th><td>"+d.type+"</td></tr>");
-
-	if (d.type == 'url')
-		display_data_url(d);
-	else if (d.type == 'as')
-		display_data_as(d);
-	else if (d.type == 'ip')
-		display_data_ip(d);
-	else if (d.type == 'hostname')
-		display_data_hostname(d);
-	else if (d.type == 'evil')
-		display_data_evil(d);
-	else
+// 
+	// if (d.type == 'url')
+	// 	display_data_url(d);
+//	// else if (d.type == 'as')
+	// 	display_data_as(d);
+	// else if (d.type == 'ip')
+	// 	display_data_ip(d);
+	// else if (d.type == 'hostname')
+	// 	display_data_hostname(d);
+	// else if (d.type == 'evil')
+	// 	display_data_evil(d);
+	//else
 		display_generic(d);
 
 	$('#node_info').append("<tr><th>Date Updated</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
@@ -102,18 +102,15 @@ function display_data(d)
 
 }
 
-
-
 function display_generic(d) {
 	console.log('display generic')
 	for (var key in d) {
-		$("#node_info").append("<tr><th>"+key+"</th><td>"+d[key]+"</td></tr>");
+		if (['type', 'context', 'date_created', 'date_retreived', 'date_updated', 'last_analysis', "_id", "group", "incoming_links", "index", "px", "py", "x", "y", "radius", 'weight' ].indexOf(key) == -1) {
+			$("#node_info").append("<tr><th>"+key.charAt(0).toUpperCase() + key.slice(1) +"</th><td>"+d[key]+"</td></tr>");
+		}
 	}
 }
 
-function display_data_evil(d) {
-	// to do !
-}
 
 function display_data_hostname(d) {
 

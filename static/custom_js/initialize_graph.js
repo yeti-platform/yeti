@@ -16,19 +16,19 @@ var radiusScale,
 function initialize_graph() {
 		 radiusScale = 
 		      d3.scale.log()
-		  .domain([1, 20])
-		  .range([1, 15]);
+			  .domain([1, 20])
+			  .range([1, 15]);
 
 		 color = d3.scale.category10();
-
-		 width = $('.graph').width()
-		    height = $('.graph').height();
+		 
+		 width = $('.span9').width();
+         height = window.innerHeight - 100;
 
 		$('div.data').height(height);
 		$('div.data').width($(window).width()-width-20);
 
 		 nodes = []
-		    links = []
+		 links = []
 		    
 
 		 force = d3.layout.force()

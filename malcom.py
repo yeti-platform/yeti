@@ -27,7 +27,7 @@ import netifaces as ni
 
 #flask stuff
 from werkzeug import secure_filename
-from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort
+from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash
 
 #websockets
 from geventwebsocket.handler import WebSocketHandler
@@ -92,7 +92,7 @@ def page_not_found(error):
 @app.after_request
 def after_request(response):
 	origin = request.headers.get('Origin', '')
-	debug_output(origin, False)
+	# debug_output(origin, False)
 	response.headers['Access-Control-Allow-Origin'] = origin
 	response.headers['Access-Control-Allow-Credentials'] = 'true'
 	return response
@@ -189,7 +189,7 @@ def list():
 	query = {}
 	for key in request.args:
 		query[key] = request.args[key]
-
+	
 	try:
 		page = int(query['page'])
 	except Exception, e:
@@ -231,8 +231,6 @@ def dataset_csv():
 		filename.append("%s_%s" % (key, query[key]))
 
 	filename = "-".join(filename)
-
-	print query, filename
 	
 	results = a.data.find(query)
 	
@@ -271,7 +269,8 @@ def add_data():
 		context = request.form.get('context', None)
 		
 		if len(elements) == 0 or not context:
-			return "You must specify an element and a context"
+			flash("You must specify an element and a context", 'warning')
+			return redirect(url_for('dataset'))
 
 		a = g.a
 		context = context.strip().split(";")
@@ -304,23 +303,56 @@ def analytics():
 # Sniffer ============================================
 
 @app.route('/sniffer/',  methods=['GET', 'POST'])
-def sniffer(session=""):
+def sniffer():
 	if request.method == 'POST':
 		filter = request.form['filter']
+		
 		session_name = request.form['session_name']
+		if session_name == "":
+			flash("Please specify a session name", 'warning')
+			return redirect(url_for('sniffer'))
+
 		debug_output("Creating session %s" % session_name)
 		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.ifaces)
-		if request.form['startnow']:
+		
+		# if we're dealing with an uploaded PCAP file
+		file = request.files.get('pcap-file')
+
+		if file:
+			pcap = file.read()
+			loaded = sniffer_sessions[session_name].load_pcap(pcap)
+			if loaded != True:
+				flash("Could not read .pcap file: %s" % loaded, 'error')
+				return redirect(url_for('sniffer'))
+
+		# start sniffing right away
+		if request.form.get('startnow', None):
 			sniffer_sessions[session_name].start(str(request.remote_addr))
+		
 		return redirect(url_for('sniffer_session', session_name=session_name))
+
+
 	return render_template('sniffer_new.html')
+
+@app.route('/sniffer/sessionlist/')
+def sniffer_sessionlist():
+	session_list = []
+	for s in sniffer_sessions:
+		session_list.append({
+								'name': s, 
+								'packets': len(sniffer_sessions[s].pkts),
+								'nodes': len(sniffer_sessions[s].nodes),
+								'edges': len(sniffer_sessions[s].edges),
+							})
+	return dumps({'session_list': session_list})
+
 
 @app.route('/sniffer/<session_name>/')
 def sniffer_session(session_name):
-	# if session doesn't exist, create it
+	# check if session exists
 	if session_name not in sniffer_sessions:
-		abort(404)
-
+		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
+		return redirect(url_for('sniffer'))
 	
 	return render_template('sniffer.html', session=sniffer_sessions[session_name], session_name=session_name)
 	

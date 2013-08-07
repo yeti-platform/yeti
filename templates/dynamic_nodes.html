@@ -1,34 +1,29 @@
 {% extends "base.html" %}
 {% block main %}
-<script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
+
 <div class='span9 graph'>
 </div>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
 
 <script type="text/javascript">
 
 initialize_graph();
 
 d3.json(url_static_prefix+"/graph/{{field}}/{{value}}", function(error, graph) {
-    
-   for (var i in graph.nodes) {
-     nodes.push(graph.nodes[i])
-   } 
-
-   for (var i in graph.edges) {
-    links.push(graph.edges[i])
-   }
-
-   for (var i=0; i < nodes.length; i++) {
-                nodes[i].x = Math.random()*width;
-                nodes[i].y = Math.random()*height;
-            }
-
+    console.log(graph)
+   push_nodes(graph.nodes)
+   push_links(graph.edges)
     start();
 
 });
 
 
+</script>
+<script>
+initSnifferWebSocket()
+ws_sniffer.onopen = snifferInterfaceInit
 </script>
 {%endblock%}
 {% block sidebar %}
@@ -36,8 +31,8 @@ d3.json(url_static_prefix+"/graph/{{field}}/{{value}}", function(error, graph) {
   <h1>Highlight</h1>
 
   <div class="input-append">
-      <input class="span2" id="query" type="text" onkeyup="javascript:highlight($('#query').val())">
-      <button class='btn' type='button' onclick="javascript:highlight('clear'); $('#query').val('');">Clear</button>
+      <input id="query" type="text" onkeyup="highlight_query($('#query').val())">
+      <button class='btn' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
 
   </div>
   <span class="help-block">e.g. 'type:ip', 'google.com'</span>
@@ -47,5 +42,15 @@ d3.json(url_static_prefix+"/graph/{{field}}/{{value}}", function(error, graph) {
   <h1>Info</h1>
   <table class='table' id='node_info'></table>
   <div class='whois'></div>
+</div>
+<div class='hotkeys'>
+  <ul>
+    <li><strong>space</strong>: get node neighbors</li>
+    <li><strong>e</strong>: find evil</li>
+    <li><strong>u</strong>: unfix selected</li>
+    <li><strong>shift</strong>: multimple selections</li>
+    <li><strong>h</strong>: hide nodes</li>
+    <li><strong>(shift+)arrows</strong>: move nodes</li>
+  </ul>
 </div>
 {% endblock %}

@@ -1,12 +1,14 @@
 {% extends "base.html" %}
 {% block main %}
-<script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
-
-<script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
 
 <div class='span9 graph'> 
 </div>
+
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
+ 
+
 
 
 <script type="text/javascript">
@@ -38,6 +40,7 @@ ws_sniffer.onopen = snifferInterfaceInit
 
 {% block sidebar %}
 <div class='data span3 toolbar'>
+
   <h1 id='session_name'>{{session.name}}</h1>
   <small>Filter: {{session.filter}}</small>
   <br />
@@ -48,7 +51,9 @@ ws_sniffer.onopen = snifferInterfaceInit
   <table class='table' id='node_info'></table>
   <div class='whois'></div>
   <h3>Sessions</h3>
-  <ul id='sessions'></ul>
+  <table id='sessions' class='table table-condensed'>
+    <tr><th>Session name</th></tr>
+  </table>
 </div>
 <div class='hotkeys'>
   <ul>
