@@ -183,24 +183,23 @@ def dataset():
 	return render_template("dataset.html")
 
 
-@app.route('/dataset/list') # ajax method for populating dataset table
-def list(query={}):
+@app.route('/dataset/list/') # ajax method for populating dataset table
+def list():
 	a = g.a
 	query = {}
 	for key in request.args:
 		query[key] = request.args[key]
 
-	if 'pagination_start' in query and 'per_page' in query:
-		pagination_start = int(query['pagination_start'])
-		per_page = int(query['per_page'])
-		del query['pagination_start']
-		del query['per_page']
-	else:
-		pagination_start = 0
-		per_page = 50
+	try:
+		page = int(query['page'])
+	except Exception, e:
+		page = 0
 
-	
-	debug_output("Search for %s" % query)
+	del query['page']
+
+	per_page = 50
+
+	debug_output("Search for %s (page #%s)" % (query, page))
 	
 	elts = [e for e in a.data.find(query)]
 	
@@ -211,15 +210,14 @@ def list(query={}):
 	data = {}
 	if len(elts) > 0:
 		data['fields'] = elts[0].display_fields
-		data['elements'] = elts[pagination_start:pagination_start+per_page]
+		data['elements'] = elts[page*per_page:(page+1)*per_page]
 	else:
 		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('context', 'Context')]
 		data['elements'] = []
-
-	print "Will display_fields: %s" % (data['fields'])
 	
-	data['pagination_start'] = pagination_start
+	data['page'] = page
 	data['per_page'] = per_page
+	data['total_results'] = len(elts)
 
 	return dumps(data)
 

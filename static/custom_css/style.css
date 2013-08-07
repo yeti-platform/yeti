@@ -1,3 +1,28 @@
+/* Dataset */
+
+.loading-modal {
+	display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 ) 
+                url('../custom_img/ajax-loader.gif') 
+                50% 50% 
+                no-repeat;
+}
+
+#all.loading {
+	overflow: hidden;
+}
+
+#all.loading .loading-modal {
+	display: block;
+}
+
+
 /* Feeds */
 
 tr.error .error-cause {

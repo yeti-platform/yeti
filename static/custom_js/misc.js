@@ -1,7 +1,7 @@
 $(
 function navigation_highlight() {
-  page = location.pathname.split("/")[1];
-  $('#'+page+"-nav").addClass('active');
+  section = location.href.split(url_static_prefix)[1].split('/')[0];
+  $('#'+section+"-nav").addClass('active');
 }
 )
 
@@ -28,7 +28,6 @@ function dataset_remove(id) {
 
 function get_dataset_csv(query, url) {
 	queries = query.split(' ');
-	console.log(queries)
 	querydict = {};
 
 	for (var i in queries) {
@@ -36,55 +35,69 @@ function get_dataset_csv(query, url) {
 	}
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
-
-	console.log(url)
-
 	location.href = url
 }
 
-function get_dataset(query, url, pagination_start, per_page) {
+function change_page(arg, url) {
+	console.log('loading page ' + arg)
+	query = $('#query').val()
+	location.hash = arg
+	get_dataset(query, url)
+}
+
+function get_dataset(query, url) {
+
 	queries = query.split(' ');
-	console.log(queries)
 	querydict = {};
 
 	for (var i in queries) {
 		querydict[queries[i].split('=')[0]] = queries[i].split('=')[1];	
 	}
 
-	if (pagination_start == undefined || per_page == undefined) {
-		querydict['pagination_start'] = 0;
-		querydict['per_page'] = 50;
-	}
-	else {
-		querydict['pagination_start'] = pagination_start
-		querydict['per_page'] = per_page
+	// un # dans l'url
+	page = location.hash.split("#")[1]
+	console.log(page)
+
+	if (page == undefined) {
+		page = 0;
 	}
 
-	console.log(querydict)
+	querydict['page'] = page
 
 	$.ajax({
 	  dataType: "json",
 	  url: url,
 	  data: querydict,
+	  beforeSend: function(data) {
+	  	$('#all').addClass('loading')
+	  },
+	  complete: function(data) {
+	  	$('#all').removeClass('loading')
+	  },
 	  success: function(data){
+	  	// empty the table and populate it 
 	  	dataset = $('#dataset')
 	  	dataset.empty()
 	  	head = $("<tr>")
 
+	  	// get the headers
 	  	for (var i in data.fields) {
 	  		head.append($("<th>").text(data.fields[i][1]))
 	  	}
+
 	  	head.append($("<th>").text(''))
 
-	  	// dataset.append('<tr><th>Value</th><th>Type</th><th>Context</th><th></th></tr>')
 	  	dataset.append(head)
 
+	  	// loop over the elements
+
 	  	for (var i in data.elements) {
-	  		//console.log(data[i])
 	  		elt = data.elements[i]
 
 	  		context_links = new Array()
+	  		//create row
 	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'></tr>")
+	  		
 	  		for (var key in data.fields) {
 	  				k = data.fields[key][0]
 	  				v = elt[k]
@@ -95,7 +108,7 @@ function get_dataset(query, url, pagination_start, per_page) {
 	  				else
 	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+v+"'>"+v+"</a></td>")
 	  		}
-	  		// row.append("<td class='context_links'></td>")
+
 	  		row.append("<td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td>")
 
 	  		context_links = row.find('.context_links')
@@ -108,8 +121,28 @@ function get_dataset(query, url, pagination_start, per_page) {
 	  				context_links.append(', ')
 	  			context_links.append(a)
 	  		}
+
+	  		// append the created row to the table
 	  		dataset.append(row)
 	  	}
+
+	  	// adjust pagination
+	  	per_page = 50;
+	  	total_pages = Math.floor(data.total_results / per_page)
+	  	previous_page = page - 1 >= 0 ? page - 1 : 0;
+	  	next_page = (page*1+1) <= total_pages ? page*1 + 1 : page*1;
+	  	
+	  	prev = $("#pagination-prev")
+	  	next = $("#pagination-next")
+	  	$("#pagination-page").text("Page "+page+" of "+ total_pages)
+	  	
+	  	prev.attr('data-nav', previous_page)
+	  	next.attr('data-nav', next_page)
+
+	  	console.log("Page "+page+" of "+ total_pages)
+	  	console.log("current page: " + page)
+	  	console.log("previous page: " + previous_page)
+	  	console.log("next page: " + next_page)
 	  }
 	});
 }

@@ -46,7 +46,7 @@ class Evil(Element):
 
 class As(Element):
 	display_fields = default_fields + [
-										('country', 'CN'),
+										('country', 'country'),
 										('asn', 'ASN'),
 										('domain', 'Domain'), 
 										('ISP', 'ISP'),
@@ -121,8 +121,8 @@ class Ip(Element):
 
 	display_fields = default_fields + [
 						('city', 'City'),
-						('bgp', 'BGP prefix'),
-						('ISP', 'AS'),
+						('bgp', 'BGP'),
+						('isp', 'ISP'),
 						# 'region_name',
 						# 'area_code',
 						('time_zone', 'TZ'),
