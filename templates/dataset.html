@@ -10,10 +10,9 @@
 
 	<div id='datasetTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='all'>
-			<table class='table table-condensed' id='dataset'>
+			<table class='table table-condensed table-hover' id='dataset'>
 			</table>
 			<script>get_dataset("",'{{url_for('list')}}')</script>
-			<div class='loading-modal'></div>
 		</div>
 
 		<!-- <div class='tab-pane' id='ip'>
@@ -38,8 +37,8 @@
 	<div id='datasetSideTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
-			      <input id="query" placeholder='context=malware' type="text">
-			      <button class='btn btn-primary' type='button' onclick="javascript:get_dataset($('#query').val(), '{{ url_for('list') }}')">Go</button>
+			      <input id="query" placeholder='context=malware' type="text" onkeyup="get_dataset($('#query').val(), '{{ url_for('list') }}')">
+			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list') }}')">Go</button>
 		  	</div>
 		  <br style='clear:both' />
 		<a href='#' onclick="javascript:get_dataset_csv($('#query').val(), '{{url_for('dataset_csv')}}')">Export filter results as csv</a>
@@ -50,6 +49,8 @@
 		    <li><a id='pagination-page' href="javascript:void(0)"></a></li>
 		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list') }}')">Next</a></li>
 		  </ul>
+		  <br />
+		  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
 		</div>
 		</div>
 		

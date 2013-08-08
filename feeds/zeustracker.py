@@ -28,8 +28,10 @@ class ZeusTrackerBinaries(Feed):
     def get_info(self):
         try:
             feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries")
+            self.status = "OK"
         except Exception, e:
-            return e
+            self.status = "ERROR: " + e
+            return False
         
         children = ["title", "link", "description", "guid"]
         main_node = "item"
@@ -49,8 +51,10 @@ class ZeusTrackerBinaries(Feed):
 
     def analytics(self, analytics):
 
-        for entry in self.parsed:
+        self.elements_fetched = 0
 
+        for entry in self.parsed:
+            
             # Evil object
             evil = Evil()
 
@@ -80,11 +84,10 @@ class ZeusTrackerBinaries(Feed):
             evil['type'] = 'evil'
 
             # context
-            evil['context'] += ['evil', 'zeus']
+            evil['context'] += ['zeus', 'malware']
 
             # date_retreived
             evil['date_retreived'] = datetime.datetime.utcnow()
-
 
             evil['value'] = "ZeuS bot"
             if md5:
@@ -92,19 +95,22 @@ class ZeusTrackerBinaries(Feed):
             else:
                 evil['value'] += " (URL: %s)" % evil['url']
 
-            evil['value'] = evil['md5']
-
             # commit to db
-            evil = analytics.save_element(evil)
+            evil = analytics.save_element(evil, ['ZeusTrackerBinaries'])
 
             # URL object
-
-            url = Url(evil['url'], ['evil', 'zeus'])
+            url = Url(evil['url'], ['evil', 'ZeusTrackerBinaries'])
 
             # commit to db
-            analytics.save_element(url)
+            url = analytics.save_element(url)
 
             # connect url with malware
             analytics.data.connect(url, evil, ['hosting'])
+
+            if evil.is_recent():
+                self.elements_fetched += 1
+            if url.is_recent():
+                self.elements_fetched += 1
+
 
         analytics.process()

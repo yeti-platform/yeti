@@ -346,9 +346,8 @@ def debug_output(text, type='debug', n=True):
     if type == 'info':
         msg = bcolors.WARNING + '[INFO]'
     msg += bcolors.ENDC
-    sys.stderr.write(str("%s - %s" % (msg, text)))
-    if n:
-        sys.stderr.write('\n')        
+    n = '\n' if n else ""
+    sys.stderr.write(str("%s - %s%s" % (msg, text, n)))
 
 
 class bcolors:

@@ -1,8 +1,12 @@
 /* Dataset */
 
-.loading-modal {
+.timestamp {
+	width:130px;
+}
+
+/*.loading-modal {
 	display:    none;
-    position:   fixed;
+    position:   relative;
     z-index:    1000;
     top:        0;
     left:       0;
@@ -13,7 +17,17 @@
                 50% 50% 
                 no-repeat;
 }
+*/
 
+#loading-spinner {
+	display: none;
+}
+
+#loading-spinner.show {
+	margin:40px auto;
+	display:block;
+}
+/*
 #all.loading {
 	overflow: hidden;
 }
@@ -21,7 +35,7 @@
 #all.loading .loading-modal {
 	display: block;
 }
-
+*/
 
 /* Feeds */
 

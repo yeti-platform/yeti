@@ -56,7 +56,11 @@ class Sniffer():
 	def run(self):
 		debug_output("[+] Sniffing session %s started" % self.name)
 		debug_output("[+] Filter: %s" % self.filter)
-		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
+		try:
+			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
+		except Exception, e:
+			print e
+		
 		debug_output("[+] Sniffing session %s stopped" % self.name)
 
 		return 

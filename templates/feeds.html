@@ -9,7 +9,7 @@
 			<th>Run every</th>
 			<th>Last run</th>
 			<th>Next run</th>
-			<th>Last run time</th>
+			<th>Elements fetched</th>
 			<th>Status</th>
 			<th>Run now</th>
 		</tr>
@@ -20,7 +20,7 @@
 			<td>{{ feeds[name].run_every }}</td>
 			<td>{{ feeds[name].last_run.strftime("%Y-%m-%d %H:%M:%S") if feeds[name].last_run else "N/A"}}</td>
 			<td>{{ feeds[name].next_run.strftime("%Y-%m-%d %H:%M:%S") if feeds[name].next_run else "N/A"}}</td>
-			<td>{{ feeds[name].last_run_time if feeds[name].last_run_time else "N/A"}}</td>
+			<td>{{ feeds[name].elements_fetched }}</td>
 			<td class='error-cause'>{{ feeds[name].status }}</td>
 			<td><a href='{{ url_for("run_feed", feed_name=name)}}'><i class='icon-refresh'></i></a></td>
 		</tr>

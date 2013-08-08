@@ -3,9 +3,11 @@ import datetime
 import pygeoip
 from toolbox import debug_output
 
-default_fields = [('value', "Value"), ('type', "Type"), ('context', "Context")]
+
 
 class Element(dict):
+
+	default_fields = [('date_updated', 'Updated'), ('value', "Value"), ('type', "Type"), ('context', "Context")]	
 	
 	def __init__(self):
 		self['context'] = []
@@ -25,14 +27,18 @@ class Element(dict):
 		self['context'].extend(context)
 		self['context'] = list(set(self['context']))
 
-
+	def is_recent(self):
+		if 'date_created' not in self:
+			return False
+		else:
+			return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
 
 
 
 
 
 class Evil(Element):
-	display_fields = default_fields + []
+	display_fields = Element.default_fields + []
 	def __init__(self, value='', type="malware", context=[]):
 		super(Evil, self).__init__()
 		self['value'] = value
@@ -50,16 +56,12 @@ class Evil(Element):
 		self['last_analysis'] = datetime.datetime.utcnow()
 		return []
 
-
-
-
-
-
+	
 
 
 
 class As(Element):
-	display_fields = default_fields + [
+	display_fields = Element.default_fields + [
 										('country', 'Country'),
 										('asn', 'ASN'),
 										('domain', 'Domain'), 
@@ -94,7 +96,7 @@ class As(Element):
 
 
 class Url(Element):
-	display_fields = default_fields + [
+	display_fields = Element.default_fields + [
 							('hostname', 'Hostname'),
 							]
 
@@ -149,10 +151,11 @@ class Url(Element):
 
 class Ip(Element):
 
-	display_fields = default_fields + [
+	display_fields = Element.default_fields + [
 						('city', 'City'),
+						('postal_code', "ZIP code"),
 						('bgp', 'BGP'),
-						('isp', 'ISP'),
+						('ISP', 'ISP'),
 						# 'region_name',
 						# 'area_code',
 						('time_zone', 'TZ'),
@@ -160,7 +163,6 @@ class Ip(Element):
 						# ('metro_code', 'Metro code'),
 						#'country_code3',
 						#'country_name',
-						('postal_code', "ZIP code"),
 						#'longitude',
 						('country_code', 'CN'),
 						#'latitude',
@@ -218,7 +220,7 @@ class Ip(Element):
 
 class Hostname(Element):
 	
-	display_fields = default_fields + []
+	display_fields = Element.default_fields + []
 
 	def __init__(self, hostname="", context=[]):
 		super(Hostname, self).__init__()

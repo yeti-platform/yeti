@@ -31,10 +31,16 @@ function get_dataset_csv(query, url) {
 	querydict = {};
 
 	for (var i in queries) {
-		querydict[queries[i].split('=')[0]] = queries[i].split('=')[1];	
+		splitted = queries[i].split('=')
+		if (splitted.length > 1)
+			querydict[splitted[0]] = splitted[1];	
+		else if (splitted[0] != "")
+			querydict['value'] = splitted[0]
 	}
 
+
 	url = url_static_prefix + url +"?"+ $.param(querydict)
+	
 	location.href = url
 }
 
@@ -46,7 +52,6 @@ function change_page(arg, url) {
 }
 
 function get_dataset(query, url) {
-
 	queries = query.split(' ');
 	querydict = {};
 
@@ -60,7 +65,6 @@ function get_dataset(query, url) {
 
 	// un # dans l'url
 	page = location.hash.split("#")[1]
-	console.log(page)
 
 	if (page == undefined) {
 		page = 0;
@@ -73,10 +77,10 @@ function get_dataset(query, url) {
 	  url: url,
 	  data: querydict,
 	  beforeSend: function(data) {
-	  	$('#all').addClass('loading')
+	  	$('#loading-spinner').addClass('show')
 	  },
 	  complete: function(data) {
-	  	$('#all').removeClass('loading')
+	  	$('#loading-spinner').removeClass('show')
 	  },
 	  success: function(data){
 	  	// empty the table and populate it 
@@ -86,7 +90,10 @@ function get_dataset(query, url) {
 
 	  	// get the headers
 	  	for (var i in data.fields) {
-	  		head.append($("<th>").text(data.fields[i][1]))
+	  		h = $("<th>").text(data.fields[i][1])
+	  		if (data.fields[i][0].indexOf('date') != -1)
+	  			h.addClass('timestamp')
+	  		head.append(h)
 	  	}
 
 	  	head.append($("<th>").text(''))
@@ -97,18 +104,19 @@ function get_dataset(query, url) {
 
 	  	for (var i in data.elements) {
 	  		elt = data.elements[i]
-
+	  		console.log(elt)
 	  		context_links = new Array()
 	  		//create row
 	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'></tr>")
-	  		console.log(data)
 	  		for (var key in data.fields) {
 	  				k = data.fields[key][0]
 	  				v = elt[k]
 	  				if (k == 'context')
 	  					row.append($("<td />").addClass('context_links'))
-	  				else if (v == "")
-	  					row.append($("<td />"))
+	  				else if (k.indexOf('date') != -1)
+	  					row.append($("<td />").text(format_date(new Date(elt.date_updated.$date))).addClass('timestamp'))
+	  				else if (v == "" || v == undefined)
+	  					row.append($("<td />").text('-'))
 	  				else
 	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+v+"'>"+v+"</a></td>")
 	  		}
@@ -142,11 +150,6 @@ function get_dataset(query, url) {
 	  	
 	  	prev.attr('data-nav', previous_page)
 	  	next.attr('data-nav', next_page)
-
-	  	console.log("Page "+page+" of "+ total_pages)
-	  	console.log("current page: " + page)
-	  	console.log("previous page: " + previous_page)
-	  	console.log("next page: " + next_page)
 	  }
 	});
 }

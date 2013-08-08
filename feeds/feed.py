@@ -24,6 +24,7 @@ class Feed(object):
 		self.next_run = None
 		self.running = False
 		self.last_run_time = None
+		self.elements_fetched = 0
 		self.status = "OK"
 
 	def run(self, analytics):
@@ -32,12 +33,9 @@ class Feed(object):
 		self.last_run = datetime.now()
 		self.next_run = self.last_run + self.run_every
 
-		self.status = self.get_info()
-		if self.status == True:
-			self.status = "OK"
+		if self.get_info():
 			self.analytics(analytics)
 
-		self.last_run_time = datetime.now() - self.last_run
 		self.running = False
 
 

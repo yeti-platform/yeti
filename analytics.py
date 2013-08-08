@@ -104,15 +104,12 @@ class Analytics:
 		debug_output("(getting ASNs for %s IPs)" % results.count(), type='analytics')
 		
 		for r in results:
-			#elts.append(r)
 			ips.append(r)
 
 		as_info = get_net_info_shadowserver(ips)
 		
 		if not as_info:
 			return
-
-		debug_file = open('as_debug_file.txt', 'w+')
 
 		for i in range(len(ips)):
 
@@ -133,11 +130,11 @@ class Analytics:
 			_as = As.from_dict(_as)
 			_as['last_analysis'] = datetime.datetime.now()
 			_as['date_updated'] = datetime.datetime.now()
+
 			new = self.save_element(_as)
 			self.save_element(ips[i])
 			
 			self.data.connect(ips[i], new, 'net_info')
-			debug_file.write("%s --> %s (%s)\n" %(ips[i]['value'], _as['value'], ips[i]['bgp']))
 
 
 	def find_evil(self, elt, depth=2, node_links=([],[])):

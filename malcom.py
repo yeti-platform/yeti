@@ -22,7 +22,7 @@ from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
 
 #system
-import os, datetime, time, sys, signal, argparse
+import os, datetime, time, sys, signal, argparse, re
 import netifaces as ni
 
 #flask stuff
@@ -129,14 +129,16 @@ def nodes(field, value):
 
 @app.route('/graph/<field>/<path:value>')
 def graph(field, value):
-	a = g.a 
-	base_elts = [e for e in a.data.elements.find( { field: { "$regex": value } })]
+	a = g.a
+	query = { field: re.compile(re.escape(value), re.IGNORECASE) }
+	print query
+	base_elts = [e for e in a.data.elements.find( query )]
 	edges, nodes = a.data.get_graph_for_elts(base_elts)
 	data = { 'query': base_elts, 'edges': edges, 'nodes': nodes }
 	ids = [node['_id'] for node in nodes]
 	other = [a for a in a.data.elements.find( {"_id" : { '$not' : { '$in' : ids }}})]
 	
-	debug_output("query: %s, edges: %s, nodes: %s, other: %s" % (len(base_elts), len(edges), len(nodes), len(other)))
+	debug_output("query: %s, edges found: %s, nodes found: %s, other: %s" % (len(base_elts), len(edges), len(nodes), len(other)))
 	return (dumps(data))
 
 @app.route('/neighbors', methods=['POST'])
@@ -183,25 +185,25 @@ def dataset():
 	return render_template("dataset.html")
 
 
-@app.route('/dataset/list/') # ajax method for populating dataset table
+@app.route('/dataset/list/') # ajax method for sarching dataset and populating dataset table
 def list():
 	a = g.a
 	query = {}
-	for key in request.args:
-		query[key] = request.args[key]
-	
+	print request.args
 	try:
-		page = int(query['page'])
+		page = int(request.args['page'])
 	except Exception, e:
 		page = 0
 
-	del query['page']
+	for key in request.args:
+		if key != 'page':
+			query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
 
 	per_page = 50
 
 	debug_output("Search for %s (page #%s)" % (query, page))
 	
-	elts = [e for e in a.data.find(query)]
+	elts = [e for e in a.data.find(query).sort('date_created', -1)]
 	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
@@ -226,16 +228,21 @@ def dataset_csv():
 	a = g.a
 	filename = []
 	query = {}
+	print request.args
 	for key in request.args:
-		query[key] = request.args[key]
-		filename.append("%s_%s" % (key, query[key]))
+		if key != '':
+			query[key] = re.compile(re.escape(request.args[key]), re.IGNORECASE)
+			filename.append("%s_%s" % (key, request.args[key]))
+		else:
+			filename.append('all')
 
 	filename = "-".join(filename)
-	
-	results = a.data.find(query)
+	print query
+	results = a.data.find(query).sort('date_created', -1)
 	
 	if results.count() == 0:
-		data = ""
+		flash("You're about to download an empty .csv",'warning')
+		return redirect(url_for('dataset'))
 	else:
 		response = make_response()
 		response.headers['Cache-Control'] = 'no-cache'
@@ -246,10 +253,10 @@ def dataset_csv():
 		for e in results:
 			data += ";".join([list_to_str(e.get(f[0],"-")) for f in fields]) + "\n"
 
-	response.data = data
-	response.headers['Content-Length'] = len(response.data)
+		response.data = data
+		response.headers['Content-Length'] = len(response.data)
 
-	return response
+		return response
 
 
 @app.route('/dataset/add', methods=['POST'])

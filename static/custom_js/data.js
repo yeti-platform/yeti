@@ -105,8 +105,10 @@ function display_data(d)
 function display_generic(d) {
 	console.log('display generic')
 	for (var key in d) {
-		if (['type', 'context', 'date_created', 'date_retreived', 'date_updated', 'last_analysis', "_id", "group", "incoming_links", "index", "px", "py", "x", "y", "radius", 'weight' ].indexOf(key) == -1) {
-			$("#node_info").append("<tr><th>"+key.charAt(0).toUpperCase() + key.slice(1) +"</th><td>"+d[key]+"</td></tr>");
+		if (['Fixed', 'Selected', 'PreviouslySelected', 'type', 'context', 'date_created', 'date_retreived', 'date_updated', 'last_analysis', "_id", "group", "incoming_links", "index", "px", "py", "x", "y", "radius", 'weight' ].indexOf(key) == -1) {
+			val = d[key]
+			if (val == undefined) { val = "N/A"}
+			$("#node_info").append("<tr><th>"+key.charAt(0).toUpperCase() + key.slice(1) +"</th><td>"+val+"</td></tr>");
 		}
 	}
 }
@@ -159,14 +161,14 @@ function display_data_ip(d) {
 function format_date(date)
 {
 	// hours part from the timestamp
-	var hours = date.getHours();
+	var hours = date.getHours() < 10 ? '0' + date.getHours() : date.getHours();
 	// minutes part from the timestamp
-	var minutes = date.getMinutes();
+	var minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()
 	// seconds part from the timestamp
-	var seconds = date.getSeconds();
+	var seconds = date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds()
 
-	var day = date.getDate();
-	var month = date.getMonth()+1;
+	var day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+	var month = date.getMonth()+1 < 10 ? '0' + (date.getMonth()+1) : (date.getMonth()+1)
 	var year = date.getFullYear();
 
 	// will display time in 10:30:23 format

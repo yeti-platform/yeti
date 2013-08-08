@@ -118,7 +118,8 @@ class Model:
 	def connect(self, src, dst, attribs="", commit=True):
 
 			if not src or not dst:
-				exit()
+				return None
+				
 			conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
 			if conn:
 				conn['attribs'] = attribs
