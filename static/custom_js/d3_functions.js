@@ -132,9 +132,9 @@ function keyup() {
 }
 
 function resize() {
-    width = $('.span9').width();
-    height = window.innerHeight - 100;
-    $('.span9').height(height)
+    width = $('.graph').width();
+    height = window.innerHeight - 150;
+    $('.graph').height(height)
     svg.attr("width", width).attr("height", height);
     force.size([width, height]).resume();
 }

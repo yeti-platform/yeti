@@ -2,9 +2,9 @@ from scapy.all import *
 from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading
 from bson.json_util import dumps
-from malcom import debug_output
+from toolbox import debug_output
 from bson.objectid import ObjectId
-
+from flow import Flow
 
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
@@ -37,6 +37,8 @@ class Sniffer():
 		self.nodes_ids = []
 		self.nodes_pk = []
 		self.edges_ids = []
+		self.flows = {}
+
 
 	def load_pcap(self, pcap):
 		debug_output("Loading PCAP from file...")
@@ -56,17 +58,25 @@ class Sniffer():
 	def run(self):
 		debug_output("[+] Sniffing session %s started" % self.name)
 		debug_output("[+] Filter: %s" % self.filter)
-		try:
-			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
-		except Exception, e:
-			print e
+		#try:
+		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
+		#except Exception, e:
+		#	print e
 		
 		debug_output("[+] Sniffing session %s stopped" % self.name)
 
 		return 
 
-	def update(self, session_name='default'):
+	def update_nodes(self):
 		return { 'query': {}, 'nodes':self.nodes, 'edges': self.edges }
+
+	def flow_status(self):
+		data = {}
+		data['flows'] = []
+		for fid in self.flows:
+			data['flows'].append(self.flows[fid].get_statistics())
+
+		return data
 
 	def start(self, remote_addr):
 		self.thread = threading.Thread(None, self.run, None)
@@ -145,8 +155,6 @@ class Sniffer():
 		new_elts = []
 		new_edges = []
 
-
-
 		# intercept DNS responses (these contain names and IPs)
 		if DNS in pkt and pkt[IP].sport == 53:
 			debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
@@ -170,7 +178,7 @@ class Sniffer():
 
 				debug_output("Added %s, %s" %(hname, ipaddr))
 
-				debug_output("Response %s: %s -> %s" % (i, _hname, _ipaddr))
+				debug_output("Caught DNS response %s: %s -> %s" % (i, _hname['value'], _ipaddr['value']))
 
 				if _hname and _ipaddr:
 
@@ -187,7 +195,6 @@ class Sniffer():
 					# we can check for types using
 					# if pkt[DNS].an[i].type == 1: # A record
 
-					#conn = self.analytics.data.connect(_hname, _ipaddr, type, True)
 					conn = {'attribs': 'A', 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
 					if conn not in self.edges:
 						self.edges.append(conn)
@@ -214,6 +221,9 @@ class Sniffer():
 		return new_elts, new_edges
 		
 	def handlePacket(self, pkt):
+
+		self.pkts.append(pkt)
+
 		elts = []
 		edges = []
 
@@ -229,15 +239,26 @@ class Sniffer():
 		if new_edges:
 			edges += new_edges
 
+		# do flow analysis here, if necessary
+		if TCP in pkt or UDP in pkt:
+			Flow.pkt_handler(pkt, self.flows)
+			self.send_flow_statistics(self.flows[Flow.flowid(pkt)])	
+		# end flow analysis
+		
 		self.send_nodes(elts, edges)
 
+	def send_flow_statistics(self, flow):
+		data = {}
+		data['flow'] = flow.get_statistics()
+		data['type'] = 'flow_statistics_update'
+
+		try:
+			self.ws.send(dumps(data))
+		except Exception, e:
+			debug_output("Could not send flow statistics: %s" % e)
 
 	def send_nodes(self, elts=[], edges=[]):
-
-		#debug_output('New stuff:\nNodes: %s\nEdges:%s' % (", ".join(["%s: %s" % (e['type'], e['value']) for e in elts]), len(edges)))
-
-		#data = { 'query': {}, 'nodes':self.nodes, 'edges': self.edges }
-		data = { 'querya': {}, 'nodes':elts, 'edges': edges }
+		data = { 'querya': {}, 'nodes':elts, 'edges': edges, 'type': 'nodeupdate'}
 		try:
 			if len(elts) > 0 or len(edges) > 0:
 				self.ws.send(dumps(data))

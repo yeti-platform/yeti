@@ -12,7 +12,7 @@ from toolbox import *
 from analytics import *
 from feeds.feed import FeedEngine
 from datatypes.element import Hostname
-import netsniffer
+from networking import netsniffer
 
 #db 
 from pymongo import MongoClient
@@ -403,9 +403,9 @@ def analytics_api():
 
 			if cmd == 'analyticsstatus':
 				if g.a.active:
-					send_msg(ws, {'status': 1})
+					send_msg(ws, {'status': 1}, type=cmd)
 				else:
-					send_msg(ws, {'status': 0})
+					send_msg(ws, {'status': 0}, type=cmd)
 
 			
 
@@ -427,28 +427,30 @@ def sniffer_api():
 			
 			debug_output("Received: %s" % message)
 
+
+
 			cmd = message['cmd']
-
-			if cmd == 'sessionlist':
-				session_list = [s for s in sniffer_sessions]
-				send_msg(ws, {'session_list': session_list})
-				continue
-
 			session_name = message['session_name']
-
-
 
 			if session_name in sniffer_sessions:
 				session = sniffer_sessions[session_name]
 			else:
-				send_msg(ws, "Session %s not foud" % session_name)
+				send_msg(ws, "Session %s not foud" % session_name, type=cmd)
 				continue
 
 			session.ws = ws
 
+
+			# websocket commands
+
+			if cmd == 'sessionlist':
+				session_list = [s for s in sniffer_sessions]
+				send_msg(ws, {'session_list': session_list}, type=cmd)
+				continue
+
 			if cmd == 'sniffstart':
 				session.start(str(request.remote_addr))
-				send_msg(ws, "OK")
+				send_msg(ws, "OK", type=cmd)
 				continue
 
 			if cmd == 'sniffstop':
@@ -456,24 +458,41 @@ def sniffer_api():
 					session.stop()
 					send_msg(ws, 'OK')
 				else:
-					send_msg(ws, 'Error: sniffer not running')
+					send_msg(ws, 'Error: sniffer not running', type=cmd)
 				continue
 
 			if cmd == 'sniffstatus':
 				if session.status():
 					status = 'active'
 					debug_output("Session %s is active" % session.name)
-					send_msg(ws, {'status': 'active', 'session_name': session.name})
+					send_msg(ws, {'status': 'active', 'session_name': session.name}, type=cmd)
 				else:
 					status = 'inactive'
 					debug_output("Session %s is inactive" % session.name)
-					send_msg(ws, {'status': 'inactive', 'session_name': session.name})
+					send_msg(ws, {'status': 'inactive', 'session_name': session.name}, type=cmd)
 				continue
 					
 			if cmd == 'sniffupdate':
-				data = session.update()
+				data = session.update_nodes()
+				data['type'] = cmd
 				if data:
 					ws.send(dumps(data))
+				continue
+
+			if cmd == 'flowstatus':
+				data = session.flow_status()
+				data['type'] = cmd
+				if data:
+					ws.send(dumps(data))
+				continue
+
+			if cmd == 'get_flow_payload':
+				fid = message['flowid']
+				flow = session.flows[fid]
+				data = {}
+				data['payload'] = flow.payload
+				data['type'] = cmd
+				ws.send(dumps(data))
 				continue
 		
 	return ""

@@ -1,48 +1,168 @@
+function initSnifferWebSocket() {
+    if ("WebSocket" in window) {
+        ws_sniffer = new WebSocket(url_websocket_prefix+"api/sniffer");
+        ws_sniffer.onmessage = function(msg) { snifferWebSocketHandler(msg); }
+    } else {
+        console.log("WebSocket not supported");
+    }
+}
+
+function snifferWebSocketHandler(msg) {
+    data = $.parseJSON(msg.data);
+    console.log("Received data: " + data.type); console.log(data);
+
+    if (data.type == 'sniffstatus') {
+        
+                if (data.msg.status == 'inactive') {
+                    $('#startsniff').removeAttr('disabled');
+                    $('#stopsniff').attr('disabled','true');
+                }
+                else {
+                    $('#startsniff').attr('disabled','true');
+                    $('#stopsniff').removeAttr('disabled');
+                }
+
+                console.log("Retreiving session list (AJAX)")
+                getSessionList()
+
+                
+                sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_name': $('#session_name').text()});
+                console.log("Sent sniffupdate");
+    }
+
+    if (data.type == 'sniffupdate') {
+            push_nodes(data.nodes);
+            push_links(data.edges);
+            start();
+    }
+
+    if (data.type == 'sniffstart') {
+            $('#startsniff').attr('disabled','true')
+            $('#stopsniff').removeAttr('disabled')
+    }
+
+    if (data.type == 'nodeupdate' || data.type == 'sniffupdate') {
+            push_nodes(data.nodes);
+            push_links(data.edges);
+            start();
+    }
+
+    if (data.type == 'sniffstop') {
+        $('#startsniff').removeAttr('disabled')
+        $('#stopsniff').attr('disabled','true')
+    }
+
+    if (data.type == 'flowstatus') {
+        table = $('#flow-list')
+        table.empty()
+        table.append("<tr><th>Source</th><th>Destination</th><th>Protocol</th><th>Packet count</th><th>Data transfered</th><th>Decoded as</th><th>Raw payload</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
+        for (var i in data.flows) {
+            flow = data.flows[i]
+            row = $('<tr />').attr('id',flow['fid'])
+            row = netflow_row(flow, row)
+            table.append(row)
+        }
+    }
+
+    if (data.type == 'flow_statistics_update') {
+        // find the column
+        flow = data.flow
+        row = $('#'+flow.fid)
+        if (row.length > 0) {   // we found our row, let's update it
+            row.empty()
+            netflow_row(flow, row)
+        }
+        else {                  // row not found, let's create it
+            row = $("<tr />").attr('id', flow.fid)
+            console.log(row)
+            row = netflow_row(flow, row)
+            $("#flow-list").append(row)
+        }
+    }
+
+    if (data.type == 'get_flow_payload') {
+        pre = $('<pre />').text(data.payload)
+        $('#PayloadModal .modal-body').empty().append(pre)
+    }
+}
+
+function netflow_row(flow, row) {
+    row.append($('<td />').text(flow['src_addr']+":"+flow['src_port']))
+    row.append($('<td />').text(flow['dst_addr']+":"+flow['dst_port']))
+    row.append($('<td />').text(flow['protocol']))
+    row.append($('<td />').text(flow['packet_count']))
+
+    // calculate transfered data
+
+    data_transfered = flow['data_transfered']
+    unit = 0
+    while (data_transfered > 1024) {
+        data_transfered = data_transfered / 1024;
+        unit++ ;
+    }
+
+    data_transfered = Math.round(data_transfered*100)/100
+
+    if (unit == 0)
+        unit = ' B'
+    else if (unit == 1)
+        unit = ' KB'
+    else if (unit == 2)
+        unit = ' MB'
+    else if (unit == 3)
+        unit = ' GB'
+
+    row.append($('<td />').text(data_transfered + unit))
+
+    // setup decoding
+    if (flow.decoded_flow) {
+        decoded = $("<td />").text(flow.decoded_flow.type)
+        decoded.tooltip({ 'title': flow.decoded_flow.info, 'container': 'body'})
+    }
+    else {
+        decoded = $("<td />").text("N/A")
+    }
+    row.append(decoded)
+
+    // setup payload visor
+
+    payload = flow.payload
+    // icon = $("<a />").attr({ 'href': "#PayloadModal", 'role': 'button', 'class':'btn', 'data-toggle': 'modal' })
+    // icon.append($("<i />").addClass('icon-eye-open'))
+    icon = $("<i />").addClass('icon-eye-open');
+    icon.click(function() {
+        get_flow_payload(flow.fid); 
+        $("#PayloadModal").modal('toggle')
+    });
+    row.append($('<td />').addClass('flow-payload').append(icon))
+
+    return row
+}
+
+function get_flow_payload(id) {
+    sendmessage(ws_sniffer, {'cmd': 'get_flow_payload', 'session_name': $('#session_name').text(), 'flowid': id})
+
+}
+
 function snifferInterfaceInit() {
     sendmessage(ws_sniffer, {'cmd': 'sniffstatus', 'session_name': $('#session_name').text()});
-    console.log("sniffstatus");
+    sendmessage(ws_sniffer, {'cmd': 'flowstatus', 'session_name': $('#session_name').text()});
+    console.log("Sent sniffstatus");
+}
 
-    ws_sniffer.onmessage = function(msg) {
-        data = $.parseJSON(msg.data);
-        console.log(data);
-        
-        if (data.msg.status == 'inactive') {
-            $('#startsniff').removeAttr('disabled');
-            $('#stopsniff').attr('disabled','true');
-        }
-        else {
-            $('#startsniff').attr('disabled','true');
-            $('#stopsniff').removeAttr('disabled');
-        }
 
-        sendmessage(ws_sniffer, {'cmd': 'sessionlist'});
-        console.log("sessionlist");
 
-        ws_sniffer.onmessage = function(msg) {
-            data = $.parseJSON(msg.data);
-            console.log(data);
+function startsniff(){
+    session_name = $('#session_name').text()
+    sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_name': session_name})
+    console.log("Sent sniffstart")
 
-            for (var i in data.msg.session_list) {
-                ul = $('#sessions');
-                session_links = $('<a href='+url_static_prefix+'"/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
-                li = $('<li></li>');
-                li.append(session_links);
-                ul.append(li);
-            }
+}
 
-            sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_name': $('#session_name').text()});
-            console.log("sniffupdate");
-
-            ws_sniffer.onmessage = function(msg) {
-                data = $.parseJSON(msg.data);
-                console.log(data);
-                push_nodes(data.nodes);
-                push_links(data.edges);
-                start();
-            };
-
-        }      
-    };
+function stopsniff() {
+    session_name = $('#session_name').text()
+    sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_name': session_name})
+    console.log("Sent sniffstop")
 }
 
 function getSessionList() {
@@ -68,67 +188,3 @@ function getSessionList() {
     }
   });
 }
-
-
-// function getSessionList() {
-//     sendmessage(ws_sniffer, {'cmd': 'sessionlist'});
-//         console.log("sessionlist");
-
-//         ws_sniffer.onmessage = function(msg) {
-//             data = $.parseJSON(msg.data);
-//             console.log(data);
-
-//             table = $('#sessions');
-//             for (var i in data.msg.session_list) {    
-//                 session_links = $('<a href='+url_static_prefix+'"/sniffer/'+data.msg.session_list[i]+'">'+data.msg.session_list[i]+'</a>');
-//                 tr = $('<tr></tr>');
-//                 tr.append($("<td />").append(session_links));
-//                 table.append(tr);
-//             }
-//         }
-// }
-
-function initSnifferWebSocket() {
-    if ("WebSocket" in window) {
-        ws_sniffer = new WebSocket(url_websocket_prefix+"api/sniffer");
-    } else {
-        console.log("WebSocket not supported");
-    }
-}
-
-function startsniff(){
-    session_name = $('#session_name').text()
-    if ( session_name != '') {
-        sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_name': session_name})
-        ws_sniffer.onmessage = function (msg) {
-            data = $.parseJSON(msg.data)
-            console.log(data)
-            $('#startsniff').attr('disabled','true')
-            $('#stopsniff').removeAttr('disabled')
-
-            ws_sniffer.onmessage = function (msg) {
-                data  = $.parseJSON(msg.data)
-                console.log(data)
-                push_nodes(data.nodes);
-                push_links(data.edges);
-                start();
-            };
-        }
-    }
-    else {
-        alert('Please enter a session name to continue')
-    }
-}
-
-function stopsniff() {
-    session_name = $('#session_name').text()
-    sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_name': session_name})
-
-    ws_sniffer.onmessage = function (msg) {
-        data = $.parseJSON(msg.data)
-        console.log(data)
-        $('#startsniff').removeAttr('disabled')
-        $('#stopsniff').attr('disabled','true')
-    }
-}
-

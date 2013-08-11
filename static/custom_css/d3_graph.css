@@ -11,8 +11,9 @@
   opacity: 0.5;
 }
 
-marker {
+.marker {
 	z-index: 1000;
+	display:none;
 }
 
 .dim {
@@ -35,7 +36,7 @@ marker {
 }
 
 .graph {
-	width:72%;
+	width:auto;
 	height:550px;
 	border:1px solid #DDD;
 }

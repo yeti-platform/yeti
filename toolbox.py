@@ -41,8 +41,8 @@ def list_to_str(obj):
         return str(obj)
 
 
-def send_msg(ws, msg):
-    msg = {'type':'msg', 'msg': msg}
+def send_msg(ws, msg, type='msg'):
+    msg = {'type':type, 'msg': msg}
     try:
         ws.send(dumps(msg))
     except Exception, e:

@@ -1,8 +1,22 @@
 {% extends "base.html" %}
 {% block main %}
 
-<div class='span9 graph'>
+<div class='span9'> 
+  <div class='graph'>
+  </div>
+  <div class='hotkeys'>
+  <ul>
+    <li><strong>space</strong>: get node neighbors</li>
+    <li><strong>e</strong>: find evil</li>
+    <li><strong>u</strong>: unfix selected</li>
+    <li><strong>shift</strong>: multimple selections</li>
+    <li><strong>h</strong>: hide nodes</li>
+    <li><strong>(shift+)arrows</strong>: move nodes</li>
+  </ul>
 </div>
+</div>
+
+
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
@@ -42,15 +56,5 @@ ws_sniffer.onopen = snifferInterfaceInit
   <h1>Info</h1>
   <table class='table' id='node_info'></table>
   <div class='whois'></div>
-</div>
-<div class='hotkeys'>
-  <ul>
-    <li><strong>space</strong>: get node neighbors</li>
-    <li><strong>e</strong>: find evil</li>
-    <li><strong>u</strong>: unfix selected</li>
-    <li><strong>shift</strong>: multimple selections</li>
-    <li><strong>h</strong>: hide nodes</li>
-    <li><strong>(shift+)arrows</strong>: move nodes</li>
-  </ul>
 </div>
 {% endblock %}

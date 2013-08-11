@@ -1,23 +1,25 @@
+/* sniffer */
+
+#PayloadModal {
+	left:10%;
+	top:10%;
+	margin:0;
+	width:80%;
+}
+
+#PayloadModal .modal-body pre {
+	font-size: small;
+	font-family: "Courier New";
+	line-height: 12px;
+}
+
+
 /* Dataset */
 
 .timestamp {
 	width:130px;
 }
 
-/*.loading-modal {
-	display:    none;
-    position:   relative;
-    z-index:    1000;
-    top:        0;
-    left:       0;
-    height:     100%;
-    width:      100%;
-    background: rgba( 255, 255, 255, .8 ) 
-                url('../custom_img/ajax-loader.gif') 
-                50% 50% 
-                no-repeat;
-}
-*/
 
 #loading-spinner {
 	display: none;
@@ -27,15 +29,7 @@
 	margin:40px auto;
 	display:block;
 }
-/*
-#all.loading {
-	overflow: hidden;
-}
 
-#all.loading .loading-modal {
-	display: block;
-}
-*/
 
 /* Feeds */
 

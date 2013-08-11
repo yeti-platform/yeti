@@ -104,7 +104,6 @@ function get_dataset(query, url) {
 
 	  	for (var i in data.elements) {
 	  		elt = data.elements[i]
-	  		console.log(elt)
 	  		context_links = new Array()
 	  		//create row
 	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'></tr>")

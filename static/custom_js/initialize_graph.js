@@ -21,7 +21,7 @@ function initialize_graph() {
 
 		 color = d3.scale.category10();
 		 
-		 width = $('.span9').width();
+		 width = $('.graph').width();
          height = window.innerHeight - 100;
 
 		$('div.data').height(height);
