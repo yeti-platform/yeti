@@ -203,7 +203,8 @@ def list():
 
 	debug_output("Search for %s (page #%s)" % (query, page))
 	
-	elts = [e for e in a.data.find(query).sort('date_created', -1)]
+	# more memory efficient to slice within the request than afterwards
+	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
 	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
@@ -212,14 +213,14 @@ def list():
 	data = {}
 	if len(elts) > 0:
 		data['fields'] = elts[0].display_fields
-		data['elements'] = elts[page*per_page:(page+1)*per_page]
+		data['elements'] = elts
 	else:
 		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('context', 'Context')]
 		data['elements'] = []
 	
 	data['page'] = page
 	data['per_page'] = per_page
-	data['total_results'] = len(elts)
+	data['total_results'] = a.data.find(query).count()
 
 	return dumps(data)
 

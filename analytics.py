@@ -116,7 +116,7 @@ class Analytics:
 			ip = ips[i]['value']
 			_as = as_info[ip]
 			
-			assert ip == _as['ip']
+			assert ip == _as.get('ip', "N/A")
 			del _as['ip']
 
 			# copy keys from _as into IP
