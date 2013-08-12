@@ -490,7 +490,7 @@ def sniffer_api():
 				fid = message['flowid']
 				flow = session.flows[fid]
 				data = {}
-				data['payload'] = flow.payload
+				data['payload'] = flow.get_payload('web')
 				data['type'] = cmd
 				ws.send(dumps(data))
 				continue

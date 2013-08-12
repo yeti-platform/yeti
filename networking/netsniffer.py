@@ -44,14 +44,14 @@ class Sniffer():
 		debug_output("Loading PCAP from file...")
 		timestamp = str(time.mktime(time.gmtime())).split('.')[0]
 		filename = '/tmp/load-%s.cap' % timestamp
-		try:
-			f = open(filename, 'wb')
-			f.write(pcap)
-			f.close()
-			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=filename)	
-			debug_output("Loaded %s packets from file." % len(self.pkts))
-		except Exception, e:
-			return e
+		#try:
+		f = open(filename, 'wb')
+		f.write(pcap)
+		f.close()
+		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=filename)	
+		debug_output("Loaded %s packets from file." % len(self.pkts))
+		#except Exception, e:
+		#	return e
 		
 		return True
 

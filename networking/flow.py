@@ -1,7 +1,9 @@
 from scapy.all import *
 from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading, string
-from bson.json_util import dumps
+from bson.json_util import dumps, loads
+
+
 
 
 class Decoder(object):
@@ -10,9 +12,10 @@ class Decoder(object):
 	def decode_flow(flow):
 		data = None
 		if flow.src_port == 80: # probable HTTP response
-			data = Decoder.HTTP_response(flow.payload)
+			data = Decoder.HTTP_response(flow.get_payload())
 		if flow.dst_port == 80: # probable HTTP request
-			data = Decoder.HTTP_request(flow.payload)
+			data = Decoder.HTTP_request(flow.get_payload())
+			
 
 		if data:
 			return data
@@ -53,23 +56,22 @@ class Decoder(object):
 
 			data['type'] = 'HTTP response'
 			data['info'] = 'Status: %s' % (data['status'])
-			try:
-				if response and encoding:
-					if data['encoding'] == 'chunked':
-						decoded = ""
-						encoded = data['response']
-						cursor = 0
-						chunk_size = -1
-						while chunk_size != 0:
-							chunk_size = int(encoded[cursor:cursor+encoded[cursor:].find('\r\n')], 16)
-							cursor += encoded[cursor:].find('\r\n') + 2
-							decoded += encoded[cursor:chunk_size+cursor]
-							cursor += chunk_size + 2
-						data['decoded_payload'] = decoded
-			except Exception, e:
-				return False
+			# try:
+			# 	if response and encoding:
+			# 		if data['encoding'] == 'chunked':
+			# 			decoded = u""
+			# 			encoded = data['response']
+			# 			cursor = 0
+			# 			chunk_size = -1
+			# 			while chunk_size != 0:
+			# 				chunk_size = int(encoded[cursor:cursor+encoded[cursor:].find('\r\n')], 16)
+			# 				cursor += encoded[cursor:].find('\r\n') + 2
+			# 				decoded += encoded[cursor:chunk_size+cursor]
+			# 				cursor += chunk_size + 2
+			# 			data['decoded_payload'] = decoded
+			# except Exception, e:
+			# 	return False
 			
-
 			return data
 	
 
@@ -191,8 +193,13 @@ class Flow(object):
 		# we'll use the type and info fields
 		update['decoded_flow'] = Decoder.decode_flow(self)
 
-
 		return update
+
+	def get_payload(self, encoding='web'):
+		if encoding == 'web':
+			return unicode(self.payload, errors='replace')
+		else:
+			return self.payload
 
 	def print_statistics(self):
 		print "%s:%s  ->  %s:%s (%s, %s packets, %s buff)" % (self.src_addr, self.src_port, self.dst_addr, self.dst_port, self.protocol, len(self.packets), len(self.buffer))
