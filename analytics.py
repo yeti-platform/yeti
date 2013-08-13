@@ -219,23 +219,24 @@ class Analytics:
 
 		while results.count() > 0:
 
-			stack_lock = threading.Lock()
+			#stack_lock = threading.Lock()
 
-			results = [r for r in results] # this is not good
+			#results = [r for r in results] # this is not good
+
 			threads = []
 
 			# status reporting
-			self.total = len(results)
+			self.total = results.count()
 			self.progress = 0
 
-			while len(results) > 0:
-				
+			#while len(results) > 0:
+			for r in results:
+
 				self.max_threads.acquire()
-				stack_lock.acquire()
-				elt = results.pop()
-				
-				stack_lock.release()
-				thread = Worker(elt, self)
+				#stack_lock.acquire()
+				#elt = results.pop()
+				#stack_lock.release()
+				thread = Worker(r, self)
 				threads.append(thread)
 				thread.start()
 				
