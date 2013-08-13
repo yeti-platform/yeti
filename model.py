@@ -60,7 +60,7 @@ class Model:
 
 	def __init__(self):
 		self._connection = MongoClient()
-		self._db = self._connection.cifpy_flask_new
+		self._db = self._connection.malcom
 		self._db.add_son_manipulator(Transform())
 		self.elements = self._db.elements
 		self.graph = self._db.graph
@@ -93,19 +93,27 @@ class Model:
 	def save(self, element):
 		self.db_lock.acquire()
 		elt = self.exists(element)
+		
 
 		if elt:
-			element['_id'] = elt['_id']
 			element.upgrade_context(elt['context'])
+			element.date_updated = datetime.datetime.utcnow()
 			debug_output("(updated %s %s)" % (element.type, element.value), type='model')
 		else:
 			element['date_created'] = datetime.datetime.utcnow()
 			debug_output("(added %s %s to DB)" % (element.type, element.value), type='model')
 
 		element['date_updated'] = datetime.datetime.utcnow()
-		saved = self.elements.save(element)
+		
+		if "_id" in element:
+			del element["_id"] # pymongo does not allow updating IDs (even if it's the same)
+
+		self.elements.update({'value': element['value']}, { "$set" : element}, upsert=True)
+		saved = self.elements.find_one({'value': element['value']})
 
 		self.db_lock.release()
+
+		assert saved.get('date_created', None) != None and saved.get('_id', None) != None
 		return saved
 
 	def remove(self, element_id):
@@ -119,7 +127,7 @@ class Model:
 
 			if not src or not dst:
 				return None
-				
+			
 			conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
 			if conn:
 				conn['attribs'] = attribs

@@ -131,7 +131,6 @@ def nodes(field, value):
 def graph(field, value):
 	a = g.a
 	query = { field: re.compile(re.escape(value), re.IGNORECASE) }
-	print query
 	base_elts = [e for e in a.data.elements.find( query )]
 	edges, nodes = a.data.get_graph_for_elts(base_elts)
 	data = { 'query': base_elts, 'edges': edges, 'nodes': nodes }
@@ -189,7 +188,6 @@ def dataset():
 def list():
 	a = g.a
 	query = {}
-	print request.args
 	try:
 		page = int(request.args['page'])
 	except Exception, e:
@@ -200,8 +198,6 @@ def list():
 			query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
 
 	per_page = 50
-
-	debug_output("Search for %s (page #%s)" % (query, page))
 	
 	# more memory efficient to slice within the request than afterwards
 	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
@@ -229,7 +225,6 @@ def dataset_csv():
 	a = g.a
 	filename = []
 	query = {}
-	print request.args
 	for key in request.args:
 		if key != '':
 			query[key] = re.compile(re.escape(request.args[key]), re.IGNORECASE)
@@ -238,7 +233,6 @@ def dataset_csv():
 			filename.append('all')
 
 	filename = "-".join(filename)
-	print query
 	results = a.data.find(query).sort('date_created', -1)
 	
 	if results.count() == 0:

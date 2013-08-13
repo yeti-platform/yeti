@@ -19,9 +19,11 @@ class Worker(threading.Thread):
 		
 
 	def run(self):
+		
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']), type='analytics')
 		etype = self.elt['type']
 		context = self.elt['context']
+		assert (self.elt.get('last_analysis', None) == None) or (datetime.datetime.utcnow() - self.elt.elt['last_analysis'] >= datetime.timedelta(days=1))
 		new = self.elt.analytics()
 		for n in new:
 			elt = self.engine.data.exists(n[1])
@@ -34,6 +36,7 @@ class Worker(threading.Thread):
 			self.engine.data.connect(self.elt, added, n[0])
 		
 		self.engine.save_element(self.elt, context)
+		assert datetime.datetime.utcnow() - self.elt['last_analysis'] < datetime.timedelta(days=1)
 		self.engine.progress += 1
 		self.engine.websocket_lock.acquire()
 		self.engine.notify_progress()
@@ -73,8 +76,8 @@ class Analytics:
 	def save_element(self, element, context=[]):
 
 		element.upgrade_context(context)
-		_id = self.data.save(element)
-		return self.data.find_one(_id)
+		return self.data.save(element)
+		
 
 
 	# graph function
@@ -111,30 +114,49 @@ class Analytics:
 		if not as_info:
 			return
 
-		for i in range(len(ips)):
-
-			ip = ips[i]['value']
-			_as = as_info[ip]
+		for ip in as_info:
 			
-			assert ip == _as.get('ip', "N/A")
+			_as = as_info[ip]
+			_ip = self.data.find_one({'value': ip})
+			
 			del _as['ip']
-
-			# copy keys from _as into IP
 			for key in _as:
 				if key not in ['type', 'value', 'context']:
-					ips[i][key] = _as[key]
-			
-			# remove the BGP key from the AS
+					_ip[key] = _as[key]
 			del _as['bgp']
 
 			_as = As.from_dict(_as)
-			_as['last_analysis'] = datetime.datetime.now()
-			_as['date_updated'] = datetime.datetime.now()
 
-			new = self.save_element(_as)
-			self.save_element(ips[i])
+			# commit any changes to DB
+			_as = self.save_element(_as)
+			_ip = self.save_element(_ip)
+
+			if _as and _ip:
+				self.data.connect(_ip, _as, 'net_info')
+
+		# for i in range(len(ips)):
+
+		# 	ip = ips[i]['value']
+		# 	_as = as_info[ip]
 			
-			self.data.connect(ips[i], new, 'net_info')
+		# 	assert ip == _as.get('ip', "N/A")
+		# 	del _as['ip']
+
+		# 	# copy keys from _as into IP
+		# 	for key in _as:
+		# 		if key not in ['type', 'value', 'context']:
+		# 			ips[i][key] = _as[key]
+			
+		# 	# remove the BGP key from the AS
+		# 	del _as['bgp']
+
+		# 	_as = As.from_dict(_as)
+		# 	_as['date_updated'] = datetime.datetime.now()
+
+		# 	new = self.save_element(_as)
+		# 	self.save_element(ips[i])
+			
+		# 	self.data.connect(ips[i], new, 'net_info')
 
 
 	def find_evil(self, elt, depth=2, node_links=([],[])):
@@ -199,8 +221,7 @@ class Analytics:
 
 			stack_lock = threading.Lock()
 
-			results = [r for r in results]
-			#debug_output("################## Will deal with %s results" % len(results))
+			results = [r for r in results] # this is not good
 			threads = []
 
 			# status reporting
@@ -208,23 +229,23 @@ class Analytics:
 			self.progress = 0
 
 			while len(results) > 0:
-
+				
 				self.max_threads.acquire()
 				stack_lock.acquire()
 				elt = results.pop()
+				
 				stack_lock.release()
 				thread = Worker(elt, self)
 				threads.append(thread)
 				thread.start()
-
+				
 			for t in threads:
 				t.join()
 
-			#debug_output("################## used %s threads for this loop" % len(threads))
 
 			results = self.data.elements.find(
 				{ '$or': [
-							{ 'last_analysis': {"$lt": datetime.datetime.now() - datetime.timedelta(1)} },
+							{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
 							{ 'last_analysis': None },
 						]
 				}

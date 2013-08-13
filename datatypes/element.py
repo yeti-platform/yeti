@@ -97,7 +97,9 @@ class As(Element):
 
 class Url(Element):
 	display_fields = Element.default_fields + [
+							('scheme', 'Scheme'),
 							('hostname', 'Hostname'),
+							('path', 'Path'),
 							]
 
 	def __init__(self, url="", context=[]):
@@ -122,12 +124,18 @@ class Url(Element):
 		debug_output("(url analytics for %s)" % self['value'])
 
 		new = []
-		# link with hostname
-		host = toolbox.url_get_host(self['value'])
-		if host == None:
-			self['hostname'] = "No hostname"
-		else:
-			self['hostname'] = host
+		#link with hostname
+		# host = toolbox.url_get_host(self['value'])
+		# if host == None:
+		# 	self['hostname'] = "No hostname"
+		# else:
+		# 	self['hostname'] = host
+
+		# find path
+		path, scheme, hostname = toolbox.split_url(self['value'])
+		self['path'] = path
+		self['scheme'] = scheme
+		self['hostname'] = hostname
 
 		if toolbox.is_ip(self['hostname']):
 			new.append(('host', Ip(self['hostname'])))

@@ -17,18 +17,18 @@ from bson.json_util import dumps
 url_regex = r"""
 
         (
-          (([\w]{2,9}):\/\/)?
+          ((?P<scheme>[\w]{2,9}):\/\/)?
           ([\S]*\:[\S]*\@)?
-          (
+          (?P<hostname>
             ((([\w\-]+\.)+)
             ([a-zA-Z]{2,6}))
             |([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})
           )
 
           (\:[\d]{1,5})?
-          (\/[\/\w\-_%\.]+)?
-          (\?[\w\-_%\.&=]+)?
-          (\#[\S]+)?
+          (?P<path>(\/[\/\w\-_%\.]+)?
+            (\?[\w\-_%\.&=]+)?
+            (\#[\S]+)?)
         )
     """
 
@@ -178,6 +178,17 @@ def is_url(url):
     else:
         return None
 
+def split_url(url):
+    _re = re.compile(url_regex,re.VERBOSE)
+    data = re.search(_re, url)
+    if data:
+        path = data.group('path')
+        scheme = data.group('scheme')
+        hostname = data.group('hostname')
+        return (path, scheme, hostname)
+    return None
+
+
 
 def dns_dig_records(hostname):
 
@@ -196,27 +207,33 @@ def dns_dig_records(hostname):
     return records
 
 def url_get_host(url):
-    host = url_get_hostname(url)
-    if host:
-        return host
+    hostname = split_url(url)[2]
+    if hostname == "":
+        return None
     else:
-        host = url_get_ip(url)
-        if host:
-            return host
-        else:
-            return None
+        return hostname
+        
+    # host = url_get_hostname(url)
+    # if host:
+    #     return host
+    # else:
+    #     host = url_get_ip(url)
+    #     if host:
+    #         return host
+    #     else:
+    #         return None
 
-def url_get_hostname(url):
-    try:
-        return find_hostnames(url)[0]
-    except Exception, e:
-        return None
+# def url_get_hostname(url):
+#     try:
+#         return find_hostnames(url)[0]
+#     except Exception, e:
+#         return None
 
-def url_get_ip(url):
-    try:
-        return find_ips(url)[0]
-    except Exception, e:
-        return None
+# def url_get_ip(url):
+#     try:
+#         return find_ips(url)[0]
+#     except Exception, e:
+#         return None
     
 
 def url_check(url):

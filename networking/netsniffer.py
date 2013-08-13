@@ -35,6 +35,7 @@ class Sniffer():
 		self.nodes = []
 		self.edges = []
 		self.nodes_ids = []
+		self.nodes_values = []
 		self.nodes_pk = []
 		self.edges_ids = []
 		self.flows = {}
@@ -125,18 +126,30 @@ class Sniffer():
 		src = source['ip']
 		dst = dest['ip']
 
-		src = self.analytics.add_text([src], ['sniffer', self.name])
-		dst = self.analytics.add_text([dst], ['sniffer', self.name])
-
-		if src['_id'] not in self.nodes_ids:
+		if src not in self.nodes_values:
+			src = self.analytics.add_text([src], ['sniffer', self.name])
 			self.nodes_ids.append(src['_id'])
+			self.nodes_values.append(src['value'])
 			self.nodes.append(src)
 			new_elts.append(src)
+		else:
+			src = [e for e in self.nodes if e['value'] == src][0]
 
-		if dst['_id'] not in self.nodes_ids:
+		if dst not in self.nodes_values:
+			dst = self.analytics.add_text([dst], ['sniffer', self.name])
 			self.nodes_ids.append(dst['_id'])
+			self.nodes_values.append(dst['value'])
 			self.nodes.append(dst)
 			new_elts.append(dst)
+		else:
+			dst = [e for e in self.nodes if e['value'] == dst][0]
+
+		# if src['_id'] not in self.nodes_ids:
+		# add to db
+		# if dst['_id'] not in self.nodes_ids:
+		# add to db
+		# this is being done in the conditions above
+			
 
 		# don't save sniffing relations to the DB
 		# conn = self.analytics.data.connect(src, elt, 'communication', True)
@@ -173,44 +186,47 @@ class Sniffer():
 				if hname[-1:] == ".":
 					hname = hname[:-1]
 				
-				_hname = self.analytics.add_text([hname], [self.name])		# log every discovery to db
-				_ipaddr = self.analytics.add_text([ipaddr], [self.name])
+				# check if we haven't seen these already
 
-				debug_output("Added %s, %s" %(hname, ipaddr))
+				if hname not in self.nodes_values:
+					_hname = self.analytics.add_text([hname], ['sniffer', self.name])		# log every discovery to db
+					self.nodes_ids.append(_hname['_id'])
+					self.nodes_values.append(_hname['value'])
+					self.nodes.append(_hname)
+					new_elts.append(_hname)
+				else:
+					_hname = [e for e in self.nodes if e['value'] == hname][0]
+
+				if ipaddr not in self.nodes_values:
+					_ipaddr = self.analytics.add_text([ipaddr], ['sniffer', self.name])
+					self.nodes_ids.append(_ipaddr['_id'])
+					self.nodes_values.append(_ipaddr['value'])
+					self.nodes.append(_ipaddr)
+					new_elts.append(_ipaddr)
+				else:
+					_ipaddr = [e for e in self.nodes if e['value'] == ipaddr][0]
 
 				debug_output("Caught DNS response %s: %s -> %s" % (i, _hname['value'], _ipaddr['value']))
+				debug_output("Added %s, %s" %(hname, ipaddr))
 
-				if _hname and _ipaddr:
 
-					if _hname['_id'] not in self.nodes_ids:
-						self.nodes_ids.append(_hname['_id'])
-						self.nodes.append(_hname)
-						new_elts.append(_hname)
-
-					if _ipaddr['_id'] not in self.nodes_ids:
-						self.nodes_ids.append(_ipaddr['_id'])
-						self.nodes.append(_ipaddr)
-						new_elts.append(_ipaddr)
-
-					# we can check for types using
-					# if pkt[DNS].an[i].type == 1: # A record
-
-					conn = {'attribs': 'A', 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
-					if conn not in self.edges:
-						self.edges.append(conn)
-						new_edges.append(conn)
+				conn = {'attribs': 'A', 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
+				if conn not in self.edges:
+					self.edges.append(conn)
+					new_edges.append(conn)
 
 			#deal with the original DNS request
 			question = pkt[DNS].qd.qname
-			_question = self.analytics.add_text([question], [self.name]) # log it to db (for further reference)
 
-			if _question:
-				if _question['_id'] not in self.nodes_ids:
-						self.nodes_ids.append(_question['_id'])
-						self.nodes.append(_question)
-						new_edges.append(_question)
-
-
+			if question not in self.nodes_values:
+				_question = self.analytics.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
+				self.nodes_ids.append(_question['_id'])
+				self.nodes_values.append(_question['value'])
+				self.nodes.append(_question)
+				new_edges.append(_question)
+			else:
+				_question = [e for e in self.nodes if e['value'] == question][0]
+						
 
 				#conn = self.analytics.data.connect(_question, elt, "resolve", True)
 				# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id']) } }
@@ -251,16 +267,16 @@ class Sniffer():
 		data = {}
 		data['flow'] = flow.get_statistics()
 		data['type'] = 'flow_statistics_update'
-
-		try:
-			self.ws.send(dumps(data))
-		except Exception, e:
-			debug_output("Could not send flow statistics: %s" % e)
+		if self.ws:
+			try:
+				self.ws.send(dumps(data))
+			except Exception, e:
+				debug_output("Could not send flow statistics: %s" % e)
 
 	def send_nodes(self, elts=[], edges=[]):
 		data = { 'querya': {}, 'nodes':elts, 'edges': edges, 'type': 'nodeupdate'}
 		try:
-			if len(elts) > 0 or len(edges) > 0:
+			if (len(elts) > 0 or len(edges) > 0) and self.ws:
 				self.ws.send(dumps(data))
 		except Exception, e:
 			debug_output("Could not send nodes: %s" % e)
