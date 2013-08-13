@@ -80,7 +80,7 @@ class Flow(object):
 	
 	@staticmethod
 	def flowid(pkt):
-		fid = "flowid-%s-%s-%s-%s" % (pkt[IP].src, pkt[IP].sport, pkt[IP].dst, pkt[IP].dport)
+		fid = "flowid--%s-%s--%s-%s" % (pkt[IP].src, pkt[IP].sport, pkt[IP].dst, pkt[IP].dport)
 		return fid.replace('.','-')
 
 	@staticmethod

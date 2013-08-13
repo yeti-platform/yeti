@@ -55,7 +55,7 @@ function snifferWebSocketHandler(msg) {
     if (data.type == 'flowstatus') {
         table = $('#flow-list')
         table.empty()
-        table.append("<tr><th>Source</th><th>Destination</th><th>Protocol</th><th>Packet count</th><th>Data transfered</th><th>Decoded as</th><th>Raw payload</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
+        table.append("<tr><th style='text-align:right;'>Source</th><th></th><th style='text-align:right;'>Destination</th><th></th><th>Protocol</th><th>Packet count</th><th>Data transfered</th><th>Decoded as</th><th>Raw payload</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
         for (var i in data.flows) {
             flow = data.flows[i]
             row = $('<tr />').attr('id',flow['fid'])
@@ -86,9 +86,22 @@ function snifferWebSocketHandler(msg) {
     }
 }
 
+function highlight_response(row) {
+    id = row.attr('id')
+    split = id.split('--')
+    newid = split[0] +"--"+ split[2] +"--"+ split[1]
+    $("#"+newid).toggleClass('flow-response')
+}
+
 function netflow_row(flow, row) {
-    row.append($('<td />').text(flow['src_addr']+":"+flow['src_port']))
-    row.append($('<td />').text(flow['dst_addr']+":"+flow['dst_port']))
+    // row.append($('<td />').text(flow['src_addr']+":"+flow['src_port']))
+    // row.append($('<td />').text(flow['dst_addr']+":"+flow['dst_port']))
+
+    row.append($('<td />').text(flow['src_addr']).css('text-align', 'right'))
+    row.append($('<td />').text(flow['src_port']))
+    row.append($('<td />').text(flow['src_addr']).css('text-align', 'right'))
+    row.append($('<td />').text(flow['dst_port']))
+
     row.append($('<td />').text(flow['protocol']))
     row.append($('<td />').text(flow['packet_count']))
 
@@ -122,6 +135,12 @@ function netflow_row(flow, row) {
     else {
         decoded = $("<td />").text("N/A")
     }
+    row.mouseover(function() {
+        highlight_response($(this))
+    });
+    row.mouseout(function() {
+        highlight_response($(this))
+    });
     row.append(decoded)
 
     // setup payload visor
@@ -151,10 +170,10 @@ function snifferInterfaceInit() {
 }
 
 
-
 function startsniff(){
     session_name = $('#session_name').text()
     sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_name': session_name})
+    $('#startsniff').attr('disabled','true')
     console.log("Sent sniffstart")
 
 }
@@ -162,6 +181,7 @@ function startsniff(){
 function stopsniff() {
     session_name = $('#session_name').text()
     sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_name': session_name})
+    $('#stopsniff').attr('disabled','true')
     console.log("Sent sniffstop")
 }
 

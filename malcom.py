@@ -451,7 +451,7 @@ def sniffer_api():
 			if cmd == 'sniffstop':
 				if session.status():
 					session.stop()
-					send_msg(ws, 'OK')
+					send_msg(ws, 'OK', type=cmd)
 				else:
 					send_msg(ws, 'Error: sniffer not running', type=cmd)
 				continue

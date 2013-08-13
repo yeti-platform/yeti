@@ -66,7 +66,7 @@ class Analytics:
 					elt = Hostname(is_hostname(t), [])
 				if elt:
 					added.append(self.save_element(elt, context))
-
+					
 		if len(added) == 1:
 			return added[0]
 		else:

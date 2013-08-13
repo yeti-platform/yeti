@@ -59,7 +59,7 @@ class Sniffer():
 	def run(self):
 		debug_output("[+] Sniffing session %s started" % self.name)
 		debug_output("[+] Filter: %s" % self.filter)
-		#try:
+		self.stopSniffing = False
 		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
 		#except Exception, e:
 		#	print e
@@ -220,10 +220,11 @@ class Sniffer():
 
 			if question not in self.nodes_values:
 				_question = self.analytics.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
-				self.nodes_ids.append(_question['_id'])
-				self.nodes_values.append(_question['value'])
-				self.nodes.append(_question)
-				new_edges.append(_question)
+				if _question:
+					self.nodes_ids.append(_question['_id'])
+					self.nodes_values.append(_question['value'])
+					self.nodes.append(_question)
+					new_edges.append(_question)
 			else:
 				_question = [e for e in self.nodes if e['value'] == question][0]
 						
