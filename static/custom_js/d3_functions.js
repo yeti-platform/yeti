@@ -28,7 +28,7 @@ function getneighbors() {
   console.log($.param(ids))
   $.ajax({
     type: 'post',
-    url: '/neighbors',
+    url: url_static_prefix+'/neighbors',
     dataType: 'json',
     data: ids,
     success: function(data) {
@@ -53,7 +53,7 @@ function getevil() {
   console.log($.param(ids))
   $.ajax({
     type: 'post',
-    url: '/evil',
+    url: url_static_prefix+'/evil',
     dataType: 'json',
     data: ids,
     success: function(data) {

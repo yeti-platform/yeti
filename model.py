@@ -113,7 +113,10 @@ class Model:
 
 		self.db_lock.release()
 
-		assert saved.get('date_created', None) != None and saved.get('_id', None) != None
+		print saved
+		assert saved.get('date_created', None) != None 
+		assert saved.get('_id', None) != None
+
 		return saved
 
 	def remove(self, element_id):
