@@ -7,8 +7,11 @@ Malcom can help you:
 * detect central command and control (C&C) servers
 * understand peer-to-peer networks
 * observe DNS fast-flux infrastructures
+* quickly determine if a network artifact is 'known-bad'
 
-The aim of Malcom is to make malware analysis *faster* by providing a human-readable version of network traffic originating from a given host or network. Convert network traffic information to actionable intelligence faster.
+The aim of Malcom is to make malware analysis and intel gathering *faster* by providing a human-readable version of network traffic originating from a given host or network. Convert network traffic information to actionable intelligence faster.
+
+Check the [wiki](https://github.com/tomchop/malcom/wiki) for a Quickstart and some nice screenshots.
 
 In the near future, it will also become a collaborative tool (coming soon!)
 
@@ -62,7 +65,7 @@ The following was tested on Ubuntu server 12.04 LTS:
         pip install lxml
 
 
-Launch the webserver using `python server.py`. Check `python server.py --help` for listen interface and ports.
+Launch the webserver using `python malcom.py`. Check `python malcom.py --help` for listen interface and ports.
 
 ### Environment
 
