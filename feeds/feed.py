@@ -1,4 +1,4 @@
-import os
+import os, sys
 from toolbox import debug_output
 from datetime import timedelta, datetime
 
@@ -84,7 +84,7 @@ class FeedEngine(object):
 					class_n = modict.get(n)
 				 	try:
 				 		if issubclass(class_n, Feed) and class_n not in globals_:
-				 			print " + Loading %s..." % n
+				 			sys.stderr.write(" + Loading %s..." % n)
 				 			new_feed = class_n(n) # create new feed object
 				 			self.feeds[n] = new_feed
 

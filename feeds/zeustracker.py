@@ -30,7 +30,7 @@ class ZeusTrackerBinaries(Feed):
             feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries")
             self.status = "OK"
         except Exception, e:
-            self.status = "ERROR: " + e
+            self.status = "ERROR: " + str(e)
             return False
         
         children = ["title", "link", "description", "guid"]
