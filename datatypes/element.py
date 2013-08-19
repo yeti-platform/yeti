@@ -4,7 +4,6 @@ import pygeoip
 from toolbox import debug_output
 
 
-
 class Element(dict):
 
 	default_fields = [('date_updated', 'Updated'), ('value', "Value"), ('type', "Type"), ('context', "Context")]	
@@ -287,3 +286,11 @@ class Hostname(Element):
 		self['last_analysis'] = datetime.datetime.utcnow()
 
 		return new
+
+DataTypes = {
+	'url': Url,
+	'ip': Ip,
+	'hostname': Hostname,
+	'as': As,
+	'evil': Evil,
+}

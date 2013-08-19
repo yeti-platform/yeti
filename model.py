@@ -5,53 +5,21 @@ import pygeoip
 import threading
 from toolbox import *
 from bson.objectid import ObjectId
-from datatypes.element import Hostname, Url, Ip, As, Evil
+from datatypes.element import Hostname, Url, Ip, As, Evil, DataTypes
 
-def encode_datatype(datatype):
-	return datatype.to_dict()
-
-def decode_custom_ip(document):
-	assert document['type'] == "ip"
-	return Ip.from_dict(document)
-	
-def decode_custom_url(document):
-	assert document['type'] == "url"
-	return Url.from_dict(document)
-	
-def decode_custom_hostname(document):
-	assert document['type'] == "hostname"
-	return Hostname.from_dict(document)
-
-def decode_custom_as(document):
-	assert document['type'] == "as"
-	return As.from_dict(document)
-
-def decode_custom_evil(document):
-	assert document['type'] == "evil"
-	return Evil.from_dict(document)
 
 class Transform(SONManipulator):
 	def transform_incoming(self, son, collection):
 		for (key, value) in son.items():
-			if isinstance(value, Hostname) or isinstance(value, Ip) or isinstance(value, Url):
-				son[key] = encode_datatype(value) #do static methods in each class
-			elif isinstance(value, dict): # Make sure we recurse into sub-docs
+			if isinstance(value, dict):
 				son[key] = self.transform_incoming(value, collection)
 		return son
 
-
 	def transform_outgoing(self, son, collection):
 		if 'type' in son:
-			if son['type'] == 'ip':
-				return decode_custom_ip(son)
-			if son['type'] == 'url':
-				return decode_custom_url(son)
-			if son['type'] == 'hostname':
-				return decode_custom_hostname(son)
-			if son['type'] == 'as':
-				return decode_custom_as(son)
-			if son['type'] == 'evil':
-				return decode_custom_evil(son)
+			t = son['type']
+			return DataTypes[t].from_dict(son)
+
 		else:
 			return son
 
@@ -113,7 +81,6 @@ class Model:
 
 		self.db_lock.release()
 
-		print saved
 		assert saved.get('date_created', None) != None 
 		assert saved.get('_id', None) != None
 
