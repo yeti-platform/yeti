@@ -503,14 +503,24 @@ def echo(ws):
 
 if __name__ == "__main__":
 	
-	os.system('clear')
+	
 
 	# options
 	parser = argparse.ArgumentParser(description="Malcom - malware communications analyzer")
 	parser.add_argument("-i", "--interface", help="Listen interface", default=app.config['LISTEN_INTERFACE'])
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=app.config['LISTEN_PORT'])
+	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
 	args = parser.parse_args()
 
+	# call malcom to run feeds from crontab or other method
+	if args.feeds >= 1:
+		if args.feeds == 1:
+			feed_engine.run_scheduled_feeds()
+		elif args.feeds == 2:
+			feed_engine.run_all_feeds()
+		exit()
+
+	os.system('clear')
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port
 
