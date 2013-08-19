@@ -341,8 +341,12 @@ function start() {
 function tick(e) {
 
   node.attr("transform", function(d) { 
-  	return "translate(" + Math.max(5, Math.min(width - 5, d.x)) + "," + Math.max(5, Math.min(height - 5, d.y)) + ")"; 
+  	d.x = Math.max(5, Math.min(width - 5, d.x));
+    d.y = Math.max(5, Math.min(height - 5, d.y));
+    return "translate(" + d.x + "," + d.y + ")";
  });
+
+  node.attr()
 
   link.attr("x1", function(d) { return Math.max(5, Math.min(width - 5, d.source.x)); })
       .attr("y1", function(d) { return Math.max(5, Math.min(height - 5, d.source.y)); })

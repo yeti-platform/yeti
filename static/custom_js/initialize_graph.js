@@ -36,7 +36,7 @@ function initialize_graph() {
 		    .links(links)
 		    .charge(-400)
 		    .friction(0.8)
-		    .linkDistance(120)
+		    .linkDistance(70)
 		    .size([width, height])
 		    .on("tick", tick);
 
