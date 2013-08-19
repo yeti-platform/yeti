@@ -136,7 +136,30 @@ function resize() {
     height = window.innerHeight - 150;
     $('.graph').height(height)
     svg.attr("width", width).attr("height", height);
+    brush.attr('width', width).attr('height', height);
     force.size([width, height]).resume();
+
+    brush.call(d3.svg.brush()
+            .x(d3.scale.identity().domain([0, width]))
+            .y(d3.scale.identity().domain([0, height]))
+            .on("brushstart", function(d) {
+              node.each(function(d) { 
+                d.previouslySelected = shiftKey && d.selected; 
+              });
+            })
+            .on("brush", function() {
+              var extent = d3.event.target.extent();
+              node.classed("selected", function(d) {
+                d.selected = d.previouslySelected ^
+                    (extent[0][0] <= d.x && d.x < extent[1][0]
+                    && extent[0][1] <= d.y && d.y < extent[1][1]);
+                return d.selected;
+              });
+            })
+            .on("brushend", function() {
+              d3.event.target.clear();
+              d3.select(this).call(d3.event.target);
+            }));
 }
 
 function add_nodes(new_node) {
@@ -184,7 +207,6 @@ function push_links(edges) {
      edges[i].target = nodes[ids_nodes.indexOf(dst_oid)]
      edges[i].src = edges[i].source._id
      edges[i].dst = edges[i].target._id
-
 
      links.push(edges[i])
      ids_edges.push(edges[i]._id.$oid)
@@ -340,11 +362,19 @@ function start() {
 
 function tick(e) {
 
+ // if (e != undefined) {
+ //    var k = 6 * e.alpha;
+ //      links.forEach(function(d, i) {
+ //        d.source.y += k;
+ //        d.target.y -= k;
+ //      });
+ //  }
+
   node.attr("transform", function(d) { 
-  	d.x = Math.max(5, Math.min(width - 5, d.x));
+    d.x = Math.max(5, Math.min(width - 5, d.x));
     d.y = Math.max(5, Math.min(height - 5, d.y));
     return "translate(" + d.x + "," + d.y + ")";
- });
+  }); 
 
   node.attr()
 

@@ -40,7 +40,8 @@ function initialize_graph() {
 		 force = d3.layout.force()
 		    .nodes(nodes)
 		    .links(links)
-		    .charge(-400)
+		    .gravity(0.01)
+		    .charge(-200)
 		    .friction(0.8)
 		    .linkDistance(70)
 		    .size([width, height])
@@ -64,25 +65,5 @@ function initialize_graph() {
 		 node = svg.selectAll(".node")
 		    link = svg.selectAll(".link");
 
-		    brush.call(d3.svg.brush()
-		        .x(d3.scale.identity().domain([0, width]))
-		        .y(d3.scale.identity().domain([0, height]))
-		        .on("brushstart", function(d) {
-		          node.each(function(d) { 
-		            d.previouslySelected = shiftKey && d.selected; 
-		          });
-		        })
-		        .on("brush", function() {
-		          var extent = d3.event.target.extent();
-		          node.classed("selected", function(d) {
-		            d.selected = d.previouslySelected ^
-		                (extent[0][0] <= d.x && d.x < extent[1][0]
-		                && extent[0][1] <= d.y && d.y < extent[1][1]);
-		            return d.selected;
-		          });
-		        })
-		        .on("brushend", function() {
-		          d3.event.target.clear();
-		          d3.select(this).call(d3.event.target);
-		        }));
+		    
 }
