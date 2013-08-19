@@ -23,7 +23,6 @@ class Feed(object):
 		self.last_run = None
 		self.next_run = None
 		self.running = False
-		self.last_run_time = None
 		self.elements_fetched = 0
 		self.status = "OK"
 		self.analytics = None
