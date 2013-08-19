@@ -58,7 +58,7 @@ class Model:
 			debug_output(e)
 
 	
-	def save(self, element):
+	def save(self, element, with_status=False):
 		self.db_lock.acquire()
 		elt = self.exists(element)
 		
@@ -76,15 +76,17 @@ class Model:
 		if "_id" in element:
 			del element["_id"] # pymongo does not allow updating IDs (even if it's the same)
 
-		self.elements.update({'value': element['value']}, { "$set" : element}, upsert=True)
+		status = self.elements.update({'value': element['value']}, { "$set" : element}, upsert=True)
 		saved = self.elements.find_one({'value': element['value']})
 
 		self.db_lock.release()
 
 		assert saved.get('date_created', None) != None 
 		assert saved.get('_id', None) != None
-
-		return saved
+		if not with_status:
+			return saved
+		else:
+			return saved, status
 
 	def remove(self, element_id):
 		return self.elements.remove({'_id' : ObjectId(element_id)})
