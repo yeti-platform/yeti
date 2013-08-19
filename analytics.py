@@ -52,6 +52,8 @@ class Analytics:
 		self.websocket = None
 		self.thread = None
 		self.websocket_lock = threading.Lock()
+		self.progress = 0
+		self.total = 0
 
 	def add_text(self, text, context=[]):
 		added = []
@@ -73,10 +75,10 @@ class Analytics:
 			return added
 		
 
-	def save_element(self, element, context=[]):
+	def save_element(self, element, context=[], with_status=False):
 
 		element.upgrade_context(context)
-		return self.data.save(element)
+		return self.data.save(element, with_status=with_status)
 		
 
 
