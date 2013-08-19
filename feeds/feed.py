@@ -26,30 +26,47 @@ class Feed(object):
 		self.last_run_time = None
 		self.elements_fetched = 0
 		self.status = "OK"
+		self.analytics = None
 
-	def run(self, analytics):
+	def update(self):
+		"""
+		The update() function has to be implemented in each of your feeds.
+		Its role is to:
+		 - Fetch data from wherever it needs to
+		 - Translate this data into elements understood by Malcom (as defined in malcom.datatypes.element)
+		 - Save these newly created elements to the database using the self.analytics attribute
+		"""
+		raise NotImplementedError("update: This method must be implemented in your feed class")
+
+	def run(self):
 
 		self.running = True
 		self.last_run = datetime.now()
 		self.next_run = self.last_run + self.run_every
+		self.elements_fetched = 0
 
-		if self.get_info():
-			self.analytics(analytics)
+		status = self.update()
 
+		self.analytics.process()
 		self.running = False
 
 
 
 class FeedEngine(object):
-	"""Feed engine. This object will load, update, and analyze feeds"""
+	"""Feed engine. This object will load and update feeds"""
 	def __init__(self, analytics):
 		self.a = analytics
 		self.feeds = {}
 
 	def run_feed(self, feed_name):
 		feed = self.feeds[feed_name]
-		feed.run(self.a)
+		feed.run()
 
+	def run_all_feeds(self):
+		raise NotImplementedError("run_all_feeds must be implemented")
+
+	def run_scheduled_feeds(self):
+		raise NotImplementedError("run_scheduled_feeds must be implemented")
 
 	def load_feeds(self):
 	
@@ -84,16 +101,17 @@ class FeedEngine(object):
 					class_n = modict.get(n)
 				 	try:
 				 		if issubclass(class_n, Feed) and class_n not in globals_:
-				 			sys.stderr.write(" + Loading %s..." % n)
 				 			new_feed = class_n(n) # create new feed object
+				 			new_feed.analytics = self.a # attach analytics instance to feed
 				 			self.feeds[n] = new_feed
 
 				 			# this may be for show for now
 				 			export_names.append(n)
 				 			export_classes.append(class_n)
-
+				 			sys.stderr.write(" + Loaded %s...\n" % n)
 				 	except Exception, e:
 				 		pass
+				 		
 
 		globals_.update((export_names[i], c) for i, c in enumerate(export_classes))
 
