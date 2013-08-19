@@ -11,15 +11,6 @@ from feed import Feed
 
 class ZeusTrackerBinaries(Feed):
 
-	display = [  ("url", "URL"),
-				 ("description", "Description"),
-				 ("status", "Status"),
-				 ("md5", "MD5"),
-				 ("source", "Source"),
-				 ("type", "Type"),
-				 ("date_retreived", "Retrived")
-				]
-
 	def __init__(self, name):
 		super(ZeusTrackerBinaries, self).__init__(name)
 
@@ -48,8 +39,14 @@ class ZeusTrackerBinaries(Feed):
 
 	def analyze(self, dict):
 			
-		# Evil object
+		# We create an Evil object. Evil objects are what Malcom uses
+		# to store anything it considers evil. Malware, spam sources, etc.
+		# Remember that you can create your own datatypes, if need be.
+
 		evil = Evil()
+
+		# We start populating the Evil() object's attributes with
+		# information from the dict we parsed earlier
 
 		evil['feed'] = "ZeusTrackerBinaries"
 		evil['url'] = toolbox.find_urls(dict['description'])[0]
@@ -82,25 +79,31 @@ class ZeusTrackerBinaries(Feed):
 		# date_retreived
 		evil['date_retreived'] = datetime.datetime.utcnow()
 
+		# This is important. Values have to be unique, since it's this way that
+		# Malcom will identify them in the database.
+		# This is probably not the best way, but it will do for now.
+
 		evil['value'] = "ZeuS bot"
 		if md5:
 			evil['value'] += " (MD5: %s)" % evil['md5']
 		else:
 			evil['value'] += " (URL: %s)" % evil['url']
 
-		# commit to db
+		# Save elements to DB. The status field will contain information on 
+		# whether this element already existed in the DB.
+
 		evil, status = self.analytics.save_element(evil, with_status=True)
 		if status['updatedExisting'] == False:
 			self.elements_fetched += 1
 
-		# URL object
+		# Create an URL element
 		url = Url(evil['url'], ['evil', 'ZeusTrackerBinaries'])
 
-		# commit to db
+		# Save it to the DB.
 		url, status = self.analytics.save_element(url, with_status=True)
 		if status['updatedExisting'] == False:
 			self.elements_fetched += 1
 
-		# connect url with malware
+		# Connect the URL element to the Evil element
 		self.analytics.data.connect(url, evil, ['hosting'])
 
