@@ -77,7 +77,8 @@ def find_hostnames(data):
     for i in re.finditer("((([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?", data):
         h = string.lower(i.group(1))
         tld = h.split('.')[-1:][0]
-        if tld in tlds:
+
+        if tld in tlds or tld.startswith('xn--'):
             hostnames.append(h)
 
     return hostnames
