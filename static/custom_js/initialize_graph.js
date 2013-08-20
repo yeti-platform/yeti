@@ -35,7 +35,6 @@ function initialize_graph() {
 
 		 nodes = []
 		 links = []
-		    
 
 		 force = d3.layout.force()
 		    .nodes(nodes)
