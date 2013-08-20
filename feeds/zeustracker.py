@@ -9,11 +9,12 @@ from feed import Feed
 
 
 
+
 class ZeusTrackerBinaries(Feed):
 
 	def __init__(self, name):
 		super(ZeusTrackerBinaries, self).__init__(name)
-
+		self.enabled = True
 
 	def update(self):
 		try:

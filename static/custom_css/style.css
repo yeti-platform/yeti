@@ -37,6 +37,10 @@
 
 /* Feeds */
 
+#feeds tr.disabled > td {
+	opacity:0.4;
+}
+
 tr.error .error-cause {
 	font-weight: bold;
 	color:red;

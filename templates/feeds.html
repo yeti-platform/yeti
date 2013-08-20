@@ -2,9 +2,10 @@
 {% block main %}
 <div class='span9'>
 	<h1>Loaded feeds</h1>
-	<table class='table table-condensed' id='dataset'>
+	<table class='table table-condensed' id='feeds'>
 		<tr>
 			<th>Feed name</th>
+			<th>Enabled</th>
 			<th>Running</th>
 			<th>Run every</th>
 			<th>Last run</th>
@@ -14,15 +15,20 @@
 			<th>Run now</th>
 		</tr>
 		{% for name in feeds %}
-		<tr class='{{ "error" if feeds[name].status != "OK" else "success" }}'>
+		<tr class='{{ "disabled" if not feeds[name].enabled }} {{ "error" if feeds[name].status != "OK" else "success" }}'>
 			<td>{{ feeds[name].name }}</td>
+			<td>{{ "Yes" if feeds[name].enabled else "No" }}</td>
 			<td>{{ "Yes" if feeds[name].running else "No" }}</td>
 			<td>{{ feeds[name].run_every }}</td>
 			<td>{{ feeds[name].last_run.strftime("%Y-%m-%d %H:%M:%S") if feeds[name].last_run else "N/A"}}</td>
 			<td>{{ feeds[name].next_run.strftime("%Y-%m-%d %H:%M:%S") if feeds[name].next_run else "N/A"}}</td>
 			<td>{{ feeds[name].elements_fetched }}</td>
 			<td class='error-cause'>{{ feeds[name].status }}</td>
-			<td><a href='{{ url_for("run_feed", feed_name=name)}}'><i class='icon-refresh'></i></a></td>
+			{% if feeds[name].enabled %}
+				<td><a href='{{ url_for("run_feed", feed_name=name)}}'><i class='icon-refresh'></i></a></td>
+			{% else %}
+				<td></td>
+			{% endif %}
 		</tr>
 
 		{% endfor %}
