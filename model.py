@@ -59,30 +59,28 @@ class Model:
 
 	
 	def save(self, element, with_status=False):
-		self.db_lock.acquire()
-		elt = self.exists(element)
-		
+		#self.db_lock.acquire()
+		#elt = self.exists(element)
+	
+		context = element['context']
+		del element['context'] # so context in the db does not get overwritten
 
-		if elt:
-			element.upgrade_context(elt['context'])
-			element.date_updated = datetime.datetime.utcnow()
-			debug_output("(updated %s %s)" % (element.type, element.value), type='model')
-		else:
-			element['date_created'] = datetime.datetime.utcnow()
-			debug_output("(added %s %s to DB)" % (element.type, element.value), type='model')
+		if '_id' in element:
+			del element['_id']
 
-		element['date_updated'] = datetime.datetime.utcnow()
-		
-		if "_id" in element:
-			del element["_id"] # pymongo does not allow updating IDs (even if it's the same)
-
-		status = self.elements.update({'value': element['value']}, { "$set" : element}, upsert=True)
+		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'context' : {'$each': context}}}, upsert=True)
 		saved = self.elements.find_one({'value': element['value']})
 
-		self.db_lock.release()
+		if status['updatedExisting'] == True:
+			debug_output("(updated %s %s)" % (saved.type, saved.value), type='model')
+		else:
+			debug_output("(added %s %s)" % (saved.type, saved.value), type='model')
+			saved['date_created'] = datetime.datetime.utcnow()
 
-		assert saved.get('date_created', None) != None 
-		assert saved.get('_id', None) != None
+		saved['date_updated'] = datetime.datetime.utcnow()
+
+		self.elements.save(saved)
+
 		if not with_status:
 			return saved
 		else:
