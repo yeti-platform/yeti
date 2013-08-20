@@ -78,6 +78,7 @@ app.config['VERSION'] = "0.3"
 app.config['UPLOAD_FOLDER'] = ""
 app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
+app.config['MAX_THREADS'] = 4
 
 
 # global avariables, used throughout malcom
@@ -193,9 +194,13 @@ def list():
 	except Exception, e:
 		page = 0
 
+	print request.args
 	for key in request.args:
 		if key != 'page':
-			query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
+			if request.args[key].find(',') != -1: # split request arguments
+				query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
+			else:
+				query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
 
 	per_page = 50
 	
@@ -510,19 +515,16 @@ if __name__ == "__main__":
 	parser.add_argument("-i", "--interface", help="Listen interface", default=app.config['LISTEN_INTERFACE'])
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=app.config['LISTEN_PORT'])
 	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
+	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
 	args = parser.parse_args()
 
-	# call malcom to run feeds from crontab or other method
-	if args.feeds >= 1:
-		if args.feeds == 1:
-			feed_engine.run_scheduled_feeds()
-		elif args.feeds == 2:
-			feed_engine.run_all_feeds()
-		exit()
+	
 
 	os.system('clear')
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port
+	app.config['MAX_THREADS'] = args.max_threads
+	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
 	sys.stderr.write("Starting server...\n")
@@ -534,7 +536,15 @@ if __name__ == "__main__":
 	sys.stderr.write("Importing feeds...\n")
 	feed_engine.load_feeds()
 
-	sys.stderr.write("Server running on %s:%s\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']))
+	# call malcom to run feeds from crontab or other method
+	if args.feeds >= 1:
+		if args.feeds == 1:
+			feed_engine.run_scheduled_feeds()
+		elif args.feeds == 2:
+			feed_engine.run_all_feeds()
+		exit()
+
+	sys.stderr.write("Server running on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
 
 	try:
 		http_server = WSGIServer((app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']), malcom_app, handler_class=WebSocketHandler)
