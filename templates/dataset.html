@@ -42,7 +42,10 @@
 		  	</div>
 		  <br style='clear:both' />
 		<a href='#' onclick="javascript:get_dataset_csv($('#query').val(), '{{url_for('dataset_csv')}}')">Export filter results as csv</a>
-
+		<br /><br /><br />
+		<table id='stats' class='table table-condensed'>
+			<tr> <th>Total results</th> <td id='total-results'></td></tr>
+		</table>
 		<div class="pagination">
 		  <ul>
 		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list') }}')">Prev</a></li>

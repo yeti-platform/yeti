@@ -146,6 +146,7 @@ function get_dataset(query, url) {
 	  	prev = $("#pagination-prev")
 	  	next = $("#pagination-next")
 	  	$("#pagination-page").text("Page "+page+" of "+ total_pages)
+	  	$("#total-results").text(data.total_results)
 	  	
 	  	prev.attr('data-nav', previous_page)
 	  	next.attr('data-nav', next_page)
