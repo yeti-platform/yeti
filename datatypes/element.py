@@ -103,13 +103,9 @@ class Url(Element):
 
 	def __init__(self, url="", context=[]):
 		super(Url, self).__init__()
-		# check if url is valid
-		if toolbox.is_url(url) != url:
-			return None
-		else:
-			self['value'] = url
-			self['context'] = context
-			self['type'] = 'url'
+		self['value'] = url
+		self['context'] = context
+		self['type'] = 'url'
 			
 
 	@staticmethod
@@ -182,14 +178,10 @@ class Ip(Element):
 						]
 
 	def __init__(self, ip="", context=[]):
-		super(Ip, self).__init__()
-		# check if url is valid
-		if toolbox.is_ip(ip) != ip:
-			return None
-		else:
-			self['value'] = ip
-			self['context'] = context
-			self['type'] = 'ip'
+		super(Ip, self).__init__()	
+		self['value'] = ip
+		self['context'] = context
+		self['type'] = 'ip'
 			
 
 	@staticmethod
