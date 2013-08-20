@@ -1,6 +1,7 @@
-import os, sys
+import os, sys, threading
 from toolbox import debug_output
 from datetime import timedelta, datetime
+
 
 
 
@@ -21,7 +22,7 @@ class Feed(object):
 			self.run_every = timedelta(days=num)
 
 		self.last_run = None
-		self.next_run = None
+		self.next_run = datetime.utcnow()
 		self.running = False
 		self.elements_fetched = 0
 		self.status = "OK"
@@ -44,6 +45,7 @@ class Feed(object):
 		self.next_run = self.last_run + self.run_every
 		self.elements_fetched = 0
 
+		#thread this
 		status = self.update()
 
 		self.analytics.process()
@@ -56,16 +58,32 @@ class FeedEngine(object):
 	def __init__(self, analytics):
 		self.a = analytics
 		self.feeds = {}
+		self.threads = {}
 
 	def run_feed(self, feed_name):
-		feed = self.feeds[feed_name]
-		feed.run()
+		if self.threads.get(feed_name):
+			if self.threads[feed_name].is_alive():
+				return
+		self.threads[feed_name] = threading.Thread(None, self.feeds[feed_name].run, None)
+		self.threads[feed_name].start()
 
 	def run_all_feeds(self):
-		raise NotImplementedError("run_all_feeds must be implemented")
+		debug_output("Running all feeds")
+		for feed_name in [f for f in self.feeds if self.feeds[f].enabled]:
+			debug_output('Starting thread for feed %s...' % feed_name)
+			self.run_feed(feed_name)
+
+		for t in self.threads:
+			self.threads[t].join()
 
 	def run_scheduled_feeds(self):
-		raise NotImplementedError("run_scheduled_feeds must be implemented")
+		debug_output("Running scheduled feeds")
+		for feed_name in [f for f in self.feeds if (self.feeds[f].next_run < datetime.utcnow() and self.feeds[f].enabled)]:
+			debug_output('Starting thread for feed %s...' % feed_name)
+			self.run_feed(feed_name)
+
+		for t in self.threads:
+			self.threads[t].join()
 
 	def load_feeds(self):
 	
