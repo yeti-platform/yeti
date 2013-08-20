@@ -45,15 +45,17 @@ class Worker(threading.Thread):
 
 class Analytics:
 
-	def __init__(self):
+	def __init__(self, max_threads=4):
 		self.data = Model()
-		self.max_threads = threading.Semaphore(20)
+		#self.max_threads = threading.Semaphore(app.config['THREADS'])
 		self.active = False
 		self.websocket = None
 		self.thread = None
 		self.websocket_lock = threading.Lock()
 		self.progress = 0
 		self.total = 0
+
+		self.max_threads = threading.Semaphore(4)
 
 	def add_text(self, text, context=[]):
 		added = []
@@ -136,29 +138,6 @@ class Analytics:
 			if _as and _ip:
 				self.data.connect(_ip, _as, 'net_info')
 
-		# for i in range(len(ips)):
-
-		# 	ip = ips[i]['value']
-		# 	_as = as_info[ip]
-			
-		# 	assert ip == _as.get('ip', "N/A")
-		# 	del _as['ip']
-
-		# 	# copy keys from _as into IP
-		# 	for key in _as:
-		# 		if key not in ['type', 'value', 'context']:
-		# 			ips[i][key] = _as[key]
-			
-		# 	# remove the BGP key from the AS
-		# 	del _as['bgp']
-
-		# 	_as = As.from_dict(_as)
-		# 	_as['date_updated'] = datetime.datetime.now()
-
-		# 	new = self.save_element(_as)
-		# 	self.save_element(ips[i])
-			
-		# 	self.data.connect(ips[i], new, 'net_info')
 
 
 	def find_evil(self, elt, depth=2, node_links=([],[])):
@@ -221,23 +200,15 @@ class Analytics:
 
 		while results.count() > 0:
 
-			#stack_lock = threading.Lock()
-
-			#results = [r for r in results] # this is not good
-
 			threads = []
 
 			# status reporting
 			self.total = results.count()
 			self.progress = 0
 
-			#while len(results) > 0:
 			for r in results:
 
 				self.max_threads.acquire()
-				#stack_lock.acquire()
-				#elt = results.pop()
-				#stack_lock.release()
 				thread = Worker(r, self)
 				threads.append(thread)
 				thread.start()
