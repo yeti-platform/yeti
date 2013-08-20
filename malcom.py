@@ -3,7 +3,7 @@
 
 __description__ = 'Malcom - Malware communications analyzer'
 __author__ = '@tomchop_'
-__version__ = '0.3'
+__version__ = '1.0 alpha'
 __license__ = "GPL"
 
 
@@ -74,7 +74,7 @@ def malcom_app(environ, start_response):
 
 
 app.config['DEBUG'] = True
-app.config['VERSION'] = "0.3"
+app.config['VERSION'] = "1.0 alpha"
 app.config['UPLOAD_FOLDER'] = ""
 app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
