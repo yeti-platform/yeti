@@ -19,10 +19,8 @@ class Transform(SONManipulator):
 		if 'type' in son:
 			t = son['type']
 			return DataTypes[t].from_dict(son)
-
 		else:
 			return son
-
 
 class Model:
 
@@ -59,7 +57,7 @@ class Model:
 
 	
 	def save(self, element, with_status=False):
-		#self.db_lock.acquire()
+		self.db_lock.acquire()
 		#elt = self.exists(element)
 	
 		context = element['context']
@@ -69,7 +67,10 @@ class Model:
 			del element['_id']
 
 		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'context' : {'$each': context}}}, upsert=True)
-		saved = self.elements.find_one({'value': element['value']})
+		saved = self.elements.find({'value': element['value']})
+
+		assert(saved.count() == 1)
+		saved = saved[0]
 
 		if status['updatedExisting'] == True:
 			debug_output("(updated %s %s)" % (saved.type, saved.value), type='model')
@@ -81,6 +82,10 @@ class Model:
 
 		self.elements.save(saved)
 
+		assert saved['date_created'] != None and saved['date_updated'] != None
+
+		self.db_lock.release()
+		
 		if not with_status:
 			return saved
 		else:
