@@ -85,7 +85,7 @@ class Model:
 		assert saved['date_created'] != None and saved['date_updated'] != None
 
 		self.db_lock.release()
-		
+
 		if not with_status:
 			return saved
 		else:
@@ -179,18 +179,18 @@ class Model:
 															{'dst': e['_id']}
 															] })]
 			
-			while len(new_edges) > 0:
-				edges.extend(new_edges)
+			# while len(new_edges) > 0:
+			edges.extend(new_edges)
 
-				get_new_edges = []
+			get_new_edges = []
 
-				for edge in new_edges:
-					get_new_edges.append(edge['dst'])
-						 
-				new_edges = [edge for edge in self.graph.find( {'$or' : [
-																	{"src" : {'$in' : get_new_edges }},
-																	{"dst" : {'$in' : get_new_edges }}
-																	]}) if edge not in edges]
+			for edge in new_edges:
+				get_new_edges.append(edge['dst'])
+					 
+			new_edges = [edge for edge in self.graph.find( {'$or' : [
+																{"src" : {'$in' : get_new_edges }},
+																{"dst" : {'$in' : get_new_edges }}
+																]}) if edge not in edges]
 
 		s_src = set([e['src'] for e in edges])
 		s_dst = set([e['dst'] for e in edges])
@@ -199,17 +199,13 @@ class Model:
 		
 		nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
 
-		
-
-		
-
 		idlist = [n['_id'] for n in nodes]
 
 		ids = list(set([e['_id'] for e in edges]))
 		edges = [e for e in self.graph.find({"_id" : { '$in': ids }})]
 		destinations = [e['dst'] for e in edges]
 		for n in nodes:
-			n['group'] = 1
+			#n['group'] = 1
 			n['incoming_links'] = destinations.count(n['_id'])
 
 		for e in edges:
@@ -217,9 +213,6 @@ class Model:
 			e['target'] = idlist.index(e['dst'])
 			e['src']
 			e['dst']
-
-
-	
 
 		return edges, nodes
 		#return [], [nodes[0]]
