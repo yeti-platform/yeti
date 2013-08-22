@@ -105,7 +105,13 @@ class Analytics:
 	# elements analytics
 
 	def bulk_asn(self):
-		results = self.data.elements.find({ 'type': 'ip' })
+		results = self.data.elements.find(
+			{ 'type': 'ip' , 
+			{ '$or': [
+						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
+						{ 'last_analysis': None },
+					 ]
+			}})
 		
 		#elts = []
 		ips = []
@@ -131,6 +137,9 @@ class Analytics:
 			
 			_as = as_info[ip]
 			_ip = self.data.find_one({'value': ip})
+
+			if not _ip:
+				return
 			
 			del _as['ip']
 			for key in _as:
