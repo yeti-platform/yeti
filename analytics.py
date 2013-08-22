@@ -105,13 +105,9 @@ class Analytics:
 	# elements analytics
 
 	def bulk_asn(self):
-		results = self.data.elements.find(
-			{ 'type': 'ip' , 
-			{ '$or': [
-						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
-						{ 'last_analysis': None },
-					 ]
-			}})
+		results = self.data.elements.find({'type': 'ip', 'bgp': None})
+
+
 		
 		#elts = []
 		ips = []
