@@ -52,6 +52,7 @@ class Analytics:
 		self.websocket = None
 		self.thread = None
 		self.websocket_lock = threading.Lock()
+		self.stack_lock = threading.Lock()
 		self.progress = 0
 		self.total = 0
 
@@ -90,13 +91,13 @@ class Analytics:
 		
 		added = []
 		for url in artifacts['urls']:
-			added.append(self.data.save(url, context))
+			added.append(self.save_element(url, context))
 
 		for hostname in artifacts['hostnames']:
-			added.append(self.data.hostname_add(hostname, context))
+			added.append(self.save_element(hostname, context))
 
 		for ip in artifacts['ips']:
-			added.append(self.data.ip_add(ip, context))
+			added.append(self.save_element(ip, context))
 
 		return added        
 
@@ -104,7 +105,13 @@ class Analytics:
 	# elements analytics
 
 	def bulk_asn(self):
-		results = self.data.elements.find({ 'type': 'ip' })
+		results = self.data.elements.find(
+			{ 'type': 'ip' , 
+			{ '$or': [
+						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
+						{ 'last_analysis': None },
+					 ]
+			}})
 		
 		#elts = []
 		ips = []
@@ -113,15 +120,26 @@ class Analytics:
 		for r in results:
 			ips.append(r)
 
-		as_info = get_net_info_shadowserver(ips)
+		ips_chunks = [ips[x:x+250] for x in xrange(0, len(ips), 250)]
+
+
+		as_info = {}
+		for ips in ips_chunks:
+			try:
+				as_info = dict(as_info.items() + get_net_info_shadowserver(ips).items())
+			except Exception, e:
+				pass
 		
-		if not as_info:
+		if as_info == {}:
 			return
 
 		for ip in as_info:
 			
 			_as = as_info[ip]
 			_ip = self.data.find_one({'value': ip})
+
+			if not _ip:
+				return
 			
 			del _as['ip']
 			for key in _as:
@@ -190,32 +208,37 @@ class Analytics:
 	def process_thread(self):
 		
 		self.active = True
+
 		results = self.data.elements.find(
 			{ '$or': [
-						{ 'last_analysis': {"$lt": datetime.datetime.now() - datetime.timedelta(1)} },
+						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
 						{ 'last_analysis': None },
-					]
+					 ]
 			}
 		)
 
-		while results.count() > 0:
+		results = [r for r in results]
+		while len(results) > 0:
+
+		#while results.count() > 0:
 
 			threads = []
 
 			# status reporting
-			self.total = results.count()
+			self.total = len(results)#results.count()
 			self.progress = 0
-
+			
 			for r in results:
 
+				self.stack_lock.acquire()
 				self.max_threads.acquire()
 				thread = Worker(r, self)
 				threads.append(thread)
 				thread.start()
+				self.stack_lock.release()	
 				
 			for t in threads:
 				t.join()
-
 
 			results = self.data.elements.find(
 				{ '$or': [
@@ -224,10 +247,12 @@ class Analytics:
 						]
 				}
 			)
+			results = [r for r in results]
 
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
 		self.active = False
+		debug_output("Finished analyzing.")
 		self.notify_progress()
 
 
