@@ -293,10 +293,11 @@ def parse_net_info_shadowserver(info):
         entry['ip'] = columns[0].lstrip().rstrip()
         entry['asn'] = columns[1].lstrip().rstrip()
         entry['bgp'] = columns[2].lstrip().rstrip()
-        entry['value'] = columns[3].lstrip().rstrip()
+        entry['name'] = columns[3].lstrip().rstrip().decode('latin-1')
         entry['country'] = columns[4].lstrip().rstrip()
         entry['domain'] = columns[5].lstrip().rstrip()
         entry['ISP'] = columns[6].lstrip().rstrip()
+        entry['value'] = "%s (%s)" % (entry['name'], entry['asn'])
 
         results[entry['ip']] = entry
 
@@ -366,7 +367,11 @@ def debug_output(text, type='debug', n=True):
         msg = bcolors.WARNING + '[INFO]'
     msg += bcolors.ENDC
     n = '\n' if n else ""
-    sys.stderr.write(str("%s - %s%s" % (msg, text, n)))
+    try:
+        sys.stderr.write(str("%s - %s%s" % (msg, text, n)))
+    except Exception, e:
+        pass
+    
 
 
 class bcolors:

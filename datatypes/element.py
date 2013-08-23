@@ -61,10 +61,11 @@ class Evil(Element):
 
 class As(Element):
 	display_fields = Element.default_fields + [
-										('country', 'Country'),
-										('asn', 'ASN'),
-										('domain', 'Domain'), 
+										('name', 'Name'),
 										('ISP', 'ISP'),
+										#('domain', 'Domain'), 
+										('asn', 'ASN'),
+										('country', 'Country'),
 										]
 	def __init__(self, _as="", context=[]):
 		super(As, self).__init__()
