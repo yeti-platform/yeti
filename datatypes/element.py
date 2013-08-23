@@ -61,10 +61,11 @@ class Evil(Element):
 
 class As(Element):
 	display_fields = Element.default_fields + [
-										('country', 'Country'),
-										('asn', 'ASN'),
-										('domain', 'Domain'), 
+										('name', 'Name'),
 										('ISP', 'ISP'),
+										#('domain', 'Domain'), 
+										('asn', 'ASN'),
+										('country', 'Country'),
 										]
 	def __init__(self, _as="", context=[]):
 		super(As, self).__init__()
@@ -136,6 +137,9 @@ class Url(Element):
 			new.append(('host', Ip(self['hostname'])))
 		elif toolbox.is_hostname(self['hostname']):
 			new.append(('host', Hostname(self['hostname'])))
+		else:
+			debug_output("No hostname found for %s" % self['value'], type='error')
+			return
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		

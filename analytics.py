@@ -23,20 +23,19 @@ class Worker(threading.Thread):
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']), type='analytics')
 		etype = self.elt['type']
 		context = self.elt['context']
-		assert (self.elt.get('last_analysis', None) == None) or (datetime.datetime.utcnow() - self.elt.elt['last_analysis'] >= datetime.timedelta(days=1))
+		
+		if self.elt.get('last_analysis', None): # check that last analysis is older than 24h 
+			assert (datetime.datetime.utcnow() - self.elt['last_analysis'] >= datetime.timedelta(days=1))
+
 		new = self.elt.analytics()
 		for n in new:
-			elt = self.engine.data.exists(n[1])
-			if not elt:
-				added = self.engine.save_element(n[1])
-			else:
-				added = self.engine.save_element(elt)
-
+			saved = self.engine.save_element(n[1])
 			#do the link
-			self.engine.data.connect(self.elt, added, n[0])
+			self.engine.data.connect(self.elt, saved, n[0])
 		
+		# this will update analysis time
 		self.engine.save_element(self.elt, context)
-		assert datetime.datetime.utcnow() - self.elt['last_analysis'] < datetime.timedelta(days=1)
+
 		self.engine.progress += 1
 		self.engine.websocket_lock.acquire()
 		self.engine.notify_progress()
@@ -107,22 +106,19 @@ class Analytics:
 	def bulk_asn(self):
 		results = self.data.elements.find({'type': 'ip', 'bgp': None})
 
-
-		
-		#elts = []
 		ips = []
 		debug_output("(getting ASNs for %s IPs)" % results.count(), type='analytics')
 		
 		for r in results:
 			ips.append(r)
 
-		ips_chunks = [ips[x:x+250] for x in xrange(0, len(ips), 250)]
-
+		ips_chunks = [ips[x:x+100] for x in xrange(0, len(ips), 100)]
 
 		as_info = {}
 		for ips in ips_chunks:
 			try:
 				as_info = dict(as_info.items() + get_net_info_shadowserver(ips).items())
+
 			except Exception, e:
 				pass
 		
@@ -136,7 +132,7 @@ class Analytics:
 
 			if not _ip:
 				return
-			
+
 			del _as['ip']
 			for key in _as:
 				if key not in ['type', 'value', 'context']:
@@ -148,7 +144,7 @@ class Analytics:
 			# commit any changes to DB
 			_as = self.save_element(_as)
 			_ip = self.save_element(_ip)
-
+		
 			if _as and _ip:
 				self.data.connect(_ip, _as, 'net_info')
 
@@ -194,6 +190,12 @@ class Analytics:
 				return
 		self.thread = threading.Thread(None, self.process_thread, None)
 		self.thread.start()
+		self.thread.join() # wait for analytics to finish
+		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
+		self.bulk_asn()
+		self.active = False
+		debug_output("Finished analyzing.")
+		self.notify_progress()
 
 	def notify_progress(self):
 		if self.progress != self.total:
@@ -245,11 +247,6 @@ class Analytics:
 			)
 			results = [r for r in results]
 
-		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
-		self.bulk_asn()
-		self.active = False
-		debug_output("Finished analyzing.")
-		self.notify_progress()
-
+		
 
 		

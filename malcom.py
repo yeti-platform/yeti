@@ -194,7 +194,6 @@ def list():
 	except Exception, e:
 		page = 0
 
-	print request.args
 	for key in request.args:
 		if key != 'page':
 			if request.args[key].find(',') != -1: # split request arguments

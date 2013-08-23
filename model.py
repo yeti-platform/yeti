@@ -69,7 +69,7 @@ class Model:
 		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'context' : {'$each': context}}}, upsert=True)
 		saved = self.elements.find({'value': element['value']})
 
-		assert(saved.count() == 1)
+		assert(saved.count() == 1) # check that elements are unique in the db
 		saved = saved[0]
 
 		if status['updatedExisting'] == True:
