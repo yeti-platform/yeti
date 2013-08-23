@@ -23,7 +23,8 @@ class Worker(threading.Thread):
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']), type='analytics')
 		etype = self.elt['type']
 		context = self.elt['context']
-		assert (self.elt.get('last_analysis', None) == None) or (datetime.datetime.utcnow() - self.elt.elt['last_analysis'] >= datetime.timedelta(days=1))
+		assert (self.elt.get('last_analysis', None) == None)
+		assert (datetime.datetime.utcnow() - self.elt['last_analysis'] >= datetime.timedelta(days=1))
 		new = self.elt.analytics()
 		for n in new:
 			elt = self.engine.data.exists(n[1])
