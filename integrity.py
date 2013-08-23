@@ -13,7 +13,6 @@ noupdate = a.data.find({"date_updated": None}).count()
 type = "error" if noupdate > 0 else "debug"
 debug_output("Elements without a date_updated: {}".format(noupdate), type)
 
-
 # Check if there are urls that don't have hostnames
 nohostname = a.data.find({'type': 'url', 'hostname': None}).count()
 type = "error" if nohostname > 0 else "debug"
