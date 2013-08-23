@@ -136,6 +136,9 @@ class Url(Element):
 			new.append(('host', Ip(self['hostname'])))
 		elif toolbox.is_hostname(self['hostname']):
 			new.append(('host', Hostname(self['hostname'])))
+		else:
+			debug_output("No hostname found for %s" % self['value'], type='error')
+			return
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		
