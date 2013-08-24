@@ -207,14 +207,15 @@ class Analytics:
 		
 		self.active = True
 
-		results = self.data.elements.find(
-			{ '$or': [
+		query = { '$or': [
 						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
 						{ 'last_analysis': None },
 					 ]
 			}
-		)
 
+		results = self.data.elements.find(query)[:100]
+
+		# load 100 results in memory
 		results = [r for r in results]
 		while len(results) > 0:
 
@@ -244,7 +245,7 @@ class Analytics:
 							{ 'last_analysis': None },
 						]
 				}
-			)
+			)[:100]
 			results = [r for r in results]
 
 		

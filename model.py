@@ -35,6 +35,11 @@ class Model:
 		self.gi = pygeoip.GeoIP('geoIP/GeoLiteCity.dat')
 		self.db_lock = threading.Lock()
 
+		# create indexes
+		self.elements.ensure_index('value')
+		self.graph.create_index([('src',1), ('dst',1)])
+
+
 	def stats(self):
 		stats = "DB loaded with %s elements\n" % self._db.elements.count()
 		stats += "Graph has %s edges" % self._db.graph.count()
