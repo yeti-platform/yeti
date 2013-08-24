@@ -133,8 +133,15 @@ def graph(field, value):
 	a = g.a
 	query = { field: re.compile(re.escape(value), re.IGNORECASE) }
 	base_elts = [e for e in a.data.elements.find( query )]
-	edges, nodes = a.data.get_graph_for_elts(base_elts)
-	data = { 'query': base_elts, 'edges': edges, 'nodes': nodes }
+
+	total_nodes = []
+	total_edges = []
+	for elt in base_elts:
+		nodes, edges = a.data.get_neighbors(elt)
+		total_nodes.extend(nodes)
+		total_edges.extend(edges)
+
+	data = { 'query': base_elts, 'edges': total_edges, 'nodes': total_nodes }
 	ids = [node['_id'] for node in nodes]
 	other = [a for a in a.data.elements.find( {"_id" : { '$not' : { '$in' : ids }}})]
 	

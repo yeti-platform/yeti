@@ -168,53 +168,53 @@ class Model:
 		return nodes, new_edges
 
 
-	def get_graph_for_elts(self, elts):
-		edges = []
+	# def get_graph_for_elts(self, elts):
+	# 	edges = []
 		
-		ids = []
-		for e in elts:
+	# 	ids = []
+	# 	for e in elts:
 
-			new_edges = [n for n in self.graph.find({ '$or' : [
-															{'src': e['_id']}, 
-															{'dst': e['_id']}
-															] })]
+	# 		new_edges = [n for n in self.graph.find({ '$or' : [
+	# 														{'src': e['_id']}, 
+	# 														{'dst': e['_id']}
+	# 														] })]
 			
-			# while len(new_edges) > 0:
-			edges.extend(new_edges)
+	# 		# while len(new_edges) > 0:
+	# 		edges.extend(new_edges)
 
-			get_new_edges = []
+	# 		get_new_edges = []
 
-			for edge in new_edges:
-				get_new_edges.append(edge['dst'])
+	# 		for edge in new_edges:
+	# 			get_new_edges.append(edge['dst'])
 					 
-			new_edges = [edge for edge in self.graph.find( {'$or' : [
-																{"src" : {'$in' : get_new_edges }},
-																{"dst" : {'$in' : get_new_edges }}
-																]}) if edge not in edges]
+	# 		new_edges = [edge for edge in self.graph.find( {'$or' : [
+	# 															{"src" : {'$in' : get_new_edges }},
+	# 															{"dst" : {'$in' : get_new_edges }}
+	# 															]}) if edge not in edges]
 
-		s_src = set([e['src'] for e in edges])
-		s_dst = set([e['dst'] for e in edges])
+	# 	s_src = set([e['src'] for e in edges])
+	# 	s_dst = set([e['dst'] for e in edges])
 
-		ids = list(s_src | s_dst | set([n['_id'] for n in elts]))
+	# 	ids = list(s_src | s_dst | set([n['_id'] for n in elts]))
 		
-		nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
+	# 	nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
 
-		idlist = [n['_id'] for n in nodes]
+	# 	idlist = [n['_id'] for n in nodes]
 
-		ids = list(set([e['_id'] for e in edges]))
-		edges = [e for e in self.graph.find({"_id" : { '$in': ids }})]
-		destinations = [e['dst'] for e in edges]
-		for n in nodes:
-			#n['group'] = 1
-			n['incoming_links'] = destinations.count(n['_id'])
+	# 	ids = list(set([e['_id'] for e in edges]))
+	# 	edges = [e for e in self.graph.find({"_id" : { '$in': ids }})]
+	# 	destinations = [e['dst'] for e in edges]
+	# 	for n in nodes:
+	# 		#n['group'] = 1
+	# 		n['incoming_links'] = destinations.count(n['_id'])
 
-		for e in edges:
-			e['source'] = idlist.index(e['src'])
-			e['target'] = idlist.index(e['dst'])
-			e['src']
-			e['dst']
+	# 	for e in edges:
+	# 		e['source'] = idlist.index(e['src'])
+	# 		e['target'] = idlist.index(e['dst'])
+	# 		e['src']
+	# 		e['dst']
 
-		return edges, nodes
-		#return [], [nodes[0]]
+	# 	return edges, nodes
+	# 	#return [], [nodes[0]]
 
  
