@@ -143,9 +143,8 @@ def graph(field, value):
 
 	data = { 'query': base_elts, 'edges': total_edges, 'nodes': total_nodes }
 	ids = [node['_id'] for node in nodes]
-	other = [a for a in a.data.elements.find( {"_id" : { '$not' : { '$in' : ids }}})]
 	
-	debug_output("query: %s, edges found: %s, nodes found: %s, other: %s" % (len(base_elts), len(edges), len(nodes), len(other)))
+	debug_output("query: %s, edges found: %s, nodes found: %s" % (len(base_elts), len(edges), len(nodes)))
 	return (dumps(data))
 
 @app.route('/neighbors', methods=['POST'])
