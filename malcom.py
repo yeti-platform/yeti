@@ -221,7 +221,7 @@ def list():
 		data['fields'] = elts[0].display_fields
 		data['elements'] = elts
 	else:
-		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('context', 'Context')]
+		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
 		data['elements'] = []
 	
 	data['page'] = page
@@ -278,15 +278,15 @@ def add_data():
 		else:
 			elements = [request.form['element']]
 
-		context = request.form.get('context', None)
+		tags = request.form.get('tags', None)
 		
-		if len(elements) == 0 or not context:
-			flash("You must specify an element and a context", 'warning')
+		if len(elements) == 0 or not tags:
+			flash("You must specify an element and tags", 'warning')
 			return redirect(url_for('dataset'))
 
 		a = g.a
-		context = context.strip().split(";")
-		a.add_text(elements, context)
+		tags = tags.strip().split(";")
+		a.add_text(elements, tags)
 
 		if request.form.get('analyse', None):
 			a.process()

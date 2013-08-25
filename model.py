@@ -65,13 +65,13 @@ class Model:
 		self.db_lock.acquire()
 		#elt = self.exists(element)
 	
-		context = element['context']
-		del element['context'] # so context in the db does not get overwritten
+		tags = element['tags']
+		del element['tags'] # so tags in the db does not get overwritten
 
 		if '_id' in element:
 			del element['_id']
 
-		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'context' : {'$each': context}}}, upsert=True)
+		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'tags' : {'$each': tags}}}, upsert=True)
 		saved = self.elements.find({'value': element['value']})
 
 		assert(saved.count() == 1) # check that elements are unique in the db
@@ -125,7 +125,7 @@ class Model:
 		elts = feed.get_info()
 	  
 		for e in elts:
-			self.malware_add(e,e['context'])
+			self.malware_add(e,e['tags'])
 
 	def get_neighbors(self, elt, query={}):
 

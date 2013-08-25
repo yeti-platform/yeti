@@ -36,7 +36,7 @@ class SuspiciousDomains(Feed):
 			return
 
 		# Create the new URL and store it in the DB
-		hostname = Hostname(hostname=hostname, context=['SuspiciousDomains', 'evil'])
+		hostname = Hostname(hostname=hostname, tags=['SuspiciousDomains', 'evil'])
 
 		hostname, status = self.analytics.save_element(hostname, with_status=True)
 		if status['updatedExisting'] == False:

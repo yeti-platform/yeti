@@ -6,10 +6,10 @@ from toolbox import debug_output
 
 class Element(dict):
 
-	default_fields = [('date_updated', 'Updated'), ('value', "Value"), ('type', "Type"), ('context', "Context")]	
+	default_fields = [('date_updated', 'Updated'), ('value', "Value"), ('type', "Type"), ('tags', "Tags")]	
 	
 	def __init__(self):
-		self['context'] = []
+		self['tags'] = []
 		self['value'] = None
 		self['type'] = None
 		
@@ -22,9 +22,9 @@ class Element(dict):
 	def __setattr__(self, name, value):
 		self[name] = value
 
-	def upgrade_context(self, context):
-		self['context'].extend(context)
-		self['context'] = list(set(self['context']))
+	def upgrade_tags(self, tags):
+		self['tags'].extend(tags)
+		self['tags'] = list(set(self['tags']))
 
 	def is_recent(self):
 		if 'date_created' not in self:
@@ -38,11 +38,11 @@ class Element(dict):
 
 class Evil(Element):
 	display_fields = Element.default_fields + []
-	def __init__(self, value='', type="malware", context=[]):
+	def __init__(self, value='', type="malware", tags=[]):
 		super(Evil, self).__init__()
 		self['value'] = value
 		self['type'] = type
-		self['context'] = context + ['evil']
+		self['tags'] = tags + ['evil']
 
 	@staticmethod
 	def from_dict(d):
@@ -67,11 +67,11 @@ class As(Element):
 										('asn', 'ASN'),
 										('country', 'Country'),
 										]
-	def __init__(self, _as="", context=[]):
+	def __init__(self, _as="", tags=[]):
 		super(As, self).__init__()
 		self['value'] = _as
 		self['type'] = 'as'
-		self['context'] = context
+		self['tags'] = tags
 		
 
 
@@ -102,10 +102,10 @@ class Url(Element):
 							('path', 'Path'),
 							]
 
-	def __init__(self, url="", context=[]):
+	def __init__(self, url="", tags=[]):
 		super(Url, self).__init__()
 		self['value'] = url
-		self['context'] = context
+		self['tags'] = tags
 		self['type'] = 'url'
 			
 
@@ -181,10 +181,10 @@ class Ip(Element):
 						#'type',
 						]
 
-	def __init__(self, ip="", context=[]):
+	def __init__(self, ip="", tags=[]):
 		super(Ip, self).__init__()	
 		self['value'] = ip
-		self['context'] = context
+		self['tags'] = tags
 		self['type'] = 'ip'
 			
 
@@ -225,10 +225,10 @@ class Hostname(Element):
 	
 	display_fields = Element.default_fields + []
 
-	def __init__(self, hostname="", context=[]):
+	def __init__(self, hostname="", tags=[]):
 		super(Hostname, self).__init__()
 		if toolbox.is_hostname(hostname) == hostname:
-			self['context'] = context
+			self['tags'] = tags
 			self['value'] = toolbox.is_hostname(hostname)
 			if self['value'][-1:] == ".":
 				self['value'] = self['value'][:-1]

@@ -22,7 +22,7 @@ class Worker(threading.Thread):
 		
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']), type='analytics')
 		etype = self.elt['type']
-		context = self.elt['context']
+		tags = self.elt['tags']
 		
 		if self.elt.get('last_analysis', None): # check that last analysis is older than 24h 
 			assert (datetime.datetime.utcnow() - self.elt['last_analysis'] >= datetime.timedelta(days=1))
@@ -34,7 +34,7 @@ class Worker(threading.Thread):
 			self.engine.data.connect(self.elt, saved, n[0])
 		
 		# this will update analysis time
-		self.engine.save_element(self.elt, context)
+		self.engine.save_element(self.elt, tags)
 
 		self.engine.progress += 1
 		self.engine.websocket_lock.acquire()
@@ -57,7 +57,7 @@ class Analytics:
 
 		self.max_threads = threading.Semaphore(4)
 
-	def add_text(self, text, context=[]):
+	def add_text(self, text, tags=[]):
 		added = []
 		for t in text:
 			elt = None
@@ -69,7 +69,7 @@ class Analytics:
 				elif is_hostname(t):
 					elt = Hostname(is_hostname(t), [])
 				if elt:
-					added.append(self.save_element(elt, context))
+					added.append(self.save_element(elt, tags))
 					
 		if len(added) == 1:
 			return added[0]
@@ -77,26 +77,26 @@ class Analytics:
 			return added
 		
 
-	def save_element(self, element, context=[], with_status=False):
+	def save_element(self, element, tags=[], with_status=False):
 
-		element.upgrade_context(context)
+		element.upgrade_tags(tags)
 		return self.data.save(element, with_status=with_status)
 		
 
 
 	# graph function
-	def add_artifacts(self, data, context=[]):
+	def add_artifacts(self, data, tags=[]):
 		artifacts = find_artifacts(data)
 		
 		added = []
 		for url in artifacts['urls']:
-			added.append(self.save_element(url, context))
+			added.append(self.save_element(url, tags))
 
 		for hostname in artifacts['hostnames']:
-			added.append(self.save_element(hostname, context))
+			added.append(self.save_element(hostname, tags))
 
 		for ip in artifacts['ips']:
-			added.append(self.save_element(ip, context))
+			added.append(self.save_element(ip, tags))
 
 		return added        
 
@@ -135,7 +135,7 @@ class Analytics:
 
 			del _as['ip']
 			for key in _as:
-				if key not in ['type', 'value', 'context']:
+				if key not in ['type', 'value', 'tags']:
 					_ip[key] = _as[key]
 			del _as['bgp']
 
@@ -169,7 +169,7 @@ class Analytics:
 		else:
 			
 			# if recursion ends, then search for evil neighbors
-			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {'context': {'$in': ['evil']}})
+			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {'tags': {'$in': ['evil']}})
 			
 			# return evil neighbors if found
 			if len(neighbors_n) > 0:

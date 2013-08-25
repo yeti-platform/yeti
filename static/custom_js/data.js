@@ -94,18 +94,18 @@ function display_data(d)
 	$('#node_info').append("<tr><th>Date Created</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
 	$('#node_info').append("<tr><th>Last analysis</th><td>"+format_date(new Date(d.last_analysis.$date))+"</td></tr>");
 
-	context_string = d.context[0];
-	for (var i = 1; i < d.context.length; i++)
-		context_string = context_string + ", " + d.context[i];
+	tags_string = d.tags[0];
+	for (var i = 1; i < d.tags.length; i++)
+		tags_string = tags_string + ", " + d.tags[i];
 
-	$('#node_info').append("<tr><th>Context</th><td>"+context_string+"</td></tr>");
+	$('#node_info').append("<tr><th>tags</th><td>"+tags_string+"</td></tr>");
 
 }
 
 function display_generic(d) {
 	console.log('display generic')
 	for (var key in d) {
-		if (['Fixed', 'Selected', 'PreviouslySelected', 'type', 'context', 'date_created', 'date_retreived', 'date_updated', 'last_analysis', "_id", "group", "incoming_links", "index", "px", "py", "x", "y", "radius", 'weight' ].indexOf(key) == -1) {
+		if (['Fixed', 'Selected', 'PreviouslySelected', 'type', 'tags', 'date_created', 'date_retreived', 'date_updated', 'last_analysis', "_id", "group", "incoming_links", "index", "px", "py", "x", "y", "radius", 'weight' ].indexOf(key) == -1) {
 			val = d[key]
 			if (val == undefined) { val = "N/A"}
 			$("#node_info").append("<tr><th>"+key.charAt(0).toUpperCase() + key.slice(1) +"</th><td>"+val+"</td></tr>");

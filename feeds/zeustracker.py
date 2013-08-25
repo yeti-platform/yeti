@@ -74,8 +74,8 @@ class ZeusTrackerBinaries(Feed):
 		# type
 		evil['type'] = 'evil'
 
-		# context
-		evil['context'] += ['zeus', 'malware', 'ZeusTrackerBinaries']
+		# tags
+		evil['tags'] += ['zeus', 'malware', 'ZeusTrackerBinaries']
 
 		# date_retreived
 		evil['date_retreived'] = datetime.datetime.utcnow()

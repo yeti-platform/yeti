@@ -37,7 +37,7 @@
 	<div id='datasetSideTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
-			      <input id="query" placeholder='context=malware' type="text" onkeyup="get_dataset($('#query').val(), '{{ url_for('list') }}')">
+			      <input id="query" placeholder='tags=malware' type="text" onkeyup="get_dataset($('#query').val(), '{{ url_for('list') }}')">
 			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list') }}')">Go</button>
 		  	</div>
 		  <br style='clear:both' />
@@ -68,8 +68,8 @@
 			    <span class="help-block">Or choose file to upload (1 element / line)</span>
 			    <input type="file" placeholder="" name='element-list'>
 			  
-			  	<label for='context'>Context</label>
-			    <input id='context' type="text" name="context" placeholder="">
+			  	<label for='tags'>Tags</label>
+			    <input id='tags' type="text" name="tags" placeholder="">
 			    <label class="checkbox">
 			      <input type="checkbox" name='analyse'> Analyse after import
 			    </label>
