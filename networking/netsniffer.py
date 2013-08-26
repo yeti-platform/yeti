@@ -187,9 +187,8 @@ class Sniffer():
 					hname = hname[:-1]
 				
 				# check if we haven't seen these already
-
 				if hname not in self.nodes_values:
-					_hname = self.analytics.add_text([hname], ['sniffer', self.name])		# log every discovery to db
+					_hname = self.analytics.add_text([hname], ['sniffer', self.name]) # log every discovery to db
 					self.nodes_ids.append(_hname['_id'])
 					self.nodes_values.append(_hname['value'])
 					self.nodes.append(_hname)
@@ -198,7 +197,7 @@ class Sniffer():
 					_hname = [e for e in self.nodes if e['value'] == hname][0]
 
 				if ipaddr not in self.nodes_values:
-					_ipaddr = self.analytics.add_text([ipaddr], ['sniffer', self.name])
+					_ipaddr = self.analytics.add_text([ipaddr], ['sniffer', self.name]) # log every discovery to db
 					self.nodes_ids.append(_ipaddr['_id'])
 					self.nodes_values.append(_ipaddr['value'])
 					self.nodes.append(_ipaddr)
@@ -224,7 +223,8 @@ class Sniffer():
 					self.nodes_ids.append(_question['_id'])
 					self.nodes_values.append(_question['value'])
 					self.nodes.append(_question)
-					new_edges.append(_question)
+					new_elts.append(_question)
+
 			else:
 				_question = [e for e in self.nodes if e['value'] == question][0]
 						
