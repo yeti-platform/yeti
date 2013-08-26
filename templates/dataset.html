@@ -58,7 +58,7 @@
 		</div>
 		
 
-
+		{% if not g.config['READONLY'] %}
 		<div class='tab-pane' id='add'>
 			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>
 			
@@ -76,10 +76,9 @@
 			  </fieldset>
 			</form>
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
-			{% if not g.config['READONLY'] %}
 			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
-			{% endif %}
 		</div>
+		{% endif %}
 
 
 

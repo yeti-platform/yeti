@@ -48,6 +48,7 @@ class Analytics:
 		self.data = Model()
 		#self.max_threads = threading.Semaphore(app.config['THREADS'])
 		self.active = False
+		self.status = "Inactive"
 		self.websocket = None
 		self.thread = None
 		self.websocket_lock = threading.Lock()
@@ -198,10 +199,11 @@ class Analytics:
 		self.notify_progress()
 
 	def notify_progress(self):
+		status = {'active': self.active, 'status': self.status}
 		if self.progress != self.total:
-			send_msg(self.websocket, {'progress': '%s/%s' %(self.progress, self.total)})
-		else:
-			send_msg(self.websocket, {'status': 0})
+			status['progress'] = '%s/%s' % (self.progress, self.total)
+	
+		send_msg(self.websocket, status, type='analyticsstatus')
 
 	def process_thread(self):
 		

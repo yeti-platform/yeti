@@ -3,8 +3,6 @@ from toolbox import debug_output
 from datetime import timedelta, datetime
 
 
-
-
 class Feed(object):
 	"""This is a feed base class. All other feeds must inherit from this class"""
 	def __init__(self, name, run_every="24h"):
@@ -45,10 +43,12 @@ class Feed(object):
 		self.next_run = self.last_run + self.run_every
 		self.elements_fetched = 0
 
-		#thread this
+		self.analytics.status = "Feeding"
 		status = self.update()
-
+		self.analytics.status = "Working"
 		self.analytics.process()
+		self.analytics.status = "Inactive"
+		self.analytics.notify_progress()
 		self.running = False
 
 

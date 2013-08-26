@@ -19,18 +19,26 @@ function analyticsInterfaceInit() {
         data = $.parseJSON(msg.data);
         console.log(data);
 
-        if (data.msg.status == true) {
-        	$("#analytics-status-nav p").text("Analytics: active...")
-        	$("#analytics-status-nav p").css('color','white')
+        if (data.msg.active == true) { // deal with active status
+
+            if (data.msg.status == true) {
+                $("#analytics-status-nav p").text("Analytics: "+data.msg.status+"...")
+                $("#analytics-status-nav p").css('color','white')
+            }
+
+            if (data.msg.progress) {
+                $("#analytics-status-nav p").text("Analytics: "+data.msg.status+"... ("+data.msg.progress+")")
+                $("#analytics-status-nav p").css('color','white')   
+            }
         }
-        if (data.msg.status == false) { 
-            $("#analytics-status-nav p").text("Analytics: inactive")
+
+        else { // inactive status
+            $("#analytics-status-nav p").text("Analytics: " +data.msg.status)
             $("#analytics-status-nav p").css('color','')
         }
-        if (data.msg.progress) {
-            $("#analytics-status-nav p").text("Analytics: active... ("+data.msg.progress+")")
-            $("#analytics-status-nav p").css('color','white')   
-        }
+
+        
+        
         
     };
 }

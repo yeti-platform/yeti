@@ -56,7 +56,7 @@ def find_ips(data):
     for i in re.finditer("([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})",data):
         # sanitize IPs to avoid leading 0s
         ip = ".".join([str(int(dot)) for dot in i.group(1).split('.')])
-        ips.append(i.group(1))
+        ips.append(ip)
     return ips
 
 def find_urls(data):

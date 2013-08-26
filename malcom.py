@@ -85,7 +85,7 @@ app.config['PRIVATE_URLS'] = [
 								r'^/feeds', 
 								r'/clear',
 								r'/sniffer',
-							]	
+							 ]	
 
 app.config['IFACES'] = {}
 for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
@@ -423,10 +423,11 @@ def analytics_api():
 			cmd = message['cmd']
 
 			if cmd == 'analyticsstatus':
-				if g.a.active:
-					send_msg(ws, {'status': 1}, type=cmd)
-				else:
-					send_msg(ws, {'status': 0}, type=cmd)
+				g.a.notify_progress()
+				# if g.a.active:
+				# 	send_msg(ws, {'status': 1}, type=cmd)
+				# else:
+				# 	send_msg(ws, {'status': 0}, type=cmd)
 
 			
 
