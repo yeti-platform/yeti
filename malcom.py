@@ -341,7 +341,7 @@ def sniffer():
 			return redirect(url_for('sniffer'))
 
 		debug_output("Creating session %s" % session_name)
-		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.ifaces)
+		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.config['IFACES'])
 		
 		# if we're dealing with an uploaded PCAP file
 		file = request.files.get('pcap-file')

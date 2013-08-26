@@ -1,5 +1,5 @@
 import toolbox
-import datetime
+import datetime, os
 import pygeoip
 from toolbox import debug_output
 
@@ -201,7 +201,9 @@ class Ip(Element):
 
 		# get geolocation info
 		try:
-			gi = pygeoip.GeoIP('geoIP/GeoLiteCity.dat')
+			file = os.path.abspath(__file__)
+			datatypes_directory = os.path.dirname(file)
+			gi = pygeoip.GeoIP(datatypes_directory+'/../geoIP/GeoLiteCity.dat')
 			geoinfo = gi.record_by_addr(self.value)
 			for key in geoinfo:
 				self[key] = geoinfo[key]
