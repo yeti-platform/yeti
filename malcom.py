@@ -79,7 +79,17 @@ app.config['UPLOAD_FOLDER'] = ""
 app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
 app.config['MAX_THREADS'] = 4
+app.config['READONLY'] = False
 
+app.config['PRIVATE_URLS'] = [
+								r'^/feeds', 
+								r'/clear',
+								r'/sniffer',
+							]	
+
+app.config['IFACES'] = {}
+for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
+	app.config['IFACES'][i] = ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']
 
 # global avariables, used throughout malcom
 sniffer_sessions = {}
@@ -100,11 +110,16 @@ def after_request(response):
 
 @app.before_request
 def before_request():
-	g.version = app.config['VERSION']
+	# check for readonly mode and authorized URLs
+	if app.config['READONLY']:
+		for private_url in app.config['PRIVATE_URLS']:
+			if re.search(private_url, request.path):
+				abort(404)
+
+	# make configuration and analytics engine available to views
+	g.config = app.config
 	g.a = analytics_engine
-	g.ifaces = {}
-	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
-		g.ifaces[i] = ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']
+
 
 @app.route('/')
 def index():
@@ -114,7 +129,8 @@ def index():
 
 @app.route('/feeds')
 def feeds():
-	return render_template('feeds.html', feeds=feed_engine.feeds)
+	alpha = sorted(feed_engine.feeds, key=lambda name: name)
+	return render_template('feeds.html', feed_names=alpha, feeds=feed_engine.feeds)
 
 @app.route('/feeds/run/<feed_name>')
 def run_feed(feed_name):
@@ -521,6 +537,7 @@ if __name__ == "__main__":
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=app.config['LISTEN_PORT'])
 	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
 	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
+	parser.add_argument("-ro", "--read-only", help="Make this instance of read-only (Feeds and Sniffer tabs disabled)", action="store_true", default=app.config['READONLY'])
 	args = parser.parse_args()
 
 	
@@ -529,10 +546,12 @@ if __name__ == "__main__":
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port
 	app.config['MAX_THREADS'] = args.max_threads
+	app.config['READONLY'] = args.read_only
+
 	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
-	sys.stderr.write("Starting server...\n")
+	sys.stderr.write("Starting server in %s mode...\n" % ("readonly" if app.config['READONLY'] else "readwrite"))
 	sys.stderr.write("Detected interfaces:\n")
 	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
 		sys.stderr.write("%s:\t%s\n" % (i, ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']))

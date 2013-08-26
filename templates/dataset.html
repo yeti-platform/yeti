@@ -76,7 +76,9 @@
 			  </fieldset>
 			</form>
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
+			{% if not g.config['READONLY'] %}
 			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
+			{% endif %}
 		</div>
 
 

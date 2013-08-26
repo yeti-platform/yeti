@@ -54,6 +54,8 @@ def send_msg(ws, msg, type='msg'):
 def find_ips(data):
     ips = []
     for i in re.finditer("([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})",data):
+        # sanitize IPs to avoid leading 0s
+        ip = ".".join([str(int(dot)) for dot in i.group(1).split('.')])
         ips.append(i.group(1))
     return ips
 

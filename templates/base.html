@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Malcom 1.0 alpha</title>
+    <title>Malcom {{ g.config['VERSION'] }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -65,8 +65,10 @@
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
+              {% if not g.config['READONLY'] %}
               <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
               <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Sniffer</a></li>
+              {% endif %}
               <li class="divider-vertical"></li>
               
             </ul>
@@ -80,8 +82,8 @@
               <li id='iface-nav'>
                   <div class='interfaces'>
                     <table>
-                      {% for i in g.ifaces %}
-                        <tr><th>{{i}}</th><td>{{g.ifaces[i]}}</td></tr>
+                      {% for i in g.config['IFACES'] %}
+                        <tr><th>{{i}}</th><td>{{ g.config['IFACES'][i] }}</td></tr>
                       {% endfor %}
                     </table>
                     </div>

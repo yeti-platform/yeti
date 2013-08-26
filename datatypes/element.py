@@ -182,7 +182,7 @@ class Ip(Element):
 						]
 
 	def __init__(self, ip="", tags=[]):
-		super(Ip, self).__init__()	
+		super(Ip, self).__init__()
 		self['value'] = ip
 		self['tags'] = tags
 		self['type'] = 'ip'
