@@ -33,8 +33,27 @@ class Element(dict):
 			return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
 
 
+class File(Element):
+	display_fields = Element.default_fields + [('md5', "MD5"), ('file_type', "Type")]
+	def __init__(self, value='', type='file', tags=[]):
+		super(File, self).__init__()
+		self['value'] = value
+		self['type'] = type
+		self['tags'] = tags
 
+	@staticmethod
+	def from_dict(d):
+		f = File()
+		for key in d:
+			f[key] = d[key]
+		return f
 
+	def analytics(self):
+		self['last_analysis'] = datetime.datetime.utcnow()
+		# md5
+		self['md5'] = ""
+		self['file_type'] = "None"
+		return []
 
 class Evil(Element):
 	display_fields = Element.default_fields + []
