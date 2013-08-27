@@ -25,13 +25,19 @@
 <script type="text/javascript">
 
 initialize_graph();
+spinner = $("#loading-spinner")
+spinner.css('position', 'absolute');
+spinner.css('top', height/2);
+spinner.css('left', width/2);
+spinner.toggleClass('show')
+
 
 d3.json(url_static_prefix+"/graph/{{field}}/{{value}}", function(error, graph) {
     console.log(graph)
-   push_nodes(graph.nodes)
-   push_links(graph.edges)
+    push_nodes(graph.nodes)
+    push_links(graph.edges)
+    spinner.toggleClass('show')
     start();
-
 });
 
 

@@ -11,8 +11,9 @@
 	<div id='datasetTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='all'>
 			<table class='table table-condensed table-hover' id='dataset'>
+				<tr><th><h3>Populating table...</h3></th></tr>
 			</table>
-			<script>get_dataset("",'{{url_for('list')}}')</script>
+			<script>$( get_dataset("",'{{url_for('list')}}'))</script>
 		</div>
 
 		<!-- <div class='tab-pane' id='ip'>
