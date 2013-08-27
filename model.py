@@ -36,6 +36,7 @@ class Model:
 		self.db_lock = threading.Lock()
 
 		# create indexes
+		self.elements.ensure_index([('date_created', -1), ('value', 1)])
 		self.elements.ensure_index('value')
 		self.graph.ensure_index([('src', 1), ('dst', 1)])
 		self.graph.ensure_index('src')
