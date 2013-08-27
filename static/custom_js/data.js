@@ -1,7 +1,3 @@
-function hide_sniffer_nodes(selected_nodes) {
-
-}
-
 
 function highlight_query(query) {
 
@@ -76,19 +72,8 @@ function display_data(d)
 	$(".whois").empty();
 
 	$('#node_info').append("<tr><th>Node type</th><td>"+d.type+"</td></tr>");
-// 
-	// if (d.type == 'url')
-	// 	display_data_url(d);
-//	// else if (d.type == 'as')
-	// 	display_data_as(d);
-	// else if (d.type == 'ip')
-	// 	display_data_ip(d);
-	// else if (d.type == 'hostname')
-	// 	display_data_hostname(d);
-	// else if (d.type == 'evil')
-	// 	display_data_evil(d);
-	//else
-		display_generic(d);
+
+	display_generic(d);
 
 	$('#node_info').append("<tr><th>Date Updated</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
 	$('#node_info').append("<tr><th>Date Created</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");

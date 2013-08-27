@@ -7,10 +7,10 @@ $(
 
 function clear_db() {
 	var r=confirm("You sure?");
-		if (r==true)
-		  {
-		 	document.location.href=url_static_prefix+'dataset/clear';
-		  }
+	if (r==true)
+	  {
+	 	document.location.href=url_static_prefix+'dataset/clear';
+	  }
 }
 
 function dataset_remove(id) {
