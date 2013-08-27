@@ -20,6 +20,6 @@ debug_output("URLs without a hostname: {}".format(nohostname), type)
 
 emptyhostname = a.data.find({'type': 'url', 'hostname': ""}).count()
 type = "error" if emptyhostname > 0 else "debug"
-debug_output("URLs without empty hostname: {}".format(emptyhostname), type)
+debug_output("URLs with empty hostname: {}".format(emptyhostname), type)
 
 

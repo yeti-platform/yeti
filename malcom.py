@@ -561,6 +561,7 @@ if __name__ == "__main__":
 	sys.stderr.write("Importing feeds...\n")
 	feed_engine.load_feeds()
 
+
 	# call malcom to run feeds from crontab or other method
 	if args.feeds >= 1:
 		if args.feeds == 1:
@@ -568,6 +569,9 @@ if __name__ == "__main__":
 		elif args.feeds == 2:
 			feed_engine.run_all_feeds()
 		exit()
+
+	sys.stderr.write("Starting feed scheduler...\n")
+	feed_engine.start()
 
 	sys.stderr.write("Server running on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
 
@@ -582,4 +586,6 @@ if __name__ == "__main__":
 			debug_output('Stopping sniffing sessions...')
 			for s in sniffer_sessions:
 				sniffer_sessions[s].stop()
+
+		feed_engine.stop_all_feeds()
 		exit(0)
