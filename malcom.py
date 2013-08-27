@@ -80,6 +80,7 @@ app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
 app.config['MAX_THREADS'] = 4
 app.config['READONLY'] = False
+app.config['NO_FEED'] = False
 
 app.config['PRIVATE_URLS'] = [
 								r'^/feeds', 
@@ -539,6 +540,7 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
 	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
 	parser.add_argument("-ro", "--read-only", help="Make this instance of read-only (Feeds and Sniffer tabs disabled)", action="store_true", default=app.config['READONLY'])
+	parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
 
 	
@@ -548,6 +550,7 @@ if __name__ == "__main__":
 	app.config['LISTEN_PORT'] = args.port
 	app.config['MAX_THREADS'] = args.max_threads
 	app.config['READONLY'] = args.read_only
+	app.config['NO_FEED'] = args.no_feeds
 
 	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
@@ -570,8 +573,9 @@ if __name__ == "__main__":
 			feed_engine.run_all_feeds()
 		exit()
 
-	sys.stderr.write("Starting feed scheduler...\n")
-	feed_engine.start()
+	if not app.config['NO_FEED']:
+		sys.stderr.write("Starting feed scheduler...\n")
+		feed_engine.start()
 
 	sys.stderr.write("Server running on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
 
