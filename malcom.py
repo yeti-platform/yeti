@@ -226,7 +226,6 @@ def list():
 
 	per_page = 50
 	
-	# more memory efficient to slice within the request than afterwards
 	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
 	
 	for elt in elts:

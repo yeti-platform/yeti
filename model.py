@@ -37,7 +37,10 @@ class Model:
 
 		# create indexes
 		self.elements.ensure_index('value')
-		self.graph.create_index([('src',1), ('dst',1)])
+		self.graph.ensure_index([('src', 1), ('dst', 1)])
+		self.graph.ensure_index('src')
+		self.graph.ensure_index('dst')
+
 
 
 	def stats(self):
@@ -133,12 +136,10 @@ class Model:
 			return [], []
 
 		# get all links to / from the required element
-
-		new_edges = [n for n in self.graph.find({	'$or' : [
-															{'src': elt['_id']},
-															{'dst': elt['_id']}
-													]})]
-
+		to = [e for e in self.graph.find({'src': elt['_id']})]
+		fr = [e for e in self.graph.find({'dst': elt['_id']}) if e not in to]
+		new_edges = to+fr
+		
 		# get all IDs of the new nodes that have been discovered
 		s_src = set([e['src'] for e in new_edges])
 		s_dst = set([e['dst'] for e in new_edges])
@@ -146,7 +147,6 @@ class Model:
 		ids = list(s_src | s_dst | set([elt['_id']]))
 		
 		# get the new node objects
-		#nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
 		nodes = [node for node in self.elements.find( {'$and' : [{ "_id" : { '$in' : ids }}, query]})]
 
 		# get nodes IDs
@@ -156,12 +156,9 @@ class Model:
 		new_edges = [e for e in new_edges if e['src'] in nodes or e['dst'] in nodes_id]
 		
 		# get links for new nodes, in case we use them
-		more_edges = [edge for edge in self.graph.find({'$or' : [
-											{"src" : {'$in' : nodes_id }},
-											{"dst" : {'$in' : nodes_id }}
-											]}) if edge not in new_edges]
-
-		
+		to = [e for e in self.graph.find({'src': { '$in': nodes_id }}) if e not in new_edges]
+		fr = [e for e in self.graph.find({'dst': { '$in': nodes_id }}) if e not in new_edges]
+		more_edges = to+fr
 
 		destinations = [e['dst'] for e in new_edges]
 		for n in nodes:
