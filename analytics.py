@@ -104,50 +104,62 @@ class Analytics:
 
 	# elements analytics
 
-	def bulk_asn(self):
-		results = self.data.elements.find({'type': 'ip', 'bgp': None})
+	def bulk_asn(self, items=100):
 
-		ips = []
-		debug_output("(getting ASNs for %s IPs)" % results.count(), type='analytics')
+		last_analysis = {'$or': [
+									{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
+									{ 'last_analysis': None },
+								]
+						}
+
+		nobgp = {"$or": [{'bgp': None}, last_analysis ]}
+
+		results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]}) [:items]
+
+		#results = self.data.elements.find({'type': 'ip', 'bgp': None})
+
+		while results.count() > 0:
 		
-		for r in results:
-			ips.append(r)
+			ips = []
+			debug_output("(getting ASNs for %s IPs)" % results.count(), type='analytics')
+			
+			for r in results:
+				ips.append(r)
 
-		ips_chunks = [ips[x:x+100] for x in xrange(0, len(ips), 100)]
-
-		as_info = {}
-		for ips in ips_chunks:
+			as_info = {}
+			
 			try:
 				as_info = dict(as_info.items() + get_net_info_shadowserver(ips).items())
-
 			except Exception, e:
-				pass
-		
-		if as_info == {}:
-			return
-
-		for ip in as_info:
+				debug_output("Could not get AS for IPs: %s" % e)
 			
-			_as = as_info[ip]
-			_ip = self.data.find_one({'value': ip})
-
-			if not _ip:
+			if as_info == {}:
 				return
 
-			del _as['ip']
-			for key in _as:
-				if key not in ['type', 'value', 'tags']:
-					_ip[key] = _as[key]
-			del _as['bgp']
+			for ip in as_info:
+				
+				_as = as_info[ip]
+				_ip = self.data.find_one({'value': ip})
 
-			_as = As.from_dict(_as)
+				if not _ip:
+					return
 
-			# commit any changes to DB
-			_as = self.save_element(_as)
-			_ip = self.save_element(_ip)
-		
-			if _as and _ip:
-				self.data.connect(_ip, _as, 'net_info')
+				del _as['ip']
+				for key in _as:
+					if key not in ['type', 'value', 'tags']:
+						_ip[key] = _as[key]
+				del _as['bgp']
+
+				_as = As.from_dict(_as)
+
+				# commit any changes to DB
+				_as = self.save_element(_as)
+				_ip = self.save_element(_ip)
+			
+				if _as and _ip:
+					self.data.connect(_ip, _as, 'net_info')
+
+			results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]}) [:items]
 
 
 
