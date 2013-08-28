@@ -114,14 +114,12 @@ class Analytics:
 
 		nobgp = {"$or": [{'bgp': None}, last_analysis ]}
 
-		results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]
+		results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
-		#results = self.data.elements.find({'type': 'ip', 'bgp': None})
-
-		while results.count() > 0:
+		while len(results) > 0:
 		
 			ips = []
-			debug_output("(getting ASNs for %s IPs)" % results.count(), type='analytics')
+			debug_output("(getting ASNs for %s IPs)" % len(results), type='analytics')
 			
 			for r in results:
 				ips.append(r)
@@ -129,7 +127,7 @@ class Analytics:
 			as_info = {}
 			
 			try:
-				as_info = dict(as_info.items() + get_net_info_shadowserver(ips).items())
+				as_info = get_net_info_shadowserver(ips)
 			except Exception, e:
 				debug_output("Could not get AS for IPs: %s" % e)
 			
@@ -159,7 +157,7 @@ class Analytics:
 				if _as and _ip:
 					self.data.connect(_ip, _as, 'net_info')
 
-			results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]
+			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
 
 
