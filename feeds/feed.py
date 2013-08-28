@@ -64,7 +64,7 @@ class FeedEngine(threading.Thread):
 		self.global_thread = None
 
 		# for periodic tasking
-		self.period = 10
+		self.period = 60
 		self.run_periodically = False
 
 	def run_feed(self, feed_name):
@@ -83,6 +83,8 @@ class FeedEngine(threading.Thread):
 		for t in self.threads:
 			if self.threads[t].is_alive():
 				self.threads[t].join()
+		
+		self.anaytics.data.rebuild_indexes()
 
 	def stop_all_feeds(self):
 		self.run_periodically = False
@@ -100,6 +102,8 @@ class FeedEngine(threading.Thread):
 		for t in self.threads:
 			if self.threads[t].is_alive():
 				self.threads[t].join()
+		
+		self.anaytics.data.rebuild_indexes()
 
 	def run(self):
 		self.run_periodically = True
