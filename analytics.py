@@ -104,7 +104,7 @@ class Analytics:
 
 	# elements analytics
 
-	def bulk_asn(self, items=100):
+	def bulk_asn(self, items=1000):
 
 		last_analysis = {'$or': [
 									{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
@@ -132,6 +132,7 @@ class Analytics:
 				debug_output("Could not get AS for IPs: %s" % e)
 			
 			if as_info == {}:
+				debug_output("as_info empty", 'error')
 				return
 
 			for ip in as_info:
