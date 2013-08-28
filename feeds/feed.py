@@ -84,7 +84,7 @@ class FeedEngine(threading.Thread):
 			if self.threads[t].is_alive():
 				self.threads[t].join()
 		
-		self.anaytics.data.rebuild_indexes()
+		self.a.data.rebuild_indexes()
 
 	def stop_all_feeds(self):
 		self.run_periodically = False
@@ -103,7 +103,7 @@ class FeedEngine(threading.Thread):
 			if self.threads[t].is_alive():
 				self.threads[t].join()
 		
-		self.anaytics.data.rebuild_indexes()
+		self.a.data.rebuild_indexes()
 
 	def run(self):
 		self.run_periodically = True

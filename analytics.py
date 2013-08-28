@@ -114,7 +114,7 @@ class Analytics:
 
 		nobgp = {"$or": [{'bgp': None}, last_analysis ]}
 
-		results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]}) [:items]
+		results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]
 
 		#results = self.data.elements.find({'type': 'ip', 'bgp': None})
 
@@ -159,7 +159,7 @@ class Analytics:
 				if _as and _ip:
 					self.data.connect(_ip, _as, 'net_info')
 
-			results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]}) [:items]
+			results = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]
 
 
 
