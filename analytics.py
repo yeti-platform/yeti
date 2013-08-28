@@ -114,12 +114,14 @@ class Analytics:
 
 		nobgp = {"$or": [{'bgp': None}, last_analysis ]}
 
+		total = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]}).count()
+		done = 0
 		results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
 		while len(results) > 0:
 		
 			ips = []
-			debug_output("(getting ASNs for %s IPs)" % len(results), type='analytics')
+			debug_output("(getting ASNs for %s IPs - %s/%s done)" % (len(results), done, total), type='analytics')
 			
 			for r in results:
 				ips.append(r)
@@ -157,7 +159,7 @@ class Analytics:
 			
 				if _as and _ip:
 					self.data.connect(_ip, _as, 'net_info')
-
+			done += len(results)
 			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
 

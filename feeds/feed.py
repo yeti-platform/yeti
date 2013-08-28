@@ -110,7 +110,8 @@ class FeedEngine(threading.Thread):
 		while self.run_periodically:
 			time.sleep(self.period) # run a new thread every period seconds
 			debug_output("Checking feeds...")
-			threading.Thread(None, self.run_scheduled_feeds, None).start()
+			self.run_scheduled_feeds()
+			#threading.Thread(None, self.run_scheduled_feeds, None).start()
 
 
 	def load_feeds(self):
