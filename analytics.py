@@ -63,12 +63,12 @@ class Analytics:
 		for t in text:
 			elt = None
 			if t.strip() != "":
-				if is_ip(t):
-					elt = Ip(is_ip(t), [])
-				elif is_url(t):
-					elt = Url(is_url(t), [])			
+				if is_url(t):
+					elt = Url(is_url(t), [])
 				elif is_hostname(t):
 					elt = Hostname(is_hostname(t), [])
+				elif is_ip(t):
+					elt = Ip(is_ip(t), [])
 				if elt:
 					added.append(self.save_element(elt, tags))
 					
@@ -107,7 +107,7 @@ class Analytics:
 	def bulk_asn(self, items=1000):
 
 		last_analysis = {'$or': [
-									{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
+									{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=7)} },
 									{ 'last_analysis': None },
 								]
 						}

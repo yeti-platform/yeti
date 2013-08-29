@@ -188,7 +188,7 @@ function stopsniff() {
 function getSessionList() {
     $.ajax({
     type: 'get',
-    url: '/sniffer/sessionlist/',
+    url: url_static_prefix+'/sniffer/sessionlist/',
     success: function(data) {
         data = $.parseJSON(data);
         console.log(data);
