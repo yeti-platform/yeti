@@ -46,8 +46,6 @@ class Feed(object):
 
 		self.analytics.status = "Feeding"
 		status = self.update()
-		self.analytics.status = "Working"
-		self.analytics.process()
 		self.analytics.status = "Inactive"
 		self.analytics.notify_progress()
 		self.running = False
@@ -83,7 +81,10 @@ class FeedEngine(threading.Thread):
 		for t in self.threads:
 			if self.threads[t].is_alive():
 				self.threads[t].join()
-		
+
+		self.analytics.status = "Working"
+		self.analytics.process()
+
 		self.a.data.rebuild_indexes()
 
 	def stop_all_feeds(self):
@@ -102,6 +103,9 @@ class FeedEngine(threading.Thread):
 		for t in self.threads:
 			if self.threads[t].is_alive():
 				self.threads[t].join()
+
+		self.analytics.status = "Working"
+		self.analytics.process()
 		
 		self.a.data.rebuild_indexes()
 

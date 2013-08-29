@@ -153,6 +153,8 @@ def graph(field, value):
 
 	total_nodes = []
 	total_edges = []
+	nodes = []
+	edges = []
 	for elt in base_elts:
 		nodes, edges = a.data.get_neighbors(elt)
 		total_nodes.extend(nodes)
