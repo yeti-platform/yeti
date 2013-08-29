@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
+    {% block custom_head %}
+    {% endblock %}
 
     <!-- Le styles -->
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.css') }}" rel="stylesheet">
@@ -29,6 +31,7 @@
     <script src="{{ url_for('static', filename='bootstrap/js/bootstrap.min.js') }}"></script>
     <link href="{{ url_for('static', filename='custom_css/style.css') }}" rel='stylesheet'>
     <link href="{{ url_for('static', filename='custom_css/d3_graph.css') }}" rel='stylesheet'>
+
     
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/data.js') }}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/misc.js') }}" charset="utf-8"></script>
