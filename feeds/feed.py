@@ -44,10 +44,10 @@ class Feed(object):
 		self.next_run = self.last_run + self.run_every
 		self.elements_fetched = 0
 
-		self.analytics.status = "Feeding"
+		
+		self.analytics.notify_progress("Feeding")
 		status = self.update()
-		self.analytics.status = "Inactive"
-		self.analytics.notify_progress()
+		self.analytics.notify_progress("Inactive")
 		self.running = False
 
 
@@ -82,8 +82,8 @@ class FeedEngine(threading.Thread):
 			if self.threads[t].is_alive():
 				self.threads[t].join()
 
-		self.analytics.status = "Working"
-		self.analytics.process()
+		self.a.notify_progress("Working")
+		self.a.process()
 
 		self.a.data.rebuild_indexes()
 
@@ -96,6 +96,9 @@ class FeedEngine(threading.Thread):
 		self._Thread__stop()
 
 	def run_scheduled_feeds(self):
+		
+		self.a.notify_progress("Feeding")
+
 		for feed_name in [f for f in self.feeds if (self.feeds[f].next_run < datetime.utcnow() and self.feeds[f].enabled)]:	
 			debug_output('Starting thread for feed %s...' % feed_name)
 			self.run_feed(feed_name)
@@ -104,8 +107,8 @@ class FeedEngine(threading.Thread):
 			if self.threads[t].is_alive():
 				self.threads[t].join()
 
-		self.analytics.status = "Working"
-		self.analytics.process()
+		self.a.notify_progress("Working")
+		self.a.process()
 		
 		self.a.data.rebuild_indexes()
 

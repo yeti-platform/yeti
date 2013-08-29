@@ -9,7 +9,7 @@ class MDLHosts(Feed):
 	"""
 	def __init__(self, name):
 		super(MDLHosts, self).__init__(name, run_every="12h")
-		self.enabled = True
+		self.enabled = False
 
 	def update(self):
 		try:

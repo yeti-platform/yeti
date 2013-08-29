@@ -13,7 +13,7 @@ class SpyEyeCnc(Feed):
 
 	def __init__(self, name):
 		super(SpyEyeCnc, self).__init__(name, run_every="1h")
-		self.enabled = True
+		self.enabled = False
 
 
 	def update(self):

@@ -209,9 +209,11 @@ class Analytics:
 		self.bulk_asn()
 		self.active = False
 		debug_output("Finished analyzing.")
-		self.notify_progress()
+		self.notify_progress("Finished analyzing.")
 
-	def notify_progress(self):
+	def notify_progress(self, status=None):
+		if status:
+			self.status = status
 		status = {'active': self.active, 'status': self.status}
 		if self.progress != self.total:
 			status['progress'] = '%s/%s' % (self.progress, self.total)

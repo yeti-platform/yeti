@@ -14,7 +14,7 @@ class MalcodeBinaries(Feed):
 
 	def __init__(self, name):
 		super(MalcodeBinaries, self).__init__(name, run_every="1h")
-		self.enabled = True
+		self.enabled = False
 
 	def update(self):
 		try:
