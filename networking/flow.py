@@ -95,6 +95,9 @@ class Flow(object):
 	def __init__(self, pkt):
 		self.packets = []
 
+		# set initial timestamp
+		self.timestamp = pkt.time
+
 		# addresses
 		self.src_addr = pkt[IP].src 
 		self.dst_addr = pkt[IP].dst
@@ -179,6 +182,7 @@ class Flow(object):
 	def get_statistics(self):
 
 		update = {
+				'timestamp': self.timestamp,
 				'fid' : self.fid,
 				'src_addr': self.src_addr,
 				'src_port': self.src_port,

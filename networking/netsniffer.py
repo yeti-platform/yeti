@@ -76,7 +76,8 @@ class Sniffer():
 		data['flows'] = []
 		for fid in self.flows:
 			data['flows'].append(self.flows[fid].get_statistics())
-
+		print data['flows'][0]
+		data['flows'] = sorted(data['flows'], key= lambda x: x['timestamp'])
 		return data
 
 	def start(self, remote_addr):
