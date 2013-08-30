@@ -11,17 +11,14 @@ Malcom can help you:
 
 The aim of Malcom is to make malware analysis and intel gathering *faster* by providing a human-readable version of network traffic originating from a given host or network. Convert network traffic information to actionable intelligence faster.
 
-Check the [wiki](https://github.com/tomchop/malcom/wiki) for a Quickstart and some nice screenshots.
-
-In the near future, it will also become a collaborative tool (coming soon!)
+Check the [wiki](https://github.com/tomchop/malcom/wiki) for a Quickstart with some nice screenshots and a tutorial on [how to add your own feeds](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
 
 ## Quick how-to
 
 * Install
 * Elevate your privileges to root (yeah, I know, see [disclaimer](/README.md#Disclaimer))
-* Start the webserver with `python malcom.py`
+* Start the webserver with `python malcom.py` (or see options with `python malcom --help`)
 ** Default port is 8080
-** If you want to change ports and stuff, just edit malcom.py directly
 
 ## Installation
 
@@ -77,17 +74,10 @@ As long as it's getting layer-3 network data, Malcom can be deployed anywhere. A
 
 ### Feeds (experimental)
 
-For now, feeds have to be ran manually.
+Feeds now run automatically by default. If you want to avoid this behavior, run malcom with the `--no-feeds` option.
 Source your virtualenv, and then launch a python shell (i.e. type `python`)
 
-        from analytics import Analytics
-        from feeds.zeustracker import ZeusTrackerBinaries
-        a = Analytics()
-        z = ZeusTrackerBinaries(a)
-        parsed = z.get_info()
-        z.analytics()
-
-Your database should be populated with the feed. If you can dig into the code, adding feeds is pretty straightforward (assuming you're generating `Evil` objects). You can find an example feed in `/feeds/zeustracker`.
+Your database should be populated automatically. If you can dig into the code, adding feeds is pretty straightforward (assuming you're generating `Evil` objects). You can find an example feed in `/feeds/zeustracker`. A more detailed tutorial is [available here](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
 
 
 ## Technical specs
@@ -97,7 +87,7 @@ Malcom was written mostly from scratch, in Python. It uses the following framewo
 * [flask](http://flask.pocoo.org/) - a lightweight python web framework
 * [mongodb](http://www.mongodb.org/) - a NoSQL database. It interfaces to python with [pymongo](http://api.mongodb.org/python/current/)
 * [d3js](http://d3js.org/) - a JavaScript library that produces awesome force-directed graphs (https://github.com/mbostock/d3/wiki/Gallery)
-* [bootstrap](http://twitter.github.io/bootstrap/) - a CSS framework that will eventually kill webdesign, but makes it extremely easy to quickly produce webapps without having to focus on the HTML and CSS
+* [bootstrap](http://twitter.github.io/bootstrap/) - a CSS framework that will eventually kill webdesign, but makes it extremely easy to quickly "webize" applications that are functionnal in command line without caring spending too much time on HTML and CSS.
 
 ## Roadmap
 
@@ -105,19 +95,19 @@ My todo list is a text file on my desktop, its items are written in three differ
 
 **Collaboration** - The **main** direction I want this tool to take is to become collaborative. I have a few ideas for this, and I think it will become 100x more useful once data sharing is implemented.
 
-**Extendability** - The other thing I want to include in the tool is the ability to more easily extend it. I don't have the same needs as everyone else, and this tool was conceived having my needs in mind.
+**Extendability** - The other thing I want to include in the tool is the ability to more easily extend it. I don't have the same needs as everyone else, and this tool was conceived having my needs in mind. You can now customize Malcom by [adding new feeds](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
 
 Once collaboration and extension are up and running, I think this will be helpful for more than one incident responder out there. :-)
 
 ## Disclaimer
 
-This tool was coded during my free time. Like a huge number of tools we download and use daily, I wouldn't recommend to use it on a production environment where data stability is a MUST.
+This tool was coded during my free time. Like a huge number of tools we download and use daily, I wouldn't recommend to use it on a production environment where data stability and reliability is a MUST.
 
-* It may be broken, have security gaps (running as root is probably not a good idea), or not work at all. 
+* It may be broken, have security gaps (running it as root in uncontrolled environments is probably not a good idea), or not work at all. 
 * It's written in python, so don't expect it to be ultra-fast or handle huge amounts of data easily. 
 * I'm no coder, so don't expect to see beautiful pythonic code everywhere you look. Or lots of comments.
 
-It's version 0.1, meaning "it works for me". You're free to share it, improve it, ask for pull requests.
+It's in early stages of development, meaning "it works for me". You're free to share it, improve it, ask for pull requests.
 
 ## License
 
@@ -137,4 +127,4 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Please note that Maximind and Bootstrap (and other third party libraries included in Malcom) have their own GPL compatible licences.
+Please note that MongoDB, d3js, Maximind and Bootstrap (and other third party libraries included in Malcom) may have their own GPL compatible licences.
