@@ -153,9 +153,9 @@ class Url(Element):
 		self['hostname'] = hostname
 
 		if toolbox.is_ip(self['hostname']):
-			new.append(('host', Ip(self['hostname'])))
+			new.append(('host', Ip(toolbox.is_ip(self['hostname']))))
 		elif toolbox.is_hostname(self['hostname']):
-			new.append(('host', Hostname(self['hostname'])))
+			new.append(('host', Hostname(toolbox.is_hostname(self['hostname']))))
 		else:
 			debug_output("No hostname found for %s" % self['value'], type='error')
 			return
