@@ -4,21 +4,21 @@ from lxml import etree
 import toolbox
 from bson.objectid import ObjectId
 from bson.json_util import dumps
-from datatypes.element import Evil, Url
+from datatypes.element import Hostname
 from feed import Feed
 
 
 
-
-class ZeusTrackerBinaries(Feed):
+class SpyEyeCnc(Feed):
 
 	def __init__(self, name):
-		super(ZeusTrackerBinaries, self).__init__(name)
-		self.enabled = True
+		super(SpyEyeCnc, self).__init__(name, run_every="1h")
+		self.enabled = False
+
 
 	def update(self):
 		try:
-			feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries")
+			feed = urllib2.urlopen("https://spyeyetracker.abuse.ch/monitor.php?rssfeed=tracker")
 			self.status = "OK"
 		except Exception, e:
 			self.status = "ERROR: " + str(e)
@@ -49,8 +49,8 @@ class ZeusTrackerBinaries(Feed):
 		# We start populating the Evil() object's attributes with
 		# information from the dict we parsed earlier
 
-		evil['feed'] = "ZeusTrackerBinaries"
-		evil['url'] = toolbox.find_urls(dict['description'])[0]
+		evil['feed'] = "SpyEyeConfigs"
+		evil['hostname'] = toolbox.find_hostnames(dict['description'])[0]
 		
 		# description
 		evil['description'] = dict['link'] + " " + dict['description'] 
@@ -75,7 +75,7 @@ class ZeusTrackerBinaries(Feed):
 		evil['type'] = 'evil'
 
 		# tags
-		evil['tags'] += ['zeus', 'malware', 'ZeusTrackerBinaries']
+		evil['tags'] += ['spyeye', 'malware', 'SpyEyeCnc']
 
 		# date_retreived
 		evil['date_retreived'] = datetime.datetime.utcnow()
@@ -84,7 +84,7 @@ class ZeusTrackerBinaries(Feed):
 		# Malcom will identify them in the database.
 		# This is probably not the best way, but it will do for now.
 
-		evil['value'] = "ZeuS bot"
+		evil['value'] = "SpyEye Config"
 		if md5:
 			evil['value'] += " (MD5: %s)" % evil['md5']
 		else:
@@ -98,13 +98,13 @@ class ZeusTrackerBinaries(Feed):
 			self.elements_fetched += 1
 
 		# Create an URL element
-		url = Url(evil['url'], ['evil', 'ZeusTrackerBinaries'])
+		hostname = Hostname(evil['hostname'], ['evil', 'SpyEyeConfigs'])
 
 		# Save it to the DB.
-		url, status = self.analytics.save_element(url, with_status=True)
+		url, status = self.analytics.save_element(hostname, with_status=True)
 		if status['updatedExisting'] == False:
 			self.elements_fetched += 1
 
 		# Connect the URL element to the Evil element
-		self.analytics.data.connect(url, evil, ['hosting'])
+		self.analytics.data.connect(hostname, evil, ['hosting'])
 

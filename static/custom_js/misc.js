@@ -7,10 +7,10 @@ $(
 
 function clear_db() {
 	var r=confirm("You sure?");
-		if (r==true)
-		  {
-		 	document.location.href=url_static_prefix+'dataset/clear';
-		  }
+	if (r==true)
+	  {
+	 	document.location.href=url_static_prefix+'dataset/clear';
+	  }
 }
 
 function dataset_remove(id) {
@@ -104,14 +104,14 @@ function get_dataset(query, url) {
 
 	  	for (var i in data.elements) {
 	  		elt = data.elements[i]
-	  		context_links = new Array()
+	  		tags_links = new Array()
 	  		//create row
 	  		row = $("<tr id='row_"+elt['_id']['$oid']+"'></tr>")
 	  		for (var key in data.fields) {
 	  				k = data.fields[key][0]
 	  				v = elt[k]
-	  				if (k == 'context')
-	  					row.append($("<td />").addClass('context_links'))
+	  				if (k == 'tags')
+	  					row.append($("<td />").addClass('tags_links'))
 	  				else if (k.indexOf('date') != -1)
 	  					row.append($("<td />").text(format_date(new Date(elt.date_updated.$date))).addClass('timestamp'))
 	  				else if (v == "" || v == undefined)
@@ -122,15 +122,15 @@ function get_dataset(query, url) {
 
 	  		row.append("<td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td>")
 
-	  		context_links = row.find('.context_links')
+	  		tags_links = row.find('.tags_links')
 
-	  		for (var c in elt['context']) {
+	  		for (var c in elt['tags']) {
 	  			a = $('<a>')
-	  			a.attr('href', url_static_prefix+'nodes/context/'+elt['context'][c])
-	  			a.text(elt['context'][c])
+	  			a.attr('href', url_static_prefix+'nodes/tags/'+elt['tags'][c])
+	  			a.text(elt['tags'][c])
 	  			if (c != 0)
-	  				context_links.append(', ')
-	  			context_links.append(a)
+	  				tags_links.append(', ')
+	  			tags_links.append(a)
 	  		}
 
 	  		// append the created row to the table

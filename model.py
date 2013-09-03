@@ -35,6 +35,18 @@ class Model:
 		self.gi = pygeoip.GeoIP('geoIP/GeoLiteCity.dat')
 		self.db_lock = threading.Lock()
 
+		# create indexes
+		self.rebuild_indexes()
+
+	def rebuild_indexes(self):
+		# create indexes
+		debug_output("Rebuliding indexes...", 'model')
+		self.elements.ensure_index([('date_created', -1), ('value', 1)])
+		self.elements.ensure_index('value')
+		self.graph.ensure_index([('src', 1), ('dst', 1)])
+		self.graph.ensure_index('src')
+		self.graph.ensure_index('dst')
+
 	def stats(self):
 		stats = "DB loaded with %s elements\n" % self._db.elements.count()
 		stats += "Graph has %s edges" % self._db.graph.count()
@@ -60,13 +72,13 @@ class Model:
 		self.db_lock.acquire()
 		#elt = self.exists(element)
 	
-		context = element['context']
-		del element['context'] # so context in the db does not get overwritten
+		tags = element['tags']
+		del element['tags'] # so tags in the db does not get overwritten
 
 		if '_id' in element:
 			del element['_id']
 
-		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'context' : {'$each': context}}}, upsert=True)
+		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'tags' : {'$each': tags}}}, upsert=True)
 		saved = self.elements.find({'value': element['value']})
 
 		assert(saved.count() == 1) # check that elements are unique in the db
@@ -120,7 +132,7 @@ class Model:
 		elts = feed.get_info()
 	  
 		for e in elts:
-			self.malware_add(e,e['context'])
+			self.malware_add(e,e['tags'])
 
 	def get_neighbors(self, elt, query={}):
 
@@ -128,12 +140,10 @@ class Model:
 			return [], []
 
 		# get all links to / from the required element
-
-		new_edges = [n for n in self.graph.find({	'$or' : [
-															{'src': elt['_id']},
-															{'dst': elt['_id']}
-													]})]
-
+		to = [e for e in self.graph.find({'src': elt['_id']})]
+		fr = [e for e in self.graph.find({'dst': elt['_id']}) if e not in to]
+		new_edges = to+fr
+		
 		# get all IDs of the new nodes that have been discovered
 		s_src = set([e['src'] for e in new_edges])
 		s_dst = set([e['dst'] for e in new_edges])
@@ -141,7 +151,6 @@ class Model:
 		ids = list(s_src | s_dst | set([elt['_id']]))
 		
 		# get the new node objects
-		#nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
 		nodes = [node for node in self.elements.find( {'$and' : [{ "_id" : { '$in' : ids }}, query]})]
 
 		# get nodes IDs
@@ -151,12 +160,9 @@ class Model:
 		new_edges = [e for e in new_edges if e['src'] in nodes or e['dst'] in nodes_id]
 		
 		# get links for new nodes, in case we use them
-		more_edges = [edge for edge in self.graph.find({'$or' : [
-											{"src" : {'$in' : nodes_id }},
-											{"dst" : {'$in' : nodes_id }}
-											]}) if edge not in new_edges]
-
-		
+		to = [e for e in self.graph.find({'src': { '$in': nodes_id }}) if e not in new_edges]
+		fr = [e for e in self.graph.find({'dst': { '$in': nodes_id }}) if e not in new_edges]
+		more_edges = to+fr
 
 		destinations = [e['dst'] for e in new_edges]
 		for n in nodes:
@@ -168,53 +174,53 @@ class Model:
 		return nodes, new_edges
 
 
-	def get_graph_for_elts(self, elts):
-		edges = []
+	# def get_graph_for_elts(self, elts):
+	# 	edges = []
 		
-		ids = []
-		for e in elts:
+	# 	ids = []
+	# 	for e in elts:
 
-			new_edges = [n for n in self.graph.find({ '$or' : [
-															{'src': e['_id']}, 
-															{'dst': e['_id']}
-															] })]
+	# 		new_edges = [n for n in self.graph.find({ '$or' : [
+	# 														{'src': e['_id']}, 
+	# 														{'dst': e['_id']}
+	# 														] })]
 			
-			# while len(new_edges) > 0:
-			edges.extend(new_edges)
+	# 		# while len(new_edges) > 0:
+	# 		edges.extend(new_edges)
 
-			get_new_edges = []
+	# 		get_new_edges = []
 
-			for edge in new_edges:
-				get_new_edges.append(edge['dst'])
+	# 		for edge in new_edges:
+	# 			get_new_edges.append(edge['dst'])
 					 
-			new_edges = [edge for edge in self.graph.find( {'$or' : [
-																{"src" : {'$in' : get_new_edges }},
-																{"dst" : {'$in' : get_new_edges }}
-																]}) if edge not in edges]
+	# 		new_edges = [edge for edge in self.graph.find( {'$or' : [
+	# 															{"src" : {'$in' : get_new_edges }},
+	# 															{"dst" : {'$in' : get_new_edges }}
+	# 															]}) if edge not in edges]
 
-		s_src = set([e['src'] for e in edges])
-		s_dst = set([e['dst'] for e in edges])
+	# 	s_src = set([e['src'] for e in edges])
+	# 	s_dst = set([e['dst'] for e in edges])
 
-		ids = list(s_src | s_dst | set([n['_id'] for n in elts]))
+	# 	ids = list(s_src | s_dst | set([n['_id'] for n in elts]))
 		
-		nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
+	# 	nodes = [node for node in self.elements.find({ "_id" : { '$in' : ids }})]
 
-		idlist = [n['_id'] for n in nodes]
+	# 	idlist = [n['_id'] for n in nodes]
 
-		ids = list(set([e['_id'] for e in edges]))
-		edges = [e for e in self.graph.find({"_id" : { '$in': ids }})]
-		destinations = [e['dst'] for e in edges]
-		for n in nodes:
-			#n['group'] = 1
-			n['incoming_links'] = destinations.count(n['_id'])
+	# 	ids = list(set([e['_id'] for e in edges]))
+	# 	edges = [e for e in self.graph.find({"_id" : { '$in': ids }})]
+	# 	destinations = [e['dst'] for e in edges]
+	# 	for n in nodes:
+	# 		#n['group'] = 1
+	# 		n['incoming_links'] = destinations.count(n['_id'])
 
-		for e in edges:
-			e['source'] = idlist.index(e['src'])
-			e['target'] = idlist.index(e['dst'])
-			e['src']
-			e['dst']
+	# 	for e in edges:
+	# 		e['source'] = idlist.index(e['src'])
+	# 		e['target'] = idlist.index(e['dst'])
+	# 		e['src']
+	# 		e['dst']
 
-		return edges, nodes
-		#return [], [nodes[0]]
+	# 	return edges, nodes
+	# 	#return [], [nodes[0]]
 
  

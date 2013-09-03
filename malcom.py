@@ -79,7 +79,18 @@ app.config['UPLOAD_FOLDER'] = ""
 app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
 app.config['MAX_THREADS'] = 4
+app.config['READONLY'] = False
+app.config['NO_FEED'] = False
 
+app.config['PRIVATE_URLS'] = [
+								r'^/feeds', 
+								r'/clear',
+								r'/sniffer',
+							 ]	
+
+app.config['IFACES'] = {}
+for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
+	app.config['IFACES'][i] = ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']
 
 # global avariables, used throughout malcom
 sniffer_sessions = {}
@@ -100,11 +111,16 @@ def after_request(response):
 
 @app.before_request
 def before_request():
-	g.version = app.config['VERSION']
+	# check for readonly mode and authorized URLs
+	if app.config['READONLY']:
+		for private_url in app.config['PRIVATE_URLS']:
+			if re.search(private_url, request.path):
+				abort(404)
+
+	# make configuration and analytics engine available to views
+	g.config = app.config
 	g.a = analytics_engine
-	g.ifaces = {}
-	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
-		g.ifaces[i] = ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']
+
 
 @app.route('/')
 def index():
@@ -114,7 +130,8 @@ def index():
 
 @app.route('/feeds')
 def feeds():
-	return render_template('feeds.html', feeds=feed_engine.feeds)
+	alpha = sorted(feed_engine.feeds, key=lambda name: name)
+	return render_template('feeds.html', feed_names=alpha, feeds=feed_engine.feeds)
 
 @app.route('/feeds/run/<feed_name>')
 def run_feed(feed_name):
@@ -133,12 +150,20 @@ def graph(field, value):
 	a = g.a
 	query = { field: re.compile(re.escape(value), re.IGNORECASE) }
 	base_elts = [e for e in a.data.elements.find( query )]
-	edges, nodes = a.data.get_graph_for_elts(base_elts)
-	data = { 'query': base_elts, 'edges': edges, 'nodes': nodes }
+
+	total_nodes = []
+	total_edges = []
+	nodes = []
+	edges = []
+	for elt in base_elts:
+		nodes, edges = a.data.get_neighbors(elt)
+		total_nodes.extend(nodes)
+		total_edges.extend(edges)
+
+	data = { 'query': base_elts, 'edges': total_edges, 'nodes': total_nodes }
 	ids = [node['_id'] for node in nodes]
-	other = [a for a in a.data.elements.find( {"_id" : { '$not' : { '$in' : ids }}})]
 	
-	debug_output("query: %s, edges found: %s, nodes found: %s, other: %s" % (len(base_elts), len(edges), len(nodes), len(other)))
+	debug_output("query: %s, edges found: %s, nodes found: %s" % (len(base_elts), len(edges), len(nodes)))
 	return (dumps(data))
 
 @app.route('/neighbors', methods=['POST'])
@@ -203,7 +228,6 @@ def list():
 
 	per_page = 50
 	
-	# more memory efficient to slice within the request than afterwards
 	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
 	
 	for elt in elts:
@@ -215,7 +239,7 @@ def list():
 		data['fields'] = elts[0].display_fields
 		data['elements'] = elts
 	else:
-		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('context', 'Context')]
+		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
 		data['elements'] = []
 	
 	data['page'] = page
@@ -272,15 +296,15 @@ def add_data():
 		else:
 			elements = [request.form['element']]
 
-		context = request.form.get('context', None)
+		tags = request.form.get('tags', None)
 		
-		if len(elements) == 0 or not context:
-			flash("You must specify an element and a context", 'warning')
+		if len(elements) == 0 or not tags:
+			flash("You must specify an element and tags", 'warning')
 			return redirect(url_for('dataset'))
 
 		a = g.a
-		context = context.strip().split(";")
-		a.add_text(elements, context)
+		tags = tags.strip().split(";")
+		a.add_text(elements, tags)
 
 		if request.form.get('analyse', None):
 			a.process()
@@ -319,7 +343,7 @@ def sniffer():
 			return redirect(url_for('sniffer'))
 
 		debug_output("Creating session %s" % session_name)
-		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.ifaces)
+		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.config['IFACES'])
 		
 		# if we're dealing with an uploaded PCAP file
 		file = request.files.get('pcap-file')
@@ -401,10 +425,11 @@ def analytics_api():
 			cmd = message['cmd']
 
 			if cmd == 'analyticsstatus':
-				if g.a.active:
-					send_msg(ws, {'status': 1}, type=cmd)
-				else:
-					send_msg(ws, {'status': 0}, type=cmd)
+				g.a.notify_progress()
+				# if g.a.active:
+				# 	send_msg(ws, {'status': 1}, type=cmd)
+				# else:
+				# 	send_msg(ws, {'status': 0}, type=cmd)
 
 			
 
@@ -515,6 +540,8 @@ if __name__ == "__main__":
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=app.config['LISTEN_PORT'])
 	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
 	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
+	parser.add_argument("-ro", "--read-only", help="Make this instance of read-only (Feeds and Sniffer tabs disabled)", action="store_true", default=app.config['READONLY'])
+	parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
 
 	
@@ -523,10 +550,13 @@ if __name__ == "__main__":
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port
 	app.config['MAX_THREADS'] = args.max_threads
+	app.config['READONLY'] = args.read_only
+	app.config['NO_FEED'] = args.no_feeds
+
 	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
-	sys.stderr.write("Starting server...\n")
+	sys.stderr.write("Starting server in %s mode...\n" % ("readonly" if app.config['READONLY'] else "readwrite"))
 	sys.stderr.write("Detected interfaces:\n")
 	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
 		sys.stderr.write("%s:\t%s\n" % (i, ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']))
@@ -535,6 +565,7 @@ if __name__ == "__main__":
 	sys.stderr.write("Importing feeds...\n")
 	feed_engine.load_feeds()
 
+
 	# call malcom to run feeds from crontab or other method
 	if args.feeds >= 1:
 		if args.feeds == 1:
@@ -542,6 +573,10 @@ if __name__ == "__main__":
 		elif args.feeds == 2:
 			feed_engine.run_all_feeds()
 		exit()
+
+	if not app.config['NO_FEED']:
+		sys.stderr.write("Starting feed scheduler...\n")
+		feed_engine.start()
 
 	sys.stderr.write("Server running on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
 
@@ -556,4 +591,6 @@ if __name__ == "__main__":
 			debug_output('Stopping sniffing sessions...')
 			for s in sniffer_sessions:
 				sniffer_sessions[s].stop()
+
+		feed_engine.stop_all_feeds()
 		exit(0)

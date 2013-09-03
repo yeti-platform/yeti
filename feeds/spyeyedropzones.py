@@ -9,16 +9,16 @@ from feed import Feed
 
 
 
-
-class ZeusTrackerBinaries(Feed):
+class SpyEyeDropzones(Feed):
 
 	def __init__(self, name):
-		super(ZeusTrackerBinaries, self).__init__(name)
-		self.enabled = True
+		super(SpyEyeDropzones, self).__init__(name, run_every="1h")
+		self.enabled = False
+
 
 	def update(self):
 		try:
-			feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries")
+			feed = urllib2.urlopen("https://spyeyetracker.abuse.ch/monitor.php?rssfeed=dropurls")
 			self.status = "OK"
 		except Exception, e:
 			self.status = "ERROR: " + str(e)
@@ -49,7 +49,7 @@ class ZeusTrackerBinaries(Feed):
 		# We start populating the Evil() object's attributes with
 		# information from the dict we parsed earlier
 
-		evil['feed'] = "ZeusTrackerBinaries"
+		evil['feed'] = "SpyEyeDropzones"
 		evil['url'] = toolbox.find_urls(dict['description'])[0]
 		
 		# description
@@ -61,13 +61,13 @@ class ZeusTrackerBinaries(Feed):
 		else:
 			evil['status'] = "online"
 
-		# md5 
-		md5 = re.search("MD5 hash: (?P<md5>[0-9a-f]{32,32})",dict['description'])
-		if md5 != None:
-			evil['md5'] = md5.group('md5')
-		else:
-			evil['md5'] = "No MD5"
-		
+                # md5 
+                md5 = re.search("MD5 hash: (?P<md5>[0-9a-f]{32,32})",dict['description'])
+                if md5 != None:
+                        evil['md5'] = md5.group('md5')
+                else:
+                        evil['md5'] = "No MD5"
+
 		# linkback
 		evil['source'] = dict['guid']
 
@@ -75,7 +75,7 @@ class ZeusTrackerBinaries(Feed):
 		evil['type'] = 'evil'
 
 		# tags
-		evil['tags'] += ['zeus', 'malware', 'ZeusTrackerBinaries']
+		evil['tags'] += ['spyeye', 'malware', 'SpyEyeDropzones']
 
 		# date_retreived
 		evil['date_retreived'] = datetime.datetime.utcnow()
@@ -84,11 +84,7 @@ class ZeusTrackerBinaries(Feed):
 		# Malcom will identify them in the database.
 		# This is probably not the best way, but it will do for now.
 
-		evil['value'] = "ZeuS bot"
-		if md5:
-			evil['value'] += " (MD5: %s)" % evil['md5']
-		else:
-			evil['value'] += " (URL: %s)" % evil['url']
+		evil['value'] = "SpyEye Dropzone (%s)"%evil['url']
 
 		# Save elements to DB. The status field will contain information on 
 		# whether this element already existed in the DB.
@@ -98,7 +94,7 @@ class ZeusTrackerBinaries(Feed):
 			self.elements_fetched += 1
 
 		# Create an URL element
-		url = Url(evil['url'], ['evil', 'ZeusTrackerBinaries'])
+		url = Url(evil['url'], ['evil', 'SpyEyeDropzones'])
 
 		# Save it to the DB.
 		url, status = self.analytics.save_element(url, with_status=True)

@@ -55,7 +55,7 @@ function snifferWebSocketHandler(msg) {
     if (data.type == 'flowstatus') {
         table = $('#flow-list')
         table.empty()
-        table.append("<tr><th style='text-align:right;'>Source</th><th></th><th style='text-align:right;'>Destination</th><th></th><th>Protocol</th><th>Packet count</th><th>Data transfered</th><th>Decoded as</th><th>Raw payload</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
+        table.append("<tr><th>Timestamp</th><th style='text-align:right;'>Source</th><th></th><th style='text-align:right;'>Destination</th><th></th><th>Protocol</th><th>Packet count</th><th>Data transfered</th><th>Decoded as</th><th>Raw payload</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
         for (var i in data.flows) {
             flow = data.flows[i]
             row = $('<tr />').attr('id',flow['fid'])
@@ -96,7 +96,7 @@ function highlight_response(row) {
 function netflow_row(flow, row) {
     // row.append($('<td />').text(flow['src_addr']+":"+flow['src_port']))
     // row.append($('<td />').text(flow['dst_addr']+":"+flow['dst_port']))
-
+    row.append($('<td />').text(flow['timestamp']))
     row.append($('<td />').text(flow['src_addr']).css('text-align', 'right'))
     row.append($('<td />').text(flow['src_port']))
     row.append($('<td />').text(flow['src_addr']).css('text-align', 'right'))
@@ -188,7 +188,7 @@ function stopsniff() {
 function getSessionList() {
     $.ajax({
     type: 'get',
-    url: '/sniffer/sessionlist/',
+    url: url_static_prefix+'/sniffer/sessionlist/',
     success: function(data) {
         data = $.parseJSON(data);
         console.log(data);

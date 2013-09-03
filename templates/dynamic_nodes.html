@@ -1,7 +1,11 @@
 {% extends "base.html" %}
+
+
+
 {% block main %}
 
 <div class='span9'> 
+  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
   <div class='graph'>
   </div>
   <div class='hotkeys'>
@@ -13,6 +17,23 @@
     <li><strong>h</strong>: hide nodes</li>
     <li><strong>(shift+)arrows</strong>: move nodes</li>
   </ul>
+  <table>
+    <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider' style='width:100px;'></div></td>
+    </tr>
+  </table>
+
+  <script type="text/javascript">
+    $("#slider").slider({
+      range: 'max',
+      min: 10,
+      max: 300,
+      value: 70,
+      slide: function (event, ui) {
+        force.linkDistance(ui.value);
+        start();
+      }
+    });
+  </script>
 </div>
 </div>
 
@@ -24,13 +45,19 @@
 <script type="text/javascript">
 
 initialize_graph();
+spinner = $("#loading-spinner")
+spinner.css('position', 'absolute');
+spinner.css('top', height/2);
+spinner.css('left', width/2);
+spinner.toggleClass('show')
+
 
 d3.json(url_static_prefix+"/graph/{{field}}/{{value}}", function(error, graph) {
     console.log(graph)
-   push_nodes(graph.nodes)
-   push_links(graph.edges)
+    push_nodes(graph.nodes)
+    push_links(graph.edges)
+    spinner.toggleClass('show')
     start();
-
 });
 
 

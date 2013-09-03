@@ -1,7 +1,6 @@
-import os, sys, threading
+import os, sys, threading, time
 from toolbox import debug_output
 from datetime import timedelta, datetime
-
 
 
 
@@ -45,20 +44,26 @@ class Feed(object):
 		self.next_run = self.last_run + self.run_every
 		self.elements_fetched = 0
 
-		#thread this
+		
+		self.analytics.notify_progress("Feeding")
 		status = self.update()
-
-		self.analytics.process()
+		self.analytics.notify_progress("Inactive")
 		self.running = False
 
 
 
-class FeedEngine(object):
+class FeedEngine(threading.Thread):
 	"""Feed engine. This object will load and update feeds"""
 	def __init__(self, analytics):
+		threading.Thread.__init__(self)
 		self.a = analytics
 		self.feeds = {}
 		self.threads = {}
+		self.global_thread = None
+
+		# for periodic tasking
+		self.period = 60
+		self.run_periodically = False
 
 	def run_feed(self, feed_name):
 		if self.threads.get(feed_name):
@@ -74,16 +79,47 @@ class FeedEngine(object):
 			self.run_feed(feed_name)
 
 		for t in self.threads:
-			self.threads[t].join()
+			if self.threads[t].is_alive():
+				self.threads[t].join()
+
+		self.a.notify_progress("Working")
+		self.a.process()
+
+		self.a.data.rebuild_indexes()
+
+	def stop_all_feeds(self):
+		self.run_periodically = False
+		for t in self.threads:
+			if self.threads[t].is_alive():
+				self.threads[t]._Thread__stop()
+		
+		self._Thread__stop()
 
 	def run_scheduled_feeds(self):
-		debug_output("Running scheduled feeds")
-		for feed_name in [f for f in self.feeds if (self.feeds[f].next_run < datetime.utcnow() and self.feeds[f].enabled)]:
+		
+		self.a.notify_progress("Feeding")
+
+		for feed_name in [f for f in self.feeds if (self.feeds[f].next_run < datetime.utcnow() and self.feeds[f].enabled)]:	
 			debug_output('Starting thread for feed %s...' % feed_name)
 			self.run_feed(feed_name)
 
 		for t in self.threads:
-			self.threads[t].join()
+			if self.threads[t].is_alive():
+				self.threads[t].join()
+
+		self.a.notify_progress("Working")
+		self.a.process()
+		
+		self.a.data.rebuild_indexes()
+
+	def run(self):
+		self.run_periodically = True
+		while self.run_periodically:
+			time.sleep(self.period) # run a new thread every period seconds
+			debug_output("Checking feeds...")
+			self.run_scheduled_feeds()
+			#threading.Thread(None, self.run_scheduled_feeds, None).start()
+
 
 	def load_feeds(self):
 	

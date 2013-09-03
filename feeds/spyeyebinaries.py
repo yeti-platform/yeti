@@ -9,16 +9,16 @@ from feed import Feed
 
 
 
-
-class ZeusTrackerBinaries(Feed):
+class SpyEyeBinaries(Feed):
 
 	def __init__(self, name):
-		super(ZeusTrackerBinaries, self).__init__(name)
-		self.enabled = True
+		super(SpyEyeBinaries, self).__init__(name, run_every="1h")
+		self.enabled = False
+
 
 	def update(self):
 		try:
-			feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries")
+			feed = urllib2.urlopen("https://spyeyetracker.abuse.ch/monitor.php?rssfeed=binaryurls")
 			self.status = "OK"
 		except Exception, e:
 			self.status = "ERROR: " + str(e)
@@ -49,7 +49,7 @@ class ZeusTrackerBinaries(Feed):
 		# We start populating the Evil() object's attributes with
 		# information from the dict we parsed earlier
 
-		evil['feed'] = "ZeusTrackerBinaries"
+		evil['feed'] = "SpyEyeBinaries"
 		evil['url'] = toolbox.find_urls(dict['description'])[0]
 		
 		# description
@@ -75,7 +75,7 @@ class ZeusTrackerBinaries(Feed):
 		evil['type'] = 'evil'
 
 		# tags
-		evil['tags'] += ['zeus', 'malware', 'ZeusTrackerBinaries']
+		evil['tags'] += ['spyeye', 'malware', 'SpyEyeBinaries']
 
 		# date_retreived
 		evil['date_retreived'] = datetime.datetime.utcnow()
@@ -84,7 +84,7 @@ class ZeusTrackerBinaries(Feed):
 		# Malcom will identify them in the database.
 		# This is probably not the best way, but it will do for now.
 
-		evil['value'] = "ZeuS bot"
+		evil['value'] = "SpyEye bot"
 		if md5:
 			evil['value'] += " (MD5: %s)" % evil['md5']
 		else:
@@ -98,7 +98,7 @@ class ZeusTrackerBinaries(Feed):
 			self.elements_fetched += 1
 
 		# Create an URL element
-		url = Url(evil['url'], ['evil', 'ZeusTrackerBinaries'])
+		url = Url(evil['url'], ['evil', 'SpyEyeBinaries'])
 
 		# Save it to the DB.
 		url, status = self.analytics.save_element(url, with_status=True)

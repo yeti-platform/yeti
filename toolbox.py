@@ -54,7 +54,9 @@ def send_msg(ws, msg, type='msg'):
 def find_ips(data):
     ips = []
     for i in re.finditer("([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})",data):
-        ips.append(i.group(1))
+        # sanitize IPs to avoid leading 0s
+        ip = ".".join([str(int(dot)) for dot in i.group(1).split('.')])
+        ips.append(ip)
     return ips
 
 def find_urls(data):
@@ -214,28 +216,6 @@ def url_get_host(url):
         return None
     else:
         return hostname
-        
-    # host = url_get_hostname(url)
-    # if host:
-    #     return host
-    # else:
-    #     host = url_get_ip(url)
-    #     if host:
-    #         return host
-    #     else:
-    #         return None
-
-# def url_get_hostname(url):
-#     try:
-#         return find_hostnames(url)[0]
-#     except Exception, e:
-#         return None
-
-# def url_get_ip(url):
-#     try:
-#         return find_ips(url)[0]
-#     except Exception, e:
-#         return None
     
 
 def url_check(url):
@@ -311,6 +291,7 @@ def get_net_info_cymru(ips):
     query +="end\r\n"
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    debug_output("Connecting to whois.cymru.com")
     try:
         s.connect(("whois.cymru.com", 43))
     except Exception, e:
@@ -338,19 +319,19 @@ def get_net_info_cymru(ips):
 def parse_net_info_cymru(info):
     lines = info.split("\n")
     lines = lines[1:-1]
-    results = []
+    results = {}
     for line in lines:
-        entries = {}
+        entry = {}
         columns = line.split("|")
 
-        entries['value'] = columns[0].lstrip().rstrip()
-        entries['bgp'] = columns[2].lstrip().rstrip()
-        entries['country'] = columns[3].lstrip().rstrip()
-        entries['registry'] = columns[4].lstrip().rstrip()
-        entries['allocated'] = parse(columns[5].lstrip().rstrip())
-        entries['as_name'] = columns[6].lstrip().rstrip()
+        entry['value'] = columns[0].lstrip().rstrip()
+        entry['bgp'] = columns[2].lstrip().rstrip()
+        entry['country'] = columns[3].lstrip().rstrip()
+        entry['registry'] = columns[4].lstrip().rstrip()
+        entry['allocated'] = parse(columns[5].lstrip().rstrip())
+        entry['as_name'] = columns[6].lstrip().rstrip()
         
-        results.append(entries)
+        results[entry['value']] = entry
 
     return results
 

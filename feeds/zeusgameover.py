@@ -3,18 +3,18 @@ from datatypes.element import Hostname
 from feed import Feed
 import toolbox
 
-class SuspiciousDomains(Feed):
+class ZeusGameOverDomains(Feed):
 	"""
-	This gets data from https://isc.sans.edu/suspicious_domains.html
+	This gets data from http://virustracker.info/text/ZeuSGameover_Domains.txt
 	Sensitivity level: high (for now)
 	"""
 	def __init__(self, name):
-		super(SuspiciousDomains, self).__init__(name)
+		super(ZeusGameOverDomains, self).__init__(name, run_every="12h")
 		self.enabled = False
 
 	def update(self):
 		try:
-			feed = urllib2.urlopen("https://isc.sans.edu/feeds/suspiciousdomains_High.txt").readlines()
+			feed = urllib2.urlopen("http://virustracker.info/text/ZeuSGameover_Domains.txt").readlines()
 			self.status = "OK"
 		except Exception, e:
 			self.status = "ERROR: " + str(e)
@@ -36,7 +36,7 @@ class SuspiciousDomains(Feed):
 			return
 
 		# Create the new URL and store it in the DB
-		hostname = Hostname(hostname=hostname, tags=['SuspiciousDomains', 'evil'])
+		hostname = Hostname(hostname=hostname, tags=['virustracker.info', 'zeusgameover'])
 
 		hostname, status = self.analytics.save_element(hostname, with_status=True)
 		if status['updatedExisting'] == False:

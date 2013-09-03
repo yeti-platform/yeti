@@ -31,11 +31,22 @@ function getneighbors() {
     url: url_static_prefix+'/neighbors',
     dataType: 'json',
     data: ids,
+    beforeSend: function(data) {
+      $(".graph").css('opacity', 0.1)
+      spinner = $("#loading-spinner")
+      spinner.css('position', 'absolute');
+      spinner.css('top', height/2);
+      spinner.css('left', width/2);
+      spinner.toggleClass('show')
+      
+    },
     success: function(data) {
+      $(".graph").css('opacity', 1)
       console.log(data)
-    push_nodes(data.nodes)
-    push_links(data.edges)
-    start();  
+      spinner.toggleClass('show')
+      push_nodes(data.nodes)
+      push_links(data.edges)
+      start();  
     }
 
   })

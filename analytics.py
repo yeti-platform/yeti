@@ -22,7 +22,7 @@ class Worker(threading.Thread):
 		
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']), type='analytics')
 		etype = self.elt['type']
-		context = self.elt['context']
+		tags = self.elt['tags']
 		
 		if self.elt.get('last_analysis', None): # check that last analysis is older than 24h 
 			assert (datetime.datetime.utcnow() - self.elt['last_analysis'] >= datetime.timedelta(days=1))
@@ -34,7 +34,7 @@ class Worker(threading.Thread):
 			self.engine.data.connect(self.elt, saved, n[0])
 		
 		# this will update analysis time
-		self.engine.save_element(self.elt, context)
+		self.engine.save_element(self.elt, tags)
 
 		self.engine.progress += 1
 		self.engine.websocket_lock.acquire()
@@ -48,6 +48,7 @@ class Analytics:
 		self.data = Model()
 		#self.max_threads = threading.Semaphore(app.config['THREADS'])
 		self.active = False
+		self.status = "Inactive"
 		self.websocket = None
 		self.thread = None
 		self.websocket_lock = threading.Lock()
@@ -57,19 +58,19 @@ class Analytics:
 
 		self.max_threads = threading.Semaphore(4)
 
-	def add_text(self, text, context=[]):
+	def add_text(self, text, tags=[]):
 		added = []
 		for t in text:
 			elt = None
 			if t.strip() != "":
-				if is_ip(t):
-					elt = Ip(is_ip(t), [])
-				elif is_url(t):
-					elt = Url(is_url(t), [])			
+				if is_url(t):
+					elt = Url(is_url(t), [])
 				elif is_hostname(t):
 					elt = Hostname(is_hostname(t), [])
+				elif is_ip(t):
+					elt = Ip(is_ip(t), [])
 				if elt:
-					added.append(self.save_element(elt, context))
+					added.append(self.save_element(elt, tags))
 					
 		if len(added) == 1:
 			return added[0]
@@ -77,76 +78,89 @@ class Analytics:
 			return added
 		
 
-	def save_element(self, element, context=[], with_status=False):
+	def save_element(self, element, tags=[], with_status=False):
 
-		element.upgrade_context(context)
+		element.upgrade_tags(tags)
 		return self.data.save(element, with_status=with_status)
 		
 
 
 	# graph function
-	def add_artifacts(self, data, context=[]):
+	def add_artifacts(self, data, tags=[]):
 		artifacts = find_artifacts(data)
 		
 		added = []
 		for url in artifacts['urls']:
-			added.append(self.save_element(url, context))
+			added.append(self.save_element(url, tags))
 
 		for hostname in artifacts['hostnames']:
-			added.append(self.save_element(hostname, context))
+			added.append(self.save_element(hostname, tags))
 
 		for ip in artifacts['ips']:
-			added.append(self.save_element(ip, context))
+			added.append(self.save_element(ip, tags))
 
 		return added        
 
 
 	# elements analytics
 
-	def bulk_asn(self):
-		results = self.data.elements.find({'type': 'ip', 'bgp': None})
+	def bulk_asn(self, items=1000):
 
-		ips = []
-		debug_output("(getting ASNs for %s IPs)" % results.count(), type='analytics')
+		last_analysis = {'$or': [
+									{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=7)} },
+									{ 'last_analysis': None },
+								]
+						}
+
+		nobgp = {"$or": [{'bgp': None}, last_analysis ]}
+
+		total = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]}).count()
+		done = 0
+		results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
+
+		while len(results) > 0:
 		
-		for r in results:
-			ips.append(r)
-
-		ips_chunks = [ips[x:x+100] for x in xrange(0, len(ips), 100)]
-
-		as_info = {}
-		for ips in ips_chunks:
-			try:
-				as_info = dict(as_info.items() + get_net_info_shadowserver(ips).items())
-
-			except Exception, e:
-				pass
-		
-		if as_info == {}:
-			return
-
-		for ip in as_info:
+			ips = []
+			debug_output("(getting ASNs for %s IPs - %s/%s done)" % (len(results), done, total), type='analytics')
 			
-			_as = as_info[ip]
-			_ip = self.data.find_one({'value': ip})
+			for r in results:
+				ips.append(r)
 
-			if not _ip:
+			as_info = {}
+			
+			try:
+				as_info = get_net_info_shadowserver(ips)
+			except Exception, e:
+				debug_output("Could not get AS for IPs: %s" % e)
+			
+			if as_info == {}:
+				debug_output("as_info empty", 'error')
 				return
 
-			del _as['ip']
-			for key in _as:
-				if key not in ['type', 'value', 'context']:
-					_ip[key] = _as[key]
-			del _as['bgp']
+			for ip in as_info:
+				
+				_as = as_info[ip]
+				_ip = self.data.find_one({'value': ip})
 
-			_as = As.from_dict(_as)
+				if not _ip:
+					return
 
-			# commit any changes to DB
-			_as = self.save_element(_as)
-			_ip = self.save_element(_ip)
-		
-			if _as and _ip:
-				self.data.connect(_ip, _as, 'net_info')
+				del _as['ip']
+				for key in _as:
+					if key not in ['type', 'value', 'tags']:
+						_ip[key] = _as[key]
+				del _as['bgp']
+
+				_as = As.from_dict(_as)
+
+				# commit any changes to DB
+				_as = self.save_element(_as)
+				_ip = self.save_element(_ip)
+			
+				if _as and _ip:
+					self.data.connect(_ip, _as, 'net_info')
+			done += len(results)
+			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
 
 
@@ -169,7 +183,7 @@ class Analytics:
 		else:
 			
 			# if recursion ends, then search for evil neighbors
-			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {'context': {'$in': ['evil']}})
+			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {'tags': {'$in': ['evil']}})
 			
 			# return evil neighbors if found
 			if len(neighbors_n) > 0:
@@ -195,26 +209,30 @@ class Analytics:
 		self.bulk_asn()
 		self.active = False
 		debug_output("Finished analyzing.")
-		self.notify_progress()
+		self.notify_progress("Finished analyzing.")
 
-	def notify_progress(self):
+	def notify_progress(self, status=None):
+		if status:
+			self.status = status
+		status = {'active': self.active, 'status': self.status}
 		if self.progress != self.total:
-			send_msg(self.websocket, {'progress': '%s/%s' %(self.progress, self.total)})
-		else:
-			send_msg(self.websocket, {'status': 0})
+			status['progress'] = '%s/%s' % (self.progress, self.total)
+	
+		send_msg(self.websocket, status, type='analyticsstatus')
 
 	def process_thread(self):
 		
 		self.active = True
 
-		results = self.data.elements.find(
-			{ '$or': [
+		query = { '$or': [
 						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
 						{ 'last_analysis': None },
 					 ]
 			}
-		)
 
+		results = self.data.elements.find(query)[:100]
+
+		# load 100 results in memory
 		results = [r for r in results]
 		while len(results) > 0:
 
@@ -244,7 +262,7 @@ class Analytics:
 							{ 'last_analysis': None },
 						]
 				}
-			)
+			)[:100]
 			results = [r for r in results]
 
 		

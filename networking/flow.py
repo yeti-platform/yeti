@@ -2,7 +2,8 @@ from scapy.all import *
 from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading, string
 from bson.json_util import dumps, loads
-
+from datatypes.element import Url, Hostname, Ip
+import toolbox
 
 
 
@@ -16,7 +17,6 @@ class Decoder(object):
 		if flow.dst_port == 80: # probable HTTP request
 			data = Decoder.HTTP_request(flow.get_payload())
 			
-
 		if data:
 			return data
 		else:
@@ -28,7 +28,6 @@ class Decoder(object):
 		request = re.search(r'(?P<method>GET|HEAD|POST|PUT|DELETE|TRACE|OPTIONS|CONNECT|PATCH) (?P<URI>\S*) HTTP', payload)
 		if not request:
 			return False
-
 		else:
 			data['method'] = request.group("method")
 			data['uri'] = request.group('URI')
@@ -37,6 +36,7 @@ class Decoder(object):
 
 			data['type'] = 'HTTP request'
 			data['info'] = "%s request for %s" % (data['method'], data['host']+data['uri'])
+			data['url'] = "http://" + data['host'] + data['uri']
 			return data
 
 	@staticmethod
@@ -56,6 +56,7 @@ class Decoder(object):
 
 			data['type'] = 'HTTP response'
 			data['info'] = 'Status: %s' % (data['status'])
+			# chunk_encoding
 			# try:
 			# 	if response and encoding:
 			# 		if data['encoding'] == 'chunked':
@@ -95,6 +96,9 @@ class Flow(object):
 	def __init__(self, pkt):
 		self.packets = []
 
+		# set initial timestamp
+		self.timestamp = pkt.time
+
 		# addresses
 		self.src_addr = pkt[IP].src 
 		self.dst_addr = pkt[IP].dst
@@ -112,11 +116,17 @@ class Flow(object):
 
 		# see if we need to reconstruct flow (i.e. check SEQ numbers)
 		self.payload = ""
+		self.payload_parsed = None
 		self.data_transfered = 0
 		self.packet_count = 0
 		self.add_pkt(pkt)
 		self.fid = Flow.flowid(pkt)
-		
+
+	def extract_elements(self):
+		if self.payload_parsed and 'url' in self.payload_parsed:
+			return {'url': self.payload_parsed['url'], 'host': self.payload_parsed['host'], 'method': self.payload_parsed['method']}
+		else:
+			return None
 	
 	def add_pkt(self, pkt):
 		self.packet_count += 1
@@ -179,6 +189,7 @@ class Flow(object):
 	def get_statistics(self):
 
 		update = {
+				'timestamp': self.timestamp,
 				'fid' : self.fid,
 				'src_addr': self.src_addr,
 				'src_port': self.src_port,
@@ -191,7 +202,8 @@ class Flow(object):
 				}
 
 		# we'll use the type and info fields
-		update['decoded_flow'] = Decoder.decode_flow(self)
+		self.payload_parsed = Decoder.decode_flow(self)
+		update['decoded_flow'] = self.payload_parsed
 
 		return update
 

@@ -11,8 +11,9 @@
 	<div id='datasetTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='all'>
 			<table class='table table-condensed table-hover' id='dataset'>
+				<tr><th><h3>Populating table...</h3></th></tr>
 			</table>
-			<script>get_dataset("",'{{url_for('list')}}')</script>
+			<script>$( get_dataset("",'{{url_for('list')}}'))</script>
 		</div>
 
 		<!-- <div class='tab-pane' id='ip'>
@@ -37,7 +38,7 @@
 	<div id='datasetSideTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
-			      <input id="query" placeholder='context=malware' type="text" onkeyup="get_dataset($('#query').val(), '{{ url_for('list') }}')">
+			      <input id="query" placeholder='tags=malware' type="text" onkeyup="get_dataset($('#query').val(), '{{ url_for('list') }}')">
 			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list') }}')">Go</button>
 		  	</div>
 		  <br style='clear:both' />
@@ -58,7 +59,7 @@
 		</div>
 		
 
-
+		{% if not g.config['READONLY'] %}
 		<div class='tab-pane' id='add'>
 			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>
 			
@@ -68,8 +69,8 @@
 			    <span class="help-block">Or choose file to upload (1 element / line)</span>
 			    <input type="file" placeholder="" name='element-list'>
 			  
-			  	<label for='context'>Context</label>
-			    <input id='context' type="text" name="context" placeholder="">
+			  	<label for='tags'>Tags</label>
+			    <input id='tags' type="text" name="tags" placeholder="">
 			    <label class="checkbox">
 			      <input type="checkbox" name='analyse'> Analyse after import
 			    </label>
@@ -78,6 +79,7 @@
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
 			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
 		</div>
+		{% endif %}
 
 
 

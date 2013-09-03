@@ -1,15 +1,15 @@
 import toolbox
-import datetime
+import datetime, os
 import pygeoip
 from toolbox import debug_output
 
 
 class Element(dict):
 
-	default_fields = [('date_updated', 'Updated'), ('value', "Value"), ('type', "Type"), ('context', "Context")]	
+	default_fields = [('date_updated', 'Updated'), ('value', "Value"), ('type', "Type"), ('tags', "Tags")]	
 	
 	def __init__(self):
-		self['context'] = []
+		self['tags'] = []
 		self['value'] = None
 		self['type'] = None
 		
@@ -22,9 +22,9 @@ class Element(dict):
 	def __setattr__(self, name, value):
 		self[name] = value
 
-	def upgrade_context(self, context):
-		self['context'].extend(context)
-		self['context'] = list(set(self['context']))
+	def upgrade_tags(self, tags):
+		self['tags'].extend(tags)
+		self['tags'] = list(set(self['tags']))
 
 	def is_recent(self):
 		if 'date_created' not in self:
@@ -33,16 +33,35 @@ class Element(dict):
 			return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
 
 
+class File(Element):
+	display_fields = Element.default_fields + [('md5', "MD5"), ('file_type', "Type")]
+	def __init__(self, value='', type='file', tags=[]):
+		super(File, self).__init__()
+		self['value'] = value
+		self['type'] = type
+		self['tags'] = tags
 
+	@staticmethod
+	def from_dict(d):
+		f = File()
+		for key in d:
+			f[key] = d[key]
+		return f
 
+	def analytics(self):
+		self['last_analysis'] = datetime.datetime.utcnow()
+		# md5
+		self['md5'] = ""
+		self['file_type'] = "None"
+		return []
 
 class Evil(Element):
 	display_fields = Element.default_fields + []
-	def __init__(self, value='', type="malware", context=[]):
+	def __init__(self, value='', type="malware", tags=[]):
 		super(Evil, self).__init__()
 		self['value'] = value
 		self['type'] = type
-		self['context'] = context + ['evil']
+		self['tags'] = tags + ['evil']
 
 	@staticmethod
 	def from_dict(d):
@@ -67,11 +86,11 @@ class As(Element):
 										('asn', 'ASN'),
 										('country', 'Country'),
 										]
-	def __init__(self, _as="", context=[]):
+	def __init__(self, _as="", tags=[]):
 		super(As, self).__init__()
 		self['value'] = _as
 		self['type'] = 'as'
-		self['context'] = context
+		self['tags'] = tags
 		
 
 
@@ -102,10 +121,10 @@ class Url(Element):
 							('path', 'Path'),
 							]
 
-	def __init__(self, url="", context=[]):
+	def __init__(self, url="", tags=[]):
 		super(Url, self).__init__()
 		self['value'] = url
-		self['context'] = context
+		self['tags'] = tags
 		self['type'] = 'url'
 			
 
@@ -134,9 +153,9 @@ class Url(Element):
 		self['hostname'] = hostname
 
 		if toolbox.is_ip(self['hostname']):
-			new.append(('host', Ip(self['hostname'])))
+			new.append(('host', Ip(toolbox.is_ip(self['hostname']))))
 		elif toolbox.is_hostname(self['hostname']):
-			new.append(('host', Hostname(self['hostname'])))
+			new.append(('host', Hostname(toolbox.is_hostname(self['hostname']))))
 		else:
 			debug_output("No hostname found for %s" % self['value'], type='error')
 			return
@@ -181,10 +200,10 @@ class Ip(Element):
 						#'type',
 						]
 
-	def __init__(self, ip="", context=[]):
-		super(Ip, self).__init__()	
+	def __init__(self, ip="", tags=[]):
+		super(Ip, self).__init__()
 		self['value'] = ip
-		self['context'] = context
+		self['tags'] = tags
 		self['type'] = 'ip'
 			
 
@@ -201,7 +220,9 @@ class Ip(Element):
 
 		# get geolocation info
 		try:
-			gi = pygeoip.GeoIP('geoIP/GeoLiteCity.dat')
+			file = os.path.abspath(__file__)
+			datatypes_directory = os.path.dirname(file)
+			gi = pygeoip.GeoIP(datatypes_directory+'/../geoIP/GeoLiteCity.dat')
 			geoinfo = gi.record_by_addr(self.value)
 			for key in geoinfo:
 				self[key] = geoinfo[key]
@@ -225,10 +246,10 @@ class Hostname(Element):
 	
 	display_fields = Element.default_fields + []
 
-	def __init__(self, hostname="", context=[]):
+	def __init__(self, hostname="", tags=[]):
 		super(Hostname, self).__init__()
 		if toolbox.is_hostname(hostname) == hostname:
-			self['context'] = context
+			self['tags'] = tags
 			self['value'] = toolbox.is_hostname(hostname)
 			if self['value'][-1:] == ".":
 				self['value'] = self['value'][:-1]
