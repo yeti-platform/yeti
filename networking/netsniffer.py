@@ -76,7 +76,6 @@ class Sniffer():
 		data['flows'] = []
 		for fid in self.flows:
 			data['flows'].append(self.flows[fid].get_statistics())
-		print data['flows'][0]
 		data['flows'] = sorted(data['flows'], key= lambda x: x['timestamp'])
 		return data
 
@@ -230,7 +229,7 @@ class Sniffer():
 				_question = [e for e in self.nodes if e['value'] == question][0]
 						
 
-				#conn = self.analytics.data.connect(_question, elt, "resolve", True)
+				# conn = self.analytics.data.connect(_question, elt, "resolve", True)
 				# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id']) } }
 				# if conn not in self.edges:
 				# 		self.edges.append(conn)
@@ -238,6 +237,41 @@ class Sniffer():
 
 		return new_elts, new_edges
 		
+	def checkHTTP(self, flow):
+		# extract elements from payloads
+
+		new_elts = []
+		new_edges = []
+
+		http_elts = flow.extract_elements()
+		
+		if http_elts:
+
+			url = self.analytics.add_text([http_elts['url']])
+			if url['value'] not in self.nodes_values:
+				self.nodes_ids.append(url['_id'])
+				self.nodes_values.append(url['value'])
+				self.nodes.append(url)
+				new_elts.append(url)
+
+			host = self.analytics.add_text([http_elts['host']])
+			if host['value'] not in self.nodes_values:
+				self.nodes_ids.append(host['_id'])
+				self.nodes_values.append(host['value'])
+				self.nodes.append(host)
+				new_elts.append(host)
+			
+			# in this case, we can save the connection to the DB since it is not temporary
+			conn = self.analytics.data.connect(host, url, "host")
+			#conn = {'attribs': http_elts['method'], 'src': host['_id'], 'dst': url['_id'], '_id': { '$oid': str(host['_id'])+str(url['_id'])}}
+			if conn not in self.edges:
+				self.edges.append(conn)
+				new_edges.append(conn)
+
+		print new_elts, new_edges
+		return new_elts, new_edges
+
+
 	def handlePacket(self, pkt):
 
 		self.pkts.append(pkt)
@@ -260,8 +294,16 @@ class Sniffer():
 		# do flow analysis here, if necessary
 		if TCP in pkt or UDP in pkt:
 			Flow.pkt_handler(pkt, self.flows)
-			self.send_flow_statistics(self.flows[Flow.flowid(pkt)])	
-		# end flow analysis
+			flow = self.flows[Flow.flowid(pkt)]
+			self.send_flow_statistics(flow)	
+			
+			new_elts, new_edges = self.checkHTTP(flow)
+			if new_elts:
+				elts += new_elts
+			if new_edges:
+				edges += new_edges			
+
+			# end flow analysis
 		
 		self.send_nodes(elts, edges)
 
