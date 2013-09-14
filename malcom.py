@@ -172,6 +172,9 @@ def neighbors():
 	allnodes = []
 	alledges = []
 
+	if len(request.form.getlist('ids')) == 0:
+		return dumps({})
+
 	for id in request.form.getlist('ids'):
 		elt = a.data.elements.find_one({'_id': ObjectId(id) })
 		nodes, edges = a.data.get_neighbors(elt)

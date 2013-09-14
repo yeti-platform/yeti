@@ -2,6 +2,7 @@ import toolbox
 import datetime, os
 import pygeoip
 from toolbox import debug_output
+import toolbox
 
 
 class Element(dict):
@@ -54,6 +55,8 @@ class File(Element):
 		self['md5'] = ""
 		self['file_type'] = "None"
 		return []
+
+
 
 class Evil(Element):
 	display_fields = Element.default_fields + []
@@ -218,6 +221,7 @@ class Ip(Element):
 	def analytics(self):
 		debug_output( "(ip analytics for %s)" % self['value'])
 
+
 		# get geolocation info
 		try:
 			file = os.path.abspath(__file__)
@@ -229,9 +233,17 @@ class Ip(Element):
 		except Exception, e:
 			debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
 
+		# get reverse hostname
+		
+		new = []
+		hostname = toolbox.dns_dig_reverse(self['value'])
+		
+		if hostname:
+			new.append(('reverse', Hostname(hostname)))
+
 		self['last_analysis'] = datetime.datetime.utcnow()
 
-		return []
+		return new
 
 
 

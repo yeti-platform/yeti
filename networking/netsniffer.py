@@ -123,44 +123,49 @@ class Sniffer():
 			dest['port'] = pkt[IP].dport
 		else: return None, None
 
-		src = source['ip']
-		dst = dest['ip']
+		ips = [source['ip'], dest['ip']]
+		ids = []
+		
+		for ip in ips:
 
-		if src not in self.nodes_values:
-			src = self.analytics.add_text([src], ['sniffer', self.name])
-			self.nodes_ids.append(src['_id'])
-			self.nodes_values.append(src['value'])
-			self.nodes.append(src)
-			new_elts.append(src)
-		else:
-			src = [e for e in self.nodes if e['value'] == src][0]
+			if ip not in self.nodes_values:
+				ip = self.analytics.add_text([ip], ['sniffer', self.name])
+				
+				# do some live analysis
+				new = ip.analytics()
+				for n in new:
+					saved = self.analytics.save_element(n[1])
+					self.nodes_ids.append(saved['_id'])
+					self.nodes_values.append(saved['value'])
+					self.nodes.append(saved)
+					new_elts.append(saved)
+					
+					#do the link
+					conn = self.analytics.data.connect(ip, saved, n[0])
+					if conn not in self.edges:
+						self.edges.append(conn)
+						new_edges.append(conn)
 
-		if dst not in self.nodes_values:
-			dst = self.analytics.add_text([dst], ['sniffer', self.name])
-			self.nodes_ids.append(dst['_id'])
-			self.nodes_values.append(dst['value'])
-			self.nodes.append(dst)
-			new_elts.append(dst)
-		else:
-			dst = [e for e in self.nodes if e['value'] == dst][0]
+				
+				self.nodes_ids.append(ip['_id'])
+				self.nodes_values.append(ip['value'])
+				self.nodes.append(ip)
+				new_elts.append(ip)
+			else:
+				ip = [e for e in self.nodes if e['value'] == ip][0]
 
-		# if src['_id'] not in self.nodes_ids:
-		# add to db
-		# if dst['_id'] not in self.nodes_ids:
-		# add to db
-		# this is being done in the conditions above
-			
+			ids.append(ip['_id'])
 
-		# don't save sniffing relations to the DB
-		# conn = self.analytics.data.connect(src, elt, 'communication', True)
 
+		# temporary "connection". IPs are only connceted because hey are communicating with each other
 		oid = "$oid"
-		conn = {'attribs': '%s > %s' %(source['port'], dest['port']), 'src': src['_id'], 'dst': dst['_id'], '_id': { oid: str(src['_id'])+str(dst['_id'])}}
+		conn = {'attribs': '%s > %s' %(source['port'], dest['port']), 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
 		
 		if conn not in self.edges:
 			self.edges.append(conn)
 			new_edges.append(conn)
 		
+		print new_elts
 		return new_elts, new_edges
 
 	def checkDNS(self, pkt):
@@ -198,6 +203,22 @@ class Sniffer():
 
 				if ipaddr not in self.nodes_values:
 					_ipaddr = self.analytics.add_text([ipaddr], ['sniffer', self.name]) # log every discovery to db
+					
+					# do some live analysis
+					new = _ipaddr.analytics()
+					for n in new:
+						saved = self.analytics.save_element(n[1])
+						self.nodes_ids.append(saved['_id'])
+						self.nodes_values.append(saved['value'])
+						self.nodes.append(saved)
+						new_elts.append(saved)
+						
+						#do the link
+						conn = self.analytics.data.connect(_ipaddr, saved, n[0])
+						if conn not in self.edges:
+							self.edges.append(conn)
+							new_edges.append(conn)
+
 					self.nodes_ids.append(_ipaddr['_id'])
 					self.nodes_values.append(_ipaddr['value'])
 					self.nodes.append(_ipaddr)
@@ -208,8 +229,9 @@ class Sniffer():
 				debug_output("Caught DNS response %s: %s -> %s" % (i, _hname['value'], _ipaddr['value']))
 				debug_output("Added %s, %s" %(hname, ipaddr))
 
-
-				conn = {'attribs': 'A', 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
+				# we can use a real connection here
+				# conn = {'attribs': 'A', 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
+				conn = self.analytics.data.connect(_hname, _ipaddr, "A", True)
 				if conn not in self.edges:
 					self.edges.append(conn)
 					new_edges.append(conn)
@@ -262,13 +284,13 @@ class Sniffer():
 				new_elts.append(host)
 			
 			# in this case, we can save the connection to the DB since it is not temporary
-			conn = self.analytics.data.connect(host, url, "host")
 			#conn = {'attribs': http_elts['method'], 'src': host['_id'], 'dst': url['_id'], '_id': { '$oid': str(host['_id'])+str(url['_id'])}}
+			conn = self.analytics.data.connect(host, url, "host")
+
 			if conn not in self.edges:
 				self.edges.append(conn)
 				new_edges.append(conn)
 
-		print new_elts, new_edges
 		return new_elts, new_edges
 
 

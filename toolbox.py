@@ -192,12 +192,10 @@ def split_url(url):
         return (path, scheme, hostname)
     return None
 
-
-
 def dns_dig_records(hostname):
 
     try:
-        _dig = check_output(['dig','@8.8.8.8','ANY',hostname])
+        _dig = check_output(['dig', '@8.8.8.8', 'ANY', hostname])
     except CalledProcessError, e:
         _dig = e.output
 
@@ -209,6 +207,22 @@ def dns_dig_records(hostname):
         else:
             records[r['record_type']] = [r['record']]
     return records
+
+def dns_dig_reverse(ip):
+    try:
+        _dig = check_output(['dig','@8.8.8.8','-x', ip])
+    except Exception, e:
+        _dig = e.output
+
+    results = re.search('PTR\t+(?P<record>.+)', _dig)
+    if results:
+        hostname = is_hostname(results.group('record'))
+    else:
+        hostname = None
+
+    return hostname
+
+
 
 def url_get_host(url):
     hostname = split_url(url)[2]
