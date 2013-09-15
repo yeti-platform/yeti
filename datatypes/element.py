@@ -60,7 +60,7 @@ class File(Element):
 
 class Evil(Element):
 	display_fields = Element.default_fields + []
-	def __init__(self, value='', type="malware", tags=[]):
+	def __init__(self, value='', type="evil", tags=[]):
 		super(Evil, self).__init__()
 		self['value'] = value
 		self['type'] = type

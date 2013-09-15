@@ -106,5 +106,5 @@ class SpyEyeConfigs(Feed):
 			self.elements_fetched += 1
 
 		# Connect the URL element to the Evil element
-		self.analytics.data.connect(url, evil, ['hosting'])
+		self.analytics.data.connect(url, evil, 'hosting')
 
