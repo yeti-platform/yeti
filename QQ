@@ -1,0 +1,1004 @@
+commit 900c877c0f02ef8bfff21d8bbd525faf89b3a9c1
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sun Sep 15 20:02:44 2013 +0200
+
+    Bugfix: connection attributes in []
+
+commit edafd92fc1902304385226b927dc317e5997635f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sun Sep 15 20:02:23 2013 +0200
+
+    New feed type: Tor Nodes
+
+commit abff29f935bace9c7e4b05c2da11e7ef147dd34c
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Sep 14 18:14:18 2013 +0200
+
+    Reverse IP in sniffer
+    
+    And live analytics on IP addresses
+
+commit 5abb165bed305303f6e6d1e82000ecfd773a21ba
+Merge: 290238b 5d0c4c4
+Author: malcom <malcom@ubuntu.(none)>
+Date:   Wed Sep 4 00:24:00 2013 +0200
+
+    Merge branch 'master' of https://github.com/tomchop/malcom
+
+commit 290238b5b24227e79421b2eaf594f6d24f022535
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Sep 3 18:59:58 2013 +0200
+
+    Removing bulky css/js
+
+commit 5d0c4c4e25f9fcbd202be777a6aaaffbf9088fa7
+Merge: 02fa921 ac14b31
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Sep 3 18:55:29 2013 +0200
+
+    Merge branch 'dev'
+
+commit ac14b317b0ba76ce4b2dd63084e1970c7c58a1a0
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Sep 3 15:22:37 2013 +0200
+
+    Feature - Flows recover URLs
+
+commit 99093c39c2344a76c7a1dedc0537b110cfdede55
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Sep 3 15:22:26 2013 +0200
+
+    Bugfix
+    
+    Hostnames getting registered as IPs
+
+commit bda554887a41451c34188b334ae08a61e41e9a42
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 30 21:29:36 2013 +0200
+
+    Minor changes
+    
+    README edited
+    Using bootstrap.min.css
+
+commit f32e294b0bafb6d40f9d7dff02d0cb4dae00790e
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 29 16:16:04 2013 +0200
+
+    Feature
+    
+    Added timestamp to flows
+
+commit 4238c2c426e3a6a58152d5df631b2246e2c1d3db
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 29 15:31:55 2013 +0200
+
+    Feature
+    
+    Slider to select node distance
+
+commit c7163205e029592b020224eda4a97be5db32f89f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 29 14:47:17 2013 +0200
+
+    Bugfix
+
+commit a5c632a74f156a794572de5d837cca53f3500c32
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 29 11:32:53 2013 +0200
+
+    Feeds disabled by default
+
+commit 46de94bd2f837d9c1d86e5f1fa6275d49dd9bcf9
+Author: y0m <guillaume.arcas@gmail.com>
+Date:   Thu Aug 29 11:00:59 2013 +0200
+
+    Second push with AAAAALLLLL my feeds
+
+commit 3afb4365ac398903fc239cc924a9295e863e32e2
+Author: y0m <guillaume.arcas@gmail.com>
+Date:   Thu Aug 29 10:59:35 2013 +0200
+
+    First push with AAAAALLLLL my feeds
+
+commit 8dfbed08e11406bff6bbcb05d72088f09caa482d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 29 09:48:25 2013 +0200
+
+    Performance
+    
+    Will analyze data when all feeds have finished
+
+commit ad4ab92edc3ca8063c069397570f04eb71990bf1
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 29 01:11:49 2013 +0200
+
+    Performance
+
+commit d332a66f2a74b6eb6aaa032990b54a7cc8d32f2f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 29 00:44:33 2013 +0200
+
+    Performance
+
+commit c37b055ffc0de97a40ed37ec3bf5cbf83bee7363
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 28 23:59:08 2013 +0200
+
+    Performance
+
+commit 93f9db6df387a5c82af368d44e955600cd04c4e1
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 28 18:11:19 2013 +0200
+
+    Bugfix
+
+commit 49ad8b3780407c42bce5ecb885e3e3d33f7d1d5d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 28 18:08:14 2013 +0200
+
+    Performance
+    
+    Rebuild indexes after importing feeds
+
+commit 88a0235906bb96989b9420bd143bfb9bd9136bcb
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 28 17:48:48 2013 +0200
+
+    Performance improvements
+    
+    ASNs are fetched by 100s
+
+commit be336acf99ccbf9be7c0c71b97a7f95b7ab318a9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 27 22:10:45 2013 +0200
+
+    Performance
+    
+    Malcom will create indexes on load
+
+commit eee042f3f238a926e0207108f0c9dd0bf989dda1
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 27 22:02:59 2013 +0200
+
+    Performance
+
+commit f3b6ab4413e31b9de1dfa03094046ccd3408d872
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 27 18:00:53 2013 +0200
+
+    Feature
+    
+    Added File datatype
+
+commit bac9b646e33bfde1d69686ea9e1af7c37c1233a9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 27 17:18:28 2013 +0200
+
+    Added option to disable automatic feeding
+
+commit 223052722113f2908a104c717e2c7544ec2b639d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 27 17:04:36 2013 +0200
+
+    Feeds now feed automatically
+
+commit 5cc9c2c7b0e28fbb28412995670006ae8eb90427
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 27 17:04:27 2013 +0200
+
+    Added spinners
+
+commit dcd98709e1c25b3a3cf67e9db2c1be112e648e2d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 27 13:00:27 2013 +0200
+
+    Spinner when loading neighbors
+
+commit 154a25fcbd0d7c99756b3a1793d6af4f328b9435
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 26 15:38:10 2013 +0200
+
+    Bugfix
+    
+    Hostnames not showing in sniffer
+
+commit d3a9e0b7118aff9e06423e958857078d8916ae19
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 26 15:03:25 2013 +0200
+
+    Fix GeoIP
+
+commit d089560a3208066537e6002f2aec59650bbd26ba
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 26 14:40:27 2013 +0200
+
+    Features
+
+commit 1eda6ff8c9fa2edee55a8c9d2839c7c2a17d22f9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 26 12:58:30 2013 +0200
+
+    Features
+    
+    Private URLS
+    Sorted Feeds in feed view
+    IP sanitizing
+
+commit e296f577a2d644fe2806675f0593a1268ad89b24
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sun Aug 25 15:35:42 2013 +0200
+
+    Name change
+    
+    context is now called tags
+
+commit cbf34d80beedcc405deff8fb76b73204db7322d2
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Aug 24 20:54:28 2013 +0200
+
+    Performance
+    
+    Index creation
+
+commit 17642bcdb544f03dd572436a00c9fc0e2b2ba42b
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Aug 24 20:06:30 2013 +0200
+
+    Performance
+
+commit 27c4287fe53500b5b685c73b03c4612b5d9d4392
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Aug 24 20:00:04 2013 +0200
+
+    Performance
+    
+    Changed get_graph_for_elts to get_neighbors.
+    get_graph_for_elts was too greedy for a large DB
+
+commit 02fa921041b199b72c1fdcc8ec882ea582ff1f5e
+Merge: 33f5417 5162e4d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 23 19:43:24 2013 +0200
+
+    Merge branch 'dev'
+
+commit 5162e4d5a0476b9c8e91ac1b9280ba8747ceb2d3
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 23 19:40:13 2013 +0200
+
+    Bugfixes
+
+commit 75d0d82c55c2f88160427ea6b2606f3912ccf20e
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 23 18:49:32 2013 +0200
+
+    Bugfix
+
+commit 410238a64d2e866e6d1d65c6b7d2ba621011d156
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 23 15:14:00 2013 +0200
+
+    Bugfix
+
+commit 71eb62f4873ff98e3010d0c41587044233a74a63
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 23 14:59:00 2013 +0200
+
+    Bugfix
+    
+    URLs with no hostanme are not considered analyzed
+
+commit 33f541743356e1d511819c820eaf37e0b4948bce
+Merge: 880322a 7886c54
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 22 15:34:50 2013 +0200
+
+    Merge branch 'dev'
+
+commit 7886c54197784485d0a86be7a570e3c7a14b8d2d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 22 15:34:33 2013 +0200
+
+    Fixed AS retreival
+
+commit 880322a60b0acb10ef4514f44412bd981b3a07bd
+Merge: c8e4724 9965d80
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 22 15:22:57 2013 +0200
+
+    Merge branch 'dev'
+
+commit 9965d807ec4194f4e60e15ce01148301c0d6f233
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 22 15:18:54 2013 +0200
+
+    Versionning
+
+commit 4cba754550a52944b0b7032856d3bbe923447ab9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 22 15:18:49 2013 +0200
+
+    Performance
+    
+    IP analytics on new IPs only
+    Split IP 2 AS into chunks
+
+commit dd053a75640feb1a05482d0f3ef52333c4f7e1ab
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 21 17:28:21 2013 +0200
+
+    Bugfix
+
+commit dfa81b3608f5f84c954800a06e20754b7a70217c
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 21 17:13:17 2013 +0200
+
+    Bugfix
+    
+    ~ in urls
+
+commit e833a6ddf207fd6250253420efb271c107c0eb2d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 21 16:42:34 2013 +0200
+
+    Bugfix
+    
+    Inconsistent results, back to putting everything into memory
+    Graph view only shows direct neighbors
+    Only go through analytics interface to the db
+
+commit c8e472477b36ad16d5ed849882502302cc9d9861
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 21 00:10:24 2013 +0200
+
+    Version change
+
+commit d67d632a8732d821797a421876e088d767299a0d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 21 00:00:49 2013 +0200
+
+    New feed
+    
+    Added SANS' SuspiciousDomains list
+
+commit 90e3424af3eb437dc106eb819c848a3f2b1923eb
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 21 00:00:08 2013 +0200
+
+    -
+
+commit c1d8e97c54387304349b0a53ba3c947cb156af06
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:59:59 2013 +0200
+
+    Performance improvement
+    
+    Model should work a little faster
+
+commit cc20bb3d79853d50530964193bb2e721271ecd24
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:58:57 2013 +0200
+
+    Feature
+    
+    Search with "AND" queries in dataset
+
+commit f7c6abf6be9575b228f732a2f9f199058b537294
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:58:47 2013 +0200
+
+    Feature
+    
+    Added total element count in dataset
+
+commit f013d4d96ef57347fbae129606fb936fb60e92f2
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:58:28 2013 +0200
+
+    Bugfix
+    
+    find_hostnames woulnd't take tlds starting with xn--
+
+commit b13e94a320a401086387adf410fcf8cec1228e2d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:57:51 2013 +0200
+
+    Feature
+    
+    Feeds can now be enabled / disabled
+
+commit 9d3a3ec40948da56e9f0963b54b97ff3654149ec
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:57:16 2013 +0200
+
+    Features
+    
+    Feeds are threaded
+    Feeds can be run from command line
+
+commit 9abf2d1a0a72e8fc42e4d0312b5413d144556347
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:56:45 2013 +0200
+
+    Bugfix
+    
+    Elements can now be created empty - no value is checked when creating
+    the element
+
+commit 3da6a5c24d02e4163a192ae07068b60c7e73e810
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 23:56:17 2013 +0200
+
+    MAX_THREADS can be configured
+
+commit 1e8c0b6cc2eab1cc64d7a7df98af1ff0cb31d534
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 20 00:06:09 2013 +0200
+
+    Bugfix
+    
+    Brush wouldn't resize with window
+    Some changes in graph parameters
+
+commit 7c9b9e45a08aa7bea1d1afe1ecd31263d2d95159
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 23:13:56 2013 +0200
+
+    Cleanup
+
+commit 31b1f71f2624239b764819b5233abfbcfee54179
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 23:13:44 2013 +0200
+
+    Comments
+
+commit d7908a2835af09589d0c12a03087f3b12660b605
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 18:11:19 2013 +0200
+
+    Feature
+    
+    Added some argument options to be passed when feeds need updating
+
+commit 5c43ed6e1c6d873e8e9301ca2670a8cae7cf94a8
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 18:11:05 2013 +0200
+
+    Interface
+    
+    Prevent space from scrolling down the webpage in graph view
+
+commit be102b4fa2f7f101238af2706299ca22cd174214
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 18:10:46 2013 +0200
+
+    Feature
+    
+    analytics.save can now return the state of the object (newly created or
+    not)
+
+commit 4d6d21d477488418a94c95d3d63293f9bd368f96
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 18:10:17 2013 +0200
+
+    Feature
+    
+    Simplified the way feeds are created
+
+commit b315e8fbf72e50d13dd5c6494ed65f996b922e56
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 18:09:52 2013 +0200
+
+    Bugfix
+    
+    analytics progress counter
+
+commit 38ffe535df138b3b62358c87930f74a2cde90f49
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 15:24:44 2013 +0200
+
+    Bugfix
+    
+    nodes would go out of scope
+
+commit 760049b0ba0e8837c0e0b3e92d3c34d6615c63a8
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 19 12:00:40 2013 +0200
+
+    Model cleanup
+    
+    Cleaned up model, adding element types should be easier
+
+commit 0a1c434d94c73eb508e82c677e3263c13ea7c218
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 16 17:21:51 2013 +0200
+
+    Bugfix
+
+commit 3c3e9fae31c3a266b36c09221c85d102094251ac
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 16 17:21:44 2013 +0200
+
+    Changed readme
+
+commit 8227e3c0ae6a4de70cf14e0762e487ee657b8f55
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 14 11:07:44 2013 +0200
+
+    Bugfix
+
+commit 41f76d644949a60817eddf48211069608b722b64
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 13 18:46:56 2013 +0200
+
+    Performance improvement
+    
+    No longer mapping the whole request to an array, proceding with
+    mongodb's cursor
+
+commit 9c4e0f29fd4696628d89976c1a19558f5441eb77
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 13 18:26:47 2013 +0200
+
+    Features
+    
+    Response highlight in flow tab
+    Bugfix: sniffer would stop and not start again
+
+commit 29cb9761a9e261cae5439b8b10b2b3c1be4c76c3
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 13 17:29:54 2013 +0200
+
+    Performance improvements
+    
+    Url splitting
+    Pagination
+    Searching in already pushed nodes
+
+commit c9d084b784547dad67cbef8ba80416b0ccf69ccc
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 12 15:49:12 2013 +0200
+
+    Faster
+
+commit 3466f3f6f52b942b8e0fa6f60d9498d5291f3d44
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 12 14:54:56 2013 +0200
+
+    Bugfix
+    
+    Unicode bugs (argh!)
+    Commented out chunk-decoding. Will see where I implement this in the
+    future
+
+commit b3c4fb14a94f54c1e307e858b415bac11b064f16
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sun Aug 11 17:42:35 2013 +0200
+
+    Flow statistics
+    
+    Added flow statistics, payload viewing, etc.
+
+commit 6800b19df16c05c335e8365f0e4a7a7f07ffef48
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 8 17:56:41 2013 +0200
+
+    Features
+    
+    - Regex search in dataset
+    - Changed loading so as to be less intrusive
+    - bugfix: when searching for complex value names
+    - added timestamp in dataset
+
+commit cb7ffe6f3abd87eeea06ed460e27119daa3afe3e
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Aug 8 01:26:32 2013 +0200
+
+    Changes in architecture
+    
+    Can load pcaps
+    Changed the way fields are displayed in dataset
+    Changed the layout, fixed some CSS bugs
+    Fixed some JS / d3js bugs
+
+commit bb8b9ad3c8750269cb74c6caab89b5e6ef2692c9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Aug 7 17:34:30 2013 +0200
+
+    Pagination
+    
+    And some minor changes
+
+commit 1b3eb02fac9c864629eae098e31c0daf4eb47d4c
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 6 16:16:03 2013 +0200
+
+    Bugfix
+
+commit c24b2e9736b13a1bc7dd8445a8e2cfe17af37a26
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Aug 6 15:28:46 2013 +0200
+
+    Better interface for searching within dataset
+    
+    Can now download dataset in csv format
+
+commit d6619d6445b204da3bd11bc083872a315cb16e3d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 5 11:13:48 2013 +0200
+
+    Fixed static links
+
+commit 7850b54decba57f5ae3e9dc55645db990bdb7fa9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 5 11:10:15 2013 +0200
+
+    Fixed some static links in scripts
+
+commit 5a563692c8f5e49f3343bd353e19979f70f4768c
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Aug 5 11:08:48 2013 +0200
+
+    Fixed some static links
+
+commit 400597d0f26b6bd3697835a6d020c86ec0af2753
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sun Aug 4 15:50:56 2013 +0200
+
+    Feeds
+    
+    Dynamic feed import (just add your class in a python file in the feeds
+    directory!)
+    Feed control panel
+     * Feed names
+     * Last run, next run, last run time, status
+     * manual feed run (for now)
+
+commit 9c3e77e80a4d3f57a7f768a0873907be05e9a93d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Aug 3 21:00:38 2013 +0200
+
+    Reverse proxy support
+
+commit 14097764faa297fa23afb577d37e5e454e357a2c
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Aug 3 19:50:59 2013 +0200
+
+    Can be run from a reverse proxy
+
+commit 8d374ee19118d3e7611b4669ef3cecc378d56fd2
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Aug 3 19:09:10 2013 +0200
+
+    Prepping dynamic feed importing
+
+commit d07c59054818a75404cb083cd1dd017b99adfcdd
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Aug 3 19:08:50 2013 +0200
+
+    Minor changes
+    
+    Name changes
+    created __init__.py so malcom can be imported
+
+commit e75738d5b447acb776b7560d992172016a2a3f5a
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 2 20:34:32 2013 +0200
+
+    CSS compatibility
+    
+    Removed bootstrap/ directory, had nothing to do here
+    Changed the CSS file tree for better readability
+    All static files links are now relative
+
+commit 73e93c9212519ec07d42d02fd675c393ff54fdac
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 2 19:01:28 2013 +0200
+
+    Readme for feeds
+
+commit 1eb07e6cbf8348ccd3d5cf71508d55c47a8c9309
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Aug 2 18:57:33 2013 +0200
+
+    Added feeds functionality
+
+commit b3a0a5c4ad067dae5e19393d4de680f3d3cbdb65
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:38:46 2013 +0200
+
+    Changed depth to two
+    
+    This allows for ip -> hostname -> url -> malware
+
+commit 420987f48ce4581810c6c9a06dbcb7460c8c2387
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:38:25 2013 +0200
+
+    Added tooltip
+
+commit 81421fda7143ea5d966dffa2e962353255e9e062
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:37:24 2013 +0200
+
+    find_evil too complex for each packet
+
+commit 368b7cc826d3c6add4a916cea8d812273f19d04b
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:37:08 2013 +0200
+
+    find_evil ajax
+
+commit 2e856905e15ea66d0bead0db65fe6216e38c0942
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:36:54 2013 +0200
+
+    Evil class
+
+commit 0ed7b970796eb2bbd64b96e109ce3170da206629
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:36:43 2013 +0200
+
+    find_evil route
+
+commit cb9fa2e0af3cb874e2647b158b64f8122fc5dd9b
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:36:25 2013 +0200
+
+    Fixed the Element class
+
+commit 36d496595f07ff82821a8016aad695c3f86f4b02
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 15:36:16 2013 +0200
+
+    implemented find_evil
+
+commit 8c43acc1571234219c71d8a9468b65a6127f8bb6
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jul 30 00:15:34 2013 +0200
+
+    Fixed links
+
+commit 91b3c24ed13a1b6a14b36236816698f2e709d07f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 21:02:27 2013 +0200
+
+    asd
+
+commit 728307f9904e673a8acba8b717ea37a79f233c4a
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 21:01:41 2013 +0200
+
+    Simplified install
+
+commit 51fa9794566b8d498be206e2524dde80459e3f55
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 21:01:03 2013 +0200
+
+    Simplified install
+
+commit 79896fbdd5baf7e920eb6702cf60eacbbd1bb64f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 20:58:33 2013 +0200
+
+    Simplified install
+
+commit ef4fe6e5a5042a4f050f0e20d987377b1afebde3
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 20:56:21 2013 +0200
+
+    Simplified install
+
+commit 12c234959fc3dbec72162594aba93da2e300edd5
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 20:53:19 2013 +0200
+
+    Simplified install
+
+commit 3de66c84d49ca1c153af1da5bf2747d7d2170373
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 20:50:46 2013 +0200
+
+    Simplified install
+
+commit 432e904a7f71d0e0430f9bfd563f0aae070a4a3f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Mon Jul 29 15:56:23 2013 +0200
+
+    Removed feeds import
+    
+    Removed feeds and XML, feed engine will be rewritten
+
+commit acd13e14c46d27e68302af47ec5376632f4932c5
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Jul 26 18:19:19 2013 +0200
+
+    Cleared up README
+
+commit d65be1dbb776318ac356a4f693184aac66f43f79
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sun Jul 21 14:54:12 2013 +0200
+
+    Graph now shoing src / destination ports
+    
+    Changed some CSS files
+    Removed unncessesary comments
+    Changed d3 graph characteristics
+
+commit b0dd12489103f06ea74b7cbebb2c7648f077a1a4
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sun Jul 21 03:09:50 2013 +0200
+
+    Interface
+    
+    Added new hotkey to display neighbors of all selected nodes
+
+commit b53fc2a8ece54bd1352d86cacdc2149f986b1d85
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Jul 20 17:54:44 2013 +0200
+
+    Fixes in selection / simplification of .js inclusion
+
+commit b14b3402459bda4507d1aa3e97e28e80eace57a2
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Jul 19 14:05:29 2013 +0200
+
+    Minor changes
+    
+    Work on dragging and selection
+    Sniffer sessions start automatically by default
+    "Add" tab renamed to "Modify DB"
+
+commit d976950fcb229303151ba5cdaa5f2fe7799b828f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Jul 19 00:40:02 2013 +0200
+
+    Minor interface changes
+    
+    Cleared some log pollution
+    Added nudges
+    Added some logic to the selection process
+    Press U to unfix selected nodes
+
+commit 3698cb2ec720b62c37325cd8c36c77ff8d0fe4cf
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Jun 27 14:56:24 2013 +0200
+
+    Install libevent in README
+
+commit 9128626d13a9e70132142e8ea95e71b5df86a76f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jun 25 18:33:57 2013 +0200
+
+    Licensing of third party libs
+
+commit 6207248d187249f3976e87d93a2817080ae9c7c9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jun 25 18:32:14 2013 +0200
+
+    Live highlighting in node view
+    
+    + Code cleanup (comments)
+
+commit 4de8b130833e2530600f58fca7f1be8b90e044ff
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jun 25 17:59:32 2013 +0200
+
+    Graph modifications
+    
+    Multiple select and brush features
+    More analytics debugging
+
+commit 6836af2fe64e9b425c9b806246926597880c6229
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Jun 22 18:21:10 2013 +0200
+
+    Arrows & Model
+    
+    Changed model (values are now stored in 'values' field)
+    Added arrows to the sniffer graph
+
+commit db449b41a5b5a0a5836cca02590e5d59e1a9d466
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Sat Jun 22 15:43:23 2013 +0200
+
+    Minor changes
+
+commit deb19c59119d0b5118d6f3de3f787d4b78270484
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Jun 21 00:35:12 2013 +0200
+
+    Minimal editing
+
+commit 8ffa684b4221863601402ef71457f9449d731fa6
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Jun 21 00:34:27 2013 +0200
+
+    Added some docstrings
+
+commit 03c34a5899ad750fe3ec7b604156cdc7bbf165af
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Jun 21 00:34:21 2013 +0200
+
+    Changed license
+
+commit 7ab8bd89e7c8ed664e6fcac1afd7d2018fc7ea3e
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Fri Jun 7 18:57:46 2013 +0200
+
+    Resizable windows for graphs
+
+commit a662034efed34bccff213f2fe9a1e33dd5614303
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Jun 6 16:26:10 2013 +0200
+
+    Cleared up installation instructions
+
+commit 2fbb64b8ff48c7186d78ab05a98a918c21a75b35
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Jun 6 16:20:36 2013 +0200
+
+    Bugfixes
+    
+    Domain retreival from URL
+    Interpreting special chars in url
+    Changed name in template
+
+commit d54a8b0aa6006dbb5350298349e77b3a5ac6060e
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Jun 6 12:16:20 2013 +0200
+
+    Changed README
+
+commit 615d2f17ab72b45a10b48d273ee075f5604239b0
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Thu Jun 6 12:12:32 2013 +0200
+
+    Changed README.md
+
+commit 6d2013e403801b8dbe768516050502fdb7a5469c
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Jun 5 14:37:25 2013 +0200
+
+    Added session names to sniffer sessions context
+
+commit c2f8d4040c2edd9730f04bb5472312c3014954e0
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Jun 5 14:22:41 2013 +0200
+
+    Removed faup
+    
+    Faup was segfaulting. Removed from project.
+
+commit 0ff3b340820d06c973a39c87903993930fbff28d
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Jun 5 13:20:47 2013 +0200
+
+    Fixed bug if new_elts / new_edges is None
+
+commit 57d072afc611166da44216c5408961f5efee8a8f
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Wed Jun 5 13:14:12 2013 +0200
+
+    Changed requirements
+    
+    Cleaned strange files. This should work from a brand new virtualenv
+
+commit cd4bd62f5ccdeb12468709ea35ca3d469c2b8cc3
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jun 4 17:08:16 2013 +0200
+
+    Initial commit
+
+commit 8c65a3ae4cb6f5840b493be8965fa1c9421a6e94
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jun 4 17:07:51 2013 +0200
+
+    changed gitignore
+
+commit 0c75bffbca41fc9032a138b7a181a538cc2e37f9
+Author: Thomas Chopitea <tomchop@gmail.com>
+Date:   Tue Jun 4 08:06:26 2013 -0700
+
+    Initial commit

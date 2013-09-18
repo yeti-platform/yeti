@@ -220,7 +220,7 @@ class Analytics:
 	
 		send_msg(self.websocket, status, type='analyticsstatus')
 
-	def process_thread(self):
+	def process_thread(self, items=1000):
 		
 		self.active = True
 
@@ -230,7 +230,7 @@ class Analytics:
 					 ]
 			}
 
-		results = self.data.elements.find(query)[:100]
+		results = self.data.elements.find(query)[:items]
 
 		# load 100 results in memory
 		results = [r for r in results]
@@ -262,7 +262,7 @@ class Analytics:
 							{ 'last_analysis': None },
 						]
 				}
-			)[:100]
+			)[:items]
 			results = [r for r in results]
 
 		

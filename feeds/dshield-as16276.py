@@ -9,7 +9,7 @@ class DShield16276(Feed):
 	"""
 	def __init__(self, name):
 		super(DShield16276, self).__init__(name)
-		self.enabled = False
+		self.enabled = True
 
 	def update(self):
 		try:

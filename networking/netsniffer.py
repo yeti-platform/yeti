@@ -165,7 +165,6 @@ class Sniffer():
 			self.edges.append(conn)
 			new_edges.append(conn)
 		
-		print new_elts
 		return new_elts, new_edges
 
 	def checkDNS(self, pkt):

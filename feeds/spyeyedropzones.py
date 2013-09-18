@@ -13,7 +13,7 @@ class SpyEyeDropzones(Feed):
 
 	def __init__(self, name):
 		super(SpyEyeDropzones, self).__init__(name, run_every="1h")
-		self.enabled = False
+		self.enabled = True
 
 
 	def update(self):

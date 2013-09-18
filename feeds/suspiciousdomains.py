@@ -10,7 +10,7 @@ class SuspiciousDomains(Feed):
 	"""
 	def __init__(self, name):
 		super(SuspiciousDomains, self).__init__(name)
-		self.enabled = False
+		self.enabled = True
 
 	def update(self):
 		try:
