@@ -25,7 +25,7 @@ class Sniffer():
 			filter_ifaces += " and not host %s " % ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
 		#easier testing this way
-		self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
+		#self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False

@@ -99,7 +99,7 @@ function netflow_row(flow, row) {
     row.append($('<td />').text(flow['timestamp']))
     row.append($('<td />').text(flow['src_addr']).css('text-align', 'right'))
     row.append($('<td />').text(flow['src_port']))
-    row.append($('<td />').text(flow['src_addr']).css('text-align', 'right'))
+    row.append($('<td />').text(flow['dst_addr']).css('text-align', 'right'))
     row.append($('<td />').text(flow['dst_port']))
 
     row.append($('<td />').text(flow['protocol']))
