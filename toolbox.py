@@ -27,9 +27,9 @@ url_regex = r"""
           )
 
           (\:[\d]{1,5})?
-          (?P<path>(\/[\/\~\w\-_%\.\*\#\$]+)?
-            (\?[\~\w\-_%\.&=\*\#\$]+)?
-            (\#[\S]+)?)
+          (?P<path>(\/[\/\~\w\-_%\.\*\#\$]*)?
+            (\?[\~\w\-_%\.&=\*\#\$]*)?
+            (\#[\S]*)?)
         )
     """
 
@@ -92,6 +92,7 @@ def whois(data):
         response = check_output('whois %s' %data,
                 shell=True,
                 stderr=STDOUT)
+        response = response.decode('cp1252').encode('utf-8')
     except Exception, e:
         response = "Whois resolution failed"
     
