@@ -59,6 +59,14 @@
 		  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
 		</div>
 		</div>
+		<script>
+			$("#query").keyup(function (event) {
+				if (!$('#fuzzy').prop('checked') || event.which == 13) {
+					get_dataset($('#query').val(), '{{ url_for('list') }}')
+				}
+			});
+			$(get_dataset("",'{{url_for('list')}}'))
+		</script>
 		
 
 		{% if not g.config['READONLY'] %}
@@ -81,14 +89,7 @@
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
 			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
 		</div>
-		<script>
-			$("#query").keyup(function (event) {
-				if (!$('#fuzzy').prop('checked') || event.which == 13) {
-					get_dataset($('#query').val(), '{{ url_for('list') }}')
-				}
-			});
-			$(get_dataset("",'{{url_for('list')}}'))
-		</script>
+
 		{% endif %}
 
 
