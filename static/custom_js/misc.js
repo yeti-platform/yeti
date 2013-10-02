@@ -156,3 +156,12 @@ function get_dataset(query, url) {
 	  }
 	});
 }
+
+function real_time(url, key) {
+	if (!$('#fuzzy').prop('checked') || key == 13) {
+		get_dataset($('#query').val(), url)
+	}
+}
+
+
+

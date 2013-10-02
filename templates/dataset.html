@@ -37,7 +37,7 @@
 	<div id='datasetSideTabsContent' class='tab-content'>
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
-			      <input id="query" placeholder='tags=malware' type="text" onkeyup="get_dataset($('#query').val(), '{{ url_for('list') }}')">
+			      <input id="query" placeholder='tags=malware' type="text">
 			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list') }}')">Go</button>
 			      <label class="checkbox">
 				      <input id='fuzzy' type="checkbox"> Fuzzy search (slower)
@@ -81,7 +81,14 @@
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
 			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
 		</div>
-		<script>$(get_dataset("",'{{url_for('list')}}'))</script>
+		<script>
+			$("#query").keyup(function (event) {
+				if (!$('#fuzzy').prop('checked') || event.which == 13) {
+					get_dataset($('#query').val(), '{{ url_for('list') }}')
+				}
+			});
+			$(get_dataset("",'{{url_for('list')}}'))
+		</script>
 		{% endif %}
 
 
