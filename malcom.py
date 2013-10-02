@@ -222,16 +222,28 @@ def list():
 	except Exception, e:
 		page = 0
 
+	fuzzy = False if request.args['fuzzy']=='false' else True
+
 	for key in request.args:
-		if key != 'page':
+		if key not in  ['page', 'fuzzy']:
 			if request.args[key].find(',') != -1: # split request arguments
-				query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
+				if fuzzy:
+					query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
+				else:
+					query['$and'] = [{ key: split} for split in request.args[key].split(',')]
 			else:
-				query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
+				if fuzzy:
+					query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
+				else:
+					query[key] = request.args[key]
 
 	per_page = 50
-	
+
+	chrono_query = datetime.datetime.now()
 	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
+	chrono_query = datetime.datetime.now() - chrono_query
+	debug_output("Query completed in %s" % chrono_query)
+	
 	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
@@ -247,8 +259,13 @@ def list():
 	
 	data['page'] = page
 	data['per_page'] = per_page
-	data['total_results'] = a.data.find(query).count()
 
+	chrono_count = datetime.datetime.now()
+	data['total_results'] = a.data.find(query).count()
+	chrono_count = datetime.datetime.now() - chrono_count
+	debug_output("Count completed in %s" % chrono_count)
+	data['chrono_query'] = str(chrono_query)
+	data['chrono_count'] = str(chrono_count)
 	return dumps(data)
 
 @app.route('/dataset/list/csv')
@@ -535,7 +552,6 @@ def echo(ws):
 
 if __name__ == "__main__":
 	
-	
 
 	# options
 	parser = argparse.ArgumentParser(description="Malcom - malware communications analyzer")
@@ -548,7 +564,6 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	
-
 	os.system('clear')
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port

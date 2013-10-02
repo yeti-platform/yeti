@@ -13,7 +13,6 @@
 			<table class='table table-condensed table-hover' id='dataset'>
 				<tr><th><h3>Populating table...</h3></th></tr>
 			</table>
-			<script>$( get_dataset("",'{{url_for('list')}}'))</script>
 		</div>
 
 		<!-- <div class='tab-pane' id='ip'>
@@ -40,6 +39,9 @@
 			<div class="input-append pull-left" >
 			      <input id="query" placeholder='tags=malware' type="text" onkeyup="get_dataset($('#query').val(), '{{ url_for('list') }}')">
 			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list') }}')">Go</button>
+			      <label class="checkbox">
+				      <input id='fuzzy' type="checkbox"> Fuzzy search (slower)
+				    </label>
 		  	</div>
 		  <br style='clear:both' />
 		<a href='#' onclick="javascript:get_dataset_csv($('#query').val(), '{{url_for('dataset_csv')}}')">Export filter results as csv</a>
@@ -79,6 +81,7 @@
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
 			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
 		</div>
+		<script>$(get_dataset("",'{{url_for('list')}}'))</script>
 		{% endif %}
 
 

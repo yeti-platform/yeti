@@ -52,6 +52,7 @@ function change_page(arg, url) {
 }
 
 function get_dataset(query, url) {
+
 	queries = query.split(' ');
 	querydict = {};
 
@@ -71,6 +72,8 @@ function get_dataset(query, url) {
 	}
 
 	querydict['page'] = page
+
+	querydict['fuzzy'] = $('#fuzzy').prop('checked')
 
 	$.ajax({
 	  dataType: "json",
