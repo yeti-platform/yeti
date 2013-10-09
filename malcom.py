@@ -183,10 +183,12 @@ def neighbors():
 	for id in request.form.getlist('ids'):
 		elt = a.data.elements.find_one({'_id': ObjectId(id) })
 		nodes, edges = a.data.get_neighbors(elt)
-		allnodes += [n for n in nodes if n not in allnodes]
-		alledges += [e for e in edges if e not in alledges]
+		if len(nodes) > 2000 or len(edges) > 2000:
+			msg = "TOO_MANY_ELEMENTS"
+		allnodes += [n for n in nodes[1000] if n not in allnodes] # this is a really expensive operation
+		alledges += [e for e in edges[1000] if e not in alledges] # dirty solution, limit to 1000 results
 		
-	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges }
+	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges, 'msg': msg }
 
 	return (dumps(data))
 
@@ -195,14 +197,14 @@ def evil():
 	a = g.a
 	allnodes = []
 	alledges = []
-
+	msg = ""
 	for id in request.form.getlist('ids'):
 		elt = a.data.elements.find_one({'_id': ObjectId(id) })
 		nodes, edges = a.find_evil(elt)
 		allnodes += [n for n in nodes if n not in allnodes]
 		alledges += [e for e in edges if e not in alledges]
 		
-	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges }
+	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges, 'msg': msg }
 
 	return (dumps(data))
 
