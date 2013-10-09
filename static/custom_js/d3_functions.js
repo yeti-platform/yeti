@@ -46,11 +46,20 @@ function getneighbors() {
       spinner.toggleClass('show')
       push_nodes(data.nodes)
       push_links(data.edges)
+      if (data.msg == "TOO_MANY_ELEMENTS") {
+        display_message('Your request yielded too many results. Try to request simpler neighbors')
+      }
       start();  
     }
 
   })
   
+}
+
+function display_message(text) {
+  message = $('<div class="alert alert-warning"><button type="button" class="close" data-dismiss="alert">×</button>'+text+'</div>')
+  $("#message").empty()
+  $("#message").append(message)
 }
 
 function getevil() {

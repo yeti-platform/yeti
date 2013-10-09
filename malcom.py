@@ -176,7 +176,7 @@ def neighbors():
 	a = g.a
 	allnodes = []
 	alledges = []
-
+	msg = ""
 	if len(request.form.getlist('ids')) == 0:
 		return dumps({})
 
@@ -184,9 +184,9 @@ def neighbors():
 		elt = a.data.elements.find_one({'_id': ObjectId(id) })
 		nodes, edges = a.data.get_neighbors(elt)
 		if len(nodes) > 2000 or len(edges) > 2000:
-			msg = "TOO_MANY_ELEMENTS"
-		allnodes += [n for n in nodes[1000] if n not in allnodes] # this is a really expensive operation
-		alledges += [e for e in edges[1000] if e not in alledges] # dirty solution, limit to 1000 results
+			msg = "TOO_MANY_ELEMENTS" # at least, we notify the user that we're doing something dirty
+		allnodes += [n for n in nodes[:2000] if n not in allnodes] # this is a really expensive operation
+		alledges += [e for e in edges[:2000] if e not in alledges] # dirty solution, limit to 1000 results
 		
 	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges, 'msg': msg }
 
