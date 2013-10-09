@@ -113,14 +113,18 @@ class Sniffer():
 		new_elts = []
 		new_edges = []
 
-		if IP in pkt:
-			source['ip'] = pkt[IP].src
-			dest['ip'] = pkt[IP].dst
+		# get IP layer
+		IP_layer = IP if IP in pkt else IPv6
+		if IP_layer == IPv6: return None, None # tonight is not the night to add ipv6 support
+	
+		if IP_layer in pkt:	
+			source['ip'] = pkt[IP_layer].src
+			dest['ip'] = pkt[IP_layer].dst
 		else: return None, None
 
 		if TCP in pkt or UDP in pkt:
-			source['port'] = pkt[IP].sport
-			dest['port'] = pkt[IP].dport
+			source['port'] = pkt[IP_layer].sport
+			dest['port'] = pkt[IP_layer].dport
 		else: return None, None
 
 		ips = [source['ip'], dest['ip']]
@@ -130,7 +134,9 @@ class Sniffer():
 
 			if ip not in self.nodes_values:
 				ip = self.analytics.add_text([ip], ['sniffer', self.name])
-				
+
+				if ip == []: continue # tonight is not the night to add ipv6 support
+
 				# do some live analysis
 				new = ip.analytics()
 				for n in new:
@@ -173,7 +179,8 @@ class Sniffer():
 		new_edges = []
 
 		# intercept DNS responses (these contain names and IPs)
-		if DNS in pkt and pkt[IP].sport == 53:
+		IP_layer = IP if IP in pkt else IPv6
+		if DNS in pkt and pkt[IP_layer].sport == 53:
 			debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
 			
 			for i in xrange(pkt[DNS].ancount): # cycle through responses and add records to graph
@@ -295,6 +302,9 @@ class Sniffer():
 
 	def handlePacket(self, pkt):
 
+		IP_layer = IP if IP in pkt else IPv6 # add IPv6 support another night...
+		if IP_layer == IPv6: return
+
 		self.pkts.append(pkt)
 
 		elts = []
@@ -313,7 +323,9 @@ class Sniffer():
 			edges += new_edges
 
 		# do flow analysis here, if necessary
+
 		if TCP in pkt or UDP in pkt:
+
 			Flow.pkt_handler(pkt, self.flows)
 			flow = self.flows[Flow.flowid(pkt)]
 			self.send_flow_statistics(flow)	

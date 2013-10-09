@@ -81,11 +81,14 @@ class Flow(object):
 	
 	@staticmethod
 	def flowid(pkt):
-		fid = "flowid--%s-%s--%s-%s" % (pkt[IP].src, pkt[IP].sport, pkt[IP].dst, pkt[IP].dport)
+		IP_layer = IP if IP in pkt else IPv6
+		fid = "flowid--%s-%s--%s-%s" % (pkt[IP_layer].src, pkt[IP_layer].sport, pkt[IP_layer].dst, pkt[IP_layer].dport)
 		return fid.replace('.','-')
 
 	@staticmethod
 	def pkt_handler(pkt, flows):
+		if IP not in pkt:
+			return
 
 		flowid = Flow.flowid(pkt)
 		if flowid not in flows:
