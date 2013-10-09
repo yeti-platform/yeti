@@ -148,7 +148,9 @@ def nodes(field, value):
 @app.route('/graph/<field>/<path:value>')
 def graph(field, value):
 	a = g.a
-	query = { field: re.compile(re.escape(value), re.IGNORECASE) }
+	#query = { field: re.compile(re.escape(value), re.IGNORECASE) }
+	# faster query
+	query = { field: value }
 	base_elts = [e for e in a.data.elements.find( query )]
 
 	total_nodes = []
@@ -273,9 +275,16 @@ def dataset_csv():
 	a = g.a
 	filename = []
 	query = {}
+	fuzzy = False if request.args['fuzzy'] == 'false' else True
+
 	for key in request.args:
-		if key != '':
-			query[key] = re.compile(re.escape(request.args[key]), re.IGNORECASE)
+		if key != '' and key not in ['fuzzy']:
+			if fuzzy:
+				# slow
+				query[key] = re.compile(re.escape(request.args[key]), re.IGNORECASE)
+			else:
+				# skip regex to make it faster
+				query[key] = request.args[key]
 			filename.append("%s_%s" % (key, request.args[key]))
 		else:
 			filename.append('all')
@@ -560,7 +569,7 @@ if __name__ == "__main__":
 	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
 	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
 	parser.add_argument("-ro", "--read-only", help="Make this instance of read-only (Feeds and Sniffer tabs disabled)", action="store_true", default=app.config['READONLY'])
-	parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
+	#parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
 
 	
@@ -569,7 +578,6 @@ if __name__ == "__main__":
 	app.config['LISTEN_PORT'] = args.port
 	app.config['MAX_THREADS'] = args.max_threads
 	app.config['READONLY'] = args.read_only
-	app.config['NO_FEED'] = args.no_feeds
 
 	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
@@ -584,19 +592,28 @@ if __name__ == "__main__":
 	feed_engine.load_feeds()
 
 
-	# call malcom to run feeds from crontab or other method
+	# call malcom to run feeds - this will not start the web interface
 	if args.feeds >= 1:
 		if args.feeds == 1:
-			feed_engine.run_scheduled_feeds()
+			feed_engine.start()
+			sys.stderr.write("Starting feed scheduler...\n")
+			cmd = raw_input()
+			while cmd != 'exit':
+				try:
+					sys.stderr.write('Command entered %s\n' % cmd)
+					cmd = raw_input()
+				except KeyboardInterrupt:
+					sys.stderr.write(" caught: Exiting gracefully\n")
+					feed_engine.stop_all_feeds()
+					exit(0)
+				
 		elif args.feeds == 2:
 			feed_engine.run_all_feeds()
-		exit()
+		
+		exit(0)
 
-	if not app.config['NO_FEED']:
-		sys.stderr.write("Starting feed scheduler...\n")
-		feed_engine.start()
 
-	sys.stderr.write("Server running on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
+	sys.stderr.write("Web interface running on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
 
 	try:
 		http_server = WSGIServer((app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']), malcom_app, handler_class=WebSocketHandler)

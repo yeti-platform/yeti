@@ -38,8 +38,11 @@ function get_dataset_csv(query, url) {
 			querydict['value'] = splitted[0]
 	}
 
+	querydict['fuzzy'] = $('#fuzzy').prop('checked')
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
+
+	console.log(url)
 	
 	location.href = url
 }
