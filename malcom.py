@@ -28,6 +28,8 @@ import netifaces as ni
 #flask stuff
 from werkzeug import secure_filename
 from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash
+from functools import wraps
+
 
 #websockets
 from geventwebsocket.handler import WebSocketHandler
@@ -79,14 +81,9 @@ app.config['UPLOAD_FOLDER'] = ""
 app.config['LISTEN_INTERFACE'] = "0.0.0.0"
 app.config['LISTEN_PORT'] = 8080
 app.config['MAX_THREADS'] = 4
-app.config['READONLY'] = False
+app.config['PUBLIC'] = False
 app.config['NO_FEED'] = False
 
-app.config['PRIVATE_URLS'] = [
-								r'^/feeds', 
-								r'/clear',
-								r'/sniffer',
-							 ]	
 
 app.config['IFACES'] = {}
 for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
@@ -111,15 +108,19 @@ def after_request(response):
 
 @app.before_request
 def before_request():
-	# check for readonly mode and authorized URLs
-	if app.config['READONLY']:
-		for private_url in app.config['PRIVATE_URLS']:
-			if re.search(private_url, request.path):
-				abort(404)
-
 	# make configuration and analytics engine available to views
 	g.config = app.config
 	g.a = analytics_engine
+
+
+# decorator for URLs that should not be public
+def private_url(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if app.config['PUBLIC']:
+            abort(404)
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 @app.route('/')
@@ -129,11 +130,13 @@ def index():
 # feeds ========================================================
 
 @app.route('/feeds')
+@private_url
 def feeds():
 	alpha = sorted(feed_engine.feeds, key=lambda name: name)
 	return render_template('feeds.html', feed_names=alpha, feeds=feed_engine.feeds)
 
 @app.route('/feeds/run/<feed_name>')
+@private_url
 def run_feed(feed_name):
 	feed_engine.run_feed(feed_name)
 	return redirect(url_for('feeds'))
@@ -312,6 +315,7 @@ def dataset_csv():
 
 
 @app.route('/dataset/add', methods=['POST'])
+@private_url
 def add_data():
 	
 	if request.method == "POST":
@@ -350,6 +354,7 @@ def delete(id):
 	return dumps(result)
 
 @app.route('/dataset/clear/')
+@private_url
 def clear():
 	g.a.data.clear_db()
 	return redirect(url_for('dataset'))
@@ -502,11 +507,15 @@ def sniffer_api():
 				continue
 
 			if cmd == 'sniffstart':
+				if g.config['PUBLIC']:
+					continue
 				session.start(str(request.remote_addr))
 				send_msg(ws, "OK", type=cmd)
 				continue
 
 			if cmd == 'sniffstop':
+				if g.config['PUBLIC']:
+					continue
 				if session.status():
 					session.stop()
 					send_msg(ws, 'OK', type=cmd)
@@ -568,7 +577,7 @@ if __name__ == "__main__":
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=app.config['LISTEN_PORT'])
 	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
 	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
-	parser.add_argument("-ro", "--read-only", help="Make this instance of read-only (Feeds and Sniffer tabs disabled)", action="store_true", default=app.config['READONLY'])
+	parser.add_argument("--public", help="Run a public instance (Feeds and network sniffing disabled)", action="store_true", default=app.config['PUBLIC'])
 	#parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
 
@@ -577,12 +586,12 @@ if __name__ == "__main__":
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port
 	app.config['MAX_THREADS'] = args.max_threads
-	app.config['READONLY'] = args.read_only
+	app.config['PUBLIC'] = args.public
 
 	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
-	sys.stderr.write("Starting server in %s mode...\n" % ("readonly" if app.config['READONLY'] else "readwrite"))
+	sys.stderr.write("Starting server in %s mode...\n" % ("public" if app.config['PUBLIC'] else "private"))
 	sys.stderr.write("Detected interfaces:\n")
 	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
 		sys.stderr.write("%s:\t%s\n" % (i, ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']))

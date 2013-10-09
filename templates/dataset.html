@@ -31,7 +31,9 @@
 
 	<ul id='datasetSideTabs' class='nav nav-tabs'>
 		<li class='active'><a href='#search' data-toggle='tab'>Search</a></li>
+		{% if not g.config['PUBLIC'] %}
 		<li><a href='#add' data-toggle='tab'>Alter dataset</a></li>
+		{% endif %}
 	</ul>
 
 	<div id='datasetSideTabsContent' class='tab-content'>
@@ -69,7 +71,7 @@
 		</script>
 		
 
-		{% if not g.config['READONLY'] %}
+		{% if not g.config['PUBLIC'] %}
 		<div class='tab-pane' id='add'>
 			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>
 			

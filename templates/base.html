@@ -68,9 +68,10 @@
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
-              {% if not g.config['READONLY'] %}
-              <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
               <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Sniffer</a></li>
+              {% if not g.config['PUBLIC'] %}
+                <!-- here goes stuff that should only be run on private instances -->
+                <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
               {% endif %}
               <li class="divider-vertical"></li>
               

@@ -22,7 +22,9 @@
     <label for='session_name'>BPF</label>
     <input type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
     <br />
-    <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
+    {% if not g.config['PUBLIC'] %}
+      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
+    {% endif %}
     <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Create new session</button>
     
   </form>  
