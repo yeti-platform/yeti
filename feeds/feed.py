@@ -82,10 +82,6 @@ class FeedEngine(threading.Thread):
 			if self.threads[t].is_alive():
 				self.threads[t].join()
 
-		self.a.notify_progress("Working")
-		self.a.process()
-
-		self.a.data.rebuild_indexes()
 
 	def stop_all_feeds(self):
 		self.run_periodically = False
@@ -96,9 +92,6 @@ class FeedEngine(threading.Thread):
 		self._Thread__stop()
 
 	def run_scheduled_feeds(self):
-		
-		self.a.notify_progress("Feeding")
-
 		for feed_name in [f for f in self.feeds if (self.feeds[f].next_run < datetime.utcnow() and self.feeds[f].enabled)]:	
 			debug_output('Starting thread for feed %s...' % feed_name)
 			self.run_feed(feed_name)
@@ -106,11 +99,7 @@ class FeedEngine(threading.Thread):
 		for t in self.threads:
 			if self.threads[t].is_alive():
 				self.threads[t].join()
-
-		self.a.notify_progress("Working")
-		self.a.process()
 		
-		self.a.data.rebuild_indexes()
 
 	def run(self):
 		self.run_periodically = True

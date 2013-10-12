@@ -130,7 +130,6 @@ def index():
 # feeds ========================================================
 
 @app.route('/feeds')
-@private_url
 def feeds():
 	alpha = sorted(feed_engine.feeds, key=lambda name: name)
 	return render_template('feeds.html', feed_names=alpha, feeds=feed_engine.feeds)
@@ -462,10 +461,7 @@ def analytics_api():
 
 			if cmd == 'analyticsstatus':
 				g.a.notify_progress()
-				# if g.a.active:
-				# 	send_msg(ws, {'status': 1}, type=cmd)
-				# else:
-				# 	send_msg(ws, {'status': 0}, type=cmd)
+
 
 			
 
@@ -575,11 +571,12 @@ if __name__ == "__main__":
 
 	# options
 	parser = argparse.ArgumentParser(description="Malcom - malware communications analyzer")
+	parser.add_argument("-a", "--analytics", help="Run analytics", action="store_true", default=False)
+	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
 	parser.add_argument("-i", "--interface", help="Listen interface", default=app.config['LISTEN_INTERFACE'])
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=app.config['LISTEN_PORT'])
-	parser.add_argument("-f", "--feeds", help="Run feeds (use -ff to force run on all feeds)", action="count")
-	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
 	parser.add_argument("--public", help="Run a public instance (Feeds and network sniffing disabled)", action="store_true", default=app.config['PUBLIC'])
+	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=app.config['MAX_THREADS'])
 	#parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
 
@@ -593,7 +590,7 @@ if __name__ == "__main__":
 	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
-	sys.stderr.write("Starting server in %s mode...\n" % ("public" if app.config['PUBLIC'] else "private"))
+	
 	sys.stderr.write("Detected interfaces:\n")
 	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
 		sys.stderr.write("%s:\t%s\n" % (i, ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']))
@@ -623,20 +620,26 @@ if __name__ == "__main__":
 		
 		exit(0)
 
+	elif args.analytics:
+		while True:
+			analytics_engine.process()
+			sleep(60*60*24) # sleep 24h
 
-	sys.stderr.write("Web interface running on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
+		pass
+	else:
+		sys.stderr.write("Starting server in %s mode...\n" % ("public" if app.config['PUBLIC'] else "private"))
+		try:
+			http_server = WSGIServer((app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']), malcom_app, handler_class=WebSocketHandler)
+			sys.stderr.write("Webserver listening on %s:%s with %s maximum threads\n\n" % (app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT'], app.config["MAX_THREADS"]))
+			http_server.serve_forever()
+		except KeyboardInterrupt:
 
-	try:
-		http_server = WSGIServer((app.config['LISTEN_INTERFACE'], app.config['LISTEN_PORT']), malcom_app, handler_class=WebSocketHandler)
-		http_server.serve_forever()
-	except KeyboardInterrupt:
+			sys.stderr.write(" caught: Exiting gracefully\n")
 
-		sys.stderr.write(" caught: Exiting gracefully\n")
+			if len(sniffer_sessions) > 0:
+				debug_output('Stopping sniffing sessions...')
+				for s in sniffer_sessions:
+					sniffer_sessions[s].stop()
 
-		if len(sniffer_sessions) > 0:
-			debug_output('Stopping sniffing sessions...')
-			for s in sniffer_sessions:
-				sniffer_sessions[s].stop()
-
-		feed_engine.stop_all_feeds()
-		exit(0)
+			feed_engine.stop_all_feeds()
+			exit(0)

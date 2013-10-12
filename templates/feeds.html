@@ -12,7 +12,9 @@
 			<th>Next run</th>
 			<th>New elements fetched</th>
 			<th>Status</th>
+			{% if  not g.config['PUBLIC'] %}
 			<th>Run now</th>
+			{% endif %}
 		</tr>
 		{% for name in feed_names %}
 		<tr class='{{ "disabled" if not feeds[name].enabled }} {{ "error" if feeds[name].status != "OK" else "success" }}'>
@@ -24,10 +26,8 @@
 			<td>{{ feeds[name].next_run.strftime("%Y-%m-%d %H:%M:%S") if feeds[name].next_run else "N/A"}}</td>
 			<td>{{ feeds[name].elements_fetched }}</td>
 			<td class='error-cause'>{{ feeds[name].status }}</td>
-			{% if feeds[name].enabled %}
+			{% if feeds[name].enabled and not g.config['PUBLIC']%}
 				<td><a href='{{ url_for("run_feed", feed_name=name)}}'><i class='icon-refresh'></i></a></td>
-			{% else %}
-				<td></td>
 			{% endif %}
 		</tr>
 
