@@ -380,21 +380,26 @@ def sniffer():
 		debug_output("Creating session %s" % session_name)
 		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.config['IFACES'])
 		
+		pcap = None
+
 		# if we're dealing with an uploaded PCAP file
 		file = request.files.get('pcap-file')
-
 		if file:
-			pcap = file.read()
-			loaded = sniffer_sessions[session_name].load_pcap(pcap)
-			if loaded != True:
-				flash("Could not read .pcap file: %s" % loaded, 'error')
-				return redirect(url_for('sniffer'))
+			sniffer_sessions[session_name].pcap = file.read()
+
+			#pcap_filename = '/tmp/temp_pcap'
+			#stored_pcap = open(pcap_filename).write(pcap)
+
+			#loaded = sniffer_sessions[session_name].load_pcap(pcap)
+			# if loaded != True:
+			# 	flash("Could not read .pcap file: %s" % loaded, 'error')
+			# 	return redirect(url_for('sniffer'))
 
 		# start sniffing right away
 		if request.form.get('startnow', None):
 			sniffer_sessions[session_name].start(str(request.remote_addr))
 		
-		return redirect(url_for('sniffer_session', session_name=session_name))
+		return redirect(url_for('sniffer_session', session_name=session_name, pcap_filename=pcap))
 
 
 	return render_template('sniffer_new.html')
@@ -413,7 +418,7 @@ def sniffer_sessionlist():
 
 
 @app.route('/sniffer/<session_name>/')
-def sniffer_session(session_name):
+def sniffer_session(session_name, pcap_filename=None):
 	# check if session exists
 	if session_name not in sniffer_sessions:
 		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
@@ -505,6 +510,12 @@ def sniffer_api():
 				continue
 
 			if cmd == 'sniffstart':
+				if session.pcap:
+					loaded = session.load_pcap(session.pcap)
+					if loaded:
+						session.pcap = False
+					else:
+						send_msg(ws, 'Error: PCAP could not be loaded', type=cmd)
 				if g.config['PUBLIC']:
 					continue
 				session.start(str(request.remote_addr))

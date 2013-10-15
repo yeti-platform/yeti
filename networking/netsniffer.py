@@ -31,6 +31,7 @@ class Sniffer():
 		self.stopSniffing = False
 		
 		self.thread = None
+		self.pcap = False
 		self.pkts = []
 		self.nodes = []
 		self.edges = []
@@ -337,8 +338,10 @@ class Sniffer():
 				edges += new_edges			
 
 			# end flow analysis
-		
-		self.send_nodes(elts, edges)
+		if elts != [] and edges != []:
+			self.send_nodes(elts, edges)
+		if self.pcap:
+			time.sleep(0.1)
 
 	def send_flow_statistics(self, flow):
 		data = {}
