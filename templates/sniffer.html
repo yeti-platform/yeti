@@ -22,6 +22,24 @@
           <li><strong>h</strong>: hide nodes</li>
           <li><strong>(shift+)arrows</strong>: move nodes</li>
         </ul>
+        <table>
+          <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider' style='width:100px;'></div></td>
+          </tr>
+        </table>
+
+        <script type="text/javascript">
+          $("#slider").slider({
+            range: 'max',
+            min: 10,
+            max: 300,
+            value: 70,
+            slide: function (event, ui) {
+              force.linkDistance(ui.value);
+              start();
+            }
+          });
+        </script>
+          
       </div>
     </div>
 
