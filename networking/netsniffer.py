@@ -175,14 +175,33 @@ class Sniffer():
 		return new_elts, new_edges
 
 	def checkDNS(self, pkt):
-
 		new_elts = []
 		new_edges = []
 
 		# intercept DNS responses (these contain names and IPs)
 		IP_layer = IP if IP in pkt else IPv6
 		if DNS in pkt and pkt[IP_layer].sport == 53:
+
+			#deal with the original DNS request
+			question = pkt[DNS].qd.qname
+
+			if question not in self.nodes_values:
+				_question = self.analytics.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
+				if _question:
+					debug_output("Caught DNS question: %s" % (_question['value']))
+					self.nodes_ids.append(_question['_id'])
+					self.nodes_values.append(_question['value'])
+					self.nodes.append(_question)
+					new_elts.append(_question)
+
+			else:
+				_question = [e for e in self.nodes if e['value'] == question][0]
+
+
+				
 			debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
+
+
 			
 			for i in xrange(pkt[DNS].ancount): # cycle through responses and add records to graph
 
@@ -243,20 +262,7 @@ class Sniffer():
 					self.edges.append(conn)
 					new_edges.append(conn)
 
-			#deal with the original DNS request
-			question = pkt[DNS].qd.qname
-
-			if question not in self.nodes_values:
-				_question = self.analytics.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
-				if _question:
-					self.nodes_ids.append(_question['_id'])
-					self.nodes_values.append(_question['value'])
-					self.nodes.append(_question)
-					new_elts.append(_question)
-
-			else:
-				_question = [e for e in self.nodes if e['value'] == question][0]
-						
+			
 
 				# conn = self.analytics.data.connect(_question, elt, "resolve", True)
 				# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id']) } }
@@ -338,7 +344,8 @@ class Sniffer():
 				edges += new_edges			
 
 			# end flow analysis
-		if elts != [] and edges != []:
+
+		if elts != [] or edges != []:
 			self.send_nodes(elts, edges)
 		if self.pcap:
 			time.sleep(0.1)

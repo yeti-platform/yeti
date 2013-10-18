@@ -41,7 +41,7 @@ function snifferWebSocketHandler(msg) {
             $('#stopsniff').removeAttr('disabled')
     }
 
-    if (data.type == 'nodeupdate' || data.type == 'sniffupdate') {
+    if (data.type == 'nodeupdate') {
             push_nodes(data.nodes);
             push_links(data.edges);
             start();
