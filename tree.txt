@@ -1,0 +1,110 @@
+.
+├── disable_routing.sh
+├── enable_routing.sh
+├── __init__.py
+├── integrity.py
+├── LICENSE.md
+├── Malcom
+│   ├── analytics
+│   │   └── analytics.py
+│   ├── auxiliary
+│   │   └── toolbox.py
+│   ├── feeds
+│   │   ├── alienvault.py
+│   │   ├── dshield-as16276.py
+│   │   ├── dshield-as3215.py
+│   │   ├── feed.py
+│   │   ├── __init__.py
+│   │   ├── malcode.py
+│   │   ├── malwarepatrol.py
+│   │   ├── mdlhostlist.py
+│   │   ├── mdliplist.py
+│   │   ├── mdltracker.py
+│   │   ├── openbl.py
+│   │   ├── palevotracker.py
+│   │   ├── siri-urz.py
+│   │   ├── spyeyebinaries.py
+│   │   ├── spyeyecnc.py
+│   │   ├── spyeyeconfigs.py
+│   │   ├── spyeyedropzones.py
+│   │   ├── suspiciousdomains.py
+│   │   ├── torexitnodes.py
+│   │   ├── xmlparser
+│   │   ├── zeusconfigs.py
+│   │   ├── zeusdropzones.py
+│   │   ├── zeusgameover.py
+│   │   └── zeustracker.py
+│   ├── model
+│   │   ├── datatypes.py
+│   │   ├── __init__.py
+│   │   └── model.py
+│   ├── networking
+│   │   ├── flow.py
+│   │   ├── flow.pyc
+│   │   ├── __init__.py
+│   │   ├── __init__.pyc
+│   │   ├── netsniffer.py
+│   │   └── netsniffer.pyc
+│   ├── sniffer
+│   └── web
+│       ├── static
+│       │   ├── bootstrap
+│       │   │   ├── css
+│       │   │   │   ├── bootstrap.min.css
+│       │   │   │   └── bootstrap-responsive.min.css
+│       │   │   ├── img
+│       │   │   │   ├── glyphicons-halflings.png
+│       │   │   │   └── glyphicons-halflings-white.png
+│       │   │   └── js
+│       │   │       └── bootstrap.min.js
+│       │   ├── custom_css
+│       │   │   ├── d3_graph.css
+│       │   │   └── style.css
+│       │   ├── custom_img
+│       │   │   ├── ajax-loader.gif
+│       │   │   └── ajax-loader-old.gif
+│       │   ├── custom_js
+│       │   │   ├── analytics_websockets.js
+│       │   │   ├── d3_functions.js
+│       │   │   ├── data.js
+│       │   │   ├── initialize_graph.js
+│       │   │   ├── misc.js
+│       │   │   └── sniffer_websockets.js
+│       │   ├── d3js
+│       │   │   └── d3.v3.min.js
+│       │   └── jquery
+│       │       ├── images
+│       │       │   ├── animated-overlay.gif
+│       │       │   ├── ui-bg_flat_0_aaaaaa_40x100.png
+│       │       │   ├── ui-bg_flat_75_ffffff_40x100.png
+│       │       │   ├── ui-bg_glass_55_fbf9ee_1x400.png
+│       │       │   ├── ui-bg_glass_65_ffffff_1x400.png
+│       │       │   ├── ui-bg_glass_75_dadada_1x400.png
+│       │       │   ├── ui-bg_glass_75_e6e6e6_1x400.png
+│       │       │   ├── ui-bg_glass_95_fef1ec_1x400.png
+│       │       │   ├── ui-bg_highlight-soft_75_cccccc_1x100.png
+│       │       │   ├── ui-icons_222222_256x240.png
+│       │       │   ├── ui-icons_2e83ff_256x240.png
+│       │       │   ├── ui-icons_454545_256x240.png
+│       │       │   ├── ui-icons_888888_256x240.png
+│       │       │   └── ui-icons_cd0a0a_256x240.png
+│       │       ├── jquery-1.9.1.js
+│       │       ├── jquery-ui.css
+│       │       └── jquery-ui.js
+│       ├── templates
+│       │   ├── base.html
+│       │   ├── dataset.html
+│       │   ├── dynamic_nodes.html
+│       │   ├── feeds.html
+│       │   ├── flash.html
+│       │   ├── index.html
+│       │   ├── nodes.html
+│       │   ├── sniffer.html
+│       │   └── sniffer_new.html
+│       └── webserver.py
+├── malcom.py
+├── README.md
+├── requirements.txt
+└── tree.txt
+
+20 directories, 87 files
