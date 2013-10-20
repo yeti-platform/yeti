@@ -33,6 +33,7 @@ class Sniffer():
 		self.stopSniffing = False
 		
 		self.thread = None
+		self.public = False
 		self.pcap = False
 		self.pkts = []
 		self.nodes = []
@@ -44,17 +45,19 @@ class Sniffer():
 		self.flows = {}
 
 
-	def load_pcap(self, pcap):
+	def load_pcap(self):
 		debug_output("Loading PCAP from file...")
 		timestamp = str(time.mktime(time.gmtime())).split('.')[0]
 		filename = '/tmp/load-%s.cap' % timestamp
 
 		f = open(filename, 'wb')
-		f.write(pcap)
+		f.write(self.pcap)
 		f.close()
 		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=filename)	
 		
 		debug_output("Loaded %s packets from file." % len(self.pkts))
+
+		self.pcap = False
 		
 		return True
 
@@ -62,9 +65,11 @@ class Sniffer():
 		debug_output("[+] Sniffing session %s started" % self.name)
 		debug_output("[+] Filter: %s" % self.filter)
 		self.stopSniffing = False
-		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
-		#except Exception, e:
-		#	print e
+		
+		if self.pcap:
+			self.load_pcap()
+		elif not self.public:
+			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
 		
 		debug_output("[+] Sniffing session %s stopped" % self.name)
 
@@ -81,7 +86,8 @@ class Sniffer():
 		data['flows'] = sorted(data['flows'], key= lambda x: x['timestamp'])
 		return data
 
-	def start(self, remote_addr):
+	def start(self, remote_addr, public=False):
+		self.public = public
 		self.thread = threading.Thread(None, self.run, None)
 		self.thread.start()
 		

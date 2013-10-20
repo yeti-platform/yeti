@@ -104,10 +104,10 @@ ws_sniffer.onopen = snifferInterfaceInit
 
   {% if not g.config['PUBLIC'] %}
   <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">
-    {% if session.pcap %}Replay PCAP{% else %}Start{%endif%}
+    {% if session.pcap %}Play PCAP{% else %}Start{%endif%}
   </button>
   <button id='stopsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:stopsniff()">
-    {% if session.pcap %}Pause{% else %}Stop{%endif%}
+    {% if session.pcap %}Cancel{% else %}Stop{%endif%}
   </button>
   {% endif %}
   

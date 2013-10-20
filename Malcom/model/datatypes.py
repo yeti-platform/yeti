@@ -227,7 +227,7 @@ class Ip(Element):
 		try:
 			file = os.path.abspath(__file__)
 			datatypes_directory = os.path.dirname(file)
-			gi = pygeoip.GeoIP(datatypes_directory+'/../geoIP/GeoLiteCity.dat')
+			gi = pygeoip.GeoIP(datatypes_directory+'/../auxiliary/geoIP/GeoLiteCity.dat')
 			geoinfo = gi.record_by_addr(self.value)
 			for key in geoinfo:
 				self[key] = geoinfo[key]

@@ -7,13 +7,9 @@ __version__ = '1.0 alpha'
 __license__ = "GPL"
 
 
-# custom
-from Malcom.auxiliary.toolbox import *
-from Malcom.analytics.analytics import Analytics
-from Malcom.feeds.feed import FeedEngine
-from Malcom.model.datatypes import Hostname
-from Malcom.networking import netsniffer
-import Malcom
+#system
+import os, datetime, time, sys, signal, argparse, re
+import netifaces as ni
 
 #db 
 from pymongo import MongoClient
@@ -21,10 +17,6 @@ from pymongo import MongoClient
 #json / bson
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
-
-#system
-import os, datetime, time, sys, signal, argparse, re
-import netifaces as ni
 
 #flask stuff
 from werkzeug import secure_filename
@@ -34,6 +26,14 @@ from functools import wraps
 #websockets
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
+
+# custom
+from Malcom.auxiliary.toolbox import *
+from Malcom.analytics.analytics import Analytics
+from Malcom.feeds.feed import FeedEngine
+from Malcom.model.datatypes import Hostname
+from Malcom.networking import netsniffer
+import Malcom
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 
@@ -485,15 +485,7 @@ def sniffer_api():
 				continue
 
 			if cmd == 'sniffstart':
-				if session.pcap:
-					loaded = session.load_pcap(session.pcap)
-					if loaded:
-						session.pcap = False
-					else:
-						send_msg(ws, 'Error: PCAP could not be loaded', type=cmd)
-				if g.config['PUBLIC']:
-					continue
-				session.start(str(request.remote_addr))
+				session.start(str(request.remote_addr), public=g.config['PUBLIC'])
 				send_msg(ws, "OK", type=cmd)
 				continue
 
