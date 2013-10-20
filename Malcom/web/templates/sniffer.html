@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block main %}
+
+<div class='span9'> 
+  
+  <ul id='datasetTabs' class='nav nav-tabs'>
+    <li class='active'><a href='#graph' data-toggle='tab'>Graph</a></li>
+    <li><a href='#flows' data-toggle='tab'>Flows</a></li>
+  </ul>
+
+
+  <div id='datasetTabsContent' class='tab-content'>
+    <div class='tab-pane active' id='graph'>
+      <div class='graph'>
+      </div>
+      <div class='hotkeys'>
+        <ul>
+          <li><strong>space</strong>: get node neighbors</li>
+          <li><strong>e</strong>: find evil</li>
+          <li><strong>u</strong>: unfix selected</li>
+          <li><strong>shift</strong>: multimple selections</li>
+          <li><strong>h</strong>: hide nodes</li>
+          <li><strong>(shift+)arrows</strong>: move nodes</li>
+        </ul>
+        <table>
+          <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider' style='width:100px;'></div></td>
+          </tr>
+        </table>
+
+        <script type="text/javascript">
+          $("#slider").slider({
+            range: 'max',
+            min: 10,
+            max: 300,
+            value: 70,
+            slide: function (event, ui) {
+              force.linkDistance(ui.value);
+              start();
+            }
+          });
+        </script>
+          
+      </div>
+    </div>
+
+    <div class='tab-pane' id='flows'>
+      <table class='table table-condensed table-hover' id='flow-list'>
+      </table>
+    </div>
+  </div>
+   
+  <!-- Modal -->
+  <div id="PayloadModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="PayloadModalLabel" aria-hidden="true">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+      <h3 id="PayloadModalLabel">Payload contents</h3>
+    </div>
+    <div class="modal-body">
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
+
+<script type="text/javascript">
+
+ initialize_graph();
+
+// let's add arrows to the whole shennaningans
+
+  svg.append("svg:defs").selectAll("marker")
+      .data(["arrow"])
+      .enter().append("svg:marker")
+        .attr("id", String)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .append("svg:path")
+          .attr("d", "M0,-5L10,0L0,5");
+
+
+</script>
+<script>
+initSnifferWebSocket()
+ws_sniffer.onopen = snifferInterfaceInit
+</script>
+{%endblock%}
+
+{% block sidebar %}
+<div class='data span3 toolbar'>
+
+  <h1 id='session_name'>{{session.name}}</h1>
+  <small>Filter: {{session.filter}}</small>
+  <br />
+
+  {% if not g.config['PUBLIC'] %}
+  <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">
+    {% if session.pcap %}Play PCAP{% else %}Start{%endif%}
+  </button>
+  <button id='stopsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:stopsniff()">
+    {% if session.pcap %}Cancel{% else %}Stop{%endif%}
+  </button>
+  {% endif %}
+  
+  <a href="{{url_for('pcap', session_name=session_name)}}">Get .pcap</a>
+  <h3>Info</h3>
+  <table class='table' id='node_info'></table>
+  <div class='whois'></div>
+  <h3>Sessions</h3>
+  <table id='sessions' class='table table-condensed'>
+    <tr><th>Name</th><th># captured</th><th>Nodes</th><th>Edges</th></tr>
+  </table>
+</div>
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
