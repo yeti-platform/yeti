@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 __description__ = 'Malcom - Malware communications analyzer'
@@ -14,7 +14,7 @@ from feeds.feed import FeedEngine
 from datatypes.element import Hostname
 from networking import netsniffer
 
-#db 
+#db
 from pymongo import MongoClient
 
 #json / bson
@@ -54,21 +54,21 @@ app.debug = True
 # 	proxy_pass http://127.0.0.1:8080;
 # 	proxy_http_version 1.1;
 # 	proxy_set_header SCRIPT_NAME /malcom;
-# 	proxy_set_header Host $host;    
+# 	proxy_set_header Host $host;
 # 	proxy_set_header X-Scheme $scheme;
 # 	proxy_set_header Upgrade $http_upgrade;
 # 	proxy_set_header Connection "upgrade";
 # }
 
-def malcom_app(environ, start_response):  
-	
+def malcom_app(environ, start_response):
+
 	if environ.get('HTTP_SCRIPT_NAME'):
-		# update path info 
+		# update path info
 		environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
 		# declare SCRIPT_NAME
 		environ['SCRIPT_NAME'] = environ['HTTP_SCRIPT_NAME']
-	
-	if environ.get('HTTP_X_SCHEME'):	
+
+	if environ.get('HTTP_X_SCHEME'):
 		# forward the scheme
 		environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME')
 
@@ -166,7 +166,7 @@ def graph(field, value):
 
 	data = { 'query': base_elts, 'edges': total_edges, 'nodes': total_nodes }
 	ids = [node['_id'] for node in nodes]
-	
+
 	debug_output("query: %s, edges found: %s, nodes found: %s" % (len(base_elts), len(edges), len(nodes)))
 	return (dumps(data))
 
@@ -186,7 +186,7 @@ def neighbors():
 			msg = "TOO_MANY_ELEMENTS" # at least, we notify the user that we're doing something dirty
 		allnodes += [n for n in nodes[:2000] if n not in allnodes] # this is a really expensive operation
 		alledges += [e for e in edges[:2000] if e not in alledges] # dirty solution, limit to 1000 results
-		
+
 	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges, 'msg': msg }
 
 	return (dumps(data))
@@ -202,7 +202,7 @@ def evil():
 		nodes, edges = a.find_evil(elt)
 		allnodes += [n for n in nodes if n not in allnodes]
 		alledges += [e for e in edges if e not in alledges]
-		
+
 	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges, 'msg': msg }
 
 	return (dumps(data))
@@ -249,8 +249,8 @@ def list():
 	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
 	chrono_query = datetime.datetime.now() - chrono_query
 	debug_output("Query completed in %s" % chrono_query)
-	
-	
+
+
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
@@ -262,7 +262,7 @@ def list():
 	else:
 		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
 		data['elements'] = []
-	
+
 	data['page'] = page
 	data['per_page'] = per_page
 
@@ -295,7 +295,7 @@ def dataset_csv():
 
 	filename = "-".join(filename)
 	results = a.data.find(query).sort('date_created', -1)
-	
+
 	if results.count() == 0:
 		flash("You're about to download an empty .csv",'warning')
 		return redirect(url_for('dataset'))
@@ -318,7 +318,7 @@ def dataset_csv():
 @app.route('/dataset/add', methods=['POST'])
 @private_url
 def add_data():
-	
+
 	if request.method == "POST":
 		file = request.files.get('element-list')
 		if file:  #we're dealing with a list of elements
@@ -331,7 +331,7 @@ def add_data():
 			elements = [request.form['element']]
 
 		tags = request.form.get('tags', None)
-		
+
 		if len(elements) == 0 or not tags:
 			flash("You must specify an element and tags", 'warning')
 			return redirect(url_for('dataset'))
@@ -350,7 +350,7 @@ def add_data():
 
 @app.route('/dataset/remove/<id>')
 def delete(id):
-	a = g.a 
+	a = g.a
 	result = a.data.remove(id)
 	return dumps(result)
 
@@ -371,7 +371,7 @@ def analytics():
 def sniffer():
 	if request.method == 'POST':
 		filter = request.form['filter']
-		
+
 		session_name = request.form['session_name']
 		if session_name == "":
 			flash("Please specify a session name", 'warning')
@@ -379,7 +379,7 @@ def sniffer():
 
 		debug_output("Creating session %s" % session_name)
 		sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.config['IFACES'])
-		
+
 		pcap = None
 
 		# if we're dealing with an uploaded PCAP file
@@ -398,7 +398,7 @@ def sniffer():
 		# start sniffing right away
 		if request.form.get('startnow', None):
 			sniffer_sessions[session_name].start(str(request.remote_addr))
-		
+
 		return redirect(url_for('sniffer_session', session_name=session_name, pcap_filename=pcap))
 
 
@@ -409,7 +409,7 @@ def sniffer_sessionlist():
 	session_list = []
 	for s in sniffer_sessions:
 		session_list.append({
-								'name': s, 
+								'name': s,
 								'packets': len(sniffer_sessions[s].pkts),
 								'nodes': len(sniffer_sessions[s].nodes),
 								'edges': len(sniffer_sessions[s].edges),
@@ -423,9 +423,9 @@ def sniffer_session(session_name, pcap_filename=None):
 	if session_name not in sniffer_sessions:
 		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
 		return redirect(url_for('sniffer'))
-	
+
 	return render_template('sniffer.html', session=sniffer_sessions[session_name], session_name=session_name)
-	
+
 
 @app.route('/sniffer/<session_name>/pcap')
 def pcap(session_name):
@@ -468,7 +468,7 @@ def analytics_api():
 				g.a.notify_progress()
 
 
-			
+
 
 
 @app.route('/api/sniffer')
@@ -485,7 +485,7 @@ def sniffer_api():
 			except Exception, e:
 				debug_output("Could not decode JSON message: %s" %e)
 				return ""
-			
+
 			debug_output("Received: %s" % message)
 
 
@@ -542,7 +542,7 @@ def sniffer_api():
 					debug_output("Session %s is inactive" % session.name)
 					send_msg(ws, {'status': 'inactive', 'session_name': session.name}, type=cmd)
 				continue
-					
+
 			if cmd == 'sniffupdate':
 				data = session.update_nodes()
 				data['type'] = cmd
@@ -565,7 +565,7 @@ def sniffer_api():
 				data['type'] = cmd
 				ws.send(dumps(data))
 				continue
-		
+
 	return ""
 
 
@@ -578,7 +578,7 @@ def echo(ws):
 			ws.send(message)
 
 if __name__ == "__main__":
-	
+
 
 	# options
 	parser = argparse.ArgumentParser(description="Malcom - malware communications analyzer")
@@ -591,7 +591,7 @@ if __name__ == "__main__":
 	#parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
 
-	
+
 	os.system('clear')
 	app.config['LISTEN_INTERFACE'] = args.interface
 	app.config['LISTEN_PORT'] = args.port
@@ -601,7 +601,7 @@ if __name__ == "__main__":
 	analytics_engine.max_threads = threading.Semaphore(app.config['MAX_THREADS'])
 
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % app.config['VERSION'])
-	
+
 	sys.stderr.write("Detected interfaces:\n")
 	for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
 		sys.stderr.write("%s:\t%s\n" % (i, ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']))
@@ -625,10 +625,10 @@ if __name__ == "__main__":
 					sys.stderr.write(" caught: Exiting gracefully\n")
 					feed_engine.stop_all_feeds()
 					exit(0)
-				
+
 		elif args.feeds == 2:
 			feed_engine.run_all_feeds()
-		
+
 		exit(0)
 
 	elif args.analytics:
