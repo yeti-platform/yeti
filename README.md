@@ -58,7 +58,7 @@ The following was tested on Ubuntu server 12.04 LTS:
 
 * If you're planning on using feeds, you might want to install libxml:
 
-        apt-get install libxml2-dev libxslt-dev
+        apt-get install libxml2-dev libxslt-dev zlib1g-dev
         pip install lxml
 
 
