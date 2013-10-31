@@ -2,9 +2,10 @@ import urllib2
 import datetime, re
 from lxml import etree
 import Malcom.auxiliary.toolbox as toolbox
+
 from bson.objectid import ObjectId
 from bson.json_util import dumps
-from Malcom.model.datatypes import Hostname
+from Malcom.model.datatypes import Hostname, Evil
 from feed import Feed
 
 
