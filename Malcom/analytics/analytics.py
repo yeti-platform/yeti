@@ -153,6 +153,7 @@ class Analytics:
 
 				# commit any changes to DB
 				_as = self.save_element(_as)
+				_ip['last_analysis'] = datetime.datetime.now()
 				_ip = self.save_element(_ip)
 			
 				if _as and _ip:
@@ -205,6 +206,7 @@ class Analytics:
 		self.thread.start()
 		self.thread.join() # wait for analytics to finish
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
+
 		self.bulk_asn()
 		self.active = False
 		debug_output("Finished analyzing.")
@@ -219,7 +221,7 @@ class Analytics:
 	
 		send_msg(self.websocket, status, type='analyticsstatus')
 
-	def process_thread(self, items=1000):
+	def process_thread(self):
 		
 		self.active = True
 
@@ -227,42 +229,24 @@ class Analytics:
 						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
 						{ 'last_analysis': None },
 					 ]
-			}
+				}
 
-		results = self.data.elements.find(query)[:items]
-
-		# load 100 results in memory
-		results = [r for r in results]
-		while len(results) > 0:
-
-		#while results.count() > 0:
-
-			threads = []
-
-			# status reporting
-			self.total = len(results)#results.count()
-			self.progress = 0
+		results = self.data.elements.find(query)
+		total = self.data.elements.find(query).count()
+		i = 0
+		while total > 0:
 			
 			for r in results:
-
-				self.stack_lock.acquire()
+				if i % 10000 == 0:
+					debug_output("Progress: %s/%s" % (i, total), 'analytics')
 				self.max_threads.acquire()
-				thread = Worker(r, self)
-				threads.append(thread)
-				thread.start()
-				self.stack_lock.release()	
-				
-			for t in threads:
-				t.join()
-
-			results = self.data.elements.find(
-				{ '$or': [
-							{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
-							{ 'last_analysis': None },
-						]
-				}
-			)[:items]
-			results = [r for r in results]
+				i += 1
+				self.stack_lock.acquire()
+				Worker(r, self).start()
+				self.stack_lock.release()
+			
+			results = self.data.elements.find(query)
+			total = self.data.elements.find(query).count()
 
 		
 

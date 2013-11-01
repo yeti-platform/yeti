@@ -69,11 +69,12 @@ class Model:
 
 	
 	def save(self, element, with_status=False):
+		
 		self.db_lock.acquire()
 		#elt = self.exists(element)
 	
 		tags = element['tags']
-		del element['tags'] # so tags in the db does not get overwritten
+		del element['tags'] # so tags in the db do not get overwritten
 
 		if '_id' in element:
 			del element['_id']
@@ -93,7 +94,6 @@ class Model:
 		saved['date_updated'] = datetime.datetime.utcnow()
 
 		self.elements.save(saved)
-
 		assert saved['date_created'] != None and saved['date_updated'] != None
 
 		self.db_lock.release()
@@ -174,7 +174,9 @@ class Model:
 		if not include_original:
 			nodes = [n for n in nodes if n['_id'] != elt['_id']]
 			
-
+		#display 
+		for e in nodes:
+			e['fields'] = e.display_fields
 		return nodes, new_edges
 
  

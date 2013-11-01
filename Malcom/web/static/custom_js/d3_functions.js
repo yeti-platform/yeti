@@ -305,7 +305,7 @@ function start() {
   //   .attr("id", function(d) {return d._id.$oid })
   //   .style("stroke", function(d) { return color(d.attribs); })
 
-  // path_text = l.append("text").attr('class', 'path-text').text(function(d) { return d.attribs })
+  //path_text = l.append("text").attr('class', 'path-text').text(function(d) { return d.attribs })
 
   // remove old links
   link.exit().remove();
@@ -417,7 +417,7 @@ function tick(e) {
 
       var x=(d.source.x + (dx)*(offset));
       var y=(d.source.y + (dy)*(offset));
-      //return "translate(" + dx + "," + dy + ")";
+      //return "translate(" + x + "," + y + ")";
       return "translate(" + x + "," + y + ") matrix("+cosinus+", "+sinus+", "+-sinus+", "+cosinus+", 0 , 0)";
     });
 }

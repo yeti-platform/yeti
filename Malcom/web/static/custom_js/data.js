@@ -66,82 +66,46 @@ function change_opacity(query) {
 
 function display_data(d)
 {
-
-	 console.log(d)
+	console.log(d)
 	$('#node_info').empty();
 	$(".whois").empty();
 
-	$('#node_info').append("<tr><th>Node type</th><td>"+d.type+"</td></tr>");
-
 	display_generic(d);
 
-	$('#node_info').append("<tr><th>Date Updated</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
-	$('#node_info').append("<tr><th>Date Created</th><td>"+format_date(new Date(d.date_updated.$date))+"</td></tr>");
-	$('#node_info').append("<tr><th>Last analysis</th><td>"+format_date(new Date(d.last_analysis.$date))+"</td></tr>");
-
-	tags_string = d.tags[0];
-	for (var i = 1; i < d.tags.length; i++)
-		tags_string = tags_string + ", " + d.tags[i];
-
-	$('#node_info').append("<tr><th>tags</th><td>"+tags_string+"</td></tr>");
-
+	$('#node_info').append("<tr><th>Tags</th><td>"+tags_string+"</td></tr>");
 }
 
 function display_generic(d) {
 	console.log('display generic')
-	for (var key in d) {
-		if (['Fixed', 'Selected', 'PreviouslySelected', 'type', 'tags', 'date_created', 'date_retreived', 'date_updated', 'last_analysis', "_id", "group", "incoming_links", "index", "px", "py", "x", "y", "radius", 'weight' ].indexOf(key) == -1) {
-			val = d[key]
-			if (val == undefined) { val = "N/A"}
-			$("#node_info").append("<tr><th>"+key.charAt(0).toUpperCase() + key.slice(1) +"</th><td>"+val+"</td></tr>");
+	if (d.fields != undefined) {
+		for (var display in d.fields) {
+			key = d.fields[display][0]
+			label = d.fields[display][1]
+			if (d[key] == undefined) { label = "N/A"}
+			value = d[key]
+			
+			if (['date_updated', 'date_created', 'last_analysis'].indexOf(key) != -1)
+				value = format_date(new Date(value.$date))
+			if (key == 'tags')
+				if (d.tags.length == 0) 
+					value = '-'
+				else
+					value = d.tags.join(', ')
+
+			$("#node_info").append("<tr><th>"+label+"</th><td>"+value+"</td></tr>");	
+		}
+	}
+	else {
+		for (var key in d) {
+			if (['fixed', 'selected', 'previouslyselected', 'type', 'tags', 'date_created', 'date_retreived', 'date_updated', 'last_analysis', "_id", "group", "incoming_links", "index", "px", "py", "x", "y", "radius", 'weight'].indexOf(key.toLowerCase()) == -1) {
+				val = d[key]
+				if (val == undefined) { val = "N/A"}
+				$("#node_info").append("<tr><th>"+key.charAt(0).toUpperCase() + key.slice(1) +"</th><td>"+val+"</td></tr>");
+			}
 		}
 	}
 }
 
-
-function display_data_hostname(d) {
-
-	$('#node_info').append("<tr><th>Hostname</th><td>"+d.value+"</td></tr>");
-	if (d.domain != null)
-		$('#node_info').append("<tr><th>Domain</th><td>"+d.domain+"</td></tr>");
-	if (!jQuery.isEmptyObject(d.dns_info)) {
-		for (var i in d.dns_info)
-			$('#node_info').append("<tr><th>"+i+"</th><td>"+d.dns_info[i]+"</td></tr>");
-	}
-
-	$('.whois').html('<small>'+d.whois.replace(/\n/g, "<br />")+'</small>');
-	console.log(d.whois)
-}
-
-function display_data_url(d) {
-	
-	$('#node_info').append("<tr><th>URL</th><td>"+d.value+"</td></tr>");
-	$('#node_info').append("<tr><th>Hostname</th><td>"+d.hostname+"</td></tr>");
-}
-
-function display_data_as(d){
-	$('#node_info').append("<tr><th>AS name</th><td>"+d.value+"</td></tr>");
-	$('#node_info').append("<tr><th>ASN</th><td>"+d.asn+"</td></tr>");
-	$('#node_info').append("<tr><th>Netblock</th><td>"+d.bgp+"</td></tr>");
-	$('#node_info').append("<tr><th>Country</th><td>"+d.country+"</td></tr>");
-	$('#node_info').append("<tr><th>ISP</th><td>"+d.ISP+"</td></tr>");
-	// $('#node_info').append("<tr><th>Allocated</th><td>"+format_date(new Date(d.allocated.$date))+"</td></tr>");
-
-}
-
-function display_data_ip(d) {
-	$('#node_info').append("<tr><th>IP</th><td>"+d.value+"</td></tr>");
-	
-	if (d.geoinfo) {
-		geoloc_string = "";
-		if (d.geoinfo.city != "")
-			geoloc_string += d.geoinfo.city + ", ";
-		geoloc_string += d.geoinfo.country_name +" ("+d.geoinfo.latitude+", "+d.geoinfo.longitude+")";
-		$('#node_info').append("<tr><th>Geoloc</th><td>"+geoloc_string+"</td></tr>");
-	}
-	
-	$('.whois').text(d.whois);
-}
 
 function format_date(date)
 {

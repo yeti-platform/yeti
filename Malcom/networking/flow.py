@@ -13,9 +13,9 @@ class Decoder(object):
 	def decode_flow(flow):
 		data = None
 		if flow.src_port == 80: # probable HTTP response
-			data = Decoder.HTTP_response(flow.get_payload())
+			data = Decoder.HTTP_response(flow.payload)
 		if flow.dst_port == 80: # probable HTTP request
-			data = Decoder.HTTP_request(flow.get_payload())
+			data = Decoder.HTTP_request(flow.payload)
 			
 		if data:
 			return data
@@ -33,10 +33,11 @@ class Decoder(object):
 			data['uri'] = request.group('URI')
 			host = re.search(r'Host: (?P<host>\S+)', payload)
 			data['host'] = host.group('host') if host else "N/A"
-
+			data['flow_type'] = "http_request"
 			data['type'] = 'HTTP request'
-			data['info'] = "%s request for %s" % (data['method'], data['host']+data['uri'])
 			data['url'] = "http://" + data['host'] + data['uri']
+			data['info'] = "%s request for %s" % (data['method'], data['url'])
+			
 			return data
 
 	@staticmethod
@@ -45,22 +46,22 @@ class Decoder(object):
 		response = re.search(r'(HTTP.* (?P<status_code>\d{3,3}))', payload)
 		if not response:
 			return False
-
 		else:
-
+			data['flow_type'] = 'http_response'
 			data['status'] = response.group("status_code")
 			encoding = re.search(r'Transfer-Encoding: (?P<encoding>\S+)', payload)
 			data['encoding'] = encoding.group('encoding') if encoding else "N/A"
 			response = re.search(r'\r\n\r\n(?P<response>[\S\s]*)', payload)
-			data['response'] = response.group('response') if response else "N/A"
+			#data['response'] = response.group('response') if response else "N/A"
 
 			data['type'] = 'HTTP response'
 			data['info'] = 'Status: %s' % (data['status'])
-			# chunk_encoding
+			
+			# # chunk_encoding
 			# try:
 			# 	if response and encoding:
 			# 		if data['encoding'] == 'chunked':
-			# 			decoded = u""
+			# 			decoded = ""
 			# 			encoded = data['response']
 			# 			cursor = 0
 			# 			chunk_size = -1
@@ -69,9 +70,10 @@ class Decoder(object):
 			# 				cursor += encoded[cursor:].find('\r\n') + 2
 			# 				decoded += encoded[cursor:chunk_size+cursor]
 			# 				cursor += chunk_size + 2
-			# 			data['decoded_payload'] = decoded
+			# 			data['response'] = decoded
+						
 			# except Exception, e:
-			# 	return False
+			# 	toolbox.debug_output("Could not decode chunked HTTP response: %s" % e, "error")
 			
 			return data
 	
@@ -119,15 +121,15 @@ class Flow(object):
 
 		# see if we need to reconstruct flow (i.e. check SEQ numbers)
 		self.payload = ""
-		self.payload_parsed = None
+		self.decoded_flow = None
 		self.data_transfered = 0
 		self.packet_count = 0
 		self.add_pkt(pkt)
 		self.fid = Flow.flowid(pkt)
 
 	def extract_elements(self):
-		if self.payload_parsed and 'url' in self.payload_parsed:
-			return {'url': self.payload_parsed['url'], 'host': self.payload_parsed['host'], 'method': self.payload_parsed['method']}
+		if self.decoded_flow and self.decoded_flow['flow_type'] == 'http_request':
+			return {'url': self.decoded_flow['url'], 'host': self.decoded_flow['host'], 'method': self.decoded_flow['method']}
 		else:
 			return None
 	
@@ -149,9 +151,7 @@ class Flow(object):
 			self.seq = pkt[TCP].seq
 			self.initial_seq = pkt[TCP].seq
 
-			# in a perfect world, everyone respects RFCs
 			if Raw in pkt:
-				print "Data contained in SYN packet!"
 				self.payload += pkt[Raw].load
 				self.data_transfered += len(pkt[Raw].load)
 
@@ -205,16 +205,23 @@ class Flow(object):
 				}
 
 		# we'll use the type and info fields
-		self.payload_parsed = Decoder.decode_flow(self)
-		update['decoded_flow'] = self.payload_parsed
+		self.decoded_flow = Decoder.decode_flow(self)
+		update['decoded_flow'] = self.decoded_flow
 
 		return update
 
 	def get_payload(self, encoding='web'):
+		 # if self.payload_parsed:
+		 # 	if self.payload_parsed['flow_type'] == 'http_response':
+		 # 		return unicode(self.payload_parsed['response'], errors='replace')
+		 # 	if self.payload_parsed['flow_type'] == 'http_request':	
+		 # 		return self.payload
+		 # else:
 		if encoding == 'web':
 			return unicode(self.payload, errors='replace')
-		else:
+		if encoding == 'raw':
 			return self.payload
+			
 
 	def print_statistics(self):
 		print "%s:%s  ->  %s:%s (%s, %s packets, %s buff)" % (self.src_addr, self.src_port, self.dst_addr, self.dst_port, self.protocol, len(self.packets), len(self.buffer))

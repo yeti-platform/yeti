@@ -17,6 +17,13 @@
 	background-color: #e7ff9f;
 }
 
+.flow-payload {
+	text-align: center;
+}
+.flow-payload i {
+	margin-left:15px;
+}
+
 
 /* Dataset */
 

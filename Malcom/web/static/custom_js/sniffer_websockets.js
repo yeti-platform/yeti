@@ -148,19 +148,26 @@ function netflow_row(flow, row) {
     payload = flow.payload
     // icon = $("<a />").attr({ 'href': "#PayloadModal", 'role': 'button', 'class':'btn', 'data-toggle': 'modal' })
     // icon.append($("<i />").addClass('icon-eye-open'))
-    icon = $("<i />").addClass('icon-eye-open');
-    icon.click(function() {
+    icon_view = $("<i />").addClass('icon-eye-open');
+    icon_view.click(function() {
         get_flow_payload(flow.fid); 
         $("#PayloadModal").modal('toggle')
     });
-    row.append($('<td />').addClass('flow-payload').append(icon))
+
+    icon_download = $("<a />").attr('href', url_static_prefix+'/sniffer/'+$('#session_name').text()+"/"+flow.fid+'/raw');
+    icon_download.append($("<i />").addClass('icon-download-alt'));
+    
+    payload = $('<td />').addClass('flow-payload')
+    payload.append(icon_view)
+    payload.append(icon_download)
+    
+    row.append(payload)
 
     return row
 }
 
 function get_flow_payload(id) {
     sendmessage(ws_sniffer, {'cmd': 'get_flow_payload', 'session_name': $('#session_name').text(), 'flowid': id})
-
 }
 
 function snifferInterfaceInit() {
@@ -187,24 +194,24 @@ function stopsniff() {
 
 function getSessionList() {
     $.ajax({
-    type: 'get',
-    url: url_static_prefix+'/sniffer/sessionlist/',
-    success: function(data) {
-        data = $.parseJSON(data);
-        console.log(data);
+        type: 'get',
+        url: url_static_prefix+'/sniffer/sessionlist/',
+        success: function(data) {
+            data = $.parseJSON(data);
+            console.log(data);
 
-        table = $('#sessions');
+            table = $('#sessions');
 
-        for (var i in data.session_list) {    
-            
-            tr = $('<tr></tr>');
-            session_links = $('<a />').attr("href", url_static_prefix+'/sniffer/'+data.session_list[i]['name']).text(data.session_list[i]['name']);
-            tr.append($("<td />").append(session_links))
-            tr.append($("<td />").text(data.session_list[i]['packets']));
-            tr.append($("<td />").text(data.session_list[i]['nodes']));
-            tr.append($("<td />").text(data.session_list[i]['edges']));
-            table.append(tr);
-        }
-    }
-  });
+            for (var i in data.session_list) {    
+                
+                tr = $('<tr></tr>');
+                session_links = $('<a />').attr("href", url_static_prefix+'/sniffer/'+data.session_list[i]['name']).text(data.session_list[i]['name']);
+                tr.append($("<td />").append(session_links))
+                tr.append($("<td />").text(data.session_list[i]['packets']));
+                tr.append($("<td />").text(data.session_list[i]['nodes']));
+                tr.append($("<td />").text(data.session_list[i]['edges']));
+                table.append(tr);
+            }
+            }
+        });
 }

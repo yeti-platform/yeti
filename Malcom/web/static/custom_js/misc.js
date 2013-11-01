@@ -93,11 +93,11 @@ function get_dataset(query, url) {
 	  	dataset = $('#dataset')
 	  	dataset.empty()
 	  	head = $("<tr>")
-
+	  	console.log(data)
 	  	// get the headers
 	  	for (var i in data.fields) {
 	  		h = $("<th>").text(data.fields[i][1])
-	  		if (data.fields[i][0].indexOf('date') != -1)
+	  		if (['date_created', 'date_updated', 'last_analysis'].indexOf(data.fields[i][0]) != -1)
 	  			h.addClass('timestamp')
 	  		head.append(h)
 	  	}
@@ -116,12 +116,12 @@ function get_dataset(query, url) {
 	  		for (var key in data.fields) {
 	  				k = data.fields[key][0]
 	  				v = elt[k]
-	  				if (k == 'tags')
-	  					row.append($("<td />").addClass('tags_links'))
-	  				else if (k.indexOf('date') != -1)
-	  					row.append($("<td />").text(format_date(new Date(elt.date_updated.$date))).addClass('timestamp'))
-	  				else if (v == "" || v == undefined)
+	  				if (v == "" || v == undefined)
 	  					row.append($("<td />").text('-'))
+	  				else if (k == 'tags')
+	  					row.append($("<td />").addClass('tags_links'))
+	  				else if (['date_created', 'date_updated', 'last_analysis'].indexOf(k) != -1)
+	  					row.append($("<td />").text(format_date(new Date(v.$date))).addClass('timestamp'))
 	  				else
 	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+v+"'>"+v+"</a></td>")
 	  		}

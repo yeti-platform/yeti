@@ -148,7 +148,7 @@ def graph(field, value):
 
 	data = { 'query': base_elts, 'edges': total_edges, 'nodes': total_nodes }
 	ids = [node['_id'] for node in nodes]
-	
+
 	debug_output("query: %s, edges found: %s, nodes found: %s" % (len(base_elts), len(edges), len(nodes)))
 	return (dumps(data))
 
@@ -409,12 +409,29 @@ def pcap(session_name):
 	response = make_response()
 	response.headers['Cache-Control'] = 'no-cache'
 	response.headers['Content-Type'] = 'application/vnd.tcpdump.pcap'
-	response.headers['Content-Disposition'] = 'attachment; filename='+session_name+'capture.pcap'
+	response.headers['Content-Disposition'] = 'attachment; filename='+session_name+'_capture.pcap'
 	response.data = Malcom.sniffer_sessions[session_name].get_pcap()
 	response.headers['Content-Length'] = len(response.data)
 
 	return response
 
+
+
+@app.route("/sniffer/<session_name>/<flowid>/raw")
+def send_raw_payload(session_name, flowid):
+	if session_name not in Malcom.sniffer_sessions:
+		abort(404)
+	if flowid not in Malcom.sniffer_sessions[session_name].flows:
+		abort(404)
+			
+	response = make_response()
+	response.headers['Cache-Control'] = 'no-cache'
+	response.headers['Content-Type'] = 'application/octet-stream'
+	response.headers['Content-Disposition'] = 'attachment; filename=%s_%s_dump.raw' % (session_name, flowid)
+	response.data = Malcom.sniffer_sessions[session_name].flows[flowid].get_payload(encoding='raw')
+	response.headers['Content-Length'] = len(response.data)
+
+	return response
 
 
 # APIs =========================================
@@ -528,7 +545,8 @@ def sniffer_api():
 				fid = message['flowid']
 				flow = session.flows[fid]
 				data = {}
-				data['payload'] = flow.get_payload('web')
+				data['payload'] = flow.get_payload()
+
 				data['type'] = cmd
 				ws.send(dumps(data))
 				continue

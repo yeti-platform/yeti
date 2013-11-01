@@ -8,7 +8,7 @@ from Malcom.auxiliary.toolbox import debug_output
 
 class Element(dict):
 
-	default_fields = [('date_updated', 'Updated'), ('value', "Value"), ('type', "Type"), ('tags', "Tags")]	
+	default_fields = [('value', "Value"), ('type', "Type"), ('tags', "Tags"), ('date_updated', 'Updated'), ('date_created', 'Created'), ('last_analysis', 'Analyzed') ]	
 	
 	def __init__(self):
 		self['tags'] = []
@@ -19,7 +19,7 @@ class Element(dict):
 		return self.__dict__
 
 	def __getattr__(self, name):
-		return self[name]
+		return self.get(name, None)
 
 	def __setattr__(self, name, value):
 		self[name] = value
