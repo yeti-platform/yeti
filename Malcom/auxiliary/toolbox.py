@@ -196,22 +196,28 @@ def split_url(url):
 def dns_dig_records(hostname):
 
     try:
-        _dig = check_output(['dig', '@8.8.8.8', 'ANY', hostname])
+        _dig = check_output(['dig', hostname, '+noall', '+answer', 'A'])
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'NS'])
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'MX'])
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'CNAME'])
     except CalledProcessError, e:
         _dig = e.output
 
-    results = [r.groupdict() for r in re.finditer(re.escape(hostname)+'\.\s+\d+\s+\w+\s+(?P<record_type>\w+)\s+(?P<record>.+)',_dig)]
+    results = [r.groupdict() for r in re.finditer(re.escape(hostname)+'\..+\s+(?P<record_type>\S+)\s+(?P<record>\S+)\n',_dig)]
     records = {}
     for r in results:
         if r['record_type'] in records:
             records[r['record_type']].append(r['record'])
         else:
             records[r['record_type']] = [r['record']]
+
+    for r in records:
+        records[r] = list(set(records[r]))
     return records
 
 def dns_dig_reverse(ip):
     try:
-        _dig = check_output(['dig','@8.8.8.8','-x', ip])
+        _dig = check_output(['dig', '-x', ip])
     except Exception, e:
         _dig = e.output
 

@@ -76,7 +76,7 @@ class Sniffer():
 		return 
 
 	def update_nodes(self):
-		return { 'query': {}, 'nodes':self.nodes, 'edges': self.edges }
+		return { 'query': {}, 'nodes': self.nodes, 'edges': self.edges }
 
 	def flow_status(self):
 		data = {}
@@ -344,6 +344,7 @@ class Sniffer():
 			self.send_flow_statistics(flow)	
 			
 			new_elts, new_edges = self.checkHTTP(flow)
+
 			if new_elts:
 				elts += new_elts
 			if new_edges:
@@ -367,6 +368,10 @@ class Sniffer():
 				debug_output("Could not send flow statistics: %s" % e)
 
 	def send_nodes(self, elts=[], edges=[]):
+		
+		for e in elts:
+			e['fields'] = e.display_fields
+
 		data = { 'querya': {}, 'nodes':elts, 'edges': edges, 'type': 'nodeupdate'}
 		try:
 			if (len(elts) > 0 or len(edges) > 0) and self.ws:

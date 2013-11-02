@@ -21,9 +21,6 @@ class Worker(threading.Thread):
 		debug_output("Started thread on %s %s" % (self.elt['type'], self.elt['value']), type='analytics')
 		etype = self.elt['type']
 		tags = self.elt['tags']
-		
-		if self.elt.get('last_analysis', None): # check that last analysis is older than 24h 
-			assert (datetime.datetime.utcnow() - self.elt['last_analysis'] >= datetime.timedelta(days=1))
 
 		new = self.elt.analytics()
 		for n in new:
@@ -31,7 +28,7 @@ class Worker(threading.Thread):
 			#do the link
 			self.engine.data.connect(self.elt, saved, n[0])
 		
-		# this will update analysis time
+		# this will change updated time
 		self.engine.save_element(self.elt, tags)
 
 		self.engine.progress += 1
@@ -77,7 +74,6 @@ class Analytics:
 		
 
 	def save_element(self, element, tags=[], with_status=False):
-
 		element.upgrade_tags(tags)
 		return self.data.save(element, with_status=with_status)
 		
@@ -241,12 +237,25 @@ class Analytics:
 					debug_output("Progress: %s/%s" % (i, total), 'analytics')
 				self.max_threads.acquire()
 				i += 1
-				self.stack_lock.acquire()
-				Worker(r, self).start()
-				self.stack_lock.release()
+				with self.stack_lock:
+					
+					# check that last analysis is older than 24h 
+					if r.get('last_analysis', None): 
+						assert (datetime.datetime.utcnow() - r['last_analysis'] >= datetime.timedelta(days=1))
+					
+					# change analytics date here so this element doesn't get included in the next loop
+					r['last_analysis'] = datetime.datetime.now()
+					r = self.save_element(r)
+				
+					# start thread
+					Worker(r, self).start()
+
+				#self.stack_lock.release()
 			
 			results = self.data.elements.find(query)
 			total = self.data.elements.find(query).count()
+
+
 
 		
 

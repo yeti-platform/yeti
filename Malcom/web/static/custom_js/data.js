@@ -71,8 +71,6 @@ function display_data(d)
 	$(".whois").empty();
 
 	display_generic(d);
-
-	$('#node_info').append("<tr><th>Tags</th><td>"+tags_string+"</td></tr>");
 }
 
 function display_generic(d) {
