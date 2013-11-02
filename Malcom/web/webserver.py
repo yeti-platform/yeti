@@ -387,6 +387,7 @@ def sniffer_sessionlist():
 								'packets': len(Malcom.sniffer_sessions[s].pkts),
 								'nodes': len(Malcom.sniffer_sessions[s].nodes),
 								'edges': len(Malcom.sniffer_sessions[s].edges),
+								'status': "Running" if Malcom.sniffer_sessions[s].status() else "Stopped"
 							})
 	return dumps({'session_list': session_list})
 

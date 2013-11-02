@@ -210,6 +210,7 @@ function getSessionList() {
                 tr.append($("<td />").text(data.session_list[i]['packets']));
                 tr.append($("<td />").text(data.session_list[i]['nodes']));
                 tr.append($("<td />").text(data.session_list[i]['edges']));
+                tr.append($("<td />").text(data.session_list[i]['status']));
                 table.append(tr);
             }
             }
