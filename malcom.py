@@ -39,7 +39,8 @@ if __name__ == "__main__":
 	parser.add_argument("-i", "--interface", help="Listen interface", default=Malcom.config['LISTEN_INTERFACE'])
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=Malcom.config['LISTEN_PORT'])
 	parser.add_argument("--public", help="Run a public instance (Feeds and network sniffing disabled)", action="store_true", default=Malcom.config['PUBLIC'])
-	parser.add_argument("-t", "--max-threads", help="Number of threads to use (default 4)", type=int, default=Malcom.config['MAX_THREADS'])
+	parser.add_argument("--max-threads", help="Number of threads to use (default 4)", type=int, default=Malcom.config['MAX_THREADS'])
+	
 	#parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
 
@@ -75,7 +76,6 @@ if __name__ == "__main__":
 			
 		elif args.feeds == 2:
 			Malcom.feed_engine.run_all_feeds()
-		
 		exit(0)
 
 	elif args.analytics: # run analytics
@@ -88,5 +88,4 @@ if __name__ == "__main__":
 		pass
 	else: # run webserver
 		web = MalcomWeb(Malcom.config['PUBLIC'], Malcom.config['LISTEN_PORT'], Malcom.config['LISTEN_INTERFACE'])
-		
 		exit(0)

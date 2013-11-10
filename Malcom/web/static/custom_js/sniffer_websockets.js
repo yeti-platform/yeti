@@ -160,7 +160,11 @@ function netflow_row(flow, row) {
     payload = $('<td />').addClass('flow-payload')
     payload.append(icon_view)
     payload.append(icon_download)
-    
+
+    if (flow.tls == true) {
+        payload.append("<img class='ssl-smiley' alt='SSL added and removed here!' src='/static/custom_img/ssl.png' />")
+    }
+
     row.append(payload)
 
     return row

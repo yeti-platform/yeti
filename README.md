@@ -54,9 +54,18 @@ The following was tested on Ubuntu server 12.04 LTS:
 
 * still from your virtualenv, install necessary python packages
 
-        pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces lxml zlib1g-dev
+        pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces lxml zlib1g-dev twisted
 
 Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
+
+### Quick note on TLS interception
+
+Malcom now supports TLS interception. For this to work, you need to generate some keys in Malcom/networking/tlsproxy/keys. See the KEYS.md file there for more information on how to do this. 
+
+Make sure you also have IPtables (you already should) and permissions to do some port forwarding with it (you usually need to be root for that).
+You can to this using the convenient `forward_port.sh` script. For example, to intercept all TLS communications towards port 443, use `forward_port.sh 443 9999`. You'll then have to tell malcom to run an interception proxy on port `9999`.
+
+Expect this process to be automated in future releases.
 
 ### Environment
 
@@ -66,13 +75,13 @@ If you're used to doing malware analysis, you probably already have tons of virt
 
 As long as it's getting layer-3 network data, Malcom can be deployed anywhere. Although it's not recommended to use it on high-availability networks (it wasn't designed to be fast, see [disclaimer](/README.md#Disclaimer)), you can have it running at the end of your switch's mirror port or on your gateway.
 
-### Feeds (experimental)
+### Feeds
 
-Feeds now run automatically by default. If you want to avoid this behavior, run malcom with the `--no-feeds` option.
-Source your virtualenv, and then launch a python shell (i.e. type `python`)
+To launch an instance of Malcom that ONLY fetches information from feeds, run Malcom with the `--feeds` option.
 
 Your database should be populated automatically. If you can dig into the code, adding feeds is pretty straightforward (assuming you're generating `Evil` objects). You can find an example feed in `/feeds/zeustracker`. A more detailed tutorial is [available here](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
 
+You can also use `celery` to run feeds. Make sure celery is installed by running `$ pip install celery` from your virtualenv. You can then use `celery worker -E --config=celeryconfig  --loglevel=DEBUG --concurrency=12` to launch the feeding process with 12 simultaneous workers.
 
 ## Technical specs
 

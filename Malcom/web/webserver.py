@@ -360,10 +360,15 @@ def sniffer():
 			return redirect(url_for('sniffer'))
 
 		debug_output("Creating session %s" % session_name)
-		Malcom.sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.config['IFACES'])
+
+		# intercept TLS ?
+		tls_proxy_port = request.form.get('tls_proxy_port', None)
+		# create iptables entry?
+
+		Malcom.sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.config['IFACES'], tls_proxy_port)
+		
 		
 		pcap = None
-
 		# if we're dealing with an uploaded PCAP file
 		file = request.files.get('pcap-file')
 		if file:
@@ -580,7 +585,10 @@ class MalcomWeb(object):
 			if len(Malcom.sniffer_sessions) > 0:
 				debug_output('Stopping sniffing sessions...')
 				for s in Malcom.sniffer_sessions:
-					Malcom.sniffer_sessions[s].stop()
+					session = Malcom.sniffer_sessions[s]
+					session.stop()
+					if session.tls_proxy:
+						session.tls_proxy.stop()
 
 			Malcom.feed_engine.stop_all_feeds()
 			exit(0)

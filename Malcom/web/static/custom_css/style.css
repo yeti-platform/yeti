@@ -20,7 +20,18 @@
 .flow-payload {
 	text-align: center;
 }
+
+.flow-payload .icon-eye-open {
+	cursor: pointer;
+}
+
 .flow-payload i {
+	margin-left:15px;
+}
+
+img.ssl-smiley {
+	height:15px;
+	width:15px;
 	margin-left:15px;
 }
 

@@ -24,6 +24,8 @@
     <br />
     {% if not g.config['PUBLIC'] %}
       <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
+      <label for='tls-interception'>TLS proxy port</label>
+      <input type="text" placeholder="Leave blank for no interception" name='tls_proxy_port' id='tls_proxy_port'>
     {% endif %}
     <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Create new session</button>
     

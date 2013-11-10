@@ -12,18 +12,25 @@ class Decoder(object):
 	@staticmethod
 	def decode_flow(flow):
 		data = None
+
 		if flow.src_port == 80: # probable HTTP response
 			data = Decoder.HTTP_response(flow.payload)
 		if flow.dst_port == 80: # probable HTTP request
 			data = Decoder.HTTP_request(flow.payload)
-			
+		
+		if flow.tls:
+			if flow.dst_port == 443: # probabl HTTPs request
+				data = Decoder.HTTP_request(flow.cleartext_payload, secure=True)
+			if flow.src_port == 443: # probabl HTTPs request
+				data = Decoder.HTTP_response(flow.cleartext_payload)
+
 		if data:
 			return data
 		else:
 			return False
 
 	@staticmethod
-	def HTTP_request(payload):
+	def HTTP_request(payload, secure=False):
 		data = {}
 		request = re.search(r'(?P<method>GET|HEAD|POST|PUT|DELETE|TRACE|OPTIONS|CONNECT|PATCH) (?P<URI>\S*) HTTP', payload)
 		if not request:
@@ -34,8 +41,15 @@ class Decoder(object):
 			host = re.search(r'Host: (?P<host>\S+)', payload)
 			data['host'] = host.group('host') if host else "N/A"
 			data['flow_type'] = "http_request"
-			data['type'] = 'HTTP request'
-			data['url'] = "http://" + data['host'] + data['uri']
+			
+			if secure:
+				data['scheme'] = 'https://'
+				data['type'] = 'HTTP request (TLS)'
+			else:
+				data['scheme'] = 'http://'
+				data['type'] = 'HTTP request'
+
+			data['url'] = data['scheme'] + data['host'] + data['uri']
 			data['info'] = "%s request for %s" % (data['method'], data['url'])
 			
 			return data
@@ -98,8 +112,14 @@ class Flow(object):
 		else:
 			flows[flowid].add_pkt(pkt)
 
+	def reverse_flowid(self):
+		fid = "flowid--%s-%s--%s-%s" % (self.dst_addr, self.dst_port, self.src_addr, self.src_port)
+		return fid.replace('.','-')		
+
 	def __init__(self, pkt):
 		self.packets = []
+		self.tls = False # until proven otherwise
+		self.cleartext_payload = ""
 
 		# set initial timestamp
 		self.timestamp = pkt.time
@@ -124,8 +144,12 @@ class Flow(object):
 		self.decoded_flow = None
 		self.data_transfered = 0
 		self.packet_count = 0
-		self.add_pkt(pkt)
 		self.fid = Flow.flowid(pkt)
+
+
+		self.add_pkt(pkt)
+
+		
 
 	def extract_elements(self):
 		if self.decoded_flow and self.decoded_flow['flow_type'] == 'http_request':
@@ -135,7 +159,7 @@ class Flow(object):
 	
 	def add_pkt(self, pkt):
 		self.packet_count += 1
-		if self.protocol == 'TCP':
+		if self.protocol == 'TCP' and not self.tls:
 			self.reconstruct_flow(pkt)
 		else:
 			self.packets += pkt
@@ -145,7 +169,6 @@ class Flow(object):
 		assert TCP in pkt
 
 		# deal with all packets or only new connections ?
-		# if len(self.packets) == 0: # we're dealing with a new flow (maybe partial)
 
 		if pkt[TCP].flags & 0x02:			# SYN flag detected
 			self.seq = pkt[TCP].seq
@@ -163,7 +186,6 @@ class Flow(object):
 			while self.check_buffer():
 				pass
 
-	#def check_buffer(self, pkt):
 	def check_buffer(self):
 		for i, pkt in enumerate(self.buffer):
 			last = self.packets[-1:][0]
@@ -201,7 +223,7 @@ class Flow(object):
 				'protocol': self.protocol,
 				'packet_count': self.packet_count,
 				'data_transfered': self.data_transfered,
-				#'decoded_protocol': self.decoded_protocol,
+				'tls': self.tls,
 				}
 
 		# we'll use the type and info fields
@@ -211,16 +233,16 @@ class Flow(object):
 		return update
 
 	def get_payload(self, encoding='web'):
-		 # if self.payload_parsed:
-		 # 	if self.payload_parsed['flow_type'] == 'http_response':
-		 # 		return unicode(self.payload_parsed['response'], errors='replace')
-		 # 	if self.payload_parsed['flow_type'] == 'http_request':	
-		 # 		return self.payload
-		 # else:
+
+		if self.tls:
+			payload = self.cleartext_payload
+		else:
+			payload = self.payload
+
 		if encoding == 'web':
-			return unicode(self.payload, errors='replace')
+			return unicode(payload, errors='replace')
 		if encoding == 'raw':
-			return self.payload
+			return payload
 			
 
 	def print_statistics(self):

@@ -5,9 +5,10 @@ from bson.json_util import dumps
 
 from bson.objectid import ObjectId
 
+
 from Malcom.networking.flow import Flow
 from Malcom.auxiliary.toolbox import debug_output
-
+from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
 
@@ -16,7 +17,7 @@ NOTROOT = "nobody"
 
 class Sniffer():
 
-	def __init__(self, analytics, name, remote_addr, filter, ifaces, ws=None):
+	def __init__(self, analytics, name, remote_addr, filter, ifaces, tls_proxy_port, ws=None):
 		
 		self.analytics = analytics
 		self.name = name
@@ -26,8 +27,7 @@ class Sniffer():
 		for i in ifaces:
 			filter_ifaces += " and not host %s " % ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
-		#easier testing this way
-		#self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
+
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False
@@ -36,14 +36,29 @@ class Sniffer():
 		self.public = False
 		self.pcap = False
 		self.pkts = []
+
+		# nodes, edges, their values, their IDs
 		self.nodes = []
 		self.edges = []
 		self.nodes_ids = []
 		self.nodes_values = []
 		self.nodes_pk = []
 		self.edges_ids = []
-		self.flows = {}
 
+		# flows
+		self.flows = {}
+		
+		# MalcomTLSProxy instance
+		self.intercept_tls = True if tls_proxy_port else False
+		self.tls_proxy_port = int(tls_proxy_port) if tls_proxy_port else None
+		self.tls_proxy = None 
+
+		if self.intercept_tls:
+			debug_output("[+] Starting TLS interception proxy on port %s" % self.tls_proxy_port)
+			self.tls_proxy = MalcomTLSProxy(self.flows, self.tls_proxy_port)
+			self.tls_proxy.start()
+		else:
+			debug_output("[-] No TLS interception")
 
 	def load_pcap(self):
 		debug_output("Loading PCAP from file...")
@@ -203,11 +218,7 @@ class Sniffer():
 			else:
 				_question = [e for e in self.nodes if e['value'] == question][0]
 
-
-				
 			debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
-
-
 			
 			for i in xrange(pkt[DNS].ancount): # cycle through responses and add records to graph
 
@@ -323,6 +334,9 @@ class Sniffer():
 		elts = []
 		edges = []
 
+		# STANDARD PACKET ANALYSIS - extract IP addresses and domain names
+		# the magic for extracting elements from packets happens here
+
 		new_elts, new_edges = self.checkIP(pkt)
 		if new_elts:
 			elts += new_elts
@@ -335,7 +349,9 @@ class Sniffer():
 		if new_edges:
 			edges += new_edges
 
-		# do flow analysis here, if necessary
+		
+		# FLOW ANALYSIS - reconstruct TCP flow if possible
+		# do flow analysis here, if necessary - this will be replaced by dpkt's magic
 
 		if TCP in pkt or UDP in pkt:
 
@@ -350,8 +366,27 @@ class Sniffer():
 			if new_edges:
 				edges += new_edges			
 
-			# end flow analysis
+		# end flow analysis
 
+		
+		# TLS MITM - intercept TLS communications and send cleartext to malcom
+		# We want to be protocol agnostic (HTTPS, FTPS, ***S). For now, we choose which 
+		# connections to intercept based on destination port number
+		
+		# We could also catch ALL connections and MITM only those which start with
+		# a TLS handshake
+
+		tlsports = [443]
+		if TCP in pkt and pkt[TCP].flags & 0x02 and pkt[TCP].dport in tlsports and not self.pcap and self.intercept_tls: # of course, interception doesn't work with pcaps
+			# mark flow as tls			
+			flow.tls = True
+
+			# add host / flow tuple to the TLS connection list
+			debug_output("TLS SYN to from: %s:%s -> %s:%s" % (pkt[IP].src, pkt[TCP].sport, pkt[IP].dst, pkt[TCP].dport))
+			# this could actually be replaced by only flow
+			self.tls_proxy.hosts[(pkt[IP].src, pkt[TCP].sport)] = (pkt[IP].dst, pkt[TCP].dport, flow.fid) 
+
+			
 		if elts != [] or edges != []:
 			self.send_nodes(elts, edges)
 		if self.pcap:
