@@ -1,6 +1,6 @@
 # Malcom - Malware Communication Analyzer
 
-Malcom is a tool designed to analyze a system's network communication using graphical representations of network traffic. This comes handy when analyzing how certain malware species try to communicate with the outside world. 
+Malcom is a tool designed to analyze a system's network communication using graphical representations of network traffic. This comes handy when analyzing how certain malware species try to communicate with the outside world.
 
 Malcom can help you: 
 
@@ -12,6 +12,10 @@ Malcom can help you:
 The aim of Malcom is to make malware analysis and intel gathering *faster* by providing a human-readable version of network traffic originating from a given host or network. Convert network traffic information to actionable intelligence faster.
 
 Check the [wiki](https://github.com/tomchop/malcom/wiki) for a Quickstart with some nice screenshots and a tutorial on [how to add your own feeds](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
+
+![nodes-tomchop.png](http://direct.tomchop.me/malcom/nodes-tomchop.png)
+Graph for the host tomchop.me.
+
 
 ## Quick how-to
 
