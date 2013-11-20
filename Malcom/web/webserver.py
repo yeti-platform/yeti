@@ -3,7 +3,7 @@
 
 __description__ = 'Malcom - Malware communications analyzer'
 __author__ = '@tomchop_'
-__version__ = '1.0 alpha'
+__version__ = '1.1 alpha'
 __license__ = "GPL"
 
 
@@ -129,65 +129,20 @@ def run_feed(feed_name):
 def nodes(field, value):
 	return render_template('dynamic_nodes.html', field=field, value=value)
 
-@app.route('/graph/<field>/<path:value>')
-def graph(field, value):
-	a = g.a
-	#query = { field: re.compile(re.escape(value), re.IGNORECASE) }
-	# faster query
-	query = { field: value }
-	base_elts = [e for e in a.data.elements.find( query )]
 
-	total_nodes = []
-	total_edges = []
-	nodes = []
-	edges = []
-	for elt in base_elts:
-		nodes, edges = a.data.get_neighbors(elt)
-		total_nodes.extend(nodes)
-		total_edges.extend(edges)
-
-	data = { 'query': base_elts, 'edges': total_edges, 'nodes': total_nodes }
-	ids = [node['_id'] for node in nodes]
-
-	debug_output("query: %s, edges found: %s, nodes found: %s" % (len(base_elts), len(edges), len(nodes)))
-	return (dumps(data))
-
-@app.route('/neighbors', methods=['POST'])
+@app.route('/neighbors')
 def neighbors():
 	a = g.a
-	allnodes = []
-	alledges = []
-	msg = ""
-	if len(request.form.getlist('ids')) == 0:
-		return dumps({})
+	data = a.find_neighbors(request.args)
+	return make_response(dumps(data), 200, {'Content-Type': 'application/json'})
 
-	for id in request.form.getlist('ids'):
-		elt = a.data.elements.find_one({'_id': ObjectId(id) })
-		nodes, edges = a.data.get_neighbors(elt)
-		if len(nodes) > 2000 or len(edges) > 2000:
-			msg = "TOO_MANY_ELEMENTS" # at least, we notify the user that we're doing something dirty
-		allnodes += [n for n in nodes[:2000] if n not in allnodes] # this is a really expensive operation
-		alledges += [e for e in edges[:2000] if e not in alledges] # dirty solution, limit to 1000 results
-		
-	data = { 'query': elt, 'nodes':allnodes, 'edges': alledges, 'msg': msg }
-
-	return (dumps(data))
-
-@app.route('/evil', methods=['POST'])
+@app.route('/evil')
 def evil():
 	a = g.a
-	allnodes = []
-	alledges = []
-	msg = ""
-	for id in request.form.getlist('ids'):
-		elt = a.data.elements.find_one({'_id': ObjectId(id) })
-		nodes, edges = a.find_evil(elt)
-		allnodes += [n for n in nodes if n not in allnodes]
-		alledges += [e for e in edges if e not in alledges]
-		
-	data = { 'query': None, 'nodes':allnodes, 'edges': alledges, 'msg': msg }
 
-	return (dumps(data))
+	data = a.multi_graph_find(request.args, {'key':'tags', 'value': 'evil'})
+
+	return (dumps(data), 200, {'Content-Type': 'application/json'})
 
 
 # dataset operations ======================================================
@@ -195,6 +150,70 @@ def evil():
 def allowed_file(filename):
 	return '.' in filename and \
 		   filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+
+
+@app.route('/dataset/report/<field>/<path:value>/')
+@app.route('/dataset/report/<field>/<path:value>/<strict>/')
+def report(field, value, strict=False):
+	base_elts_dict = {}
+	base_elts = []
+
+	if strict:
+		result_set = g.a.data.find({field: value})
+	else:
+		result_set = g.a.data.find({field: re.compile(re.escape(value), re.IGNORECASE)})
+
+	for e in result_set:
+		base_elts_dict[e['_id']] = e
+		base_elts.append(e)
+
+
+	# get all 1st degree nodes in one dict
+	all_nodes_dict = {}
+	all_edges_dict = {}
+
+	for elt in base_elts:
+		nodes, edges = g.a.data.get_neighbors(elt)
+		for n in nodes:
+			all_nodes_dict[n['_id']] = n
+		for e in edges:
+			all_edges_dict[e['_id']] = e
+
+	filtered_edges_dict = {}
+	for l in all_edges_dict:
+		if all_nodes_dict.get(all_edges_dict[l]['src'], False):
+			filtered_edges_dict[l] = all_edges_dict[l]
+
+	# all_nodes_dict 		contains an id_dictionary with all neighboring nodes
+	# filtered_edges_dict 	contains an id_dictionary of all links of which the source is in all_nodes_dict
+	# all_edges_dict 		contains an id_dictionary of all 1st degree and 2nd degree links
+
+	linked_elements = {}
+
+	for e in filtered_edges_dict:
+		e = filtered_edges_dict[e]
+		
+		if all_nodes_dict.get(e['dst'], False): # if edge points towards one of base_elts
+			dst = all_nodes_dict[e['dst']]
+			if e['attribs'] not in linked_elements: # if we don't have a record for this link, create an empty array
+				linked_elements[e['attribs']] = []
+			if dst not in linked_elements[e['attribs']]: # avoid duplicates
+				print "%s -> %s -> %s" % (dst['value'], e['attribs'], dst['value'])
+				linked_elements[e['attribs']].append(dst)
+	
+	related_elements = {}
+
+	chrono = datetime.datetime.now()
+	for n in all_nodes_dict:
+		n = all_nodes_dict[n]
+		if n['type'] not in related_elements: # if we don't have a record for this type, create an empty array
+			related_elements[n['type']] = []
+		related_elements[n['type']].append(n)
+
+	#display fields
+	base_elts[0]['fields'] = base_elts[0].display_fields
+
+	return render_template("report.html", field=field, value=value, base_elts=base_elts, linked=linked_elements, related_elements=related_elements)
 
 @app.route('/dataset/')
 def dataset():
@@ -587,8 +606,4 @@ class MalcomWeb(object):
 				for s in Malcom.sniffer_sessions:
 					session = Malcom.sniffer_sessions[s]
 					session.stop()
-					if session.tls_proxy:
-						session.tls_proxy.stop()
 
-			Malcom.feed_engine.stop_all_feeds()
-			exit(0)

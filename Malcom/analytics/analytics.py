@@ -1,6 +1,8 @@
 from flask import Flask
 import dateutil, time, threading
 
+from bson.objectid import ObjectId
+
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
@@ -157,11 +159,63 @@ class Analytics:
 			done += len(results)
 			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
+	def find_neighbors(self, query):
+		
+		total_nodes = {}
+		total_edges = {}
+
+		for key in query:
+
+			for value in query.getlist(key):
+				
+				if key == '_id': value = ObjectId(value)
+
+				elt = self.data.elements.find_one({key: value})
+				
+				nodes, edges = self.data.get_neighbors(elt)
+				
+				for n in nodes:
+					total_nodes[n['_id']] = n
+				for e in edges:
+					total_edges[e['_id']] = e
+			
+		total_nodes = [total_nodes[n] for n in total_nodes]	
+		total_edges = [total_edges[e] for e in total_edges]
+
+		data = {'nodes':total_nodes, 'edges': total_edges }
+
+		return data
+
+	def multi_graph_find(self, query, graph_query, depth=2):
+		total_nodes = {}
+		total_edges = {}
+
+		for key in query:
+
+			for value in query.getlist(key):
+				
+				if key == '_id': value = ObjectId(value)
+
+				elt = self.data.elements.find_one({key: value})
+				
+				nodes, edges = self.single_graph_find(elt, graph_query, depth)
+				
+				for n in nodes:
+					total_nodes[n['_id']] = n
+				for e in edges:
+					total_edges[e['_id']] = e
+			
+		total_nodes = [total_nodes[n] for n in total_nodes]	
+		total_edges = [total_edges[e] for e in total_edges]
+
+		data = {'nodes':total_nodes, 'edges': total_edges }
+
+		return data
 
 
-	def find_evil(self, elt, depth=2, node_links=([],[])):
-		evil_nodes = []
-		evil_links = []
+	def single_graph_find(self, elt, query, depth=2):
+		chosen_nodes = []
+		chosen_links = []
 		
 		if depth > 0:
 			# get a node's neighbors
@@ -169,29 +223,29 @@ class Analytics:
 			
 			for i, node in enumerate(neighbors_n):
 				# for each node, find evil (recursion)
-				en, el = self.find_evil(node, depth=depth-1, node_links=node_links)
+				en, el = self.single_graph_find(node, query, depth=depth-1)
 				
-				# if we found evil nodes, add them to the evil_nodes list
+				# if we found evil nodes, add them to the chosen_nodes list
 
 				if len(en) > 0:
-					evil_nodes += [n for n in en if n not in evil_nodes] + [node]
-					evil_links += [l for l in el if l not in evil_links] + [neighbors_l[i]]
+					chosen_nodes += [n for n in en if n not in chosen_nodes] + [node]
+					chosen_links += [l for l in el if l not in chosen_links] + [neighbors_l[i]]
 		else:
 			
 			# if recursion ends, then search for evil neighbors
-			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {'tags': {'$in': ['evil']}}, include_original=False)
+			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {query['key']: {'$in': [query['value']]}}, include_original=False)
 			
 			# return evil neighbors if found
 			if len(neighbors_n) > 0:
-				evil_nodes += [n for n in neighbors_n if n not in evil_nodes]
-				evil_links += [l for l in neighbors_l if l not in evil_links]
+				chosen_nodes += [n for n in neighbors_n if n not in chosen_nodes]
+				chosen_links += [l for l in neighbors_l if l not in chosen_links]
 				
 			# if not, return nothing
 			else:
-				evil_nodes = []
-				evil_links = []
+				chosen_nodes = []
+				chosen_links = []
 
-		return evil_nodes, evil_links
+		return chosen_nodes, chosen_links
 
 
 	def process(self):
@@ -236,7 +290,6 @@ class Analytics:
 				if i % 10000 == 0:
 					debug_output("Progress: %s/%s" % (i, total), 'analytics')
 				self.max_threads.acquire()
-				i += 1
 				with self.stack_lock:
 					
 					# check that last analysis is older than 24h 
@@ -249,14 +302,16 @@ class Analytics:
 				
 					# start thread
 					Worker(r, self).start()
-
-				#self.stack_lock.release()
+					i+=1
 			
+			time.sleep(10)
 			results = self.data.elements.find(query)
 			total = self.data.elements.find(query).count()
 
 
 
-		
 
-		
+
+
+
+

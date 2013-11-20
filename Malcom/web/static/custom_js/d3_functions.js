@@ -21,13 +21,13 @@ function getneighbors() {
   datas = d3.selectAll('.selected').data()
   ids = []
   for (var i in datas) {
-    ids.push({'name': 'ids', 'value': datas[i]._id.$oid})
+    ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
   // url = '/neighbors/'+id;
   // console.log(url);
   console.log($.param(ids))
   $.ajax({
-    type: 'post',
+    type: 'get',
     url: url_static_prefix+'/neighbors',
     dataType: 'json',
     data: ids,
@@ -66,13 +66,12 @@ function getevil() {
   datas = d3.selectAll('.selected').data()
   ids = []
   for (var i in datas) {
-    ids.push({'name': 'ids', 'value': datas[i]._id.$oid})
+    ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
   // url = '/neighbors/'+id;
   // console.log(url);
   console.log($.param(ids))
   $.ajax({
-    type: 'post',
     url: url_static_prefix+'/evil',
     dataType: 'json',
     data: ids,
