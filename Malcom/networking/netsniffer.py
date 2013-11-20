@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 from Malcom.networking.flow import Flow
 from Malcom.auxiliary.toolbox import debug_output
 from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
+import Malcom
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
 
@@ -51,12 +52,10 @@ class Sniffer():
 		# MalcomTLSProxy instance
 		self.intercept_tls = True if tls_proxy_port else False
 		self.tls_proxy_port = int(tls_proxy_port) if tls_proxy_port else None
-		self.tls_proxy = None 
 
 		if self.intercept_tls:
-			debug_output("[+] Starting TLS interception proxy on port %s" % self.tls_proxy_port)
-			self.tls_proxy = MalcomTLSProxy(self.flows, self.tls_proxy_port)
-			self.tls_proxy.start()
+			self.tls_proxy = Malcom.tls_proxy
+			self.tls_proxy.add_flows(self.flows)
 		else:
 			debug_output("[-] No TLS interception")
 

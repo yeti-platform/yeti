@@ -72,7 +72,7 @@ class ProxyServer(protocol.Protocol):
 
 		if tuples:
 			self.dst_addr, self.dst_port, dst_fid = tuples
-			self.dst_flow = self.factory.flows[dst_fid]
+			self.dst_flow = self.factory.get_flow(dst_fid)
 			print "Connecting to %s:%s" % (self.dst_addr, self.dst_port)
 		
 
@@ -83,7 +83,7 @@ class ProxyServer(protocol.Protocol):
 		self.srv_queue.get().addCallback(self.clientDataReceived)
 
 		# these operations must be done after data is sent so that the flow is created
-		self.src_flow = self.factory.flows[self.dst_flow.reverse_flowid()]
+		self.src_flow = self.factory.get_flow(self.dst_flow.reverse_flowid())
 		self.server_payload += chunk
 
 		self.src_flow.cleartext_payload = self.server_payload
@@ -130,15 +130,20 @@ class MalcomTLSFactory():
  		for p in self.protocols:
  			p.transport.loseConnection()
 
+ 	def get_flow(self, fid):
+ 		for session_flows in self.flows:
+ 			if session_flows.get(fid, False):
+ 				return session_flows[fid]
+
 
 class MalcomTLSProxy(threading.Thread):
 	"""This class will handle the twisted reactor"""
-	def __init__(self, flows, port=9999):
+	def __init__(self, port=9999):
 		super(MalcomTLSProxy, self).__init__()
 		self.hosts = {}
 		self.factory = MalcomTLSFactory(self.hosts)
 		self.factory.proxy = self
-		self.factory.flows = flows
+		self.factory.flows = []
 		self.running = True
 		self.thread = None
 		self.port = port
@@ -152,7 +157,7 @@ class MalcomTLSProxy(threading.Thread):
 
 		try:
 			while self.running:
-				sleep(5)
+				sleep(2)
 		except KeyboardInterrupt, e:
 			self.stop()
 		
@@ -160,6 +165,9 @@ class MalcomTLSProxy(threading.Thread):
 		self.running = False
 		reactor.callFromThread(reactor.stop)
 		self.thread.join()
+
+	def add_flows(self, flows):
+		self.factory.flows.append(flows)
  
 if __name__ == "__main__":
 	m = MalcomTLSProxy()

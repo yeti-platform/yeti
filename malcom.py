@@ -15,6 +15,7 @@ from flask import Flask
 from Malcom.analytics.analytics import Analytics
 from Malcom.feeds.feed import FeedEngine
 from Malcom.web.webserver import MalcomWeb
+from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 import Malcom # this is the configuraiton
 
 # this should be stored and loaded from a configuration file
@@ -25,6 +26,7 @@ Malcom.config['LISTEN_PORT'] = 8080
 Malcom.config['MAX_THREADS'] = 4
 Malcom.config['PUBLIC'] = False
 Malcom.config['NO_FEED'] = False
+Malcom.config['TLS_PROXY_PORT'] = False
 
 Malcom.config['IFACES'] = {}
 for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
@@ -40,6 +42,7 @@ if __name__ == "__main__":
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=Malcom.config['LISTEN_PORT'])
 	parser.add_argument("--public", help="Run a public instance (Feeds and network sniffing disabled)", action="store_true", default=Malcom.config['PUBLIC'])
 	parser.add_argument("--max-threads", help="Number of threads to use (default 4)", type=int, default=Malcom.config['MAX_THREADS'])
+	parser.add_argument("--tls-proxy-port", help="Port number on which to start the TLS proxy on. No proxy started if not specified.", type=int, default=Malcom.config['TLS_PROXY_PORT'])
 	
 	#parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
 	args = parser.parse_args()
@@ -58,6 +61,12 @@ if __name__ == "__main__":
 
 	sys.stderr.write("Importing feeds...\n")
 	Malcom.analytics_engine = Analytics()
+	
+	if args.tls_proxy_port:
+		sys.stderr.write("Starting TLS proxy on port %s\n" % args.tls_proxy_port)
+		Malcom.tls_proxy = MalcomTLSProxy(args.tls_proxy_port)
+		Malcom.tls_proxy.start()
+
 	Malcom.feed_engine = FeedEngine(Malcom.analytics_engine)
 	Malcom.feed_engine.load_feeds()
 
@@ -86,6 +95,10 @@ if __name__ == "__main__":
 			Malcom.analytics_engine.process()
 			sleep(60*60*24) # sleep 24h
 		pass
+
 	else: # run webserver
 		web = MalcomWeb(Malcom.config['PUBLIC'], Malcom.config['LISTEN_PORT'], Malcom.config['LISTEN_INTERFACE'])
+		if Malcom.tls_proxy:
+			Malcom.tls_proxy.stop()
+
 		exit(0)
