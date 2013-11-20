@@ -134,49 +134,58 @@ class Model:
 		for e in elts:
 			self.malware_add(e,e['tags'])
 
+
 	def get_neighbors(self, elt, query={}, include_original=True):
 
 		if not elt:
 			return [], []
 
-		# get all links to / from the required element
-		to = [e for e in self.graph.find({'src': elt['_id']})]
-		fr = [e for e in self.graph.find({'dst': elt['_id']}) if e not in to]
-		new_edges = to+fr
-		
-		# get all IDs of the new nodes that have been discovered
-		s_src = set([e['src'] for e in new_edges])
-		s_dst = set([e['dst'] for e in new_edges])
+		d_new_edges = {}
+		new_edges = []
+		d_ids = { elt['_id']: elt['_id'] }
 
-		ids = list(s_src | s_dst | set([elt['_id']]))
+		# get all links to / from the required element
+
+		for e in self.graph.find({'src': elt['_id']}):
+			d_new_edges[e['_id']] = e
+			d_ids[e['dst']] = e['dst']
+		for e in self.graph.find({'dst': elt['_id']}):
+			d_new_edges[e['_id']] = e
+			d_ids[e['src']] = e['src']
 		
+
+		# get all IDs of the new nodes that have been discovered
+		ids = [d_ids[i] for i in d_ids]
+
 		# get the new node objects
-		nodes = [node for node in self.elements.find( {'$and' : [{ "_id" : { '$in' : ids }}, query]})]
+		nodes = {}
+		for node in self.elements.find( {'$and' : [{ "_id" : { '$in' : ids }}, query]}):
+			nodes[node['_id']] = node
+		
+		# get incoming links (node weight)
+		destinations = [d_new_edges[e]['dst'] for e in d_new_edges]
+		for n in nodes:
+			nodes[n]['incoming_links'] = destinations.count(nodes[n]['_id'])
 
 		# get nodes IDs
-		nodes_id = [n['_id'] for n in nodes]
-
-		# remove links for which a node was not compliant to query
-		new_edges = [e for e in new_edges if e['src'] in nodes or e['dst'] in nodes_id]
-		
+		nodes_id = [nodes[n]['_id'] for n in nodes]
 		# get links for new nodes, in case we use them
-		to = [e for e in self.graph.find({'src': { '$in': nodes_id }}) if e not in new_edges]
-		fr = [e for e in self.graph.find({'dst': { '$in': nodes_id }}) if e not in new_edges]
-		more_edges = to+fr
-
-		destinations = [e['dst'] for e in new_edges]
-		for n in nodes:
-			n['group'] = 1
-			n['incoming_links'] = destinations.count(n['_id'])
-
-		new_edges.extend(more_edges)
+		for e in self.graph.find({'src': { '$in': nodes_id }}):
+			d_new_edges[e['_id']] = e
+		for e in self.graph.find({'dst': { '$in': nodes_id }}):
+			d_new_edges[e['_id']] = e
 
 		if not include_original:
-			nodes = [n for n in nodes if n['_id'] != elt['_id']]
-			
-		#display 
+			del nodes[elt['_id']]
+		
+		# create arrays
+		new_edges = [d_new_edges[e] for e in d_new_edges]
+		nodes = [nodes[n] for n in nodes]
+
+		# display 
 		for e in nodes:
 			e['fields'] = e.display_fields
+
 		return nodes, new_edges
 
  
