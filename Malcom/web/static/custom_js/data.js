@@ -79,8 +79,10 @@ function display_generic(d) {
 		for (var display in d.fields) {
 			key = d.fields[display][0]
 			label = d.fields[display][1]
-			if (d[key] == undefined) { label = "N/A"}
-			value = d[key]
+			if (d[key] == undefined)
+				value = "N/A"
+			else
+				value = d[key]
 			
 			if (['date_updated', 'date_created', 'last_analysis'].indexOf(key) != -1)
 				value = format_date(new Date(value.$date))
