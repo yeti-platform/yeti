@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
 		while True:
 			Malcom.analytics_engine.process()
-			sleep(60*60*24) # sleep 24h
+			sleep(10) # sleep 10 seconds
 		pass
 
 	else: # run webserver
