@@ -169,15 +169,15 @@ class Analytics:
 			for value in query.getlist(key):
 				
 				if key == '_id': value = ObjectId(value)
-
-				elt = self.data.elements.find_one({key: value})
+				elts = self.data.elements.find({key: value})[:100]
 				
-				nodes, edges = self.data.get_neighbors(elt)
-				
-				for n in nodes:
-					total_nodes[n['_id']] = n
-				for e in edges:
-					total_edges[e['_id']] = e
+				for elt in elts:
+					nodes, edges = self.data.get_neighbors(elt)
+					
+					for n in nodes:
+						total_nodes[n['_id']] = n
+					for e in edges:
+						total_edges[e['_id']] = e
 			
 		total_nodes = [total_nodes[n] for n in total_nodes]	
 		total_edges = [total_edges[e] for e in total_edges]
