@@ -151,12 +151,11 @@ class Model:
 		for e in _new_edges:
 			ids[e['src']] = e['src']
 			ids[e['dst']] = e['dst']
-			#nnew_edges.append(e)
 
 		ids = [i for i in ids]
 
 		new_nodes = self.elements.find({'_id': {'$in': ids}})
-		# do another new_edges with the new id set to get second links
+		
 		return new_nodes, new_edges
 			
 
