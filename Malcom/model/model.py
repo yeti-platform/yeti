@@ -43,6 +43,7 @@ class Model:
 		debug_output("Rebuliding indexes...", 'model')
 		self.elements.ensure_index([('date_created', -1), ('value', 1)])
 		self.elements.ensure_index('value')
+		self.elements.ensure_index('tags')
 		self.graph.ensure_index([('src', 1), ('dst', 1)])
 		self.graph.ensure_index('src')
 		self.graph.ensure_index('dst')
@@ -134,8 +135,32 @@ class Model:
 		for e in elts:
 			self.malware_add(e,e['tags'])
 
+	def get_neighbors_id(self, elts, query={}, include_original=True):
+		
+		ids = [e['_id'] for e in elts]
+		new_edges = self.graph.find({'$or': [
+				{'src': {'$in': ids}}, {'dst': {'$in': ids}}
+			]})
+		_new_edges = self.graph.find({'$or': [
+				{'src': {'$in': ids}}, {'dst': {'$in': ids}}
+			]})
 
-	def get_neighbors(self, elt, query={}, include_original=True):
+
+		ids = {}
+
+		for e in _new_edges:
+			ids[e['src']] = e['src']
+			ids[e['dst']] = e['dst']
+			#nnew_edges.append(e)
+
+		ids = [i for i in ids]
+
+		new_nodes = self.elements.find({'_id': {'$in': ids}})
+		# do another new_edges with the new id set to get second links
+		return new_nodes, new_edges
+			
+
+	def get_neighbors_elt(self, elt, query={}, include_original=True):
 
 		if not elt:
 			return [], []

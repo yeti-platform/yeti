@@ -163,21 +163,24 @@ class Analytics:
 		
 		total_nodes = {}
 		total_edges = {}
+		final_query = []
 
 		for key in query:
 
-			for value in query.getlist(key):
-				
-				if key == '_id': value = ObjectId(value)
-				elts = self.data.elements.find({key: value})[:100]
-				
-				for elt in elts:
-					nodes, edges = self.data.get_neighbors(elt)
-					
-					for n in nodes:
-						total_nodes[n['_id']] = n
-					for e in edges:
-						total_edges[e['_id']] = e
+			if key == '_id': 
+				values = [ObjectId(v) for v in query[key]]
+			else:
+				values = [v for v in query[key]]
+
+			final_query.append({key: {'$in': values}})
+
+		elts = self.data.elements.find({'$and': final_query})
+		
+		nodes, edges = self.data.get_neighbors_id(elts)
+		for n in nodes:
+			total_nodes[n['_id']] = n
+		for e in edges:
+			total_edges[e['_id']] = e
 			
 		total_nodes = [total_nodes[n] for n in total_nodes]	
 		total_edges = [total_edges[e] for e in total_edges]
@@ -192,7 +195,7 @@ class Analytics:
 
 		for key in query:
 
-			for value in query.getlist(key):
+			for value in query[key]:
 				
 				if key == '_id': value = ObjectId(value)
 
@@ -219,21 +222,20 @@ class Analytics:
 		
 		if depth > 0:
 			# get a node's neighbors
-			neighbors_n, neighbors_l = self.data.get_neighbors(elt, include_original=False)
+			neighbors_n, neighbors_l = self.data.get_neighbors_elt(elt, include_original=False)
 			
 			for i, node in enumerate(neighbors_n):
 				# for each node, find evil (recursion)
 				en, el = self.single_graph_find(node, query, depth=depth-1)
 				
 				# if we found evil nodes, add them to the chosen_nodes list
-
 				if len(en) > 0:
 					chosen_nodes += [n for n in en if n not in chosen_nodes] + [node]
 					chosen_links += [l for l in el if l not in chosen_links] + [neighbors_l[i]]
 		else:
 			
 			# if recursion ends, then search for evil neighbors
-			neighbors_n, neighbors_l = self.data.get_neighbors(elt, {query['key']: {'$in': [query['value']]}}, include_original=False)
+			neighbors_n, neighbors_l = self.data.get_neighbors_elt(elt, {query['key']: {'$in': [query['value']]}}, include_original=False)
 			
 			# return evil neighbors if found
 			if len(neighbors_n) > 0:

@@ -133,14 +133,20 @@ def nodes(field, value):
 @app.route('/neighbors')
 def neighbors():
 	a = g.a
-	data = a.find_neighbors(request.args)
+	query = {}
+	for key in request.args:
+		query[key] = request.args.getlist(key)
+
+	data = a.find_neighbors(query)
 	return make_response(dumps(data), 200, {'Content-Type': 'application/json'})
 
 @app.route('/evil')
 def evil():
 	a = g.a
-
-	data = a.multi_graph_find(request.args, {'key':'tags', 'value': 'evil'})
+	query = {}
+	for key in request.args:
+		query[key] = request.args.getlist(key)
+	data = a.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
 
 	return (dumps(data), 200, {'Content-Type': 'application/json'})
 
