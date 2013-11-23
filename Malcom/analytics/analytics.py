@@ -185,6 +185,10 @@ class Analytics:
 		total_nodes = [total_nodes[n] for n in total_nodes]	
 		total_edges = [total_edges[e] for e in total_edges]
 
+		# display 
+		for e in total_nodes:
+			e['fields'] = e.display_fields
+
 		data = {'nodes':total_nodes, 'edges': total_edges }
 
 		return data
