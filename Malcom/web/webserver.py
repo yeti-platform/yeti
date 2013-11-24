@@ -137,7 +137,7 @@ def neighbors():
 	for key in request.args:
 		query[key] = request.args.getlist(key)
 
-	data = a.find_neighbors(query)
+	data = a.find_neighbors(query, include_original=True)
 	return make_response(dumps(data), 200, {'Content-Type': 'application/json'})
 
 @app.route('/evil')

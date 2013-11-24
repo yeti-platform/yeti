@@ -159,7 +159,7 @@ class Analytics:
 			done += len(results)
 			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
-	def find_neighbors(self, query):
+	def find_neighbors(self, query, include_original=True):
 		
 		total_nodes = {}
 		total_edges = {}
@@ -176,7 +176,7 @@ class Analytics:
 
 		elts = self.data.elements.find({'$and': final_query})
 		
-		nodes, edges = self.data.get_neighbors_id(elts)
+		nodes, edges = self.data.get_neighbors_id(elts, include_original=include_original)
 		for n in nodes:
 			total_nodes[n['_id']] = n
 		for e in edges:

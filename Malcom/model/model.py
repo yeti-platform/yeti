@@ -136,13 +136,14 @@ class Model:
 			self.malware_add(e,e['tags'])
 
 	def get_neighbors_id(self, elts, query={}, include_original=True):
-		
-		ids = [e['_id'] for e in elts]
+
+		original_ids = [e['_id'] for e in elts]
+
 		new_edges = self.graph.find({'$or': [
-				{'src': {'$in': ids}}, {'dst': {'$in': ids}}
+				{'src': {'$in': original_ids}}, {'dst': {'$in': original_ids}}
 			]})
 		_new_edges = self.graph.find({'$or': [
-				{'src': {'$in': ids}}, {'dst': {'$in': ids}}
+				{'src': {'$in': original_ids}}, {'dst': {'$in': original_ids}}
 			]})
 
 
@@ -154,7 +155,15 @@ class Model:
 
 		ids = [i for i in ids]
 
-		new_nodes = self.elements.find({'_id': {'$in': ids}})
+		if include_original:
+			q = {'$and': [{'_id': {'$in': ids}}, query]}
+			original = {'$or': [q, {'_id': {'$in': original_ids}}]}
+			new_nodes = self.elements.find(original)
+		else:
+			new_nodes = self.elements.find({'$and': [{'_id': {'$in': ids}}, query]})
+
+		new_nodes = [n for n in new_nodes]
+		new_edges = [e for e in new_edges]
 		
 		return new_nodes, new_edges
 			
@@ -199,8 +208,8 @@ class Model:
 		for e in self.graph.find({'dst': { '$in': nodes_id }}):
 			d_new_edges[e['_id']] = e
 
-		if not include_original:
-			del nodes[elt['_id']]
+		# if not include_original:
+		# 	del nodes[elt['_id']]
 		
 		# create arrays
 		new_edges = [d_new_edges[e] for e in d_new_edges]
