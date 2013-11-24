@@ -227,7 +227,7 @@ def dataset():
 
 
 @app.route('/dataset/list/') # ajax method for sarching dataset and populating dataset table
-def list():
+def list_data():
 	a = g.a
 	query = {}
 	try:
@@ -464,8 +464,35 @@ def send_raw_payload(session_name, flowid):
 
 	return response
 
+# Public API ================================================
 
-# APIs =========================================
+@app.route('/public/api')
+def query_public_api():
+	query = {}
+	for key in request.args:
+		query[key] = request.args.getlist(key)
+
+	apikey = request.headers.get('X-Malcom-API-key', False)
+
+	#if not "X-Malcom-API-key":
+	#	return dumps({})
+
+	available_tags = g.a.data.get_tags_for_key(apikey)
+
+	tag_filter = {'tags': {'$in': available_tags}}
+	query = {'$and': [query, tag_filter]}
+
+	db_data = g.a.data.find(query)
+	data = []
+	for d in db_data:
+		d['tags'] = list(set(available_tags) & set(d['tags']))
+		data.append(d)
+
+	return (dumps(data), 200, {'Content-Type': 'application/json'})
+
+
+
+# APIs (websockets) =========================================
 
 
 @app.route('/api/analytics')
@@ -488,7 +515,7 @@ def analytics_api():
 			cmd = message['cmd']
 
 			if cmd == 'analyticsstatus':
-				g.a.notify_progress()
+				g.a.notify_progress('Loaded')
 
 
 			

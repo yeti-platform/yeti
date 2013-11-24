@@ -31,6 +31,7 @@ class Model:
 		self.elements = self._db.elements
 		self.graph = self._db.graph
 		self.history = self._db.history
+		self.public_api = self._db.public_api
 
 		self.gi = pygeoip.GeoIP('Malcom/auxiliary/geoIP/GeoLiteCity.dat')
 		self.db_lock = threading.Lock()
@@ -221,4 +222,21 @@ class Model:
 
 		return nodes, new_edges
 
- 
+	#Public API operations
+
+	def add_tag_to_key(self, apikey, tag):
+		k = self.public_api.find_one({'api-key': apikey})
+		if not k:
+			k = self.public_api.save({'api-key': apikey, 'available-tags': [tag]})
+		else:
+			if tag not in k['available-tags']:
+				k['available-tags'].append(tag)
+				self.public_api.save(k)
+
+	def get_tags_for_key(self, apikey):
+		tags = self.public_api.find_one({'api-key': apikey})
+		if not tags:
+			return []
+		else:
+			return tags.get('available-tags', [])
+
