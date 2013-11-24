@@ -81,16 +81,17 @@ function display_generic(d) {
 			label = d.fields[display][1]
 			if (d[key] == undefined)
 				value = "N/A"
-			else
+			else {
 				value = d[key]
-			
-			if (['date_updated', 'date_created', 'last_analysis'].indexOf(key) != -1)
-				value = format_date(new Date(value.$date))
-			if (key == 'tags')
-				if (d.tags.length == 0) 
-					value = '-'
-				else
-					value = d.tags.join(', ')
+				
+				if (['date_updated', 'date_created', 'last_analysis'].indexOf(key) != -1)
+					value = format_date(new Date(value.$date))
+				if (key == 'tags')
+					if (d.tags.length == 0) 
+						value = '-'
+					else
+						value = d.tags.join(', ')
+			}
 
 			$("#node_info").append("<tr><th>"+label+"</th><td>"+value+"</td></tr>");	
 		}
