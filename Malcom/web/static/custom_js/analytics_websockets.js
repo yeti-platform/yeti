@@ -22,18 +22,18 @@ function analyticsInterfaceInit() {
         if (data.msg.active == true) { // deal with active status
 
             if (data.msg.status == true) {
-                $("#analytics-status-nav p").text("Analytics: "+data.msg.status+"...")
+                $("#analytics-status-nav p").text("Analytics: "+data.msg.msg+"...")
                 $("#analytics-status-nav p").css('color','white')
             }
 
-            if (data.msg.progress) {
-                $("#analytics-status-nav p").text("Analytics: "+data.msg.status+"... ("+data.msg.progress+")")
+            if (data.msg.msg) {
+                $("#analytics-status-nav p").text("Analytics: "+data.msg.msg+"... ("+data.msg.progress+")")
                 $("#analytics-status-nav p").css('color','white')   
             }
         }
 
         else { // inactive status
-            $("#analytics-status-nav p").text("Analytics: " +data.msg.status)
+            $("#analytics-status-nav p").text("Analytics: " +data.msg.msg)
             $("#analytics-status-nav p").css('color','')
         }
 

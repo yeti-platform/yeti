@@ -35,7 +35,7 @@ class Worker(threading.Thread):
 
 		self.engine.progress += 1
 		self.engine.websocket_lock.acquire()
-		self.engine.notify_progress()
+		self.engine.notify_progress(self.elt['value'])
 		self.engine.websocket_lock.release()
 		self.engine.max_threads.release()
 
@@ -53,7 +53,8 @@ class Analytics:
 		self.progress = 0
 		self.total = 0
 
-		self.max_threads = threading.Semaphore(4)
+		self.max_threads = threading.Semaphore(max_threads)
+		self.worker_threads = {}
 
 	def add_text(self, text, tags=[]):
 		added = []
@@ -268,13 +269,11 @@ class Analytics:
 		debug_output("Finished analyzing.")
 		self.notify_progress("Finished analyzing.")
 
-	def notify_progress(self, status=None):
-		if status:
-			self.status = status
-		status = {'active': self.active, 'status': self.status}
-		if self.progress != self.total:
-			status['progress'] = '%s/%s' % (self.progress, self.total)
-	
+
+	def notify_progress(self, msg=None):
+
+		status = {'active': self.active, 'msg': msg}
+		status['progress'] = '%s' % (self.progress)
 		send_msg(self.websocket, status, type='analyticsstatus')
 
 	def process_thread(self):
@@ -289,9 +288,10 @@ class Analytics:
 
 		results = self.data.elements.find(query)
 		total = self.data.elements.find(query).count()
+		
 		i = 0
 		while total > 0:
-			
+
 			for r in results:
 				if i % 10000 == 0:
 					debug_output("Progress: %s/%s" % (i, total), 'analytics')
@@ -307,12 +307,19 @@ class Analytics:
 					r = self.save_element(r)
 				
 					# start thread
-					Worker(r, self).start()
+					w = Worker(r, self)
+					self.worker_threads[r['value']] = w
+					w.start()
 					i+=1
 			
-			time.sleep(10)
+			for t in self.worker_threads:
+				self.worker_threads[t].join()
+
+			self.worker_threads = {}
+
 			results = self.data.elements.find(query)
 			total = self.data.elements.find(query).count()
+			
 
 
 
