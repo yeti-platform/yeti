@@ -26,6 +26,7 @@ class Feed(object):
 		self.elements_fetched = 0
 		self.status = "OK"
 		self.analytics = None
+		self.enabled = False
 
 	def update(self):
 		"""
