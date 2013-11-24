@@ -19,6 +19,18 @@ var radiusScale,
 	node, 
 	link
 
+// rescale g
+function rescale() {
+	if (!shiftKey) {
+	  trans=d3.event.translate;
+	  scale=d3.event.scale;
+	  svg.attr("transform",
+	      "translate(" + trans + ")" +
+	      " scale(" + scale + ")");
+	}
+}
+
+
 function initialize_graph() {
 		 radiusScale = 
 		      d3.scale.log()
@@ -47,9 +59,16 @@ function initialize_graph() {
 		    .size([width, height])
 		    .on("tick", tick);
 
-		 svg = d3.select(".graph").append("svg")
+		 zoom_scale = d3.select(".graph").append("svg")
 		    .attr("width", width)
-		    .attr("height", height);
+		    .attr("height", height)
+		    .attr("pointer-events", "all")
+		 
+		 svg = zoom_scale.append('g') // this will catch our events
+				 // .call(d3.behavior.zoom().on("zoom", rescale))
+			  //    .on("dblclick.zoom", null)
+			     .attr('id', 'zoom')
+			     .append('g') // this will contain the graph
 
 		  d3.select('body')
 		    .attr("tabindex", 1)
