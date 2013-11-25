@@ -30,11 +30,11 @@
         <script type="text/javascript">
           $("#slider").slider({
             range: 'max',
-            min: 10,
-            max: 300,
-            value: 70,
+            min: 50,
+            max: 1000,
+            value: 110,
             slide: function (event, ui) {
-              force.linkDistance(ui.value);
+              force.charge(-ui.value);
               start();
             }
           });
