@@ -21,8 +21,11 @@ Graph for the host tomchop.me.
 
 * Install
 * Elevate your privileges to root (yeah, I know, see [disclaimer](/README.md#Disclaimer))
-* Start the webserver with `python malcom.py` (or see options with `python malcom --help`)
+* Start the webserver with `./malcom.py` (or see options with `./malcom.py --help`)
 ** Default port is 8080
+* To have a dedicated process for analytics, run `./malcom.py --analytics`
+* To have a process dedicated to feeding, run `./malcom.py --feeds`
+** Alternatively, run the feeds from `celery`. See the [feeds](/README.md#Feeds) section for details on how to to this. 
 
 ## Installation
 
@@ -58,7 +61,7 @@ The following was tested on Ubuntu server 12.04 LTS:
 
 * still from your virtualenv, install necessary python packages
 
-        pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces lxml zlib1g-dev twisted
+        pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces lxml zlib1g-dev twisted pyopenssl
 
 Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
 
