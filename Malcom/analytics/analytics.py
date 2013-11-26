@@ -25,6 +25,7 @@ class Worker(threading.Thread):
 		tags = self.elt['tags']
 
 		new = self.elt.analytics()
+		
 		for n in new:
 			saved = self.engine.save_element(n[1])
 			#do the link
@@ -43,7 +44,7 @@ class Analytics:
 
 	def __init__(self, max_threads=4):
 		self.data = Model()
-		#self.max_threads = threading.Semaphore(app.config['THREADS'])
+		self.max_threads = threading.Semaphore(app.config['THREADS'])
 		self.active = False
 		self.status = "Inactive"
 		self.websocket = None
@@ -53,7 +54,7 @@ class Analytics:
 		self.progress = 0
 		self.total = 0
 
-		self.max_threads = threading.Semaphore(max_threads)
+		self.max_threads = threading.Semaphore(self.max_threads)
 		self.worker_threads = {}
 
 	def add_text(self, text, tags=[]):
@@ -280,31 +281,19 @@ class Analytics:
 		
 		self.active = True
 
-		query = { '$or': [
-						{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=1)} },
-						{ 'last_analysis': None },
-					 ]
-				}
-
-		results = self.data.elements.find(query)
+		query = {'next_analysis' : {'$lt': datetime.datetime.utcnow() }}
 		total = self.data.elements.find(query).count()
+		results = self.data.elements.find(query)
+		
 		
 		i = 0
 		while total > 0:
 
+
 			for r in results:
-				if i % 10000 == 0:
-					debug_output("Progress: %s/%s" % (i, total), 'analytics')
+				debug_output("Progress: %s/%s" % (i, total), 'analytics')
 				self.max_threads.acquire()
 				with self.stack_lock:
-					
-					# check that last analysis is older than 24h 
-					if r.get('last_analysis', None): 
-						assert (datetime.datetime.utcnow() - r['last_analysis'] >= datetime.timedelta(days=1))
-					
-					# change analytics date here so this element doesn't get included in the next loop
-					r['last_analysis'] = datetime.datetime.now()
-					r = self.save_element(r)
 				
 					# start thread
 					w = Worker(r, self)
@@ -316,9 +305,11 @@ class Analytics:
 				self.worker_threads[t].join()
 
 			self.worker_threads = {}
-
-			results = self.data.elements.find(query)
+			
+			query = {'next_analysis' : {'$lt': datetime.datetime.utcnow() }}
 			total = self.data.elements.find(query).count()
+			results = self.data.elements.find(query)
+			
 			
 
 

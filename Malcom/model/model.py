@@ -71,12 +71,10 @@ class Model:
 
 	
 	def save(self, element, with_status=False):
-		
-		self.db_lock.acquire()
-		#elt = self.exists(element)
 	
-		tags = element['tags']
-		del element['tags'] # so tags in the db do not get overwritten
+		tags = element.get('tags', False)
+		if tags:
+			del element['tags'] # so tags in the db do not get overwritten
 
 		if '_id' in element:
 			del element['_id']
@@ -92,13 +90,12 @@ class Model:
 		else:
 			debug_output("(added %s %s)" % (saved.type, saved.value), type='model')
 			saved['date_created'] = datetime.datetime.utcnow()
+			saved['next_analysis'] = datetime.datetime.utcnow()
 
 		saved['date_updated'] = datetime.datetime.utcnow()
 
 		self.elements.save(saved)
 		assert saved['date_created'] != None and saved['date_updated'] != None
-
-		self.db_lock.release()
 
 		if not with_status:
 			return saved

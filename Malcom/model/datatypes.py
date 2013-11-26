@@ -14,6 +14,9 @@ class Element(dict):
 		self['tags'] = []
 		self['value'] = None
 		self['type'] = None
+		self['refresh_period'] = None
+		# all elements have to be analysed at least once
+
 		
 	def to_dict(self):
 		return self.__dict__
@@ -55,6 +58,8 @@ class File(Element):
 		# md5
 		self['md5'] = ""
 		self['file_type'] = "None"
+		# analysis does not change with time
+		self['next_analysis'] = None
 		return []
 
 
@@ -76,10 +81,10 @@ class Evil(Element):
 
 	def analytics(self):
 		self['last_analysis'] = datetime.datetime.utcnow()
+		
+		# analysis does not change with time
+		self['next_analysis'] = None
 		return []
-
-	
-
 
 
 class As(Element):
@@ -108,6 +113,8 @@ class As(Element):
 	def analytics(self):
 		self['last_analysis'] = datetime.datetime.utcnow()
 
+		# analysis does not change with time
+		self['next_analysis'] = None
 		return []
 
 
@@ -165,8 +172,11 @@ class Url(Element):
 			return
 
 		self['last_analysis'] = datetime.datetime.utcnow()
-		
-		
+
+		# this information is constant and does not change through time
+		# we'll have to change this when we check for URL availability
+		self['next_analysis'] = None
+
 		return new
 
 
@@ -209,6 +219,8 @@ class Ip(Element):
 		self['value'] = ip
 		self['tags'] = tags
 		self['type'] = 'ip'
+		# refresh IP geolocation every 72hours
+		self['refresh_period'] = 3*24*3600
 			
 
 	@staticmethod
@@ -221,7 +233,6 @@ class Ip(Element):
 
 	def analytics(self):
 		debug_output( "(ip analytics for %s)" % self['value'])
-
 
 		# get geolocation info
 		try:
@@ -243,6 +254,7 @@ class Ip(Element):
 			new.append(('reverse', Hostname(hostname)))
 
 		self['last_analysis'] = datetime.datetime.utcnow()
+		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
 
 		return new
 
@@ -267,6 +279,9 @@ class Hostname(Element):
 			if self['value'][-1:] == ".":
 				self['value'] = self['value'][:-1]
 			self['type'] = 'hostname'
+
+			# refresh domains every 6 hours
+			self['refresh_period'] = 6*3600
 		else:
 			return None
 
@@ -314,6 +329,7 @@ class Hostname(Element):
 				new.append(('domain', Hostname(domain)))
 
 		self['last_analysis'] = datetime.datetime.utcnow()
+		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
 
 		return new
 

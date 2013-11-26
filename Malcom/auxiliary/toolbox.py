@@ -203,7 +203,7 @@ def dns_dig_records(hostname):
     except CalledProcessError, e:
         _dig = e.output
 
-    results = [r.groupdict() for r in re.finditer(re.escape(hostname)+'\..+\s+(?P<record_type>\S+)\s+(?P<record>\S+)\n',_dig)]
+    results = [r.groupdict() for r in re.finditer(re.escape(hostname)+'\..+\s+(?P<record_type>[A-Za-z]+)[\s]+([0-9]+ )?(?P<record>\S+)\n',_dig)]
     records = {}
     for r in results:
         if r['record_type'] in records:
