@@ -6,8 +6,8 @@ from bson.objectid import ObjectId
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
-
-
+import Malcom.shmem.SharedData as SharedData
+import Malcom
 
 class Worker(threading.Thread):
 
@@ -44,7 +44,7 @@ class Analytics:
 
 	def __init__(self, max_threads=4):
 		self.data = Model()
-		self.max_threads = threading.Semaphore(app.config['THREADS'])
+		self.max_threads = threading.Semaphore(Malcom.config['MAX_THREADS'])
 		self.active = False
 		self.status = "Inactive"
 		self.websocket = None

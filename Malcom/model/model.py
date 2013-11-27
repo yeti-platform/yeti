@@ -72,9 +72,10 @@ class Model:
 	
 	def save(self, element, with_status=False):
 	
-		tags = element.get('tags', False)
-		if tags:
-			del element['tags'] # so tags in the db do not get overwritten
+		tags = []
+		if 'tags' in element:
+			tags = element['tags']
+			del element['tags'] 	# so tags in the db do not get overwritten
 
 		if '_id' in element:
 			del element['_id']
