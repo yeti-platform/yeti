@@ -6,7 +6,6 @@ from bson.objectid import ObjectId
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
-import Malcom.shmem.SharedData as SharedData
 import Malcom
 
 class Worker(threading.Thread):
