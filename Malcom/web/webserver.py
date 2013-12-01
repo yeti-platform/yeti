@@ -201,11 +201,12 @@ def report(field, value, strict=False):
 		
 		if all_nodes_dict.get(e['dst'], False): # if edge points towards one of base_elts
 			dst = all_nodes_dict[e['dst']]
+			src = all_nodes_dict[e['src']]
 			if e['attribs'] not in linked_elements: # if we don't have a record for this link, create an empty array
 				linked_elements[e['attribs']] = []
 			if dst not in linked_elements[e['attribs']]: # avoid duplicates
 				print "%s -> %s" % (e['attribs'], dst['value'])
-				linked_elements[e['attribs']].append(dst)
+				linked_elements[e['attribs']].append((src, dst))
 	
 	related_elements = {}
 
@@ -218,7 +219,7 @@ def report(field, value, strict=False):
 
 	#display fields
 	base_elts[0]['fields'] = base_elts[0].display_fields
-
+	print linked_elements
 	return render_template("report.html", field=field, value=value, base_elts=base_elts, linked=linked_elements, related_elements=related_elements)
 
 @app.route('/dataset/')

@@ -112,17 +112,17 @@
 							<div class="accordion-heading">
 							
 								<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionRelated" href="#collapse{{r}}{{loop.index0}}">
-								{{r}} - {{n.value}}
+								{{r}} - {{n[1].value}} ({{n[0].value}})
 								</a>
 							</div>
 							<div id="collapse{{r}}{{loop.index0}}" class="accordion-body collapse">
 								<div class="accordion-inner">
 									<table class='table table-condensed'>
-									{% for label in n.display_fields %}
+									{% for label in n[1].display_fields %}
 										{% if label[0] == 'tags' %}
-											<tr><th>{{label[1]}}</th><td>{{", ".join(n.tags)}}</td></tr>
+											<tr><th>{{label[1]}}</th><td>{{", ".join(n[1].tags)}}</td></tr>
 										{%else%}
-											<tr><th>{{label[1]}}</th><td>{{ n[label[0]]}}</td></tr>
+											<tr><th>{{label[1]}}</th><td>{{ n[1][label[0]]}}</td></tr>
 										{%endif%}
 									{% endfor %}
 									</table>
