@@ -43,7 +43,7 @@ class Analytics:
 
 	def __init__(self):
 		self.data = Model()
-		self.max_threads = Malcom.config['MAX_THREADS']
+		self.max_threads = Malcom.config.get('MAX_THREADS', 4)
 		self.active = False
 		self.status = "Inactive"
 		self.websocket = None
