@@ -179,7 +179,7 @@ def report(field, value, strict=False):
 	all_edges_dict = {}
 
 	for elt in base_elts:
-		nodes, edges = g.a.data.get_neighbors(elt)
+		nodes, edges = g.a.data.get_neighbors_elt(elt)
 		for n in nodes:
 			all_nodes_dict[n['_id']] = n
 		for e in edges:
@@ -204,7 +204,7 @@ def report(field, value, strict=False):
 			if e['attribs'] not in linked_elements: # if we don't have a record for this link, create an empty array
 				linked_elements[e['attribs']] = []
 			if dst not in linked_elements[e['attribs']]: # avoid duplicates
-				print "%s -> %s -> %s" % (dst['value'], e['attribs'], dst['value'])
+				print "%s -> %s" % (e['attribs'], dst['value'])
 				linked_elements[e['attribs']].append(dst)
 	
 	related_elements = {}

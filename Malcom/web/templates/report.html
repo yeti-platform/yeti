@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block main %}
+<div class='span9'>
+	<h1>Details for {{field}}:{{value}} ({{base_elts|length}}) </h1>
+
+	<!-- <ul id='datasetTabs' class='nav nav-tabs'>
+		<li class='active'><a href='#all' data-toggle='tab'>All</a></li>
+	</ul> -->
+
+	<!-- <div id='datasetTabsContent' class='tab-content'>
+		<div class='tab-pane active' id='all'> -->
+			{% if base_elts|length == 1 %}
+			<table class='table table-condensed'>
+				{% for label in base_elts[0].display_fields %}
+					{% if label[0] == 'tags' %}
+						<tr><th>{{label[1]}}</th><td>{{", ".join(base_elts[0].tags)}}</td></tr>
+					{%else%}
+						<tr><th>{{label[1]}}</th><td>{{ base_elts[0].get(label[0], "N/A") }}</td></tr>
+					{%endif%}
+				{% endfor %}
+			</table>
+			{% else %}
+			<div class="accordion" id="accordionResults">
+					<div class="accordion-group">
+					
+						<div class="accordion-heading">
+						
+							<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionResults" href="#collapseResults">
+							{{ base_elts|length }} matching elements
+							</a>
+						</div>
+						<div id="collapseResults" class="accordion-body collapse">
+							<div class="accordion-inner">
+								<table class='table table-condensed'>
+								{% for h in base_elts[0].fields %}
+									<th>{{h[1]}}</th>
+								{% endfor %}
+								{% for e in base_elts %}
+									<tr>
+										{% for f in base_elts[0].fields %}
+											{% if f[0] == 'tags' %}
+												<td>{{", ".join(e[f[0]])}}</td>
+											{% else %}
+												<td>{{e[f[0]]}}</td>
+											{% endif %}
+										{% endfor %}
+									</tr>
+								{% endfor %}
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			{% endif %}
+
+			<h3>Related elements</h3>
+			
+			<ul id='relatedTabs' class='nav nav-tabs'>
+				{% for r in related_elements %}
+				<li {% if loop.index0 == 0%}class='active'{%endif%}><a href='#{{r}}' data-toggle='tab'>{{r}}</a></li>
+				{% endfor %}
+			</ul>
+
+			<div id='relatedTabsContent' class='tab-content'>
+				{% for r in related_elements %}
+				<div class='tab-pane {% if loop.index0 == 0%}active{%endif%}' id='{{r}}'>
+					<div class="accordion" id="accordionRelated">
+						<div class="accordion-group">
+						{% for n in related_elements[r]%}
+							<div class="accordion-heading">
+							
+								<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionRelated" href="#collapse{{r}}{{loop.index0}}">
+								{{r}} - {{n.value}}
+								</a>
+							</div>
+							<div id="collapse{{r}}{{loop.index0}}" class="accordion-body collapse">
+								<div class="accordion-inner">
+									<table class='table table-condensed'>
+									{% for label in n.display_fields %}
+										{% if label[0] == 'tags' %}
+											<tr><th>{{label[1]}}</th><td>{{", ".join(n.tags)}}</td></tr>
+										{%else%}
+											<tr><th>{{label[1]}}</th><td>{{ n[label[0]]}}</td></tr>
+										{%endif%}
+									{% endfor %}
+									</table>
+								</div>
+							</div>
+						{% endfor %}
+						</div>
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+
+
+
+			<h3>Links</h3>
+
+			<ul id='linkedTabs' class='nav nav-tabs'>
+				{% for r in linked %}
+				<li {% if loop.index0 == 0%}class='active'{%endif%}><a href='#{{r}}' data-toggle='tab'>{{r}}</a></li>
+				{% endfor %}
+			</ul>
+
+			<div id='linkedTabsContent' class='tab-content'>
+				{% for r in linked %}
+				<div class='tab-pane {% if loop.index0 == 0%}active{%endif%}' id='{{r}}'>
+					<div class="accordion" id="accordionRelated">
+						<div class="accordion-group">
+						{% for n in linked[r]%}
+							<div class="accordion-heading">
+							
+								<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionRelated" href="#collapse{{r}}{{loop.index0}}">
+								{{r}} - {{n.value}}
+								</a>
+							</div>
+							<div id="collapse{{r}}{{loop.index0}}" class="accordion-body collapse">
+								<div class="accordion-inner">
+									<table class='table table-condensed'>
+									{% for label in n.display_fields %}
+										{% if label[0] == 'tags' %}
+											<tr><th>{{label[1]}}</th><td>{{", ".join(n.tags)}}</td></tr>
+										{%else%}
+											<tr><th>{{label[1]}}</th><td>{{ n[label[0]]}}</td></tr>
+										{%endif%}
+									{% endfor %}
+									</table>
+								</div>
+							</div>
+						{% endfor %}
+						</div>
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+
+
+
+
+
+
+<!-- 		</div>
+	</div> -->
+
+</div>
+
+
+
+{% endblock %}
+{%block sidebar %}
+<div class='span3 toolbar'>
+	{% include "flash.html" %}
+
+	<ul id='datasetSideTabs' class='nav nav-tabs'>
+		<li class='active'><a href='#search' data-toggle='tab'>Search</a></li>
+		{% if not g.config['PUBLIC'] %}
+		<li><a href='#add' data-toggle='tab'>Alter dataset</a></li>
+		{% endif %}
+	</ul>
+
+	<div id='datasetSideTabsContent' class='tab-content'>
+		<div class='tab-pane active' id='search'>
+			<div class="input-append pull-left" >
+			      <input id="query" placeholder='tags=malware' type="text">
+			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list_data') }}')">Go</button>
+			      <label class="checkbox">
+				      <input id='fuzzy' type="checkbox"> Fuzzy search (slower)
+				    </label>
+		  	</div>
+		  <br style='clear:both' />
+		<a href='#' onclick="javascript:get_dataset_csv($('#query').val(), '{{url_for('dataset_csv')}}')">Export filter results as csv</a>
+		<br /><br /><br />
+		<table id='stats' class='table table-condensed'>
+			<tr> <th>Total results</th> <td id='total-results'></td></tr>
+		</table>
+		<div class="pagination">
+		  <ul>
+		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Prev</a></li>
+		    <li><a id='pagination-page' href="javascript:void(0)"></a></li>
+		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Next</a></li>
+		  </ul>
+		  <br />
+		  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
+		</div>
+		</div>
+		<script>
+			$("#query").keyup(function (event) {
+				if (!$('#fuzzy').prop('checked') || event.which == 13) {
+					get_dataset($('#query').val(), '{{ url_for('list_data') }}')
+				}
+			});
+			$(get_dataset("",'{{url_for('list_data')}}'))
+		</script>
+		
+
+		{% if not g.config['PUBLIC'] %}
+		<div class='tab-pane' id='add'>
+			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>
+			
+			    <label for='element'>Element</label>
+			    <input type="text" placeholder="" name='element' id='element'>
+			    <span class="help-block">i.e. http://google.com; tomchop.me; 127.0.0.1</span>
+			    <span class="help-block">Or choose file to upload (1 element / line)</span>
+			    <input type="file" placeholder="" name='element-list'>
+			  
+			  	<label for='tags'>Tags</label>
+			    <input id='tags' type="text" name="tags" placeholder="">
+			    <label class="checkbox">
+			      <input type="checkbox" name='analyse'> Analyse after import
+			    </label>
+			  </fieldset>
+			</form>
+			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
+			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
+		</div>
+
+		{% endif %}
+
+
+
+	</div>
+</div>
+{% endblock%}
