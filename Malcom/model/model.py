@@ -63,7 +63,7 @@ class Model:
 	def clear_db(self):
 		for c in self._db.collection_names():
 			if c != "system.indexes":
-				self._db[c].remove()
+				self._db[c].drop()
 	
 	def list_db(self):
 		for e in self.elements.find():
