@@ -13,21 +13,22 @@ class Decoder(object):
 	def decode_flow(flow):
 		data = None
 
-		if flow.src_port == 80: # probable HTTP response
-			data = Decoder.HTTP_response(flow.payload)
-		if flow.dst_port == 80: # probable HTTP request
-			data = Decoder.HTTP_request(flow.payload)
+		#if flow.src_port == 80: # probable HTTP response
+		data = Decoder.HTTP_response(flow.payload)
+		if data: return data
+		#if flow.dst_port == 80: # probable HTTP request
+		data = Decoder.HTTP_request(flow.payload)
+		if data: return data
 		
 		if flow.tls:
-			if flow.dst_port == 443: # probabl HTTPs request
-				data = Decoder.HTTP_request(flow.cleartext_payload, secure=True)
-			if flow.src_port == 443: # probabl HTTPs request
-				data = Decoder.HTTP_response(flow.cleartext_payload)
+			#if flow.dst_port == 443: # probabl HTTPs request
+			data = Decoder.HTTP_request(flow.cleartext_payload, secure=True)
+			if data: return data
+			#if flow.src_port == 443: # probabl HTTPs request
+			data = Decoder.HTTP_response(flow.cleartext_payload)
+			if data: return data
 
-		if data:
-			return data
-		else:
-			return False
+		return False
 
 	@staticmethod
 	def HTTP_request(payload, secure=False):
