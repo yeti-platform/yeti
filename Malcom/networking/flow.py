@@ -162,6 +162,10 @@ class Flow(object):
 		self.packet_count += 1
 		if self.protocol == 'TCP' and not self.tls:
 			self.reconstruct_flow(pkt)
+		elif self.protocol == 'UDP':
+			self.packets += pkt
+			self.payload += str(pkt[UDP].payload)
+			self.data_transfered += len(self.payload)
 		else:
 			self.packets += pkt
 
