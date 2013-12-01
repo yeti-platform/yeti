@@ -41,9 +41,9 @@ class Worker(threading.Thread):
 
 class Analytics:
 
-	def __init__(self, max_threads=4):
+	def __init__(self):
 		self.data = Model()
-		self.max_threads = threading.Semaphore(Malcom.config['MAX_THREADS'])
+		self.max_threads = Malcom.config['MAX_THREADS']
 		self.active = False
 		self.status = "Inactive"
 		self.websocket = None
