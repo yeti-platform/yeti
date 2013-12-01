@@ -26,14 +26,15 @@
 			<td>{{ feeds[name].next_run.strftime("%Y-%m-%d %H:%M:%S") if feeds[name].next_run else "N/A"}}</td>
 			<td>{{ feeds[name].elements_fetched }}</td>
 			<td class='error-cause'>{{ feeds[name].status }}</td>
+			<td>
 			{% if feeds[name].enabled and not g.config['PUBLIC']%}
-				<td><a href='{{ url_for("run_feed", feed_name=name)}}'><i class='icon-refresh'></i></a></td>
+				<a href='{{ url_for("run_feed", feed_name=name)}}'><i class='icon-refresh'></i></a>
 			{% endif %}
+			</td>
 		</tr>
 
 		{% endfor %}
 	</table>	
-	<!-- {{feeds['ZeusTrackerBinaries'].__dict__}} -->
 </div>
 
 
