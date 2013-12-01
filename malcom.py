@@ -98,7 +98,10 @@ if __name__ == "__main__":
 
 	else: # run webserver
 		web = MalcomWeb(Malcom.config['PUBLIC'], Malcom.config['LISTEN_PORT'], Malcom.config['LISTEN_INTERFACE'])
-		if Malcom.tls_proxy:
+		try:
 			Malcom.tls_proxy.stop()
+		except Exception, e:
+			pass
+			
 
 		exit(0)
