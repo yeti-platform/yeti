@@ -12,6 +12,8 @@ from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 import Malcom
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
+[1, 2, 5, 15]
+rr_codes = {"1": "A", "2": "NS", "5": "CNAME", "15": "MX"}
 
 NOTROOT = "nobody"
 
@@ -83,6 +85,7 @@ class Sniffer():
 		if self.pcap:
 			self.load_pcap()
 		elif not self.public:
+			print self.filter
 			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
 		
 		debug_output("[+] Sniffing session %s stopped" % self.name)
@@ -186,7 +189,8 @@ class Sniffer():
 
 		# temporary "connection". IPs are only connceted because hey are communicating with each other
 		oid = "$oid"
-		conn = {'attribs': '%s > %s' %(source['port'], dest['port']), 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
+		#conn = {'attribs': '%s > %s' %(source['port'], dest['port']), 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
+		conn = {'attribs': 'dport:%s' % dest['port'], 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
 		
 		if conn not in self.edges:
 			self.edges.append(conn)
@@ -217,74 +221,90 @@ class Sniffer():
 			else:
 				_question = [e for e in self.nodes if e['value'] == question][0]
 
-			debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
+			#debug_output("[+] DNS reply caught (%s answers)" % pkt[DNS].ancount)
 			
-			for i in xrange(pkt[DNS].ancount): # cycle through responses and add records to graph
 
-				if pkt[DNS].an[i].type != 1:
-					debug_output('No A records in reply')
-					continue
+			response_types = [pkt[DNS].an, pkt[DNS].ns, pkt[DNS].ar]
+			response_counts = [pkt[DNS].ancount, pkt[DNS].nscount, pkt[DNS].arcount]
 
-				hname = pkt[DNS].an[i].rrname
-				ipaddr = pkt[DNS].an[i].rdata
-
-				# check if hname ends with '.'
-
-				if hname[-1:] == ".":
-					hname = hname[:-1]
+			for i, response in enumerate(response_types):
+				if response_counts[i] == 0: continue
 				
-				# check if we haven't seen these already
-				if hname not in self.nodes_values:
-					_hname = self.analytics.add_text([hname], ['sniffer', self.name]) # log every discovery to db
-					self.nodes_ids.append(_hname['_id'])
-					self.nodes_values.append(_hname['value'])
-					self.nodes.append(_hname)
-					new_elts.append(_hname)
-				else:
-					_hname = [e for e in self.nodes if e['value'] == hname][0]
+				debug_output("[+] DNS replies caught (%s answers)" % response_counts[i])			
+				#for i in xrange(pkt[DNS].ancount): # cycle through responses and add records to graph
 
-				if ipaddr not in self.nodes_values:
-					_ipaddr = self.analytics.add_text([ipaddr], ['sniffer', self.name]) # log every discovery to db
+				for rr in xrange(response_counts[i]):
+					if response[rr].type not in [1, 2, 5, 15]:
+						debug_output('No relevant records in reply')
+						continue
+
+					rr = response[rr]
+
+					rrname = rr.rrname
+					rdata = rr.rdata
 					
-					# do some live analysis
-					new = _ipaddr.analytics()
-					for n in new:
-						saved = self.analytics.save_element(n[1])
-						self.nodes_ids.append(saved['_id'])
-						self.nodes_values.append(saved['value'])
-						self.nodes.append(saved)
-						new_elts.append(saved)
-						
-						#do the link
-						conn = self.analytics.data.connect(_ipaddr, saved, n[0])
+					# check if rrname ends with '.'
+					if rrname[-1:] == ".":
+						rrname = rrname[:-1]
+					
+					# check if we haven't seen these already
+					if rrname not in self.nodes_values:
+						_rrname = self.analytics.add_text([rrname], ['sniffer', self.name]) # log every discovery to db
+						if _rrname != []:
+							self.nodes_ids.append(_rrname['_id'])
+							self.nodes_values.append(_rrname['value'])
+							self.nodes.append(_rrname)
+							new_elts.append(_rrname)
+					else:
+						_rrname = [e for e in self.nodes if e['value'] == rrname][0]
+
+					if rdata not in self.nodes_values:
+						_rdata = self.analytics.add_text([rdata], ['sniffer', self.name]) # log every discovery to db
+						if _rdata != []: # avoid linking elements if only one is found
+							self.nodes_ids.append(_rdata['_id'])
+							self.nodes_values.append(_rdata['value'])
+							self.nodes.append(_rdata)
+							new_elts.append(_rdata)
+
+							# do some live analysis
+							# new = _rdata.analytics()
+							# for n in new:
+							# 	saved = self.analytics.save_element(n[1])
+							# 	self.nodes_ids.append(saved['_id'])
+							# 	self.nodes_values.append(saved['value'])
+							# 	self.nodes.append(saved)
+							# 	new_elts.append(saved)
+								
+							# 	#do the link
+							# 	conn = self.analytics.data.connect(_rdata, saved, n[0])
+							# 	if conn not in self.edges:
+							# 		self.edges.append(conn)
+							# 		new_edges.append(conn)
+					else:
+						_rdata = [e for e in self.nodes if e['value'] == rdata][0]
+
+					
+
+					# we can use a real connection here
+					# conn = {'attribs': 'A', 'src': _rrname['_id'], 'dst': _rdata['_id'], '_id': { '$oid': str(_rrname['_id'])+str(_rdata['_id'])}}
+					
+					# if two elemnts are found, link them
+					if _rrname != [] and _rdata != []:
+						debug_output("Caught DNS answer: %s -> %s" % ( _rrname['value'], _rdata['value']))
+						debug_output("Added %s, %s" %(rrname, rdata))
+						conn = self.analytics.data.connect(_rrname, _rdata, rr_codes[str(rr.type)], True)
 						if conn not in self.edges:
 							self.edges.append(conn)
 							new_edges.append(conn)
-
-					self.nodes_ids.append(_ipaddr['_id'])
-					self.nodes_values.append(_ipaddr['value'])
-					self.nodes.append(_ipaddr)
-					new_elts.append(_ipaddr)
-				else:
-					_ipaddr = [e for e in self.nodes if e['value'] == ipaddr][0]
-
-				debug_output("Caught DNS response %s: %s -> %s" % (i, _hname['value'], _ipaddr['value']))
-				debug_output("Added %s, %s" %(hname, ipaddr))
-
-				# we can use a real connection here
-				# conn = {'attribs': 'A', 'src': _hname['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id'])}}
-				conn = self.analytics.data.connect(_hname, _ipaddr, "A", True)
-				if conn not in self.edges:
-					self.edges.append(conn)
-					new_edges.append(conn)
-
-			
-
-				# conn = self.analytics.data.connect(_question, elt, "resolve", True)
-				# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _ipaddr['_id'], '_id': { '$oid': str(_hname['_id'])+str(_ipaddr['_id']) } }
-				# if conn not in self.edges:
-				# 		self.edges.append(conn)
-				# 		new_edges.append(conn)
+					else:
+						debug_output("Don't know what to do with '%s' and '%s'" % (_rrname, _rdata), 'error')
+						pkt.display()
+						
+					# conn = self.analytics.data.connect(_question, elt, "resolve", True)
+					# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _rdata['_id'], '_id': { '$oid': str(_rrname['_id'])+str(_rdata['_id']) } }
+					# if conn not in self.edges:
+					# 		self.edges.append(conn)
+					# 		new_edges.append(conn)
 
 		return new_elts, new_edges
 		
