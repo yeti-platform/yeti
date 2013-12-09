@@ -1,7 +1,8 @@
 import os, sys, threading, time
-from Malcom.auxiliary.toolbox import debug_output
 from datetime import timedelta, datetime
 
+from Malcom.auxiliary.toolbox import debug_output
+import Malcom
 
 
 class Feed(object):
@@ -108,20 +109,15 @@ class FeedEngine(threading.Thread):
 			time.sleep(self.period) # run a new thread every period seconds
 			debug_output("Checking feeds...")
 			self.run_scheduled_feeds()
-			#threading.Thread(None, self.run_scheduled_feeds, None).start()
 
 
 	def load_feeds(self):
 	
 		globals_, locals_ = globals(), locals()
 
-		file = os.path.abspath(__file__)
-		malcom_directory = os.path.dirname(file)
-		
+		feeds_dir = Malcom.config['FEEDS_DIR']
 		package_name = 'feeds'
-		feeds_dir = malcom_directory + '/' + package_name
 
-		feeds_dir = malcom_directory
 		debug_output("Loading feeds in %s" % feeds_dir)
 		
 		for filename in os.listdir(feeds_dir):

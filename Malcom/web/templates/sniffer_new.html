@@ -3,7 +3,7 @@
 <div class='span9'>
   <h1>Sniffer sessions</h1>
   <table id='sessions' class='table table-condensed'>
-    <tr> <th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th></tr>
+    <tr> <th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th></th></tr>
   </table>
 </div>
 
@@ -15,6 +15,7 @@
 {%include "flash.html"%}
   <form method='POST' action='' enctype='multipart/form-data'>
     <h3>New sniffer session</h3>
+    <div id='message'></div>
     <label for='pcap-upload'>Start from .pcap file</label>
     <input type="file" placeholder="" id='pcap-upload' name='pcap-file'>
     <label for='session_name'>Session name</label>
@@ -24,8 +25,9 @@
     <br />
     {% if not g.config['PUBLIC'] %}
       <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
-      <label for='tls-interception'>TLS proxy port</label>
-      <input type="text" placeholder="Leave blank for no interception" name='tls_proxy_port' id='tls_proxy_port'>
+      <label class="checkbox"><input type="checkbox" name="intercept_tls" checked='checked'> Intercept TLS</label>
+      <!-- <label for='tls-interception'>TLS proxy port</label>
+      <input type="text" placeholder="Leave blank for no interception" name='tls_proxy_port' id='tls_proxy_port'> -->
     {% endif %}
     <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Create new session</button>
     

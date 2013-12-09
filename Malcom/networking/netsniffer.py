@@ -12,33 +12,37 @@ from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 import Malcom
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
-[1, 2, 5, 15]
 rr_codes = {"1": "A", "2": "NS", "5": "CNAME", "15": "MX"}
 
 NOTROOT = "nobody"
 
 
-class Sniffer():
+class Sniffer(dict):
 
-	def __init__(self, analytics, name, remote_addr, filter, ifaces, tls_proxy_port, ws=None):
+	def __init__(self, analytics, name, remote_addr, filter, intercept_tls=False, ws=None, filter_restore=None):
 		
 		self.analytics = analytics
 		self.name = name
 		self.ws = ws
-		self.ifaces = ifaces
+		self.ifaces = Malcom.config['IFACES']
 		filter_ifaces = ""
-		for i in ifaces:
-			filter_ifaces += " and not host %s " % ifaces[i]
+		for i in self.ifaces:
+			filter_ifaces += " and not host %s " % self.ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
 
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False
+
+		if filter_restore:
+			self.filter = filter_restore
 		
 		self.thread = None
 		self.public = False
 		self.pcap = False
+		self.pcap_filename = self.name + '.pcap'
 		self.pkts = []
+		self.packet_count = 0
 
 		# nodes, edges, their values, their IDs
 		self.nodes = []
@@ -51,30 +55,22 @@ class Sniffer():
 		# flows
 		self.flows = {}
 		
-		# MalcomTLSProxy instance
-		self.intercept_tls = True if tls_proxy_port else False
-		self.tls_proxy_port = int(tls_proxy_port) if tls_proxy_port else None
-
+		self.intercept_tls = intercept_tls
 		if self.intercept_tls:
+			debug_output("[+] Intercepting TLS")
 			self.tls_proxy = Malcom.tls_proxy
 			self.tls_proxy.add_flows(self.flows)
 		else:
 			debug_output("[-] No TLS interception")
 
 	def load_pcap(self):
-		debug_output("Loading PCAP from file...")
-		timestamp = str(time.mktime(time.gmtime())).split('.')[0]
-		filename = '/tmp/load-%s.cap' % timestamp
 
-		f = open(filename, 'wb')
-		f.write(self.pcap)
-		f.close()
-		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=filename)	
+		filename = self.pcap_filename
+		debug_output("Loading PCAP from %s " % filename)
+		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=Malcom.config['SNIFFER_DIR']+"/"+filename)	
 		
 		debug_output("Loaded %s packets from file." % len(self.pkts))
 
-		self.pcap = False
-		
 		return True
 
 	def run(self):
@@ -86,7 +82,9 @@ class Sniffer():
 			self.load_pcap()
 		elif not self.public:
 			print self.filter
-			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)	
+			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)
+
+		self.generate_pcap()
 		
 		debug_output("[+] Sniffing session %s stopped" % self.name)
 
@@ -122,13 +120,13 @@ class Sniffer():
 		else:
 			return False
 
-	def get_pcap(self):
-		debug_output("Generating PCAP (length: %s)" % len(self.pkts))
-		if len(self.pkts) == 0:
-			return ""
-		wrpcap("/tmp/temp.cap", self.pkts)
-		pcap = open('/tmp/temp.cap').read()
-		return pcap
+	def generate_pcap(self):
+		if len (self.pkts) > 0:
+			debug_output("Generating PCAP for %s (length: %s)" % (self.name, len(self.pkts)))
+			filename = Malcom.config['SNIFFER_DIR'] + "/" + self.pcap_filename
+			wrpcap(filename, self.pkts)
+			debug_output("Saving session to DB")
+			self.analytics.data.save_sniffer_session(self)
 	
 	def checkIP(self, pkt):
 
@@ -349,6 +347,7 @@ class Sniffer():
 		if IP_layer == IPv6: return
 
 		self.pkts.append(pkt)
+		self.packet_count += 1
 
 		elts = []
 		edges = []

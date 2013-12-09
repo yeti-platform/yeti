@@ -1,11 +1,16 @@
+import dateutil
+
+import threading, os
+
 from pymongo import MongoClient
 from pymongo.son_manipulator import SONManipulator
-import dateutil
 import pygeoip
-import threading
-from Malcom.auxiliary.toolbox import *
+
 from bson.objectid import ObjectId
+
+from Malcom.auxiliary.toolbox import *
 from Malcom.model.datatypes import Hostname, Url, Ip, As, Evil, DataTypes
+import Malcom
 
 
 class Transform(SONManipulator):
@@ -28,8 +33,10 @@ class Model:
 		self._connection = MongoClient()
 		self._db = self._connection.malcom
 		self._db.add_son_manipulator(Transform())
+		# collections
 		self.elements = self._db.elements
 		self.graph = self._db.graph
+		self.sniffer_sessions = self._db.sniffer_sessions
 		self.history = self._db.history
 		self.public_api = self._db.public_api
 
@@ -69,6 +76,39 @@ class Model:
 		for e in self.elements.find():
 			debug_output(e)
 
+
+	def save_sniffer_session(self, session):
+		dict = { 
+			'name': session.name,
+			'filter': session.filter,
+			'intercept_tls': session.intercept_tls,
+			'pcap': True,
+			'packet_count': session.packet_count,
+			}
+		status = self.sniffer_sessions.update({'name': dict['name']}, dict, upsert=True)
+		return status
+
+	def get_sniffer_session(self, session_name):
+		session = self.sniffer_sessions.find_one({'name': session_name})
+		return session
+
+	def del_sniffer_session(self, session_name):
+
+		session = self.sniffer_sessions.find_one({'name': session_name})
+			
+		filename = session['name'] + ".pcap"
+				
+		try:
+			os.remove(Malcom.config['SNIFFER_DIR'] + "/" + filename)
+		except Exception, e:
+			print e
+
+		self.sniffer_sessions.remove({'name': session_name})
+
+		return True
+
+	def get_sniffer_sessions(self):
+		return [s for s in self.sniffer_sessions.find()]
 	
 	def save(self, element, with_status=False):
 	
@@ -88,6 +128,7 @@ class Model:
 
 		if status['updatedExisting'] == True:
 			debug_output("(updated %s %s)" % (saved.type, saved.value), type='model')
+			assert saved.get('date_created', None) != None
 		else:
 			debug_output("(added %s %s)" % (saved.type, saved.value), type='model')
 			saved['date_created'] = datetime.datetime.utcnow()

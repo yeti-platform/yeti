@@ -20,7 +20,7 @@ from bson.json_util import dumps, loads
 
 #flask stuff
 from werkzeug import secure_filename
-from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash
+from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash, send_from_directory
 from functools import wraps
 
 #websockets
@@ -380,25 +380,30 @@ def sniffer():
 	if request.method == 'POST':
 		filter = request.form['filter']
 		
-		session_name = request.form['session_name']
+		session_name = secure_filename(request.form['session_name'])
 		if session_name == "":
 			flash("Please specify a session name", 'warning')
 			return redirect(url_for('sniffer'))
 
 		debug_output("Creating session %s" % session_name)
 
-		# intercept TLS ?
-		tls_proxy_port = request.form.get('tls_proxy_port', None)
-		# create iptables entry?
+		# intercept TLS?
+		intercept_tls = True if request.form.get('intercept_tls', False) else False
 
-		Malcom.sniffer_sessions[session_name] = netsniffer.Sniffer(Analytics(), session_name, str(request.remote_addr), filter, g.config['IFACES'], tls_proxy_port)
+		Malcom.sniffer_sessions[session_name] = netsniffer.Sniffer(Malcom.analytics_engine, session_name, str(request.remote_addr), filter, intercept_tls=intercept_tls)
 		
+		# this is where the data will be stored persistently
+		filename = session_name + ".pcap"
+		Malcom.sniffer_sessions[session_name].pcap_filename = filename
 		
 		pcap = None
 		# if we're dealing with an uploaded PCAP file
 		file = request.files.get('pcap-file')
 		if file:
-			Malcom.sniffer_sessions[session_name].pcap = file.read()
+			# store in /sniffer folder
+			with open(Malcom.config['SNIFFER_DIR'] + "/" + filename, 'wb') as f:
+				f.write(file.read())
+			Malcom.sniffer_sessions[session_name].pcap = True
 
 		# start sniffing right away
 		if request.form.get('startnow', None):
@@ -415,7 +420,7 @@ def sniffer_sessionlist():
 	for s in Malcom.sniffer_sessions:
 		session_list.append({
 								'name': s, 
-								'packets': len(Malcom.sniffer_sessions[s].pkts),
+								'packets': Malcom.sniffer_sessions[s].packet_count,
 								'nodes': len(Malcom.sniffer_sessions[s].nodes),
 								'edges': len(Malcom.sniffer_sessions[s].edges),
 								'status': "Running" if Malcom.sniffer_sessions[s].status() else "Stopped"
@@ -432,21 +437,31 @@ def sniffer_session(session_name, pcap_filename=None):
 		return redirect(url_for('sniffer'))
 	
 	return render_template('sniffer.html', session=Malcom.sniffer_sessions[session_name], session_name=session_name)
+
+@app.route('/sniffer/<session_name>/delete')
+def sniffer_session_delete(session_name):
+	if session_name not in Malcom.sniffer_sessions:
+		return (dumps({'status':'Sniffer session %s does not exist' % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
+	else:
+		if Malcom.sniffer_sessions[session_name].status():
+			return (dumps({'status':"Can't delete session %s: session running" % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
+		g.a.data.del_sniffer_session(session_name)
+		print Malcom.sniffer_sessions
+		del Malcom.sniffer_sessions[session_name]
+		return (dumps({'status':"Sniffer session %s has been deleted" % session_name, 'success': 1}), 200, {'Content-Type': 'application/json'})
+
+
+
+
+
 	
 
 @app.route('/sniffer/<session_name>/pcap')
 def pcap(session_name):
 	if session_name not in Malcom.sniffer_sessions:
 		abort(404)
-	response = make_response()
-	response.headers['Cache-Control'] = 'no-cache'
-	response.headers['Content-Type'] = 'application/vnd.tcpdump.pcap'
-	response.headers['Content-Disposition'] = 'attachment; filename='+session_name+'_capture.pcap'
-	response.data = Malcom.sniffer_sessions[session_name].get_pcap()
-	response.headers['Content-Length'] = len(response.data)
-
-	return response
-
+	Malcom.sniffer_sessions[session_name].generate_pcap()
+	return send_from_directory(Malcom.config['SNIFFER_DIR'], Malcom.sniffer_sessions[session_name].pcap_filename, mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_name+'.pcap')
 
 
 @app.route("/sniffer/<session_name>/<flowid>/raw")
@@ -518,7 +533,7 @@ def analytics_api():
 			if cmd == 'analyticsstatus':
 				g.a.notify_progress('Loaded')
 
-
+	
 			
 
 
@@ -624,7 +639,7 @@ class MalcomWeb(object):
 	def start_server(self):
 		for key in Malcom.config:
 			app.config[key] = Malcom.config[key]
-		app.config['UPLOAD_FOLDER'] = ""
+		app.config['UPLOAD_DIR'] = ""
 		
 		sys.stderr.write("Starting webserver in %s mode...\n" % ("public" if self.public else "private"))
 		try:

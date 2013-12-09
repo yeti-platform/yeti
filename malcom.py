@@ -16,6 +16,7 @@ from Malcom.analytics.analytics import Analytics
 from Malcom.feeds.feed import FeedEngine
 from Malcom.web.webserver import MalcomWeb
 from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
+from Malcom.networking import netsniffer
 import Malcom # this is the configuraiton
 
 # this should be stored and loaded from a configuration file
@@ -27,6 +28,9 @@ Malcom.config['MAX_THREADS'] = 4
 Malcom.config['PUBLIC'] = False
 Malcom.config['NO_FEED'] = False
 Malcom.config['TLS_PROXY_PORT'] = False
+Malcom.config['BASE_PATH'] = os.getcwd() + '/Malcom'
+Malcom.config['SNIFFER_DIR'] = Malcom.config['BASE_PATH'] + '/sniffer'
+Malcom.config['FEEDS_DIR'] = Malcom.config['BASE_PATH'] + '/feeds'
 
 Malcom.config['IFACES'] = {}
 for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
@@ -58,17 +62,29 @@ if __name__ == "__main__":
 	sys.stderr.write("Detected interfaces:\n")
 	for iface in Malcom.config['IFACES']:
 		sys.stderr.write("%s:\t%s\n" % (iface, Malcom.config['IFACES'][iface]))
-
-	sys.stderr.write("Importing feeds...\n")
-	Malcom.analytics_engine = Analytics()
 	
+	Malcom.analytics_engine = Analytics()
+
 	if args.tls_proxy_port:
 		sys.stderr.write("Starting TLS proxy on port %s\n" % args.tls_proxy_port)
 		Malcom.tls_proxy = MalcomTLSProxy(args.tls_proxy_port)
 		Malcom.tls_proxy.start()
 
+	sys.stderr.write("Importing feeds...\n")
 	Malcom.feed_engine = FeedEngine(Malcom.analytics_engine)
 	Malcom.feed_engine.load_feeds()
+
+	sys.stderr.write("Importing packet captures...\n")
+	
+	for s in Malcom.analytics_engine.data.get_sniffer_sessions():
+		Malcom.sniffer_sessions[s['name']] = netsniffer.Sniffer(Malcom.analytics_engine, 
+																s['name'], 
+																None, 
+																None, 
+																filter_restore=s['filter'], 
+																intercept_tls=s['intercept_tls'] if args.tls_proxy_port else False)
+
+		Malcom.sniffer_sessions[s['name']].pcap = True
 
 	# call malcom to run feeds - this will not start the web interface
 	if args.feeds >= 1:

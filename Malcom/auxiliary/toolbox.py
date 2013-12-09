@@ -219,7 +219,7 @@ def dns_dig_reverse(ip):
     try:
         _dig = check_output(['dig', '-x', ip])
     except Exception, e:
-        _dig = e.output
+        _dig = str(e)
 
     results = re.search('PTR\t+(?P<record>.+)', _dig)
     if results:

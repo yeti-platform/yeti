@@ -196,6 +196,34 @@ function stopsniff() {
     console.log("Sent sniffstop")
 }
 
+function delsniff(session_name) {
+    r = confirm("Are you sure you want to remove session "+ session_name+" and all of its data?")
+    if (r == false) {return}
+    $.ajax({
+        type: 'get',
+        url: url_static_prefix+'/sniffer/'+session_name+'/delete',
+        success: function(data) {
+            console.log(data.success);
+            if (data.success == 1) { // delete the corresponding row
+                $("#session-"+session_name).remove()
+                display_message("Session " + session_name + " removed")
+            }
+            if (data.success == 0) {
+                console.log(data)
+                display_message(data.status)
+
+            }
+        }
+    });
+}
+
+function display_message(text) {
+  message = $('<div class="alert alert-warning"><button type="button" class="close" data-dismiss="alert">×</button>'+text+'</div>')
+  $("#message").empty()
+  $("#message").append(message)
+}
+
+
 function getSessionList() {
     $.ajax({
         type: 'get',
@@ -207,14 +235,19 @@ function getSessionList() {
             table = $('#sessions');
 
             for (var i in data.session_list) {    
-                
-                tr = $('<tr></tr>');
-                session_links = $('<a />').attr("href", url_static_prefix+'/sniffer/'+data.session_list[i]['name']).text(data.session_list[i]['name']);
+                name = data.session_list[i]['name']
+                tr = $('<tr></tr>').attr('id', 'session-'+name);
+                session_links = $('<a />').attr("href", url_static_prefix+'/sniffer/'+name).text(name);
                 tr.append($("<td />").append(session_links))
                 tr.append($("<td />").text(data.session_list[i]['packets']));
                 tr.append($("<td />").text(data.session_list[i]['nodes']));
                 tr.append($("<td />").text(data.session_list[i]['edges']));
                 tr.append($("<td />").text(data.session_list[i]['status']));
+                del = $("<td />")
+                i = $('<i class="icon-remove"></i>').data('session-name', name)
+                del.append(i)
+                i.click(function () { delsniff($(this).data('session-name')) })
+                tr.append(del)
                 table.append(tr);
             }
             }
