@@ -39,12 +39,16 @@ class Element(dict):
 
 
 class File(Element):
+	
 	display_fields = Element.default_fields + [('md5', "MD5"), ('file_type', "Type")]
+	default_refresh_period = None
+	
 	def __init__(self, value='', type='file', tags=[]):
 		super(File, self).__init__()
 		self['value'] = value
 		self['type'] = type
 		self['tags'] = tags
+		self['refresh_period'] = File.default_refresh_period
 
 	@staticmethod
 	def from_dict(d):
@@ -65,12 +69,16 @@ class File(Element):
 
 
 class Evil(Element):
+	
 	display_fields = Element.default_fields + []
+	default_refresh_period = None
+
 	def __init__(self, value='', type="evil", tags=[]):
 		super(Evil, self).__init__()
 		self['value'] = value
 		self['type'] = type
 		self['tags'] = tags + ['evil']
+		self['refresh_period'] = Evil.default_refresh_period
 
 	@staticmethod
 	def from_dict(d):
@@ -95,12 +103,15 @@ class As(Element):
 										('asn', 'ASN'),
 										('country', 'Country'),
 										]
+	default_refresh_period = None
+
 	def __init__(self, _as="", tags=[]):
 		super(As, self).__init__()
 		self['value'] = _as
 		self['type'] = 'as'
 		self['tags'] = tags
-		
+		self['refresh_period'] = As.default_refresh_period
+
 
 
 	@staticmethod
@@ -119,25 +130,20 @@ class As(Element):
 
 
 
-
-
-
-
-
-
 class Url(Element):
 	display_fields = Element.default_fields + [
 							('scheme', 'Scheme'),
 							('hostname', 'Hostname'),
 							('path', 'Path'),
 							]
+	default_refresh_period = None
 
 	def __init__(self, url="", tags=[]):
 		super(Url, self).__init__()
 		self['value'] = url
 		self['tags'] = tags
 		self['type'] = 'url'
-			
+		self['refresh_period'] = Url.default_refresh_period
 
 	@staticmethod
 	def from_dict(d):
@@ -190,6 +196,8 @@ class Url(Element):
 
 
 class Ip(Element):
+	
+	default_refresh_period = 3*24*3600
 
 	display_fields = Element.default_fields + [
 						('city', 'City'),
@@ -220,7 +228,7 @@ class Ip(Element):
 		self['tags'] = tags
 		self['type'] = 'ip'
 		# refresh IP geolocation every 72hours
-		self['refresh_period'] = 3*24*3600
+		self['refresh_period'] = Ip.default_refresh_period
 			
 
 	@staticmethod
@@ -269,6 +277,7 @@ class Ip(Element):
 
 class Hostname(Element):
 	
+	default_refresh_period = 6*3600
 	display_fields = Element.default_fields + []
 
 	def __init__(self, hostname="", tags=[]):
@@ -281,7 +290,7 @@ class Hostname(Element):
 			self['type'] = 'hostname'
 
 			# refresh domains every 6 hours
-			self['refresh_period'] = 6*3600
+			self['refresh_period'] = Hostname.default_refresh_period
 		else:
 			return None
 

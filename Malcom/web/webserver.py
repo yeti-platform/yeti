@@ -3,7 +3,7 @@
 
 __description__ = 'Malcom - Malware communications analyzer'
 __author__ = '@tomchop_'
-__version__ = '1.1 alpha'
+__version__ = '1.2 alpha'
 __license__ = "GPL"
 
 
