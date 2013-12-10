@@ -66,9 +66,12 @@ if __name__ == "__main__":
 	Malcom.analytics_engine = Analytics()
 
 	if args.tls_proxy_port:
+		Malcom.config['TLS_PROXY_PORT'] = args.tls_proxy_port
 		sys.stderr.write("Starting TLS proxy on port %s\n" % args.tls_proxy_port)
 		Malcom.tls_proxy = MalcomTLSProxy(args.tls_proxy_port)
 		Malcom.tls_proxy.start()
+	else:
+		Malcom.tls_proxy = None
 
 	sys.stderr.write("Importing feeds...\n")
 	Malcom.feed_engine = FeedEngine(Malcom.analytics_engine)
