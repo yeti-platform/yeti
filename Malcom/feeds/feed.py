@@ -29,6 +29,17 @@ class Feed(object):
 		self.analytics = None
 		self.enabled = False
 
+	def get_dict(self):
+		return { 'name': self.name,
+				 'last_run': self.last_run,
+				 'next_run': self.next_run,
+				 'running': self.running,
+				 'elements_fetched': self.elements_fetched,
+				 'status': self.status,
+				 'analytics': self.analytics,
+				 'enabled': self.enabled,
+				}
+
 	def update(self):
 		"""
 		The update() function has to be implemented in each of your feeds.
@@ -138,19 +149,19 @@ class FeedEngine(threading.Thread):
 					if n == 'Feed':
 						continue
 					class_n = modict.get(n)
-				 	try:
-				 		if issubclass(class_n, Feed) and class_n not in globals_:
-				 			new_feed = class_n(n) # create new feed object
-				 			new_feed.analytics = self.a # attach analytics instance to feed
-				 			self.feeds[n] = new_feed
+					try:
+						if issubclass(class_n, Feed) and class_n not in globals_:
+							new_feed = class_n(n) # create new feed object
+							new_feed.analytics = self.a # attach analytics instance to feed
+							self.feeds[n] = new_feed
 
-				 			# this may be for show for now
-				 			export_names.append(n)
-				 			export_classes.append(class_n)
-				 			sys.stderr.write(" + Loaded %s...\n" % n)
-				 	except Exception, e:
-				 		pass
-				 		
+							# this may be for show for now
+							export_names.append(n)
+							export_classes.append(class_n)
+							sys.stderr.write(" + Loaded %s...\n" % n)
+					except Exception, e:
+						pass
+						
 
 		globals_.update((export_names[i], c) for i, c in enumerate(export_classes))
 
