@@ -388,7 +388,7 @@ def sniffer():
 		debug_output("Creating session %s" % session_name)
 
 		# intercept TLS?
-		intercept_tls = True if request.form.get('intercept_tls', False) else False
+		intercept_tls = True if request.form.get('intercept_tls', False) and Malcom.tls_proxy != None else False
 
 		Malcom.sniffer_sessions[session_name] = netsniffer.Sniffer(Malcom.analytics_engine, session_name, str(request.remote_addr), filter, intercept_tls=intercept_tls)
 		
