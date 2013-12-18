@@ -41,7 +41,7 @@ class CybercrimeTracker(Feed):
 			return
 
 		# Create the new url and store it in the DB
-		url =Url(url=url, tags=['cybercrimetracker', 'malware', dict['description']])
+		url =Url(url=url, tags=['cybercrimetracker', 'malware', dict['description'].lower()])
 
 		url, status = self.analytics.save_element(url, with_status=True)
 		if status['updatedExisting'] == False:

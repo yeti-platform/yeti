@@ -1,10 +1,8 @@
 import urllib2
-import datetime, re
+import re
 from lxml import etree
 import Malcom.auxiliary.toolbox as toolbox
-from bson.objectid import ObjectId
-from bson.json_util import dumps
-from Malcom.model.datatypes import Evil, Url
+from Malcom.model.datatypes import Url
 from feed import Feed
 
 class UrlQuery(Feed):
