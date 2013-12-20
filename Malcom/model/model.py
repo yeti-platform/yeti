@@ -33,6 +33,7 @@ class Model:
 		self._connection = MongoClient()
 		self._db = self._connection.malcom
 		self._db.add_son_manipulator(Transform())
+		
 		# collections
 		self.elements = self._db.elements
 		self.graph = self._db.graph
@@ -40,7 +41,6 @@ class Model:
 		self.history = self._db.history
 		self.public_api = self._db.public_api
 
-		self.gi = pygeoip.GeoIP('Malcom/auxiliary/geoIP/GeoLiteCity.dat')
 		self.db_lock = threading.Lock()
 
 		# create indexes
