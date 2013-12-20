@@ -102,14 +102,12 @@ ws_sniffer.onopen = snifferInterfaceInit
   <small>Filter: {{session.filter}}</small>
   <br />
 
-  {% if not g.config['PUBLIC'] %}
   <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">
     {% if session.pcap %}Play PCAP{% else %}Start{%endif%}
   </button>
   <button id='stopsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:stopsniff()">
     {% if session.pcap %}Cancel{% else %}Stop{%endif%}
   </button>
-  {% endif %}
   
   <a href="{{url_for('pcap', session_name=session_name)}}">Get .pcap</a>
   <h3>Info</h3>
