@@ -1,3 +1,56 @@
+/* link colors  - COMMS */
+
+.link { 
+	fill:none;
+}
+
+.link.TCP {
+	stroke: #7bcef8;
+}
+
+.link.UDP {
+	stroke: #ffbca0;
+}
+
+.link.DNS {
+	stroke: #b40812;
+}
+
+.link.HTTP {
+	stroke: #0050df;
+}
+
+
+/* link colors - TOPOLOGY */
+
+
+.link.A {
+	stroke: #df0000;
+}
+.link.NS {
+	stroke: #df7000;
+}
+.link.MX {
+	stroke: #dfE000;
+}
+.link.reverse {
+	stroke: #0043df;
+}
+.link.domain {
+	stroke: #da0039;
+}
+.link.CNAME {
+	stroke: #0079df;
+}
+.link.net_info {
+	stroke: grey;
+}
+.link.host {
+	stroke: #da0039;
+}
+
+
+
 
 .node text {
   pointer-events: none;

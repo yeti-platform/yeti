@@ -1,3 +1,12 @@
+function freeze_graph(freeze) {
+  all = d3.selectAll('.node').data()
+  for (var i in all) {
+    all[i].fixed = freeze;
+  }
+  tick(); // this is the key to make it work together with updating both px,py,x,y on d !
+  force.resume();
+}
+
 function nudge(dx, dy) {
  if (shiftKey)
     coef = 40
@@ -14,7 +23,6 @@ function nudge(dx, dy) {
 
     tick(); // this is the key to make it work together with updating both px,py,x,y on d !
       force.resume();
-
 }
 
 function getneighbors() {
@@ -288,15 +296,30 @@ function start() {
 
   Links and lines separated  */
 
-  l = link.enter().insert("line", ".node")
-    .attr("class", "link")
+  l = link.enter().insert("path", ".node")
+    //.attr("class", "link")
     .attr("marker-end", function(d) { return "url(#arrow)"; })
     .attr("id", function(d) {return d._id.$oid })
-    .style("stroke", function(d) { return color(d.attribs); })
+    .attr("class", function (d) { 
+      c = 'link ';
+      c += d.attribs + " ";
+      return c
+    })
+    // .style("stroke", function(d) { 
+    //   if (d.attribs == '') { return "#AAA" } else {return color(d.attribs);}
+    // })
 
   // text on links
+   
    path_text = svg.selectAll(".path-text").data(force.links(), function (d) { return d._id.$oid });   
-  // path_text.enter().append('svg:text').attr('class','path-text').text(function (d) {return d.attribs})
+   if (link_labels) {
+    path_text.enter().append('svg:text').attr('class','path-text').text(function (d) {return d.attribs})
+   }
+   else {
+    path_text.remove()
+   }
+   
+   
 
 
   // l = link.enter().append('svg:g').attr('class', 'link-container')
@@ -382,42 +405,48 @@ function start() {
 
 function tick(e) {
 
- // if (e != undefined) {
- //    var k = 6 * e.alpha;
- //      links.forEach(function(d, i) {
- //        d.source.y += k;
- //        d.target.y -= k;
- //      });
- //  }
-
   node.attr("transform", function(d) { 
     d.x = Math.max(5, Math.min(width - 5, d.x));
     d.y = Math.max(5, Math.min(height - 5, d.y));
     return "translate(" + d.x + "," + d.y + ")";
   }); 
 
-  node.attr()
-
-  link.attr("x1", function(d) { return Math.max(5, Math.min(width - 5, d.source.x)); })
-      .attr("y1", function(d) { return Math.max(5, Math.min(height - 5, d.source.y)); })
-      .attr("x2", function(d) { return Math.max(5, Math.min(width - 5, d.target.x)); })
-      .attr("y2", function(d) { return Math.max(5, Math.min(height - 5, d.target.y)); });
+  link.attr('d', linkArc);
 
 // we can adjust link length from here
+  if (link_labels) {
+        path_text.attr("transform", function(d) 
+        {
+          var dx = (d.target.x - d.source.x),
+          dy = (d.target.y - d.source.y);
+          var dr = Math.sqrt(dx * dx + dy * dy);
+          var sinus = dy/dr;
+          var cosinus = dx/dr;
+          var l = dr-50
+          var offset = ((1 - (l / dr )) / 2);
+          var x=(d.source.x + (dx)*(offset));
+          var y=(d.source.y + (dy)*(offset));
+          return "translate(" + x + "," + y + ") matrix("+cosinus+", "+sinus+", "+-sinus+", "+cosinus+", 0 , 0)";
+        });
+  }
+  else {
+    path_text.attr('transform', "");
+    path_text.remove()
+  }
 
-    path_text.attr("transform", function(d) 
-    {
-      var dx = (d.target.x - d.source.x),
-      dy = (d.target.y - d.source.y);
-      var dr = Math.sqrt(dx * dx + dy * dy);
-      var sinus = dy/dr;
-      var cosinus = dx/dr;
-      var l = dr-50
-      var offset = ((1 - (l / dr )) / 2);
+}
 
-      var x=(d.source.x + (dx)*(offset));
-      var y=(d.source.y + (dy)*(offset));
-      //return "translate(" + x + "," + y + ")";
-      return "translate(" + x + "," + y + ") matrix("+cosinus+", "+sinus+", "+-sinus+", "+cosinus+", 0 , 0)";
-    });
+
+function linkArc(d) {
+  var dx = d.target.x - d.source.x,
+      dy = d.target.y - d.source.y,
+      dr = Math.sqrt(dx * dx + dy * dy);
+      if (curved_links) {
+        return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
+      }
+
+      else {
+        return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y
+      }
+  
 }

@@ -13,7 +13,8 @@ import Malcom
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
 rr_codes = {"1": "A", "2": "NS", "5": "CNAME", "15": "MX"}
-
+known_tcp_ports = {'80':'HTTP', '443':'HTTPS', '21':'FTP', '22':'SSH'}
+known_udp_ports = {'53':'DNS'}
 NOTROOT = "nobody"
 
 
@@ -29,7 +30,7 @@ class Sniffer(dict):
 		for i in self.ifaces:
 			filter_ifaces += " and not host %s " % self.ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
-
+		self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False
@@ -188,8 +189,19 @@ class Sniffer(dict):
 		# temporary "connection". IPs are only connceted because hey are communicating with each other
 		oid = "$oid"
 		#conn = {'attribs': '%s > %s' %(source['port'], dest['port']), 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
-		conn = {'attribs': 'dport:%s' % dest['port'], 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
-		
+		#conn = {'attribs': 'dport:%s' % dest['port'], 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
+		if TCP in pkt:
+			ports = known_tcp_ports
+			attribs = "TCP"
+		elif UDP in pkt:
+			ports = known_udp_ports
+			attribs = "UDP"
+			
+		attribs = ports.get(str(dest['port']), attribs)
+		if attribs in ["TCP", "UDP"]:
+			attribs = ports.get(str(source['port']), attribs)
+
+		conn = {'attribs': attribs, 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
 		if conn not in self.edges:
 			self.edges.append(conn)
 			new_edges.append(conn)
@@ -352,21 +364,6 @@ class Sniffer(dict):
 		elts = []
 		edges = []
 
-		# STANDARD PACKET ANALYSIS - extract IP addresses and domain names
-		# the magic for extracting elements from packets happens here
-
-		new_elts, new_edges = self.checkIP(pkt)
-		if new_elts:
-			elts += new_elts
-		if new_edges:
-			edges += new_edges
-
-		new_elts, new_edges = self.checkDNS(pkt)
-		if new_elts:
-			elts += new_elts
-		if new_edges:
-			edges += new_edges
-
 		
 		# FLOW ANALYSIS - reconstruct TCP flow if possible
 		# do flow analysis here, if necessary - this will be replaced by dpkt's magic
@@ -382,11 +379,26 @@ class Sniffer(dict):
 			if new_elts:
 				elts += new_elts
 			if new_edges:
-				edges += new_edges			
+				edges += new_edges
 
 		# end flow analysis
 
-		
+
+		# STANDARD PACKET ANALYSIS - extract IP addresses and domain names
+		# the magic for extracting elements from packets happens here
+
+		new_elts, new_edges = self.checkIP(pkt) # pass decode information if found
+		if new_elts:
+			elts += new_elts
+		if new_edges:
+			edges += new_edges
+
+		new_elts, new_edges = self.checkDNS(pkt)
+		if new_elts:
+			elts += new_elts
+		if new_edges:
+			edges += new_edges
+
 		# TLS MITM - intercept TLS communications and send cleartext to malcom
 		# We want to be protocol agnostic (HTTPS, FTPS, ***S). For now, we choose which 
 		# connections to intercept based on destination port number

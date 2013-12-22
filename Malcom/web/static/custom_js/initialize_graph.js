@@ -17,7 +17,9 @@ var radiusScale,
 	svg, 
 	brush, 
 	node, 
-	link
+	link,
+	link_labels,
+	curved_links
 
 // rescale g
 function rescale() {
@@ -47,6 +49,9 @@ function initialize_graph() {
 
 		 nodes = []
 		 links = []
+
+		 link_labels = false
+		 curved_links = false
 
 		 force = d3.layout.force()
 		    .nodes(nodes)
@@ -84,5 +89,6 @@ function initialize_graph() {
 		 node = svg.selectAll(".node")
 		    link = svg.selectAll(".link");
 
-		    
+		 // graph controls
+		 console.log($("#curved-links"))		    
 }
