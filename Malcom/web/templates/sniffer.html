@@ -112,7 +112,9 @@ ws_sniffer.onopen = snifferInterfaceInit
   <a href="{{url_for('pcap', session_name=session_name)}}">Get .pcap</a>
   <label class="checkbox" style='font-size:small'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
   <label class="checkbox" style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
-  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph()'>Freeze graph</button>
+  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
+  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
+  
   <h3>Info</h3>
   <table class='table' id='node_info'></table>
   <div class='whois'></div>
