@@ -82,7 +82,6 @@ class Sniffer(dict):
 		if self.pcap:
 			self.load_pcap()
 		elif not self.public:
-			print self.filter
 			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)
 
 		self.generate_pcap()

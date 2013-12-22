@@ -51,7 +51,7 @@ class MalcodeBinaries(Feed):
 		# information from the dict we parsed earlier
 
 		evil['feed'] = "MalcodeBinaries"
-		print dict['description']
+
 		evil['url'] = toolbox.find_urls(dict['description'])[0]
 		
 		# description

@@ -219,7 +219,6 @@ def report(field, value, strict=False):
 
 	#display fields
 	base_elts[0]['fields'] = base_elts[0].display_fields
-	print linked_elements
 	return render_template("report.html", field=field, value=value, base_elts=base_elts, linked=linked_elements, related_elements=related_elements)
 
 @app.route('/dataset/')
@@ -446,7 +445,6 @@ def sniffer_session_delete(session_name):
 		if Malcom.sniffer_sessions[session_name].status():
 			return (dumps({'status':"Can't delete session %s: session running" % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
 		g.a.data.del_sniffer_session(session_name)
-		print Malcom.sniffer_sessions
 		del Malcom.sniffer_sessions[session_name]
 		return (dumps({'status':"Sniffer session %s has been deleted" % session_name, 'success': 1}), 200, {'Content-Type': 'application/json'})
 
