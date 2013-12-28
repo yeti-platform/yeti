@@ -29,7 +29,7 @@ class UrlQuery(Feed):
 				dict[field] = item.findtext(field)
 			
 			if dict['description'] != 'No alerts detected.':
-			 self.analyze(dict)
+				self.analyze(dict)
 
 		return True
 
@@ -71,7 +71,7 @@ class UrlQuery(Feed):
 		if tds: tags.append('tds')
 
 		# Create the new url and store it in the DB
-		url =Url(url=url, tags=tags)
+		url =Url(url=url[0], tags=tags)
 
 		url, status = self.analytics.save_element(url, with_status=True)
 		if status['updatedExisting'] == False:

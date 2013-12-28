@@ -1,5 +1,5 @@
 import urllib2
-from Malcom.model.datatypes import Ip 
+from Malcom.model.datatypes import Hostname 
 from feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
