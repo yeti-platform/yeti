@@ -24,7 +24,7 @@ Malcom.config['DEBUG'] = True
 Malcom.config['VERSION'] = "1.1 alpha"
 Malcom.config['LISTEN_INTERFACE'] = "0.0.0.0"
 Malcom.config['LISTEN_PORT'] = 8080
-Malcom.config['MAX_THREADS'] = 4
+Malcom.config['MAX_WORKERS'] = 4
 Malcom.config['PUBLIC'] = False
 Malcom.config['NO_FEED'] = False
 Malcom.config['TLS_PROXY_PORT'] = False
@@ -45,7 +45,7 @@ if __name__ == "__main__":
 	parser.add_argument("-i", "--interface", help="Listen interface", default=Malcom.config['LISTEN_INTERFACE'])
 	parser.add_argument("-p", "--port", help="Listen port", type=int, default=Malcom.config['LISTEN_PORT'])
 	parser.add_argument("--public", help="Run a public instance (Feeds and network sniffing disabled)", action="store_true", default=Malcom.config['PUBLIC'])
-	parser.add_argument("--max-threads", help="Number of threads to use (default 4)", type=int, default=Malcom.config['MAX_THREADS'])
+	parser.add_argument("--max-workers", help="Number of worker processes to use (default 4)", type=int, default=Malcom.config['MAX_WORKERS'])
 	parser.add_argument("--tls-proxy-port", help="Port number on which to start the TLS proxy on. No proxy started if not specified.", type=int, default=Malcom.config['TLS_PROXY_PORT'])
 	
 	#parser.add_argument("--no-feeds", help="Disable automatic feeding", action="store_true", default=app.config['NO_FEED'])
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 	os.system('clear')
 	Malcom.config['LISTEN_INTERFACE'] = args.interface
 	Malcom.config['LISTEN_PORT'] = args.port
-	Malcom.config['MAX_THREADS'] = args.max_threads
+	Malcom.config['MAX_WORKERS'] = args.max_workers
 	Malcom.config['PUBLIC'] = args.public
 
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % Malcom.config['VERSION'])
@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
 	elif args.analytics: # run analytics
 		
-		Malcom.analytics_engine.max_threads = threading.Semaphore(Malcom.config['MAX_THREADS'])
+		#Malcom.analytics_engine.max_workers = threading.Semaphore(Malcom.config['MAX_WORKERS'])
 
 		while True:
 			Malcom.analytics_engine.process()

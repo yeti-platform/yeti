@@ -37,6 +37,10 @@ class Element(dict):
 		else:
 			return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
 
+	# necessary for pickling
+	def __getstate__(self): return self.__dict__
+	def __setstate__(self, d): self.__dict__.update(d)
+
 
 class File(Element):
 	
