@@ -297,7 +297,7 @@ class Analytics:
 			workers = []
 
 			for i in range(Malcom.config['MAX_WORKERS']):
-				w = Worker(elements_queue, name='MalcomWorker-%s' % i)
+				w = Worker(elements_queue)
 				workers.append(w)
 				w.start()
 

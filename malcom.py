@@ -107,9 +107,6 @@ if __name__ == "__main__":
 		exit(0)
 
 	elif args.analytics: # run analytics
-		
-		#Malcom.analytics_engine.max_workers = threading.Semaphore(Malcom.config['MAX_WORKERS'])
-
 		while True:
 			Malcom.analytics_engine.process()
 			sleep(10) # sleep 10 seconds
