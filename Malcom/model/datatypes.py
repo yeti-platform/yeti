@@ -191,14 +191,6 @@ class Url(Element):
 
 
 
-
-
-
-
-
-
-
-
 class Ip(Element):
 	
 	default_refresh_period = 3*24*3600
@@ -249,8 +241,7 @@ class Ip(Element):
 		# get geolocation info
 		try:
 			file = os.path.abspath(__file__)
-			datatypes_directory = os.path.dirname(file)
-			gi = pygeoip.GeoIP(datatypes_directory+'/../auxiliary/geoIP/GeoLiteCity.dat')
+			gi = pygeoip.GeoIP(Malcom.config['BASE_PATH']+'/auxiliary/geoIP/GeoLiteCity.dat')
 			geoinfo = gi.record_by_addr(self.value)
 			for key in geoinfo:
 				self[key] = geoinfo[key]

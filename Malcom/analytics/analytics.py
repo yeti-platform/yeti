@@ -37,15 +37,13 @@ class Worker(Process):
 			self.engine.save_element(elt, tags)
 
 			self.engine.progress += 1
-			self.engine.websocket_lock.acquire()
 			self.engine.notify_progress(elt['value'])
-			self.engine.websocket_lock.release()
 
 class Analytics:
 
 	def __init__(self):
 		self.data = Model()
-		self.max_workers = Malcom.config['MAX_WORKERS']
+		self.max_workers = Malcom.config.get('MAX_WORKERS', 4)
 		self.active = False
 		self.status = "Inactive"
 		self.websocket = None
@@ -260,27 +258,28 @@ class Analytics:
 				return
 
 		self.thread = threading.Thread(None, self.process_thread, None)
+
+		then = time.datetime.utcnow()
 		self.thread.start()
 		self.thread.join() # wait for analytics to finish
+		now = time.datetime.utcnow()
 
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
 		self.active = False
-		debug_output("Finished analyzing.")
+		debug_output("Finished analyzing (run time: %s)." % str(now-then))
 		self.notify_progress("Finished analyzing.")
-
 
 	def notify_progress(self, msg=None):
 
 		status = {'active': self.active, 'msg': msg}
 		status['progress'] = '%s' % (self.progress)
 		send_msg(self.websocket, status, type='analyticsstatus')
+		
 
 	def process_thread(self):
 
 		self.active = True
-		
-				
 		
 		i = 0
 		total = 1
