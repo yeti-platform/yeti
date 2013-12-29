@@ -1,5 +1,5 @@
 from flask import Flask
-import dateutil, time, threading, pickle, gc
+import dateutil, time, threading, pickle, gc, datetime
 
 from bson.objectid import ObjectId
 from multiprocessing import Pool, Process, Queue
@@ -259,10 +259,10 @@ class Analytics:
 
 		self.thread = threading.Thread(None, self.process_thread, None)
 
-		then = time.datetime.utcnow()
+		then = datetime.datetime.utcnow()
 		self.thread.start()
 		self.thread.join() # wait for analytics to finish
-		now = time.datetime.utcnow()
+		now = datetime.datetime.utcnow()
 
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
@@ -275,7 +275,7 @@ class Analytics:
 		status = {'active': self.active, 'msg': msg}
 		status['progress'] = '%s' % (self.progress)
 		send_msg(self.websocket, status, type='analyticsstatus')
-		
+
 
 	def process_thread(self):
 
