@@ -255,7 +255,7 @@ def list_data():
 	chrono_query = datetime.datetime.now()
 	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
 	chrono_query = datetime.datetime.now() - chrono_query
-	debug_output("Query completed in %s" % chrono_query)
+	#debug_output("Query completed in %s" % chrono_query)
 	
 	
 	for elt in elts:
@@ -276,7 +276,7 @@ def list_data():
 	chrono_count = datetime.datetime.now()
 	data['total_results'] = a.data.find(query).count()
 	chrono_count = datetime.datetime.now() - chrono_count
-	debug_output("Count completed in %s" % chrono_count)
+	#debug_output("Count completed in %s" % chrono_count)
 	data['chrono_query'] = str(chrono_query)
 	data['chrono_count'] = str(chrono_count)
 	return dumps(data)

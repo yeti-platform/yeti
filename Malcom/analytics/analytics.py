@@ -262,13 +262,14 @@ class Analytics:
 		then = datetime.datetime.utcnow()
 		self.thread.start()
 		self.thread.join() # wait for analytics to finish
-		now = datetime.datetime.utcnow()
-
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
-		self.active = False
-		debug_output("Finished analyzing (run time: %s)." % str(now-then))
-		self.notify_progress("Finished analyzing.")
+
+
+		now = datetime.datetime.utcnow()
+		if self.work_done:
+			debug_output("Finished analyzing (run time: %s)." % str(now-then))
+			self.notify_progress("Finished analyzing.")
 
 	def notify_progress(self, msg=None):
 
@@ -283,13 +284,16 @@ class Analytics:
 		
 		i = 0
 		total = 1
-		
+	
+		self.work_done = False
+
 		while total > 0:
 
 			query = {'next_analysis' : {'$lt': datetime.datetime.utcnow()}}
 			total = self.data.elements.find(query).count()
 			results = self.data.elements.find(query)
 			if total == 0: break # exit loop if there are no new elements to analyze
+
 
 			# build process Queue (1000 elements max) and workers
 			elements_queue = Queue(1000)
@@ -314,6 +318,7 @@ class Analytics:
 				w.join()
 
 			workers[:] = []
+			self.work_done = True
 
 		self.active = False
 
