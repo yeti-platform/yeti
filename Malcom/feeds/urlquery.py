@@ -8,7 +8,7 @@ from feed import Feed
 class UrlQuery(Feed):
 
 	def __init__(self, name):
-		super(UrlQuery, self).__init__(name, run_every="1h")
+		super(UrlQuery, self).__init__(name, run_every="5m")
 		self.enabled = True
 
 	def update(self):
