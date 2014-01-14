@@ -85,7 +85,7 @@ if __name__ == "__main__":
 																None, 
 																None, 
 																filter_restore=s['filter'], 
-																intercept_tls=s['intercept_tls'] if args.tls_proxy_port else False)
+																intercept_tls=s['intercept_tls'] if Malcom.tls_proxy else False)
 
 		Malcom.sniffer_sessions[s['name']].pcap = True
 
