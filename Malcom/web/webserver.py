@@ -336,16 +336,25 @@ def add_data():
 				return 'filename not allowed'
 		else:
 			elements = [request.form['element']]
-
-		tags = request.form.get('tags', None)
+			tags = request.form.get('tags', None)
 		
-		if len(elements) == 0 or not tags:
-			flash("You must specify an element and tags", 'warning')
+		if len(elements) == 0:
+			flash("You must specify some elements", 'warning')
 			return redirect(url_for('dataset'))
 
 		a = g.a
-		tags = tags.strip().split(";")
-		a.add_text(elements, tags)
+
+		if file: # if we just uploaded a file, and it has associated tags
+			for e in elements:
+				if ";" in e:
+					elt = e.split(';')[0]
+					tag = e.split(';')[1]
+					a.add_text([elt], tag.split(','))
+				else:
+					a.add_text([e])
+		else: # we're inputting from the web
+			tags = tags.strip().split(",")
+			a.add_text(elements, tags)
 
 		if request.form.get('analyse', None):
 			a.process()
