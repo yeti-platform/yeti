@@ -39,7 +39,7 @@ def list_to_str(obj):
     if isinstance(obj, list):
         return ", ".join([list_to_str(e) for e in obj])
     else:
-        return str(obj)
+        return str(obj).decode('cp1252')
 
 
 def send_msg(ws, msg, type='msg'):
