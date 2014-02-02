@@ -101,7 +101,13 @@ ws_sniffer.onopen = snifferInterfaceInit
   <h1 id='session_name'>{{session.name}}</h1>
   <small>Filter: {{session.filter}}</small>
   <br />
+  <h3>Graph operations</h3>
+  <div class="input-append">
+      <input id="query" type="text" onkeyup="highlight_query($('#query').val())">
+      <button class='btn' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
 
+  </div>
+  <span class="help-block">e.g. 'type:ip', 'google.com'</span>
   <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">
     {% if session.pcap %}Play PCAP{% else %}Start{%endif%}
   </button>
@@ -110,13 +116,17 @@ ws_sniffer.onopen = snifferInterfaceInit
   </button>
   
   <a href="{{url_for('pcap', session_name=session_name)}}">Get .pcap</a>
-  <label class="checkbox" style='font-size:small'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
-  <label class="checkbox" style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  <br style='clear:both' style='margin-top:10px;'>
+
+  <div style='margin-top:5px;'>
+    <label class="checkbox" style='font-size:small;float:left;margin-right:30px;'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
+    <label class="checkbox" style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  </div>
   <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
   <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
   
-  <h3>Info</h3>
-  <table class='table' id='node_info'></table>
+  <h3>Node info</h3>
+  <table class='table table-condensed' id='node_info'></table>
   <div class='whois'></div>
   <h3>Sessions</h3>
   <table id='sessions' class='table table-condensed'>
