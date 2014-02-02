@@ -176,9 +176,9 @@ function keyup() {
 
 function resize() {
     width = $('.graph').width();
-    height = window.innerHeight - 150;
+    height = window.innerHeight - 160;
     $('.graph').height(height)
-    zoom_scale.attr('width', width).attr('height', height)
+    // zoom_scale.attr('width', width).attr('height', height)
     svg.attr("width", width).attr("height", height);
     brush.attr('width', width).attr('height', height);
     force.size([width, height]).resume();
