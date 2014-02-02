@@ -97,12 +97,12 @@ def before_request():
 
 # decorator for URLs that should not be public
 def private_url(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if app.config['PUBLIC']:
-            abort(404)
-        return f(*args, **kwargs)
-    return decorated_function
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		if app.config['PUBLIC']:
+			abort(404)
+		return f(*args, **kwargs)
+	return decorated_function
 
 
 @app.route('/')
@@ -226,43 +226,68 @@ def dataset():
 	return render_template("dataset.html")
 
 
-@app.route('/dataset/list/') # ajax method for sarching dataset and populating dataset table
-def list_data():
+@app.route('/dataset/query/') # ajax method for sarching dataset and populating dataset table
+def query_data():
 	a = g.a
 	query = {}
-	try:
-		page = int(request.args['page'])
-	except Exception, e:
-		page = 0
 
-	fuzzy = False if request.args['fuzzy']=='false' else True
+	if 'page' in request.args:
+		page = int(request.args['page'])
+	else:
+		page = None
+
+
+	if 'fuzzy' in request.args:
+		fuzzy = request.args['fuzzy'] != 'false'
+	else:
+		fuzzy = False
+	
 
 	for key in request.args:
-		if key not in  ['page', 'fuzzy']:
-			if request.args[key].find(',') != -1: # split request arguments
-				if fuzzy:
-					query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
+		if key not in ['page', 'fuzzy']:
+				if request.args[key].find(',') != -1: # split request arguments
+						if fuzzy:
+								query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
+						else:
+								query['$and'] = [{ key: split} for split in request.args[key].split(',')]
 				else:
-					query['$and'] = [{ key: split} for split in request.args[key].split(',')]
-			else:
-				if fuzzy:
-					query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
-				else:
-					query[key] = request.args[key]
+						if fuzzy:
+								query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
+						else:
+								query[key] = request.args[key]
 
-	per_page = 50
-
-	chrono_query = datetime.datetime.now()
-	elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
-	chrono_query = datetime.datetime.now() - chrono_query
-	#debug_output("Query completed in %s" % chrono_query)
 	
+	apikey = request.headers.get('X-Malcom-API-key', False)
+
+	#if not "X-Malcom-API-key":
+	#	return dumps({})
+
+	available_tags = g.a.data.get_tags_for_key(apikey)
+
+	if len(available_tags) > 0:
+		tag_filter = {'tags': {'$in': available_tags}}
+	else:
+		tag_filter = {}
+
+	query = {'$and': [query, tag_filter]}
+
+	data = {}
+	chrono_query = datetime.datetime.now()
+	if page != None:
+		page = int(page)
+		per_page = 50
+		elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
+		data['page'] = page
+		data['per_page'] = per_page
+	else:
+		elts = [e for e in a.data.find(query).sort('date_created', -1)]
+
+	chrono_query = datetime.datetime.now() - chrono_query	
 	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
 
-	data = {}
 	if len(elts) > 0:
 		data['fields'] = elts[0].display_fields
 		data['elements'] = elts
@@ -270,29 +295,31 @@ def list_data():
 		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
 		data['elements'] = []
 	
-	data['page'] = page
-	data['per_page'] = per_page
-
 	chrono_count = datetime.datetime.now()
 	data['total_results'] = a.data.find(query).count()
 	chrono_count = datetime.datetime.now() - chrono_count
-	#debug_output("Count completed in %s" % chrono_count)
+
 	data['chrono_query'] = str(chrono_query)
 	data['chrono_count'] = str(chrono_count)
+
 	return dumps(data)
 
-@app.route('/dataset/list/csv')
+@app.route('/dataset/csv')
 def dataset_csv():
 	a = g.a
 	filename = []
 	query = {}
-	fuzzy = False if request.args['fuzzy'] == 'false' else True
 
+	if 'fuzzy' in request.args:
+		fuzzy = request.args['fuzzy'] != 'false'
+	else:
+		fuzzy = False
+	
 	for key in request.args:
 		if key != '' and key not in ['fuzzy']:
 			if fuzzy:
 				# slow
-				query[key] = re.compile(re.escape(request.args[key]), re.IGNORECASE)
+				query[key] = re.compile(request.args[key], re.IGNORECASE)
 			else:
 				# skip regex to make it faster
 				query[key] = request.args[key]
@@ -460,8 +487,6 @@ def sniffer_session_delete(session_name):
 
 
 
-
-	
 
 @app.route('/sniffer/<session_name>/pcap')
 def pcap(session_name):

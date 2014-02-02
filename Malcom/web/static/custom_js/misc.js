@@ -74,14 +74,17 @@ function get_dataset(query, url) {
 		page = 0;
 	}
 
+	params = {}
 	querydict['page'] = page
-
 	querydict['fuzzy'] = $('#fuzzy').prop('checked')
+
+	console.log($.param(querydict))
 
 	$.ajax({
 	  dataType: "json",
+	  type: 'GET',
 	  url: url,
-	  data: querydict,
+	  data: $.param(querydict),
 	  beforeSend: function(data) {
 	  	$('#loading-spinner').addClass('show')
 	  },

@@ -40,7 +40,7 @@
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
 			      <input id="query" placeholder='tags=malware' type="text">
-			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list_data') }}')">Go</button>
+			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('query_data') }}')">Go</button>
 			      <label class="checkbox">
 				      <input id='fuzzy' type="checkbox"> Fuzzy search (slower)
 				    </label>
@@ -53,9 +53,9 @@
 		</table>
 		<div class="pagination">
 		  <ul>
-		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Prev</a></li>
+		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('query_data') }}')">Prev</a></li>
 		    <li><a id='pagination-page' href="javascript:void(0)"></a></li>
-		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Next</a></li>
+		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('query_data') }}')">Next</a></li>
 		  </ul>
 		  <br />
 		  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
@@ -64,10 +64,10 @@
 		<script>
 			$("#query").keyup(function (event) {
 				if (!$('#fuzzy').prop('checked') || event.which == 13) {
-					get_dataset($('#query').val(), '{{ url_for('list_data') }}')
+					get_dataset($('#query').val(), '{{ url_for('query_data') }}')
 				}
 			});
-			$(get_dataset("",'{{url_for('list_data')}}'))
+			$(get_dataset("",'{{url_for('query_data')}}'))
 		</script>
 		
 
