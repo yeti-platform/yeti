@@ -1,9 +1,10 @@
 
 import datetime, os
-import pygeoip
+import geoip2.database
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.auxiliary.toolbox import debug_output
+import Malcom
 
 
 class Element(dict):
@@ -241,10 +242,17 @@ class Ip(Element):
 		# get geolocation info
 		try:
 			file = os.path.abspath(__file__)
-			gi = pygeoip.GeoIP(Malcom.config['BASE_PATH']+'/auxiliary/geoIP/GeoLiteCity.dat')
-			geoinfo = gi.record_by_addr(self.value)
-			for key in geoinfo:
-				self[key] = geoinfo[key]
+			reader = geoip2.database.Reader(Malcom.config['BASE_PATH']+'/auxiliary/geoIP/GeoLite2-City.mmdb')
+			geoinfo = reader.city(self.value)
+			
+			self['city'] = geoinfo.city.name
+			self['postal_code'] = geoinfo.postal.code
+			self['time_zone'] = geoinfo.location.time_zone
+			self['country_code'] = geoinfo.country.iso_code
+			self['latitude'] = str(geoinfo.location.latitude)
+			self['longitude'] = str(geoinfo.location.longitude)
+
+
 		except Exception, e:
 			debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
 

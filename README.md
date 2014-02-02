@@ -61,7 +61,7 @@ The following was tested on Ubuntu server 12.04 LTS:
 
 * still from your virtualenv, install necessary python packages
 
-        pip install flask pymongo pygeoip gevent-websocket python-dateutil netifaces lxml twisted pyopenssl
+        pip install flask pymongo geoip2 gevent-websocket python-dateutil netifaces lxml twisted pyopenssl
 
 Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
 
