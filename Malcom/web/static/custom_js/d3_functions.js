@@ -1,3 +1,25 @@
+function keydown() {
+  console.log(d3.event.keyCode)
+  if (!d3.event.metaKey) switch (d3.event.keyCode) {
+    case 38: nudge( 0, -1); break;             // UP
+    case 40: nudge( 0, +1); break;             // DOWN
+    case 37: nudge(-1,  0); break;             // LEFT
+    case 39: nudge(+1,  0); break;             // RIGHT
+    case 85: unfix(); break;                   // u
+    case 72: toggle_sniffer_nodes_visibility('hide'); break;      // h
+    case 83: toggle_sniffer_nodes_visibility('show'); break;      // s
+    case 84: toggle_sniffer_nodes_visibility('toggle'); break;      // t
+    case 32: getneighbors(); break;            // space
+    case 69: getevil(); break;            // space
+  }
+  shiftKey = d3.event.shiftKey || d3.event.metaKey;
+}
+
+function keyup() {
+  shiftKey = d3.event.shiftKey || d3.event.metaKey;
+}
+
+
 function freeze_graph(freeze) {
   all = d3.selectAll('.node').data()
   for (var i in all) {
@@ -31,8 +53,7 @@ function getneighbors() {
   for (var i in datas) {
     ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
-  // url = '/neighbors/'+id;
-  // console.log(url);
+
   console.log($.param(ids))
   $.ajax({
     type: 'get',
@@ -76,8 +97,6 @@ function getevil() {
   for (var i in datas) {
     ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
-  // url = '/neighbors/'+id;
-  // console.log(url);
   console.log($.param(ids))
   $.ajax({
     url: url_static_prefix+'/evil',
@@ -95,7 +114,8 @@ function getevil() {
   
 }
 
-function unfix() { // unfixes and deselects selected ndoes
+// unfixes and deselects selected ndoes
+function unfix() { 
   sel = d3.selectAll('.selected')
   seldata = sel.data()
   for (var i in seldata) {
@@ -107,7 +127,8 @@ function unfix() { // unfixes and deselects selected ndoes
   force.resume();
 }
 
-function toggle_sniffer_nodes_visibility(state) { // hides nodes making them transparent
+// toggles node visibility
+function toggle_sniffer_nodes_visibility(state) { 
   sel = d3.selectAll('.selected')
   seldata = sel.data()
   hide_nodes = []
@@ -153,26 +174,7 @@ function toggle_sniffer_nodes_visibility(state) { // hides nodes making them tra
 
 }
 
-function keydown() {
-  console.log(d3.event.keyCode)
-  if (!d3.event.metaKey) switch (d3.event.keyCode) {
-    case 38: nudge( 0, -1); break;             // UP
-    case 40: nudge( 0, +1); break;             // DOWN
-    case 37: nudge(-1,  0); break;             // LEFT
-    case 39: nudge(+1,  0); break;             // RIGHT
-    case 85: unfix(); break;                   // u
-    case 72: toggle_sniffer_nodes_visibility('hide'); break;      // h
-    case 83: toggle_sniffer_nodes_visibility('show'); break;      // s
-    case 84: toggle_sniffer_nodes_visibility('toggle'); break;      // t
-    case 32: getneighbors(); break;            // space
-    case 69: getevil(); break;            // space
-  }
-  shiftKey = d3.event.shiftKey || d3.event.metaKey;
-}
 
-function keyup() {
-  shiftKey = d3.event.shiftKey || d3.event.metaKey;
-}
 
 function resize() {
     width = $('.graph').width();
