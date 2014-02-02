@@ -107,21 +107,34 @@ function unfix() { // unfixes and deselects selected ndoes
   force.resume();
 }
 
-function hide_sniffer_nodes() { // hides nodes making them transparent
+function toggle_sniffer_nodes_visibility(state) { // hides nodes making them transparent
   sel = d3.selectAll('.selected')
   seldata = sel.data()
   hide_nodes = []
   show_nodes = []
   sel.classed('dim', function(d) {
-    d.hidden = !(d.hidden == true)
-    if (d.hidden) {
-      hide_nodes.push(d._id.$oid);
+    if (state == 'toggle') {
+        d.hidden = !(d.hidden == true)
+        if (d.hidden) {
+          hide_nodes.push(d._id.$oid);
+        }
+        else {
+          show_nodes.push(d._id.$oid);
+        }
+        return d.hidden
     }
-    else {
-      show_nodes.push(d._id.$oid);
-    }
-    return d.hidden
-  })
+    else if (state == 'hide') {
+      
+        d.hidden = true
+        hide_nodes.push(d._id.$oid)
+        return true
+      }
+    else if (state == 'show') {
+        d.hidden = false
+        hide_nodes.push(d._id.$oid)
+        return false
+      }
+    })
 
   // update link visibility
 
@@ -141,13 +154,16 @@ function hide_sniffer_nodes() { // hides nodes making them transparent
 }
 
 function keydown() {
+  console.log(d3.event.keyCode)
   if (!d3.event.metaKey) switch (d3.event.keyCode) {
     case 38: nudge( 0, -1); break;             // UP
     case 40: nudge( 0, +1); break;             // DOWN
     case 37: nudge(-1,  0); break;             // LEFT
     case 39: nudge(+1,  0); break;             // RIGHT
     case 85: unfix(); break;                   // u
-    case 72: hide_sniffer_nodes(); break;      // h
+    case 72: toggle_sniffer_nodes_visibility('hide'); break;      // h
+    case 83: toggle_sniffer_nodes_visibility('show'); break;      // s
+    case 84: toggle_sniffer_nodes_visibility('toggle'); break;      // t
     case 32: getneighbors(); break;            // space
     case 69: getevil(); break;            // space
   }
