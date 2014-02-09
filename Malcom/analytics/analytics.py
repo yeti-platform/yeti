@@ -2,7 +2,7 @@ from flask import Flask
 import dateutil, time, threading, pickle, gc, datetime
 
 from bson.objectid import ObjectId
-from multiprocessing import Pool, Process, Queue
+from multiprocessing import Pool, Process, JoinableQueue
 
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
@@ -19,25 +19,33 @@ class Worker(Process):
 		
 	def run(self):
 		for elt in iter (self.queue.get, None):
-			elt = pickle.loads(elt)
-			#print elt
-			debug_output("[%s] Started work on %s %s" % (self.name, elt['type'], elt['value']), type='analytics')
-			etype = elt['type']
-			tags = elt['tags']
+			try:
+				elt = pickle.loads(elt)
+				#print elt
+				debug_output("[%s] Started work on %s %s" % (self.name, elt['type'], elt['value']), type='analytics')
+				etype = elt['type']
+				tags = elt['tags']
 
-			new = elt.analytics()
-			
-			for n in new:
-				saved = self.engine.save_element(n[1])
+				new = elt.analytics()
+				
+				for n in new:
+					saved = self.engine.save_element(n[1])
 
-				#do the link
-				self.engine.data.connect(elt, saved, n[0])
-			
-			# this will change updated time
-			self.engine.save_element(elt, tags)
+					#do the link
+					self.engine.data.connect(elt, saved, n[0])
+				
+				# this will change updated time
+				self.engine.save_element(elt, tags)
 
-			self.engine.progress += 1
-			self.engine.notify_progress(elt['value'])
+				self.engine.progress += 1
+				self.engine.notify_progress(elt['value'])
+				self.queue.task_done()
+			except Exception, e:
+				debug_output("An error occured in %s: %s" % (self.name, e), type="error")
+				self.queue.task_done()
+				#self.queue.put(elt)
+		self.queue.task_done()
+
 
 class Analytics:
 
@@ -257,11 +265,9 @@ class Analytics:
 			if self.thread.is_alive():
 				return
 
-		self.thread = threading.Thread(None, self.process_thread, None)
-
 		then = datetime.datetime.utcnow()
-		self.thread.start()
-		self.thread.join() # wait for analytics to finish
+		self.process_thread()
+	
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
 
@@ -287,38 +293,39 @@ class Analytics:
 	
 		self.work_done = False
 
+		
+		# build process Queue (1000 elements max)
+		elements_queue = JoinableQueue(1000)
+			
+		# start workers
+		workers = []
+
+		for i in range(Malcom.config['MAX_WORKERS']):
+			w = Worker(elements_queue)
+			# w.daemon = True
+			workers.append(w)
+			w.start()
+
 		while total > 0:
 
 			query = {'next_analysis' : {'$lt': datetime.datetime.utcnow()}}
 			total = self.data.elements.find(query).count()
 			results = self.data.elements.find(query)
 			if total == 0: break # exit loop if there are no new elements to analyze
-
-
-			# build process Queue (1000 elements max) and workers
-			elements_queue = Queue(1000)
-			workers = []
-
-			for i in range(Malcom.config['MAX_WORKERS']):
-				w = Worker(elements_queue)
-				workers.append(w)
-				w.start()
+			self.work_done = True
 
 			# add elements to Queue			
 			for elt in results:
 				elements_queue.put(pickle.dumps(elt))
 
-			# Worker cleanup
-			for i in range(Malcom.config['MAX_WORKERS']):
-				elements_queue.put(None)
-			elements_queue.close()
-
 			# Wait for workers to finish
-			for w in workers:
-				w.join()
+			elements_queue.join()
 
-			workers[:] = []
-			self.work_done = True
+		for i in range(Malcom.config['MAX_WORKERS']):
+				elements_queue.put(None)
+
+		for w in workers:
+			w.join()
 
 		self.active = False
 
