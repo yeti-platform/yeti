@@ -203,11 +203,15 @@ def report(field, value, strict=False):
 			dst = all_nodes_dict[e['dst']]
 			src = all_nodes_dict[e['src']]
 			if e['attribs'] not in linked_elements: # if we don't have a record for this link, create an empty array
-				linked_elements[e['attribs']] = []
-			if dst not in linked_elements[e['attribs']]: # avoid duplicates
-				print "%s -> %s" % (e['attribs'], dst['value'])
-				linked_elements[e['attribs']].append((src, dst))
-	
+				linked_elements[e['attribs']] = {}
+			if dst['value'] not in linked_elements[e['attribs']]: # avoid duplicates
+				print "%s is %s for %s" % (dst['value'], e['attribs'], src['value'])
+				linked_elements[e['attribs']][dst['value']] = []
+			linked_elements[e['attribs']][dst['value']].append(src)
+
+	for a in linked_elements['NS']:
+		print a, [e['value'] for e in linked_elements['NS'][a]]
+
 	related_elements = {}
 
 	chrono = datetime.datetime.now()

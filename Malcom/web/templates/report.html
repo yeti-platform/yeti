@@ -64,7 +64,22 @@
 			<div id='relatedTabsContent' class='tab-content'>
 				{% for r in related_elements %}
 				<div class='tab-pane {% if loop.index0 == 0%}active{%endif%}' id='{{r}}'>
-					<div class="accordion" id="accordionRelated">
+
+					<table class='table table-condensed'>
+						<tr>{% for label in related_elements[r][0].display_fields if label[0] not in ['type'] %}<th>{{ label[1] }}</th>{% endfor %}</tr>
+						{% for n in related_elements[r] %}
+						<tr>
+							{% for label in n.display_fields if label[0] not in ['type'] %}
+							{% if label[0] == 'tags' %}
+								<td>{{", ".join(n.tags)}}</td>
+							{%else%}
+								<td>{{ n[label[0]] }}</td>
+							{%endif%}
+							{% endfor %}
+						</tr>
+						{%endfor%}
+					</table>
+					<!-- <div class="accordion" id="accordionRelated">
 						<div class="accordion-group">
 						{% for n in related_elements[r]%}
 							<div class="accordion-heading">
@@ -88,7 +103,7 @@
 							</div>
 						{% endfor %}
 						</div>
-					</div>
+					</div> -->
 				</div>
 				{% endfor %}
 			</div>
@@ -108,24 +123,45 @@
 				<div class='tab-pane {% if loop.index0 == 0%}active{%endif%}' id='{{r}}'>
 					<div class="accordion" id="accordionRelated">
 						<div class="accordion-group">
-						{% for n in linked[r]%}
+						{% for dest in linked[r]%}
 							<div class="accordion-heading">
 							
 								<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionRelated" href="#collapse{{r}}{{loop.index0}}">
-								{{r}} - {{n[1].value}} ({{n[0].value}})
+								{{r}} - {{dest}}
 								</a>
 							</div>
 							<div id="collapse{{r}}{{loop.index0}}" class="accordion-body collapse">
 								<div class="accordion-inner">
 									<table class='table table-condensed'>
-									{% for label in n[1].display_fields %}
-										{% if label[0] == 'tags' %}
-											<tr><th>{{label[1]}}</th><td>{{", ".join(n[1].tags)}}</td></tr>
-										{%else%}
-											<tr><th>{{label[1]}}</th><td>{{ n[1][label[0]]}}</td></tr>
-										{%endif%}
-									{% endfor %}
+										<tr>
+										{% for label in linked[r][dest][0].display_fields %}
+										<th>{{label[1]}}</th>
+										{%endfor%}
+										</tr>
+
+										{% for e in linked[r][dest] %}
+										<tr>
+											{% for label in e.display_fields %}
+												{% if label[0] == 'tags' %}
+													<td>{{", ".join(e.tags)}}</td>
+												{%else%}
+													<td>{{ e[label[0]]}}</td>
+												{%endif%}
+											{% endfor %}
+										</tr>
+										{% endfor %}
 									</table>
+									<!-- <table class='table table-condensed'>
+									{% for n in linked[r][dest] %}
+										{% for label in n.display_fields %}
+											{% if label[0] == 'tags' %}
+												<tr><th>{{label[1]}}</th><td>{{", ".join(n.tags)}}</td></tr>
+											{%else%}
+												<tr><th>{{label[1]}}</th><td>{{ n[label[0]]}}</td></tr>
+											{%endif%}
+										{% endfor %}
+									{% endfor %}
+									</table> -->
 								</div>
 							</div>
 						{% endfor %}
@@ -163,7 +199,7 @@
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
 			      <input id="query" placeholder='tags=malware' type="text">
-			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list_data') }}')">Go</button>
+			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('query_data') }}')">Go</button>
 			      <label class="checkbox">
 				      <input id='fuzzy' type="checkbox"> Fuzzy search (slower)
 				    </label>
@@ -176,9 +212,9 @@
 		</table>
 		<div class="pagination">
 		  <ul>
-		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Prev</a></li>
+		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('query_data') }}')">Prev</a></li>
 		    <li><a id='pagination-page' href="javascript:void(0)"></a></li>
-		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Next</a></li>
+		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('query_data') }}')">Next</a></li>
 		  </ul>
 		  <br />
 		  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
@@ -187,10 +223,10 @@
 		<script>
 			$("#query").keyup(function (event) {
 				if (!$('#fuzzy').prop('checked') || event.which == 13) {
-					get_dataset($('#query').val(), '{{ url_for('list_data') }}')
+					get_dataset($('#query').val(), '{{ url_for('query_data') }}')
 				}
 			});
-			$(get_dataset("",'{{url_for('list_data')}}'))
+			$(get_dataset("",'{{url_for('query_data')}}'))
 		</script>
 		
 
