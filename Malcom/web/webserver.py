@@ -209,9 +209,6 @@ def report(field, value, strict=False):
 				linked_elements[e['attribs']][dst['value']] = []
 			linked_elements[e['attribs']][dst['value']].append(src)
 
-	for a in linked_elements['NS']:
-		print a, [e['value'] for e in linked_elements['NS'][a]]
-
 	related_elements = {}
 
 	chrono = datetime.datetime.now()
