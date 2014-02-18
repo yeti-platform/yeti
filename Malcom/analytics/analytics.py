@@ -3,7 +3,6 @@ import dateutil, time, threading, pickle, gc, datetime
 
 from bson.objectid import ObjectId
 from multiprocessing import Pool, Process, JoinableQueue
-
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
@@ -21,8 +20,7 @@ class Worker(Process):
 		for elt in iter (self.queue.get, None):
 			try:
 				elt = pickle.loads(elt)
-				#print elt
-				debug_output("[%s] Started work on %s %s" % (self.name, elt['type'], elt['value']), type='analytics')
+				debug_output("[%s] Started work on %s %s. Queue size: %s" % (self.name, elt['type'], elt['value'], self.queue.qsize()), type='analytics')
 				etype = elt['type']
 				tags = elt['tags']
 
@@ -30,20 +28,17 @@ class Worker(Process):
 				
 				for n in new:
 					saved = self.engine.save_element(n[1])
-
 					#do the link
 					self.engine.data.connect(elt, saved, n[0])
 				
 				# this will change updated time
 				self.engine.save_element(elt, tags)
-
+				self.queue.task_done()
 				self.engine.progress += 1
 				self.engine.notify_progress(elt['value'])
-				self.queue.task_done()
 			except Exception, e:
 				debug_output("An error occured in %s: %s" % (self.name, e), type="error")
 				self.queue.task_done()
-				#self.queue.put(elt)
 		self.queue.task_done()
 
 
@@ -295,7 +290,7 @@ class Analytics:
 
 		
 		# build process Queue (1000 elements max)
-		elements_queue = JoinableQueue(1000)
+		elements_queue = JoinableQueue(10000)
 			
 		# start workers
 		workers = []
@@ -307,14 +302,13 @@ class Analytics:
 			w.start()
 
 		while total > 0:
-
 			query = {'next_analysis' : {'$lt': datetime.datetime.utcnow()}}
 			total = self.data.elements.find(query).count()
-			results = self.data.elements.find(query)
+			results = self.data.elements.find(query)[:10000]
 			if total == 0: break # exit loop if there are no new elements to analyze
 			self.work_done = True
-
-			# add elements to Queue			
+			
+			# add elements to Queue
 			for elt in results:
 				elements_queue.put(pickle.dumps(elt))
 
@@ -322,7 +316,7 @@ class Analytics:
 			elements_queue.join()
 
 		for i in range(Malcom.config['MAX_WORKERS']):
-				elements_queue.put(None)
+			elements_queue.put(None)
 
 		for w in workers:
 			w.join()
