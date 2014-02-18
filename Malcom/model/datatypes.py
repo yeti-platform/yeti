@@ -1,6 +1,12 @@
 
 import datetime, os
-import geoip2.database
+try:
+	import geoip2.database
+	geoip = True
+except Exception, e:
+	print "Geoip2 database not found"
+	geoip = False
+
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.auxiliary.toolbox import debug_output
@@ -242,15 +248,16 @@ class Ip(Element):
 		# get geolocation info
 		try:
 			file = os.path.abspath(__file__)
-			reader = geoip2.database.Reader(Malcom.config['BASE_PATH']+'/auxiliary/geoIP/GeoLite2-City.mmdb')
-			geoinfo = reader.city(self.value)
-			
-			self['city'] = geoinfo.city.name
-			self['postal_code'] = geoinfo.postal.code
-			self['time_zone'] = geoinfo.location.time_zone
-			self['country_code'] = geoinfo.country.iso_code
-			self['latitude'] = str(geoinfo.location.latitude)
-			self['longitude'] = str(geoinfo.location.longitude)
+			if geoip:
+				reader = geoip2.database.Reader(Malcom.config['BASE_PATH']+'/auxiliary/geoIP/GeoLite2-City.mmdb')
+				geoinfo = reader.city(self.value)
+				
+				self['city'] = geoinfo.city.name
+				self['postal_code'] = geoinfo.postal.code
+				self['time_zone'] = geoinfo.location.time_zone
+				self['country_code'] = geoinfo.country.iso_code
+				self['latitude'] = str(geoinfo.location.latitude)
+				self['longitude'] = str(geoinfo.location.longitude)
 
 
 		except Exception, e:
