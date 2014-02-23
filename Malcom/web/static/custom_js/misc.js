@@ -148,13 +148,20 @@ function get_dataset(query, url) {
 
 	  	// adjust pagination
 	  	per_page = 50;
-	  	total_pages = Math.floor(data.total_results / per_page)
+	  	if (data.total_results != 'many')	{
+		  	total_pages = Math.floor(data.total_results / per_page) + 1;
+		  	next_page = (page*1+1) <= total_pages ? page*1 + 1 : page*1;
+	  	}
+	  	else {
+	  		total_pages = 'many';
+	  		next_page = page*1+1;
+	  	}
 	  	previous_page = page - 1 >= 0 ? page - 1 : 0;
-	  	next_page = (page*1+1) <= total_pages ? page*1 + 1 : page*1;
+	  	
 	  	
 	  	prev = $("#pagination-prev")
 	  	next = $("#pagination-next")
-	  	$("#pagination-page").text("Page "+(page+1)+" of "+ (total_pages+1))
+	  	$("#pagination-page").text("Page "+(page*1+1)+" of "+ (total_pages))
 	  	$("#total-results").text(data.total_results)
 	  	
 	  	prev.attr('data-nav', previous_page)

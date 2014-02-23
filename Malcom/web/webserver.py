@@ -297,7 +297,10 @@ def query_data():
 		data['elements'] = []
 	
 	chrono_count = datetime.datetime.now()
-	data['total_results'] = a.data.find(query).count()
+	if not fuzzy:
+		data['total_results'] = a.data.find(query).count()
+	else:
+		data['total_results'] = "many"
 	chrono_count = datetime.datetime.now() - chrono_count
 
 	data['chrono_query'] = str(chrono_query)
