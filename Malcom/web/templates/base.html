@@ -69,7 +69,9 @@
             <ul class="nav">
               <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
               <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Sniffer</a></li>            
+              {% if g.config['FEEDS'] %}
               <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
+              {% endif %}
               <li class="divider-vertical"></li>
               
             </ul>

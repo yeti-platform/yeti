@@ -57,7 +57,6 @@ class Feed(object):
 		self.next_run = self.last_run + self.run_every
 		self.elements_fetched = 0
 
-		
 		self.analytics.notify_progress("Feeding")
 		status = self.update()
 		self.analytics.notify_progress("Inactive")
@@ -67,7 +66,7 @@ class Feed(object):
 
 class FeedEngine(threading.Thread):
 	"""Feed engine. This object will load and update feeds"""
-	def __init__(self, analytics):
+	def __init__(self, analytics, scheduler):
 		threading.Thread.__init__(self)
 		self.a = analytics
 		self.feeds = {}
@@ -75,8 +74,9 @@ class FeedEngine(threading.Thread):
 		self.global_thread = None
 
 		# for periodic tasking
-		self.period = 60
-		self.run_periodically = False
+		if scheduler:
+			self.period = 60
+			self.run_periodically = False
 
 	def run_feed(self, feed_name):
 		if self.threads.get(feed_name):
@@ -85,15 +85,17 @@ class FeedEngine(threading.Thread):
 		self.threads[feed_name] = threading.Thread(None, self.feeds[feed_name].run, None)
 		self.threads[feed_name].start()
 
-	def run_all_feeds(self):
+
+	def run_all_feeds(self, block=False):
 		debug_output("Running all feeds")
 		for feed_name in [f for f in self.feeds if self.feeds[f].enabled]:
 			debug_output('Starting thread for feed %s...' % feed_name)
 			self.run_feed(feed_name)
 
-		for t in self.threads:
-			if self.threads[t].is_alive():
-				self.threads[t].join()
+		if block:
+			for t in self.threads:
+				if self.threads[t].is_alive():
+					self.threads[t].join()
 
 
 	def stop_all_feeds(self):

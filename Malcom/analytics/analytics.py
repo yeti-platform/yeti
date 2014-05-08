@@ -2,7 +2,7 @@ from flask import Flask
 import dateutil, time, threading, pickle, gc, datetime
 
 from bson.objectid import ObjectId
-from multiprocessing import Pool, Process, JoinableQueue
+from multiprocessing import Pool, Process, JoinableQueue, Queue
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
@@ -15,11 +15,18 @@ class Worker(Process):
 		super(Worker, self).__init__()
 		self.queue = queue
 		self.engine = Analytics()
+		self.work = False
 		
 	def run(self):
-		for elt in iter (self.queue.get, None):
-			try:
+		self.work = True
+		try:
+			while self.work:
+			#for elt in iter(self.queue.get, None):
+				elt = self.queue.get()
+				if elt == None:
+					break
 				elt = pickle.loads(elt)
+
 				debug_output("[%s] Started work on %s %s. Queue size: %s" % (self.name, elt['type'], elt['value'], self.queue.qsize()), type='analytics')
 				etype = elt['type']
 				tags = elt['tags']
@@ -33,21 +40,29 @@ class Worker(Process):
 				
 				# this will change updated time
 				self.engine.save_element(elt, tags)
-				self.queue.task_done()
 				self.engine.progress += 1
 				self.engine.notify_progress(elt['value'])
-			except Exception, e:
-				debug_output("An error occured in %s: %s" % (self.name, e), type="error")
-				self.queue.task_done()
-		self.queue.task_done()
+			return
+
+		except Exception, e:
+			debug_output("An error occured in %s: %s" % (self.name, e), type="error")
+		except KeyboardInterrupt, e:
+			pass
+
+		
+
+	def stop(self):
+		self.work = False
 
 
-class Analytics:
+class Analytics(threading.Thread):
 
 	def __init__(self):
+		threading.Thread.__init__(self)
 		self.data = Model()
 		self.max_workers = Malcom.config.get('MAX_WORKERS', 4)
 		self.active = False
+		self.active_lock = threading.Lock()
 		self.status = "Inactive"
 		self.websocket = None
 		self.thread = None
@@ -55,6 +70,9 @@ class Analytics:
 		self.stack_lock = threading.Lock()
 		self.progress = 0
 		self.total = 0
+		self.workers = []
+		self.elements_queue = None
+
 
 	def add_text(self, text, tags=[]):
 		added = []
@@ -254,23 +272,84 @@ class Analytics:
 
 		return chosen_nodes, chosen_links
 
+	def run(self):
+		self.run_analysis = True
+		while self.run_analysis:
+			debug_output("Launching analytics")
+			time.sleep(1) # run a new thread every period seconds
+			self.active_lock.acquire()
+			if self.run_analysis:
+				self.process(10000)
+			self.active_lock.release()
 
-	def process(self):
+	def stop(self):
+		self.run_analysis = False
+		for w in self.workers:
+			try:
+				w.stop()
+			except Exception, e:
+				pass
+
+		self.join()
+
+		try:
+			while True:
+				self.elements_queue.get(False)
+		except Exception, e:
+			pass
+			
+
+	def process(self, batch_size=10000):
 		if self.thread:
 			if self.thread.is_alive():
 				return
 
 		then = datetime.datetime.utcnow()
-		self.process_thread()
-	
+		
+		self.active = True
+		self.work_done = False
+		
+		# build process Queue (1000 elements max)
+		self.elements_queue = Queue(batch_size)
+		
+		self.workers = None
+
+		total = 1
+
+		# start workers
+		workers = []
+		for i in range(Malcom.config['MAX_WORKERS']):
+			w = Worker(self.elements_queue)
+			w.start()
+			workers.append(w)
+
+		self.workers = workers
+
+		query = {'next_analysis' : {'$lt': datetime.datetime.utcnow()}}
+		results = self.data.elements.find(query)[:batch_size]
+		
+		# add elements to Queue
+		for elt in results:
+			self.elements_queue.put(pickle.dumps(elt))
+
+		for i in range(Malcom.config['MAX_WORKERS']):
+			self.elements_queue.put(None)
+
+		for w in self.workers:
+			w.join()	
+
 		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 		self.bulk_asn()
-
+		
+		self.active = False
 
 		now = datetime.datetime.utcnow()
-		if self.work_done:
-			debug_output("Finished analyzing (run time: %s)." % str(now-then))
-			self.notify_progress("Finished analyzing.")
+		
+		msg = "Analyzed %s elements (run time: %s)." % (str(now-then), batch_size) 
+		debug_output(msg)
+		self.notify_progress(msg)
+
+		
 
 	def notify_progress(self, msg=None):
 
@@ -279,51 +358,6 @@ class Analytics:
 		send_msg(self.websocket, status, type='analyticsstatus')
 
 
-	def process_thread(self):
-
-		self.active = True
-		
-		i = 0
-		total = 1
-	
-		self.work_done = False
-
-		
-		# build process Queue (1000 elements max)
-		elements_queue = JoinableQueue(10000)
-			
-		# start workers
-		workers = []
-
-		for i in range(Malcom.config['MAX_WORKERS']):
-			w = Worker(elements_queue)
-			# w.daemon = True
-			workers.append(w)
-			w.start()
-
-		while total > 0:
-			query = {'next_analysis' : {'$lt': datetime.datetime.utcnow()}}
-			total = self.data.elements.find(query).count()
-			results = self.data.elements.find(query)[:10000]
-			if total == 0: break # exit loop if there are no new elements to analyze
-			self.work_done = True
-			
-			# add elements to Queue
-			for elt in results:
-				elements_queue.put(pickle.dumps(elt))
-
-			# Wait for workers to finish
-			elements_queue.join()
-
-		for i in range(Malcom.config['MAX_WORKERS']):
-			elements_queue.put(None)
-
-		for w in workers:
-			w.join()
-
-		self.active = False
-
-			
 			
 
 

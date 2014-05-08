@@ -264,7 +264,7 @@ class Ip(Element):
 			debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
 
 		# get reverse hostname
-		
+		return []	
 		new = []
 		hostname = toolbox.dns_dig_reverse(self['value'])
 		

@@ -28,9 +28,10 @@ class Sniffer(dict):
 		self.ifaces = Malcom.config['IFACES']
 		filter_ifaces = ""
 		for i in self.ifaces:
+			if i != "Not defined": continue
 			filter_ifaces += " and not host %s " % self.ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
-		self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
+		#self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False
@@ -82,6 +83,7 @@ class Sniffer(dict):
 		if self.pcap:
 			self.load_pcap()
 		elif not self.public:
+			print "Sniffing with filter: %s" % self.filter
 			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)
 
 		self.generate_pcap()
@@ -411,7 +413,7 @@ class Sniffer(dict):
 			flow.tls = True
 
 			# add host / flow tuple to the TLS connection list
-			debug_output("TLS SYN to from: %s:%s -> %s:%s" % (pkt[IP].src, pkt[TCP].sport, pkt[IP].dst, pkt[TCP].dport))
+			debug_output("TLS SYN: %s:%s -> %s:%s" % (pkt[IP].src, pkt[TCP].sport, pkt[IP].dst, pkt[TCP].dport))
 			# this could actually be replaced by only flow
 			self.tls_proxy.hosts[(pkt[IP].src, pkt[TCP].sport)] = (pkt[IP].dst, pkt[TCP].dport, flow.fid) 
 

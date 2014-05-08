@@ -8,7 +8,7 @@ __license__ = "GPL"
 
 
 #system
-import os, datetime, time, sys, signal, argparse, re
+import os, datetime, time, sys, signal, argparse, re, threading, multiprocessing
 import netifaces as ni
 
 #db 
@@ -26,6 +26,9 @@ from functools import wraps
 #websockets
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
+import gevent
+# import gevent.monkey
+# gevent.monkey.patch_all()
 
 # custom
 from Malcom.auxiliary.toolbox import *
@@ -111,16 +114,19 @@ def index():
 
 # feeds ========================================================
 
-@app.route('/feeds')
-def feeds():
-	alpha = sorted(Malcom.feed_engine.feeds, key=lambda name: name)
-	return render_template('feeds.html', feed_names=alpha, feeds=Malcom.feed_engine.feeds)
 
-@app.route('/feeds/run/<feed_name>')
-@private_url
-def run_feed(feed_name):
-	Malcom.feed_engine.run_feed(feed_name)
-	return redirect(url_for('feeds'))
+if Malcom.config['FEEDS']:
+
+	@app.route('/feeds')
+	def feeds():
+		alpha = sorted(Malcom.feed_engine.feeds, key=lambda name: name)
+		return render_template('feeds.html', feed_names=alpha, feeds=Malcom.feed_engine.feeds)
+
+	@app.route('/feeds/run/<feed_name>')
+	@private_url
+	def run_feed(feed_name):
+		Malcom.feed_engine.run_feed(feed_name)
+		return redirect(url_for('feeds'))
 
 
 # graph operations =============================================
@@ -430,8 +436,8 @@ def sniffer():
 		intercept_tls = True if request.form.get('intercept_tls', False) and Malcom.tls_proxy != None else False
 
 		Malcom.sniffer_sessions[session_name] = netsniffer.Sniffer(Malcom.analytics_engine, session_name, str(request.remote_addr), filter, intercept_tls=intercept_tls)
-		
 		# this is where the data will be stored persistently
+
 		filename = session_name + ".pcap"
 		Malcom.sniffer_sessions[session_name].pcap_filename = filename
 		
@@ -555,7 +561,7 @@ def analytics_api():
 		debug_output("Got websocket")
 
 		ws = request.environ['wsgi.websocket']
-		g.a.websocket = ws
+		g.a.websocket = ws # TODO: remove this and use a local ws variable
 
 		while True:
 			try:
@@ -567,7 +573,7 @@ def analytics_api():
 			cmd = message['cmd']
 
 			if cmd == 'analyticsstatus':
-				g.a.notify_progress('Loaded')
+				g.a.notify_progress('Loaded') # same here
 
 	
 			
@@ -664,31 +670,35 @@ def sniffer_api():
 	return ""
 
 
-class MalcomWeb(object):
+
+
+class MalcomWeb(threading.Thread):
 	"""docstring for MalcomWeb"""
 	def __init__(self, public, listen_port, listen_interface):
+		threading.Thread.__init__(self)
 		self.public = public
 		self.listen_port = listen_port
 		self.listen_interface = listen_interface
+		self.http_server = None
+
+	def run(self):
 		self.start_server()
+
+	def stop_server(self):
+		pass
 
 	def start_server(self):
 		for key in Malcom.config:
 			app.config[key] = Malcom.config[key]
 		app.config['UPLOAD_DIR'] = ""
-		
 		sys.stderr.write("Starting webserver in %s mode...\n" % ("public" if self.public else "private"))
+		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler)
+		sys.stderr.write("Webserver listening on %s:%s\n\n" % (self.listen_interface, self.listen_port))
 		try:
-			http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler)
-			sys.stderr.write("Webserver listening on %s:%s\n\n" % (self.listen_interface, self.listen_port))
-			http_server.serve_forever()
-		except KeyboardInterrupt:
-
-			sys.stderr.write(" caught: Exiting gracefully\n")
-
-			if len(Malcom.sniffer_sessions) > 0:
-				debug_output('Stopping sniffing sessions...')
-				for s in Malcom.sniffer_sessions:
-					session = Malcom.sniffer_sessions[s]
-					session.stop()
-
+			self.http_server.serve_forever()
+			# p.join()
+		except KeyboardInterrupt, e:
+			pass
+		
+		
+		
