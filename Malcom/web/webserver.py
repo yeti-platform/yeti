@@ -44,7 +44,6 @@ app = Malcom.app
 		
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-app.debug = True
 
 
 # This enables the server to be ran behind a reverse-proxy
@@ -254,12 +253,14 @@ def query_data():
 		if key not in ['page', 'fuzzy']:
 				if request.args[key].find(',') != -1: # split request arguments
 						if fuzzy:
-								query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
+								#query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
+								query['$and'] = [{ key: re.compile(split)} for split in request.args[key].split(',')]
 						else:
 								query['$and'] = [{ key: split} for split in request.args[key].split(',')]
 				else:
 						if fuzzy:
-								query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
+								#query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
+								query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
 						else:
 								query[key] = request.args[key]
 
@@ -575,7 +576,14 @@ def analytics_api():
 			if cmd == 'analyticsstatus':
 				g.a.notify_progress('Loaded') # same here
 
-	
+@app.route('/fast')
+def fast():
+	return ("That was fast!")
+
+@app.route('/slow')
+def slow():
+	time.sleep(10)
+	return ("That was slow...")
 			
 
 
@@ -694,6 +702,8 @@ class MalcomWeb(threading.Thread):
 		sys.stderr.write("Starting webserver in %s mode...\n" % ("public" if self.public else "private"))
 		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler)
 		sys.stderr.write("Webserver listening on %s:%s\n\n" % (self.listen_interface, self.listen_port))
+		#app.run(threaded=True, host='0.0.0.0')
+		
 		try:
 			self.http_server.serve_forever()
 			# p.join()

@@ -39,42 +39,30 @@ for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
 
 def parse_config(filename):
 	import ConfigParser
-	config = ConfigParser.ConfigParser()
+	config = ConfigParser.ConfigParser(allow_no_value=True)
 	config.read(filename)
 
 	sections = config.sections()
 
-	for section in sections:
-		try:
-			if section == 'web':
-				Malcom.config['WEB'] = config.getboolean(section, 'activated')
-				Malcom.config['LISTEN_INTERFACE'] = config.get(section, 'listen_interface')
-				Malcom.config['LISTEN_PORT'] = config.getint(section, 'listen_port')
-				Malcom.config['PUBLIC'] = config.getboolean(section, 'public')
+	if config.has_section('web'):
+		Malcom.config['WEB'] = config.getboolean('web', 'activated')
+		Malcom.config['LISTEN_INTERFACE'] = config.get('web', 'listen_interface')
+		Malcom.config['LISTEN_PORT'] = config.getint('web', 'listen_port')
+		Malcom.config['PUBLIC'] = config.getboolean('web', 'public')
 
-			if section == 'analytics':
-				Malcom.config['ANALYTICS'] = config.getboolean(section, 'activated')
-				Malcom.config['MAX_WORKERS'] = config.getint(section, 'max_workers')
+	if config.has_section('analytics'):
+		Malcom.config['ANALYTICS'] = config.getboolean('analytics', 'activated')
+		Malcom.config['MAX_WORKERS'] = config.getint('analytics', 'max_workers')
 
-			if section == 'feeds':
-				Malcom.config['FEEDS'] = config.getboolean(section, 'activated')
-				Malcom.config['FEEDS_DIR'] = config.get(section, 'feeds_dir')
-				Malcom.config['FEEDS_SCHEDULER'] = config.getboolean(section, 'scheduler')
+	if config.has_section('feeds'):
+		Malcom.config['FEEDS'] = config.getboolean('feeds', 'activated')
+		Malcom.config['FEEDS_DIR'] = config.get('feeds', 'feeds_dir')
+		Malcom.config['FEEDS_SCHEDULER'] = config.getboolean('feeds', 'scheduler')
 
-			if section == 'sniffer':
-				Malcom.config['SNIFFER'] = config.getboolean(section, 'activated')
-				Malcom.config['SNIFFER_DIR'] = config.get(section, 'sniffer_dir')
-				Malcom.config['TLS_PROXY_PORT'] = config.getint(section, 'tls_proxy_port')
-
-			# deal with DB origins
-			if section.startswith("db_"):
-				pass
-
-		except Exception, e:
-				sys.stderr.write("Configuration file failed to load: %s\nBailing...\n\n" % e)
-				exit(-1)
-
-	#print Malcom.config
+	if config.has_section('sniffer'):
+		Malcom.config['SNIFFER'] = config.getboolean('sniffer', 'activated')
+		Malcom.config['SNIFFER_DIR'] = config.get('sniffer', 'sniffer_dir')
+		Malcom.config['TLS_PROXY_PORT'] = config.getint('sniffer', 'tls_proxy_port')
 	
 	sys.stderr.write("Successfully loaded configuration file from %s\n" % filename)
 	pass
