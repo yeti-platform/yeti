@@ -38,11 +38,11 @@ class Element(dict):
 		self['tags'].extend(tags)
 		self['tags'] = list(set(self['tags']))
 
-	def is_recent(self):
-		if 'date_created' not in self:
-			return False
-		else:
-			return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
+	# def is_recent(self):
+	# 	if 'date_created' not in self:
+	# 		return False
+	# 	else:
+	# 		return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
 
 	# necessary for pickling
 	def __getstate__(self): return self.__dict__
@@ -259,12 +259,10 @@ class Ip(Element):
 				self['latitude'] = str(geoinfo.location.latitude)
 				self['longitude'] = str(geoinfo.location.longitude)
 
-
 		except Exception, e:
 			debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
 
 		# get reverse hostname
-		return []	
 		new = []
 		hostname = toolbox.dns_dig_reverse(self['value'])
 		
@@ -273,7 +271,7 @@ class Ip(Element):
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
-
+		print Malcom.config
 		return new
 
 

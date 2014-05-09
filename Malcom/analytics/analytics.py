@@ -1,6 +1,5 @@
 from flask import Flask
 import dateutil, time, threading, pickle, gc, datetime
-
 from bson.objectid import ObjectId
 from multiprocessing import Pool, Process, JoinableQueue, Queue
 from Malcom.auxiliary.toolbox import *
@@ -32,14 +31,22 @@ class Worker(Process):
 				tags = elt['tags']
 
 				new = elt.analytics()
+
+				last_connect = elt.get('date_updated', datetime.datetime.utcnow())
 				
 				for n in new:
 					saved = self.engine.save_element(n[1])
-					#do the link
-					self.engine.data.connect(elt, saved, n[0])
-				
+					# do the link
+					first_seen, last_seen = self.engine.data.connect(elt, saved, n[0])
+
+					# update date updated if there's a new connection
+					if first_seen > last_connect:
+						last_connect = first_seen
+
 				# this will change updated time
+				elt['date_updated'] = last_connect
 				self.engine.save_element(elt, tags)
+
 				self.engine.progress += 1
 				self.engine.notify_progress(elt['value'])
 			return
@@ -170,7 +177,7 @@ class Analytics(threading.Thread):
 
 				# commit any changes to DB
 				_as = self.save_element(_as)
-				_ip['last_analysis'] = datetime.datetime.now()
+				_ip['last_analysis'] = datetime.datetime.utcnow()
 				_ip = self.save_element(_ip)
 			
 				if _as and _ip:
@@ -307,45 +314,48 @@ class Analytics(threading.Thread):
 		then = datetime.datetime.utcnow()
 		
 		self.active = True
+		self.workers = []
 		self.work_done = False
-		
-		# build process Queue (1000 elements max)
-		self.elements_queue = Queue(batch_size)
-		
-		self.workers = None
-
-		total = 1
-
-		# start workers
-		workers = []
-		for i in range(Malcom.config['MAX_WORKERS']):
-			w = Worker(self.elements_queue)
-			w.start()
-			workers.append(w)
-
-		self.workers = workers
 
 		query = {'next_analysis' : {'$lt': datetime.datetime.utcnow()}}
-		results = self.data.elements.find(query)[:batch_size]
-		
-		# add elements to Queue
-		for elt in results:
-			self.elements_queue.put(pickle.dumps(elt))
+		results = [r for r in self.data.elements.find(query)[:batch_size]]
+		total_elts = 0
 
-		for i in range(Malcom.config['MAX_WORKERS']):
-			self.elements_queue.put(None)
+		if len(results) > 0:
 
-		for w in self.workers:
-			w.join()	
+			# build process Queue (10000 elements max)
+			self.elements_queue = Queue(batch_size)
 
-		# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
-		self.bulk_asn()
+			# start workers
+			workers = []
+			for i in range(Malcom.config['MAX_WORKERS']):
+				w = Worker(self.elements_queue)
+				w.start()
+				workers.append(w)
+
+			self.workers = workers
+			
+			# add elements to Queue
+			
+			for elt in results:
+				self.elements_queue.put(pickle.dumps(elt))
+				total_elts += 1
+				work_done = True
+
+			for i in range(Malcom.config['MAX_WORKERS']):
+				self.elements_queue.put(None)
+
+			for w in self.workers:
+				w.join()	
+
+			# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
+			self.bulk_asn()
 		
 		self.active = False
 
 		now = datetime.datetime.utcnow()
 		
-		msg = "Analyzed %s elements (run time: %s)." % (str(now-then), batch_size) 
+		msg = "Analyzed %s elements (run time: %s)" % (total_elts, str(now-then)) 
 		debug_output(msg)
 		self.notify_progress(msg)
 

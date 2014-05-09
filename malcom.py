@@ -3,7 +3,7 @@
 
 __description__ = 'Malcom - Malware communications analyzer'
 __author__ = '@tomchop_'
-__version__ = '1.1 alpha'
+__version__ = '1.2 alpha'
 __license__ = "GPL"
 
 import os, sys, argparse, threading
@@ -18,8 +18,7 @@ from Malcom.analytics.analytics import Analytics
 
 # this should be stored and loaded from a configuration file
 Malcom.config['DEBUG'] = True
-Malcom.config['VERSION'] = "1.1 alpha"
-
+Malcom.config['VERSION'] = "1.2 alpha"
 
 Malcom.config['LISTEN_INTERFACE'] = "0.0.0.0"
 Malcom.config['LISTEN_PORT'] = 8080

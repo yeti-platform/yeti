@@ -53,7 +53,7 @@ class Feed(object):
 	def run(self):
 
 		self.running = True
-		self.last_run = datetime.now()
+		self.last_run = datetime.utcnow()
 		self.next_run = self.last_run + self.run_every
 		self.elements_fetched = 0
 

@@ -217,7 +217,7 @@ def report(field, value, strict=False):
 
 	related_elements = {}
 
-	chrono = datetime.datetime.now()
+	chrono = datetime.datetime.utcnow()
 	for n in all_nodes_dict:
 		n = all_nodes_dict[n]
 		if n['type'] not in related_elements: # if we don't have a record for this type, create an empty array
@@ -279,7 +279,7 @@ def query_data():
 	query = {'$and': [query, tag_filter]}
 
 	data = {}
-	chrono_query = datetime.datetime.now()
+	chrono_query = datetime.datetime.utcnow()
 	if page != None:
 		page = int(page)
 		per_page = 50
@@ -289,7 +289,7 @@ def query_data():
 	else:
 		elts = [e for e in a.data.find(query).sort('date_created', -1)]
 
-	chrono_query = datetime.datetime.now() - chrono_query	
+	chrono_query = datetime.datetime.utcnow() - chrono_query	
 	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
@@ -302,12 +302,12 @@ def query_data():
 		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
 		data['elements'] = []
 	
-	chrono_count = datetime.datetime.now()
+	chrono_count = datetime.datetime.utcnow()
 	if not fuzzy:
 		data['total_results'] = a.data.find(query).count()
 	else:
 		data['total_results'] = "many"
-	chrono_count = datetime.datetime.now() - chrono_count
+	chrono_count = datetime.datetime.utcnow() - chrono_count
 
 	data['chrono_query'] = str(chrono_query)
 	data['chrono_count'] = str(chrono_count)

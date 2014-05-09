@@ -134,10 +134,8 @@ class Model:
 			saved['date_created'] = datetime.datetime.utcnow()
 			saved['next_analysis'] = datetime.datetime.utcnow()
 
-		saved['date_updated'] = datetime.datetime.utcnow()
-
 		self.elements.save(saved)
-		assert saved['date_created'] != None and saved['date_updated'] != None
+		assert saved['date_created'] != None
 
 		if not with_status:
 			return saved
@@ -150,30 +148,40 @@ class Model:
 	def exists(self, element):
 		return self.elements.find_one({ 'value': element.value })
 
-
 	def connect(self, src, dst, attribs="", commit=True):
-
 			if not src or not dst:
 				return None
 			
 			conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
+			
+			# if the connection already exists, just modify attributes and last seen time
 			if conn:
-				conn['attribs'] = attribs
+				if attribs != "": conn['attribs'] = attribs
+				conn['last_seen'] = datetime.datetime.utcnow()
+
+			# if not, change the connection
 			else:
 				conn = {}
 				conn['src'] = src._id
 				conn['dst'] = dst._id
-				conn['attribs'] = attribs   
+				conn['attribs'] = attribs
+				conn['first_seen'] = datetime.datetime.utcnow()
+				conn['last_seen'] = datetime.datetime.utcnow()
 				debug_output("(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs), type='model')
+			
 			if commit:
 				self.graph.save(conn)
-			return conn
+			
+			return conn['first_seen'], conn['last_seen']
 
 	def add_feed(self, feed):
 		elts = feed.get_info()
 	  
 		for e in elts:
 			self.malware_add(e,e['tags'])
+
+	def get_destinations(self, elt):
+		return [e['value'] for e in self.graph.find({'src': elt['_id']}, 'value')]
 
 	def get_neighbors_id(self, elts, query={}, include_original=True):
 
