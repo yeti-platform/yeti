@@ -1,8 +1,11 @@
+from gevent import Greenlet
+from gevent.select import select as gselect
+import gevent
+
 from scapy.all import *
 from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading
 from bson.json_util import dumps
-
 from bson.objectid import ObjectId
 
 
@@ -12,7 +15,7 @@ from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 import Malcom
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
-rr_codes = {"1": "A", "2": "NS", "5": "CNAME", "15": "MX"}
+rr_codes = { 1: "A", 28: "AAAA", 2: "NS", 5: "CNAME", 15: "MX", 255: 'ANY', 12: "PTR" }
 known_tcp_ports = {'80':'HTTP', '443':'HTTPS', '21':'FTP', '22':'SSH'}
 known_udp_ports = {'53':'DNS'}
 NOTROOT = "nobody"
@@ -40,6 +43,7 @@ class Sniffer(dict):
 			self.filter = filter_restore
 		
 		self.thread = None
+		self.thread_active = False
 		self.public = False
 		self.pcap = False
 		self.pcap_filename = self.name + '.pcap'
@@ -76,6 +80,7 @@ class Sniffer(dict):
 		return True
 
 	def run(self):
+		self.thread_active = True
 		debug_output("[+] Sniffing session %s started" % self.name)
 		debug_output("[+] Filter: %s" % self.filter)
 		self.stopSniffing = False
@@ -89,7 +94,7 @@ class Sniffer(dict):
 		self.generate_pcap()
 		
 		debug_output("[+] Sniffing session %s stopped" % self.name)
-
+		self.thread_active = False
 		return 
 
 	def update_nodes(self):
@@ -105,22 +110,18 @@ class Sniffer(dict):
 
 	def start(self, remote_addr, public=False):
 		self.public = public
-		self.thread = threading.Thread(None, self.run, None)
+		self.thread = Greenlet(self.run)
 		self.thread.start()
 		
 	def stop(self):
 		self.stopSniffing = True
 		if self.thread:
 			self.thread.join()
-		time.sleep(0.5)
 		return True
 		
 
 	def status(self):
-		if self.thread:
-			return self.thread.is_alive()
-		else:
-			return False
+		return self.thread_active
 
 	def generate_pcap(self):
 		if len (self.pkts) > 0:
@@ -303,7 +304,7 @@ class Sniffer(dict):
 					if _rrname != [] and _rdata != []:
 						debug_output("Caught DNS answer: %s -> %s" % ( _rrname['value'], _rdata['value']))
 						debug_output("Added %s, %s" %(rrname, rdata))
-						conn = self.analytics.data.connect(_rrname, _rdata, rr_codes[str(rr.type)], True)
+						conn = self.analytics.data.connect(_rrname, _rdata, rr_codes[rr.type], True)
 						if conn not in self.edges:
 							self.edges.append(conn)
 							new_edges.append(conn)
@@ -384,7 +385,6 @@ class Sniffer(dict):
 
 		# end flow analysis
 
-
 		# STANDARD PACKET ANALYSIS - extract IP addresses and domain names
 		# the magic for extracting elements from packets happens here
 
@@ -394,11 +394,13 @@ class Sniffer(dict):
 		if new_edges:
 			edges += new_edges
 
+
 		new_elts, new_edges = self.checkDNS(pkt)
 		if new_elts:
 			elts += new_elts
 		if new_edges:
 			edges += new_edges
+
 
 		# TLS MITM - intercept TLS communications and send cleartext to malcom
 		# We want to be protocol agnostic (HTTPS, FTPS, ***S). For now, we choose which 
@@ -421,7 +423,7 @@ class Sniffer(dict):
 		if elts != [] or edges != []:
 			self.send_nodes(elts, edges)
 		if self.pcap:
-			time.sleep(0.1)
+			gevent.sleep(0.1)
 
 	def send_flow_statistics(self, flow):
 		data = {}
@@ -502,12 +504,18 @@ class Sniffer(dict):
 						stopperStoptime = time.time()+stopperTimeout
 						remainStopper = stopperStoptime-time.time()
 
-					sel = select([s],[],[],remainStopper)
+					if self.pcap == True:
+						sel = select([s],[],[],remainStopper)
+					else:
+						sel = gselect([s],[],[],remainStopper)
 					if s not in sel[0]:
 						if stopper and stopper():
 							break
 				else:
-					sel = select([s],[],[],remain)
+					if self.pcap == True:
+						sel = select([s],[],[],remain)
+					else:
+						sel = gselect([s],[],[],remain)
 
 				if s in sel[0]:
 					p = s.recv(MTU)
