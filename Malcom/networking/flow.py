@@ -5,30 +5,81 @@ from bson.json_util import dumps, loads
 from Malcom.model.datatypes import Url, Hostname, Ip
 import Malcom.auxiliary.toolbox as toolbox
 
-
+rr_codes = {1: "A", 28: "AAAA", 2: "NS", 5: "CNAME", 15: "MX", 255: 'ANY', 12: 'PTR'}
+r_codes = {3: "Name error", 0: "OK"}
+		
 
 class Decoder(object):
 
 	@staticmethod
 	def decode_flow(flow):
 		data = None
-
-		#if flow.src_port == 80: # probable HTTP response
+		
 		data = Decoder.HTTP_response(flow.payload)
 		if data: return data
-		#if flow.dst_port == 80: # probable HTTP request
+		
 		data = Decoder.HTTP_request(flow.payload)
 		if data: return data
 		
 		if flow.tls:
-			#if flow.dst_port == 443: # probabl HTTPs request
+
 			data = Decoder.HTTP_request(flow.cleartext_payload, secure=True)
 			if data: return data
-			#if flow.src_port == 443: # probabl HTTPs request
+
 			data = Decoder.HTTP_response(flow.cleartext_payload)
 			if data: return data
 
+		data = Decoder.DNS_request(flow.payload)
+		if data: return data
+
+		data = Decoder.DNS_response(flow.payload)
+		if data: return data
+
 		return False
+
+
+	@staticmethod
+	def DNS_request(payload):
+		data = {}
+
+		try: # we're relying on scapy to parse raw data... this is probably not gonig to end well.
+			dns = DNS(payload)
+			if dns.ancount == 0 and dns.nscount == 0 and dns.arcount == 0 and dns.qdcount > 0: # looks like a DNS query
+				data['flow_type'] = 'dns_query'
+				data['request_type'] = rr_codes.get(dns.qd.qtype, "?")
+				data['questions'] = [ (dns.qd[i].qname, dns.qd[i].qtype) for i in range(dns.qdcount)]
+				data['info'] = "DNS query: %s" % (", ".join( "%s (%s)" % (q[0], rr_codes.get(q[1], "?")) for q in data['questions'] ))
+		except Exception, e:
+			return {}
+
+		return data
+
+	@staticmethod
+	def DNS_response(payload):
+		data = {}
+		
+		try:
+			dns = DNS(payload)
+			if dns.ancount > 0 or dns.nscount > 0 or dns.arcount > 0 : # looks like a DNS response
+				try:
+					data['answers'] = [ (dns.an[i].rrname, dns.an[i].rdata, dns.an[i].type) for i in range(dns.ancount)]	
+				except IndexError, e:
+					dns.display()
+					raise e
+				
+				data['rcode'] = dns.rcode
+				data['flow_type'] = 'dns_response'
+				if len(data['answers']) > 0:
+					data['info'] = "DNS %s %s" % (r_codes[data['rcode']], ", ".join( "%s (%s) -> %s" % (q[0], rr_codes.get(q[2], "?"), q[1]) for q in data['answers'] ))
+					if 'A' in [rr_codes.get(q[2]) for q in data['answers']] and r_codes[dns.rcode] == 'OK':
+						data['flow_type'] = 'dns_response_OK'
+				else:
+					data['info'] = "DNS %s (no answers)" % r_codes[data['rcode']]
+		except Exception, e:
+			return {}
+
+		return data
+
 
 	@staticmethod
 	def HTTP_request(payload, secure=False):
@@ -62,8 +113,8 @@ class Decoder(object):
 		if not response:
 			return False
 		else:
-			data['flow_type'] = 'http_response'
 			data['status'] = response.group("status_code")
+			data['flow_type'] = 'http_response_%s' % data['status']
 			encoding = re.search(r'Transfer-Encoding: (?P<encoding>\S+)', payload)
 			data['encoding'] = encoding.group('encoding') if encoding else "N/A"
 			response = re.search(r'\r\n\r\n(?P<response>[\S\s]*)', payload)
