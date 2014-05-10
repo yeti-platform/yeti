@@ -7,7 +7,7 @@ __version__ = '1.2 alpha'
 __license__ = "GPL"
 
 # patch threads
-from gevent import monkey; monkey.patch_all()
+from gevent import monkey; monkey.patch_socket(dns=False); monkey.patch_time();
 
 # system
 import os, datetime, time, sys, signal, argparse, re, threading, multiprocessing
@@ -29,6 +29,7 @@ from functools import wraps
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
 from gevent.pool import Pool
+from gevent import Greenlet
 
 # custom
 from Malcom.auxiliary.toolbox import *
@@ -44,7 +45,7 @@ app = Malcom.app
 		
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
-
+app.debug = True
 
 # This enables the server to be ran behind a reverse-proxy
 # Make sure you have an nginx configuraiton similar to this
@@ -286,7 +287,10 @@ def query_data():
 	if page != None:
 		page = int(page)
 		per_page = 50
-		elts = [e for e in a.data.find(query).sort('date_created', -1)[page*per_page:page*per_page+per_page]]
+		if fuzzy:
+			elts = [e for e in a.data.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]#.hint([('_id', 1)])
+		else:
+			elts = [e for e in a.data.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]
 		data['page'] = page
 		data['per_page'] = per_page
 	else:
@@ -397,7 +401,8 @@ def add_data():
 			a.add_text(elements, tags)
 
 		if request.form.get('analyse', None):
-			a.process()
+			a.once = True
+			a.start()
 
 		return redirect(url_for('dataset'))
 
@@ -670,10 +675,19 @@ def sniffer_api():
 	return ""
 
 
-class MalcomWeb(threading.Thread):
+@app.route("/fast")
+def fast():
+	return "That was fast!"
+
+@app.route("/slow")
+def slow():
+	time.sleep(10)
+	return "That was slow..."
+
+class MalcomWeb(Greenlet):
 	"""docstring for MalcomWeb"""
 	def __init__(self, public, listen_port, listen_interface):
-		threading.Thread.__init__(self)
+		Greenlet.__init__(self)
 		self.public = public
 		self.listen_port = listen_port
 		self.listen_interface = listen_interface

@@ -1,3 +1,5 @@
+from gevent import monkey; monkey.patch_socket(dns=False); monkey.patch_time();
+
 import dateutil
 
 import threading, os
@@ -63,7 +65,7 @@ class Model:
 
 	def find(self, query={}):
 		return self.elements.find(query)
-
+		
 	def find_one(self, oid):
 		return self.elements.find_one(oid)
 
@@ -121,11 +123,7 @@ class Model:
 			del element['_id']
 
 		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'tags' : {'$each': tags}}}, upsert=True)
-		saved = self.elements.find({'value': element['value']})
-
-		assert(saved.count() == 1) # check that elements are unique in the db
-		saved = saved[0]
-
+		saved = self.elements.find_one({'value': element['value']})
 		if status['updatedExisting'] == True:
 			debug_output("(updated %s %s)" % (saved.type, saved.value), type='model')
 			assert saved.get('date_created', None) != None
@@ -172,7 +170,7 @@ class Model:
 			if commit:
 				self.graph.save(conn)
 			
-			return conn['first_seen'], conn['last_seen']
+			return conn
 
 	def add_feed(self, feed):
 		elts = feed.get_info()

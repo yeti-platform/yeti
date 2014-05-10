@@ -1,11 +1,14 @@
 from flask import Flask
+import Malcom
 import dateutil, time, threading, pickle, gc, datetime
 from bson.objectid import ObjectId
-from multiprocessing import Pool, Process, JoinableQueue, Queue
+from multiprocessing import Process, Queue
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
-import Malcom
+
+# from gevent.queue import Queue
+from gevent import Greenlet
 
 
 class Worker(Process):
@@ -20,13 +23,15 @@ class Worker(Process):
 		self.work = True
 		try:
 			while self.work:
+				print "Worker working"
 			#for elt in iter(self.queue.get, None):
+				print "Worker queue %s" % self.queue
 				elt = self.queue.get()
 				if elt == None:
 					break
 				elt = pickle.loads(elt)
 
-				debug_output("[%s] Started work on %s %s. Queue size: %s" % (self.name, elt['type'], elt['value'], self.queue.qsize()), type='analytics')
+				debug_output("[%s] Started work on %s %s. Queue size: %s" % ("AnonGreenlet", elt['type'], elt['value'], self.queue.qsize()), type='analytics')
 				etype = elt['type']
 				tags = elt['tags']
 
@@ -37,7 +42,9 @@ class Worker(Process):
 				for n in new:
 					saved = self.engine.save_element(n[1])
 					# do the link
-					first_seen, last_seen = self.engine.data.connect(elt, saved, n[0])
+					conn = self.engine.data.connect(elt, saved, n[0])
+					first_seen = conn['first_seen']
+					last_seen = conn['last_seen']
 
 					# update date updated if there's a new connection
 					if first_seen > last_connect:
@@ -52,20 +59,18 @@ class Worker(Process):
 			return
 
 		except Exception, e:
-			debug_output("An error occured in %s: %s" % (self.name, e), type="error")
+			debug_output("An error occured in %s: %s" % ("AnonGreenlet", e), type="error")
 		except KeyboardInterrupt, e:
 			pass
-
-		
 
 	def stop(self):
 		self.work = False
 
 
-class Analytics(threading.Thread):
+class Analytics(Greenlet):
 
 	def __init__(self):
-		threading.Thread.__init__(self)
+		Greenlet.__init__(self)
 		self.data = Model()
 		self.max_workers = Malcom.config.get('MAX_WORKERS', 4)
 		self.active = False
@@ -79,6 +84,7 @@ class Analytics(threading.Thread):
 		self.total = 0
 		self.workers = []
 		self.elements_queue = None
+		self.once = False
 
 
 	def add_text(self, text, tags=[]):
@@ -288,6 +294,7 @@ class Analytics(threading.Thread):
 			if self.run_analysis:
 				self.process(10000)
 			self.active_lock.release()
+			if self.once: self.run_analysis = False; self.once = False
 
 	def stop(self):
 		self.run_analysis = False
@@ -336,18 +343,21 @@ class Analytics(threading.Thread):
 			self.workers = workers
 			
 			# add elements to Queue
-			
+			print 'adding elts (from query %s in queue %s)' % (query, self.elements_queue)
 			for elt in results:
 				self.elements_queue.put(pickle.dumps(elt))
+				print "just put %s" %elt
 				total_elts += 1
 				work_done = True
+			print 'done'
 
 			for i in range(Malcom.config['MAX_WORKERS']):
 				self.elements_queue.put(None)
+			print "none added"
 
 			for w in self.workers:
 				w.join()	
-
+			print "waiting for join"
 			# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 			self.bulk_asn()
 		
