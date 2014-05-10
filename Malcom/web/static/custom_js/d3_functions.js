@@ -174,14 +174,17 @@ function toggle_sniffer_nodes_visibility(state) {
 
 }
 
-
-
 function resize() {
+
+    if (!$('a[href=#graph]').parent().hasClass('active'))
+      return
+
     width = $('.graph').width();
     height = window.innerHeight - 160;
     $('.graph').height(height)
     // zoom_scale.attr('width', width).attr('height', height)
     svg.attr("width", width).attr("height", height);
+    $('svg').attr('width', svg.attr('width')).attr('height', svg.attr('height'));
     brush.attr('width', width).attr('height', height);
     force.size([width, height]).resume();
 

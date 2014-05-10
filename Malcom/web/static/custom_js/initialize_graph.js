@@ -5,6 +5,8 @@ window.onkeydown=function(e){
 };
 
 
+
+
 // declare useful global vars
 var radiusScale, 
 	color, 
@@ -85,10 +87,14 @@ function initialize_graph() {
 		    .datum(function() { return {selected: false, previouslySelected: false}; })
 		    .attr("class", "brush");
 
+		 // make sure graph is resized when clicking on the graph link
+
 
 		 node = svg.selectAll(".node")
 		    link = svg.selectAll(".link");
 
 		 // graph controls
-		 console.log($("#curved-links"))		    
+		 console.log($("#curved-links"))	
+   
+
 }
