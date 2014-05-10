@@ -366,14 +366,3 @@ class Analytics(threading.Thread):
 		status = {'active': self.active, 'msg': msg}
 		status['progress'] = '%s' % (self.progress)
 		send_msg(self.websocket, status, type='analyticsstatus')
-
-
-			
-
-
-
-
-
-
-
-

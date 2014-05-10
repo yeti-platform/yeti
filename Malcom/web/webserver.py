@@ -6,29 +6,29 @@ __author__ = '@tomchop_'
 __version__ = '1.2 alpha'
 __license__ = "GPL"
 
+# patch threads
+from gevent import monkey; monkey.patch_all()
 
-#system
+# system
 import os, datetime, time, sys, signal, argparse, re, threading, multiprocessing
 import netifaces as ni
 
-#db 
+# db 
 from pymongo import MongoClient
 
-#json / bson
+# json / bson
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
 
-#flask stuff
+# flask stuff
 from werkzeug import secure_filename
-from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash, send_from_directory, Response
 from functools import wraps
 
-#websockets
+# websockets / WSGI
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
-import gevent
-# import gevent.monkey
-# gevent.monkey.patch_all()
+from gevent.pool import Pool
 
 # custom
 from Malcom.auxiliary.toolbox import *
@@ -65,6 +65,7 @@ app.secret_key = os.urandom(24)
 
 def malcom_app(environ, start_response):  
 	
+
 	if environ.get('HTTP_SCRIPT_NAME'):
 		# update path info 
 		environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
@@ -74,6 +75,7 @@ def malcom_app(environ, start_response):
 	if environ.get('HTTP_X_SCHEME'):	
 		# forward the scheme
 		environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME')
+
 
 	return app(environ, start_response)
 
@@ -576,16 +578,6 @@ def analytics_api():
 			if cmd == 'analyticsstatus':
 				g.a.notify_progress('Loaded') # same here
 
-@app.route('/fast')
-def fast():
-	return ("That was fast!")
-
-@app.route('/slow')
-def slow():
-	time.sleep(10)
-	return ("That was slow...")
-			
-
 
 @app.route('/api/sniffer')
 def sniffer_api():
@@ -678,8 +670,6 @@ def sniffer_api():
 	return ""
 
 
-
-
 class MalcomWeb(threading.Thread):
 	"""docstring for MalcomWeb"""
 	def __init__(self, public, listen_port, listen_interface):
@@ -700,13 +690,13 @@ class MalcomWeb(threading.Thread):
 			app.config[key] = Malcom.config[key]
 		app.config['UPLOAD_DIR'] = ""
 		sys.stderr.write("Starting webserver in %s mode...\n" % ("public" if self.public else "private"))
-		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler)
+		
+		pool = Pool(1000)
+		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler, spawn=pool)
 		sys.stderr.write("Webserver listening on %s:%s\n\n" % (self.listen_interface, self.listen_port))
-		#app.run(threaded=True, host='0.0.0.0')
 		
 		try:
 			self.http_server.serve_forever()
-			# p.join()
 		except KeyboardInterrupt, e:
 			pass
 		
