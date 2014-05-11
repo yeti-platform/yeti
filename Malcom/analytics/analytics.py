@@ -23,9 +23,7 @@ class Worker(Process):
 		self.work = True
 		try:
 			while self.work:
-				print "Worker working"
 			#for elt in iter(self.queue.get, None):
-				print "Worker queue %s" % self.queue
 				elt = self.queue.get()
 				if elt == None:
 					break
@@ -343,21 +341,16 @@ class Analytics(Greenlet):
 			self.workers = workers
 			
 			# add elements to Queue
-			print 'adding elts (from query %s in queue %s)' % (query, self.elements_queue)
 			for elt in results:
 				self.elements_queue.put(pickle.dumps(elt))
-				print "just put %s" %elt
 				total_elts += 1
 				work_done = True
-			print 'done'
 
 			for i in range(Malcom.config['MAX_WORKERS']):
 				self.elements_queue.put(None)
-			print "none added"
 
 			for w in self.workers:
 				w.join()	
-			print "waiting for join"
 			# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 			self.bulk_asn()
 		
