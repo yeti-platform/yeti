@@ -31,7 +31,7 @@ class Sniffer(dict):
 		self.ifaces = Malcom.config['IFACES']
 		filter_ifaces = ""
 		for i in self.ifaces:
-			if i != "Not defined": continue
+			if self.ifaces[i] == "Not defined": continue
 			filter_ifaces += " and not host %s " % self.ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
 		#self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)

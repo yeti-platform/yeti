@@ -1,3 +1,5 @@
+#from gevent import monkey; monkey.patch_socket(); monkey.patch_time();
+
 from flask import Flask
 import Malcom
 import dateutil, time, threading, pickle, gc, datetime
@@ -8,7 +10,7 @@ from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
 
 # from gevent.queue import Queue
-from gevent import Greenlet
+#from gevent import Greenlet
 
 
 class Worker(Process):
@@ -24,17 +26,19 @@ class Worker(Process):
 		try:
 			while self.work:
 			#for elt in iter(self.queue.get, None):
+	
 				elt = self.queue.get()
+
 				if elt == None:
 					break
+
 				elt = pickle.loads(elt)
 
-				debug_output("[%s] Started work on %s %s. Queue size: %s" % ("AnonGreenlet", elt['type'], elt['value'], self.queue.qsize()), type='analytics')
+				debug_output("[%s] Started work on %s %s. Queue size: %s" % ("AnonProcess", elt['type'], elt['value'], self.queue.qsize()), type='analytics')
 				etype = elt['type']
 				tags = elt['tags']
 
 				new = elt.analytics()
-
 				last_connect = elt.get('date_updated', datetime.datetime.utcnow())
 				
 				for n in new:
@@ -52,6 +56,7 @@ class Worker(Process):
 				elt['date_updated'] = last_connect
 				self.engine.save_element(elt, tags)
 
+
 				self.engine.progress += 1
 				self.engine.notify_progress(elt['value'])
 			return
@@ -65,10 +70,11 @@ class Worker(Process):
 		self.work = False
 
 
-class Analytics(Greenlet):
+
+class Analytics(Process):
 
 	def __init__(self):
-		Greenlet.__init__(self)
+		super(Analytics, self).__init__()
 		self.data = Model()
 		self.max_workers = Malcom.config.get('MAX_WORKERS', 4)
 		self.active = False
@@ -330,15 +336,6 @@ class Analytics(Greenlet):
 
 			# build process Queue (10000 elements max)
 			self.elements_queue = Queue(batch_size)
-
-			# start workers
-			workers = []
-			for i in range(Malcom.config['MAX_WORKERS']):
-				w = Worker(self.elements_queue)
-				w.start()
-				workers.append(w)
-
-			self.workers = workers
 			
 			# add elements to Queue
 			for elt in results:
@@ -349,8 +346,18 @@ class Analytics(Greenlet):
 			for i in range(Malcom.config['MAX_WORKERS']):
 				self.elements_queue.put(None)
 
+			# start workers
+			workers = []
+			for i in range(Malcom.config['MAX_WORKERS']):
+				w = Worker(self.elements_queue)
+				w.start()
+				workers.append(w)
+
+			self.workers = workers
+
 			for w in self.workers:
-				w.join()	
+				w.join()
+
 			# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 			self.bulk_asn()
 		

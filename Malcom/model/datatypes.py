@@ -186,7 +186,7 @@ class Url(Element):
 			new.append(('host', Hostname(toolbox.is_hostname(self['hostname']))))
 		else:
 			debug_output("No hostname found for %s" % self['value'], type='error')
-			return
+			return []
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 
@@ -271,15 +271,8 @@ class Ip(Element):
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
-		print Malcom.config
+
 		return new
-
-
-
-
-
-
-
 
 
 

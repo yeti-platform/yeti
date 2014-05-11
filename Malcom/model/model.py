@@ -1,4 +1,4 @@
-from gevent import monkey; monkey.patch_socket(dns=False); monkey.patch_time();
+#from gevent import monkey; monkey.patch_subprocess()#socket(dns=False); monkey.patch_time();
 
 import dateutil
 
@@ -125,13 +125,14 @@ class Model:
 		# check if existing
 		_element = self.elements.find_one({'value': element['value']})
 		if _element != None:
-			for key in _element:
-				element[key] = _element[key]
-			print tags
-			print element
-			if key not in element:
-				element[key] = {}
-			element['tags'].extend(tags)
+			for key in element:
+				if key=='tags': continue
+				_element[key] = element[key]
+			if key not in _element:
+				_element[key] = {}
+			_element['tags']
+			_element['tags'] = list(set(_element['tags'] + tags))
+			element = _element
 			new = False
 		else:
 			new = True
@@ -144,7 +145,6 @@ class Model:
 			element['date_created'] = datetime.datetime.utcnow()
 			element['next_analysis'] = datetime.datetime.utcnow()
 
-		print element
 		self.elements.save(element)
 		assert element['date_created'] != None
 
