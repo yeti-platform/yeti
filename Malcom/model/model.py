@@ -121,24 +121,37 @@ class Model:
 
 		if '_id' in element:
 			del element['_id']
-
-		status = self.elements.update({'value': element['value']}, {"$set" : element, "$addToSet": {'tags' : {'$each': tags}}}, upsert=True)
-		saved = self.elements.find_one({'value': element['value']})
-		if status['updatedExisting'] == True:
-			debug_output("(updated %s %s)" % (saved.type, saved.value), type='model')
-			assert saved.get('date_created', None) != None
+		
+		# check if existing
+		_element = self.elements.find_one({'value': element['value']})
+		if _element != None:
+			for key in _element:
+				element[key] = _element[key]
+			print tags
+			print element
+			if key not in element:
+				element[key] = {}
+			element['tags'].extend(tags)
+			new = False
 		else:
-			debug_output("(added %s %s)" % (saved.type, saved.value), type='model')
-			saved['date_created'] = datetime.datetime.utcnow()
-			saved['next_analysis'] = datetime.datetime.utcnow()
+			new = True
 
-		self.elements.save(saved)
-		assert saved['date_created'] != None
+		if not new:
+			debug_output("(updated %s %s)" % (element.type, element.value), type='model')
+			assert element.get('date_created', None) != None
+		else:
+			debug_output("(added %s %s)" % (element.type, element.value), type='model')
+			element['date_created'] = datetime.datetime.utcnow()
+			element['next_analysis'] = datetime.datetime.utcnow()
+
+		print element
+		self.elements.save(element)
+		assert element['date_created'] != None
 
 		if not with_status:
-			return saved
+			return element
 		else:
-			return saved, status
+			return element, new
 
 	def remove(self, element_id):
 		return self.elements.remove({'_id' : ObjectId(element_id)})

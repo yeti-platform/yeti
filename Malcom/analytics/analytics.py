@@ -159,7 +159,7 @@ class Analytics(Greenlet):
 			except Exception, e:
 				debug_output("Could not get AS for IPs: %s" % e)
 			
-			if as_info == {}:
+			if as_info == {} or as_info == None:
 				debug_output("as_info empty", 'error')
 				return
 
