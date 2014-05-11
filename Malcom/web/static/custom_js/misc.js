@@ -21,7 +21,7 @@ function dataset_remove(id) {
 			if (data['n'] == 1)
 				$('#row_'+id).remove()
 			else
-				console.log("Could not remove element "+id)
+				console.log("ERROR: Could not remove element "+id)
 		}
 	});
 }
@@ -41,14 +41,12 @@ function get_dataset_csv(query, url) {
 	querydict['fuzzy'] = $('#fuzzy').prop('checked')
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
-
-	console.log(url)
 	
 	location.href = url
 }
 
 function change_page(arg, url) {
-	console.log('loading page ' + arg)
+	console.log('Loading page ' + arg)
 	query = $('#query').val()
 	location.hash = arg
 	get_dataset(query, url)
@@ -78,8 +76,6 @@ function get_dataset(query, url) {
 	querydict['page'] = page
 	querydict['fuzzy'] = $('#fuzzy').prop('checked')
 
-	console.log($.param(querydict))
-
 	$.ajax({
 	  dataType: "json",
 	  type: 'GET',
@@ -96,7 +92,6 @@ function get_dataset(query, url) {
 	  	dataset = $('#dataset')
 	  	dataset.empty()
 	  	head = $("<tr>")
-	  	console.log(data)
 	  	// get the headers
 	  	for (var i in data.fields) {
 	  		h = $("<th>").text(data.fields[i][1])

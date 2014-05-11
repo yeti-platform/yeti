@@ -53,7 +53,6 @@ spinner.toggleClass('show')
 
 
 d3.json(url_static_prefix+"/neighbors?{{field}}={{value}}", function(error, graph) {
-    console.log(graph)
     push_nodes(graph.nodes)
     push_links(graph.edges)
     spinner.toggleClass('show')

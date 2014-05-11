@@ -1,5 +1,5 @@
 function keydown() {
-  console.log(d3.event.keyCode)
+  console.log("Keydown pressed: " + d3.event.keyCode)
   if (!d3.event.metaKey) switch (d3.event.keyCode) {
     case 38: nudge( 0, -1); break;             // UP
     case 40: nudge( 0, +1); break;             // DOWN
@@ -54,7 +54,6 @@ function getneighbors() {
     ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
 
-  console.log($.param(ids))
   $.ajax({
     type: 'get',
     url: url_static_prefix+'/neighbors',
@@ -71,7 +70,6 @@ function getneighbors() {
     },
     success: function(data) {
       $(".graph").css('opacity', 1)
-      console.log(data)
       spinner.toggleClass('show')
       push_nodes(data.nodes)
       push_links(data.edges)
@@ -97,17 +95,15 @@ function getevil() {
   for (var i in datas) {
     ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
-  console.log($.param(ids))
+  
   $.ajax({
     url: url_static_prefix+'/evil',
     dataType: 'json',
     data: ids,
     success: function(data) {
-      console.log(data)
-    push_nodes(data.nodes)
-    push_links(data.edges)
-
-    start();  
+      push_nodes(data.nodes)
+      push_links(data.edges)
+      start();  
     }
 
   })
@@ -258,19 +254,41 @@ function push_links(edges) {
      edges[i].dst = edges[i].target._id
 
      links.push(edges[i])
+
      ids_edges.push(edges[i]._id.$oid)
+     }
+     else {
+      
+      // highlight existing connections
+      highlighted_link = link.filter(function(d){ return (d._id.$oid) == edges[i]._id.$oid })
+      highlighted_link.classed('comms', true)
+      // setTimeout(uncomm, 500, highlighted_link)
+
+      highlighted_nodes = node.filter(function(d) {return (d._id.$oid == edges[i].dst.$oid)})
+      highlighted_nodes.classed('comms', true)
+      // setTimeout(uncomm, 500, highlighted_nodes)
+
      }
    }
 }
 
+function uncomm(elt) {
+  elt.classed('comms', false)
+}
 
+function uncomm_all() {
+  highlighted_link = link.classed('comms', false)
+  highlighted_nodes = node.classed('comms', false)
+}
+
+
+comm_intervals = {}
 
 
 function start() {
 
   function dragmove(d, i) {
 
-    //console.log('dragmove')
       sel = d3.selectAll('.selected').data()
       for (var i in sel) {
         sel[i].px += d3.event.dx;
@@ -286,7 +304,6 @@ function start() {
   }
 
   function dragend(d, i) {
-      //console.log('dragend')
       d.fixed = true; // of course set the node to fixed so the force doesn't include the node in its auto positioning stuff
       tick();
       force.resume();
@@ -321,7 +338,7 @@ function start() {
     //.attr("class", "link")
     .attr("marker-end", function(d) { return "url(#arrow)"; })
     .attr("id", function(d) {return d._id.$oid })
-    .attr("class", function (d) { 
+    .attr("class", function (d) { //asdasd
       c = 'link ';
       c += d.attribs + " ";
       return c
@@ -385,8 +402,6 @@ function start() {
      .attr('class', function (d) { return d.type } )
 
      .on("mousedown", function (d) { // this is what happens when we mousedown on a node
-          //console.log('mousedown')
-
           if (!d.selected) {
             if (!shiftKey) {
               node.classed('selected', function(p) { return p.selected = false; }) // deselect all others
@@ -397,11 +412,9 @@ function start() {
           
      })
      .on("click", function(d){
-          //console.log('click')
           
      })
      .on('mouseover', function(d){
-          //console.log('mouseover')
           display_data(d)
       })
 

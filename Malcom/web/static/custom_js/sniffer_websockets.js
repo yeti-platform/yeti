@@ -9,7 +9,7 @@ function initSnifferWebSocket() {
 
 function snifferWebSocketHandler(msg) {
     data = $.parseJSON(msg.data);
-    console.log("Received data: " + data.type); console.log(data);
+    //console.log("Received data: " + data.type); console.log(data);
 
     if (data.type == 'sniffstatus') {
         
@@ -21,13 +21,9 @@ function snifferWebSocketHandler(msg) {
                     $('#startsniff').attr('disabled','true');
                     $('#stopsniff').removeAttr('disabled');
                 }
-
-                console.log("Retreiving session list (AJAX)")
                 getSessionList()
-
                 
                 sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_name': $('#session_name').text()});
-                console.log("Sent sniffupdate");
     }
 
     if (data.type == 'sniffupdate') {
@@ -74,7 +70,6 @@ function snifferWebSocketHandler(msg) {
         }
         else {                  // row not found, let's create it
             row = $("<tr />").attr('id', flow.fid)
-            console.log(row)
             row = netflow_row(flow, row)
             $("#flow-list").append(row)
         }
@@ -183,15 +178,12 @@ function get_flow_payload(id) {
 function snifferInterfaceInit() {
     sendmessage(ws_sniffer, {'cmd': 'sniffstatus', 'session_name': $('#session_name').text()});
     sendmessage(ws_sniffer, {'cmd': 'flowstatus', 'session_name': $('#session_name').text()});
-    console.log("Sent sniffstatus");
 }
-
 
 function startsniff(){
     session_name = $('#session_name').text()
     sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_name': session_name})
     $('#startsniff').attr('disabled','true')
-    console.log("Sent sniffstart")
 
 }
 
@@ -199,7 +191,6 @@ function stopsniff() {
     session_name = $('#session_name').text()
     sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_name': session_name})
     $('#stopsniff').attr('disabled','true')
-    console.log("Sent sniffstop")
 }
 
 function delsniff(session_name) {
@@ -209,13 +200,11 @@ function delsniff(session_name) {
         type: 'get',
         url: url_static_prefix+'/sniffer/'+session_name+'/delete',
         success: function(data) {
-            console.log(data.success);
             if (data.success == 1) { // delete the corresponding row
                 $("#session-"+session_name).remove()
                 display_message("Session " + session_name + " removed")
             }
             if (data.success == 0) {
-                console.log(data)
                 display_message(data.status)
 
             }
@@ -236,7 +225,6 @@ function getSessionList() {
         url: url_static_prefix+'/sniffer/sessionlist/',
         success: function(data) {
             data = $.parseJSON(data);
-            console.log(data);
 
             table = $('#sessions');
 

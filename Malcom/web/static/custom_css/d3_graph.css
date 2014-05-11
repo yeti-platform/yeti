@@ -1,54 +1,60 @@
 /* link colors  - COMMS */
 
 .link { 
-	fill:none;
+	stroke: #bab8b8;
+	transition:stroke 1s;
 }
 
 .link.TCP {
-	stroke: #7bcef8;
+	stroke: #8eb0df;
 }
 
 .link.UDP {
-	stroke: #ffbca0;
+	stroke: #8eb0df;
 }
 
 .link.DNS {
-	stroke: #b40812;
+	stroke: #21b429;
 }
 
 .link.HTTP {
-	stroke: #0050df;
+	stroke: #275bdf;
+}
+
+.link.comms {        
+	stroke: rgba(255,2,0,0.7);   
+	opacity:1;
 }
 
 
 /* link colors - TOPOLOGY */
 
 
-.link.A {
-	stroke: #df0000;
+/*.link.A {
+	stroke: #2aea36;
 }
 .link.NS {
-	stroke: #df7000;
+	stroke: #21b429;
 }
 .link.MX {
-	stroke: #dfE000;
+	stroke: #219d47;
 }
 .link.reverse {
-	stroke: #0043df;
+	stroke: #21b429;
 }
 .link.domain {
-	stroke: #da0039;
+	stroke: #62b464;
 }
 .link.CNAME {
-	stroke: #0079df;
+	stroke: #82b48c;
 }
 .link.net_info {
 	stroke: grey;
 }
 .link.host {
-	stroke: #da0039;
+	stroke: #71b470;
 }
-
+*/
 
 
 
@@ -74,8 +80,9 @@
 }
 
 .link {
-	stroke: #000;
+	stroke: #bab8b8;
 	stroke-width: 1.5px;
+	opacity:0.50;
 }
 
 .node {
@@ -124,6 +131,18 @@ circle:hover {
 	stroke: black!important;
 	stroke-width: 3px;
 	cursor: pointer;
+	
+}
+
+circle {
+	transition:stroke 0.2s;
+	transition:fill 0.2s;
+}
+
+.comms circle {
+	stroke: #c70110;
+	fill: #ee0011;
+
 }
 
 .brush .extent {

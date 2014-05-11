@@ -28,8 +28,6 @@ function highlight_query(query) {
 }
 
 function change_opacity(query) {
-
-	console.log(query)
 	
 	ids = []
 	
@@ -66,7 +64,7 @@ function change_opacity(query) {
 
 function display_data(d)
 {
-	console.log(d)
+	console.log("Displayed data: "+d)
 	$('#node_info').empty();
 	$(".whois").empty();
 
@@ -74,7 +72,6 @@ function display_data(d)
 }
 
 function display_generic(d) {
-	console.log('display generic')
 	if (d.fields != undefined) {
 		for (var display in d.fields) {
 			key = d.fields[display][0]

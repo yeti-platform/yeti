@@ -59,10 +59,10 @@ function initialize_graph() {
 		    .nodes(nodes)
 		    .links(links)
 		    .gravity(0.05)
-		    .charge(-100)
+		    .charge(-200)
 		    .friction(0.8)
 		    .theta(0.99)
-		    .linkDistance(70)
+		    .linkDistance(100)
 		    .size([width, height])
 		    .on("tick", tick);
 
@@ -88,13 +88,10 @@ function initialize_graph() {
 		    .attr("class", "brush");
 
 		 // make sure graph is resized when clicking on the graph link
-
-
+		 
 		 node = svg.selectAll(".node")
 		    link = svg.selectAll(".link");
 
-		 // graph controls
-		 console.log($("#curved-links"))	
    
 
 }

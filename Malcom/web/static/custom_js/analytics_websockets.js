@@ -1,6 +1,7 @@
 function sendmessage(websocket, data) {
     msg = JSON.stringify(data)
     websocket.send(msg)
+    console.log("Sent message to websocket: " + data)
 }
 
 function initAnalyticsWebSocket() {
@@ -13,11 +14,11 @@ function initAnalyticsWebSocket() {
 
 function analyticsInterfaceInit() {
     sendmessage(ws_analytics, {'cmd': 'analyticsstatus'});
-    console.log("Sent analyticsstatus");
+    //console.log("Sent analyticsstatus");
 
     ws_analytics.onmessage = function(msg) {
         data = $.parseJSON(msg.data);
-        console.log(data);
+        //console.log(data);
 
         if (data.msg.active == true) { // deal with active status
 
