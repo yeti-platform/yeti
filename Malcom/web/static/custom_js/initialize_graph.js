@@ -86,8 +86,6 @@ function initialize_graph() {
 		 brush = svg.append("g")
 		    .datum(function() { return {selected: false, previouslySelected: false}; })
 		    .attr("class", "brush");
-
-		 // make sure graph is resized when clicking on the graph link
 		 
 		 node = svg.selectAll(".node")
 		    link = svg.selectAll(".link");

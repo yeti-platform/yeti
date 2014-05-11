@@ -54,6 +54,9 @@ function getneighbors() {
     ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
 
+  if (ids.length == 0)
+    return
+
   $.ajax({
     type: 'get',
     url: url_static_prefix+'/neighbors',
@@ -172,7 +175,7 @@ function toggle_sniffer_nodes_visibility(state) {
 
 function resize() {
 
-    if (!$('a[href=#graph]').parent().hasClass('active'))
+    if (!$('a[href=#graph]').parent().hasClass('active') && $('a[href=#graph]').length > 0)
       return
 
     width = $('.graph').width();

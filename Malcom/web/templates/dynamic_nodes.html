@@ -45,17 +45,31 @@
 <script type="text/javascript">
 
 initialize_graph();
-spinner = $("#loading-spinner")
-spinner.css('position', 'absolute');
-spinner.css('top', height/2);
-spinner.css('left', width/2);
-spinner.toggleClass('show')
+// spinner = $("#loading-spinner")
+// spinner.css('position', 'absolute');
+// spinner.css('top', height/2);
+// spinner.css('left', width/2);
+// spinner.toggleClass('show')
+setInterval(function() {uncomm_all()}, 500)
 
+  // svg.append("svg:defs").selectAll("marker")
+  //     .data(["arrow"])
+  //     .enter().append("svg:marker")
+  //       .attr("id", String)
+  //       .attr("viewBox", "0 -5 10 10")
+  //       .attr("markerUnits", "userSpaceOnUse")
+  //       .attr("refX", 20)
+  //       .attr("refY", 0)
+  //       .attr("markerWidth", 7)
+  //       .attr("markerHeight", 7)
+  //       .attr("orient", "auto")
+  //       .append("svg:path")
+  //         .attr("d", "M0,-5L10,0L0,5");
 
 d3.json(url_static_prefix+"/neighbors?{{field}}={{value}}", function(error, graph) {
     push_nodes(graph.nodes)
     push_links(graph.edges)
-    spinner.toggleClass('show')
+    // spinner.toggleClass('show')
     start();
 });
 
