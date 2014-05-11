@@ -29,7 +29,10 @@ from functools import wraps
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
 from gevent.pool import Pool
-from gevent import Greenlet
+#from gevent import Greenlet
+
+#from multiprocessing
+from multiprocessing import Process
 
 # custom
 from Malcom.auxiliary.toolbox import *
@@ -401,8 +404,7 @@ def add_data():
 			a.add_text(elements, tags)
 
 		if request.form.get('analyse', None):
-			a.once = True
-			a.start()
+			pass
 
 		return redirect(url_for('dataset'))
 
@@ -684,10 +686,12 @@ def slow():
 	time.sleep(10)
 	return "That was slow..."
 
-class MalcomWeb(Greenlet):
+
+
+class MalcomWeb(Process):
 	"""docstring for MalcomWeb"""
 	def __init__(self, public, listen_port, listen_interface):
-		Greenlet.__init__(self)
+		super(MalcomWeb, self).__init__()
 		self.public = public
 		self.listen_port = listen_port
 		self.listen_interface = listen_interface
