@@ -1,7 +1,8 @@
 function sendmessage(websocket, data) {
     msg = JSON.stringify(data)
     websocket.send(msg)
-    console.log("Sent message to websocket: " + data)
+    console.log("Sent message to websocket: ")
+    console.log(data)
 }
 
 function initAnalyticsWebSocket() {
@@ -14,32 +15,21 @@ function initAnalyticsWebSocket() {
 
 function analyticsInterfaceInit() {
     sendmessage(ws_analytics, {'cmd': 'analyticsstatus'});
-    //console.log("Sent analyticsstatus");
+    console.log("Sent analyticsstatus");
 
     ws_analytics.onmessage = function(msg) {
         data = $.parseJSON(msg.data);
-        //console.log(data);
+        // console.log(data);
 
-        if (data.msg.active == true) { // deal with active status
+        $("#analytics-status-nav p").text(data.msg)
 
-            if (data.msg.status == true) {
-                $("#analytics-status-nav p").text("Analytics: "+data.msg.msg+"...")
-                $("#analytics-status-nav p").css('color','white')
-            }
-
-            if (data.msg.msg) {
-                $("#analytics-status-nav p").text("Analytics: "+data.msg.msg+"... ("+data.msg.progress+")")
-                $("#analytics-status-nav p").css('color','white')   
-            }
-        }
-
-        else { // inactive status
-            $("#analytics-status-nav p").text("Analytics: " +data.msg.msg)
+        if (data.msg == 'Inactive') { // deal with active / inactive status        
             $("#analytics-status-nav p").css('color','')
         }
+        else {
+            $("#analytics-status-nav p").css('color','white')
+            
+        }
 
-        
-        
-        
     };
 }

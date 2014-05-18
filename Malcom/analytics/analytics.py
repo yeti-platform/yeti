@@ -2,30 +2,27 @@
 
 from flask import Flask
 import Malcom
-import dateutil, time, threading, pickle, gc, datetime
+import dateutil, time, threading, pickle, gc, datetime, os
 from bson.objectid import ObjectId
 from multiprocessing import Process, Queue
+
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
-
-# from gevent.queue import Queue
-#from gevent import Greenlet
-
+from Malcom.analytics.messenger import AnalyticsMessenger
 
 class Worker(Process):
 
 	def __init__(self, queue):
 		super(Worker, self).__init__()
 		self.queue = queue
-		self.engine = Analytics()
+		self.engine = None
 		self.work = False
 		
 	def run(self):
 		self.work = True
 		try:
 			while self.work:
-			#for elt in iter(self.queue.get, None):
 	
 				elt = self.queue.get()
 
@@ -34,7 +31,7 @@ class Worker(Process):
 
 				elt = pickle.loads(elt)
 
-				debug_output("[%s] Started work on %s %s. Queue size: %s" % ("AnonProcess", elt['type'], elt['value'], self.queue.qsize()), type='analytics')
+				debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s" % (self.name, os.getpid(), elt['type'], elt['value'], self.queue.qsize()), type='analytics')
 				etype = elt['type']
 				tags = elt['tags']
 
@@ -56,13 +53,13 @@ class Worker(Process):
 				elt['date_updated'] = last_connect
 				self.engine.save_element(elt, tags)
 
-
 				self.engine.progress += 1
 				self.engine.notify_progress(elt['value'])
 			return
+			print "Worker exiting"
 
 		except Exception, e:
-			debug_output("An error occured in %s: %s" % ("AnonGreenlet", e), type="error")
+			debug_output("An error occured in [%s | PID %s]: %s" % (self.name, os.getpid(), e), type="error")
 		except KeyboardInterrupt, e:
 			pass
 
@@ -73,10 +70,10 @@ class Worker(Process):
 
 class Analytics(Process):
 
-	def __init__(self):
+	def __init__(self, max_workers=4):
 		super(Analytics, self).__init__()
 		self.data = Model()
-		self.max_workers = Malcom.config.get('MAX_WORKERS', 4)
+		self.max_workers = max_workers
 		self.active = False
 		self.active_lock = threading.Lock()
 		self.status = "Inactive"
@@ -91,32 +88,10 @@ class Analytics(Process):
 		self.once = False
 
 
-	def add_text(self, text, tags=[]):
-		added = []
-		for t in text:
-			elt = None
-			if t.strip() != "":
-				if is_url(t):
-					elt = Url(is_url(t), [])
-				elif is_hostname(t):
-					elt = Hostname(is_hostname(t), [])
-				elif is_ip(t):
-					elt = Ip(is_ip(t), [])
-				if elt:
-					added.append(self.save_element(elt, tags))
-					
-		if len(added) == 1:
-			return added[0]
-		else:
-			return added
-		
-
 	def save_element(self, element, tags=[], with_status=False):
 		element.upgrade_tags(tags)
 		return self.data.save(element, with_status=with_status)
 		
-
-
 	# graph function
 	def add_artifacts(self, data, tags=[]):
 		artifacts = find_artifacts(data)
@@ -195,39 +170,8 @@ class Analytics(Process):
 			done += len(results)
 			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
-	def find_neighbors(self, query, include_original=True):
-		
-		total_nodes = {}
-		total_edges = {}
-		final_query = []
-
-		for key in query:
-
-			if key == '_id': 
-				values = [ObjectId(v) for v in query[key]]
-			else:
-				values = [v for v in query[key]]
-
-			final_query.append({key: {'$in': values}})
-
-		elts = self.data.elements.find({'$and': final_query})
-		
-		nodes, edges = self.data.get_neighbors_id(elts, include_original=include_original)
-		for n in nodes:
-			total_nodes[n['_id']] = n
-		for e in edges:
-			total_edges[e['_id']] = e
-			
-		total_nodes = [total_nodes[n] for n in total_nodes]	
-		total_edges = [total_edges[e] for e in total_edges]
-
-		# display 
-		for e in total_nodes:
-			e['fields'] = e.display_fields
-
-		data = {'nodes':total_nodes, 'edges': total_edges }
-
-		return data
+	def bulk_dns(self):
+		pass
 
 	def multi_graph_find(self, query, graph_query, depth=2):
 		total_nodes = {}
@@ -289,15 +233,32 @@ class Analytics(Process):
 
 		return chosen_nodes, chosen_links
 
+	def notify_progress(self, msg):
+		if self.active:
+			msg = "Working - %s" % msg
+		else:
+			msg = "Inactive"
+
+		self.messenger.broadcast(msg, 'analytics', 'analyticsUpdate')
+
 	def run(self):
 		self.run_analysis = True
+		
+		self.messenger = AnalyticsMessenger(self)
+
 		while self.run_analysis:
 			debug_output("Launching analytics")
-			time.sleep(1) # run a new thread every period seconds
-			self.active_lock.acquire()
+			
+			self.active_lock.acquire()			
 			if self.run_analysis:
 				self.process(10000)
 			self.active_lock.release()
+
+			try:
+				time.sleep(1)
+			except KeyboardInterrupt:
+				self.run_analysis = False
+			
 			if self.once: self.run_analysis = False; self.once = False
 
 	def stop(self):
@@ -323,8 +284,7 @@ class Analytics(Process):
 				return
 
 		then = datetime.datetime.utcnow()
-		
-		self.active = True
+
 		self.workers = []
 		self.work_done = False
 
@@ -333,6 +293,7 @@ class Analytics(Process):
 		total_elts = 0
 
 		if len(results) > 0:
+			self.active = True
 
 			# build process Queue (10000 elements max)
 			self.elements_queue = Queue(batch_size)
@@ -343,36 +304,34 @@ class Analytics(Process):
 				total_elts += 1
 				work_done = True
 
-			for i in range(Malcom.config['MAX_WORKERS']):
+			for i in range(self.max_workers):
 				self.elements_queue.put(None)
 
 			# start workers
 			workers = []
-			for i in range(Malcom.config['MAX_WORKERS']):
+			for i in range(self.max_workers):
 				w = Worker(self.elements_queue)
+				w.engine = self
 				w.start()
 				workers.append(w)
 
 			self.workers = workers
 
 			for w in self.workers:
-				w.join()
-
+				try:
+					w.join()
+				except KeyboardInterrupt:
+					self.run_analysis = False
+				
 			# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
 			self.bulk_asn()
+			self.active = False
 		
-		self.active = False
-
 		now = datetime.datetime.utcnow()
 		
-		msg = "Analyzed %s elements (run time: %s)" % (total_elts, str(now-then)) 
+		msg = "Analyzed %s elements in %s" % (total_elts, str(now-then)) 
 		debug_output(msg)
-		self.notify_progress(msg)
-
+		self.notify_progress("Inactive")
 		
 
-	def notify_progress(self, msg=None):
-
-		status = {'active': self.active, 'msg': msg}
-		status['progress'] = '%s' % (self.progress)
-		send_msg(self.websocket, status, type='analyticsstatus')
+	

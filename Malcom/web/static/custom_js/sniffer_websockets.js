@@ -3,13 +3,23 @@ function initSnifferWebSocket() {
         ws_sniffer = new WebSocket(url_websocket_prefix+"api/sniffer");
         ws_sniffer.onmessage = function(msg) { snifferWebSocketHandler(msg); }
     } else {
-        console.log("WebSocket not supported");
+        console.log("WebSocket not supported (data)");
     }
+}
+
+function initSnifferRealtimeWebSocket(session_name) {
+    if ("WebSocket" in window) {
+        ws_sniffer_data = new WebSocket(url_websocket_prefix+"api/sniffer/realtime/"+session_name);
+        ws_sniffer_data.onmessage = function(msg) { snifferWebSocketHandler(msg); }
+    } else {
+        console.log("WebSocket not supported (realtime)");
+    }
+
 }
 
 function snifferWebSocketHandler(msg) {
     data = $.parseJSON(msg.data);
-    //console.log("Received data: " + data.type); console.log(data);
+    // console.log("Received data: " + data.type); console.log(data);
 
     if (data.type == 'sniffstatus') {
         
@@ -38,8 +48,8 @@ function snifferWebSocketHandler(msg) {
     }
 
     if (data.type == 'nodeupdate') {
-            push_nodes(data.nodes);
-            push_links(data.edges);
+            push_nodes(data.msg.nodes);
+            push_links(data.msg.edges);
             start();
     }
 
@@ -62,7 +72,7 @@ function snifferWebSocketHandler(msg) {
 
     if (data.type == 'flow_statistics_update') {
         // find the column
-        flow = data.flow
+        flow = data.msg.flow
         row = $('#'+flow.fid)
         if (row.length > 0) {   // we found our row, let's update it
             row.empty()
@@ -220,12 +230,14 @@ function display_message(text) {
 
 
 function getSessionList() {
+    console.log("Requesting session list")
     $.ajax({
         type: 'get',
         url: url_static_prefix+'/sniffer/sessionlist/',
         success: function(data) {
-            data = $.parseJSON(data);
 
+            data = $.parseJSON(data);
+            console.log(data)
             table = $('#sessions');
 
             for (var i in data.session_list) {    

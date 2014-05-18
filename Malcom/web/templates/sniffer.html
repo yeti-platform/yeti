@@ -93,6 +93,7 @@ setInterval(function() {uncomm_all()}, 500)
 </script>
 <script>
 initSnifferWebSocket()
+initSnifferRealtimeWebSocket('{{session.name}}')
 ws_sniffer.onopen = snifferInterfaceInit
 </script>
 {%endblock%}

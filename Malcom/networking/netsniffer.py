@@ -11,8 +11,10 @@ from bson.objectid import ObjectId
 
 from Malcom.networking.flow import Flow
 from Malcom.auxiliary.toolbox import debug_output
+from Malcom.networking.messenger import SnifferMessenger
 from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
-import Malcom
+from Malcom.model.model import Model
+
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']
 rr_codes = { 1: "A", 28: "AAAA", 2: "NS", 5: "CNAME", 15: "MX", 255: 'ANY', 12: "PTR" }
@@ -20,21 +22,91 @@ known_tcp_ports = {'80':'HTTP', '443':'HTTPS', '21':'FTP', '22':'SSH'}
 known_udp_ports = {'53':'DNS'}
 NOTROOT = "nobody"
 
-
-class Sniffer(dict):
-
-	def __init__(self, analytics, name, remote_addr, filter, intercept_tls=False, ws=None, filter_restore=None):
+class SnifferEngine(object):
+	"""docstring for SnifferEngine"""
+	
+	def __init__(self, setup):
+		super(SnifferEngine, self).__init__()
+		self.setup = setup
+		sys.stderr.write("[+] Starting sniffer...\n")
 		
-		self.analytics = analytics
+		
+		if setup['TLS_PROXY_PORT'] > 0:
+			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
+			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % setup['TLS_PROXY_PORT'])
+			self.tls_proxy = MalcomTLSProxy(setup['TLS_PROXY_PORT'])
+			self.tls_proxy.start()
+		else:
+			self.tls_proxy = None
+
+		self.sessions = {}
+		self.messenger = SnifferMessenger()
+		self.messenger.snifferengine = self
+		
+		# sys.stderr.write("Importing packet captures...\n")
+
+		# for s in Malcom.analytics_engine.data.get_sniffer_sessions():
+		# 	Malcom.sniffer_sessions[s['name']] = netsniffer.Sniffer(Malcom.analytics_engine, 
+		# 															s['name'], 
+		# 															None, 
+		# 															None, 
+		# 															filter_restore=s['filter'], 
+		# 															intercept_tls=s['intercept_tls'] if Malcom.tls_proxy else False)
+		# 	Malcom.sniffer_sessions[s['name']].pcap = True
+
+	def new_session(self, params):
+		session_name = params['session_name']
+		remote_addr = params['remote_addr']
+		filter = params['filter']
+		intercept_tls = params['intercept_tls']
+		filename = params['filename']
+		
+		sniffer_session = SnifferSession(session_name, remote_addr, filter, self, intercept_tls)
+		sniffer_session.engine = self
+
+		self.sessions[session_name] = sniffer_session
+
+	def delete_session(self, session_name):
+		session = self.sessions.get(session_name, False)
+
+		if session == False:
+			return "notfound"
+
+		if session.status():
+			return "running" # session running
+
+		else:
+			del self.sessions[session_name]
+			return "stopped"
+		
+
+	# def start_session(self, session_name, remote_addr):
+	# 	session = self.sessions.get(session_name, False)
+	# 	if session != False:
+	# 		session.start(remote_addr)
+
+	# def stop_session(self, session_name):
+	# 	session = self.sessions.get(session_name, False)
+	# 	if session != False:
+	# 		session.stop()		
+
+
+
+class SnifferSession():
+
+	def __init__(self, name, remote_addr, filter, engine, intercept_tls=False, ws=None, filter_restore=None):
+		
+		self.engine = engine
+		self.model = Model()
 		self.name = name
 		self.ws = ws
-		self.ifaces = Malcom.config['IFACES']
+		self.ifaces = self.engine.setup['IFACES']
 		filter_ifaces = ""
 		for i in self.ifaces:
 			if self.ifaces[i] == "Not defined": continue
 			filter_ifaces += " and not host %s " % self.ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
-		#self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
+		self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False
@@ -51,11 +123,11 @@ class Sniffer(dict):
 		self.packet_count = 0
 
 		# nodes, edges, their values, their IDs
-		self.nodes = []
-		self.edges = []
-		self.nodes_ids = []
-		self.nodes_values = []
-		self.edges_ids = []
+		# self.nodes = []
+		# self.edges = []
+		# self.nodes_ids = []
+		# self.nodes_values = []
+		# self.edges_ids = []
 
 		self.nodes = {}
 		self.edges = {}
@@ -75,7 +147,7 @@ class Sniffer(dict):
 
 		filename = self.pcap_filename
 		debug_output("Loading PCAP from %s " % filename)
-		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=Malcom.config['SNIFFER_DIR']+"/"+filename)	
+		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=self.engine.setup['SNIFFER_DIR']+"/"+filename)	
 		
 		debug_output("Loaded %s packets from file." % len(self.pkts))
 
@@ -90,7 +162,6 @@ class Sniffer(dict):
 		if self.pcap:
 			self.load_pcap()
 		elif not self.public:
-			print "Sniffing with filter: %s" % self.filter
 			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)
 
 		self.generate_pcap()
@@ -112,7 +183,7 @@ class Sniffer(dict):
 
 	def start(self, remote_addr, public=False):
 		self.public = public
-		self.thread = Greenlet(self.run)
+		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
 		
 	def stop(self):
@@ -128,10 +199,11 @@ class Sniffer(dict):
 	def generate_pcap(self):
 		if len (self.pkts) > 0:
 			debug_output("Generating PCAP for %s (length: %s)" % (self.name, len(self.pkts)))
-			filename = Malcom.config['SNIFFER_DIR'] + "/" + self.pcap_filename
+			filename = self.engine.setup['SNIFFER_DIR'] + "/" + self.pcap_filename
 			wrpcap(filename, self.pkts)
 			debug_output("Saving session to DB")
-			self.analytics.data.save_sniffer_session(self)
+			self.model.save_sniffer_session(self)
+			return True
 	
 	def checkIP(self, pkt):
 
@@ -160,21 +232,21 @@ class Sniffer(dict):
 		for ip in ips:
 				
 			if ip not in self.nodes:
-				ip = self.analytics.add_text([ip], ['sniffer', self.name])
+				ip = self.model.add_text([ip], ['sniffer', self.name])
 
 				if ip == []: continue # tonight is not the night to add ipv6 support
 
 				# do some live analysis
 				new = ip.analytics()
 				for n in new:
-					saved = self.analytics.save_element(n[1])
+					saved = self.model.save(n[1])
 					
 					self.nodes[str(saved['_id'])] = saved
 					new_elts.append(saved)
 					
 					# Do the link. The link should be kept because it is not
 					# exclusively related to this sniffing sesison
-					conn = self.analytics.data.connect(ip, saved, n[0])
+					conn = self.model.connect(ip, saved, n[0])
 					if conn['_id'] not in self.edges:
 						self.edges[str(conn['_id'])] = conn
 						new_edges.append(conn)
@@ -221,7 +293,7 @@ class Sniffer(dict):
 			question = pkt[DNS].qd.qname
 
 			if question not in self.nodes:
-				_question = self.analytics.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
+				_question = self.model.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
 				if _question:
 					debug_output("Caught DNS question: %s" % (_question['value']))
 
@@ -256,7 +328,7 @@ class Sniffer(dict):
 					
 					# check if we haven't seen these already
 					if rrname not in self.nodes:
-						_rrname = self.analytics.add_text([rrname], ['sniffer', self.name]) # log every discovery to db
+						_rrname = self.model.add_text([rrname], ['sniffer', self.name]) # log every discovery to db
 						if _rrname != []:
 							self.nodes[_rrname['value']] = _rrname
 							new_elts.append(_rrname)
@@ -265,7 +337,7 @@ class Sniffer(dict):
 						new_elts.append(_rrname)
 
 					if rdata not in self.nodes:
-						_rdata = self.analytics.add_text([rdata], ['sniffer', self.name]) # log every discovery to db
+						_rdata = self.model.add_text([rdata], ['sniffer', self.name]) # log every discovery to db
 						if _rdata != []: # avoid linking elements if only one is found
 							self.nodes[_rdata['value']] = _rdata
 							new_elts.append(_rdata)
@@ -295,7 +367,7 @@ class Sniffer(dict):
 					if _rrname != [] and _rdata != []:
 						debug_output("Caught DNS answer: %s -> %s" % ( _rrname['value'], _rdata['value']))
 						debug_output("Added %s, %s" %(rrname, rdata))
-						conn = self.analytics.data.connect(_rrname, _rdata, rr_codes[rr.type], True)
+						conn = self.model.connect(_rrname, _rdata, rr_codes[rr.type], True)
 						self.edges[str(conn['_id'])] = conn
 						new_edges.append(conn)
 					else:
@@ -320,19 +392,19 @@ class Sniffer(dict):
 		
 		if http_elts:
 
-			url = self.analytics.add_text([http_elts['url']])
+			url = self.model.add_text([http_elts['url']])
 			if url['value'] not in self.nodes:
 				self.nodes[url['value']] = url
 				new_elts.append(url)
 
-			host = self.analytics.add_text([http_elts['host']])
+			host = self.model.add_text([http_elts['host']])
 			if host['value'] not in self.nodes:
 				self.nodes[host['value']] = host
 				new_elts.append(host)
 			
 			# in this case, we can save the connection to the DB since it is not temporary
 			#conn = {'attribs': http_elts['method'], 'src': host['_id'], 'dst': url['_id'], '_id': { '$oid': str(host['_id'])+str(url['_id'])}}
-			conn = self.analytics.data.connect(host, url, "host")
+			conn = self.model.connect(host, url, "host")
 
 			# if conn not in self.edges:
 			self.edges[str(conn['_id'])] = conn
@@ -415,23 +487,26 @@ class Sniffer(dict):
 		data = {}
 		data['flow'] = flow.get_statistics()
 		data['type'] = 'flow_statistics_update'
-		if self.ws:
-			try:
-				self.ws.send(dumps(data))
-			except Exception, e:
-				debug_output("Could not send flow statistics: %s" % e)
+		data['session_name'] = self.name
+		
+		try:
+			#self.ws.send(dumps(data)) #REDIS broadcast
+			self.engine.messenger.broadcast(dumps(data), 'sniffer-data', 'flow_statistics_update')
+		except Exception, e:
+			debug_output("Could not send flow statistics: %s" % e, 'error')
 
 	def send_nodes(self, elts=[], edges=[]):
 		
 		for e in elts:
 			e['fields'] = e.display_fields
 
-		data = { 'querya': {}, 'nodes':elts, 'edges': edges, 'type': 'nodeupdate'}
+		data = { 'querya': {}, 'nodes':elts, 'edges': edges, 'type': 'nodeupdate', 'session_name': self.name}
 		try:
-			if (len(elts) > 0 or len(edges) > 0) and self.ws:
-				self.ws.send(dumps(data))
+			if (len(elts) > 0 or len(edges) > 0):
+				#self.ws.send(dumps(data)) #REDIS broadcast
+				self.engine.messenger.broadcast(dumps(data), 'sniffer-data', 'nodeupdate')
 		except Exception, e:
-			debug_output("Could not send nodes: %s" % e)
+			debug_output("Could not send nodes: %s" % e, 'error')
 		
 	def stop_sniffing(self):
 		return self.stopSniffing

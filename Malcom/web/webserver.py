@@ -7,10 +7,10 @@ __version__ = '1.2 alpha'
 __license__ = "GPL"
 
 # patch threads
-from gevent import monkey; monkey.patch_socket(dns=False); monkey.patch_time();
+from gevent import monkey; monkey.patch_socket(dns=False); #monkey.patch_time();
 
 # system
-import os, datetime, time, sys, signal, argparse, re, threading, multiprocessing
+import os, datetime, time, sys, signal, argparse, re, pickle
 import netifaces as ni
 
 # db 
@@ -19,6 +19,7 @@ from pymongo import MongoClient
 # json / bson
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
+import json
 
 # flask stuff
 from werkzeug import secure_filename
@@ -28,27 +29,29 @@ from functools import wraps
 # websockets / WSGI
 from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
-from gevent.pool import Pool
-#from gevent import Greenlet
+import gevent
 
-#from multiprocessing
+# from gevent.pool import Pool
+# from gevent import Greenlet
+
+# multiprocessing
 from multiprocessing import Process
 
 # custom
 from Malcom.auxiliary.toolbox import *
-from Malcom.analytics.analytics import Analytics
-from Malcom.feeds.feed import FeedEngine
+# from Malcom.feeds.feed import FeedEngine
+from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname
-from Malcom.networking import netsniffer
-import Malcom
+# from Malcom.networking import netsniffer
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
-
-app = Malcom.app
 		
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.debug = True
+
+Model = Model()
+
 
 # This enables the server to be ran behind a reverse-proxy
 # Make sure you have an nginx configuraiton similar to this
@@ -67,22 +70,6 @@ app.debug = True
 # 	proxy_set_header Connection "upgrade";
 # }
 
-def malcom_app(environ, start_response):  
-	
-
-	if environ.get('HTTP_SCRIPT_NAME'):
-		# update path info 
-		environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
-		# declare SCRIPT_NAME
-		environ['SCRIPT_NAME'] = environ['HTTP_SCRIPT_NAME']
-	
-	if environ.get('HTTP_X_SCHEME'):	
-		# forward the scheme
-		environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME')
-
-
-	return app(environ, start_response)
-
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -100,8 +87,8 @@ def after_request(response):
 def before_request():
 	# make configuration and analytics engine available to views
 	g.config = app.config
-	g.a = Malcom.analytics_engine
-
+	g.model = Model
+	g.messenger = app.config['MESSENGER']
 
 # decorator for URLs that should not be public
 def private_url(f):
@@ -120,18 +107,21 @@ def index():
 # feeds ========================================================
 
 
-if Malcom.config['FEEDS']:
+# if Malcom.config['FEEDS']:
 
-	@app.route('/feeds')
-	def feeds():
-		alpha = sorted(Malcom.feed_engine.feeds, key=lambda name: name)
-		return render_template('feeds.html', feed_names=alpha, feeds=Malcom.feed_engine.feeds)
+@app.route('/feeds')
+def feeds():
+	# REDIS query to feed engine
+	feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
+	# alpha = sorted(Malcom.feed_engine.feeds, key=lambda name: name)
+	return render_template('feeds.html', feed_names=[n for n in feed_list], feeds=feed_list)
 
-	@app.route('/feeds/run/<feed_name>')
-	@private_url
-	def run_feed(feed_name):
-		Malcom.feed_engine.run_feed(feed_name)
-		return redirect(url_for('feeds'))
+@app.route('/feeds/run/<feed_name>')
+@private_url
+def run_feed(feed_name):
+	# REDIS query to feed engine
+	result = g.messenger.send_recieve('feedRun', 'feeds', params={'feed_name':feed_name})
+	return redirect(url_for('feeds'))
 
 
 # graph operations =============================================
@@ -143,21 +133,19 @@ def nodes(field, value):
 
 @app.route('/neighbors')
 def neighbors():
-	a = g.a
 	query = {}
 	for key in request.args:
 		query[key] = request.args.getlist(key)
 
-	data = a.find_neighbors(query, include_original=True)
+	data = Model.find_neighbors(query, include_original=True)
 	return make_response(dumps(data), 200, {'Content-Type': 'application/json'})
 
 @app.route('/evil')
 def evil():
-	a = g.a
 	query = {}
 	for key in request.args:
 		query[key] = request.args.getlist(key)
-	data = a.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
+	data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
 
 	return (dumps(data), 200, {'Content-Type': 'application/json'})
 
@@ -176,9 +164,9 @@ def report(field, value, strict=False):
 	base_elts = []
 
 	if strict:
-		result_set = g.a.data.find({field: value})
+		result_set = Model.find({field: value})
 	else:
-		result_set = g.a.data.find({field: re.compile(re.escape(value), re.IGNORECASE)})
+		result_set = Model.find({field: re.compile(re.escape(value), re.IGNORECASE)})
 
 	for e in result_set:
 		base_elts_dict[e['_id']] = e
@@ -190,7 +178,7 @@ def report(field, value, strict=False):
 	all_edges_dict = {}
 
 	for elt in base_elts:
-		nodes, edges = g.a.data.get_neighbors_elt(elt)
+		nodes, edges = Model.get_neighbors_elt(elt)
 		for n in nodes:
 			all_nodes_dict[n['_id']] = n
 		for e in edges:
@@ -240,7 +228,7 @@ def dataset():
 
 @app.route('/dataset/query/') # ajax method for sarching dataset and populating dataset table
 def query_data():
-	a = g.a
+
 	query = {}
 
 	if 'page' in request.args:
@@ -276,7 +264,7 @@ def query_data():
 	#if not "X-Malcom-API-key":
 	#	return dumps({})
 
-	available_tags = g.a.data.get_tags_for_key(apikey)
+	available_tags = Model.get_tags_for_key(apikey)
 
 	if len(available_tags) > 0:
 		tag_filter = {'tags': {'$in': available_tags}}
@@ -291,13 +279,13 @@ def query_data():
 		page = int(page)
 		per_page = 50
 		if fuzzy:
-			elts = [e for e in a.data.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]#.hint([('_id', 1)])
+			elts = [e for e in Model.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]#.hint([('_id', 1)])
 		else:
-			elts = [e for e in a.data.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]
+			elts = [e for e in Model.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]
 		data['page'] = page
 		data['per_page'] = per_page
 	else:
-		elts = [e for e in a.data.find(query).sort('date_created', -1)]
+		elts = [e for e in Model.find(query).sort('date_created', -1)]
 
 	chrono_query = datetime.datetime.utcnow() - chrono_query	
 	
@@ -314,7 +302,7 @@ def query_data():
 	
 	chrono_count = datetime.datetime.utcnow()
 	if not fuzzy:
-		data['total_results'] = a.data.find(query).count()
+		data['total_results'] = Model.find(query).count()
 	else:
 		data['total_results'] = "many"
 	chrono_count = datetime.datetime.utcnow() - chrono_count
@@ -326,7 +314,7 @@ def query_data():
 
 @app.route('/dataset/csv')
 def dataset_csv():
-	a = g.a
+
 	filename = []
 	query = {}
 
@@ -348,7 +336,7 @@ def dataset_csv():
 			filename.append('all')
 
 	filename = "-".join(filename)
-	results = a.data.find(query).sort('date_created', -1)
+	results = Model.find(query).sort('date_created', -1)
 	
 	if results.count() == 0:
 		flash("You're about to download an empty .csv",'warning')
@@ -389,19 +377,17 @@ def add_data():
 			flash("You must specify some elements", 'warning')
 			return redirect(url_for('dataset'))
 
-		a = g.a
-
 		if file: # if we just uploaded a file, and it has associated tags
 			for e in elements:
 				if ";" in e:
 					elt = e.split(';')[0]
 					tag = e.split(';')[1]
-					a.add_text([elt], tag.split(','))
+					Model.add_text([elt], tag.split(','))
 				else:
-					a.add_text([e])
+					Model.add_text([e])
 		else: # we're inputting from the web
 			tags = tags.strip().split(",")
-			a.add_text(elements, tags)
+			Model.add_text(elements, tags)
 
 		if request.form.get('analyse', None):
 			pass
@@ -413,26 +399,23 @@ def add_data():
 
 @app.route('/dataset/remove/<id>')
 def delete(id):
-	a = g.a 
-	result = a.data.remove(id)
+	result = Model.remove(id)
 	return dumps(result)
 
 @app.route('/dataset/clear/')
 @private_url
 def clear():
-	g.a.data.clear_db()
+	Model.clear_db()
 	return redirect(url_for('dataset'))
 
-@app.route('/analytics')
-def analytics():
-	g.a.process()
-	return "Analytics: Done."
 
 # Sniffer ============================================
 
 @app.route('/sniffer/',  methods=['GET', 'POST'])
 def sniffer():
 	if request.method == 'POST':
+		
+
 		filter = request.form['filter']
 		
 		session_name = secure_filename(request.form['session_name'])
@@ -443,77 +426,93 @@ def sniffer():
 		debug_output("Creating session %s" % session_name)
 
 		# intercept TLS?
-		intercept_tls = True if request.form.get('intercept_tls', False) and Malcom.tls_proxy != None else False
+		intercept_tls = True if request.form.get('intercept_tls', False) and g.config.tls_proxy != None else False
 
-		Malcom.sniffer_sessions[session_name] = netsniffer.Sniffer(Malcom.analytics_engine, session_name, str(request.remote_addr), filter, intercept_tls=intercept_tls)
+		
+		params = {  'session_name': session_name,
+					'remote_addr' : str(request.remote_addr),
+					'filter': filter,
+					'intercept_tls': intercept_tls,
+					'filename' : session_name + ".pcap"
+				}
+		
+
+		
 		# this is where the data will be stored persistently
 
-		filename = session_name + ".pcap"
-		Malcom.sniffer_sessions[session_name].pcap_filename = filename
-		
 		pcap = None
 		# if we're dealing with an uploaded PCAP file
 		file = request.files.get('pcap-file')
 		if file:
+			params['pcap'] = True
 			# store in /sniffer folder
-			with open(Malcom.config['SNIFFER_DIR'] + "/" + filename, 'wb') as f:
+			with open(g.config['SNIFFER_DIR'] + "/" + filename, 'wb') as f:
 				f.write(file.read())
-			Malcom.sniffer_sessions[session_name].pcap = True
+
+		#REDIS send message to sniffer w/ params
+		g.messenger.send_recieve('newsession', 'sniffer-commands', params=params)
 
 		# start sniffing right away
 		if request.form.get('startnow', None):
-			Malcom.sniffer_sessions[session_name].start(str(request.remote_addr))
+			# REDIS send message to sniffer to start
+			g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_name': session_name, 'remote_addr': str(request.remote_addr)} )
+			#sniffer_session.start(str(request.remote_addr))
 		
 		return redirect(url_for('sniffer_session', session_name=session_name, pcap_filename=pcap))
-
 
 	return render_template('sniffer_new.html')
 
 @app.route('/sniffer/sessionlist/')
 def sniffer_sessionlist():
-	session_list = []
-	for s in Malcom.sniffer_sessions:
-		session_list.append({
-								'name': s, 
-								'packets': Malcom.sniffer_sessions[s].packet_count,
-								'nodes': len(Malcom.sniffer_sessions[s].nodes),
-								'edges': len(Malcom.sniffer_sessions[s].edges),
-								'status': "Running" if Malcom.sniffer_sessions[s].status() else "Stopped"
-							})
+	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
 	return dumps({'session_list': session_list})
 
 
 @app.route('/sniffer/<session_name>/')
 def sniffer_session(session_name, pcap_filename=None):
 	# check if session exists
-	if session_name not in Malcom.sniffer_sessions:
+	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
+	if session_name not in session_list:
 		debug_output("Sniffing session '%s' does not exist" % session_name, 'error')
 		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
 		return redirect(url_for('sniffer'))
 	
-	return render_template('sniffer.html', session=Malcom.sniffer_sessions[session_name], session_name=session_name)
+	# REDIS query sniffer for info on current session
+	session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_name': session_name})
+	return render_template('sniffer.html', session=session_info, session_name=session_name)
 
 @app.route('/sniffer/<session_name>/delete')
 def sniffer_session_delete(session_name):
-	if session_name not in Malcom.sniffer_sessions:
+	# REDIS query info to stop
+	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
+	if session_name not in session_list:
+		debug_output("Sniffing session '%s' does not exist" % session_name, 'error')
+		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
+		return redirect(url_for('sniffer'))
+
+	result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_name': session_name})
+	
+	if result == "notfound": # session not found
 		return (dumps({'status':'Sniffer session %s does not exist' % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
-	else:
-		if Malcom.sniffer_sessions[session_name].status():
-			return (dumps({'status':"Can't delete session %s: session running" % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
-		g.a.data.del_sniffer_session(session_name)
-		del Malcom.sniffer_sessions[session_name]
+	
+	elif result == "running": # session running
+		return (dumps({'status':"Can't delete session %s: session running" % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
+	
+	elif result == "stopped": # session successfully stopped
 		return (dumps({'status':"Sniffer session %s has been deleted" % session_name, 'success': 1}), 200, {'Content-Type': 'application/json'})
-
-
-
 
 
 @app.route('/sniffer/<session_name>/pcap')
 def pcap(session_name):
-	if session_name not in Malcom.sniffer_sessions:
-		abort(404)
-	Malcom.sniffer_sessions[session_name].generate_pcap()
-	return send_from_directory(Malcom.config['SNIFFER_DIR'], Malcom.sniffer_sessions[session_name].pcap_filename, mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_name+'.pcap')
+	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
+	if session_name not in session_list:
+		debug_output("Sniffing session '%s' does not exist" % session_name, 'error')
+		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
+		return redirect(url_for('sniffer'))
+
+	result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_name': session_name})
+
+	return send_from_directory(g.config['SNIFFER_DIR'], session_name+".pcap", mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_name+'.pcap')
 
 
 @app.route("/sniffer/<session_name>/<flowid>/raw")
@@ -545,12 +544,12 @@ def query_public_api():
 	#if not "X-Malcom-API-key":
 	#	return dumps({})
 
-	available_tags = g.a.data.get_tags_for_key(apikey)
+	available_tags = Model.get_tags_for_key(apikey)
 
 	tag_filter = {'tags': {'$in': available_tags}}
 	query = {'$and': [query, tag_filter]}
 
-	db_data = g.a.data.find(query)
+	db_data = Model.find(query)
 	data = []
 	for d in db_data:
 		d['tags'] = list(set(available_tags) & set(d['tags']))
@@ -559,8 +558,29 @@ def query_public_api():
 	return (dumps(data), 200, {'Content-Type': 'application/json'})
 
 
+# TEST 
+
+@app.route('/analytics/<query_type>')
+def analytics_status(query_type):
+	status = g.messenger.send_recieve('%sQuery' % query_type, 'analytics')
+	return str(status)
+
 
 # APIs (websockets) =========================================
+
+# def notify_progress(ws, msg='N/A'):
+# 		# REDIS query analytics engine to get status
+# 		g.messenger.analytics_ws = ws
+# 		while True:
+# 			# progress = g.messenger.send_recieve('progressQuery', 'analytics')
+# 			# active = g.messenger.send_recieve('statusQuery', 'analytics')
+# 			# # progress = 1
+# 			# # active = True
+
+# 			# status = {'active': active, 'msg': msg}
+# 			# status['progress'] = progress
+# 			# send_msg(ws, status, type='analyticsstatus')
+# 			gevent.sleep(1)
 
 
 @app.route('/api/analytics')
@@ -568,11 +588,12 @@ def analytics_api():
 	debug_output("Call to analytics API")
 
 	if request.environ.get('wsgi.websocket'):
-		debug_output("Got websocket")
+		debug_output("Got analytics websocket")
 
 		ws = request.environ['wsgi.websocket']
-		g.a.websocket = ws # TODO: remove this and use a local ws variable
-
+		
+		g.messenger.analytics_ws = ws
+		
 		while True:
 			try:
 				message = loads(ws.receive())
@@ -582,13 +603,27 @@ def analytics_api():
 
 			cmd = message['cmd']
 
-			if cmd == 'analyticsstatus':
-				g.a.notify_progress('Loaded') # same here
+			if cmd == 'analyticsstatus':				
+				while True:
+					gevent.sleep(1)
+
+
+@app.route('/api/sniffer/realtime/<session_name>')
+def sniffer_streaming_api(session_name):
+	debug_output("Call to streaming API for session %s" % session_name)
+
+	if request.environ.get('wsgi.websocket'):
+		debug_output("Got websocket for session %s" % session_name)
+		ws = request.environ['wsgi.websocket']
+		g.messenger.websocket_for_session[session_name] = ws
+
+		while True:
+			gevent.sleep(1)
 
 
 @app.route('/api/sniffer')
 def sniffer_api():
-	debug_output("call to sniffer API")
+	debug_output("Call to sniffer API")
 
 	if request.environ.get('wsgi.websocket'):
 
@@ -603,73 +638,94 @@ def sniffer_api():
 			
 			debug_output("Received: %s" % message)
 
-
-
 			cmd = message['cmd']
 			session_name = message['session_name']
+			# REDIS query sniffer for info
+			# if session_name in Malcom.sniffer_sessions:
+			# 	session = "fail"
+			# 	session = Malcom.sniffer_sessions[session_name]
+			# else:
+			# 	send_msg(ws, "Session %s not foud" % session_name, type=cmd)
+			# 	continue
 
-			if session_name in Malcom.sniffer_sessions:
-				session = Malcom.sniffer_sessions[session_name]
-			else:
-				send_msg(ws, "Session %s not foud" % session_name, type=cmd)
-				continue
-
-			session.ws = ws
-
+			session = "fail"
 
 			# websocket commands
+			params = {'session_name': session_name}
 
 			if cmd == 'sessionlist':
-				session_list = [s for s in Malcom.sniffer_sessions]
+				session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
+				# REDIS query sniffer for info
+				# session_list = [s for s in Malcom.sniffer_sessions]
 				send_msg(ws, {'session_list': session_list}, type=cmd)
 				continue
 
 			if cmd == 'sniffstart':
-				session.start(str(request.remote_addr), public=g.config['PUBLIC'])
+				params['remote_addr'] = str(request.remote_addr)
+				msg = g.messenger.send_recieve('sniffstart', 'sniffer-commands', params=params)
+
+				# REDIS send message to sniffer
+				# session.start(str(request.remote_addr), public=g.config['PUBLIC'])
 				send_msg(ws, "OK", type=cmd)
 				continue
 
 			if cmd == 'sniffstop':
-				if g.config['PUBLIC']:
-					continue
-				if session.status():
-					session.stop()
-					send_msg(ws, 'OK', type=cmd)
-				else:
-					send_msg(ws, 'Error: sniffer not running', type=cmd)
+				msg = g.messenger.send_recieve('sniffstop', 'sniffer-commands', params=params)
+				
+				send_msg(ws, msg, type=cmd)
+				# REDIS send message to sniffer
+				# if session.status():
+				# 	session.stop()
+				# 	send_msg(ws, 'OK', type=cmd)
+				# else:
+				# 	send_msg(ws, 'Error: sniffer not running', type=cmd)
 				continue
 
 			if cmd == 'sniffstatus':
-				if session.status():
+				status = g.messenger.send_recieve('sniffstatus', 'sniffer-commands', params=params)
+				
+				# REDIS send message to sniffer
+				if status:
 					status = 'active'
-					debug_output("Session %s is active" % session.name)
-					send_msg(ws, {'status': 'active', 'session_name': session.name}, type=cmd)
+					debug_output("Session %s is active" % params['session_name'])
+					send_msg(ws, {'status': 'active', 'session_name': params['session_name']}, type=cmd)
 				else:
 					status = 'inactive'
-					debug_output("Session %s is inactive" % session.name)
-					send_msg(ws, {'status': 'inactive', 'session_name': session.name}, type=cmd)
+					debug_output("Session %s is inactive" % params['session_name'])
+					send_msg(ws, {'status': 'inactive', 'session_name': params['session_name']}, type=cmd)
 				continue
 					
 			if cmd == 'sniffupdate':
-				data = session.update_nodes()
+				
+				# REDIS send message to sniffer
+				msg = g.messenger.send_recieve('sniffupdate', 'sniffer-commands', params=params)
+				data = json.loads(msg) # json loads so that it doesn't complain about fake object ids
 				data['type'] = cmd
 				if data:
 					ws.send(dumps(data))
 				continue
 
 			if cmd == 'flowstatus':
-				data = session.flow_status()
+				# REDIS send message to sniffer
+				flow = g.messenger.send_recieve('flowstatus', 'sniffer-commands', params=params)
+				
+				data = flow # remember we had to stringify the data to have the right encoding
 				data['type'] = cmd
 				if data:
 					ws.send(dumps(data))
 				continue
 
 			if cmd == 'get_flow_payload':
-				fid = message['flowid']
-				flow = session.flows[fid]
+				params['flowid'] = message['flowid']
+				payload = g.messenger.send_recieve('get_flow_payload', 'sniffer-commands', params=params)
+				
+				# REDIS send message to sniffer
+				# fid = message['flowid']
+				# flow = session.flows[fid]
 				data = {}
-				data['payload'] = flow.get_payload()
-
+				if len(payload) == 0:
+					payload = "[no payload]"
+				data['payload'] = payload
 				data['type'] = cmd
 				ws.send(dumps(data))
 				continue
@@ -683,20 +739,40 @@ def fast():
 
 @app.route("/slow")
 def slow():
-	time.sleep(10)
-	return "That was slow..."
+	t0 = datetime.datetime.now()
+	for i in range(50):
+		Model.elements.find().explain()
+	t = datetime.datetime.now()
+
+	return "That was slow... %s\n" % ((t-t0))
+
+
+
+def malcom_app(environ, start_response):  
+	if environ.get('HTTP_SCRIPT_NAME'):
+		# update path info 
+		environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
+		# declare SCRIPT_NAME
+		environ['SCRIPT_NAME'] = environ['HTTP_SCRIPT_NAME']
+	
+	if environ.get('HTTP_X_SCHEME'):	
+		# forward the scheme
+		environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME')
+
+	return app(environ, start_response)
 
 
 
 class MalcomWeb(Process):
 	"""docstring for MalcomWeb"""
-	def __init__(self, public, listen_port, listen_interface):
+	def __init__(self, public, listen_port, listen_interface, setup):
 		super(MalcomWeb, self).__init__()
-		self.public = public
-		self.listen_port = listen_port
-		self.listen_interface = listen_interface
+		self.setup = setup
+		self.public = setup['PUBLIC']
+		self.listen_port = setup['LISTEN_PORT']
+		self.listen_interface = setup['LISTEN_INTERFACE']
 		self.http_server = None
-
+	
 	def run(self):
 		self.start_server()
 
@@ -704,13 +780,15 @@ class MalcomWeb(Process):
 		pass
 
 	def start_server(self):
-		for key in Malcom.config:
-			app.config[key] = Malcom.config[key]
+		for key in self.setup:
+			app.config[key] = self.setup[key]
 		app.config['UPLOAD_DIR'] = ""
-		sys.stderr.write("Starting webserver in %s mode...\n" % ("public" if self.public else "private"))
+
+		from Malcom.web.messenger import WebMessenger
+		app.config['MESSENGER'] = WebMessenger()
 		
-		pool = Pool(1000)
-		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler, spawn=pool)
+		sys.stderr.write("Starting webserver in %s mode...\n" % ("public" if self.public else "private"))
+		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler)
 		sys.stderr.write("Webserver listening on %s:%s\n\n" % (self.listen_interface, self.listen_port))
 		
 		try:

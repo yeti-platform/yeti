@@ -1,4 +1,4 @@
-#from gevent import monkey; monkey.patch_subprocess()#socket(dns=False); monkey.patch_time();
+# from gevent import monkey; monkey.patch_socket()#subprocess()#socket(dns=False); monkey.patch_time();
 
 import dateutil
 
@@ -12,8 +12,7 @@ from bson.objectid import ObjectId
 
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.datatypes import Hostname, Url, Ip, As, Evil, DataTypes
-import Malcom
-
+#from Malcom.configuration import Malconf
 
 class Transform(SONManipulator):
 	def transform_incoming(self, son, collection):
@@ -63,136 +62,83 @@ class Model:
 		stats += "Graph has %s edges" % self._db.graph.count()
 		return stats
 
+
+	# =============== link operations =================
+
+	def connect(self, src, dst, attribs="", commit=True):
+		if not src or not dst:
+			return None
+		
+		conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
+		
+		# if the connection already exists, just modify attributes and last seen time
+		if conn:
+			if attribs != "": conn['attribs'] = attribs
+			conn['last_seen'] = datetime.datetime.utcnow()
+
+		# if not, change the connection
+		else:
+			conn = {}
+			conn['src'] = src._id
+			conn['dst'] = dst._id
+			conn['attribs'] = attribs
+			conn['first_seen'] = datetime.datetime.utcnow()
+			conn['last_seen'] = datetime.datetime.utcnow()
+			debug_output("(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs), type='model')
+		
+		if commit:
+			self.graph.save(conn)
+		
+		return conn
+
+	def get_destinations(self, elt):
+		return [e['value'] for e in self.graph.find({'src': elt['_id']}, 'value')]
+
+
+
+
+
+	# =========== elements operations ============
+
 	def find(self, query={}):
 		return self.elements.find(query)
 		
 	def find_one(self, oid):
 		return self.elements.find_one(oid)
 
-	def clear_db(self):
-		for c in self._db.collection_names():
-			if c != "system.indexes":
-				self._db[c].drop()
-	
-	def list_db(self):
-		for e in self.elements.find():
-			debug_output(e)
-
-
-	def save_sniffer_session(self, session):
-		dict = { 
-			'name': session.name,
-			'filter': session.filter,
-			'intercept_tls': session.intercept_tls,
-			'pcap': True,
-			'packet_count': session.packet_count,
-			}
-		status = self.sniffer_sessions.update({'name': dict['name']}, dict, upsert=True)
-		return status
-
-	def get_sniffer_session(self, session_name):
-		session = self.sniffer_sessions.find_one({'name': session_name})
-		return session
-
-	def del_sniffer_session(self, session_name):
-
-		session = self.sniffer_sessions.find_one({'name': session_name})
-			
-		filename = session['name'] + ".pcap"
-				
-		try:
-			os.remove(Malcom.config['SNIFFER_DIR'] + "/" + filename)
-		except Exception, e:
-			print e
-
-		self.sniffer_sessions.remove({'name': session_name})
-
-		return True
-
-	def get_sniffer_sessions(self):
-		return [s for s in self.sniffer_sessions.find()]
-	
-	def save(self, element, with_status=False):
-	
-		tags = []
-		if 'tags' in element:
-			tags = element['tags']
-			del element['tags'] 	# so tags in the db do not get overwritten
-
-		if '_id' in element:
-			del element['_id']
+	def find_neighbors(self, query, include_original=True):
 		
-		# check if existing
-		_element = self.elements.find_one({'value': element['value']})
-		if _element != None:
-			for key in element:
-				if key=='tags': continue
-				_element[key] = element[key]
-			if key not in _element:
-				_element[key] = {}
-			_element['tags']
-			_element['tags'] = list(set(_element['tags'] + tags))
-			element = _element
-			new = False
-		else:
-			new = True
+		total_nodes = {}
+		total_edges = {}
+		final_query = []
 
-		if not new:
-			debug_output("(updated %s %s)" % (element.type, element.value), type='model')
-			assert element.get('date_created', None) != None
-		else:
-			debug_output("(added %s %s)" % (element.type, element.value), type='model')
-			element['date_created'] = datetime.datetime.utcnow()
-			element['next_analysis'] = datetime.datetime.utcnow()
+		for key in query:
 
-		self.elements.save(element)
-		assert element['date_created'] != None
-
-		if not with_status:
-			return element
-		else:
-			return element, new
-
-	def remove(self, element_id):
-		return self.elements.remove({'_id' : ObjectId(element_id)})
-
-	def exists(self, element):
-		return self.elements.find_one({ 'value': element.value })
-
-	def connect(self, src, dst, attribs="", commit=True):
-			if not src or not dst:
-				return None
-			
-			conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
-			
-			# if the connection already exists, just modify attributes and last seen time
-			if conn:
-				if attribs != "": conn['attribs'] = attribs
-				conn['last_seen'] = datetime.datetime.utcnow()
-
-			# if not, change the connection
+			if key == '_id': 
+				values = [ObjectId(v) for v in query[key]]
 			else:
-				conn = {}
-				conn['src'] = src._id
-				conn['dst'] = dst._id
-				conn['attribs'] = attribs
-				conn['first_seen'] = datetime.datetime.utcnow()
-				conn['last_seen'] = datetime.datetime.utcnow()
-				debug_output("(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs), type='model')
-			
-			if commit:
-				self.graph.save(conn)
-			
-			return conn
+				values = [v for v in query[key]]
 
-	def add_feed(self, feed):
-		elts = feed.get_info()
-	  
-		for e in elts:
-			self.malware_add(e,e['tags'])
+			final_query.append({key: {'$in': values}})
 
-	def get_destinations(self, elt):
-		return [e['value'] for e in self.graph.find({'src': elt['_id']}, 'value')]
+		elts = self.elements.find({'$and': final_query})
+		
+		nodes, edges = self.get_neighbors_id(elts, include_original=include_original)
+		for n in nodes:
+			total_nodes[n['_id']] = n
+		for e in edges:
+			total_edges[e['_id']] = e
+			
+		total_nodes = [total_nodes[n] for n in total_nodes]	
+		total_edges = [total_edges[e] for e in total_edges]
+
+		# display 
+		for e in total_nodes:
+			e['fields'] = e.display_fields
+
+		data = {'nodes':total_nodes, 'edges': total_edges }
+
+		return data
 
 	def get_neighbors_id(self, elts, query={}, include_original=True):
 
@@ -237,7 +183,6 @@ class Model:
 		d_ids = { elt['_id']: elt['_id'] }
 
 		# get all links to / from the required element
-
 		for e in self.graph.find({'src': elt['_id']}):
 			d_new_edges[e['_id']] = e
 			d_ids[e['dst']] = e['dst']
@@ -266,9 +211,6 @@ class Model:
 			d_new_edges[e['_id']] = e
 		for e in self.graph.find({'dst': { '$in': nodes_id }}):
 			d_new_edges[e['_id']] = e
-
-		# if not include_original:
-		# 	del nodes[elt['_id']]
 		
 		# create arrays
 		new_edges = [d_new_edges[e] for e in d_new_edges]
@@ -280,7 +222,176 @@ class Model:
 
 		return nodes, new_edges
 
-	#Public API operations
+	# ---- update & save operations ----
+
+	def bulk_insert(self, elements):
+		return self.elements.insert(elements)
+
+
+	def save(self, element, with_status=False):
+	
+		tags = []
+		if 'tags' in element:
+			tags = element['tags']
+			del element['tags'] 	# so tags in the db do not get overwritten
+
+		if '_id' in element:
+			del element['_id']
+		
+		# check if existing
+		_element = self.elements.find_one({'value': element['value']})
+		if _element != None:
+			for key in element:
+				if key=='tags': continue
+				_element[key] = element[key]
+			if key not in _element:
+				_element[key] = {}
+			_element['tags'] = list(set(_element['tags'] + tags))
+			element = _element
+			new = False
+		else:
+			new = True
+			element['tags'] = tags
+
+		if not new:
+			debug_output("(updated %s %s)" % (element.type, element.value), type='model')
+			assert element.get('date_created', None) != None
+		else:
+			debug_output("(added %s %s)" % (element.type, element.value), type='model')
+			element['date_created'] = datetime.datetime.utcnow()
+			element['next_analysis'] = datetime.datetime.utcnow()
+
+		self.elements.save(element)
+		assert element['date_created'] != None
+
+		if not with_status:
+			return element
+		else:
+			return element, new
+
+	def add_text(self, text, tags=[]):
+		added = []
+		for t in text:
+			elt = None
+			if t.strip() != "":
+				if is_url(t):
+					elt = Url(is_url(t), [])
+				elif is_hostname(t):
+					elt = Hostname(is_hostname(t), [])
+				elif is_ip(t):
+					elt = Ip(is_ip(t), [])
+				if elt:
+					elt['tags'] = tags
+					added.append(self.save(elt))
+					
+		if len(added) == 1:
+			return added[0]
+		else:
+			return added
+		
+
+	# ---- remove operations ----
+
+	def remove_element(self, element):
+		return self.elements.remove({'_id' : element['_id']})
+
+	def remove_by_id(self, element_id):
+		return self.elements.remove({'_id' : ObjectId(element_id)})
+
+	def remove_by_value(self, element_value):
+		return self.elements.remove({'value' : element_value})
+
+	
+
+
+
+
+	# ============= clear / list db ================
+
+	def clear_db(self):
+		for c in self._db.collection_names():
+			if c != "system.indexes":
+				self._db[c].drop()
+	
+	def list_db(self):
+		for e in self.elements.find():
+			debug_output(e)
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	# ============ sniffer operations ==============
+
+	def save_sniffer_session(self, session):
+		dict = { 
+			'name': session.name,
+			'filter': session.filter,
+			'intercept_tls': session.intercept_tls,
+			'pcap': True,
+			'packet_count': session.packet_count,
+			}
+		status = self.sniffer_sessions.update({'name': dict['name']}, dict, upsert=True)
+		return status
+
+	def get_sniffer_session(self, session_name):
+		session = self.sniffer_sessions.find_one({'name': session_name})
+		return session
+
+	def del_sniffer_session(self, session_name):
+
+		session = self.sniffer_sessions.find_one({'name': session_name})
+			
+		filename = session['name'] + ".pcap"
+				
+		try:
+			os.remove(Malcom.config['SNIFFER_DIR'] + "/" + filename)
+		except Exception, e:
+			print e
+
+		self.sniffer_sessions.remove({'name': session_name})
+
+		return True
+
+	def get_sniffer_sessions(self):
+		return [s for s in self.sniffer_sessions.find()]
+
+
+	
+
+
+
+
+
+
+	# =========== Feed operations =====================
+
+	def add_feed(self, feed):
+		elts = feed.get_info()
+	  
+		for e in elts:
+			self.malware_add(e,e['tags'])
+
+	
+
+	
+
+	# ============ Public API operations ===============
 
 	def add_tag_to_key(self, apikey, tag):
 		k = self.public_api.find_one({'api-key': apikey})

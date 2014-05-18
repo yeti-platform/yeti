@@ -6,70 +6,47 @@ __author__ = '@tomchop_'
 __version__ = '1.2 alpha'
 __license__ = "GPL"
 
-import os, sys, argparse, threading
+#from gevent import monkey; monkey.patch_all()#subprocess()#socket(dns=False); monkey.patch_time();
+
+
+import os, sys, argparse
 import netifaces as ni
-from time import sleep
-from multiprocessing import Pipe
 
 from flask import Flask
 
-import Malcom # this is the configuration
-from Malcom.analytics.analytics import Analytics
+from Malcom.config.malconf import MalcomSetup
 
-# this should be stored and loaded from a configuration file
-Malcom.config['DEBUG'] = True
-Malcom.config['VERSION'] = "1.2 alpha"
+setup = MalcomSetup()
 
-Malcom.config['LISTEN_INTERFACE'] = "0.0.0.0"
-Malcom.config['LISTEN_PORT'] = 8080
-Malcom.config['MAX_WORKERS'] = 4
-Malcom.config['PUBLIC'] = False
-Malcom.config['TLS_PROXY_PORT'] = False
-Malcom.config['FEEDS'] = False
-Malcom.config['ANALYTICS'] = False
+# this should be stored and loaded from a configuration fil
 
-Malcom.config['BASE_PATH'] = os.getcwd() + '/Malcom'
-Malcom.config['SNIFFER_DIR'] = Malcom.config['BASE_PATH'] + '/sniffer'
-Malcom.config['FEEDS_DIR'] = Malcom.config['BASE_PATH'] + '/feeds'
+# malconf['DEBUG'] = True
+# malconf['VERSION'] = "1.2 alpha"
 
-Malcom.config['IFACES'] = {}
-for i in [i for i in ni.interfaces() if i.find('eth') != -1]:
-	Malcom.config['IFACES'][i] = ni.ifaddresses(i).get(2,[{'addr':'Not defined'}])[0]['addr']
+# malconf['LISTEN_INTERFACE'] = "0.0.0.0"
+# malconf['LISTEN_PORT'] = 8080
+# malconf['MAX_WORKERS'] = 4
+# malconf['PUBLIC'] = False
+# malconf['TLS_PROXY_PORT'] = False
+# malconf['FEEDS'] = False
+# malconf['ANALYTICS'] = False
+
+# malconf['BASE_PATH'] = os.getcwd() + '/Malcom'
+# malconf['SNIFFER_DIR'] = malconf['BASE_PATH'] + '/sniffer'
+# malconf['FEEDS_DIR'] = malconf['BASE_PATH'] + '/feeds'
+
+# malconf['IFACES'] = {}
 
 
-def parse_config(filename):
-	import ConfigParser
-	config = ConfigParser.ConfigParser(allow_no_value=True)
-	config.read(filename)
-
-	sections = config.sections()
-
-	if config.has_section('web'):
-		Malcom.config['WEB'] = config.getboolean('web', 'activated')
-		Malcom.config['LISTEN_INTERFACE'] = config.get('web', 'listen_interface')
-		Malcom.config['LISTEN_PORT'] = config.getint('web', 'listen_port')
-		Malcom.config['PUBLIC'] = config.getboolean('web', 'public')
-
-	if config.has_section('analytics'):
-		Malcom.config['ANALYTICS'] = config.getboolean('analytics', 'activated')
-		Malcom.config['MAX_WORKERS'] = config.getint('analytics', 'max_workers')
-
-	if config.has_section('feeds'):
-		Malcom.config['FEEDS'] = config.getboolean('feeds', 'activated')
-		Malcom.config['FEEDS_DIR'] = config.get('feeds', 'feeds_dir')
-		Malcom.config['FEEDS_SCHEDULER'] = config.getboolean('feeds', 'scheduler')
-
-	if config.has_section('sniffer'):
-		Malcom.config['SNIFFER'] = config.getboolean('sniffer', 'activated')
-		Malcom.config['SNIFFER_DIR'] = config.get('sniffer', 'sniffer_dir')
-		Malcom.config['TLS_PROXY_PORT'] = config.getint('sniffer', 'tls_proxy_port')
-	
-	sys.stderr.write("Successfully loaded configuration file from %s\n" % filename)
-	pass
+setup = MalcomSetup()
+setup['VERSION'] = "1.2a"
 
 if __name__ == "__main__":
 
-	# options
+	# Init
+	os.system('clear')
+	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % setup['VERSION'])
+
 	parser = argparse.ArgumentParser(description="Malcom - malware communications analyzer")
 	parser.add_argument("-a", "--analytics", help="Run analytics", action="store_true", default=False)
 	parser.add_argument("-f", "--feeds", help="Run feeds", action="store_true", default=False)
@@ -81,28 +58,15 @@ if __name__ == "__main__":
 	parser.add_argument("--tls-proxy-port", help="Port number on which to start the TLS proxy on. No proxy started if not specified.", type=int, default=0)
 	
 	args = parser.parse_args()
-	os.system('clear')
-	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % Malcom.config['VERSION'])
 
-	if args.config:
-		parse_config(args.config)
-	else:
-		Malcom.config['LISTEN_INTERFACE'] = args.interface
-		Malcom.config['LISTEN_PORT'] = args.port
-		Malcom.config['MAX_WORKERS'] = args.max_workers
-		Malcom.config['PUBLIC'] = args.public
-		Malcom.config['TLS_PROXY_PORT'] = args.tls_proxy_port
-		Malcom.config['FEEDS'] = args.feeds
-		Malcom.config['ANALYTICS'] = args.analytics
+	setup.load_config(args)
 
+	# detect interfaces
 	sys.stderr.write("Detected interfaces:\n")
-	for iface in Malcom.config['IFACES']:
-		sys.stderr.write("%s:\t%s\n" % (iface, Malcom.config['IFACES'][iface]))
-	
-	Malcom.analytics_engine = Analytics()
 
+	for iface in setup['IFACES']:
+		sys.stderr.write("%s:\t%s\n" % (iface, setup['IFACES'][iface]))
 	
-
 ################################################
 
 # from Malcom.analytics.analytics import Analytics
@@ -112,56 +76,43 @@ if __name__ == "__main__":
 # from Malcom.networking import netsniffer
 
 ################################################
-
-	if Malcom.config['SNIFFER']:
-		sys.stderr.write("[+] Starting sniffer...\n")
-		if Malcom.config['TLS_PROXY_PORT'] > 0:
-			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % Malcom.config['TLS_PROXY_PORT'])
-			Malcom.tls_proxy = MalcomTLSProxy(Malcom.config['TLS_PROXY_PORT'])
-			Malcom.tls_proxy.start()
-		else:
-			Malcom.tls_proxy = None
-		from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
+	if setup['SNIFFER']:
 		from Malcom.networking import netsniffer
-		sys.stderr.write("Importing packet captures...\n")
+		setup.sniffer_engine = netsniffer.SnifferEngine(setup)
 
-		for s in Malcom.analytics_engine.data.get_sniffer_sessions():
-			Malcom.sniffer_sessions[s['name']] = netsniffer.Sniffer(Malcom.analytics_engine, 
-																	s['name'], 
-																	None, 
-																	None, 
-																	filter_restore=s['filter'], 
-																	intercept_tls=s['intercept_tls'] if Malcom.tls_proxy else False)
-			Malcom.sniffer_sessions[s['name']].pcap = True
+		
 
 
 	# call malcom to run feeds - this will not start the web interface
-	if Malcom.config['FEEDS']:
+	if setup['FEEDS']:
 		sys.stderr.write("[+] Importing feeds...\n")
 		from Malcom.feeds.feed import FeedEngine
-		scheduler = Malcom.config['FEEDS_SCHEDULER']
-		Malcom.feed_engine = FeedEngine(Malcom.analytics_engine, scheduler)
-		Malcom.feed_engine.load_feeds()
+		setup.feed_engine = FeedEngine(setup)
+		setup.feed_engine.load_feeds(setup['ACTIVATED_FEEDS'])
+		
 		# launch process		
-
-		if scheduler:
-			Malcom.feed_engine.start()
+		if setup['FEEDS_SCHEDULER']:
+			setup.feed_engine.period = 1
+			setup.feed_engine.run_periodically = False
+			setup.feed_engine.start()
 			sys.stderr.write("Starting feed scheduler...\n")
 		else:
 			sys.stderr.write("Feed scheduler must be started manually.\n")
 
 	# run analytics
-	if Malcom.config['ANALYTICS']:
+	if setup['ANALYTICS']:
 		sys.stderr.write("[+] Starting analytics engine...\n")
-		Malcom.analytics_engine.start()
+		from Malcom.analytics.analytics import Analytics
+		setup.analytics_engine = Analytics(setup['MAX_WORKERS'])
+		setup.analytics_engine.start()
 		
-	if Malcom.config['WEB']:
+	if setup['WEB']:
 		sys.stderr.write("[+] Starting webserver...\n")
 		from Malcom.web.webserver import MalcomWeb
-		Malcom.web = MalcomWeb(Malcom.config['PUBLIC'], Malcom.config['LISTEN_PORT'], Malcom.config['LISTEN_INTERFACE'])
+		setup.web = MalcomWeb(setup['PUBLIC'], setup['LISTEN_PORT'], setup['LISTEN_INTERFACE'], setup)
 
-	if Malcom.config['WEB']:
-		Malcom.web.start_server()
+	if setup['WEB']:
+		setup.web.start_server()
 	else:
 		try:
 			while True:
@@ -171,30 +122,30 @@ if __name__ == "__main__":
 
 	sys.stderr.write("\nExiting gracefully\n")
 	
-	if Malcom.config['WEB']:
+	if setup['WEB']:
 		sys.stderr.write('Stopping webserver... ')
 		sys.stderr.write("done.\n")
 
-	if Malcom.config['ANALYTICS']:
+	if setup['ANALYTICS']:
 		sys.stderr.write("Stopping analytics engine... ")
-		Malcom.analytics_engine.stop()
-		Malcom.analytics_engine.join()
+		setup.analytics_engine.stop()
+		setup.analytics_engine.join()
 		sys.stderr.write("done.\n")
 
-	if Malcom.config['SNIFFER'] and len(Malcom.sniffer_sessions) > 0:
+	if setup['SNIFFER'] and len(setup.sniffer_engine.sessions) > 0:
 		sys.stderr.write('Stopping sniffing sessions... ')
-		for s in Malcom.sniffer_sessions:
-			session = Malcom.sniffer_sessions[s]
+		for s in setup.sniffer_engine.sessions:
+			session = setup.sniffer_engine.sessions[s]
 			session.stop()
 
-	if Malcom.config['FEEDS']:
+	if setup['FEEDS']:
 		sys.stderr.write("Stopping feed engine... ")
-		Malcom.feed_engine.stop_all_feeds()
+		setup.feed_engine.stop_all_feeds()
 		sys.stderr.write("done.\n")
 
-	if Malcom.config['TLS_PROXY_PORT']:
+	if setup['TLS_PROXY_PORT']:
 		sys.stderr.write("Stopping TLS proxy... ")
-		Malcom.tls_proxy.stop()
+		setup.tls_proxy.stop()
 		sys.stderr.write("done.\n")
 
 	exit()
