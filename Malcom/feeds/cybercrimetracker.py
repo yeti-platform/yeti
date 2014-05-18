@@ -16,24 +16,10 @@ class CybercrimeTracker(Feed):
 		self.source = "http://cybercrime-tracker.net/rss.xml"
 		self.confidence = 90
 		
-	def update(self):
-		feed = urllib2.urlopen(self.source)	#Xylitol's tracker
-		self.status = "OK"
+	def update(self, testing=False):
+		self.update_xml('item', ["title", "link", "pubDate", "description"])
 
-		children = ["title", "link", "pubDate", "description"]
-		main_node = "item"
-		
-		tree = etree.parse(feed)
-		for item in tree.findall("//%s"%main_node):
-			dict = {}
-			for field in children:
-				dict[field] = item.findtext(field)
-
-			self.analyze(dict)
-
-		return True
-
-	def analyze(self, dict):
+	def analyze(self, dict, testing=False):
 		try:
 			url = toolbox.find_urls(dict['title'])[0]
 		except Exception, e:
@@ -47,4 +33,4 @@ class CybercrimeTracker(Feed):
 		evil['tags'] = ['cybercrimetracker', 'malware', 'cc', dict['description'].lower()]
 		evil['info'] = "%s CC. Published on %s" % (dict['description'], dict['pubDate'])
 
-		self.commit_to_db(url, evil)
+		return url, evil

@@ -18,21 +18,7 @@ class ZeusTrackerBinaries(Feed):
 		
 
 	def update(self):
-		feed = urllib2.urlopen(self.source)
-		self.status = "OK"
-		
-		children = ["title", "link", "description", "guid"]
-		main_node = "item"
-
-		tree = etree.parse(feed)
-		for item in tree.findall("//%s"%main_node):
-			dict = {}
-			for field in children:
-				dict[field] = item.findtext(field)
-
-			self.analyze(dict)
-
-		return True
+		self.update_xml('item', ["title", "link", "description", "guid"])
 
 	def analyze(self, dict):
 			
@@ -47,7 +33,6 @@ class ZeusTrackerBinaries(Feed):
 		
 		# description
 		evil['description'] = dict['description'] 
-
 		# status
 		if dict['description'].find("offline") != -1:
 			evil['status'] = "offline"
@@ -67,6 +52,8 @@ class ZeusTrackerBinaries(Feed):
 		# tags
 		evil['tags'] += ['zeus', 'malware', 'exe']
 
+		url = Url(toolbox.find_urls(dict['description'])[0], ['malware'])
+
 		# This is important. Values have to be unique, since it's this way that
 		# Malcom will identify them in the database.
 		# This is probably not the best way, but it will do for now.
@@ -75,11 +62,9 @@ class ZeusTrackerBinaries(Feed):
 		if md5:
 			evil['value'] += " (MD5: %s)" % evil['md5']
 		else:
-			evil['value'] += " (URL: %s)" % evil['url']
+			evil['value'] += " (URL: %s)" % url['value']
 
 		# Save elements to DB. The status field will contain information on 
 		# whether this element already existed in the DB.
 
-		url = Url(toolbox.find_urls(dict['description'])[0], ['malware'])
-
-		self.commit_to_db(url, evil)
+		return url, evil

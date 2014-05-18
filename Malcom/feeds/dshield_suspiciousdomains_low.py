@@ -1,5 +1,5 @@
 import urllib2
-from Malcom.model.datatypes import Hostname
+from Malcom.model.datatypes import Hostname, Evil
 from feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
@@ -12,12 +12,7 @@ class DShieldSuspiciousDomainsLow(Feed):
 		self.confidence = 10
 		
 	def update(self):
-		feed = urllib2.urlopen(self.source).readlines()
-		self.status = "OK"
-		
-		for line in feed:	
-			self.analyze(line)
-		return True
+		self.update_lines()
 
 	def analyze(self, line):
 		if line.startswith('#') or line.startswith('\n'):
@@ -29,10 +24,11 @@ class DShieldSuspiciousDomainsLow(Feed):
 			return
 
 		# Create the new ip and store it in the DB
-		hostname = Hostname(hostname=hostname, tags=['dshield', 'low'])
+		hostname = Hostname(hostname=hostname, tags=['evil'])
 
-		hostname, new = self.model.save(hostname, with_status=True)
-		if new:
-			self.elements_fetched += 1
+		evil = Evil()
+		evil['tags'] = ['dshield', 'low']
+
+		return hostname, evil
 
 

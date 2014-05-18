@@ -1,6 +1,6 @@
-import urllib2
+import urllib2, re
 import Malcom.auxiliary.toolbox as toolbox
-from Malcom.model.datatypes import Hostname, Evil
+from Malcom.model.datatypes import Url, Evil
 from feed import Feed
 from lxml import etree
 
@@ -15,44 +15,22 @@ class MDLHosts(Feed):
 		self.name = "MalwareDomainList"
 
 	def update(self):
-		feed = urllib2.urlopen(self.source)
-		self.status = "OK"
-		
-		children = ["title", "link", "description", "guid"]
-		main_node = "item"
-		
-		tree = etree.parse(feed)
-		for item in tree.findall("//%s"%main_node):
-			dict = {}
-			for field in children:
-				dict[field] = item.findtext(field)
-
-			self.analyze(dict)
-
-		return True
+		self.update_xml('item', ["title", "link", "description", "guid"])
 
 	def analyze(self, dict):
-		if line.startswith('#') or line.startswith('\n'):
-			return
-		try:
-			hostname = toolbox.find_hostnames(line)[0]
-		except Exception, e:
-			# if find_hostname raises an exception, it means no hostname
-			# was found in the line, so we return
-			return
 
 		# Create the new URL and store it in the DB
-		url = re.search("Host: (?<url>[^,]),", dict['description']).group('url')
-		url = Url(value=url)
+		url = re.search("Host: (?P<url>[^,]+),", dict['description']).group('url')
+		url = Url(url=url)
 		evil = Evil()
 		
 		evil['details'] = dict['description']
-		threat_type = re.search('Description :(?<tag>[^,]+,)').group('tag')
+		threat_type = re.search('Description: (?P<tag>.+)', dict['description']).group('tag')
 		evil['tags'] = ['malwaredomainlist', threat_type]
 		evil['value'] = "%s (%s)" % (threat_type, url['value'])
 		evil['link'] = dict['link']
 		evil['guid'] = dict['guid']
 
-		self.commit_to_db(url, evil)
+		return url, evil
 
 

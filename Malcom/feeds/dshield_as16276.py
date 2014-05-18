@@ -1,5 +1,5 @@
 import urllib2
-from Malcom.model.datatypes import Ip 
+from Malcom.model.datatypes import Ip, Evil
 from feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
@@ -16,12 +16,7 @@ class DShield16276(Feed):
 		
 
 	def update(self):
-		feed = urllib2.urlopen(self.source).readlines()
-		self.status = "OK"
-		
-		for line in feed:	
-			self.analyze(line)
-		return True
+		self.update_lines()
 
 	def analyze(self, line):
 		if line.startswith('#') or line.startswith('\n'):
@@ -46,5 +41,6 @@ class DShield16276(Feed):
 		evil['first seen'] = dict[3]
 		evil['last seen'] = dict[4]
 
-		self.commit_to_db(ip, evil)
+		return ip, evil
+
 

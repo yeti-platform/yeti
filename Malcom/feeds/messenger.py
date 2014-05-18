@@ -1,5 +1,5 @@
 from Malcom.shmem.SharedData import Messenger
-import json, threading, time, pickle
+import json, threading, time, pickle, urllib2
 from bson import json_util
 
 
@@ -34,12 +34,14 @@ class FeedsMessenger(Messenger):
 								'elements_fetched' : f.elements_fetched,
 								'status' : f.status,
 								'enabled' : f.enabled,
+								'name': f.name,
+								'description': f.description,
+								'source':f.source
 								}
 
 			final_msg = pickle.dumps(msg)
 
 		if msg == 'feedRun':
-
 			result = self.feedengine_instance.run_feed(params['feed_name'])
 			final_msg = result
 

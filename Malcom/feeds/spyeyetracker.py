@@ -5,7 +5,7 @@ import Malcom.auxiliary.toolbox as toolbox
 
 from bson.objectid import ObjectId
 from bson.json_util import dumps
-from Malcom.model.datatypes import Hostname, Evil
+from Malcom.model.datatypes import Hostname, Evil, Ip
 from feed import Feed
 
 
@@ -13,32 +13,14 @@ from feed import Feed
 class SpyEyeTracker(Feed):
 
 	def __init__(self, name):
-		super(SpyEyeCnc, self).__init__(name, run_every="1h")
+		super(SpyEyeTracker, self).__init__(name, run_every="1h")
 		self.name = "SpyEyeTracker"
 		self.source = "https://spyeyetracker.abuse.ch/monitor.php?rssfeed=tracker"
 		self.description = "This feed shows the latest forty SpyEye C&Cs which the tracker has captured."
-		
-
 
 	def update(self):
-		
-		feed = urllib2.urlopen(self.source)
-		self.status = "OK"
-	
-		
-		children = ["title", "link", "description", "guid"]
-		main_node = "item"
-		
+		self.update_xml('item', ["title", "link", "description", "guid"])
 
-		tree = etree.parse(feed)
-		for item in tree.findall("//%s"%main_node):
-			dict = {}
-			for field in children:
-				dict[field] = item.findtext(field)
-
-			self.analyze(dict)
-
-		return True
 
 	def analyze(self, dict):
 			
@@ -70,17 +52,21 @@ class SpyEyeTracker(Feed):
 		# This is important. Values have to be unique, since it's this way that
 		# Malcom will identify them in the database.
 		# This is probably not the best way, but it will do for now.
-
-		evil['value'] = "SpyEye Config"
-		if md5:
-			evil['value'] += " (MD5: %s)" % evil['md5']
-		else:
-			evil['value'] += " (URL: %s)" % evil['url']
-
+		
+		try:
+			elt = Hostname(toolbox.find_hostnames(dict['description'])[0], tags=['cc', 'spyeye', 'malware'])
+		except Exception, e:
+			try:
+				elt = Ip(toolbox.find_ips(dict['description'])[0], tags=['cc', 'spyeye', 'malware'])
+			except Exception, e:
+				return
+		
+		evil['value'] = "SpyEye CC (%s)" % elt['value']
+		
 		# Save elements to DB. The status field will contain information on 
 		# whether this element already existed in the DB.
 
-		hostname = Hostname(toolbox.find_hostnames(dict['description'])[0], tags=['cc', 'spyeye', 'malware'])
+		return elt, evil
 
-		self.commit_to_db(hostname, evil)
+		self.commit_to_db(elt, evil)
 

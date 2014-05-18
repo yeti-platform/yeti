@@ -1,11 +1,14 @@
-import os, sys, time, threading
+import os, sys, time, threading, urllib2
 from datetime import timedelta, datetime
 from multiprocessing import Process
+from lxml import etree
 
 from Malcom.auxiliary.toolbox import debug_output
 from Malcom.config.malconf import MalcomSetup
 from Malcom.model.model import Model
 from Malcom.feeds.messenger import FeedsMessenger
+
+
 
 class Feed(object):
 	"""This is a feed base class. All other feeds must inherit from this class"""
@@ -30,6 +33,7 @@ class Feed(object):
 		self.status = "OK"
 		self.enabled = False
 		self.model = None
+		self.testing = False
 
 	def get_dict(self):
 		return { 'name': self.name,
@@ -41,6 +45,35 @@ class Feed(object):
 				 'enabled': self.enabled,
 				}
 
+	def update_xml(self, main_node, children):
+		assert self.source != None
+
+		feed = urllib2.urlopen(self.source)
+		self.status = "OK"
+		tree = etree.parse(feed)
+		for item in tree.findall("//%s"%main_node):
+			dict = {}
+			for field in children:
+				dict[field] = item.findtext(field)
+
+			result = self.analyze(dict)
+			if result != None:
+				elt, evil = result
+				self.commit_to_db(elt, evil)
+
+	def update_lines(self):
+		assert self.source != None
+		feed = urllib2.urlopen(self.source).readlines()
+		self.status = "OK"
+		
+		for line in feed:	
+			result = self.analyze(line)
+			if result != None:
+				elt, evil = result
+				self.commit_to_db(elt, evil)
+
+		return True
+
 	def update(self):
 		"""
 		The update() function has to be implemented in each of your feeds.
@@ -51,16 +84,25 @@ class Feed(object):
 		"""
 		raise NotImplementedError("update: This method must be implemented in your feed class")
 
-	def commit_to_db(self, element, evil, attribs=""):
+	def analyze(self):
+		raise NotImplementedError("analyze: This method must be implemented in your feed class")
+
+	def commit_to_db(self, element, evil, attribs="", testing=False):
+		if self.testing:
+			print "%s <%s>" % (element['value'], evil['value'])
+			self.elements_fetched +=1
+			return
 		
+		if 'evil' not in element['tags']: element['tags'] += ['evil'] # add an 'evil' tag if it was not specified in the feed
+
 		element, new = self.model.save(element, with_status=True)
 		if new:
 			self.elements_fetched += 1
 		
 		# ensure this is set
 		assert self.source != None and self.description != None
-		evil['source'] = self.source
-		evil['description'] = self.description
+		# evil['source'] = self.source
+		# evil['description'] = self.description
 		evil['feed'] = self.name
 
 		evil, new = self.model.save(evil, with_status=True)
@@ -84,9 +126,8 @@ class Feed(object):
 			t1 = datetime.now()
 			print "Feed %s added in %s" %(self.name, str(t1-t0))
 		except Exception, e:
-		 	self.status = "ERROR: %s" % e
+	 		self.status = "ERROR: %s" % e
 		
-		# self.analytics.notify_progress("Inactive")
 		self.running = False
 
 
@@ -100,7 +141,7 @@ class FeedEngine(Process):
 		self.feeds = {}
 		self.threads = {}
 		self.global_thread = None
-		self.messenger = FeedsMessenger(self)
+		# self.messenger = FeedsMessenger(self)
 
 	def run_feed(self, feed_name):
 		if self.threads.get(feed_name):
@@ -108,14 +149,12 @@ class FeedEngine(Process):
 				return False
 		self.threads[feed_name] = threading.Thread(None, self.feeds[feed_name].run, None)
 		print "Running %s" % feed_name
-		self.feeds[feed_name].run()
-		#self.threads[feed_name].run()
+		self.threads[feed_name].start()
 		return True
 
 
 	def run_all_feeds(self, block=False):
 		debug_output("Running all feeds")
-		print [f for f in self.feeds if self.feeds[f].enabled]
 		for feed_name in [f for f in self.feeds if self.feeds[f].enabled]:
 			debug_output('Starting thread for feed %s...' % feed_name)
 			self.run_feed(feed_name)
@@ -127,7 +166,7 @@ class FeedEngine(Process):
 
 
 	def stop_all_feeds(self):
-		self.run_periodically = False
+		self.shutdown = True
 		for t in self.threads:
 			if self.threads[t].is_alive():
 				self.threads[t]._Thread__stop()
@@ -145,10 +184,11 @@ class FeedEngine(Process):
 
 	def run(self):
 		self.messenger = FeedsMessenger(self)
-		self.run_periodically = True
-		while self.run_periodically:
-			debug_output("Checking feeds...")
-			self.run_scheduled_feeds()
+		self.shutdown = False
+		while not self.shutdown:
+			debug_output("FeedEngine heartbeat")
+			if self.scheduler:
+				self.run_scheduled_feeds()
 			time.sleep(self.period) # run a new thread every period seconds
 
 
@@ -173,24 +213,27 @@ class FeedEngine(Process):
 				modict = module.__dict__
 
 				names = [name for name in modict if name[0] != '_']
-				
 				for n in names:
-					if n == 'Feed':
+					
+					# print n, activated_feeds
+					if n == 'Feed' or n.lower() not in activated_feeds:
 						continue
+				
 					class_n = modict.get(n)
-					try:
-						if issubclass(class_n, Feed) and class_n not in globals_:
-							new_feed = class_n(n) # create new feed object
-							new_feed.model = Model() # attach model instance to feed
-							self.feeds[n] = new_feed
-							self.feeds[n].enabled = True if n.lower() in activated_feeds else False
+					
+					if issubclass(class_n, Feed) and class_n not in globals_:
+						new_feed = class_n(n) # create new feed object
+						
+						new_feed.model = Model() # attach model instance to feed
+						self.feeds[n] = new_feed
 
-							# this may be for show for now
-							export_names.append(n)
-							export_classes.append(class_n)
-							sys.stderr.write(" + Loaded %s...\n" % n)
-					except Exception, e:
-						pass						
+						self.feeds[n].enabled = True if n.lower() in activated_feeds else False
+
+						# this may be for show for now
+						export_names.append(n)
+						export_classes.append(class_n)
+						sys.stderr.write(" + Loaded %s...\n" % n)
+				
 
 		globals_.update((export_names[i], c) for i, c in enumerate(export_classes))
 

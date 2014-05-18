@@ -18,14 +18,7 @@ class AlienvaultIP(Feed):
 		self.confidence = 50
 
 	def update(self):
-		
-		feed = urllib2.urlopen("https://reputation.alienvault.com/reputation.generic").readlines()
-		self.status = "OK"
-		
-		for line in feed:	
-			self.analyze(line)
-
-		return True
+		self.update_lines()
 
 	def analyze(self, line):
 
@@ -54,7 +47,6 @@ class AlienvaultIP(Feed):
 		evil['value'] = ip['value'] + ' (%s)' % description
 		evil['tags'] = ['AlienvaultIP', description]
 
-		self.commit_to_db(ip, evil)
-
+		return ip, evil
 
 
