@@ -10,20 +10,21 @@ from feed import Feed
 
 
 
-class SpyEyeCnc(Feed):
+class SpyEyeTracker(Feed):
 
 	def __init__(self, name):
 		super(SpyEyeCnc, self).__init__(name, run_every="1h")
-		self.enabled = True
+		self.name = "SpyEyeTracker"
+		self.source = "https://spyeyetracker.abuse.ch/monitor.php?rssfeed=tracker"
+		self.description = "This feed shows the latest forty SpyEye C&Cs which the tracker has captured."
+		
 
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("https://spyeyetracker.abuse.ch/monitor.php?rssfeed=tracker")
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		
+		feed = urllib2.urlopen(self.source)
+		self.status = "OK"
+	
 		
 		children = ["title", "link", "description", "guid"]
 		main_node = "item"
@@ -49,37 +50,22 @@ class SpyEyeCnc(Feed):
 
 		# We start populating the Evil() object's attributes with
 		# information from the dict we parsed earlier
-
-		evil['feed'] = "SpyEyeConfigs"
-		evil['hostname'] = toolbox.find_hostnames(dict['description'])[0]
 		
 		# description
 		evil['description'] = dict['link'] + " " + dict['description'] 
 
 		# status
-		if dict['description'].find("offline") != -1:
-			evil['status'] = "offline"
+		status = re.search("Status: (?P<status>\S+),", dict['description'])
+		if status:
+			evil['status'] = status.group('status')
 		else:
-			evil['status'] = "online"
-
-		# md5 
-		md5 = re.search("MD5 hash: (?P<md5>[0-9a-f]{32,32})",dict['description'])
-		if md5 != None:
-			evil['md5'] = md5.group('md5')
-		else:
-			evil['md5'] = "No MD5"
-		
+			evil['status'] = "unknown"
+			
 		# linkback
-		evil['source'] = dict['guid']
-
-		# type
-		evil['type'] = 'evil'
+		evil['guid'] = dict['guid']
 
 		# tags
-		evil['tags'] += ['spyeye', 'malware', 'SpyEyeCnc']
-
-		# date_retreived
-		evil['date_retreived'] = datetime.datetime.utcnow()
+		evil['tags'] += ['spyeye', 'malware', 'cc']
 
 		# This is important. Values have to be unique, since it's this way that
 		# Malcom will identify them in the database.
@@ -94,18 +80,7 @@ class SpyEyeCnc(Feed):
 		# Save elements to DB. The status field will contain information on 
 		# whether this element already existed in the DB.
 
-		evil, status = self.analytics.save_element(evil, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
+		hostname = Hostname(toolbox.find_hostnames(dict['description'])[0], tags=['cc', 'spyeye', 'malware'])
 
-		# Create an URL element
-		hostname = Hostname(evil['hostname'], ['evil', 'SpyEyeConfigs'])
-
-		# Save it to the DB.
-		url, status = self.analytics.save_element(hostname, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
-		# Connect the URL element to the Evil element
-		self.analytics.data.connect(hostname, evil, 'hosting')
+		self.commit_to_db(hostname, evil)
 

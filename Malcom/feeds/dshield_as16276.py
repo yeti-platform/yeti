@@ -9,15 +9,15 @@ class DShield16276(Feed):
 	"""
 	def __init__(self, name):
 		super(DShield16276, self).__init__(name)
-		self.enabled = True
+		self.name = "DShield16276"
+		self.source = "http://dshield.org/asdetailsascii.html?as=16276"
+		self.description = "DShield scanning report for AS 16276"
+		self.confidence = 30
+		
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://dshield.org/asdetailsascii.html?as=16276").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		feed = urllib2.urlopen(self.source).readlines()
+		self.status = "OK"
 		
 		for line in feed:	
 			self.analyze(line)
@@ -25,6 +25,9 @@ class DShield16276(Feed):
 
 	def analyze(self, line):
 		if line.startswith('#') or line.startswith('\n'):
+			return
+		dict = line.split('\t')
+		if int(dict[2]) < 300: # skip entries which have not been reported at least 300 times
 			return
 
 		try:
@@ -35,10 +38,13 @@ class DShield16276(Feed):
 			return
 
 		# Create the new ip and store it in the DB
+		dict = line.split('\t')
 		ip = Ip(ip=ip, tags=['dshield'])
+		evil = Evil()
+		evil['value'] = 'Scanner at %s' % ip['value']
+		evil['reports'] = dict[2]
+		evil['first seen'] = dict[3]
+		evil['last seen'] = dict[4]
 
-		ip, status = self.analytics.save_element(ip, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
+		self.commit_to_db(ip, evil)
 

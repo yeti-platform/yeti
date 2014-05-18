@@ -13,28 +13,27 @@ class SpyEyeConfigs(Feed):
 
 	def __init__(self, name):
 		super(SpyEyeConfigs, self).__init__(name, run_every="1h")
-		self.enabled = True
+		self.name = "SpyEyeConfigs"
+		self.source = "https://spyeyetracker.abuse.ch/monitor.php?rssfeed=configurls"
+		self.description = "This feed shows the latest fourty SpyEye ConfigURLs."
+		
 
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("https://spyeyetracker.abuse.ch/monitor.php?rssfeed=configurls")
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		
+		feed = urllib2.urlopen("")
+		self.status = "OK"
 		
 		children = ["title", "link", "description", "guid"]
 		main_node = "item"
-		
 
 		tree = etree.parse(feed)
 		for item in tree.findall("//%s"%main_node):
 			dict = {}
 			for field in children:
 				dict[field] = item.findtext(field)
-
-			self.analyze(dict)
+			print dict
+			#self.analyze(dict)
 
 		return True
 
@@ -47,13 +46,10 @@ class SpyEyeConfigs(Feed):
 		evil = Evil()
 
 		# We start populating the Evil() object's attributes with
-		# information from the dict we parsed earlier
+		# information from the dict we parsed earlier	
 
-		evil['feed'] = "SpyEyeConfigs"
-		evil['url'] = toolbox.find_urls(dict['description'])[0]
-		
 		# description
-		evil['description'] = dict['link'] + " " + dict['description'] 
+		evil['info'] = dict['description'] 
 
 		# status
 		if dict['description'].find("offline") != -1:
@@ -69,16 +65,10 @@ class SpyEyeConfigs(Feed):
 			evil['md5'] = "No MD5"
 		
 		# linkback
-		evil['source'] = dict['guid']
-
-		# type
-		evil['type'] = 'evil'
+		evil['guid'] = dict['guid']
 
 		# tags
-		evil['tags'] += ['spyeye', 'malware', 'SpyEyeConfigs']
-
-		# date_retreived
-		evil['date_retreived'] = datetime.datetime.utcnow()
+		evil['tags'] += ['spyeye', 'malware', 'config']
 
 		# This is important. Values have to be unique, since it's this way that
 		# Malcom will identify them in the database.
@@ -92,19 +82,7 @@ class SpyEyeConfigs(Feed):
 
 		# Save elements to DB. The status field will contain information on 
 		# whether this element already existed in the DB.
+		url = Url(url=toolbox.find_urls(dict['description'])[0])
 
-		evil, status = self.analytics.save_element(evil, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
-		# Create an URL element
-		url = Url(evil['url'], ['evil', 'SpyEyeConfigs'])
-
-		# Save it to the DB.
-		url, status = self.analytics.save_element(url, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
-		# Connect the URL element to the Evil element
-		self.analytics.data.connect(url, evil, 'hosting')
+		self.commit_to_db(url, evil)
 

@@ -2,6 +2,7 @@ import urllib2
 from Malcom.model.datatypes import Ip, Evil
 from feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
+import time
 
 class TorExitNodes(Feed):
 	"""
@@ -9,16 +10,14 @@ class TorExitNodes(Feed):
 	"""
 	def __init__(self, name):
 		super(TorExitNodes, self).__init__(name, run_every="12h")
-		self.enabled = True
+		self.name = "TorExitNodes"
+		self.source = "https://www.dan.me.uk/torlist/"
+		self.description = "List of Tor exit nodes"
+		
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("https://www.dan.me.uk/tornodes").read()
+		feed = urllib2.urlopen(self.source).read()
 		
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
-
 		start = feed.find('<!-- __BEGIN_TOR_NODE_LIST__ //-->') + len('<!-- __BEGIN_TOR_NODE_LIST__ //-->')
 		end = feed.find('<!-- __END_TOR_NODE_LIST__ //-->')
 
@@ -34,7 +33,7 @@ class TorExitNodes(Feed):
 	def analyze(self, line):
 		fields = line.split('|')
 
-		tornode = Evil(tags=['Tor info'])
+		tornode = Evil(tags=['tor exit node'])
 		#
 		try:
 			tornode['ip'] = fields[0]
@@ -49,27 +48,15 @@ class TorExitNodes(Feed):
 			return
 
 
-		tornode['value'] = "Tor: %s (%s)" % (tornode['name'], tornode['ip'])
+		tornode['value'] = "Tor node: %s (%s)" % (tornode['name'], tornode['ip'])
 
 		try:
 			ip = toolbox.find_ips(tornode['ip'])[0]
-			ip = Ip(ip=ip, tags=['Tor Node'])
+			ip = Ip(ip=ip, tags=['tor'])
 		except Exception, e:
 			# if find_ip raises an exception, it means no ip 
 			# was found in the line, so we return
 			return
 
-		
-		# store ip in database
-		ip, status = self.analytics.save_element(ip, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
-		# store tornode in database
-		tornode, status = self.analytics.save_element(tornode, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
-		self.analytics.data.connect(ip, tornode, 'Tor node')
-
+		self.commit_to_db(ip, tornode, "Tor node")
 

@@ -3,21 +3,17 @@ from Malcom.model.datatypes import Ip
 from feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
-class MDLIpList(Feed):
+class OpenblIP(Feed):
 	"""
-	This gets data from http://www.malwaredomainlist.com/hostslist/ip.txt 
+	This gets data fromhttp://www.openbl.org/lists/base.txt 
 	"""
 	def __init__(self, name):
-		super(MDLIpList, self).__init__(name)
-		self.enabled = True
+		super(OpenblIP, self).__init__(name, run_every="12h")
+		
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://www.malwaredomainlist.com/hostslist/ip.txt").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		feed = urllib2.urlopen("http://www.openbl.org/lists/base.txt").readlines()
+		self.status = "OK"
 		
 		for line in feed:	
 			self.analyze(line)
@@ -35,10 +31,10 @@ class MDLIpList(Feed):
 			return
 
 		# Create the new ip and store it in the DB
-		ip = Ip(ip=ip, tags=['mdliplist'])
+		ip = Ip(ip=ip, tags=['openblip'])
 
-		ip, status = self.analytics.save_element(ip, with_status=True)
-		if status['updatedExisting'] == False:
+		ip, new = self.model.save(ip, with_status=True)
+		if new:
 			self.elements_fetched += 1
 
 

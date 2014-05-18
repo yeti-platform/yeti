@@ -9,15 +9,11 @@ class UrlQuery(Feed):
 
 	def __init__(self, name):
 		super(UrlQuery, self).__init__(name, run_every="5m")
-		self.enabled = True
+		
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://urlquery.net/rss.php")
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		feed = urllib2.urlopen("http://urlquery.net/rss.php")
+		self.status = "OK"
 
 		children = ["title", "link", "description", "pubDate"]
 		main_node = "item"
@@ -43,12 +39,8 @@ class UrlQuery(Feed):
 		dynamicdns_re = re.compile('Dynamic\sDNS', re.IGNORECASE)
 		tds_re = re.compile('TDS\sURL', re.IGNORECASE)
 
-		try:
-			page_data = urllib2.urlopen(dict['link']).read()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		page_data = urllib2.urlopen(dict['link']).read()
+		self.status = "OK"
 
 		url = url_re.findall(page_data)
 		exploit_kit = exploit_kit_re.findall(page_data)
@@ -73,6 +65,6 @@ class UrlQuery(Feed):
 		# Create the new url and store it in the DB
 		url =Url(url=url[0], tags=tags)
 
-		url, status = self.analytics.save_element(url, with_status=True)
-		if status['updatedExisting'] == False:
+		url, new = self.model.save(url, with_status=True)
+		if new:
 			self.elements_fetched += 1

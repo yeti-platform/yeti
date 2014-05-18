@@ -6,15 +6,14 @@ import Malcom.auxiliary.toolbox as toolbox
 class DShieldSuspiciousDomainsMedium(Feed):
 	def __init__(self, name):
 		super(DShieldSuspiciousDomainsMedium, self).__init__(name)
-		self.enabled = True
-
+		self.name = "DShieldSuspiciousDomainsMedium"
+		self.description = "DShield medium sensitivity suspicious domains"
+		self.source = "http://www.dshield.org/feeds/suspiciousdomains_Medium.txt"
+		self.confidence = 10
+		
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://www.dshield.org/feeds/suspiciousdomains_Medium.txt").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		feed = urllib2.urlopen(self.source).readlines()
+		self.status = "OK"
 		
 		for line in feed:	
 			self.analyze(line)
@@ -32,8 +31,8 @@ class DShieldSuspiciousDomainsMedium(Feed):
 		# Create the new ip and store it in the DB
 		hostname = Hostname(hostname=hostname, tags=['dshield', 'medium'])
 
-		hostname, status = self.analytics.save_element(hostname, with_status=True)
-		if status['updatedExisting'] == False:
+		hostname, new = self.model.save(hostname, with_status=True)
+		if new:
 			self.elements_fetched += 1
 
 

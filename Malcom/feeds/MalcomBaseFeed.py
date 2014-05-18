@@ -15,13 +15,9 @@ class MalcomBaseFeed(Feed):
 		self.malcom_host = "malcom.public.instance.com"
 
 	def update(self):
-		try:
-			request = urllib2.Request("http://%s/public/api" % self.malcom_host, headers={'X-Malcom-API-Key': self.apikey})
-			feed = urllib2.urlopen(request).read()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		request = urllib2.Request("http://%s/public/api" % self.malcom_host, headers={'X-Malcom-API-Key': self.apikey})
+		feed = urllib2.urlopen(request).read()
+
 		
 		self.analyze(feed)
 		return True
@@ -30,8 +26,8 @@ class MalcomBaseFeed(Feed):
 		elements = loads(line)
 		test = []
 		for elt in elements:
-			status = self.analytics.save_element(elt, with_status=True)
-			if status['updatedExisting'] == False:
+			new = self.model.save(elt, with_status=True)
+			if new:
 				self.elements_fetched += 1
 
 

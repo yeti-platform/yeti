@@ -9,15 +9,12 @@ class SiriUrzVX(Feed):
 	"""
 	def __init__(self, name):
 		super(SiriUrzVX, self).__init__(name, run_every="1h")
-		self.enabled = True
+		self.name = "SiriUrzVX"
+		
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://vxvault.siri-urz.net/URL_List.php").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		feed = urllib2.urlopen("http://vxvault.siri-urz.net/URL_List.php").readlines()
+		self.status = "OK"
 		
 		for line in feed:	
 			self.analyze(line)
@@ -38,8 +35,8 @@ class SiriUrzVX(Feed):
 		# Create the new ip and store it in the DB
 		url =Url(url=url, tags=['siri-urz'])
 
-		url, status = self.analytics.save_element(url, with_status=True)
-		if status['updatedExisting'] == False:
+		url, new = self.model.save(url, with_status=True)
+		if new:
 			self.elements_fetched += 1
 
 

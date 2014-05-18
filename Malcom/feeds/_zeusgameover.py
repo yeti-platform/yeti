@@ -10,15 +10,14 @@ class ZeusGameOverDomains(Feed):
 	"""
 	def __init__(self, name):
 		super(ZeusGameOverDomains, self).__init__(name, run_every="12h")
-		self.enabled = True
+		self.name = "ZeusGameOverDomains"
+		self.source = "http://virustracker.info/text/ZeuSGameover_Domains.txt"
+		self.description
+		
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://virustracker.info/text/ZeuSGameover_Domains.txt").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		feed = urllib2.urlopen("http://virustracker.info/text/ZeuSGameover_Domains.txt").readlines()
+		self.status = "OK"
 		
 		for line in feed:	
 			self.analyze(line)
@@ -38,8 +37,8 @@ class ZeusGameOverDomains(Feed):
 		# Create the new URL and store it in the DB
 		hostname = Hostname(hostname=hostname, tags=['virustracker.info', 'zeusgameover'])
 
-		hostname, status = self.analytics.save_element(hostname, with_status=True)
-		if status['updatedExisting'] == False:
+		hostname, new = self.model.save(hostname, with_status=True)
+		if new:
 			self.elements_fetched += 1
 
 
