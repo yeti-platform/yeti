@@ -92,12 +92,14 @@ if __name__ == "__main__":
 		
 		# launch process		
 		if setup['FEEDS_SCHEDULER']:
-			setup.feed_engine.period = 1
-			setup.feed_engine.run_periodically = False
-			setup.feed_engine.start()
+			setup.feed_engine.scheduler = True
 			sys.stderr.write("Starting feed scheduler...\n")
 		else:
+			setup.feed_engine.scheduler = False
 			sys.stderr.write("Feed scheduler must be started manually.\n")
+
+		setup.feed_engine.period = 1
+		setup.feed_engine.start()
 
 	# run analytics
 	if setup['ANALYTICS']:
