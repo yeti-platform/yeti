@@ -7,7 +7,7 @@ __version__ = '1.2 alpha'
 __license__ = "GPL"
 
 # patch threads
-from gevent import monkey; monkey.patch_socket(dns=False); #monkey.patch_time();
+from gevent import monkey; monkey.patch_socket(dns=False);
 
 # system
 import os, datetime, time, sys, signal, argparse, re, pickle
