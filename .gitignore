@@ -44,7 +44,7 @@ Malcom/sniffer/*.pcap
 # do not include TLS keys
 Malcom/networking/tlsproxy/keys/server.crt
 Malcom/networking/tlsproxy/keys/server.key
-
+Malcom/auxiliary/geoIP/*
 
 # MAC OS X stuff
 .DS_Store
