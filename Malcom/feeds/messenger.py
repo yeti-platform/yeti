@@ -1,5 +1,5 @@
 from Malcom.shmem.SharedData import Messenger
-import json, threading, time, pickle, urllib2
+import json, threading, time, pickle, urllib2, sys
 from bson import json_util
 
 
@@ -10,7 +10,7 @@ class FeedsMessenger(Messenger):
 		self.name = "feeds"
 		self.feedengine_instance = feedengine_instance
 
-		print "Feed messenger started"
+		sys.stderr.write("[+] Feed messenger started\n")
 		self.subscribe_channel('feeds', self.message_handler)
 
 

@@ -1,6 +1,6 @@
 from Malcom.shmem.SharedData import Messenger
 from Malcom.auxiliary.toolbox import send_msg, debug_output
-import json, time, redis
+import json, time, redis, sys
 
 
 class WebMessenger(Messenger):
@@ -8,7 +8,7 @@ class WebMessenger(Messenger):
 	def __init__(self):
 		super(WebMessenger, self).__init__()
 		self.name = 'web'
-		print "WebMessenger started"
+		sys.stderr.write("[+] WebMessenger started\n")
 
 		self.subscribe_channel('analytics', self.analytics_handler)
 		self.subscribe_channel('sniffer-data', self.sniffer_data_handler)

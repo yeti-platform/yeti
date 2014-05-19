@@ -1,5 +1,5 @@
 from bson import json_util
-import redis, threading, time, json
+import redis, threading, time, json, sys
 
 
 # analytics
@@ -12,7 +12,7 @@ class Messenger(object):
 		self.r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 	def subscribe_channel(self, channel, callback):
-		print "Subscribing to", channel
+		sys.stderr.write("[+] Subscribing to %s\n" % channel)
 		t = threading.Thread(target=self.__listen_on_channel, args=(channel, callback))
 		t.setDaemon(True)
 		t.start()

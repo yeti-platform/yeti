@@ -47,7 +47,8 @@ def send_msg(ws, msg, type='msg'):
     try:
         ws.send(dumps(msg))
     except Exception, e:
-        debug_output("Could not send message: %s" % e)
+        pass # debug_output("Could not send message: %s" % e)
+        
     
 
 
@@ -370,7 +371,7 @@ def debug_output(text, type='debug', n=True):
     msg += bcolors.ENDC
     n = '\n' if n else ""
     try:
-        sys.stderr.write(str("%s - %s%s" % (msg, text, n)))
+        sys.stdout.write(str("%s [%s] - %s%s" % (msg, datetime.datetime.now(), text, n)))
     except Exception, e:
         pass
     

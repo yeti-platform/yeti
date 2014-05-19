@@ -247,7 +247,7 @@ class Analytics(Process):
 		self.messenger = AnalyticsMessenger(self)
 
 		while self.run_analysis:
-			debug_output("Launching analytics")
+			debug_output("Analytics hearbeat")
 			
 			self.active_lock.acquire()			
 			if self.run_analysis:
@@ -329,8 +329,8 @@ class Analytics(Process):
 		
 		now = datetime.datetime.utcnow()
 		
-		msg = "Analyzed %s elements in %s" % (total_elts, str(now-then)) 
-		debug_output(msg)
+		if total_elts > 0:
+			debug_output("Analyzed %s elements in %s" % (total_elts, str(now-then)) )
 		self.notify_progress("Inactive")
 		
 

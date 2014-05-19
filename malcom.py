@@ -8,13 +8,11 @@ __license__ = "GPL"
 
 #from gevent import monkey; monkey.patch_all()#subprocess()#socket(dns=False); monkey.patch_time();
 
-
 import os, sys, argparse
 import netifaces as ni
 
-from flask import Flask
-
 from Malcom.config.malconf import MalcomSetup
+from Malcom.auxiliary.toolbox import debug_output
 
 setup = MalcomSetup()
 
@@ -81,8 +79,6 @@ if __name__ == "__main__":
 		setup.sniffer_engine = netsniffer.SnifferEngine(setup)
 
 		
-
-
 	# call malcom to run feeds - this will not start the web interface
 	if setup['FEEDS']:
 		sys.stderr.write("[+] Importing feeds...\n")
@@ -93,10 +89,10 @@ if __name__ == "__main__":
 		# launch process		
 		if setup['FEEDS_SCHEDULER']:
 			setup.feed_engine.scheduler = True
-			sys.stderr.write("Starting feed scheduler...\n")
+			("Starting feed scheduler...\n")
 		else:
 			setup.feed_engine.scheduler = False
-			sys.stderr.write("Feed scheduler must be started manually.\n")
+			sys.stderr.write("[!] Feed scheduler must be started manually.\n")
 
 		setup.feed_engine.period = 1
 		setup.feed_engine.start()
@@ -125,28 +121,29 @@ if __name__ == "__main__":
 	sys.stderr.write("\nExiting gracefully\n")
 	
 	if setup['WEB']:
-		sys.stderr.write('Stopping webserver... ')
+		sys.stderr.write('[.] Stopping webserver... ')
 		sys.stderr.write("done.\n")
 
 	if setup['ANALYTICS']:
-		sys.stderr.write("Stopping analytics engine... ")
+		sys.stderr.write("[.] Stopping analytics engine... ")
 		setup.analytics_engine.stop()
 		setup.analytics_engine.join()
 		sys.stderr.write("done.\n")
 
 	if setup['SNIFFER'] and len(setup.sniffer_engine.sessions) > 0:
-		sys.stderr.write('Stopping sniffing sessions... ')
+		sys.stderr.write('[.] Stopping sniffing sessions... ')
 		for s in setup.sniffer_engine.sessions:
 			session = setup.sniffer_engine.sessions[s]
 			session.stop()
+		sys.stderr.write("done.\n")
 
 	if setup['FEEDS']:
-		sys.stderr.write("Stopping feed engine... ")
+		sys.stderr.write("[.] Stopping feed engine... ")
 		setup.feed_engine.stop_all_feeds()
 		sys.stderr.write("done.\n")
 
 	if setup['TLS_PROXY_PORT']:
-		sys.stderr.write("Stopping TLS proxy... ")
+		sys.stderr.write("[.] Stopping TLS proxy... ")
 		setup.tls_proxy.stop()
 		sys.stderr.write("done.\n")
 

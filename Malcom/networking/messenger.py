@@ -1,5 +1,5 @@
 from Malcom.shmem.SharedData import Messenger
-import json, threading, time
+import json, threading, time, sys
 from bson import json_util
 
 class SnifferMessenger(Messenger):
@@ -10,7 +10,7 @@ class SnifferMessenger(Messenger):
 		self.snifferengine = None
 		self.subscribe_channel('sniffer-commands', self.command_handler)
 		
-		print "Sniffer Messenger started"
+		sys.stderr.write("[+] Sniffer Messenger started\n")
 
 	def update_nodes(self, nodes, edges, session_name):
 		msg = {'nodes':nodes, 'edges':edges, 'session_name': session_name}

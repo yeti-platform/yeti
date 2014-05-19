@@ -787,9 +787,9 @@ class MalcomWeb(Process):
 		from Malcom.web.messenger import WebMessenger
 		app.config['MESSENGER'] = WebMessenger()
 		
-		sys.stderr.write("Starting webserver in %s mode...\n" % ("public" if self.public else "private"))
+		sys.stderr.write("[+] Starting webserver...\n")
 		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler)
-		sys.stderr.write("Webserver listening on %s:%s\n\n" % (self.listen_interface, self.listen_port))
+		sys.stderr.write("[+] Webserver listening on http://%s:%s\n\n" % (self.listen_interface, self.listen_port))
 		
 		try:
 			self.http_server.serve_forever()

@@ -1,5 +1,5 @@
 from Malcom.shmem.SharedData import Messenger
-import json, threading, time
+import json, threading, time, sys
 
 class AnalyticsMessenger(Messenger):
 	"""docstring for AnalyticsMessenger"""
@@ -9,7 +9,7 @@ class AnalyticsMessenger(Messenger):
 		self.analytics_instance = analytics_instance
 		self.subscribe_channel('analytics', self.message_handler)
 		#self.status_update()
-		print "Analytics Messenger started"
+		sys.stderr.write("[+] Analytics Messenger started\n")
 
 	def status_update(self):
 		t = threading.Thread(target=self.__status_update)

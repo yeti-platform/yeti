@@ -1,16 +1,15 @@
-
 import datetime, os
+
 try:
 	import geoip2.database
 	geoip = True
 except Exception, e:
-	print "Geoip2 database not found"
+	sys.stderr.write("[-] Geoip2 library not found")
 	geoip = False
 
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.auxiliary.toolbox import debug_output
-import Malcom
 
 
 class Element(dict):
@@ -245,11 +244,12 @@ class Ip(Element):
 	def analytics(self):
 		debug_output( "(ip analytics for %s)" % self['value'])
 
-		# get geolocation info
-		try:
-			file = os.path.abspath(__file__)
-			if geoip:
-				reader = geoip2.database.Reader(Malcom.config['BASE_PATH']+'/auxiliary/geoIP/GeoLite2-City.mmdb')
+		# get geolocation info (v2)
+		if geoip:
+			try:
+				file = os.path.abspath(__file__)
+				current_path = os.path.dirname(os.path.abspath(__file__))
+				reader = geoip2.database.Reader(current_path+'/../auxiliary/geoIP/GeoIP2-City.mmdb')
 				geoinfo = reader.city(self.value)
 				
 				self['city'] = geoinfo.city.name
@@ -259,8 +259,8 @@ class Ip(Element):
 				self['latitude'] = str(geoinfo.location.latitude)
 				self['longitude'] = str(geoinfo.location.longitude)
 
-		except Exception, e:
-			debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
+			except Exception, e:
+				debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
 
 		# get reverse hostname
 		new = []

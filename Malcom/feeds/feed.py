@@ -186,10 +186,14 @@ class FeedEngine(Process):
 		self.messenger = FeedsMessenger(self)
 		self.shutdown = False
 		while not self.shutdown:
-			debug_output("FeedEngine heartbeat")
-			if self.scheduler:
-				self.run_scheduled_feeds()
-			time.sleep(self.period) # run a new thread every period seconds
+			try:
+				debug_output("FeedEngine heartbeat")
+				if self.scheduler:
+					self.run_scheduled_feeds()
+				time.sleep(self.period) # run a new thread every period seconds
+			except KeyboardInterrupt, e:
+				self.shutdown = True
+			
 
 
 	def load_feeds(self, activated_feeds):
