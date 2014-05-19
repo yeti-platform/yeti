@@ -14,10 +14,6 @@
 				<tr><th><h3>Populating table...</h3></th></tr>
 			</table>
 		</div>
-
-		<!-- <div class='tab-pane' id='ip'>
-			Placeholder
-		</div> -->
 	</div>
 
 </div>
@@ -42,7 +38,7 @@
 			      <input id="query" placeholder='tags=malware' type="text">
 			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('query_data') }}')">Go</button>
 			      <label class="checkbox">
-				      <input id='fuzzy' type="checkbox"> Fuzzy search (slower)
+				      <input id='fuzzy' type="checkbox"> Regex search (slower)
 				    </label>
 		  	</div>
 		  <br style='clear:both' />
@@ -83,9 +79,6 @@
 			  
 			  	<label for='tags'>Tags</label>
 			    <input id='tags' type="text" name="tags" placeholder="">
-			    <label class="checkbox">
-			      <input type="checkbox" name='analyse'> Analyse after import
-			    </label>
 			  </fieldset>
 			</form>
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
