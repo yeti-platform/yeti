@@ -1,6 +1,6 @@
 # Malcom - Malware Communication Analyzer
 
-Malcom is a tool designed to analyze a system's network communication using graphical representations of network traffic. This comes handy when analyzing how certain malware species try to communicate with the outside world.
+Malcom is a tool designed to analyze a system's network communication using graphical representations of network traffic, and cross-reference them with known malware sources. This comes handy when analyzing how certain malware species try to communicate with the outside world.
 
 Malcom can help you: 
 
@@ -13,7 +13,7 @@ The aim of Malcom is to make malware analysis and intel gathering *faster* by pr
 
 Check the [wiki](https://github.com/tomchop/malcom/wiki) for a Quickstart with some nice screenshots and a tutorial on [how to add your own feeds](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
 
-If you need some help, or want to contribute, feel free to join our [Google Group](https://groups.google.com/forum/#!forum/malcom-users) or try to grab someone on IRC (#malcom on freenode.net, it's pretty quiet but there's alwas someone around).
+If you need some help, or want to contribute, feel free to join the [mailing list](https://groups.google.com/forum/#!forum/malcom-users) or try to grab someone on IRC (#malcom on freenode.net, it's pretty quiet but there's always someone around).
 
 ![nodes-tomchop.png](http://direct.tomchop.me/malcom/nodes-tomchop.png)
 Graph for the host tomchop.me.
@@ -23,27 +23,25 @@ Graph for the host tomchop.me.
 
 * Install
 * Elevate your privileges to root (yeah, I know, see [disclaimer](/README.md#Disclaimer))
-* Start the webserver with `./malcom.py` (or see options with `./malcom.py --help`)
+* Start the webserver using the default configuration with `./malcom.py -c malcom.conf` (or see options with `./malcom.py --help`)
 ** Default port is 8080
-* To have a dedicated process for analytics, run `./malcom.py --analytics`
-* To have a process dedicated to feeding, run `./malcom.py --feeds`
 ** Alternatively, run the feeds from `celery`. See the [feeds](/README.md#Feeds) section for details on how to to this. 
 
 ## Installation
 
 Malcom is written in python. Provided you have the necessary libraries, you should be able to run it on any platform.
 
-The following was tested on Ubuntu server 12.04 LTS:
+The following was tested on Ubuntu server 14.04 LTS:
 
-* Install `git`, `python` and `libevent` libs, and `mongodb`
+* Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev
+        apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev
 
 * Get `virtualenv` and `scapy`
 
-        wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.9.tar.gz
+        wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.11.5.tar.gz
         wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-        tar xvzf virtualenv-1.9.tar.gz
+        tar xvzf virtualenv-1.11.5.tar.gz
         tar xvzf scapy-latest.tar.gz
 
 * Clone the Git repo
@@ -53,7 +51,7 @@ The following was tested on Ubuntu server 12.04 LTS:
 * Create your virtualenv and activate it
 
         cd malcom
-        python ../virtualenv-1.9/virtualenv.py env-malcom
+        python ../virtualenv-1.11.5/virtualenv.py env-malcom
         source env-malcom/bin/activate
 
 * Install scapy, without elevating your privs to root
@@ -63,7 +61,7 @@ The following was tested on Ubuntu server 12.04 LTS:
 
 * still from your virtualenv, install necessary python packages
 
-        pip install flask pymongo geoip2 gevent-websocket python-dateutil netifaces lxml twisted pyopenssl
+        pip install flask pymongo pygeoip geoip2 gevent-websocket python-dateutil netifaces lxml twisted pyopenssl redis
 
 Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
 
@@ -78,7 +76,7 @@ Expect this process to be automated in future releases.
 
 ### Environment
 
-Malcom was designed and tested on a Ubuntu Server 12.04 LTS VM.
+Malcom was designed and tested on a Ubuntu Server 14.04 LTS VM.
 
 If you're used to doing malware analysis, you probably already have tons of virtual machines running on a host OS. Just install Malcom on a new VM, and route your other VM's connections through Malcom. Use `enable_routing.sh` to activate routing / NATing on the VM Malcom is running on. You'll need to add an extra network card to the guest OS.
 
@@ -98,12 +96,11 @@ Malcom was written mostly from scratch, in Python. It uses the following framewo
 
 * [flask](http://flask.pocoo.org/) - a lightweight python web framework
 * [mongodb](http://www.mongodb.org/) - a NoSQL database. It interfaces to python with [pymongo](http://api.mongodb.org/python/current/)
+* [redis](redis.io) - An advanced in-memory key-value store
 * [d3js](http://d3js.org/) - a JavaScript library that produces awesome force-directed graphs (https://github.com/mbostock/d3/wiki/Gallery)
-* [bootstrap](http://twitter.github.io/bootstrap/) - a CSS framework that will eventually kill webdesign, but makes it extremely easy to quickly "webize" applications that are functionnal in command line without caring spending too much time on HTML and CSS.
+* [bootstrap](http://twitter.github.io/bootstrap/) - a CSS framework that will eventually kill webdesign, but makes it extremely easy to quickly "webize" applications that would only work through a command prompt.
 
 ## Roadmap
-
-My todo list is a text file on my desktop, its items are written in three different languages and I don't really think anyone else than me could understand the acronyms.
 
 **Collaboration** - The **main** direction I want this tool to take is to become collaborative. I have a few ideas for this, and I think it will become 100x more useful once data sharing is implemented.
 
@@ -139,4 +136,4 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-Please note that MongoDB, d3js, Maximind and Bootstrap (and other third party libraries included in Malcom) may have their own GPL compatible licences.
+Please note that Redis, MongoDB, d3js, Maximind and Bootstrap (and other third party libraries included in Malcom) may have their own GPL compatible licences.
