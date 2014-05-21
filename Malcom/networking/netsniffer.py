@@ -482,7 +482,7 @@ class SnifferSession():
 		if elts != [] or edges != []:
 			self.send_nodes(elts, edges)
 		if self.pcap:
-			gevent.sleep(0.1)
+			pass
 
 	def send_flow_statistics(self, flow):
 		data = {}
