@@ -64,7 +64,6 @@ class Decoder(object):
 				try:
 					data['answers'] = [ (dns.an[i].rrname, dns.an[i].rdata, dns.an[i].type) for i in range(dns.ancount)]	
 				except IndexError, e:
-					dns.display()
 					raise e
 				
 				data['rcode'] = dns.rcode

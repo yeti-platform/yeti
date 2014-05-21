@@ -30,11 +30,13 @@ class WebMessenger(Messenger):
 	
 	def sniffer_data_handler(self, msg):
 		msg = json.loads(msg)
+		# print "webmsgr received", msg
 		queryid = msg['queryid']
 		src= msg['src']
 		msg_type = msg.get('type', False)
 		
 		if msg_type == "nodeupdate":
+
 			data = json.loads(msg['msg']) # data = {nodes, edges, session_name}
 			session_name = data['session_name']
 			try:
@@ -42,13 +44,17 @@ class WebMessenger(Messenger):
 			except Exception, e:
 				debug_output('Error sending node udpate: %s' % e, 'error')
 
-		if msg_type == 'flow_statistics_update':
+		elif msg_type == 'flow_statistics_update':
 			data = json.loads(msg['msg']) # data = {flows, session_name}
 			session_name = data['session_name']
 			try:
 				send_msg(self.websocket_for_session[session_name], data, type=data['type'])
 			except Exception, e:
-				debug_output('Error sending flow: %s' % e, 'error')
+				debug_output('Error sending flow data: %s' % e, 'error')
+
+		else:
+			print msg
+
 
 
 		

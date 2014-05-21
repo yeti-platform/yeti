@@ -6,8 +6,6 @@ __author__ = '@tomchop_'
 __version__ = '1.2 alpha'
 __license__ = "GPL"
 
-#from gevent import monkey; monkey.patch_all()#subprocess()#socket(dns=False); monkey.patch_time();
-
 import os, sys, argparse
 import netifaces as ni
 
