@@ -83,6 +83,7 @@
 	stroke: #bab8b8;
 	stroke-width: 1.5px;
 	opacity:0.50;
+	fill:none;
 }
 
 .node {
