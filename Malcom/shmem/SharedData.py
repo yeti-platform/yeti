@@ -1,6 +1,7 @@
 from bson import json_util
 import redis, threading, time, json, sys
-
+import random
+from Malcom.auxiliary.toolbox import debug_output
 
 # analytics
 
@@ -24,22 +25,31 @@ class Messenger(object):
 		client.subscribe(channel)
 		for item in client.listen():
 			if item['type'] == 'message':
+				# print "received [%s] %s" % (channel, item['data'])
 				callback(item['data'])
 
 	def publish_to_channel(self, channel, message):
-		self.r.publish(channel, message)
+		try:
+			self.r.publish(channel, message)
+		except Exception, e:
+			debug_output("Could not broadcast: %s %s" % (e, message), 'error')
+		
 
 	def broadcast(self, msg, channel, type="bcast"):
-		queryid = str(time.time())
+		queryid = str(random.random())
 
 		message = json.dumps({'msg': msg, 'queryid': queryid, 'src': self.name, 'type':type})
-
-		self.r.publish(channel, message)
+		try:
+			# print "broadcast [%s] : %s" % (channel, type)
+			self.r.publish(channel, message)
+		except Exception, e:
+			debug_output("Could not broadcast: %s %s" % (e, message), 'error')
+		
 		# self.client.subscribe(channel)
 		#print "[%s] Sending %s message" % (msg, self.name)
 
 	def send_recieve(self, msg, channel, params={}):
-		queryid = str(time.time())
+		queryid = str(random.random())
 		message = json.dumps({'msg': msg, 'queryid': queryid, 'src': self.name, 'params': params})
 		
 		r = redis.StrictRedis(host='localhost', port=6379, db=0)

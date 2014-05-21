@@ -238,7 +238,13 @@ class Model:
 			del element['_id']
 		
 		# check if existing
-		_element = self.elements.find_one({'value': element['value']})
+		while True:
+			try:
+				_element = self.elements.find_one({'value': element['value']})
+				break
+			except Exception, e:
+				debug_output("Could not fetch %s: %s" %(element['value'], e), 'error')
+		
 		if _element != None:
 			for key in element:
 				if key=='tags': continue
@@ -259,8 +265,13 @@ class Model:
 			debug_output("(added %s %s)" % (element.type, element.value), type='model')
 			element['date_created'] = datetime.datetime.utcnow()
 			element['next_analysis'] = datetime.datetime.utcnow()
-
-		self.elements.save(element)
+		while True:
+			try:
+				self.elements.save(element)
+				break
+			except Exception, e:
+				debug_output("Could not save %s: %s" %(element, e), 'error')
+		
 		assert element['date_created'] != None
 
 		if not with_status:

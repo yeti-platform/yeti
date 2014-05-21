@@ -1,7 +1,3 @@
-from gevent import Greenlet
-from gevent.select import select as gselect
-import gevent
-
 from scapy.all import *
 from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading
@@ -488,12 +484,8 @@ class SnifferSession():
 		data['flow'] = flow.get_statistics()
 		data['type'] = 'flow_statistics_update'
 		data['session_name'] = self.name
-		
-		try:
-			#self.ws.send(dumps(data)) #REDIS broadcast
-			self.engine.messenger.broadcast(dumps(data), 'sniffer-data', 'flow_statistics_update')
-		except Exception, e:
-			debug_output("Could not send flow statistics: %s" % e, 'error')
+
+		self.engine.messenger.broadcast(dumps(data), 'sniffer-data', 'flow_statistics_update')
 
 	def send_nodes(self, elts=[], edges=[]):
 		
@@ -565,18 +557,12 @@ class SnifferSession():
 						stopperStoptime = time.time()+stopperTimeout
 						remainStopper = stopperStoptime-time.time()
 
-					if self.pcap == True:
-						sel = select([s],[],[],remainStopper)
-					else:
-						sel = gselect([s],[],[],remainStopper)
+					sel = select([s],[],[],remainStopper)
 					if s not in sel[0]:
 						if stopper and stopper():
 							break
 				else:
-					if self.pcap == True:
-						sel = select([s],[],[],remain)
-					else:
-						sel = gselect([s],[],[],remain)
+					sel = select([s],[],[],remain)
 
 				if s in sel[0]:
 					p = s.recv(MTU)

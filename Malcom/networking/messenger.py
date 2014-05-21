@@ -9,7 +9,7 @@ class SnifferMessenger(Messenger):
 		self.name = 'sniffer'
 		self.snifferengine = None
 		self.subscribe_channel('sniffer-commands', self.command_handler)
-		
+		self.command_lock = threading.Lock()
 		sys.stderr.write("[+] Sniffer Messenger started\n")
 
 	def update_nodes(self, nodes, edges, session_name):
@@ -17,6 +17,7 @@ class SnifferMessenger(Messenger):
 		self.broadcast(msg, 'sniffer-data', 'nodeupdate')
 
 	def command_handler(self, msg):
+		self.command_lock.acquire()
 		msg = json.loads(msg)
 		cmd = msg['msg']
 		params = msg.get('params', {})
@@ -78,7 +79,6 @@ class SnifferMessenger(Messenger):
 				# this needs to be stringyfied, or else encoding errors will ensue
 				final_msg = flow
 
-
 			if cmd == 'flow_statistics_update':
 				print "Received 'flow_statistics_update' message. Please implement me? "
 
@@ -97,6 +97,7 @@ class SnifferMessenger(Messenger):
 		if final_msg != None:
 			reply = {'msg': final_msg, 'queryid': queryid, 'dst': src, 'src':self.name}
 			self.publish_to_channel('sniffer-commands', json.dumps(reply))
+		self.command_lock.release()
 		
 		return
 

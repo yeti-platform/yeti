@@ -31,18 +31,13 @@ from geventwebsocket.handler import WebSocketHandler
 from gevent.pywsgi import WSGIServer
 import gevent
 
-# from gevent.pool import Pool
-# from gevent import Greenlet
-
 # multiprocessing
 from multiprocessing import Process
 
 # custom
 from Malcom.auxiliary.toolbox import *
-# from Malcom.feeds.feed import FeedEngine
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname
-# from Malcom.networking import netsniffer
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 		
@@ -597,7 +592,7 @@ def analytics_api():
 		while True:
 			try:
 				message = loads(ws.receive())
-				debug_output("Received: %s" % message)
+				debug_output("(analytics webAPI) Received: %s" % message)
 			except Exception, e:
 				return ""
 
@@ -636,17 +631,10 @@ def sniffer_api():
 				debug_output("Could not decode JSON message: %s" %e)
 				return ""
 			
-			debug_output("Received: %s" % message)
+			debug_output("(sniffer webAPI) Received: %s" % message)
 
 			cmd = message['cmd']
 			session_name = message['session_name']
-			# REDIS query sniffer for info
-			# if session_name in Malcom.sniffer_sessions:
-			# 	session = "fail"
-			# 	session = Malcom.sniffer_sessions[session_name]
-			# else:
-			# 	send_msg(ws, "Session %s not foud" % session_name, type=cmd)
-			# 	continue
 
 			session = "fail"
 
@@ -696,7 +684,6 @@ def sniffer_api():
 				continue
 					
 			if cmd == 'sniffupdate':
-				
 				# REDIS send message to sniffer
 				msg = g.messenger.send_recieve('sniffupdate', 'sniffer-commands', params=params)
 				data = json.loads(msg) # json loads so that it doesn't complain about fake object ids
@@ -740,7 +727,7 @@ def fast():
 @app.route("/slow")
 def slow():
 	t0 = datetime.datetime.now()
-	for i in range(50):
+	for i in range(50000):
 		Model.elements.find().explain()
 	t = datetime.datetime.now()
 
@@ -774,6 +761,7 @@ class MalcomWeb(Process):
 		self.http_server = None
 	
 	def run(self):
+		
 		self.start_server()
 
 	def stop_server(self):
