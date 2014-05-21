@@ -36,19 +36,20 @@ class SnifferEngine(object):
 			self.tls_proxy = None
 
 		self.sessions = {}
+		self.model = Model()
 		self.messenger = SnifferMessenger()
 		self.messenger.snifferengine = self
 		
-		# sys.stderr.write("Importing packet captures...\n")
+		debug_output("Importing packet captures...\n")
 
-		# for s in Malcom.analytics_engine.data.get_sniffer_sessions():
-		# 	Malcom.sniffer_sessions[s['name']] = netsniffer.Sniffer(Malcom.analytics_engine, 
-		# 															s['name'], 
-		# 															None, 
-		# 															None, 
-		# 															filter_restore=s['filter'], 
-		# 															intercept_tls=s['intercept_tls'] if Malcom.tls_proxy else False)
-		# 	Malcom.sniffer_sessions[s['name']].pcap = True
+		for s in self.model.get_sniffer_sessions():
+			self.sessions[s['name']] = SnifferSession(	s['name'], 
+														None, 
+														None, 
+														self,
+														filter_restore=s['filter'], 
+														intercept_tls=s['intercept_tls'] if setup['TLS_PROXY_PORT'] else False)
+			self.sessions[s['name']].pcap = True
 
 	def new_session(self, params):
 		session_name = params['session_name']
@@ -102,7 +103,7 @@ class SnifferSession():
 			if self.ifaces[i] == "Not defined": continue
 			filter_ifaces += " and not host %s " % self.ifaces[i]
 		self.filter = "ip and not host 127.0.0.1 and not host %s %s" % (remote_addr, filter_ifaces)
-		self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
+		# self.filter = "ip and not host 127.0.0.1 and not host %s" % (remote_addr)
 		if filter != "":
 			self.filter += " and (%s)" % filter
 		self.stopSniffing = False
@@ -228,7 +229,8 @@ class SnifferSession():
 		for ip in ips:
 				
 			if ip not in self.nodes:
-				ip = self.model.add_text([ip], ['sniffer', self.name])
+		
+				ip = self.model.add_text([ip], ['sniffer', self.name])			
 
 				if ip == []: continue # tonight is not the night to add ipv6 support
 
@@ -289,7 +291,9 @@ class SnifferSession():
 			question = pkt[DNS].qd.qname
 
 			if question not in self.nodes:
+
 				_question = self.model.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
+		
 				if _question:
 					debug_output("Caught DNS question: %s" % (_question['value']))
 
@@ -325,6 +329,7 @@ class SnifferSession():
 					# check if we haven't seen these already
 					if rrname not in self.nodes:
 						_rrname = self.model.add_text([rrname], ['sniffer', self.name]) # log every discovery to db
+				
 						if _rrname != []:
 							self.nodes[_rrname['value']] = _rrname
 							new_elts.append(_rrname)
@@ -368,7 +373,6 @@ class SnifferSession():
 						new_edges.append(conn)
 					else:
 						debug_output("Don't know what to do with '%s' and '%s'" % (_rrname, _rdata), 'error')
-						pkt.display()
 						
 					# conn = self.analytics.data.connect(_question, elt, "resolve", True)
 					# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _rdata['_id'], '_id': { '$oid': str(_rrname['_id'])+str(_rdata['_id']) } }
@@ -411,6 +415,7 @@ class SnifferSession():
 
 	def handlePacket(self, pkt):
 
+
 		IP_layer = IP if IP in pkt else IPv6 # add IPv6 support another night...
 		if IP_layer == IPv6: return
 
@@ -428,7 +433,7 @@ class SnifferSession():
 
 			Flow.pkt_handler(pkt, self.flows)
 			flow = self.flows[Flow.flowid(pkt)]
-			self.send_flow_statistics(flow)	
+			self.send_flow_statistics(flow)
 			
 			new_elts, new_edges = self.checkHTTP(flow)
 
@@ -495,7 +500,6 @@ class SnifferSession():
 		data = { 'querya': {}, 'nodes':elts, 'edges': edges, 'type': 'nodeupdate', 'session_name': self.name}
 		try:
 			if (len(elts) > 0 or len(edges) > 0):
-				#self.ws.send(dumps(data)) #REDIS broadcast
 				self.engine.messenger.broadcast(dumps(data), 'sniffer-data', 'nodeupdate')
 		except Exception, e:
 			debug_output("Could not send nodes: %s" % e, 'error')
