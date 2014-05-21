@@ -359,15 +359,15 @@ def parse_net_info_cymru(info):
 
 def debug_output(text, type='debug', n=True):
     if type == 'debug':
-        msg = bcolors.OKGREEN + '[DEBUG]'
+        msg = bcolors.DEBUG + '[DEBUG]'
     if type == 'model':
-        msg = bcolors.HEADER + '[MODEL]'
+        msg = bcolors.DATA + '[DATA]'
     if type == 'analytics':
-        msg = bcolors.OKBLUE + '[ANALYTICS]'
+        msg = bcolors.ANALYTICS + '[ANALYTICS]'
     if type == 'error':
-        msg = bcolors.FAIL + '[ERROR]'
+        msg = bcolors.ERROR + '[ERROR]'
     if type == 'info':
-        msg = bcolors.WARNING + '[INFO]'
+        msg = bcolors.INFO + '[INFO]'
     msg += bcolors.ENDC
     n = '\n' if n else ""
     try:
@@ -378,19 +378,19 @@ def debug_output(text, type='debug', n=True):
 
 
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
+    DATA = '\033[95m'
+    ANALYTICS = '\033[94m'
+    DEBUG = '\033[92m'
+    INFO = '\033[93m'
+    ERROR = '\033[91m'
     ENDC = '\033[0m'
 
     def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
+        self.DATA = ''
+        self.ANALYTICS = ''
+        self.DEBUG = ''
+        self.INFO = ''
+        self.ERROR = ''
         self.ENDC = ''
 
 
