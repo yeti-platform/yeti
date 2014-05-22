@@ -13,10 +13,13 @@ The aim of Malcom is to make malware analysis and intel gathering *faster* by pr
 
 Check the [wiki](https://github.com/tomchop/malcom/wiki) for a Quickstart with some nice screenshots and a tutorial on [how to add your own feeds](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
 
-If you need some help, or want to contribute, feel free to join the [mailing list](https://groups.google.com/forum/#!forum/malcom-users) or try to grab someone on IRC (#malcom on freenode.net, it's pretty quiet but there's always someone around).
+If you need some help, or want to contribute, feel free to join the [mailing list](https://groups.google.com/forum/#!forum/malcom-users) or try to grab someone on IRC (#malcom on freenode.net, it's pretty quiet but there's always someone around). You can also hit me up on twitter [@tomchop_](https://twitter.com/tomchop_)
 
+Here's an example graph for host tomchop.me
 ![nodes-tomchop.png](http://direct.tomchop.me/malcom/nodes-tomchop.png)
-Graph for the host tomchop.me.
+
+Dataset view (filtered to only show IPs)
+![nodes-tomchop.png](http://direct.tomchop.me/malcom/dataset-view.png)
 
 
 ## Quick how-to
