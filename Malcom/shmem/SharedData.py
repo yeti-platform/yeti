@@ -32,7 +32,7 @@ class Messenger(object):
 		try:
 			self.r.publish(channel, message)
 		except Exception, e:
-			debug_output("Could not broadcast: %s %s" % (e, message), 'error')
+			debug_output("Could not broadcast: %s" % (e), 'error')
 		
 
 	def broadcast(self, msg, channel, type="bcast"):
@@ -43,7 +43,7 @@ class Messenger(object):
 			# print "broadcast [%s] : %s" % (channel, type)
 			self.r.publish(channel, message)
 		except Exception, e:
-			debug_output("Could not broadcast: %s %s" % (e, message), 'error')
+			debug_output("Could not broadcast: %s" % (e), 'error')
 		
 		# self.client.subscribe(channel)
 		#print "[%s] Sending %s message" % (msg, self.name)
