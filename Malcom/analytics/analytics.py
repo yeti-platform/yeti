@@ -173,31 +173,7 @@ class Analytics(Process):
 	def bulk_dns(self):
 		pass
 
-	def multi_graph_find(self, query, graph_query, depth=2):
-		total_nodes = {}
-		total_edges = {}
 
-		for key in query:
-
-			for value in query[key]:
-				
-				if key == '_id': value = ObjectId(value)
-
-				elt = self.data.elements.find_one({key: value})
-				
-				nodes, edges = self.single_graph_find(elt, graph_query, depth)
-				
-				for n in nodes:
-					total_nodes[n['_id']] = n
-				for e in edges:
-					total_edges[e['_id']] = e
-			
-		total_nodes = [total_nodes[n] for n in total_nodes]	
-		total_edges = [total_edges[e] for e in total_edges]
-
-		data = {'nodes':total_nodes, 'edges': total_edges }
-
-		return data
 
 
 	def single_graph_find(self, elt, query, depth=2):
