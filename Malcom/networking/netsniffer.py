@@ -33,7 +33,6 @@ class SnifferEngine(object):
 		self.setup = setup
 		sys.stderr.write("[+] Starting sniffer...\n")
 		
-		
 		if setup['TLS_PROXY_PORT'] > 0:
 			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % setup['TLS_PROXY_PORT'])
@@ -47,7 +46,7 @@ class SnifferEngine(object):
 		self.messenger = SnifferMessenger()
 		self.messenger.snifferengine = self
 		
-		debug_output("Importing packet captures...\n")
+		debug_output("Importing packet captures...")
 
 		for s in self.model.get_sniffer_sessions():
 			self.sessions[s['name']] = SnifferSession(	s['name'], 
@@ -82,7 +81,6 @@ class SnifferEngine(object):
 		
 		sniffer_session = SnifferSession(session_name, remote_addr, filter, self, intercept_tls)
 		sniffer_session.engine = self
-
 		self.sessions[session_name] = sniffer_session
 
 	def delete_session(self, session_name):
@@ -96,7 +94,8 @@ class SnifferEngine(object):
 
 		else:
 			del self.sessions[session_name]
-			return "stopped"
+			self.model.del_sniffer_session(session_name, self.setup['SNIFFER_DIR'])
+			return "removed"
 		
 
 	# def start_session(self, session_name, remote_addr):
@@ -141,13 +140,6 @@ class SnifferSession():
 		self.pkts = []
 		self.packet_count = 0
 
-		# nodes, edges, their values, their IDs
-		# self.nodes = []
-		# self.edges = []
-		# self.nodes_ids = []
-		# self.nodes_values = []
-		# self.edges_ids = []
-
 		self.nodes = {}
 		self.edges = {}
 
@@ -163,27 +155,28 @@ class SnifferSession():
 			debug_output("[-] No TLS interception")
 
 	def load_pcap(self):
-
 		filename = self.pcap_filename
 		debug_output("Loading PCAP from %s " % filename)
-		self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=self.engine.setup['SNIFFER_DIR']+"/"+filename)	
-		
+		self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=self.engine.setup['SNIFFER_DIR']+"/"+filename)	
 		debug_output("Loaded %s packets from file." % len(self.pkts))
-
 		return True
+
+	def start(self, remote_addr, public=False):
+		self.public = public
+		self.thread = threading.Thread(target=self.run)
+		self.thread.start()
 
 	def run(self):
 		self.thread_active = True
 		debug_output("[+] Sniffing session %s started" % self.name)
 		debug_output("[+] Filter: %s" % self.filter)
 		self.stopSniffing = False
-		
+
 		if self.pcap:
 			self.load_pcap()
 		elif not self.public:
-			self.pkts += self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1)
-
-		self.generate_pcap()
+			self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, store=0)
+			self.generate_pcap()
 		
 		debug_output("[+] Sniffing session %s stopped" % self.name)
 		self.thread_active = False
@@ -200,10 +193,7 @@ class SnifferSession():
 		data['flows'] = sorted(data['flows'], key= lambda x: x['timestamp'])
 		return data
 
-	def start(self, remote_addr, public=False):
-		self.public = public
-		self.thread = threading.Thread(target=self.run)
-		self.thread.start()
+	
 		
 	def stop(self):
 		self.stopSniffing = True
@@ -218,6 +208,7 @@ class SnifferSession():
 	def generate_pcap(self):
 		if len (self.pkts) > 0:
 			debug_output("Generating PCAP for %s (length: %s)" % (self.name, len(self.pkts)))
+
 			filename = self.engine.setup['SNIFFER_DIR'] + "/" + self.pcap_filename
 			wrpcap(filename, self.pkts)
 			debug_output("Saving session to DB")
@@ -434,7 +425,6 @@ class SnifferSession():
 
 		return new_elts, new_edges
 
-
 	def handlePacket(self, pkt):
 
 
@@ -447,7 +437,6 @@ class SnifferSession():
 		elts = []
 		edges = []
 
-		
 		# FLOW ANALYSIS - reconstruct TCP flow if possible
 		# do flow analysis here, if necessary - this will be replaced by dpkt's magic
 
