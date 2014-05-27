@@ -4,6 +4,13 @@ import pwd, os, sys, time, threading
 from bson.json_util import dumps
 from bson.objectid import ObjectId
 
+try:
+	import yara
+	has_yara = True
+	# load_yara_rules
+except Exception, e:
+	debug_output("[!] yara-python was not found on system.")
+	has_yara = False
 
 from Malcom.networking.flow import Flow
 from Malcom.auxiliary.toolbox import debug_output
@@ -21,7 +28,7 @@ NOTROOT = "nobody"
 class SnifferEngine(object):
 	"""docstring for SnifferEngine"""
 	
-	def __init__(self, setup):
+	def __init__(self, setup, yara_rules=None):
 		super(SnifferEngine, self).__init__()
 		self.setup = setup
 		sys.stderr.write("[+] Starting sniffer...\n")
@@ -50,6 +57,21 @@ class SnifferEngine(object):
 														filter_restore=s['filter'], 
 														intercept_tls=s['intercept_tls'] if setup['TLS_PROXY_PORT'] else False)
 			self.sessions[s['name']].pcap = True
+		
+		if has_yara and yara_rules:
+			self.yara_rules = self.load_yara_rules(yara_rules)
+		else:
+			self.yara_rules = None
+
+
+	def load_yara_rules(self, path):
+		debug_output("Compiling YARA rules from %s" % path)
+		if path[-1] != '/':	path += '/' # add trailing slash if not present
+		filepaths = {}
+		for file in os.listdir(path):
+			filepaths[file] = path + file
+		debug_output("Loaded %s YARA rule files in %s" % (len(filepaths), path))
+		return yara.compile(filepaths=filepaths)
 
 	def new_session(self, params):
 		session_name = params['session_name']
@@ -174,7 +196,7 @@ class SnifferSession():
 		data = {}
 		data['flows'] = []
 		for fid in self.flows:
-			data['flows'].append(self.flows[fid].get_statistics())
+			data['flows'].append(self.flows[fid].get_statistics(self.engine.yara_rules))
 		data['flows'] = sorted(data['flows'], key= lambda x: x['timestamp'])
 		return data
 
@@ -486,7 +508,7 @@ class SnifferSession():
 
 	def send_flow_statistics(self, flow):
 		data = {}
-		data['flow'] = flow.get_statistics()
+		data['flow'] = flow.get_statistics(self.engine.yara_rules)
 		data['type'] = 'flow_statistics_update'
 		data['session_name'] = self.name
 

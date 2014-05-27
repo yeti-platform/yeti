@@ -61,7 +61,7 @@ function snifferWebSocketHandler(msg) {
     if (data.type == 'flowstatus') {
         table = $('#flow-list')
         table.empty()
-        table.append("<tr><th>Timestamp</th><th style='text-align:right;'>Source</th><th></th><th style='text-align:right;'>Destination</th><th></th><th>Proto</th><th>#</th><th>Data</th><th>Decoded as</th><th>Raw payload</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
+        table.append("<tr><th>Timestamp</th><th style='text-align:right;'>Source</th><th></th><th style='text-align:right;'>Destination</th><th></th><th>Proto</th><th>#</th><th>Data</th><th>Decoded as</th><th>Raw payload</th><th>YARA</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
         for (var i in data.flows) {
             flow = data.flows[i]
             row = $('<tr />').attr('id',flow['fid'])
@@ -213,8 +213,6 @@ function netflow_row(flow, row) {
     // setup payload visor
 
     payload = flow.payload
-    // icon = $("<a />").attr({ 'href': "#PayloadModal", 'role': 'button', 'class':'btn', 'data-toggle': 'modal' })
-    // icon.append($("<i />").addClass('icon-eye-open'))
     icon_view = $("<i />").addClass('icon-eye-open');
     icon_view.click(function() {
         get_flow_payload(flow.fid); 
@@ -233,6 +231,21 @@ function netflow_row(flow, row) {
     }
 
     row.append(payload)
+
+    // YARA matches
+    icon_yara = $("<i />").addClass('icon-flag');
+    matching_rules = []
+    for (var i in flow.yara_matches) {
+        matching_rules.push(i)
+    }
+    if (matching_rules.length > 0) {
+        icon_yara.tooltip({ 'title': matching_rules.join(', '), 'container': 'body'})
+        yara = $('<td />').append(icon_yara)
+    }
+    else { yara = $('<td />') }
+
+    row.append(yara)
+
 
     return row
 }
