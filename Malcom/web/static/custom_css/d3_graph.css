@@ -76,7 +76,7 @@
 }
 
 .dim {
-	opacity: 0.15;
+	opacity: 0.15 !important;
 }
 
 .link {
