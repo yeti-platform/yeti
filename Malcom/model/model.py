@@ -42,8 +42,6 @@ class Model:
 		self.history = self._db.history
 		self.public_api = self._db.public_api
 
-		self.db_lock = threading.Lock()
-
 		# create indexes
 		self.rebuild_indexes()
 
@@ -67,8 +65,14 @@ class Model:
 	def connect(self, src, dst, attribs="", commit=True):
 		if not src or not dst:
 			return None
+
+		while True:
+			try:
+				conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
+				break
+			except Exception, e:
+				debug_output("Could not find connection from %s: %s" %(ObjectId(src._id), e), 'error')
 		
-		conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
 		
 		# if the connection already exists, just modify attributes and last seen time
 		if conn:
@@ -86,7 +90,14 @@ class Model:
 			debug_output("(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs), type='model')
 		
 		if commit:
-			self.graph.save(conn)
+			while True:
+				try:
+					self.graph.save(conn)
+					break
+				except Exception, e:
+					debug_output("Could not save %s: %s" %(conn, e), 'error')
+
+			
 		
 		return conn
 
@@ -389,14 +400,14 @@ class Model:
 		session = self.sniffer_sessions.find_one({'name': session_name})
 		return session
 
-	def del_sniffer_session(self, session_name):
+	def del_sniffer_session(self, session_name, sniffer_dir):
 
 		session = self.sniffer_sessions.find_one({'name': session_name})
 			
 		filename = session['name'] + ".pcap"
 				
 		try:
-			os.remove(Malcom.config['SNIFFER_DIR'] + "/" + filename)
+			os.remove(sniffer_dir + "/" + filename)
 		except Exception, e:
 			print e
 
