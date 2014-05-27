@@ -83,8 +83,11 @@ class SnifferMessenger(Messenger):
 				print "Received 'flow_statistics_update' message. Please implement me? "
 
 			if cmd == 'get_flow_payload':
-				payload = session.flows[params['flowid']].get_payload()
-				final_msg = payload
+				if params['flowid'] in session.flows:
+					final_msg = session.flows[params['flowid']].get_payload(encoding='base64')
+				else:
+					final_msg = False
+
 
 			if cmd == 'sniffdelete':
 				result = self.snifferengine.delete_session(params['session_name'])

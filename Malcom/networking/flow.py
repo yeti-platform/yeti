@@ -295,7 +295,7 @@ class Flow(object):
 			payload = self.payload
 
 		if encoding == 'web':
-			return unicode(payload, errors='replace')
+			return unicode(payload, errors='ignore')
 		if encoding == 'raw':
 			return payload
 			
