@@ -144,7 +144,6 @@ function toggle_sniffer_nodes_visibility(state) {
         return d.hidden
     }
     else if (state == 'hide') {
-      
         d.hidden = true
         hide_nodes.push(d._id.$oid)
         return true
