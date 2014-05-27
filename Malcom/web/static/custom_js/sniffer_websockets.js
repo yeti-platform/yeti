@@ -86,9 +86,65 @@ function snifferWebSocketHandler(msg) {
     }
 
     if (data.type == 'get_flow_payload') {
-        pre = $('<pre />').text(data.payload)
-        $('#PayloadModal .modal-body').empty().append(pre)
+        payload = atob(data.payload)
+
+        div_ascii_dump = $('<pre />')
+        div_ascii_dump.text(payload)
+
+
+        div_hexdump = $('<div />')
+        
+        div_ascii = $('<pre />').attr('id', 'hexdump_ascii')
+
+        div_ascii.text(splitSubstr(payload.replace(/[^\x20-\x7E]/g, "."), 16).join('\n'))
+
+        div_hex = $('<pre />').attr('id', 'hexdump_hex')
+        hex = ""
+        hex_payload = hexdump(payload)
+        lines = splitSubstr(hex_payload, 32)
+        for (var i in lines) {
+            bytes = splitSubstr(lines[i], 2)
+            for (var b in bytes) {
+                hex +=  bytes[b] + " "
+            }
+            hex += "\n"
+        }
+        div_hex.text(hex).css('float','left')
+
+        div_offsets = $("<pre />").attr('id', 'hexdump_offsets')
+        lines = Math.ceil(payload.length/16)
+        offsets = ""
+        ctr = 0
+        for (var i=0; i<lines; i++) {
+            offsets += "0x"+ctr.toString(16)
+            offsets += "\n"
+            ctr += 16
+        }
+        div_offsets.text(offsets).css('float','left').css('text-align', 'right')
+
+        div_hexdump.append(div_offsets).append(div_hex).append(div_ascii)
+
+        $('#hexdump').empty().append(div_hexdump)
+        $('#ascii').empty().append(div_ascii_dump)
     }
+}
+
+function splitSubstr(str, len) {
+  var ret = [ ];
+  for (var offset = 0, strLen = str.length; offset < strLen; offset += len) {
+    ret.push(str.substr(offset, len));
+  }
+  return ret;
+}
+
+function hexdump(payload) {
+    var hex = '';
+    for(var i = 0; i < payload.length; i++) {
+        if (payload.charCodeAt(i) < 16) {b = "0"}
+        else { b = ""}
+        hex += b+payload.charCodeAt(i).toString(16);
+    }
+    return hex
 }
 
 function highlight_response(row) {
@@ -212,12 +268,9 @@ function delsniff(session_name) {
         success: function(data) {
             if (data.success == 1) { // delete the corresponding row
                 $("#session-"+session_name).remove()
-                display_message("Session " + session_name + " removed")
             }
-            if (data.success == 0) {
-                display_message(data.status)
-
-            }
+            
+            display_message(data.status)
         }
     });
 }
@@ -237,7 +290,6 @@ function getSessionList() {
         success: function(data) {
 
             data = $.parseJSON(data);
-            console.log(data)
             table = $('#sessions');
 
             for (var i in data.session_list) {    
