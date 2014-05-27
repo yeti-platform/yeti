@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block main %}
 
-<div class='span9'> 
+<div class='span9' id='mainscreen'> 
   
   <ul id='datasetTabs' class='nav nav-tabs'>
     <li class='active'><a href='#graph' data-toggle='tab'>Graph</a></li>
@@ -10,7 +10,7 @@
 
 
   <div id='datasetTabsContent' class='tab-content'>
-    <div class='tab-pane active' id='graph'>
+    <div class='tab-pane active' id='graph'> <!-- Graph view pane -->
       <div class='graph'>
       </div>
       <div class='hotkeys'>
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div class='tab-pane' id='flows'>
+    <div class='tab-pane' id='flows'> <!-- Flow table view pane -->
       <table class='table table-condensed' id='flow-list'>
       </table>
     </div>
@@ -56,6 +56,35 @@
       <h3 id="PayloadModalLabel">Payload contents</h3>
     </div>
     <div class="modal-body">
+
+      <ul class="nav nav-tabs" id="myTab">
+        <li class="active"><a href="#ascii" data-toggle="tab">ASCII</a></li>
+        <li><a href="#hexdump" data-toggle="tab">Hexdump</a></li>
+      </ul>
+ 
+    <div class="tab-content">
+      <div class="tab-pane active" id="ascii">ASCII</div>
+      <div class="tab-pane" id="hexdump">Hexdump</div>
+    </div>
+
+      <!-- <ul id='modalTabs' class='nav nav-tabs'>
+        <li class='active'><a href='#ascii-dump' data-toggle='dump'>ASCII</a></li>
+        <li><a href='#hex-dump' data-toggle='dump'>Hexdump</a></li>
+      </ul>
+
+      <div id='asciidumpTabsContent' class='dump-content'>
+        <div class='tab-pane active' id='ascii-dump'>
+          ascii
+        </div>
+      </div>
+
+      <div id='hexdumpTabsContent' class='dump-content'>
+        <div class='dump-pane active' id='hex-dump'>
+          hex
+        </div>
+      </div> -->
+
+
     </div>
     <div class="modal-footer">
       <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
@@ -95,6 +124,23 @@ setInterval(function() {uncomm_all()}, 500)
 initSnifferWebSocket()
 initSnifferRealtimeWebSocket('{{session.name}}')
 ws_sniffer.onopen = snifferInterfaceInit
+
+$('a[href="#graph"]').on('shown', function (e) {
+  // e.target // activated tab
+  // e.relatedTarget // previous tab
+  $("#mainscreen").attr('class', 'span9')
+  $(".toolbar").show()
+})
+
+$('a[href="#flows"]').on('shown', function (e) {
+  // e.target // activated tab
+  // e.relatedTarget // previous tab
+  $("#mainscreen").attr('class', 'span12')
+  $(".toolbar").hide()
+})
+
+
+
 </script>
 {%endblock%}
 
