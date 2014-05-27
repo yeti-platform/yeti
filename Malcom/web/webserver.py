@@ -490,10 +490,10 @@ def sniffer_session_delete(session_name):
 	if result == "notfound": # session not found
 		return (dumps({'status':'Sniffer session %s does not exist' % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
 	
-	elif result == "running": # session running
+	if result == "running": # session running
 		return (dumps({'status':"Can't delete session %s: session running" % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
 	
-	elif result == "stopped": # session successfully stopped
+	if result == "removed": # session successfully stopped
 		return (dumps({'status':"Sniffer session %s has been deleted" % session_name, 'success': 1}), 200, {'Content-Type': 'application/json'})
 
 
@@ -512,16 +512,20 @@ def pcap(session_name):
 
 @app.route("/sniffer/<session_name>/<flowid>/raw")
 def send_raw_payload(session_name, flowid):
-	if session_name not in Malcom.sniffer_sessions:
+	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
+	if session_name not in session_list:
 		abort(404)
-	if flowid not in Malcom.sniffer_sessions[session_name].flows:
+
+	payload = g.messenger.send_recieve('get_flow_payload', 'sniffer-commands', params={'session_name': session_name, 'flowid':flowid})
+	
+	if payload == False:
 		abort(404)
 			
 	response = make_response()
 	response.headers['Cache-Control'] = 'no-cache'
 	response.headers['Content-Type'] = 'application/octet-stream'
 	response.headers['Content-Disposition'] = 'attachment; filename=%s_%s_dump.raw' % (session_name, flowid)
-	response.data = Malcom.sniffer_sessions[session_name].flows[flowid].get_payload(encoding='raw')
+	response.data = payload.decode('base64')
 	response.headers['Content-Length'] = len(response.data)
 
 	return response
@@ -623,12 +627,13 @@ def sniffer_api():
 	if request.environ.get('wsgi.websocket'):
 
 		ws = request.environ['wsgi.websocket']
-
+		
 		while True:
 			try:
-				message = loads(ws.receive())
+				msg = ws.receive()
+				message = loads(msg)
 			except Exception, e:
-				debug_output("Could not decode JSON message: %s" %e)
+				debug_output("Could not decode JSON message: %s\n%s" % (e, msg) )
 				return ""
 			
 			debug_output("(sniffer webAPI) Received: %s" % message)
