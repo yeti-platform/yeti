@@ -30,11 +30,16 @@ class Decoder(object):
 			data = Decoder.HTTP_response(flow.cleartext_payload)
 			if data: return data
 
-		data = Decoder.DNS_request(flow.payload)
-		if data: return data
+		# This is to avoid scapy's decompression loops
+		# Only try tro decode DNS queries / answers if
+		# they seem to be going to an appropriate port
+		if flow.dst_port == 53:
+			data = Decoder.DNS_request(flow.payload)
+			if data: return data
 
-		data = Decoder.DNS_response(flow.payload)
-		if data: return data
+		if flow.src_port == 53:
+			data = Decoder.DNS_response(flow.payload)
+			if data: return data
 
 		return False
 
