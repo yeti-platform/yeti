@@ -272,7 +272,7 @@ class Analytics(Process):
 			self.active = True
 
 			# build process Queue (10000 elements max)
-			self.elements_queue = Queue(batch_size)
+			self.elements_queue = Queue(batch_size+self.max_workers)
 			
 			# add elements to Queue
 			for elt in results:
