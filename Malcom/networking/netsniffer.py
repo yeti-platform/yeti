@@ -4,6 +4,12 @@ import pwd, os, sys, time, threading
 from bson.json_util import dumps
 from bson.objectid import ObjectId
 
+from Malcom.networking.flow import Flow
+from Malcom.auxiliary.toolbox import debug_output
+from Malcom.networking.messenger import SnifferMessenger
+from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
+from Malcom.model.model import Model
+
 try:
 	import yara
 	has_yara = True
@@ -11,12 +17,6 @@ try:
 except Exception, e:
 	debug_output("[!] yara-python was not found on system.")
 	has_yara = False
-
-from Malcom.networking.flow import Flow
-from Malcom.auxiliary.toolbox import debug_output
-from Malcom.networking.messenger import SnifferMessenger
-from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
-from Malcom.model.model import Model
 
 
 types = ['hostname', 'ip', 'url', 'as', 'malware']

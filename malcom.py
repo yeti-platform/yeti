@@ -14,7 +14,7 @@ from Malcom.auxiliary.toolbox import debug_output
 
 setup = MalcomSetup()
 
-# this should be stored and loaded from a configuration fil
+# this should be stored and loaded from a configuration file
 
 # malconf['DEBUG'] = True
 # malconf['VERSION'] = "1.2 alpha"
