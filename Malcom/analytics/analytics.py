@@ -79,8 +79,6 @@ class Analytics(Process):
 		self.status = "Inactive"
 		self.websocket = None
 		self.thread = None
-		self.websocket_lock = threading.Lock()
-		self.stack_lock = threading.Lock()
 		self.progress = 0
 		self.total = 0
 		self.workers = []
