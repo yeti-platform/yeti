@@ -83,7 +83,11 @@ if __name__ == "__main__":
 		sys.stderr.write("[+] Importing feeds...\n")
 		from Malcom.feeds.feed import FeedEngine
 		setup.feed_engine = FeedEngine(setup)
-		setup.feed_engine.load_feeds(setup['ACTIVATED_FEEDS'])
+		try:
+			loaded = setup.feed_engine.load_feeds(setup['ACTIVATED_FEEDS'])
+		except Exception, e:
+			sys.stderr.write("Could not load feeds specified in feeds_dir: %s\n" % e)
+			exit()
 		
 		# launch process		
 		if setup['FEEDS_SCHEDULER']:

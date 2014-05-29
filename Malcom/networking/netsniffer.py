@@ -32,6 +32,12 @@ class SnifferEngine(object):
 		super(SnifferEngine, self).__init__()
 		self.setup = setup
 		sys.stderr.write("[+] Starting sniffer...\n")
+
+		# check if sniffer directory exists
+		if not os.path.isdir(self.setup['SNIFFER_DIR']):
+			sys.stderr.write("Could not load directory specified in sniffer_dir: %s\n" % self.setup['SNIFFER_DIR'])
+			exit()
+		
 		
 		if setup['TLS_PROXY_PORT'] > 0:
 			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
@@ -58,7 +64,13 @@ class SnifferEngine(object):
 			self.sessions[s['name']].pcap = True
 		
 		if has_yara and yara_rules:
-			self.yara_rules = self.load_yara_rules(yara_rules)
+			try:
+				self.yara_rules = self.load_yara_rules(yara_rules)
+			except Exception, e:
+				sys.stderr.write("Could not load yara rules specified in yara_path: %s\n" % e)
+				exit()
+
+
 		else:
 			self.yara_rules = None
 
