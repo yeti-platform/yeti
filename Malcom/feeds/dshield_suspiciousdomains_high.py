@@ -27,7 +27,7 @@ class DShieldSuspiciousDomainsHigh(Feed):
 		hostname = Hostname(hostname=hostname, tags=['evil'])
 
 		evil = Evil()
-		evil['value'] = "%s (suspicious domain)" % hostname['value']
+		evil['value'] = "%s (DShield suspicious domain)" % hostname['value']
 		evil['tags'] = ['dshield', 'high']
 
 		return hostname, evil
