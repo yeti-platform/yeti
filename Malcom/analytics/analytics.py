@@ -305,7 +305,8 @@ class Analytics(Process):
 		
 		if total_elts > 0:
 			debug_output("Analyzed %s elements in %s" % (total_elts, str(now-then)) )
-		self.notify_progress("Inactive")
+		if self.run_analysis == True:
+			self.notify_progress("Inactive")
 		
 
 	
