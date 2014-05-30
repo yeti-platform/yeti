@@ -431,7 +431,6 @@ def sniffer():
 					'filename' : session_name + ".pcap"
 				}
 		
-
 		
 		# this is where the data will be stored persistently
 
@@ -441,7 +440,7 @@ def sniffer():
 		if file:
 			params['pcap'] = True
 			# store in /sniffer folder
-			with open(g.config['SNIFFER_DIR'] + "/" + filename, 'wb') as f:
+			with open(g.config['SNIFFER_DIR'] + "/" + params['filename'], 'wb') as f:
 				f.write(file.read())
 
 		#REDIS send message to sniffer w/ params

@@ -84,7 +84,7 @@ class SnifferEngine(object):
 		debug_output("Loaded %s YARA rule files in %s" % (len(filepaths), path))
 		return yara.compile(filepaths=filepaths)
 
-	def new_session(self, params):
+	def new_session(self, params, pcap=False):
 		session_name = params['session_name']
 		remote_addr = params['remote_addr']
 		filter = params['filter']
@@ -92,6 +92,7 @@ class SnifferEngine(object):
 		filename = params['filename']
 		
 		sniffer_session = SnifferSession(session_name, remote_addr, filter, self, intercept_tls)
+		sniffer_session.pcap = pcap
 		sniffer_session.engine = self
 		self.sessions[session_name] = sniffer_session
 

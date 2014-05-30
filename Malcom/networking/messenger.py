@@ -26,7 +26,8 @@ class SnifferMessenger(Messenger):
 		final_msg = None
 
 		if cmd == 'newsession':
-			self.snifferengine.new_session(params)
+			pcap = params.get('pcap', False)
+			self.snifferengine.new_session(params, pcap=pcap)
 			final_msg = True
 
 		if cmd == 'sessionlist':
