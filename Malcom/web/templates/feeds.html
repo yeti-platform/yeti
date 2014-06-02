@@ -10,10 +10,10 @@
 			<th>Run every</th>
 			<th>Last run</th>
 			<th>Next run</th>
-			<th>New elements fetched</th>
+			<th>Fresh</th>
 			<th>Status</th>
 			{% if  not g.config['PUBLIC'] %}
-			<th>Run now</th>
+			<th>Refresh</th>
 			{% endif %}
 		</tr>
 		{% for name in feed_names %}
