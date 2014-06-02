@@ -1,7 +1,3 @@
-#from gevent import monkey; monkey.patch_socket(); monkey.patch_time();
-
-from flask import Flask
-import Malcom
 import dateutil, time, threading, pickle, gc, datetime, os
 from bson.objectid import ObjectId
 from multiprocessing import Process, Queue
@@ -10,6 +6,7 @@ from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
 from Malcom.analytics.messenger import AnalyticsMessenger
+
 
 class Worker(Process):
 
@@ -112,7 +109,7 @@ class Analytics(Process):
 	def bulk_asn(self, items=1000):
 
 		last_analysis = {'$or': [
-									{ 'last_analysis': {"$lt": datetime.datetime.utcnow() - datetime.timedelta(days=7)} },
+									{ 'next_analysis' : {'$lt': datetime.datetime.utcnow()}},
 									{ 'last_analysis': None },
 								]
 						}
@@ -161,6 +158,8 @@ class Analytics(Process):
 				# commit any changes to DB
 				_as = self.save_element(_as)
 				_ip['last_analysis'] = datetime.datetime.utcnow()
+				_ip['next_analysis'] = ip['last_analysis'] + datetime.timedelta(seconds=ip['refresh_period'])
+
 				_ip = self.save_element(_ip)
 			
 				if _as and _ip:
