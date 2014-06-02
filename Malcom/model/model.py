@@ -39,6 +39,7 @@ class Model:
 		self.elements = self._db.elements
 		self.graph = self._db.graph
 		self.sniffer_sessions = self._db.sniffer_sessions
+		self.feeds = self._db.feeds
 		self.history = self._db.history
 		self.public_api = self._db.public_api
 
@@ -434,7 +435,12 @@ class Model:
 		for e in elts:
 			self.malware_add(e,e['tags'])
 
-	
+	def feed_last_run(self, feed_name):
+		self.feeds.update({'name': feed_name}, {'$set': {'last_run': datetime.datetime.utcnow()} }, upsert=True)
+
+	def get_feed_progress(self, feed_names):
+		feeds = [f for f in self.feeds.find({'name': {'$in': feed_names}})]
+		return feeds
 
 	
 

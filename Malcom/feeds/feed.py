@@ -125,6 +125,8 @@ class Feed(object):
 			self.update()
 			t1 = datetime.now()
 			print "Feed %s added in %s" %(self.name, str(t1-t0))
+			# save time for record in db
+			self.model.feed_last_run(self.name)
 		except Exception, e:
 	 		self.status = "ERROR: %s" % e
 		
@@ -237,6 +239,13 @@ class FeedEngine(Process):
 						export_names.append(n)
 						export_classes.append(class_n)
 						sys.stderr.write(" + Loaded %s...\n" % n)
+
+		# now that feeds are loaded, check their state in the db
+		feed_status = self.model.get_feed_progress([f for f in self.feeds])
+		for status in feed_status:
+			name = status['name']
+			self.feeds[name].last_run = status['last_run']
+			self.feeds[name].next_run = status['last_run'] + self.feeds[name].run_every
 				
 
 		globals_.update((export_names[i], c) for i, c in enumerate(export_classes))
