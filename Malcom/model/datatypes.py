@@ -230,7 +230,11 @@ class Ip(Element):
 		self['tags'] = tags
 		self['type'] = 'ip'
 		# refresh IP geolocation every 72hours
+		if ip != '':
+			self.location_info()
+		
 		self['refresh_period'] = Ip.default_refresh_period
+		
 			
 
 	@staticmethod
@@ -238,12 +242,27 @@ class Ip(Element):
 		ip = Ip()
 		for key in d:
 			ip[key] = d[key]
+
+		ip.location_info()
 		return ip
 			
 
 	def analytics(self):
 		debug_output( "(ip analytics for %s)" % self['value'])
+		new = []
 
+		# get reverse hostname
+		hostname = toolbox.dns_dig_reverse(self['value'])
+		if hostname:
+			new.append(('reverse', Hostname(hostname)))
+
+		self['last_analysis'] = datetime.datetime.utcnow()
+		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
+
+		return new
+
+	def location_info(self):
+	
 		# get geolocation info (v2)
 		if geoip:
 			try:
@@ -260,19 +279,7 @@ class Ip(Element):
 				self['longitude'] = str(geoinfo.location.longitude)
 
 			except Exception, e:
-				debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
-
-		# get reverse hostname
-		new = []
-		hostname = toolbox.dns_dig_reverse(self['value'])
-		
-		if hostname:
-			new.append(('reverse', Hostname(hostname)))
-
-		self['last_analysis'] = datetime.datetime.utcnow()
-		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
-
-		return new
+				debug_output( "Could not get IP location info for %s: %s" %(self.value, e), 'error')
 
 
 

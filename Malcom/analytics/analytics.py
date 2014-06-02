@@ -49,6 +49,8 @@ class Worker(Process):
 				# this will change updated time
 				elt['date_updated'] = last_connect
 				self.engine.save_element(elt, tags)
+				if elt['type']== 'ip':
+					print elt
 
 				self.engine.progress += 1
 				self.engine.notify_progress(elt['value'])
@@ -120,7 +122,7 @@ class Analytics(Process):
 		done = 0
 		results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
-		while len(results) > 0:
+		while len(results) > 0 and self.run_analysis:
 		
 			ips = []
 			debug_output("(getting ASNs for %s IPs - %s/%s done)" % (len(results), done, total), type='analytics')
@@ -158,7 +160,7 @@ class Analytics(Process):
 				# commit any changes to DB
 				_as = self.save_element(_as)
 				_ip['last_analysis'] = datetime.datetime.utcnow()
-				_ip['next_analysis'] = ip['last_analysis'] + datetime.timedelta(seconds=ip['refresh_period'])
+				_ip['next_analysis'] = _ip['last_analysis'] + datetime.timedelta(seconds=_ip['refresh_period'])
 
 				_ip = self.save_element(_ip)
 			
@@ -297,8 +299,9 @@ class Analytics(Process):
 					self.run_analysis = False
 				
 			# regroup ASN analytics to make only 1 query to Cymru / Shadowserver
-			self.bulk_asn()
-			self.active = False
+			if self.run_analysis:
+				self.bulk_asn()
+				self.active = False
 		
 		now = datetime.datetime.utcnow()
 		
