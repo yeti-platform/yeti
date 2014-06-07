@@ -46,10 +46,13 @@ class Model:
 		# create indexes
 		self.rebuild_indexes()
 
+		# locks
+		self.db_lock = threading.Lock()
+
 	def rebuild_indexes(self):
 		# create indexes
 		self.elements.ensure_index([('date_created', -1), ('value', 1)])
-		self.elements.ensure_index('value')
+		self.elements.ensure_index('value', unique=True)
 		self.elements.ensure_index('tags')
 		self.graph.ensure_index([('src', 1), ('dst', 1)])
 		self.graph.ensure_index('src')
@@ -266,50 +269,55 @@ class Model:
 
 
 	def save(self, element, with_status=False):
-	
-		tags = []
-		if 'tags' in element:
-			tags = element['tags']
-			del element['tags'] 	# so tags in the db do not get overwritten
+		
+		with self.db_lock:
+			# critical section starts here
+			tags = []
+			if 'tags' in element:
+				tags = element['tags']
+				del element['tags'] 	# so tags in the db do not get overwritten
 
-		if '_id' in element:
-			del element['_id']
-		
-		# check if existing
-		while True:
-			try:
-				_element = self.elements.find_one({'value': element['value']})
-				break
-			except Exception, e:
-				debug_output("Could not fetch %s: %s" %(element['value'], e), 'error')
-		
-		if _element != None:
-			for key in element:
-				if key=='tags': continue
-				_element[key] = element[key]
-			if key not in _element:
-				_element[key] = {}
-			_element['tags'] = list(set(_element['tags'] + tags))
-			element = _element
-			new = False
-		else:
-			new = True
-			element['tags'] = tags
+			if '_id' in element:
+				del element['_id']
+			
+			# check if existing
+			while True:
+				try:
+					_element = self.elements.find_one({'value': element['value']})
+					break
+				except Exception, e:
+					debug_output("Could not fetch %s: %s" %(element['value'], e), 'error')
+			
+			if _element != None:
+				for key in element:
+					if key=='tags': continue
+					_element[key] = element[key]
+				if key not in _element:
+					_element[key] = {}
+				_element['tags'] = list(set(_element['tags'] + tags))
+				element = _element
+				new = False
+			else:
+				new = True
+				element['tags'] = tags
 
-		if not new:
-			debug_output("(updated %s %s)" % (element.type, element.value), type='model')
-			assert element.get('date_created', None) != None
-		else:
-			debug_output("(added %s %s)" % (element.type, element.value), type='model')
-			element['date_created'] = datetime.datetime.utcnow()
-			element['next_analysis'] = datetime.datetime.utcnow()
-		while True:
-			try:
-				self.elements.save(element)
-				break
-			except Exception, e:
-				debug_output("Could not save %s: %s" %(element, e), 'error')
-		
+			if not new:
+				debug_output("(updated %s %s)" % (element.type, element.value), type='model')
+				assert element.get('date_created', None) != None
+			else:
+				debug_output("(added %s %s)" % (element.type, element.value), type='model')
+				element['date_created'] = datetime.datetime.utcnow()
+				element['next_analysis'] = datetime.datetime.utcnow()
+			
+			while True:
+				try:
+					self.elements.save(element)
+					break
+				except Exception, e:
+					debug_output("Could not save %s: %s" %(element, e), 'error')
+
+			# end of critical section
+			
 		assert element['date_created'] != None
 
 		if not with_status:

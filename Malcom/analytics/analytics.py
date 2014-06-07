@@ -49,8 +49,6 @@ class Worker(Process):
 				# this will change updated time
 				elt['date_updated'] = last_connect
 				self.engine.save_element(elt, tags)
-				if elt['type']== 'ip':
-					print elt
 
 				self.engine.progress += 1
 				self.engine.notify_progress(elt['value'])
@@ -83,6 +81,7 @@ class Analytics(Process):
 		self.workers = []
 		self.elements_queue = None
 		self.once = False
+		self.run_analysis = False
 
 
 	def save_element(self, element, tags=[], with_status=False):
@@ -161,11 +160,11 @@ class Analytics(Process):
 				_as = self.save_element(_as)
 				_ip['last_analysis'] = datetime.datetime.utcnow()
 				_ip['next_analysis'] = _ip['last_analysis'] + datetime.timedelta(seconds=_ip['refresh_period'])
-
 				_ip = self.save_element(_ip)
 			
 				if _as and _ip:
 					self.data.connect(_ip, _as, 'net_info')
+					
 			done += len(results)
 			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
