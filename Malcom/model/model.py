@@ -1,18 +1,18 @@
 # from gevent import monkey; monkey.patch_socket()#subprocess()#socket(dns=False); monkey.patch_time();
 
 import dateutil
-
-import threading, os
+import threading
+import os
 
 from pymongo import MongoClient
 from pymongo.son_manipulator import SONManipulator
+import pymongo.errors
 import pygeoip
-
 from bson.objectid import ObjectId
 
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.datatypes import Hostname, Url, Ip, As, Evil, DataTypes
-#from Malcom.configuration import Malconf
+
 
 class Transform(SONManipulator):
 	def transform_incoming(self, son, collection):
@@ -313,8 +313,10 @@ class Model:
 				try:
 					self.elements.save(element)
 					break
-				except Exception, e:
-					debug_output("Could not save %s: %s" %(element, e), 'error')
+				except pymongo.errors.DuplicateKeyerror as e:
+					break
+				except Exception as e:
+					debug_output("Could not save %s: %s (%s)" %(element, e, type(e), 'error'))
 
 			# end of critical section
 			
