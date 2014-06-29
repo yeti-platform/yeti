@@ -101,8 +101,6 @@ class Model:
 				except Exception, e:
 					debug_output("Could not save %s: %s" %(conn, e), 'error')
 
-			
-		
 		return conn
 
 	def get_destinations(self, elt):
@@ -116,6 +114,13 @@ class Model:
 
 	def find(self, query={}):
 		return self.elements.find(query)
+
+	def get(self, **kwargs):
+		while True:
+			try:
+				return self.elements.find_one(kwargs)
+			except Exception, e:
+				pass
 		
 	def find_one(self, oid):
 		return self.elements.find_one(oid)
@@ -228,13 +233,50 @@ class Model:
 		
 		# create arrays
 		new_edges = [d_new_edges[e] for e in d_new_edges]
-		nodes = [nodes[n] for n in nodes]
+
+		if not include_original:
+			nodes = [nodes[n] for n in nodes if nodes[n]['value'] != elt['value']]
+		else:
+			nodes = [nodes[n] for n in nodes]
 
 		# display 
 		for e in nodes:
 			e['fields'] = e.display_fields
 
 		return nodes, new_edges
+
+	def single_graph_find(self, elt, query, depth=2):
+		chosen_nodes = []
+		chosen_links = []
+		
+		if depth > 0:
+			# get a node's neighbors
+			neighbors_n, neighbors_l = self.get_neighbors_elt(elt, include_original=False)
+			
+			for i, node in enumerate(neighbors_n):
+				# for each node, find evil (recursion)
+				en, el = self.single_graph_find(node, query, depth=depth-1)
+				
+				# if we found evil nodes, add them to the chosen_nodes list
+				if len(en) > 0:
+					chosen_nodes += [n for n in en if n not in chosen_nodes] + [node]
+					chosen_links += [l for l in el if l not in chosen_links] + [neighbors_l[i]]
+		else:
+			
+			# if recursion ends, then search for evil neighbors
+			neighbors_n, neighbors_l = self.get_neighbors_elt(elt, {query['key']: {'$in': [query['value']]}}, include_original=False)
+			
+			# return evil neighbors if found
+			if len(neighbors_n) > 0:
+				chosen_nodes += [n for n in neighbors_n if n not in chosen_nodes]
+				chosen_links += [l for l in neighbors_l if l not in chosen_links]
+				
+			# if not, return nothing
+			else:
+				chosen_nodes = []
+				chosen_links = []
+
+		return chosen_nodes, chosen_links
 
 	def multi_graph_find(self, query, graph_query, depth=2):
 		total_nodes = {}
@@ -246,7 +288,7 @@ class Model:
 				
 				if key == '_id': value = ObjectId(value)
 
-				elt = self.data.elements.find_one({key: value})
+				elt = self.elements.find_one({key: value})
 				
 				nodes, edges = self.single_graph_find(elt, graph_query, depth)
 				
@@ -269,7 +311,9 @@ class Model:
 
 
 	def save(self, element, with_status=False):
-		
+		if None in [element['value'], element['type']]:
+			raise ValueError("Invalid value for element: %s" % element)
+
 		with self.db_lock:
 			# critical section starts here
 			tags = []
@@ -313,10 +357,10 @@ class Model:
 				try:
 					self.elements.save(element)
 					break
-				except pymongo.errors.DuplicateKeyerror as e:
+				except pymongo.errors.DuplicateKeyError as e:
 					break
 				except Exception as e:
-					debug_output("Could not save %s: %s (%s)" %(element, e, type(e), 'error'))
+					debug_output("Could not save %s: %s (%s)" % (element, e, type(e)), 'error')
 
 			# end of critical section
 			
@@ -351,17 +395,21 @@ class Model:
 	# ---- remove operations ----
 
 	def remove_element(self, element):
+		self.remove_connections(element['_id'])
 		return self.elements.remove({'_id' : element['_id']})
+		
 
 	def remove_by_id(self, element_id):
+		self.remove_connections(ObjectId(element_id))
 		return self.elements.remove({'_id' : ObjectId(element_id)})
 
 	def remove_by_value(self, element_value):
+		e = self.elements.find({'value': element_value})
+		self.remove_connections(e['_id'])
 		return self.elements.remove({'value' : element_value})
 
-	
-
-
+	def remove_connections(self, element_id):
+		self.graph.remove({'$or': [{'src': element_id}, {'dst': element_id}] })
 
 
 	# ============= clear / list db ================

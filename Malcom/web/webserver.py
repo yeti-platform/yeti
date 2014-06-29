@@ -394,7 +394,7 @@ def add_data():
 
 @app.route('/dataset/remove/<id>')
 def delete(id):
-	result = Model.remove(id)
+	result = Model.remove_by_id(id)
 	return dumps(result)
 
 @app.route('/dataset/clear/')

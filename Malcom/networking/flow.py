@@ -63,7 +63,6 @@ class Decoder(object):
 	@staticmethod
 	def DNS_response(payload):
 		data = {}
-		
 		try:
 			dns = DNS(payload)
 			if dns.ancount > 0 or dns.nscount > 0 or dns.arcount > 0 : # looks like a DNS response

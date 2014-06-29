@@ -52,7 +52,7 @@ class ZeusTrackerConfigs(Feed):
 		evil['guid'] = dict['guid']
 
 		# tags 
-		evil['tags'] += ['zeus', 'malware']
+		evil['tags'] += ['zeus', 'malware', 'ZeusTrackerConfigs']
 
 		url = Url(toolbox.find_urls(dict['description'])[0], ['zeus', 'config'])
 

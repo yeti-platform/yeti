@@ -2,14 +2,18 @@ import datetime, os
 
 try:
 	import geoip2.database
+	file = os.path.abspath(__file__)
+	current_path = os.path.dirname(os.path.abspath(__file__))
+	geoip_reader = geoip2.database.Reader(current_path+'/../auxiliary/geoIP/GeoIP2-City.mmdb')
 	geoip = True
 except Exception, e:
-	sys.stderr.write("[-] Geoip2 library not found")
+	sys.stderr.write("[-] Could not load GeoIP library - %s" % e)
 	geoip = False
 
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.auxiliary.toolbox import debug_output
+from Malcom.auxiliary.async_resolver import AsyncResolver
 
 
 class Element(dict):
@@ -21,8 +25,6 @@ class Element(dict):
 		self['value'] = None
 		self['type'] = None
 		self['refresh_period'] = None
-		# all elements have to be analysed at least once
-
 		
 	def to_dict(self):
 		return self.__dict__
@@ -36,12 +38,6 @@ class Element(dict):
 	def upgrade_tags(self, tags):
 		self['tags'].extend(tags)
 		self['tags'] = list(set(self['tags']))
-
-	# def is_recent(self):
-	# 	if 'date_created' not in self:
-	# 		return False
-	# 	else:
-	# 		return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
 
 	# necessary for pickling
 	def __getstate__(self): return self.__dict__
@@ -266,10 +262,7 @@ class Ip(Element):
 		# get geolocation info (v2)
 		if geoip:
 			try:
-				file = os.path.abspath(__file__)
-				current_path = os.path.dirname(os.path.abspath(__file__))
-				reader = geoip2.database.Reader(current_path+'/../auxiliary/geoIP/GeoIP2-City.mmdb')
-				geoinfo = reader.city(self.value)
+				geoinfo = geoip_reader.city(self.value)
 				
 				self['city'] = geoinfo.city.name
 				self['postal_code'] = geoinfo.postal.code
@@ -285,11 +278,13 @@ class Ip(Element):
 
 class Hostname(Element):
 	
-	default_refresh_period = 6*3600
+	default_refresh_period = 6*60*60 # 6 hours
+	# default_refresh_period = 10*60 # 10 minutes
 	display_fields = Element.default_fields + []
 
 	def __init__(self, hostname="", tags=[]):
 		super(Hostname, self).__init__()
+		hostname = hostname.lower()
 		if toolbox.is_hostname(hostname) == hostname:
 			self['tags'] = tags
 			self['value'] = toolbox.is_hostname(hostname)
@@ -314,41 +309,38 @@ class Hostname(Element):
 
 		debug_output( "(host analytics for %s)" % self.value)
 
-		# this should get us a couple of IP addresses, or other hostnames
-		self['dns_info'] = toolbox.dns_dig_records(self.value)
-		
-		new = []
-
 		#get Whois
-
 		self['whois'] = toolbox.whois(self['value'])
 
+		# this should get us a couple of IP addresses, or other hostnames
+		# self['dns_info'] = toolbox.dns_dig_records(self.value)
+		
+		# new = []
 
-		# get DNS info
-		for record in self.dns_info:
-			if record in ['MX', 'A', 'NS', 'CNAME']:
-				for entry in self['dns_info'][record]:
-					art = toolbox.find_artifacts(entry) #do this
-					for t in art:
-						for findings in art[t]:
-							if t == 'hostnames':
-								new.append((record, Hostname(findings)))
-							if t == 'urls':
-								new.append((record, Url(findings)))
-							if t == 'ips':
-								new.append((record, Ip(findings)))
+		# # get DNS info
+		# for record in self.dns_info:
+		# 	if record in ['MX', 'A', 'NS', 'CNAME']:
+		# 		for entry in self['dns_info'][record]:
+		# 			art = toolbox.find_artifacts(entry) #do this
+		# 			for t in art:
+		# 				for findings in art[t]:
+		# 					if t == 'hostnames':
+		# 						new.append((record, Hostname(findings)))
+		# 					if t == 'urls':
+		# 						new.append((record, Url(findings)))
+		# 					if t == 'ips':
+		# 						new.append((record, Ip(findings)))
 
-		# is _hostname a subdomain ?
-
-		if len(self.value.split(".")) > 2:
-			domain = toolbox.is_subdomain(self.value)
-			if domain:
-				new.append(('domain', Hostname(domain)))
+		# # is _hostname a subdomain ?
+		# if len(self.value.split(".")) > 2:
+		# 	domain = toolbox.is_subdomain(self.value)
+		# 	if domain:
+		# 		new.append(('domain', Hostname(domain)))
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
 
-		return new
+		return []
 
 DataTypes = {
 	'url': Url,

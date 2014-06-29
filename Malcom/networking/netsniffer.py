@@ -431,10 +431,13 @@ class SnifferSession():
 			# in this case, we can save the connection to the DB since it is not temporary
 			#conn = {'attribs': http_elts['method'], 'src': host['_id'], 'dst': url['_id'], '_id': { '$oid': str(host['_id'])+str(url['_id'])}}
 			conn = self.model.connect(host, url, "host")
-
-			# if conn not in self.edges:
 			self.edges[str(conn['_id'])] = conn
 			new_edges.append(conn)
+
+			dst_addr = self.model.get(value=flow.dst_addr)
+			conn_http = {'attribs': http_elts['method'], 'src': dst_addr['_id'], 'dst': host['_id'], '_id': { '$oid': str(dst_addr['_id'])+str(host['_id'])}}
+			self.edges[str(conn_http['_id'])] = conn_http
+			new_edges.append(conn_http)
 
 		return new_elts, new_edges
 
@@ -568,6 +571,7 @@ class SnifferSession():
 			stopperStoptime = time.time()+stopperTimeout
 		remainStopper = None
 		while 1:
+
 			try:
 				if not stopper:
 					break
@@ -609,6 +613,8 @@ class SnifferSession():
 							print r
 					if count > 0 and c >= count:
 						break
+					if offline:
+						time.sleep(0.05)
 			except KeyboardInterrupt:
 				break
 		s.close()

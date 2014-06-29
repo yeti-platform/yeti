@@ -92,11 +92,18 @@ function display_message(text) {
   $("#message").append(message)
 }
 
-function getevil() {
-  datas = d3.selectAll('.selected').data()
+
+function getevil(node_id) {
   ids = []
-  for (var i in datas) {
-    ids.push({'name': '_id', 'value': datas[i]._id.$oid})
+
+  if (typeof node_id === 'undefined') {
+    datas = d3.selectAll('.selected').data()
+    for (var i in datas) {
+      ids.push({'name': '_id', 'value': datas[i]._id.$oid})
+    }
+  }
+  else {
+    ids.push({'name': '_id', 'value': node_id._id.$oid}) 
   }
   
   $.ajax({
@@ -110,7 +117,6 @@ function getevil() {
     }
 
   })
-  
 }
 
 // unfixes and deselects selected ndoes
@@ -228,6 +234,11 @@ function push_nodes(new_nodes) {
 
      nodes.push(new_nodes[i])
      ids.push(new_nodes[i]._id.$oid)
+
+     if (new_nodes[i]['tags'].indexOf('evil') != -1 && new_nodes[i]['type'] != 'evil') {
+      getevil(new_nodes[i])
+     }
+
      }
    } 
 }
