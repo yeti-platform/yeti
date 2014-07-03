@@ -93,17 +93,27 @@ function display_message(text) {
 }
 
 
-function getevil(node_id) {
+function getevil_nodes(node_id) {
+  ids.push({'name': '_id', 'value': node_id._id.$oid}) 
+  $.ajax({
+    url: url_static_prefix+'/evil',
+    dataType: 'json',
+    data: ids,
+    success: function(data) {
+      push_nodes(data.nodes)
+      push_links(data.edges)
+      start();  
+    }
+
+  });
+}
+
+function getevil() {
   ids = []
 
-  if (typeof node_id === 'undefined') {
-    datas = d3.selectAll('.selected').data()
-    for (var i in datas) {
-      ids.push({'name': '_id', 'value': datas[i]._id.$oid})
-    }
-  }
-  else {
-    ids.push({'name': '_id', 'value': node_id._id.$oid}) 
+  datas = d3.selectAll('.selected').data()
+  for (var i in datas) {
+    ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
   
   $.ajax({
@@ -116,7 +126,7 @@ function getevil(node_id) {
       start();  
     }
 
-  })
+  });
 }
 
 // unfixes and deselects selected ndoes
@@ -236,7 +246,7 @@ function push_nodes(new_nodes) {
      ids.push(new_nodes[i]._id.$oid)
 
      if (new_nodes[i]['tags'].indexOf('evil') != -1 && new_nodes[i]['type'] != 'evil') {
-      getevil(new_nodes[i])
+      getevil_nodes(new_nodes[i])
      }
 
      }
