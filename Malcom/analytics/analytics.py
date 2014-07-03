@@ -48,7 +48,7 @@ class Worker(Process):
 				# print "DDDDDDD", self.name
 				# print elt
 
-				# debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s" % (self.name, os.getpid(), elt['type'], elt['value'], self.queue.qsize()), type='analytics')
+				debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s" % (self.name, os.getpid(), elt['type'], elt['value'], self.queue.qsize()), type='analytics')
 				type_ = elt['type']
 				tags = elt['tags']
 
