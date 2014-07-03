@@ -230,7 +230,7 @@ class FeedEngine(Process):
 					if issubclass(class_n, Feed) and class_n not in globals_:
 						new_feed = class_n(n) # create new feed object
 						
-						new_feed.model = Model() # attach model instance to feed
+						new_feed.model = self.model # attach model instance to feed
 						self.feeds[n] = new_feed
 
 						self.feeds[n].enabled = True if n.lower() in activated_feeds else False
