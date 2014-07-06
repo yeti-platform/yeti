@@ -38,7 +38,6 @@ class SnifferEngine(object):
 			sys.stderr.write("Could not load directory specified in sniffer_dir: %s\n" % self.setup['SNIFFER_DIR'])
 			exit()
 		
-		
 		if setup['TLS_PROXY_PORT'] > 0:
 			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % setup['TLS_PROXY_PORT'])
@@ -52,16 +51,16 @@ class SnifferEngine(object):
 		self.messenger = SnifferMessenger()
 		self.messenger.snifferengine = self
 		
-		debug_output("Importing packet captures...")
+		# debug_output("Importing packet captures...")
 
-		for s in self.model.get_sniffer_sessions():
-			self.sessions[s['name']] = SnifferSession(	s['name'], 
-														None, 
-														None, 
-														self,
-														filter_restore=s['filter'], 
-														intercept_tls=s['intercept_tls'] if setup['TLS_PROXY_PORT'] else False)
-			self.sessions[s['name']].pcap = True
+		# for s in self.model.get_sniffer_sessions():
+		# 	self.sessions[s['name']] = SnifferSession(	s['name'], 
+		# 												None, 
+		# 												None, 
+		# 												self,
+		# 												filter_restore=s['filter'], 
+		# 												intercept_tls=s['intercept_tls'] if setup['TLS_PROXY_PORT'] else False)
+		# 	self.sessions[s['name']].pcap = True
 		
 		if has_yara and yara_rules:
 			try:

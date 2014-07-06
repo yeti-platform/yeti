@@ -410,9 +410,9 @@ class Model:
 
 	def clear_db(self):
 		for c in self._db.collection_names():
-			if c != "system.indexes":
+			if c in ['elements', 'graph', 'sniffer_sessions', 'feeds']: # if c != "system.indexes":
 				self._db[c].drop()
-	
+
 	def list_db(self):
 		for e in self.elements.find():
 			debug_output(e)
@@ -439,7 +439,7 @@ class Model:
 	# ============ sniffer operations ==============
 
 	def save_sniffer_session(self, session):
-		dict = { 
+		dict = {
 			'name': session.name,
 			'filter': session.filter,
 			'intercept_tls': session.intercept_tls,

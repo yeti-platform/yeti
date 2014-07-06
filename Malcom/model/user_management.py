@@ -4,14 +4,16 @@ import os
 import string
 import random
 import re
+import datetime
 
 from pymongo import MongoClient
 from pymongo.son_manipulator import SONManipulator
 import pymongo.errors
-from pbkdf2 import crypt
+from passlib.hash import pbkdf2_sha512
+from flask.ext.login import make_secure_token
 
 
-class Transform(SONManipulator):
+class UserTransform(SONManipulator):
 	def transform_incoming(self, son, collection):
 		for (key, value) in son.items():
 			if isinstance(value, User):
@@ -19,7 +21,10 @@ class Transform(SONManipulator):
 		return son
 
 	def transform_outgoing(self, son, collection):
-		return User.from_dict(son)
+		if 'username' in son:
+			return User.from_dict(son)
+		else:
+			return son
 		
 
 class UserManager():
@@ -27,12 +32,13 @@ class UserManager():
 	def __init__(self):
 		self._connection = MongoClient()
 		self._db = self._connection.malcom
-		
+
 		self.users = self._db.users
 		self.users.ensure_index('username', unique=True)
 		
 		self.public_api = self._db.public_api
 
+		self._db.add_son_manipulator(UserTransform())
 
 	# ============ User operations =====================
 
@@ -40,18 +46,18 @@ class UserManager():
 		u = self.get_user(username=username)
 		
 		if not u:
-			print "User not found, creating"
+			print "User not found, creating..."
 			u = User(username)
 		
 			u.reset_password(password)
 			if apikey:
 				u.generate_api_key()
-
-			self.save_user(u)
+			u.joined = datetime.datetime.utcnow()
+			u.last_activity = None
+			u = self.save_user(u)
 			return u
 		else:
 			return None
-
 
 	def get_user(self, **kwargs):
 		user = self.users.find_one(kwargs)
@@ -72,19 +78,18 @@ class UserManager():
 		# generate a random password
 		if not password:
 			password = self.generate_password(length=25)
-		pwhash = crypt(password)
+		pwhash = pbkdf2_sha512.encrypt(password)
 
 		self.users.update({"username":username}, {'$set':{'pwhash': pwhash}})
 
 		return self.get_user(username=username)
 
-
 	def save_user(self, user):
 		d = dict(user)
-		del d['_id']
-		u = self.users.find_and_modify({'username': user['username']}, {'$set': d}, upsert=True)
-		return u
-
+		if '_id' in d: del d['_id']
+		# u = self.users.find_and_modify({'username': user['username']}, {'$set': d}, upsert=True, new=True)
+		u = self.users.find_and_modify({'username': user['username']}, d, upsert=True, new=True)
+		return User.from_dict(u)
 
 	# ============ Public API operations ===============
 
@@ -110,11 +115,15 @@ class User(dict):
 	def __init__(self, username):
 		self.username = username
 		self.admin = False
+		self.joined = None
+		self.last_activity = None
+		self.api_last_activity = None
+		self.api_request_count = 0
 
 	def check_password(self, password):
 		stored_hash = self['pwhash']
-		
-		if stored_hash == crypt(password, stored_hash):
+
+		if pbkdf2_sha512.verify(password, stored_hash):
 			return True
 		else:
 			return False
@@ -126,8 +135,7 @@ class User(dict):
 		if len(password) < 8:
 			return False
 
-		self['pwhash'] = crypt(password)
-
+		self['pwhash'] = pbkdf2_sha512.encrypt(password)
 		return True
 
 	@staticmethod
@@ -153,6 +161,10 @@ class User(dict):
 
 		self['api_key'] = kk
 
+	def get_auth_token(self):
+		if not self.token:
+			self.token = make_secure_token(self.username, self.pwhash, os.urandom(1024))
+		return self.token
 
 	def is_authenticated(self):
 		return True
@@ -175,6 +187,9 @@ class User(dict):
 		for key in d:
 			u[key] = d[key]
 		return u
+
+	def __unicode__(self):
+		return str(self)
 
 	def to_dict(self):
 		return self.__dict__

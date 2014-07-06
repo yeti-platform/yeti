@@ -69,6 +69,12 @@ UserManager = UserManager()
 # 	proxy_set_header Connection "upgrade";
 # }
 
+@app.template_filter('datetimeformat')
+def datetimeformat(value, format='%Y-%m-%d %H:%M'):
+	if value:
+		return value.strftime(format)
+	else:
+		return "None"
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -95,23 +101,44 @@ def before_request():
 
 # Authentication stuff ==========================================
 
+@lm.token_loader
+def load_token(token):
+	print "Load token"
+	u = UserManager.get_user(token=token)
+	if u:
+		u.last_activity = datetime.datetime.utcnow()
+		u = UserManager.save_user(u)
+	return u
+
 @lm.user_loader
 def load_user(username):
-	return UserManager.get_user(username=username)
+	print "Load user"
+	u = UserManager.get_user(username=username)
+	if u:
+		u.last_activity = datetime.datetime.utcnow()
+		u = UserManager.save_user(u)
+	return u
 
 @lm.request_loader
 def load_user_from_request(request):
+	print "Load user from request"
 	api_key = request.headers.get("X-Malcom-API-Key")
 	if api_key:
-		print "Getting user for API-key %s" % api_key
-		return UserManager.get_user(api_key=api_key)
+		print "Getting user for API key %s" % api_key
+		u = UserManager.get_user(api_key=api_key)
+		if u: 
+			u.api_last_activity = datetime.datetime.utcnow()
+			u.api_request_count += 1 
+			u = UserManager.save_user(u)
+		return u
 
 @app.route("/logout")
 @login_required
 def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
+	del current_user['token']
+	UserManager.save_user(current_user)
+	logout_user()
+	return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -122,17 +149,20 @@ def login():
 	if request.method == 'POST':
 		username = request.form.get('username')
 		password = request.form.get('password')
-		rememberme = request.form.get('rememberme', False)
+		rememberme = bool(request.form.get('rememberme', False))
 		print "Login attempt for %s:%s (rememberme: %s)" % (username, password, rememberme)
+		
 		# get user w/ username
-		user = UserManager.get_user(username='tomchop')
+		user = UserManager.get_user(username=username)
+
 		# check its password
-		if user.check_password(password):
+		if user and user.check_password(password):
 			print "Success!"
-			login_user(user)
-			return redirect(url_for('dataset'))
+			user.get_auth_token()
+			UserManager.save_user(user)
+			login_user(user, remember=rememberme)
+			return redirect(request.args.get("next") or url_for("index"))
 		else:
-			print "Fail..."
 			flash("Wrong username / password combination",'error')
 			return redirect(url_for('login'))
 	else:
@@ -144,6 +174,32 @@ def login():
 @login_required
 def index():
 	return redirect(url_for('dataset'))
+
+# Profile ======================================================
+
+@app.route("/account", methods=['GET','POST'])
+@login_required
+def account():
+	if request.method == 'POST':
+		if request.form.get('current-password'): # user is asking to change their password
+
+			current = request.form.get('current-password')
+			new = request.form.get('new-password')
+			repeatnew = request.form.get('repeat-new-password')
+
+			if not current_user.check_password(current):
+				flash("Current password does not match.", 'error')
+				return redirect(url_for('account'))
+			if new != repeatnew:
+				flash("The passwords do not match.", 'error')
+				return redirect(url_for('account'))
+
+			current_user.reset_password(new)
+			UserManager.save_user(current_user)
+			flash('Password changed successfully!', 'success')
+			return redirect(url_for('account'))
+
+	return render_template('account.html')
 
 # feeds ========================================================
 
@@ -843,6 +899,7 @@ class MalcomWeb(Process):
 		
 		lm.init_app(app)
 		lm.login_view = 'login'
+		lm.session_protection = 'strong'
 
 		for key in self.setup:
 			app.config[key] = self.setup[key]
