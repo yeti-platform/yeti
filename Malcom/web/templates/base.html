@@ -56,33 +56,23 @@
 
   <body>
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
+
+    <div class='navbar navbar-inverse navbar-fixed-top'>
       <div class="navbar-inner">
         <div class="container">
-          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="brand" href="{{ url_for('dataset') }}">Malcom</a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
-              <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Sniffer</a></li>            
-              {% if g.config['FEEDS'] %}
-              <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
-              {% endif %}
-              <li class="divider-vertical"></li>
-              
-            </ul>
-          </div>
-          <div class='nav-collapse collapse pull-right'>
-            <ul class='nav'>
-              <li id='analytics-status-nav'>
+          <a class='brand' href="#">Malcom</a>
+          <ul class='nav'>
+            <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
+            <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Sniffer</a></li>
+            {% if g.config['FEEDS'] %}
+            <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
+            {% endif %}            
+          </ul>
+          <ul class='nav pull-right'>
+            <li id='analytics-status-nav'>
                 <p class='navbar-text analytics'>Loading status...</p>
-              </li>
-
-              <li id='iface-nav'>
+            </li>
+            <li id='iface-nav'>
                   <div class='interfaces'>
                     <table>
                       {% for i in g.config['IFACES'] %}
@@ -90,15 +80,20 @@
                       {% endfor %}
                     </table>
                     </div>
-                </li>
-            </ul>
-            </div>
-          <!--/.nav-collapse -->
-
+            </li>
+            <li class='dropdown'>
+              <a href='#' class='dropdown-toggle' data-toggle='dropdown'>{{ current_user.username }} <b class='caret'></b></a>
+              <ul class="dropdown-menu">
+                <!-- <li><a href="#">Settings</a></li>
+                <li class="divider"></li> -->
+                <li><a href="{{url_for('logout')}}">Logout</a></li>
+              </ul>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
-
+ 
     <div class="container-fluid main">
 
       <div class='row-fluid'>

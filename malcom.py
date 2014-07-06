@@ -110,7 +110,7 @@ if __name__ == "__main__":
 	if setup['WEB']:
 		sys.stderr.write("[+] Starting webserver...\n")
 		from Malcom.web.webserver import MalcomWeb
-		setup.web = MalcomWeb(setup['PUBLIC'], setup['LISTEN_PORT'], setup['LISTEN_INTERFACE'], setup)
+		setup.web = MalcomWeb(setup['AUTH'], setup['LISTEN_PORT'], setup['LISTEN_INTERFACE'], setup)
 
 	if setup['WEB']:
 		setup.web.start_server()

@@ -7,7 +7,6 @@ import os
 from pymongo import MongoClient
 from pymongo.son_manipulator import SONManipulator
 import pymongo.errors
-import pygeoip
 from bson.objectid import ObjectId
 
 from Malcom.auxiliary.toolbox import *
@@ -41,8 +40,7 @@ class Model:
 		self.sniffer_sessions = self._db.sniffer_sessions
 		self.feeds = self._db.feeds
 		self.history = self._db.history
-		self.public_api = self._db.public_api
-
+		
 		# create indexes
 		self.rebuild_indexes()
 
@@ -306,10 +304,6 @@ class Model:
 
 	# ---- update & save operations ----
 
-	def bulk_insert(self, elements):
-		return self.elements.insert(elements)
-
-
 	def save(self, element, with_status=False):
 		if None in [element['value'], element['type']]:
 			raise ValueError("Invalid value for element: %s" % element)
@@ -478,8 +472,6 @@ class Model:
 		return [s for s in self.sniffer_sessions.find()]
 
 
-	
-
 
 
 
@@ -502,21 +494,5 @@ class Model:
 
 	
 
-	# ============ Public API operations ===============
 
-	def add_tag_to_key(self, apikey, tag):
-		k = self.public_api.find_one({'api-key': apikey})
-		if not k:
-			k = self.public_api.save({'api-key': apikey, 'available-tags': [tag]})
-		else:
-			if tag not in k['available-tags']:
-				k['available-tags'].append(tag)
-				self.public_api.save(k)
-
-	def get_tags_for_key(self, apikey):
-		tags = self.public_api.find_one({'api-key': apikey})
-		if not tags:
-			return []
-		else:
-			return tags.get('available-tags', [])
 

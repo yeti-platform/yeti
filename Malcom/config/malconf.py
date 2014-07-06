@@ -21,7 +21,7 @@ class MalcomSetup(dict):
 			self['LISTEN_INTERFACE'] = args.interface
 			self['LISTEN_PORT'] = args.port
 			self['MAX_WORKERS'] = args.max_workers
-			self['PUBLIC'] = args.public
+			self['AUTH'] = args.auth
 			self['TLS_PROXY_PORT'] = args.tls_proxy_port
 			self['FEEDS'] = args.feeds
 			self['ANALYTICS'] = args.analytics
@@ -38,7 +38,7 @@ class MalcomSetup(dict):
 			self['WEB'] = config.getboolean('web', 'activated')
 			self['LISTEN_INTERFACE'] = config.get('web', 'listen_interface')
 			self['LISTEN_PORT'] = config.getint('web', 'listen_port')
-			self['PUBLIC'] = config.getboolean('web', 'public')
+			self['AUTH'] = config.getboolean('web', 'auth')
 
 		if config.has_section('analytics'):
 			self['ANALYTICS'] = config.getboolean('analytics', 'activated')

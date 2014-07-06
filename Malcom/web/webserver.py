@@ -23,7 +23,8 @@ import json
 
 # flask stuff
 from werkzeug import secure_filename
-from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash, send_from_directory, Response
+from flask import Flask, request, render_template, redirect, url_for, g, make_response, abort, flash, send_from_directory, Response, session
+from flask.ext.login import LoginManager, login_user, login_required, logout_user, current_user
 from functools import wraps
 
 # websockets / WSGI
@@ -37,15 +38,18 @@ from multiprocessing import Process
 # custom
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
-from Malcom.model.datatypes import Hostname
+from Malcom.model.user_management import UserManager
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 		
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.debug = True
+lm = LoginManager()
 
 Model = Model()
+UserManager = UserManager()
+
 
 
 # This enables the server to be ran behind a reverse-proxy
@@ -82,20 +86,62 @@ def after_request(response):
 def before_request():
 	# make configuration and analytics engine available to views
 	g.config = app.config
-	g.model = Model
 	g.messenger = app.config['MESSENGER']
 
-# decorator for URLs that should not be public
-def private_url(f):
-	@wraps(f)
-	def decorated_function(*args, **kwargs):
-		if app.config['PUBLIC']:
-			abort(404)
-		return f(*args, **kwargs)
-	return decorated_function
+	if g.config['AUTH']:	
+		g.user = current_user
+	else:
+		g.user = None
 
+# Authentication stuff ==========================================
+
+@lm.user_loader
+def load_user(username):
+	return UserManager.get_user(username=username)
+
+@lm.request_loader
+def load_user_from_request(request):
+	api_key = request.headers.get("X-Malcom-API-Key")
+	if api_key:
+		print "Getting user for API-key %s" % api_key
+		return UserManager.get_user(api_key=api_key)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+
+	if g.user is not None and g.user.is_authenticated():
+		return redirect(url_for('index'))
+	
+	if request.method == 'POST':
+		username = request.form.get('username')
+		password = request.form.get('password')
+		rememberme = request.form.get('rememberme', False)
+		print "Login attempt for %s:%s (rememberme: %s)" % (username, password, rememberme)
+		# get user w/ username
+		user = UserManager.get_user(username='tomchop')
+		# check its password
+		if user.check_password(password):
+			print "Success!"
+			login_user(user)
+			return redirect(url_for('dataset'))
+		else:
+			print "Fail..."
+			flash("Wrong username / password combination",'error')
+			return redirect(url_for('login'))
+	else:
+		return render_template('login.html')
+
+# Index ========================================================
 
 @app.route('/')
+@login_required
 def index():
 	return redirect(url_for('dataset'))
 
@@ -105,6 +151,7 @@ def index():
 # if Malcom.config['FEEDS']:
 
 @app.route('/feeds')
+@login_required
 def feeds():
 	# REDIS query to feed engine
 	feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
@@ -112,7 +159,7 @@ def feeds():
 	return render_template('feeds.html', feed_names=[n for n in feed_list], feeds=feed_list)
 
 @app.route('/feeds/run/<feed_name>')
-@private_url
+@login_required
 def run_feed(feed_name):
 	# REDIS query to feed engine
 	result = g.messenger.send_recieve('feedRun', 'feeds', params={'feed_name':feed_name})
@@ -122,11 +169,13 @@ def run_feed(feed_name):
 # graph operations =============================================
 
 @app.route('/nodes/<field>/<path:value>')
+@login_required
 def nodes(field, value):
 	return render_template('dynamic_nodes.html', field=field, value=value)
 
 
 @app.route('/neighbors')
+@login_required
 def neighbors():
 	query = {}
 	for key in request.args:
@@ -136,6 +185,7 @@ def neighbors():
 	return make_response(dumps(data), 200, {'Content-Type': 'application/json'})
 
 @app.route('/evil')
+@login_required
 def evil():
 	query = {}
 	for key in request.args:
@@ -154,6 +204,7 @@ def allowed_file(filename):
 
 @app.route('/dataset/report/<field>/<path:value>/')
 @app.route('/dataset/report/<field>/<path:value>/<strict>/')
+@login_required
 def report(field, value, strict=False):
 	base_elts_dict = {}
 	base_elts = []
@@ -217,11 +268,13 @@ def report(field, value, strict=False):
 	return render_template("report.html", field=field, value=value, base_elts=base_elts, linked=linked_elements, related_elements=related_elements)
 
 @app.route('/dataset/')
+@login_required
 def dataset():
 	return render_template("dataset.html")
 
 
 @app.route('/dataset/query/') # ajax method for sarching dataset and populating dataset table
+@login_required
 def query_data():
 
 	query = {}
@@ -259,12 +312,14 @@ def query_data():
 	#if not "X-Malcom-API-key":
 	#	return dumps({})
 
-	available_tags = Model.get_tags_for_key(apikey)
+	# available_tags = Model.get_tags_for_key(apikey)
 
-	if len(available_tags) > 0:
-		tag_filter = {'tags': {'$in': available_tags}}
-	else:
-		tag_filter = {}
+	# if len(available_tags) > 0:
+	# 	tag_filter = {'tags': {'$in': available_tags}}
+	# else:
+	# 	tag_filter = {}
+
+	tag_filter = {}
 
 	query = {'$and': [query, tag_filter]}
 
@@ -308,6 +363,7 @@ def query_data():
 	return dumps(data)
 
 @app.route('/dataset/csv')
+@login_required
 def dataset_csv():
 
 	filename = []
@@ -353,7 +409,7 @@ def dataset_csv():
 
 
 @app.route('/dataset/add', methods=['POST'])
-@private_url
+@login_required
 def add_data():
 	
 	if request.method == "POST":
@@ -393,12 +449,13 @@ def add_data():
 		return "Not allowed"
 
 @app.route('/dataset/remove/<id>')
+@login_required
 def delete(id):
 	result = Model.remove_by_id(id)
 	return dumps(result)
 
 @app.route('/dataset/clear/')
-@private_url
+@login_required
 def clear():
 	Model.clear_db()
 	return redirect(url_for('dataset'))
@@ -407,9 +464,9 @@ def clear():
 # Sniffer ============================================
 
 @app.route('/sniffer/',  methods=['GET', 'POST'])
+@login_required
 def sniffer():
 	if request.method == 'POST':
-		
 
 		filter = request.form['filter']
 		
@@ -457,12 +514,14 @@ def sniffer():
 	return render_template('sniffer_new.html')
 
 @app.route('/sniffer/sessionlist/')
+@login_required
 def sniffer_sessionlist():
 	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
 	return dumps({'session_list': session_list})
 
 
 @app.route('/sniffer/<session_name>/')
+@login_required
 def sniffer_session(session_name, pcap_filename=None):
 	# check if session exists
 	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
@@ -476,6 +535,7 @@ def sniffer_session(session_name, pcap_filename=None):
 	return render_template('sniffer.html', session=session_info, session_name=session_name)
 
 @app.route('/sniffer/<session_name>/delete')
+@login_required
 def sniffer_session_delete(session_name):
 	# REDIS query info to stop
 	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
@@ -497,6 +557,7 @@ def sniffer_session_delete(session_name):
 
 
 @app.route('/sniffer/<session_name>/pcap')
+@login_required
 def pcap(session_name):
 	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
 	if session_name not in session_list:
@@ -510,6 +571,7 @@ def pcap(session_name):
 
 
 @app.route("/sniffer/<session_name>/<flowid>/raw")
+@login_required
 def send_raw_payload(session_name, flowid):
 	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
 	if session_name not in session_list:
@@ -532,6 +594,7 @@ def send_raw_payload(session_name, flowid):
 # Public API ================================================
 
 @app.route('/public/api')
+@login_required
 def query_public_api():
 	query = {}
 	for key in request.args:
@@ -559,6 +622,7 @@ def query_public_api():
 # TEST 
 
 @app.route('/analytics/<query_type>')
+@login_required
 def analytics_status(query_type):
 	status = g.messenger.send_recieve('%sQuery' % query_type, 'analytics')
 	return str(status)
@@ -582,6 +646,7 @@ def analytics_status(query_type):
 
 
 @app.route('/api/analytics')
+@login_required
 def analytics_api():
 	debug_output("Call to analytics API")
 
@@ -607,6 +672,7 @@ def analytics_api():
 
 
 @app.route('/api/sniffer/realtime/<session_name>')
+@login_required
 def sniffer_streaming_api(session_name):
 	debug_output("Call to streaming API for session %s" % session_name)
 
@@ -620,6 +686,7 @@ def sniffer_streaming_api(session_name):
 
 
 @app.route('/api/sniffer')
+@login_required
 def sniffer_api():
 	debug_output("Call to sniffer API")
 
@@ -756,10 +823,9 @@ def malcom_app(environ, start_response):
 
 class MalcomWeb(Process):
 	"""docstring for MalcomWeb"""
-	def __init__(self, public, listen_port, listen_interface, setup):
+	def __init__(self, auth, listen_port, listen_interface, setup):
 		super(MalcomWeb, self).__init__()
 		self.setup = setup
-		self.public = setup['PUBLIC']
 		self.listen_port = setup['LISTEN_PORT']
 		self.listen_interface = setup['LISTEN_INTERFACE']
 		self.http_server = None
@@ -772,9 +838,17 @@ class MalcomWeb(Process):
 		pass
 
 	def start_server(self):
+		if not self.setup['AUTH']:
+			app.config['LOGIN_DISABLED'] = True
+		
+		lm.init_app(app)
+		lm.login_view = 'login'
+
 		for key in self.setup:
 			app.config[key] = self.setup[key]
 		app.config['UPLOAD_DIR'] = ""
+
+		
 
 		from Malcom.web.messenger import WebMessenger
 		app.config['MESSENGER'] = WebMessenger()
