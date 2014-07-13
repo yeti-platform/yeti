@@ -7,9 +7,9 @@ function initSnifferWebSocket() {
     }
 }
 
-function initSnifferRealtimeWebSocket(session_name) {
+function initSnifferRealtimeWebSocket(session_id) {
     if ("WebSocket" in window) {
-        ws_sniffer_data = new WebSocket(url_websocket_prefix+"api/sniffer/realtime/"+session_name);
+        ws_sniffer_data = new WebSocket(url_websocket_prefix+"api/sniffer/realtime/"+session_id);
         ws_sniffer_data.onmessage = function(msg) { snifferWebSocketHandler(msg); }
     } else {
         console.log("WebSocket not supported (realtime)");
@@ -22,7 +22,7 @@ function snifferWebSocketHandler(msg) {
     // console.log("Received data: " + data.type); console.log(data);
 
     if (data.type == 'sniffstatus') {
-        
+
                 if (data.msg.status == 'inactive') {
                     $('#startsniff').removeAttr('disabled');
                     $('#stopsniff').attr('disabled','true');
@@ -32,8 +32,8 @@ function snifferWebSocketHandler(msg) {
                     $('#stopsniff').removeAttr('disabled');
                 }
                 getSessionList()
-                
-                sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_name': $('#session_name').text()});
+
+                sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_id': $('#session_id').text()});
     }
 
     if (data.type == 'sniffupdate') {
@@ -53,7 +53,7 @@ function snifferWebSocketHandler(msg) {
             start();
     }
 
-    if (data.type == 'sniffstop') {
+    if (data.type == 'sniffstop' || data.type == 'sniffdone') {
         $('#startsniff').removeAttr('disabled')
         $('#stopsniff').attr('disabled','true')
     }
@@ -93,7 +93,7 @@ function snifferWebSocketHandler(msg) {
 
 
         div_hexdump = $('<div />')
-        
+
         div_ascii = $('<pre />').attr('id', 'hexdump_ascii')
 
         div_ascii.text(splitSubstr(payload.replace(/[^\x20-\x7E]/g, "."), 16).join('\n'))
@@ -151,7 +151,7 @@ function highlight_response(row) {
     id = row.attr('id')
     split = id.split('--')
     newid = split[0] +"--"+ split[2] +"--"+ split[1]
-    
+
     row.toggleClass('flow-request')
     $("#"+newid).toggleClass('flow-response')
 
@@ -215,13 +215,13 @@ function netflow_row(flow, row) {
     payload = flow.payload
     icon_view = $("<i />").addClass('icon-eye-open');
     icon_view.click(function() {
-        get_flow_payload(flow.fid); 
+        get_flow_payload(flow.fid);
         $("#PayloadModal").modal('toggle')
     });
 
-    icon_download = $("<a />").attr('href', url_static_prefix+'/sniffer/'+$('#session_name').text()+"/"+flow.fid+'/raw');
+    icon_download = $("<a />").attr('href', url_static_prefix+'/sniffer/'+$('#session_id').text()+"/"+flow.fid+'/raw');
     icon_download.append($("<i />").addClass('icon-download-alt'));
-    
+
     payload = $('<td />').addClass('flow-payload')
     payload.append(icon_view)
     payload.append(icon_download)
@@ -251,38 +251,37 @@ function netflow_row(flow, row) {
 }
 
 function get_flow_payload(id) {
-    sendmessage(ws_sniffer, {'cmd': 'get_flow_payload', 'session_name': $('#session_name').text(), 'flowid': id})
+    sendmessage(ws_sniffer, {'cmd': 'get_flow_payload', 'session_id': $('#session_id').text(), 'flowid': id})
 }
 
 function snifferInterfaceInit() {
-    sendmessage(ws_sniffer, {'cmd': 'sniffstatus', 'session_name': $('#session_name').text()});
-    sendmessage(ws_sniffer, {'cmd': 'flowstatus', 'session_name': $('#session_name').text()});
+    sendmessage(ws_sniffer, {'cmd': 'sniffstatus', 'session_id': $('#session_id').text()});
+    sendmessage(ws_sniffer, {'cmd': 'flowstatus', 'session_id': $('#session_id').text()});
 }
 
 function startsniff(){
-    session_name = $('#session_name').text()
-    sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_name': session_name})
+    session_id = $('#session_id').text()
+    sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_id': session_id})
     $('#startsniff').attr('disabled','true')
-
 }
 
 function stopsniff() {
-    session_name = $('#session_name').text()
-    sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_name': session_name})
+    session_id = $('#session_id').text()
+    sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_id': session_id})
     $('#stopsniff').attr('disabled','true')
 }
 
-function delsniff(session_name) {
-    r = confirm("Are you sure you want to remove session "+ session_name+" and all of its data?")
+function delsniff(session_id) {
+    r = confirm("Are you sure you want to remove session "+session_id+" and all of its data?")
     if (r == false) {return}
     $.ajax({
         type: 'get',
-        url: url_static_prefix+'/sniffer/'+session_name+'/delete',
+        url: url_static_prefix+'/sniffer/'+session_id+'/delete',
         success: function(data) {
             if (data.success == 1) { // delete the corresponding row
-                $("#session-"+session_name).remove()
+                $("#session-"+session_id).remove()
             }
-            
+
             display_message(data.status)
         }
     });
@@ -295,32 +294,43 @@ function display_message(text) {
 }
 
 
-function getSessionList() {
+function getSessionList(private) {
     console.log("Requesting session list")
+    url = url_static_prefix+'/sniffer/sessionlist/?user'
+    if (private) {
+        url += "&private"
+    }
     $.ajax({
         type: 'get',
-        url: url_static_prefix+'/sniffer/sessionlist/',
+        url: url,
         success: function(data) {
-
-            data = $.parseJSON(data);
             table = $('#sessions');
-
-            for (var i in data.session_list) {    
-                name = data.session_list[i]['name']
-                tr = $('<tr></tr>').attr('id', 'session-'+name);
-                session_links = $('<a />').attr("href", url_static_prefix+'/sniffer/'+name).text(name);
-                tr.append($("<td />").append(session_links))
-                tr.append($("<td />").text(data.session_list[i]['packets']));
-                tr.append($("<td />").text(data.session_list[i]['nodes']));
-                tr.append($("<td />").text(data.session_list[i]['edges']));
-                tr.append($("<td />").text(data.session_list[i]['status']));
-                del = $("<td />")
-                i = $('<i class="icon-remove"></i>').data('session-name', name)
-                del.append(i)
-                i.click(function () { delsniff($(this).data('session-name')) })
-                tr.append(del)
-                table.append(tr);
-            }
+            console.log(data)
+            for (var i in data.session_list) {
+                    id = data.session_list[i].id
+                    name = data.session_list[i]['name']
+                    public = data.session_list[i]['public'] ? "Yes" : "No"
+                    
+                    session_links = $('<a />').attr("href", url_static_prefix+'sniffer/'+id).text(name);
+                    tr = $('<tr></tr>').attr('id', 'session-'+id);
+                    d = new Date(data.session_list[i]['date_created'].$date)
+                    // tr.append($("<td />").text(format_date(data.session_list[i]['date_created'])));
+                    tr.append($("<td />").text(format_date(d, false)));
+                    tr.append($("<td />").append(session_links));
+                    tr.append($("<td />").text(data.session_list[i]['packets']));
+                    tr.append($("<td />").text(data.session_list[i]['nodes']));
+                    tr.append($("<td />").text(data.session_list[i]['edges']));
+                    tr.append($("<td />").text(data.session_list[i]['status']));
+                    tr.append($("<td />").text(public));
+                    del = $("<td />")
+                    if (private) {
+                        i = $('<i class="icon-remove"></i>').data('session-id', id)
+                        del.append(i)
+                        i.click(function () { delsniff($(this).data('session-id')) })
+                        tr.append(del)
+                    }
+                    table.append(tr);
+                }
             }
         });
 }

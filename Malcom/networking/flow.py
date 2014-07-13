@@ -23,7 +23,6 @@ class Decoder(object):
 		if data: return data
 		
 		if flow.tls:
-
 			data = Decoder.HTTP_request(flow.cleartext_payload, secure=True)
 			if data: return data
 
@@ -172,38 +171,43 @@ class Flow(object):
 		fid = "flowid--%s-%s--%s-%s" % (self.dst_addr, self.dst_port, self.src_addr, self.src_port)
 		return fid.replace('.','-')		
 
-	def __init__(self, pkt):
+	def __init__(self, pkt=None):
 		self.packets = []
 		self.tls = False # until proven otherwise
 		self.cleartext_payload = ""
 
-		# set initial timestamp
-		self.timestamp = pkt.time
+		# if we create the flow with a new packet, do some parsing
+		
+		self.packet_count = 0
 
-		# addresses
-		self.src_addr = pkt[IP].src 
-		self.dst_addr = pkt[IP].dst
+		if pkt: 
+			# set initial timestamp
+			self.timestamp = pkt.time
 
-		self.src_port = pkt[IP].sport
-		self.dst_port = pkt[IP].dport
-	
-		if pkt.getlayer(IP).proto == 6:
-			self.protocol = 'TCP'
-			self.buffer = [] # buffer for out-of-order packets
-		elif pkt.getlayer(IP).proto == 17:
-			self.protocol = 'UDP'
-		else:
-			self.protocol = "???"
+			# addresses
+			self.src_addr = pkt[IP].src 
+			self.dst_addr = pkt[IP].dst
+
+			self.src_port = pkt[IP].sport
+			self.dst_port = pkt[IP].dport
+		
+			if pkt.getlayer(IP).proto == 6:
+				self.protocol = 'TCP'
+				self.buffer = [] # buffer for out-of-order packets
+			elif pkt.getlayer(IP).proto == 17:
+				self.protocol = 'UDP'
+			else:
+				self.protocol = "???"
+
+			self.fid = Flow.flowid(pkt)
+			self.add_pkt(pkt)
 
 		# see if we need to reconstruct flow (i.e. check SEQ numbers)
 		self.payload = ""
 		self.decoded_flow = None
 		self.data_transfered = 0
 		self.packet_count = 0
-		self.fid = Flow.flowid(pkt)
-
-
-		self.add_pkt(pkt)
+		
 
 		
 
@@ -271,7 +275,7 @@ class Flow(object):
 
 		return False
 
-	def get_statistics(self, yara_rules=None):
+	def get_statistics(self, yara_rules=None, include_payload=False):
 
 		update = {
 				'timestamp': self.timestamp,
@@ -294,7 +298,35 @@ class Flow(object):
 			# add this to something
 		update['decoded_flow'] = self.decoded_flow
 
+		if include_payload:
+			update['payload'] = self.get_payload(encoding='raw')
+
 		return update
+	@staticmethod
+	def load_flow(flow):
+
+		f = Flow()
+		
+		f.timestamp = flow['timestamp']
+		f.fid = flow['fid']
+		f.src_addr = flow['src_addr']
+		f.src_port = flow['src_port']
+		f.dst_addr = flow['dst_addr']
+		f.dst_port = flow['dst_port']
+		f.protocol = flow['protocol']
+		f.packet_count = flow['packet_count']
+		f.data_transfered = flow['data_transfered']
+		f.tls = flow['tls']
+
+		if f.tls:
+			f.cleartext_payload = flow['payload']
+		
+		f.payload = flow['payload']
+		f.decoded_flow = Decoder.decode_flow(f)
+
+		return f
+
+
 
 	def get_payload(self, encoding='web'):
 

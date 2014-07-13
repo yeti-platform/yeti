@@ -40,7 +40,7 @@ function nudge(dx, dy) {
         sel[i].py += coef*dy
         sel[i].x += coef*dx
         sel[i].y += coef*dy
-        sel[i].fixed = true;   
+        sel[i].fixed = true;
       }
 
     tick(); // this is the key to make it work together with updating both px,py,x,y on d !
@@ -69,7 +69,7 @@ function getneighbors() {
       spinner.css('top', height/2);
       spinner.css('left', width/2);
       spinner.toggleClass('show')
-      
+
     },
     success: function(data) {
       $(".graph").css('opacity', 1)
@@ -79,11 +79,11 @@ function getneighbors() {
       if (data.msg == "TOO_MANY_ELEMENTS") {
         display_message('Your request yielded too many results. Try to request simpler neighbors')
       }
-      start();  
+      start();
     }
 
   })
-  
+
 }
 
 function display_message(text) {
@@ -94,7 +94,7 @@ function display_message(text) {
 
 
 function getevil_nodes(node_id) {
-  ids.push({'name': '_id', 'value': node_id._id.$oid}) 
+  ids.push({'name': '_id', 'value': node_id._id.$oid})
   $.ajax({
     url: url_static_prefix+'/evil',
     dataType: 'json',
@@ -102,7 +102,7 @@ function getevil_nodes(node_id) {
     success: function(data) {
       push_nodes(data.nodes)
       push_links(data.edges)
-      start();  
+      start();
     }
 
   });
@@ -115,7 +115,7 @@ function getevil() {
   for (var i in datas) {
     ids.push({'name': '_id', 'value': datas[i]._id.$oid})
   }
-  
+
   $.ajax({
     url: url_static_prefix+'/evil',
     dataType: 'json',
@@ -123,14 +123,14 @@ function getevil() {
     success: function(data) {
       push_nodes(data.nodes)
       push_links(data.edges)
-      start();  
+      start();
     }
 
   });
 }
 
 // unfixes and deselects selected ndoes
-function unfix() { 
+function unfix() {
   sel = d3.selectAll('.selected')
   seldata = sel.data()
   for (var i in seldata) {
@@ -143,7 +143,7 @@ function unfix() {
 }
 
 // toggles node visibility
-function toggle_sniffer_nodes_visibility(state) { 
+function toggle_sniffer_nodes_visibility(state) {
   sel = d3.selectAll('.selected')
   seldata = sel.data()
   hide_nodes = []
@@ -206,8 +206,8 @@ function resize() {
             .x(d3.scale.identity().domain([0, width]))
             .y(d3.scale.identity().domain([0, height]))
             .on("brushstart", function(d) {
-              node.each(function(d) { 
-                d.previouslySelected = shiftKey && d.selected; 
+              node.each(function(d) {
+                d.previouslySelected = shiftKey && d.selected;
               });
             })
             .on("brush", function() {
@@ -230,15 +230,17 @@ function add_nodes(new_node) {
   start();
 }
 
+
 function push_nodes(new_nodes) {
+
   ids = []
   $(".node").each(function(index, value){
     ids.push(value.id)
   })
    for (var i in new_nodes) {
-    
+
     if (ids.indexOf(new_nodes[i]._id.$oid) == -1) {
-      
+
       new_nodes[i].x = Math.random()*width;
       new_nodes[i].y = Math.random()*height;
 
@@ -250,7 +252,7 @@ function push_nodes(new_nodes) {
      }
 
      }
-   } 
+   }
 }
 
 function push_links(edges) {
@@ -281,7 +283,7 @@ function push_links(edges) {
      ids_edges.push(edges[i]._id.$oid)
      }
      else {
-      
+
       // highlight existing connections
       highlighted_link = link.filter(function(d){ return (d._id.$oid) == edges[i]._id.$oid })
       highlighted_link.classed('comms', true)
@@ -318,12 +320,12 @@ function start() {
         sel[i].py += d3.event.dy;
         sel[i].x += d3.event.dx;
         sel[i].y += d3.event.dy;
-        sel[i].fixed = true;   
+        sel[i].fixed = true;
       }
 
       tick(); // this is the key to make it work together with updating both px,py,x,y on d !
       force.resume();
-      
+
   }
 
   function dragend(d, i) {
@@ -340,20 +342,20 @@ function start() {
                 	if (dd.target._id == null)
                 		return (nodes[dd.target]._id.$oid == d._id.$oid);
                 	else
-                  		return (dd.target._id.$oid == d._id.$oid);
-                }).length+2);
+                  	return (dd.target._id.$oid == d._id.$oid);
+                }).length + 2);
                 d.radius = r;
                 return r;
               })
-            svg.selectAll('g').attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-              
+            svg.selectAll('g.node').attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
 
   //select links
   link = link.data(force.links(), function(d) { return d._id.$oid })
 
   link.enter().insert('line', '.node')
 
-  /* 
+  /*
 
   Links and lines separated  */
 
@@ -366,21 +368,21 @@ function start() {
       c += d.attribs + " ";
       return c
     })
-    // .style("stroke", function(d) { 
+    // .style("stroke", function(d) {
     //   if (d.attribs == '') { return "#AAA" } else {return color(d.attribs);}
     // })
 
   // text on links
-   
-   path_text = svg.selectAll(".path-text").data(force.links(), function (d) { return d._id.$oid });   
+
+   path_text = svg.selectAll(".path-text").data(force.links(), function (d) { return d._id.$oid });
    if (link_labels) {
     path_text.enter().append('svg:text').attr('class','path-text').text(function (d) {return d.attribs})
    }
    else {
     path_text.remove()
    }
-   
-   
+
+
 
 
   // l = link.enter().append('svg:g').attr('class', 'link-container')
@@ -403,8 +405,8 @@ function start() {
         .on("drag", dragmove)
         .on("dragend", dragend);
 
-  
-  
+
+
   // create new svg:g
   n = node.enter().append("svg:g")
     .attr("class", "node").call(node_drag)
@@ -432,10 +434,10 @@ function start() {
             d3.select(this.parentNode).classed("selected", true);
             d.selected = true
           }
-          
+
      })
      .on("click", function(d){
-          
+
      })
      .on('mouseover', function(d){
           display_data(d)
@@ -445,8 +447,8 @@ function start() {
   n.append("text")
       .attr("dx", 12)
       .attr("dy", ".35em")
-      .text(function(d) { 
-        return d['value'] 
+      .text(function(d) {
+        return d['value']
       });
 
   // remove old nodes
@@ -462,17 +464,17 @@ function start() {
 
 function tick(e) {
 
-  node.attr("transform", function(d) { 
+  node.attr("transform", function(d) {
     d.x = Math.max(5, Math.min(width - 5, d.x));
     d.y = Math.max(5, Math.min(height - 5, d.y));
     return "translate(" + d.x + "," + d.y + ")";
-  }); 
+  });
 
   link.attr('d', linkArc);
 
 // we can adjust link length from here
   if (link_labels) {
-        path_text.attr("transform", function(d) 
+        path_text.attr("transform", function(d)
         {
           var dx = (d.target.x - d.source.x),
           dy = (d.target.y - d.source.y);
@@ -505,5 +507,5 @@ function linkArc(d) {
       else {
         return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y
       }
-  
+
 }

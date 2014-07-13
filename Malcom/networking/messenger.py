@@ -1,6 +1,10 @@
-from Malcom.shmem.SharedData import Messenger
 import json, threading, time, sys
 from bson import json_util
+from bson.json_util import loads as bson_loads
+from bson.json_util import dumps as bson_dumps
+
+
+from Malcom.shmem.SharedData import Messenger
 
 class SnifferMessenger(Messenger):
 	"""docstring for SnifferMessenger"""
@@ -26,85 +30,98 @@ class SnifferMessenger(Messenger):
 		final_msg = None
 
 		if cmd == 'newsession':
-			pcap = params.get('pcap', False)
-			self.snifferengine.new_session(params, pcap=pcap)
-			final_msg = True
+			_id = self.snifferengine.new_session(params)
+			final_msg = bson_dumps(_id)
 
 		if cmd == 'sessionlist':
-			session_list = {}
-			for session in self.snifferengine.sessions:
-				session = self.snifferengine.sessions[session]
-				
-				session_list[session.name] = {  'name': session.name,
-												'packets': session.packet_count,
-												'nodes': len(session.nodes),
-												'edges': len(session.edges),
-												'status': "Running" if session.status() else "Stopped",
-												}
+			session_list = []
+			user = params.get('user', None)
+			page = params.get('page', 0)
+			private = params.get('private', False)
 
-			final_msg = session_list
+			for session in self.snifferengine.model.get_sniffer_sessions(private=private, username=user, page=page):
 
-		try:
-			session = self.snifferengine.sessions[params.get('session_name')]
-		except Exception, e:
-			session = False
-
-		if session:
-
-			if cmd == 'sessioninfo':
-				final_msg = {
-						'name' : session.name,
-						'filter' : session.filter,
-						'pcap' : session.pcap
-				}
-	
-			if cmd == 'sniffstatus':
-				final_msg = session.status()
-
-			if cmd == 'sniffupdate':
-				# this needs to be stringyfied, or else encoding errors will ensue
-				final_msg = session.update_nodes()
-				final_msg = json.dumps(final_msg, default=json_util.default)
-
-			if cmd == 'sniffstart':
-				#self.snifferengine.start_session(params['session_name'], params['remote_addr'])
-				session.start(params['remote_addr'])
-				final_msg = True
-
-			if cmd == 'sniffstop':
-				session.stop()
-				final_msg = True
-
-			if cmd == 'flowstatus':
-				flow = session.flow_status()
-				# this needs to be stringyfied, or else encoding errors will ensue
-				final_msg = flow
-
-			if cmd == 'flow_statistics_update':
-				print "Received 'flow_statistics_update' message. Please implement me? "
-
-			if cmd == 'get_flow_payload':
-				if params['flowid'] in session.flows:
-					final_msg = session.flows[params['flowid']].get_payload(encoding='base64')
+				if session['name'] in self.snifferengine.sessions:
+					active = self.snifferengine.sessions[session['name']].status()
 				else:
-					final_msg = False
+					active = False
 
+				session_data = bson_loads(session['session_data'])
+				session_list.append( {   	'id': str(session['_id']),
+											'date_created': session['date_created'],
+											'name': session['name'],
+											'packets': session['packet_count'],
+											'nodes': len(session_data['nodes']),
+											'edges': len(session_data['edges']),
+											'status': "Running" if active else "Stopped",
+											'public': session['public'],
+										} )
 
-			if cmd == 'sniffdelete':
-				result = self.snifferengine.delete_session(params['session_name'])
-				final_msg = result
+			final_msg = bson_dumps(session_list)
 
-			if cmd == 'sniffpcap':
-				result = session.generate_pcap()
-				final_msg = result
+		if params.get('session_id', False):
+			try:
+				session = self.snifferengine.fetch_sniffer_session(params['session_id'])
+			except Exception, e:
+				print e
+				session = None
+				final_msg = False
+
+			if session:
+
+				if cmd == 'sessioninfo':
+
+					final_msg = {
+							'name' : session.name,
+							'filter' : session.filter,
+							'pcap' : session.pcap,
+							'pcap_filename': session.pcap_filename,
+							'id' : str(session.id),
+							'public': session.public,
+					}
+
+				if cmd == 'sniffstatus':
+					final_msg = session.status()
+
+				if cmd == 'sniffupdate':
+					# this needs to be stringyfied, or else encoding errors will ensue
+					final_msg = session.update_nodes()
+					final_msg = json.dumps(final_msg, default=json_util.default)
+
+				if cmd == 'sniffstart':
+					#self.snifferengine.start_session(params['session_name'], params['remote_addr'])
+					session.start(params['remote_addr'])
+					final_msg = True
+
+				if cmd == 'sniffstop':
+					session.stop()
+					final_msg = True
+
+				if cmd == 'flowstatus':
+					flow = session.flow_status()
+					# this needs to be stringyfied, or else encoding errors will ensue
+					final_msg = flow
+
+				if cmd == 'flow_statistics_update':
+					print "Received 'flow_statistics_update' message. Please implement me? "
+
+				if cmd == 'get_flow_payload':
+					if params['flowid'] in session.flows:
+						final_msg = session.flows[params['flowid']].get_payload(encoding='base64')
+					else:
+						final_msg = False
+
+				if cmd == 'sniffdelete':
+					result = self.snifferengine.delete_session(params['session_id'])
+					final_msg = result
+
+				if cmd == 'sniffpcap':
+					result = self.snifferengine.commit_to_db(session)
+					final_msg = result
 
 		if final_msg != None:
 			reply = {'msg': final_msg, 'queryid': queryid, 'dst': src, 'src':self.name}
 			self.publish_to_channel('sniffer-commands', json.dumps(reply))
 		self.command_lock.release()
-		
+
 		return
-
-	
-
-	

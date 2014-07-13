@@ -148,7 +148,10 @@ $('a[href="#flows"]').on('shown', function (e) {
 <div class='data span3 toolbar'>
 
   <h1 id='session_name'>{{session.name}}</h1>
-  <small>Filter: {{session.filter}}</small>
+  <table class='table table-compact' style='font-size:x-small'>
+    <tr><th>Filter</th><td>{{session.filter}}</td></tr>
+    <tr><th>ID</th><td id='session_id'>{{session.id}}</td></tr>
+  </table>
   <br />
   <h3>Graph operations</h3>
   <div class="input-append">
@@ -158,13 +161,13 @@ $('a[href="#flows"]').on('shown', function (e) {
   </div>
   <span class="help-block">e.g. 'type:ip', 'google.com'</span>
   <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">
-    {% if session.pcap %}Play PCAP{% else %}Start{%endif%}
+    {% if session.pcap %}Replay PCAP{% else %}Start{%endif%}
   </button>
   <button id='stopsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:stopsniff()">
     {% if session.pcap %}Cancel{% else %}Stop{%endif%}
   </button>
   
-  <a href="{{url_for('pcap', session_name=session_name)}}">Get .pcap</a>
+  <a href="{{url_for('pcap', session_id=session.id)}}">Get .pcap</a>
   <br style='clear:both' style='margin-top:10px;'>
 
   <div style='margin-top:5px;'>

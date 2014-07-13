@@ -45,7 +45,7 @@ Malcom/sniffer/*.pcap
 Malcom/networking/tlsproxy/keys/server.crt
 Malcom/networking/tlsproxy/keys/server.key
 Malcom/auxiliary/geoIP/*
-malcom.conf
+*.conf
 
 # MAC OS X stuff
 .DS_Store

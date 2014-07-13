@@ -5,7 +5,7 @@
 
 	<ul id='settingsTabs' class='nav nav-tabs'>
 		<li class='active'><a href='#userinfo' data-toggle='tab'>User info</a></li>
-		<li><a href='#pcaps' data-toggle='tab'>PCAPs</a></li>
+		<li><a href='#pcaps' data-toggle='tab'>Sessions</a></li>
 		{% if current_user.is_admin() %}
 		<li><a href='#admin' data-toggle='tab'>Admin</a></li>
 		{% endif %}
@@ -76,7 +76,19 @@
 		<!-- pcaps -->
 
 		<div id='pcaps' class='tab-pane'>
-			Empty
+			{% if sniffer_sessions %}
+				<table id='sessions' class='table table-condensed'>
+			    <tr><th>Created</th><th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th>Public</th><th></th></tr>
+			  </table>
+			  <script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
+			  <script type="text/javascript">getSessionList(true)</script>
+			{%else%}
+			<div class="alert alert-block alert-info">
+			  <h4>You don't have any sessions yet.</h4>
+			  <a href='{{ url_for('sniffer') }}'>Click here</a> to view public sessions and add your own.
+			</div>
+			{%endif%}
+
 		</div>
 
 

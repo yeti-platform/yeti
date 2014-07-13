@@ -119,6 +119,14 @@ class User(dict):
 		self.last_activity = None
 		self.api_last_activity = None
 		self.api_request_count = 0
+		self.sniffer_sessions = {}
+
+	def add_sniffer_session(self, session_id):
+		self.sniffer_sessions[session_id] = True
+
+	def remove_sniffer_session(self, session_id):
+		if session_id in self.sniffer_sessions:
+			del self.sniffer_sessions[session_id]
 
 	def check_password(self, password):
 		stored_hash = self['pwhash']

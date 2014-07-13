@@ -1,7 +1,9 @@
+import pwd, os, sys, time, threading, datetime
+
 from scapy.all import *
 from scapy.error import Scapy_Exception
-import pwd, os, sys, time, threading
-from bson.json_util import dumps
+from bson.json_util import dumps as bson_dumps
+from bson.json_util import loads as bson_loads
 from bson.objectid import ObjectId
 
 from Malcom.networking.flow import Flow
@@ -27,7 +29,7 @@ NOTROOT = "nobody"
 
 class SnifferEngine(object):
 	"""docstring for SnifferEngine"""
-	
+
 	def __init__(self, setup, yara_rules=None):
 		super(SnifferEngine, self).__init__()
 		self.setup = setup
@@ -37,7 +39,7 @@ class SnifferEngine(object):
 		if not os.path.isdir(self.setup['SNIFFER_DIR']):
 			sys.stderr.write("Could not load directory specified in sniffer_dir: %s\n" % self.setup['SNIFFER_DIR'])
 			exit()
-		
+
 		if setup['TLS_PROXY_PORT'] > 0:
 			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % setup['TLS_PROXY_PORT'])
@@ -47,21 +49,25 @@ class SnifferEngine(object):
 			self.tls_proxy = None
 
 		self.sessions = {}
+
 		self.model = Model()
+		self.db_lock = threading.Lock()
+
 		self.messenger = SnifferMessenger()
 		self.messenger.snifferengine = self
-		
+
+
 		# debug_output("Importing packet captures...")
 
 		# for s in self.model.get_sniffer_sessions():
-		# 	self.sessions[s['name']] = SnifferSession(	s['name'], 
-		# 												None, 
-		# 												None, 
+		# 	self.sessions[s['name']] = SnifferSession(	s['name'],
+		# 												None,
+		# 												None,
 		# 												self,
-		# 												filter_restore=s['filter'], 
+		# 												filter_restore=s['filter'],
 		# 												intercept_tls=s['intercept_tls'] if setup['TLS_PROXY_PORT'] else False)
 		# 	self.sessions[s['name']].pcap = True
-		
+
 		if has_yara and yara_rules:
 			try:
 				self.yara_rules = self.load_yara_rules(yara_rules)
@@ -83,51 +89,82 @@ class SnifferEngine(object):
 		debug_output("Loaded %s YARA rule files in %s" % (len(filepaths), path))
 		return yara.compile(filepaths=filepaths)
 
-	def new_session(self, params, pcap=False):
+	def fetch_sniffer_session(self, session_id):
+		if not session_id: return
+
+		# try to get session from memory
+		debug_output("Fetching session %s from memory" % session_id)
+		session = self.sessions.get(ObjectId(session_id))
+
+		# if not found, recreate it from the DB
+		if not session:
+			debug_output("Fetching session %s from DB" % session_id)
+			s = self.model.get_sniffer_session(session_id)
+
+			if s:
+				session = SnifferSession(	s['name'],
+											None,
+											None,
+											self,
+											id=s['_id'],
+											filter_restore=s['filter'],
+											intercept_tls=False)
+				session.pcap = s['pcap']
+				session.public = s['public']
+				session.date_created = s['date_created']
+				self.sessions[session.id] = session
+				session_data = bson_loads(s['session_data'])
+				session.nodes = session_data['nodes']
+				session.edges = session_data['edges']
+				session.flows = {}
+				for flow in session_data['flows']:
+					f = Flow.load_flow(flow)
+					session.flows[f.fid] = f
+
+		return session
+
+
+	def new_session(self, params):
 		session_name = params['session_name']
 		remote_addr = params['remote_addr']
 		filter = params['filter']
 		intercept_tls = params['intercept_tls']
-		filename = params['filename']
-		
+
 		sniffer_session = SnifferSession(session_name, remote_addr, filter, self, intercept_tls)
-		sniffer_session.pcap = pcap
-		sniffer_session.engine = self
-		self.sessions[session_name] = sniffer_session
+		sniffer_session.pcap = params['pcap']
+		sniffer_session.public = params['public']
 
-	def delete_session(self, session_name):
-		session = self.sessions.get(session_name, False)
+		return self.model.save_sniffer_session(sniffer_session)
 
-		if session == False:
-			return "notfound"
+	def delete_session(self, session_id):
+		session = self.fetch_sniffer_session(session_id)
+
+		if not session:
+			return 'notfound'
 
 		if session.status():
 			return "running" # session running
 
 		else:
-			del self.sessions[session_name]
-			self.model.del_sniffer_session(session_name, self.setup['SNIFFER_DIR'])
+			self.model.del_sniffer_session(session, self.setup['SNIFFER_DIR'])
 			return "removed"
-		
 
-	# def start_session(self, session_name, remote_addr):
-	# 	session = self.sessions.get(session_name, False)
-	# 	if session != False:
-	# 		session.start(remote_addr)
-
-	# def stop_session(self, session_name):
-	# 	session = self.sessions.get(session_name, False)
-	# 	if session != False:
-	# 		session.stop()		
-
+	def commit_to_db(self, session):
+		with self.db_lock:
+			session.save_pcap()
+			self.model.save_sniffer_session(session)
+		debug_output("[+] Sniffing session %s saved" % session.name)
+		return True
 
 
 class SnifferSession():
 
-	def __init__(self, name, remote_addr, filter, engine, intercept_tls=False, ws=None, filter_restore=None):
-		
+	def __init__(self, name, remote_addr, filter, engine, id=None, intercept_tls=False, ws=None, filter_restore=None):
+
+		self.id = id
 		self.engine = engine
-		self.model = Model()
+		self.model = engine.model
+		self.date_created = datetime.datetime.utcnow()
 		self.name = name
 		self.ws = ws
 		self.ifaces = self.engine.setup['IFACES']
@@ -143,12 +180,11 @@ class SnifferSession():
 
 		if filter_restore:
 			self.filter = filter_restore
-		
+
 		self.thread = None
 		self.thread_active = False
-		self.public = False
 		self.pcap = False
-		self.pcap_filename = self.name + '.pcap'
+		self.pcap_filename = "%s-%s.pcap" % (self.id, self.name) # TODO CHANGE THIS AND MAKE IT SECURE
 		self.pkts = []
 		self.packet_count = 0
 
@@ -157,7 +193,7 @@ class SnifferSession():
 
 		# flows
 		self.flows = {}
-		
+
 		self.intercept_tls = intercept_tls
 		if self.intercept_tls:
 			debug_output("[+] Intercepting TLS")
@@ -169,64 +205,69 @@ class SnifferSession():
 	def load_pcap(self):
 		filename = self.pcap_filename
 		debug_output("Loading PCAP from %s " % filename)
-		self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=self.engine.setup['SNIFFER_DIR']+"/"+filename)	
+		self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, offline=self.engine.setup['SNIFFER_DIR']+"/"+filename)
 		debug_output("Loaded %s packets from file." % len(self.pkts))
 		return True
 
-	def start(self, remote_addr, public=False):
-		self.public = public
+	def start(self, remote_addr):
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
 
+	def reset_session_progress(self):
+		self.packet_count = 0
+		self.nodes = {}
+		self.edges = {}
+		self.flows = {}
+
 	def run(self):
 		self.thread_active = True
+
+		self.reset_session_progress()
 		debug_output("[+] Sniffing session %s started" % self.name)
 		debug_output("[+] Filter: %s" % self.filter)
 		self.stopSniffing = False
 
 		if self.pcap:
 			self.load_pcap()
-		elif not self.public:
+		else:
 			self.sniff(stopper=self.stop_sniffing, filter=self.filter, prn=self.handlePacket, stopperTimeout=1, store=0)
-			self.generate_pcap()
-		
+
 		debug_output("[+] Sniffing session %s stopped" % self.name)
+		self.engine.commit_to_db(self)
+
+		data = {'type': 'sniffdone', 'session_name':self.name}
+		self.engine.messenger.broadcast(bson_dumps(data), 'sniffer-data', 'sniffdone')
+
 		self.thread_active = False
-		return 
+		return
 
 	def update_nodes(self):
 		return { 'query': {}, 'nodes': self.nodes, 'edges': self.edges }
 
-	def flow_status(self):
+	def flow_status(self, include_payload=False):
 		data = {}
 		data['flows'] = []
 		for fid in self.flows:
-			data['flows'].append(self.flows[fid].get_statistics(self.engine.yara_rules))
+			data['flows'].append(self.flows[fid].get_statistics(self.engine.yara_rules, include_payload))
 		data['flows'] = sorted(data['flows'], key= lambda x: x['timestamp'])
 		return data
 
-	
-		
 	def stop(self):
 		self.stopSniffing = True
 		if self.thread:
 			self.thread.join()
 		return True
-		
 
 	def status(self):
 		return self.thread_active
 
-	def generate_pcap(self):
-		if len (self.pkts) > 0:
+	def save_pcap(self):
+		if self.packet_count > 0 and not self.pcap:
 			debug_output("Generating PCAP for %s (length: %s)" % (self.name, len(self.pkts)))
-
 			filename = self.engine.setup['SNIFFER_DIR'] + "/" + self.pcap_filename
 			wrpcap(filename, self.pkts)
-			debug_output("Saving session to DB")
-			self.model.save_sniffer_session(self)
-			return True
-	
+			self.pcap = True
+
 	def checkIP(self, pkt):
 
 		source = {}
@@ -237,8 +278,8 @@ class SnifferSession():
 		# get IP layer
 		IP_layer = IP if IP in pkt else IPv6
 		if IP_layer == IPv6: return None, None # tonight is not the night to add ipv6 support
-	
-		if IP_layer in pkt:	
+
+		if IP_layer in pkt:
 			source['ip'] = pkt[IP_layer].src
 			dest['ip'] = pkt[IP_layer].dst
 		else: return None, None
@@ -250,12 +291,12 @@ class SnifferSession():
 
 		ips = [source['ip'], dest['ip']]
 		ids = []
-		
+
 		for ip in ips:
-				
+
 			if ip not in self.nodes:
-		
-				ip = self.model.add_text([ip], ['sniffer', self.name])			
+
+				ip = self.model.add_text([ip], ['sniffer', self.name])
 
 				if ip == []: continue # tonight is not the night to add ipv6 support
 
@@ -263,10 +304,10 @@ class SnifferSession():
 				new = ip.analytics()
 				for n in new:
 					saved = self.model.save(n[1])
-					
+
 					self.nodes[str(saved['_id'])] = saved
 					new_elts.append(saved)
-					
+
 					# Do the link. The link should be kept because it is not
 					# exclusively related to this sniffing sesison
 					conn = self.model.connect(ip, saved, n[0])
@@ -284,24 +325,24 @@ class SnifferSession():
 
 		# Temporary "connection". IPs are only connceted because hey are communicating with each other
 		oid = "$oid"
-	
+
 		if TCP in pkt:
 			ports = known_tcp_ports
 			attribs = "TCP"
 		elif UDP in pkt:
 			ports = known_udp_ports
 			attribs = "UDP"
-			
+
 		attribs = ports.get(str(dest['port']), attribs)
 		if attribs in ["TCP", "UDP"]:
 			attribs = ports.get(str(source['port']), attribs)
 
-		conn = {'attribs': attribs, 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])+str(ids[1])}}
-		
+		conn = {'attribs': attribs, 'src': ids[0], 'dst': ids[1], '_id': { oid: str(ids[0])[12:]+str(ids[1])[12:]}}
+
 		self.edges[str(conn['_id'])] = conn
-					
+
 		new_edges.append(conn)
-		
+
 		return new_elts, new_edges
 
 	def checkDNS(self, pkt):
@@ -318,7 +359,7 @@ class SnifferSession():
 			if question not in self.nodes:
 
 				_question = self.model.add_text([question], ['sniffer', self.name]) # log it to db (for further reference)
-		
+
 				if _question:
 					debug_output("Caught DNS question: %s" % (_question['value']))
 
@@ -334,8 +375,8 @@ class SnifferSession():
 
 			for i, response in enumerate(response_types):
 				if response_counts[i] == 0: continue
-				
-				debug_output("[+] DNS replies caught (%s answers)" % response_counts[i])			
+
+				debug_output("[+] DNS replies caught (%s answers)" % response_counts[i])
 
 				for rr in xrange(response_counts[i]):
 					if response[rr].type not in [1, 2, 5, 15]:
@@ -346,15 +387,15 @@ class SnifferSession():
 
 					rrname = rr.rrname
 					rdata = rr.rdata
-					
+
 					# check if rrname ends with '.'
 					if rrname[-1:] == ".":
 						rrname = rrname[:-1]
-					
+
 					# check if we haven't seen these already
 					if rrname not in self.nodes:
 						_rrname = self.model.add_text([rrname], ['sniffer', self.name]) # log every discovery to db
-				
+
 						if _rrname != []:
 							self.nodes[_rrname['value']] = _rrname
 							new_elts.append(_rrname)
@@ -376,7 +417,7 @@ class SnifferSession():
 							# 	self.nodes_values.append(saved['value'])
 							# 	self.nodes.append(saved)
 							# 	new_elts.append(saved)
-								
+
 							# 	#do the link
 							# 	conn = self.analytics.data.connect(_rdata, saved, n[0])
 							# 	if conn not in self.edges:
@@ -388,7 +429,7 @@ class SnifferSession():
 
 					# we can use a real connection here
 					# conn = {'attribs': 'A', 'src': _rrname['_id'], 'dst': _rdata['_id'], '_id': { '$oid': str(_rrname['_id'])+str(_rdata['_id'])}}
-					
+
 					# if two elements are found, link them
 					if _rrname != [] and _rdata != []:
 						debug_output("Caught DNS answer: %s -> %s" % ( _rrname['value'], _rdata['value']))
@@ -398,7 +439,7 @@ class SnifferSession():
 						new_edges.append(conn)
 					else:
 						debug_output("Don't know what to do with '%s' and '%s'" % (_rrname, _rdata), 'error')
-						
+
 					# conn = self.analytics.data.connect(_question, elt, "resolve", True)
 					# conn = {'attribs': 'query', 'src': _question['_id'], 'dst': _rdata['_id'], '_id': { '$oid': str(_rrname['_id'])+str(_rdata['_id']) } }
 					# if conn not in self.edges:
@@ -406,7 +447,7 @@ class SnifferSession():
 					# 		new_edges.append(conn)
 
 		return new_elts, new_edges
-		
+
 	def checkHTTP(self, flow):
 		# extract elements from payloads
 
@@ -414,7 +455,7 @@ class SnifferSession():
 		new_edges = []
 
 		http_elts = flow.extract_elements()
-		
+
 		if http_elts:
 
 			url = self.model.add_text([http_elts['url']])
@@ -426,7 +467,7 @@ class SnifferSession():
 			if host['value'] not in self.nodes:
 				self.nodes[host['value']] = host
 				new_elts.append(host)
-			
+
 			# in this case, we can save the connection to the DB since it is not temporary
 			#conn = {'attribs': http_elts['method'], 'src': host['_id'], 'dst': url['_id'], '_id': { '$oid': str(host['_id'])+str(url['_id'])}}
 			conn = self.model.connect(host, url, "host")
@@ -434,7 +475,7 @@ class SnifferSession():
 			new_edges.append(conn)
 
 			dst_addr = self.model.get(value=flow.dst_addr)
-			conn_http = {'attribs': http_elts['method'], 'src': dst_addr['_id'], 'dst': host['_id'], '_id': { '$oid': str(dst_addr['_id'])+str(host['_id'])}}
+			conn_http = {'attribs': http_elts['method'], 'src': dst_addr['_id'], 'dst': host['_id'], '_id': { '$oid': str(dst_addr['_id'])[12:]+str(host['_id'])[12:]}}
 			self.edges[str(conn_http['_id'])] = conn_http
 			new_edges.append(conn_http)
 
@@ -460,7 +501,7 @@ class SnifferSession():
 			Flow.pkt_handler(pkt, self.flows)
 			flow = self.flows[Flow.flowid(pkt)]
 			self.send_flow_statistics(flow)
-			
+
 			new_elts, new_edges = self.checkHTTP(flow)
 
 			if new_elts:
@@ -488,23 +529,23 @@ class SnifferSession():
 
 
 		# TLS MITM - intercept TLS communications and send cleartext to malcom
-		# We want to be protocol agnostic (HTTPS, FTPS, ***S). For now, we choose which 
+		# We want to be protocol agnostic (HTTPS, FTPS, ***S). For now, we choose which
 		# connections to intercept based on destination port number
-		
+
 		# We could also catch ALL connections and MITM only those which start with
 		# a TLS handshake
 
 		tlsports = [443]
 		if TCP in pkt and pkt[TCP].flags & 0x02 and pkt[TCP].dport in tlsports and not self.pcap and self.intercept_tls: # of course, interception doesn't work with pcaps
-			# mark flow as tls			
+			# mark flow as tls
 			flow.tls = True
 
 			# add host / flow tuple to the TLS connection list
 			debug_output("TLS SYN: %s:%s -> %s:%s" % (pkt[IP].src, pkt[TCP].sport, pkt[IP].dst, pkt[TCP].dport))
 			# this could actually be replaced by only flow
-			self.tls_proxy.hosts[(pkt[IP].src, pkt[TCP].sport)] = (pkt[IP].dst, pkt[TCP].dport, flow.fid) 
+			self.tls_proxy.hosts[(pkt[IP].src, pkt[TCP].sport)] = (pkt[IP].dst, pkt[TCP].dport, flow.fid)
 
-			
+
 		if elts != [] or edges != []:
 			self.send_nodes(elts, edges)
 		if self.pcap:
@@ -516,20 +557,20 @@ class SnifferSession():
 		data['type'] = 'flow_statistics_update'
 		data['session_name'] = self.name
 
-		self.engine.messenger.broadcast(dumps(data), 'sniffer-data', 'flow_statistics_update')
+		self.engine.messenger.broadcast(bson_dumps(data), 'sniffer-data', 'flow_statistics_update')
 
 	def send_nodes(self, elts=[], edges=[]):
-		
-		for e in elts:
-			e['fields'] = e.display_fields
 
-		data = { 'querya': {}, 'nodes':elts, 'edges': edges, 'type': 'nodeupdate', 'session_name': self.name}
+		for e in elts:
+			e['fields'] = e.default_fields
+
+		data = { 'querya': {}, 'nodes': elts, 'edges': edges, 'type': 'nodeupdate', 'session_name': self.name}
 		try:
 			if (len(elts) > 0 or len(edges) > 0):
-				self.engine.messenger.broadcast(dumps(data), 'sniffer-data', 'nodeupdate')
+				self.engine.messenger.broadcast(bson_dumps(data), 'sniffer-data', 'nodeupdate')
 		except Exception, e:
 			debug_output("Could not send nodes: %s" % e, 'error')
-		
+
 	def stop_sniffing(self):
 		return self.stopSniffing
 
@@ -547,7 +588,7 @@ class SnifferSession():
 					 ex: lfilter = lambda x: x.haslayer(Padding)
 			offline: pcap file to read packets from, instead of sniffing them
 			timeout: stop sniffing after a given time (default: None)
-			stopperTimeout: break the select to check the returned value of 
+			stopperTimeout: break the select to check the returned value of
 					 stopper() and stop sniffing if needed (select timeout)
 			stopper: function returning true or false to stop the sniffing process
 			L2socket: use the provided L2socket

@@ -19,6 +19,7 @@ from pymongo import MongoClient
 # json / bson
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
+
 import json
 
 # flask stuff
@@ -50,8 +51,6 @@ lm = LoginManager()
 Model = Model()
 UserManager = UserManager()
 
-
-
 # This enables the server to be ran behind a reverse-proxy
 # Make sure you have an nginx configuraiton similar to this
 
@@ -68,6 +67,45 @@ UserManager = UserManager()
 # 	proxy_set_header Upgrade $http_upgrade;
 # 	proxy_set_header Connection "upgrade";
 # }
+
+
+# Custom decorators =============================================
+
+def can_view_sniffer_session(f):
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		session_id = kwargs['session_id']
+		session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
+	
+		if (not session_info or session_info['id'] not in current_user.sniffer_sessions) and not session_info['public']:
+			debug_output("Sniffing session '%s' does not exist" % session_id, 'error')
+			flash("Sniffing session '%s' does not exist" % session_id, 'warning')
+			return redirect(url_for('sniffer'))
+		
+		kwargs['session_info'] = session_info
+		return f(*args, **kwargs)
+
+	return decorated_function
+
+def can_modify_sniffer_session(f):
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		session_id = kwargs['session_id']
+		session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
+	
+		if not session_info or session_info['id'] not in current_user.sniffer_sessions:
+			debug_output("Sniffing session '%s' does not exist" % session_id, 'error')
+			flash("Sniffing session '%s' does not exist" % session_id, 'warning')
+			return redirect(url_for('sniffer'))
+		
+		kwargs['session_info'] = session_info
+		return f(*args, **kwargs)
+
+	return decorated_function
+
+
+
+# Requests ======================================================
 
 @app.template_filter('datetimeformat')
 def datetimeformat(value, format='%Y-%m-%d %H:%M'):
@@ -199,7 +237,9 @@ def account():
 			flash('Password changed successfully!', 'success')
 			return redirect(url_for('account'))
 
-	return render_template('account.html')
+	sniffer_sessions = len(current_user.sniffer_sessions) > 0
+
+	return render_template('account.html', sniffer_sessions=sniffer_sessions)
 
 # feeds ========================================================
 
@@ -306,7 +346,6 @@ def report(field, value, strict=False):
 			if e['attribs'] not in linked_elements: # if we don't have a record for this link, create an empty array
 				linked_elements[e['attribs']] = {}
 			if dst['value'] not in linked_elements[e['attribs']]: # avoid duplicates
-				print "%s is %s for %s" % (dst['value'], e['attribs'], src['value'])
 				linked_elements[e['attribs']][dst['value']] = []
 			linked_elements[e['attribs']][dst['value']].append(src)
 
@@ -536,104 +575,100 @@ def sniffer():
 		# intercept TLS?
 		intercept_tls = True if request.form.get('intercept_tls', False) and g.config.tls_proxy != None else False
 
-		
+		file = request.files.get('pcap-file').read()
+
 		params = {  'session_name': session_name,
 					'remote_addr' : str(request.remote_addr),
 					'filter': filter,
 					'intercept_tls': intercept_tls,
-					'filename' : session_name + ".pcap"
+					'public': True if request.form.get('public', False) else False,
+					'pcap': True if file else False,
 				}
-		
-		
+
+		# REDIS send message to sniffer w/ params
+		session_id = str(loads(g.messenger.send_recieve('newsession', 'sniffer-commands', params=params)))
+		session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
 		# this is where the data will be stored persistently
-
-		pcap = None
 		# if we're dealing with an uploaded PCAP file
-		file = request.files.get('pcap-file')
 		if file:
-			params['pcap'] = True
 			# store in /sniffer folder
-			with open(g.config['SNIFFER_DIR'] + "/" + params['filename'], 'wb') as f:
-				f.write(file.read())
+			with open(g.config['SNIFFER_DIR'] + "/" + session_info['pcap_filename'], 'wb') as f:
+				f.write(file)
 
-		#REDIS send message to sniffer w/ params
-		g.messenger.send_recieve('newsession', 'sniffer-commands', params=params)
+		# associate sniffer session with current user
+		current_user.add_sniffer_session(session_id)
+		UserManager.save_user(current_user)
+		debug_output("Added session %s for user %s" % (session_id, current_user.username))
 
-		# start sniffing right away
+		# if requested, start sniffing right away
 		if request.form.get('startnow', None):
 			# REDIS send message to sniffer to start
-			g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_name': session_name, 'remote_addr': str(request.remote_addr)} )
+			g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
 			#sniffer_session.start(str(request.remote_addr))
 		
-		return redirect(url_for('sniffer_session', session_name=session_name, pcap_filename=pcap))
+		return redirect(url_for('sniffer_session', session_id=session_id))
 
 	return render_template('sniffer_new.html')
 
 @app.route('/sniffer/sessionlist/')
 @login_required
 def sniffer_sessionlist():
-	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
-	return dumps({'session_list': session_list})
-
-
-@app.route('/sniffer/<session_name>/')
-@login_required
-def sniffer_session(session_name, pcap_filename=None):
-	# check if session exists
-	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
-	if session_name not in session_list:
-		debug_output("Sniffing session '%s' does not exist" % session_name, 'error')
-		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
-		return redirect(url_for('sniffer'))
+	params = {}
 	
-	# REDIS query sniffer for info on current session
-	session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_name': session_name})
-	return render_template('sniffer.html', session=session_info, session_name=session_name)
+	if 'user' in request.args:
+		params['user'] = current_user.username
+	if 'page' in request.args:
+		params['page'] = int(request.args.get('page'))
+	if 'private' in request.args:
+		params['private'] = True
 
-@app.route('/sniffer/<session_name>/delete')
+	session_list = loads(g.messenger.send_recieve('sessionlist', 'sniffer-commands', params=params))
+	return (dumps({'session_list': session_list}), 200, {'Content-Type': 'application/json'})
+
+@app.route('/sniffer/<session_id>/')
 @login_required
-def sniffer_session_delete(session_name):
-	# REDIS query info to stop
-	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
-	if session_name not in session_list:
-		debug_output("Sniffing session '%s' does not exist" % session_name, 'error')
-		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
-		return redirect(url_for('sniffer'))
+@can_view_sniffer_session
+def sniffer_session(session_id, session_info=None):
+	return render_template('sniffer.html', session=session_info, session_name=session_info['name'])
 
-	result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_name': session_name})
+@app.route('/sniffer/<session_id>/delete')
+@login_required
+@can_modify_sniffer_session
+def sniffer_session_delete(session_id, session_info=None):
+	session_id = session_info['id']
+
+	result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_id': session_id})
 	
 	if result == "notfound": # session not found
-		return (dumps({'status':'Sniffer session %s does not exist' % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
+		return (dumps({'status':'Sniffer session %s does not exist' % session_id, 'success': 0}), 200, {'Content-Type': 'application/json'})
 	
 	if result == "running": # session running
-		return (dumps({'status':"Can't delete session %s: session running" % session_name, 'success': 0}), 200, {'Content-Type': 'application/json'})
+		return (dumps({'status':"Can't delete session %s: session running" % session_id, 'success': 0}), 200, {'Content-Type': 'application/json'})
 	
 	if result == "removed": # session successfully stopped
-		return (dumps({'status':"Sniffer session %s has been deleted" % session_name, 'success': 1}), 200, {'Content-Type': 'application/json'})
+		current_user.remove_sniffer_session(session_id)
+		UserManager.save_user(current_user)
+		return (dumps({'status':"Sniffer session %s has been deleted" % session_id, 'success': 1}), 200, {'Content-Type': 'application/json'})
 
 
-@app.route('/sniffer/<session_name>/pcap')
+@app.route('/sniffer/<session_id>/pcap')
 @login_required
-def pcap(session_name):
-	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
-	if session_name not in session_list:
-		debug_output("Sniffing session '%s' does not exist" % session_name, 'error')
-		flash("Sniffing session '%s' does not exist" % session_name, 'warning')
-		return redirect(url_for('sniffer'))
+@can_view_sniffer_session
+def pcap(session_id, session_info=None):
+	session_id = session_info['id']
 
-	result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_name': session_name})
-
-	return send_from_directory(g.config['SNIFFER_DIR'], session_name+".pcap", mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_name+'.pcap')
+	result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
+	return send_from_directory(g.config['SNIFFER_DIR'], session_info['pcap_filename'], mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
 
 @app.route("/sniffer/<session_name>/<flowid>/raw")
 @login_required
-def send_raw_payload(session_name, flowid):
-	session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
-	if session_name not in session_list:
-		abort(404)
+@can_view_sniffer_session
+def send_raw_payload(session_name, flowid, session_info=None):
 
-	payload = g.messenger.send_recieve('get_flow_payload', 'sniffer-commands', params={'session_name': session_name, 'flowid':flowid})
+	session_id = session_info['id']
+
+	payload = g.messenger.send_recieve('get_flow_payload', 'sniffer-commands', params={'session_id': session_id, 'flowid':flowid})
 	
 	if payload == False:
 		abort(404)
@@ -641,7 +676,7 @@ def send_raw_payload(session_name, flowid):
 	response = make_response()
 	response.headers['Cache-Control'] = 'no-cache'
 	response.headers['Content-Type'] = 'application/octet-stream'
-	response.headers['Content-Disposition'] = 'attachment; filename=%s_%s_dump.raw' % (session_name, flowid)
+	response.headers['Content-Disposition'] = 'attachment; filename=%s_%s_dump.raw' % (session_info['name'], flowid)
 	response.data = payload.decode('base64')
 	response.headers['Content-Length'] = len(response.data)
 
@@ -685,21 +720,6 @@ def analytics_status(query_type):
 
 
 # APIs (websockets) =========================================
-
-# def notify_progress(ws, msg='N/A'):
-# 		# REDIS query analytics engine to get status
-# 		g.messenger.analytics_ws = ws
-# 		while True:
-# 			# progress = g.messenger.send_recieve('progressQuery', 'analytics')
-# 			# active = g.messenger.send_recieve('statusQuery', 'analytics')
-# 			# # progress = 1
-# 			# # active = True
-
-# 			# status = {'active': active, 'msg': msg}
-# 			# status['progress'] = progress
-# 			# send_msg(ws, status, type='analyticsstatus')
-# 			gevent.sleep(1)
-
 
 @app.route('/api/analytics')
 @login_required
@@ -761,12 +781,12 @@ def sniffer_api():
 			debug_output("(sniffer webAPI) Received: %s" % message)
 
 			cmd = message['cmd']
-			session_name = message['session_name']
+			session_id = message['session_id']
 
 			session = "fail"
 
 			# websocket commands
-			params = {'session_name': session_name}
+			params = {'session_id': session_id}
 
 			if cmd == 'sessionlist':
 				session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
@@ -802,12 +822,12 @@ def sniffer_api():
 				# REDIS send message to sniffer
 				if status:
 					status = 'active'
-					debug_output("Session %s is active" % params['session_name'])
-					send_msg(ws, {'status': 'active', 'session_name': params['session_name']}, type=cmd)
+					debug_output("Session %s is active" % params['session_id'])
+					send_msg(ws, {'status': 'active', 'session_id': params['session_id']}, type=cmd)
 				else:
 					status = 'inactive'
-					debug_output("Session %s is inactive" % params['session_name'])
-					send_msg(ws, {'status': 'inactive', 'session_name': params['session_name']}, type=cmd)
+					debug_output("Session %s is inactive" % params['session_id'])
+					send_msg(ws, {'status': 'inactive', 'session_id': params['session_id']}, type=cmd)
 				continue
 					
 			if cmd == 'sniffupdate':

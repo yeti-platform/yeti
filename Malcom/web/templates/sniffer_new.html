@@ -3,12 +3,12 @@
 <div class='span9'>
   <h1>Sniffer sessions</h1>
   <table id='sessions' class='table table-condensed'>
-    <tr> <th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th></th></tr>
+    <tr><th>Created</th><th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th>Public</th></tr>
   </table>
 </div>
 
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
-<script type="text/javascript">getSessionList()</script>
+<script type="text/javascript">getSessionList(false)</script>
 {%endblock%}
 {% block sidebar %}
 <div class='data span3'>
@@ -25,6 +25,7 @@
     <br />
     {% if not g.config['PUBLIC'] %}
       <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
+      <label class="checkbox"><input type="checkbox" name="public" checked='checked'> Make session public</label>
       {% if g.config['TLS_PROXY_PORT'] %}
       <label class="checkbox"><input type="checkbox" name="intercept_tls" checked='checked'> Intercept TLS (port {{g.config['TLS_PROXY_PORT']}})</label>
       {% endif %}

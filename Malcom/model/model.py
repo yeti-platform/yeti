@@ -3,14 +3,20 @@
 import dateutil
 import threading
 import os
+import pickle
 
+import pymongo
 from pymongo import MongoClient
 from pymongo.son_manipulator import SONManipulator
 import pymongo.errors
+
 from bson.objectid import ObjectId
+from bson.json_util import dumps as bson_dumps
+from bson.json_util import loads as bson_loads
 
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.datatypes import Hostname, Url, Ip, As, Evil, DataTypes
+from Malcom.model.user_management import UserManager
 
 
 class Transform(SONManipulator):
@@ -40,6 +46,7 @@ class Model:
 		self.sniffer_sessions = self._db.sniffer_sessions
 		self.feeds = self._db.feeds
 		self.history = self._db.history
+		self.um = UserManager()
 		
 		# create indexes
 		self.rebuild_indexes()
@@ -439,37 +446,62 @@ class Model:
 	# ============ sniffer operations ==============
 
 	def save_sniffer_session(self, session):
+		session_data = session.flow_status(include_payload=True)
+		session_data['nodes'] = session.nodes
+		session_data['edges'] = session.edges
+
 		dict = {
+			'date_created': session.date_created,
 			'name': session.name,
 			'filter': session.filter,
 			'intercept_tls': session.intercept_tls,
-			'pcap': True,
+			'pcap': session.pcap,
+			'pcap_filename': session.pcap_filename,
 			'packet_count': session.packet_count,
-			}
-		status = self.sniffer_sessions.update({'name': dict['name']}, dict, upsert=True)
-		return status
+			'session_data': bson_dumps(session_data),
+			'public': session.public,
+		}
 
-	def get_sniffer_session(self, session_name):
-		session = self.sniffer_sessions.find_one({'name': session_name})
+		if not session.id:
+			# we're creating a new session
+			dict['_id'] = ObjectId()
+			session.id = dict['_id']
+		else:
+			dict['_id'] = session.id
+
+		self.sniffer_sessions.save(dict)
+		return str(session.id)
+
+	def get_sniffer_session(self, session_id):
+		session = self.sniffer_sessions.find_one(ObjectId(session_id))
 		return session
 
-	def del_sniffer_session(self, session_name, sniffer_dir):
+	def get_sniffer_sessions(self, private=True, username=None, filter={}, page=0, max=50):
+		if username:
+			user_sessions = [ObjectId(id) for id in self.um.get_user(username=username).sniffer_sessions]
+		else:
+			user_sessions = {}
 
-		session = self.sniffer_sessions.find_one({'name': session_name})
+		if not private:
+			filter = { '$or': [ {'public':True}, {'_id': {'$in': user_sessions}} ] }
+		else:
+			filter = {'_id': {'$in': user_sessions}}
+		return list(self.sniffer_sessions.find(filter, skip=page, limit=max, sort=[('date_created', pymongo.DESCENDING)]))
+		
+	def del_sniffer_session(self, session, sniffer_dir):
 			
-		filename = session['name'] + ".pcap"
+		filename = session.pcap_filename
 				
 		try:
 			os.remove(sniffer_dir + "/" + filename)
 		except Exception, e:
 			print e
 
-		self.sniffer_sessions.remove({'name': session_name})
+		self.sniffer_sessions.remove({'name': session.name})
 
 		return True
 
-	def get_sniffer_sessions(self):
-		return [s for s in self.sniffer_sessions.find()]
+	
 
 
 
