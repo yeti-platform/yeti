@@ -9,14 +9,14 @@ function clear_db() {
 	var r=confirm("You sure?");
 	if (r==true)
 	  {
-	 	document.location.href=url_static_prefix+'dataset/clear';
+	 	document.location.href=url_static_prefix+'api/dataset/clear';
 	  }
 }
 
 function dataset_remove(id) {
 	$.ajax({
 		dataType: "json",
-		url: url_static_prefix+'dataset/remove/'+id,
+		url: url_static_prefix+'api/dataset/remove/'+id,
 		success:function(data){
 			if (data['n'] == 1)
 				$('#row_'+id).remove()
@@ -121,7 +121,7 @@ function get_dataset(query, url) {
 	  				else if (['date_created', 'date_updated', 'last_analysis'].indexOf(k) != -1)
 	  					row.append($("<td />").text(format_date(new Date(v.$date))).addClass('timestamp'))
 	  				else
-	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+v+"'>"+v+"</a></td>")
+	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+encodeURIComponent(v)+"'>"+v+"</a></td>")
 	  		}
 
 	  		row.append("<td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td>")

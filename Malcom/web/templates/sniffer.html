@@ -139,6 +139,7 @@ $('a[href="#flows"]').on('shown', function (e) {
   $(".toolbar").hide()
 })
 
+// getSessionList(true)
 
 
 </script>
@@ -148,9 +149,10 @@ $('a[href="#flows"]').on('shown', function (e) {
 <div class='data span3 toolbar'>
 
   <h2 id='session_name'>{{session.name}}</h2>
-  <table class='table table-compact' style='font-size:x-small'>
+  <table class='table table-compact minitable' style='font-size:x-small'>
     <tr><th>Filter</th><td>{{session.filter}}</td></tr>
     <tr><th>ID</th><td id='session_id'>{{session.id}}</td></tr>
+    <tr><th>Public</th><td>{{"Yes" if session.public else "No"}}</td></tr>
   </table>
   <br />
   <h3>Graph operations</h3>
@@ -167,7 +169,7 @@ $('a[href="#flows"]').on('shown', function (e) {
     {% if session.pcap %}Cancel{% else %}Stop{%endif%}
   </button>
   
-  <a href="{{url_for('pcap', session_id=session.id)}}">Get .pcap</a>
+  <a href="{{url_for('malcom_api.pcap', session_id=session.id)}}">Get .pcap</a>
   <br style='clear:both' style='margin-top:10px;'>
 
   <div style='margin-top:5px;'>
@@ -180,10 +182,10 @@ $('a[href="#flows"]').on('shown', function (e) {
   <h3>Node info</h3>
   <table class='table table-condensed' id='node_info'></table>
   <div class='whois'></div>
-  <h3>Sessions</h3>
+  <!-- <h3>Sessions</h3>
   <table id='sessions' class='table table-condensed'>
     <tr><th>Name</th><th># captured</th><th>Nodes</th><th>Edges</th><th>Status</th></tr>
-  </table>
+  </table> -->
 </div>
 
 {% endblock %}

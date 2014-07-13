@@ -24,8 +24,8 @@
     <input type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
     <br />
     {% if not g.config['PUBLIC'] %}
-      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
-      <label class="checkbox"><input type="checkbox" name="public" checked='checked'> Make session public</label>
+      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffing right away</label>
+      <label class="checkbox"><input type="checkbox" name="public" checked='checked'> Share this session</label>
       {% if g.config['TLS_PROXY_PORT'] %}
       <label class="checkbox"><input type="checkbox" name="intercept_tls" checked='checked'> Intercept TLS (port {{g.config['TLS_PROXY_PORT']}})</label>
       {% endif %}

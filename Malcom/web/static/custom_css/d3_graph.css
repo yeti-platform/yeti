@@ -180,8 +180,9 @@ circle {
 	margin-left:20px;
 }
 
-
-
+.minitable td, .minitable th {
+	line-height: 10px;
+}
 
 
 

@@ -96,7 +96,7 @@ function display_message(text) {
 function getevil_nodes(node_id) {
   ids.push({'name': '_id', 'value': node_id._id.$oid})
   $.ajax({
-    url: url_static_prefix+'/evil',
+    url: url_static_prefix+'api/evil',
     dataType: 'json',
     data: ids,
     success: function(data) {
@@ -117,7 +117,7 @@ function getevil() {
   }
 
   $.ajax({
-    url: url_static_prefix+'/evil',
+    url: url_static_prefix+'api/evil',
     dataType: 'json',
     data: ids,
     success: function(data) {

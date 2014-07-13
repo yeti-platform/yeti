@@ -38,7 +38,7 @@ from multiprocessing import Process
 
 # custom
 from Malcom.auxiliary.toolbox import *
-from Malcom.model.model import Model
+from Malcom.model.model import Model as ModelClass
 from Malcom.model.user_management import UserManager
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
@@ -48,8 +48,10 @@ app.secret_key = os.urandom(24)
 app.debug = True
 lm = LoginManager()
 
-Model = Model()
+Model = ModelClass()
 UserManager = UserManager()
+
+
 
 # This enables the server to be ran behind a reverse-proxy
 # Make sure you have an nginx configuraiton similar to this
@@ -70,6 +72,14 @@ UserManager = UserManager()
 
 
 # Custom decorators =============================================
+
+def user_is_admin(f):
+	@wraps(f)
+	def decorated_function(*args, **kwargs):
+		if not current_user.admin:
+			abort(404)
+		return f(*args, **kwargs)
+	return decorated_function
 
 def can_view_sniffer_session(f):
 	@wraps(f)
@@ -103,6 +113,13 @@ def can_modify_sniffer_session(f):
 
 	return decorated_function
 
+
+# import Blueprints =============================================
+
+from Malcom.web.websockets import malcom_websockets
+from Malcom.web.api import malcom_api
+app.register_blueprint(malcom_websockets, url_prefix='/websocket')
+app.register_blueprint(malcom_api, url_prefix='/api')
 
 
 # Requests ======================================================
@@ -290,15 +307,7 @@ def neighbors():
 	data = Model.find_neighbors(query, include_original=True)
 	return make_response(dumps(data), 200, {'Content-Type': 'application/json'})
 
-@app.route('/evil')
-@login_required
-def evil():
-	query = {}
-	for key in request.args:
-		query[key] = request.args.getlist(key)
-	data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
 
-	return (dumps(data), 200, {'Content-Type': 'application/json'})
 
 
 # dataset operations ======================================================
@@ -376,96 +385,6 @@ def report(field, value, strict=False):
 @login_required
 def dataset():
 	return render_template("dataset.html")
-
-
-@app.route('/dataset/query/') # ajax method for sarching dataset and populating dataset table
-@login_required
-def query_data():
-
-	query = {}
-
-	if 'page' in request.args:
-		page = int(request.args['page'])
-	else:
-		page = None
-
-
-	if 'fuzzy' in request.args:
-		fuzzy = request.args['fuzzy'] != 'false'
-	else:
-		fuzzy = False
-	
-
-	for key in request.args:
-		if key not in ['page', 'fuzzy']:
-				if request.args[key].find(',') != -1: # split request arguments
-						if fuzzy:
-								#query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
-								query['$and'] = [{ key: re.compile(split)} for split in request.args[key].split(',')]
-						else:
-								query['$and'] = [{ key: split} for split in request.args[key].split(',')]
-				else:
-						if fuzzy:
-								#query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
-								query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
-						else:
-								query[key] = request.args[key]
-
-	
-	apikey = request.headers.get('X-Malcom-API-key', False)
-
-	#if not "X-Malcom-API-key":
-	#	return dumps({})
-
-	# available_tags = Model.get_tags_for_key(apikey)
-
-	# if len(available_tags) > 0:
-	# 	tag_filter = {'tags': {'$in': available_tags}}
-	# else:
-	# 	tag_filter = {}
-
-	tag_filter = {}
-
-	query = {'$and': [query, tag_filter]}
-
-	data = {}
-	chrono_query = datetime.datetime.utcnow()
-	if page != None:
-		page = int(page)
-		per_page = 50
-		if fuzzy:
-			elts = [e for e in Model.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]#.hint([('_id', 1)])
-		else:
-			elts = [e for e in Model.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]
-		data['page'] = page
-		data['per_page'] = per_page
-	else:
-		elts = [e for e in Model.find(query).sort('date_created', -1)]
-
-	chrono_query = datetime.datetime.utcnow() - chrono_query	
-	
-	for elt in elts:
-		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
-		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
-
-	if len(elts) > 0:
-		data['fields'] = elts[0].display_fields
-		data['elements'] = elts
-	else:
-		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
-		data['elements'] = []
-	
-	chrono_count = datetime.datetime.utcnow()
-	if not fuzzy:
-		data['total_results'] = Model.find(query).count()
-	else:
-		data['total_results'] = "many"
-	chrono_count = datetime.datetime.utcnow() - chrono_count
-
-	data['chrono_query'] = str(chrono_query)
-	data['chrono_count'] = str(chrono_count)
-
-	return dumps(data)
 
 @app.route('/dataset/csv')
 @login_required
@@ -553,17 +472,7 @@ def add_data():
 	else:
 		return "Not allowed"
 
-@app.route('/dataset/remove/<id>')
-@login_required
-def delete(id):
-	result = Model.remove_by_id(id)
-	return dumps(result)
 
-@app.route('/dataset/clear/')
-@login_required
-def clear():
-	Model.clear_db()
-	return redirect(url_for('dataset'))
 
 
 # Sniffer ============================================
@@ -625,55 +534,12 @@ def sniffer():
 
 	return render_template('sniffer_new.html')
 
-@app.route('/sniffer/sessionlist/')
-@login_required
-def sniffer_sessionlist():
-	params = {}
-	
-	if 'user' in request.args:
-		params['user'] = current_user.username
-	if 'page' in request.args:
-		params['page'] = int(request.args.get('page'))
-	if 'private' in request.args:
-		params['private'] = True
-
-	session_list = loads(g.messenger.send_recieve('sessionlist', 'sniffer-commands', params=params))
-	return (dumps({'session_list': session_list}), 200, {'Content-Type': 'application/json'})
 
 @app.route('/sniffer/<session_id>/')
 @login_required
 @can_view_sniffer_session
 def sniffer_session(session_id, session_info=None):
 	return render_template('sniffer.html', session=session_info, session_name=session_info['name'])
-
-@app.route('/sniffer/<session_id>/delete')
-@login_required
-@can_modify_sniffer_session
-def sniffer_session_delete(session_id, session_info=None):
-	session_id = session_info['id']
-
-	result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_id': session_id})
-	
-	if result == "notfound": # session not found
-		return (dumps({'status':'Sniffer session %s does not exist' % session_id, 'success': 0}), 200, {'Content-Type': 'application/json'})
-	
-	if result == "running": # session running
-		return (dumps({'status':"Can't delete session %s: session running" % session_id, 'success': 0}), 200, {'Content-Type': 'application/json'})
-	
-	if result == "removed": # session successfully stopped
-		current_user.remove_sniffer_session(session_id)
-		UserManager.save_user(current_user)
-		return (dumps({'status':"Sniffer session %s has been deleted" % session_id, 'success': 1}), 200, {'Content-Type': 'application/json'})
-
-
-@app.route('/sniffer/<session_id>/pcap')
-@login_required
-@can_view_sniffer_session
-def pcap(session_id, session_info=None):
-	session_id = session_info['id']
-
-	result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
-	return send_from_directory(g.config['SNIFFER_DIR'], session_info['pcap_filename'], mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
 
 @app.route("/sniffer/<session_name>/<flowid>/raw")
@@ -697,203 +563,6 @@ def send_raw_payload(session_name, flowid, session_info=None):
 
 	return response
 
-# Public API ================================================
-
-@app.route('/public/api')
-@login_required
-def query_public_api():
-	query = {}
-	for key in request.args:
-		query[key] = request.args.getlist(key)
-
-	apikey = request.headers.get('X-Malcom-API-key', False)
-
-	#if not "X-Malcom-API-key":
-	#	return dumps({})
-
-	available_tags = Model.get_tags_for_key(apikey)
-
-	tag_filter = {'tags': {'$in': available_tags}}
-	query = {'$and': [query, tag_filter]}
-
-	db_data = Model.find(query)
-	data = []
-	for d in db_data:
-		d['tags'] = list(set(available_tags) & set(d['tags']))
-		data.append(d)
-
-	return (dumps(data), 200, {'Content-Type': 'application/json'})
-
-
-# TEST 
-
-@app.route('/analytics/<query_type>')
-@login_required
-def analytics_status(query_type):
-	status = g.messenger.send_recieve('%sQuery' % query_type, 'analytics')
-	return str(status)
-
-
-# APIs (websockets) =========================================
-
-@app.route('/api/analytics')
-@login_required
-def analytics_api():
-	debug_output("Call to analytics API")
-
-	if request.environ.get('wsgi.websocket'):
-		debug_output("Got analytics websocket")
-
-		ws = request.environ['wsgi.websocket']
-		
-		g.messenger.analytics_ws = ws
-		
-		while True:
-			try:
-				message = loads(ws.receive())
-				debug_output("(analytics webAPI) Received: %s" % message)
-			except Exception, e:
-				return ""
-
-			cmd = message['cmd']
-
-			if cmd == 'analyticsstatus':				
-				while True:
-					gevent.sleep(1)
-
-
-@app.route('/api/sniffer/realtime/<session_name>')
-@login_required
-def sniffer_streaming_api(session_name):
-	debug_output("Call to streaming API for session %s" % session_name)
-
-	if request.environ.get('wsgi.websocket'):
-		debug_output("Got websocket for session %s" % session_name)
-		ws = request.environ['wsgi.websocket']
-		g.messenger.websocket_for_session[session_name] = ws
-
-		while True:
-			gevent.sleep(1)
-
-
-@app.route('/api/sniffer')
-@login_required
-def sniffer_api():
-	debug_output("Call to sniffer API")
-
-	if request.environ.get('wsgi.websocket'):
-
-		ws = request.environ['wsgi.websocket']
-		
-		while True:
-			try:
-				msg = ws.receive()
-				message = loads(msg)
-			except Exception, e:
-				debug_output("Could not decode JSON message: %s\n%s" % (e, msg) )
-				return ""
-			
-			debug_output("(sniffer webAPI) Received: %s" % message)
-
-			cmd = message['cmd']
-			session_id = message['session_id']
-
-			session = "fail"
-
-			# websocket commands
-			params = {'session_id': session_id}
-
-			if cmd == 'sessionlist':
-				session_list = g.messenger.send_recieve('sessionlist', 'sniffer-commands')
-				# REDIS query sniffer for info
-				# session_list = [s for s in Malcom.sniffer_sessions]
-				send_msg(ws, {'session_list': session_list}, type=cmd)
-				continue
-
-			if cmd == 'sniffstart':
-				params['remote_addr'] = str(request.remote_addr)
-				msg = g.messenger.send_recieve('sniffstart', 'sniffer-commands', params=params)
-
-				# REDIS send message to sniffer
-				# session.start(str(request.remote_addr), public=g.config['PUBLIC'])
-				send_msg(ws, "OK", type=cmd)
-				continue
-
-			if cmd == 'sniffstop':
-				msg = g.messenger.send_recieve('sniffstop', 'sniffer-commands', params=params)
-				
-				send_msg(ws, msg, type=cmd)
-				# REDIS send message to sniffer
-				# if session.status():
-				# 	session.stop()
-				# 	send_msg(ws, 'OK', type=cmd)
-				# else:
-				# 	send_msg(ws, 'Error: sniffer not running', type=cmd)
-				continue
-
-			if cmd == 'sniffstatus':
-				status = g.messenger.send_recieve('sniffstatus', 'sniffer-commands', params=params)
-				
-				# REDIS send message to sniffer
-				if status:
-					status = 'active'
-					debug_output("Session %s is active" % params['session_id'])
-					send_msg(ws, {'status': 'active', 'session_id': params['session_id']}, type=cmd)
-				else:
-					status = 'inactive'
-					debug_output("Session %s is inactive" % params['session_id'])
-					send_msg(ws, {'status': 'inactive', 'session_id': params['session_id']}, type=cmd)
-				continue
-					
-			if cmd == 'sniffupdate':
-				# REDIS send message to sniffer
-				msg = g.messenger.send_recieve('sniffupdate', 'sniffer-commands', params=params)
-				data = json.loads(msg) # json loads so that it doesn't complain about fake object ids
-				data['type'] = cmd
-				if data:
-					ws.send(dumps(data))
-				continue
-
-			if cmd == 'flowstatus':
-				# REDIS send message to sniffer
-				flow = g.messenger.send_recieve('flowstatus', 'sniffer-commands', params=params)
-				
-				data = flow # remember we had to stringify the data to have the right encoding
-				data['type'] = cmd
-				if data:
-					ws.send(dumps(data))
-				continue
-
-			if cmd == 'get_flow_payload':
-				params['flowid'] = message['flowid']
-				payload = g.messenger.send_recieve('get_flow_payload', 'sniffer-commands', params=params)
-				
-				# REDIS send message to sniffer
-				# fid = message['flowid']
-				# flow = session.flows[fid]
-				data = {}
-				if len(payload) == 0:
-					payload = "[no payload]"
-				data['payload'] = payload
-				data['type'] = cmd
-				ws.send(dumps(data))
-				continue
-		
-	return ""
-
-
-@app.route("/fast")
-def fast():
-	return "That was fast!"
-
-@app.route("/slow")
-def slow():
-	t0 = datetime.datetime.now()
-	for i in range(50000):
-		Model.elements.find().explain()
-	t = datetime.datetime.now()
-
-	return "That was slow... %s\n" % ((t-t0))
 
 
 

@@ -1,6 +1,6 @@
 function initSnifferWebSocket() {
     if ("WebSocket" in window) {
-        ws_sniffer = new WebSocket(url_websocket_prefix+"api/sniffer");
+        ws_sniffer = new WebSocket(url_websocket_prefix+"websocket/sniffer");
         ws_sniffer.onmessage = function(msg) { snifferWebSocketHandler(msg); }
     } else {
         console.log("WebSocket not supported (data)");
@@ -9,7 +9,7 @@ function initSnifferWebSocket() {
 
 function initSnifferRealtimeWebSocket(session_id) {
     if ("WebSocket" in window) {
-        ws_sniffer_data = new WebSocket(url_websocket_prefix+"api/sniffer/realtime/"+session_id);
+        ws_sniffer_data = new WebSocket(url_websocket_prefix+"websocket/sniffer/streaming/"+session_id);
         ws_sniffer_data.onmessage = function(msg) { snifferWebSocketHandler(msg); }
     } else {
         console.log("WebSocket not supported (realtime)");
@@ -31,7 +31,7 @@ function snifferWebSocketHandler(msg) {
                     $('#startsniff').attr('disabled','true');
                     $('#stopsniff').removeAttr('disabled');
                 }
-                getSessionList()
+                // getSessionList()
 
                 sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_id': $('#session_id').text()});
     }
@@ -276,7 +276,7 @@ function delsniff(session_id) {
     if (r == false) {return}
     $.ajax({
         type: 'get',
-        url: url_static_prefix+'/sniffer/'+session_id+'/delete',
+        url: url_static_prefix+'api/sniffer/'+session_id+'/delete/',
         success: function(data) {
             if (data.success == 1) { // delete the corresponding row
                 $("#session-"+session_id).remove()
@@ -296,7 +296,7 @@ function display_message(text) {
 
 function getSessionList(private) {
     console.log("Requesting session list")
-    url = url_static_prefix+'/sniffer/sessionlist/?user'
+    url = url_static_prefix+'api/sniffer/sessionlist/?user'
     if (private) {
         url += "&private"
     }
