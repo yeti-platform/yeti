@@ -94,6 +94,7 @@ function display_message(text) {
 
 
 function getevil_nodes(node_id) {
+  ids = []
   ids.push({'name': '_id', 'value': node_id._id.$oid})
   $.ajax({
     url: url_static_prefix+'api/evil/',
