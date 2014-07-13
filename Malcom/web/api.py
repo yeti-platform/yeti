@@ -1,5 +1,8 @@
+
 from flask import Blueprint, render_template, abort, request, g, url_for
 from flask.ext.login import current_user
+
+import pymongo
 
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
@@ -19,6 +22,7 @@ malcom_api = Blueprint('malcom_api', __name__)
 @login_required
 def evil():
 	query = {}
+	
 	for key in request.args:
 		query[key] = request.args.getlist(key)
 	data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
@@ -32,18 +36,13 @@ def query_data():
 
 	query = {}
 
-	if 'page' in request.args:
-		page = int(request.args['page'])
-	else:
-		page = None
-
-	if 'fuzzy' in request.args:
-		fuzzy = request.args['fuzzy'] != 'false'
-	else:
-		fuzzy = False
+	page = int(request.args.get('page', 0))
+	per_page = int(request.args.get('per_page', 50))
+	if per_page > 500: per_page = 500
+	fuzzy = bool(request.args.get('fuzzy', False))
 	
 	for key in request.args:
-		if key not in ['page', 'fuzzy']:
+		if key not in ['page', 'fuzzy', 'per_page']:
 				if request.args[key].find(',') != -1: # split request arguments
 						if fuzzy:
 								#query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
@@ -57,37 +56,24 @@ def query_data():
 						else:
 								query[key] = request.args[key]
 
-	tag_filter = {}
-
-	query = {'$and': [query, tag_filter]}
-
 	data = {}
 	chrono_query = datetime.datetime.utcnow()
-	if page != None:
-		page = int(page)
-		per_page = 50
-		if fuzzy:
-			elts = [e for e in Model.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]#.hint([('_id', 1)])
-		else:
-			elts = [e for e in Model.find(query)[page*per_page:page*per_page+per_page].sort('date_created', 1)]
-		data['page'] = page
-		data['per_page'] = per_page
-	else:
-		elts = [e for e in Model.find(query).sort('date_created', -1)]
-
+	
+	elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))#.hint([('_id', 1)])
+	data['page'] = page
+	data['per_page'] = per_page
+	
 	chrono_query = datetime.datetime.utcnow() - chrono_query	
 	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
-
 	if len(elts) > 0:
 		data['fields'] = elts[0].display_fields
 		data['elements'] = elts
 	else:
 		data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
 		data['elements'] = []
-	
 	chrono_count = datetime.datetime.utcnow()
 	if not fuzzy:
 		data['total_results'] = Model.find(query).count()
