@@ -13,7 +13,7 @@
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <style>
       body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+        padding-top: 50px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
     </style>
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap-responsive.min.css') }}" rel="stylesheet">
@@ -86,8 +86,11 @@
               <ul class="dropdown-menu">
                 <!-- <li><a href="#">Settings</a></li>
                 <li class="divider"></li> -->
-                <li><a href="{{url_for('account')}}">Account</a></li>
-                <li><a href="{{url_for('logout')}}">Logout</a></li>
+                <li><a href="{{url_for('account_sessions')}}"><i class="icon-facetime-video"></i> My PCAPs</a></li>
+                <li><a href="{{url_for('account_yara')}}"><i class="icon-book"></i> My Yara rules</a></li>
+                <li class="divider"></li>
+                <li><a href="{{url_for('account_settings')}}"><i class="icon-wrench"></i> Account settings</a></li>
+                <li><a href="{{url_for('logout')}}"><i class="icon-off"></i> Logout</a></li>
               </ul>
             </li>
           </ul>

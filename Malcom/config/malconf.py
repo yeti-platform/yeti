@@ -54,6 +54,7 @@ class MalcomSetup(dict):
 			self['SNIFFER_DIR'] = config.get('sniffer', 'sniffer_dir')
 			self['TLS_PROXY_PORT'] = config.getint('sniffer', 'tls_proxy_port')
 			self['YARA_PATH'] = config.get('sniffer', 'yara_path')
+			self['SNIFFER_NETWORK'] = config.getboolean('sniffer', 'network')
 
 		if config.has_section('feeds'):
 			self['ACTIVATED_FEEDS'] = []

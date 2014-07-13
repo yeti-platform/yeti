@@ -213,11 +213,11 @@ def login():
 def index():
 	return redirect(url_for('dataset'))
 
-# Profile ======================================================
+# Account ======================================================
 
-@app.route("/account", methods=['GET','POST'])
+@app.route("/account/settings", methods=['GET','POST'])
 @login_required
-def account():
+def account_settings():
 	if request.method == 'POST':
 		if request.form.get('current-password'): # user is asking to change their password
 
@@ -237,9 +237,19 @@ def account():
 			flash('Password changed successfully!', 'success')
 			return redirect(url_for('account'))
 
-	sniffer_sessions = len(current_user.sniffer_sessions) > 0
+	return render_template('account/settings.html')
 
-	return render_template('account.html', sniffer_sessions=sniffer_sessions)
+@app.route("/account/sessions")
+@login_required
+def account_sessions():
+	sniffer_sessions = len(current_user.sniffer_sessions) > 0
+	return render_template('account/sessions.html', sniffer_sessions=sniffer_sessions)
+
+@app.route("/account/yara")
+@login_required
+def account_yara():
+	return render_template('account/yara.html')
+
 
 # feeds ========================================================
 
@@ -576,6 +586,11 @@ def sniffer():
 		intercept_tls = True if request.form.get('intercept_tls', False) and g.config.tls_proxy != None else False
 
 		file = request.files.get('pcap-file').read()
+
+		if not file and not g.config['SNIFFER_NETWORK']:
+			flash("Please specify a PCAP file", 'warning')
+			return redirect(url_for('sniffer'))
+
 
 		params = {  'session_name': session_name,
 					'remote_addr' : str(request.remote_addr),
