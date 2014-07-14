@@ -208,7 +208,7 @@ def login():
 		username = request.form.get('username')
 		password = request.form.get('password')
 		rememberme = bool(request.form.get('rememberme', False))
-		print "Login attempt for %s:%s (rememberme: %s)" % (username, password, rememberme)
+		print "Login attempt for %s (rememberme: %s)" % (username, rememberme)
 		
 		# get user w/ username
 		user = UserManager.get_user(username=username)
