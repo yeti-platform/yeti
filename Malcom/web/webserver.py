@@ -185,7 +185,10 @@ def load_user_from_request(request):
 			u.api_last_activity = datetime.datetime.utcnow()
 			u.api_request_count += 1 
 			u = UserManager.save_user(u)
-		return u
+			return u
+		else:
+			return abort(403)
+		
 
 @app.route("/logout")
 @login_required
@@ -297,15 +300,7 @@ def nodes(field, value):
 	return render_template('dynamic_nodes.html', field=field, value=value)
 
 
-@app.route('/neighbors')
-@login_required
-def neighbors():
-	query = {}
-	for key in request.args:
-		query[key] = request.args.getlist(key)
 
-	data = Model.find_neighbors(query, include_original=True)
-	return make_response(dumps(data), 200, {'Content-Type': 'application/json'})
 
 
 

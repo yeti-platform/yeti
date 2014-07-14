@@ -59,7 +59,7 @@ function getneighbors() {
 
   $.ajax({
     type: 'get',
-    url: url_static_prefix+'/neighbors',
+    url: url_static_prefix+'api/neighbors/',
     dataType: 'json',
     data: ids,
     beforeSend: function(data) {

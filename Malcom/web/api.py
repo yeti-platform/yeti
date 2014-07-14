@@ -1,5 +1,5 @@
 
-from flask import Blueprint, render_template, abort, request, g, url_for
+from flask import Blueprint, render_template, abort, request, g, url_for, send_from_directory
 from flask.ext.login import current_user
 
 import pymongo
@@ -18,13 +18,26 @@ malcom_api = Blueprint('malcom_api', __name__)
 # Public API ================================================
 
 
+@malcom_api.route('/neighbors/')
+@login_required
+def neighbors():
+	query = {}
+	for key in request.args:
+		query[key] = request.args.getlist(key)
+
+	data = Model.find_neighbors(query, include_original=True)
+	return (dumps(data), 200, {'Content-Type': 'application/json'})
+
 @malcom_api.route('/evil/')
 @login_required
 def evil():
 	query = {}
-	
+	depth = int(request.args.get('depth', 2))
+	if depth > 2: depth = 2
+
 	for key in request.args:
-		query[key] = request.args.getlist(key)
+		if key not in ['depth']:
+			query[key] = request.args.getlist(key)
 	data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
 
 	return (dumps(data), 200, {'Content-Type': 'application/json'})

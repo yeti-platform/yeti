@@ -61,7 +61,7 @@ setInterval(function() {uncomm_all()}, 500)
   //       .append("svg:path")
   //         .attr("d", "M0,-5L10,0L0,5");
 
-d3.json(url_static_prefix+"/neighbors?{{field}}={{value}}", function(error, graph) {
+d3.json(url_static_prefix+"api/neighbors/?{{field}}={{value}}", function(error, graph) {
     push_nodes(graph.nodes)
     push_links(graph.edges)
     // spinner.toggleClass('show')
