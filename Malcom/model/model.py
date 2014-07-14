@@ -446,7 +446,7 @@ class Model:
 	# ============ sniffer operations ==============
 
 	def save_sniffer_session(self, session):
-		session_data = session.flow_status(include_payload=True)
+		session_data = session.flow_status(include_payload=True, encoding='binary')
 		session_data['nodes'] = session.nodes
 		session_data['edges'] = session.edges
 

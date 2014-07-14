@@ -7,7 +7,8 @@ import pymongo
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
 
-from Malcom.web.webserver import Model, login_required, user_is_admin, can_modify_sniffer_session, can_view_sniffer_session
+from Malcom.web.webserver import Model, UserManager
+from Malcom.web.webserver import login_required, user_is_admin, can_modify_sniffer_session, can_view_sniffer_session
 from Malcom.auxiliary.toolbox import *
 
 

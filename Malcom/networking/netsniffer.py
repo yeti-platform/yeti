@@ -244,11 +244,11 @@ class SnifferSession():
 	def update_nodes(self):
 		return { 'query': {}, 'nodes': self.nodes, 'edges': self.edges }
 
-	def flow_status(self, include_payload=False):
+	def flow_status(self, include_payload=False, encoding='raw'):
 		data = {}
 		data['flows'] = []
 		for fid in self.flows:
-			data['flows'].append(self.flows[fid].get_statistics(self.engine.yara_rules, include_payload))
+			data['flows'].append(self.flows[fid].get_statistics(self.engine.yara_rules, include_payload, encoding))
 		data['flows'] = sorted(data['flows'], key= lambda x: x['timestamp'])
 		return data
 

@@ -2,6 +2,7 @@ from scapy.all import *
 from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading, string
 from bson.json_util import dumps, loads
+from bson import Binary
 from Malcom.model.datatypes import Url, Hostname, Ip
 import Malcom.auxiliary.toolbox as toolbox
 
@@ -275,7 +276,7 @@ class Flow(object):
 
 		return False
 
-	def get_statistics(self, yara_rules=None, include_payload=False):
+	def get_statistics(self, yara_rules=None, include_payload=False, encoding='raw'):
 
 		update = {
 				'timestamp': self.timestamp,
@@ -299,7 +300,7 @@ class Flow(object):
 		update['decoded_flow'] = self.decoded_flow
 
 		if include_payload:
-			update['payload'] = self.get_payload(encoding='raw')
+			update['payload'] = self.get_payload(encoding=encoding)
 
 		return update
 	@staticmethod
@@ -341,6 +342,8 @@ class Flow(object):
 			return payload
 		if encoding == 'base64':
 			return payload.encode('base64')
+		if encoding == 'binary':
+			return Binary(payload)
 	
 	def run_yara(self, yara_rules):
 		matches = {}

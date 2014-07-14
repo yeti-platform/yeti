@@ -39,7 +39,7 @@ from multiprocessing import Process
 # custom
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model as ModelClass
-from Malcom.model.user_management import UserManager
+from Malcom.model.user_management import UserManager as UserManagerClass
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 		
@@ -49,7 +49,7 @@ app.debug = True
 lm = LoginManager()
 
 Model = ModelClass()
-UserManager = UserManager()
+UserManager = UserManagerClass()
 
 
 
