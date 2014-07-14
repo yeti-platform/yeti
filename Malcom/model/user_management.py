@@ -140,8 +140,6 @@ class User(dict):
 		# generate a random password
 		if not password:
 			password = self.generate_password(length=25)
-		if len(password) < 8:
-			return False
 
 		self['pwhash'] = pbkdf2_sha512.encrypt(password)
 		return True

@@ -247,15 +247,15 @@ def account_settings():
 
 			if not current_user.check_password(current):
 				flash("Current password does not match.", 'error')
-				return redirect(url_for('account'))
+				return redirect(url_for('account_settings'))
 			if new != repeatnew:
 				flash("The passwords do not match.", 'error')
-				return redirect(url_for('account'))
+				return redirect(url_for('account_settings'))
 
 			current_user.reset_password(new)
 			UserManager.save_user(current_user)
 			flash('Password changed successfully!', 'success')
-			return redirect(url_for('account'))
+			return redirect(url_for('account_settings'))
 
 	return render_template('account/settings.html')
 
