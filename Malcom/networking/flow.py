@@ -179,6 +179,10 @@ class Flow(object):
 		# if we create the flow with a new packet, do some parsing
 		
 		self.packet_count = 0
+		self.payload = ""		
+		self.decoded_flow = None
+		self.data_transfered = 0
+		self.packet_count = 0
 
 		if pkt: 
 			# set initial timestamp
@@ -202,11 +206,7 @@ class Flow(object):
 			self.fid = Flow.flowid(pkt)
 			self.add_pkt(pkt)
 
-		# see if we need to reconstruct flow (i.e. check SEQ numbers)
-		self.payload = ""
-		self.decoded_flow = None
-		self.data_transfered = 0
-		self.packet_count = 0
+		
 		
 
 		
