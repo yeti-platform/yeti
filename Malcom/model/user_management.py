@@ -12,6 +12,8 @@ import pymongo.errors
 from passlib.hash import pbkdf2_sha512
 from flask.ext.login import make_secure_token
 
+from Malcom.auxiliary.toolbox import debug_output
+
 
 class UserTransform(SONManipulator):
 	def transform_incoming(self, son, collection):
@@ -46,15 +48,18 @@ class UserManager():
 		u = self.get_user(username=username)
 		
 		if not u:
-			print "User not found, creating..."
+			debug_output("User not found, creating...")
 			u = User(username)
 		
-			u.reset_password(password)
+			password = u.reset_password(password)
+
 			if apikey:
 				u.generate_api_key()
 			u.joined = datetime.datetime.utcnow()
 			u.last_activity = None
 			u = self.save_user(u)
+
+			debug_output("Account %s:%s successfully created" % (username, password))
 			return u
 		else:
 			return None
@@ -142,7 +147,7 @@ class User(dict):
 			password = self.generate_password(length=25)
 
 		self['pwhash'] = pbkdf2_sha512.encrypt(password)
-		return True
+		return password
 
 	@staticmethod
 	def generate_password(length=25):
