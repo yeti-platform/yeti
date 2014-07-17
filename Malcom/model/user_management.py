@@ -59,7 +59,7 @@ class UserManager():
 			u.last_activity = None
 			u = self.save_user(u)
 
-			debug_output("Account %s:%s successfully created" % (username, password))
+			debug_output("Account successfully created.\nUsername: %s\nPassword:%s" % (username, password))
 			return u
 		else:
 			return None
