@@ -457,7 +457,6 @@ class SnifferSession():
 		http_elts = flow.extract_elements()
 
 		if http_elts:
-
 			url = self.model.add_text([http_elts['url']])
 			if url['value'] not in self.nodes:
 				self.nodes[url['value']] = url
