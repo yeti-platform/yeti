@@ -41,8 +41,7 @@ class Worker(Process):
 				if elt == "BAIL":
 					break
 				
-				tt0 = datetime.datetime.now()
-				debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s (%s to get)" % (self.name, os.getpid(), elt['type'], elt['value'], self.engine.elements_queue.qsize(), datetime.datetime.now() -tt0), type='analytics')
+				debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s" % (self.name, os.getpid(), elt['type'], elt['value'], self.engine.elements_queue.qsize()), type='analytics')
 				type_ = elt['type']
 				tags = elt['tags']
 
@@ -65,7 +64,7 @@ class Worker(Process):
 				# debug_output("[%s | PID %s | elt: %s] NOTIFIED" % (self.name, os.getpid(), elt['value']), type='error')
 
 				t = datetime.datetime.now()
-				# open('logfile.txt', 'a+').write("%s -> %s\n" %(t-t0, elt['value']))
+				debug_output("Finished analyzing %s in %s\n" %(elt['value'], t-t0))
 
 			# debug_output("[%s | PID %s] EXITING" % (self.name, os.getpid()), type='error')
 			return
