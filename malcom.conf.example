@@ -5,7 +5,7 @@
 activated = true
 listen_interface = 0.0.0.0
 listen_port = 8080
-auth = True
+auth = true
 
 [feeds]
 activated = false 
@@ -18,7 +18,7 @@ max_workers = 12
 
 [sniffer]
 activated = true
-network = false
+network = true
 pcap = false
 sniffer_dir = /home/malcom/malcom/Malcom/sniffer
 tls_proxy_port = 0
