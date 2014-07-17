@@ -381,6 +381,13 @@ def report(field, value, strict=False):
 def dataset():
 	return render_template("dataset.html")
 
+@app.route('/dataset/clear/')
+@login_required
+@user_is_admin
+def clear():
+	Model.clear_db()
+	return redirect(url_for('dataset'))
+
 @app.route('/dataset/csv')
 @login_required
 def dataset_csv():

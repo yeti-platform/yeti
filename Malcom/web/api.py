@@ -108,14 +108,6 @@ def delete(id):
 	return (dumps(result), 200, {'Content-Type': 'application/json'})
 
 
-@malcom_api.route('/dataset/clear/')
-@login_required
-@user_is_admin
-def clear():
-	Model.clear_db()
-	return redirect(url_for('dataset'))
-
-
 @malcom_api.route('/sniffer/sessionlist/')
 @login_required
 def sniffer_sessionlist():

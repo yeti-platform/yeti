@@ -9,7 +9,7 @@ function clear_db() {
 	var r=confirm("You sure?");
 	if (r==true)
 	  {
-	 	document.location.href=url_static_prefix+'api/dataset/clear';
+	 	document.location.href=url_static_prefix+'dataset/clear';
 	  }
 }
 
