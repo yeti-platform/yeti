@@ -373,16 +373,17 @@ class Model:
 			return element, new
 
 	def add_text(self, text, tags=[]):
+
 		added = []
 		for t in text:
 			elt = None
 			if t.strip() != "":
 				if is_url(t):
 					elt = Url(is_url(t), [])
-				elif is_hostname(t):
-					elt = Hostname(is_hostname(t), [])
 				elif is_ip(t):
 					elt = Ip(is_ip(t), [])
+				elif is_hostname(t):
+					elt = Hostname(is_hostname(t), [])
 				if elt:
 					elt['tags'] = tags
 					added.append(self.save(elt))

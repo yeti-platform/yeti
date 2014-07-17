@@ -53,14 +53,13 @@ class SpyEyeTracker(Feed):
 		# Malcom will identify them in the database.
 		# This is probably not the best way, but it will do for now.
 		
-		try:
-			elt = Hostname(toolbox.find_hostnames(dict['description'])[0], tags=['cc', 'spyeye', 'malware'])
-		except Exception, e:
-			try:
-				elt = Ip(toolbox.find_ips(dict['description'])[0], tags=['cc', 'spyeye', 'malware'])
-			except Exception, e:
-				return
+		host = re.search("Host: (?P<host>\S+),", dict['description']).group("host")
 		
+		if toolbox.find_ips(host):
+			elt = Ip(host, tags=['cc', 'spyeye', 'malware'])
+		else:
+			elt = Hostname(host, tags=['cc', 'spyeye', 'malware'])
+
 		evil['value'] = "SpyEye CC (%s)" % elt['value']
 		
 		# Save elements to DB. The status field will contain information on 
