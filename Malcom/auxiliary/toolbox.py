@@ -145,7 +145,7 @@ def find_artifacts(data):
 
 
 def is_ip(ip):
-    match = re.match(ip_regex, ip)
+    match = re.match("^"+ip_regex+"$", ip)
     if match:
         return match.group(1)
     else:
@@ -158,7 +158,7 @@ def is_ip(ip):
 
 
 def is_hostname(hostname):
-    match = re.match(hostname_regex, hostname)
+    match = re.match("^"+hostname_regex+"$", hostname)
     if match:
         return match.group(1)
     else:
@@ -193,7 +193,7 @@ def is_subdomain(hostname):
 
 
 def is_url(url):
-    match = re.match(url_regex, url, re.VERBOSE)
+    match = re.match("^"+url_regex+"$", url, re.VERBOSE)
     if match:
         url = match.group(1)
         if url.find('/') != -1:
