@@ -38,7 +38,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev
+        apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev libadns1-dev
 
 * Get `virtualenv` and `scapy`
 
@@ -64,7 +64,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * still from your virtualenv, install necessary python packages
 
-        pip install flask pymongo pygeoip geoip2 gevent-websocket python-dateutil netifaces lxml twisted pyopenssl redis service_identity flask-login pycrypto passlib
+        pip install flask pymongo pygeoip geoip2 gevent-websocket python-dateutil netifaces lxml twisted pyopenssl redis service_identity flask-login pycrypto passlib 
         pip install adns-python --allow-external adns-python --allow-unverified adns-python
 
 Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.

@@ -44,6 +44,9 @@ class UserManager():
 
 	# ============ User operations =====================
 
+	def get_default_user(self):
+		return self.get_user(username='malcom')
+
 	def add_user(self, username, password=None, apikey=True):
 		u = self.get_user(username=username)
 		
@@ -113,7 +116,7 @@ class UserManager():
 			return []
 		else:
 			return tags.get('available-tags', [])
-		
+
 
 class User(dict):
 

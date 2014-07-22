@@ -606,12 +606,11 @@ class MalcomWeb(Process):
 		lm.init_app(app)
 		lm.login_view = 'login'
 		lm.session_protection = 'strong'
+		lm.anonymous_user = UserManager.get_default_user
 
 		for key in self.setup:
 			app.config[key] = self.setup[key]
 		app.config['UPLOAD_DIR'] = ""
-
-		
 
 		from Malcom.web.messenger import WebMessenger
 		app.config['MESSENGER'] = WebMessenger()
