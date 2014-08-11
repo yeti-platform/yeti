@@ -48,7 +48,7 @@ class Model:
 
 	def rebuild_indexes(self):
 		# create indexes
-		debug_output("Rebuliding indexes...", 'model')
+		debug_output("Rebuilding indexes...", 'model')
 		self.elements.ensure_index([('date_created', -1), ('value', 1)])
 		self.elements.ensure_index('value')
 		self.elements.ensure_index('tags')
