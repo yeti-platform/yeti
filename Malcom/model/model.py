@@ -56,12 +56,17 @@ class Model:
 
 	def rebuild_indexes(self):
 		# create indexes
+		debug_output("Rebuilding indexes...")
 		self.elements.ensure_index([('date_created', -1), ('value', 1)])
-		self.elements.ensure_index('value', unique=True)
+		self.elements.ensure_index('value', unique=True, dropDups=True)
 		self.elements.ensure_index('tags')
+		self.elements.ensure_index('next_analysis')
+		self.elements.ensure_index('last_analysis')
+		self.elements.ensure_index('bgp')
 		self.graph.ensure_index([('src', 1), ('dst', 1)])
 		self.graph.ensure_index('src')
 		self.graph.ensure_index('dst')
+		debug_output("Done rebuilding indexes...")
 
 	def stats(self):
 		stats = "DB loaded with %s elements\n" % self._db.elements.count()
@@ -75,36 +80,38 @@ class Model:
 		if not src or not dst:
 			return None
 
-		while True:
-			try:
-				conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
-				break
-			except Exception, e:
-				debug_output("Could not find connection from %s: %s" %(ObjectId(src._id), e), 'error')
-		
-		
-		# if the connection already exists, just modify attributes and last seen time
-		if conn:
-			if attribs != "": conn['attribs'] = attribs
-			conn['last_seen'] = datetime.datetime.utcnow()
+		with self.db_lock:
 
-		# if not, change the connection
-		else:
-			conn = {}
-			conn['src'] = src._id
-			conn['dst'] = dst._id
-			conn['attribs'] = attribs
-			conn['first_seen'] = datetime.datetime.utcnow()
-			conn['last_seen'] = datetime.datetime.utcnow()
-			debug_output("(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs), type='model')
-		
-		if commit:
 			while True:
 				try:
-					self.graph.save(conn)
+					conn = self.graph.find_one({ 'src': ObjectId(src._id), 'dst': ObjectId(dst._id) })
 					break
 				except Exception, e:
-					debug_output("Could not save %s: %s" %(conn, e), 'error')
+					debug_output("Could not find connection from %s: %s" %(ObjectId(src._id), e), 'error')
+			
+			
+			# if the connection already exists, just modify attributes and last seen time
+			if conn:
+				if attribs != "": conn['attribs'] = attribs
+				conn['last_seen'] = datetime.datetime.utcnow()
+
+			# if not, change the connection
+			else:
+				conn = {}
+				conn['src'] = src._id
+				conn['dst'] = dst._id
+				conn['attribs'] = attribs
+				conn['first_seen'] = datetime.datetime.utcnow()
+				conn['last_seen'] = datetime.datetime.utcnow()
+				debug_output("(linked %s to %s [%s])" % (str(src._id), str(dst._id), attribs), type='model')
+			
+			if commit:
+				while True:
+					try:
+						self.graph.save(conn)
+						break
+					except Exception, e:
+						debug_output("Could not save %s: %s" %(conn, e), 'error')
 
 		return conn
 
@@ -121,11 +128,13 @@ class Model:
 		return self.elements.find(query)
 
 	def get(self, **kwargs):
-		while True:
-			try:
-				return self.elements.find_one(kwargs)
-			except Exception, e:
-				pass
+		with self.db_lock:
+			while True:
+				try:
+					return self.elements.find_one(kwargs)
+				except Exception, e:
+					debug_output(e, type='error')
+					pass
 		
 	def find_one(self, oid):
 		return self.elements.find_one(oid)
@@ -387,7 +396,7 @@ class Model:
 				if elt:
 					elt['tags'] = tags
 					added.append(self.save(elt))
-					
+						
 		if len(added) == 1:
 			return added[0]
 		else:

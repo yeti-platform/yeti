@@ -20,6 +20,7 @@ class AsyncResolver(object):
         self.total_processed = 0
         self.callback = callback
         self.queue = Queue()
+        self.max_reqs = threading.Semaphore(max_reqs)
 
     def start(self):
         self.active = True
@@ -27,16 +28,19 @@ class AsyncResolver(object):
         self.resolver_thread.start()
 
     def submit(self, hostname):
+        self.max_reqs.acquire()
         self.queue.put(hostname)
 
     def resolver(self):
         while self.active:
             host = self.queue.get()
-            if host == None:
+            if host == "BAIL":
                 break
             self.resolve_all(host)
 
-    def stop(self):
+    def wait(self):
+        self.resolver_thread.join()
+        time.sleep(60)
         self.active = False
         self.collect_results_thread.join()
 
@@ -61,6 +65,8 @@ class AsyncResolver(object):
                     pass
                     # self.resolve(answer[1])
                     # self.callback(host, rtype, answer)
+
+                self.max_reqs.release()
 
             if num_r > 0:
                 self.total_processed += num_r

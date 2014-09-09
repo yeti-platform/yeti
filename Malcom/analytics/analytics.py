@@ -1,6 +1,6 @@
 import dateutil, time, threading, pickle, gc, datetime, os
 from bson.objectid import ObjectId
-from multiprocessing import Process, Queue, Lock
+from multiprocessing import Process, JoinableQueue as Queue, Lock
 import Queue as ExceptionQueue
 
 import adns
@@ -12,18 +12,18 @@ from Malcom.analytics.messenger import AnalyticsMessenger
 from Malcom.auxiliary.async_resolver import AsyncResolver
 
 
-
-
 class Worker(Process):
 
-	def __init__(self, name=None, adns_lock=None, queue_lock=None):
+	def __init__(self, name=None, queue_lock=None, hostname_lock=None):
 		super(Worker, self).__init__()
 		self.engine = None
 		self.work = False
 
 		if name: self.name = name
-		self.adns_lock = adns_lock
 		self.queue_lock = queue_lock
+		self.hostname_lock = hostname_lock
+
+		debug_output("[%s | PID %s] STARTING" % (self.name, os.getpid()))
 
 		
 	def run(self):
@@ -32,45 +32,55 @@ class Worker(Process):
 			while self.work:
 				
 				t0 = datetime.datetime.now()
-				# debug_output("[%s | PID %s] FETCHING NEW ELT (size: %s)" % (self.name, os.getpid(), self.engine.elements_queue.qsize()), type='error')
 				
 				with self.queue_lock:
+					debug_output("[%s | PID %s] WAITING FOR NEW ELT (size: %s)" % (self.name, os.getpid(), self.engine.elements_queue.qsize()), type='debug')
 					elt = self.engine.elements_queue.get()
 
 				elt = pickle.loads(elt)
 				if elt == "BAIL":
-					break
+					debug_output("[%s | PID %s] GOT BAIL MESSAGE" % (self.name, os.getpid()), type='debug')
+					self.work = False
+					continue
 				
-				debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s" % (self.name, os.getpid(), elt['type'], elt['value'], self.engine.elements_queue.qsize()), type='analytics')
+				with self.queue_lock:
+					debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s" % (self.name, os.getpid(), elt['type'], elt['value'], self.engine.elements_queue.qsize()), type='analytics')
+				
 				type_ = elt['type']
 				tags = elt['tags']
 
 				if type_ == 'hostname':
-					tt0 = datetime.datetime.now()
-					with self.adns_lock:
-						self.engine.ar.submit(elt['value'])
-					# debug_output("[%s | PID %s | elt: %s] PUT ADNS IN QUEUE (%s)" % (self.name, os.getpid(), elt['value'], datetime.datetime.now() -tt0), type='error')
+					with self.hostname_lock:
+						self.engine.hostnames.put(elt['value'])
+					# debug_output("[%s | PID %s | elt: %s] PUT ADNS IN QUEUE (%s)" % (self.name, os.getpid(), elt['value'], datetime.datetime.now() -tt0), type='debug')
 
 				tt0 = datetime.datetime.now()
 				new = elt.analytics()
-				# debug_output("[%s | PID %s | elt: %s] ANALYTICS DONE (%s NEW) (%s)" % (self.name, os.getpid(), elt['value'], len(new), datetime.datetime.now() -tt0), type='error')
+				debug_output("[%s | PID %s | elt: %s] ANALYTICS DONE (%s NEW) (%s)" % (self.name, os.getpid(), elt['value'], len(new), datetime.datetime.now() -tt0), type='debug')
 				self.engine.process_new(elt, new)
-				# debug_output("[%s | PID %s | elt: %s] NEW PROCESSED" % (self.name, os.getpid(), elt['value']), type='error')
+				debug_output("[%s | PID %s | elt: %s] NEW PROCESSED" % (self.name, os.getpid(), elt['value']), type='debug')
 				self.engine.save_element(elt, tags)
-				# debug_output("[%s | PID %s | elt: %s] NEW SAVED" % (self.name, os.getpid(), elt['value']), type='error')
+				debug_output("[%s | PID %s | elt: %s] NEW SAVED" % (self.name, os.getpid(), elt['value']), type='debug')
 
 				self.engine.progress += 1
 				# self.engine.notify_progress(elt['value'])
-				# debug_output("[%s | PID %s | elt: %s] NOTIFIED" % (self.name, os.getpid(), elt['value']), type='error')
+				# debug_output("[%s | PID %s | elt: %s] NOTIFIED" % (self.name, os.getpid(), elt['value']), type='debug')
 
 				t = datetime.datetime.now()
-				debug_output("Finished analyzing %s in %s\n" %(elt['value'], t-t0))
+				debug_output("Finished analyzing %s in %s" %(elt['value'], t-t0))
+				with self.queue_lock:
+					self.engine.elements_queue.task_done()
 
-			# debug_output("[%s | PID %s] EXITING" % (self.name, os.getpid()), type='error')
+			debug_output("[%s | PID %s] EXITING\n" % (self.name, os.getpid()), type='error')
+			with self.queue_lock:
+				self.engine.elements_queue.task_done()
 			return
 
 		except Exception, e:
 			debug_output("An error occured in [%s | PID %s]: %s\nelt info:\n%s" % (self.name, os.getpid(), e, elt), type="error")
+			with self.queue_lock:
+					self.engine.elements_queue.task_done()
+			return
 
 		except KeyboardInterrupt, e:
 			pass
@@ -122,8 +132,31 @@ class Analytics(Process):
 
 	# elements analytics
 
-	def bulk_asn(self, items=1000):
+	def bulk_functions(self):
+		self.bulk_dns()
+		self.bulk_asn()
 
+	def bulk_dns(self):
+		debug_output("Running bulk DNS (%s in queue)" % self.hostnames.qsize())
+		ar = AsyncResolver(self.process_adns_result, max_reqs=500)
+		ar.start()
+
+		while True:
+			try:
+				hostname = self.hostnames.get(False)
+				debug_output("Submitting %s" % hostname)
+				ar.submit(hostname)
+			except Exception, e:
+				debug_output("End of list reached, sending BAIL")
+				ar.submit("BAIL") # this will indicate ADNS that it has reached the end of its list
+				break
+
+		debug_output("Waiting 60 seconds for replies to come in...")
+		ar.wait()
+		debug_output("Done")
+
+	def bulk_asn(self, items=1000):
+		debug_output("Running bulk ASN")
 		last_analysis = {'$or': [
 									{ 'next_analysis' : {'$lt': datetime.datetime.utcnow()}},
 									{ 'last_analysis': None },
@@ -183,7 +216,6 @@ class Analytics(Process):
 			done += len(results)
 			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
-	
 
 	def notify_progress(self, msg):
 		if self.active:
@@ -193,23 +225,24 @@ class Analytics(Process):
 
 		self.messenger.broadcast(msg, 'analytics', 'analyticsUpdate')
 
+
 	def run(self):
 
 		self.run_analysis = True
-		self.queue_lock = Lock()
 		self.messenger = AnalyticsMessenger(self)
-		self.elements_queue = Queue()
-
-		self.ar = AsyncResolver(self.add_adns_result, max_reqs=500)
-		self.ar.start()
-		self.adns_results = []
 		
+		self.elements_queue = Queue()
+		self.queue_lock = Lock()
+		
+		self.hostnames = Queue()
+		self.hostname_lock = Lock()
+
 		while self.run_analysis:
 			debug_output("Analytics hearbeat")
-			
+
 			self.active_lock.acquire()	
 			if self.run_analysis:
-				self.process(2000)
+				self.process(10000)
 			self.active_lock.release()
 
 			try:
@@ -234,70 +267,55 @@ class Analytics(Process):
 		except Exception, e:
 			pass
 
-	def add_adns_result(self, host, rtype, answer):
-		self.adns_results.append((host, rtype, answer))
+	def process_adns_result(self, host, rtype, answer):
+		
+		host = self.data.get(value=host)
+		hname = host['value']
 
-	def process_adns_results(self):
-		time.sleep(1)
-		# print len(self.adns_results)
-		while len(self.adns_results) > 0:
-			host, rtype, answer = self.adns_results.pop()
-			# print "rtype:%s\nhost:%s\nanswer:%s" % (rtype, host, answer)
+		if rtype == adns.rr.CNAME: # cname
+			self.process_new(host, [('CNAME', Hostname(hostname=cname.lower())) for cname in answer[3]])
 			
-			host = self.data.get(value=host)
-			hname = host['value']
-			# print "rtype:%s\nhost:%s\nanswer:%s" % (rtype, host, answer)
+		if rtype == adns.rr.A:
+			records = [('A', Ip(ip=ip)) for ip in answer[3]]
+			self.process_new(host, records)
+		
+		if rtype == adns.rr.MX:
+			mx_records = {}
 
-			if rtype == adns.rr.CNAME: # cname
-				# print answer
-				self.process_new(host, [('CNAME', Hostname(hostname=cname.lower())) for cname in answer[3]])
+			for mx in answer[3]:
+				if mx[1][0] in ['', None]: continue
+
+				ips = None
+				if mx[1][2]:
+					ips = [ip[1] for ip in mx[1][2]]
 				
-			if rtype == adns.rr.A:
-				records = [('A', Ip(ip=ip)) for ip in answer[3]]
-				self.process_new(host, records)
+				mx_records[mx[1][0].lower()] = (mx[0], ips)
+		
+			new_mx = [("MX (%s)" % mx_records[mx_srv][0], self.data.add_text([mx_srv.lower()])) for mx_srv in mx_records]
+			mx_hostnames = self.process_new(host, new_mx)
+			for host in mx_hostnames:
+				ips = mx_records[host['value']][1]
+				if ips:
+					self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
 			
-			if rtype == adns.rr.MX:
-				mx_records = {}
+		if rtype == adns.rr.NS:
+			ns_records = {}
+			for ns in answer[3]:
+				if ns[2]: ips = [ip[1] for ip in ns[2]]
+				else: ips = []
+				ns_records[ns[0].lower()] = (ns[0].lower(), ips)
 
-				for mx in answer[3]:
-					# print mx
-					if mx[1][0] in ['', None]: continue
+			new_ns = []
+			for hname in ns_records:
+				h = Hostname(hostname=hname.lower())
+				if h['value']:
+					new_ns.append(("NS", h))
+			ns_hostnames = self.process_new(host, new_ns)
 
-					ips = None
-					if mx[1][2]:
-						ips = [ip[1] for ip in mx[1][2]]
-					
-					mx_records[mx[1][0].lower()] = (mx[0], ips)
-			
-				# print mx_records
-				new_mx = [("MX (%s)" % mx_records[mx_srv][0], self.data.add_text([mx_srv.lower()])) for mx_srv in mx_records]
-				mx_hostnames = self.process_new(host, new_mx)
-
-				for host in mx_hostnames:
-					ips = mx_records[host['value']][1]
-					if ips:
-						self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
-				
-			if rtype == adns.rr.NS:
-				ns_records = {}
-				for ns in answer[3]:
-					# print ns
-					if ns[2]: ips = [ip[1] for ip in ns[2]]
-					else: ips = []
-					ns_records[ns[0].lower()] = (ns[0].lower(), ips)
-
-				# print ns_records
-				new_ns = []
-				for hname in ns_records:
-					h = Hostname(hostname=hname.lower())
-					if h['value']:
-						new_ns.append(("NS", h))
-				ns_hostnames = self.process_new(host, new_ns)
-
-				for host in ns_hostnames:
-					ips = ns_records[host['value']][1]
-					if ips and host['value'] != None:
-						self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
+			for host in ns_hostnames:
+				ips = ns_records[host['value']][1]
+				if ips and host['value'] != None:
+					self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
 
 
 	def process_new(self, elt, new):
@@ -310,7 +328,8 @@ class Analytics(Process):
 			
 			# do the link
 			conn = self.data.connect(elt, saved, n[0])
-			first_seen = conn['first_seen']
+			first_seen = conn.get('first_seen', datetime.datetime.utcnow())
+			conn['first_seen'] = first_seen
 			last_seen = conn['last_seen']
 
 			# update date updated if there's a new connection
@@ -324,6 +343,7 @@ class Analytics(Process):
 
 		self.process_lock.release()
 		return new_elts
+
 
 	def process(self, batch_size=2000):
 		if self.thread:
@@ -340,14 +360,22 @@ class Analytics(Process):
 		total_elts = 0
 
 		if len(results) > 0:
+
 			self.active = True
 
-			# build process Queue
-			# self.elements_queue = Queue(0)
-			
+			# start workers
+			self.queue_lock = Lock()
+			workers = []
+			for i in range(self.max_workers):
+				w = Worker(name="Worker %s" % i, queue_lock=self.queue_lock, hostname_lock=self.hostname_lock)
+				w.engine = self
+				w.start()
+				workers.append(w)
+
+			self.workers = workers
+
 			# add elements to Queue
 			for elt in results:
-				# print pickle.dumps(elt), self.elements_queue.qsize()
 				self.elements_queue.put(pickle.dumps(elt))
 				total_elts += 1
 				work_done = True
@@ -355,29 +383,13 @@ class Analytics(Process):
 			for i in range(self.max_workers):
 				self.elements_queue.put(pickle.dumps("BAIL"))
 
-			# start workers
-			workers = []
-			adns_lock = Lock()
-			for i in range(self.max_workers):
-				w = Worker(name="Worker %s" % i, adns_lock=adns_lock, queue_lock=self.queue_lock)
-				w.engine = self
-				w.start()
-				workers.append(w)
-
-			self.workers = workers
-
-			for w in self.workers:
-				try:
-					w.join()
-				except KeyboardInterrupt:
-					self.run_analysis = False
+			self.elements_queue.join()
 			
 			debug_output("Workers have joined")
 
 			# regroup ASN analytics and ADNS analytics
 			if self.run_analysis:
-				self.bulk_asn()
-				self.process_adns_results()
+				self.bulk_functions()
 				self.active = False
 		
 		now = datetime.datetime.utcnow()
