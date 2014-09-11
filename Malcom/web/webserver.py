@@ -202,8 +202,9 @@ def logout():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 
-	if g.user is not None and g.user.is_authenticated():
-		return redirect(url_for('index'))
+	if g.user != None:
+		if g.user.is_authenticated():
+			return redirect(url_for('index'))
 	
 	if request.method == 'POST':
 		username = request.form.get('username')
@@ -594,7 +595,6 @@ class MalcomWeb(Process):
 		self.http_server = None
 	
 	def run(self):
-		
 		self.start_server()
 
 	def stop_server(self):

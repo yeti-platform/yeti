@@ -45,7 +45,16 @@ class UserManager():
 	# ============ User operations =====================
 
 	def get_default_user(self):
-		return self.get_user(username='malcom')
+		m = self.get_user(username='malcom')
+		
+		# we'll run into this case when the database is new or does not contain a malcom user
+		if m == None:
+			m = self.add_user('malcom', 'malcom')
+			m.anonymous = True
+			m.authenticated = False
+			self.save_user(m)
+
+		return m
 
 	def add_user(self, username, password=None, apikey=True):
 		u = self.get_user(username=username)
@@ -129,6 +138,16 @@ class User(dict):
 		self.api_request_count = 0
 		self.sniffer_sessions = {}
 
+		# This is necessary to distinguish between
+		# registered users and anonymous users
+		#
+		# The anonymous user is the 'malcom' user
+		# that is only given access when 'auth' is 
+		# set to 'false' in the configuration file
+
+		self.authenticated = True
+		self.anonymous = False
+
 	def add_sniffer_session(self, session_id):
 		self.sniffer_sessions[session_id] = True
 
@@ -181,13 +200,13 @@ class User(dict):
 		return self.token
 
 	def is_authenticated(self):
-		return True
+		return self.authenticated
 
 	def is_active(self):
 		return True
 
 	def is_anonymous(self):
-		return False
+		return self.anonymous
 
 	def is_admin(self):
 		return self.admin
