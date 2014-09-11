@@ -48,6 +48,7 @@ Malcom/auxiliary/geoIP/*
 *.conf
 
 # MAC OS X stuff
+.fuse_*
 .DS_Store
 .DS_Store?
 ._*
