@@ -193,7 +193,8 @@ def load_user_from_request(request):
 @app.route("/logout")
 @login_required
 def logout():
-	del current_user['token']
+	if 'token' in current_user:
+		del current_user['token']
 	UserManager.save_user(current_user)
 	logout_user()
 	return redirect(url_for('login'))

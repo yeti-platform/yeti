@@ -252,8 +252,6 @@ class Analytics(Process):
 			
 			if self.once: self.run_analysis = False; self.once = False
 
-		self.ar.stop()
-
 	def stop(self):
 		self.run_analysis = False
 		for w in self.workers:
