@@ -38,7 +38,8 @@ function get_dataset_csv(query, url) {
 			querydict['value'] = splitted[0]
 	}
 
-	querydict['fuzzy'] = $('#fuzzy').prop('checked')
+	if ($('#fuzzy').prop('checked') == true)
+		querydict['fuzzy'] = 'true'
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
 	
@@ -74,7 +75,9 @@ function get_dataset(query, url) {
 
 	params = {}
 	querydict['page'] = page
-	querydict['fuzzy'] = $('#fuzzy').prop('checked')
+	
+	if ($('#fuzzy').prop('checked') == true)
+		querydict['fuzzy'] = 'true'
 
 	$.ajax({
 	  dataType: "json",

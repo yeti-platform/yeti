@@ -188,7 +188,7 @@ def load_user_from_request(request):
 			return u
 		else:
 			return abort(403)
-		
+
 
 @app.route("/logout")
 @login_required
@@ -397,10 +397,7 @@ def dataset_csv():
 	filename = []
 	query = {}
 
-	if 'fuzzy' in request.args:
-		fuzzy = request.args['fuzzy'] != 'false'
-	else:
-		fuzzy = False
+	fuzzy = bool(request.args.get('fuzzy', False))
 	
 	for key in request.args:
 		if key != '' and key not in ['fuzzy']:
