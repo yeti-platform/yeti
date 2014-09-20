@@ -73,7 +73,11 @@ def query_data():
 	data = {}
 	chrono_query = datetime.datetime.utcnow()
 	
-	elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))#.hint([('_id', 1)])
+	if fuzzy:
+		elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
+	else:
+		elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
+	
 	data['page'] = page
 	data['per_page'] = per_page
 	
