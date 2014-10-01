@@ -269,51 +269,59 @@ class Analytics(Process):
 		
 		host = self.data.get(value=host)
 		hname = host['value']
-
-		if rtype == adns.rr.CNAME: # cname
-			self.process_new(host, [('CNAME', Hostname(hostname=cname.lower())) for cname in answer[3]])
-			
-		if rtype == adns.rr.A:
-			records = [('A', Ip(ip=ip)) for ip in answer[3]]
-			self.process_new(host, records)
-		
-		if rtype == adns.rr.MX:
-			mx_records = {}
-
-			for mx in answer[3]:
-				if mx[1][0] in ['', None]: continue
-
-				ips = None
-				if mx[1][2]:
-					ips = [ip[1] for ip in mx[1][2]]
+		try:
+			if rtype == adns.rr.CNAME: # cname
+				self.process_new(host, [('CNAME', Hostname(hostname=cname.lower())) for cname in answer[3]])
 				
-				mx_records[mx[1][0].lower()] = (mx[0], ips)
-		
-			new_mx = [("MX (%s)" % mx_records[mx_srv][0], self.data.add_text([mx_srv.lower()])) for mx_srv in mx_records]
-			mx_hostnames = self.process_new(host, new_mx)
-			for host in mx_hostnames:
-				ips = mx_records[host['value']][1]
-				if ips:
-					self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
+			if rtype == adns.rr.A:
+				records = [('A', Ip(ip=ip)) for ip in answer[3]]
+				self.process_new(host, records)
 			
-		if rtype == adns.rr.NS:
-			ns_records = {}
-			for ns in answer[3]:
-				if ns[2]: ips = [ip[1] for ip in ns[2]]
-				else: ips = []
-				ns_records[ns[0].lower()] = (ns[0].lower(), ips)
+			if rtype == adns.rr.MX:
+				mx_records = {}
 
-			new_ns = []
-			for hname in ns_records:
-				h = Hostname(hostname=hname.lower())
-				if h['value']:
-					new_ns.append(("NS", h))
-			ns_hostnames = self.process_new(host, new_ns)
+				for mx in answer[3]:
+					if mx[1][0] in ['', None]: continue
 
-			for host in ns_hostnames:
-				ips = ns_records[host['value']][1]
-				if ips and host['value'] != None:
-					self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
+					ips = None
+					if mx[1][2]:
+						ips = [ip[1] for ip in mx[1][2]]
+					
+					mx_records[mx[1][0].lower()] = (mx[0], ips)
+			
+				new_mx = [("MX (%s)" % mx_records[mx_srv][0], self.data.add_text([mx_srv.lower()])) for mx_srv in mx_records]
+				mx_hostnames = self.process_new(host, new_mx)
+				for host in mx_hostnames:
+					ips = mx_records[host['value']][1]
+					if ips:
+						self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
+				
+			if rtype == adns.rr.NS:
+				ns_records = {}
+				for ns in answer[3]:
+					if ns[2]: ips = [ip[1] for ip in ns[2]]
+					else: ips = []
+					ns_records[ns[0].lower()] = (ns[0].lower(), ips)
+
+				new_ns = []
+				for hname in ns_records:
+					h = Hostname(hostname=hname.lower())
+					if h['value']:
+						new_ns.append(("NS", h))
+				ns_hostnames = self.process_new(host, new_ns)
+
+				for host in ns_hostnames:
+					ips = ns_records[host['value']][1]
+					if ips and host['value'] != None:
+						self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
+
+		except Exception, e:
+			debug_output("process_adns_results: An error occured: %s" % e, 'error')
+			print host
+			print rtype
+			print answer
+			return
+			# raise e
 
 
 	def process_new(self, elt, new):
