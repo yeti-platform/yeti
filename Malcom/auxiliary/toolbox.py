@@ -382,15 +382,16 @@ def parse_net_info_cymru(info):
     return results
 
 def debug_output(text, type='debug', n=True):
+    msg = ""
     if type == 'debug':
         msg = bcolors.DEBUG + '[DEBUG]'
-    if type == 'model':
+    elif type == 'model':
         msg = bcolors.DATA + '[DATA]'
-    if type == 'analytics':
+    elif type == 'analytics':
         msg = bcolors.ANALYTICS + '[ANALYTICS]'
-    if type == 'error':
+    elif type == 'error':
         msg = bcolors.ERROR + '[ERROR]'
-    if type == 'info':
+    elif type == 'info':
         msg = bcolors.INFO + '[INFO]'
     msg += bcolors.ENDC
     n = '\n' if n else ""

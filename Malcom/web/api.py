@@ -53,8 +53,7 @@ def query_data():
 	page = int(request.args.get('page', 0))
 	per_page = int(request.args.get('per_page', 50))
 	if per_page > 500: per_page = 500
-	fuzzy = bool(request.args.get('fuzzy', False))
-	
+	fuzzy = True if request.args.get('fuzzy', False) == 'true' else False
 	for key in request.args:
 		if key not in ['page', 'fuzzy', 'per_page']:
 				if request.args[key].find(',') != -1: # split request arguments
@@ -72,16 +71,19 @@ def query_data():
 
 	data = {}
 	chrono_query = datetime.datetime.utcnow()
-	
+
+	print query
 	if fuzzy:
 		elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
 	else:
 		elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
 	
+	chrono_query = datetime.datetime.utcnow() - chrono_query	
+
 	data['page'] = page
 	data['per_page'] = per_page
 	
-	chrono_query = datetime.datetime.utcnow() - chrono_query	
+	
 	
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
