@@ -86,8 +86,8 @@ def can_view_sniffer_session(f):
 	def decorated_function(*args, **kwargs):
 		session_id = kwargs['session_id']
 		session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
-	
-		if (not session_info or session_info['id'] not in current_user.sniffer_sessions) and not session_info['public']:
+
+		if not session_info or (session_info['id'] not in current_user.sniffer_sessions and not session_info['public']):
 			debug_output("Sniffing session '%s' does not exist" % session_id, 'error')
 			flash("Sniffing session '%s' does not exist" % session_id, 'warning')
 			return redirect(url_for('sniffer'))
@@ -493,7 +493,9 @@ def sniffer():
 		debug_output("Creating session %s" % session_name)
 
 		# intercept TLS?
-		intercept_tls = True if request.form.get('intercept_tls', False) and g.config.tls_proxy != None else False
+		# intercept_tls = True if request.form.get('intercept_tls', False) and g.config.sniffer_engine.tls_proxy != None else False
+		intercept_tls = True if request.form.get('intercept_tls', False) == 'on' else False
+		print "Intercept TLS: %s" % intercept_tls
 
 		file = request.files.get('pcap-file').read()
 

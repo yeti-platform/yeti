@@ -44,6 +44,7 @@ class SnifferEngine(object):
 			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % setup['TLS_PROXY_PORT'])
 			self.tls_proxy = MalcomTLSProxy(setup['TLS_PROXY_PORT'])
+			self.tls_proxy.engine = self
 			self.tls_proxy.start()
 		else:
 			self.tls_proxy = None
@@ -90,16 +91,19 @@ class SnifferEngine(object):
 		return yara.compile(filepaths=filepaths)
 
 	def fetch_sniffer_session(self, session_id):
-		if not session_id: return
-
-		# try to get session from memory
-		debug_output("Fetching session %s from memory" % session_id)
-		session = self.sessions.get(ObjectId(session_id))
-
+		try:
+			debug_output("Fetching session %s from memory" % session_id)
+			session = self.sessions.get(ObjectId(session_id))
+		except Exception as e:
+			debug_output("An {} error occurred when fetching session '{}': {}".format(type(e).__name__, session_id, e), 'error')
+			return
+				
 		# if not found, recreate it from the DB
 		if not session:
 			debug_output("Fetching session %s from DB" % session_id)
 			s = self.model.get_sniffer_session(session_id)
+			# TLS interception only possible if PCAP hasn't been generated yet
+			intercept_tls = s['intercept_tls'] and not s['pcap']
 
 			if s:
 				session = SnifferSession(	s['name'],
@@ -108,7 +112,7 @@ class SnifferEngine(object):
 											self,
 											id=s['_id'],
 											filter_restore=s['filter'],
-											intercept_tls=False)
+											intercept_tls=intercept_tls)
 				session.pcap = s['pcap']
 				session.public = s['public']
 				session.date_created = s['date_created']
@@ -130,7 +134,7 @@ class SnifferEngine(object):
 		filter = params['filter']
 		intercept_tls = params['intercept_tls']
 
-		sniffer_session = SnifferSession(session_name, remote_addr, filter, self, intercept_tls)
+		sniffer_session = SnifferSession(session_name, remote_addr, filter, self, None, intercept_tls)
 		sniffer_session.pcap = params['pcap']
 		sniffer_session.public = params['public']
 
@@ -160,7 +164,6 @@ class SnifferEngine(object):
 class SnifferSession():
 
 	def __init__(self, name, remote_addr, filter, engine, id=None, intercept_tls=False, ws=None, filter_restore=None):
-
 		self.id = id
 		self.engine = engine
 		self.model = engine.model
@@ -197,8 +200,8 @@ class SnifferSession():
 		self.intercept_tls = intercept_tls
 		if self.intercept_tls:
 			debug_output("[+] Intercepting TLS")
-			self.tls_proxy = Malcom.tls_proxy
-			self.tls_proxy.add_flows(self.flows)
+			self.tls_proxy = self.engine.tls_proxy
+			# self.tls_proxy.add_flows(self.flows)
 		else:
 			debug_output("[-] No TLS interception")
 
@@ -543,6 +546,7 @@ class SnifferSession():
 			debug_output("TLS SYN: %s:%s -> %s:%s" % (pkt[IP].src, pkt[TCP].sport, pkt[IP].dst, pkt[TCP].dport))
 			# this could actually be replaced by only flow
 			self.tls_proxy.hosts[(pkt[IP].src, pkt[TCP].sport)] = (pkt[IP].dst, pkt[TCP].dport, flow.fid)
+			self.tls_proxy.factory.flows[flow.fid] = flow
 
 
 		if elts != [] or edges != []:

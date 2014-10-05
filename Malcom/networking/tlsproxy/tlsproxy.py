@@ -73,7 +73,7 @@ class ProxyServer(protocol.Protocol):
 		if tuples:
 			self.dst_addr, self.dst_port, dst_fid = tuples
 			self.dst_flow = self.factory.get_flow(dst_fid)
-			print "Connecting to %s:%s" % (self.dst_addr, self.dst_port)
+			print "Connecting to %s:%s (flow: %s)" % (self.dst_addr, self.dst_port, self.dst_flow)
 		
 
  	# response from server - reverse flow
@@ -131,10 +131,9 @@ class MalcomTLSFactory():
  			p.transport.loseConnection()
 
  	def get_flow(self, fid):
- 		for session_flows in self.flows:
- 			if session_flows.get(fid, False):
- 				return session_flows[fid]
-
+ 		for sid in self.proxy.engine.sessions:
+ 			return self.proxy.engine.sessions[sid].flows.get(fid, None)
+ 		
 
 class MalcomTLSProxy(threading.Thread):
 	"""This class will handle the twisted reactor"""
@@ -143,7 +142,7 @@ class MalcomTLSProxy(threading.Thread):
 		self.hosts = {}
 		self.factory = MalcomTLSFactory(self.hosts)
 		self.factory.proxy = self
-		self.factory.flows = []
+		self.factory.flows = {}
 		self.running = True
 		self.thread = None
 		self.port = port

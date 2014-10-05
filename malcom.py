@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
 	if setup['TLS_PROXY_PORT']:
 		sys.stderr.write("[.] Stopping TLS proxy... ")
-		setup.tls_proxy.stop()
+		setup.sniffer_engine.tls_proxy.stop()
 		sys.stderr.write("done.\n")
 
 	exit()

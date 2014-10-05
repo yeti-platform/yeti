@@ -60,11 +60,10 @@ class SnifferMessenger(Messenger):
 			final_msg = bson_dumps(session_list)
 
 		if params.get('session_id', False):
-			try:
-				session = self.snifferengine.fetch_sniffer_session(params['session_id'])
-			except Exception, e:
-				print e
-				session = None
+			
+			session = self.snifferengine.fetch_sniffer_session(params['session_id'])
+
+			if not session:
 				final_msg = False
 
 			if session:
