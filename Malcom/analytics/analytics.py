@@ -271,7 +271,7 @@ class Analytics(Process):
 		hname = host['value']
 		try:
 			if rtype == adns.rr.CNAME: # cname
-				self.process_new(host, [('CNAME', Hostname(hostname=cname.lower())) for cname in answer[3]])
+				self.process_new(host, [('CNAME', Hostname(hostname=cname.lower())) for cname in answer[3] if cname != ''])
 				
 			if rtype == adns.rr.A:
 				records = [('A', Ip(ip=ip)) for ip in answer[3]]
@@ -315,8 +315,9 @@ class Analytics(Process):
 					if ips and host['value'] != None:
 						self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
 
-		except Exception, e:
+		except ValueError, e:
 			debug_output("process_adns_results: An error occured: %s" % e, 'error')
+			print adns.rr.NS, adns.rr.MX, adns.rr.A
 			print host
 			print rtype
 			print answer
