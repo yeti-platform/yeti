@@ -94,8 +94,9 @@ class Decoder(object):
 		else:
 			data['method'] = request.group("method")
 			data['uri'] = request.group('URI')
-			host = re.search(r'Host: (?P<host>\S+)', payload)
-			data['host'] = host.group('host') if host else "N/A"
+			host = re.search(r'Host: (?P<host>[.\w-]+)(:(?P<port>[\d]{1,5}))?', payload).groupdict()
+			data['host'] = host['host']
+			data['port'] = host['port']
 			data['flow_type'] = "http_request"
 			
 			if secure:
@@ -105,7 +106,9 @@ class Decoder(object):
 				data['scheme'] = 'http://'
 				data['type'] = 'HTTP request'
 
-			data['url'] = data['scheme'] + data['host'] + data['uri']
+			data['url'] = data['scheme'] + data['host']
+			data['url'] += ":" + data['port']
+			data['url'] += data['uri']
 			data['info'] = "%s request for %s" % (data['method'], data['url'])
 			
 			return data
