@@ -107,7 +107,8 @@ class Decoder(object):
 				data['type'] = 'HTTP request'
 
 			data['url'] = data['scheme'] + data['host']
-			data['url'] += ":" + data['port']
+			if data['port']:
+				data['url'] += ":" + data['port']
 			data['url'] += data['uri']
 			data['info'] = "%s request for %s" % (data['method'], data['url'])
 			
