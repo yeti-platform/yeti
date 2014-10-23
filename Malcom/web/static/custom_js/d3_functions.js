@@ -248,9 +248,9 @@ function push_nodes(new_nodes) {
      nodes.push(new_nodes[i])
      ids.push(new_nodes[i]._id.$oid)
 
-     if (new_nodes[i]['tags'].indexOf('evil') != -1 && new_nodes[i]['type'] != 'evil') {
-      getevil_nodes(new_nodes[i])
-     }
+     // if (new_nodes[i]['tags'].indexOf('evil') != -1 && new_nodes[i]['type'] != 'evil') {
+     //  getevil_nodes(new_nodes[i])
+     // }
 
      }
    }
