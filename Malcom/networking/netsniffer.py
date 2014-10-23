@@ -476,8 +476,8 @@ class SnifferSession():
 			self.edges[str(conn['_id'])] = conn
 			new_edges.append(conn)
 
-			dst_addr = self.model.get(value=flow.dst_addr)
-			conn_http = {'attribs': http_elts['method'], 'src': dst_addr['_id'], 'dst': host['_id'], '_id': { '$oid': str(dst_addr['_id'])[12:]+str(host['_id'])[12:]}}
+			src_addr = self.model.get(value=flow.src_addr)
+			conn_http = {'attribs': http_elts['method'], 'src': src_addr['_id'], 'dst': host['_id'], '_id': { '$oid': str(src_addr['_id'])[12:]+str(host['_id'])[12:]}}
 			self.edges[str(conn_http['_id'])] = conn_http
 			new_edges.append(conn_http)
 
