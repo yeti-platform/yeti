@@ -228,9 +228,7 @@ class Ip(Element):
 		if ip != '':
 			self.location_info()
 		
-		self['refresh_period'] = Ip.default_refresh_period
-		
-			
+		self['refresh_period'] = Ip.default_refresh_period			
 
 	@staticmethod
 	def from_dict(d):
@@ -247,7 +245,7 @@ class Ip(Element):
 		new = []
 
 		# get reverse hostname
-		hostname = toolbox.dns_dig_reverse(self['value'])
+		hostname = toolbox.reverse_dns(self['value'])
 		if hostname:
 			new.append(('reverse', Hostname(hostname)))
 

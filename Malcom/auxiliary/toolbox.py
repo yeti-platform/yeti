@@ -227,7 +227,7 @@ def dns_get_records(hostname):
         for r in results:
             records['A'].append(r.address)
     except Exception, e:
-        print "An error occurred: {}".format(e)
+        debug_output("An error occured while resolving A: {}".format(e))
     try:
         results = dns.resolver.query(hostname, 'NS')
         for r in results:
@@ -235,7 +235,7 @@ def dns_get_records(hostname):
             if tgt[-1] == '.': tgt = tgt[:-1]
             records['NS'].append(tgt)
     except Exception, e:
-        print "An error occurred: {}".format(e)
+        debug_output("An error occured while resolving NS: {}".format(e))
     try:
         results = dns.resolver.query(hostname, 'CNAME')
         for r in results:
@@ -243,7 +243,7 @@ def dns_get_records(hostname):
             if tgt[-1] == '.': tgt = tgt[:-1]
             records['CNAME'].append(tgt)
     except Exception, e:
-        print "An error occurred: {}".format(e)
+        debug_output("An error occured while resolving CNAME: {}".format(e))
     try:
         results = dns.resolver.query(hostname, 'MX')
         for r in results:
@@ -251,7 +251,7 @@ def dns_get_records(hostname):
             if mx[-1] == '.': mx = mx[:-1]
             records['MX'].append(mx)
     except Exception, e:
-        print e
+        debug_output("An error occured while resolving MX: {}".format(e))
     return records
     
 
@@ -287,6 +287,13 @@ def dns_dig_records(hostname):
         records[r] = list(set(records[r]))
     return records
 
+def reverse_dns(ip):
+    try:
+        host = socket.gethostbyaddr(ip)[0]
+    except Exception, e:
+        host = None
+    return host
+    
 def dns_dig_reverse(ip):
     try:
         _dig = check_output(['dig', '-x', ip])
