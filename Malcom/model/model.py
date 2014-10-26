@@ -80,6 +80,9 @@ class Model:
 		if not src or not dst:
 			return None
 
+		if src['_id'] == dst['_id']:
+			return None
+
 		with self.db_lock:
 
 			while True:
@@ -409,7 +412,6 @@ class Model:
 		self.remove_connections(element['_id'])
 		return self.elements.remove({'_id' : element['_id']})
 		
-
 	def remove_by_id(self, element_id):
 		self.remove_connections(ObjectId(element_id))
 		return self.elements.remove({'_id' : ObjectId(element_id)})
@@ -420,7 +422,7 @@ class Model:
 		return self.elements.remove({'value' : element_value})
 
 	def remove_connections(self, element_id):
-		self.graph.remove({'$or': [{'src': element_id}, {'dst': element_id}] })
+		self.graph.remove({'$or': [{'src': element_id}, {'dst': element_id}]})
 
 
 	# ============= clear / list db ================
