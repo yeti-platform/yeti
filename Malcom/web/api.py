@@ -72,7 +72,7 @@ def query_data():
 	data = {}
 	chrono_query = datetime.datetime.utcnow()
 
-	print query
+	print "Query: ", query
 	if fuzzy:
 		elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
 	else:
