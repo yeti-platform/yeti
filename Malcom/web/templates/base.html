@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    {% block custom_head %}
-    {% endblock %}
+    
 
     <!-- Le styles -->
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -32,6 +31,8 @@
     <link href="{{ url_for('static', filename='custom_css/style.css') }}" rel='stylesheet'>
     <link href="{{ url_for('static', filename='custom_css/d3_graph.css') }}" rel='stylesheet'>
 
+    {% block custom_head %}
+    {% endblock %}
     
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/data.js') }}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/misc.js') }}" charset="utf-8"></script>
@@ -63,7 +64,7 @@
           <a class='brand' href="#">Malcom</a>
           <ul class='nav'>
             <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
-            <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Sniffer sessions</a></li>
+            <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Network captures</a></li>
             {% if g.config['FEEDS'] %}
             <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
             {% endif %}            
@@ -86,8 +87,8 @@
               <ul class="dropdown-menu">
                 <!-- <li><a href="#">Settings</a></li>
                 <li class="divider"></li> -->
-                <li><a href="{{url_for('account_sessions')}}"><i class="icon-facetime-video"></i> My PCAPs</a></li>
-                <li><a href="{{url_for('account_yara')}}"><i class="icon-book"></i> My Yara rules</a></li>
+                <li><a href="{{url_for('account_sessions')}}"><i class="icon-facetime-video"></i> Network captures</a></li>
+                <li><a href="{{url_for('account_yara')}}"><i class="icon-book"></i> Yara rules</a></li>
                 <li class="divider"></li>
                 <li><a href="{{url_for('account_settings')}}"><i class="icon-wrench"></i> Account settings</a></li>
                 <li><a href="{{url_for('logout')}}"><i class="icon-off"></i> Logout</a></li>
