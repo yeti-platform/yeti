@@ -38,23 +38,27 @@ class SnifferMessenger(Messenger):
 			user = params.get('user', None)
 			page = params.get('page', 0)
 			private = params.get('private', False)
-
+			
 			for session in self.snifferengine.model.get_sniffer_sessions(private=private, username=user, page=page):
-
-				if session['name'] in self.snifferengine.sessions:
-					active = self.snifferengine.sessions[session['name']].status()
+			
+				if session['_id'] in self.snifferengine.sessions:
+					session = self.snifferengine.sessions[session['_id']]
+					active = session.status()
+					session = session.__dict__
 				else:
 					active = False
-
-				session_data = bson_loads(session['session_data'])
-				session_list.append( {   	'id': str(session['_id']),
-											'date_created': session['date_created'],
-											'name': session['name'],
-											'packets': session['packet_count'],
-											'nodes': len(session_data['nodes']),
-											'edges': len(session_data['edges']),
+					session_data = bson_loads(session['session_data'])
+					session['nodes'] = session_data['nodes']
+					session['edges'] = session_data['edges']
+				
+				session_list.append( {   	'id': str(session.get('_id')),
+											'date_created': session.get('date_created'),
+											'name': session.get('name'),
+											'packets': session.get('packet_count'),
+											'nodes': len(session.get('nodes')),
+											'edges': len(session.get('edges')),
 											'status': "Running" if active else "Stopped",
-											'public': session['public'],
+											'public': session.get('public'),
 										} )
 
 			final_msg = bson_dumps(session_list)
@@ -77,10 +81,11 @@ class SnifferMessenger(Messenger):
 							'pcap_filename': session.pcap_filename,
 							'id' : str(session.id),
 							'public': session.public,
+							'status': session.status(),
 					}
 
 				if cmd == 'sniffstatus':
-					final_msg = session.status()
+					final_msg = {'status': session.status()}
 
 				if cmd == 'sniffupdate':
 					# this needs to be stringyfied, or else encoding errors will ensue

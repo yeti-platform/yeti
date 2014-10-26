@@ -97,7 +97,7 @@ class SnifferEngine(object):
 		except Exception as e:
 			debug_output("An {} error occurred when fetching session '{}': {}".format(type(e).__name__, session_id, e), 'error')
 			return
-				
+
 		# if not found, recreate it from the DB
 		if not session:
 			debug_output("Fetching session %s from DB" % session_id)
