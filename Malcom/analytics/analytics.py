@@ -1,9 +1,9 @@
 import dateutil, time, threading, pickle, gc, datetime, os
 from bson.objectid import ObjectId
-from multiprocessing import Process, JoinableQueue as Queue, Lock
-import Queue as ExceptionQueue
+from multiprocessing import Process#, JoinableQueue as Queue, Lock
 
-import adns
+import Queue as Queue
+from threading import Thread, Lock
 
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
@@ -12,7 +12,7 @@ from Malcom.analytics.messenger import AnalyticsMessenger
 from Malcom.auxiliary.async_resolver import AsyncResolver
 
 
-class Worker(Process):
+class Worker(Thread):
 
 	def __init__(self, name=None, queue_lock=None, hostname_lock=None):
 		super(Worker, self).__init__()
@@ -25,6 +25,33 @@ class Worker(Process):
 
 		debug_output("[%s | PID %s] STARTING" % (self.name, os.getpid()))
 
+		# deferred_queue = Queue()
+
+	def work_sync(self, elt, tags):
+		tt0 = datetime.datetime.now()
+		new = elt.analytics()
+		debug_output("[%s | PID %s | elt: %s] ANALYTICS DONE (%s NEW) (%s)" % (self.name, os.getpid(), elt['value'], len(new), datetime.datetime.now() -tt0), type='debug')
+		self.engine.process_new(elt, new)
+		debug_output("[%s | PID %s | elt: %s] NEW PROCESSED" % (self.name, os.getpid(), elt['value']), type='debug')
+		self.engine.save_element(elt, tags)
+		debug_output("[%s | PID %s | elt: %s] NEW SAVED" % (self.name, os.getpid(), elt['value']), type='debug')
+		self.engine.progress += 1
+		# self.engine.notify_progress(elt['value'])
+		# debug_output("[%s | PID %s | elt: %s] NOTIFIED" % (self.name, os.getpid(), elt['value']), type='debug')
+
+		# t = datetime.datetime.now()
+		
+
+	def work_async(self, elt, tags):
+		# get analysis time out of the way
+		elt['last_analysis'] = datetime.datetime.utcnow()
+		elt['next_analysis'] = elt['last_analysis'] + datetime.timedelta(seconds=elt['refresh_period'])
+		elt = self.engine.save_element(elt, tags)
+
+		# do the actual analysis
+		t = Thread(target=self.work_sync, args=(elt, tags))
+		t.daemon = True
+		t.start()
 		
 	def run(self):
 		self.work = True
@@ -50,21 +77,9 @@ class Worker(Process):
 				tags = elt['tags']
 
 				if type_ == 'hostname':
-					with self.hostname_lock:
-						self.engine.hostnames.put(elt['value'])
-					# debug_output("[%s | PID %s | elt: %s] PUT ADNS IN QUEUE (%s)" % (self.name, os.getpid(), elt['value'], datetime.datetime.now() -tt0), type='debug')
-
-				tt0 = datetime.datetime.now()
-				new = elt.analytics()
-				debug_output("[%s | PID %s | elt: %s] ANALYTICS DONE (%s NEW) (%s)" % (self.name, os.getpid(), elt['value'], len(new), datetime.datetime.now() -tt0), type='debug')
-				self.engine.process_new(elt, new)
-				debug_output("[%s | PID %s | elt: %s] NEW PROCESSED" % (self.name, os.getpid(), elt['value']), type='debug')
-				self.engine.save_element(elt, tags)
-				debug_output("[%s | PID %s | elt: %s] NEW SAVED" % (self.name, os.getpid(), elt['value']), type='debug')
-
-				self.engine.progress += 1
-				# self.engine.notify_progress(elt['value'])
-				# debug_output("[%s | PID %s | elt: %s] NOTIFIED" % (self.name, os.getpid(), elt['value']), type='debug')
+					self.work_async(elt, tags)
+				else:
+					self.work_sync(elt, tags)
 
 				t = datetime.datetime.now()
 				debug_output("Finished analyzing %s in %s" %(elt['value'], t-t0))
@@ -98,7 +113,7 @@ class Analytics(Process):
 		self.max_workers = max_workers
 		self.active = False
 		self.active_lock = threading.Lock()
-		self.process_lock = threading.Lock()
+		# self.process_lock = threading.Lock()
 		self.status = "Inactive"
 		self.thread = None
 		self.progress = 0
@@ -133,7 +148,7 @@ class Analytics(Process):
 	# elements analytics
 
 	def bulk_functions(self):
-		self.bulk_dns()
+		# self.bulk_dns()
 		self.bulk_asn()
 
 	def bulk_dns(self):
@@ -231,10 +246,10 @@ class Analytics(Process):
 		self.run_analysis = True
 		self.messenger = AnalyticsMessenger(self)
 		
-		self.elements_queue = Queue()
+		self.elements_queue = Queue.Queue()
 		self.queue_lock = Lock()
 		
-		self.hostnames = Queue()
+		self.hostnames = Queue.Queue()
 		self.hostname_lock = Lock()
 
 		while self.run_analysis:
@@ -279,7 +294,6 @@ class Analytics(Process):
 			
 			if rtype == adns.rr.MX:
 				mx_records = {}
-
 				for mx in answer[3]:
 					if mx[1][0] in ['', None]: continue
 
@@ -326,7 +340,7 @@ class Analytics(Process):
 
 
 	def process_new(self, elt, new):
-		self.process_lock.acquire()
+		# self.process_lock.acquire()
 		last_connect = elt.get('date_updated', datetime.datetime.utcnow())
 		new_elts = []
 		for n in new:
@@ -348,7 +362,7 @@ class Analytics(Process):
 
 			new_elts.append(saved)
 
-		self.process_lock.release()
+		# self.process_lock.release()
 		return new_elts
 
 

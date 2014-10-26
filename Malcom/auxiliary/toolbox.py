@@ -14,6 +14,8 @@ import logging
 from subprocess import check_output, CalledProcessError, STDOUT
 from bson.json_util import dumps
 
+import dns.resolver
+
 url_regex = r"""
 
         (
@@ -218,15 +220,60 @@ def split_url(url):
         return (path, scheme, hostname)
     return None
 
+def dns_get_records(hostname):
+    records = {'A': [], 'NS': [], 'CNAME': [], 'MX': []}
+    try:
+        results = dns.resolver.query(hostname, 'A')
+        for r in results:
+            records['A'].append(r.address)
+    except Exception, e:
+        print "An error occurred: {}".format(e)
+    try:
+        results = dns.resolver.query(hostname, 'NS')
+        for r in results:
+            tgt = r.target.to_text()
+            if tgt[-1] == '.': tgt = tgt[:-1]
+            records['NS'].append(tgt)
+    except Exception, e:
+        print "An error occurred: {}".format(e)
+    try:
+        results = dns.resolver.query(hostname, 'CNAME')
+        for r in results:
+            tgt = r.target.to_text()
+            if tgt[-1] == '.': tgt = tgt[:-1]
+            records['CNAME'].append(tgt)
+    except Exception, e:
+        print "An error occurred: {}".format(e)
+    try:
+        results = dns.resolver.query(hostname, 'MX')
+        for r in results:
+            mx = r.exchange.to_text()
+            if mx[-1] == '.': mx = mx[:-1]
+            records['MX'].append(mx)
+    except Exception, e:
+        print e
+    return records
+    
+
 def dns_dig_records(hostname):
+    _dig = ""
 
     try:
-        _dig = check_output(['dig', hostname, '+noall', '+answer', 'A'])
-        _dig += check_output(['dig', hostname, '+noall', '+answer', 'NS'])
-        _dig += check_output(['dig', hostname, '+noall', '+answer', 'MX'])
-        _dig += check_output(['dig', hostname, '+noall', '+answer', 'CNAME'])
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'A'])
     except CalledProcessError, e:
-        _dig = e.output
+        pass
+    
+    try:
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'NS'])
+    except CalledProcessError, e:
+        pass
+    
+    try:
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'CNAME'])    
+    except CalledProcessError, e:
+        pass
+
+    # _dig += check_output(['dig', hostname, '+noall', '+answer', 'MX'])
 
     results = [r.groupdict() for r in re.finditer(re.escape(hostname)+'\..+\s+(?P<record_type>[A-Za-z]+)[\s]+([0-9]+ )?(?P<record>\S+)\n',_dig)]
     records = {}

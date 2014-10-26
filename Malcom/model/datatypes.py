@@ -10,7 +10,6 @@ except Exception, e:
 	sys.stderr.write("[-] Could not load GeoIP library - %s" % e)
 	geoip = False
 
-
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.auxiliary.toolbox import debug_output
 from Malcom.auxiliary.async_resolver import AsyncResolver
@@ -304,43 +303,35 @@ class Hostname(Element):
 			h[key] = d[key]
 		return h 
 
-		
 	def analytics(self):
 
 		debug_output( "(host analytics for %s)" % self.value)
 
-		#get Whois
-		self['whois'] = toolbox.whois(self['value'])
-
-		# this should get us a couple of IP addresses, or other hostnames
-		# self['dns_info'] = toolbox.dns_dig_records(self.value)
+		new = []
 		
-		# new = []
+		dns_info = toolbox.dns_get_records(self.value)
+		for rtype in dns_info:
+			for entry in dns_info[rtype]:
+				art = toolbox.find_artifacts(entry)
+				for t in art:
+					for findings in art[t]:
+						if t == 'hostnames':
+							new.append((rtype, Hostname(findings)))
+						if t == 'urls':
+							new.append((rtype, Url(findings)))
+						if t == 'ips':
+							new.append((rtype, Ip(findings)))
 
-		# # get DNS info
-		# for record in self.dns_info:
-		# 	if record in ['MX', 'A', 'NS', 'CNAME']:
-		# 		for entry in self['dns_info'][record]:
-		# 			art = toolbox.find_artifacts(entry) #do this
-		# 			for t in art:
-		# 				for findings in art[t]:
-		# 					if t == 'hostnames':
-		# 						new.append((record, Hostname(findings)))
-		# 					if t == 'urls':
-		# 						new.append((record, Url(findings)))
-		# 					if t == 'ips':
-		# 						new.append((record, Ip(findings)))
-
-		# # is _hostname a subdomain ?
-		# if len(self.value.split(".")) > 2:
-		# 	domain = toolbox.is_subdomain(self.value)
-		# 	if domain:
-		# 		new.append(('domain', Hostname(domain)))
+		# is _hostname a subdomain ?
+		if len(self.value.split(".")) > 2:
+			domain = toolbox.is_subdomain(self.value)
+			if domain:
+				new.append(('domain', Hostname(domain)))
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
 
-		return []
+		return new
 
 DataTypes = {
 	'url': Url,
