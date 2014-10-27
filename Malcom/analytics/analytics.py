@@ -97,9 +97,6 @@ class Worker(Thread):
 					self.engine.elements_queue.task_done()
 			return
 
-		except KeyboardInterrupt, e:
-			pass
-
 	def stop(self):
 		self.work = False
 
@@ -260,13 +257,10 @@ class Analytics(Process):
 				self.process(10000)
 			self.active_lock.release()
 
-			try:
-				time.sleep(1)
-			except KeyboardInterrupt:
-				self.run_analysis = False
-			
 			if self.once: self.run_analysis = False; self.once = False
 
+			time.sleep(1)
+		
 	def stop(self):
 		self.run_analysis = False
 		for w in self.workers:
@@ -274,11 +268,6 @@ class Analytics(Process):
 				w.stop()
 			except Exception, e:
 				pass
-		try:
-			while True:
-				self.elements_queue.get(False)
-		except Exception, e:
-			pass
 
 	def process_adns_result(self, host, rtype, answer):
 		
@@ -349,6 +338,7 @@ class Analytics(Process):
 			
 			# do the link
 			conn = self.data.connect(elt, saved, n[0])
+			if not conn: continue
 			first_seen = conn.get('first_seen', datetime.datetime.utcnow())
 			conn['first_seen'] = first_seen
 			last_seen = conn['last_seen']
