@@ -1,7 +1,8 @@
 from Malcom.feeds.feed import FeedEngine
 import os
 
-all_feeds = ['AlienvaultIP',
+all_feeds = [
+			 'AlienvaultIP',
 			 'CybercrimeTracker',
 			 'DShield16276',
 			 'DShield3215',
@@ -24,10 +25,11 @@ all_feeds = ['AlienvaultIP',
 			 'ZeusTrackerConfigs',
 			 'ZeusTrackerDropzones',
 			 'ZeusGameOverDomains',
-			 'ZeusTrackerBinaries']
+			 'ZeusTrackerBinaries'
+			 ]
 
 feed_dir = os.getcwd()+'/Malcom/feeds'
-print feed_dir
+print "Testing feeds in", feed_dir
 fe = FeedEngine({'FEEDS_DIR': feed_dir})
 
 fe.load_feeds([f.lower() for f in all_feeds])
