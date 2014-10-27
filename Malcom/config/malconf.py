@@ -1,4 +1,4 @@
-import ConfigParser, argparse
+import ConfigParser, argparse, os
 import netifaces as ni
 
 class MalcomSetup(dict):
@@ -21,10 +21,14 @@ class MalcomSetup(dict):
 			self['LISTEN_INTERFACE'] = args.interface
 			self['LISTEN_PORT'] = args.port
 			self['MAX_WORKERS'] = args.max_workers
-			self['AUTH'] = args.auth
 			self['TLS_PROXY_PORT'] = args.tls_proxy_port
 			self['FEEDS'] = args.feeds
+			self['SNIFFER'] = args.sniffer
+			self['SNIFFER_DIR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer')
+			self['YARA_PATH'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara')
 			self['ANALYTICS'] = args.analytics
+			self['WEB'] = True
+			self['AUTH'] = False
 
 		
 	def parse_config_file(self, filename):

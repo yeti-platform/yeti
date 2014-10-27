@@ -44,11 +44,12 @@ if __name__ == "__main__":
 	sys.stderr.write("===== Malcom %s - Malware Communications Analyzer =====\n\n" % setup['VERSION'])
 
 	parser = argparse.ArgumentParser(description="Malcom - malware communications analyzer")
+	parser.add_argument("-c", "--config", help="Configuration file", default=None)
 	parser.add_argument("-a", "--analytics", help="Run analytics", action="store_true", default=False)
 	parser.add_argument("-f", "--feeds", help="Run feeds", action="store_true", default=False)
-	parser.add_argument("-i", "--interface", help="Listen interface", default="0.0.0.0")
-	parser.add_argument("-p", "--port", help="Listen port", type=int, default="8080")
-	parser.add_argument("-c", "--config", help="Configuration file", default=None)
+	parser.add_argument("-i", "--interface", help="Listen interface for webserver", default="0.0.0.0")
+	parser.add_argument("-p", "--port", help="Listen port for webserver", type=int, default="8080")
+	parser.add_argument("-s", "--sniffer", help="Start sniffer", action="store_true", default=True)
 	parser.add_argument("--public", help="Run a public instance (Feeds and network sniffing disabled)", action="store_true", default=False)
 	parser.add_argument("--max-workers", help="Number of worker processes to use (default 4)", type=int, default=4)
 	parser.add_argument("--tls-proxy-port", help="Port number on which to start the TLS proxy on. No proxy started if not specified.", type=int, default=0)
@@ -129,8 +130,7 @@ if __name__ == "__main__":
 
 	if setup['ANALYTICS']:
 		sys.stderr.write("[.] Stopping analytics engine... ")
-		setup.analytics_engine.stop()
-		setup.analytics_engine.join()
+		setup.analytics_engine.terminate()
 		sys.stderr.write("done.\n")
 
 	if setup['SNIFFER'] and len(setup.sniffer_engine.sessions) > 0:
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
 	if setup['FEEDS']:
 		sys.stderr.write("[.] Stopping feed engine... ")
-		setup.feed_engine.stop_all_feeds()
+		setup.feed_engine.terminate()
 		sys.stderr.write("done.\n")
 
 	if setup['TLS_PROXY_PORT']:
