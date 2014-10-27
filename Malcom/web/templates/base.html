@@ -6,14 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    {% block custom_head %}
-    {% endblock %}
+    
 
     <!-- Le styles -->
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
     <style>
       body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+        padding-top: 50px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
     </style>
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap-responsive.min.css') }}" rel="stylesheet">
@@ -32,6 +31,8 @@
     <link href="{{ url_for('static', filename='custom_css/style.css') }}" rel='stylesheet'>
     <link href="{{ url_for('static', filename='custom_css/d3_graph.css') }}" rel='stylesheet'>
 
+    {% block custom_head %}
+    {% endblock %}
     
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/data.js') }}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/misc.js') }}" charset="utf-8"></script>
@@ -56,31 +57,23 @@
 
   <body>
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
+
+    <div class='navbar navbar-inverse navbar-fixed-top'>
       <div class="navbar-inner">
         <div class="container">
-          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="brand" href="{{ url_for('dataset') }}">Malcom</a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
-              <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Sniffer</a></li>            
-              <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
-              <li class="divider-vertical"></li>
-              
-            </ul>
-          </div>
-          <div class='nav-collapse collapse pull-right'>
-            <ul class='nav'>
-              <li id='analytics-status-nav'>
+          <a class='brand' href="#">Malcom</a>
+          <ul class='nav'>
+            <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
+            <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Network captures</a></li>
+            {% if g.config['FEEDS'] %}
+            <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
+            {% endif %}            
+          </ul>
+          <ul class='nav pull-right'>
+            <li id='analytics-status-nav'>
                 <p class='navbar-text analytics'>Loading status...</p>
-              </li>
-
-              <li id='iface-nav'>
+            </li>
+            <li id='iface-nav'>
                   <div class='interfaces'>
                     <table>
                       {% for i in g.config['IFACES'] %}
@@ -88,11 +81,20 @@
                       {% endfor %}
                     </table>
                     </div>
-                </li>
-            </ul>
-            </div>
-          <!--/.nav-collapse -->
-
+            </li>
+            <li class='dropdown'>
+              <a href='#' class='dropdown-toggle' data-toggle='dropdown'>{{ current_user.username }} <b class='caret'></b></a>
+              <ul class="dropdown-menu">
+                <!-- <li><a href="#">Settings</a></li>
+                <li class="divider"></li> -->
+                <li><a href="{{url_for('account_sessions')}}"><i class="icon-facetime-video"></i> Network captures</a></li>
+                <li><a href="{{url_for('account_yara')}}"><i class="icon-book"></i> Yara rules</a></li>
+                <li class="divider"></li>
+                <li><a href="{{url_for('account_settings')}}"><i class="icon-wrench"></i> Account settings</a></li>
+                <li><a href="{{url_for('logout')}}"><i class="icon-off"></i> Logout</a></li>
+              </ul>
+            </li>
+          </ul>
         </div>
       </div>
     </div>

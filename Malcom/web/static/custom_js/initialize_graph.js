@@ -5,6 +5,8 @@ window.onkeydown=function(e){
 };
 
 
+
+
 // declare useful global vars
 var radiusScale, 
 	color, 
@@ -17,7 +19,9 @@ var radiusScale,
 	svg, 
 	brush, 
 	node, 
-	link
+	link,
+	link_labels,
+	curved_links
 
 // rescale g
 function rescale() {
@@ -48,14 +52,17 @@ function initialize_graph() {
 		 nodes = []
 		 links = []
 
+		 link_labels = false
+		 curved_links = false
+
 		 force = d3.layout.force()
 		    .nodes(nodes)
 		    .links(links)
 		    .gravity(0.05)
-		    .charge(-100)
+		    .charge(-200)
 		    .friction(0.8)
 		    .theta(0.99)
-		    .linkDistance(70)
+		    .linkDistance(100)
 		    .size([width, height])
 		    .on("tick", tick);
 
@@ -79,10 +86,10 @@ function initialize_graph() {
 		 brush = svg.append("g")
 		    .datum(function() { return {selected: false, previouslySelected: false}; })
 		    .attr("class", "brush");
-
-
+		 
 		 node = svg.selectAll(".node")
 		    link = svg.selectAll(".link");
 
-		    
+   
+
 }

@@ -14,6 +14,8 @@ import logging
 from subprocess import check_output, CalledProcessError, STDOUT
 from bson.json_util import dumps
 
+import dns.resolver
+
 url_regex = r"""
 
         (
@@ -23,23 +25,35 @@ url_regex = r"""
                       ((([\w\-]+\.)+)
                       ([a-zA-Z]{2,6}))
                       |([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})
+                      |([\w\-]+)
                       )
           )
 
           (\:[\d]{1,5})?
           (?P<path>(\/[\/\~\w\-_%\.\*\#\$]*)?
-            (\?[\~\w\-_%\.&=\*\#\$]*)?
+            (\?[\~\w\-_%\.&=\*\#\$/]*)?
             (\#[\S]*)?)
         )
     """
 
-tlds = [u'cx', u'cy', u'cz', u'ro', u'ke', u'kg', u'kh', u'ki', u'cr', u'cs', u'cu', u'cv', u'ch', u'ci', u'kr', u'ck', u'cl', u'cm', u'cn', u'co', u'rs', u'ca', u'kz', u'cc', u'cd', u'cf', u'cg', u'zw', u'iq', u'tk', u'za', u'info', u'nz', u'ua', u'name', u'ug', u'bz', u'by', u'uz', u'je', u'post', u'bs', u'br', u'bw', u'bv', u'jm', u'bt', u'bj', u'bi', u'bh', u'bo', u'bn', u'bm', u'bb', u'ba', u'jobs', u'bg', u'bf', u'be', u'bd', u'mo', u'kp', u'eh', u'eg', u'net', u'ec', u'tj', u'et', u'eu', u'er', u'travel', u'pm', u'pl', u'ee', u'in', u'io', u'il', u'im', u'pe', u'pg', u'kw', u'pa', u'id', u'ie', u'sk', u'py', u'yt', u'tg', u'ky', u'ir', u'is', u'pw', u'am', u'tz', u'it', u'lt', u'sd', u'pf', u'rw', u'ws', u'ru', u'tw', u'arpa', u'cat', u'pro', u'sh', u'si', u'sj', u'sc', u'sl', u'sm', u'sn', u'so', u'hm', u'sa', u'sb', u'hn', u'coop', u'se', u'hk', u'sg', u'hu', u'ht', u'sz', u'tv', u'hr', u'sr', u'ss', u'st', u'su', u'sv', u'sx', u'sy', u'mobi', u'wf', u'es', u'org', u'tel', u'ye', u'om', u'vu', u'priv', u'edu', u're', u'zm', u've', u'pn', u'vc', u'va', u'vn', u'tc', u'vi', u'ph', u'int', u'fo', u'fm', u'fk', u'fj', u'fi', u'fr', u'no', u'nl', u'SH', u'ni', u'ng', u'mz', u'ne', u'nc', u'biz', u'na', u'qa', u'com', u'nu', u'tc', u'nr', u'np', u'ac', u'test', u'af', u'ag', u'ad', u'ae', u'ai', u'an', u'ao', u'al', u'yu', u'ar', u'as', u'th', u'aq', u'aw', u'at', u'au', u'az', u'ax', u'pk', u'tl', u'mv', u'mw', u'mt', u'mu', u'mr', u'ms', u'mp', u'mq', u'tp', u'tn', u'km', u'tt', u'mx', u'my', u'mg', u'md', u'me', u'tm', u'mc', u'to', u'ma', u'mn', u'asia', u'ml', u'mm', u'mk', u'mh', u'tf', u'gt', u'dk', u'dj', u'dm', u'do', u'museum', u'kn', u'uy', u'de', u'dd', u'td', u'jp', u'dz', u'ps', u'nf', u'pt', u'pr', u'mil', u'ls', u'lr', u'lu', u'gr', u'lv', u'ly', u'jo', u'gov', u'vg', u'us', u'la', u'lc', u'lb', u'tm', u'li', u'lk', u'tr', u'gd', u'ge', u'gf', u'gg', u'ga', u'gb', u'gl', u'gm', u'gn', u'gh', u'gi', u'aero', u'gu', u'gw', u'gp', u'gq', u'xxx', u'gs', u'gy', u'la', u'uk']
+        #(((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>(((([\w\-]+\.)+)([a-zA-Z\-]{2,22}))|([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})))(\:[\d]{1,5})?(?P<path>(\/[\/\~\w\-_%\.\*\#\$]*)?(\?[\~\w\-_%\.&=\*\#\$]*)?(\#[\S]*)?))
+ip_regex = r'([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})'
+
+hostname_regex = r"((([\w\-]+\.)*)([\w\-]+))\.?"
+
+email_regex = r"([\w\-\.\_]+@(([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?"
+
+hash_regex = r"([a-fA-F0-9]{32,64})"
+
+
+tlds = ['ac', 'academy', 'accountants', 'active', 'actor', 'ad', 'ae', 'aero', 'af', 'ag', 'agency', 'ai', 'airforce', 'al', 'am', 'an', 'ao', 'aq', 'ar', 'archi', 'army', 'arpa', 'as', 'asia', 'associates', 'at', 'attorney', 'au', 'audio', 'autos', 'aw', 'ax', 'axa', 'az', 'ba', 'bar', 'bargains', 'bayern', 'bb', 'bd', 'be', 'beer', 'berlin', 'best', 'bf', 'bg', 'bh', 'bi', 'bid', 'bike', 'bio', 'biz', 'bj', 'black', 'blackfriday', 'blue', 'bm', 'bmw', 'bn', 'bo', 'boutique', 'br', 'brussels', 'bs', 'bt', 'build', 'builders', 'buzz', 'bv', 'bw', 'by', 'bz', 'bzh', 'ca', 'cab', 'camera', 'camp', 'cancerresearch', 'capetown', 'capital', 'cards', 'care', 'career', 'careers', 'cash', 'cat', 'catering', 'cc', 'cd', 'center', 'ceo', 'cf', 'cg', 'ch', 'cheap', 'christmas', 'church', 'ci', 'citic', 'city', 'ck', 'cl', 'claims', 'cleaning', 'clinic', 'clothing', 'club', 'cm', 'cn', 'co', 'codes', 'coffee', 'college', 'cologne', 'com', 'community', 'company', 'computer', 'condos', 'construction', 'consulting', 'contractors', 'cooking', 'cool', 'coop', 'country', 'cr', 'credit', 'creditcard', 'cruises', 'cu', 'cuisinella', 'cv', 'cw', 'cx', 'cy', 'cz', 'dance', 'dating', 'de', 'deals', 'degree', 'democrat', 'dental', 'dentist', 'desi', 'diamonds', 'digital', 'direct', 'directory', 'discount', 'dj', 'dk', 'dm', 'dnp', 'do', 'domains', 'durban', 'dz', 'ec', 'edu', 'education', 'ee', 'eg', 'email', 'engineer', 'engineering', 'enterprises', 'equipment', 'er', 'es', 'estate', 'et', 'eu', 'eus', 'events', 'exchange', 'expert', 'exposed', 'fail', 'farm', 'feedback', 'fi', 'finance', 'financial', 'fish', 'fishing', 'fitness', 'fj', 'fk', 'flights', 'florist', 'fm', 'fo', 'foo', 'foundation', 'fr', 'frogans', 'fund', 'furniture', 'futbol', 'ga', 'gal', 'gallery', 'gb', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gift', 'gives', 'gl', 'glass', 'global', 'globo', 'gm', 'gmo', 'gn', 'gop', 'gov', 'gp', 'gq', 'gr', 'graphics', 'gratis', 'green', 'gripe', 'gs', 'gt', 'gu', 'guide', 'guitars', 'guru', 'gw', 'gy', 'hamburg', 'haus', 'hiphop', 'hiv', 'hk', 'hm', 'hn', 'holdings', 'holiday', 'homes', 'horse', 'host', 'house', 'hr', 'ht', 'hu', 'id', 'ie', 'il', 'im', 'immobilien', 'in', 'industries', 'info', 'ink', 'institute', 'insure', 'int', 'international', 'investments', 'io', 'iq', 'ir', 'is', 'it', 'je', 'jetzt', 'jm', 'jo', 'jobs', 'joburg', 'jp', 'juegos', 'kaufen', 'ke', 'kg', 'kh', 'ki', 'kim', 'kitchen', 'kiwi', 'km', 'kn', 'koeln', 'kp', 'kr', 'kred', 'kw', 'ky', 'kz', 'la', 'land', 'lawyer', 'lb', 'lc', 'lease', 'li', 'life', 'lighting', 'limited', 'limo', 'link', 'lk', 'loans', 'london', 'lotto', 'lr', 'ls', 'lt', 'lu', 'luxe', 'luxury', 'lv', 'ly', 'ma', 'maison', 'management', 'mango', 'market', 'marketing', 'mc', 'md', 'me', 'media', 'meet', 'melbourne', 'menu', 'mg', 'mh', 'miami', 'mil', 'mini', 'mk', 'ml', 'mm', 'mn', 'mo', 'mobi', 'moda', 'moe', 'monash', 'mortgage', 'moscow', 'motorcycles', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu', 'museum', 'mv', 'mw', 'mx', 'my', 'mz', 'na', 'nagoya', 'name', 'navy', 'nc', 'ne', 'net', 'neustar', 'nf', 'ng', 'nhk', 'ni', 'ninja', 'nl', 'no', 'np', 'nr', 'nrw', 'nu', 'nyc', 'nz', 'okinawa', 'om', 'onl', 'org', 'organic', 'ovh', 'pa', 'paris', 'partners', 'parts', 'pe', 'pf', 'pg', 'ph', 'photo', 'photography', 'photos', 'physio', 'pics', 'pictures', 'pink', 'pk', 'pl', 'place', 'plumbing', 'pm', 'pn', 'post', 'pr', 'press', 'pro', 'productions', 'properties', 'ps', 'pt', 'pub', 'pw', 'py', 'qa', 'qpon', 'quebec', 're', 'recipes', 'red', 'rehab', 'reise', 'reisen', 'ren', 'rentals', 'repair', 'report', 'republican', 'rest', 'reviews', 'rich', 'rio', 'ro', 'rocks', 'rodeo', 'rs', 'ru', 'ruhr', 'rw', 'ryukyu', 'sa', 'saarland', 'sb', 'sc', 'scb', 'schmidt', 'schule', 'scot', 'sd', 'se', 'services', 'sexy', 'sg', 'sh', 'shiksha', 'shoes', 'si', 'singles', 'sj', 'sk', 'sl', 'sm', 'sn', 'so', 'social', 'software', 'sohu', 'solar', 'solutions', 'soy', 'space', 'sr', 'st', 'su', 'supplies', 'supply', 'support', 'surf', 'surgery', 'suzuki', 'sv', 'sx', 'sy', 'systems', 'sz', 'tattoo', 'tax', 'tc', 'td', 'technology', 'tel', 'tf', 'tg', 'th', 'tienda', 'tips', 'tirol', 'tj', 'tk', 'tl', 'tm', 'tn', 'to', 'today', 'tokyo', 'tools', 'town', 'toys', 'tp', 'tr', 'trade', 'training', 'travel', 'tt', 'tv', 'tw', 'tz', 'ua', 'ug', 'uk', 'university', 'uno', 'us', 'uy', 'uz', 'va', 'vacations', 'vc', 've', 'vegas', 'ventures', 'versicherung', 'vet', 'vg', 'vi', 'viajes', 'villas', 'vision', 'vlaanderen', 'vn', 'vodka', 'vote', 'voting', 'voto', 'voyage', 'vu', 'wang', 'watch', 'webcam', 'website', 'wed', 'wf', 'wien', 'wiki', 'works', 'ws', 'wtc', 'wtf', 'xn--3bst00m', 'xn--3ds443g', 'xn--3e0b707e', 'xn--45brj9c', 'xn--4gbrim', 'xn--55qw42g', 'xn--55qx5d', 'xn--6frz82g', 'xn--6qq986b3xl', 'xn--80adxhks', 'xn--80ao21a', 'xn--80asehdb', 'xn--80aswg', 'xn--90a3ac', 'xn--c1avg', 'xn--cg4bki', 'xn--clchc0ea0b2g2a9gcd', 'xn--czr694b', 'xn--czru2d', 'xn--d1acj3b', 'xn--fiq228c5hs', 'xn--fiq64b', 'xn--fiqs8s', 'xn--fiqz9s', 'xn--fpcrj9c3d', 'xn--fzc2c9e2c', 'xn--gecrj9c', 'xn--h2brj9c', 'xn--i1b6b1a6a2e', 'xn--io0a7i', 'xn--j1amh', 'xn--j6w193g', 'xn--kprw13d', 'xn--kpry57d', 'xn--kput3i', 'xn--l1acc', 'xn--lgbbat1ad8j', 'xn--mgb9awbf', 'xn--mgba3a4f16a', 'xn--mgbaam7a8h', 'xn--mgbab2bd', 'xn--mgbayh7gpa', 'xn--mgbbh1a71e', 'xn--mgbc0a9azcg', 'xn--mgberp4a5d4ar', 'xn--mgbx4cd0ab', 'xn--ngbc5azd', 'xn--nqv7f', 'xn--nqv7fs00ema', 'xn--o3cw4h', 'xn--ogbpf8fl', 'xn--p1ai', 'xn--pgbs0dh', 'xn--q9jyb4c', 'xn--rhqv96g', 'xn--s9brj9c', 'xn--ses554g', 'xn--unup4y', 'xn--wgbh1c', 'xn--wgbl6a', 'xn--xkc2al3hye2a', 'xn--xkc2dl3a5ee0h', 'xn--yfro4i67o', 'xn--ygbi2ammx', 'xn--zfr164b', 'xxx', 'xyz', 'yachts', 'ye', 'yokohama', 'yt', 'za', 'zm', 'zone', 'zw']
+# taken from http://data.iana.org/TLD/tlds-alpha-by-domain.txt
 
 def list_to_str(obj):
     if isinstance(obj, list):
         return ", ".join([list_to_str(e) for e in obj])
     else:
-        return str(obj)
+        return str(obj).decode('cp1252')
 
 
 def send_msg(ws, msg, type='msg'):
@@ -47,13 +61,14 @@ def send_msg(ws, msg, type='msg'):
     try:
         ws.send(dumps(msg))
     except Exception, e:
-        debug_output("Could not send message: %s" % e)
+        pass # debug_output("Could not send message: %s" % e)
+        
     
 
 
 def find_ips(data):
     ips = []
-    for i in re.finditer("([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})",data):
+    for i in re.finditer(ip_regex,data):
         # sanitize IPs to avoid leading 0s
         ip = ".".join([str(int(dot)) for dot in i.group(1).split('.')])
         ips.append(ip)
@@ -61,15 +76,13 @@ def find_ips(data):
 
 def find_urls(data):
     urls = []
-    _re = re.compile(url_regex,re.VERBOSE)
+    _re = re.compile(url_regex, re.VERBOSE)
 
     for i in re.finditer(_re,data):
         url = i.group(1)
 
-        h = find_hostnames(data)
-        i = find_ips(data)
-        
-        if (len(h) > 0 or len(i) > 0) and url.find('/') != -1: # there's at least one IP or one hostname in the URL
+        # if (len(h) > 0 or len(i) > 0) and url.find('/') != -1: # there's at least one IP or one domain name in the URL
+        if url.find('/') != -1:
             urls.append(url)
 
     return urls
@@ -77,11 +90,11 @@ def find_urls(data):
 def find_hostnames(data):
     # sends back an array of hostnames
     hostnames = []
-    for i in re.finditer("((([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?", data):
+    for i in re.finditer(hostname_regex, data):
         h = string.lower(i.group(1))
         tld = h.split('.')[-1:][0]
 
-        if tld in tlds or tld.startswith('xn--'):
+        if tld in tlds:
             hostnames.append(h)
 
     return hostnames
@@ -101,7 +114,7 @@ def whois(data):
 
 def find_emails(data):
     emails = []
-    for i in re.finditer("([\w\-\.\_]+@(([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?",data):
+    for i in re.finditer(email_regex,data):
         e = string.lower(i.group(1))
         tld = e.split('.')[-1:]
         emails.append(e)
@@ -109,7 +122,7 @@ def find_emails(data):
 
 def find_hashes(data):
     hashes = []
-    for i in re.finditer("([a-fA-F0-9]{32,64})",data):
+    for i in re.finditer(hash_regex,data):
         hashes.append(string.lower(i.group(1)))
     return hashes
 
@@ -134,26 +147,34 @@ def find_artifacts(data):
 
 
 def is_ip(ip):
-    ip = find_ips(ip)
-    if len(ip) > 0:
-        return ip[0]
+    match = re.match("^"+ip_regex+"$", ip)
+    if match:
+        return match.group(1)
     else:
         return None
+    # ip = find_ips(ip)
+    # if len(ip) > 0:
+    #     return ip[0]
+    # else:
+    #     return None
 
 
 def is_hostname(hostname):
-
-    hostname = find_hostnames(hostname)
-    if len(hostname) > 0:
-        return string.lower(hostname[0])
+    match = re.match("^"+hostname_regex+"$", hostname)
+    if match:
+        return match.group(1)
     else:
         return None
 
-def is_subdomain(hostname):
-    hostname = find_hostnames(hostname)
-    if len(hostname) > 0:
-        hostname = hostname[0]
+    # hostname = find_hostnames(hostname)
+    # if len(hostname) > 0:
+    #     return string.lower(hostname[0])
+    # else:
+    #     return None
 
+def is_subdomain(hostname):
+    hostname = is_hostname(hostname)
+    if hostname:
         tld = hostname.split('.')[-1:][0]
         if tld in tlds:
             tld = hostname.split('.')[-2:][0]
@@ -169,19 +190,25 @@ def is_subdomain(hostname):
                     return False
                 else:
                     return domain
-
     else:
         return False
 
 
 def is_url(url):
-
-    url = find_urls(url)
-
-    if len(url) > 0:
-        return url[0]
+    match = re.match("^"+url_regex+"$", url, re.VERBOSE)
+    if match:
+        url = match.group(1)
+        if url.find('/') != -1:
+            return match.group(1)
     else:
         return None
+
+    # url = find_urls(url)
+
+    # if len(url) > 0:
+    #     return url[0]
+    # else:
+    #     return None
 
 def split_url(url):
     _re = re.compile(url_regex,re.VERBOSE)
@@ -193,15 +220,60 @@ def split_url(url):
         return (path, scheme, hostname)
     return None
 
+def dns_get_records(hostname):
+    records = {'A': [], 'NS': [], 'CNAME': [], 'MX': []}
+    try:
+        results = dns.resolver.query(hostname, 'A')
+        for r in results:
+            records['A'].append(r.address)
+    except Exception, e:
+        debug_output("An error occured while resolving A: {}".format(e))
+    try:
+        results = dns.resolver.query(hostname, 'NS')
+        for r in results:
+            tgt = r.target.to_text()
+            if tgt[-1] == '.': tgt = tgt[:-1]
+            records['NS'].append(tgt)
+    except Exception, e:
+        debug_output("An error occured while resolving NS: {}".format(e))
+    try:
+        results = dns.resolver.query(hostname, 'CNAME')
+        for r in results:
+            tgt = r.target.to_text()
+            if tgt[-1] == '.': tgt = tgt[:-1]
+            records['CNAME'].append(tgt)
+    except Exception, e:
+        debug_output("An error occured while resolving CNAME: {}".format(e))
+    try:
+        results = dns.resolver.query(hostname, 'MX')
+        for r in results:
+            mx = r.exchange.to_text()
+            if mx[-1] == '.': mx = mx[:-1]
+            records['MX'].append(mx)
+    except Exception, e:
+        debug_output("An error occured while resolving MX: {}".format(e))
+    return records
+    
+
 def dns_dig_records(hostname):
+    _dig = ""
 
     try:
-        _dig = check_output(['dig', hostname, '+noall', '+answer', 'A'])
-        _dig += check_output(['dig', hostname, '+noall', '+answer', 'NS'])
-        _dig += check_output(['dig', hostname, '+noall', '+answer', 'MX'])
-        _dig += check_output(['dig', hostname, '+noall', '+answer', 'CNAME'])
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'A'])
     except CalledProcessError, e:
-        _dig = e.output
+        pass
+    
+    try:
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'NS'])
+    except CalledProcessError, e:
+        pass
+    
+    try:
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'CNAME'])    
+    except CalledProcessError, e:
+        pass
+
+    # _dig += check_output(['dig', hostname, '+noall', '+answer', 'MX'])
 
     results = [r.groupdict() for r in re.finditer(re.escape(hostname)+'\..+\s+(?P<record_type>[A-Za-z]+)[\s]+([0-9]+ )?(?P<record>\S+)\n',_dig)]
     records = {}
@@ -215,6 +287,13 @@ def dns_dig_records(hostname):
         records[r] = list(set(records[r]))
     return records
 
+def reverse_dns(ip):
+    try:
+        host = socket.gethostbyaddr(ip)[0]
+    except Exception, e:
+        host = None
+    return host
+    
 def dns_dig_reverse(ip):
     try:
         _dig = check_output(['dig', '-x', ip])
@@ -357,39 +436,41 @@ def parse_net_info_cymru(info):
     return results
 
 def debug_output(text, type='debug', n=True):
+    msg = ""
     if type == 'debug':
-        msg = bcolors.OKGREEN + '[DEBUG]'
-    if type == 'model':
-        msg = bcolors.HEADER + '[MODEL]'
-    if type == 'analytics':
-        msg = bcolors.OKBLUE + '[ANALYTICS]'
-    if type == 'error':
-        msg = bcolors.FAIL + '[ERROR]'
-    if type == 'info':
-        msg = bcolors.WARNING + '[INFO]'
+        msg = bcolors.DEBUG + '[DEBUG]'
+    elif type == 'model':
+        msg = bcolors.DATA + '[DATA]'
+    elif type == 'analytics':
+        msg = bcolors.ANALYTICS + '[ANALYTICS]'
+    elif type == 'error':
+        msg = bcolors.ERROR + '[ERROR]'
+    elif type == 'info':
+        msg = bcolors.INFO + '[INFO]'
     msg += bcolors.ENDC
     n = '\n' if n else ""
+
     try:
-        sys.stderr.write(str("%s - %s%s" % (msg, text, n)))
+        sys.stdout.write(str("%s [%s] - %s%s" % (msg, datetime.datetime.now(), text, n)))
     except Exception, e:
         pass
     
 
 
 class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
+    DATA = '\033[95m'
+    ANALYTICS = '\033[94m'
+    DEBUG = '\033[92m'
+    INFO = '\033[93m'
+    ERROR = '\033[91m'
     ENDC = '\033[0m'
 
     def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
+        self.DATA = ''
+        self.ANALYTICS = ''
+        self.DEBUG = ''
+        self.INFO = ''
+        self.ERROR = ''
         self.ENDC = ''
 
 

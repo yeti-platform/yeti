@@ -1,18 +1,28 @@
 function initSnifferWebSocket() {
     if ("WebSocket" in window) {
-        ws_sniffer = new WebSocket(url_websocket_prefix+"api/sniffer");
+        ws_sniffer = new WebSocket(url_websocket_prefix+"websocket/sniffer");
         ws_sniffer.onmessage = function(msg) { snifferWebSocketHandler(msg); }
     } else {
-        console.log("WebSocket not supported");
+        console.log("WebSocket not supported (data)");
     }
+}
+
+function initSnifferRealtimeWebSocket(session_id) {
+    if ("WebSocket" in window) {
+        ws_sniffer_data = new WebSocket(url_websocket_prefix+"websocket/sniffer/streaming/"+session_id);
+        ws_sniffer_data.onmessage = function(msg) { snifferWebSocketHandler(msg); }
+    } else {
+        console.log("WebSocket not supported (realtime)");
+    }
+
 }
 
 function snifferWebSocketHandler(msg) {
     data = $.parseJSON(msg.data);
-    console.log("Received data: " + data.type); console.log(data);
+    // console.log("Received data: " + data.type); console.log(data);
 
     if (data.type == 'sniffstatus') {
-        
+
                 if (data.msg.status == 'inactive') {
                     $('#startsniff').removeAttr('disabled');
                     $('#stopsniff').attr('disabled','true');
@@ -21,13 +31,9 @@ function snifferWebSocketHandler(msg) {
                     $('#startsniff').attr('disabled','true');
                     $('#stopsniff').removeAttr('disabled');
                 }
+                // getSessionList()
 
-                console.log("Retreiving session list (AJAX)")
-                getSessionList()
-
-                
-                sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_name': $('#session_name').text()});
-                console.log("Sent sniffupdate");
+                sendmessage(ws_sniffer, {'cmd': 'sniffupdate', 'session_id': $('#session_id').text()});
     }
 
     if (data.type == 'sniffupdate') {
@@ -42,12 +48,12 @@ function snifferWebSocketHandler(msg) {
     }
 
     if (data.type == 'nodeupdate') {
-            push_nodes(data.nodes);
-            push_links(data.edges);
+            push_nodes(data.msg.nodes);
+            push_links(data.msg.edges);
             start();
     }
 
-    if (data.type == 'sniffstop') {
+    if (data.type == 'sniffstop' || data.type == 'sniffdone') {
         $('#startsniff').removeAttr('disabled')
         $('#stopsniff').attr('disabled','true')
     }
@@ -55,7 +61,7 @@ function snifferWebSocketHandler(msg) {
     if (data.type == 'flowstatus') {
         table = $('#flow-list')
         table.empty()
-        table.append("<tr><th>Timestamp</th><th style='text-align:right;'>Source</th><th></th><th style='text-align:right;'>Destination</th><th></th><th>Protocol</th><th>Packet count</th><th>Data transfered</th><th>Decoded as</th><th>Raw payload</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
+        table.append("<tr><th>Timestamp</th><th style='text-align:right;'>Source</th><th></th><th style='text-align:right;'>Destination</th><th></th><th>Proto</th><th>#</th><th>Data</th><th>Decoded as</th><th>Raw payload</th><th>YARA</th></tr>") //<th>First activity</th><th>Last activity</th><th>Content</th>
         for (var i in data.flows) {
             flow = data.flows[i]
             row = $('<tr />').attr('id',flow['fid'])
@@ -66,7 +72,7 @@ function snifferWebSocketHandler(msg) {
 
     if (data.type == 'flow_statistics_update') {
         // find the column
-        flow = data.flow
+        flow = data.msg.flow
         row = $('#'+flow.fid)
         if (row.length > 0) {   // we found our row, let's update it
             row.empty()
@@ -74,34 +80,92 @@ function snifferWebSocketHandler(msg) {
         }
         else {                  // row not found, let's create it
             row = $("<tr />").attr('id', flow.fid)
-            console.log(row)
             row = netflow_row(flow, row)
             $("#flow-list").append(row)
         }
     }
 
     if (data.type == 'get_flow_payload') {
-        pre = $('<pre />').text(data.payload)
-        $('#PayloadModal .modal-body').empty().append(pre)
+        payload = atob(data.payload)
+
+        div_ascii_dump = $('<pre />')
+        div_ascii_dump.text(payload)
+
+
+        div_hexdump = $('<div />')
+
+        div_ascii = $('<pre />').attr('id', 'hexdump_ascii')
+
+        div_ascii.text(splitSubstr(payload.replace(/[^\x20-\x7E]/g, "."), 16).join('\n'))
+
+        div_hex = $('<pre />').attr('id', 'hexdump_hex')
+        hex = ""
+        hex_payload = hexdump(payload)
+        lines = splitSubstr(hex_payload, 32)
+        for (var i in lines) {
+            bytes = splitSubstr(lines[i], 2)
+            for (var b in bytes) {
+                hex +=  bytes[b] + " "
+            }
+            hex += "\n"
+        }
+        div_hex.text(hex).css('float','left')
+
+        div_offsets = $("<pre />").attr('id', 'hexdump_offsets')
+        lines = Math.ceil(payload.length/16)
+        offsets = ""
+        ctr = 0
+        for (var i=0; i<lines; i++) {
+            offsets += "0x"+ctr.toString(16)
+            offsets += "\n"
+            ctr += 16
+        }
+        div_offsets.text(offsets).css('float','left').css('text-align', 'right')
+
+        div_hexdump.append(div_offsets).append(div_hex).append(div_ascii)
+
+        $('#hexdump').empty().append(div_hexdump)
+        $('#ascii').empty().append(div_ascii_dump)
     }
+}
+
+function splitSubstr(str, len) {
+  var ret = [ ];
+  for (var offset = 0, strLen = str.length; offset < strLen; offset += len) {
+    ret.push(str.substr(offset, len));
+  }
+  return ret;
+}
+
+function hexdump(payload) {
+    var hex = '';
+    for(var i = 0; i < payload.length; i++) {
+        if (payload.charCodeAt(i) < 16) {b = "0"}
+        else { b = ""}
+        hex += b+payload.charCodeAt(i).toString(16);
+    }
+    return hex
 }
 
 function highlight_response(row) {
     id = row.attr('id')
     split = id.split('--')
     newid = split[0] +"--"+ split[2] +"--"+ split[1]
+
+    row.toggleClass('flow-request')
     $("#"+newid).toggleClass('flow-response')
+
 }
 
 function netflow_row(flow, row) {
     // row.append($('<td />').text(flow['src_addr']+":"+flow['src_port']))
     // row.append($('<td />').text(flow['dst_addr']+":"+flow['dst_port']))
-    row.append($('<td />').text(flow['timestamp']))
+    d = new Date(flow['timestamp'] * 1000)
+    row.append($('<td />').text(format_date(d, true)))
     row.append($('<td />').text(flow['src_addr']).css('text-align', 'right'))
     row.append($('<td />').text(flow['src_port']))
     row.append($('<td />').text(flow['dst_addr']).css('text-align', 'right'))
     row.append($('<td />').text(flow['dst_port']))
-
     row.append($('<td />').text(flow['protocol']))
     row.append($('<td />').text(flow['packet_count']))
 
@@ -129,34 +193,35 @@ function netflow_row(flow, row) {
 
     // setup decoding
     if (flow.decoded_flow) {
-        decoded = $("<td />").text(flow.decoded_flow.type)
-        decoded.tooltip({ 'title': flow.decoded_flow.info, 'container': 'body'})
+        decoded = $("<td />").text(flow.decoded_flow.info)
+        decoded.tooltip({ 'title': flow.decoded_flow.type, 'container': 'body'})
+        row.addClass(flow.decoded_flow.flow_type)
     }
     else {
         decoded = $("<td />").text("N/A")
     }
+
     row.mouseover(function() {
         highlight_response($(this))
     });
     row.mouseout(function() {
         highlight_response($(this))
     });
+
     row.append(decoded)
 
     // setup payload visor
 
     payload = flow.payload
-    // icon = $("<a />").attr({ 'href': "#PayloadModal", 'role': 'button', 'class':'btn', 'data-toggle': 'modal' })
-    // icon.append($("<i />").addClass('icon-eye-open'))
     icon_view = $("<i />").addClass('icon-eye-open');
     icon_view.click(function() {
-        get_flow_payload(flow.fid); 
+        get_flow_payload(flow.fid);
         $("#PayloadModal").modal('toggle')
     });
 
-    icon_download = $("<a />").attr('href', url_static_prefix+'/sniffer/'+$('#session_name').text()+"/"+flow.fid+'/raw');
+    icon_download = $("<a />").attr('href', url_static_prefix+'/sniffer/'+$('#session_id').text()+"/"+flow.fid+'/raw');
     icon_download.append($("<i />").addClass('icon-download-alt'));
-    
+
     payload = $('<td />').addClass('flow-payload')
     payload.append(icon_view)
     payload.append(icon_download)
@@ -167,52 +232,57 @@ function netflow_row(flow, row) {
 
     row.append(payload)
 
+    // YARA matches
+    icon_yara = $("<i />").addClass('icon-flag');
+    matching_rules = []
+    for (var i in flow.yara_matches) {
+        matching_rules.push(i)
+    }
+    if (matching_rules.length > 0) {
+        icon_yara.tooltip({ 'title': matching_rules.join(', '), 'container': 'body'})
+        yara = $('<td />').append(icon_yara)
+    }
+    else { yara = $('<td />') }
+
+    row.append(yara)
+
+
     return row
 }
 
 function get_flow_payload(id) {
-    sendmessage(ws_sniffer, {'cmd': 'get_flow_payload', 'session_name': $('#session_name').text(), 'flowid': id})
+    sendmessage(ws_sniffer, {'cmd': 'get_flow_payload', 'session_id': $('#session_id').text(), 'flowid': id})
 }
 
 function snifferInterfaceInit() {
-    sendmessage(ws_sniffer, {'cmd': 'sniffstatus', 'session_name': $('#session_name').text()});
-    sendmessage(ws_sniffer, {'cmd': 'flowstatus', 'session_name': $('#session_name').text()});
-    console.log("Sent sniffstatus");
+    sendmessage(ws_sniffer, {'cmd': 'sniffstatus', 'session_id': $('#session_id').text()});
+    sendmessage(ws_sniffer, {'cmd': 'flowstatus', 'session_id': $('#session_id').text()});
 }
 
-
 function startsniff(){
-    session_name = $('#session_name').text()
-    sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_name': session_name})
+    session_id = $('#session_id').text()
+    sendmessage(ws_sniffer, {'cmd': 'sniffstart', 'session_id': session_id})
     $('#startsniff').attr('disabled','true')
-    console.log("Sent sniffstart")
-
 }
 
 function stopsniff() {
-    session_name = $('#session_name').text()
-    sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_name': session_name})
+    session_id = $('#session_id').text()
+    sendmessage(ws_sniffer, {'cmd': 'sniffstop', 'session_id': session_id})
     $('#stopsniff').attr('disabled','true')
-    console.log("Sent sniffstop")
 }
 
-function delsniff(session_name) {
-    r = confirm("Are you sure you want to remove session "+ session_name+" and all of its data?")
+function delsniff(session_id) {
+    r = confirm("Are you sure you want to remove session "+session_id+" and all of its data?")
     if (r == false) {return}
     $.ajax({
         type: 'get',
-        url: url_static_prefix+'/sniffer/'+session_name+'/delete',
+        url: url_static_prefix+'api/sniffer/'+session_id+'/delete/',
         success: function(data) {
-            console.log(data.success);
             if (data.success == 1) { // delete the corresponding row
-                $("#session-"+session_name).remove()
-                display_message("Session " + session_name + " removed")
+                $("#session-"+session_id).remove()
             }
-            if (data.success == 0) {
-                console.log(data)
-                display_message(data.status)
 
-            }
+            display_message(data.status)
         }
     });
 }
@@ -224,32 +294,43 @@ function display_message(text) {
 }
 
 
-function getSessionList() {
+function getSessionList(private) {
+    console.log("Requesting session list")
+    url = url_static_prefix+'api/sniffer/sessionlist/?user'
+    if (private) {
+        url += "&private"
+    }
     $.ajax({
         type: 'get',
-        url: url_static_prefix+'/sniffer/sessionlist/',
+        url: url,
         success: function(data) {
-            data = $.parseJSON(data);
-            console.log(data);
-
             table = $('#sessions');
-
-            for (var i in data.session_list) {    
-                name = data.session_list[i]['name']
-                tr = $('<tr></tr>').attr('id', 'session-'+name);
-                session_links = $('<a />').attr("href", url_static_prefix+'/sniffer/'+name).text(name);
-                tr.append($("<td />").append(session_links))
-                tr.append($("<td />").text(data.session_list[i]['packets']));
-                tr.append($("<td />").text(data.session_list[i]['nodes']));
-                tr.append($("<td />").text(data.session_list[i]['edges']));
-                tr.append($("<td />").text(data.session_list[i]['status']));
-                del = $("<td />")
-                i = $('<i class="icon-remove"></i>').data('session-name', name)
-                del.append(i)
-                i.click(function () { delsniff($(this).data('session-name')) })
-                tr.append(del)
-                table.append(tr);
-            }
+            console.log(data)
+            for (var i in data.session_list) {
+                    id = data.session_list[i].id
+                    name = data.session_list[i]['name']
+                    public = data.session_list[i]['public'] ? "Yes" : "No"
+                    
+                    session_links = $('<a />').attr("href", url_static_prefix+'sniffer/'+id).text(name);
+                    tr = $('<tr></tr>').attr('id', 'session-'+id);
+                    d = new Date(data.session_list[i]['date_created'].$date)
+                    // tr.append($("<td />").text(format_date(data.session_list[i]['date_created'])));
+                    tr.append($("<td />").text(format_date(d, false)));
+                    tr.append($("<td />").append(session_links));
+                    tr.append($("<td />").text(data.session_list[i]['packets']));
+                    tr.append($("<td />").text(data.session_list[i]['nodes']));
+                    tr.append($("<td />").text(data.session_list[i]['edges']));
+                    tr.append($("<td />").text(data.session_list[i]['status']));
+                    tr.append($("<td />").text(public));
+                    del = $("<td />")
+                    if (private) {
+                        i = $('<i class="icon-remove"></i>').data('session-id', id)
+                        del.append(i)
+                        i.click(function () { delsniff($(this).data('session-id')) })
+                        tr.append(del)
+                    }
+                    table.append(tr);
+                }
             }
         });
 }

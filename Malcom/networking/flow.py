@@ -2,33 +2,88 @@ from scapy.all import *
 from scapy.error import Scapy_Exception
 import pwd, os, sys, time, threading, string
 from bson.json_util import dumps, loads
+from bson import Binary
 from Malcom.model.datatypes import Url, Hostname, Ip
 import Malcom.auxiliary.toolbox as toolbox
 
 
+rr_codes = {1: "A", 28: "AAAA", 2: "NS", 5: "CNAME", 15: "MX", 255: 'ANY', 12: 'PTR'}
+r_codes = {3: "Name error", 0: "OK"}
+		
 
 class Decoder(object):
 
 	@staticmethod
 	def decode_flow(flow):
 		data = None
-
-		#if flow.src_port == 80: # probable HTTP response
+		
 		data = Decoder.HTTP_response(flow.payload)
 		if data: return data
-		#if flow.dst_port == 80: # probable HTTP request
+		
 		data = Decoder.HTTP_request(flow.payload)
 		if data: return data
 		
 		if flow.tls:
-			#if flow.dst_port == 443: # probabl HTTPs request
 			data = Decoder.HTTP_request(flow.cleartext_payload, secure=True)
 			if data: return data
-			#if flow.src_port == 443: # probabl HTTPs request
+
 			data = Decoder.HTTP_response(flow.cleartext_payload)
 			if data: return data
 
+		# This is to avoid scapy's decompression loops
+		# Only try tro decode DNS queries / answers if
+		# they seem to be going to an appropriate port
+		if flow.dst_port == 53:
+			data = Decoder.DNS_request(flow.payload)
+			if data: return data
+
+		if flow.src_port == 53:
+			data = Decoder.DNS_response(flow.payload)
+			if data: return data
+
 		return False
+
+
+	@staticmethod
+	def DNS_request(payload):
+		data = {}
+
+		try: # we're relying on scapy to parse raw data... this is probably not gonig to end well.
+			dns = DNS(payload)
+			if dns.ancount == 0 and dns.nscount == 0 and dns.arcount == 0 and dns.qdcount > 0: # looks like a DNS query
+				data['flow_type'] = 'dns_query'
+				data['request_type'] = rr_codes.get(dns.qd.qtype, "?")
+				data['questions'] = [ (dns.qd[i].qname, dns.qd[i].qtype) for i in range(dns.qdcount)]
+				data['info'] = "DNS query: %s" % (", ".join( "%s (%s)" % (q[0], rr_codes.get(q[1], "?")) for q in data['questions'] ))
+		except Exception, e:
+			return {}
+
+		return data
+
+	@staticmethod
+	def DNS_response(payload):
+		data = {}
+		try:
+			dns = DNS(payload)
+			if dns.ancount > 0 or dns.nscount > 0 or dns.arcount > 0 : # looks like a DNS response
+				try:
+					data['answers'] = [ (dns.an[i].rrname, dns.an[i].rdata, dns.an[i].type) for i in range(dns.ancount)]	
+				except IndexError, e:
+					raise e
+				
+				data['rcode'] = dns.rcode
+				data['flow_type'] = 'dns_response'
+				if len(data['answers']) > 0:
+					data['info'] = "DNS %s %s" % (r_codes[data['rcode']], ", ".join( "%s (%s) -> %s" % (q[0], rr_codes.get(q[2], "?"), q[1]) for q in data['answers'] ))
+					if 'A' in [rr_codes.get(q[2]) for q in data['answers']] and r_codes[dns.rcode] == 'OK':
+						data['flow_type'] = 'dns_response_OK'
+				else:
+					data['info'] = "DNS %s (no answers)" % r_codes[data['rcode']]
+		except Exception, e:
+			return {}
+
+		return data
+
 
 	@staticmethod
 	def HTTP_request(payload, secure=False):
@@ -39,8 +94,9 @@ class Decoder(object):
 		else:
 			data['method'] = request.group("method")
 			data['uri'] = request.group('URI')
-			host = re.search(r'Host: (?P<host>\S+)', payload)
-			data['host'] = host.group('host') if host else "N/A"
+			host = re.search(r'Host: (?P<host>[.\w-]+)(:(?P<port>[\d]{1,5}))?', payload).groupdict()
+			data['host'] = host['host']
+			data['port'] = host['port']
 			data['flow_type'] = "http_request"
 			
 			if secure:
@@ -50,7 +106,10 @@ class Decoder(object):
 				data['scheme'] = 'http://'
 				data['type'] = 'HTTP request'
 
-			data['url'] = data['scheme'] + data['host'] + data['uri']
+			data['url'] = data['scheme'] + data['host']
+			if data['port']:
+				data['url'] += ":" + data['port']
+			data['url'] += data['uri']
 			data['info'] = "%s request for %s" % (data['method'], data['url'])
 			
 			return data
@@ -62,8 +121,8 @@ class Decoder(object):
 		if not response:
 			return False
 		else:
-			data['flow_type'] = 'http_response'
 			data['status'] = response.group("status_code")
+			data['flow_type'] = 'http_response_%s' % data['status']
 			encoding = re.search(r'Transfer-Encoding: (?P<encoding>\S+)', payload)
 			data['encoding'] = encoding.group('encoding') if encoding else "N/A"
 			response = re.search(r'\r\n\r\n(?P<response>[\S\s]*)', payload)
@@ -117,38 +176,43 @@ class Flow(object):
 		fid = "flowid--%s-%s--%s-%s" % (self.dst_addr, self.dst_port, self.src_addr, self.src_port)
 		return fid.replace('.','-')		
 
-	def __init__(self, pkt):
+	def __init__(self, pkt=None):
 		self.packets = []
 		self.tls = False # until proven otherwise
 		self.cleartext_payload = ""
 
-		# set initial timestamp
-		self.timestamp = pkt.time
-
-		# addresses
-		self.src_addr = pkt[IP].src 
-		self.dst_addr = pkt[IP].dst
-
-		self.src_port = pkt[IP].sport
-		self.dst_port = pkt[IP].dport
-	
-		if pkt.getlayer(IP).proto == 6:
-			self.protocol = 'TCP'
-			self.buffer = [] # buffer for out-of-order packets
-		elif pkt.getlayer(IP).proto == 17:
-			self.protocol = 'UDP'
-		else:
-			self.protocol = "???"
-
-		# see if we need to reconstruct flow (i.e. check SEQ numbers)
-		self.payload = ""
+		# if we create the flow with a new packet, do some parsing
+		
+		self.packet_count = 0
+		self.payload = ""		
 		self.decoded_flow = None
 		self.data_transfered = 0
 		self.packet_count = 0
-		self.fid = Flow.flowid(pkt)
 
+		if pkt: 
+			# set initial timestamp
+			self.timestamp = pkt.time
 
-		self.add_pkt(pkt)
+			# addresses
+			self.src_addr = pkt[IP].src 
+			self.dst_addr = pkt[IP].dst
+
+			self.src_port = pkt[IP].sport
+			self.dst_port = pkt[IP].dport
+		
+			if pkt.getlayer(IP).proto == 6:
+				self.protocol = 'TCP'
+				self.buffer = [] # buffer for out-of-order packets
+			elif pkt.getlayer(IP).proto == 17:
+				self.protocol = 'UDP'
+			else:
+				self.protocol = "???"
+
+			self.fid = Flow.flowid(pkt)
+			self.add_pkt(pkt)
+
+		
+		
 
 		
 
@@ -216,7 +280,7 @@ class Flow(object):
 
 		return False
 
-	def get_statistics(self):
+	def get_statistics(self, yara_rules=None, include_payload=False, encoding='raw'):
 
 		update = {
 				'timestamp': self.timestamp,
@@ -233,9 +297,41 @@ class Flow(object):
 
 		# we'll use the type and info fields
 		self.decoded_flow = Decoder.decode_flow(self)
+		# if yara_rules:
+		# 	matches = self.run_yara(yara_rules)
+		# 	update['yara_matches'] = matches
+			# add this to something
 		update['decoded_flow'] = self.decoded_flow
 
+		if include_payload:
+			update['payload'] = self.get_payload(encoding=encoding)
+
 		return update
+	@staticmethod
+	def load_flow(flow):
+
+		f = Flow()
+		
+		f.timestamp = flow['timestamp']
+		f.fid = flow['fid']
+		f.src_addr = flow['src_addr']
+		f.src_port = flow['src_port']
+		f.dst_addr = flow['dst_addr']
+		f.dst_port = flow['dst_port']
+		f.protocol = flow['protocol']
+		f.packet_count = flow['packet_count']
+		f.data_transfered = flow['data_transfered']
+		f.tls = flow['tls']
+
+		if f.tls:
+			f.cleartext_payload = flow['payload']
+		
+		f.payload = flow['payload']
+		f.decoded_flow = Decoder.decode_flow(f)
+
+		return f
+
+
 
 	def get_payload(self, encoding='web'):
 
@@ -245,10 +341,24 @@ class Flow(object):
 			payload = self.payload
 
 		if encoding == 'web':
-			return unicode(payload, errors='replace')
+			return unicode(payload, errors='ignore')
 		if encoding == 'raw':
 			return payload
-			
+		if encoding == 'base64':
+			return payload.encode('base64')
+		if encoding == 'binary':
+			return Binary(payload)
+	
+	def run_yara(self, yara_rules):
+		matches = {}
+		for m in yara_rules.match(data=self.get_payload(encoding='raw')): # match against plaintext / decrypted paylaod
+			if matches.get(m.rule, False) == False:
+				matches[m.rule] = []
+			matches[m.rule].append(m.strings)
+
+		return matches
+
+
 
 	def print_statistics(self):
 		print "%s:%s  ->  %s:%s (%s, %s packets, %s buff)" % (self.src_addr, self.src_port, self.dst_addr, self.dst_port, self.protocol, len(self.packets), len(self.buffer))

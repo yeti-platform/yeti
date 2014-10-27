@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block main %}
 <div class='span9'>
-  <h1>Sniffer sessions</h1>
+  <h2>Sniffer sessions</h2>
   <table id='sessions' class='table table-condensed'>
-    <tr> <th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th></th></tr>
+    <tr><th>Created</th><th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th>Public</th></tr>
   </table>
 </div>
 
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
-<script type="text/javascript">getSessionList()</script>
+<script type="text/javascript">getSessionList(false)</script>
 {%endblock%}
 {% block sidebar %}
 <div class='data span3'>
@@ -24,14 +24,17 @@
     <input type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
     <br />
     {% if not g.config['PUBLIC'] %}
-      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffer with new session</label>
+      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffing right away</label>
+      <label class="checkbox"><input type="checkbox" name="public" checked='checked'> Share this session</label>
+      <span class="help-block">This will make the sniffing session accessible by everyone. Uncheck to keep private.<br/>Bear in mind that artifacts detected in your session (IP addresses, URLs, and hostnames) <strong>will still be added to the database and may be manipulated regularly</strong>.</span>
       {% if g.config['TLS_PROXY_PORT'] %}
       <label class="checkbox"><input type="checkbox" name="intercept_tls" checked='checked'> Intercept TLS (port {{g.config['TLS_PROXY_PORT']}})</label>
+
       {% endif %}
       <!-- <label for='tls-interception'>TLS proxy port</label>
       <input type="text" placeholder="Leave blank for no interception" name='tls_proxy_port' id='tls_proxy_port'> -->
     {% endif %}
-    <button type="submit" id='newsniff' onclick='return hasname();' class="btn btn-primary">Create new session</button>
+    <button type="submit" id='newsniff' class="btn btn-primary">Create new session</button>
     
   </form>  
 </div>

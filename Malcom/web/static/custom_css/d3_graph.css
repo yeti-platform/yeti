@@ -1,3 +1,62 @@
+/* link colors  - COMMS */
+
+.link { 
+	stroke: #bab8b8;
+	transition:stroke 1s;
+}
+
+.link.TCP {
+	stroke: #8eb0df;
+}
+
+.link.UDP {
+	stroke: #8eb0df;
+}
+
+.link.DNS {
+	stroke: #21b429;
+}
+
+.link.HTTP {
+	stroke: #275bdf;
+}
+
+.link.comms {        
+	stroke: rgba(255,2,0,0.7);   
+	opacity:1;
+}
+
+
+/* link colors - TOPOLOGY */
+
+
+/*.link.A {
+	stroke: #2aea36;
+}
+.link.NS {
+	stroke: #21b429;
+}
+.link.MX {
+	stroke: #219d47;
+}
+.link.reverse {
+	stroke: #21b429;
+}
+.link.domain {
+	stroke: #62b464;
+}
+.link.CNAME {
+	stroke: #82b48c;
+}
+.link.net_info {
+	stroke: grey;
+}
+.link.host {
+	stroke: #71b470;
+}
+*/
+
+
 
 .node text {
   pointer-events: none;
@@ -17,12 +76,14 @@
 }
 
 .dim {
-	opacity: 0.15;
+	opacity: 0.15 !important;
 }
 
 .link {
-	stroke: #000;
+	stroke: #bab8b8;
 	stroke-width: 1.5px;
+	opacity:0.50;
+	fill:none;
 }
 
 .node {
@@ -71,6 +132,18 @@ circle:hover {
 	stroke: black!important;
 	stroke-width: 3px;
 	cursor: pointer;
+	
+}
+
+circle {
+	transition:stroke 0.2s;
+	transition:fill 0.2s;
+}
+
+.comms circle {
+	stroke: #c70110;
+	fill: #ee0011;
+
 }
 
 .brush .extent {
@@ -107,8 +180,9 @@ circle:hover {
 	margin-left:20px;
 }
 
-
-
+.minitable td, .minitable th {
+	line-height: 10px;
+}
 
 
 

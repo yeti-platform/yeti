@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block main %}
+<div class='span9'>
+	<h2>Network captures</h2>
+
+	<ul id='settingsTabs' class='nav nav-tabs'>
+		<li class='active'><a href='#pcaps' data-toggle='tab'><i class="icon-facetime-video"></i> Sessions</a></li>
+		<li><a href='#tags' data-toggle='tab'><i class="icon-tags"></i> Tags</a></li>
+		<!-- <li><a href='#ip' data-toggle='tab'>IPs</a></li> -->
+	</ul>
+
+	<div id='settingsTabsContent' class='tab-content'>
+
+		<!-- pcaps -->
+
+		<div id='pcaps' class='tab-pane active'>
+			{% if sniffer_sessions %}
+				<table id='sessions' class='table table-condensed'>
+			    <tr><th>Created</th><th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th>Public</th><th></th></tr>
+			  </table>
+			  <script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
+			  <script type="text/javascript">getSessionList(true)</script>
+			{%else%}
+			<div class="alert alert-block alert-info">
+			  <h4>You don't have any sessions yet.</h4>
+			  <a href='{{ url_for('sniffer') }}'>Click here</a> to view public packet captures and add your own.
+			</div>
+			{%endif%}
+
+		</div>
+
+		<!-- tags -->	
+
+		<div id='tags' class='tab-pane'>
+			<div class="alert alert-block alert-warning">
+			  <h4>Coming soon.</h4>
+			</div>
+		</div>
+
+
+	</div>
+
+
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div class='span3'>
+
+</div>
+{% endblock %}

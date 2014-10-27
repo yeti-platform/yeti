@@ -36,12 +36,19 @@ nosetests.xml
 .pydevproject
 
 
-# folders
+# Malcom folders
 env-*
 libs
-
+# do not include user-generated pcap files
+Malcom/sniffer/*.pcap
+# do not include TLS keys
+Malcom/networking/tlsproxy/keys/server.crt
+Malcom/networking/tlsproxy/keys/server.key
+Malcom/auxiliary/geoIP/*
+*.conf
 
 # MAC OS X stuff
+.fuse_*
 .DS_Store
 .DS_Store?
 ._*

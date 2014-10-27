@@ -1,5 +1,5 @@
 import urllib2
-from Malcom.model.datatypes import Ip 
+from Malcom.model.datatypes import Ip, Evil
 from feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
@@ -9,22 +9,20 @@ class DShield3215(Feed):
 	"""
 	def __init__(self, name):
 		super(DShield3215, self).__init__(name)
-		self.enabled = True
+		self.name = "DShield3215"
+		self.source = 'http://dshield.org/asdetailsascii.html?as=3215'
+		self.description = "DShield scanning report for AS 3215"
+		self.confidence = 30
+		
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://dshield.org/asdetailsascii.html?as=3215").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
-		
-		for line in feed:	
-			self.analyze(line)
-		return True
+		self.update_lines()
 
 	def analyze(self, line):
 		if line.startswith('#') or line.startswith('\n'):
+			return
+		dict = line.split('\t')
+		if int(dict[2]) < 300: # skip entries which have not been reported at least 300 times
 			return
 
 		try:
@@ -35,10 +33,15 @@ class DShield3215(Feed):
 			return
 
 		# Create the new ip and store it in the DB
+		dict = line.split('\t')
 		ip = Ip(ip=ip, tags=['dshield'])
+		evil = Evil()
+		evil['value'] = 'Scanner at %s' % ip['value']
+		evil['reports'] = dict[2]
+		evil['first seen'] = dict[3]
+		evil['last seen'] = dict[4]
 
-		ip, status = self.analytics.save_element(ip, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
+		return ip, evil
+
 
 

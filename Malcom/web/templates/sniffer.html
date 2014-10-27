@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block main %}
 
-<div class='span9'> 
+<div class='span9' id='mainscreen'> 
   
   <ul id='datasetTabs' class='nav nav-tabs'>
     <li class='active'><a href='#graph' data-toggle='tab'>Graph</a></li>
@@ -10,7 +10,7 @@
 
 
   <div id='datasetTabsContent' class='tab-content'>
-    <div class='tab-pane active' id='graph'>
+    <div class='tab-pane active' id='graph'> <!-- Graph view pane -->
       <div class='graph'>
       </div>
       <div class='hotkeys'>
@@ -19,7 +19,7 @@
           <li><strong>e</strong>: find evil</li>
           <li><strong>u</strong>: unfix selected</li>
           <li><strong>shift</strong>: multimple selections</li>
-          <li><strong>h</strong>: hide nodes</li>
+          <li><strong>h / s / t</strong>: hide / show / toggle node display</li>
           <li><strong>(shift+)arrows</strong>: move nodes</li>
         </ul>
         <table>
@@ -43,8 +43,8 @@
       </div>
     </div>
 
-    <div class='tab-pane' id='flows'>
-      <table class='table table-condensed table-hover' id='flow-list'>
+    <div class='tab-pane' id='flows'> <!-- Flow table view pane -->
+      <table class='table table-condensed' id='flow-list'>
       </table>
     </div>
   </div>
@@ -56,6 +56,35 @@
       <h3 id="PayloadModalLabel">Payload contents</h3>
     </div>
     <div class="modal-body">
+
+      <ul class="nav nav-tabs" id="myTab">
+        <li class="active"><a href="#ascii" data-toggle="tab">ASCII</a></li>
+        <li><a href="#hexdump" data-toggle="tab">Hexdump</a></li>
+      </ul>
+ 
+    <div class="tab-content">
+      <div class="tab-pane active" id="ascii">ASCII</div>
+      <div class="tab-pane" id="hexdump">Hexdump</div>
+    </div>
+
+      <!-- <ul id='modalTabs' class='nav nav-tabs'>
+        <li class='active'><a href='#ascii-dump' data-toggle='dump'>ASCII</a></li>
+        <li><a href='#hex-dump' data-toggle='dump'>Hexdump</a></li>
+      </ul>
+
+      <div id='asciidumpTabsContent' class='dump-content'>
+        <div class='tab-pane active' id='ascii-dump'>
+          ascii
+        </div>
+      </div>
+
+      <div id='hexdumpTabsContent' class='dump-content'>
+        <div class='dump-pane active' id='hex-dump'>
+          hex
+        </div>
+      </div> -->
+
+
     </div>
     <div class="modal-footer">
       <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
@@ -74,51 +103,89 @@
 
 // let's add arrows to the whole shennaningans
 
+setInterval(function() {uncomm_all()}, 500)
+
   svg.append("svg:defs").selectAll("marker")
       .data(["arrow"])
       .enter().append("svg:marker")
         .attr("id", String)
         .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 15)
+        .attr("markerUnits", "userSpaceOnUse")
+        .attr("refX", 20)
         .attr("refY", 0)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
+        .attr("markerWidth", 7)
+        .attr("markerHeight", 7)
         .attr("orient", "auto")
         .append("svg:path")
           .attr("d", "M0,-5L10,0L0,5");
 
-
 </script>
 <script>
 initSnifferWebSocket()
+initSnifferRealtimeWebSocket('{{session.name}}')
 ws_sniffer.onopen = snifferInterfaceInit
+
+$('a[href="#graph"]').on('shown', function (e) {
+  // e.target // activated tab
+  // e.relatedTarget // previous tab
+  $("#mainscreen").attr('class', 'span9')
+  $(".toolbar").show()
+})
+
+$('a[href="#flows"]').on('shown', function (e) {
+  // e.target // activated tab
+  // e.relatedTarget // previous tab
+  $("#mainscreen").attr('class', 'span12')
+  $(".toolbar").hide()
+})
+
+// getSessionList(true)
+
+
 </script>
 {%endblock%}
 
 {% block sidebar %}
 <div class='data span3 toolbar'>
 
-  <h1 id='session_name'>{{session.name}}</h1>
-  <small>Filter: {{session.filter}}</small>
+  <h2 id='session_name'>{{session.name}}</h2>
+  <table class='table table-compact minitable' style='font-size:x-small'>
+    <tr><th>Filter</th><td>{{session.filter}}</td></tr>
+    <tr><th>ID</th><td id='session_id'>{{session.id}}</td></tr>
+    <tr><th>Public</th><td>{{"Yes" if session.public else "No"}}</td></tr>
+  </table>
   <br />
+  <h3>Graph operations</h3>
+  <div class="input-append">
+      <input id="query" type="text" onkeyup="highlight_query($('#query').val())">
+      <button class='btn' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
 
-  {% if not g.config['PUBLIC'] %}
+  </div>
+  <span class="help-block">e.g. 'type:ip', 'google.com'</span>
   <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">
-    {% if session.pcap %}Play PCAP{% else %}Start{%endif%}
+    {% if session.pcap %}Replay PCAP{% else %}Start{%endif%}
   </button>
   <button id='stopsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:stopsniff()">
     {% if session.pcap %}Cancel{% else %}Stop{%endif%}
   </button>
-  {% endif %}
   
-  <a href="{{url_for('pcap', session_name=session_name)}}">Get .pcap</a>
-  <h3>Info</h3>
-  <table class='table' id='node_info'></table>
+  <a href="{{url_for('malcom_api.pcap', session_id=session.id)}}">Get .pcap</a>
+  <br style='clear:both' style='margin-top:10px;'>
+
+  <div style='margin-top:5px;'>
+    <label class="checkbox" style='font-size:small;float:left;margin-right:30px;'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
+    <label class="checkbox" style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  </div>
+  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
+  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
+  
+  <h3>Node info</h3>
+  <table class='table table-condensed' id='node_info'></table>
   <div class='whois'></div>
-  <h3>Sessions</h3>
+  <!-- <h3>Sessions</h3>
   <table id='sessions' class='table table-condensed'>
     <tr><th>Name</th><th># captured</th><th>Nodes</th><th>Edges</th><th>Status</th></tr>
-  </table>
+  </table> -->
 </div>
 
 {% endblock %}

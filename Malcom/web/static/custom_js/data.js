@@ -28,8 +28,6 @@ function highlight_query(query) {
 }
 
 function change_opacity(query) {
-
-	console.log(query)
 	
 	ids = []
 	
@@ -66,7 +64,7 @@ function change_opacity(query) {
 
 function display_data(d)
 {
-	console.log(d)
+	console.log("Displayed data: "+d)
 	$('#node_info').empty();
 	$(".whois").empty();
 
@@ -74,7 +72,6 @@ function display_data(d)
 }
 
 function display_generic(d) {
-	console.log('display generic')
 	if (d.fields != undefined) {
 		for (var display in d.fields) {
 			key = d.fields[display][0]
@@ -108,7 +105,7 @@ function display_generic(d) {
 }
 
 
-function format_date(date)
+function format_date(date, millis)
 {
 	// hours part from the timestamp
 	var hours = date.getHours() < 10 ? '0' + date.getHours() : date.getHours();
@@ -116,6 +113,14 @@ function format_date(date)
 	var minutes = date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()
 	// seconds part from the timestamp
 	var seconds = date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds()
+	if (millis == true) {
+		m = date.getMilliseconds()
+		if (m < 10)
+			m = "00"+m
+		if (m > 10 && m < 100)
+			m = "0"+m
+		seconds += "." + m
+	}
 
 	var day = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
 	var month = date.getMonth()+1 < 10 ? '0' + (date.getMonth()+1) : (date.getMonth()+1)

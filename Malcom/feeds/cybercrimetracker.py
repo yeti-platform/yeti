@@ -11,38 +11,26 @@ class CybercrimeTracker(Feed):
 
 	def __init__(self, name):
 		super(CybercrimeTracker, self).__init__(name, run_every="12h")
-		self.enabled = True
-
-	def update(self):
-		try:
-			feed = urllib2.urlopen("http://cybercrime-tracker.net/rss.xml")	#Xylitol's tracker
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
-
-		children = ["title", "link", "pubDate", "description"]
-		main_node = "item"
+		self.name = "CybercrimeTracker"
+		self.description = "CyberCrime Tracker - Latest 20 CnC URLS"
+		self.source = "http://cybercrime-tracker.net/rss.xml"
+		self.confidence = 90
 		
-		tree = etree.parse(feed)
-		for item in tree.findall("//%s"%main_node):
-			dict = {}
-			for field in children:
-				dict[field] = item.findtext(field)
+	def update(self, testing=False):
+		self.update_xml('item', ["title", "link", "pubDate", "description"])
 
-			self.analyze(dict)
-
-		return True
-
-	def analyze(self, dict):
+	def analyze(self, dict, testing=False):
 		try:
 			url = toolbox.find_urls(dict['title'])[0]
 		except Exception, e:
-			return
+			return # if no URL is found, bail
 
 		# Create the new url and store it in the DB
-		url =Url(url=url, tags=['cybercrimetracker', 'malware', dict['description'].lower()])
+		url = Url(url=url, tags=['cybercrimetracker', 'malware', dict['description'].lower()])
 
-		url, status = self.analytics.save_element(url, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
+		evil = Evil()
+		evil['value'] = "%s (%s CC)" % (url['value'], dict['description'].lower())
+		evil['tags'] = ['cybercrimetracker', 'malware', 'cc', dict['description'].lower()]
+		evil['info'] = "%s CC. Published on %s" % (dict['description'], dict['pubDate'])
+
+		return url, evil

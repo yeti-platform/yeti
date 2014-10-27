@@ -1,0 +1,61 @@
+# malcom.conf
+# The default malcom configuration
+
+[web]
+activated = true
+listen_interface = 0.0.0.0
+listen_port = 8080
+auth = true
+
+[feeds]
+activated = false 
+feeds_dir = /home/malcom/malcom/Malcom/feeds
+scheduler = false
+
+[analytics]
+activated = false 
+max_workers = 12
+
+[sniffer]
+activated = true
+network = true
+pcap = false
+sniffer_dir = /home/malcom/malcom/Malcom/sniffer
+tls_proxy_port = 0
+yara_path = /home/malcom/yararules
+
+
+# databases can be configured here
+
+[db_local]
+name = Local
+type = db
+host = localhost
+port = 27017
+
+
+[feeds]
+# AlienvaultIP
+CybercrimeTracker
+# DShield16276
+# DShield3215
+DShieldSuspiciousDomainsHigh
+# DShieldSuspiciousDomainsLow
+# DShieldSuspiciousDomainsMedium
+MalcodeBinaries
+# MalwareDomains
+MDLHosts
+MDLTracker
+OpenblIP
+PalevoTracker
+SiriUrzVX
+SpyEyeBinaries
+SpyEyeTracker
+SpyEyeConfigs
+SpyEyeDropzones
+TorExitNodes
+UrlQuery
+ZeusTrackerConfigs
+ZeusTrackerDropzones
+ZeusGameOverDomains
+ZeusTrackerBinaries

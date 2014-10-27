@@ -13,30 +13,13 @@ class ZeusTrackerDropzones(Feed):
 
 	def __init__(self, name):
 		super(ZeusTrackerDropzones, self).__init__(name, run_every="1h")
-		self.enabled = True
-
-
+		self.name = "ZeusTrackerDropzones"
+		self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones"
+		self.description = "This feed shows the latest 50 ZeuS dropzone URLs."
+		
 	def update(self):
-		try:
-			feed = urllib2.urlopen("https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones")
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
-		
-		children = ["title", "link", "description", "guid"]
-		main_node = "item"
-		
+		self.update_xml('item', ["title", "link", "description", "guid"])
 
-		tree = etree.parse(feed)
-		for item in tree.findall("//%s"%main_node):
-			dict = {}
-			for field in children:
-				dict[field] = item.findtext(field)
-
-			self.analyze(dict)
-
-		return True
 
 	def analyze(self, dict):
 			
@@ -48,12 +31,9 @@ class ZeusTrackerDropzones(Feed):
 
 		# We start populating the Evil() object's attributes with
 		# information from the dict we parsed earlier
-
-		evil['feed'] = "ZeusTrackerDropzones"
-		evil['url'] = toolbox.find_urls(dict['description'])[0]
 		
 		# description
-		evil['description'] = dict['link'] + " " + dict['description'] 
+		evil['description'] = dict['description'] 
 
 		# status
 		if dict['description'].find("offline") != -1:
@@ -69,16 +49,13 @@ class ZeusTrackerDropzones(Feed):
 			evil['md5'] = "No MD5"
 		
 		# linkback
-		evil['source'] = dict['guid']
-
-		# type
-		evil['type'] = 'evil'
+		evil['guid'] = dict['guid']
 
 		# tags
 		evil['tags'] += ['zeus', 'malware', 'ZeusTrackerDropzones']
 
-		# date_retreived
-		evil['date_retreived'] = datetime.datetime.utcnow()
+		# Create an URL element
+		url = Url(toolbox.find_urls(dict['description'])[0], ['evil', 'ZeusTrackerDropzones'])
 
 		# This is important. Values have to be unique, since it's this way that
 		# Malcom will identify them in the database.
@@ -88,23 +65,9 @@ class ZeusTrackerDropzones(Feed):
 		if md5:
 			evil['value'] += " (MD5: %s)" % evil['md5']
 		else:
-			evil['value'] += " (URL: %s)" % evil['url']
+			evil['value'] += " (URL: %s)" % url['value']
 
 		# Save elements to DB. The status field will contain information on 
 		# whether this element already existed in the DB.
 
-		evil, status = self.analytics.save_element(evil, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
-		# Create an URL element
-		url = Url(evil['url'], ['evil', 'ZeusTrackerDropzones'])
-
-		# Save it to the DB.
-		url, status = self.analytics.save_element(url, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
-
-		# Connect the URL element to the Evil element
-		self.analytics.data.connect(url, evil, 'hosting')
-
+		return url, evil

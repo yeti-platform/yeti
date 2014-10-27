@@ -1,9 +1,18 @@
+import datetime, os, sys
 
-import datetime, os
-import pygeoip
+try:
+	import geoip2.database
+	file = os.path.abspath(__file__)
+	current_path = os.path.dirname(os.path.abspath(__file__))
+	geoip_reader = geoip2.database.Reader(current_path+'/../auxiliary/geoIP/GeoIP2-City.mmdb')
+	geoip = True
+except Exception, e:
+	sys.stderr.write("[-] Could not load GeoIP library - %s" % e)
+	geoip = False
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.auxiliary.toolbox import debug_output
+from Malcom.auxiliary.async_resolver import AsyncResolver
 
 
 class Element(dict):
@@ -15,8 +24,6 @@ class Element(dict):
 		self['value'] = None
 		self['type'] = None
 		self['refresh_period'] = None
-		# all elements have to be analysed at least once
-
 		
 	def to_dict(self):
 		return self.__dict__
@@ -31,11 +38,9 @@ class Element(dict):
 		self['tags'].extend(tags)
 		self['tags'] = list(set(self['tags']))
 
-	def is_recent(self):
-		if 'date_created' not in self:
-			return False
-		else:
-			return (self['date_created'] - datetime.datetime.now()) < datetime.timedelta(minutes=1)
+	# necessary for pickling
+	def __getstate__(self): return self.__dict__
+	def __setstate__(self, d): self.__dict__.update(d)
 
 
 class File(Element):
@@ -175,7 +180,7 @@ class Url(Element):
 			new.append(('host', Hostname(toolbox.is_hostname(self['hostname']))))
 		else:
 			debug_output("No hostname found for %s" % self['value'], type='error')
-			return
+			return []
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 
@@ -184,14 +189,6 @@ class Url(Element):
 		self['next_analysis'] = None
 
 		return new
-
-
-
-
-
-
-
-
 
 
 
@@ -228,36 +225,27 @@ class Ip(Element):
 		self['tags'] = tags
 		self['type'] = 'ip'
 		# refresh IP geolocation every 72hours
-		self['refresh_period'] = Ip.default_refresh_period
-			
+		if ip != '':
+			self.location_info()
+		
+		self['refresh_period'] = Ip.default_refresh_period			
 
 	@staticmethod
 	def from_dict(d):
 		ip = Ip()
 		for key in d:
 			ip[key] = d[key]
+
+		ip.location_info()
 		return ip
 			
 
 	def analytics(self):
 		debug_output( "(ip analytics for %s)" % self['value'])
-
-		# get geolocation info
-		try:
-			file = os.path.abspath(__file__)
-			datatypes_directory = os.path.dirname(file)
-			gi = pygeoip.GeoIP(datatypes_directory+'/../auxiliary/geoIP/GeoLiteCity.dat')
-			geoinfo = gi.record_by_addr(self.value)
-			for key in geoinfo:
-				self[key] = geoinfo[key]
-		except Exception, e:
-			debug_output( "Could not get IP info for %s: %s" %(self.value, e), 'error')
+		new = []
 
 		# get reverse hostname
-		
-		new = []
-		hostname = toolbox.dns_dig_reverse(self['value'])
-		
+		hostname = toolbox.reverse_dns(self['value'])
 		if hostname:
 			new.append(('reverse', Hostname(hostname)))
 
@@ -266,22 +254,34 @@ class Ip(Element):
 
 		return new
 
+	def location_info(self):
+	
+		# get geolocation info (v2)
+		if geoip:
+			try:
+				geoinfo = geoip_reader.city(self.value)
+				
+				self['city'] = geoinfo.city.name
+				self['postal_code'] = geoinfo.postal.code
+				self['time_zone'] = geoinfo.location.time_zone
+				self['country_code'] = geoinfo.country.iso_code
+				self['latitude'] = str(geoinfo.location.latitude)
+				self['longitude'] = str(geoinfo.location.longitude)
 
-
-
-
-
-
+			except Exception, e:
+				debug_output( "Could not get IP location info for %s: %s" %(self.value, e), 'error')
 
 
 
 class Hostname(Element):
 	
-	default_refresh_period = 6*3600
+	default_refresh_period = 6*60*60 # 6 hours
+	# default_refresh_period = 10*60 # 10 minutes
 	display_fields = Element.default_fields + []
 
 	def __init__(self, hostname="", tags=[]):
 		super(Hostname, self).__init__()
+		hostname = hostname.lower()
 		if toolbox.is_hostname(hostname) == hostname:
 			self['tags'] = tags
 			self['value'] = toolbox.is_hostname(hostname)
@@ -301,37 +301,26 @@ class Hostname(Element):
 			h[key] = d[key]
 		return h 
 
-		
 	def analytics(self):
 
 		debug_output( "(host analytics for %s)" % self.value)
 
-		# this should get us a couple of IP addresses, or other hostnames
-		self['dns_info'] = toolbox.dns_dig_records(self.value)
-		
 		new = []
-
-		#get Whois
-
-		self['whois'] = toolbox.whois(self['value'])
-
-
-		# get DNS info
-		for record in self.dns_info:
-			if record in ['MX', 'A', 'NS', 'CNAME']:
-				for entry in self['dns_info'][record]:
-					art = toolbox.find_artifacts(entry) #do this
-					for t in art:
-						for findings in art[t]:
-							if t == 'hostnames':
-								new.append((record, Hostname(findings)))
-							if t == 'urls':
-								new.append((record, Url(findings)))
-							if t == 'ips':
-								new.append((record, Ip(findings)))
+		
+		dns_info = toolbox.dns_get_records(self.value)
+		for rtype in dns_info:
+			for entry in dns_info[rtype]:
+				art = toolbox.find_artifacts(entry)
+				for t in art:
+					for findings in art[t]:
+						if t == 'hostnames':
+							new.append((rtype, Hostname(findings)))
+						if t == 'urls':
+							new.append((rtype, Url(findings)))
+						if t == 'ips':
+							new.append((rtype, Ip(findings)))
 
 		# is _hostname a subdomain ?
-
 		if len(self.value.split(".")) > 2:
 			domain = toolbox.is_subdomain(self.value)
 			if domain:

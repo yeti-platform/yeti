@@ -13,6 +13,10 @@
 	line-height: 12px;
 }
 
+.flow-request {
+	background-color: #d8d5d6;
+}
+
 .flow-response {
 	background-color: #e7ff9f;
 }
@@ -34,6 +38,26 @@ img.ssl-smiley {
 	width:15px;
 	margin-left:15px;
 }
+
+
+/* Flow table */
+
+.http_response_200 {
+	background-color: rgba(75,144,216,0.2);	
+}
+
+.http_response_200:hover {
+	background-color: rgba(75,144,216,0.7);	
+}
+
+.dns_response_OK {
+	background-color: rgba(114, 255, 94, 0.2);
+}
+
+.dns_response_OK:hover {
+	background-color: rgba(114, 255, 94, 0.7);
+}
+
 
 
 /* Dataset */
@@ -85,6 +109,15 @@ tr.success .error-cause {
 	padding:0 10px;
 }
 
+.navbar-text {
+	padding-left:10px;
+	padding-right:10px;
+}
+
+.navbar {
+	font-size:0.9em;
+}
+
 /* HTML */
 
 .container {
@@ -115,11 +148,13 @@ input[type="file"] {
 
 div.data {
 	float:right;
-	font: 12px "Helvetica", sans-serif;
+	font-size: 12px;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif
 }
 
-body {
-	font: 12px "Helvetica", sans-serif;
+body .main {
+	font-size: 12px;
+	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif
 }
 
 table th {

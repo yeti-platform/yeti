@@ -1,6 +1,7 @@
-import urllib2
-from Malcom.model.datatypes import Hostname
+import urllib2, re
+from Malcom.model.datatypes import Hostname, Evil
 from feed import Feed
+from lxml import etree
 import Malcom.auxiliary.toolbox as toolbox
 
 class PalevoTracker(Feed):
@@ -9,36 +10,25 @@ class PalevoTracker(Feed):
 	"""
 	def __init__(self, name):
 		super(PalevoTracker, self).__init__(name, run_every="1h")
-		self.enabled = True
+		self.name = "PalevoTracker"
+		self.description = "List of the twenty most recent Palevo Botnet C&amp;C servers Palevo Tracker came across of."
+		self.source = "https://palevotracker.abuse.ch/?rssfeed"
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("https://palevotracker.abuse.ch/?rssfeed").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
+		self.update_xml('item', ["title", "link", "description", 'guid'])
+
+	def analyze(self, dict):
+
+		# Create the new Hostname and store it in the DB
+		hostname = Hostname(hostname=toolbox.find_hostnames(dict['title'])[0])
+		if hostname['value'] == None: return
 		
-		for line in feed:	
-			self.analyze(line)
-		return True
+		evil = Evil()
+		evil['value'] = "Palevo CC (%s)" % hostname['value']
+		evil['status'] = re.search("Status: (?P<status>\S+)", dict['description']).group('status')
+		evil['info'] = dict['description']
+		evil['tags'] = ['cc', 'palevo']
 
-	def analyze(self, line):
-		if line.startswith('#') or line.startswith('\n'):
-			return
-
-		try:
-			hostname = toolbox.find_hostnames(line)[0]
-		except Exception, e:
-			# if find_hostname raises an exception, it means no hostname
-			# was found in the line, so we return
-			return
-
-		# Create the new URL and store it in the DB
-		hostname = Hostname(hostname=hostname, tags=['palevotracker'])
-
-		hostname, status = self.analytics.save_element(hostname, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
+		return hostname, evil
 
 

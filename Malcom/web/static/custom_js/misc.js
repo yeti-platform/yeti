@@ -16,12 +16,12 @@ function clear_db() {
 function dataset_remove(id) {
 	$.ajax({
 		dataType: "json",
-		url: url_static_prefix+'dataset/remove/'+id,
+		url: url_static_prefix+'api/dataset/remove/'+id,
 		success:function(data){
 			if (data['n'] == 1)
 				$('#row_'+id).remove()
 			else
-				console.log("Could not remove element "+id)
+				console.log("ERROR: Could not remove element "+id)
 		}
 	});
 }
@@ -38,17 +38,16 @@ function get_dataset_csv(query, url) {
 			querydict['value'] = splitted[0]
 	}
 
-	querydict['fuzzy'] = $('#fuzzy').prop('checked')
+	if ($('#fuzzy').prop('checked') == true)
+		querydict['fuzzy'] = 'true'
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
-
-	console.log(url)
 	
 	location.href = url
 }
 
 function change_page(arg, url) {
-	console.log('loading page ' + arg)
+	console.log('Loading page ' + arg)
 	query = $('#query').val()
 	location.hash = arg
 	get_dataset(query, url)
@@ -74,14 +73,17 @@ function get_dataset(query, url) {
 		page = 0;
 	}
 
+	params = {}
 	querydict['page'] = page
-
-	querydict['fuzzy'] = $('#fuzzy').prop('checked')
+	
+	if ($('#fuzzy').prop('checked') == true)
+		querydict['fuzzy'] = 'true'
 
 	$.ajax({
 	  dataType: "json",
+	  type: 'GET',
 	  url: url,
-	  data: querydict,
+	  data: $.param(querydict),
 	  beforeSend: function(data) {
 	  	$('#loading-spinner').addClass('show')
 	  },
@@ -93,7 +95,6 @@ function get_dataset(query, url) {
 	  	dataset = $('#dataset')
 	  	dataset.empty()
 	  	head = $("<tr>")
-	  	console.log(data)
 	  	// get the headers
 	  	for (var i in data.fields) {
 	  		h = $("<th>").text(data.fields[i][1])
@@ -123,7 +124,7 @@ function get_dataset(query, url) {
 	  				else if (['date_created', 'date_updated', 'last_analysis'].indexOf(k) != -1)
 	  					row.append($("<td />").text(format_date(new Date(v.$date))).addClass('timestamp'))
 	  				else
-	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+v+"'>"+v+"</a></td>")
+	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+encodeURIComponent(v)+"'>"+v+"</a></td>")
 	  		}
 
 	  		row.append("<td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td>")
@@ -145,13 +146,20 @@ function get_dataset(query, url) {
 
 	  	// adjust pagination
 	  	per_page = 50;
-	  	total_pages = Math.floor(data.total_results / per_page)
+	  	if (data.total_results != 'many')	{
+		  	total_pages = Math.floor(data.total_results / per_page) + 1;
+		  	next_page = (page*1+1) <= total_pages ? page*1 + 1 : page*1;
+	  	}
+	  	else {
+	  		total_pages = 'many';
+	  		next_page = page*1+1;
+	  	}
 	  	previous_page = page - 1 >= 0 ? page - 1 : 0;
-	  	next_page = (page*1+1) <= total_pages ? page*1 + 1 : page*1;
+	  	
 	  	
 	  	prev = $("#pagination-prev")
 	  	next = $("#pagination-next")
-	  	$("#pagination-page").text("Page "+page+" of "+ total_pages)
+	  	$("#pagination-page").text("Page "+(page*1+1)+" of "+ (total_pages))
 	  	$("#total-results").text(data.total_results)
 	  	
 	  	prev.attr('data-nav', previous_page)

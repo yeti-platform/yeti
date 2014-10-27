@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block main %}
 <div class='span9'>
-	<h1>Dataset</h1>
+	<h2>Dataset</h2>
 
 	<ul id='datasetTabs' class='nav nav-tabs'>
 		<li class='active'><a href='#all' data-toggle='tab'>All</a></li>
@@ -14,17 +14,11 @@
 				<tr><th><h3>Populating table...</h3></th></tr>
 			</table>
 		</div>
-
-		<!-- <div class='tab-pane' id='ip'>
-			Placeholder
-		</div> -->
 	</div>
 
 </div>
-
-
-
 {% endblock %}
+
 {%block sidebar %}
 <div class='span3 toolbar'>
 	{% include "flash.html" %}
@@ -40,9 +34,9 @@
 		<div class='tab-pane active' id='search'>
 			<div class="input-append pull-left" >
 			      <input id="query" placeholder='tags=malware' type="text">
-			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('list_data') }}')">Go</button>
+			      <button class='btn btn-primary' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('malcom_api.query_data') }}')">Go</button>
 			      <label class="checkbox">
-				      <input id='fuzzy' type="checkbox"> Fuzzy search (slower)
+				      <input id='fuzzy' type="checkbox"> Regex search (slower)
 				    </label>
 		  	</div>
 		  <br style='clear:both' />
@@ -53,9 +47,9 @@
 		</table>
 		<div class="pagination">
 		  <ul>
-		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Prev</a></li>
+		    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('malcom_api.query_data') }}')">Prev</a></li>
 		    <li><a id='pagination-page' href="javascript:void(0)"></a></li>
-		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('list_data') }}')">Next</a></li>
+		    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('malcom_api.query_data') }}')">Next</a></li>
 		  </ul>
 		  <br />
 		  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
@@ -64,10 +58,10 @@
 		<script>
 			$("#query").keyup(function (event) {
 				if (!$('#fuzzy').prop('checked') || event.which == 13) {
-					get_dataset($('#query').val(), '{{ url_for('list_data') }}')
+					get_dataset($('#query').val(), '{{ url_for('malcom_api.query_data') }}')
 				}
 			});
-			$(get_dataset("",'{{url_for('list_data')}}'))
+			$(get_dataset("",'{{url_for('malcom_api.query_data')}}'))
 		</script>
 		
 
@@ -83,13 +77,12 @@
 			  
 			  	<label for='tags'>Tags</label>
 			    <input id='tags' type="text" name="tags" placeholder="">
-			    <label class="checkbox">
-			      <input type="checkbox" name='analyse'> Analyse after import
-			    </label>
 			  </fieldset>
 			</form>
 			<button onclick='javascript:$("#addform").submit()' class="btn">Add</button>
+			{% if current_user.admin %}
 			<a href="#" onclick="javascript:clear_db()" class="btn btn-danger">Clear DB</a>
+			{% endif %}
 		</div>
 
 		{% endif %}

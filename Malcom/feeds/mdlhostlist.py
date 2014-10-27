@@ -1,44 +1,36 @@
-import urllib2
-from Malcom.model.datatypes import Hostname
-from feed import Feed
+import urllib2, re
 import Malcom.auxiliary.toolbox as toolbox
+from Malcom.model.datatypes import Url, Evil
+from feed import Feed
+from lxml import etree
 
-class MDLHosts(Feed):
+class MalwareDomainList(Feed):
 	"""
-	This gets data from http://www.malwaredomainlist.com/hostslist/hosts.txt
+	This gets data from http://www.malwaredomainlist.com/hostslist/mdl.xml
 	"""
 	def __init__(self, name):
-		super(MDLHosts, self).__init__(name, run_every="12h")
-		self.enabled = True
+		super(MalwareDomainList, self).__init__(name, run_every="12h")
+		self.source = "http://www.malwaredomainlist.com/hostslist/mdl.xml"
+		self.description = "MalwareDomainList update. This feed shows the latest urls which have been added to our list."
+		self.name = "MalwareDomainList"
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://www.malwaredomainlist.com/hostslist/hosts.txt").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
-		
-		for line in feed:	
-			self.analyze(line)
-		return True
+		self.update_xml('item', ["title", "link", "description", "guid"])
 
-	def analyze(self, line):
-		if line.startswith('#') or line.startswith('\n'):
-			return
-
-		try:
-			hostname = toolbox.find_hostnames(line)[0]
-		except Exception, e:
-			# if find_hostname raises an exception, it means no hostname
-			# was found in the line, so we return
-			return
+	def analyze(self, dict):
 
 		# Create the new URL and store it in the DB
-		hostname = Hostname(hostname=hostname, tags=['malwaredomainlist'])
+		url = re.search("Host: (?P<url>[^,]+),", dict['description']).group('url')
+		url = Url(url=url)
+		evil = Evil()
+		
+		evil['details'] = dict['description']
+		threat_type = re.search('Description: (?P<tag>.+)', dict['description']).group('tag')
+		evil['tags'] = ['malwaredomainlist', threat_type]
+		evil['value'] = "%s (%s)" % (threat_type, url['value'])
+		evil['link'] = dict['link']
+		evil['guid'] = dict['guid']
 
-		hostname, status = self.analytics.save_element(hostname, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
+		return url, evil
 
 

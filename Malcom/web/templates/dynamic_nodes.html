@@ -40,23 +40,31 @@
 
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for('static', filename='custom_js/sniffer_websockets.js') }}" charset="utf-8"></script>
-
 <script type="text/javascript">
 
 initialize_graph();
-spinner = $("#loading-spinner")
-spinner.css('position', 'absolute');
-spinner.css('top', height/2);
-spinner.css('left', width/2);
-spinner.toggleClass('show')
 
 
-d3.json(url_static_prefix+"/neighbors?{{field}}={{value}}", function(error, graph) {
-    console.log(graph)
+setInterval(function() {uncomm_all()}, 500)
+
+  // svg.append("svg:defs").selectAll("marker")
+  //     .data(["arrow"])
+  //     .enter().append("svg:marker")
+  //       .attr("id", String)
+  //       .attr("viewBox", "0 -5 10 10")
+  //       .attr("markerUnits", "userSpaceOnUse")
+  //       .attr("refX", 20)
+  //       .attr("refY", 0)
+  //       .attr("markerWidth", 7)
+  //       .attr("markerHeight", 7)
+  //       .attr("orient", "auto")
+  //       .append("svg:path")
+  //         .attr("d", "M0,-5L10,0L0,5");
+
+d3.json(url_static_prefix+"api/neighbors/?{{field}}={{value}}", function(error, graph) {
     push_nodes(graph.nodes)
     push_links(graph.edges)
-    spinner.toggleClass('show')
+    // spinner.toggleClass('show')
     start();
 });
 
@@ -69,7 +77,7 @@ ws_sniffer.onopen = snifferInterfaceInit
 {%endblock%}
 {% block sidebar %}
 <div class='data span3 toolbar'>
-  <h1>Highlight</h1>
+  <h2>Highlight</h2>
 
   <div class="input-append">
       <input id="query" type="text" onkeyup="highlight_query($('#query').val())">
@@ -77,10 +85,16 @@ ws_sniffer.onopen = snifferInterfaceInit
 
   </div>
   <span class="help-block">e.g. 'type:ip', 'google.com'</span>
+  <label class="checkbox" style='font-size:small'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
+  <label class="checkbox" style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
+  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
+  
+  
   <div id='message'></div>
               
 
-  <h1>Info</h1>
+  <h2>Info</h2>
   <table class='table' id='node_info'></table>
   <div class='whois'></div>
 </div>

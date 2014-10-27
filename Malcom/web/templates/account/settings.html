@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block main %}
+<div class='span9'>
+	<h2>Account settings</h2>
+
+	<ul id='settingsTabs' class='nav nav-tabs'>
+		<li class='active'><a href='#userinfo' data-toggle='tab'><i class="icon-info-sign"></i> User info</a></li>
+		{% if current_user.is_admin() %}
+		<li><a href='#admin' data-toggle='tab'><i class="icon-fire"></i> Admin</a></li>
+		{% endif %}
+		<!-- <li><a href='#ip' data-toggle='tab'>IPs</a></li> -->
+	</ul>
+
+	<div id='settingsTabsContent' class='tab-content'>
+		
+		<!-- userinfo -->
+		<div id='userinfo' class='tab-pane active'>
+			<div class='row' style='margin-left:0;'>
+				<div class='span5'>
+					<table class='table table-condensed'>
+						<tr><th>Username</th><td>{{ current_user.username }} {% if current_user.is_admin() %}(Admin){%endif%}</td></tr>
+						<tr><th>API Key</th><td>{{ current_user.api_key }}</td></tr>
+						<tr><th>Joined</th><td>{{ current_user.joined|datetimeformat("%Y-%m-%d") }}</td></tr>
+						<tr><th>Last activity</th><td>{{ current_user.last_activity|datetimeformat }}</td></tr>
+						<tr><th>Last activity (API)</th><td>{{ current_user.last_activity_api|datetimeformat }}</td></tr>
+						<tr><th>API requests</th><td>{{ current_user.api_request_count }}</td></tr>
+					</table>
+					<a href="#change-password-dialog" role="button" class="btn" data-toggle="modal">Change password</a>
+					<button class='btn btn-danger'>Delete account</button>
+				</div>
+				<div class='span6'>
+					{%include "flash.html"%}
+				</div>
+			</div>
+
+			<div id='change-password-dialog' class="modal hide">
+			  <div class="modal-header">
+			    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			    <h3>Change password</h3>
+			  </div>
+			  <div class="modal-body">
+			    <form class='form-horizontal' action='' method='POST' id='reset-password-form'>
+					<div class="control-group">
+						<label class="control-label" for="currentPassword">Current password</label>
+						<div class="controls">
+							<input name='current-password' type="password" id="currentPassword">
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="currentPassword">New password</label>
+						<div class="controls">
+							<input name='new-password' type="password" id="newPassword">
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label" for="currentPassword">Repeat</label>
+						<div class="controls">
+							<input name='repeat-new-password' type="password" id="newPasswordRepeat">
+						</div>
+					</div>
+			    </form>	
+
+			  </div>
+			  <div class="modal-footer">
+			    <a href="#" class="btn" data-dismiss='modal'>Close</a>
+			    <a href="#" class="btn btn-primary" onclick='javascript:$("#reset-password-form").submit();'>
+			    	Reset password
+			    </a>
+			  </div>
+			</div>
+		</div> <!-- end tab -->
+
+		{% if current_user.is_admin() %}
+		<!-- admin -->
+
+		<div id='admin' class='tab-pane'>
+			Empty
+		</div>
+
+		{% endif %}
+
+
+
+
+	</div>
+
+
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div class='span3'>
+
+</div>
+{% endblock %}

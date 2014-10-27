@@ -1,24 +1,18 @@
 import urllib2
-from Malcom.model.datatypes import Hostname
+from Malcom.model.datatypes import Hostname, Evil
 from feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
 class DShieldSuspiciousDomainsHigh(Feed):
 	def __init__(self, name):
 		super(DShieldSuspiciousDomainsHigh, self).__init__(name)
-		self.enabled = True
+		self.name = "DShieldSuspiciousDomainsHigh"
+		self.description = "DShield high sensitivity suspicious domains"
+		self.source = "http://www.dshield.org/feeds/suspiciousdomains_High.txt"
+		self.confidence = 10
 
 	def update(self):
-		try:
-			feed = urllib2.urlopen("http://www.dshield.org/feeds/suspiciousdomains_High.txt").readlines()
-			self.status = "OK"
-		except Exception, e:
-			self.status = "ERROR: " + str(e)
-			return False
-		
-		for line in feed:	
-			self.analyze(line)
-		return True
+		self.update_lines()
 
 	def analyze(self, line):
 		if line.startswith('#') or line.startswith('\n'):
@@ -29,11 +23,12 @@ class DShieldSuspiciousDomainsHigh(Feed):
 		except Exception, e:
 			return
 
-		# Create the new ip and store it in the DB
-		hostname = Hostname(hostname=hostname, tags=['dshield', 'high'])
+		# Create the new hostname
+		hostname = Hostname(hostname=hostname, tags=['evil'])
 
-		hostname, status = self.analytics.save_element(hostname, with_status=True)
-		if status['updatedExisting'] == False:
-			self.elements_fetched += 1
+		evil = Evil()
+		evil['value'] = "%s (DShield suspicious domain)" % hostname['value']
+		evil['tags'] = ['dshield', 'high']
 
+		return hostname, evil
 
