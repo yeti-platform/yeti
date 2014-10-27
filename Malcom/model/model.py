@@ -56,11 +56,7 @@ class Model:
 
 	def rebuild_indexes(self):
 		# create indexes
-<<<<<<< HEAD
-		debug_output("Rebuilding indexes...", 'model')
-=======
 		debug_output("Rebuilding indexes...")
->>>>>>> dev
 		self.elements.ensure_index([('date_created', -1), ('value', 1)])
 		self.elements.ensure_index('value', unique=True, dropDups=True)
 		self.elements.ensure_index('tags')
