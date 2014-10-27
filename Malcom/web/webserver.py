@@ -3,7 +3,7 @@
 
 __description__ = 'Malcom - Malware communications analyzer'
 __author__ = '@tomchop_'
-__version__ = '1.2 alpha'
+__version__ = '1.3 alpha'
 __license__ = "GPL"
 
 # patch threads
@@ -329,7 +329,6 @@ def report(field, value, strict=False):
 	for e in result_set:
 		base_elts_dict[e['_id']] = e
 		base_elts.append(e)
-
 
 	# get all 1st degree nodes in one dict
 	all_nodes_dict = {}

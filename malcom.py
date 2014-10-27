@@ -3,7 +3,7 @@
 
 __description__ = 'Malcom - Malware communications analyzer'
 __author__ = '@tomchop_'
-__version__ = '1.2 alpha'
+__version__ = '1.3 alpha'
 __license__ = "GPL"
 
 import os, sys, argparse
@@ -35,7 +35,7 @@ setup = MalcomSetup()
 
 
 setup = MalcomSetup()
-setup['VERSION'] = "1.2a"
+setup['VERSION'] = "1.3a"
 
 if __name__ == "__main__":
 
