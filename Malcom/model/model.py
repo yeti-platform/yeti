@@ -80,9 +80,6 @@ class Model:
 		if not src or not dst:
 			return None
 
-		if src['_id'] == dst['_id']:
-			return None
-
 		with self.db_lock:
 
 			while True:
@@ -172,7 +169,7 @@ class Model:
 		for e in total_nodes:
 			e['fields'] = e.display_fields
 
-		data = {'nodes':total_nodes, 'edges': total_edges }
+		data = {'nodes': total_nodes, 'edges': total_edges }
 
 		return data
 
