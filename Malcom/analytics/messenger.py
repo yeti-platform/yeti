@@ -9,7 +9,7 @@ class AnalyticsMessenger(Messenger):
 		self.analytics_instance = analytics_instance
 		self.subscribe_channel('analytics', self.message_handler)
 		#self.status_update()
-		sys.stderr.write("[+] Analytics Messenger started\n")
+		debug_output("[+] Analytics Messenger started")
 
 	def status_update(self):
 		t = threading.Thread(target=self.__status_update)

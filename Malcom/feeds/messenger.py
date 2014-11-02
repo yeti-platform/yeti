@@ -10,7 +10,7 @@ class FeedsMessenger(Messenger):
 		self.name = "feeds"
 		self.feedengine_instance = feedengine_instance
 
-		sys.stderr.write("[+] Feed messenger started\n")
+		debug_output("[+] Feed messenger started")
 		self.subscribe_channel('feeds', self.message_handler)
 
 

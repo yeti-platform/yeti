@@ -13,7 +13,7 @@ class Messenger(object):
 		self.r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 	def subscribe_channel(self, channel, callback):
-		sys.stderr.write("[+] Subscribing to %s\n" % channel)
+		debug_output("[+] Subscribing to %s" % channel)
 		t = threading.Thread(target=self.__listen_on_channel, args=(channel, callback))
 		t.setDaemon(True)
 		t.start()

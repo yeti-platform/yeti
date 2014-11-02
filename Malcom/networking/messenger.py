@@ -3,8 +3,8 @@ from bson import json_util
 from bson.json_util import loads as bson_loads
 from bson.json_util import dumps as bson_dumps
 
-
 from Malcom.shmem.SharedData import Messenger
+from Malcom.auxiliary.toolbox import debug_output
 
 class SnifferMessenger(Messenger):
 	"""docstring for SnifferMessenger"""
@@ -14,7 +14,7 @@ class SnifferMessenger(Messenger):
 		self.snifferengine = None
 		self.subscribe_channel('sniffer-commands', self.command_handler)
 		self.command_lock = threading.Lock()
-		sys.stderr.write("[+] Sniffer Messenger started\n")
+		debug_output("[+] Sniffer Messenger started")
 
 	def update_nodes(self, nodes, edges, session_name):
 		msg = {'nodes':nodes, 'edges':edges, 'session_name': session_name}

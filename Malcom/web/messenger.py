@@ -8,7 +8,7 @@ class WebMessenger(Messenger):
 	def __init__(self):
 		super(WebMessenger, self).__init__()
 		self.name = 'web'
-		sys.stderr.write("[+] WebMessenger started\n")
+		debug_output("[+] WebMessenger started")
 
 		self.subscribe_channel('analytics', self.analytics_handler)
 		self.subscribe_channel('sniffer-data', self.sniffer_data_handler)
