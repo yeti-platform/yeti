@@ -109,7 +109,6 @@ if __name__ == "__main__":
 		setup.analytics_engine.start()
 		
 	if setup['WEB']:
-		sys.stderr.write("[+] Starting webserver...\n")
 		from Malcom.web.webserver import MalcomWeb
 		setup.web = MalcomWeb(setup['AUTH'], setup['LISTEN_PORT'], setup['LISTEN_INTERFACE'], setup)
 
