@@ -14,7 +14,7 @@
 <div class='data span3'>
 {%include "flash.html"%}
   <form method='POST' action='' enctype='multipart/form-data'>
-    <h3>New sniffer session</h3>
+    <h3>New network capture</h3>
     <div id='message'></div>
     <label for='pcap-upload'>Start from .pcap file</label>
     <input type="file" placeholder="" id='pcap-upload' name='pcap-file'>
@@ -24,9 +24,9 @@
     <input type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
     <br />
     {% if not g.config['PUBLIC'] %}
-      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start sniffing right away</label>
-      <label class="checkbox"><input type="checkbox" name="public" checked='checked'> Share this session</label>
-      <span class="help-block">This will make the sniffing session accessible by everyone. Uncheck to keep private.<br/>Bear in mind that artifacts detected in your session (IP addresses, URLs, and hostnames) <strong>will still be added to the database and may be manipulated regularly</strong>.</span>
+      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start processing right away</label>
+      <label class="checkbox"><input type="checkbox" name="public" checked='checked'> Share this capture</label>
+      <span class="help-block">This will make the network capture accessible by everyone. Uncheck to keep private.<br/>Bear in mind that artifacts detected in your session (IP addresses, URLs, and hostnames) <strong>will still be added to the database and may be manipulated regularly</strong>.</span>
       {% if g.config['TLS_PROXY_PORT'] %}
       <label class="checkbox"><input type="checkbox" name="intercept_tls" checked='checked'> Intercept TLS (port {{g.config['TLS_PROXY_PORT']}})</label>
 
