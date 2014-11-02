@@ -40,6 +40,7 @@ from multiprocessing import Process
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model as ModelClass
 from Malcom.model.user_management import UserManager as UserManagerClass
+from Malcom.web.messenger import WebMessenger
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 		
@@ -610,8 +611,7 @@ class MalcomWeb(Process):
 		for key in self.setup:
 			app.config[key] = self.setup[key]
 		app.config['UPLOAD_DIR'] = ""
-
-		from Malcom.web.messenger import WebMessenger
+		
 		app.config['MESSENGER'] = WebMessenger()
 		
 		sys.stderr.write("[+] Starting webserver...\n")
