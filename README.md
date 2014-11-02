@@ -25,8 +25,10 @@ Dataset view (filtered to only show IPs)
 ## Quick how-to
 
 * Install
+* Make sure `mongodb` and `redis-server` are running
 * Elevate your privileges to root (yeah, I know, see [disclaimer](/README.md#Disclaimer))
 * Start the webserver using the default configuration with `./malcom.py -c malcom.conf` (or see options with `./malcom.py --help`)
+** For an example configuration file, you can copy `malcom.conf.example` to `malcom.conf`
 ** Default port is 8080
 ** Alternatively, run the feeds from `celery`. See the [feeds](/README.md#Feeds) section for details on how to to this. 
 
@@ -59,14 +61,14 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install scapy, without elevating your privs to root
 
-        cd ~/scapy-2.1.0
+        cd ../scapy-2.1.0
         python setup.py install
 
 * still from your virtualenv, install necessary python packages
 
         pip install flask pymongo pygeoip geoip2 gevent-websocket python-dateutil netifaces lxml twisted pyopenssl redis service_identity flask-login pycrypto passlib dnspython
 
-Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
+* Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
 
 ### Quick note on TLS interception
 
