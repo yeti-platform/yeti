@@ -11,7 +11,16 @@ class MalcomSetup(dict):
 		  
 	def load_config(self, args):
 		self.parse_command_line(args)
+		self.sanitize_paths()
 		self.get_network_interfaces()
+
+	def sanitize_paths(self):
+		if not self['SNIFFER_DIR'].startswith('/'):
+			self['SNIFFER_DIR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer')
+		if not self['YARA_PATH'].startswith('/'):
+			self['YARA_PATH'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara')
+		if not self['FEEDS_DIR'].startswith('/'):
+			self['FEEDS_DIR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'feeds')
 
 	def parse_command_line(self, args):
 

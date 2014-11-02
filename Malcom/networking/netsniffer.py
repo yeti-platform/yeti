@@ -40,6 +40,8 @@ class SnifferEngine(object):
 			sys.stderr.write("Could not load directory specified in sniffer_dir: %s\n" % self.setup['SNIFFER_DIR'])
 			exit()
 
+		sys.stderr.write("[+] Successfully loaded sniffer directory: %s\n" % self.setup['SNIFFER_DIR'])
+
 		if setup['TLS_PROXY_PORT'] > 0:
 			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
 			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % setup['TLS_PROXY_PORT'])
@@ -86,7 +88,9 @@ class SnifferEngine(object):
 		if path[-1] != '/':	path += '/' # add trailing slash if not present
 		filepaths = {}
 		for file in os.listdir(path):
-			filepaths[file] = path + file
+			if file.endswith('.yar'):
+				print file
+				filepaths[file] = path + file
 		debug_output("Loaded %s YARA rule files in %s" % (len(filepaths), path))
 		return yara.compile(filepaths=filepaths)
 
