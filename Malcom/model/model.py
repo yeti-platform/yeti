@@ -495,7 +495,9 @@ class Model:
 			filter = { '$or': [ {'public':True}, {'_id': {'$in': user_sessions}} ] }
 		else:
 			filter = {'_id': {'$in': user_sessions}}
-		return list(self.sniffer_sessions.find(filter, skip=page, limit=max, sort=[('date_created', pymongo.DESCENDING)]))
+
+		session_list = list(self.sniffer_sessions.find(filter, skip=page, limit=max, sort=[('date_created', pymongo.DESCENDING)]))
+		return session_list
 		
 	def del_sniffer_session(self, session, sniffer_dir):
 			

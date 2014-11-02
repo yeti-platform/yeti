@@ -40,7 +40,7 @@ class SnifferMessenger(Messenger):
 			private = params.get('private', False)
 			
 			for session in self.snifferengine.model.get_sniffer_sessions(private=private, username=user, page=page):
-			
+				
 				if session['_id'] in self.snifferengine.sessions:
 					session = self.snifferengine.sessions[session['_id']]
 					active = session.status()
@@ -50,8 +50,9 @@ class SnifferMessenger(Messenger):
 					session_data = bson_loads(session['session_data'])
 					session['nodes'] = session_data['nodes']
 					session['edges'] = session_data['edges']
+					session['id'] = session['_id']
 				
-				session_list.append( {   	'id': str(session.get('_id')),
+				session_list.append( {   	'id': str(session.get('id')),
 											'date_created': session.get('date_created'),
 											'name': session.get('name'),
 											'packets': session.get('packet_count'),
@@ -60,7 +61,7 @@ class SnifferMessenger(Messenger):
 											'status': "Running" if active else "Stopped",
 											'public': session.get('public'),
 										} )
-
+			
 			final_msg = bson_dumps(session_list)
 
 		if params.get('session_id', False):
