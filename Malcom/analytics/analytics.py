@@ -9,8 +9,6 @@ from Malcom.auxiliary.toolbox import *
 from Malcom.model.model import Model
 from Malcom.model.datatypes import Hostname, Ip, Url, As
 from Malcom.analytics.messenger import AnalyticsMessenger
-from Malcom.auxiliary.async_resolver import AsyncResolver
-
 
 class Worker(Thread):
 
@@ -116,7 +114,6 @@ class Analytics(Process):
 		self.progress = 0
 		self.workers = []
 		self.elements_queue = None
-		self.adns_results = None
 		self.once = False
 		self.run_analysis = False
 
@@ -145,27 +142,7 @@ class Analytics(Process):
 	# elements analytics
 
 	def bulk_functions(self):
-		# self.bulk_dns()
 		self.bulk_asn()
-
-	def bulk_dns(self):
-		debug_output("Running bulk DNS (%s in queue)" % self.hostnames.qsize())
-		ar = AsyncResolver(self.process_adns_result, max_reqs=500)
-		ar.start()
-
-		while True:
-			try:
-				hostname = self.hostnames.get(False)
-				debug_output("Submitting %s" % hostname)
-				ar.submit(hostname)
-			except Exception, e:
-				debug_output("End of list reached, sending BAIL")
-				ar.submit("BAIL") # this will indicate ADNS that it has reached the end of its list
-				break
-
-		debug_output("Waiting 60 seconds for replies to come in...")
-		ar.wait()
-		debug_output("Done")
 
 	def bulk_asn(self, items=1000):
 		debug_output("Running bulk ASN")
@@ -269,65 +246,6 @@ class Analytics(Process):
 			except Exception, e:
 				pass
 
-	def process_adns_result(self, host, rtype, answer):
-		
-		host = self.data.get(value=host)
-		hname = host['value']
-		try:
-			if rtype == adns.rr.CNAME: # cname
-				self.process_new(host, [('CNAME', Hostname(hostname=cname.lower())) for cname in answer[3] if cname != ''])
-				
-			if rtype == adns.rr.A:
-				records = [('A', Ip(ip=ip)) for ip in answer[3]]
-				self.process_new(host, records)
-			
-			if rtype == adns.rr.MX:
-				mx_records = {}
-				for mx in answer[3]:
-					if mx[1][0] in ['', None]: continue
-
-					ips = None
-					if mx[1][2]:
-						ips = [ip[1] for ip in mx[1][2]]
-					
-					mx_records[mx[1][0].lower()] = (mx[0], ips)
-			
-				new_mx = [("MX (%s)" % mx_records[mx_srv][0], self.data.add_text([mx_srv.lower()])) for mx_srv in mx_records]
-				mx_hostnames = self.process_new(host, new_mx)
-				for host in mx_hostnames:
-					ips = mx_records[host['value']][1]
-					if ips:
-						self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
-				
-			if rtype == adns.rr.NS:
-				ns_records = {}
-				for ns in answer[3]:
-					if ns[2]: ips = [ip[1] for ip in ns[2]]
-					else: ips = []
-					ns_records[ns[0].lower()] = (ns[0].lower(), ips)
-
-				new_ns = []
-				for hname in ns_records:
-					h = Hostname(hostname=hname.lower())
-					if h['value']:
-						new_ns.append(("NS", h))
-				ns_hostnames = self.process_new(host, new_ns)
-
-				for host in ns_hostnames:
-					ips = ns_records[host['value']][1]
-					if ips and host['value'] != None:
-						self.process_new(host, [('A', Ip(ip=ip)) for ip in ips])
-
-		except ValueError, e:
-			debug_output("process_adns_results: An error occured: %s" % e, 'error')
-			print adns.rr.NS, adns.rr.MX, adns.rr.A
-			print host
-			print rtype
-			print answer
-			return
-			# raise e
-
-
 	def process_new(self, elt, new):
 		# self.process_lock.acquire()
 		last_connect = elt.get('date_updated', datetime.datetime.utcnow())
@@ -398,7 +316,7 @@ class Analytics(Process):
 			
 			debug_output("Workers have joined")
 
-			# regroup ASN analytics and ADNS analytics
+			# regroup ASN analytics
 			if self.run_analysis:
 				self.bulk_functions()
 				self.active = False

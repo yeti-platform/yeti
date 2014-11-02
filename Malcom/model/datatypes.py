@@ -12,7 +12,6 @@ except Exception, e:
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.auxiliary.toolbox import debug_output
-from Malcom.auxiliary.async_resolver import AsyncResolver
 
 
 class Element(dict):
