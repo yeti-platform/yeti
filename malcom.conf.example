@@ -5,25 +5,23 @@
 activated = true
 listen_interface = 0.0.0.0
 listen_port = 8080
-auth = true
+auth = false 
 
 [feeds]
-activated = false 
-feeds_dir = /home/malcom/malcom/Malcom/feeds
+activated = false
+feeds_dir = feeds 
 scheduler = false
 
 [analytics]
-activated = false 
+activated = true 
 max_workers = 12
 
 [sniffer]
 activated = true
 network = true
-pcap = false
-sniffer_dir = /home/malcom/malcom/Malcom/sniffer
-tls_proxy_port = 0
-yara_path = /home/malcom/yararules
-
+sniffer_dir = sniffer
+tls_proxy_port = 9000
+yara_path = yara
 
 # databases can be configured here
 
@@ -35,15 +33,19 @@ port = 27017
 
 
 [feeds]
+# You can comment / uncomment feeds
+# according to if you want to use
+# them or not
+# 
 # AlienvaultIP
-CybercrimeTracker
 # DShield16276
 # DShield3215
-DShieldSuspiciousDomainsHigh
 # DShieldSuspiciousDomainsLow
 # DShieldSuspiciousDomainsMedium
-MalcodeBinaries
 # MalwareDomains
+DShieldSuspiciousDomainsHigh
+MalcodeBinaries
+CybercrimeTracker
 MDLHosts
 MDLTracker
 OpenblIP
