@@ -92,7 +92,7 @@ class Worker(Thread):
 		except Exception, e:
 			debug_output("An error occured in [%s | PID %s]: %s\nelt info:\n%s" % (self.name, os.getpid(), e, elt), type="error")
 			with self.queue_lock:
-					self.engine.elements_queue.task_done()
+				self.engine.elements_queue.task_done()
 			return
 
 	def stop(self):
@@ -316,7 +316,7 @@ class Analytics(Process):
 			
 			debug_output("Workers have joined")
 
-			# regroup ASN analytics
+			# regroup ASN analytics and ADNS analytics
 			if self.run_analysis:
 				self.bulk_functions()
 				self.active = False
