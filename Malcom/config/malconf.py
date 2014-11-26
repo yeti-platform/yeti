@@ -16,11 +16,11 @@ class MalcomSetup(dict):
 
 	def sanitize_paths(self):
 		if not self['SNIFFER_DIR'].startswith('/'):
-			self['SNIFFER_DIR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer')
+			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer'))
 		if not self['YARA_PATH'].startswith('/'):
-			self['YARA_PATH'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara')
+			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara'))
 		if not self['FEEDS_DIR'].startswith('/'):
-			self['FEEDS_DIR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'feeds')
+			self['FEEDS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'feeds'))
 
 	def parse_command_line(self, args):
 
@@ -33,8 +33,9 @@ class MalcomSetup(dict):
 			self['TLS_PROXY_PORT'] = args.tls_proxy_port
 			self['FEEDS'] = args.feeds
 			self['SNIFFER'] = args.sniffer
-			self['SNIFFER_DIR'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer')
-			self['YARA_PATH'] = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara')
+			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer'))
+			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara'))
+			self['FEEDS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'feeds'))
 			self['ANALYTICS'] = args.analytics
 			self['WEB'] = True
 			self['AUTH'] = False
