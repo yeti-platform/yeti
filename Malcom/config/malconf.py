@@ -33,6 +33,7 @@ class MalcomSetup(dict):
 			self['TLS_PROXY_PORT'] = args.tls_proxy_port
 			self['FEEDS'] = args.feeds
 			self['SNIFFER'] = args.sniffer
+			self['SNIFFER_NETWORK'] = False
 			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer'))
 			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara'))
 			self['FEEDS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'feeds'))
