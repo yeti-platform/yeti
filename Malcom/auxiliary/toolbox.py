@@ -159,9 +159,10 @@ def is_ip(ip):
 
 
 def is_hostname(hostname):
-    match = re.match("^"+hostname_regex+"$", hostname)
-    if match:
-        return match.group(1)
+    if hostname:
+        match = re.match("^"+hostname_regex+"$", hostname)
+        if match:
+            return match.group(1)
     else:
         return None
 
