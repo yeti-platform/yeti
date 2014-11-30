@@ -545,10 +545,10 @@ def sniffer_session(session_id, session_info=None):
 	return render_template('sniffer.html', session=session_info, session_name=session_info['name'])
 
 
-@app.route("/sniffer/<session_name>/<flowid>/raw")
+@app.route("/sniffer/<session_id>/<flowid>/raw")
 @login_required
 @can_view_sniffer_session
-def send_raw_payload(session_name, flowid, session_info=None):
+def send_raw_payload(session_id, flowid, session_info=None):
 
 	session_id = session_info['id']
 
