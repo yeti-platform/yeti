@@ -37,7 +37,7 @@ class FeodoTracker(Feed):
 
 		version = re.search("Version: (?P<version>[ABCD])", dict['description'])
 		if version != None:
-			evil['version'] = version
+			evil['version'] = version.group('version')
 		else:
 			evil['version'] = 'N/A'
 
