@@ -177,8 +177,8 @@ class FeedEngine(Process):
 	def run_scheduled_feeds(self):
 		for f in self.feeds:
 			if self.feeds[f].next_run < datetime.utcnow() and self.feeds[f].enabled:
-				debug_output('Starting thread for feed %s...' % feed_name)
-				self.run_feed(feed_name)
+				debug_output('Starting thread for feed %s...' % self.feeds[f].name)
+				self.run_feed(self.feeds[f].name)
 
 		for t in self.threads:
 			if self.threads[t].is_alive():
