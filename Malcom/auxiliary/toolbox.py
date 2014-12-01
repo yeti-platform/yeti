@@ -146,11 +146,12 @@ def find_artifacts(data):
 
 
 def is_ip(ip):
-    match = re.match("^"+ip_regex+"$", ip)
-    if match:
-        return match.group(1)
+    if ip:
+        match = re.match("^"+ip_regex+"$", ip)
+        if match:
+            return match.group(1)
     else:
-        return None
+        return False
     # ip = find_ips(ip)
     # if len(ip) > 0:
     #     return ip[0]
@@ -164,7 +165,7 @@ def is_hostname(hostname):
         if match:
             return match.group(1)
     else:
-        return None
+        return False
 
     # hostname = find_hostnames(hostname)
     # if len(hostname) > 0:
@@ -173,23 +174,24 @@ def is_hostname(hostname):
     #     return None
 
 def is_subdomain(hostname):
-    hostname = is_hostname(hostname)
     if hostname:
-        tld = hostname.split('.')[-1:][0]
-        if tld in tlds:
-            tld = hostname.split('.')[-2:][0]
+        hostname = is_hostname(hostname)
+        if hostname:
+            tld = hostname.split('.')[-1:][0]
             if tld in tlds:
-                domain = ".".join(hostname.split('.')[-3:])
-                if domain == hostname:
-                    return False
+                tld = hostname.split('.')[-2:][0]
+                if tld in tlds:
+                    domain = ".".join(hostname.split('.')[-3:])
+                    if domain == hostname:
+                        return False
+                    else:
+                        return domain
                 else:
-                    return domain
-            else:
-                domain = ".".join(hostname.split('.')[-2:])
-                if domain == hostname:
-                    return False
-                else:
-                    return domain
+                    domain = ".".join(hostname.split('.')[-2:])
+                    if domain == hostname:
+                        return False
+                    else:
+                        return domain
     else:
         return False
 
