@@ -245,8 +245,9 @@ class Ip(Element):
 
 		# get reverse hostname
 		hostname = toolbox.reverse_dns(self['value'])
-		if toolbox.is_hostname(hostname):
-			new.append(('reverse', Hostname(hostname)))
+		if hostname:
+			if toolbox.is_hostname(hostname):
+				new.append(('reverse', Hostname(hostname)))
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])
