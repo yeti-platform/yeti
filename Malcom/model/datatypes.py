@@ -74,7 +74,7 @@ class File(Element):
 
 class Evil(Element):
 	
-	display_fields = Element.default_fields + []
+	display_fields = Element.default_fields + [('link', 'Link'), ('guid', 'GUID')]
 	default_refresh_period = None
 
 	def __init__(self, value='', type="evil", tags=[]):
