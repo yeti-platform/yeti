@@ -52,7 +52,7 @@ class ZeusTrackerBinaries(Feed):
 		# tags
 		evil['tags'] += ['zeus', 'malware', 'exe']
 
-		url = Url(toolbox.find_urls(dict['description'])[0], ['malware'])
+		url = Url(re.search("URL: (?P<url>\S+),", dict['description']).group('url'))
 
 		# This is important. Values have to be unique, since it's this way that
 		# Malcom will identify them in the database.
