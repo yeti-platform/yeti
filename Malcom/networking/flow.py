@@ -297,10 +297,10 @@ class Flow(object):
 
 		# we'll use the type and info fields
 		self.decoded_flow = Decoder.decode_flow(self)
-		# if yara_rules:
-		# 	matches = self.run_yara(yara_rules)
-		# 	update['yara_matches'] = matches
-			# add this to something
+		if yara_rules:
+			matches = self.run_yara(yara_rules)
+			update['yara_matches'] = matches
+
 		update['decoded_flow'] = self.decoded_flow
 
 		if include_payload:
