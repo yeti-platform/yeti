@@ -465,25 +465,28 @@ class SnifferSession():
 
 		if http_elts:
 			url = self.model.add_text([http_elts['url']])
-			if url['value'] not in self.nodes:
-				self.nodes[url['value']] = url
-				new_elts.append(url)
-
+			if url:
+				if url['value'] not in self.nodes:
+					self.nodes[url['value']] = url
+					new_elts.append(url)
+			
 			host = self.model.add_text([http_elts['host']])
-			if host['value'] not in self.nodes:
-				self.nodes[host['value']] = host
-				new_elts.append(host)
+			if host:
+				if host['value'] not in self.nodes:
+					self.nodes[host['value']] = host
+					new_elts.append(host)
 
 			# in this case, we can save the connection to the DB since it is not temporary
 			#conn = {'attribs': http_elts['method'], 'src': host['_id'], 'dst': url['_id'], '_id': { '$oid': str(host['_id'])+str(url['_id'])}}
-			conn = self.model.connect(host, url, "host")
-			self.edges[str(conn['_id'])] = conn
-			new_edges.append(conn)
+			if url and host:
+				conn = self.model.connect(host, url, "host")
+				self.edges[str(conn['_id'])] = conn
+				new_edges.append(conn)
 
-			src_addr = self.model.get(value=flow.src_addr)
-			conn_http = {'attribs': http_elts['method'], 'src': src_addr['_id'], 'dst': host['_id'], '_id': { '$oid': str(src_addr['_id'])[12:]+str(host['_id'])[12:]}}
-			self.edges[str(conn_http['_id'])] = conn_http
-			new_edges.append(conn_http)
+				src_addr = self.model.get(value=flow.src_addr)
+				conn_http = {'attribs': http_elts['method'], 'src': src_addr['_id'], 'dst': host['_id'], '_id': { '$oid': str(src_addr['_id'])[12:]+str(host['_id'])[12:]}}
+				self.edges[str(conn_http['_id'])] = conn_http
+				new_edges.append(conn_http)
 
 		return new_elts, new_edges
 
