@@ -74,13 +74,17 @@
                 <p class='navbar-text analytics'>Loading status...</p>
             </li>
             <li id='iface-nav'>
-                  <div class='interfaces'>
-                    <table>
+                  <div class='interfaces' id='interfaces-tooltip'>
+                    <table style='float:left'>
                       {% for i in g.config['IFACES'] %}
                         <tr><th>{{i}}</th><td>{{ g.config['IFACES'][i] }}</td></tr>
+                        {% if loop.index %2 == 0 %}
+                        </table>
+                        <table style='float:left'>
+                        {% endif %}
                       {% endfor %}
                     </table>
-                    </div>
+                  </div>
             </li>
             <li class='dropdown'>
               <a href='#' class='dropdown-toggle' data-toggle='dropdown'>{{ current_user.username }} <b class='caret'></b></a>
