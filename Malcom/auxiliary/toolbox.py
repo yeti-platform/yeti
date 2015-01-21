@@ -222,38 +222,47 @@ def split_url(url):
         return (path, scheme, hostname)
     return None
 
-def dns_get_records(hostname):
-    records = {'A': [], 'NS': [], 'CNAME': [], 'MX': []}
-    try:
-        results = dns.resolver.query(hostname, 'A')
-        for r in results:
-            records['A'].append(r.address)
-    except Exception, e:
-        debug_output("An error occured while resolving A: {}".format(e))
-    try:
-        results = dns.resolver.query(hostname, 'NS')
-        for r in results:
-            tgt = r.target.to_text()
-            if tgt[-1] == '.': tgt = tgt[:-1]
-            records['NS'].append(tgt)
-    except Exception, e:
-        debug_output("An error occured while resolving NS: {}".format(e))
-    try:
-        results = dns.resolver.query(hostname, 'CNAME')
-        for r in results:
-            tgt = r.target.to_text()
-            if tgt[-1] == '.': tgt = tgt[:-1]
-            records['CNAME'].append(tgt)
-    except Exception, e:
-        debug_output("An error occured while resolving CNAME: {}".format(e))
-    try:
-        results = dns.resolver.query(hostname, 'MX')
-        for r in results:
-            mx = r.exchange.to_text()
-            if mx[-1] == '.': mx = mx[:-1]
-            records['MX'].append(mx)
-    except Exception, e:
-        debug_output("An error occured while resolving MX: {}".format(e))
+def dns_get_records(hostname, records=['A', 'NS', 'CNAME', 'MX']):
+    records = {key: [] for key in records}
+
+    if 'A' in records:    
+        try:
+            results = dns.resolver.query(hostname, 'A')
+            for r in results:
+                records['A'].append(r.address)
+        except Exception, e:
+            debug_output("An error occured while resolving A: {}".format(e))
+    
+    if 'NS' in records:
+        try:
+            results = dns.resolver.query(hostname, 'NS')
+            for r in results:
+                tgt = r.target.to_text()
+                if tgt[-1] == '.': tgt = tgt[:-1]
+                records['NS'].append(tgt)
+        except Exception, e:
+            debug_output("An error occured while resolving NS: {}".format(e))
+    
+    if 'CNAME' in records:
+        try:
+            results = dns.resolver.query(hostname, 'CNAME')
+            for r in results:
+                tgt = r.target.to_text()
+                if tgt[-1] == '.': tgt = tgt[:-1]
+                records['CNAME'].append(tgt)
+        except Exception, e:
+            debug_output("An error occured while resolving CNAME: {}".format(e))
+    
+    if 'MX' in records:
+        try:
+            results = dns.resolver.query(hostname, 'MX')
+            for r in results:
+                mx = r.exchange.to_text()
+                if mx[-1] == '.': mx = mx[:-1]
+                records['MX'].append(mx)
+        except Exception, e:
+            debug_output("An error occured while resolving MX: {}".format(e))
+            
     return records
     
 

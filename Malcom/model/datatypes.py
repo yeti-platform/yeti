@@ -307,18 +307,24 @@ class Hostname(Element):
 
 		new = []
 		
-		dns_info = toolbox.dns_get_records(self.value)
+		# only resolve A and CNAME records for subdomains
+		if toolbox.is_subdomain(self.value):
+			dns_info = toolbox.dns_get_records(self.value, ['A', 'CNAME'])
+		else:
+			dns_info = toolbox.dns_get_records(self.value)
+
 		for rtype in dns_info:
-			for entry in dns_info[rtype]:
-				art = toolbox.find_artifacts(entry)
-				for t in art:
-					for findings in art[t]:
-						if t == 'hostnames':
-							new.append((rtype, Hostname(findings)))
-						if t == 'urls':
-							new.append((rtype, Url(findings)))
-						if t == 'ips':
-							new.append((rtype, Ip(findings)))
+				for entry in dns_info[rtype]:
+					art = toolbox.find_artifacts(entry)
+					for t in art:
+						for findings in art[t]:
+							if t == 'hostnames':
+								new.append((rtype, Hostname(findings)))
+							if t == 'urls':
+								new.append((rtype, Url(findings)))
+							if t == 'ips':
+								new.append((rtype, Ip(findings)))
+
 
 		# is _hostname a subdomain ?
 		if len(self.value.split(".")) > 2:
