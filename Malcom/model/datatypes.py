@@ -41,6 +41,12 @@ class Element(dict):
 	def __getstate__(self): return self.__dict__
 	def __setstate__(self, d): self.__dict__.update(d)
 
+	def add_evil(source, data):
+		if not self.get('evil'):
+			self['evil'] = {}
+		self['evil'].append({source:data})
+
+
 
 class File(Element):
 	
@@ -74,7 +80,7 @@ class File(Element):
 
 class Evil(Element):
 	
-	display_fields = Element.default_fields + [('link', 'Link'), ('guid', 'GUID')]
+	display_fields = Element.default_fields + [('link', 'Link'), ('guid', 'GUID'), ('description', 'Description')]
 	default_refresh_period = None
 
 	def __init__(self, value='', type="evil", tags=[]):
