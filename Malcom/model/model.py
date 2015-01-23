@@ -348,7 +348,7 @@ class Model:
 					_element[key] = element[key]
 				if key not in _element:
 					_element[key] = {}
-				_element['tags'] = list(set(_element['tags'] + tags))
+				_element['tags'] = [t.strip().lower() for t in list(set(_element['tags'] + tags))]
 				element = _element
 				new = False
 			else:
