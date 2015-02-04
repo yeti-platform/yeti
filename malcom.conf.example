@@ -8,7 +8,7 @@ listen_port = 8080
 auth = false 
 
 [feeds]
-activated = false
+activated = true
 feeds_dir = feeds 
 scheduler = false
 
@@ -61,3 +61,6 @@ ZeusTrackerConfigs
 ZeusTrackerDropzones
 ZeusGameOverDomains
 ZeusTrackerBinaries
+FeodoTracker
+MalwareTrafficAnalysis
+
