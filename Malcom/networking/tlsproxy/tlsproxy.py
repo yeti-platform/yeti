@@ -149,10 +149,15 @@ class MalcomTLSProxy(threading.Thread):
 
 	def run(self):
 		self.factory.protocol = ProxyServer
-		reactor.listenSSL(self.port, self.factory, ssl.DefaultOpenSSLContextFactory('Malcom/networking/tlsproxy/keys/server.key', 'Malcom/networking/tlsproxy/keys/server.crt'), interface="0.0.0.0")
+		try:
+			reactor.listenSSL(self.port, self.factory, ssl.DefaultOpenSSLContextFactory('Malcom/networking/tlsproxy/keys/server.key', 'Malcom/networking/tlsproxy/keys/server.crt'), interface="0.0.0.0")
 
-		self.thread = threading.Thread(None, reactor.run, None, (), {'installSignalHandlers': 0})
-		self.thread.start()
+			self.thread = threading.Thread(None, reactor.run, None, (), {'installSignalHandlers': 0})
+			self.thread.start()
+		except Exception, e:
+			self.stop()
+			self.running = False
+		
 
 		try:
 			while self.running:
@@ -161,9 +166,14 @@ class MalcomTLSProxy(threading.Thread):
 			self.stop()
 		
 	def stop(self):
-		self.running = False
-		reactor.callFromThread(reactor.stop)
-		self.thread.join()
+		if self.running:
+			self.running = False
+			try:
+				reactor.callFromThread(reactor.stop)
+				self.thread.join()
+			except Exception, e:
+				pass
+			
 
 	def add_flows(self, flows):
 		self.factory.flows.append(flows)
