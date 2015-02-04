@@ -40,7 +40,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        $ apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev libadns1-dev virtualenv
+        $ apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev virtualenv
 
 * Get `scapy`:
 
