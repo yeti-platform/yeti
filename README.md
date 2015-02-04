@@ -40,35 +40,36 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev libadns1-dev
+        $ apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev libadns1-dev virtualenv
 
-* Get `virtualenv` and `scapy`
+* Get `scapy`:
 
-        wget https://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.11.5.tar.gz
-        wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-        tar xvzf virtualenv-1.11.5.tar.gz
-        tar xvzf scapy-latest.tar.gz
+        $ wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
+        $ tar xvzf scapy-latest.tar.gz
 
-* Clone the Git repo
+* Clone the Git repo:
 
-        git clone https://github.com/tomchop/malcom.git malcom
+        $ git clone https://github.com/tomchop/malcom.git malcom
 
-* Create your virtualenv and activate it
+* Create your virtualenv and activate it:
 
-        cd malcom
-        python ../virtualenv-1.11.5/virtualenv.py env-malcom
-        source env-malcom/bin/activate
+        $ cd malcom
+        $ virtualenv env-malcom
+        $ source env-malcom/bin/activate
 
-* Install scapy, without elevating your privs to root
+* Install scapy (if you're ina virtual environment, don't  `sudo`):
 
-        cd ../scapy-2.1.0
-        python setup.py install
+        $ cd ../scapy-2.1.0
+        $ python setup.py install
 
-* still from your virtualenv, install necessary python packages
+* Still from your virtualenv, install necessary python packages from the `requirements.txt` file:
 
-        pip install flask pymongo pygeoip geoip2 gevent-websocket python-dateutil netifaces lxml twisted pyopenssl redis service_identity flask-login pycrypto passlib dnspython
+        $ pip install -r requirements.txt
+        
+
 
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
+  * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
 
 ### Quick note on TLS interception
 
