@@ -2,6 +2,20 @@
 
 Malcom is a tool designed to analyze a system's network communication using graphical representations of network traffic, and cross-reference them with known malware sources. This comes handy when analyzing how certain malware species try to communicate with the outside world.
 
+- [What is Malcom?](#user-content-what-is-miasm)
+- [Quick how-to](#quick-how-to)
+- [Installation](#installation)
+ - [Docker instance](#docker-instance)
+ - [Quick note on TLS interception](#quick-note-on-tls-interception) 
+ - [Environment](#environment) 
+ - [Feeds](#feeds)
+- [Technical specs](#technical-specs)
+- [Roadmap](#roadmap)
+- [Disclaimer](#disclaimer)
+- [License](#license)
+
+# What is Malcom?
+
 Malcom can help you: 
 
 * detect central command and control (C&C) servers
@@ -34,7 +48,7 @@ Dataset view (filtered to only show IPs)
 
 ## Installation
 
-Malcom is written in python. Provided you have the necessary libraries, you should be able to run it on any platform.
+Malcom is written in python. Provided you have the necessary libraries, you should be able to run it on any platform. I highly recommend the use of python virtual environments (`virtualenv`) so as not to mess up your system libraries.
 
 The following was tested on Ubuntu server 14.04 LTS:
 
@@ -67,9 +81,22 @@ The following was tested on Ubuntu server 14.04 LTS:
         $ pip install -r requirements.txt
         
 
-
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
+
+### Docker instance
+
+The quickest way to get you started is to pull the Docker image from the public docker repo.
+
+        $ sudo docker pull tomchop/malcom
+        $ sudo docker run -P -d --name malcom tomchop/malcom
+        
+Connect to your malcom instance by checking the port on the docker file.
+
+        $ sudo docker port malcom
+        8080/tcp -> 0.0.0.0:49155
+
+Connecting to `http://<docker_host>:49155/` should get you started.
 
 ### Quick note on TLS interception
 
@@ -90,7 +117,7 @@ As long as it's getting layer-3 network data, Malcom can be deployed anywhere. A
 
 ### Feeds
 
-To launch an instance of Malcom that ONLY fetches information from feeds, run Malcom with the `--feeds` option.
+To launch an instance of Malcom that ONLY fetches information from feeds, run Malcom with the `--feeds` option or tweak the configuration file.
 
 Your database should be populated automatically. If you can dig into the code, adding feeds is pretty straightforward (assuming you're generating `Evil` objects). You can find an example feed in `/feeds/zeustracker`. A more detailed tutorial is [available here](https://github.com/tomchop/malcom/wiki/Adding-feeds-to-Malcom).
 
