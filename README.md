@@ -86,7 +86,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 ### Docker instance
 
-The quickest way to get you started is to pull the Docker image from the public docker repo.
+The quickest way to get you started is to pull the Docker image from the [public docker repo](https://registry.hub.docker.com/u/tomchop/malcom/).
 
         $ sudo docker pull tomchop/malcom
         $ sudo docker run -P -d --name malcom tomchop/malcom
