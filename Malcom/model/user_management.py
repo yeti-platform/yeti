@@ -52,6 +52,7 @@ class UserManager():
 			m = self.add_user('malcom', 'malcom')
 			m.anonymous = True
 			m.authenticated = False
+			m.admin = True
 			self.save_user(m)
 
 		return m
