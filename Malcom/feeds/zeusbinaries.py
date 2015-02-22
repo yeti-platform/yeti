@@ -11,20 +11,19 @@ from Malcom.model.datatypes import Evil, Url
 from Malcom.feeds.feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
-class ZeusTrackerConfigs(Feed):
+class ZeusTrackerBinaries(Feed):
 
 	def __init__(self, name):
-		super(ZeusTrackerConfigs, self).__init__(name, run_every="1h")
-		self.name = "ZeusTrackerConfigs"
-		self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"
-		self.description = "This feed shows the latest 50 ZeuS config URLs."
+		super(ZeusTrackerBinaries, self).__init__(name)
+		self.name = "ZeusTrackerBinaries"
+		self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries"
+		self.description = "This feed shows the latest 50 ZeuS binary URLs."
 		
 	def update(self):
 		for dict in self.update_xml('item', ["title", "link", "description", "guid"]):
 			self.analyze(dict)
 
 	def analyze(self, dict):
-			
 		evil = dict
 
 		url = Url(re.search("URL: (?P<url>\S+),", dict['description']).group('url'))

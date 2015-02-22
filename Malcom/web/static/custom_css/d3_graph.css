@@ -113,10 +113,9 @@ circle.as {
 }
 
 circle.evil {
-	fill: #d62728;
-	stroke: #951b1c;
+	fill: #d62728 !important;
+	stroke: #951b1c !important;
 }
-
 
 circle.ip {
 	fill: #98df8a;

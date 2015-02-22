@@ -1,11 +1,15 @@
 import urllib2
-import datetime, re
-from lxml import etree
-import Malcom.auxiliary.toolbox as toolbox
+import datetime
+import re
+import md5
+
+import bs4
 from bson.objectid import ObjectId
 from bson.json_util import dumps
+
 from Malcom.model.datatypes import Evil, Url
-from feed import Feed
+from Malcom.feeds.feed import Feed
+import Malcom.auxiliary.toolbox as toolbox
 
 
 class MalcodeBinaries(Feed):
@@ -17,63 +21,21 @@ class MalcodeBinaries(Feed):
 		self.source	= "http://malc0de.com/rss/"
 
 	def update(self):
-		
-		request = urllib2.Request(self.source, headers={"User-agent": "Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11"})
-		feed = urllib2.urlopen(request)
-		
-		children = ["title", "description", "link"]
-		main_node = "item"
-		
-		tree = etree.parse(feed)
-		for item in tree.findall("//%s"%main_node):
-			dict = {}
-			for field in children:
-				dict[field] = item.findtext(field)
-
+		for dict in self.update_xml('item', ['title', 'description', 'link'], headers={"User-Agent": "Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11"}):
 			self.analyze(dict)
 
 		return True
 
 	def analyze(self, dict):
-
-		try:
-			url = toolbox.find_urls(dict['description'])[0]
-		except Exception, e:
-			return # no URL found, bail
-
-		url = Url(url=url, tags=['exe'])
-			
-		# We create an Evil object. Evil objects are what Malcom uses
-		# to store anything it considers evil. Malware, spam sources, etc.
-		# Remember that you can create your own datatypes, if need be.
-
-		evil = Evil()
-
-		# We start populating the Evil() object's attributes with
-		# information from the dict we parsed earlier
+		g = re.match(r'^URL: (?P<url>.+), IP Address: (?P<ip>[\d.]+), Country: (?P<country>[A-Z]{2}), ASN: (?P<asn>\d+), MD5: (?P<md5>[a-f0-9]+)$', dict['description'])
+		evil = g.groupdict()
+		evil['description'] = "N/A"
+		evil['link'] = dict['link']
+		evil['id'] = md5.new(dict['description']).hexdigest()
+		evil['source'] = self.name
 		
-		evil['info'] = dict['description']  # description
-		evil['tags'] = [self.name, 'malware']
-	
-		md5 = re.search("MD5 hash: (?P<md5>[0-9a-f]{32,32})", dict['description']) # md5 
-		if md5 != None:
-			evil['md5'] = md5.group('md5')
-		else:
-			evil['md5'] = "No MD5"
-		
-		evil['link'] = dict['link'] # linkback
+		url = Url(url=evil['url'])
+		url.add_evil(evil)
 
-		# This is important. Values have to be unique, since it's this way that
-		# Malcom will identify them in the database.
-		# This is probably not the best way, but it will do for now.
+		self.commit_to_db(url)
 
-		evil['value'] = "Malcode malware URL"
-		if md5:
-			evil['value'] += " (MD5: %s)" % evil['md5']
-		else:
-			evil['value'] += " (URL: %s)" % url['value']
-
-		# Save elements to DB. The status field will contain information on 
-		# whether this element already existed in the DB.
-
-		self.commit_to_db(url, evil)

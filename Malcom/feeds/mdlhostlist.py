@@ -1,8 +1,11 @@
-import urllib2, re
-import Malcom.auxiliary.toolbox as toolbox
-from Malcom.model.datatypes import Url, Evil
-from feed import Feed
+import urllib2
+import re
+import md5
 from lxml import etree
+
+import Malcom.auxiliary.toolbox as toolbox
+from Malcom.model.datatypes import Url
+from Malcom.feeds.feed import Feed
 
 class MalwareDomainList(Feed):
 	"""
@@ -15,22 +18,16 @@ class MalwareDomainList(Feed):
 		self.name = "MalwareDomainList"
 
 	def update(self):
-		self.update_xml('item', ["title", "link", "description", "guid"])
+		for dict in self.update_xml('item', ["title", "link", "description", "guid"]):
+			self.analyze(dict)
 
 	def analyze(self, dict):
 
 		# Create the new URL and store it in the DB
-		url = re.search("Host: (?P<url>[^,]+),", dict['description']).group('url')
-		url = Url(url=url)
-		evil = Evil()
-		
-		evil['details'] = dict['description']
-		threat_type = re.search('Description: (?P<tag>.+)', dict['description']).group('tag')
-		evil['tags'] = ['malwaredomainlist', threat_type]
-		evil['value'] = "%s (%s)" % (threat_type, url['value'])
-		evil['link'] = dict['link']
-		evil['guid'] = dict['guid']
-
-		return url, evil
+		evil = dict
+		url = Url(url=re.search("Host: (?P<url>[^,]+),", dict['description']).group('url'))
+		evil['id'] = md5.new(dict['guid']).hexdigest()
+		url.add_evil(evil)
+		self.commit_to_db(url)
 
 

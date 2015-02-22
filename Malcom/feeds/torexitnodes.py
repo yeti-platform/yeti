@@ -1,8 +1,11 @@
 import urllib2
-from Malcom.model.datatypes import Ip, Evil
-from feed import Feed
-import Malcom.auxiliary.toolbox as toolbox
 import time
+import md5
+
+from Malcom.feeds.feed import Feed
+import Malcom.auxiliary.toolbox as toolbox
+from Malcom.model.datatypes import Ip
+
 
 class TorExitNodes(Feed):
 	"""
@@ -26,37 +29,36 @@ class TorExitNodes(Feed):
 		if len(feed) > 10:
 			self.status = "OK"
 		
-		for line in feed:	
+		for line in feed:
 			self.analyze(line)
 		return True
 
 	def analyze(self, line):
+
 		fields = line.split('|')
 
-		tornode = Evil(tags=['tor exit node'])
-		#
-		try:
-			tornode['ip'] = fields[0]
-			tornode['name'] = fields[1]
-			tornode['router-port'] = fields[2]
-			tornode['directory-port'] = fields[3]
-			tornode['flags'] = fields[4]
-			tornode['uptime'] = fields[5]
-			tornode['version'] = fields[6]
-			tornode['contactinfo'] = fields[7]
-		except Exception, e:
+		if len(fields) < 8:
 			return
 
+		ip = toolbox.find_ips(fields[0])[0]
+		ip = Ip(ip=ip, tags=['tor'])
+	
+		tornode = {}
+		tornode['description'] = "Tor exit node"
+		tornode['ip'] = fields[0]
+		tornode['name'] = fields[1]
+		tornode['router-port'] = fields[2]
+		tornode['directory-port'] = fields[3]
+		tornode['flags'] = fields[4]
+		tornode['uptime'] = fields[5]
+		tornode['version'] = fields[6]
+		tornode['contactinfo'] = fields[7]
+	
+		tornode['id'] = md5.new(tornode['ip']+tornode['name']).hexdigest()
 
 		tornode['value'] = "Tor node: %s (%s)" % (tornode['name'], tornode['ip'])
+		tornode['source'] = self.name
 
-		try:
-			ip = toolbox.find_ips(tornode['ip'])[0]
-			ip = Ip(ip=ip, tags=['tor'])
-		except Exception, e:
-			# if find_ip raises an exception, it means no ip 
-			# was found in the line, so we return
-			return
-
-		self.commit_to_db(ip, tornode, "Tor node")
+		ip.add_evil(tornode)
+		self.commit_to_db(ip)
 

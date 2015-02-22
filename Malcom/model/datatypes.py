@@ -23,6 +23,7 @@ class Element(dict):
 		self['value'] = None
 		self['type'] = None
 		self['refresh_period'] = None
+		self['evil'] = {}
 		
 	def to_dict(self):
 		return self.__dict__
@@ -41,12 +42,21 @@ class Element(dict):
 	def __getstate__(self): return self.__dict__
 	def __setstate__(self, d): self.__dict__.update(d)
 
-	def add_evil(source, data):
+	def add_evil(self, evil):
 		if not self.get('evil'):
-			self['evil'] = {}
-		self['evil'].append({source:data})
+			self['evil'] = {}		
+		
+		if not evil.get('id'):
+			raise ValueError("Evil info does not have a unique ID:\n{}".format(evil))
+		if not evil.get('source'):
+			raise ValueError("Evil info does not have a source:\n{}".format(evil))
+		if not evil.get('description'):
+			raise ValueError("Evil info does not have a description:\n{}".format(evil))
 
-
+		if not evil.get('date_added'):
+			evil['date_added'] = datetime.datetime.utcnow()
+			
+		self['evil'][evil['id']] = evil
 
 class File(Element):
 	
@@ -141,11 +151,12 @@ class As(Element):
 
 
 class Url(Element):
-	display_fields = Element.default_fields + [
-							('scheme', 'Scheme'),
-							('hostname', 'Hostname'),
-							('path', 'Path'),
-							]
+	element_fields = [
+						('scheme', 'Scheme'),
+						('hostname', 'Hostname'),
+						('path', 'Path'),
+						]
+	display_fields = Element.default_fields + element_fields
 	default_refresh_period = None
 
 	def __init__(self, url="", tags=[]):
@@ -201,7 +212,7 @@ class Ip(Element):
 	
 	default_refresh_period = 3*24*3600
 
-	display_fields = Element.default_fields + [
+	element_fields= [
 						('city', 'City'),
 						('postal_code', "ZIP code"),
 						('bgp', 'BGP'),
@@ -223,6 +234,8 @@ class Ip(Element):
 						#'_id',
 						#'type',
 						]
+
+	display_fields = Element.default_fields + element_fields
 
 	def __init__(self, ip="", tags=[]):
 		super(Ip, self).__init__()
@@ -282,8 +295,10 @@ class Ip(Element):
 class Hostname(Element):
 	
 	default_refresh_period = 6*60*60 # 6 hours
-	# default_refresh_period = 10*60 # 10 minutes
-	display_fields = Element.default_fields + []
+	
+	element_fields = []
+
+	display_fields = Element.default_fields + element_fields
 
 	def __init__(self, hostname="", tags=[]):
 		super(Hostname, self).__init__()

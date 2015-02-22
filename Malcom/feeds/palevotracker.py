@@ -1,8 +1,13 @@
-import urllib2, re
-from Malcom.model.datatypes import Hostname, Evil
-from feed import Feed
+import urllib2
+import re
+import md5
+
 from lxml import etree
+
+from Malcom.feeds.feed import Feed
+from Malcom.model.datatypes import Hostname
 import Malcom.auxiliary.toolbox as toolbox
+
 
 class PalevoTracker(Feed):
 	"""
@@ -15,20 +20,22 @@ class PalevoTracker(Feed):
 		self.source = "https://palevotracker.abuse.ch/?rssfeed"
 
 	def update(self):
-		self.update_xml('item', ["title", "link", "description", 'guid'])
+		for dict in self.update_xml('item', ["title", "link", "description", 'guid']):
+			self.analyze(dict)
 
 	def analyze(self, dict):
 
 		# Create the new Hostname and store it in the DB
+
 		hostname = Hostname(hostname=toolbox.find_hostnames(dict['title'])[0])
 		if hostname['value'] == None: return
-		
-		evil = Evil()
-		evil['value'] = "Palevo CC (%s)" % hostname['value']
-		evil['status'] = re.search("Status: (?P<status>\S+)", dict['description']).group('status')
-		evil['info'] = dict['description']
-		evil['tags'] = ['cc', 'palevo']
 
-		return hostname, evil
+		evil = dict
+		evil['status'] = re.search("Status: (?P<status>\S+)", dict['description']).group('status')
+		evil['id'] = md5.new(re.search(r"id=(?P<id>[a-f0-9]+)", dict['guid']).group('id')).hexdigest()
+		evil['source'] = self.name
+
+		hostname.add_evil(evil)
+		self.commit_to_db(hostname)
 
 

@@ -1,10 +1,16 @@
+import md5
+import urllib2
+import datetime
+import StringIO
+import csv
+
+from bson.json_util import dumps, loads
+
 from Malcom.model.datatypes import Ip, Url, Hostname, As, Evil 
 from Malcom.feeds.feed import Feed
-
 import Malcom.auxiliary.toolbox as toolbox
 
-import urllib2
-from bson.json_util import dumps, loads
+
 
 class AsproxTracker(Feed):
 	"""
@@ -18,20 +24,37 @@ class AsproxTracker(Feed):
 		self.description = "This feed contains known Asprox C2 servers"
 
 	def update(self):
-		self.update_lines()
+		request = urllib2.Request(self.source)
+		reader = csv.reader(urllib2.urlopen(request), delimiter=',', quotechar="'")
+		for line in reader:
+			self.analyze(line)
 
 	def analyze(self, line):
-
-		Number,Status,CC,Host,Port,Protocol = line.split(',')[:6] # split the entry into elements
-
-		_url = Url(url="{}://{}:{}".format(Protocol, Host, Port))
-		_url['tags'] = ['asprox']
-
-		evil = Evil() 
-		evil['tags'] = ['asprox', 'cc']
-		evil['value'] = 'Asprox C2: {}'.format(_url['value'])
-		evil['status'] = Status
 		
-		return _url, evil
+		if line[0] == 'Number':
+			return
+
+		Number,Status,CC,Host,Port,Protocol, ASN, Last_Updated, First_Seen, Last_Seen, First_Active, Last_Active, SBL, Abuse_Contact, Details = line # split the entry into elements
+
+		url = Url(url="{}://{}:{}".format(Protocol, Host, Port))
+		url['tags'] = ['asprox']
+
+		evil = {}
+		
+		evil['status'] = Status
+		evil['cc'] = CC
+		evil['status'] = Status
+		print First_Seen
+		evil['date_added'] = datetime.datetime.strptime(First_Seen, "%Y-%m-%d %H:%M:%S") 
+		print Last_Seen
+		evil['last_seen'] = datetime.datetime.strptime(Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else "N/A" 
+		evil['sbl'] = SBL
+		evil['abuse_contact'] = Abuse_Contact
+		evil['description'] = Details if Details else "N/A"
+		evil['id'] = md5.new(First_Seen+Host).hexdigest()
+		evil['source'] = self.name
+
+		url.add_evil(evil)
+		self.commit_to_db(url)
 
 

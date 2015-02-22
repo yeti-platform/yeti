@@ -425,8 +425,12 @@ function start() {
                 d.radius = r
                 return r;
               })
-     .attr('class', function (d) { return d.type } )
-
+     .attr('class', function (d) { 
+      console.log(d)
+        c = d.type
+        for (var i in d.tags) { c += ' ' + d.tags[i] }
+        return c
+      })
      .on("mousedown", function (d) { // this is what happens when we mousedown on a node
           if (!d.selected) {
             if (!shiftKey) {
