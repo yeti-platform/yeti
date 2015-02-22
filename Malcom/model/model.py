@@ -363,6 +363,9 @@ class Model:
 				element['date_created'] = datetime.datetime.utcnow()
 				element['next_analysis'] = datetime.datetime.utcnow()
 			
+			# tags are all lowercased and stripped
+			element['tags'] = [t.lower().strip() for t in element['tags']]
+
 			while True:
 				try:
 					self.elements.save(element)
