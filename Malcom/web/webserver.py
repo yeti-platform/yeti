@@ -316,7 +316,6 @@ def allowed_file(filename):
 
 
 @app.route('/dataset/report/<field>/<path:value>/')
-@app.route('/dataset/report/<field>/<path:value>/<strict>/')
 @login_required
 def report(field, value, strict=False):
 	base_elts_dict = {}
@@ -330,6 +329,9 @@ def report(field, value, strict=False):
 	for e in result_set:
 		base_elts_dict[e['_id']] = e
 		base_elts.append(e)
+
+	if len(base_elts) == 0:
+		abort(404)
 
 	# get all 1st degree nodes in one dict
 	all_nodes_dict = {}
