@@ -2,7 +2,7 @@ FROM ubuntu:14.04
 MAINTAINER Thomas Chopitea <tomchop@gmail.com>
 
 # update and install dependencies
-RUN apt-get -qq update && apt-get -qqy install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-pip
+RUN apt-get -qq update && apt-get -qqy install build-essential git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-pip
 
 VOLUME ['/var/lib/mongodb']
 # scapy
@@ -17,6 +17,12 @@ RUN cd /opt && \
 # get malcom
 RUN cd /opt && \
 	git clone https://github.com/tomchop/malcom.git malcom
+
+# get maxmind geoip database
+RUN cd /opt/malcom/Malcom/auxiliary/geoIP && \
+	wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz && \
+	gunzip -d GeoLite2-City.mmdb.gz && \
+	mv GeoLite2-City.mmdb GeoIP2-City.mmdb
 
 # set working dir, install python modules and launch webserver
 WORKDIR /opt/malcom
