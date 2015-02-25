@@ -54,7 +54,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        $ apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
+        $ apt-get install build-essential git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
 
 * Get `scapy`:
 
@@ -78,8 +78,15 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Still from your virtualenv, install necessary python packages from the `requirements.txt` file:
 
+        $ cd ../malcom
         $ pip install -r requirements.txt
-        
+
+* For IP geolocation to work, you need to download the [Maxmind](http://dev.maxmind.com/) database and copy the .dat file to the `malcom/Malcom/auxiliary/geoIP` directory. You can get Maxmind's free (and thus more or less accurate) database from the following link: http://dev.maxmind.com/geoip/geoip2/geolite2/:
+
+        $ cd malcom/Malcom/auxiliary/geoIP
+        $ wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
+        $ gunzip -d GeoLite2-City.mmdb.gz
+        $ mv GeoLite2-City.mmdb GeoIP2-City.mmdb
 
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
