@@ -19,7 +19,7 @@ RUN cd /opt && \
 	git clone https://github.com/tomchop/malcom.git malcom
 
 # get maxmind geoip database
-ADD http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz /opt/malcom/Malcom/auxiliary/geoIP
+ADD http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz /opt/malcom/Malcom/auxiliary/geoIP/GeoLite2-City.mmdb.gz
 RUN cd /opt/malcom/Malcom/auxiliary/geoIP && \
 	gunzip -d GeoLite2-City.mmdb.gz && \
 	mv GeoLite2-City.mmdb GeoIP2-City.mmdb
