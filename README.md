@@ -81,6 +81,12 @@ The following was tested on Ubuntu server 14.04 LTS:
         $ cd ../malcom
         $ pip install -r requirements.txt
 
+* For IP geolocation to work, you need to download the [Maxmind](http://dev.maxmind.com/) database and copy the .dat file to the `malcom/Malcom/auxiliary/geoIP` directory. You can get Maxmind's free (and thus more or less accurate) database from the following link: http://dev.maxmind.com/geoip/geoip2/geolite2/:
+
+        $ cd malcom/Malcom/auxiliary/geoIP
+        $ wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
+        $ gunzip -d GeoLite2-City.mmdb.gz`
+
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
 
