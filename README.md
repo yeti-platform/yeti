@@ -54,7 +54,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        $ apt-get install git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
+        $ apt-get install build-essential git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
 
 * Get `scapy`:
 
@@ -78,8 +78,8 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Still from your virtualenv, install necessary python packages from the `requirements.txt` file:
 
+        $ cd ../malcom
         $ pip install -r requirements.txt
-        
 
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
