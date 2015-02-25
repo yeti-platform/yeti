@@ -85,7 +85,8 @@ The following was tested on Ubuntu server 14.04 LTS:
 
         $ cd malcom/Malcom/auxiliary/geoIP
         $ wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
-        $ gunzip -d GeoLite2-City.mmdb.gz`
+        $ gunzip -d GeoLite2-City.mmdb.gz
+        $ mv GeoLite2-City.mmdb GeoIP2-City.mmdb
 
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
