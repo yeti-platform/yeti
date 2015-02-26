@@ -24,7 +24,10 @@ malcom_api = Blueprint('malcom_api', __name__)
 def neighbors():
 	query = {}
 	for key in request.args:
-		query[key] = request.args.getlist(key)
+		if key == '_id':
+			query[key] = {"$in" : [ObjectId(id) for id in request.args.getlist(key)]}
+		else:
+			query[key] = {"$in" : request.args.getlist(key)}
 
 	data = Model.find_neighbors(query, include_original=True)
 	return (dumps(data), 200, {'Content-Type': 'application/json'})
@@ -77,14 +80,14 @@ def query_data():
 		elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
 	else:
 		elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
-	
-	chrono_query = datetime.datetime.utcnow() - chrono_query	
+
+	chrono_query = datetime.datetime.utcnow() - chrono_query
 
 	data['page'] = page
 	data['per_page'] = per_page
-	
-	
-	
+
+
+
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
@@ -118,7 +121,7 @@ def delete(id):
 @login_required
 def sniffer_sessionlist():
 	params = {}
-	
+
 	if 'user' in request.args:
 		params['user'] = current_user.username
 	if 'page' in request.args:
@@ -136,13 +139,13 @@ def sniffer_session_delete(session_id, session_info=None):
 	session_id = session_info['id']
 
 	result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_id': session_id})
-	
+
 	if result == "notfound": # session not found
 		return (dumps({'status':'Sniffer session %s does not exist' % session_id, 'success': 0}), 200, {'Content-Type': 'application/json'})
-	
+
 	if result == "running": # session running
 		return (dumps({'status':"Can't delete session %s: session running" % session_id, 'success': 0}), 200, {'Content-Type': 'application/json'})
-	
+
 	if result == "removed": # session successfully stopped
 		current_user.remove_sniffer_session(session_id)
 		UserManager.save_user(current_user)
