@@ -142,16 +142,10 @@ class Model:
 	def find_neighbors(self, query, include_original=True):
 		"""Gets neighbors for all elements matching query"""
 
-		final_query = []
+		# Get original elements
+		elts = self.elements.find(query)
 
-		for key in query:
-			if key == '_id':
-				values = [ObjectId(v) for v in query[key]]
-			else:
-				values = [v for v in query[key]]
-			final_query.append({key: {'$in': values}})
-
-		elts = self.elements.find({'$and': final_query})
+		# find neighbors for elements
 		total_nodes, total_edges = self._multi_get_neighbors(elts, include_original=include_original)
 
 		# Add display fields
@@ -179,11 +173,9 @@ class Model:
 			ids.add(e['dst'])
 
 		if include_original:
-			ids.add(set(original_ids))
-			new_nodes = list(self.elements.find({'$and': [{'_id': {'$in': list(ids)}}, query]}))
-		else:
-			new_nodes = list(self.elements.find({'$and': [{'_id': {'$in': list(ids)}}, query]}))
+			ids = ids | set(original_ids)
 
+		new_nodes = list(self.elements.find({'$and': [{'_id': {'$in': list(ids)}}, query]}))
 		return new_nodes, new_edges
 
 	def get_neighbors(self, elt, query={}, include_original=True):
