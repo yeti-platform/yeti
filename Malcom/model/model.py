@@ -300,9 +300,13 @@ class Model:
 
 			# critical section starts here
 			tags = []
+			evil = {}
 			if 'tags' in element:
 				tags = element['tags']
 				del element['tags'] 	# so tags in the db do not get overwritten
+			if 'evil' in element:
+				evil = element['evil']
+				del element['evil']
 
 			if '_id' in element:
 				del element['_id']
@@ -319,9 +323,9 @@ class Model:
 				for key in element:
 					if key=='tags': continue
 					_element[key] = element[key]
-				if key not in _element:
-					_element[key] = {}
 				_element['tags'] = [t.strip().lower() for t in list(set(_element['tags'] + tags))]
+				if evil != {}:
+					_element['evil'] = dict(_element['evil'].items() + evil.items())
 				element = _element
 				new = False
 			else:
