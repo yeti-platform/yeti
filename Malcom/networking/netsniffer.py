@@ -17,7 +17,7 @@ try:
 	has_yara = True
 	# load_yara_rules
 except Exception, e:
-	sys.stderr.write("[!] yara-python was not found on system.\nPlease install yara if you want to use your rules.\n")
+	debug_output("yara-python was not found on system. Please install yara if you want to use your rules.", type='error')
 	has_yara = False
 
 

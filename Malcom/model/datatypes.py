@@ -1,4 +1,6 @@
 import datetime, os, sys
+from Malcom.auxiliary.toolbox import debug_output
+import Malcom.auxiliary.toolbox as toolbox
 
 try:
 	import geoip2.database
@@ -7,11 +9,11 @@ try:
 	geoip_reader = geoip2.database.Reader(current_path+'/../auxiliary/geoIP/GeoIP2-City.mmdb')
 	geoip = True
 except Exception, e:
-	sys.stderr.write("[-] Could not load GeoIP library - %s" % e)
+	debug_output("Could not load GeoIP library - %s" % e, type='error')
 	geoip = False
 
-import Malcom.auxiliary.toolbox as toolbox
-from Malcom.auxiliary.toolbox import debug_output
+
+
 
 
 class Element(dict):
