@@ -31,7 +31,7 @@ class FeodoTracker(Feed):
 		self.name = "FeodoTracker"
 		self.source = "https://feodotracker.abuse.ch/feodotracker.rss"
 		self.description = "Feodo Tracker RSS Feed. This feed shows the latest twenty Feodo C2 servers which Feodo Tracker has identified."
-		
+
 
 	def update(self):
 		for dict in self.update_xml('item', ["title", "link", "description", "guid"]):
@@ -40,13 +40,13 @@ class FeodoTracker(Feed):
 	def analyze(self, dict):
 		evil = dict
 
-		
+
 		date_string = re.search(r"\((?P<datetime>[\d\- :]+)\)", dict['title']).group('datetime')
 		try:
 			evil['date_added'] = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
 		except ValueError, e:
 			pass
-		
+
 		g = re.match(r'^Host: (?P<host>.+), Version: (?P<version>\w)', dict['description'])
 		g = g.groupdict()
 		evil['host'] = g['host']
@@ -55,8 +55,8 @@ class FeodoTracker(Feed):
 		evil['id'] = md5.new(dict['description']).hexdigest()
 		evil['source'] = self.name
 		del evil['title']
-		
-		
+
+
 		if toolbox.is_ip(evil['host']):
 			elt = Ip(ip=evil['host'], tags=[FeodoTracker.variants[g['version']]])
 		elif toolbox.is_hostname(evil['host']):

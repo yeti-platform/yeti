@@ -18,15 +18,15 @@ except Exception, e:
 
 class Element(dict):
 
-	default_fields = [('value', "Value"), ('type', "Type"), ('tags', "Tags"), ('date_updated', 'Updated'), ('date_created', 'Created'), ('last_analysis', 'Analyzed') ]	
-	
+	default_fields = [('value', "Value"), ('type', "Type"), ('tags', "Tags"), ('date_updated', 'Updated'), ('date_created', 'Created'), ('last_analysis', 'Analyzed') ]
+
 	def __init__(self):
 		self['tags'] = []
 		self['value'] = None
 		self['type'] = None
 		self['refresh_period'] = None
 		self['evil'] = {}
-		
+
 	def to_dict(self):
 		return self.__dict__
 
@@ -46,8 +46,8 @@ class Element(dict):
 
 	def add_evil(self, evil):
 		if not self.get('evil'):
-			self['evil'] = {}		
-		
+			self['evil'] = {}
+
 		if not evil.get('id'):
 			raise ValueError("Evil info does not have a unique ID:\n{}".format(evil))
 		if not evil.get('source'):
@@ -57,14 +57,14 @@ class Element(dict):
 
 		if not evil.get('date_added'):
 			evil['date_added'] = datetime.datetime.utcnow()
-			
+
 		self['evil'][evil['id']] = evil
 
 class File(Element):
-	
+
 	display_fields = Element.default_fields + [('md5', "MD5"), ('file_type', "Type")]
 	default_refresh_period = None
-	
+
 	def __init__(self, value='', type='file', tags=[]):
 		super(File, self).__init__()
 		self['value'] = value
@@ -91,7 +91,7 @@ class File(Element):
 
 
 class Evil(Element):
-	
+
 	display_fields = Element.default_fields + [('link', 'Link'), ('guid', 'GUID'), ('description', 'Description')]
 	default_refresh_period = None
 
@@ -111,7 +111,7 @@ class Evil(Element):
 
 	def analytics(self):
 		self['last_analysis'] = datetime.datetime.utcnow()
-		
+
 		# analysis does not change with time
 		self['next_analysis'] = None
 		return []
@@ -121,7 +121,7 @@ class As(Element):
 	display_fields = Element.default_fields + [
 										('name', 'Name'),
 										('ISP', 'ISP'),
-										#('domain', 'Domain'), 
+										#('domain', 'Domain'),
 										('asn', 'ASN'),
 										('country', 'Country'),
 										]
@@ -173,7 +173,7 @@ class Url(Element):
 		url = Url()
 		for key in d:
 			url[key] = d[key]
-		return url 
+		return url
 
 	def analytics(self):
 		debug_output("(url analytics for %s)" % self['value'])
@@ -211,7 +211,7 @@ class Url(Element):
 
 
 class Ip(Element):
-	
+
 	default_refresh_period = 3*24*3600
 
 	element_fields= [
@@ -247,8 +247,8 @@ class Ip(Element):
 		# refresh IP geolocation every 72hours
 		if ip != '':
 			self.location_info()
-		
-		self['refresh_period'] = Ip.default_refresh_period			
+
+		self['refresh_period'] = Ip.default_refresh_period
 
 	@staticmethod
 	def from_dict(d):
@@ -258,7 +258,7 @@ class Ip(Element):
 
 		ip.location_info()
 		return ip
-			
+
 
 	def analytics(self):
 		debug_output( "(ip analytics for %s)" % self['value'])
@@ -276,12 +276,12 @@ class Ip(Element):
 		return new
 
 	def location_info(self):
-	
+
 		# get geolocation info (v2)
 		if geoip:
 			try:
 				geoinfo = geoip_reader.city(self.value)
-				
+
 				self['city'] = geoinfo.city.name
 				self['postal_code'] = geoinfo.postal.code
 				self['time_zone'] = geoinfo.location.time_zone
@@ -295,9 +295,9 @@ class Ip(Element):
 
 
 class Hostname(Element):
-	
+
 	default_refresh_period = 6*60*60 # 6 hours
-	
+
 	element_fields = []
 
 	display_fields = Element.default_fields + element_fields
@@ -322,14 +322,14 @@ class Hostname(Element):
 		h = Hostname()
 		for key in d:
 			h[key] = d[key]
-		return h 
+		return h
 
 	def analytics(self):
 
 		debug_output( "(host analytics for %s)" % self.value)
 
 		new = []
-		
+
 		# only resolve A and CNAME records for subdomains
 		if toolbox.is_subdomain(self.value):
 			dns_info = toolbox.dns_get_records(self.value, ['A', 'CNAME'])

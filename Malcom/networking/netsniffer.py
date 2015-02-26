@@ -469,7 +469,7 @@ class SnifferSession():
 				if url['value'] not in self.nodes:
 					self.nodes[url['value']] = url
 					new_elts.append(url)
-			
+
 			host = self.model.add_text([http_elts['host']])
 			if host:
 				if host['value'] not in self.nodes:
