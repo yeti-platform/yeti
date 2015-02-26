@@ -13,7 +13,7 @@ from gevent import monkey; monkey.patch_socket(dns=False);
 import os, datetime, time, sys, signal, argparse, re, pickle
 import netifaces as ni
 
-# db 
+# db
 from pymongo import MongoClient
 
 # json / bson
@@ -43,7 +43,7 @@ from Malcom.model.user_management import UserManager as UserManagerClass
 from Malcom.web.messenger import WebMessenger
 
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
-		
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.debug = True
@@ -65,7 +65,7 @@ UserManager = UserManagerClass()
 # 	proxy_pass http://127.0.0.1:8080;
 # 	proxy_http_version 1.1;
 # 	proxy_set_header SCRIPT_NAME /malcom;
-# 	proxy_set_header Host $host;    
+# 	proxy_set_header Host $host;
 # 	proxy_set_header X-Scheme $scheme;
 # 	proxy_set_header Upgrade $http_upgrade;
 # 	proxy_set_header Connection "upgrade";
@@ -92,7 +92,7 @@ def can_view_sniffer_session(f):
 			debug_output("Sniffing session '%s' does not exist" % session_id, 'error')
 			flash("Sniffing session '%s' does not exist" % session_id, 'warning')
 			return redirect(url_for('sniffer'))
-		
+
 		kwargs['session_info'] = session_info
 		return f(*args, **kwargs)
 
@@ -103,12 +103,12 @@ def can_modify_sniffer_session(f):
 	def decorated_function(*args, **kwargs):
 		session_id = kwargs['session_id']
 		session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
-	
+
 		if not session_info or session_info['id'] not in current_user.sniffer_sessions:
 			debug_output("Sniffing session '%s' does not exist" % session_id, 'error')
 			flash("Sniffing session '%s' does not exist" % session_id, 'warning')
 			return redirect(url_for('sniffer'))
-		
+
 		kwargs['session_info'] = session_info
 		return f(*args, **kwargs)
 
@@ -132,6 +132,13 @@ def datetimeformat(value, format='%Y-%m-%d %H:%M'):
 	else:
 		return "None"
 
+@app.template_filter('display_iterable')
+def datetimeformat(value):
+	if len(value) > 0:
+		return ", ".join(value)
+	else:
+		return "N/A"
+
 @app.errorhandler(404)
 def page_not_found(error):
 	return 'This page does not exist', 404
@@ -150,7 +157,7 @@ def before_request():
 	g.config = app.config
 	g.messenger = app.config['MESSENGER']
 
-	if g.config['AUTH']:	
+	if g.config['AUTH']:
 		g.user = current_user
 	else:
 		g.user = None
@@ -182,9 +189,9 @@ def load_user_from_request(request):
 	if api_key:
 		print "Getting user for API key %s" % api_key
 		u = UserManager.get_user(api_key=api_key)
-		if u: 
+		if u:
 			u.api_last_activity = datetime.datetime.utcnow()
-			u.api_request_count += 1 
+			u.api_request_count += 1
 			u = UserManager.save_user(u)
 			return u
 		else:
@@ -206,13 +213,13 @@ def login():
 	if g.user != None:
 		if g.user.is_authenticated():
 			return redirect(url_for('index'))
-	
+
 	if request.method == 'POST':
 		username = request.form.get('username')
 		password = request.form.get('password')
 		rememberme = bool(request.form.get('rememberme', False))
 		print "Login attempt for %s (rememberme: %s)" % (username, rememberme)
-		
+
 		# get user w/ username
 		user = UserManager.get_user(username=username)
 
@@ -318,8 +325,9 @@ def allowed_file(filename):
 @app.route('/dataset/report/<field>/<path:value>/')
 @login_required
 def report(field, value, strict=False):
-	base_elts_dict = {}
 	base_elts = []
+	base_ids = []
+	evil_elts = {}
 
 	if strict:
 		result_set = Model.find({field: value})
@@ -327,27 +335,29 @@ def report(field, value, strict=False):
 		result_set = Model.find({field: re.compile(re.escape(value), re.IGNORECASE)})
 
 	for e in result_set:
-		base_elts_dict[e['_id']] = e
 		base_elts.append(e)
+		base_ids.append(e['_id'])
+		if 'evil' in e['tags']:
+			evil_elts[e['_id']] = e
 
 	if len(base_elts) == 0:
 		abort(404)
 
 	# get all 1st degree nodes in one dict
-	all_nodes_dict = {}
-	all_edges_dict = {}
 
-	for elt in base_elts:
-		nodes, edges = Model.get_neighbors_elt(elt)
-		for n in nodes:
-			all_nodes_dict[n['_id']] = n
-		for e in edges:
-			all_edges_dict[e['_id']] = e
+	first_degree = {}
+
+	data = Model.find_neighbors({ '_id' : {'$in': base_ids}})
+	nodes = data['nodes']
+	edges = data['edges']
+
+	all_nodes_dict = { n['_id']: n for n in nodes}
+	all_edges_dict = { e['_id']: e for e in edges}
 
 	filtered_edges_dict = {}
-	for l in all_edges_dict:
-		if all_nodes_dict.get(all_edges_dict[l]['src'], False):
-			filtered_edges_dict[l] = all_edges_dict[l]
+	for key, edge in all_edges_dict.items():
+		if all_nodes_dict.get(edge['src'], False):
+			filtered_edges_dict[key] = edge
 
 	# all_nodes_dict 		contains an id_dictionary with all neighboring nodes
 	# filtered_edges_dict 	contains an id_dictionary of all links of which the source is in all_nodes_dict
@@ -355,9 +365,8 @@ def report(field, value, strict=False):
 
 	linked_elements = {}
 
-	for e in filtered_edges_dict:
-		e = filtered_edges_dict[e]
-		
+	for e in filtered_edges_dict.values():
+
 		if all_nodes_dict.get(e['dst'], False): # if edge points towards one of base_elts
 			dst = all_nodes_dict[e['dst']]
 			src = all_nodes_dict[e['src']]
@@ -378,7 +387,7 @@ def report(field, value, strict=False):
 
 	#display fields
 	base_elts[0]['fields'] = base_elts[0].display_fields
-	return render_template("report.html", field=field, value=value, base_elts=base_elts, linked=linked_elements, related_elements=related_elements)
+	return render_template("report.html", field=field, value=value, base_elts=base_elts, evil_elts=evil_elts, linked=linked_elements, related_elements=related_elements)
 
 @app.route('/dataset/')
 @login_required
@@ -400,7 +409,7 @@ def dataset_csv():
 	query = {}
 
 	fuzzy = bool(request.args.get('fuzzy', False))
-	
+
 	for key in request.args:
 		if key != '' and key not in ['fuzzy']:
 			if fuzzy:
@@ -415,7 +424,7 @@ def dataset_csv():
 
 	filename = "-".join(filename)
 	results = Model.find(query).sort('date_created', -1)
-	
+
 	if results.count() == 0:
 		flash("You're about to download an empty .csv",'warning')
 		return redirect(url_for('dataset'))
@@ -438,7 +447,7 @@ def dataset_csv():
 @app.route('/dataset/add', methods=['POST'])
 @login_required
 def add_data():
-	
+
 	if request.method == "POST":
 		file = request.files.get('element-list')
 		if file:  #we're dealing with a list of elements
@@ -450,7 +459,7 @@ def add_data():
 		else:
 			elements = [request.form['element']]
 			tags = request.form.get('tags', None)
-		
+
 		if len(elements) == 0:
 			flash("You must specify some elements", 'warning')
 			return redirect(url_for('dataset'))
@@ -486,7 +495,7 @@ def sniffer():
 	if request.method == 'POST':
 
 		filter = request.form['filter']
-		
+
 		session_name = secure_filename(request.form['session_name'])
 		if session_name == "":
 			flash("Please specify a session name", 'warning')
@@ -534,7 +543,7 @@ def sniffer():
 			# REDIS send message to sniffer to start
 			g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
 			#sniffer_session.start(str(request.remote_addr))
-		
+
 		return redirect(url_for('sniffer_session', session_id=session_id))
 
 	return render_template('sniffer_new.html')
@@ -555,10 +564,10 @@ def send_raw_payload(session_id, flowid, session_info=None):
 	session_id = session_info['id']
 
 	payload = g.messenger.send_recieve('get_flow_payload', 'sniffer-commands', params={'session_id': session_id, 'flowid':flowid})
-	
+
 	if payload == False:
 		abort(404)
-			
+
 	response = make_response()
 	response.headers['Cache-Control'] = 'no-cache'
 	response.headers['Content-Type'] = 'application/octet-stream'
@@ -571,14 +580,14 @@ def send_raw_payload(session_id, flowid, session_info=None):
 
 
 
-def malcom_app(environ, start_response):  
+def malcom_app(environ, start_response):
 	if environ.get('HTTP_SCRIPT_NAME'):
-		# update path info 
+		# update path info
 		environ['PATH_INFO'] = environ['PATH_INFO'].replace(environ['HTTP_SCRIPT_NAME'], "")
 		# declare SCRIPT_NAME
 		environ['SCRIPT_NAME'] = environ['HTTP_SCRIPT_NAME']
-	
-	if environ.get('HTTP_X_SCHEME'):	
+
+	if environ.get('HTTP_X_SCHEME'):
 		# forward the scheme
 		environ['wsgi.url_scheme'] = environ.get('HTTP_X_SCHEME')
 
@@ -594,7 +603,7 @@ class MalcomWeb(Process):
 		self.listen_port = setup['LISTEN_PORT']
 		self.listen_interface = setup['LISTEN_INTERFACE']
 		self.http_server = None
-	
+
 	def run(self):
 		self.start_server()
 
@@ -604,7 +613,7 @@ class MalcomWeb(Process):
 	def start_server(self):
 		if not self.setup['AUTH']:
 			app.config['LOGIN_DISABLED'] = True
-		
+
 		lm.init_app(app)
 		lm.login_view = 'login'
 		lm.session_protection = 'strong'
@@ -613,17 +622,17 @@ class MalcomWeb(Process):
 		for key in self.setup:
 			app.config[key] = self.setup[key]
 		app.config['UPLOAD_DIR'] = ""
-		
+
 		app.config['MESSENGER'] = WebMessenger()
-		
+
 		sys.stderr.write("[+] Starting webserver...\n")
 		self.http_server = WSGIServer((self.listen_interface, self.listen_port), malcom_app, handler_class=WebSocketHandler)
 		sys.stderr.write("[+] Webserver listening on http://%s:%s\n\n" % (self.listen_interface, self.listen_port))
-		
+
 		try:
 			self.http_server.serve_forever()
 		except KeyboardInterrupt, e:
 			pass
-		
-		
-		
+
+
+
