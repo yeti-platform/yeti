@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% block main %}
-<div class='span12'>
-	<h2>Loaded feeds</h2>
-	<table class='table table-condensed' id='feeds'>
+<div class='col-md-12'>
+	<table class='table' id='feeds'>
 		<tr>
 			<th>Feed name</th>
 			<th>Enabled</th>
@@ -28,13 +27,12 @@
 			<td class='error-cause'>{{ feeds[name].status }}</td>
 			<td>
 			{% if feeds[name].enabled and not g.config['PUBLIC']%}
-				<a href='{{ url_for("run_feed", feed_name=name)}}'><i class='icon-refresh'></i></a>
+				<a href='{{ url_for("run_feed", feed_name=name)}}'><span class='glyphicon glyphicon-refresh'></span></a>
 			{% endif %}
 			</td>
 		</tr>
-
 		{% endfor %}
-	</table>	
+	</table>
 </div>
 
 

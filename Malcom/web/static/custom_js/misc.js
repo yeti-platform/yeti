@@ -33,7 +33,7 @@ function get_dataset_csv(query, url) {
 	for (var i in queries) {
 		splitted = queries[i].split('=')
 		if (splitted.length > 1)
-			querydict[splitted[0]] = splitted[1];	
+			querydict[splitted[0]] = splitted[1];
 		else if (splitted[0] != "")
 			querydict['value'] = splitted[0]
 	}
@@ -42,7 +42,7 @@ function get_dataset_csv(query, url) {
 		querydict['fuzzy'] = 'true'
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
-	
+
 	location.href = url
 }
 
@@ -61,7 +61,7 @@ function get_dataset(query, url) {
 	for (var i in queries) {
 		splitted = queries[i].split('=')
 		if (splitted.length > 1)
-			querydict[splitted[0]] = splitted[1];	
+			querydict[splitted[0]] = splitted[1];
 		else if (splitted[0] != "")
 			querydict['value'] = splitted[0]
 	}
@@ -75,7 +75,7 @@ function get_dataset(query, url) {
 
 	params = {}
 	querydict['page'] = page
-	
+
 	if ($('#fuzzy').prop('checked') == true)
 		querydict['fuzzy'] = 'true'
 
@@ -91,7 +91,7 @@ function get_dataset(query, url) {
 	  	$('#loading-spinner').removeClass('show')
 	  },
 	  success: function(data){
-	  	// empty the table and populate it 
+	  	// empty the table and populate it
 	  	dataset = $('#dataset')
 	  	dataset.empty()
 	  	head = $("<tr>")
@@ -127,7 +127,7 @@ function get_dataset(query, url) {
 	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+encodeURIComponent(v)+"'>"+v+"</a></td>")
 	  		}
 
-	  		row.append("<td><i class='icon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></i></td>")
+	  		row.append("<td><span class='glyphicon glyphicon-remove' onclick='javascript:dataset_remove(\""+elt['_id']['$oid']+"\")'></span></td>")
 
 	  		tags_links = row.find('.tags_links')
 
@@ -155,13 +155,13 @@ function get_dataset(query, url) {
 	  		next_page = page*1+1;
 	  	}
 	  	previous_page = page - 1 >= 0 ? page - 1 : 0;
-	  	
-	  	
+
+
 	  	prev = $("#pagination-prev")
 	  	next = $("#pagination-next")
 	  	$("#pagination-page").text("Page "+(page*1+1)+" of "+ (total_pages))
 	  	$("#total-results").text(data.total_results)
-	  	
+
 	  	prev.attr('data-nav', previous_page)
 	  	next.attr('data-nav', next_page)
 	  }

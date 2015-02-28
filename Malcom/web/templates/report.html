@@ -76,7 +76,7 @@
 				{% if evil_elts|length < 10 %}
 					{% for elt in evil_elts.values() %}
 						{% for key, evil in elt.evil.items() %}
-							<div class='alert alert-error evil' data-id='{{evil.id}}'><i class='icon-chevron-right'></i>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
+							<div class='alert alert-error evil' data-id='{{evil.id}}'><span class='glyphicon glyphicon-chevron-right'></span>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
 							<table class='table table-condensed' id='details-evil-{{evil.id}}' style='display:none'>
 								{% for key, value in evil.items() %}
 								<tr><th>{{key}}</th><td>{{value}}</td></tr>
@@ -98,7 +98,7 @@
 									{% for elt in base_elts %}
 										{% if 'evil' in elt %}
 											{% for key, evil in elt.evil.items() %}
-												<div class='alert alert-error evil' data-id='{{evil.id}}'><i class='icon-chevron-right'></i>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
+												<div class='alert alert-error evil' data-id='{{evil.id}}'><span class='glyphicon glyphicon-chevron-right'></span>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
 												<table class='table table-condensed' id='details-evil-{{evil.id}}' style='display:none'>
 													{% for key, value in evil.items() %}
 													<tr><th>{{key}}</th><td>{{value}}</td></tr>

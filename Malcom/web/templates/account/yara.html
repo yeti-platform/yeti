@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 {% block main %}
-<div class='span9'>
-	<h2>My YARA rules</h2>
+<div class='col-md-12'>
+	<ol class="breadcrumb">
+	  <li>Account</li>
+	  <li class="active">YARA rules</li>
+	</ol>
 
-	<ul id='settingsTabs' class='nav nav-tabs'>
-		<!-- <li class='active'><a href='#userinfo' data-toggle='tab'>User info</a></li> -->
-		<li class='active'><a href='#yara' data-toggle='tab'><i class="icon-book"></i>Yara rules</a></li>
-		
-		<!-- <li><a href='#ip' data-toggle='tab'>IPs</a></li> -->
-	</ul>
+	<div role="tabpanel">
 
-	<div id='settingsTabsContent' class='tab-content'>
+		<ul id='settingsTabs' class='nav nav-tabs'>
+			<li class='active'><a href='#yara' data-toggle='tab'><span class="glyphicon glyphicon-book"></span> Yara rules</a></li>
+		</ul>
 
-		<div id='yara' class='tab-pane active'>
-			<div class="alert alert-block alert-warning">
-			  <h4>Coming soon.</h4>
+		<div id='settingsTabsContent' class='tab-content'>
+			<div id='yara' class='tab-pane active'>
+				<div class="alert alert-block alert-warning">
+				  <h4>Coming soon.</h4>
+				</div>
 			</div>
 		</div>
-
 
 	</div>
 
@@ -26,7 +27,4 @@
 {% endblock %}
 
 {% block sidebar %}
-<div class='span3'>
-
-</div>
 {% endblock %}

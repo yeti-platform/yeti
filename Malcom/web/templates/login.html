@@ -29,9 +29,9 @@
            -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
                 box-shadow: 0 1px 2px rgba(0,0,0,.05);
       }
-      .form-signin .form-signin-heading,
-      .form-signin .checkbox {
+      .form-signin-heading {
         margin-bottom: 10px;
+        margin-top:0px;
       }
       .form-signin input[type="text"],
       .form-signin input[type="password"] {
@@ -60,12 +60,16 @@
 
       <form class="form-signin" action='' method='POST'>
         <h2 class="form-signin-heading">Please sign in</h2>
-        <input name='username' type="text" class="input-block-level" placeholder="Email address">
-        <input name='password' type="password" class="input-block-level" placeholder="Password">
-        <label class="checkbox">
-          <input name='rememberme' type="checkbox" value="remember-me"> Remember me
-        </label>
-        <button class="btn btn-large btn-primary" type="submit">Sign in</button>
+        <div class='form-group'>
+          <input name='username' type="text" class="form-control" placeholder="Email address">
+          <input name='password' type="password" class="form-control" placeholder="Password">
+          <div class="checkbox">
+            <label>
+              <input name='rememberme' class='checkbox' type="checkbox" value="remember-me"> Remember me
+            </label>
+          </div>
+        </div>
+        <button class="btn btn-lg btn-primary" type="submit">Sign in</button>
       </form>
       {%include "flash.html"%}
     </div> <!-- /container -->
@@ -73,7 +77,6 @@
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    
-    
+
   </body>
 </html>

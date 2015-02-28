@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    
+
 
     <!-- Le styles -->
     <link href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -15,10 +15,9 @@
         padding-top: 50px; /* 60px to make the container go all the way to the bottom of the topbar */
       }
     </style>
-    <link href="{{ url_for('static', filename='bootstrap/css/bootstrap-responsive.min.css') }}" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='jquery/jquery-ui.css') }}" />
-  
+
     <!-- custom scripts -->
     <script type="text/javascript">
       var url_static_prefix = "{{ url_for('index', _external=True) }}";
@@ -33,7 +32,7 @@
 
     {% block custom_head %}
     {% endblock %}
-    
+
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/data.js') }}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/misc.js') }}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/analytics_websockets.js') }}" charset="utf-8"></script>
@@ -57,21 +56,40 @@
 
   <body>
 
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Malcom</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
 
-    <div class='navbar navbar-inverse navbar-fixed-top'>
-      <div class="navbar-inner">
-        <div class="container">
-          <a class='brand' href="#">Malcom</a>
-          <ul class='nav'>
+          <ul class="nav navbar-nav">
             <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
             <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Network captures</a></li>
-            {% if g.config['FEEDS'] %}
             <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
-            {% endif %}            
           </ul>
-          <ul class='nav pull-right'>
-            <li id='analytics-status-nav'>
+
+          <ul class="nav navbar-nav navbar-right">
+<!--             <li id='analytics-status-nav'>asd
                 <p class='navbar-text analytics'>Loading status...</p>
+            </li> -->
+            <li class='dropdown'>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+              {{ current_user.username }} <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu" role="menu">
+                <li><a href="{{url_for('account_sessions')}}"> <span class='glyphicon glyphicon-facetime-video'></span> Network captures</a></li>
+                <li><a href="{{url_for('account_yara')}}"> <span class='glyphicon glyphicon-book'></span> Yara rules</a></li>
+                <li class="divider"></li>
+                <li><a href="{{url_for('account_settings')}}"> <span class='glyphicon glyphicon-wrench'></span> Account settings</a></li>
+                <li><a href="{{url_for('logout')}}"> <span class='glyphicon glyphicon-off'></span> Logout</a></li>
+              </ul>
             </li>
             <li id='iface-nav'>
                   <div class='interfaces' id='interfaces-tooltip'>
@@ -86,41 +104,32 @@
                     </table>
                   </div>
             </li>
-            <li class='dropdown'>
-              <a href='#' class='dropdown-toggle' data-toggle='dropdown'>{{ current_user.username }} <b class='caret'></b></a>
-              <ul class="dropdown-menu">
-                <!-- <li><a href="#">Settings</a></li>
-                <li class="divider"></li> -->
-                <li><a href="{{url_for('account_sessions')}}"><i class="icon-facetime-video"></i> Network captures</a></li>
-                <li><a href="{{url_for('account_yara')}}"><i class="icon-book"></i> Yara rules</a></li>
-                <li class="divider"></li>
-                <li><a href="{{url_for('account_settings')}}"><i class="icon-wrench"></i> Account settings</a></li>
-                <li><a href="{{url_for('logout')}}"><i class="icon-off"></i> Logout</a></li>
-              </ul>
-            </li>
           </ul>
-        </div>
+        </div><!--/.nav-collapse -->
       </div>
-    </div>
+    </nav>
 
-    <div class="container-fluid main">
+    <div class="container main">
 
-      <div class='row-fluid'>
-        
+      <div class='row'>
           {% block main %}
           {% endblock %}
-        
+
           {% block sidebar %}
           {% endblock %}
       </div>
-          
+
     </div> <!-- /container -->
+
+    <footer class="footer">
+      <div class="container">
+        <p class="text-muted "><small><a href='https://github.com/tomchop/malcom/wiki'>Wiki</a> | <a href='https://github.com/tomchop/malcom/issues'>Report a bug</a></small></p>
+      </div>
+    </footer>
 
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-
-
   </body>
 </html>
 

@@ -1,26 +1,24 @@
 {% extends "base.html" %}
-
-
-
 {% block main %}
 
-<div class='span9'> 
+<div class='col-md-9'>
   <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
   <div class='graph'>
   </div>
   <div class='hotkeys'>
-  <ul>
-    <li><strong>space</strong>: get node neighbors</li>
-    <li><strong>e</strong>: find evil</li>
-    <li><strong>u</strong>: unfix selected</li>
-    <li><strong>shift</strong>: multimple selections</li>
-    <li><strong>h</strong>: hide nodes</li>
-    <li><strong>(shift+)arrows</strong>: move nodes</li>
-  </ul>
-  <table>
-    <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider' style='width:100px;'></div></td>
-    </tr>
-  </table>
+    <ul>
+      <li><strong>space</strong>: get node neighbors</li>
+      <li><strong>e</strong>: find evil</li>
+      <li><strong>u</strong>: unfix selected</li>
+      <li><strong>shift</strong>: multimple selections</li>
+      <li><strong>h</strong>: hide nodes</li>
+      <li><strong>(shift+)arrows</strong>: move nodes</li>
+    </ul>
+    <table>
+      <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider'></div></td>
+      </tr>
+    </table>
+  </div>
 
   <script type="text/javascript">
     $("#slider").slider({
@@ -34,7 +32,6 @@
       }
     });
   </script>
-</div>
 </div>
 
 
@@ -76,23 +73,34 @@ ws_sniffer.onopen = snifferInterfaceInit
 </script>
 {%endblock%}
 {% block sidebar %}
-<div class='data span3 toolbar'>
+<div class='data col-md-3 toolbar'>
   <h2>Highlight</h2>
 
-  <div class="input-append">
-      <input id="query" type="text" onkeyup="highlight_query($('#query').val())">
-      <button class='btn' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
-
+  <!-- replace this as include template -->
+  <div class="input-append input-group">
+      <input id="query" class="form-control input-sm" type="text" onkeyup="highlight_query($('#query').val())">
+      <span class="input-group-btn">
+        <button class='btn btn-default btn-sm' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
+      </span>
   </div>
   <span class="help-block">e.g. 'type:ip', 'google.com'</span>
-  <label class="checkbox" style='font-size:small'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
-  <label class="checkbox" style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
-  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
-  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
-  
-  
+
+  <div class="checkbox">
+    <label style='font-size:small'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
+  </div>
+  <div class="checkbox">
+    <label style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  </div>
+
+  <div class="btn-group" role="group" aria-label="graph-operations">
+    <button class='btn btn-sm btn-default' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
+    <button class='btn btn-sm btn-default' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
+  </div>
+
+  <!-- end replace this -->
+
   <div id='message'></div>
-              
+
 
   <h2>Info</h2>
   <table class='table' id='node_info'></table>

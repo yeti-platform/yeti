@@ -1,54 +1,59 @@
 {% extends "base.html" %}
 {% block main %}
 
-<div class='span9' id='mainscreen'> 
-  
-  <ul id='datasetTabs' class='nav nav-tabs'>
-    <li class='active'><a href='#graph' data-toggle='tab'>Graph</a></li>
-    <li><a href='#flows' data-toggle='tab'>Flows</a></li>
-  </ul>
+<div class='col-md-9' id='mainscreen'>
 
+  <div role="tabpanel">
 
-  <div id='datasetTabsContent' class='tab-content'>
-    <div class='tab-pane active' id='graph'> <!-- Graph view pane -->
-      <div class='graph'>
-      </div>
-      <div class='hotkeys'>
-        <ul>
-          <li><strong>space</strong>: get node neighbors</li>
-          <li><strong>e</strong>: find evil</li>
-          <li><strong>u</strong>: unfix selected</li>
-          <li><strong>shift</strong>: multimple selections</li>
-          <li><strong>h / s / t</strong>: hide / show / toggle node display</li>
-          <li><strong>(shift+)arrows</strong>: move nodes</li>
-        </ul>
-        <table>
-          <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider' style='width:100px;'></div></td>
-          </tr>
+    <ul id='datasetTabs' class='nav nav-tabs' role='tablist'>
+      <li role="presentation" class='active'><a href='#graph' aria-controls="graph" role="tab" data-toggle='tab'>Graph</a></li>
+      <li role="presentation"><a href='#flows' aria-controls="flows" role="tab" data-toggle='tab'>Flows</a></li>
+    </ul>
+
+    <div id='datasetTabsContent' class='tab-content'>
+
+      <div role="tabpanel" class='tab-pane active' id='graph'> <!-- Graph view pane -->
+        <div class='graph'>
+        </div>
+        <div class='hotkeys'>
+          <ul>
+            <li><strong>space</strong>: get node neighbors</li>
+            <li><strong>e</strong>: find evil</li>
+            <li><strong>u</strong>: unfix selected</li>
+            <li><strong>shift</strong>: multimple selections</li>
+            <li><strong>h / s / t</strong>: hide / show / toggle node display</li>
+            <li><strong>(shift+)arrows</strong>: move nodes</li>
+          </ul>
+          <table>
+            <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider' style='width:100px;'></div></td>
+            </tr>
+          </table>
+
+           <script type="text/javascript">
+            $("#slider").slider({
+              range: 'max',
+              min: 50,
+              max: 1000,
+              value: 110,
+              slide: function (event, ui) {
+                force.charge(-ui.value);
+                start();
+              }
+            });
+          </script>
+
+        </div> <!-- end hotkeys -->
+      </div> <!-- end first tabpane -->
+
+      <div role="tabpanel" class='tab-pane' id='flows'> <!-- Flow table view pane -->
+        <table class='table table-condensed' id='flow-list'>
         </table>
+      </div> <!-- end second tabpane -->
 
-        <script type="text/javascript">
-          $("#slider").slider({
-            range: 'max',
-            min: 50,
-            max: 1000,
-            value: 110,
-            slide: function (event, ui) {
-              force.charge(-ui.value);
-              start();
-            }
-          });
-        </script>
-          
-      </div>
-    </div>
+    </div> <!-- end tabs content -->
 
-    <div class='tab-pane' id='flows'> <!-- Flow table view pane -->
-      <table class='table table-condensed' id='flow-list'>
-      </table>
-    </div>
   </div>
-   
+
   <!-- Modal -->
   <div id="PayloadModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="PayloadModalLabel" aria-hidden="true">
     <div class="modal-header">
@@ -61,7 +66,7 @@
         <li class="active"><a href="#ascii" data-toggle="tab">ASCII</a></li>
         <li><a href="#hexdump" data-toggle="tab">Hexdump</a></li>
       </ul>
- 
+
     <div class="tab-content">
       <div class="tab-pane active" id="ascii">ASCII</div>
       <div class="tab-pane" id="hexdump">Hexdump</div>
@@ -125,67 +130,69 @@ initSnifferWebSocket()
 initSnifferRealtimeWebSocket('{{session.name}}')
 ws_sniffer.onopen = snifferInterfaceInit
 
-$('a[href="#graph"]').on('shown', function (e) {
-  // e.target // activated tab
-  // e.relatedTarget // previous tab
-  $("#mainscreen").attr('class', 'span9')
+$('a[href="#graph"]').on('shown.bs.tab', function (e) {
+  $("#mainscreen").attr('class', 'col-md-9')
   $(".toolbar").show()
 })
 
-$('a[href="#flows"]').on('shown', function (e) {
-  // e.target // activated tab
-  // e.relatedTarget // previous tab
-  $("#mainscreen").attr('class', 'span12')
+$('a[href="#flows"]').on('shown.bs.tab', function (e) {
+  $("#mainscreen").attr('class', 'col-md-12')
   $(".toolbar").hide()
 })
 
-// getSessionList(true)
 
 
 </script>
 {%endblock%}
 
 {% block sidebar %}
-<div class='data span3 toolbar'>
+<div class='data col-md-3 toolbar'>
 
   <h2 id='session_name'>{{session.name}}</h2>
+
   <table class='table table-compact minitable' style='font-size:x-small'>
     <tr><th>Filter</th><td>{{session.filter}}</td></tr>
     <tr><th>ID</th><td id='session_id'>{{session.id}}</td></tr>
     <tr><th>Public</th><td>{{"Yes" if session.public else "No"}}</td></tr>
   </table>
-  <br />
-  <h3>Graph operations</h3>
-  <div class="input-append">
-      <input id="query" type="text" onkeyup="highlight_query($('#query').val())">
-      <button class='btn' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
 
+  <h3>Graph operations</h3>
+
+  <!-- replace this as include template -->
+
+  <div class="input-append input-group">
+      <input id="query" class="form-control input-sm" type="text" onkeyup="highlight_query($('#query').val())">
+      <span class="input-group-btn">
+        <button class='btn btn-default btn-sm' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
+      </span>
   </div>
   <span class="help-block">e.g. 'type:ip', 'google.com'</span>
-  <button id='startsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:startsniff()">
-    {% if session.pcap %}Replay PCAP{% else %}Start{%endif%}
-  </button>
-  <button id='stopsniff' class='btn btn-primary' type='button' disabled='true' onclick="javascript:stopsniff()">
-    {% if session.pcap %}Cancel{% else %}Stop{%endif%}
-  </button>
-  
-  <a href="{{url_for('malcom_api.pcap', session_id=session.id)}}">Get .pcap</a>
-  <br style='clear:both' style='margin-top:10px;'>
 
-  <div style='margin-top:5px;'>
-    <label class="checkbox" style='font-size:small;float:left;margin-right:30px;'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
-    <label class="checkbox" style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  <div class="checkbox">
+    <label style='font-size:small'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
   </div>
-  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
-  <button class='btn btn-mini' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
-  
+  <div class="checkbox">
+    <label style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  </div>
+
+  <div class="btn-group" role="group" aria-label="graph-operations">
+    <button class='btn btn-sm btn-default' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
+    <button class='btn btn-sm btn-default' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
+  </div>
+
+  <!-- end replace -->
+
+  <div class="btn-group" role="group" aria-label="sniffer-operations">
+    <button id='startsniff' disabled='true' onclick="javascript:startsniff()" type="button" class="btn btn-sm btn-default">{% if session.pcap %}Replay{% else %}Start{%endif%}</button>
+    <button id='stopsniff' disabled='true' type="button" class="btn btn-sm btn-default">{% if session.pcap %}Cancel{% else %}Stop{%endif%}</button>
+    <a class="btn btn-sm btn-default" href="{{url_for('malcom_api.pcap', session_id=session.id)}}" role="button">Download .pcap</a>
+  </div>
+
+
   <h3>Node info</h3>
   <table class='table table-condensed' id='node_info'></table>
   <div class='whois'></div>
-  <!-- <h3>Sessions</h3>
-  <table id='sessions' class='table table-condensed'>
-    <tr><th>Name</th><th># captured</th><th>Nodes</th><th>Edges</th><th>Status</th></tr>
-  </table> -->
+
 </div>
 
 {% endblock %}

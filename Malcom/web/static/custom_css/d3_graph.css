@@ -1,6 +1,6 @@
 /* link colors  - COMMS */
 
-.link { 
+.link {
 	stroke: #bab8b8;
 	transition:stroke 1s;
 }
@@ -21,8 +21,8 @@
 	stroke: #275bdf;
 }
 
-.link.comms {        
-	stroke: rgba(255,2,0,0.7);   
+.link.comms {
+	stroke: rgba(255,2,0,0.7);
 	opacity:1;
 }
 
@@ -61,7 +61,7 @@
 .node text {
   pointer-events: none;
   font: 10px sans-serif;
-  
+
 }
 
 .path-text {
@@ -131,7 +131,7 @@ circle:hover {
 	stroke: black!important;
 	stroke-width: 3px;
 	cursor: pointer;
-	
+
 }
 
 circle {
@@ -161,22 +161,26 @@ circle {
 }
 
 .hotkeys {
-	margin-left:-15px;
 	float:left;
 }
 .hotkeys ul {
-	margin:0;
+	margin: 0;
+	padding: 0;
 }
 
 .hotkeys table {
-	margin-left:17px;
 	font-size: x-small;
 }
 .hotkeys li {
 	display:inline;
 	text-align: center;
 	font-size: x-small;
-	margin-left:20px;
+	margin-right:20px;
+}
+
+#slider {
+	margin-top: 3px;
+	width: 100px;
 }
 
 .minitable td, .minitable th {

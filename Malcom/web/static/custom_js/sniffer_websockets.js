@@ -310,7 +310,7 @@ function getSessionList(private) {
                     id = data.session_list[i].id
                     name = data.session_list[i]['name']
                     public = data.session_list[i]['public'] ? "Yes" : "No"
-                    
+
                     session_links = $('<a />').attr("href", url_static_prefix+'sniffer/'+id).text(name);
                     tr = $('<tr></tr>').attr('id', 'session-'+id);
                     d = new Date(data.session_list[i]['date_created'].$date)
@@ -324,7 +324,7 @@ function getSessionList(private) {
                     tr.append($("<td />").text(public));
                     del = $("<td />")
                     if (private) {
-                        i = $('<i class="icon-remove"></i>').data('session-id', id)
+                        i = $('<span class="glyphicon glyphicon-remove"></span>').data('session-id', id)
                         del.append(i)
                         i.click(function () { delsniff($(this).data('session-id')) })
                         tr.append(del)

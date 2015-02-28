@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block main %}
-<div class='span9'>
-  <h2>Sniffer sessions</h2>
+<div class='col-md-9'>
   <table id='sessions' class='table table-condensed'>
     <tr><th>Created</th><th>Session name</th><th>Packets captured</th><th>Nodes</th><th>Edges</th><th>Status</th><th>Public</th></tr>
   </table>
@@ -11,31 +10,42 @@
 <script type="text/javascript">getSessionList(false)</script>
 {%endblock%}
 {% block sidebar %}
-<div class='data span3'>
+<div class='data col-md-3'>
 {%include "flash.html"%}
   <form method='POST' action='' enctype='multipart/form-data'>
-    <h3>New network capture</h3>
     <div id='message'></div>
-    <label for='pcap-upload'>Start from .pcap file</label>
-    <input type="file" placeholder="" id='pcap-upload' name='pcap-file'>
-    <label for='session_name'>Session name</label>
-    <input type="text" placeholder="Session name" name='session_name' id='session_name' >
-    <label for='session_name'>BPF</label>
-    <input type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
-    <br />
+    <div class="form-group">
+      <label for='session_name'>Session name</label>
+      <input class="form-control" type="text" placeholder="Session name" name='session_name' id='session_name' >
+    </div>
+    <div class="form-group">
+      <label for='session_name'>BPF</label>
+      <input class="form-control" type="text" placeholder="port 21 and not udp" name='filter' id='filter'>
+    </div>
+    <div class="form-group">
+      <label for='pcap-upload'>Upload .pcap file (offline capture)</label>
+      <input type="file" placeholder="" id='pcap-upload' name='pcap-file'>
+    </div>
     {% if not g.config['PUBLIC'] %}
-      <label class="checkbox"><input type="checkbox" name="startnow" checked='checked'> Start processing right away</label>
-      <label class="checkbox"><input type="checkbox" name="public" checked='checked'> Share this capture</label>
-      <span class="help-block">This will make the network capture accessible by everyone. Uncheck to keep private.<br/>Bear in mind that artifacts detected in your session (IP addresses, URLs, and hostnames) <strong>will still be added to the database and may be manipulated regularly</strong>.</span>
+    <div class="checkbox">
+      <label><input type="checkbox" name="startnow" checked='checked'> Start processing right away</label>
+    </div>
+    <div class="checkbox">
+      <label><input type="checkbox" name="public" checked='checked'> Share this capture</label>
+      <p class="help-block">This will make the network capture accessible by everyone. Uncheck to keep private.<br/>Bear in mind that artifacts detected in your session (IP addresses, URLs, and hostnames) <strong>will still be added to the database and may be manipulated regularly</strong>.</p>
+    </div>
+
+
       {% if g.config['TLS_PROXY_PORT'] %}
-      <label class="checkbox"><input type="checkbox" name="intercept_tls" checked='checked'> Intercept TLS (port {{g.config['TLS_PROXY_PORT']}})</label>
+      <div class="checkbox">
+        <label class="checkbox"><input type="checkbox" name="intercept_tls" checked='checked'> Intercept TLS (port {{g.config['TLS_PROXY_PORT']}})</label>
+      </div>
 
       {% endif %}
       <!-- <label for='tls-interception'>TLS proxy port</label>
       <input type="text" placeholder="Leave blank for no interception" name='tls_proxy_port' id='tls_proxy_port'> -->
     {% endif %}
-    <button type="submit" id='newsniff' class="btn btn-primary">Create new session</button>
-    
-  </form>  
+    <button type="submit" id='newsniff' class="btn btn-primary">Start sniffing</button>
+  </form>
 </div>
 {% endblock %}

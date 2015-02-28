@@ -6,7 +6,7 @@
 <head>
   <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
   <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-  
+
   <style>
 
 </style>
@@ -18,7 +18,7 @@
 
 // taken from honeyproxy
 
- var radiusScale = 
+ var radiusScale =
       d3.scale.log()
   .domain([1, 10])
   .range([2, 10]);
@@ -59,7 +59,7 @@ function test() {
 }
 
 function restart() {
-  
+
   link = link.data(edges)
   node = node.data(nodes)
 
@@ -106,7 +106,7 @@ d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
       .attr('r', function(d){ return radiusScale(d.incoming_links+1);} /*was 5*/)
       .style('fill', function(d) { return color(d.type) } )
       .style("stroke", function(d) { return d3.rgb(color(d.type)).darker(); })
-      
+
      .on("mousedown", function(d) {
          d.fixed = true;
          d3.select(this).classed("sticky", true);
@@ -122,17 +122,15 @@ d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
   node.append("text")
       .attr("dx", 12)
       .attr("dy", ".35em")
-      .text(function(d) { 
+      .text(function(d) {
         if (d['type'] == 'as') {
           return d['as_name'] + " ("+d['country']+")"
         }
-        return d[d.type] 
+        return d[d.type]
       });
 
-  path_text = svg.selectAll(".path").data(edges/*, function(d){return d.attribs}*/);     
+  path_text = svg.selectAll(".path").data(edges/*, function(d){return d.attribs}*/);
   path_text.enter().append("svg:text").attr("class","path-text").text(function(d) { return d.attribs; });
-
-
 
   force.on("tick", function() {
     link.attr("x1", function(d) { return d.source.x; })
