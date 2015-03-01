@@ -86,8 +86,6 @@ def query_data():
 	data['page'] = page
 	data['per_page'] = per_page
 
-
-
 	for elt in elts:
 		elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 		elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
