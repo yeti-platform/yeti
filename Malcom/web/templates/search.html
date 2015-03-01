@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block main %}
+<div class='col-md-12'>
+	<div class='center-block search'>
+		<h1 class='title'>Search Malcom</h1>
+		<p class="lead">Enter an URL, IP address, or domain name</p>
+		<form action='{{ url_for("report") }}' method='GET'>
+			<input class="form-control input-lg" name='query'>
+			{% with messages = get_flashed_messages() %}
+		  		{% if messages %}
+	    		<div class="alert alert-warning clearfix" style='display:inline-block;'>
+	      			Empty query is empty!
+	      		</div>
+	      		<br class='clearfix' />
+		      	{%endif%}
+	    	{%endwith%}
+			<input class='btn btn-default btn-lg' type='submit' value='Go'>
+		</form>
+	</div>
+
+	<div class='row'>
+		<div class='col-md-6 col-md-offset-3'>
+			<h3>Recent searches</h3>
+			<table class='table'>
+				<tr><th>Terms</th><th>Results</th></tr>
+			</table>
+		</div>
+	</div>
+</div>
+{% endblock %}

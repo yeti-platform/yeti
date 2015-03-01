@@ -324,17 +324,25 @@ def allowed_file(filename):
 		   filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-@app.route('/dataset/report/<field>/<path:value>/')
+@app.route('/search/')
 @login_required
-def report(field, value, strict=False):
+def search():
+	return render_template('search.html')
+
+@app.route('/results')
+@login_required
+def report():
+	query = request.args.get('query', False)
+	strict = request.args.get('strict', True)
+
 	base_elts = []
 	base_ids = []
 	evil_elts = {}
 
 	if strict:
-		result_set = Model.find({field: value})
+		result_set = Model.find({'value': query})
 	else:
-		result_set = Model.find({field: re.compile(re.escape(value), re.IGNORECASE)})
+		result_set = Model.find({'value': re.compile(re.escape(query), re.IGNORECASE)})
 
 	for e in result_set:
 		base_elts.append(e)
@@ -389,7 +397,10 @@ def report(field, value, strict=False):
 
 	#display fields
 	base_elts[0]['fields'] = base_elts[0].display_fields
-	return render_template("report.html", field=field, value=value, base_elts=base_elts, evil_elts=evil_elts, linked=linked_elements, related_elements=related_elements)
+	return render_template("report.html", field='value', value=query, base_elts=base_elts, evil_elts=evil_elts, linked=linked_elements, related_elements=related_elements)
+
+
+
 
 @app.route('/dataset/')
 @login_required

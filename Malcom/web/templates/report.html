@@ -9,239 +9,171 @@
 {% endblock %}
 
 {% block main %}
-<div class='span12'>
-	<h2>Details for {{field}}: {{value}} </h2>
+<div class='col-md-12'>
+<h2>Details for {{field}}: {{value}} </h2>
 
-			{% if base_elts|length == 1 %}
+	{% if base_elts|length == 1 %}
 
-			<table class='table table-condensed'>
-			<tr>
-				{% for key, label in base_elts[0].default_fields %}<th>{{label}}</th>{% endfor %}
-			</tr>
-			<tr>
-				{% for key, label in base_elts[0].default_fields %}
-					{% if base_elts[0].get(key) is iterable and base_elts[0].get(key) is not string %}
-						<td>{{ base_elts[0].get(key)|display_iterable}}</td>
-					{%else%}
-						<td>{{ base_elts[0].get(key, "N/A") }}</td>
-					{%endif%}
-				{% endfor %}
-			</tr>
-			</table>
-
-			<table class='table table-condensed'>
-				{% for label in base_elts[0].element_fields %}
-					<tr><th>{{label[1]}}</th><td>{{ base_elts[0].get(label[0], "N/A") }}</td></tr>
-				{% endfor %}
-			</table>
-
-			{% else %}
-			<div class="accordion" id="accordionResults">
-					<div class="accordion-group">
-						<div class="accordion-heading">
-							<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionResults" href="#collapseResults">
-							{{ base_elts|length }} matching elements
-							</a>
-						</div>
-						<div id="collapseResults" class="accordion-body collapse">
-							<div class="accordion-inner">
-								<table class='table table-condensed'>
-								{% for h in base_elts[0].fields %}
-									<th>{{h[1]}}</th>
-								{% endfor %}
-								{% for e in base_elts %}
-									<tr>
-										{% for f in base_elts[0].fields %}
-											{% if f[0] == 'value' %}
-												<td><a href="{{ url_for('report', field=f[0], value=e[f[0]]) }}">{{ e[f[0]] }}</a></td>
-											{% elif f[0] == 'tags' %}
-												<td>{{", ".join(e[f[0]])}}</td>
-											{% else %}
-												<td>{{e[f[0]]}}</td>
-											{% endif %}
-										{% endfor %}
-									</tr>
-								{% endfor %}
-								</table>
-							</div>
-						</div>
-					</div>
-				</div>
-			{% endif %}
-
-			{% if evil_elts|length > 0%}
-
-				<h3>Evilness</h3>
-
-				{% if evil_elts|length < 10 %}
-					{% for elt in evil_elts.values() %}
-						{% for key, evil in elt.evil.items() %}
-							<div class='alert alert-error evil' data-id='{{evil.id}}'><span class='glyphicon glyphicon-chevron-right'></span>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
-							<table class='table table-condensed' id='details-evil-{{evil.id}}' style='display:none'>
-								{% for key, value in evil.items() %}
-								<tr><th>{{key}}</th><td>{{value}}</td></tr>
-								{% endfor %}
-							</table>
-							{% endfor %}
-					{% endfor %}
-
-				{% else %}
-				<div class="accordion" id="accordionEvil">
-						<div class="accordion-group">
-							<div class="accordion-heading">
-								<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionEvil" href="#collapseEvil">
-								{{ base_elts|length }} evil elements
-								</a>
-							</div>
-							<div id="collapseEvil" class="accordion-body collapse">
-								<div class="accordion-inner">
-									{% for elt in base_elts %}
-										{% if 'evil' in elt %}
-											{% for key, evil in elt.evil.items() %}
-												<div class='alert alert-error evil' data-id='{{evil.id}}'><span class='glyphicon glyphicon-chevron-right'></span>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
-												<table class='table table-condensed' id='details-evil-{{evil.id}}' style='display:none'>
-													{% for key, value in evil.items() %}
-													<tr><th>{{key}}</th><td>{{value}}</td></tr>
-													{% endfor %}
-												</table>
-												{% endfor %}
-										{% endif %}
-									{% endfor %}
-								</div>
-							</div>
-						</div>
-					</div>
-
+		<table class='table table-condensed'>
+		<tr>
+			{% for key, label in base_elts[0].default_fields %}<th>{{label}}</th>{% endfor %}
+		</tr>
+		<tr>
+			{% for key, label in base_elts[0].default_fields %}
+				{% if base_elts[0].get(key) is iterable and base_elts[0].get(key) is not string %}
+					<td>{{ base_elts[0].get(key)|display_iterable}}</td>
+				{%else%}
+					<td>{{ base_elts[0].get(key, "N/A") }}</td>
 				{%endif%}
-			{%endif%}
+			{% endfor %}
+		</tr>
+		</table>
 
-			<h3>Related elements</h3>
+		<table class='table table-condensed'>
+			{% for label in base_elts[0].element_fields %}
+				<tr><th>{{label[1]}}</th><td>{{ base_elts[0].get(label[0], "N/A") }}</td></tr>
+			{% endfor %}
+		</table>
 
-			<ul id='relatedTabs' class='nav nav-tabs'>
-				{% for r in related_elements %}
-				<li {% if loop.index0 == 0%}class='active'{%endif%}><a href='#{{r}}' data-toggle='tab'>{{r}}</a></li>
+	{% else %}
+		<div>
+			<div class="toggle-control" data-toggle-target='results'>
+					<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionResults" href="#collapseResults">
+					{{ base_elts|length }} matching elements
+					</a>
+			</div>
+			<div id="results" class="toggle-hidden">
+				<table class='table table-condensed'>
+				{% for h in base_elts[0].fields %}
+					<th>{{h[1]}}</th>
 				{% endfor %}
-			</ul>
-
-			<div id='relatedTabsContent' class='tab-content'>
-				{% for r in related_elements %}
-				<div class='tab-pane {% if loop.index0 == 0%}active{%endif%}' id='{{r}}'>
-
-					<table class='table table-condensed'>
-						<tr>{% for label in related_elements[r][0].display_fields if label[0] not in ['type'] %}<th>{{ label[1] }}</th>{% endfor %}</tr>
-						{% for n in related_elements[r] %}
-						<tr>
-							{% for label in n.display_fields if label[0] not in ['type'] %}
-							{% if label[0] == 'tags' %}
-								<td>{{", ".join(n.tags)}}</td>
-							{%else%}
-								<td>{{ n[label[0]] }}</td>
-							{%endif%}
+				{% for e in base_elts %}
+					<tr>
+						{% for f in base_elts[0].fields %}
+							{% if f[0] == 'value' %}
+								<td><a href="{{ url_for('report', field=f[0], value=e[f[0]]) }}">{{ e[f[0]] }}</a></td>
+							{% elif f[0] == 'tags' %}
+									<td>{{", ".join(e[f[0]])}}</td>
+								{% else %}
+									<td>{{e[f[0]]}}</td>
+								{% endif %}
 							{% endfor %}
 						</tr>
-						{%endfor%}
+					{% endfor %}
+				</table>
+			</div>
+		</div>
+	{% endif %}
+
+	{% if evil_elts|length > 0%}
+
+		<h3>Evilness</h3>
+
+		{% if evil_elts|length < 10 %}
+			{% for elt in evil_elts.values() %}
+				{% for key, evil in elt.evil.items() %}
+					<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
+					<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}'>
+						{% for key, value in evil.items() %}
+						<tr><th>{{key}}</th><td>{{value}}</td></tr>
+						{% endfor %}
 					</table>
-					<!-- <div class="accordion" id="accordionRelated">
-						<div class="accordion-group">
-						{% for n in related_elements[r]%}
-							<div class="accordion-heading">
+					{% endfor %}
+			{% endfor %}
 
-								<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionRelated" href="#collapse{{r}}{{loop.index0}}">
-								{{r}} - {{n.value}}
-								</a>
-							</div>
-							<div id="collapse{{r}}{{loop.index0}}" class="accordion-body collapse">
-								<div class="accordion-inner">
-									<table class='table table-condensed'>
-									{% for label in n.display_fields %}
-										{% if label[0] == 'tags' %}
-											<tr><th>{{label[1]}}</th><td>{{", ".join(n.tags)}}</td></tr>
-										{%else%}
-											<tr><th>{{label[1]}}</th><td>{{ n[label[0]]}}</td></tr>
-										{%endif%}
-									{% endfor %}
-									</table>
-								</div>
-							</div>
-						{% endfor %}
-						</div>
-					</div> -->
-				</div>
-				{% endfor %}
+		{% else %}
+		<div>
+			<div class="toggle-control" data-toggle-target='all-evil'>{{ base_elts|length }} evil elements</div>
+			<div id="all-evil toggle-target">
+			{% for elt in base_elts %}
+				{% if 'evil' in elt %}
+					{% for key, evil in elt.evil.items() %}
+						<div class='alert alert-danger evil' data-toggle-target-id='details-evil-{{evil.id}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
+						<table class='table table-condensed toggle-target' id='details-evil-{{evil.id}}'>
+							{% for key, value in evil.items() %}
+								<tr><th>{{key}}</th><td>{{value}}</td></tr>
+							{% endfor %}
+						</table>
+					{% endfor %}
+				{% endif %}
+			{% endfor %}
 			</div>
+		</div>
 
+		{%endif%}
+	{%endif%}
 
+		<h3>Related elements</h3>
 
-			<h3>Links</h3>
+		<ul id='relatedTabs' class='nav nav-tabs'>
+			{% for r in related_elements %}
+			<li {% if loop.index0 == 0%}class='active'{%endif%}><a href='#{{r}}' data-toggle='tab'>{{r}}</a></li>
+			{% endfor %}
+		</ul>
 
-			<ul id='linkedTabs' class='nav nav-tabs'>
-				{% for r in linked %}
-				<li {% if loop.index0 == 0%}class='active'{%endif%}><a href='#{{r}}' data-toggle='tab'>{{r}}</a></li>
-				{% endfor %}
-			</ul>
-
-			<div id='linkedTabsContent' class='tab-content'>
-				{% for r in linked %}
-				<div class='tab-pane {% if loop.index0 == 0%}active{%endif%}' id='{{r}}'>
-					<div class="accordion" id="accordionRelated">
-						<div class="accordion-group">
-						{% for dest in linked[r]%}
-							<div class="accordion-heading">
-
-								<a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordionRelated" href="#collapse{{r}}{{loop.index0}}">
-								{{r}} - {{dest}}
-								</a>
-							</div>
-							<div id="collapse{{r}}{{loop.index0}}" class="accordion-body collapse">
-								<div class="accordion-inner">
-									<table class='table table-condensed'>
-										<tr>
-										{% for label in linked[r][dest][0].display_fields %}
-										<th>{{label[1]}}</th>
-										{%endfor%}
-										</tr>
-
-										{% for e in linked[r][dest] %}
-										<tr>
-											{% for label in e.display_fields %}
-												{% if label[0] == 'tags' %}
-													<td>{{", ".join(e.tags)}}</td>
-												{%else%}
-													<td>{{ e[label[0]]}}</td>
-												{%endif%}
-											{% endfor %}
-										</tr>
-										{% endfor %}
-									</table>
-									<!-- <table class='table table-condensed'>
-									{% for n in linked[r][dest] %}
-										{% for label in n.display_fields %}
-											{% if label[0] == 'tags' %}
-												<tr><th>{{label[1]}}</th><td>{{", ".join(n.tags)}}</td></tr>
-											{%else%}
-												<tr><th>{{label[1]}}</th><td>{{ n[label[0]]}}</td></tr>
-											{%endif%}
-										{% endfor %}
-									{% endfor %}
-									</table> -->
-								</div>
-							</div>
+		<div id='relatedTabsContent' class='tab-content'>
+			{% for r in related_elements %}
+			<div class='tab-pane {% if loop.index0 == 0%}active{%endif%}' id='{{r}}'>
+				<table class='table table-condensed'>
+					<tr>{% for label in related_elements[r][0].display_fields if label[0] not in ['type'] %}<th>{{ label[1] }}</th>{% endfor %}</tr>
+					{% for n in related_elements[r] %}
+					<tr>
+						{% for label in n.display_fields if label[0] not in ['type'] %}
+						{% if label[0] == 'tags' %}
+							<td>{{", ".join(n.tags)}}</td>
+						{%else%}
+							<td>{{ n[label[0]] }}</td>
+						{%endif%}
 						{% endfor %}
-						</div>
-					</div>
-				</div>
-				{% endfor %}
+					</tr>
+					{%endfor%}
+				</table>
 			</div>
+			{% endfor %}
+		</div>
+
+		<h3>Links</h3>
 
 
+		<div role="tabpanel">
 
+		<ul id='linkedTabs' class='nav nav-tabs'>
+			{% for r in linked %}
+			<li {% if loop.index0 == 0%}class='active'{%endif%}><a href='#{{r}}' data-toggle='tab'>{{r}}</a></li>
+			{% endfor %}
+		</ul>
 
+		<div id='linkedTabsContent' class='tab-content'>
+			{% for r in linked %}
+				<div class='tab-pane {% if loop.first %}active{%endif%}' id='{{r}}'>
+					{% for dest in linked[r]%}
+						<div><a href="#" class="toggle-control" data-toggle-target='{{r}}{{loop.index0}}'>{{dest}}</a></div>
+						<table id='{{r}}{{loop.index0}}' class='table table-condensed toggle-hidden'>
+							<tr>
+							{% for label in linked[r][dest][0].display_fields %}
+								<th>{{label[1]}}</th>
+							{%endfor%}
+							</tr>
 
-
-<!-- 		</div>
-	</div> -->
-
+							{% for e in linked[r][dest] %}
+							<tr>
+								{% for label in e.display_fields %}
+									{% if label[0] == 'tags' %}
+										<td>{{", ".join(e.tags)}}</td>
+									{%else%}
+										<td>{{ e[label[0]]}}</td>
+									{%endif%}
+								{% endfor %}
+							</tr>
+							{% endfor %}
+						</table>
+					{% endfor %}
+				</div>
+			{% endfor %}
+		</div>
+	</div>
 </div>
+
 
 
 

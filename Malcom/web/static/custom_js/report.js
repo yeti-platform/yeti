@@ -1,10 +1,15 @@
 $(function() {
-	$("div.evil").click(function(event){
-		event.preventDefault();
-		id = $(this).data('id');
-		$("#details-evil-"+id).toggle();
-		i = $(this).find('i');
-		i.toggleClass('icon-chevron-right');
-		i.toggleClass('icon-chevron-down');
+
+	$(".toggle-control").each(function(){
+		$(this).prepend("<span class='glyphicon glyphicon-chevron-right'></span> ")
 	});
+
+	$(".toggle-control").click(function(event) {
+		event.preventDefault();
+		target_id = $(this).data('toggle-target');
+		$("#"+target_id).toggle();
+		i = $(this).find('span.glyphicon');
+		i.toggleClass('glyphicon-chevron-right');
+		i.toggleClass('glyphicon-chevron-down');
+	})
 });

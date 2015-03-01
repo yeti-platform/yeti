@@ -1,8 +1,7 @@
-.evil {
+.toggle-control {
 	cursor: pointer;
 }
 
-.evil i {
-	margin-top: -1px;
-	margin-right: 5px;
+.toggle-hidden {
+	display: none;
 }

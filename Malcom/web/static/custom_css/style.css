@@ -151,6 +151,27 @@ div.data {
 	/*font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;*/
 }
 
+/* search */
+
+.center-block {
+	text-align: center;
+}
+
+.search input {
+	width:70%;
+	margin: 0 auto;
+	text-align: center;
+	margin-bottom: 10px;
+}
+
+.search input[type=submit] {
+	width:auto;
+}
+
+.search .alert {
+	margin-bottom:10px;
+}
+
 /* main */
 
 /* to re-align smaller checkboxes */
