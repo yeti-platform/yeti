@@ -238,6 +238,8 @@ def login():
 
 # Index ========================================================
 
+
+
 @app.route('/')
 @login_required
 def index():
@@ -307,7 +309,7 @@ def run_feed(feed_name):
 @app.route('/nodes/<field>/<path:value>')
 @login_required
 def nodes(field, value):
-	return render_template('dynamic_nodes.html', field=field, value=value)
+	return render_template('nodes.html', field=field, value=value)
 
 
 
@@ -546,14 +548,14 @@ def sniffer():
 
 		return redirect(url_for('sniffer_session', session_id=session_id))
 
-	return render_template('sniffer_new.html')
+	return render_template('network_session_new.html')
 
 
 @app.route('/sniffer/<session_id>/')
 @login_required
 @can_view_sniffer_session
 def sniffer_session(session_id, session_info=None):
-	return render_template('sniffer.html', session=session_info, session_name=session_info['name'])
+	return render_template('network_session.html', session=session_info, session_name=session_info['name'])
 
 
 @app.route("/sniffer/<session_id>/<flowid>/raw")

@@ -1,158 +1,109 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<style>
+{% extends "base.html" %}
+{% block main %}
 
-</style>
-<head>
-  <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.1/themes/base/jquery-ui.css" />
-  <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<div class='col-md-9'>
+  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
+  <div class='graph'>
+  </div>
+  <div class='hotkeys'>
+    <ul>
+      <li><strong>space</strong>: get node neighbors</li>
+      <li><strong>e</strong>: find evil</li>
+      <li><strong>u</strong>: unfix selected</li>
+      <li><strong>shift</strong>: multimple selections</li>
+      <li><strong>h</strong>: hide nodes</li>
+      <li><strong>(shift+)arrows</strong>: move nodes</li>
+    </ul>
+    <table>
+      <tr><td>Node distance:&nbsp;&nbsp;</td><td><div id='slider'></div></td>
+      </tr>
+    </table>
+  </div>
 
-  <style>
-
-</style>
-</head>
-<body>
-
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script>
-
-// taken from honeyproxy
-
- var radiusScale =
-      d3.scale.log()
-  .domain([1, 10])
-  .range([2, 10]);
-
-// end scam
-
-width = $(window).width() * 0.98;  //width
-height = $(window).height() * 0.98; //height
-
-var color = d3.scale.category20();
-
-var force = d3.layout.force()
-    .charge(-150)
-    .linkDistance(200)
-    .gravity(.05)
-    .linkStrength(2)
-    .size([width, height]);
-
-var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .on('mousedown',test);
-
-var nodes = force.nodes();
-var edges = force.links();
-node = svg.selectAll(".node"),
-link = svg.selectAll(".link");
-
-restart()
-
-function test() {
-  var point = d3.mouse(this),
-      node = {x: point[0], y: point[1], group:1},
-      n = nodes.push(node);
-
-  edges.push({source:node, target:nodes[35]})
-  restart()
-}
-
-function restart() {
-
-  link = link.data(edges)
-  node = node.data(nodes)
-
-  link.enter().append("line",'.link')
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return 1; /*return Math.sqrt(d.value);*/ })
-      .style("stroke", function(d) { return color(d.attribs); });
-
-  node.enter().append("circle",'.node')
-      .attr('r', function(d){ return 5}) //radiusScale(d.incoming_links+1);} /*was 5*/)
-      .style('fill', function(d) { return color(d.type) } )
-      .style("stroke", function(d) { return d3.rgb(color(d.type)).darker(); })
-
-  force.start();
-}
+  <script type="text/javascript">
+    $("#slider").slider({
+      range: 'max',
+      min: 50,
+      max: 1000,
+      value: 110,
+      slide: function (event, ui) {
+        force.charge(-ui.value);
+        start();
+      }
+    });
+  </script>
+</div>
 
 
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>
+<script type="text/javascript">
 
-d3.json("/graph/{{field}}/{{value}}", function(error, graph) {
-
-
-  nodes = graph.nodes
-  edges = graph.edges
-
-  force
-      .nodes(nodes)
-      .links(edges)
-      .start();
-
-  var link = svg.selectAll(".link")
-      .data(edges)
-    .enter().append("line")
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return 1; /*return Math.sqrt(d.value);*/ })
-      .style("stroke", function(d) { return color(d.attribs); }); // stroke color depends on attribs
-
-  var node = svg.selectAll(".node")
-      .data(nodes)
-    .enter().append("svg:g")
-      .attr("class", "node")
-      .call(force.drag);
-
-  node.append("circle")
-      .attr('r', function(d){ return radiusScale(d.incoming_links+1);} /*was 5*/)
-      .style('fill', function(d) { return color(d.type) } )
-      .style("stroke", function(d) { return d3.rgb(color(d.type)).darker(); })
-
-     .on("mousedown", function(d) {
-         d.fixed = true;
-         d3.select(this).classed("sticky", true);
-     })
-     .on("click", function(d){
-      if (d.fixed == true) {
-          d.fixed = false
-          d.select(this).classed("sticky", false)
-        }
-     })
-     ;
-
-  node.append("text")
-      .attr("dx", 12)
-      .attr("dy", ".35em")
-      .text(function(d) {
-        if (d['type'] == 'as') {
-          return d['as_name'] + " ("+d['country']+")"
-        }
-        return d[d.type]
-      });
-
-  path_text = svg.selectAll(".path").data(edges/*, function(d){return d.attribs}*/);
-  path_text.enter().append("svg:text").attr("class","path-text").text(function(d) { return d.attribs; });
-
-  force.on("tick", function() {
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
-
-    node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+initialize_graph();
 
 
-  });
+setInterval(function() {uncomm_all()}, 500)
 
-  restart();
+  // svg.append("svg:defs").selectAll("marker")
+  //     .data(["arrow"])
+  //     .enter().append("svg:marker")
+  //       .attr("id", String)
+  //       .attr("viewBox", "0 -5 10 10")
+  //       .attr("markerUnits", "userSpaceOnUse")
+  //       .attr("refX", 20)
+  //       .attr("refY", 0)
+  //       .attr("markerWidth", 7)
+  //       .attr("markerHeight", 7)
+  //       .attr("orient", "auto")
+  //       .append("svg:path")
+  //         .attr("d", "M0,-5L10,0L0,5");
 
+d3.json(url_static_prefix+"api/neighbors/?{{field}}={{value}}", function(error, graph) {
+    push_nodes(graph.nodes)
+    push_links(graph.edges)
+    // spinner.toggleClass('show')
+    start();
 });
 
+
 </script>
+<script>
+initSnifferWebSocket()
+ws_sniffer.onopen = snifferInterfaceInit
+</script>
+{%endblock%}
+{% block sidebar %}
+<div class='data col-md-3 toolbar'>
+  <h2>Highlight</h2>
+
+  <!-- replace this as include template -->
+  <div class="input-append input-group">
+      <input id="query" class="form-control input-sm" type="text" onkeyup="highlight_query($('#query').val())">
+      <span class="input-group-btn">
+        <button class='btn btn-default btn-sm' type='button' onclick="highlight_query('clear'); $('#query').val('');">Clear</button>
+      </span>
+  </div>
+  <span class="help-block">e.g. 'type:ip', 'google.com'</span>
+
+  <div class="checkbox">
+    <label style='font-size:small'><input id='curved-links' type="checkbox" onclick='javascript: curved_links = this.checked;start()'> Curved links</label>
+  </div>
+  <div class="checkbox">
+    <label style='font-size:small'><input type="checkbox" id='link-labels' onclick='javascript: link_labels = this.checked; start()'> Link labels</label>
+  </div>
+
+  <div class="btn-group" role="group" aria-label="graph-operations">
+    <button class='btn btn-sm btn-default' type='button' onclick='javascript:freeze_graph(true)'>Freeze graph</button>
+    <button class='btn btn-sm btn-default' type='button' onclick='javascript:freeze_graph(false)'>Unfreeze graph</button>
+  </div>
+
+  <!-- end replace this -->
+
+  <div id='message'></div>
 
 
-<script type="text/javascript">
-//document ready
-$(function(){
-  $(document).tooltip()
-})
-</script>
+  <h2>Info</h2>
+  <table class='table' id='node_info'></table>
+  <div class='whois'></div>
+</div>
+{% endblock %}
