@@ -53,50 +53,39 @@
     </div> <!-- end tabs content -->
 
   </div>
+</div>
 
-  <!-- Modal -->
-  <div id="PayloadModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="PayloadModalLabel" aria-hidden="true">
-    <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-      <h3 id="PayloadModalLabel">Payload contents</h3>
-    </div>
-    <div class="modal-body">
 
-      <ul class="nav nav-tabs" id="myTab">
-        <li class="active"><a href="#ascii" data-toggle="tab">ASCII</a></li>
-        <li><a href="#hexdump" data-toggle="tab">Hexdump</a></li>
-      </ul>
-
-    <div class="tab-content">
-      <div class="tab-pane active" id="ascii">ASCII</div>
-      <div class="tab-pane" id="hexdump">Hexdump</div>
-    </div>
-
-      <!-- <ul id='modalTabs' class='nav nav-tabs'>
-        <li class='active'><a href='#ascii-dump' data-toggle='dump'>ASCII</a></li>
-        <li><a href='#hex-dump' data-toggle='dump'>Hexdump</a></li>
-      </ul>
-
-      <div id='asciidumpTabsContent' class='dump-content'>
-        <div class='tab-pane active' id='ascii-dump'>
-          ascii
-        </div>
+<!-- Modal -->
+<div class="modal" id="PayloadModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h3 class='modal-title' id="PayloadModalLabel">Payload contents</h3>
       </div>
+      <div class="modal-body">
+        <div role="tabpanel">
 
-      <div id='hexdumpTabsContent' class='dump-content'>
-        <div class='dump-pane active' id='hex-dump'>
-          hex
-        </div>
-      </div> -->
+            <ul class="nav nav-tabs">
+              <li class="active"><a href="#ascii" data-toggle="tab">ASCII</a></li>
+              <li><a href="#hexdump" data-toggle="tab">Hexdump</a></li>
+            </ul>
 
+            <div class="tab-content">
+              <div class="tab-pane active" id="ascii">ASCII</div>
+              <div class="tab-pane" id="hexdump">Hexdump</div>
+            </div>
 
-    </div>
-    <div class="modal-footer">
-      <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+          </div> <!-- end tabpanel -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">Close</button>
+      </div>
     </div>
   </div>
-
 </div>
+
 
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/initialize_graph.js') }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='custom_js/d3_functions.js') }}" charset="utf-8"></script>

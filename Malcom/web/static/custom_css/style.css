@@ -1,12 +1,5 @@
 /* sniffer */
 
-#PayloadModal {
-	left:10%;
-	top:10%;
-	margin:0;
-	width:80%;
-}
-
 #PayloadModal .modal-body pre {
 	font-size: small;
 	font-family: "Courier New";
@@ -37,6 +30,11 @@ img.ssl-smiley {
 	height:15px;
 	width:15px;
 	margin-left:15px;
+}
+
+#PayloadModal pre {
+	border-radius: 0px;
+
 }
 
 

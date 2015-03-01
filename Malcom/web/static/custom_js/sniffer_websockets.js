@@ -91,7 +91,6 @@ function snifferWebSocketHandler(msg) {
         div_ascii_dump = $('<pre />')
         div_ascii_dump.text(payload)
 
-
         div_hexdump = $('<div />')
 
         div_ascii = $('<pre />').attr('id', 'hexdump_ascii')
@@ -213,14 +212,14 @@ function netflow_row(flow, row) {
     // setup payload visor
 
     payload = flow.payload
-    icon_view = $("<i />").addClass('icon-eye-open');
+    icon_view = $("<span />").addClass('glyphicon glyphicon-eye-open');
     icon_view.click(function() {
         get_flow_payload(flow.fid);
         $("#PayloadModal").modal('toggle')
     });
 
     icon_download = $("<a />").attr('href', url_static_prefix+'/sniffer/'+$('#session_id').text()+"/"+flow.fid+'/raw');
-    icon_download.append($("<i />").addClass('icon-download-alt'));
+    icon_download.append($("<span />").addClass('glyphicon glyphicon-download-alt'));
 
     payload = $('<td />').addClass('flow-payload')
     payload.append(icon_view)
@@ -245,7 +244,6 @@ function netflow_row(flow, row) {
     else { yara = $('<td />') }
 
     row.append(yara)
-
 
     return row
 }
