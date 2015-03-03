@@ -155,10 +155,8 @@ div.data {
 	text-align: center;
 }
 
-.search input {
-	width:70%;
+.search .searchbar {
 	margin: 0 auto;
-	text-align: center;
 	margin-bottom: 10px;
 }
 
@@ -171,6 +169,14 @@ div.data {
 }
 
 /* main */
+
+.toggle-control {
+	cursor: pointer;
+}
+
+.toggle-hidden {
+	display: none;
+}
 
 /* to re-align smaller checkboxes */
 input[type=checkbox], input[type=radio] {

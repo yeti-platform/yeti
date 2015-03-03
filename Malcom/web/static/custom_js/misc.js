@@ -1,9 +1,23 @@
 $(
 	function navigation_highlight() {
-	  section = location.href.split(url_static_prefix)[1].split('/')[0];
-	  $('#'+section+"-nav").addClass('active');
-	}
-)
+		section = location.href.split(url_static_prefix)[1].split('/')[0];
+		$('#'+section+"-nav").addClass('active');
+
+
+		$(".toggle-control").each(function(){
+			$(this).prepend("<span class='glyphicon glyphicon-chevron-right'></span> ")
+		});
+
+		$(".toggle-control").click(function(event) {
+			event.preventDefault();
+			target_id = $(this).data('toggle-target');
+			$("#"+target_id).toggle();
+			i = $(this).find('span.glyphicon');
+			i.toggleClass('glyphicon-chevron-right');
+			i.toggleClass('glyphicon-chevron-down');
+		})
+});
+
 
 
 function format_date(date, millis)

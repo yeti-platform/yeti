@@ -23,7 +23,7 @@
 	<ul id='datasetSideTabs' class='nav nav-tabs' role='tablist'>
 		<li class='active'><a href='#search' aria-controls="search" role="tab" data-toggle='tab'>Search</a></li>
 		{% if not g.config['PUBLIC'] %}
-		<li><a href='#add' aria-controls="add" role="tab" data-toggle='tab'>Alter dataset</a></li>
+		<li><a href='#add' aria-controls="add" role="tab" data-toggle='tab'>Quick add</a></li>
 		{% endif %}
 	</ul>
 
@@ -76,7 +76,7 @@
 			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>
 				<div class='form-group'>
 				    <label for='element'>Element</label>
-				    <input class="form-control" type="text" placeholder="" name='element' id='element'>
+				    <input class="form-control" type="text" placeholder="" name='value' id='element'>
 				    <span class="help-block">e.g. http://google.com; tomchop.me; 127.0.0.1</span>
 				<!-- </div>
 				<div class='form-group'> -->
@@ -88,7 +88,7 @@
 				<div class='form-group'>
 					<label for='bulk'>Bulk add</label>
 				    <span class="help-block">Or choose a file to upload</span>
-				    <input id='bulk' type="file" placeholder="" name='element-list'>
+				    <input id='bulk' type="file" placeholder="" name='bulk-file'>
 				</div>
 
 			</form>

@@ -133,11 +133,23 @@ def datetimeformat(value, format='%Y-%m-%d %H:%M'):
 		return "None"
 
 @app.template_filter('display_iterable')
-def datetimeformat(value):
+def display_iterable(value):
 	if len(value) > 0:
 		return ", ".join(value)
 	else:
 		return "N/A"
+
+@app.template_filter('display_malcom')
+def display_malcom(value):
+	if type(value) in [str, unicode]:
+		return value
+	elif type(value) == list and len(value) > 0:
+		return ", ".join(value)
+	if type(value) == datetime.datetime:
+		return value.strftime('%Y-%m-%d %H:%M')
+
+	return "N/A"
+
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -243,7 +255,7 @@ def login():
 @app.route('/')
 @login_required
 def index():
-	return redirect(url_for('dataset'))
+	return redirect(url_for('search'))
 
 # Account ======================================================
 
@@ -324,25 +336,37 @@ def allowed_file(filename):
 		   filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-@app.route('/search/')
+@app.route('/search/', methods=['GET', 'POST'])
 @login_required
-def search():
-	return render_template('search.html')
+def search(term=""):
+	#
+	# Create a result set with whichever paremeters we have
+	if request.method == 'POST':
+		field = 'value'
+		query = [{field: r} for r in request.form['bulk-text'].split('\r\n') if r != '']
+		result_set = Model.find({'$or': query})
+	else:
+		query = request.args.get('query', False)
+		field = request.args.get('field', 'value')
+		if not bool(request.args.get('strict', False)):
+			result_set = Model.find({field: query})
+		else:
+			result_set = Model.find({field: re.compile(re.escape(query), re.IGNORECASE)})
 
-@app.route('/results')
-@login_required
-def report():
-	query = request.args.get('query', False)
-	strict = request.args.get('strict', True)
+	# user has specified an empty query
+	if query == "":
+		flash('Empty search query is empty.')
+		return redirect(url_for('search'))
 
+	# user did not specify a query
+	if query == False:
+		return render_template('search.html')
+
+
+	# query passed tests, process the result set
 	base_elts = []
 	base_ids = []
 	evil_elts = {}
-
-	if strict:
-		result_set = Model.find({'value': query})
-	else:
-		result_set = Model.find({'value': re.compile(re.escape(query), re.IGNORECASE)})
 
 	for e in result_set:
 		base_elts.append(e)
@@ -350,8 +374,20 @@ def report():
 		if 'evil' in e['tags']:
 			evil_elts[e['_id']] = e
 
+	# The search yield no results
+
 	if len(base_elts) == 0:
-		abort(404)
+		if not bool(request.args.get('log', False)):
+			flash('"{}" was not found. Use the checkbox above to add it to the database'.format(query))
+			return render_template('search.html', term=query)
+		else:
+			flash('"{}" was not found. It was added to the database'.format(query))
+			# or do the redirection here
+			return render_template('search.html', term=query)
+
+	return find_related(field, query, base_elts, base_ids, evil_elts)
+
+def find_related(field, query, base_elts, base_ids, evil_elts):
 
 	# get all 1st degree nodes in one dict
 
@@ -385,6 +421,8 @@ def report():
 			if dst['value'] not in linked_elements[e['attribs']]: # avoid duplicates
 				linked_elements[e['attribs']][dst['value']] = []
 			linked_elements[e['attribs']][dst['value']].append(src)
+			if src.get('evil', False):
+				evil_elts[src['_id']] = src
 
 	related_elements = {}
 
@@ -394,13 +432,19 @@ def report():
 		if n['type'] not in related_elements: # if we don't have a record for this type, create an empty array
 			related_elements[n['type']] = []
 		related_elements[n['type']].append(n)
+		if n.get('evil', False):
+			evil_elts[n['_id']] = n
 
-	#display fields
+	# display fields
+
 	base_elts[0]['fields'] = base_elts[0].display_fields
-	return render_template("report.html", field='value', value=query, base_elts=base_elts, evil_elts=evil_elts, linked=linked_elements, related_elements=related_elements)
+	return render_template("results.html", field=field, value=query, base_elts=base_elts, evil_elts=evil_elts, linked=linked_elements, related_elements=related_elements)
 
 
-
+@app.route('/populate/')
+@login_required
+def populate():
+	return render_template("populate.html")
 
 @app.route('/dataset/')
 @login_required
@@ -457,45 +501,41 @@ def dataset_csv():
 		return response
 
 
-@app.route('/dataset/add', methods=['POST'])
+@app.route('/populate/add', methods=['POST'])
 @login_required
 def add_data():
 
-	if request.method == "POST":
-		file = request.files.get('element-list')
-		if file:  #we're dealing with a list of elements
-			if allowed_file(file.filename):
-				elements = file.read()
-				elements = elements.split("\n")
-			else:
-				return 'filename not allowed'
-		else:
-			elements = [request.form['element']]
-			tags = request.form.get('tags', None)
+	file = request.files.get('bulk-file')
 
-		if len(elements) == 0:
-			flash("You must specify some elements", 'warning')
-			return redirect(url_for('dataset'))
+	# deal with file uploads
+	if file:
+		elements = file.read().split("\n")
 
-		if file: # if we just uploaded a file, and it has associated tags
-			for e in elements:
-				if ";" in e:
-					elt = e.split(';')[0]
-					tag = e.split(';')[1]
-					Model.add_text([elt], tag.split(','))
-				else:
-					Model.add_text([e])
-		else: # we're inputting from the web
-			tags = tags.strip().split(",")
-			Model.add_text(elements, tags)
+	# deal with raw-text
+	if request.form.get('bulk-text'):
+		elements = request.form.get('bulk-text').split("\n")
 
-		if request.form.get('analyse', None):
-			pass
+	# deal with single element add
+	if request.form.get('value'): #
+		e = request.form.get('value')
+		tags = request.form.get('tags', None)
+		if tags:
+			e = e + ";{}".format(tags)
+		elements = [e]
 
+	if len(elements) == 0:
+		flash("You must specify some elements", 'warning')
 		return redirect(url_for('dataset'))
 
-	else:
-		return "Not allowed"
+	for e in elements:
+		if ";" in e:
+			elt, tag = e.split(';')
+			Model.add_text([elt], tag.split(','))
+		else:
+			Model.add_text([e])
+
+	return redirect(url_for('dataset'))
+
 
 
 

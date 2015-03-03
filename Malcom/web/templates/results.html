@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block custom_head %}
-<script src="{{ url_for('static', filename='custom_js/report.js') }}"></script>
-<link href="{{ url_for('static', filename='custom_css/report.css') }}" rel='stylesheet'>
+<script src="{{ url_for('static', filename='custom_js/results.js') }}"></script>
+<link href="{{ url_for('static', filename='custom_css/results.css') }}" rel='stylesheet'>
 
 <link href="{{ url_for('static', filename='tagsinput/bootstrap-tagsinput.css') }}" rel='stylesheet'>
 <script src="{{ url_for('static', filename='tagsinput/bootstrap-tagsinput.min.js') }}"></script>
@@ -10,8 +10,12 @@
 
 {% block main %}
 <div class='col-md-12'>
-<h2>Details for {{field}}: {{value}} </h2>
 
+{% if value is iterable and value is not string %}
+	<h2>Details for bulk search</h2>
+{%else%}
+	<h2>Details for {{field}}: {{value}} </h2>
+{%endif%}
 	{% if base_elts|length == 1 %}
 
 		<table class='table table-condensed'>
@@ -20,11 +24,7 @@
 		</tr>
 		<tr>
 			{% for key, label in base_elts[0].default_fields %}
-				{% if base_elts[0].get(key) is iterable and base_elts[0].get(key) is not string %}
-					<td>{{ base_elts[0].get(key)|display_iterable}}</td>
-				{%else%}
-					<td>{{ base_elts[0].get(key, "N/A") }}</td>
-				{%endif%}
+					<td>{{ base_elts[0].get(key)|display_malcom }}</td>
 			{% endfor %}
 		</tr>
 		</table>
@@ -51,13 +51,14 @@
 					<tr>
 						{% for f in base_elts[0].fields %}
 							{% if f[0] == 'value' %}
-								<td><a href="{{ url_for('report', field=f[0], value=e[f[0]]) }}">{{ e[f[0]] }}</a></td>
-							{% elif f[0] == 'tags' %}
-									<td>{{", ".join(e[f[0]])}}</td>
-								{% else %}
-									<td>{{e[f[0]]}}</td>
-								{% endif %}
-							{% endfor %}
+								<td>
+								<a href="{{ url_for('nodes', field=f[0], value=e[f[0]]) }}" class='glyphicon glyphicon-map-marker'></a>&nbsp;
+								<a href="{{ url_for('search', field=f[0], query=e[f[0]]) }}">{{ e[f[0]] }}</a>
+								</td>
+							{% else %}
+								<td>{{e[f[0]]|display_malcom}}</td>
+							{% endif %}
+						{% endfor %}
 						</tr>
 					{% endfor %}
 				</table>
@@ -71,31 +72,31 @@
 
 		{% if evil_elts|length < 10 %}
 			{% for elt in evil_elts.values() %}
-				{% for key, evil in elt.evil.items() %}
-					<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
-					<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}'>
-						{% for key, value in evil.items() %}
+				{% set outer_loop = loop %}
+				{% for key, evil in elt.evil.iteritems() %}
+					<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
+					<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
+						{% for key, value in evil.iteritems() %}
 						<tr><th>{{key}}</th><td>{{value}}</td></tr>
 						{% endfor %}
 					</table>
-					{% endfor %}
+				{% endfor %}
 			{% endfor %}
 
 		{% else %}
 		<div>
-			<div class="toggle-control" data-toggle-target='all-evil'>{{ base_elts|length }} evil elements</div>
-			<div id="all-evil toggle-target">
-			{% for elt in base_elts %}
-				{% if 'evil' in elt %}
-					{% for key, evil in elt.evil.items() %}
-						<div class='alert alert-danger evil' data-toggle-target-id='details-evil-{{evil.id}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
-						<table class='table table-condensed toggle-target' id='details-evil-{{evil.id}}'>
-							{% for key, value in evil.items() %}
-								<tr><th>{{key}}</th><td>{{value}}</td></tr>
-							{% endfor %}
-						</table>
-					{% endfor %}
-				{% endif %}
+			<div class="toggle-control" data-toggle-target='all-evil'>{{ evil_elts|length }} evil elements</div>
+			<div id="all-evil" class='toggle-hidden'>
+			{% for elt in evil_elts %}
+				{% set outer_loop = loop %}
+				{% for key, evil in elt.evil.iteritems() %}
+					<div class='alert alert-danger evil' data-toggle-target-id='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
+					<table class='table table-condensed toggle-target' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
+						{% for key, value in evil.iteritems() %}
+							<tr><th>{{key}}</th><td>{{value}}</td></tr>
+						{% endfor %}
+					</table>
+				{% endfor %}
 			{% endfor %}
 			</div>
 		</div>
@@ -119,11 +120,14 @@
 					{% for n in related_elements[r] %}
 					<tr>
 						{% for label in n.display_fields if label[0] not in ['type'] %}
-						{% if label[0] == 'tags' %}
-							<td>{{", ".join(n.tags)}}</td>
-						{%else%}
-							<td>{{ n[label[0]] }}</td>
-						{%endif%}
+							{% if label[0] == 'value' %}
+								<td>
+								<a href="{{ url_for('nodes', field=label[0], value=n[label[0]]) }}" class='glyphicon glyphicon-map-marker'></a>&nbsp;
+								<a href="{{ url_for('search', field=label[0], query=n[label[0]]) }}">{{ n[label[0]] }}</a>
+								</td>
+							{%else%}
+								<td>{{ n[label[0]]|display_malcom }}</td>
+							{%endif%}
 						{% endfor %}
 					</tr>
 					{%endfor%}
@@ -158,10 +162,13 @@
 							{% for e in linked[r][dest] %}
 							<tr>
 								{% for label in e.display_fields %}
-									{% if label[0] == 'tags' %}
-										<td>{{", ".join(e.tags)}}</td>
+
+									{% if label[0] == 'value' %}
+										<td>
+										<a href="{{ url_for('nodes', field=label[0], value=e[label[0]]) }}" class='glyphicon glyphicon-map-marker'></a>&nbsp;
+										<a href="{{ url_for('search', field=label[0], query=e[label[0]]) }}">{{ e[label[0]] }}</a></td>
 									{%else%}
-										<td>{{ e[label[0]]}}</td>
+										<td>{{ e[label[0]]|display_malcom }}</td>
 									{%endif%}
 								{% endfor %}
 							</tr>

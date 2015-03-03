@@ -65,20 +65,19 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Malcom</a>
+          <a class="navbar-brand" href="{{ url_for('index')}}">Malcom</a>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
 
           <ul class="nav navbar-nav">
-            <li id='dataset-nav'><a href="{{url_for('dataset')}}">Dataset</a></li>
+            <li id='search-nav'><a href="{{url_for('search')}}">Search</a></li>
+            <li id='populate-nav'><a href="{{url_for('populate')}}">Populate</a></li>
             <li id='sniffer-nav'><a href="{{url_for('sniffer')}}">Network captures</a></li>
             <li id='feeds-nav'><a href="{{url_for('feeds')}}">Feeds</a></li>
+            <li id='dataset-nav'><a href="{{url_for('dataset')}}">Browse dataset</a></li>
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
-<!--             <li id='analytics-status-nav'>asd
-                <p class='navbar-text analytics'>Loading status...</p>
-            </li> -->
             <li class='dropdown'>
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
               {{ current_user.username }} <span class="caret"></span>

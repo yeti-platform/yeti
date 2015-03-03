@@ -1,30 +1,62 @@
 {% extends "base.html" %}
+
+{% block custom_head %}
+	<script src="{{ url_for('static', filename='custom_js/search.js') }}"></script>
+{% endblock %}
+
+
 {% block main %}
-<div class='col-md-12'>
+<div class='col-md-8 col-md-offset-2'>
 	<div class='center-block search'>
 		<h1 class='title'>Search Malcom</h1>
 		<p class="lead">Enter an URL, IP address, or domain name</p>
-		<form action='{{ url_for("report") }}' method='GET'>
-			<input class="form-control input-lg" name='query'>
+		<form action='{{ url_for("search") }}' method='GET'>
+			<div class='input-group input-group-lg searchbar'>
+				 <div class="input-group-btn">
+			        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><span id='selected-field'>Value</span> <span class="caret"></span></button>
+			        <ul class="dropdown-menu" role="menu">
+			          <li><a href="#" class='field-selector'>Value</a></li>
+			          <li><a href="#" class='field-selector'>Tags</a></li>
+			        </ul>
+			      </div><!-- /btn-group -->
+				<input class="form-control" name='query' autofocus value="{{term}}">
+				<input type='hidden' name='field' id='field-selector' value='value'>
+			</div>
+			<div class="checkbox">
+			    <label>
+			      <input type="checkbox" name="log" checked='checked'> Add element if not found
+			    </label>
+			  </div>
 			{% with messages = get_flashed_messages() %}
 		  		{% if messages %}
 	    		<div class="alert alert-warning clearfix" style='display:inline-block;'>
-	      			Empty query is empty!
+	      			{{messages[0]}}
 	      		</div>
 	      		<br class='clearfix' />
 		      	{%endif%}
 	    	{%endwith%}
-			<input class='btn btn-default btn-lg' type='submit' value='Go'>
+			 <input class='btn btn-primary btn-lg' type='submit' value='Search'>
 		</form>
 	</div>
-
-	<div class='row'>
-		<div class='col-md-6 col-md-offset-3'>
-			<h3>Recent searches</h3>
-			<table class='table'>
-				<tr><th>Terms</th><th>Results</th></tr>
-			</table>
-		</div>
-	</div>
 </div>
+
+<div class='col-md-5 col-md-offset-1' >
+	<h3>Bulk search - copy &amp; paste raw text</h3>
+	<p class="help-block">Enter one URL, IP address, or domain name per line</p>
+	<form action='{{ url_for("search") }}' method='POST'>
+		<div class="form-group">
+			<textarea class="form-control" name='bulk-text' rows=8></textarea>
+			<br />
+			<input class='btn btn-primary btn-sm' type='submit' value='Search'>
+		</div>
+	</form>
+</div>
+<div class='col-md-5'>
+	<h3>Recent searches</h3>
+	<table class='table'>
+		<tr><th>Search term</th><th># results</th></tr>
+	</table>
+</div>
+
+
 {% endblock %}
