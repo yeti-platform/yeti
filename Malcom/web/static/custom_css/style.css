@@ -122,10 +122,6 @@ tr.success .error-cause {
 
 /* HTML */
 
-/*.container {
-	width:95%;
-}*/
-
 .toolbar {
 	float:right;
 }
@@ -145,8 +141,6 @@ input[type="file"] {
 
 div.data {
 	float:right;
-	/*font-size: 12px;*/
-	/*font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;*/
 }
 
 /* search */
@@ -199,7 +193,6 @@ p.divider {
 
 body .main {
 	font-size: 12px;
-	/*font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;*/
 	margin-bottom:70px;
 }
 
