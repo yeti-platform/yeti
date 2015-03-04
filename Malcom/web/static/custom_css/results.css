@@ -2,3 +2,24 @@
 	padding: 5px;
 	margin-bottom: 5px;
 }
+
+a.glyphicon:hover {
+	text-decoration: none
+}
+
+.label {
+	font-size: 88%;
+}
+
+.page-header {
+	margin-top: 10px;
+}
+
+.main-details h2 {
+	margin-top:0px;
+	margin-bottom:15px;
+}
+
+.main-details .details-table {
+	margin-bottom:0;
+}

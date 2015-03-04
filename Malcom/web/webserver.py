@@ -139,13 +139,13 @@ def display_iterable(value):
 	else:
 		return "N/A"
 
-@app.template_filter('display_malcom')
-def display_malcom(value):
+@app.template_filter('display_other')
+def display_other(value):
 	if type(value) in [str, unicode]:
 		return value
 	elif type(value) == list and len(value) > 0:
 		return ", ".join(value)
-	if type(value) == datetime.datetime:
+	elif type(value) == datetime.datetime:
 		return value.strftime('%Y-%m-%d %H:%M')
 
 	return "N/A"
@@ -436,7 +436,6 @@ def find_related(field, query, base_elts, base_ids, evil_elts):
 			evil_elts[n['_id']] = n
 
 	# display fields
-
 	base_elts[0]['fields'] = base_elts[0].display_fields
 	return render_template("results.html", field=field, value=query, base_elts=base_elts, evil_elts=evil_elts, linked=linked_elements, related_elements=related_elements)
 

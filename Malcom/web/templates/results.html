@@ -1,5 +1,19 @@
 {% extends "base.html" %}
 
+{% macro display_malcom(key, value) -%}
+	{% if key == 'tags'%}
+		{% if value | length == 0 %}
+			<span class="label label-default">N/A</span>
+		{%else%}
+			{% for tag in value %}
+				<span class="label label-{%if tag == 'evil'%}danger{%else%}primary{%endif%}">{{tag}}</span>
+			{%endfor%}
+		{%endif%}
+	{% else %}
+		{{ value | display_other }}
+	{% endif %}
+{%- endmacro %}
+
 {% block custom_head %}
 <script src="{{ url_for('static', filename='custom_js/results.js') }}"></script>
 <link href="{{ url_for('static', filename='custom_css/results.css') }}" rel='stylesheet'>
@@ -11,25 +25,28 @@
 {% block main %}
 <div class='col-md-12'>
 
+<div class="panel panel-default main-details">
+	<div class="panel-body">
+
 {% if value is iterable and value is not string %}
-	<h2>Details for bulk search</h2>
+	<h2 class='page-header'>Details for bulk search</h2>
 {%else%}
-	<h2>Details for {{field}}: {{value}} </h2>
+	<h2 class='page-header'><a class='glyphicon glyphicon-map-marker' href="{{ url_for('nodes', field=field, value=value) }}"></a> {{field}}: {{value}} </h2>
 {%endif%}
 	{% if base_elts|length == 1 %}
 
-		<table class='table table-condensed'>
+		<table class='table table-condensed main-table'>
 		<tr>
 			{% for key, label in base_elts[0].default_fields %}<th>{{label}}</th>{% endfor %}
 		</tr>
 		<tr>
 			{% for key, label in base_elts[0].default_fields %}
-					<td>{{ base_elts[0].get(key)|display_malcom }}</td>
+					<td>{{ display_malcom(key, base_elts[0].get(key)) }}</td>
 			{% endfor %}
 		</tr>
 		</table>
 
-		<table class='table table-condensed'>
+		<table class='table table-condensed details-table'>
 			{% for label in base_elts[0].element_fields %}
 				<tr><th>{{label[1]}}</th><td>{{ base_elts[0].get(label[0], "N/A") }}</td></tr>
 			{% endfor %}
@@ -56,7 +73,7 @@
 								<a href="{{ url_for('search', field=f[0], query=e[f[0]]) }}">{{ e[f[0]] }}</a>
 								</td>
 							{% else %}
-								<td>{{e[f[0]]|display_malcom}}</td>
+								<td>{{ display_malcom(f[0], e[f[0]]) }}</td>
 							{% endif %}
 						{% endfor %}
 						</tr>
@@ -65,46 +82,51 @@
 			</div>
 		</div>
 	{% endif %}
+	</div>
+</div>
 
 	{% if evil_elts|length > 0%}
-
-		<h3>Evilness</h3>
-
-		{% if evil_elts|length < 10 %}
-			{% for elt in evil_elts.values() %}
-				{% set outer_loop = loop %}
-				{% for key, evil in elt.evil.iteritems() %}
-					<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
-					<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
-						{% for key, value in evil.iteritems() %}
-						<tr><th>{{key}}</th><td>{{value}}</td></tr>
+		<div class="panel panel-danger">
+			<div class="panel-heading">
+				<h3 class="panel-title">Evilness</h3>
+			</div>
+			<div class='panel-body'>
+				{% if evil_elts|length < 10 %}
+					{% for elt in evil_elts.values() %}
+						{% set outer_loop = loop %}
+						{% for key, evil in elt.evil.iteritems() %}
+							<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
+							<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
+								{% for key, value in evil.iteritems() %}
+								<tr><th>{{key}}</th><td>{{value}}</td></tr>
+								{% endfor %}
+							</table>
 						{% endfor %}
-					</table>
-				{% endfor %}
-			{% endfor %}
+					{% endfor %}
 
-		{% else %}
-		<div>
-			<div class="toggle-control" data-toggle-target='all-evil'>{{ evil_elts|length }} evil elements</div>
-			<div id="all-evil" class='toggle-hidden'>
-			{% for elt in evil_elts %}
-				{% set outer_loop = loop %}
-				{% for key, evil in elt.evil.iteritems() %}
-					<div class='alert alert-danger evil' data-toggle-target-id='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added}}</div>
-					<table class='table table-condensed toggle-target' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
-						{% for key, value in evil.iteritems() %}
-							<tr><th>{{key}}</th><td>{{value}}</td></tr>
+				{% else %}
+				<div>
+					<div class="toggle-control" data-toggle-target='all-evil'>{{ evil_elts|length }} evil elements</div>
+					<div id="all-evil" class='toggle-hidden'>
+					{% for elt in evil_elts.values() %}
+						{% set outer_loop = loop %}
+						{% for key, evil in elt.evil.iteritems() %}
+							<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
+							<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
+								{% for key, value in evil.iteritems() %}
+									<tr><th>{{key}}</th><td>{{value}}</td></tr>
+								{% endfor %}
+							</table>
 						{% endfor %}
-					</table>
-				{% endfor %}
-			{% endfor %}
+					{% endfor %}
+					</div>
+				</div>
+				{%endif%}
 			</div>
 		</div>
-
-		{%endif%}
 	{%endif%}
 
-		<h3>Related elements</h3>
+		<h3 class='page-header'>Related elements</h3>
 
 		<ul id='relatedTabs' class='nav nav-tabs'>
 			{% for r in related_elements %}
@@ -126,7 +148,7 @@
 								<a href="{{ url_for('search', field=label[0], query=n[label[0]]) }}">{{ n[label[0]] }}</a>
 								</td>
 							{%else%}
-								<td>{{ n[label[0]]|display_malcom }}</td>
+								<td>{{ display_malcom(label[0], n[label[0]]) }}</td>
 							{%endif%}
 						{% endfor %}
 					</tr>
@@ -136,7 +158,7 @@
 			{% endfor %}
 		</div>
 
-		<h3>Links</h3>
+		<h3 class='page-header'>Links</h3>
 
 
 		<div role="tabpanel">
@@ -168,7 +190,7 @@
 										<a href="{{ url_for('nodes', field=label[0], value=e[label[0]]) }}" class='glyphicon glyphicon-map-marker'></a>&nbsp;
 										<a href="{{ url_for('search', field=label[0], query=e[label[0]]) }}">{{ e[label[0]] }}</a></td>
 									{%else%}
-										<td>{{ e[label[0]]|display_malcom }}</td>
+										<td>{{ display_malcom(label[0], e[label[0]]) }}</td>
 									{%endif%}
 								{% endfor %}
 							</tr>
