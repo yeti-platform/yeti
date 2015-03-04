@@ -118,13 +118,16 @@ class Evil(Element):
 
 
 class As(Element):
-	display_fields = Element.default_fields + [
-										('name', 'Name'),
-										('ISP', 'ISP'),
-										#('domain', 'Domain'),
-										('asn', 'ASN'),
-										('country', 'Country'),
-										]
+
+	element_fields = [
+						('name', 'Name'),
+						('ISP', 'ISP'),
+						#('domain', 'Domain'),
+						('asn', 'ASN'),
+						('country', 'Country'),
+						]
+
+	display_fields = Element.default_fields + element_fields
 	default_refresh_period = None
 
 	def __init__(self, _as="", tags=[]):
