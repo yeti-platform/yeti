@@ -331,6 +331,7 @@ class Model:
 			else:
 				new = True
 				element['tags'] = tags
+				element['evil'] = evil
 
 			if not new:
 				debug_output("(updated %s %s)" % (element.type, element.value), type='model')
