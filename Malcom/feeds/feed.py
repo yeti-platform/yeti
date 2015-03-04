@@ -58,7 +58,7 @@ class Feed(object):
 		request = urllib2.Request(self.source, headers=headers)
 		feed = urllib2.urlopen(request)
 		tree = etree.parse(feed)
-		
+
 		self.status = "OK"
 
 		for item in tree.findall("//%s"%main_node):
@@ -75,9 +75,9 @@ class Feed(object):
 		assert self.source != None
 		request = urllib2.Request(self.source, headers=headers)
 		feed = urllib2.urlopen(request).readlines()
-		
+
 		self.status = "OK"
-		
+
 		for line in feed:
 			yield line
 
@@ -97,14 +97,14 @@ class Feed(object):
 
 	def commit_to_db(self, element, testing=False):
 		if self.testing:
-			print "Evil node: %s" % (element['value'])
-			print "Data:"
-			print bson.json_util.dumps(element['evil'], sort_keys=True, indent=4, separators=(',', ':'))
+			# print "Evil node: %s" % (element['value'])
+			# print "Data:"
+			# print bson.json_util.dumps(element['evil'], sort_keys=True, indent=4, separators=(',', ':'))
 			self.elements_fetched +=1
 			return
-		
+
 		# add an 'evil' tag if it was not specified in the feed
-		if 'evil' not in element['tags']: element['tags'] += ['evil'] 
+		if 'evil' not in element['tags']: element['tags'] += ['evil']
 
 		element, new = self.model.save(element, with_status=True)
 		if new:
@@ -132,7 +132,7 @@ class Feed(object):
 		# except Exception, e:
 	 # 		self.status = "ERROR: %s" % e
 	 # 		raise ValueError
-		
+
 		self.running = False
 
 
@@ -186,7 +186,7 @@ class FeedEngine(Process):
 		for t in self.threads:
 			if self.threads[t].is_alive():
 				self.threads[t].join()
-		
+
 
 	def run(self):
 		self.messenger = FeedsMessenger(self)
@@ -199,18 +199,18 @@ class FeedEngine(Process):
 				time.sleep(self.period) # run a new thread every period seconds
 			except KeyboardInterrupt, e:
 				self.shutdown = True
-			
+
 
 
 	def load_feeds(self, activated_feeds):
-	
+
 		globals_, locals_ = globals(), locals()
 
 		feeds_dir = self.configuration['FEEDS_DIR']
 		package_name = 'feeds'
 
 		debug_output("Loading feeds in %s" % feeds_dir)
-		
+
 		for filename in os.listdir(feeds_dir):
 			export_names = []
 			export_classes = []
@@ -224,16 +224,16 @@ class FeedEngine(Process):
 
 				names = [name for name in modict if name[0] != '_']
 				for n in names:
-					
+
 					# print n, activated_feeds
 					if n == 'Feed' or n.lower() not in activated_feeds:
 						continue
-				
+
 					class_n = modict.get(n)
-					
+
 					if issubclass(class_n, Feed) and class_n not in globals_:
 						new_feed = class_n(n) # create new feed object
-						
+
 						new_feed.model = self.model # attach model instance to feed
 						self.feeds[n] = new_feed
 
@@ -250,7 +250,7 @@ class FeedEngine(Process):
 			name = status['name']
 			self.feeds[name].last_run = status['last_run']
 			self.feeds[name].next_run = status['last_run'] + self.feeds[name].run_every
-				
+
 
 		globals_.update((export_names[i], c) for i, c in enumerate(export_classes))
 
