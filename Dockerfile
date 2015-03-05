@@ -28,6 +28,7 @@ RUN cd /opt/malcom/Malcom/auxiliary/geoIP && \
 WORKDIR /opt/malcom
 RUN pip install -r requirements.txt
 RUN cp malcom.conf.example malcom.conf
+RUN sed -i s/scheduler\ =\ false/scheduler\ =\ true/g malcom.conf
 EXPOSE 8080
 RUN echo service mongodb start > start.sh
 RUN echo service redis-server start >> start.sh
