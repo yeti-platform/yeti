@@ -30,7 +30,6 @@ pymongo==2.8
 python-dateutil==2.4.0
 redis==2.10.3
 requests==2.5.1
-scapy==2.1.0
 service-identity==14.0.0
 six==1.9.0
 wsgiref==0.1.2
