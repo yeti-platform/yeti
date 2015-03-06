@@ -36,31 +36,17 @@ port = 27017
 # You can comment / uncomment feeds
 # according to if you want to use
 # them or not
-#
-# AlienvaultIP
-# DShield16276
-# DShield3215
-# DShieldSuspiciousDomainsLow
-# DShieldSuspiciousDomainsMedium
-# MalwareDomains
-DShieldSuspiciousDomainsHigh
-MalcodeBinaries
+
+AsproxTracker
 CybercrimeTracker
-MDLHosts
-MDLTracker
-OpenblIP
+FeodoTracker
+MalcodeBinaries
+MalwaredRu
+MalwareTrafficAnalysis
+MalwareDomainList
 PalevoTracker
-SiriUrzVX
-SpyEyeBinaries
-SpyEyeTracker
-SpyEyeConfigs
-SpyEyeDropzones
 TorExitNodes
-UrlQuery
+ZeusTrackerBinaries
 ZeusTrackerConfigs
 ZeusTrackerDropzones
-ZeusGameOverDomains
-ZeusTrackerBinaries
-FeodoTracker
-MalwareTrafficAnalysis
 

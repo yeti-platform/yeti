@@ -2,18 +2,18 @@ from Malcom.feeds.feed import FeedEngine
 import os
 
 all_feeds = [
-				'AsproxTracker',
-				'CybercrimeTracker',
-				'FeodoTracker',
-				'MalcodeBinaries',
-				'MalwaredRu',
-				'MalwareTrafficAnalysis',
-				'MalwareDomainList',
-				'PalevoTracker',
-				'TorExitNodes',
-				'ZeusTrackerBinaries',
-				'ZeusTrackerConfigs',
-				'ZeusTrackerDropzones',
+			"AsproxTracker",
+			"CybercrimeTracker",
+			"FeodoTracker",
+			"MalcodeBinaries",
+			"MalwaredRu",
+			"MalwareTrafficAnalysis",
+			"MalwareDomainList",
+			"PalevoTracker",
+			"TorExitNodes",
+			"ZeusTrackerBinaries",
+			"ZeusTrackerConfigs",
+			"ZeusTrackerDropzones",
 			 ]
 
 feed_dir = os.getcwd()+'/Malcom/feeds'
