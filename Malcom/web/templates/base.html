@@ -32,13 +32,11 @@
 
     {% block custom_head %}
     {% endblock %}
-
-    <script type="text/javascript" src="{{ url_for('static', filename='custom_js/data.js') }}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/misc.js') }}" charset="utf-8"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='custom_js/analytics_websockets.js') }}" charset="utf-8"></script>
     <script>
-    initAnalyticsWebSocket()
-    ws_analytics.onopen = analyticsInterfaceInit
+      initAnalyticsWebSocket()
+      ws_analytics.onopen = analyticsInterfaceInit
     </script>
 
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->

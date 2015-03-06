@@ -16,6 +16,10 @@
 </div>
 {% endblock %}
 
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('static', filename='custom_js/dataset.js') }}" charset="utf-8"></script>
+{%endblock%}
+
 {%block sidebar %}
 <div class='col-md-3 toolbar'>
 	{% include "flash.html" %}
@@ -32,7 +36,7 @@
 		<div role="tabpanel" class='tab-pane active' id='search'>
 			<form>
 				<div class='input-group'>
-	    			<input id="query" class="form-control input-sm" placeholder='tags=malware'>
+	    			<input id="query" class="form-control input-sm" data-url="{{ url_for('malcom_api.query_data') }}" placeholder='tags=evil'>
 					<span class="input-group-btn">
 						<button class='btn btn-primary btn-sm' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('malcom_api.query_data') }}')">Go</button>
 					</span>
@@ -60,15 +64,6 @@
 				  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">
 				</nav>
 			</form>
-
-			<script type="text/javascript">
-				$("#query").keyup(function (event) {
-					if (!$('#fuzzy').prop('checked') || event.which == 13) {
-						get_dataset($('#query').val(), '{{ url_for('malcom_api.query_data') }}')
-					}
-				});
-				$(get_dataset("",'{{url_for("malcom_api.query_data")}}'));
-			</script>
 
 		</div>
 		{% if not g.config['PUBLIC'] %}

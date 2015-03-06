@@ -1,3 +1,24 @@
+$(function(){
+
+	var url = $("#query").data('url');
+
+	$("#query").keydown(function (event) {
+		if (event.which == 13) {
+			event.preventDefault();
+		}
+	});
+
+	$("#query").keyup(function (event) {
+		if (!$('#fuzzy').prop('checked') || event.which == 13) {
+			event.preventDefault();
+			get_dataset($('#query').val(), url);
+		}
+	});
+	
+	$(get_dataset("", url));
+});
+
+
 function clear_db() {
 	var r=confirm("You sure?");
 	if (r==true)
@@ -161,8 +182,3 @@ function get_dataset(query, url) {
 	});
 }
 
-function real_time(url, key) {
-	if (!$('#fuzzy').prop('checked') || key == 13) {
-		get_dataset($('#query').val(), url)
-	}
-}
