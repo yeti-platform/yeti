@@ -28,14 +28,18 @@ class MalcodeBinaries(Feed):
 
 	def analyze(self, dict):
 		g = re.match(r'^URL: (?P<url>.+), IP Address: (?P<ip>[\d.]+), Country: (?P<country>[A-Z]{2}), ASN: (?P<asn>\d+), MD5: (?P<md5>[a-f0-9]+)$', dict['description'])
-		evil = g.groupdict()
-		evil['description'] = "N/A"
-		evil['link'] = dict['link']
-		evil['id'] = md5.new(dict['description']).hexdigest()
-		evil['source'] = self.name
-		
-		url = Url(url=evil['url'])
-		url.add_evil(evil)
-
-		self.commit_to_db(url)
+		if g:
+			evil = g.groupdict()
+			evil['description'] = "N/A"
+			evil['link'] = dict['link']
+			try:
+				d=dict['description'].encode('UTF-8')
+				evil['id'] = md5.new(d).hexdigest()
+			except UnicodeError:
+				print dict['description']
+				print type(dict['description'])
+			evil['source'] = self.name
+			url = Url(url=evil['url'])
+			url.add_evil(evil)
+			self.commit_to_db(url)
 
