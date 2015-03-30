@@ -36,8 +36,7 @@ class MalcodeBinaries(Feed):
 				d=dict['description'].encode('UTF-8')
 				evil['id'] = md5.new(d).hexdigest()
 			except UnicodeError:
-				print dict['description']
-				print type(dict['description'])
+				sys.stderr.write('error Unicode : %s' % dict['description'])
 			evil['source'] = self.name
 			url = Url(url=evil['url'])
 			url.add_evil(evil)
