@@ -1,15 +1,15 @@
-import urllib2
-import datetime
-import re
-import md5
-
 import bs4
-from bson.objectid import ObjectId
 from bson.json_util import dumps
+from bson.objectid import ObjectId
+import datetime
+import md5
+import re
+import sys
+import urllib2
 
-from Malcom.model.datatypes import Evil, Url
-from Malcom.feeds.feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
+from Malcom.feeds.feed import Feed
+from Malcom.model.datatypes import Evil, Url
 
 
 class MalcodeBinaries(Feed):
@@ -35,10 +35,11 @@ class MalcodeBinaries(Feed):
 			try:
 				d=dict['description'].encode('UTF-8')
 				evil['id'] = md5.new(d).hexdigest()
+				evil['source'] = self.name
+				url = Url(url=evil['url'])
+				url.add_evil(evil)
+				self.commit_to_db(url)
 			except UnicodeError:
 				sys.stderr.write('error Unicode : %s' % dict['description'])
-			evil['source'] = self.name
-			url = Url(url=evil['url'])
-			url.add_evil(evil)
-			self.commit_to_db(url)
+			
 
