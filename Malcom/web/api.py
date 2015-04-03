@@ -5,9 +5,11 @@ from flask import Blueprint, render_template, abort, request, g, url_for, send_f
 from flask.helpers import make_response
 from flask_restful import Resource, reqparse, Api
 from flask_restful.representations.json import output_json
+import pickle
 import pymongo
 
 from Malcom.auxiliary.toolbox import *
+from Malcom.feeds.feed import Feed, FeedEngine
 from Malcom.web.webserver import Model, UserManager
 from Malcom.web.webserver import login_required, user_is_admin, can_modify_sniffer_session, can_view_sniffer_session
 from flask.ext.login import current_user
@@ -42,7 +44,30 @@ class Search_API(Resource):
 			result=Model.find({'value':{"$regex":"/"+criteria+"/"}})
 			return dumps(result)
 api.add_resource(Search_API,'/api/search')
+#================================================================
 
+# API PUBLIC for FEEDS===========================================
+class ListFeeds(Resource):
+	def get(self):
+		feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
+		return feed_list
+api.add_resource(ListFeeds,'/api/feeds/list')
+
+class StartFeeds(Resource):
+	def get(self,feed_name):
+		result = g.messenger.send_recieve('feedRun', 'feeds', params={'feed_name':feed_name})
+		return result
+
+api.add_resource(StartFeeds,'/api/feeds/<feed_name>/start/')
+
+class StatusFeeds(Resource):
+	def get(self,feed_name):
+		feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
+		if feed_name in feed_list:
+			return {'status':feed_list[feed_name]['status'],'last_run': feed_list[feed_name]['last_run'],'next_run':feed_list[feed_name]['next_run']}
+		else:
+			return {'status':'KO'}
+api.add_resource(StatusFeeds,'/api/feeds/<feed_name>/status/')
 
 #================================================================
 

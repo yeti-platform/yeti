@@ -517,7 +517,6 @@ class Model:
 		feeds = [f for f in self.feeds.find({'name': {'$in': feed_names}})]
 		return feeds
 
-
-
-
-
+	def get_feeds(self):
+		feeds=[f['name'] for f in self.feeds.find()]
+		return feeds
