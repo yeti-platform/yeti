@@ -35,6 +35,8 @@ parser.add_argument('search', type=str)
 parser.add_argument('_id', type=str)
 parser.add_argument('depth', type=str)
 
+parser_neighbor=reqparse.RequestParser()
+parser_neighbor.add_argument('_id', type=str)
 class Search_API(Resource):
 	def post(self):
 		args=parser.parse_args()
@@ -75,9 +77,10 @@ api.add_resource(StatusFeeds,'/api/feeds/<feed_name>/status/')
 class Neighbors(Resource):
 	def get(self):
 		query = {}
-		for key in request.args:
+		args=parser_neighbor.parse_args()
+		for key in args:
 			if key == '_id':
-				query[key] = {"$in" : [ObjectId(id) for id in request.args.get(key)]}
+				query[key] = {"$in" : [ObjectId(id) for id in request.args.getlist(key)]}
 			else:
 				query[key] = {"$in" : request.args.getlist(key)}
 	
