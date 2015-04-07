@@ -162,7 +162,7 @@ class QueryData(Resource):
 	
 		return data
 
-api.add_resource(QueryData,'/api/query/')
+api.add_resource(QueryData,'/api/query_data/',endpoint='api.query_data')
 
 
 class Delete(Resource):
