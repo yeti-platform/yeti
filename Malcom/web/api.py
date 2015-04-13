@@ -217,14 +217,14 @@ class Pcap(Resource):
 		if 'pcap_filename' in session:
 			return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
-api.add_resource(Pcap,'/api/sniffer/<session_id>/pcap')
+api.add_resource(Pcap,'/api/sniffer/<session_id>/pcap',endpoint='malcom_api.pcap')
 
 
 
-@malcom_api.route('/sniffer/<session_id>/pcap')
-@login_required
-@can_view_sniffer_session
-def pcap(session_id, session_info=None):
-	session_id = session_info['id']
-	result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
-	return send_from_directory(g.config['SNIFFER_DIR'], session_info['pcap_filename'], mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
+# @malcom_api.route('/sniffer/<session_id>/pcap')
+# @login_required
+# @can_view_sniffer_session
+# def pcap(session_id, session_info=None):
+# 	session_id = session_info['id']
+# 	result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
+# 	return send_from_directory(g.config['SNIFFER_DIR'], session_info['pcap_filename'], mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
