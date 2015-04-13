@@ -7,6 +7,8 @@ from flask_restful import Resource, reqparse, Api
 from flask_restful.representations.json import output_json
 import pickle
 import pymongo
+import werkzeug
+from werkzeug.datastructures import FileStorage
 
 from Malcom.auxiliary.toolbox import *
 from Malcom.feeds.feed import Feed, FeedEngine
@@ -26,6 +28,10 @@ def output_json(obj, code, headers=None):
 api=Api(app)
 DEFAULT_REPRESENTATIONS = {'application/json': output_json}
 api.representations=DEFAULT_REPRESENTATIONS
+class FileStorageArgument(reqparse.Argument):
+	def convert(self, value, op):
+		if self.type is FileStorage: 
+			return value
 
 # Public API ================================================
 
@@ -220,11 +226,41 @@ class Pcap(Resource):
 api.add_resource(Pcap,'/api/sniffer/<session_id>/pcap',endpoint='malcom_api.pcap')
 
 
+parser_session_pcap_file = reqparse.RequestParser(argument_class=FileStorageArgument)
+parser_session_pcap_file.add_argument('pcapfile',type=werkzeug.datastructures.FileStorage, location='files')
+parser_session_pcap_str=reqparse.RequestParser()
+parser_session_pcap_str.add_argument('session_name',type=str)
+parser_session_pcap_str.add_argument('intercept_tls',type=int)
+parser_session_pcap_str.add_argument('public',type=int)
+parser_session_pcap_str.add_argument('filter',type=int)
+class Start_Session(Resource):
+	def post(self):
+		args=parser_session_pcap_file.parse_args()
+		fh_pcap=args['pcapfile']
+		path_file=fh_pcap.filename
+		args_sessions_params=parser_session_pcap_str.parse_args()
+		session_name=args_sessions_params['session_name']
+		intercept_tls=bool(args_sessions_params['intercept_tls'])
+		public=bool(args_sessions_params['public'])
+		filter=''
+		if args_sessions_params['filter']:
+			filter=args_sessions_params['filter']
+		params = {  'session_name': session_name,
+					'remote_addr' : str(request.remote_addr),
+					'filter': filter,
+					'intercept_tls': intercept_tls,
+					'public': public,
+					'pcap': True if fh_pcap else False,
+				}
+		print params
+		session_id = str(loads(g.messenger.send_recieve('newsession', 'sniffer-commands', params=params)))
+		session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
+		# this is where the data will be stored persistently
+		# if we're dealing with an uploaded PCAP file
+		if fh_pcap:
+			# store in /sniffer folder
+			fh_pcap.save(g.config['SNIFFER_DIR'] + "/" + session_info['pcap_filename'])
+		g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
 
-# @malcom_api.route('/sniffer/<session_id>/pcap')
-# @login_required
-# @can_view_sniffer_session
-# def pcap(session_id, session_info=None):
-# 	session_id = session_info['id']
-# 	result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
-# 	return send_from_directory(g.config['SNIFFER_DIR'], session_info['pcap_filename'], mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
+		return {'session_id':session_id}
+api.add_resource(Start_Session,'/api/session/start/')
