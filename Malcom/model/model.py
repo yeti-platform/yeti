@@ -461,6 +461,7 @@ class Model:
 			dict['_id'] = session.id
 
 		self.sniffer_sessions.save(dict)
+		print session.nodes.keys()
 		return str(session.id)
 
 	def get_sniffer_session(self, session_id):
