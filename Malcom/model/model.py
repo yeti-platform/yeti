@@ -461,6 +461,7 @@ class Model:
 			dict['_id'] = session.id
 
 		self.sniffer_sessions.save(dict)
+		print session.nodes.keys()
 		return str(session.id)
 
 	def get_sniffer_session(self, session_id):
@@ -517,7 +518,6 @@ class Model:
 		feeds = [f for f in self.feeds.find({'name': {'$in': feed_names}})]
 		return feeds
 
-
-
-
-
+	def get_feeds(self):
+		feeds=[f['name'] for f in self.feeds.find()]
+		return feeds

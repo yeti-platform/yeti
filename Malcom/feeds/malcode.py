@@ -1,15 +1,15 @@
-import urllib2
-import datetime
-import re
-import md5
-
 import bs4
-from bson.objectid import ObjectId
 from bson.json_util import dumps
+from bson.objectid import ObjectId
+import datetime
+import md5
+import re
+import sys
+import urllib2
 
-from Malcom.model.datatypes import Evil, Url
-from Malcom.feeds.feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
+from Malcom.feeds.feed import Feed
+from Malcom.model.datatypes import Evil, Url
 
 
 class MalcodeBinaries(Feed):
@@ -28,14 +28,18 @@ class MalcodeBinaries(Feed):
 
 	def analyze(self, dict):
 		g = re.match(r'^URL: (?P<url>.+), IP Address: (?P<ip>[\d.]+), Country: (?P<country>[A-Z]{2}), ASN: (?P<asn>\d+), MD5: (?P<md5>[a-f0-9]+)$', dict['description'])
-		evil = g.groupdict()
-		evil['description'] = "N/A"
-		evil['link'] = dict['link']
-		evil['id'] = md5.new(dict['description']).hexdigest()
-		evil['source'] = self.name
-		
-		url = Url(url=evil['url'])
-		url.add_evil(evil)
-
-		self.commit_to_db(url)
+		if g:
+			evil = g.groupdict()
+			evil['description'] = "N/A"
+			evil['link'] = dict['link']
+			try:
+				d=dict['description'].encode('UTF-8')
+				evil['id'] = md5.new(d).hexdigest()
+				evil['source'] = self.name
+				url = Url(url=evil['url'])
+				url.add_evil(evil)
+				self.commit_to_db(url)
+			except UnicodeError:
+				sys.stderr.write('error Unicode : %s' % dict['description'])
+			
 

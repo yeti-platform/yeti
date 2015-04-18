@@ -312,7 +312,7 @@ class SnifferSession():
 				for n in new:
 					saved = self.model.save(n[1])
 
-					self.nodes[str(saved['_id'])] = saved
+					self.nodes[str(saved['value'])] = saved
 					new_elts.append(saved)
 
 					# Do the link. The link should be kept because it is not
