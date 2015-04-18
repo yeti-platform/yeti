@@ -30,7 +30,7 @@ DEFAULT_REPRESENTATIONS = {'application/json': output_json}
 api.representations=DEFAULT_REPRESENTATIONS
 class FileStorageArgument(reqparse.Argument):
 	def convert(self, value, op):
-		if self.type is FileStorage: 
+		if self.type is FileStorage:
 			return value
 
 # Public API ================================================
@@ -55,27 +55,20 @@ api.add_resource(Search_API,'/api/search')
 #================================================================
 
 # API PUBLIC for FEEDS===========================================
-class ListFeeds(Resource):
-	def get(self):
-		feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
-		return feed_list
-api.add_resource(ListFeeds,'/api/feeds/list')
+class FeedsAPI(Resource):
+	def get(self, action, feed_name=None):
+		if action == 'list':
+			return pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
+		if action == 'start':
+			return g.messenger.send_recieve('feedRun', 'feeds', params={'feed_name':feed_name})
+		if action == 'status':
+			feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
+			if feed_name in feed_list:
+				return {'status':feed_list[feed_name]['status'],'last_run': feed_list[feed_name]['last_run'],'next_run':feed_list[feed_name]['next_run']}
+			else:
+				return {'status':'KO'}
 
-class StartFeeds(Resource):
-	def get(self,feed_name):
-		result = g.messenger.send_recieve('feedRun', 'feeds', params={'feed_name':feed_name})
-		return result
-
-api.add_resource(StartFeeds,'/api/feeds/<feed_name>/start/')
-
-class StatusFeeds(Resource):
-	def get(self,feed_name):
-		feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
-		if feed_name in feed_list:
-			return {'status':feed_list[feed_name]['status'],'last_run': feed_list[feed_name]['last_run'],'next_run':feed_list[feed_name]['next_run']}
-		else:
-			return {'status':'KO'}
-api.add_resource(StatusFeeds,'/api/feeds/<feed_name>/status/')
+api.add_resource(FeedsAPI, '/api/feeds/<string:action>', '/api/feeds/<string:action>/<string:feed_name>')
 
 #================================================================
 
@@ -89,7 +82,7 @@ class Neighbors(Resource):
 				query[key] = {"$in" : [ObjectId(id) for id in request.args.getlist(key)]}
 			else:
 				query[key] = {"$in" : request.args.getlist(key)}
-	
+
 		data = Model.find_neighbors(query, include_original=True)
 		return data
 api.add_resource(Neighbors,'/api/neighbors/')
@@ -104,7 +97,7 @@ class Evil(Resource):
 				depth = int(args['depth'])
 			else:
 				depth=2
-		if depth > 2: depth = 2	
+		if depth > 2: depth = 2
 		for key in args:
 			if key not in ['depth']:
 				query[key] = request.args.getlist(key)
@@ -116,7 +109,7 @@ api.add_resource(Evil,'/api/evil/')
 class QueryData(Resource):
 	def get(self):
 		query = {}
-	
+
 		page = int(request.args.get('page', 0))
 		per_page = int(request.args.get('per_page', 50))
 		if per_page > 500: per_page = 500
@@ -135,21 +128,21 @@ class QueryData(Resource):
 									query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
 							else:
 									query[key] = request.args[key]
-	
+
 		data = {}
 		chrono_query = datetime.datetime.utcnow()
-	
+
 		print "Query: ", query
 		if fuzzy:
 			elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
 		else:
 			elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
-	
+
 		chrono_query = datetime.datetime.utcnow() - chrono_query
-	
+
 		data['page'] = page
 		data['per_page'] = per_page
-	
+
 		for elt in elts:
 			elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
 			elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
@@ -165,10 +158,10 @@ class QueryData(Resource):
 		else:
 			data['total_results'] = "many"
 		chrono_count = datetime.datetime.utcnow() - chrono_count
-	
+
 		data['chrono_query'] = str(chrono_query)
 		data['chrono_count'] = str(chrono_count)
-	
+
 		return data
 
 api.add_resource(QueryData,'/api/query_data/',endpoint='api.query_data')
@@ -184,7 +177,7 @@ api.add_resource(Delete,'/api/dataset/remove/<id>/')
 
 class SnifferSessionList(Resource):
 	def get(self):
-		params = {}		
+		params = {}
 		if 'user' in request.args:
 			params['user'] = current_user.username
 		if 'page' in request.args:
@@ -197,16 +190,16 @@ api.add_resource(SnifferSessionList,'/api/sniffer/sessionlist/')
 
 
 class SnifferSessionDelete(Resource):
-	
+
 	def get(self,session_id):
 		result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_id': session_id})
-	
+
 		if result == "notfound": # session not found
 			return {'status':'Sniffer session %s does not exist' % session_id, 'success': 0}
-	
+
 		if result == "running": # session running
 			return {'status':"Can't delete session %s: session running" % session_id, 'success': 0}
-	
+
 		if result == "removed": # session successfully stopped
 			current_user.remove_sniffer_session(session_id)
 			UserManager.save_user(current_user)
@@ -286,7 +279,7 @@ class Session(Resource):
 			evil= bool(args['evil'])
 		if 'elements' in args:
 			elements=bool(args['elements'])
-			
+
 		if session_id:
 			data=Model.get_sniffer_session(session_id)
 			if data and all_data==True:
@@ -300,10 +293,10 @@ class Session(Resource):
 						return [r for r in result]
 					else:
 						return [ r for r in result if len(r['evil'])> 0]
-				
+
 			else:
 				return abort(404)
 		else:
 			return abort(404)
-		
+
 api.add_resource(Session,'/api/session/<session_id>/')
