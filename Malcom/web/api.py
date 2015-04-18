@@ -76,8 +76,7 @@ api.add_resource(FeedsAPI, '/api/feeds/<string:action>', '/api/feeds/<string:act
 class Neighbors(Resource):
 	def get(self):
 		query = {}
-		args=parser_neighbor.parse_args()
-		for key in args:
+		for key in request.args:
 			if key == '_id':
 				query[key] = {"$in" : [ObjectId(id) for id in request.args.getlist(key)]}
 			else:
