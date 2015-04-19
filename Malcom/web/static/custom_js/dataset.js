@@ -14,7 +14,7 @@ $(function(){
 			get_dataset($('#query').val(), url);
 		}
 	});
-	
+
 	$(get_dataset("", url));
 });
 
@@ -30,7 +30,8 @@ function clear_db() {
 function dataset_remove(id) {
 	$.ajax({
 		dataType: "json",
-		url: url_static_prefix+'api/dataset/remove/'+id,
+		url: url_static_prefix+'api/dataset/remove/',
+		data: {'_id': id},
 		success:function(data){
 			if (data['n'] == 1)
 				$('#row_'+id).remove()

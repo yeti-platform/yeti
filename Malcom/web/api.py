@@ -1,6 +1,7 @@
 
 from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
+from bson.objectid import InvalidId
 from flask import Blueprint, render_template, abort, request, g, url_for, send_from_directory
 from flask.helpers import make_response
 from flask_restful import Resource, reqparse, Api
@@ -168,13 +169,26 @@ class QueryAPI(Resource):
 
 api.add_resource(QueryAPI, '/api/query/', endpoint="api.query")
 
+# DATA MANIPULATION =======================================================
 
-class Delete(Resource):
-    def get(self,id):
-        result = Model.remove_by_id(id)
-        return result
 
-api.add_resource(Delete,'/api/dataset/remove/<id>/')
+class DatasetAPI(Resource):
+    def get(self, action):
+
+        if action == 'remove':
+            try:
+                _id = ObjectId(request.args.get('_id'))
+            except InvalidId:
+                return {'error': 'You must specify an ID'}, 400
+
+            result = Model.remove_by_id(_id)
+            return result
+
+        if action == 'add':
+            # TODO
+            pass
+
+api.add_resource(DatasetAPI, '/api/dataset/<string:action>/')
 
 
 class SnifferSessionList(Resource):

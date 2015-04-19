@@ -385,7 +385,7 @@ class Model:
 		return self.elements.remove({'_id' : element['_id']})
 
 	def remove_by_id(self, element_id):
-		self.remove_connections(ObjectId(element_id))
+		self.remove_connections(element_id)
 		return self.elements.remove({'_id' : ObjectId(element_id)})
 
 	def remove_by_value(self, element_value):
