@@ -193,6 +193,9 @@ class DatasetAPI(Resource):
 api.add_resource(DatasetAPI, '/api/dataset/<string:action>/')
 
 
+# SNIFFER API =============================================================
+
+
 class SnifferSessionList(Resource):
     def get(self):
         params = {}
@@ -204,26 +207,26 @@ class SnifferSessionList(Resource):
             params['private'] = True
         session_list = loads(g.messenger.send_recieve('sessionlist', 'sniffer-commands', params=params))
         return {'session_list': session_list}
-api.add_resource(SnifferSessionList,'/api/sniffer/sessionlist/')
+api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 
 
 class SnifferSessionDelete(Resource):
-
-    def get(self,session_id):
+    def get(self, session_id):
         result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_id': session_id})
+        print "Result", result
 
-        if result == "notfound": # session not found
-            return {'status':'Sniffer session %s does not exist' % session_id, 'success': 0}
+        if result == "notfound":  # session not found
+            return {'status': 'Sniffer session %s does not exist' % session_id, 'success': 0}
 
-        if result == "running": # session running
-            return {'status':"Can't delete session %s: session running" % session_id, 'success': 0}
+        if result == "running":  # session running
+            return {'status': "Can't delete session %s: session running" % session_id, 'success': 0}
 
-        if result == "removed": # session successfully stopped
+        if result == "removed":  # session successfully stopped
             current_user.remove_sniffer_session(session_id)
             UserManager.save_user(current_user)
-            return {'status':"Sniffer session %s has been deleted" % session_id, 'success': 1}
+            return {'status': "Sniffer session %s has been deleted" % session_id, 'success': 1}
 
-api.add_resource(SnifferSessionDelete,'/api/sniffer/<session_id>/delete/')
+api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
 
 
 class Pcap(Resource):

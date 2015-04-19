@@ -106,6 +106,8 @@ class SnifferEngine(object):
 		if not session:
 			debug_output("Fetching session %s from DB" % session_id)
 			s = self.model.get_sniffer_session(session_id)
+			if not s:
+				return None
 			# TLS interception only possible if PCAP hasn't been generated yet
 			intercept_tls = s['intercept_tls'] and not s['pcap']
 
