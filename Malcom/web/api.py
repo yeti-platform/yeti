@@ -225,19 +225,17 @@ class SnifferSessionDelete(Resource):
             current_user.remove_sniffer_session(session_id)
             UserManager.save_user(current_user)
             return {'status': "Sniffer session %s has been deleted" % session_id, 'success': 1}
-
 api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
 
 
-class Pcap(Resource):
-    def get(self,session_id):
+class SnifferSessionPcap(Resource):
+    def get(self, session_id):
         result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
         print result
-        session=Model.get_sniffer_session(session_id)
+        session = Model.get_sniffer_session(session_id)
         if 'pcap_filename' in session:
             return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
-
-api.add_resource(Pcap,'/api/sniffer/<session_id>/pcap',endpoint='malcom_api.pcap')
+api.add_resource(SnifferSessionPcap,'/api/sniffer/<session_id>/pcap',endpoint='malcom_api.pcap')
 
 
 parser_session_pcap_file = reqparse.RequestParser(argument_class=FileStorageArgument)
