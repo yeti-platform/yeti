@@ -36,9 +36,9 @@
 		<div role="tabpanel" class='tab-pane active' id='search'>
 			<form>
 				<div class='input-group'>
-	    			<input id="query" class="form-control input-sm" data-url="{{ url_for('api.query') }}" placeholder='tags=evil'>
+	    			<input id="query" class="form-control input-sm" data-url="{{ url_for('malcom_api.query') }}" placeholder='tags=evil'>
 					<span class="input-group-btn">
-						<button class='btn btn-primary btn-sm' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('api.query') }}')">Go</button>
+						<button class='btn btn-primary btn-sm' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('malcom_api.query') }}')">Go</button>
 					</span>
 				</div>
 
@@ -56,9 +56,9 @@
 
 				<nav>
 				  <ul class="pagination">
-				    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('api.query') }}')" aria-label="Previous">Prev</a></li>
+				    <li><a id='pagination-prev' href="javascript:void(0)" data-nav="0" onclick="change_page($(this).attr('data-nav'), '{{ url_for('malcom_api.query') }}')" aria-label="Previous">Prev</a></li>
 				    <li><a id='pagination-page' href="javascript:void(0)"></a></li>
-				    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('api.query') }}')" aria-label="Next">Next</a></li>
+				    <li><a id='pagination-next' href="javascript:void(0)" data-nav="1" onclick="change_page($(this).attr('data-nav'), '{{ url_for('malcom_api.query') }}')" aria-label="Next">Next</a></li>
 				  </ul>
 				  <br />
 				  <img id='loading-spinner' src="{{ url_for('static', filename='custom_img/ajax-loader.gif')}}">

@@ -169,7 +169,7 @@ class QueryAPI(Resource):
 
 api.add_resource(Neighbors, '/api/neighbors/')
 api.add_resource(Evil, '/api/evil/')
-api.add_resource(QueryAPI, '/api/query/', endpoint="api.query")
+api.add_resource(QueryAPI, '/api/query/', endpoint="malcom_api.query")
 
 # DATA MANIPULATION =======================================================
 
@@ -207,7 +207,6 @@ class SnifferSessionList(Resource):
             params['private'] = True
         session_list = loads(g.messenger.send_recieve('sessionlist', 'sniffer-commands', params=params))
         return {'session_list': session_list}
-api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 
 
 class SnifferSessionDelete(Resource):
@@ -225,7 +224,6 @@ class SnifferSessionDelete(Resource):
             current_user.remove_sniffer_session(session_id)
             UserManager.save_user(current_user)
             return {'status': "Sniffer session %s has been deleted" % session_id, 'success': 1}
-api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
 
 
 class SnifferSessionPcap(Resource):
@@ -235,51 +233,57 @@ class SnifferSessionPcap(Resource):
         session = Model.get_sniffer_session(session_id)
         if 'pcap_filename' in session:
             return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
-api.add_resource(SnifferSessionPcap,'/api/sniffer/<session_id>/pcap',endpoint='malcom_api.pcap')
 
 
-parser_session_pcap_file = reqparse.RequestParser(argument_class=FileStorageArgument)
-parser_session_pcap_file.add_argument('pcapfile',type=werkzeug.datastructures.FileStorage, location='files')
-parser_session_pcap_str=reqparse.RequestParser()
-parser_session_pcap_str.add_argument('session_name',type=str)
-parser_session_pcap_str.add_argument('intercept_tls',type=int)
-parser_session_pcap_str.add_argument('public',type=int)
-parser_session_pcap_str.add_argument('filter',type=int)
-class Start_Session(Resource):
+
+parser_session_pcap_str = reqparse.RequestParser()
+parser_session_pcap_str.add_argument('pcapfile', type=werkzeug.datastructures.FileStorage, location='files')
+parser_session_pcap_str.add_argument('session_name', type=str)
+parser_session_pcap_str.add_argument('intercept_tls', type=bool, default=0)
+parser_session_pcap_str.add_argument('public', type=bool, default=True)
+parser_session_pcap_str.add_argument('start', type=bool, default=False)
+parser_session_pcap_str.add_argument('filter', type=str, default='')
+
+class SnifferSessionStart(Resource):
     def post(self):
-        args=parser_session_pcap_file.parse_args()
-        fh_pcap=args['pcapfile']
-        args_sessions_params=parser_session_pcap_str.parse_args()
-        session_name=args_sessions_params['session_name']
-        intercept_tls=bool(args_sessions_params['intercept_tls'])
-        public=bool(args_sessions_params['public'])
-        filter=''
-        if args_sessions_params['filter']:
-            filter=args_sessions_params['filter']
+        args_sessions_params = parser_session_pcap_str.parse_args()
+        fh_pcap = args_sessions_params['pcapfile']
+        session_name = args_sessions_params['session_name']
+        intercept_tls = args_sessions_params['intercept_tls']
+        public = args_sessions_params['public']
+        start = args_sessions_params['start']
+        _filter = args_sessions_params['filter']
+
         params = {  'session_name': session_name,
                     'remote_addr' : str(request.remote_addr),
-                    'filter': filter,
+                    'filter': _filter,
                     'intercept_tls': intercept_tls,
                     'public': public,
                     'pcap': True if fh_pcap else False,
                 }
-        print params
-        session_id = str(loads(g.messenger.send_recieve('newsession', 'sniffer-commands', params=params)))
+
+        session_id = str(loads(g.messenger.send_recieve('newsession', 'sniffer-commands', params = params)))
         session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
         # this is where the data will be stored persistently
         # if we're dealing with an uploaded PCAP file
         if fh_pcap:
             # store in /sniffer folder
             fh_pcap.save(g.config['SNIFFER_DIR'] + "/" + session_info['pcap_filename'])
-        g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
 
-        return {'session_id':session_id}
-api.add_resource(Start_Session,'/api/session/start/')
+        if start:
+            g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
 
-#GET data session by _id
-#For all data in session: http://localhost:8080/api/<session_id>/?all=1
-#For elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1
-#For evil elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1&evil=1
+        return {'session_id': session_id}
+
+api.add_resource(SnifferSessionList, '/api/sniffer/list/')
+api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
+api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>', endpoint='malcom_api.pcap')
+api.add_resource(SnifferSessionStart, '/api/sniffer/new/', endpoint = 'malcom_api.session_start')
+
+# GET data session by _id
+# For all data in session: http://localhost:8080/api/<session_id>/?all=1
+# For elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1
+# For evil elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1&evil=1
 parser_session=reqparse.RequestParser()
 parser_session.add_argument('evil',type=int)
 parser_session.add_argument('all',type=int)
@@ -318,4 +322,4 @@ class Session(Resource):
         else:
             return abort(404)
 
-api.add_resource(Session,'/api/session/<session_id>/')
+api.add_resource(SnifferSessionData,'/api/session/<session_id>/')
