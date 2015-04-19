@@ -71,7 +71,7 @@ class FeedsAPI(Resource):
 
 api.add_resource(FeedsAPI, '/api/feeds/<string:action>', '/api/feeds/<string:action>/<string:feed_name>')
 
-#================================================================
+# QUERYING API ================================================================
 
 class Neighbors(Resource):
     def get(self):
@@ -84,26 +84,26 @@ class Neighbors(Resource):
 
         data = Model.find_neighbors(query, include_original=True)
         return data
-api.add_resource(Neighbors,'/api/neighbors/')
-
 
 class Evil(Resource):
     def get(self):
         args=parser.parse_args()
         query = {}
+
         if 'depth' in args:
             if args['depth']:
                 depth = int(args['depth'])
             else:
-                depth=2
-        if depth > 2: depth = 2
+                depth = 2
+        if depth > 2:
+            depth = 2
+
         for key in args:
             if key not in ['depth']:
                 query[key] = request.args.getlist(key)
+
         data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
         return data
-api.add_resource(Evil,'/api/evil/')
-
 
 class QueryAPI(Resource):
     def get(self):
@@ -167,6 +167,8 @@ class QueryAPI(Resource):
 
         return data
 
+api.add_resource(Neighbors, '/api/neighbors/')
+api.add_resource(Evil, '/api/evil/')
 api.add_resource(QueryAPI, '/api/query/', endpoint="api.query")
 
 # DATA MANIPULATION =======================================================
