@@ -247,20 +247,16 @@ class Model:
 				if len(en) > 0:
 					chosen_nodes += [n for n in en if n not in chosen_nodes] + [node]
 					chosen_links += [l for l in el if l not in chosen_links] + [neighbors_l[i]]
-		else:
 
-			# if recursion ends, then search for evil neighbors
-			neighbors_n, neighbors_l = self.get_neighbors(elt, {query['key']: {'$in': [query['value']]}}, include_original=False)
+		n_query = {query['key']: {'$in': [query['value']]}}
+		# if recursion ends, then search for evil neighbors
 
-			# return evil neighbors if found
-			if len(neighbors_n) > 0:
-				chosen_nodes += [n for n in neighbors_n if n not in chosen_nodes]
-				chosen_links += [l for l in neighbors_l if l not in chosen_links]
+		neighbors_n, neighbors_l = self.get_neighbors(elt, n_query, include_original=False)
 
-			# if not, return nothing
-			else:
-				chosen_nodes = []
-				chosen_links = []
+		# return evil neighbors if found
+		if len(neighbors_n) > 0:
+			chosen_nodes += [n for n in neighbors_n if n not in chosen_nodes]
+			chosen_links += [l for l in neighbors_l if l not in chosen_links]
 
 		return chosen_nodes, chosen_links
 
@@ -275,7 +271,6 @@ class Model:
 
 				elt = self.elements.find_one({key: value})
 				nodes, edges = self.single_graph_find(elt, graph_query, depth)
-
 				for n in nodes:
 					total_nodes[n['_id']] = n
 				for e in edges:
@@ -459,7 +454,6 @@ class Model:
 			dict['_id'] = session.id
 
 		self.sniffer_sessions.save(dict)
-		print session.nodes.keys()
 		return str(session.id)
 
 	def get_sniffer_session(self, session_id):
