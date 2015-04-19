@@ -50,7 +50,7 @@ class FeedsAPI(Resource):
             else:
                 return {'status': 'KO'}
 
-api.add_resource(FeedsAPI, '/api/feeds/<string:action>', '/api/feeds/<string:action>/<string:feed_name>')
+api.add_resource(FeedsAPI, '/api/feeds/<string:action>/', '/api/feeds/<string:action>/<string:feed_name>/')
 
 # QUERYING API ================================================================
 
