@@ -166,7 +166,7 @@ class QueryAPI(Resource):
 
         return data
 
-api.add_resource(QueryAPI,'/api/query/')
+api.add_resource(QueryAPI, '/api/query/', endpoint="api.query")
 
 
 class Delete(Resource):

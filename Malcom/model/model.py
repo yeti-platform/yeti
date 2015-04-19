@@ -269,13 +269,11 @@ class Model:
 		total_edges = {}
 
 		for key in query:
-
 			for value in query[key]:
-
-				if key == '_id': value = ObjectId(value)
+				if key == '_id':
+					value = ObjectId(value)
 
 				elt = self.elements.find_one({key: value})
-
 				nodes, edges = self.single_graph_find(elt, graph_query, depth)
 
 				for n in nodes:
