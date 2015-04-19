@@ -262,7 +262,7 @@ class SnifferSessionStart(Resource):
                     'pcap': True if fh_pcap else False,
                 }
 
-        session_id = str(loads(g.messenger.send_recieve('newsession', 'sniffer-commands', params = params)))
+        session_id = str(loads(g.messenger.send_recieve('newsession', 'sniffer-commands', params=params)))
         session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
         # this is where the data will be stored persistently
         # if we're dealing with an uploaded PCAP file
@@ -271,55 +271,49 @@ class SnifferSessionStart(Resource):
             fh_pcap.save(g.config['SNIFFER_DIR'] + "/" + session_info['pcap_filename'])
 
         if start:
-            g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
+            g.messenger.send_recieve('sniffstart', 'sniffer-commands', params={'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
 
         return {'session_id': session_id}
 
-api.add_resource(SnifferSessionList, '/api/sniffer/list/')
-api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
-api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>', endpoint='malcom_api.pcap')
-api.add_resource(SnifferSessionStart, '/api/sniffer/new/', endpoint = 'malcom_api.session_start')
 
 # GET data session by _id
 # For all data in session: http://localhost:8080/api/<session_id>/?all=1
 # For elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1
 # For evil elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1&evil=1
-parser_session=reqparse.RequestParser()
-parser_session.add_argument('evil',type=int)
-parser_session.add_argument('all',type=int)
-parser_session.add_argument('elements',type=int)
-class Session(Resource):
-    def get(self,session_id):
-        args=parser_session.parse_args()
-        if 'all' in args:
-            if args['all']< 0 or args['all'] >1:
-                abort(404)
-            else:
-                all_data=bool(args['all'])
-        evil=False
-        elements=False
-        if 'evil' in args:
-            evil= bool(args['evil'])
-        if 'elements' in args:
-            elements=bool(args['elements'])
+parser_data = reqparse.RequestParser()
+parser_data.add_argument('evil', type=bool, default=False)
+parser_data.add_argument('all', type=bool, default=False)
+parser_data.add_argument('elements', type=bool, default=False)
 
-        if session_id:
-            data=Model.get_sniffer_session(session_id)
-            if data and all_data==True:
-                return data
-            elif data and elements==True:
-                if "session_data" in data:
-                    session_data=json.loads(data['session_data'])
-                    ids_list=[ ObjectId(session_data['nodes'][k]['_id']['$oid']) for k in session_data['nodes'].keys()]
-                    result=Model.find({'_id': {'$in': ids_list}})
-                    if evil ==False:
-                        return [r for r in result]
-                    else:
-                        return [ r for r in result if len(r['evil'])> 0]
+class SnifferSessionData(Resource):
+    def get(self, session_id):
+        args = parser_data.parse_args()
+        _all = args['all']
+        evil = args['evil']
+        elements = args['elements']
 
-            else:
-                return abort(404)
-        else:
-            return abort(404)
+        session_info = g.messenger.send_recieve('sessioninfo', 'sniffer-commands', {'session_id': session_id})
 
-api.add_resource(SnifferSessionData,'/api/session/<session_id>/')
+        if not session_info:
+            abort(404)
+
+        if _all:
+            return session_info
+
+        result = Model.find({'_id': {'$in': [ObjectId(i) for i in session_info['node_list']]}})
+
+        if elements:
+            return {"node_list" : list(result)}
+
+        if evil:
+            return {'evil_node_list': [r for r in result if len(r['evil']) > 0]}
+
+        if not (_all or elements or evil):
+            return abort(400)
+
+
+api.add_resource(SnifferSessionList, '/api/sniffer/list/')
+api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
+api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>', endpoint='malcom_api.pcap')
+api.add_resource(SnifferSessionStart, '/api/sniffer/new/', endpoint='malcom_api.session_start')
+api.add_resource(SnifferSessionData, '/api/sniffer/data/<session_id>/')

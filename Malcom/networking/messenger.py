@@ -79,10 +79,12 @@ class SnifferMessenger(Messenger):
 							'name' : session.name,
 							'filter' : session.filter,
 							'pcap' : session.pcap,
+							'packet_count': session.packet_count,
 							'pcap_filename': session.pcap_filename,
 							'id' : str(session.id),
 							'public': session.public,
 							'status': session.status(),
+							'node_list': session.get_nodes(),
 					}
 
 				if cmd == 'sniffstatus':

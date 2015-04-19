@@ -126,6 +126,7 @@ class SnifferEngine(object):
 				session_data = bson_loads(s['session_data'])
 				session.nodes = session_data['nodes']
 				session.edges = session_data['edges']
+				session.packet_count = s['packet_count']
 				session.flows = {}
 				for flow in session_data['flows']:
 					f = Flow.load_flow(flow)
@@ -210,6 +211,9 @@ class SnifferSession():
 			# self.tls_proxy.add_flows(self.flows)
 		else:
 			debug_output("[-] No TLS interception")
+
+	def get_nodes(self):
+		return [str(self.nodes[n]['_id']) for n in self.nodes]
 
 	def load_pcap(self):
 		filename = self.pcap_filename
