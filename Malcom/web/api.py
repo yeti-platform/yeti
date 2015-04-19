@@ -5,14 +5,12 @@ from bson.objectid import InvalidId
 from flask import Blueprint, render_template, abort, request, g, url_for, send_from_directory
 from flask.helpers import make_response
 from flask_restful import Resource, reqparse, Api
-from flask_restful.representations.json import output_json
 import pickle
 import pymongo
 import werkzeug
 from werkzeug.datastructures import FileStorage
 
 from Malcom.auxiliary.toolbox import *
-from Malcom.feeds.feed import Feed, FeedEngine
 from Malcom.web.webserver import Model, UserManager
 from Malcom.web.webserver import login_required, user_is_admin, can_modify_sniffer_session, can_view_sniffer_session
 from flask.ext.login import current_user
@@ -21,39 +19,22 @@ from webserver import app
 
 malcom_api = Blueprint('malcom_api', __name__)
 
+
 def output_json(obj, code, headers=None):
     resp = make_response(dumps(obj), code)
     resp.headers.extend(headers or {})
     return resp
 
-api=Api(app)
+api = Api(app)
 DEFAULT_REPRESENTATIONS = {'application/json': output_json}
-api.representations=DEFAULT_REPRESENTATIONS
+api.representations = DEFAULT_REPRESENTATIONS
+
+
 class FileStorageArgument(reqparse.Argument):
     def convert(self, value, op):
         if self.type is FileStorage:
             return value
 
-# Public API ================================================
-
-
-parser = reqparse.RequestParser()
-parser.add_argument('search', type=str)
-parser.add_argument('_id', type=str)
-parser.add_argument('depth', type=str)
-
-parser_neighbor=reqparse.RequestParser()
-parser_neighbor.add_argument('_id', type=str)
-class Search_API(Resource):
-    def post(self):
-        args=parser.parse_args()
-        if 'search' in args:
-            criteria=args['search']
-            print {'value': '/'+criteria+'/'}
-            result=Model.find({'value':{"$regex":"/"+criteria+"/"}})
-            return dumps(result)
-api.add_resource(Search_API,'/api/search')
-#================================================================
 
 # API PUBLIC for FEEDS===========================================
 class FeedsAPI(Resource):
@@ -67,7 +48,7 @@ class FeedsAPI(Resource):
             if feed_name in feed_list:
                 return {'status':feed_list[feed_name]['status'],'last_run': feed_list[feed_name]['last_run'],'next_run':feed_list[feed_name]['next_run']}
             else:
-                return {'status':'KO'}
+                return {'status': 'KO'}
 
 api.add_resource(FeedsAPI, '/api/feeds/<string:action>', '/api/feeds/<string:action>/<string:feed_name>')
 
@@ -86,8 +67,13 @@ class Neighbors(Resource):
         return data
 
 class Evil(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument('search', type=str)
+    parser.add_argument('_id', type=str)
+    parser.add_argument('depth', type=str)
+
     def get(self):
-        args=parser.parse_args()
+        args = Evil.parser.parse_args()
         query = {}
 
         if 'depth' in args:
@@ -235,18 +221,17 @@ class SnifferSessionPcap(Resource):
             return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
 
-
-parser_session_pcap_str = reqparse.RequestParser()
-parser_session_pcap_str.add_argument('pcapfile', type=werkzeug.datastructures.FileStorage, location='files')
-parser_session_pcap_str.add_argument('session_name', type=str)
-parser_session_pcap_str.add_argument('intercept_tls', type=bool, default=0)
-parser_session_pcap_str.add_argument('public', type=bool, default=True)
-parser_session_pcap_str.add_argument('start', type=bool, default=False)
-parser_session_pcap_str.add_argument('filter', type=str, default='')
-
 class SnifferSessionStart(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument('pcapfile', type=werkzeug.datastructures.FileStorage, location='files')
+    parser.add_argument('session_name', type=str)
+    parser.add_argument('intercept_tls', type=bool, default=0)
+    parser.add_argument('public', type=bool, default=True)
+    parser.add_argument('start', type=bool, default=False)
+    parser.add_argument('filter', type=str, default='')
+
     def post(self):
-        args_sessions_params = parser_session_pcap_str.parse_args()
+        args_sessions_params = SnifferSessionStart.parser.parse_args()
         fh_pcap = args_sessions_params['pcapfile']
         session_name = args_sessions_params['session_name']
         intercept_tls = args_sessions_params['intercept_tls']
@@ -280,14 +265,15 @@ class SnifferSessionStart(Resource):
 # For all data in session: http://localhost:8080/api/<session_id>/?all=1
 # For elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1
 # For evil elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1&evil=1
-parser_data = reqparse.RequestParser()
-parser_data.add_argument('evil', type=bool, default=False)
-parser_data.add_argument('all', type=bool, default=False)
-parser_data.add_argument('elements', type=bool, default=False)
 
 class SnifferSessionData(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument('evil', type=bool, default=False)
+    parser.add_argument('all', type=bool, default=False)
+    parser.add_argument('elements', type=bool, default=False)
+
     def get(self, session_id):
-        args = parser_data.parse_args()
+        args = SnifferSessionData.parser.parse_args()
         _all = args['all']
         evil = args['evil']
         elements = args['elements']
