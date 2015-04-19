@@ -72,7 +72,6 @@ api.add_resource(FeedsAPI, '/api/feeds/<string:action>', '/api/feeds/<string:act
 
 #================================================================
 
-
 class Neighbors(Resource):
     def get(self):
         query = {}
@@ -105,24 +104,25 @@ class Evil(Resource):
 api.add_resource(Evil,'/api/evil/')
 
 
-class QueryData(Resource):
+class QueryAPI(Resource):
     def get(self):
         query = {}
 
         page = int(request.args.get('page', 0))
         per_page = int(request.args.get('per_page', 50))
         if per_page > 500: per_page = 500
-        fuzzy = True if request.args.get('fuzzy', False) == 'true' else False
+        regex = True if request.args.get('regex', False) != False else False
+
         for key in request.args:
-            if key not in ['page', 'fuzzy', 'per_page']:
+            if key not in ['page', 'regex', 'per_page']:
                     if request.args[key].find(',') != -1: # split request arguments
-                            if fuzzy:
+                            if regex:
                                     #query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
                                     query['$and'] = [{ key: re.compile(split)} for split in request.args[key].split(',')]
                             else:
                                     query['$and'] = [{ key: split} for split in request.args[key].split(',')]
                     else:
-                            if fuzzy:
+                            if regex:
                                     #query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
                                     query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
                             else:
@@ -132,7 +132,8 @@ class QueryData(Resource):
         chrono_query = datetime.datetime.utcnow()
 
         print "Query: ", query
-        if fuzzy:
+        print "regex:", regex
+        if regex:
             elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
         else:
             elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
@@ -145,14 +146,16 @@ class QueryData(Resource):
         for elt in elts:
             elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
             elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
+
         if len(elts) > 0:
             data['fields'] = elts[0].display_fields
             data['elements'] = elts
         else:
             data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
             data['elements'] = []
+
         chrono_count = datetime.datetime.utcnow()
-        if not fuzzy:
+        if not regex:
             data['total_results'] = Model.find(query).count()
         else:
             data['total_results'] = "many"
@@ -163,7 +166,7 @@ class QueryData(Resource):
 
         return data
 
-api.add_resource(QueryData,'/api/query_data/',endpoint='api.query_data')
+api.add_resource(QueryAPI,'/api/query/')
 
 
 class Delete(Resource):
