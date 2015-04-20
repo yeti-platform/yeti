@@ -53,7 +53,6 @@ Model = ModelClass()
 UserManager = UserManagerClass()
 
 
-
 # This enables the server to be ran behind a reverse-proxy
 # Make sure you have an nginx configuraiton similar to this
 
@@ -206,8 +205,8 @@ def load_user_from_request(request):
 			u.api_request_count += 1
 			u = UserManager.save_user(u)
 			return u
-		else:
-			return ({"status": "Unauthorized: Invalid API Key"}, 403, {'Content-Type': 'application/json'})
+	else:
+		abort (403)
 
 
 @app.route("/logout")

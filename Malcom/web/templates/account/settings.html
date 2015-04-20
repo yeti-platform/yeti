@@ -27,7 +27,7 @@
 							<tr><th>API Key</th><td>{{ current_user.api_key }}</td></tr>
 							<tr><th>Joined</th><td>{{ current_user.joined|datetimeformat("%Y-%m-%d") }}</td></tr>
 							<tr><th>Last activity</th><td>{{ current_user.last_activity|datetimeformat }}</td></tr>
-							<tr><th>Last activity (API)</th><td>{{ current_user.last_activity_api|datetimeformat }}</td></tr>
+							<tr><th>Last activity (API)</th><td>{{ current_user.api_last_activity|datetimeformat }}</td></tr>
 							<tr><th>API requests</th><td>{{ current_user.api_request_count }}</td></tr>
 						</table>
 						<a href="#change-password-dialog" role="button" class="btn" data-toggle="modal">Change password</a>
