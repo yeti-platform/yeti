@@ -227,18 +227,18 @@ class SnifferSessionPcap(Resource):
             return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
 
-class SnifferSessionStart(Resource):
+class SnifferSessionNew(Resource):
     decorators=[login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('pcapfile', type=werkzeug.datastructures.FileStorage, location='files')
-    parser.add_argument('session_name', type=str)
+    parser.add_argument('session_name', type=str, required=True)
     parser.add_argument('intercept_tls', type=bool, default=0)
     parser.add_argument('public', type=bool, default=True)
     parser.add_argument('start', type=bool, default=False)
     parser.add_argument('filter', type=str, default='')
 
     def post(self):
-        args_sessions_params = SnifferSessionStart.parser.parse_args()
+        args_sessions_params = SnifferSessionNew.parser.parse_args()
         fh_pcap = args_sessions_params['pcapfile']
         session_name = args_sessions_params['session_name']
         intercept_tls = args_sessions_params['intercept_tls']
@@ -305,9 +305,21 @@ class SnifferSessionData(Resource):
         if not (_all or elements or evil):
             return abort(400)
 
+class SnifferSessionControl(Resource):
+    decorators=[login_required]
+
+    def get(self, session_id, action):
+        if action == 'start':
+            status = g.messenger.send_recieve('sniffstart', 'sniffer-commands', {'session_id': session_id})
+        if action == 'stop':
+            status = g.messenger.send_recieve('sniffstop', 'sniffer-commands', {'session_id': session_id})
+
+        return status
+
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
 api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>', endpoint='malcom_api.pcap')
-api.add_resource(SnifferSessionStart, '/api/sniffer/new/', endpoint='malcom_api.session_start')
+api.add_resource(SnifferSessionNew, '/api/sniffer/new/', endpoint='malcom_api.session_start')
+api.add_resource(SnifferSessionControl, '/api/sniffer/control/<session_id>/<string:action>', endpoint='malcom_api.session_control')
 api.add_resource(SnifferSessionData, '/api/sniffer/data/<session_id>/')

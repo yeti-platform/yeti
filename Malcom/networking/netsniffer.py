@@ -222,7 +222,7 @@ class SnifferSession():
 		debug_output("Loaded %s packets from file." % len(self.pkts))
 		return True
 
-	def start(self, remote_addr):
+	def start(self):
 		self.thread = threading.Thread(target=self.run)
 		self.thread.start()
 

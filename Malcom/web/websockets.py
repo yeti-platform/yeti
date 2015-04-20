@@ -24,9 +24,9 @@ def analytics_api():
 		debug_output("Got analytics websocket")
 
 		ws = request.environ['wsgi.websocket']
-		
+
 		g.messenger.analytics_ws = ws
-		
+
 		while True:
 			try:
 				message = loads(ws.receive())
@@ -36,7 +36,7 @@ def analytics_api():
 
 			cmd = message['cmd']
 
-			if cmd == 'analyticsstatus':				
+			if cmd == 'analyticsstatus':
 				while True:
 					gevent.sleep(1)
 
@@ -63,7 +63,7 @@ def sniffer_api():
 	if request.environ.get('wsgi.websocket'):
 
 		ws = request.environ['wsgi.websocket']
-		
+
 		while True:
 			try:
 				msg = ws.receive()
@@ -71,7 +71,7 @@ def sniffer_api():
 			except Exception, e:
 				debug_output("Could not decode JSON message: %s\n%s" % (e, msg) )
 				return ""
-			
+
 			debug_output("(sniffer webAPI) Received: %s" % message)
 
 			cmd = message['cmd']
@@ -94,13 +94,12 @@ def sniffer_api():
 				msg = g.messenger.send_recieve('sniffstart', 'sniffer-commands', params=params)
 
 				# REDIS send message to sniffer
-				# session.start(str(request.remote_addr), public=g.config['PUBLIC'])
 				send_msg(ws, "OK", type=cmd)
 				continue
 
 			if cmd == 'sniffstop':
 				msg = g.messenger.send_recieve('sniffstop', 'sniffer-commands', params=params)
-				
+
 				send_msg(ws, msg, type=cmd)
 				# REDIS send message to sniffer
 				# if session.status():
@@ -112,7 +111,7 @@ def sniffer_api():
 
 			if cmd == 'sniffstatus':
 				status = g.messenger.send_recieve('sniffstatus', 'sniffer-commands', params=params)
-				
+
 				# REDIS send message to sniffer
 				if status:
 					status = 'active'
@@ -123,7 +122,7 @@ def sniffer_api():
 					debug_output("Session %s is inactive" % params['session_id'])
 					send_msg(ws, {'status': 'inactive', 'session_id': params['session_id']}, type=cmd)
 				continue
-					
+
 			if cmd == 'sniffupdate':
 				# REDIS send message to sniffer
 				msg = g.messenger.send_recieve('sniffupdate', 'sniffer-commands', params=params)
@@ -136,7 +135,7 @@ def sniffer_api():
 			if cmd == 'flowstatus':
 				# REDIS send message to sniffer
 				flow = g.messenger.send_recieve('flowstatus', 'sniffer-commands', params=params)
-				
+
 				data = flow # remember we had to stringify the data to have the right encoding
 				data['type'] = cmd
 				if data:
@@ -146,7 +145,7 @@ def sniffer_api():
 			if cmd == 'get_flow_payload':
 				params['flowid'] = message['flowid']
 				payload = g.messenger.send_recieve('get_flow_payload', 'sniffer-commands', params=params)
-				
+
 				# REDIS send message to sniffer
 				# fid = message['flowid']
 				# flow = session.flows[fid]
@@ -157,5 +156,5 @@ def sniffer_api():
 				data['type'] = cmd
 				ws.send(dumps(data))
 				continue
-		
+
 	return ""

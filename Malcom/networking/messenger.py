@@ -97,7 +97,7 @@ class SnifferMessenger(Messenger):
 
 				if cmd == 'sniffstart':
 					#self.snifferengine.start_session(params['session_name'], params['remote_addr'])
-					session.start(params['remote_addr'])
+					session.start()
 					final_msg = True
 
 				if cmd == 'sniffstop':
