@@ -36,6 +36,9 @@ class Element(dict):
 	def __setattr__(self, name, value):
 		self[name] = value
 
+	def __str__(self):
+		return "[{} {} (tags: {})]".format(self.type, self.value, ",".join(self.tags))
+
 	def upgrade_tags(self, tags):
 		self['tags'].extend(tags)
 		self['tags'] = list(set(self['tags']))
