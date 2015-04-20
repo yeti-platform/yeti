@@ -9,12 +9,12 @@ $(function(){
 	});
 
 	$("#query").keyup(function (event) {
-		if (!$('#fuzzy').prop('checked') || event.which == 13) {
+		if (!$('#regex').prop('checked') || event.which == 13) {
 			event.preventDefault();
 			get_dataset($('#query').val(), url);
 		}
 	});
-	
+
 	$(get_dataset("", url));
 });
 
@@ -30,7 +30,8 @@ function clear_db() {
 function dataset_remove(id) {
 	$.ajax({
 		dataType: "json",
-		url: url_static_prefix+'api/dataset/remove/'+id,
+		url: url_static_prefix+'api/dataset/remove/',
+		data: {'_id': id},
 		success:function(data){
 			if (data['n'] == 1)
 				$('#row_'+id).remove()
@@ -52,8 +53,8 @@ function get_dataset_csv(query, url) {
 			querydict['value'] = splitted[0]
 	}
 
-	if ($('#fuzzy').prop('checked') == true)
-		querydict['fuzzy'] = 'true'
+	if ($('#regex').prop('checked') == true)
+		querydict['regex'] = 'true'
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
 
@@ -90,8 +91,8 @@ function get_dataset(query, url) {
 	params = {}
 	querydict['page'] = page
 
-	if ($('#fuzzy').prop('checked') == true)
-		querydict['fuzzy'] = 'true'
+	if ($('#regex').prop('checked') == true)
+		querydict['regex'] = 'true'
 
 	$.ajax({
 	  dataType: "json",

@@ -106,6 +106,8 @@ class SnifferEngine(object):
 		if not session:
 			debug_output("Fetching session %s from DB" % session_id)
 			s = self.model.get_sniffer_session(session_id)
+			if not s:
+				return None
 			# TLS interception only possible if PCAP hasn't been generated yet
 			intercept_tls = s['intercept_tls'] and not s['pcap']
 
@@ -124,6 +126,7 @@ class SnifferEngine(object):
 				session_data = bson_loads(s['session_data'])
 				session.nodes = session_data['nodes']
 				session.edges = session_data['edges']
+				session.packet_count = s['packet_count']
 				session.flows = {}
 				for flow in session_data['flows']:
 					f = Flow.load_flow(flow)
@@ -208,6 +211,9 @@ class SnifferSession():
 			# self.tls_proxy.add_flows(self.flows)
 		else:
 			debug_output("[-] No TLS interception")
+
+	def get_nodes(self):
+		return [str(self.nodes[n]['_id']) for n in self.nodes]
 
 	def load_pcap(self):
 		filename = self.pcap_filename
@@ -312,7 +318,7 @@ class SnifferSession():
 				for n in new:
 					saved = self.model.save(n[1])
 
-					self.nodes[str(saved['_id'])] = saved
+					self.nodes[str(saved['value'])] = saved
 					new_elts.append(saved)
 
 					# Do the link. The link should be kept because it is not

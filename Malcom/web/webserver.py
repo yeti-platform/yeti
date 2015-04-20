@@ -53,7 +53,6 @@ Model = ModelClass()
 UserManager = UserManagerClass()
 
 
-
 # This enables the server to be ran behind a reverse-proxy
 # Make sure you have an nginx configuraiton similar to this
 
@@ -206,8 +205,8 @@ def load_user_from_request(request):
 			u.api_request_count += 1
 			u = UserManager.save_user(u)
 			return u
-		else:
-			return abort(403)
+	else:
+		abort (403)
 
 
 @app.route("/logout")
@@ -464,11 +463,11 @@ def dataset_csv():
 	filename = []
 	query = {}
 
-	fuzzy = bool(request.args.get('fuzzy', False))
+	regex = bool(request.args.get('regex', False))
 
 	for key in request.args:
-		if key != '' and key not in ['fuzzy']:
-			if fuzzy:
+		if key != '' and key not in ['regex']:
+			if regex:
 				# slow
 				query[key] = re.compile(request.args[key], re.IGNORECASE)
 			else:

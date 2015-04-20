@@ -274,7 +274,7 @@ function delsniff(session_id) {
     if (r == false) {return}
     $.ajax({
         type: 'get',
-        url: url_static_prefix+'api/sniffer/'+session_id+'/delete/',
+        url: url_static_prefix+'api/sniffer/delete/'+session_id,
         success: function(data) {
             if (data.success == 1) { // delete the corresponding row
                 $("#session-"+session_id).remove()
@@ -294,7 +294,7 @@ function display_message(text) {
 
 function getSessionList(private) {
     console.log("Requesting session list")
-    url = url_static_prefix+'api/sniffer/sessionlist/?user'
+    url = url_static_prefix+'api/sniffer/list/?user'
     if (private) {
         url += "&private"
     }

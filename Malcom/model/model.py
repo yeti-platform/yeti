@@ -247,20 +247,16 @@ class Model:
 				if len(en) > 0:
 					chosen_nodes += [n for n in en if n not in chosen_nodes] + [node]
 					chosen_links += [l for l in el if l not in chosen_links] + [neighbors_l[i]]
-		else:
 
-			# if recursion ends, then search for evil neighbors
-			neighbors_n, neighbors_l = self.get_neighbors(elt, {query['key']: {'$in': [query['value']]}}, include_original=False)
+		n_query = {query['key']: {'$in': [query['value']]}}
+		# if recursion ends, then search for evil neighbors
 
-			# return evil neighbors if found
-			if len(neighbors_n) > 0:
-				chosen_nodes += [n for n in neighbors_n if n not in chosen_nodes]
-				chosen_links += [l for l in neighbors_l if l not in chosen_links]
+		neighbors_n, neighbors_l = self.get_neighbors(elt, n_query, include_original=False)
 
-			# if not, return nothing
-			else:
-				chosen_nodes = []
-				chosen_links = []
+		# return evil neighbors if found
+		if len(neighbors_n) > 0:
+			chosen_nodes += [n for n in neighbors_n if n not in chosen_nodes]
+			chosen_links += [l for l in neighbors_l if l not in chosen_links]
 
 		return chosen_nodes, chosen_links
 
@@ -269,15 +265,12 @@ class Model:
 		total_edges = {}
 
 		for key in query:
-
 			for value in query[key]:
-
-				if key == '_id': value = ObjectId(value)
+				if key == '_id':
+					value = ObjectId(value)
 
 				elt = self.elements.find_one({key: value})
-
 				nodes, edges = self.single_graph_find(elt, graph_query, depth)
-
 				for n in nodes:
 					total_nodes[n['_id']] = n
 				for e in edges:
@@ -392,7 +385,7 @@ class Model:
 		return self.elements.remove({'_id' : element['_id']})
 
 	def remove_by_id(self, element_id):
-		self.remove_connections(ObjectId(element_id))
+		self.remove_connections(element_id)
 		return self.elements.remove({'_id' : ObjectId(element_id)})
 
 	def remove_by_value(self, element_value):
@@ -517,7 +510,6 @@ class Model:
 		feeds = [f for f in self.feeds.find({'name': {'$in': feed_names}})]
 		return feeds
 
-
-
-
-
+	def get_feeds(self):
+		feeds=[f['name'] for f in self.feeds.find()]
+		return feeds
