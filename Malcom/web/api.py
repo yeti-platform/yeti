@@ -119,7 +119,7 @@ class QueryAPI(Resource):
         chrono_query = datetime.datetime.utcnow()
 
         print "Query: ", query
-        print "regex:", regex
+        print "Regex:", regex
         if regex:
             elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
         else:

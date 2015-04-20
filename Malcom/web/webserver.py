@@ -464,11 +464,11 @@ def dataset_csv():
 	filename = []
 	query = {}
 
-	fuzzy = bool(request.args.get('fuzzy', False))
+	regex = bool(request.args.get('regex', False))
 
 	for key in request.args:
-		if key != '' and key not in ['fuzzy']:
-			if fuzzy:
+		if key != '' and key not in ['regex']:
+			if regex:
 				# slow
 				query[key] = re.compile(request.args[key], re.IGNORECASE)
 			else:

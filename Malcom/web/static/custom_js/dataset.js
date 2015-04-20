@@ -9,7 +9,7 @@ $(function(){
 	});
 
 	$("#query").keyup(function (event) {
-		if (!$('#fuzzy').prop('checked') || event.which == 13) {
+		if (!$('#regex').prop('checked') || event.which == 13) {
 			event.preventDefault();
 			get_dataset($('#query').val(), url);
 		}
@@ -53,8 +53,8 @@ function get_dataset_csv(query, url) {
 			querydict['value'] = splitted[0]
 	}
 
-	if ($('#fuzzy').prop('checked') == true)
-		querydict['fuzzy'] = 'true'
+	if ($('#regex').prop('checked') == true)
+		querydict['regex'] = 'true'
 
 	url = url_static_prefix + url +"?"+ $.param(querydict)
 
@@ -91,8 +91,8 @@ function get_dataset(query, url) {
 	params = {}
 	querydict['page'] = page
 
-	if ($('#fuzzy').prop('checked') == true)
-		querydict['fuzzy'] = 'true'
+	if ($('#regex').prop('checked') == true)
+		querydict['regex'] = 'true'
 
 	$.ajax({
 	  dataType: "json",
