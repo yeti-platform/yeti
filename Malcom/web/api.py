@@ -162,7 +162,6 @@ api.add_resource(QueryAPI, '/api/query/', endpoint="malcom_api.query")
 
 class DatasetAPI(Resource):
     def get(self, action):
-
         if action == 'remove':
             try:
                 _id = ObjectId(request.args.get('_id'))
@@ -262,9 +261,9 @@ class SnifferSessionStart(Resource):
 
 
 # GET data session by _id
-# For all data in session: http://localhost:8080/api/<session_id>/?all=1
-# For elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1
-# For evil elements by session: http://localhost:8080/api/<session_id>/?all=0&elements=1&evil=1
+# For all data in session: http://localhost:8080/api/sniffer/data/<session_id>/?all=1
+# For elements by session: http://localhost:8080/api/sniffer/data/<session_id>/?elements=1
+# For evil elements by session: http://localhost:8080/api/sniffer/data/<session_id>/?evil=1
 
 class SnifferSessionData(Resource):
     parser = reqparse.RequestParser()
