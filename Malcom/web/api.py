@@ -42,7 +42,12 @@ class FeedsAPI(Resource):
         if action == 'list':
             return pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
         if action == 'start':
-            return g.messenger.send_recieve('feedRun', 'feeds', params={'feed_name':feed_name})
+            result = g.messenger.send_recieve('feedRun', 'feeds', params={'feed_name':feed_name})
+            if result == 'notfound':
+                msg = 'Feed {} not found'.format(feed_name)
+            elif result == 'running':
+                msg = "Feed {} is running".format(feed_name)
+            return {"status": msg}
         if action == 'status':
             feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
             if feed_name in feed_list:

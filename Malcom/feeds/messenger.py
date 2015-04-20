@@ -22,9 +22,9 @@ class FeedsMessenger(Messenger):
 		queryid = msg['queryid']
 		src = msg['src']
 		msg = msg['msg']
-		
+
 		final_msg = None
-		
+
 		if msg == 'feedList':
 			msg = {}
 			for feed in self.feedengine_instance.feeds:
@@ -45,7 +45,10 @@ class FeedsMessenger(Messenger):
 
 		if msg == 'feedRun':
 			result = self.feedengine_instance.run_feed(params['feed_name'])
-			final_msg = result
+			if result:
+				final_msg = "running"
+			else:
+				final_msg = "notfound"
 
 		if msg == 'feedToggle':
 			pass

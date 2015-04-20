@@ -149,12 +149,15 @@ class FeedEngine(Process):
 		# self.messenger = FeedsMessenger(self)
 
 	def run_feed(self, feed_name):
-		if self.threads.get(feed_name):
-			if self.threads[feed_name].is_alive():
-				return False
-		self.threads[feed_name] = threading.Thread(None, self.feeds[feed_name].run, None)
-		print "Running %s" % feed_name
-		self.threads[feed_name].start()
+		# Check if feed exists in list
+		if not self.feeds.get(feed_name):
+			return False
+
+		# if feed is not already running
+		if not (self.threads.get(feed_name) and self.threads[feed_name].is_alive()):
+			self.threads[feed_name] = threading.Thread(None, self.feeds[feed_name].run, None)
+			self.threads[feed_name].start()
+
 		return True
 
 
