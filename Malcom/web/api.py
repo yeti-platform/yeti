@@ -75,17 +75,12 @@ class Evil(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('_id', type=str)
     parser.add_argument('value', type=str)
-    parser.add_argument('depth', type=str)
+    parser.add_argument('depth', type=int, default=2)
 
     def get(self):
         args = Evil.parser.parse_args()
         query = {}
-
-        if 'depth' in args:
-            if args['depth']:
-                depth = int(args['depth'])
-            else:
-                depth = 2
+        depth = args['depth']
         if depth > 2:
             depth = 2
 
@@ -93,7 +88,7 @@ class Evil(Resource):
             if key not in ['depth']:
                 query[key] = request.args.getlist(key)
 
-        data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'})
+        data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'}, depth=depth)
         return data
 
 class QueryAPI(Resource):
