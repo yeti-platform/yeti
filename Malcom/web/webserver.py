@@ -207,7 +207,7 @@ def load_user_from_request(request):
 			u = UserManager.save_user(u)
 			return u
 		else:
-			return abort(403)
+			return ({"status": "Unauthorized: Invalid API Key"}, 403, {'Content-Type': 'application/json'})
 
 
 @app.route("/logout")

@@ -9,10 +9,9 @@ import pickle
 import pymongo
 import werkzeug
 from werkzeug.datastructures import FileStorage
-
+from flask.ext.login import LoginManager, login_user, login_required, logout_user, current_user
 from Malcom.auxiliary.toolbox import *
 from Malcom.web.webserver import Model, UserManager
-from Malcom.web.webserver import login_required, user_is_admin, can_modify_sniffer_session, can_view_sniffer_session
 from flask.ext.login import current_user
 from webserver import app
 
@@ -38,7 +37,7 @@ class FileStorageArgument(reqparse.Argument):
 
 # API PUBLIC for FEEDS===========================================
 class FeedsAPI(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     def get(self, action, feed_name=None):
         if action == 'list':
             return pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
@@ -61,7 +60,7 @@ api.add_resource(FeedsAPI, '/api/feeds/<string:action>/', '/api/feeds/<string:ac
 # QUERYING API ================================================================
 
 class Neighbors(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     def get(self):
         query = {}
         for key in request.args:
@@ -74,7 +73,7 @@ class Neighbors(Resource):
         return data
 
 class Evil(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('_id', type=str)
     parser.add_argument('value', type=str)
@@ -95,7 +94,7 @@ class Evil(Resource):
         return data
 
 class QueryAPI(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     def get(self):
         query = {}
 
@@ -165,7 +164,7 @@ api.add_resource(QueryAPI, '/api/query/', endpoint="malcom_api.query")
 
 
 class DatasetAPI(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     def get(self, action):
         if action == 'remove':
             try:
@@ -187,7 +186,7 @@ api.add_resource(DatasetAPI, '/api/dataset/<string:action>/')
 
 
 class SnifferSessionList(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     def get(self):
         params = {}
         if 'user' in request.args:
@@ -201,7 +200,7 @@ class SnifferSessionList(Resource):
 
 
 class SnifferSessionDelete(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     def get(self, session_id):
         result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_id': session_id})
         print "Result", result
@@ -219,7 +218,7 @@ class SnifferSessionDelete(Resource):
 
 
 class SnifferSessionPcap(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     def get(self, session_id):
         result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
         print result
@@ -229,7 +228,7 @@ class SnifferSessionPcap(Resource):
 
 
 class SnifferSessionStart(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('pcapfile', type=werkzeug.datastructures.FileStorage, location='files')
     parser.add_argument('session_name', type=str)
@@ -275,7 +274,7 @@ class SnifferSessionStart(Resource):
 # For evil elements by session: http://localhost:8080/api/sniffer/data/<session_id>/?evil=1
 
 class SnifferSessionData(Resource):
-    decorators=[api.login_required]
+    decorators=[login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('evil', type=bool, default=False)
     parser.add_argument('all', type=bool, default=False)
