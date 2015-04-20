@@ -73,8 +73,8 @@ class Neighbors(Resource):
 
 class Evil(Resource):
     parser = reqparse.RequestParser()
-    parser.add_argument('search', type=str)
     parser.add_argument('_id', type=str)
+    parser.add_argument('value', type=str)
     parser.add_argument('depth', type=str)
 
     def get(self):
