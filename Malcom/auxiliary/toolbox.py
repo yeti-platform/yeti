@@ -7,7 +7,7 @@ import socket
 import json
 import datetime
 import string
-#from pyquery import PyQuery               # external 
+#from pyquery import PyQuery               # external
 #from lxml import etree
 from dateutil.parser import parse
 import logging
@@ -61,8 +61,8 @@ def send_msg(ws, msg, type='msg'):
         ws.send(dumps(msg))
     except Exception, e:
         pass # debug_output("Could not send message: %s" % e)
-        
-    
+
+
 
 
 def find_ips(data):
@@ -99,7 +99,7 @@ def find_hostnames(data):
     return hostnames
 
 def whois(data):
-    
+
     try:
         response = check_output('whois %s' %data,
                 shell=True,
@@ -107,7 +107,7 @@ def whois(data):
         response = response.decode('cp1252').encode('utf-8')
     except Exception, e:
         response = "Whois resolution failed"
-    
+
     return response
 
 
@@ -225,14 +225,14 @@ def split_url(url):
 def dns_get_records(hostname, records=['A', 'NS', 'CNAME', 'MX']):
     records = {key: [] for key in records}
 
-    if 'A' in records:    
+    if 'A' in records:
         try:
             results = dns.resolver.query(hostname, 'A')
             for r in results:
                 records['A'].append(r.address)
         except Exception, e:
-            debug_output("An error occured while resolving A: {}".format(e))
-    
+            debug_output("An error occured while resolving {} -> A: {}".format(hostname, e), type='error')
+
     if 'NS' in records:
         try:
             results = dns.resolver.query(hostname, 'NS')
@@ -241,8 +241,8 @@ def dns_get_records(hostname, records=['A', 'NS', 'CNAME', 'MX']):
                 if tgt[-1] == '.': tgt = tgt[:-1]
                 records['NS'].append(tgt)
         except Exception, e:
-            debug_output("An error occured while resolving NS: {}".format(e))
-    
+            debug_output("An error occured while resolving {} -> NS: {}".format(hostname, e), type='error')
+
     if 'CNAME' in records:
         try:
             results = dns.resolver.query(hostname, 'CNAME')
@@ -251,8 +251,8 @@ def dns_get_records(hostname, records=['A', 'NS', 'CNAME', 'MX']):
                 if tgt[-1] == '.': tgt = tgt[:-1]
                 records['CNAME'].append(tgt)
         except Exception, e:
-            debug_output("An error occured while resolving CNAME: {}".format(e))
-    
+            debug_output("An error occured while resolving {} -> CNAME: {}".format(hostname, e), type='error')
+
     if 'MX' in records:
         try:
             results = dns.resolver.query(hostname, 'MX')
@@ -261,10 +261,10 @@ def dns_get_records(hostname, records=['A', 'NS', 'CNAME', 'MX']):
                 if mx[-1] == '.': mx = mx[:-1]
                 records['MX'].append(mx)
         except Exception, e:
-            debug_output("An error occured while resolving MX: {}".format(e))
-            
+            debug_output("An error occured while resolving {} -> MX: {}".format(hostname, e), type='error')
+
     return records
-    
+
 
 def dns_dig_records(hostname):
     _dig = ""
@@ -273,14 +273,14 @@ def dns_dig_records(hostname):
         _dig += check_output(['dig', hostname, '+noall', '+answer', 'A'])
     except CalledProcessError, e:
         pass
-    
+
     try:
         _dig += check_output(['dig', hostname, '+noall', '+answer', 'NS'])
     except CalledProcessError, e:
         pass
-    
+
     try:
-        _dig += check_output(['dig', hostname, '+noall', '+answer', 'CNAME'])    
+        _dig += check_output(['dig', hostname, '+noall', '+answer', 'CNAME'])
     except CalledProcessError, e:
         pass
 
@@ -304,7 +304,7 @@ def reverse_dns(ip):
     except Exception, e:
         host = None
     return host
-    
+
 def dns_dig_reverse(ip):
     try:
         _dig = check_output(['dig', '-x', ip])
@@ -327,7 +327,7 @@ def url_get_host(url):
         return None
     else:
         return hostname
-    
+
 
 def url_check(url):
     try:
@@ -338,7 +338,7 @@ def url_check(url):
     except urllib2.URLError:
         return None
 
-def get_net_info_shadowserver(ips):  
+def get_net_info_shadowserver(ips):
     #from shadowserver
 
     query = "begin origin\r\n"
@@ -353,7 +353,7 @@ def get_net_info_shadowserver(ips):
     except Exception, e:
         debug_output("Failed to get AS data from asn.shadowserver.org: %s" % e)
         return None
-    
+
     s.send(query)
 
     response = ''
@@ -369,7 +369,7 @@ def get_net_info_shadowserver(ips):
 
     # Deal with responses like
     #
-    #  IP            | AS  | BGP Prefix    | AS Name             | CC | Domain      | ISP 
+    #  IP            | AS  | BGP Prefix    | AS Name             | CC | Domain      | ISP
     #  17.112.152.32 | 714 | 17.112.0.0/16 | APPLE-ENGINEERING   | US | APPLE.COM   | APPLE COMPUTER INC
     #
 
@@ -394,9 +394,9 @@ def parse_net_info_shadowserver(info):
 
     return results
 
-def get_net_info_cymru(ips):  
+def get_net_info_cymru(ips):
     #from cymru
-    
+
     query = "begin\r\nverbose\r\n"
     for ip in ips: query += str(ip) + "\r\n"
     query +="end\r\n"
@@ -408,7 +408,7 @@ def get_net_info_cymru(ips):
     except Exception, e:
         debug_output("Failed to get AS data from whois.cymru.com: %s" % e)
         return None
-    
+
     s.send(query)
 
     response = ''
@@ -441,7 +441,7 @@ def parse_net_info_cymru(info):
         entry['registry'] = columns[4].lstrip().rstrip()
         entry['allocated'] = parse(columns[5].lstrip().rstrip())
         entry['as_name'] = columns[6].lstrip().rstrip()
-        
+
         results[entry['value']] = entry
 
     return results
@@ -465,7 +465,7 @@ def debug_output(text, type='debug', n=True):
         sys.stdout.write(str("%s [%s] - %s%s" % (msg, datetime.datetime.now(), text, n)))
     except Exception, e:
         pass
-    
+
 
 
 class bcolors:
@@ -487,4 +487,3 @@ class bcolors:
 
 if __name__ == "__main__":
     pass
-        
