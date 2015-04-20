@@ -380,7 +380,7 @@ def search(term=""):
 			flash('"{}" was not found. Use the checkbox above to add it to the database'.format(query))
 			return render_template('search.html', term=query)
 		else:
-			new = Model.add_text([query])
+			new = Model.add_text([query], tags=['search'])
 			flash('"{}" was not found. It was added to the database (ID: {})'.format(query, new['_id']))
 			# or do the redirection here
 			return render_template('search.html', term=query)
@@ -594,7 +594,6 @@ def sniffer():
 		if request.form.get('startnow', None):
 			# REDIS send message to sniffer to start
 			g.messenger.send_recieve('sniffstart', 'sniffer-commands', params= {'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
-			#sniffer_session.start(str(request.remote_addr))
 
 		return redirect(url_for('sniffer_session', session_id=session_id))
 
