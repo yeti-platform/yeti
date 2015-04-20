@@ -380,7 +380,8 @@ def search(term=""):
 			flash('"{}" was not found. Use the checkbox above to add it to the database'.format(query))
 			return render_template('search.html', term=query)
 		else:
-			flash('"{}" was not found. It was added to the database'.format(query))
+			new = Model.add_text([query])
+			flash('"{}" was not found. It was added to the database (ID: {})'.format(query, new['_id']))
 			# or do the redirection here
 			return render_template('search.html', term=query)
 
