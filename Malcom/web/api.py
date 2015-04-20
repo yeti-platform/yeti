@@ -118,6 +118,7 @@ class QueryAPI(Resource):
                             else:
                                     query[key] = request.args[key]
 
+        Model.add_to_history(query.get('value'))
         data = {}
         chrono_query = datetime.datetime.utcnow()
 

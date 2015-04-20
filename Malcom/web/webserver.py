@@ -338,7 +338,7 @@ def allowed_file(filename):
 @app.route('/search/', methods=['GET', 'POST'])
 @login_required
 def search(term=""):
-	#
+
 	# Create a result set with whichever paremeters we have
 	if request.method == 'POST':
 		field = 'value'
@@ -359,8 +359,11 @@ def search(term=""):
 
 	# user did not specify a query
 	if query == False:
-		return render_template('search.html')
+		return render_template('search.html', history=Model.get_history())
 
+	if bool(request.args.get('log', False)):
+			print "Adding to history"
+			Model.add_to_history(query)
 
 	# query passed tests, process the result set
 	base_elts = []
@@ -378,12 +381,12 @@ def search(term=""):
 	if len(base_elts) == 0:
 		if not bool(request.args.get('log', False)):
 			flash('"{}" was not found. Use the checkbox above to add it to the database'.format(query))
-			return render_template('search.html', term=query)
+			return render_template('search.html', term=query, history=Model.get_history())
 		else:
 			new = Model.add_text([query], tags=['search'])
 			flash('"{}" was not found. It was added to the database (ID: {})'.format(query, new['_id']))
 			# or do the redirection here
-			return render_template('search.html', term=query)
+			return render_template('search.html', term=query, history=Model.get_history())
 
 	return find_related(field, query, base_elts, base_ids, evil_elts)
 

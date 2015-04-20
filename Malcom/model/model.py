@@ -401,12 +401,28 @@ class Model:
 
 	def clear_db(self):
 		for c in self._db.collection_names():
-			if c in ['elements', 'graph', 'sniffer_sessions', 'feeds']: # if c != "system.indexes":
+			if c in ['elements', 'graph', 'sniffer_sessions', 'feeds', 'history']: # if c != "system.indexes":
 				self._db[c].drop()
 
 	def list_db(self):
 		for e in self.elements.find():
 			debug_output(e)
+
+	# ============= search history =================
+
+	def add_to_history(self, query):
+		if query.lower().strip() != '':
+			old = self.history.find_one({'query': query})
+			now = datetime.datetime.utcnow()
+			if old:
+				old['last_searched'] = now
+				old['hits'] = old['hits'] + 1
+				self.history.save(old)
+			else:
+				self.history.save({'query': query, "first_searched": now, 'last_searched': now, 'hits': 1})
+
+	def get_history(self, limit=10):
+		return list(self.history.find(limit=10, sort=[('last_searched', pymongo.DESCENDING)]))
 
 
 

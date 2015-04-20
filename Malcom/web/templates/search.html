@@ -53,8 +53,11 @@
 </div>
 <div class='col-md-5'>
 	<h3>Recent searches</h3>
-	<table class='table'>
-		<tr><th>Search term</th><th># results</th></tr>
+	<table class='table table-condensed'>
+		<tr><th>Search term</th><th>times queried</th></tr>
+		{% for entry in history %}
+		<tr><td><a href="{{ url_for("search", field='value', query=entry.query) }}">{{entry.query}}</a></td><td>{{entry.hits}}</td></tr>
+		{%endfor%}
 	</table>
 </div>
 
