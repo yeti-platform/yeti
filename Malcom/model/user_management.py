@@ -46,7 +46,6 @@ class UserManager():
 
 	def get_default_user(self):
 		m = self.get_user(username='malcom')
-		
 		# we'll run into this case when the database is new or does not contain a malcom user
 		if m == None:
 			m = self.add_user('malcom', 'malcom')

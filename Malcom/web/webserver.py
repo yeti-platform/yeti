@@ -197,6 +197,9 @@ def load_user(username):
 def load_user_from_request(request):
 	print "Load user from request"
 	api_key = request.headers.get("X-Malcom-API-Key")
+	if not app.config['AUTH']:
+		u=UserManager.get_default_user()
+		return u
 	if api_key:
 		print "Getting user for API key %s" % api_key
 		u = UserManager.get_user(api_key=api_key)
@@ -204,10 +207,6 @@ def load_user_from_request(request):
 			u.api_last_activity = datetime.datetime.utcnow()
 			u.api_request_count += 1
 			u = UserManager.save_user(u)
-			return u
-	else:
-		abort (403)
-
 
 @app.route("/logout")
 @login_required
