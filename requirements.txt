@@ -1,5 +1,6 @@
 Flask==0.10.1
 Flask-Login==0.2.11
+Flask-Restful==0.3.2
 Jinja2==2.7.3
 MarkupSafe==0.23
 Twisted==15.0.0
@@ -34,3 +35,5 @@ service-identity==14.0.0
 six==1.9.0
 wsgiref==0.1.2
 zope.interface==4.1.2
+pytz
+aniso8601==0.92
