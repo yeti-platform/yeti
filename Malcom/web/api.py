@@ -117,8 +117,8 @@ class QueryAPI(Resource):
                                     query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
                             else:
                                     query[key] = request.args[key]
-
-        Model.add_to_history(query.get('value'))
+        if query:    
+            Model.add_to_history(query.get('value'))
         data = {}
         chrono_query = datetime.datetime.utcnow()
 
