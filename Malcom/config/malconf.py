@@ -71,6 +71,24 @@ class MalcomSetup(dict):
 			self['YARA_PATH'] = config.get('sniffer', 'yara_path')
 			self['SNIFFER_NETWORK'] = config.getboolean('sniffer', 'network')
 
+		self['DATABASE'] = {'HOSTS': 'localhost', 'PORT': 27017, 'NAME': 'malcom'}
+		if config.has_section('database'):
+			db_params = dict(config.items('database'))
+			if 'hosts' in db_params:
+				self['DATABASE']['HOSTS'] = split(db_params['hosts'], ',')
+			if 'port' in db_params:
+				self['DATABASE']['PORT'] = db_params['port']
+			if 'name' in db_params:
+				self['DATABASE']['NAME'] = db_params['name']
+			if 'username' in db_params:
+				self['DATABASE']['USERNAME'] = db_params['username']
+			if 'password' in db_params:
+				self['DATABASE']['PASSWORD'] = db_params['password']
+			if 'authentication_database' in db_params:
+				self['DATABASE']['SOURCE'] = db_params['authentication_database']
+			if 'replset' in db_params:
+				self['DATABASE']['REPLSET'] = db_params['replset']
+
 		if config.has_section('feeds'):
 			self['ACTIVATED_FEEDS'] = []
 			for feed in config.options('feeds'):
