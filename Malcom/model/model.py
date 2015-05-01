@@ -8,12 +8,14 @@ import pickle
 import pymongo
 from pymongo import MongoClient
 from pymongo.son_manipulator import SONManipulator
+from pymongo.read_preferences import ReadPreference
 import pymongo.errors
 
 from bson.objectid import ObjectId
 from bson.json_util import dumps as bson_dumps
 from bson.json_util import loads as bson_loads
 
+from __main__ import setup
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.datatypes import Hostname, Url, Ip, As, Evil, DataTypes
 from Malcom.model.user_management import UserManager
@@ -36,8 +38,11 @@ class Transform(SONManipulator):
 class Model:
 
 	def __init__(self):
-		self._connection = MongoClient()
-		self._db = self._connection.malcom
+		read_pref = {'PRIMARY': ReadPreference.PRIMARY, 'PRIMARY_PREFERRED': ReadPreference.PRIMARY_PREFERRED, 'SECONDARY': ReadPreference.SECONDARY, 'SECONDARY_PREFERRED': ReadPreference.SECONDARY_PREFERRED, 'NEAREST': ReadPreference.NEAREST}
+		self._connection = MongoClient(host = setup['DATABASE'].get('HOSTS', 'localhost'), replicaSet = setup['DATABASE'].get('REPLSET', None), read_preference = read_pref[setup['DATABASE'].get('READ_PREF', 'PRIMARY')])
+		self._db = self._connection[setup['DATABASE'].get('NAME', 'malcom')]
+		if 'USERNAME' in setup['DATABASE']:
+			self._db.authenticate(setup['DATABASE']['USERNAME'], password = setup['DATABASE'].get('PASSWORD', None), source = setup['DATABASE'].get('SOURCE', None))
 		self._db.add_son_manipulator(Transform())
 
 		# collections
