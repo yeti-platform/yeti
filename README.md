@@ -91,6 +91,86 @@ The following was tested on Ubuntu server 14.04 LTS:
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
 
+### Configuration
+
+#### Database
+
+By default, Malcom will try to connect to a local mongodb instance and crete its own database, named malcom. If its ok for you, you don't need to read this nd should pass to the next step. Otherwise, you need to edit the `database` section of your `malcom.conf` file.
+
+##### Set an other name for your Malcom database
+
+By default, Malcom will use a database named `malcom`. If you don't want this, just edit the `malcom.conf` file and set the `name` directive from the `database` section to your liking.
+
+        [database]
+        ...
+        name = my_malcom_database
+        ...
+
+##### Remote database(s)
+
+By default, Malcom will try to connect to localhost but your database may be on another server. Just set the `hosts` directive. You may use hostnames or IPv4/v6 addresses (just keep in mind to enclose your IPv6 addresses between '[' and ']', like **[::1]**).
+
+If your mongod is a standalone database my.mongo.server, just set:
+
+        [database]
+        ...
+        hosts = my.mongo.server
+        ...
+
+You may also listen on some non-standard port. Just add it after the name/address of your server, separated with a "**:**"
+
+        [database]
+        ...
+        hosts = localhost:27008
+        ...
+
+And if your using a ReplicaSet regrouping my.mongo1.server and my.mongo2.server, just set:
+
+        [database]
+        ...
+        hosts = my.mongo1.server,my.mongo2.server
+        ...
+
+##### Use authentication
+
+You may have configured your mongod instances to enforce authenticated connections. In that case, you have to set the username the driver will have to use to connect to your mongod instance. To do this, just add a `username` directive to the `database` section in the `malcom.conf` file. You may also set the password with the `password` directive. If the user does not have a password, just ignore (i.e. comment) the `password` directive.
+
+        [database]
+        ...
+        username = my_user
+        password = change_me
+        ...
+
+If the user is not linked to the malcom database but to another one (for example the `admin` database for a admin user), you will have to set the `authentication_database` directive with the name of that database.
+
+        [database]
+        ...
+        authentication_database = some_other_database
+        ...
+
+##### Case of a replica set
+
+When using a replica set, you may need to ensure you are connected to the right one. For that, just add the `replset` directive to force the mongo driver to check the name of the replicaset
+
+        [database]
+        ...
+        replset = my_mongo_replica
+        ...
+
+By default, Malcom will try to connect to the primary node of th replica set. You may need/want to change that. In order to change that behaviour, just set the `read_preference` directive. See [the mongo documentation](http://docs.mongodb.org/manual/core/read-preference/) for more information.
+
+        [database]
+        ...
+        read_preference = NEAREST
+        ...
+
+Supported read preferences are:
+* PRIMARY
+* PRIMARY\_PREFERRED
+* SECONDARY
+* SECONDARY\_PREFERRED
+* NEAREST
+
 ### Docker instance
 
 The quickest way to get you started is to pull the Docker image from the [public docker repo](https://registry.hub.docker.com/u/tomchop/malcom/). **To pull the automatic Docker build for the latest GitHub commit**, use `tomchop/malcom-automatic` instead of `tomchop/malcom`.
