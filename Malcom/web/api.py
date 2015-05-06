@@ -117,8 +117,13 @@ class QueryAPI(Resource):
                                     query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
                             else:
                                     query[key] = request.args[key]
-        if query:    
-            Model.add_to_history(query.get('value'))
+        if query:
+            hist = query.get('value')
+            if hasattr(hist, 'pattern'):  # do not attempt to store a regex in history.
+                Model.add_to_history(hist.pattern)
+            else:
+                Model.add_to_history(hist)
+
         data = {}
         chrono_query = datetime.datetime.utcnow()
 
