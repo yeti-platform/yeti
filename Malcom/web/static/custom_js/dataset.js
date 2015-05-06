@@ -5,12 +5,6 @@ $(function(){
 	$("#query").keydown(function (event) {
 		if (event.which == 13) {
 			event.preventDefault();
-		}
-	});
-
-	$("#query").keyup(function (event) {
-		if (!$('#regex').prop('checked') || event.which == 13) {
-			event.preventDefault();
 			get_dataset($('#query').val(), url);
 		}
 	});
