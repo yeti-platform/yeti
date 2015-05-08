@@ -207,6 +207,7 @@ def load_user_from_request(request):
 			u.api_last_activity = datetime.datetime.utcnow()
 			u.api_request_count += 1
 			u = UserManager.save_user(u)
+			return u
 
 @app.route("/logout")
 @login_required
