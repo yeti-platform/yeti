@@ -15,7 +15,6 @@ from bson.objectid import ObjectId
 from bson.json_util import dumps as bson_dumps
 from bson.json_util import loads as bson_loads
 
-from __main__ import setup
 from Malcom.auxiliary.toolbox import *
 from Malcom.model.datatypes import Hostname, Url, Ip, As, Evil, DataTypes
 from Malcom.model.user_management import UserManager
@@ -37,7 +36,7 @@ class Transform(SONManipulator):
 
 class Model:
 
-	def __init__(self):
+	def __init__(self, setup):
 		read_pref = {'PRIMARY': ReadPreference.PRIMARY, 'PRIMARY_PREFERRED': ReadPreference.PRIMARY_PREFERRED, 'SECONDARY': ReadPreference.SECONDARY, 'SECONDARY_PREFERRED': ReadPreference.SECONDARY_PREFERRED, 'NEAREST': ReadPreference.NEAREST}
 		self._connection = MongoClient(host = setup['DATABASE'].get('HOSTS', 'localhost'), replicaSet = setup['DATABASE'].get('REPLSET', None), read_preference = read_pref[setup['DATABASE'].get('READ_PREF', 'PRIMARY')])
 		self._db = self._connection[setup['DATABASE'].get('NAME', 'malcom')]
@@ -51,7 +50,7 @@ class Model:
 		self.sniffer_sessions = self._db.sniffer_sessions
 		self.feeds = self._db.feeds
 		self.history = self._db.history
-		self.um = UserManager()
+		self.um = UserManager(setup)
 
 		# create indexes
 		self.rebuild_indexes()

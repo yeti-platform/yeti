@@ -102,9 +102,9 @@ class Worker(Thread):
 
 class Analytics(Process):
 
-	def __init__(self, max_workers=4):
+	def __init__(self, max_workers=4, setup={}):
 		super(Analytics, self).__init__()
-		self.data = Model()
+		self.data = Model(setup)
 		self.max_workers = max_workers
 		self.active = False
 		self.active_lock = threading.Lock()

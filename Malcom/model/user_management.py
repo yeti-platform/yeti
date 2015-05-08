@@ -13,7 +13,6 @@ import pymongo.errors
 from passlib.hash import pbkdf2_sha512
 from flask.ext.login import make_secure_token
 
-from __main__ import setup
 from Malcom.auxiliary.toolbox import debug_output
 
 
@@ -33,7 +32,7 @@ class UserTransform(SONManipulator):
 
 class UserManager():
 	"""Class to manage Malcom users"""
-	def __init__(self):
+	def __init__(self, setup):
 		read_pref = {'PRIMARY': ReadPreference.PRIMARY, 'PRIMARY_PREFERRED': ReadPreference.PRIMARY_PREFERRED, 'SECONDARY': ReadPreference.SECONDARY, 'SECONDARY_PREFERRED': ReadPreference.SECONDARY_PREFERRED, 'NEAREST': ReadPreference.NEAREST}
 		self._connection = MongoClient(host = setup['DATABASE'].get('HOSTS', 'localhost'), replicaSet = setup['DATABASE'].get('REPLSET', None), read_preference = read_pref[setup['DATABASE'].get('READ_PREF', 'PRIMARY')])
 		self._db = self._connection[setup['DATABASE'].get('NAME', 'malcom')]
