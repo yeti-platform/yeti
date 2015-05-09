@@ -53,7 +53,7 @@ class SnifferEngine(object):
 
 		self.sessions = {}
 
-		self.model = Model()
+		self.model = Model(self.setup)
 		self.db_lock = threading.Lock()
 
 		self.messenger = SnifferMessenger()

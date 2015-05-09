@@ -4,7 +4,7 @@ import gevent
 from bson.objectid import ObjectId
 from bson.json_util import dumps, loads
 
-from Malcom.web.webserver import Model, login_required
+from Malcom.web.webserver import login_required
 from Malcom.auxiliary.toolbox import *
 
 

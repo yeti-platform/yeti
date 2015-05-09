@@ -105,7 +105,7 @@ if __name__ == "__main__":
 	if setup['ANALYTICS']:
 		sys.stderr.write("[+] Starting analytics engine...\n")
 		from Malcom.analytics.analytics import Analytics
-		setup.analytics_engine = Analytics(setup['MAX_WORKERS'])
+		setup.analytics_engine = Analytics(setup['MAX_WORKERS'], setup)
 		setup.analytics_engine.start()
 		
 	if setup['WEB']:
