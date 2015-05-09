@@ -38,10 +38,11 @@ class Model:
 
 	def __init__(self, setup):
 		read_pref = {'PRIMARY': ReadPreference.PRIMARY, 'PRIMARY_PREFERRED': ReadPreference.PRIMARY_PREFERRED, 'SECONDARY': ReadPreference.SECONDARY, 'SECONDARY_PREFERRED': ReadPreference.SECONDARY_PREFERRED, 'NEAREST': ReadPreference.NEAREST}
-		self._connection = MongoClient(host = setup['DATABASE'].get('HOSTS', 'localhost'), replicaSet = setup['DATABASE'].get('REPLSET', None), read_preference = read_pref[setup['DATABASE'].get('READ_PREF', 'PRIMARY')])
-		self._db = self._connection[setup['DATABASE'].get('NAME', 'malcom')]
-		if 'USERNAME' in setup['DATABASE']:
-			self._db.authenticate(setup['DATABASE']['USERNAME'], password = setup['DATABASE'].get('PASSWORD', None), source = setup['DATABASE'].get('SOURCE', None))
+		db_setup = setup.get('DATABASE', {})
+		self._connection = MongoClient(host = db_setup.get('HOSTS', ['localhost:27017']), replicaSet = db_setup.get('REPLSET', None), read_preference = read_pref[db_setup.get('READ_PREF', 'PRIMARY')])
+		self._db = self._connection[db_setup.get('NAME', 'malcom')]
+		if 'USERNAME' in db_setup:
+			self._db.authenticate(db_setup['USERNAME'], password = db_setup.get('PASSWORD', None), source = db_setup.get('SOURCE', None))
 		self._db.add_son_manipulator(Transform())
 
 		# collections
