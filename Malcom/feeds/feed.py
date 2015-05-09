@@ -142,7 +142,7 @@ class FeedEngine(Process):
 	def __init__(self, configuration):
 		Process.__init__(self)
 		self.configuration = configuration
-		self.model = Model()
+		self.model = Model(self.configuration)
 		self.feeds = {}
 		self.threads = {}
 		self.global_thread = None

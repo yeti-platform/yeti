@@ -11,7 +11,6 @@ import werkzeug
 from werkzeug.datastructures import FileStorage
 from flask.ext.login import LoginManager, login_user, login_required, logout_user, current_user
 from Malcom.auxiliary.toolbox import *
-from Malcom.web.webserver import Model, UserManager
 from flask.ext.login import current_user
 from webserver import app
 
@@ -69,7 +68,7 @@ class Neighbors(Resource):
             else:
                 query[key] = {"$in" : request.args.getlist(key)}
 
-        data = Model.find_neighbors(query, include_original=True)
+        data = g.Model.find_neighbors(query, include_original=True)
         return data
 
 class Evil(Resource):
@@ -90,7 +89,7 @@ class Evil(Resource):
             if key not in ['depth']:
                 query[key] = request.args.getlist(key)
 
-        data = Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'}, depth=depth)
+        data = g.Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'}, depth=depth)
         return data
 
 class QueryAPI(Resource):
@@ -117,12 +116,13 @@ class QueryAPI(Resource):
                                     query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
                             else:
                                     query[key] = request.args[key]
+
         if query:
             hist = query.get('value')
             if hasattr(hist, 'pattern'):  # do not attempt to store a regex in history.
-                Model.add_to_history(hist.pattern)
+                g.Model.add_to_history(hist.pattern)
             else:
-                Model.add_to_history(hist)
+                g.Model.add_to_history(hist)
 
         data = {}
         chrono_query = datetime.datetime.utcnow()
@@ -130,9 +130,9 @@ class QueryAPI(Resource):
         print "Query: ", query
         print "Regex:", regex
         if regex:
-            elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
+            elts = list(g.Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
         else:
-            elts = list(Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
+            elts = list(g.Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
 
         chrono_query = datetime.datetime.utcnow() - chrono_query
 
@@ -152,7 +152,7 @@ class QueryAPI(Resource):
 
         chrono_count = datetime.datetime.utcnow()
         if not regex:
-            data['total_results'] = Model.find(query).count()
+            data['total_results'] = g.Model.find(query).count()
         else:
             data['total_results'] = "many"
         chrono_count = datetime.datetime.utcnow() - chrono_count
@@ -178,7 +178,7 @@ class DatasetAPI(Resource):
             except InvalidId:
                 return {'error': 'You must specify an ID'}, 400
 
-            result = Model.remove_by_id(_id)
+            result = g.Model.remove_by_id(_id)
             return result
 
         if action == 'add':
@@ -219,7 +219,7 @@ class SnifferSessionDelete(Resource):
 
         if result == "removed":  # session successfully stopped
             current_user.remove_sniffer_session(session_id)
-            UserManager.save_user(current_user)
+            g.UserManager.save_user(current_user)
             return {'status': "Sniffer session %s has been deleted" % session_id, 'success': 1}
 
 
@@ -228,7 +228,7 @@ class SnifferSessionPcap(Resource):
     def get(self, session_id):
         result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
         print result
-        session = Model.get_sniffer_session(session_id)
+        session = g.Model.get_sniffer_session(session_id)
         if 'pcap_filename' in session:
             return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
@@ -300,7 +300,7 @@ class SnifferSessionData(Resource):
         if _all:
             return session_info
 
-        result = Model.find({'_id': {'$in': [ObjectId(i) for i in session_info['node_list']]}})
+        result = g.Model.find({'_id': {'$in': [ObjectId(i) for i in session_info['node_list']]}})
 
         if elements:
             return {"node_list" : list(result)}

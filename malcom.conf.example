@@ -25,12 +25,40 @@ yara_path = yara
 
 # databases can be configured here
 
-[db_local]
-name = Local
-type = db
-host = localhost
-port = 27017
+[database]
+# The name of the Malcom database
+# default: malcom
+name = malcom
 
+# Comma-separated list of server names or addresses hosting the database. Ports may be defined by host
+# example: my_server1,my_server2:27018,182.168.0.10[,...]
+# If you have any IPv6 addresses, they have to enclosed in '[' and ']' characters (ex: [::1])
+# default: localhost
+host = localhost
+
+# ReplicaSet name (optionnal)
+# If set, the pymongo driver will check if the hosts above are really part of the named replicaSet when connecting to them
+# default: None
+#replset = my_replicaset
+
+# Read preference when connected to a replicaset
+# Read http://docs.mongodb.org/manual/core/read-preference/ for more information
+# Values are PRIMARY, PRIMARY_PREFERRED, SECONDARY, SECONDARY_PREFERRED, NEAREST
+# default: PRIMARY
+# read_preference = PRIMARY
+
+# Username to log in the database, if authentication is needed by the database
+# default: None
+#username = some_user
+
+# Password for the above user
+# default: None
+#password = change_me
+
+# Database used to authenticate the above user
+# If not set, it will use the current database
+# default: None
+#authentication_database = malcom
 
 [feeds]
 # You can comment / uncomment feeds
