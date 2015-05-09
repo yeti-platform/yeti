@@ -177,14 +177,9 @@ Supported read preferences are:
 The quickest way to get you started is to pull the Docker image from the [public docker repo](https://registry.hub.docker.com/u/tomchop/malcom/). **To pull the automatic Docker build for the latest GitHub commit**, use `tomchop/malcom-automatic` instead of `tomchop/malcom`.
 
         $ sudo docker pull tomchop/malcom
-        $ sudo docker run -P -d --name malcom tomchop/malcom
-        
-Connect to your malcom instance by checking the port on the docker file.
+        $ sudo docker run -p 8080:8080 -d --name malcom tomchop/malcom
 
-        $ sudo docker port malcom
-        8080/tcp -> 0.0.0.0:49155
-
-Connecting to `http://<docker_host>:49155/` should get you started.
+Connecting to `http://<docker_host>:8080/` should get you started.
 
 ### Quick note on TLS interception
 
