@@ -5,9 +5,10 @@ Malcom is a tool designed to analyze a system's network communication using grap
 - [What is Malcom?](#what-is-malcom)
 - [Quick how-to](#quick-how-to)
 - [Installation](#installation)
+ - [Configuration options](#configuration-options)
  - [Docker instance](#docker-instance)
- - [Quick note on TLS interception](#quick-note-on-tls-interception) 
- - [Environment](#environment) 
+ - [Quick note on TLS interception](#quick-note-on-tls-interception)
+ - [Environment](#environment)
  - [Feeds](#feeds)
 - [Technical specs](#technical-specs)
 - [Roadmap](#roadmap)
@@ -16,7 +17,7 @@ Malcom is a tool designed to analyze a system's network communication using grap
 
 # What is Malcom?
 
-Malcom can help you: 
+Malcom can help you:
 
 * detect central command and control (C&C) servers
 * understand peer-to-peer networks
@@ -44,7 +45,7 @@ Dataset view (filtered to only show IPs)
 * Start the webserver using the default configuration with `./malcom.py -c malcom.conf` (or see options with `./malcom.py --help`)
 ** For an example configuration file, you can copy `malcom.conf.example` to `malcom.conf`
 ** Default port is 8080
-** Alternatively, run the feeds from `celery`. See the [feeds](/README.md#Feeds) section for details on how to to this. 
+** Alternatively, run the feeds from `celery`. See the [feeds](/README.md#Feeds) section for details on how to to this.
 
 ## Installation
 
@@ -91,15 +92,15 @@ The following was tested on Ubuntu server 14.04 LTS:
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
 
-### Configuration
+### Configuration options
 
 #### Database
 
-By default, Malcom will try to connect to a local mongodb instance and crete its own database, named malcom. If its ok for you, you don't need to read this nd should pass to the next step. Otherwise, you need to edit the `database` section of your `malcom.conf` file.
+By default, Malcom will try to connect to a local mongodb instance and create its own database, named `malcom`. If this is OK for you, you may skip the following steps. Otherwise, you need to edit the `database` section of your `malcom.conf` file.
 
 ##### Set an other name for your Malcom database
 
-By default, Malcom will use a database named `malcom`. If you don't want this, just edit the `malcom.conf` file and set the `name` directive from the `database` section to your liking.
+By default, Malcom will use a database named `malcom`. You can change this behavior by editing the `malcom.conf` file and setting the `name` directive from the `database` section to your liking.
 
         [database]
         ...
@@ -108,23 +109,23 @@ By default, Malcom will use a database named `malcom`. If you don't want this, j
 
 ##### Remote database(s)
 
-By default, Malcom will try to connect to localhost but your database may be on another server. Just set the `hosts` directive. You may use hostnames or IPv4/v6 addresses (just keep in mind to enclose your IPv6 addresses between '[' and ']', like **[::1]**).
+By default, Malcom will try to connect to `localhost`, but your database may be on another server. To change this, just set the `hosts` directive. You may use hostnames or IPv4/v6 addresses (just keep in mind to enclose your IPv6 addresses between `[` and `]`, e.g. `[::1]`).
 
-If your mongod is a standalone database my.mongo.server, just set:
+If you'd like to use a standalone database on host `my.mongo.server`, just set:
 
         [database]
         ...
         hosts = my.mongo.server
         ...
 
-You may also listen on some non-standard port. Just add it after the name/address of your server, separated with a "**:**"
+You can also specify the port mongod is listening on by specifying it after the name/address of your server, separated with a `:`
 
         [database]
         ...
         hosts = localhost:27008
         ...
 
-And if your using a ReplicaSet regrouping my.mongo1.server and my.mongo2.server, just set:
+And if you're using a `ReplicaSet` regrouping `my.mongo1.server` and `my.mongo2.server`, just set:
 
         [database]
         ...
@@ -133,7 +134,7 @@ And if your using a ReplicaSet regrouping my.mongo1.server and my.mongo2.server,
 
 ##### Use authentication
 
-You may have configured your mongod instances to enforce authenticated connections. In that case, you have to set the username the driver will have to use to connect to your mongod instance. To do this, just add a `username` directive to the `database` section in the `malcom.conf` file. You may also set the password with the `password` directive. If the user does not have a password, just ignore (i.e. comment) the `password` directive.
+You may have configured your mongod instances to enforce authenticated connections. In that case, you have to set the username the driver will have to use to connect to your mongod instance. To do this, just add a `username` directive to the `database` section in the `malcom.conf` file. You may also have to set the password with the `password` directive. If the user does not have a password, just ignore (i.e. comment out) the `password` directive.
 
         [database]
         ...
@@ -141,7 +142,7 @@ You may have configured your mongod instances to enforce authenticated connectio
         password = change_me
         ...
 
-If the user is not linked to the malcom database but to another one (for example the `admin` database for a admin user), you will have to set the `authentication_database` directive with the name of that database.
+If the user is not linked to the `malcom` database but to another one (for example the `admin` database for a admin user), you will have to set the `authentication_database` directive with the name of that database.
 
         [database]
         ...
@@ -187,7 +188,7 @@ Connecting to `http://<docker_host>:49155/` should get you started.
 
 ### Quick note on TLS interception
 
-Malcom now supports TLS interception. For this to work, you need to generate some keys in Malcom/networking/tlsproxy/keys. See the KEYS.md file there for more information on how to do this. 
+Malcom now supports TLS interception. For this to work, you need to generate some keys in Malcom/networking/tlsproxy/keys. See the KEYS.md file there for more information on how to do this.
 
 Make sure you also have IPtables (you already should) and permissions to do some port forwarding with it (you usually need to be root for that).
 You can to this using the convenient `forward_port.sh` script. For example, to intercept all TLS communications towards port 443, use `forward_port.sh 443 9999`. You'll then have to tell malcom to run an interception proxy on port `9999`.
@@ -212,7 +213,7 @@ You can also use `celery` to run feeds. Make sure celery is installed by running
 
 ## Technical specs
 
-Malcom was written mostly from scratch, in Python. It uses the following frameworks to work: 
+Malcom was written mostly from scratch, in Python. It uses the following frameworks to work:
 
 * [flask](http://flask.pocoo.org/) - a lightweight python web framework
 * [mongodb](http://www.mongodb.org/) - a NoSQL database. It interfaces to python with [pymongo](http://api.mongodb.org/python/current/)
@@ -232,8 +233,8 @@ Once collaboration and extension are up and running, I think this will be helpfu
 
 This tool was coded during my free time. Like a huge number of tools we download and use daily, I wouldn't recommend to use it on a production environment where data stability and reliability is a MUST.
 
-* It may be broken, have security gaps (running it as root in uncontrolled environments is probably not a good idea), or not work at all. 
-* It's written in python, so don't expect it to be ultra-fast or handle huge amounts of data easily. 
+* It may be broken, have security gaps (running it as root in uncontrolled environments is probably not a good idea), or not work at all.
+* It's written in python, so don't expect it to be ultra-fast or handle huge amounts of data easily.
 * I'm no coder, so don't expect to see beautiful pythonic code everywhere you look. Or lots of comments.
 
 It's in early stages of development, meaning "it works for me". You're free to share it, improve it, ask for pull requests.
