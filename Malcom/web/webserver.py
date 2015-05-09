@@ -164,9 +164,9 @@ def before_request():
 	g.config = app.config
 	g.messenger = app.config['MESSENGER']
 	if not 'Model' in g:
-		g.Model = ModelClass(app.config)
+		g.Model = app.config['MODEL']
 	if not 'UserManager' in g:
-		g.UserManager = UserManagerClass(app.config)
+		g.UserManager = app.config['USER_MANAGER']
 
 	if g.config['AUTH']:
 		g.user = current_user
@@ -668,10 +668,13 @@ class MalcomWeb(Process):
 		if not self.setup['AUTH']:
 			app.config['LOGIN_DISABLED'] = True
 
+		app.config['MODEL'] = ModelClass(self.setup)
+		app.config['USER_MANAGER'] = UserManagerClass(self.setup)
+
 		lm.init_app(app)
 		lm.login_view = 'login'
 		lm.session_protection = 'strong'
-		lm.anonymous_user = UserManagerClass(self.setup).get_default_user
+		lm.anonymous_user = app.config['USER_MANAGER'].get_default_user
 
 		for key in self.setup:
 			app.config[key] = self.setup[key]
