@@ -71,8 +71,8 @@ class MalcomSetup(dict):
 			self['YARA_PATH'] = config.get('sniffer', 'yara_path')
 			self['SNIFFER_NETWORK'] = config.getboolean('sniffer', 'network')
 
-		self['DATABASE'] = {'HOSTS': ['localhost'], 'NAME': 'malcom'}
 		if config.has_section('database'):
+			self['DATABASE'] = {}
 			db_params = dict(config.items('database'))
 			if 'hosts' in db_params:
 				self['DATABASE']['HOSTS'] = db_params['hosts'].split( ',')
