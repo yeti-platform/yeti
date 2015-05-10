@@ -5,10 +5,10 @@ class MalcomSetup(dict):
 	"""Configuraiton loader"""
 	def __init__(self):
 		super(MalcomSetup, self).__init__()
-		
+
 	def save_config():
 		raise NotImplemented
-		  
+
 	def load_config(self, args):
 		self.parse_command_line(args)
 		self.sanitize_paths()
@@ -16,11 +16,11 @@ class MalcomSetup(dict):
 
 	def sanitize_paths(self):
 		if not self['SNIFFER_DIR'].startswith('/'):
-			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer'))
+			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['SNIFFER_DIR']))
 		if not self['YARA_PATH'].startswith('/'):
-			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara'))
+			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['YARA_PATH']))
 		if not self['FEEDS_DIR'].startswith('/'):
-			self['FEEDS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'feeds'))
+			self['FEEDS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['FEEDS_DIR']))
 
 	def parse_command_line(self, args):
 
@@ -41,9 +41,9 @@ class MalcomSetup(dict):
 			self['WEB'] = True
 			self['AUTH'] = False
 
-		
+
 	def parse_config_file(self, filename):
-		
+
 		config = ConfigParser.ConfigParser(allow_no_value=True)
 		config.read(filename)
 
@@ -93,7 +93,7 @@ class MalcomSetup(dict):
 			self['ACTIVATED_FEEDS'] = []
 			for feed in config.options('feeds'):
 				self['ACTIVATED_FEEDS'].append(feed)
-		
+
 
 	def get_network_interfaces(self):
 		self['IFACES'] = {}

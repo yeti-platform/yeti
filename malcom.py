@@ -53,7 +53,7 @@ if __name__ == "__main__":
 	parser.add_argument("--public", help="Run a public instance (Feeds and network sniffing disabled)", action="store_true", default=False)
 	parser.add_argument("--max-workers", help="Number of worker processes to use (default 4)", type=int, default=4)
 	parser.add_argument("--tls-proxy-port", help="Port number on which to start the TLS proxy on. No proxy started if not specified.", type=int, default=0)
-	
+
 	args = parser.parse_args()
 
 	setup.load_config(args)
@@ -63,22 +63,22 @@ if __name__ == "__main__":
 
 	for iface in setup['IFACES']:
 		sys.stderr.write("%s:\t%s\n" % (iface, setup['IFACES'][iface]))
-	
+
 ################################################
 
 # from Malcom.analytics.analytics import Analytics
 # from Malcom.feeds.feed import FeedEngine
 # from Malcom.web.webserver import MalcomWeb
-# from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
-# from Malcom.networking import netsniffer
+# from Malcom.sniffer.tlsproxy.tlsproxy import MalcomTLSProxy
+# from Malcom.sniffer import netsniffer
 
 ################################################
 	if setup['SNIFFER']:
-		from Malcom.networking import netsniffer
+		from Malcom.sniffer import netsniffer
 		yara_rules = setup.get("YARA_PATH", None)
 		setup.sniffer_engine = netsniffer.SnifferEngine(setup, yara_rules=yara_rules)
 
-		
+
 	# call malcom to run feeds - this will not start the web interface
 	if setup['FEEDS']:
 		sys.stderr.write("[+] Importing feeds...\n")
@@ -89,8 +89,8 @@ if __name__ == "__main__":
 		except Exception, e:
 			sys.stderr.write("Could not load feeds specified in feeds_dir: %s\n" % e)
 			exit()
-		
-		# launch process		
+
+		# launch process
 		if setup['FEEDS_SCHEDULER']:
 			setup.feed_engine.scheduler = True
 			("Starting feed scheduler...\n")
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 		from Malcom.analytics.analytics import Analytics
 		setup.analytics_engine = Analytics(setup['MAX_WORKERS'], setup)
 		setup.analytics_engine.start()
-		
+
 	if setup['WEB']:
 		from Malcom.web.webserver import MalcomWeb
 		setup.web = MalcomWeb(setup['AUTH'], setup['LISTEN_PORT'], setup['LISTEN_INTERFACE'], setup)
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 			pass
 
 	sys.stderr.write("\nExiting gracefully\n")
-	
+
 	if setup['WEB']:
 		sys.stderr.write('[.] Stopping webserver... ')
 		sys.stderr.write("done.\n")
@@ -150,4 +150,4 @@ if __name__ == "__main__":
 		sys.stderr.write("done.\n")
 
 	exit()
-	
+

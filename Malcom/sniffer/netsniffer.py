@@ -6,10 +6,10 @@ from bson.json_util import dumps as bson_dumps
 from bson.json_util import loads as bson_loads
 from bson.objectid import ObjectId
 
-from Malcom.networking.flow import Flow
+from Malcom.sniffer.flow import Flow
 from Malcom.auxiliary.toolbox import debug_output
-from Malcom.networking.messenger import SnifferMessenger
-from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
+from Malcom.sniffer.messenger import SnifferMessenger
+from Malcom.sniffer.tlsproxy.tlsproxy import MalcomTLSProxy
 from Malcom.model.model import Model
 
 try:
@@ -43,7 +43,7 @@ class SnifferEngine(object):
 		sys.stderr.write("[+] Successfully loaded sniffer directory: %s\n" % self.setup['SNIFFER_DIR'])
 
 		if setup['TLS_PROXY_PORT'] > 0:
-			from Malcom.networking.tlsproxy.tlsproxy import MalcomTLSProxy
+			from Malcom.sniffer.tlsproxy.tlsproxy import MalcomTLSProxy
 			sys.stderr.write("[+] Starting TLS proxy on port %s\n" % setup['TLS_PROXY_PORT'])
 			self.tls_proxy = MalcomTLSProxy(setup['TLS_PROXY_PORT'])
 			self.tls_proxy.engine = self
