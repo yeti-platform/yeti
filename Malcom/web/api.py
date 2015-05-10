@@ -227,10 +227,9 @@ class SnifferSessionPcap(Resource):
     decorators=[login_required]
     def get(self, session_id):
         result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
-        print result
         session = g.Model.get_sniffer_session(session_id)
         if 'pcap_filename' in session:
-            return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
+            return send_from_directory(g.config['SNIFFER_DIR'], session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
 
 class SnifferSessionNew(Resource):
@@ -283,7 +282,7 @@ class SnifferSessionData(Resource):
     decorators=[login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('evil', type=bool, default=False)
-    parser.add_argument('all', type=bool, default=False)
+    parser.add_argument('all', type=bool, default=True)
     parser.add_argument('elements', type=bool, default=False)
 
     def get(self, session_id):
@@ -324,8 +323,8 @@ class SnifferSessionControl(Resource):
 
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
-api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
-api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>', endpoint='malcom_api.pcap')
+api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>/')
+api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>/', endpoint='malcom_api.pcap')
 api.add_resource(SnifferSessionNew, '/api/sniffer/new/', endpoint='malcom_api.session_start')
-api.add_resource(SnifferSessionControl, '/api/sniffer/control/<session_id>/<string:action>', endpoint='malcom_api.session_control')
+api.add_resource(SnifferSessionControl, '/api/sniffer/control/<session_id>/<string:action>/', endpoint='malcom_api.session_control')
 api.add_resource(SnifferSessionData, '/api/sniffer/data/<session_id>/')
