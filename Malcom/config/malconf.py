@@ -34,7 +34,8 @@ class MalcomSetup(dict):
 			self['FEEDS'] = args.feeds
 			self['SNIFFER'] = args.sniffer
 			self['SNIFFER_NETWORK'] = False
-			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer'))
+			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer', 'captures'))
+			self['MODULES_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'sniffer', 'modules'))
 			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'yara'))
 			self['FEEDS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'feeds'))
 			self['ANALYTICS'] = args.analytics
