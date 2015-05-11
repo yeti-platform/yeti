@@ -14,7 +14,6 @@ function initSnifferRealtimeWebSocket(session_id) {
     } else {
         console.log("WebSocket not supported (realtime)");
     }
-
 }
 
 function snifferWebSocketHandler(msg) {

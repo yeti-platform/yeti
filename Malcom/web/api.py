@@ -321,6 +321,12 @@ class SnifferSessionControl(Resource):
 
         return status
 
+class SnifferSessionModuleFunction(Resource):
+    decorators=[login_required]
+
+    def get(self, session_id, module_name, function):
+        output = g.messenger.send_recieve('call_module_function', 'sniffer-commands', params={'session_id': session_id, 'module_name': module_name, 'function': function})
+        return output
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>/')
@@ -328,3 +334,4 @@ api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>/', endpoint
 api.add_resource(SnifferSessionNew, '/api/sniffer/new/', endpoint='malcom_api.session_start')
 api.add_resource(SnifferSessionControl, '/api/sniffer/control/<session_id>/<string:action>/', endpoint='malcom_api.session_control')
 api.add_resource(SnifferSessionData, '/api/sniffer/data/<session_id>/')
+api.add_resource(SnifferSessionModuleFunction, '/api/sniffer/module/<session_id>/<module_name>/<function>/', endpoint='malcom_api.call_module_function')

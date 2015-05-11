@@ -6,8 +6,11 @@
   <div role="tabpanel">
 
     <ul id='datasetTabs' class='nav nav-tabs' role='tablist'>
-      <li role="presentation" class='active'><a href='#graph' aria-controls="graph" role="tab" data-toggle='tab'>Graph</a></li>
-      <li role="presentation"><a href='#flows' aria-controls="flows" role="tab" data-toggle='tab'>Flows</a></li>
+      <li role="presentation" class='active'><a href='#graph' id="graph-tab" aria-controls="graph" role="tab" data-toggle='tab'>Graph</a></li>
+      <li role="presentation"><a href='#flows' id="flows-tab" aria-controls="flows" role="tab" data-toggle='tab'>Flows</a></li>
+      {% for display_name, name in session.modules %}
+      <li role="presentation"><a href='#{{ name }}' class='module-tab' id='{{name}}-tab' aria-controls="{{ name }}" role="tab" data-toggle='tab'>{{ display_name }}</a></li>
+      {%endfor%}
     </ul>
 
     <div id='datasetTabsContent' class='tab-content'>
@@ -49,6 +52,12 @@
         <table class='table table-condensed' id='flow-list'>
         </table>
       </div> <!-- end second tabpane -->
+
+      <!-- content pane for modules -->
+      {% for display_name, name in session.modules %}
+        <div role='tabpanel' class='tab-pane module-content' id='{{ name }}' data-bootstrap-url="{{ url_for('malcom_api.call_module_function', session_id=session.id, module_name=name, function='bootstrap') }}">
+        </div>
+      {% endfor %}
 
     </div> <!-- end tabs content -->
 
@@ -119,16 +128,25 @@ initSnifferWebSocket()
 initSnifferRealtimeWebSocket('{{session.name}}')
 ws_sniffer.onopen = snifferInterfaceInit
 
-$('a[href="#graph"]').on('shown.bs.tab', function (e) {
+$('#graph-tab').on('shown.bs.tab', function (e) {
   $("#mainscreen").attr('class', 'col-md-9')
   $(".toolbar").show()
 })
 
-$('a[href="#flows"]').on('shown.bs.tab', function (e) {
+$('#flows-tab').on('shown.bs.tab', function (e) {
   $("#mainscreen").attr('class', 'col-md-12')
   $(".toolbar").hide()
 })
 
+$(".module-tab").on('shown.bs.tab', function (e) {
+  content = $("#"+$(this).attr('aria-controls'));
+  $.ajax({
+    url: content.data('bootstrap-url'),
+    success: function(data, status) {
+      content.html(data);
+    }
+  });
+})
 
 
 </script>

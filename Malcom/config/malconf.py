@@ -17,6 +17,8 @@ class MalcomSetup(dict):
 	def sanitize_paths(self):
 		if not self['SNIFFER_DIR'].startswith('/'):
 			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['SNIFFER_DIR']))
+		if not self['MODULES_DIR'].startswith('/'):
+			self['MODULES_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['MODULES_DIR']))
 		if not self['YARA_PATH'].startswith('/'):
 			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['YARA_PATH']))
 		if not self['FEEDS_DIR'].startswith('/'):
@@ -68,6 +70,7 @@ class MalcomSetup(dict):
 		if config.has_section('sniffer'):
 			self['SNIFFER'] = config.getboolean('sniffer', 'activated')
 			self['SNIFFER_DIR'] = config.get('sniffer', 'sniffer_dir')
+			self['MODULES_DIR'] = config.get('sniffer', 'modules_dir')
 			self['TLS_PROXY_PORT'] = config.getint('sniffer', 'tls_proxy_port')
 			self['YARA_PATH'] = config.get('sniffer', 'yara_path')
 			self['SNIFFER_NETWORK'] = config.getboolean('sniffer', 'network')

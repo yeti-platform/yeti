@@ -1,4 +1,4 @@
-import pwd, os, sys, time, threading, datetime
+import pwd, os, sys, time, threading, datetime, imp
 
 from scapy.all import *
 from scapy.error import Scapy_Exception
@@ -77,11 +77,8 @@ class SnifferEngine(object):
 			except Exception, e:
 				sys.stderr.write("Could not load yara rules specified in yara_path: %s\n" % e)
 				exit()
-
-
 		else:
 			self.yara_rules = None
-
 
 	def load_yara_rules(self, path):
 		debug_output("Compiling YARA rules from %s" % path)
@@ -212,6 +209,26 @@ class SnifferSession():
 		else:
 			debug_output("[-] No TLS interception")
 
+		modules = self.load_modules()
+		self.modules = {m.name: m for m in modules}
+
+	def load_modules(self):
+		from Malcom.sniffer.modules.base_module import Module
+		modules_directory = self.engine.setup['MODULES_DIR']
+		modules = []
+		for modulename in os.listdir(modules_directory):
+			if '.' not in modulename:
+				full_filename = "{}/{}/{}.py".format(modules_directory, modulename, modulename)
+				debug_output("Loading sniffer module: {}".format(modulename))
+				module = imp.load_source(modulename, full_filename)
+				modules.append(module.__dict__.get(module.classname)(self))
+		return modules
+
+
+
+
+
+
 	def get_nodes(self):
 		return [str(self.nodes[n]['_id']) for n in self.nodes]
 
@@ -331,7 +348,7 @@ class SnifferSession():
 				self.nodes[ip['value']] = ip
 				new_elts.append(ip)
 			else:
-				ip = self.nodes[ip]
+				ip = self.model.get(value=ip)
 				new_elts.append(ip)
 
 			ids.append(ip['_id']) # collect the ID of both IPs to create a connection afterwards
@@ -380,7 +397,7 @@ class SnifferSession():
 					new_elts.append(_question)
 
 			else:
-				_question = self.nodes[_question['value']] # [e for e in self.nodes if e['value'] == question][0]
+				_question = self.model.get(value=_question['value']) # [e for e in self.nodes if e['value'] == question][0]
 				new_elts.append(_question)
 
 			response_types = [pkt[DNS].an, pkt[DNS].ns, pkt[DNS].ar]
@@ -413,7 +430,7 @@ class SnifferSession():
 							self.nodes[_rrname['value']] = _rrname
 							new_elts.append(_rrname)
 					else:
-						_rrname = self.nodes[rrname] # [e for e in self.nodes if e['value'] == rrname][0]
+						_rrname = self.model.get(value=rrname) # [e for e in self.nodes if e['value'] == rrname][0]
 						new_elts.append(_rrname)
 
 					if rdata not in self.nodes:
@@ -437,7 +454,7 @@ class SnifferSession():
 							# 		self.edges.append(conn)
 							# 		new_edges.append(conn)
 					else:
-						_rdata = self.nodes[rdata] #[e for e in self.nodes if e['value'] == rdata][0]
+						_rdata = self.model.get(value=rdata) #[e for e in self.nodes if e['value'] == rdata][0]
 						new_elts.append(_rdata)
 
 					# we can use a real connection here
@@ -498,7 +515,6 @@ class SnifferSession():
 
 	def handlePacket(self, pkt):
 
-
 		IP_layer = IP if IP in pkt else IPv6 # add IPv6 support another night...
 		if IP_layer == IPv6: return
 
@@ -542,7 +558,6 @@ class SnifferSession():
 		if new_edges:
 			edges += new_edges
 
-
 		# TLS MITM - intercept TLS communications and send cleartext to malcom
 		# We want to be protocol agnostic (HTTPS, FTPS, ***S). For now, we choose which
 		# connections to intercept based on destination port number
@@ -564,8 +579,10 @@ class SnifferSession():
 
 		if elts != [] or edges != []:
 			self.send_nodes(elts, edges)
-		if self.pcap:
-			pass
+
+		# send individual packets to modules in case they use them
+		for mod in self.modules.values():
+			mod.on_packet(pkt)
 
 	def send_flow_statistics(self, flow):
 		data = {}
@@ -576,7 +593,6 @@ class SnifferSession():
 		self.engine.messenger.broadcast(bson_dumps(data), 'sniffer-data', 'flow_statistics_update')
 
 	def send_nodes(self, elts=[], edges=[]):
-
 		for e in elts:
 			e['fields'] = e.default_fields
 
