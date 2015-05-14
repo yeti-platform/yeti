@@ -19,7 +19,8 @@ max_workers = 12
 [sniffer]
 activated = true
 network = true
-sniffer_dir = sniffer_captures
+sniffer_dir = sniffer/captures
+modules_dir = sniffer/modules
 tls_proxy_port = 9000
 yara_path = yara
 
