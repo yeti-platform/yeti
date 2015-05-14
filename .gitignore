@@ -40,7 +40,7 @@ nosetests.xml
 env-*
 libs
 # do not include user-generated pcap files
-Malcom/sniffer/*.pcap
+Malcom/sniffer/captures/*.pcap
 # do not include TLS keys
 Malcom/networking/tlsproxy/keys/server.crt
 Malcom/networking/tlsproxy/keys/server.key
