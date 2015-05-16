@@ -17,7 +17,7 @@ class MalcomSetup(dict):
 	def sanitize_paths(self):
 		if not self['SNIFFER_DIR'].startswith('/'):
 			self['SNIFFER_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['SNIFFER_DIR']))
-		if not self['MODULES_DIR'].startswith('/'):
+		if not self['MODULES_DIR'].startswith('/'):	
 			self['MODULES_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['MODULES_DIR']))
 		if not self['YARA_PATH'].startswith('/'):
 			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['YARA_PATH']))
