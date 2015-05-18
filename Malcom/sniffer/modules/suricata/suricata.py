@@ -6,6 +6,8 @@ Created on 13 mai 2015
 Thanks to inliniac and Regit for ideas: 
 https://github.com/inliniac/suricata/blob/master/scripts/suricatasc/src/suricatasc.py
 '''
+from ConfigParser import ConfigParser
+import glob
 import multiprocessing
 import os
 import re
@@ -15,10 +17,9 @@ import subprocess
 import sys
 from time import sleep
 
+from Malcom.auxiliary.toolbox import debug_output
 from Malcom.sniffer.modules.base_module import Module
 import simplejson as json
-from Malcom.auxiliary.toolbox import debug_output
-from ConfigParser import ConfigParser
 
 
 classname = "Suricata"
@@ -71,7 +72,7 @@ class Suricata(Module):
                 dest_port=entry['dest_port']
                 proto=entry['proto']
                 signature_id=''
-                description=''
+                description=''  
                 category=''
                 md5file=''
                 if event_type =="alert":
@@ -87,7 +88,7 @@ class Suricata(Module):
                     content=content+'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' %(timestamp,event_type,proto,src_ip,src_port,dest_ip,dest_port,signature_id,description,category,md5file)
             content=content+"</table>"
             return content
-        
+               
     def bootstrap(self):
         file_name=self.session.pcap_filename
         name_session=self.session.name
@@ -97,10 +98,12 @@ class Suricata(Module):
             if not os.path.isdir(dir_to_write_logs):
                 self.actions.send_pcap(file_to_analyse, dir_to_write_logs)
                 sleep(10)
+                
         content=self.content(os.path.join(dir_to_write_logs,'eve.json'))
         if not os.path.isdir(dir_to_write_logs):
             self.actions.stop()
-        return content        
+        return content
+            
     def on_packet(self, pkt):
         pass
 

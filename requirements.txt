@@ -37,3 +37,4 @@ wsgiref==0.1.2
 zope.interface==4.1.2
 pytz
 aniso8601==0.92
+simplejson==3.7.0
