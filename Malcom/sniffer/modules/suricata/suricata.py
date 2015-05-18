@@ -88,7 +88,11 @@ class Suricata(Module):
                     content=content+'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' %(timestamp,event_type,proto,src_ip,src_port,dest_ip,dest_port,signature_id,description,category,md5file)
             content=content+"</table>"
             return content
-               
+    def files_meta(self,dir_to_write_logs):
+        files_dir=os.path.join(dir_to_write_logs,'files')
+        files_metas=glob.glob(files_dir+'*.meta')
+        for file_metas in files_metas:
+            pass
     def bootstrap(self):
         file_name=self.session.pcap_filename
         name_session=self.session.name
