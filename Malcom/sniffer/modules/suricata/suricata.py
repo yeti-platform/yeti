@@ -34,6 +34,10 @@ class Suricata(Module):
         self.name = "suricata"
         self.pull_content = 'suricata'
         self.dns_requests = {}
+        self.actions=Actions()
+        self.actions.start()
+        
+ 
     def content(self,path):
         content="<table class='table table-condensed'><tr><th>Timestamp</th><th>Event Type</th><th>Proto</th><th>Source</th><th>Destination</th><th>Signature ID</th><th>Signature</th><th>Category</th><th>md5</th></tr>"
         with open(path, 'r') as f_json:
@@ -64,20 +68,17 @@ class Suricata(Module):
             content=content+"</table>"
             return content
     def bootstrap(self):
-        actions=Actions()
-        actions.start()
-        sleep(10)
         file_name=self.session.pcap_filename
         name_session=self.session.name
         if file_name and name_session:
-            print os.path.join(self.session.engine.setup['MODULES_DIR'],self.name,str(self.session.id))
             file_to_analyse=os.path.join(self.session.engine.setup['SNIFFER_DIR'],file_name)
             dir_to_write_logs=os.path.join(self.session.engine.setup['MODULES_DIR'],self.name,str(self.session.id))    
             if not os.path.isdir(dir_to_write_logs):
-                actions.send_pcap(file_to_analyse, dir_to_write_logs)
+                self.actions.send_pcap(file_to_analyse, dir_to_write_logs)
                 sleep(10)
         content=self.content(os.path.join(dir_to_write_logs,'eve.json'))
-        actions.stop()
+        if not os.path.isdir(dir_to_write_logs):
+            self.actions.stop()
         return content        
     def on_packet(self, pkt):
         pass
