@@ -29,36 +29,32 @@ SIZE = 4096
 
 class Suricata(Module):
     def __init__(self,session):
-        super(Module, self).__init__()
         self.session = session
         self.display_name = "Suricata"
         self.name = "suricata"
         self.pull_content = 'suricata'
-        self.dns_requests = {}
-                
-        interface,mode,conf_suricata,socket_unix=self._load_conf()
+        super(Suricata, self).__init__()
+        interface,mode,conf_suricata,socket_unix=self.setup()
         
                 
         self.actions=Actions(interface=interface, conf_sniffer=conf_suricata, mode=mode, socket_unix=socket_unix)
         self.actions.start()
         
-    def _load_conf(self):
+    def setup(self):
         interface=''
         mode=''
         conf_suricata=''
         socket_unix=''
-        config=ConfigParser()
-        config.readfp(open(os.path.join(self.session.engine.setup['MODULES_DIR'],self.name,self.name+'.conf')))
-
-        if config.has_section('suricata'):
-            if config.has_option('suricata','interface'):
-                interface=config.get('suricata','interface')
-            if config.has_option('suricata','mode'):
-                mode=config.get('suricata','mode')
-            if config.has_option('suricata','conf_suricata'):
-                conf_suricata=config.get('suricata','conf_suricata')
-            if config.has_option('suricata','socket_unix'):
-                socket_unix=config.get('suricata','socket_unix')
+        
+        if 'suricata' in self.config:
+            if 'interface' in self.config['suricata']:
+                interface=self.config['suricata']['interface']
+            if 'mode' in self.config['suricata']:
+                mode=self.config['suricata']['mode']
+            if 'conf_suricata' in self.config['suricata']:
+                conf_suricata=self.config['suricata']['conf_suricata']
+            if 'socket_unix' in self.config['suricata']:
+                socket_unix=self.config['suricata']['socket_unix']
                 
         return interface,mode,conf_suricata,socket_unix
     def content(self,path):

@@ -11,17 +11,17 @@ classname = "PassiveDns"
 class PassiveDns(Module):
     """This is a dummy module to show what modules can accomplish"""
     def __init__(self, session):
-        super(PassiveDns, self).__init__()
         self.session = session
         self.display_name = "Passive DNS"
-        self.name = "passivedns"
+        self.name = "passive_dns"
         self.pull_content = 'passivedns'
+        super(PassiveDns, self).__init__()
         self.dns_requests = {}
 
     # This function defines what is sent back to the browser.
     # In this case, it only sends back a table, but it could eventually
     # send back JS code that could call other functions from the module
-    # MANDATORY FUNCTION
+    # MANDATORY FUNCTION_
     def bootstrap(self):
         return self.content()
 
