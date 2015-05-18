@@ -38,7 +38,8 @@ class Suricata(Module):
         
                 
         self.actions=Actions(interface=interface, conf_sniffer=conf_suricata, mode=mode, socket_unix=socket_unix)
-        self.actions.start()
+        if not os.path.isdir(os.path.join(self.session.engine.setup['MODULES_DIR'],self.name,str(self.session.id))):
+            self.actions.start()
         
     def setup(self):
         interface=''
