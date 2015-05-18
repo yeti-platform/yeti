@@ -18,6 +18,7 @@ from time import sleep
 from Malcom.sniffer.modules.base_module import Module
 import simplejson as json
 from Malcom.auxiliary.toolbox import debug_output
+from ConfigParser import ConfigParser
 
 
 classname = "Suricata"
@@ -34,10 +35,32 @@ class Suricata(Module):
         self.name = "suricata"
         self.pull_content = 'suricata'
         self.dns_requests = {}
-        self.actions=Actions()
+                
+        interface,mode,conf_suricata,socket_unix=self._load_conf()
+        
+                
+        self.actions=Actions(interface=interface, conf_sniffer=conf_suricata, mode=mode, socket_unix=socket_unix)
         self.actions.start()
         
- 
+    def _load_conf(self):
+        interface=''
+        mode=''
+        conf_suricata=''
+        socket_unix=''
+        config=ConfigParser()
+        config.readfp(open(os.path.join(self.session.engine.setup['MODULES_DIR'],self.name,self.name+'.conf')))
+
+        if config.has_section('suricata'):
+            if config.has_option('suricata','interface'):
+                interface=config.get('suricata','interface')
+            if config.has_option('suricata','mode'):
+                mode=config.get('suricata','mode')
+            if config.has_option('suricata','conf_suricata'):
+                conf_suricata=config.get('suricata','conf_suricata')
+            if config.has_option('suricata','socket_unix'):
+                socket_unix=config.get('suricata','socket_unix')
+                
+        return interface,mode,conf_suricata,socket_unix
     def content(self,path):
         content="<table class='table table-condensed'><tr><th>Timestamp</th><th>Event Type</th><th>Proto</th><th>Source</th><th>Destination</th><th>Signature ID</th><th>Signature</th><th>Category</th><th>md5</th></tr>"
         with open(path, 'r') as f_json:
@@ -67,6 +90,7 @@ class Suricata(Module):
                     content=content+'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' %(timestamp,event_type,proto,src_ip,src_port,dest_ip,dest_port,signature_id,description,category,md5file)
             content=content+"</table>"
             return content
+        
     def bootstrap(self):
         file_name=self.session.pcap_filename
         name_session=self.session.name
