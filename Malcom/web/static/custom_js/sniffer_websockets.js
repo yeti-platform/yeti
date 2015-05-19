@@ -300,6 +300,7 @@ function getSessionList(private) {
     $.ajax({
         type: 'get',
         url: url,
+        accepts: 'application/json',
         success: function(data) {
             table = $('#sessions');
             console.log(data)
