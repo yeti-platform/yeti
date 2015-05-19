@@ -225,11 +225,6 @@ class SnifferSession():
 				modules.append(module.__dict__.get(module.classname)(self))
 		return modules
 
-
-
-
-
-
 	def get_nodes(self):
 		return [str(self.nodes[n]['_id']) for n in self.nodes]
 

@@ -93,7 +93,8 @@ class Suricata(Module):
         files_metas=glob.glob(files_dir+'*.meta')
         for file_metas in files_metas:
             pass
-    def bootstrap(self):
+    
+    def bootstrap(self,args):
         file_name=self.session.pcap_filename
         name_session=self.session.name
         if file_name and name_session:
