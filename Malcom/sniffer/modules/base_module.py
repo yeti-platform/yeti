@@ -8,15 +8,15 @@ class Module(object):
         self.load_conf()
 
     def add_static_tags(self, content):
-        static_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), self.name, 'static')
-        files = [f for f in os.listdir(static_dir) if (f.lower().endswith('.css') or f.lower().endswith('.js')) and not f.lower().startswith('.')]
         add = ""
-        for f in files:
-            if f.lower().endswith(".css"):
-                add += self.css_tag(f)
-            elif f.lower().endswith(".js"):
-                add += self.js_tag(f)
-
+        static_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), self.name, 'static')
+        if os.path.exists(static_dir):
+            files = [f for f in os.listdir(static_dir) if (f.lower().endswith('.css') or f.lower().endswith('.js')) and not f.lower().startswith('.')]
+            for f in files:
+                if f.lower().endswith(".css"):
+                    add += self.css_tag(f)
+                elif f.lower().endswith(".js"):
+                    add += self.js_tag(f)
         add += content
 
         return add
