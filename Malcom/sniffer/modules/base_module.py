@@ -1,16 +1,30 @@
 from ConfigParser import ConfigParser
 import os
-
+import re
 
 class Module(object):
     """docstring for Module"""
     def __init__(self):
         self.load_conf()
 
+    def add_static_tags(self, content):
+        static_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), self.name, 'static')
+        files = [f for f in os.listdir(static_dir) if (f.lower().endswith('.css') or f.lower().endswith('.js')) and not f.lower().startswith('.')]
+        add = ""
+        for f in files:
+            if f.lower().endswith(".css"):
+                add += self.css_tag(f)
+            elif f.lower().endswith(".js"):
+                add += self.js_tag(f)
+
+        add += content
+
+        return add
+
     def static(self, args):
         filename = args.get('filename')
-        if not filename:
-            return None
+        if not filename or re.match('\w+\.\w+', filename) is None:
+            return False
         try:
             full_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), self.name, 'static', filename)
             with open(full_path, 'r') as _file:
@@ -18,7 +32,7 @@ class Module(object):
             return str(file_contents)
         except IOError, e:
             print "File not found: {}".format(e)
-            return None
+            return False
 
     def bootstrap(self, args):
         raise NotImplementedError("You must implement a bootstrap method")

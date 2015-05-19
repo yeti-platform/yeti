@@ -338,9 +338,9 @@ class SnifferSessionModuleFunction(Resource):
     def get(self, session_id, module_name, function):
         args = request.args
         output = g.messenger.send_recieve('call_module_function', 'sniffer-commands', params={'session_id': session_id, 'module_name': module_name, 'function': function, 'args':args})
-        if output is None:
-            abort(404)
-        return output
+        if output is False:
+            return "Not found", 404
+        return str(output)
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>/')

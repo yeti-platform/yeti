@@ -22,8 +22,9 @@ class PassiveDns(Module):
     # In this case, it only sends back a table, but it could eventually
     # send back JS code that could call other functions from the module
     # MANDATORY FUNCTION_
+
     def bootstrap(self, args):
-        content = self.content()
+        content = self.add_static_tags(self.content())
         return content
 
     # This is called for each packet that is processed during a sniffing session
