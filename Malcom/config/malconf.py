@@ -98,6 +98,10 @@ class MalcomSetup(dict):
 			for feed in config.options('feeds'):
 				self['ACTIVATED_FEEDS'].append(feed)
 
+		if config.has_section('modules'):
+			self['ACTIVATED_MODULES']=[]
+			for module in config.options('modules'):
+				self['ACTIVATED_MODULES'].append(module)
 
 	def get_network_interfaces(self):
 		self['IFACES'] = {}

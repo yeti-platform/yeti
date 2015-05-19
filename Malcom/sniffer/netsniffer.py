@@ -216,8 +216,9 @@ class SnifferSession():
 		from Malcom.sniffer.modules.base_module import Module
 		modules_directory = self.engine.setup['MODULES_DIR']
 		modules = []
+		module_activated=self.engine.setup['ACTIVATED_MODULES']
 		for modulename in os.listdir(modules_directory):
-			if '.' not in modulename:
+			if '.' not in modulename and modulename in module_activated:
 				full_filename = "{}/{}/{}.py".format(modules_directory, modulename, modulename)
 				debug_output("Loading sniffer module: {}".format(modulename))
 				module = imp.load_source(modulename, full_filename)
