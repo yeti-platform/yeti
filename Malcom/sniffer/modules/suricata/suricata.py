@@ -36,12 +36,13 @@ class Suricata(Module):
         self.pull_content = 'suricata'
         super(Suricata, self).__init__()
         interface,mode,conf_suricata,socket_unix=self.setup()
-        
-                
+
+        print os.path.isdir(os.path.join(self.session.engine.setup['MODULES_DIR'],self.name,str(self.session.id)))     
         self.actions=Actions(interface=interface, conf_sniffer=conf_suricata, mode=mode, socket_unix=socket_unix)
         if not os.path.isdir(os.path.join(self.session.engine.setup['MODULES_DIR'],self.name,str(self.session.id))):
+            debug_output('Suricata Start')
             self.actions.start()
-        
+            sleep(10)
     def setup(self):
         interface=''
         mode=''
@@ -59,8 +60,14 @@ class Suricata(Module):
                 socket_unix=self.config['suricata']['socket_unix']
                 
         return interface,mode,conf_suricata,socket_unix
+    
     def content(self,path):
-        content="<table class='table table-condensed'><tr><th>Timestamp</th><th>Event Type</th><th>Proto</th><th>Source</th><th>Destination</th><th>Signature ID</th><th>Signature</th><th>Category</th><th>md5</th></tr>"
+        content=''
+        css_import=self.css_tag('style.css')
+        if css_import:
+            content=css_import
+        
+        content+="<table class='table table-condensed'><tr><th>Timestamp</th><th>Event Type</th><th>Proto</th><th>Source</th><th>Destination</th><th>Signature ID</th><th>Signature</th><th>Category</th><th>md5</th></tr>"
         with open(path, 'r') as f_json:
             for l in f_json:
                 entry=json.loads(l)
@@ -75,17 +82,20 @@ class Suricata(Module):
                 description=''  
                 category=''
                 md5file=''
+                class_severity=''
                 if event_type =="alert":
                     signature_id=entry['alert']['signature_id']
                     description=entry['alert']['signature']
                     category=entry['alert']['category']
+                    class_severity=entry['alert']['severity']
                 if event_type=='fileinfo':
                     description=entry['fileinfo']['filename']
                     category=entry['fileinfo']['magic']
                     if 'md5' in entry['fileinfo']:
                         md5file=entry['fileinfo']['md5']
+                    class_severity='2'
                 if (event_type =="alert" or event_type=='fileinfo') and (description not in  ['SURICATA TCPv4 invalid checksum','FILE store all']): 
-                    content=content+'<tr><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' %(timestamp,event_type,proto,src_ip,src_port,dest_ip,dest_port,signature_id,description,category,md5file)
+                    content=content+'<tr class="Severity_%s"><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' %(class_severity,timestamp,event_type,proto,src_ip,src_port,dest_ip,dest_port,signature_id,description,category,md5file)
             content=content+"</table>"
             return content
     def files_meta(self,dir_to_write_logs):
