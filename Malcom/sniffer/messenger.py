@@ -130,13 +130,14 @@ class SnifferMessenger(Messenger):
 				if cmd == 'call_module_function':
 					module_name = params['module_name']
 					function = params['function']
+					args = params['args']
 					module = session.modules.get(module_name, None)
 					if module:
 						try:
-							final_msg = getattr(module, function)()
+							final_msg = getattr(module, function)(args)
 						except Exception, e:
 							import traceback
-							final_msg = "[{} in function {}] Module error: {}\n".format(repr(module), function, e)
+							final_msg = "[{} in function {}] Module error: {}\n".format(module_name, function, e)
 							final_msg += traceback.format_exc()
 							final_msg = "<pre>{}</pre>".format(final_msg)
 					else:

@@ -23,10 +23,21 @@ def output_json(obj, code, headers=None):
     resp.headers.extend(headers or {})
     return resp
 
-api = Api(app)
-DEFAULT_REPRESENTATIONS = {'application/json': output_json}
-api.representations = DEFAULT_REPRESENTATIONS
+def output_normal(obj, code, headers=None):
+    resp = make_response(obj, code)
+    resp.headers.extend(headers or {})
+    return resp
 
+api = Api(app)
+DEFAULT_REPRESENTATIONS = {
+                            'application/html': output_normal,
+                            'application/json': output_json,
+                            'text/html': output_normal,
+                            'text/javascript': output_normal,
+                            'text/css': output_normal,
+                            }
+
+api.representations = DEFAULT_REPRESENTATIONS
 
 class FileStorageArgument(reqparse.Argument):
     def convert(self, value, op):
@@ -308,7 +319,7 @@ class SnifferSessionData(Resource):
             return {'evil_node_list': [r for r in result if len(r['evil']) > 0]}
 
         if not (_all or elements or evil):
-            return abort(400)
+            abort(400)
 
 class SnifferSessionControl(Resource):
     decorators=[login_required]
@@ -321,11 +332,14 @@ class SnifferSessionControl(Resource):
 
         return status
 
+
 class SnifferSessionModuleFunction(Resource):
     decorators=[login_required]
-
     def get(self, session_id, module_name, function):
-        output = g.messenger.send_recieve('call_module_function', 'sniffer-commands', params={'session_id': session_id, 'module_name': module_name, 'function': function})
+        args = request.args
+        output = g.messenger.send_recieve('call_module_function', 'sniffer-commands', params={'session_id': session_id, 'module_name': module_name, 'function': function, 'args':args})
+        if output is None:
+            abort(404)
         return output
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')

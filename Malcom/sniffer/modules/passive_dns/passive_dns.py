@@ -14,16 +14,17 @@ class PassiveDns(Module):
         self.session = session
         self.display_name = "Passive DNS"
         self.name = "passive_dns"
-        self.pull_content = 'passivedns'
-        super(PassiveDns, self).__init__()
         self.dns_requests = {}
+
+        super(PassiveDns, self).__init__()
 
     # This function defines what is sent back to the browser.
     # In this case, it only sends back a table, but it could eventually
     # send back JS code that could call other functions from the module
     # MANDATORY FUNCTION_
-    def bootstrap(self):
-        return self.content()
+    def bootstrap(self, args):
+        content = self.content()
+        return content
 
     # This is called for each packet that is processed during a sniffing session
     # MANDATORY FUNCTION
@@ -54,19 +55,19 @@ class PassiveDns(Module):
     def parse_dns_response(self, pkt):
         question = pkt[DNS].qd.qname
         if question not in self.dns_requests:
-            self.dns_requests[question] = {'count':0, 'answers':[]}
+            self.dns_requests[question] = {'count': 0, 'answers': []}
         self.dns_requests[question]['count'] += 1
 
         response_types = [pkt[DNS].an, pkt[DNS].ns, pkt[DNS].ar]
         response_counts = [pkt[DNS].ancount, pkt[DNS].nscount, pkt[DNS].arcount]
 
         for i, response in enumerate(response_types):
-            if response_counts[i] == 0: continue
+            if response_counts[i] == 0:
+                continue
             for rr in xrange(response_counts[i]):
                 if response[rr].type not in [1, 2, 5, 15]:
                     debug_output('No relevant records in reply')
                     continue
                 rr = response[rr]
-                rrname = rr.rrname
                 if rr.rdata not in self.dns_requests[question]['answers']:
                     self.dns_requests[question]['answers'].append(rr.rdata)
