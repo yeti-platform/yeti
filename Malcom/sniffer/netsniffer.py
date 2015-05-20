@@ -186,6 +186,7 @@ class SnifferSession():
         self.pcap_filename = "{}-{}.pcap".format(self.id, self.name)  # TODO CHANGE THIS AND MAKE IT SECURE
         self.pkts = []
         self.packet_count = 0
+        self.live_analysis = {}
 
         self.nodes = {}
         self.edges = {}
