@@ -191,7 +191,7 @@ $(".module-tab").on('shown.bs.tab', function (e) {
 
   <div class="btn-group" role="group" aria-label="sniffer-operations">
     <button id='startsniff' disabled='true' onclick="javascript:startsniff()" type="button" class="btn btn-sm btn-default">{% if session.pcap %}Replay{% else %}Start{%endif%}</button>
-    <button id='stopsniff' disabled='true' type="button" class="btn btn-sm btn-default">{% if session.pcap %}Cancel{% else %}Stop{%endif%}</button>
+    <button id='stopsniff' disabled='true' onclick="javascript:stopsniff()" type="button" class="btn btn-sm btn-default">{% if session.pcap %}Cancel{% else %}Stop{%endif%}</button>
     <a class="btn btn-sm btn-default" href="{{url_for('malcom_api.pcap', session_id=session.id)}}" role="button">Download .pcap</a>
   </div>
 
