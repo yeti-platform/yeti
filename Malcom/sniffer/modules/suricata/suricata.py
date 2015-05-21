@@ -96,7 +96,7 @@ class Suricata(Module):
 
     def load_result(self, path):
         if self.result and not self.reload:
-            for entry in self.result['datas']:
+            for entry in sorted(self.result['datas'], key=lambda v: v['timestamp']):
                 yield entry
         if self.reload:
             with open(path, 'r') as f_json:
