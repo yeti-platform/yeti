@@ -472,8 +472,13 @@ class Model:
         else:
             filter = {'_id': {'$in': user_sessions}}
 
-        session_list = list(
-            self.sniffer_sessions.find(filter, skip=page, limit=max, sort=[('date_created', pymongo.DESCENDING)]))
+        while True:
+            try:
+                session_list = list(self.sniffer_sessions.find(filter, skip=page, limit=max, sort=[('date_created', pymongo.DESCENDING)]))
+                break
+            except Exception, e:
+                debug_output("{}".format(e), 'error')
+
         return session_list
 
     def del_sniffer_session(self, session, sniffer_dir):
