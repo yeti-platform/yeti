@@ -1,5 +1,6 @@
 from scapy.all import *
 from Malcom.sniffer.modules.base_module import Module
+from Malcom.auxiliary.toolbox import debug_output
 
 classname = "PassiveDns"
 
