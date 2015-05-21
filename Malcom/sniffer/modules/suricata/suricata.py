@@ -15,7 +15,7 @@ from socket import socket, AF_UNIX, error
 from subprocess import PIPE
 import subprocess
 from time import sleep
-
+import datetime
 from Malcom.auxiliary.toolbox import debug_output
 from Malcom.sniffer.modules.base_module import Module
 import simplejson as json
@@ -35,13 +35,15 @@ class Suricata(Module):
         self.pull_content = 'suricata'
         super(Suricata, self).__init__()
         interface, mode, conf_suricata, socket_unix = self.setup()
-
-        print os.path.isdir(os.path.join(self.session.engine.setup['MODULES_DIR'], self.name, str(self.session.id)))
+        self.result = super(Suricata, self).load_results()
+        self.reload=False
         self.actions = Actions(interface=interface, conf_sniffer=conf_suricata, mode=mode, socket_unix=socket_unix)
-        if not os.path.isdir(os.path.join(self.session.engine.setup['MODULES_DIR'], self.name, str(self.session.id))):
-            debug_output('Suricata Start')
-            self.actions.start()
-            sleep(10)
+        if not self.result or self.result['timeout'] < datetime.datetime.utcnow():
+            self.reload = True
+        if self.reload:
+                debug_output('Suricata Start')
+                self.actions.start()
+                sleep(10)
 
     def setup(self):
         interface = ''
@@ -61,46 +63,7 @@ class Suricata(Module):
 
         return interface, mode, conf_suricata, socket_unix
 
-    def content(self, path):
-        content = ''
-        css_import = self.css_tag('style.css')
-        if css_import:
-            content = css_import
 
-        content += "<table class='table table-condensed'><tr><th>Timestamp</th><th>Event Type</th><th>Proto</th><th>Source</th><th>Destination</th><th>Signature ID</th><th>Signature</th><th>Category</th><th>md5</th></tr>"
-        with open(path, 'r') as f_json:
-            for l in f_json:
-                entry = json.loads(l)
-                timestamp = entry['timestamp']
-                event_type = entry['event_type']
-                src_ip = entry['src_ip']
-                src_port = entry['src_port']
-                dest_ip = entry['dest_ip']
-                dest_port = entry['dest_port']
-                proto = entry['proto']
-                signature_id = ''
-                description = ''
-                category = ''
-                md5file = ''
-                class_severity = ''
-                if event_type == "alert":
-                    signature_id = entry['alert']['signature_id']
-                    description = entry['alert']['signature']
-                    category = entry['alert']['category']
-                    class_severity = entry['alert']['severity']
-                if event_type == 'fileinfo':
-                    description = entry['fileinfo']['filename']
-                    category = entry['fileinfo']['magic']
-                    if 'md5' in entry['fileinfo']:
-                        md5file = entry['fileinfo']['md5']
-                    class_severity = '2'
-                if (event_type == "alert" or event_type == 'fileinfo') and (
-                    description not in ['SURICATA TCPv4 invalid checksum', 'FILE store all']):
-                    content += '<tr class="Severity_%s"><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (
-                    class_severity, timestamp, event_type, proto, src_ip, src_port, dest_ip, dest_port, signature_id,
-                    description, category, md5file)
-            content += "</table>"
-            return content
 
     def files_meta(self, dir_to_write_logs):
         files_dir = os.path.join(dir_to_write_logs, 'files')
@@ -114,9 +77,13 @@ class Suricata(Module):
         if file_name and name_session:
             file_to_analyse = os.path.join(self.session.engine.setup['SNIFFER_DIR'], file_name)
             dir_to_write_logs = os.path.join(self.session.engine.setup['MODULES_DIR'], self.name, str(self.session.id))
-            if not os.path.isdir(dir_to_write_logs):
+            if  self.reload:
                 self.actions.send_pcap(file_to_analyse, dir_to_write_logs)
-                sleep(10)
+                while not os.path.isfile(os.path.join(dir_to_write_logs, 'eve.json')):
+                    print os.path.isfile(os.path.join(dir_to_write_logs, 'eve.json'))
+                    print os.path.join(dir_to_write_logs, 'eve.json')
+                    sleep(5)
+                    pass
 
         content = self.content(os.path.join(dir_to_write_logs, 'eve.json'))
         if not os.path.isdir(dir_to_write_logs):
@@ -127,6 +94,64 @@ class Suricata(Module):
     def on_packet(self, pkt):
         pass
 
+    def load_result(self, path):
+        if self.result and not self.reload:
+            for entry in self.result['datas']:
+                yield entry
+        if self.reload:
+            with open(path, 'r') as f_json:
+                for l in f_json:
+                    yield json.loads(l)
+
+    def set_entry(self, entry):
+        timestamp = entry['timestamp']
+        event_type = entry['event_type']
+        src_ip = entry['src_ip']
+        src_port = entry['src_port']
+        dest_ip = entry['dest_ip']
+        dest_port = entry['dest_port']
+        proto = entry['proto']
+        signature_id = ''
+        description = ''
+        category = ''
+        md5file = ''
+        class_severity = ''
+        if event_type == "alert":
+            signature_id = entry['alert']['signature_id']
+            description = entry['alert']['signature']
+            category = entry['alert']['category']
+            class_severity = entry['alert']['severity']
+        if event_type == 'fileinfo':
+            description = entry['fileinfo']['filename']
+            category = entry['fileinfo']['magic']
+            if 'md5' in entry['fileinfo']:
+                md5file = entry['fileinfo']['md5']
+            class_severity = '2'
+        return class_severity, timestamp, event_type, proto, src_ip, src_port, dest_ip, dest_port, signature_id, description, category, md5file
+
+    def content(self, path):
+        content = ''
+        css_import = self.css_tag('style.css')
+        if css_import:
+            content = css_import
+        content += "<table class='table table-condensed'><tr><th>Timestamp</th><th>Event Type</th><th>Proto</th><th>Source</th><th>Destination</th><th>Signature ID</th><th>Signature</th><th>Category</th><th>md5</th></tr>"
+
+        if self.reload:
+            result_to_save = {'datas': []}
+        for entry in self.load_result(path):
+            class_severity, timestamp, event_type, proto, src_ip, src_port, dest_ip, dest_port, signature_id, description, category, md5file = self.set_entry(entry)
+            if (event_type == "alert" or event_type == 'fileinfo') and (
+                        description not in ['SURICATA TCPv4 invalid checksum', 'FILE store all']):
+                content += '<tr class="Severity_%s"><td>%s</td><td>%s</td><td>%s</td><td>%s %s</td><td>%s %s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (
+                    class_severity, timestamp, event_type, proto, src_ip, src_port, dest_ip, dest_port, signature_id,
+                    description, category, md5file)
+                if self.reload:
+                    result_to_save['datas'].append(entry)
+        if self.reload:
+            self.save_result(result_to_save)
+        content += "</table>"
+
+        return content
 
 # Class to execute and launch command with Suricata
 class Actions(object):
@@ -210,14 +235,16 @@ class SuricataBroker(object):
 
         cmdmsg = {}
         cmdmsg['command'] = command
-        if not arguments:
+
+        if arguments:
             cmdmsg['arguments'] = arguments
         if self.verbose:
             debug_output("SND: " + json.dumps(cmdmsg), 'info')
+
         self.socket.send(json.dumps(cmdmsg))
         cmdret = self.json_recv()
 
-        if cmdret:
+        if not cmdret:
             raise SuricataReturnException("Unable to get message from server")
 
         if self.verbose:
@@ -232,7 +259,7 @@ class SuricataBroker(object):
         except error, err:
             raise SuricataNetException(err)
 
-        self.socket.settimeout(10)
+        self.socket.settimeout(30)
         # send version
         if self.verbose:
             debug_output("SND: " + json.dumps({"version": VERSION}), 'info')
@@ -241,7 +268,7 @@ class SuricataBroker(object):
         # get return
         cmdret = self.json_recv()
 
-        if cmdret == None:
+        if not cmdret:
             raise SuricataReturnException("Unable to get message from server")
 
         if self.verbose:

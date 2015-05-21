@@ -1,10 +1,12 @@
 from ConfigParser import ConfigParser
 import os
 import re
+import datetime
 
 class Module(object):
     """docstring for Module"""
     def __init__(self):
+        self.timeout = 24
         self.load_conf()
 
     def add_static_tags(self, content):
@@ -33,6 +35,16 @@ class Module(object):
         except IOError, e:
             print "File not found: {}".format(e)
             return False
+
+    def load_results(self):
+        return self.session.model.get_modules_infos(self.session.id, self.name)
+
+    def save_result(self, entry={}):
+        entry['session_id'] = self.session.id
+        entry['name'] = self.name
+        entry['timeout'] = datetime.datetime.utcnow() + datetime.timedelta(hours=self.timeout)
+        self.session.model.save_module_entry(entry)
+
 
     def bootstrap(self, args):
         raise NotImplementedError("You must implement a bootstrap method")
