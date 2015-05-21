@@ -187,6 +187,7 @@ class SnifferSession():
         self.pkts = []
         self.packet_count = 0
         self.live_analysis = {}
+        self.offline_delay = 0
 
         self.nodes = {}
         self.edges = {}
@@ -674,7 +675,7 @@ class SnifferSession():
                     if count > 0 and c >= count:
                         break
                     if offline:
-                        time.sleep(0.05)
+                        time.sleep(self.offline_delay)
             except KeyboardInterrupt:
                 break
         s.close()
