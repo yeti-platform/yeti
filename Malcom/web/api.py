@@ -277,7 +277,7 @@ class SnifferSessionNew(Resource):
             fh_pcap.save(g.config['SNIFFER_DIR'] + "/" + session_info['pcap_filename'])
 
         if start:
-            g.messenger.send_recieve('sniffstart', 'sniffer-commands', params={'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
+            g.messenger.send_recieve('sniffstart', 'sniffer-commands', params={'session_id': session_id, 'remote_addr': str(request.remote_addr)})
 
         return {'session_id': session_id}
 
@@ -288,10 +288,10 @@ class SnifferSessionNew(Resource):
 # For evil elements by session: http://localhost:8080/api/sniffer/data/<session_id>/?evil=1
 
 class SnifferSessionData(Resource):
-    decorators=[login_required]
+    decorators = [login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('evil', type=bool, default=False)
-    parser.add_argument('all', type=bool, default=True)
+    parser.add_argument('all', type=bool, default=False)
     parser.add_argument('elements', type=bool, default=False)
 
     def get(self, session_id):
@@ -305,7 +305,7 @@ class SnifferSessionData(Resource):
         if not session_info:
             abort(404)
 
-        if _all:
+        if _all or not (_all or evil or elements):
             return session_info
 
         result = g.Model.find({'_id': {'$in': [ObjectId(i) for i in session_info['node_list']]}})
