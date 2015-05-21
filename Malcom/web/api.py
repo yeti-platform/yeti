@@ -19,22 +19,20 @@ malcom_api = Blueprint('malcom_api', __name__)
 
 
 def output_json(obj, code, headers=None):
-    resp = make_response(dumps(obj), code)
-    resp.headers.extend(headers or {})
-    return resp
-
-def output_normal(obj, code, headers=None):
-    resp = make_response(obj, code)
+    if type(obj) is dict:
+        resp = make_response(dumps(obj), code)
+    else:
+        resp = make_response(obj, code)
     resp.headers.extend(headers or {})
     return resp
 
 api = Api(app)
 DEFAULT_REPRESENTATIONS = {
-                            'application/html': output_normal,
+                            'application/html': output_json,
                             'application/json': output_json,
-                            'text/html': output_normal,
-                            'text/javascript': output_normal,
-                            'text/css': output_normal,
+                            'text/html': output_json,
+                            'text/javascript': output_json,
+                            'text/css': output_json,
                             }
 
 api.representations = DEFAULT_REPRESENTATIONS
@@ -340,7 +338,13 @@ class SnifferSessionModuleFunction(Resource):
         output = g.messenger.send_recieve('call_module_function', 'sniffer-commands', params={'session_id': session_id, 'module_name': module_name, 'function': function, 'args':args})
         if output is False:
             return "Not found", 404
-        return str(output)
+
+        return output
+
+        # if type(output) is dict:
+        #     return output, 200, {'Content-Type': 'application/json'}
+        # else:
+        #     return output, 200, {'Content-Type': 'text/html'}
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>/')
