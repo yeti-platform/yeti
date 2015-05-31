@@ -39,8 +39,13 @@ nosetests.xml
 # Malcom folders
 env-*
 libs
+
+# do not include private feeds
+Malcom/feeds/private*
+
 # do not include user-generated pcap files
 Malcom/sniffer/captures/*.pcap
+
 # do not include TLS keys
 Malcom/networking/tlsproxy/keys/server.crt
 Malcom/networking/tlsproxy/keys/server.key

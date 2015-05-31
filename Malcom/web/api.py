@@ -130,7 +130,7 @@ class QueryAPI(Resource):
             hist = query.get('value')
             if hasattr(hist, 'pattern'):  # do not attempt to store a regex in history.
                 g.Model.add_to_history(hist.pattern)
-            else:
+            elif hist:
                 g.Model.add_to_history(hist)
 
         data = {}
