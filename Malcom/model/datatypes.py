@@ -6,6 +6,7 @@ try:
 	import geoip2.database
 	file = os.path.abspath(__file__)
 	current_path = os.path.dirname(os.path.abspath(__file__))
+	path = os.path.join(current_path, '..', '/auxiliary/geoIP/GeoIP2-City.mmdb')
 	geoip_reader = geoip2.database.Reader(current_path+'/../auxiliary/geoIP/GeoIP2-City.mmdb')
 	geoip = True
 except Exception, e:
