@@ -19,14 +19,23 @@ malcom_api = Blueprint('malcom_api', __name__)
 
 
 def output_json(obj, code, headers=None):
-    resp = make_response(dumps(obj), code)
+    if type(obj) is dict:
+        resp = make_response(dumps(obj), code)
+    else:
+        resp = make_response(obj, code)
     resp.headers.extend(headers or {})
     return resp
 
 api = Api(app)
-DEFAULT_REPRESENTATIONS = {'application/json': output_json}
-api.representations = DEFAULT_REPRESENTATIONS
+DEFAULT_REPRESENTATIONS = {
+                            'application/html': output_json,
+                            'application/json': output_json,
+                            'text/html': output_json,
+                            'text/javascript': output_json,
+                            'text/css': output_json,
+                            }
 
+api.representations = DEFAULT_REPRESENTATIONS
 
 class FileStorageArgument(reqparse.Argument):
     def convert(self, value, op):
@@ -227,10 +236,9 @@ class SnifferSessionPcap(Resource):
     decorators=[login_required]
     def get(self, session_id):
         result = g.messenger.send_recieve('sniffpcap', 'sniffer-commands', {'session_id': session_id})
-        print result
         session = g.Model.get_sniffer_session(session_id)
         if 'pcap_filename' in session:
-            return send_from_directory(g.config['SNIFFER_DIR'],session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
+            return send_from_directory(g.config['SNIFFER_DIR'], session['pcap_filename'] , mimetype='application/vnd.tcpdump.pcap', as_attachment=True, attachment_filename='malcom_capture_'+session_id+'.pcap')
 
 
 class SnifferSessionNew(Resource):
@@ -269,7 +277,7 @@ class SnifferSessionNew(Resource):
             fh_pcap.save(g.config['SNIFFER_DIR'] + "/" + session_info['pcap_filename'])
 
         if start:
-            g.messenger.send_recieve('sniffstart', 'sniffer-commands', params={'session_id': session_id, 'remote_addr': str(request.remote_addr)} )
+            g.messenger.send_recieve('sniffstart', 'sniffer-commands', params={'session_id': session_id, 'remote_addr': str(request.remote_addr)})
 
         return {'session_id': session_id}
 
@@ -280,7 +288,7 @@ class SnifferSessionNew(Resource):
 # For evil elements by session: http://localhost:8080/api/sniffer/data/<session_id>/?evil=1
 
 class SnifferSessionData(Resource):
-    decorators=[login_required]
+    decorators = [login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('evil', type=bool, default=False)
     parser.add_argument('all', type=bool, default=False)
@@ -297,7 +305,7 @@ class SnifferSessionData(Resource):
         if not session_info:
             abort(404)
 
-        if _all:
+        if _all or not (_all or evil or elements):
             return session_info
 
         result = g.Model.find({'_id': {'$in': [ObjectId(i) for i in session_info['node_list']]}})
@@ -309,7 +317,7 @@ class SnifferSessionData(Resource):
             return {'evil_node_list': [r for r in result if len(r['evil']) > 0]}
 
         if not (_all or elements or evil):
-            return abort(400)
+            abort(400)
 
 class SnifferSessionControl(Resource):
     decorators=[login_required]
@@ -323,9 +331,25 @@ class SnifferSessionControl(Resource):
         return status
 
 
+class SnifferSessionModuleFunction(Resource):
+    decorators=[login_required]
+    def get(self, session_id, module_name, function):
+        args = request.args
+        output = g.messenger.send_recieve('call_module_function', 'sniffer-commands', params={'session_id': session_id, 'module_name': module_name, 'function': function, 'args':args})
+        if output is False:
+            return "Not found", 404
+
+        return output
+
+        # if type(output) is dict:
+        #     return output, 200, {'Content-Type': 'application/json'}
+        # else:
+        #     return output, 200, {'Content-Type': 'text/html'}
+
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
-api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>')
-api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>', endpoint='malcom_api.pcap')
+api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>/')
+api.add_resource(SnifferSessionPcap, '/api/sniffer/pcap/<session_id>/', endpoint='malcom_api.pcap')
 api.add_resource(SnifferSessionNew, '/api/sniffer/new/', endpoint='malcom_api.session_start')
-api.add_resource(SnifferSessionControl, '/api/sniffer/control/<session_id>/<string:action>', endpoint='malcom_api.session_control')
+api.add_resource(SnifferSessionControl, '/api/sniffer/control/<session_id>/<string:action>/', endpoint='malcom_api.session_control')
 api.add_resource(SnifferSessionData, '/api/sniffer/data/<session_id>/')
+api.add_resource(SnifferSessionModuleFunction, '/api/sniffer/module/<session_id>/<module_name>/<function>/', endpoint='malcom_api.call_module_function')

@@ -174,10 +174,10 @@ Supported read preferences are:
 
 ### Docker instance
 
-The quickest way to get you started is to pull the Docker image from the [public docker repo](https://registry.hub.docker.com/u/tomchop/malcom/). **To pull the automatic Docker build for the latest GitHub commit**, use `tomchop/malcom-automatic` instead of `tomchop/malcom`.
+The quickest way to get you started is to pull the Docker image from the [public docker repo](https://registry.hub.docker.com/u/tomchop/malcom/). **To pull older, more stable Docker builds**, use `tomchop/malcom` instead of `tomchop/malcom-automatic`.
 
-        $ sudo docker pull tomchop/malcom
-        $ sudo docker run -p 8080:8080 -d --name malcom tomchop/malcom
+        $ sudo docker pull tomchop/malcom-automatic
+        $ sudo docker run -p 8080:8080 -d --name malcom tomchop/malcom-automatic
 
 Connecting to `http://<docker_host>:8080/` should get you started.
 

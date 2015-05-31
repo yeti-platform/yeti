@@ -20,6 +20,7 @@ max_workers = 12
 activated = true
 network = true
 sniffer_dir = sniffer/captures
+modules_dir = sniffer/modules
 tls_proxy_port = 9000
 yara_path = yara
 
@@ -77,3 +78,13 @@ TorExitNodes
 ZeusTrackerBinaries
 ZeusTrackerConfigs
 ZeusTrackerDropzones
+
+
+[modules]
+# You can comment / uncomment modules
+# according to if you want to use
+# them or not
+
+
+#suricata
+#passive_dns

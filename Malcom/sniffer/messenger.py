@@ -85,6 +85,7 @@ class SnifferMessenger(Messenger):
 							'public': session.public,
 							'status': session.status(),
 							'node_list': session.get_nodes(),
+							'modules': [(session.modules[module_name].display_name, module_name) for module_name in session.modules],
 					}
 
 				if cmd == 'sniffstatus':
@@ -125,6 +126,23 @@ class SnifferMessenger(Messenger):
 				if cmd == 'sniffpcap':
 					result = self.snifferengine.commit_to_db(session)
 					final_msg = result
+
+				if cmd == 'call_module_function':
+					module_name = params['module_name']
+					function = params['function']
+					args = params['args']
+					module = session.modules.get(module_name, None)
+					if module:
+						try:
+							final_msg = getattr(module, function)(args)
+						except Exception, e:
+							import traceback
+							final_msg = "[{} in function {}] Module error: {}\n".format(module_name, function, e)
+							final_msg += traceback.format_exc()
+							final_msg = "<pre>{}</pre>".format(final_msg)
+					else:
+						final_msg = False
+
 
 		if final_msg != None:
 			reply = {'msg': final_msg, 'queryid': queryid, 'dst': src, 'src':self.name}
