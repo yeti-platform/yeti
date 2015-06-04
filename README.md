@@ -55,12 +55,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        $ apt-get install build-essential git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
-
-* Get `scapy`:
-
-        $ wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-        $ tar xvzf scapy-latest.tar.gz
+        $ sudo apt-get install build-essential git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
 
 * Clone the Git repo:
 
@@ -72,9 +67,12 @@ The following was tested on Ubuntu server 14.04 LTS:
         $ virtualenv env-malcom
         $ source env-malcom/bin/activate
 
-* Install scapy (if you're ina virtual environment, don't  `sudo`):
+* Get and install `scapy`:
 
-        $ cd ../scapy-2.1.0
+        $ cd .. 
+        $ wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
+        $ tar xvzf scapy-latest.tar.gz
+        $ cd scapy-2.1.0
         $ python setup.py install
 
 * Still from your virtualenv, install necessary python packages from the `requirements.txt` file:
