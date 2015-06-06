@@ -32,7 +32,7 @@ class UserTransform(SONManipulator):
 
 class UserManager():
 	"""Class to manage Malcom users"""
-	def __init__(self, setup):
+	def __init__(self, setup={}):
 		read_pref = {'PRIMARY': ReadPreference.PRIMARY, 'PRIMARY_PREFERRED': ReadPreference.PRIMARY_PREFERRED, 'SECONDARY': ReadPreference.SECONDARY, 'SECONDARY_PREFERRED': ReadPreference.SECONDARY_PREFERRED, 'NEAREST': ReadPreference.NEAREST}
 		db_setup = setup.get('DATABASE', {})
 		self._connection = MongoClient(host = db_setup.get('HOSTS', 'localhost'), replicaSet = db_setup.get('REPLSET', None), read_preference = read_pref[db_setup.get('READ_PREF', 'PRIMARY')])
