@@ -51,8 +51,10 @@ tlds = ['ac', 'academy', 'accountants', 'active', 'actor', 'ad', 'ae', 'aero', '
 def list_to_str(obj):
     if isinstance(obj, list):
         return ", ".join([list_to_str(e) for e in obj])
+    elif isinstance(obj, unicode):
+        return obj
     else:
-        return str(obj).decode('cp1252')
+        return str(obj)
 
 
 def send_msg(ws, msg, type='msg'):
