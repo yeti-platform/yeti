@@ -97,9 +97,6 @@ class Feed(object):
 
 	def commit_to_db(self, element, testing=False):
 		if self.testing:
-			# print "Evil node: %s" % (element['value'])
-			# print "Data:"
-			# print bson.json_util.dumps(element['evil'], sort_keys=True, indent=4, separators=(',', ':'))
 			self.elements_fetched +=1
 			return
 
