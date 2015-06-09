@@ -122,16 +122,17 @@ class Feed(object):
 
 		# REDIS send messages to webserver
 		# self.analytics.notify_progress("Feeding")
-		# try:
-		t0 = datetime.now()
-		self.update()
-		t1 = datetime.now()
-		print "Feed %s added in %s" %(self.name, str(t1-t0))
-		# save time for record in db
-		self.model.feed_last_run(self.name)
-		# except Exception, e:
-	 # 		self.status = "ERROR: %s" % e
-	 # 		raise ValueError
+		try:
+			t0 = datetime.now()
+			self.update()
+			t1 = datetime.now()
+			debug_output("Feed {} added in {}".format(self.name, str(t1-t0)))
+			# save time for record in db
+			self.model.feed_last_run(self.name)
+		except Exception, e:
+			debug_output("Error adding feed {}: {}".format(self.name, e))
+	 		self.status = "ERROR: {}".format(e)
+	 		self.enabled = False
 
 		self.running = False
 
