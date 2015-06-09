@@ -345,8 +345,8 @@ def search(term=""):
 		query = [{field: r} for r in request.form['bulk-text'].split('\r\n') if r != '']
 		result_set = g.Model.find({'$or': query})
 	else:
-		query = request.args.get('query', False)
-		field = request.args.get('field', 'value')
+		query = request.args.get('query', False).strip()
+		field = request.args.get('field', 'value').strip()
 		if not bool(request.args.get('strict', False)):
 			result_set = g.Model.find({field: query})
 		else:
@@ -384,7 +384,10 @@ def search(term=""):
 			return render_template('search.html', term=query, history=g.Model.get_history())
 		else:
 			new = g.Model.add_text([query], tags=['search'])
-			flash('"{}" was not found. It was added to the database (ID: {})'.format(query, new['_id']))
+			if new:
+				flash('"{}" was not found. It was added to the database (ID: {})'.format(query, new['_id']))
+			else:
+				flash('"{}" did not convert to a viable datatype').format(query)
 			# or do the redirection here
 			return render_template('search.html', term=query, history=g.Model.get_history())
 
