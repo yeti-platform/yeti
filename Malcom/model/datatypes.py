@@ -250,10 +250,6 @@ class Ip(Element):
 		self['value'] = ip
 		self['tags'] = tags
 		self['type'] = 'ip'
-		# refresh IP geolocation every 72hours
-		if ip != '':
-			self.location_info()
-
 		self['refresh_period'] = Ip.default_refresh_period
 
 	@staticmethod
@@ -261,8 +257,6 @@ class Ip(Element):
 		ip = Ip()
 		for key in d:
 			ip[key] = d[key]
-
-		ip.location_info()
 		return ip
 
 
@@ -275,6 +269,8 @@ class Ip(Element):
 		if hostname:
 			if toolbox.is_hostname(hostname):
 				new.append(('reverse', Hostname(hostname)))
+
+		self.location_info()
 
 		self['last_analysis'] = datetime.datetime.utcnow()
 		self['next_analysis'] = self['last_analysis'] + datetime.timedelta(seconds=self['refresh_period'])

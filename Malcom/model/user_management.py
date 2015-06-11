@@ -8,6 +8,7 @@ import datetime
 
 from pymongo import MongoClient
 from pymongo.son_manipulator import SONManipulator
+from pymongo.read_preferences import ReadPreference
 import pymongo.errors
 from passlib.hash import pbkdf2_sha512
 from flask.ext.login import make_secure_token
@@ -31,9 +32,13 @@ class UserTransform(SONManipulator):
 
 class UserManager():
 	"""Class to manage Malcom users"""
-	def __init__(self):
-		self._connection = MongoClient()
-		self._db = self._connection.malcom
+	def __init__(self, setup={}):
+		read_pref = {'PRIMARY': ReadPreference.PRIMARY, 'PRIMARY_PREFERRED': ReadPreference.PRIMARY_PREFERRED, 'SECONDARY': ReadPreference.SECONDARY, 'SECONDARY_PREFERRED': ReadPreference.SECONDARY_PREFERRED, 'NEAREST': ReadPreference.NEAREST}
+		db_setup = setup.get('DATABASE', {})
+		self._connection = MongoClient(host = db_setup.get('HOSTS', 'localhost'), replicaSet = db_setup.get('REPLSET', None), read_preference = read_pref[db_setup.get('READ_PREF', 'PRIMARY')])
+		self._db = self._connection[db_setup.get('NAME', 'malcom')]
+		if 'USERNAME' in db_setup:
+			self._db.authenticate(db_setup['USERNAME'], password = db_setup.get('PASSWORD', None), source = db_setup.get('SOURCE', None))
 
 		self.users = self._db.users
 		self.users.ensure_index('username', unique=True)

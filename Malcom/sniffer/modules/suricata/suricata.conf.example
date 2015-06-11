@@ -1,0 +1,4 @@
+[suricata]
+conf_suricata=/etc/suricata/suricata.yaml
+socket_unix=/var/run/suricata/suricata-command.socket
+mode=--unix-socket

@@ -1,0 +1,17 @@
+/* Flow table */
+
+.Severity_1 {
+	background-color: rgba(164,64,74,0.2);
+}
+
+.Severity_1:hover {
+	background-color: rgba(239,0,0,0.7);
+}
+
+.Severity_2 {
+	background-color: rgba(114, 255, 94, 0.2);
+}
+
+.Severity_2:hover {
+	background-color: rgba(114, 255, 94, 0.7);
+}

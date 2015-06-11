@@ -14,7 +14,6 @@ function initSnifferRealtimeWebSocket(session_id) {
     } else {
         console.log("WebSocket not supported (realtime)");
     }
-
 }
 
 function snifferWebSocketHandler(msg) {
@@ -301,6 +300,7 @@ function getSessionList(private) {
     $.ajax({
         type: 'get',
         url: url,
+        accepts: 'application/json',
         success: function(data) {
             table = $('#sessions');
             console.log(data)

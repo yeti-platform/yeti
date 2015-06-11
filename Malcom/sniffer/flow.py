@@ -9,20 +9,20 @@ import Malcom.auxiliary.toolbox as toolbox
 
 rr_codes = {1: "A", 28: "AAAA", 2: "NS", 5: "CNAME", 15: "MX", 255: 'ANY', 12: 'PTR'}
 r_codes = {3: "Name error", 0: "OK"}
-		
+
 
 class Decoder(object):
 
 	@staticmethod
 	def decode_flow(flow):
 		data = None
-		
+
 		data = Decoder.HTTP_response(flow.payload)
 		if data: return data
-		
+
 		data = Decoder.HTTP_request(flow.payload)
 		if data: return data
-		
+
 		if flow.tls:
 			data = Decoder.HTTP_request(flow.cleartext_payload, secure=True)
 			if data: return data
@@ -67,10 +67,10 @@ class Decoder(object):
 			dns = DNS(payload)
 			if dns.ancount > 0 or dns.nscount > 0 or dns.arcount > 0 : # looks like a DNS response
 				try:
-					data['answers'] = [ (dns.an[i].rrname, dns.an[i].rdata, dns.an[i].type) for i in range(dns.ancount)]	
+					data['answers'] = [ (dns.an[i].rrname, dns.an[i].rdata, dns.an[i].type) for i in range(dns.ancount)]
 				except IndexError, e:
 					raise e
-				
+
 				data['rcode'] = dns.rcode
 				data['flow_type'] = 'dns_response'
 				if len(data['answers']) > 0:
@@ -104,7 +104,7 @@ class Decoder(object):
 				data['port'] = None
 
 			data['flow_type'] = "http_request"
-			
+
 			if secure:
 				data['scheme'] = 'https://'
 				data['type'] = 'HTTP request (TLS)'
@@ -121,7 +121,7 @@ class Decoder(object):
 				data['url'] = '[unknown]'
 
 			data['info'] = "%s request for %s" % (data['method'], data['url'])
-			
+
 			return data
 
 	@staticmethod
@@ -140,7 +140,7 @@ class Decoder(object):
 
 			data['type'] = 'HTTP response'
 			data['info'] = 'Status: %s' % (data['status'])
-			
+
 			# # chunk_encoding
 			# try:
 			# 	if response and encoding:
@@ -155,16 +155,16 @@ class Decoder(object):
 			# 				decoded += encoded[cursor:chunk_size+cursor]
 			# 				cursor += chunk_size + 2
 			# 			data['response'] = decoded
-						
+
 			# except Exception, e:
 			# 	toolbox.debug_output("Could not decode chunked HTTP response: %s" % e, "error")
-			
+
 			return data
-	
+
 
 class Flow(object):
 	"""docstring for Flow"""
-	
+
 	@staticmethod
 	def flowid(pkt):
 		IP_layer = IP if IP in pkt else IPv6
@@ -184,7 +184,7 @@ class Flow(object):
 
 	def reverse_flowid(self):
 		fid = "flowid--%s-%s--%s-%s" % (self.dst_addr, self.dst_port, self.src_addr, self.src_port)
-		return fid.replace('.','-')		
+		return fid.replace('.','-')
 
 	def __init__(self, pkt=None):
 		self.packets = []
@@ -192,24 +192,24 @@ class Flow(object):
 		self.cleartext_payload = ""
 
 		# if we create the flow with a new packet, do some parsing
-		
+
 		self.packet_count = 0
-		self.payload = ""		
+		self.payload = ""
 		self.decoded_flow = None
 		self.data_transfered = 0
 		self.packet_count = 0
 
-		if pkt: 
+		if pkt:
 			# set initial timestamp
 			self.timestamp = pkt.time
 
 			# addresses
-			self.src_addr = pkt[IP].src 
+			self.src_addr = pkt[IP].src
 			self.dst_addr = pkt[IP].dst
 
 			self.src_port = pkt[IP].sport
 			self.dst_port = pkt[IP].dport
-		
+
 			if pkt.getlayer(IP).proto == 6:
 				self.protocol = 'TCP'
 				self.buffer = [] # buffer for out-of-order packets
@@ -221,17 +221,17 @@ class Flow(object):
 			self.fid = Flow.flowid(pkt)
 			self.add_pkt(pkt)
 
-		
-		
 
-		
+
+
+
 
 	def extract_elements(self):
 		if self.decoded_flow and self.decoded_flow['flow_type'] == 'http_request':
 			return {'url': self.decoded_flow['url'], 'host': self.decoded_flow['host'], 'method': self.decoded_flow['method']}
 		else:
 			return None
-	
+
 	def add_pkt(self, pkt):
 		self.packet_count += 1
 		if self.protocol == 'TCP' and not self.tls:
@@ -268,16 +268,16 @@ class Flow(object):
 	def check_buffer(self):
 		for i, pkt in enumerate(self.buffer):
 			last = self.packets[-1:][0]
-			
+
 			# calculate expected seq
 			if Raw in last:
 				next_seq = self.seq + len(last[Raw].load)
 			else:
 				next_seq = self.seq
-			
+
 			# the packet's sequence number matches
 			if next_seq == pkt[TCP].seq:
-				
+
 				# pop from buffer
 				self.packets += self.buffer.pop(i)
 				self.seq = pkt[TCP].seq
@@ -285,7 +285,7 @@ class Flow(object):
 				if Raw in pkt:
 					self.payload += str(pkt[Raw].load)
 					self.data_transfered += len(pkt[Raw].load)
-				
+
 				return True
 
 		return False
@@ -297,8 +297,8 @@ class Flow(object):
 				'fid' : self.fid,
 				'src_addr': self.src_addr,
 				'src_port': self.src_port,
-				'dst_addr': self.dst_addr, 
-				'dst_port': self.dst_port, 
+				'dst_addr': self.dst_addr,
+				'dst_port': self.dst_port,
 				'protocol': self.protocol,
 				'packet_count': self.packet_count,
 				'data_transfered': self.data_transfered,
@@ -321,7 +321,7 @@ class Flow(object):
 	def load_flow(flow):
 
 		f = Flow()
-		
+
 		f.timestamp = flow['timestamp']
 		f.fid = flow['fid']
 		f.src_addr = flow['src_addr']
@@ -335,7 +335,7 @@ class Flow(object):
 
 		if f.tls:
 			f.cleartext_payload = flow['payload']
-		
+
 		f.payload = flow['payload']
 		f.decoded_flow = Decoder.decode_flow(f)
 
@@ -358,7 +358,7 @@ class Flow(object):
 			return payload.encode('base64')
 		if encoding == 'binary':
 			return Binary(payload)
-	
+
 	def run_yara(self, yara_rules):
 		matches = {}
 		for m in yara_rules.match(data=self.get_payload(encoding='raw')): # match against plaintext / decrypted paylaod
@@ -371,12 +371,12 @@ class Flow(object):
 
 
 	def print_statistics(self):
-		print "%s:%s  ->  %s:%s (%s, %s packets, %s buff)" % (self.src_addr, self.src_port, self.dst_addr, self.dst_port, self.protocol, len(self.packets), len(self.buffer))
+		print "%s:%s  ->  %s:%s (%s, %s packets, %s buff)" % (self.src_addr, self.src_port, self.dst_addr, self.dst_port, self.protocol, len(self.packets), len(self.payload))
 
 
 
 if __name__ == '__main__':
-	
+
 	filename = sys.argv[1]
 	flows = {}
 	sniff(prn=lambda x: Flow.pkt_handler(x, flows), offline=filename, store=0)

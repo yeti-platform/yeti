@@ -5,9 +5,10 @@ Malcom is a tool designed to analyze a system's network communication using grap
 - [What is Malcom?](#what-is-malcom)
 - [Quick how-to](#quick-how-to)
 - [Installation](#installation)
+ - [Configuration options](#configuration-options)
  - [Docker instance](#docker-instance)
- - [Quick note on TLS interception](#quick-note-on-tls-interception) 
- - [Environment](#environment) 
+ - [Quick note on TLS interception](#quick-note-on-tls-interception)
+ - [Environment](#environment)
  - [Feeds](#feeds)
 - [Technical specs](#technical-specs)
 - [Roadmap](#roadmap)
@@ -16,7 +17,7 @@ Malcom is a tool designed to analyze a system's network communication using grap
 
 # What is Malcom?
 
-Malcom can help you: 
+Malcom can help you:
 
 * detect central command and control (C&C) servers
 * understand peer-to-peer networks
@@ -44,7 +45,7 @@ Dataset view (filtered to only show IPs)
 * Start the webserver using the default configuration with `./malcom.py -c malcom.conf` (or see options with `./malcom.py --help`)
 ** For an example configuration file, you can copy `malcom.conf.example` to `malcom.conf`
 ** Default port is 8080
-** Alternatively, run the feeds from `celery`. See the [feeds](/README.md#Feeds) section for details on how to to this. 
+** Alternatively, run the feeds from `celery`. See the [feeds](/README.md#Feeds) section for details on how to to this.
 
 ## Installation
 
@@ -54,12 +55,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * Install `git`, `python` and `libevent` libs, `mongodb`, `redis`, and other dependencies
 
-        $ apt-get install build-essential git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
-
-* Get `scapy`:
-
-        $ wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
-        $ tar xvzf scapy-latest.tar.gz
+        $ sudo apt-get install build-essential git python-dev libevent-dev mongodb libxml2-dev libxslt-dev zlib1g-dev redis-server libffi-dev libssl-dev python-virtualenv
 
 * Clone the Git repo:
 
@@ -71,9 +67,12 @@ The following was tested on Ubuntu server 14.04 LTS:
         $ virtualenv env-malcom
         $ source env-malcom/bin/activate
 
-* Install scapy (if you're ina virtual environment, don't  `sudo`):
+* Get and install `scapy`:
 
-        $ cd ../scapy-2.1.0
+        $ cd .. 
+        $ wget http://www.secdev.org/projects/scapy/files/scapy-latest.tar.gz
+        $ tar xvzf scapy-latest.tar.gz
+        $ cd scapy-2.1.0
         $ python setup.py install
 
 * Still from your virtualenv, install necessary python packages from the `requirements.txt` file:
@@ -83,7 +82,7 @@ The following was tested on Ubuntu server 14.04 LTS:
 
 * For IP geolocation to work, you need to download the [Maxmind](http://dev.maxmind.com/) database and extract the file to the `malcom/Malcom/auxiliary/geoIP` directory. You can get Maxmind's free (and thus more or less accurate) database from the following link: http://dev.maxmind.com/geoip/geoip2/geolite2/:
 
-        $ cd malcom/Malcom/auxiliary/geoIP
+        $ cd Malcom/auxiliary/geoIP
         $ wget http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz
         $ gunzip -d GeoLite2-City.mmdb.gz
         $ mv GeoLite2-City.mmdb GeoIP2-City.mmdb
@@ -91,23 +90,98 @@ The following was tested on Ubuntu server 14.04 LTS:
 * Launch the webserver from the `malcom` directory using `./malcom.py`. Check `./malcom.py --help` for listen interface and ports.
   * For starters, you can copy the `malcom.conf.example` file to `malcom.conf` and run `./malcom.py -c malcom.conf`
 
+### Configuration options
+
+#### Database
+
+By default, Malcom will try to connect to a local mongodb instance and create its own database, named `malcom`. If this is OK for you, you may skip the following steps. Otherwise, you need to edit the `database` section of your `malcom.conf` file.
+
+##### Set an other name for your Malcom database
+
+By default, Malcom will use a database named `malcom`. You can change this behavior by editing the `malcom.conf` file and setting the `name` directive from the `database` section to your liking.
+
+        [database]
+        ...
+        name = my_malcom_database
+        ...
+
+##### Remote database(s)
+
+By default, Malcom will try to connect to `localhost`, but your database may be on another server. To change this, just set the `hosts` directive. You may use hostnames or IPv4/v6 addresses (just keep in mind to enclose your IPv6 addresses between `[` and `]`, e.g. `[::1]`).
+
+If you'd like to use a standalone database on host `my.mongo.server`, just set:
+
+        [database]
+        ...
+        hosts = my.mongo.server
+        ...
+
+You can also specify the port mongod is listening on by specifying it after the name/address of your server, separated with a `:`
+
+        [database]
+        ...
+        hosts = localhost:27008
+        ...
+
+And if you're using a `ReplicaSet` regrouping `my.mongo1.server` and `my.mongo2.server`, just set:
+
+        [database]
+        ...
+        hosts = my.mongo1.server,my.mongo2.server
+        ...
+
+##### Use authentication
+
+You may have configured your mongod instances to enforce authenticated connections. In that case, you have to set the username the driver will have to use to connect to your mongod instance. To do this, just add a `username` directive to the `database` section in the `malcom.conf` file. You may also have to set the password with the `password` directive. If the user does not have a password, just ignore (i.e. comment out) the `password` directive.
+
+        [database]
+        ...
+        username = my_user
+        password = change_me
+        ...
+
+If the user is not linked to the `malcom` database but to another one (for example the `admin` database for a admin user), you will have to set the `authentication_database` directive with the name of that database.
+
+        [database]
+        ...
+        authentication_database = some_other_database
+        ...
+
+##### Case of a replica set
+
+When using a replica set, you may need to ensure you are connected to the right one. For that, just add the `replset` directive to force the mongo driver to check the name of the replicaset
+
+        [database]
+        ...
+        replset = my_mongo_replica
+        ...
+
+By default, Malcom will try to connect to the primary node of th replica set. You may need/want to change that. In order to change that behaviour, just set the `read_preference` directive. See [the mongo documentation](http://docs.mongodb.org/manual/core/read-preference/) for more information.
+
+        [database]
+        ...
+        read_preference = NEAREST
+        ...
+
+Supported read preferences are:
+* PRIMARY
+* PRIMARY\_PREFERRED
+* SECONDARY
+* SECONDARY\_PREFERRED
+* NEAREST
+
 ### Docker instance
 
-The quickest way to get you started is to pull the Docker image from the [public docker repo](https://registry.hub.docker.com/u/tomchop/malcom/). **To pull the automatic Docker build for the latest GitHub commit**, use `tomchop/malcom-automatic` instead of `tomchop/malcom`.
+The quickest way to get you started is to pull the Docker image from the [public docker repo](https://registry.hub.docker.com/u/tomchop/malcom/). **To pull older, more stable Docker builds**, use `tomchop/malcom` instead of `tomchop/malcom-automatic`.
 
-        $ sudo docker pull tomchop/malcom
-        $ sudo docker run -P -d --name malcom tomchop/malcom
-        
-Connect to your malcom instance by checking the port on the docker file.
+        $ sudo docker pull tomchop/malcom-automatic
+        $ sudo docker run -p 8080:8080 -d --name malcom tomchop/malcom-automatic
 
-        $ sudo docker port malcom
-        8080/tcp -> 0.0.0.0:49155
-
-Connecting to `http://<docker_host>:49155/` should get you started.
+Connecting to `http://<docker_host>:8080/` should get you started.
 
 ### Quick note on TLS interception
 
-Malcom now supports TLS interception. For this to work, you need to generate some keys in Malcom/networking/tlsproxy/keys. See the KEYS.md file there for more information on how to do this. 
+Malcom now supports TLS interception. For this to work, you need to generate some keys in Malcom/networking/tlsproxy/keys. See the KEYS.md file there for more information on how to do this.
 
 Make sure you also have IPtables (you already should) and permissions to do some port forwarding with it (you usually need to be root for that).
 You can to this using the convenient `forward_port.sh` script. For example, to intercept all TLS communications towards port 443, use `forward_port.sh 443 9999`. You'll then have to tell malcom to run an interception proxy on port `9999`.
@@ -132,7 +206,7 @@ You can also use `celery` to run feeds. Make sure celery is installed by running
 
 ## Technical specs
 
-Malcom was written mostly from scratch, in Python. It uses the following frameworks to work: 
+Malcom was written mostly from scratch, in Python. It uses the following frameworks to work:
 
 * [flask](http://flask.pocoo.org/) - a lightweight python web framework
 * [mongodb](http://www.mongodb.org/) - a NoSQL database. It interfaces to python with [pymongo](http://api.mongodb.org/python/current/)
@@ -152,8 +226,8 @@ Once collaboration and extension are up and running, I think this will be helpfu
 
 This tool was coded during my free time. Like a huge number of tools we download and use daily, I wouldn't recommend to use it on a production environment where data stability and reliability is a MUST.
 
-* It may be broken, have security gaps (running it as root in uncontrolled environments is probably not a good idea), or not work at all. 
-* It's written in python, so don't expect it to be ultra-fast or handle huge amounts of data easily. 
+* It may be broken, have security gaps (running it as root in uncontrolled environments is probably not a good idea), or not work at all.
+* It's written in python, so don't expect it to be ultra-fast or handle huge amounts of data easily.
 * I'm no coder, so don't expect to see beautiful pythonic code everywhere you look. Or lots of comments.
 
 It's in early stages of development, meaning "it works for me". You're free to share it, improve it, ask for pull requests.
