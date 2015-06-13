@@ -4,7 +4,7 @@ Created on 13 mai 2015
 
 @author: slarinier
 
-Thanks to inliniac and Regit for ideas: 
+Thanks to inliniac and Regit for ideas:
 https://github.com/inliniac/suricata/blob/master/scripts/suricatasc/src/suricatasc.py
 
 '''
@@ -36,7 +36,7 @@ class Suricata(Module):
         super(Suricata, self).__init__()
         interface, mode, conf_suricata, socket_unix = self.setup()
         self.result = super(Suricata, self).load_results()
-        self.reload=False
+        self.reload = False
         self.actions = Actions(interface=interface, conf_sniffer=conf_suricata, mode=mode, socket_unix=socket_unix)
         if not self.result or self.result['timeout'] < datetime.datetime.utcnow():
             self.reload = True
@@ -63,8 +63,6 @@ class Suricata(Module):
 
         return interface, mode, conf_suricata, socket_unix
 
-
-
     def files_meta(self, dir_to_write_logs):
         files_dir = os.path.join(dir_to_write_logs, 'files')
         files_metas = glob.glob(files_dir + '*.meta')
@@ -77,13 +75,12 @@ class Suricata(Module):
         if file_name and name_session:
             file_to_analyse = os.path.join(self.session.engine.setup['SNIFFER_DIR'], file_name)
             dir_to_write_logs = os.path.join(self.session.engine.setup['MODULES_DIR'], self.name, str(self.session.id))
-            if  self.reload:
+            if self.reload:
                 self.actions.send_pcap(file_to_analyse, dir_to_write_logs)
                 while not os.path.isfile(os.path.join(dir_to_write_logs, 'eve.json')):
                     print os.path.isfile(os.path.join(dir_to_write_logs, 'eve.json'))
                     print os.path.join(dir_to_write_logs, 'eve.json')
                     sleep(5)
-                    pass
 
         content = self.content(os.path.join(dir_to_write_logs, 'eve.json'))
         if not os.path.isdir(dir_to_write_logs):
@@ -152,6 +149,7 @@ class Suricata(Module):
         content += "</table>"
 
         return content
+
 
 # Class to execute and launch command with Suricata
 class Actions(object):
