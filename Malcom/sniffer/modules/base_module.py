@@ -36,15 +36,11 @@ class Module(object):
             print "File not found: {}".format(e)
             return False
 
-    def load_results(self):
-        return self.session.model.get_modules_infos(self.session.id, self.name)
+    def load_entry(self):
+        return self.session.model.load_module_entry(self.session.id, self.name)
 
-    def save_result(self, entry={}):
-        entry['session_id'] = self.session.id
-        entry['name'] = self.name
-        entry['timeout'] = datetime.datetime.utcnow() + datetime.timedelta(hours=self.timeout)
-        self.session.model.save_module_entry(entry)
-
+    def save_entry(self, entry={}):
+        self.session.model.save_module_entry(self.session.id, self.name, entry, datetime.datetime.utcnow() + datetime.timedelta(hours=self.timeout))
 
     def bootstrap(self, args):
         raise NotImplementedError("You must implement a bootstrap method")
