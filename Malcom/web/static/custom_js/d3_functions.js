@@ -419,7 +419,6 @@ function start() {
                 return r;
               })
      .attr('class', function (d) {
-      console.log(d)
         c = d.type
         for (var i in d.tags) { c += ' ' + d.tags[i] }
         return c
@@ -575,23 +574,50 @@ function display_data(d)
   display_generic(d);
 }
 
+function display_tags(tags) {
+  out = ""
+
+  for (i in tags) {
+    tag = tags[i]
+
+    html_tag = '<span class="label label-';
+
+    if (tag == 'evil')
+      html_tag += 'danger';
+    else
+      html_tag += 'primary';
+
+    html_tag += '">'+tag+'</span>';
+    out += html_tag
+  }
+
+  if (tags.length == 0) {
+    out = '<span class="label label-default">N/A</span>';
+  }
+
+  return out;
+}
+
 function display_generic(d) {
   if (d.fields != undefined) {
-    for (var display in d.fields) {
-      key = d.fields[display][0]
-      label = d.fields[display][1]
+    for (var i in d.fields) {
+      key = d.fields[i][0]
+      label = d.fields[i][1]
+
       if (d[key] == undefined)
         value = "N/A"
+
       else {
+
         value = d[key]
 
         if (['date_updated', 'date_created', 'last_analysis'].indexOf(key) != -1)
           value = format_date(new Date(value.$date))
         if (key == 'tags')
-          if (d.tags.length == 0)
-            value = '-'
-          else
-            value = d.tags.join(', ')
+          value = display_tags(d.tags)
+        if (key == 'value')
+          value = '<a href="/search/?query='+value+'">'+value+'</a>'
+
       }
 
       $("#node_info").append("<tr><th>"+label+"</th><td>"+value+"</td></tr>");
