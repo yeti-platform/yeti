@@ -512,12 +512,15 @@ class Model:
     def get_feeds(self):
         feeds = [f['name'] for f in self.feeds.find()]
         return feeds
+
     # =========== Modules operations =====================
 
     def get_modules_infos(self, session_id, module_name):
         result_module = self.modules.find_one({'session_id': session_id, 'name': module_name})
         if result_module:
             return result_module
+        else:
+            return {}
 
     def save_module_entry(self, entry):
         doc = self.modules.find_one_and_replace({'name': entry['name'], 'session_id': entry['session_id']}, entry)
