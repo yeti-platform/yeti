@@ -345,21 +345,22 @@ def search(term=""):
 		query = [{field: r} for r in request.form['bulk-text'].split('\r\n') if r != '']
 		result_set = g.Model.find({'$or': query})
 	else:
-		query = request.args.get('query', False).strip()
+		query = request.args.get('query', False)
 		field = request.args.get('field', 'value').strip()
 		if not bool(request.args.get('strict', False)):
 			result_set = g.Model.find({field: query})
 		else:
 			result_set = g.Model.find({field: re.compile(re.escape(query), re.IGNORECASE)})
 
-	# user has specified an empty query
-	if query == "":
-		flash('Empty search query is empty.')
-		return redirect(url_for('search'))
-
 	# user did not specify a query
 	if query == False:
 		return render_template('search.html', history=g.Model.get_history())
+	else:
+		query = query.strip()
+		# user has specified an empty query
+		if query == "":
+			flash('Empty search query is empty.')
+			return redirect(url_for('search'))
 
 	if bool(request.args.get('log', False)):
 			print "Adding to history"
@@ -496,9 +497,9 @@ def dataset_csv():
 		response.headers['Content-Type'] = 'text/csv'
 		response.headers['Content-Disposition'] = 'attachment; filename='+filename+'-extract.csv'
 		data = "{},{},{},{},{},{}\n".format('Value', 'Type', 'Tags', 'Created', 'Updated', "Analyzed")
-		
+
 		for e in results:
-			data += "{},{},{},{},{},{}\n".format(e.get('value', "-"), e.get('type', "-"), ";".join(e.get('tags', [])), e.get('date_created', "-"), e.get('date_updated', "-"), e.get('last_analysis', "-"))	
+			data += "{},{},{},{},{},{}\n".format(e.get('value', "-"), e.get('type', "-"), ";".join(e.get('tags', [])), e.get('date_created', "-"), e.get('date_updated', "-"), e.get('last_analysis', "-"))
 
 		response.data = data
 		response.headers['Content-Length'] = len(response.data)
