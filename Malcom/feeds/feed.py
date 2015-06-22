@@ -64,7 +64,7 @@ class Feed(object):
 			r = requests.get(self.source, headers=headers, auth=auth)
 		else:
 			r = requests.get(self.source, headers=headers)
-		tree = etree.parse(StringIO(r.text))
+		tree = etree.parse(StringIO(r.content))
 
 		self.status = "OK"
 
