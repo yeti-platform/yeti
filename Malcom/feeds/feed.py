@@ -4,11 +4,13 @@ import time
 import threading
 import urllib2
 import bson
+import csv
 
 from datetime import timedelta, datetime
 
 from multiprocessing import Process
 from lxml import etree
+import requests
 
 from Malcom.auxiliary.toolbox import debug_output
 from Malcom.config.malconf import MalcomSetup
@@ -52,12 +54,16 @@ class Feed(object):
 				 'enabled': self.enabled,
 				}
 
-	def update_xml(self, main_node, children, headers={}):
+	def update_xml(self, main_node, children, headers={}, auth=None):
 		assert self.source != None
 
-		request = urllib2.Request(self.source, headers=headers)
-		feed = urllib2.urlopen(request)
-		tree = etree.parse(feed)
+		# request = urllib2.Request(self.source, headers=headers)
+		# feed = urllib2.urlopen(request)
+		if auth:
+			r = requests.get(self.source, headers=headers, auth=auth)
+		else:
+			r = requests.get(self.source, headers=headers)
+		tree = etree.parse(r.text)
 
 		self.status = "OK"
 
@@ -71,14 +77,39 @@ class Feed(object):
 			yield evil
 
 
-	def update_lines(self, headers={}):
+	def update_lines(self, headers={}, auth=None):
 		assert self.source != None
-		request = urllib2.Request(self.source, headers=headers)
-		feed = urllib2.urlopen(request).readlines()
+		# request = urllib2.Request(self.source, headers=headers)
+		# feed = urllib2.urlopen(request).readlines()
 
+		if auth:
+			r = requests.get(self.source, headers=headers, auth=auth)
+		else:
+			r = requests.get(self.source, headers=headers)
+
+		feed = r.text.split('\n')
+		
 		self.status = "OK"
 
 		for line in feed:
+			yield line
+
+	def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None):
+		assert self.source != None
+		# request = urllib2.Request(self.source, headers=headers)
+		# feed = urllib2.urlopen(request).readlines()
+		print "requesting", self.source
+		if auth:
+			r = requests.get(self.source, headers=headers, auth=auth)
+		else:
+			r = requests.get(self.source, headers=headers)
+
+		feed = r.text.split('\n')
+		reader = csv.reader(feed, delimiter=delimiter, quotechar=quotechar)
+		
+		self.status = "OK"
+
+		for line in reader:
 			yield line
 
 
@@ -129,7 +160,6 @@ class Feed(object):
 		except Exception, e:
 			debug_output("Error adding feed {}: {}".format(self.name, e))
 	 		self.status = "ERROR: {}".format(e)
-	 		self.enabled = False
 
 		self.running = False
 
