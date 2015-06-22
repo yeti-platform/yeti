@@ -5,6 +5,7 @@ import threading
 import urllib2
 import bson
 import csv
+from StringIO import StringIO
 
 from datetime import timedelta, datetime
 
@@ -63,7 +64,7 @@ class Feed(object):
 			r = requests.get(self.source, headers=headers, auth=auth)
 		else:
 			r = requests.get(self.source, headers=headers)
-		tree = etree.parse(r.text)
+		tree = etree.parse(StringIO(r.text))
 
 		self.status = "OK"
 
