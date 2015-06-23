@@ -142,6 +142,7 @@ $(".module-tab").on('shown.bs.tab', function (e) {
   content = $("#"+$(this).attr('aria-controls'));
   $.ajax({
     url: content.data('bootstrap-url'),
+    dataType: 'html',
     success: function(data, status) {
       content.html(data);
     }
