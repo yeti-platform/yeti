@@ -78,7 +78,7 @@ def output_csv(data, code, headers=None):
     return resp
 
 def output_standard(data, code, headers=None):
-    resp = make_response(data, code)
+    resp = make_response(str(data), code)
     resp.headers.extend(headers or {})
     return resp
 
