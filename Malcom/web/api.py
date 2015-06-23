@@ -15,27 +15,78 @@ from flask.ext.login import current_user
 from webserver import app
 
 
-malcom_api = Blueprint('malcom_api', __name__)
+class MalcomApi(Api):
+    """Custom Malcom API"""
 
+    FORMAT_MIMETYPE_MAP = {
+        "csv": "text/csv",
+        "json": "application/json",
+        "text": "text/html",
+        # Add other mimetypes as desired here
+    }
+
+    def make_response(self, data, *args, **kwargs):
+        """Looks up the representation transformer for the requested media
+        type, invoking the transformer to create a response object. This
+        defaults to default_mediatype if no transformer is found for the
+        requested mediatype. If default_mediatype is None, a 406 Not
+        Acceptable response will be sent as per RFC 2616 section 14.1
+        :param data: Python object containing response data to be transformed
+        """
+        
+        default_mediatype = kwargs.pop('fallback_mediatype', None) or self.default_mediatype
+        mediatype = MalcomApi.FORMAT_MIMETYPE_MAP.get(request.args.get('output'))
+        
+        if not mediatype:
+            if "*/*" in request.accept_mimetypes and len(request.accept_mimetypes) == 1:
+                mediatype = self.default_mediatype
+            else:
+                mediatype = request.accept_mimetypes.best_match(
+                    self.representations,
+                    default=default_mediatype,
+                )
+        if mediatype is None:
+            raise NotAcceptable()
+        if mediatype in self.representations:
+            resp = self.representations[mediatype](data, *args, **kwargs)
+            resp.headers['Content-Type'] = mediatype
+            return resp
+        elif mediatype == 'text/plain':
+            resp = original_flask_make_response(str(data), *args, **kwargs)
+            resp.headers['Content-Type'] = 'text/plain'
+            return resp
+        else:
+            raise InternalServerError()
+
+malcom_api = Blueprint('malcom_api', __name__)
 
 def output_json(obj, code, headers=None):
     if type(obj) is dict:
         resp = make_response(dumps(obj), code)
     else:
-        resp = make_response(obj, code)
+        resp = make_response(str(obj), code)
     resp.headers.extend(headers or {})
     return resp
 
-api = Api(app)
-DEFAULT_REPRESENTATIONS = {
-                            'application/html': output_json,
-                            'application/json': output_json,
-                            'text/html': output_json,
-                            'text/javascript': output_json,
-                            'text/css': output_json,
-                            }
+def output_csv(data, code, headers=None):
+    csv = "{},{},{},{},{},{}\n".format('Value', 'Type', 'Tags', 'Created', 'Updated', "Analyzed")
+    for d in data:
+        csv += "{},{},{},{},{},{}\n".format(d.get('value', "-"), d.get('type', "-"), ";".join(d.get('tags', [])), d.get('date_created', "-"), d.get('date_updated', "-"), d.get('last_analysis', "-"))
 
-api.representations = DEFAULT_REPRESENTATIONS
+    resp = make_response(csv, code)
+    resp.headers.extend(headers or {})
+    return resp
+
+def output_standard(data, code, headers=None):
+    resp = make_response(data, code)
+    resp.headers.extend(headers or {})
+    return resp
+
+api = MalcomApi(app)
+
+api.representations['text/csv'] = output_csv
+api.representations['application/json'] = output_json
+api.representations['text/html'] = output_standard
 
 class FileStorageArgument(reqparse.Argument):
     def convert(self, value, op):
@@ -171,9 +222,22 @@ class QueryAPI(Resource):
 
         return data
 
+class Data(Resource):
+    decorators=[login_required]
+    
+    def get(self):
+        query = {}
+        for key in request.args:
+            if key not in ['output']:
+                query[key] = request.args.get(key)
+
+        cur = list({'value': e.get('value', '-') , 'type': e.get('type', '-') , 'tags': e.get('tags', '-') , 'date_created': e.get('date_created', '-') , 'date_updated': e.get('date_updated', '-') , 'last_analysis': e.get('last_analysis', '-')  } for e in g.Model.elements.find(query, sort=[('date_created', pymongo.DESCENDING)]))
+        return cur
+
 api.add_resource(Neighbors, '/api/neighbors/')
 api.add_resource(Evil, '/api/evil/')
 api.add_resource(QueryAPI, '/api/query/', endpoint="malcom_api.query")
+api.add_resource(Data, '/api/data/', endpoint="malcom_api.data")
 
 # DATA MANIPULATION =======================================================
 
