@@ -58,8 +58,6 @@ class Feed(object):
 	def update_xml(self, main_node, children, headers={}, auth=None):
 		assert self.source != None
 
-		# request = urllib2.Request(self.source, headers=headers)
-		# feed = urllib2.urlopen(request)
 		if auth:
 			r = requests.get(self.source, headers=headers, auth=auth)
 		else:
