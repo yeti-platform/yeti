@@ -342,10 +342,12 @@ def search(term=""):
 	# Create a result set with whichever paremeters we have
 	if request.method == 'POST':
 		field = 'value'
-		query = [{field: r} for r in request.form['bulk-text'].split('\r\n') if r != '']
+		query = [{field: r.strip()} for r in request.form['bulk-text'].split('\r\n') if r.strip() != '']
 		result_set = g.Model.find({'$or': query})
 	else:
 		query = request.args.get('query', False)
+		if query:
+			query = query.strip()
 		field = request.args.get('field', 'value').strip()
 		if not bool(request.args.get('strict', False)):
 			result_set = g.Model.find({field: query})
@@ -356,15 +358,10 @@ def search(term=""):
 	if query == False:
 		return render_template('search.html', history=g.Model.get_history())
 	else:
-		query = query.strip()
 		# user has specified an empty query
 		if query == "":
 			flash('Empty search query is empty.')
-			return redirect(url_for('search'))
-
-	if bool(request.args.get('log', False)):
-			print "Adding to history"
-			g.Model.add_to_history(query)
+			return redirect(url_for('search'))			
 
 	# query passed tests, process the result set
 	base_elts = []
@@ -379,7 +376,7 @@ def search(term=""):
 
 	# The search yield no results
 
-	if len(base_elts) == 0:
+	if len(base_elts) == 0 and request.method == 'GET':
 		if not bool(request.args.get('log', False)):
 			flash('"{}" was not found. Use the checkbox above to add it to the database'.format(query))
 			return render_template('search.html', term=query, history=g.Model.get_history())
@@ -387,10 +384,15 @@ def search(term=""):
 			new = g.Model.add_text([query], tags=['search'])
 			if new:
 				flash('"{}" was not found. It was added to the database (ID: {})'.format(query, new['_id']))
+				g.Model.add_to_history(query)
 			else:
-				flash('"{}" did not convert to a viable datatype').format(query)
+				flash('"{}" did not convert to a viable datatype'.format(query))
 			# or do the redirection here
 			return render_template('search.html', term=query, history=g.Model.get_history())
+	
+	if len(base_elts) == 0 and request.method == 'POST':
+		flash('Your query did not yield any results. Use the checkbox above to add it to the database')
+		return render_template('search.html', history=g.Model.get_history())
 
 	return find_related(field, query, base_elts, base_ids, evil_elts)
 
