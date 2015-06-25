@@ -19,7 +19,7 @@ except Exception, e:
 
 class Element(dict):
 
-	default_fields = [('value', "Value"), ('type', "Type"), ('tags', "Tags"), ('date_updated', 'Updated'), ('date_created', 'Created'), ('last_analysis', 'Analyzed') ]
+	default_fields = [('value', "Value"), ('type', "Type"), ('tags', "Tags"), ('date_first_seen', 'First Seen'), ('date_last_seen', "Last Seen"), ('date_updated', 'Updated'), ('date_created', 'Created'), ('last_analysis', 'Analyzed') ]
 
 	def __init__(self):
 		self['tags'] = []
@@ -64,6 +64,12 @@ class Element(dict):
 
 		self['evil'][evil['id']] = evil
 
+	def seen(self, first=datetime.datetime.utcnow(), last=datetime.datetime.utcnow()):
+		self['date_last_seen'] = last
+
+		if self.get('date_first_seen') is None or self['date_first_seen'] > first:
+			self['date_first_seen'] = first
+		
 class File(Element):
 
 	display_fields = Element.default_fields + [('md5', "MD5"), ('file_type', "Type")]

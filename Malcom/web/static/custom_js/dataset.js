@@ -107,7 +107,7 @@ function get_dataset(query, url) {
 	  	// get the headers
 	  	for (var i in data.fields) {
 	  		h = $("<th>").text(data.fields[i][1])
-	  		if (['date_created', 'date_updated', 'last_analysis'].indexOf(data.fields[i][0]) != -1)
+	  		if (['date_created', 'date_updated', 'last_analysis', 'date_first_seen', 'date_last_seen'].indexOf(data.fields[i][0]) != -1)
 	  			h.addClass('timestamp')
 	  		head.append(h)
 	  	}
@@ -130,7 +130,7 @@ function get_dataset(query, url) {
 	  					row.append($("<td />").text('-'))
 	  				else if (k == 'tags')
 	  					row.append($("<td />").addClass('tags_links'))
-	  				else if (['date_created', 'date_updated', 'last_analysis'].indexOf(k) != -1)
+	  				else if (['date_created', 'date_updated', 'last_analysis', 'date_first_seen', 'date_last_seen'].indexOf(k) != -1)
 	  					row.append($("<td />").text(format_date(new Date(v.$date))).addClass('timestamp'))
 	  				else
 	  					row.append("<td><a href='"+url_static_prefix+"nodes/"+k+"/"+encodeURIComponent(v)+"'>"+v+"</a></td>")

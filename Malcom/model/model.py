@@ -69,6 +69,8 @@ class Model:
         # create indexes
         debug_output("Rebuilding indexes...")
         self.elements.ensure_index([('date_created', -1), ('value', 1)])
+        self.elements.ensure_index([('date_first_seen', -1), ('value', 1)])
+        self.elements.ensure_index([('date_last_seen', -1), ('value', 1)])
         self.elements.ensure_index('value', unique=True, dropDups=True)
         self.elements.ensure_index('tags')
         self.elements.ensure_index('next_analysis')
@@ -298,14 +300,10 @@ class Model:
         with self.db_lock:
 
             # critical section starts here
-            tags = []
-            evil = {}
-            if 'tags' in element:
-                tags = element['tags']
-                del element['tags']  # so tags in the db do not get overwritten
-            if 'evil' in element:
-                evil = element['evil']
-                del element['evil']
+            tags = element.pop('tags', [])  # so tags in the db do not get overwritten
+            evil = element.pop('evil', {})
+            date_first_seen = element.pop('date_first_seen', None)
+            date_last_seen = element.pop('date_last_seen', None)
 
             if '_id' in element:
                 del element['_id']
@@ -335,11 +333,17 @@ class Model:
             if not new:
                 debug_output("(updated %s %s)" % (element.type, element.value), type='model')
                 assert element.get('date_created', None) != None
+                if element.get('date_first_seen'):
+                    if date_first_seen < element['date_first_seen']:
+                        element['date_first_seen'] = date_first_seen
             else:
                 debug_output("(added %s %s)" % (element.type, element.value), type='model')
                 element['date_created'] = datetime.datetime.utcnow()
                 element['next_analysis'] = datetime.datetime.utcnow()
-
+                element['date_first_seen'] = date_first_seen
+                element['date_last_seen'] = date_last_seen
+                
+                
             # tags are all lowercased and stripped
             element['tags'] = [t.lower().strip() for t in element['tags']]
 
