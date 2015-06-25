@@ -72,9 +72,9 @@ def output_json(obj, code, headers=None):
     return resp
 
 def output_csv(data, code, headers=None):
-    csv = "{},{},{},{},{},{}\n".format('Value', 'Type', 'Tags', 'Created', 'Updated', "Analyzed")
+    csv = "{},{},{},{},{},{}\n".format('Value', 'Type', 'Tags', 'First seen', 'Last seen', "Analyzed")
     for d in data:
-        csv += "{},{},{},{},{},{}\n".format(d.get('value', "-"), d.get('type', "-"), ";".join(d.get('tags', [])), d.get('date_created', "-"), d.get('date_updated', "-"), d.get('last_analysis', "-"))
+        csv += "{},{},{},{},{},{}\n".format(d.get('value', "-"), d.get('type', "-"), ";".join(d.get('tags', [])), d.get('date_first_seen', "-"), d.get('date_last_seen', "-"), d.get('last_analysis', "-"))
 
     resp = make_response(csv, code)
     resp.headers.extend(headers or {})
