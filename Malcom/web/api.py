@@ -38,6 +38,12 @@ class MalcomApi(Api):
         mediatype = MalcomApi.FORMAT_MIMETYPE_MAP.get(request.args.get('output'))
         
         if not mediatype:
+            for accept in request.accept_mimetypes:
+                if accept[0] in self.representations:
+                    mediatype = accept[0]
+                    break
+        
+        if not mediatype:
             if "*/*" in request.accept_mimetypes and len(request.accept_mimetypes) == 1:
                 mediatype = self.default_mediatype
             else:
