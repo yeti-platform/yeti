@@ -234,7 +234,7 @@ class Data(Resource):
             if key not in ['output']:
                 query[key] = request.args.get(key)
 
-        cur = list({'value': e.get('value', '-') , 'type': e.get('type', '-') , 'tags': e.get('tags', '-') , 'date_created': e.get('date_created', '-') , 'date_updated': e.get('date_updated', '-') , 'last_analysis': e.get('last_analysis', '-')  } for e in g.Model.elements.find(query, sort=[('date_created', pymongo.DESCENDING)]))
+        cur = list(g.Model.elements.find(query, sort=[('date_created', pymongo.DESCENDING)]))
         return cur
 
 api.add_resource(Neighbors, '/api/neighbors/')
