@@ -61,10 +61,7 @@ class MalcomApi(Api):
 malcom_api = Blueprint('malcom_api', __name__)
 
 def output_json(obj, code, headers=None):
-    if type(obj) is dict:
-        resp = make_response(dumps(obj), code)
-    else:
-        resp = make_response(str(obj), code)
+    resp = make_response(dumps(obj), code)
     resp.headers.extend(headers or {})
     return resp
 
