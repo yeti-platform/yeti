@@ -175,7 +175,7 @@ class Analytics(Process):
 			
 			if as_info == {} or as_info == None:
 				debug_output("as_info empty", 'error')
-				return
+				continue
 
 			for ip in as_info:
 				
@@ -183,7 +183,7 @@ class Analytics(Process):
 				_ip = self.data.find_one({'value': ip})
 
 				if not _ip:
-					return
+					continue
 
 				del _as['ip']
 				for key in _as:
