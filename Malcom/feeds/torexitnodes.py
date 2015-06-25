@@ -60,5 +60,6 @@ class TorExitNodes(Feed):
 		tornode['source'] = self.name
 
 		ip.add_evil(tornode)
+		ip.seen()
 		self.commit_to_db(ip)
 

@@ -39,5 +39,6 @@ class CybercrimeTracker(Feed):
 		evil['id'] = md5.new(dict['title']+dict['pubDate']+dict['description']).hexdigest()
 		evil['source'] = self.name
 
+		url.seen(first=evil['date_added'])
 		url.add_evil(evil)
 		self.commit_to_db(url)

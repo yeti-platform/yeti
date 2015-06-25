@@ -62,6 +62,7 @@ class FeodoTracker(Feed):
 		elif toolbox.is_hostname(evil['host']):
 			elt = Hostname(hostname=evil['host'], tags=[FeodoTracker.variants[g['version']]])
 
+		elt.seen(first=evil['date_added'])
 		elt.add_evil(evil)
 		self.commit_to_db(elt)
 

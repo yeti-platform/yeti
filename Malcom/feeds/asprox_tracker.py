@@ -47,13 +47,14 @@ class AsproxTracker(Feed):
 		print First_Seen
 		evil['date_added'] = datetime.datetime.strptime(First_Seen, "%Y-%m-%d %H:%M:%S") 
 		print Last_Seen
-		evil['last_seen'] = datetime.datetime.strptime(Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else "N/A" 
+		evil['last_seen'] = datetime.datetime.strptime(Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else datetime.datetime.utcnow()
 		evil['sbl'] = SBL
 		evil['abuse_contact'] = Abuse_Contact
 		evil['description'] = Details if Details else "N/A"
 		evil['id'] = md5.new(First_Seen+Host).hexdigest()
 		evil['source'] = self.name
 
+		url.seen(first=evil['date_added'], last=evil['last_seen'])
 		url.add_evil(evil)
 		self.commit_to_db(url)
 

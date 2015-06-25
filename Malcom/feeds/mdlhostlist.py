@@ -28,6 +28,7 @@ class MalwareDomainList(Feed):
 		url = Url(url=re.search("Host: (?P<url>[^,]+),", dict['description']).group('url'))
 		evil['id'] = md5.new(dict['guid']).hexdigest()
 		url.add_evil(evil)
+		url.seen()
 		self.commit_to_db(url)
 
 

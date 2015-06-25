@@ -33,11 +33,12 @@ class MalcodeBinaries(Feed):
 			evil['description'] = "N/A"
 			evil['link'] = dict['link']
 			try:
-				d=dict['description'].encode('UTF-8')
+				d = dict['description'].encode('UTF-8')
 				evil['id'] = md5.new(d).hexdigest()
 				evil['source'] = self.name
 				url = Url(url=evil['url'])
 				url.add_evil(evil)
+				url.seen()
 				self.commit_to_db(url)
 			except UnicodeError:
 				sys.stderr.write('error Unicode : %s' % dict['description'])

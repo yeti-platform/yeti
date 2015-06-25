@@ -37,4 +37,5 @@ class ZeusTrackerConfigs(Feed):
 			print "Date not found!"
 
 		url.add_evil(evil)
+		url.seen(first=evil['date_added'])
 		self.commit_to_db(url)

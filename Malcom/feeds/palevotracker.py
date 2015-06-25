@@ -35,6 +35,7 @@ class PalevoTracker(Feed):
 		evil['id'] = md5.new(re.search(r"id=(?P<id>[a-f0-9]+)", dict['guid']).group('id')).hexdigest()
 		evil['source'] = self.name
 
+		hostname.seen()
 		hostname.add_evil(evil)
 		self.commit_to_db(hostname)
 
