@@ -496,10 +496,10 @@ def dataset_csv():
 		response.headers['Cache-Control'] = 'no-cache'
 		response.headers['Content-Type'] = 'text/csv'
 		response.headers['Content-Disposition'] = 'attachment; filename='+filename+'-extract.csv'
-		data = "{},{},{},{},{},{}\n".format('Value', 'Type', 'Tags', 'Created', 'Updated', "Analyzed")
+		data = u"{},{},{},{},{},{}\n".format('Value', 'Type', 'Tags', 'Created', 'Updated', "Analyzed")
 
 		for e in results:
-			data += "{},{},{},{},{},{}\n".format(e.get('value', "-"), e.get('type', "-"), ";".join(e.get('tags', [])), e.get('date_created', "-"), e.get('date_updated', "-"), e.get('last_analysis', "-"))
+			data += u"{},{},{},{},{},{}\n".format(e.get('value', "-"), e.get('type', "-"), ";".join(e.get('tags', [])), e.get('date_created', "-"), e.get('date_updated', "-"), e.get('last_analysis', "-"))
 
 		response.data = data
 		response.headers['Content-Length'] = len(response.data)
