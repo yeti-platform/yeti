@@ -336,13 +336,15 @@ class Model:
                 if element.get('date_first_seen'):
                     if date_first_seen < element['date_first_seen']:
                         element['date_first_seen'] = date_first_seen
+                else:  # deal with old elements that don't have date_first|last_seen
+                    element['date_first_seen'] = date_first_seen
+                    element['date_last_seen'] = date_last_seen
             else:
                 debug_output("(added %s %s)" % (element.type, element.value), type='model')
                 element['date_created'] = datetime.datetime.utcnow()
                 element['next_analysis'] = datetime.datetime.utcnow()
                 element['date_first_seen'] = date_first_seen
                 element['date_last_seen'] = date_last_seen
-                
                 
             # tags are all lowercased and stripped
             element['tags'] = [t.lower().strip() for t in element['tags']]
