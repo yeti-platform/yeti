@@ -320,7 +320,7 @@ class Model:
                 for key in element:
                     if key == 'tags': continue
                     _element[key] = element[key]
-                _element['tags'] = [t.strip().lower() for t in list(set(_element['tags'] + tags))]
+                _element['tags'] = list(set([t.strip().lower() for t in _element['tags'] + tags]))
                 if evil != {}:
                     _element['evil'] = dict(_element['evil'].items() + evil.items())
                 element = _element
