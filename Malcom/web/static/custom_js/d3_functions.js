@@ -611,7 +611,7 @@ function display_generic(d) {
 
         value = d[key]
 
-        if (['date_updated', 'date_created', 'last_analysis'].indexOf(key) != -1)
+        if (['date_updated', 'date_created', 'last_analysis', 'date_first_seen', 'date_last_seen'].indexOf(key) != -1)
           value = format_date(new Date(value.$date))
         if (key == 'tags')
           value = display_tags(d.tags)
