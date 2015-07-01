@@ -42,6 +42,7 @@ libs
 
 # do not include private feeds
 Malcom/feeds/private*
+Malcom/feeds/Private*
 
 # do not include user-generated pcap files
 Malcom/sniffer/captures/*.pcap
