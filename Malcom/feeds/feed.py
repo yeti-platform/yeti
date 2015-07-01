@@ -20,6 +20,7 @@ from Malcom.feeds.messenger import FeedsMessenger
 
 
 
+
 class Feed(object):
 	"""This is a feed base class. All other feeds must inherit from this class"""
 	def __init__(self, name, run_every="24h"):
@@ -79,6 +80,7 @@ class Feed(object):
 			evil['source'] = self.name
 
 			yield evil
+
 
 
 	def update_lines(self, headers={}, auth=None):
@@ -171,6 +173,8 @@ class Feed(object):
 		except Exception, e:
 			debug_output("Error adding feed {}: {}".format(self.name, e))
 	 		self.status = "ERROR: {}".format(e)
+	 		import traceback
+	 		traceback.print_exc()
 
 		self.running = False
 
