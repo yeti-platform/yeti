@@ -302,8 +302,8 @@ class Model:
             # critical section starts here
             tags = element.pop('tags', [])  # so tags in the db do not get overwritten
             evil = element.pop('evil', {})
-            date_first_seen = element.pop('date_first_seen', None)
-            date_last_seen = element.pop('date_last_seen', None)
+            date_first_seen = element.pop('date_first_seen', datetime.datetime.utcnow())
+            date_last_seen = element.pop('date_last_seen', datetime.datetime.utcnow())
 
             if '_id' in element:
                 del element['_id']
