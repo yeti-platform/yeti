@@ -62,9 +62,14 @@ class Feed(object):
 			r = requests.get(self.source, headers=headers, auth=auth)
 		else:
 			r = requests.get(self.source, headers=headers)
-		tree = etree.parse(StringIO(r.content))
-
+		
 		self.status = "OK"
+
+		return self.parse_xml(r.content, main_node, children)
+
+	def parse_xml(self, data, main_node, children):
+
+		tree = etree.parse(StringIO(data))
 
 		for item in tree.findall("//%s"%main_node):
 			evil = {}
