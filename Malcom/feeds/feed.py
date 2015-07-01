@@ -111,7 +111,14 @@ class Feed(object):
 		for line in reader:
 			yield line
 
+	def update_json(self, headers={}, auth=None):
+		if auth:
+			r = requests.get(self.source, headers=headers, auth=auth)
+		else:
+			r = requests.get(self.source, headers=headers)
 
+		return r.json()
+		
 	def update(self):
 		"""
 		The update() function has to be implemented in each of your feeds.
