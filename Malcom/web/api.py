@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 from bson.objectid import InvalidId
 from flask import Blueprint, render_template, abort, request, g, url_for, send_from_directory
 from flask.helpers import make_response
-from flask_restful import Resource, reqparse, Api
+from flask_restful import Resource, reqparse, Api, abort as restful_abort
 import pickle
 import pymongo
 import werkzeug
@@ -97,7 +97,20 @@ class FileStorageArgument(reqparse.Argument):
             return value
 
 
+class Test(Resource):
+
+    parser = reqparse.RequestParser()
+    parser.add_argument('q', type=loads)
+
+    def get(self):
+        args = Test.parser.parse_args()
+        print args['q'], type(args['q'])
+        return "OK"
+
+api.add_resource(Test, '/api/test/')
+
 # API PUBLIC for FEEDS===========================================
+
 class FeedsAPI(Resource):
     decorators=[login_required]
     def get(self, action, feed_name=None):
@@ -123,14 +136,23 @@ api.add_resource(FeedsAPI, '/api/feeds/<string:action>/', '/api/feeds/<string:ac
 
 class Neighbors(Resource):
     decorators=[login_required]
-    def get(self):
-        query = {}
-        for key in request.args:
-            if key == '_id':
-                query[key] = {"$in" : [ObjectId(id) for id in request.args.getlist(key)]}
-            else:
-                query[key] = {"$in" : request.args.getlist(key)}
+    parser = reqparse.RequestParser()
+    parser.add_argument('field', type=str, choices=['id', 'value'], required=True, help='Choose from ["id", "value"]')
+    parser.add_argument('value', type=str, action='append', required=True)
 
+    def get(self):
+        args = Neighbors.parser.parse_args()
+        field = args['field']
+        value = args['value']
+        try:
+            if field == 'id':
+                field = '_id'
+                value = [ObjectId(v) for v in value]
+        except Exception, e:
+            restful_abort(400, reason='Wrong ObjectId format')
+
+        query = {field: {"$in" : value}}
+        # return query
         data = g.Model.find_neighbors(query, include_original=True)
         return data
 
@@ -166,7 +188,7 @@ class QueryAPI(Resource):
         regex = True if request.args.get('regex', False) != False else False
 
         for key in request.args:
-            if key not in ['page', 'regex', 'per_page']:
+            if key not in ['page', 'regex', 'per_page', 'output']:
                     if request.args[key].find(',') != -1: # split request arguments
                             if regex:
                                     #query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]

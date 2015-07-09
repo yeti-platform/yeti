@@ -51,17 +51,18 @@ function getneighbors() {
   datas = d3.selectAll('.selected').data()
   ids = []
   for (var i in datas) {
-    ids.push({'name': '_id', 'value': datas[i]._id.$oid})
+    ids.push( datas[i]._id.$oid)
   }
 
   if (ids.length == 0)
     return
-
+  query = {'field': 'id', 'value': ids }
+  console.log(query)
   $.ajax({
     type: 'get',
     url: url_static_prefix+'api/neighbors/',
     dataType: 'json',
-    data: ids,
+    data: $.param(query, true),
     beforeSend: function(data) {
       $(".graph").css('opacity', 0.1)
       spinner = $("#loading-spinner")
