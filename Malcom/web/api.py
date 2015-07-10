@@ -4,15 +4,18 @@ from bson.objectid import ObjectId
 from bson.objectid import InvalidId
 from flask import Blueprint, render_template, abort, request, g, url_for, send_from_directory
 from flask.helpers import make_response
-from flask_restful import Resource, reqparse, Api
+from flask_restful import Resource, reqparse, Api, abort as restful_abort
 import pickle
 import pymongo
 import werkzeug
+
 from werkzeug.datastructures import FileStorage
 from flask.ext.login import LoginManager, login_user, login_required, logout_user, current_user
 from Malcom.auxiliary.toolbox import *
 from flask.ext.login import current_user
 from webserver import app
+
+from flask_restful_swagger import swagger
 
 
 class MalcomApi(Api):
@@ -85,7 +88,7 @@ def output_standard(data, code, headers=None):
     resp.headers.extend(headers or {})
     return resp
 
-api = MalcomApi(app)
+api = swagger.docs(MalcomApi(app), apiVersion='0.1')
 
 api.representations['text/csv'] = output_csv
 api.representations['application/json'] = output_json
@@ -98,6 +101,7 @@ class FileStorageArgument(reqparse.Argument):
 
 
 # API PUBLIC for FEEDS===========================================
+
 class FeedsAPI(Resource):
     decorators=[login_required]
     def get(self, action, feed_name=None):
@@ -123,81 +127,151 @@ api.add_resource(FeedsAPI, '/api/feeds/<string:action>/', '/api/feeds/<string:ac
 
 class Neighbors(Resource):
     decorators=[login_required]
+    parser = reqparse.RequestParser()
+    parser.add_argument('field', type=str, choices=['id', 'value'], required=True, help='Choose from ["id", "value"]')
+    parser.add_argument('value', type=str, action='append', required=True)
+    @swagger.operation(
+        notes='Get neighbors for given elements',
+        nickname='neighbors',
+        parameters=[
+            {
+                'name': 'field',
+                'description': 'The field to be searched',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'str',
+                "allowableValues": {"values": ["id", "value"], "valueType": "LIST" },
+            },
+            {
+                'name': 'value',
+                'description': 'Value of the field to be searched',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'str',
+            },
+        ]
+        )
     def get(self):
-        query = {}
-        for key in request.args:
-            if key == '_id':
-                query[key] = {"$in" : [ObjectId(id) for id in request.args.getlist(key)]}
-            else:
-                query[key] = {"$in" : request.args.getlist(key)}
+        args = Neighbors.parser.parse_args()
+        field = args['field']
+        value = args['value']
+        try:
+            if field == 'id':
+                field = '_id'
+                value = [ObjectId(v) for v in value]
+        except Exception, e:
+            restful_abort(400, reason='{} is an invalid ObjectId'.format(value))
 
+        query = {field: {"$in" : value}}
+        # return query
         data = g.Model.find_neighbors(query, include_original=True)
         return data
+
+api.add_resource(Neighbors, '/api/neighbors/')
 
 class Evil(Resource):
     decorators=[login_required]
     parser = reqparse.RequestParser()
-    parser.add_argument('_id', type=str)
-    parser.add_argument('value', type=str)
+    parser.add_argument('id', type=ObjectId, action='append')
     parser.add_argument('depth', type=int, default=2)
 
+    @swagger.operation(
+        notes='Recursively search for evil elements from a given element',
+        nickname='evil',
+        parameters=[
+            {
+                'name': 'id',
+                'description': 'ID of starting element',
+                'required': True,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'ObjectId',
+            },
+            {
+                'name': 'depth',
+                'description': 'Recursivity depth (max = 2)',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'str',
+            },
+        ]
+        )
     def get(self):
         args = Evil.parser.parse_args()
-        query = {}
+
         depth = args['depth']
         if depth > 2:
             depth = 2
 
-        for key in args:
-            if key not in ['depth']:
-                query[key] = request.args.getlist(key)
-
-        data = g.Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'}, depth=depth)
+        data = g.Model.multi_graph_find({"_id": args['id']}, {'key':'tags', 'value': 'evil'}, depth=depth)
         return data
 
+api.add_resource(Evil, '/api/evil/')
+
 class QueryAPI(Resource):
+    "Descrption for the querying API"
     decorators=[login_required]
+    parser = reqparse.RequestParser()
+    parser.add_argument('query', type=loads, default={})
+    parser.add_argument('page', type=int, default=0)
+    parser.add_argument('per_page', type=int, default=50)
+    
+    @swagger.operation(
+        notes='Query the Malcom database',
+        nickname='query',
+        parameters=[
+            {
+                'name': 'query',
+                'description': 'A Python-style dictionary containing the request to be made',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'dict',
+            },
+            {
+                'name': 'page',
+                'description': 'Page of results to be requested',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'int',
+            },
+            {
+                'name': 'per_page',
+                'description': 'Number of results per page',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'int',
+            },
+        ]
+        )
     def get(self):
-        query = {}
 
-        page = int(request.args.get('page', 0))
-        per_page = int(request.args.get('per_page', 50))
-        if per_page > 500: per_page = 500
-        regex = True if request.args.get('regex', False) != False else False
-
-        for key in request.args:
-            if key not in ['page', 'regex', 'per_page']:
-                    if request.args[key].find(',') != -1: # split request arguments
-                            if regex:
-                                    #query['$and'] = [{ key: re.compile(split, re.IGNORECASE)} for split in request.args[key].split(',')]
-                                    query['$and'] = [{ key: re.compile(split)} for split in request.args[key].split(',')]
-                            else:
-                                    query['$and'] = [{ key: split} for split in request.args[key].split(',')]
-                    else:
-                            if regex:
-                                    #query[key] = re.compile(request.args[key], re.IGNORECASE) # {"$regex": request.args[key]}
-                                    query[key] = re.compile(request.args[key]) # {"$regex": request.args[key]}
-                            else:
-                                    query[key] = request.args[key]
-
-        if query:
-            hist = query.get('value')
-            if hasattr(hist, 'pattern'):  # do not attempt to store a regex in history.
-                g.Model.add_to_history(hist.pattern)
-            elif hist:
-                g.Model.add_to_history(hist)
+        args = QueryAPI.parser.parse_args()
+        query = args['query']
+        page = args['page']
+        per_page = args['per_page']
+    
+        if 'value' in query:
+            g.Model.add_to_history(query['value'])
 
         data = {}
         chrono_query = datetime.datetime.utcnow()
 
-        print "Query: ", query
-        print "Regex:", regex
-        if regex:
-            elts = list(g.Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]).hint([('date_created', -1), ('value', 1)]))
-        else:
-            elts = list(g.Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)]))
+        elts = g.Model.elements.find(query, skip=page*per_page, limit=per_page, sort=[('date_created', pymongo.DESCENDING)])
 
+        chrono_count = datetime.datetime.utcnow()
+        data['total_results'] = elts.count()
+        chrono_count = datetime.datetime.utcnow() - chrono_count
+        elts = list(elts)
         chrono_query = datetime.datetime.utcnow() - chrono_query
+
+        data['chrono_query'] = str(chrono_query)
+        data['chrono_count'] = str(chrono_count)
 
         data['page'] = page
         data['per_page'] = per_page
@@ -206,41 +280,72 @@ class QueryAPI(Resource):
             elt['link_value'] = url_for('nodes', field='value', value=elt['value'])
             elt['link_type'] = url_for('nodes', field='type', value=elt['type'])
 
-        if len(elts) > 0:
+        if data['total_results'] > 0:
             data['fields'] = elts[0].display_fields
             data['elements'] = elts
-        else:
-            data['fields'] = [('value', 'Value'), ('type', 'Type'), ('tags', 'Tags')]
-            data['elements'] = []
-
-        chrono_count = datetime.datetime.utcnow()
-        if not regex:
-            data['total_results'] = g.Model.find(query).count()
-        else:
-            data['total_results'] = "many"
-        chrono_count = datetime.datetime.utcnow() - chrono_count
-
-        data['chrono_query'] = str(chrono_query)
-        data['chrono_count'] = str(chrono_count)
 
         return data
 
+api.add_resource(QueryAPI, '/api/query/', endpoint="malcom_api.query")
+
+
 class Data(Resource):
     decorators=[login_required]
+    parser = reqparse.RequestParser()
+    parser.add_argument('values', type=str, action='append', default=[])
+    parser.add_argument('tags', type=str, action='append', default=[])
+    parser.add_argument('output', type=str, default='json')
     
+    @swagger.operation(
+        notes='Get raw data from the Malcom database',
+        nickname='data',
+        parameters=[
+            {
+                'name': 'values',
+                'description': 'An array of values',
+                'required': False,
+                "allowMultiple": True,
+                'paramType': 'query',
+                "dataType": 'str',
+            },
+            {
+                'name': 'tags',
+                'description': 'An array of tags',
+                'required': False,
+                "allowMultiple": True,
+                'paramType': 'query',
+                "dataType": 'str',
+            },
+            {
+                'name': 'output',
+                'description': 'Output format',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "allowableValues": {"values": ["json", "csv"], "valueType": "LIST" },
+                "defaultValue": 'json',
+                "dataType": 'str',
+            }
+        ]
+        )
     def get(self):
-        query = {}
-        for key in request.args:
-            if key not in ['output']:
-                query[key] = request.args.get(key)
+        args = Data.parser.parse_args()
+        
+        values = args.get('values', [])
+        if len(values) == 1 and ',' in values[0]:
+            values = values[0].split(',')
+        
+        tags = args.get('tags', [])
+        if len(tags) == 1 and ',' in tags[0]:
+            tags = tags[0].split(',')
 
+        query = {"$or": [{'value': {"$in": values}}, {'tags': {"$in": tags}}]}
         cur = list(g.Model.elements.find(query, sort=[('date_created', pymongo.DESCENDING)]))
         return cur
 
-api.add_resource(Neighbors, '/api/neighbors/')
-api.add_resource(Evil, '/api/evil/')
-api.add_resource(QueryAPI, '/api/query/', endpoint="malcom_api.query")
 api.add_resource(Data, '/api/data/', endpoint="malcom_api.data")
+
+
 
 # DATA MANIPULATION =======================================================
 
@@ -285,7 +390,6 @@ class SnifferSessionDelete(Resource):
     decorators=[login_required]
     def get(self, session_id):
         result = g.messenger.send_recieve('sniffdelete', 'sniffer-commands', {'session_id': session_id})
-        print "Result", result
 
         if result == "notfound":  # session not found
             return {'status': 'Sniffer session %s does not exist' % session_id, 'success': 0}

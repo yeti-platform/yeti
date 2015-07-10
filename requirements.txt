@@ -38,3 +38,4 @@ zope.interface==4.1.2
 pytz
 aniso8601==0.92
 simplejson==3.7.0
+flask-restful-swagger==0.19
