@@ -38,7 +38,8 @@ class FeedsMessenger(Messenger):
 								'enabled' : f.enabled,
 								'name': f.name,
 								'description': f.description,
-								'source':f.source
+								'source':f.source,
+								'tags': f.tags,
 								}
 
 			final_msg = pickle.dumps(msg)

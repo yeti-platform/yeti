@@ -14,7 +14,6 @@ from lxml import etree
 import requests
 
 from Malcom.auxiliary.toolbox import debug_output
-from Malcom.config.malconf import MalcomSetup
 from Malcom.model.model import Model
 from Malcom.feeds.messenger import FeedsMessenger
 
@@ -45,6 +44,7 @@ class Feed(object):
 		self.enabled = False
 		self.model = None
 		self.testing = False
+		self.tags = ['public']
 
 	def get_dict(self):
 		return { 'name': self.name,
@@ -54,6 +54,7 @@ class Feed(object):
 				 'elements_fetched': self.elements_fetched,
 				 'status': self.status,
 				 'enabled': self.enabled,
+				 'tags': self.tags,
 				}
 
 	def update_xml(self, main_node, children, headers={}, auth=None):
@@ -281,6 +282,7 @@ class FeedEngine(Process):
 						new_feed = class_n(n) # create new feed object
 
 						new_feed.model = self.model # attach model instance to feed
+						new_feed.engine = self
 						self.feeds[n] = new_feed
 
 						self.feeds[n].enabled = True if n.lower() in activated_feeds else False

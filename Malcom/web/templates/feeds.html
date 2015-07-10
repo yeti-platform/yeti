@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block main %}
-<div class='col-md-12'>
-	<table class='table' id='feeds'>
+
+{% macro feed_table(feed_names, feeds, tag) -%}
+<table class='table' id='feeds'>
 		<tr>
 			<th>Feed name</th>
 			<th>Enabled</th>
@@ -16,6 +16,7 @@
 			{% endif %}
 		</tr>
 		{% for name in feed_names %}
+		{% if tag in feeds[name].tags %}
 		<tr class='{{ "disabled" if not feeds[name].enabled }} {{ "error" if feeds[name].status != "OK" else "success" }}'>
 			<td>{{ feeds[name].name }}&nbsp;&nbsp;<a href='{{feeds[name].source }}'><span class='glyphicon glyphicon-new-window'></span></a></td>
 			<td>{{ "Yes" if feeds[name].enabled else "No" }}</td>
@@ -31,8 +32,26 @@
 			{% endif %}
 			</td>
 		</tr>
+		{%endif%}
 		{% endfor %}
 	</table>
+{%- endmacro %}
+
+
+{% block main %}
+<div class='col-md-12'>
+	<h3>Public feeds</h3>
+
+	{{ feed_table(feed_names, feeds, 'public') }}
+
+	<h3>Private feeds</h3>
+	
+	{{ feed_table(feed_names, feeds, 'private') }}
+
+	<h3>Internal feeds</h3>
+
+	{{ feed_table(feed_names, feeds, 'internal') }}
+
 </div>
 
 
