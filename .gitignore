@@ -44,8 +44,10 @@ libs
 Malcom/feeds/private*
 Malcom/feeds/Private*
 
-# do not include user-generated pcap files
+
+# do not include user-generated pcap files or db exports
 Malcom/sniffer/captures/*.pcap
+Malcom/exports/*
 
 # do not include TLS keys
 Malcom/networking/tlsproxy/keys/server.crt

@@ -1,4 +1,6 @@
 import datetime, os, sys
+from bson.json_util import dumps, loads
+
 from Malcom.auxiliary.toolbox import debug_output
 import Malcom.auxiliary.toolbox as toolbox
 
@@ -15,8 +17,6 @@ except Exception, e:
 
 
 
-
-
 class Element(dict):
 
 	default_fields = [('value', "Value"), ('type', "Type"), ('tags', "Tags"), ('date_first_seen', 'First Seen'), ('date_last_seen', "Last Seen"), ('date_updated', 'Updated'), ('date_created', 'Created'), ('last_analysis', 'Analyzed') ]
@@ -28,8 +28,17 @@ class Element(dict):
 		self['refresh_period'] = None
 		self['evil'] = {}
 
-	def to_dict(self):
-		return self.__dict__
+	def to_json(self):
+		return dumps(self)
+
+	def to_csv(self):
+		value = self.get('value', "")
+		_type = self.get('type', "")
+		tags = "|".join(self.get('tags', []))
+		first_seen = self.get('date_first_seen', "")
+		last_seen = self.get('date_last_seen', "")
+		last_analysis = self.get('last_analysis', "")
+		return "{},{},{},{},{},{}".format(value, _type, tags, first_seen, last_seen, last_analysis)
 
 	def __getattr__(self, name):
 		return self.get(name, None)

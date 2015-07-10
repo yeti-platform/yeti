@@ -23,6 +23,8 @@ class MalcomSetup(dict):
 			self['YARA_PATH'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['YARA_PATH']))
 		if not self['FEEDS_DIR'].startswith('/'):
 			self['FEEDS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['FEEDS_DIR']))
+		if not self['EXPORTS_DIR'].startswith('/'):
+			self['EXPORTS_DIR'] = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', self['EXPORTS_DIR']))
 
 	def parse_command_line(self, args):
 
@@ -66,6 +68,7 @@ class MalcomSetup(dict):
 			self['FEEDS'] = config.getboolean('feeds', 'activated')
 			self['FEEDS_DIR'] = config.get('feeds', 'feeds_dir')
 			self['FEEDS_SCHEDULER'] = config.getboolean('feeds', 'scheduler')
+			self['EXPORTS_DIR'] = config.get('feeds', 'exports_dir')
 
 		if config.has_section('sniffer'):
 			self['SNIFFER'] = config.getboolean('sniffer', 'activated')
