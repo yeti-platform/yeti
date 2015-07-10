@@ -34,7 +34,7 @@ class Element(dict):
 	def to_csv(self):
 		value = self.get('value', "")
 		_type = self.get('type', "")
-		tags = "|".join(self.get('tags', []))
+		tags = u"|".join(self.get('tags', []))
 		first_seen = self.get('date_first_seen', "")
 		last_seen = self.get('date_last_seen', "")
 		last_analysis = self.get('last_analysis', "")
