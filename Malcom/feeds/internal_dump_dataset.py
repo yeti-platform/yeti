@@ -29,7 +29,6 @@ class ExportAll(Feed):
 		self.output_json.write(u'[')
 		for elt in self.model.elements.find():
 			csv = elt.to_csv()
-			print csv, type(csv)
 			self.output_csv.write(u"{}\n".format(csv))
 			self.output_json.write(u"{}, ".format(elt.to_json()))
 		
