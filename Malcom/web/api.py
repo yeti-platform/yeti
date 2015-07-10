@@ -100,18 +100,6 @@ class FileStorageArgument(reqparse.Argument):
             return value
 
 
-class Test(Resource):
-
-    parser = reqparse.RequestParser()
-    parser.add_argument('q', type=loads)
-
-    def get(self):
-        args = Test.parser.parse_args()
-        print args['q'], type(args['q'])
-        return "OK"
-
-api.add_resource(Test, '/api/test/')
-
 # API PUBLIC for FEEDS===========================================
 
 class FeedsAPI(Resource):
