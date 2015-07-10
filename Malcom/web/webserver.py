@@ -303,7 +303,7 @@ def account_yara():
 @login_required
 def feeds():
 	# REDIS query to feed engine
-	feed_list = pickle.loads(g.messenger.send_recieve('feedList', 'feeds'))
+	feed_list = loads(g.messenger.send_recieve('feedList', 'feeds'))
 	# alpha = sorted(Malcom.feed_engine.feeds, key=lambda name: name)
 	return render_template('feeds.html', feed_names=[n for n in feed_list], feeds=feed_list)
 

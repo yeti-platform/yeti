@@ -41,8 +41,7 @@ class FeedsMessenger(Messenger):
 								'source':f.source,
 								'tags': f.tags,
 								}
-
-			final_msg = pickle.dumps(msg)
+			final_msg = json_util.dumps(msg)
 
 		if msg == 'feedRun':
 			result = self.feedengine_instance.run_feed(params['feed_name'])
