@@ -142,7 +142,29 @@ class Neighbors(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('field', type=str, choices=['id', 'value'], required=True, help='Choose from ["id", "value"]')
     parser.add_argument('value', type=str, action='append', required=True)
-
+    @swagger.operation(
+        notes='Get neighbors for given elements',
+        nickname='neighbors',
+        parameters=[
+            {
+                'name': 'field',
+                'description': 'The field to be searched',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'str',
+                "allowableValues": {"values": ["id", "value"], "valueType": "LIST" },
+            },
+            {
+                'name': 'value',
+                'description': 'Value of the field to be searched',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'str',
+            },
+        ]
+        )
     def get(self):
         args = Neighbors.parser.parse_args()
         field = args['field']
