@@ -184,7 +184,6 @@ class Evil(Resource):
 
 api.add_resource(Evil, '/api/evil/')
 
-
 class QueryAPI(Resource):
     "Descrption for the querying API"
     decorators=[login_required]
@@ -229,7 +228,6 @@ class QueryAPI(Resource):
         query = args['query']
         page = args['page']
         per_page = args['per_page']
-        output = args['output']
     
         if 'value' in query:
             g.Model.add_to_history(query['value'])
@@ -277,7 +275,7 @@ class Data(Resource):
         parameters=[
             {
                 'name': 'values',
-                'description': 'An array of values (e.g. "&values=value1&values=value2")',
+                'description': 'An array of values',
                 'required': False,
                 "allowMultiple": True,
                 'paramType': 'query',
@@ -285,7 +283,7 @@ class Data(Resource):
             },
             {
                 'name': 'tags',
-                'description': 'An array of tags (e.g. "&tags=tag1&tags=tag2")',
+                'description': 'An array of tags',
                 'required': False,
                 "allowMultiple": True,
                 'paramType': 'query',
