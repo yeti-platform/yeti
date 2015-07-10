@@ -96,11 +96,13 @@ function display_message(text) {
 
 function getevil_nodes(node_id) {
   ids = []
-  ids.push({'name': '_id', 'value': node_id._id.$oid})
+  ids.push(node_id._id.$oid)
+  query = {'id': ids}
+
   $.ajax({
     url: url_static_prefix+'api/evil/',
     dataType: 'json',
-    data: ids,
+    data: $.param(query, true),
     success: function(data) {
       push_nodes(data.nodes)
       push_links(data.edges)
@@ -115,13 +117,15 @@ function getevil() {
 
   datas = d3.selectAll('.selected').data()
   for (var i in datas) {
-    ids.push({'name': '_id', 'value': datas[i]._id.$oid})
+    ids.push(datas[i]._id.$oid)
   }
+
+  query = {'id': ids}
 
   $.ajax({
     url: url_static_prefix+'api/evil/',
     dataType: 'json',
-    data: ids,
+    data: $.param(query, true),
     success: function(data) {
       push_nodes(data.nodes)
       push_links(data.edges)

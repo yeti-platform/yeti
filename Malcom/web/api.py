@@ -186,22 +186,39 @@ api.add_resource(Neighbors, '/api/neighbors/')
 class Evil(Resource):
     decorators=[login_required]
     parser = reqparse.RequestParser()
-    parser.add_argument('_id', type=str)
-    parser.add_argument('value', type=str)
+    parser.add_argument('id', type=ObjectId, action='append')
     parser.add_argument('depth', type=int, default=2)
 
+    @swagger.operation(
+        notes='Recursively search for evil elements from a given element',
+        nickname='evil',
+        parameters=[
+            {
+                'name': 'id',
+                'description': 'ID of starting element',
+                'required': True,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'ObjectId',
+            },
+            {
+                'name': 'depth',
+                'description': 'Recursivity depth (max = 2)',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'str',
+            },
+        ]
+        )
     def get(self):
         args = Evil.parser.parse_args()
-        query = {}
+
         depth = args['depth']
         if depth > 2:
             depth = 2
 
-        for key in args:
-            if key not in ['depth']:
-                query[key] = request.args.getlist(key)
-
-        data = g.Model.multi_graph_find(query, {'key':'tags', 'value': 'evil'}, depth=depth)
+        data = g.Model.multi_graph_find({"_id": args['id']}, {'key':'tags', 'value': 'evil'}, depth=depth)
         return data
 
 api.add_resource(Evil, '/api/evil/')
