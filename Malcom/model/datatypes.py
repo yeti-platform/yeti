@@ -38,7 +38,7 @@ class Element(dict):
 		first_seen = self.get('date_first_seen', "")
 		last_seen = self.get('date_last_seen', "")
 		last_analysis = self.get('last_analysis', "")
-		return "{},{},{},{},{},{}".format(value, _type, tags, first_seen, last_seen, last_analysis)
+		return u"{},{},{},{},{},{}".format(value, _type, tags, first_seen, last_seen, last_analysis)
 
 	def __getattr__(self, name):
 		return self.get(name, None)
