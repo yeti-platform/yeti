@@ -77,22 +77,19 @@ function get_dataset(query, url) {
 
 	// un # dans l'url
 	page = location.hash.split("#")[1]
-
 	if (page == undefined) {
 		page = 0;
 	}
 
-	params = {}
-	querydict['page'] = page
-
+	regex = false;
 	if ($('#regex').prop('checked') == true)
-		querydict['regex'] = 'true'
+		regex = 'true'
 
 	$.ajax({
 	  dataType: "json",
 	  type: 'GET',
 	  url: url,
-	  data: $.param(querydict),
+	  data: {query: JSON.stringify(querydict), page: page, regex: regex},
 	  beforeSend: function(data) {
 	  	$('#loading-spinner').addClass('show')
 	  },
