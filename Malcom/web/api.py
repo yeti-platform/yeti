@@ -36,16 +36,16 @@ class MalcomApi(Api):
         Acceptable response will be sent as per RFC 2616 section 14.1
         :param data: Python object containing response data to be transformed
         """
-        
+
         default_mediatype = kwargs.pop('fallback_mediatype', None) or self.default_mediatype
         mediatype = MalcomApi.FORMAT_MIMETYPE_MAP.get(request.args.get('output'))
-        
+
         if not mediatype:
             for accept in request.accept_mimetypes:
                 if accept[0] in self.representations:
                     mediatype = accept[0]
                     break
-        
+
         if not mediatype:
             if "*/*" in request.accept_mimetypes and len(request.accept_mimetypes) == 1:
                 mediatype = self.default_mediatype
@@ -218,7 +218,7 @@ class QueryAPI(Resource):
     parser.add_argument('query', type=loads, default={})
     parser.add_argument('page', type=int, default=0)
     parser.add_argument('per_page', type=int, default=50)
-    
+
     @swagger.operation(
         notes='Query the Malcom database',
         nickname='query',
@@ -255,7 +255,7 @@ class QueryAPI(Resource):
         query = args['query']
         page = args['page']
         per_page = args['per_page']
-    
+
         if 'value' in query:
             g.Model.add_to_history(query['value'])
 
@@ -295,7 +295,7 @@ class Data(Resource):
     parser.add_argument('values', type=str, action='append', default=[])
     parser.add_argument('tags', type=str, action='append', default=[])
     parser.add_argument('output', type=str, default='json')
-    
+
     @swagger.operation(
         notes='Get raw data from the Malcom database',
         nickname='data',
@@ -330,11 +330,11 @@ class Data(Resource):
         )
     def get(self):
         args = Data.parser.parse_args()
-        
+
         values = args.get('values', [])
         if len(values) == 1 and ',' in values[0]:
             values = values[0].split(',')
-        
+
         tags = args.get('tags', [])
         if len(tags) == 1 and ',' in tags[0]:
             tags = tags[0].split(',')
