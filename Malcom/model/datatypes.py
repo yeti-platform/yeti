@@ -25,7 +25,7 @@ class Element(dict):
         self['value'] = None
         self['type'] = None
         self['refresh_period'] = None
-        self['evil'] = {}
+        self['evil'] = []
 
     def to_dict(self):
         return self.__dict__

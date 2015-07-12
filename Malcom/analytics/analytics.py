@@ -38,7 +38,7 @@ class Worker(Thread):
 		# debug_output("[%s | PID %s | elt: %s] NOTIFIED" % (self.name, os.getpid(), elt['value']), type='debug')
 
 		# t = datetime.datetime.now()
-		
+
 
 	def work_async(self, elt, tags):
 		# get analysis time out of the way
@@ -50,14 +50,14 @@ class Worker(Thread):
 		t = Thread(target=self.work_sync, args=(elt, tags))
 		t.daemon = True
 		t.start()
-		
+
 	def run(self):
 		self.work = True
 		try:
 			while self.work:
-				
+
 				t0 = datetime.datetime.now()
-				
+
 				with self.queue_lock:
 					debug_output("[%s | PID %s] WAITING FOR NEW ELT (size: %s)" % (self.name, os.getpid(), self.engine.elements_queue.qsize()), type='debug')
 					elt = self.engine.elements_queue.get()
@@ -67,10 +67,10 @@ class Worker(Thread):
 					debug_output("[%s | PID %s] GOT BAIL MESSAGE" % (self.name, os.getpid()), type='debug')
 					self.work = False
 					continue
-				
+
 				with self.queue_lock:
 					debug_output("[%s | PID %s] Started work on %s %s. Queue size: %s" % (self.name, os.getpid(), elt['type'], elt['value'], self.engine.elements_queue.qsize()), type='analytics')
-				
+
 				type_ = elt['type']
 				tags = elt['tags']
 
@@ -121,11 +121,11 @@ class Analytics(Process):
 	def save_element(self, element, tags=[], with_status=False):
 		element.upgrade_tags(tags)
 		return self.data.save(element, with_status=with_status)
-		
+
 	# graph function
 	def add_artifacts(self, data, tags=[]):
 		artifacts = find_artifacts(data)
-		
+
 		added = []
 		for url in artifacts['urls']:
 			added.append(self.save_element(url, tags))
@@ -136,7 +136,7 @@ class Analytics(Process):
 		for ip in artifacts['ips']:
 			added.append(self.save_element(ip, tags))
 
-		return added        
+		return added
 
 
 	# elements analytics
@@ -159,26 +159,26 @@ class Analytics(Process):
 		results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
 		while len(results) > 0 and self.run_analysis:
-		
+
 			ips = []
 			debug_output("(getting ASNs for %s IPs - %s/%s done)" % (len(results), done, total), type='analytics')
-			
+
 			for r in results:
 				ips.append(r)
 
 			as_info = {}
-			
+
 			try:
 				as_info = get_net_info_shadowserver(ips)
 			except Exception, e:
 				debug_output("Could not get AS for IPs: %s" % e)
-			
+
 			if as_info == {} or as_info == None:
 				debug_output("as_info empty", 'error')
 				continue
 
 			for ip in as_info:
-				
+
 				_as = as_info[ip]
 				_ip = self.data.find_one({'value': ip})
 
@@ -198,10 +198,10 @@ class Analytics(Process):
 				_ip['last_analysis'] = datetime.datetime.utcnow()
 				_ip['next_analysis'] = _ip['last_analysis'] + datetime.timedelta(seconds=_ip['refresh_period'])
 				_ip = self.save_element(_ip)
-			
+
 				if _as and _ip:
 					self.data.connect(_ip, _as, 'net_info')
-					
+
 			done += len(results)
 			results = [r for r in self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]})[:items]]
 
@@ -219,17 +219,17 @@ class Analytics(Process):
 
 		self.run_analysis = True
 		self.messenger = AnalyticsMessenger(self)
-		
+
 		self.elements_queue = Queue.Queue()
 		self.queue_lock = Lock()
-		
+
 		self.hostnames = Queue.Queue()
 		self.hostname_lock = Lock()
 
 		while self.run_analysis:
 			debug_output("Analytics hearbeat")
 
-			self.active_lock.acquire()	
+			self.active_lock.acquire()
 			if self.run_analysis:
 				self.process(10000)
 			self.active_lock.release()
@@ -237,7 +237,7 @@ class Analytics(Process):
 			if self.once: self.run_analysis = False; self.once = False
 
 			time.sleep(1)
-		
+
 	def stop(self):
 		self.run_analysis = False
 		for w in self.workers:
@@ -253,7 +253,7 @@ class Analytics(Process):
 		for n in new:
 			if not n[1]: continue
 			saved = self.save_element(n[1])
-			
+
 			# do the link
 			conn = self.data.connect(elt, saved, n[0])
 			if not conn: continue
@@ -313,16 +313,16 @@ class Analytics(Process):
 				self.elements_queue.put(pickle.dumps("BAIL"))
 
 			self.elements_queue.join()
-			
+
 			debug_output("Workers have joined")
 
 			# regroup ASN analytics and ADNS analytics
 			if self.run_analysis:
 				self.bulk_functions()
 				self.active = False
-		
+
 		now = datetime.datetime.utcnow()
-		
+
 		if total_elts > 0:
 			debug_output("Analyzed %s elements in %s" % (total_elts, str(now-then)) )
 		if self.run_analysis == True:
