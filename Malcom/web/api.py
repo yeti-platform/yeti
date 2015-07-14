@@ -25,8 +25,20 @@ class MalcomApi(Api):
         "csv": "text/csv",
         "json": "application/json",
         "text": "text/html",
+        "text": "text/javascript",
         # Add other mimetypes as desired here
     }
+
+    def __init__(self, *args, **kwargs):
+        super(MalcomApi, self).__init__(*args, **kwargs)
+
+        self.representations = {
+            'text/csv': output_csv,
+            'application/json': output_json,
+            'text/html': output_standard,
+            "text/javascript": output_standard,
+        }
+
 
     def make_response(self, data, *args, **kwargs):
         """Looks up the representation transformer for the requested media
@@ -510,12 +522,12 @@ class SnifferSessionModuleFunction(Resource):
         if output is False:
             return "Not found", 404
 
-        return output
+        # return output
 
-        # if type(output) is dict:
-        #     return output, 200, {'Content-Type': 'application/json'}
-        # else:
-        #     return output, 200, {'Content-Type': 'text/html'}
+        if type(output) is dict:
+            return output, 200, {'Content-Type': 'application/json'}
+        else:
+            return output, 200, {'Content-Type': 'text/html'}
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>/')
