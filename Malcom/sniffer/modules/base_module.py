@@ -54,7 +54,8 @@ class Module(object):
         return string
 
     def on_packet(self, pkt):
-        raise NotImplementedError("You must implement a on_packet(pkt) method")
+        # Implement this function if you want to process network captures in real-time
+        pass
 
     def load_conf(self):
         self.config = {}
