@@ -1,6 +1,4 @@
 from scapy.all import *
-from bson.json_util import dumps as bson_dumps
-from bson.json_util import loads as bson_loads
 
 from Malcom.sniffer.modules.base_module import Module
 from Malcom.auxiliary.toolbox import debug_output
@@ -51,9 +49,9 @@ class PassiveDns(Module):
                 filename = self.session.pcap_filename
                 self.session.pkts = sniff(stopper=self.session.stop_sniffing, filter=self.session.filter, prn=self.on_packet, stopperTimeout=1, offline=self.session.engine.setup['SNIFFER_DIR']+"/"+filename)
                 # now that everything has been processed, save the results to DB
-                self.save_entry(bson_dumps(self.dns_requests))
+                self.save_entry(self.dns_requests)
             else:
-                self.dns_requests = bson_loads(self.dns_requests)
+                self.dns_requests = self.dns_requests
 
         content = "<table class='table table-condensed'><tr><th>Query</th><th>Answers</th><th>Count</th></tr>"
         for q in self.dns_requests:

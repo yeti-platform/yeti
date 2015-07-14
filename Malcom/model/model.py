@@ -524,10 +524,10 @@ class Model:
     def load_module_entry(self, session_id, module_name):
         entry = self.modules.find_one({'session_id': session_id, 'name': module_name})
         if entry:
-            return entry['entry']
+            return bson_loads(entry['entry'])
         else:
             return {}
 
     def save_module_entry(self, session_id, module_name, entry, timeout=None):
-        asd = self.modules.update({'name': module_name, 'session_id': session_id}, {'name': module_name, 'session_id': session_id, 'entry': entry, 'timeout': timeout}, upsert=True)
+        asd = self.modules.update({'name': module_name, 'session_id': session_id}, {'name': module_name, 'session_id': session_id, 'entry': bson_dumps(entry), 'timeout': timeout}, upsert=True)
 
