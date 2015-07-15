@@ -36,7 +36,7 @@ class MalcomApi(Api):
             'text/csv': output_csv,
             'application/json': output_json,
             'text/html': output_standard,
-            "text/javascript": output_standard,
+            'text/javascript': output_standard,
         }
 
 
@@ -52,20 +52,18 @@ class MalcomApi(Api):
         default_mediatype = kwargs.pop('fallback_mediatype', None) or self.default_mediatype
         mediatype = MalcomApi.FORMAT_MIMETYPE_MAP.get(request.args.get('output'))
 
-        if not mediatype:
-            for accept in request.accept_mimetypes:
-                if accept[0] in self.representations:
-                    mediatype = accept[0]
-                    break
+        if default_mediatype in self.mediatypes():
+            mediatype = default_mediatype
 
         if not mediatype:
             if "*/*" in request.accept_mimetypes and len(request.accept_mimetypes) == 1:
-                mediatype = self.default_mediatype
+                mediatype = default_mediatype
             else:
                 mediatype = request.accept_mimetypes.best_match(
                     self.representations,
                     default=default_mediatype,
                 )
+
         if mediatype is None:
             raise NotAcceptable()
         if mediatype in self.representations:
