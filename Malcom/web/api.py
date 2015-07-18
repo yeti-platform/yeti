@@ -304,13 +304,8 @@ class Data(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('values', type=str, action='append', default=[])
     parser.add_argument('tags', type=str, action='append', default=[])
-<<<<<<< HEAD
     parser.add_argument('output', type=str, default='json', choices=['csv', 'json'])
-    
-=======
-    parser.add_argument('output', type=str, default='json')
 
->>>>>>> master
     @swagger.operation(
         notes='Get raw, live data from the Malcom database (can be slow on some queries)',
         nickname='data',
@@ -391,7 +386,7 @@ class Export(Resource):
                                     )
 
 api.add_resource(Export, '/api/export/', endpoint="malcom_api.export")
-        
+
 
 # DATA MANIPULATION =======================================================
 

@@ -1,10 +1,8 @@
-<<<<<<< HEAD
-import datetime, os, sys
-from bson.json_util import dumps, loads
-=======
 import datetime
 import os
->>>>>>> master
+import sys
+from bson.json_util import dumps, loads
+
 
 from Malcom.auxiliary.toolbox import debug_output
 import Malcom.auxiliary.toolbox as toolbox
@@ -17,15 +15,8 @@ try:
     geoip_reader = geoip2.database.Reader(current_path+'/../auxiliary/geoIP/GeoIP2-City.mmdb')
     geoip = True
 except Exception, e:
-<<<<<<< HEAD
 	debug_output("Could not load GeoIP library - %s" % e, type='error')
 	geoip = False
-
-=======
-    debug_output("Could not load GeoIP library - %s" % e, type='error')
-    geoip = False
->>>>>>> master
-
 
 class Element(dict):
 
@@ -38,7 +29,6 @@ class Element(dict):
         self['refresh_period'] = None
         self['evil'] = []
 
-<<<<<<< HEAD
 	def to_json(self):
 		return dumps(self)
 
@@ -50,10 +40,7 @@ class Element(dict):
 		last_seen = self.get('date_last_seen', "")
 		last_analysis = self.get('last_analysis', "")
 		return u"{},{},{},{},{},{}".format(value, _type, tags, first_seen, last_seen, last_analysis)
-=======
-    def to_dict(self):
-        return self.__dict__
->>>>>>> master
+
 
     def __getattr__(self, name):
         return self.get(name, None)
