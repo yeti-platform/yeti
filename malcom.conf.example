@@ -11,6 +11,7 @@ auth = false
 activated = true
 feeds_dir = feeds
 scheduler = false
+exports_dir = exports
 
 [analytics]
 activated = true

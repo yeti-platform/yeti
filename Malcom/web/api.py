@@ -304,10 +304,10 @@ class Data(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('values', type=str, action='append', default=[])
     parser.add_argument('tags', type=str, action='append', default=[])
-    parser.add_argument('output', type=str, default='json')
+    parser.add_argument('output', type=str, default='json', choices=['csv', 'json'])
 
     @swagger.operation(
-        notes='Get raw data from the Malcom database',
+        notes='Get raw, live data from the Malcom database (can be slow on some queries)',
         nickname='data',
         parameters=[
             {
@@ -355,6 +355,37 @@ class Data(Resource):
 
 api.add_resource(Data, '/api/data/', endpoint="malcom_api.data")
 
+class Export(Resource):
+    """Obtain a pre-generated full database export"""
+    decorators=[login_required]
+    parser = reqparse.RequestParser()
+    parser.add_argument('output', type=str, default='json', choices=['csv', 'json'])
+
+    @swagger.operation(
+        notes='Get raw, live data from the Malcom database (can be slow on some queries)',
+        nickname='data',
+        parameters=[
+            {
+                'name': 'output',
+                'description': 'Output format',
+                'required': False,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "allowableValues": {"values": ["json", "csv"], "valueType": "LIST" },
+                "defaultValue": 'json',
+                "dataType": 'str',
+            }
+        ]
+        )
+    def get(self):
+        args = Export.parser.parse_args()
+        output = args['output']
+        return send_from_directory( g.config['EXPORTS_DIR'],
+                                    'export_all.{}'.format(output),
+                                    mimetype=output,
+                                    )
+
+api.add_resource(Export, '/api/export/', endpoint="malcom_api.export")
 
 
 # DATA MANIPULATION =======================================================
