@@ -64,7 +64,7 @@ class Feed(object):
 			r = requests.get(self.source, headers=headers, auth=auth)
 		else:
 			r = requests.get(self.source, headers=headers)
-		
+
 		self.status = "OK"
 
 		return self.parse_xml(r.content, main_node, children)
@@ -95,7 +95,7 @@ class Feed(object):
 			r = requests.get(self.source, headers=headers)
 
 		feed = r.text.split('\n')
-		
+
 		self.status = "OK"
 
 		for line in feed:
@@ -113,7 +113,7 @@ class Feed(object):
 
 		feed = r.text.split('\n')
 		reader = csv.reader(feed, delimiter=delimiter, quotechar=quotechar)
-		
+
 		self.status = "OK"
 
 		for line in reader:
@@ -126,7 +126,7 @@ class Feed(object):
 			r = requests.get(self.source, headers=headers)
 
 		return r.json()
-		
+
 	def update(self):
 		"""
 		The update() function has to be implemented in each of your feeds.
@@ -146,7 +146,8 @@ class Feed(object):
 			return
 
 		# add an 'evil' tag if it was not specified in the feed
-		if 'evil' not in element['tags']: element['tags'] += ['evil']
+		if 'evil' not in element['tags']:
+			element['tags'] += ['evil']
 
 		element, new = self.model.save(element, with_status=True)
 		if new:

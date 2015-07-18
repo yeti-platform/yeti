@@ -25,8 +25,20 @@ class MalcomApi(Api):
         "csv": "text/csv",
         "json": "application/json",
         "text": "text/html",
+        "text": "text/javascript",
         # Add other mimetypes as desired here
     }
+
+    def __init__(self, *args, **kwargs):
+        super(MalcomApi, self).__init__(*args, **kwargs)
+
+        self.representations = {
+            'text/csv': output_csv,
+            'application/json': output_json,
+            'text/html': output_standard,
+            'text/javascript': output_standard,
+        }
+
 
     def make_response(self, data, *args, **kwargs):
         """Looks up the representation transformer for the requested media
@@ -36,24 +48,22 @@ class MalcomApi(Api):
         Acceptable response will be sent as per RFC 2616 section 14.1
         :param data: Python object containing response data to be transformed
         """
-        
+
         default_mediatype = kwargs.pop('fallback_mediatype', None) or self.default_mediatype
         mediatype = MalcomApi.FORMAT_MIMETYPE_MAP.get(request.args.get('output'))
-        
-        if not mediatype:
-            for accept in request.accept_mimetypes:
-                if accept[0] in self.representations:
-                    mediatype = accept[0]
-                    break
-        
+
+        if default_mediatype in self.mediatypes():
+            mediatype = default_mediatype
+
         if not mediatype:
             if "*/*" in request.accept_mimetypes and len(request.accept_mimetypes) == 1:
-                mediatype = self.default_mediatype
+                mediatype = default_mediatype
             else:
                 mediatype = request.accept_mimetypes.best_match(
                     self.representations,
                     default=default_mediatype,
                 )
+
         if mediatype is None:
             raise NotAcceptable()
         if mediatype in self.representations:
@@ -218,7 +228,7 @@ class QueryAPI(Resource):
     parser.add_argument('query', type=loads, default={})
     parser.add_argument('page', type=int, default=0)
     parser.add_argument('per_page', type=int, default=50)
-    
+
     @swagger.operation(
         notes='Query the Malcom database',
         nickname='query',
@@ -255,7 +265,7 @@ class QueryAPI(Resource):
         query = args['query']
         page = args['page']
         per_page = args['per_page']
-    
+
         if 'value' in query:
             g.Model.add_to_history(query['value'])
 
@@ -294,8 +304,13 @@ class Data(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument('values', type=str, action='append', default=[])
     parser.add_argument('tags', type=str, action='append', default=[])
+<<<<<<< HEAD
     parser.add_argument('output', type=str, default='json', choices=['csv', 'json'])
     
+=======
+    parser.add_argument('output', type=str, default='json')
+
+>>>>>>> master
     @swagger.operation(
         notes='Get raw, live data from the Malcom database (can be slow on some queries)',
         nickname='data',
@@ -330,11 +345,11 @@ class Data(Resource):
         )
     def get(self):
         args = Data.parser.parse_args()
-        
+
         values = args.get('values', [])
         if len(values) == 1 and ',' in values[0]:
             values = values[0].split(',')
-        
+
         tags = args.get('tags', [])
         if len(tags) == 1 and ',' in tags[0]:
             tags = tags[0].split(',')
@@ -541,12 +556,12 @@ class SnifferSessionModuleFunction(Resource):
         if output is False:
             return "Not found", 404
 
-        return output
+        # return output
 
-        # if type(output) is dict:
-        #     return output, 200, {'Content-Type': 'application/json'}
-        # else:
-        #     return output, 200, {'Content-Type': 'text/html'}
+        if type(output) is dict:
+            return output, 200, {'Content-Type': 'application/json'}
+        else:
+            return output, 200, {'Content-Type': 'text/html'}
 
 api.add_resource(SnifferSessionList, '/api/sniffer/list/')
 api.add_resource(SnifferSessionDelete, '/api/sniffer/delete/<session_id>/')

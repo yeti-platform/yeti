@@ -301,7 +301,7 @@ class Model:
 
             # critical section starts here
             tags = element.pop('tags', [])  # so tags in the db do not get overwritten
-            evil = element.pop('evil', {})
+            evil = element.pop('evil', [])
             date_first_seen = element.pop('date_first_seen', datetime.datetime.utcnow())
             date_last_seen = element.pop('date_last_seen', datetime.datetime.utcnow())
 
@@ -321,8 +321,8 @@ class Model:
                     if key == 'tags': continue
                     _element[key] = element[key]
                 _element['tags'] = list(set([t.strip().lower() for t in _element['tags'] + tags]))
-                if evil != {}:
-                    _element['evil'] = dict(_element['evil'].items() + evil.items())
+                if evil != []:
+                    _element['evil'] = _element['evil'] + evil
                 element = _element
                 new = False
             else:
@@ -345,7 +345,7 @@ class Model:
                 element['next_analysis'] = datetime.datetime.utcnow()
                 element['date_first_seen'] = date_first_seen
                 element['date_last_seen'] = date_last_seen
-                
+
             # tags are all lowercased and stripped
             element['tags'] = [t.lower().strip() for t in element['tags']]
 
@@ -524,10 +524,10 @@ class Model:
     def load_module_entry(self, session_id, module_name):
         entry = self.modules.find_one({'session_id': session_id, 'name': module_name})
         if entry:
-            return entry['entry']
+            return bson_loads(entry['entry'])
         else:
             return {}
 
     def save_module_entry(self, session_id, module_name, entry, timeout=None):
-        asd = self.modules.update({'name': module_name, 'session_id': session_id}, {'name': module_name, 'session_id': session_id, 'entry': entry, 'timeout': timeout}, upsert=True)
+        asd = self.modules.update({'name': module_name, 'session_id': session_id}, {'name': module_name, 'session_id': session_id, 'entry': bson_dumps(entry), 'timeout': timeout}, upsert=True)
 

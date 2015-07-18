@@ -35,6 +35,11 @@ class ZeusTrackerBinaries(Feed):
         except AttributeError, e:
             print "Date not found!"
 
+        try:
+            evil['status'] = re.search(r"status: (?P<status>[^,]+)", dict['description']).group('status')
+        except Exception, e:
+            print "status not found!"
+
         url.add_evil(evil)
         url.seen(first=evil['date_added'])
         self.commit_to_db(url)

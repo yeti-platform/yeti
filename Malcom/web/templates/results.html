@@ -94,7 +94,7 @@
 				{% if evil_elts|length < 10 %}
 					{% for elt in evil_elts.values() %}
 						{% set outer_loop = loop %}
-						{% for key, evil in elt.evil.iteritems() %}
+						{% for evil in elt.evil %}
 							<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
 							<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
 								{% for key, value in evil.iteritems() %}
@@ -110,7 +110,7 @@
 					<div id="all-evil" class='toggle-hidden'>
 					{% for elt in evil_elts.values() %}
 						{% set outer_loop = loop %}
-						{% for key, evil in elt.evil.iteritems() %}
+						{% for evil in elt.evil %}
 							<div class='alert alert-danger evil toggle-control' data-toggle-target='details-evil-{{evil.id}}{{outer_loop.index0}}'>{{elt.value}} was listed in <strong>{{evil.source}}</strong> on {{evil.date_added|datetimeformat}}</div>
 							<table class='table table-condensed toggle-hidden' id='details-evil-{{evil.id}}{{outer_loop.index0}}'>
 								{% for key, value in evil.iteritems() %}
