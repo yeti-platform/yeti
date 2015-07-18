@@ -9,7 +9,7 @@ import urllib2
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.feeds.feed import Feed
-from Malcom.model.datatypes import Evil, Url
+from Malcom.model.datatypes import Url
 
 
 class MalcodeBinaries(Feed):
@@ -42,5 +42,5 @@ class MalcodeBinaries(Feed):
 				self.commit_to_db(url)
 			except UnicodeError:
 				sys.stderr.write('error Unicode : %s' % dict['description'])
-			
+
 

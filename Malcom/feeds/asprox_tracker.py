@@ -6,7 +6,7 @@ import csv
 
 from bson.json_util import dumps, loads
 
-from Malcom.model.datatypes import Ip, Url, Hostname, As, Evil 
+from Malcom.model.datatypes import Ip, Url, Hostname, As
 from Malcom.feeds.feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
@@ -17,10 +17,10 @@ class AsproxTracker(Feed):
 	This is a feed that will fetch data from a URL and process it
 	"""
 	def __init__(self, name):
-		super(AsproxTracker, self).__init__(name, run_every="12h") 
-		
-		self.name = "AsproxTracker" 
-		self.source = "http://atrack.h3x.eu/api/asprox_full_csv.php" 
+		super(AsproxTracker, self).__init__(name, run_every="12h")
+
+		self.name = "AsproxTracker"
+		self.source = "http://atrack.h3x.eu/api/asprox_full_csv.php"
 		self.description = "This feed contains known Asprox C2 servers"
 
 	def update(self):
@@ -30,7 +30,7 @@ class AsproxTracker(Feed):
 			self.analyze(line)
 
 	def analyze(self, line):
-		
+
 		if line[0] == 'Number':
 			return
 
@@ -40,12 +40,12 @@ class AsproxTracker(Feed):
 		url['tags'] = ['asprox']
 
 		evil = {}
-		
+
 		evil['status'] = Status
 		evil['cc'] = CC
 		evil['status'] = Status
 		print First_Seen
-		evil['date_added'] = datetime.datetime.strptime(First_Seen, "%Y-%m-%d %H:%M:%S") 
+		evil['date_added'] = datetime.datetime.strptime(First_Seen, "%Y-%m-%d %H:%M:%S")
 		print Last_Seen
 		evil['last_seen'] = datetime.datetime.strptime(Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else datetime.datetime.utcnow()
 		evil['sbl'] = SBL

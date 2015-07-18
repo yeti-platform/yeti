@@ -6,7 +6,7 @@ import md5
 from bson.objectid import ObjectId
 from bson.json_util import dumps
 
-from Malcom.model.datatypes import Evil, Url
+from Malcom.model.datatypes import Url
 from Malcom.feeds.feed import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
@@ -19,7 +19,7 @@ class CybercrimeTracker(Feed):
 		self.description = "CyberCrime Tracker - Latest 20 CnC URLS"
 		self.source = "http://cybercrime-tracker.net/rss.xml"
 		self.confidence = 90
-		
+
 	def update(self):
 		for dict in self.update_xml('item', ["title", "link", "pubDate", "description"]):
 			self.analyze(dict)

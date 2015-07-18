@@ -117,33 +117,6 @@ class File(Element):
         return []
 
 
-class Evil(Element):
-
-    display_fields = Element.default_fields + [('link', 'Link'), ('guid', 'GUID'), ('description', 'Description')]
-    default_refresh_period = None
-
-    def __init__(self, value='', type="evil", tags=[]):
-        super(Evil, self).__init__()
-        self['value'] = value
-        self['type'] = type
-        self['tags'] = tags + ['evil']
-        self['refresh_period'] = Evil.default_refresh_period
-
-    @staticmethod
-    def from_dict(d):
-        e = Evil()
-        for key in d:
-            e[key] = d[key]
-        return e
-
-    def analytics(self):
-        self['last_analysis'] = datetime.datetime.utcnow()
-
-        # analysis does not change with time
-        self['next_analysis'] = None
-        return []
-
-
 class As(Element):
 
     element_fields = [
@@ -378,10 +351,28 @@ class Hostname(Element):
 
         return new
 
+
+class Iban(Element):
+	"""docstring for IBAN"""
+
+	default_refresh_period = 0
+
+	def validate(string):
+		pass
+
+	def __init__(self, iban=""):
+		super(Iban, self).__init__()
+		self['value'] = iban
+		self['type'] = 'iban'
+		self['refresh_period'] = Iban.default_refresh_period
+
+	def analytics(self):
+		pass
+
+
 DataTypes = {
     'url': Url,
     'ip': Ip,
     'hostname': Hostname,
     'as': As,
-    'evil': Evil,
 }
