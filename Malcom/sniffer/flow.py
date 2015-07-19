@@ -196,7 +196,7 @@ class Flow(object):
 		self.packet_count = 0
 		self.payload = ""
 		self.decoded_flow = None
-		self.data_transfered = 0
+		self.data_transferred = 0
 		self.packet_count = 0
 
 		if pkt:
@@ -239,7 +239,7 @@ class Flow(object):
 		elif self.protocol == 'UDP':
 			self.packets += pkt
 			self.payload += str(pkt[UDP].payload)
-			self.data_transfered += len(self.payload)
+			self.data_transferred += len(self.payload)
 		else:
 			self.packets += pkt
 
@@ -255,7 +255,7 @@ class Flow(object):
 
 			if Raw in pkt:
 				self.payload += pkt[Raw].load
-				self.data_transfered += len(pkt[Raw].load)
+				self.data_transferred += len(pkt[Raw].load)
 
 			self.packets += pkt
 			self.seq += 1
@@ -284,7 +284,7 @@ class Flow(object):
 
 				if Raw in pkt:
 					self.payload += str(pkt[Raw].load)
-					self.data_transfered += len(pkt[Raw].load)
+					self.data_transferred += len(pkt[Raw].load)
 
 				return True
 
@@ -301,7 +301,7 @@ class Flow(object):
 				'dst_port': self.dst_port,
 				'protocol': self.protocol,
 				'packet_count': self.packet_count,
-				'data_transfered': self.data_transfered,
+				'data_transferred': self.data_transferred,
 				'tls': self.tls,
 				}
 
@@ -327,7 +327,7 @@ class Flow(object):
 		f.dst_port = flow['dst_port']
 		f.protocol = flow['protocol']
 		f.packet_count = flow['packet_count']
-		f.data_transfered = flow['data_transfered']
+		f.data_transferred = flow['data_transferred']
 		f.tls = flow['tls']
 
 		if f.tls:
