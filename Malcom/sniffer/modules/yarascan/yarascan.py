@@ -36,7 +36,7 @@ class YaraScan(Module):
             if self.matches[flow.fid]:
                 for rule, match in self.matches[flow.fid].items():
                     m = match[0][0]
-                    content +=  "<tr><td><a class='switcher' data-flowid='{}'" +\
+                    content +=  "<tr><td><a class='switcher' data-flowid='{}'".format(flow.fid) +\
                                 " href='#'>{} &#8594; {}</a></td>".format(flow.src_addr, flow.dst_addr)
                     content += "<td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(rule,
                                                                                           m[1],
