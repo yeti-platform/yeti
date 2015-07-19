@@ -318,7 +318,7 @@ class SnifferSession():
 
             if ip not in self.nodes:
 
-                ip = self.model.add_text([ip], ['sniffer', self.name])
+                ip = self.model.add_text([ip])
 
                 if ip == []:
                     continue  # tonight is not the night to add ipv6 support
@@ -382,7 +382,7 @@ class SnifferSession():
 
             if question not in self.nodes:
 
-                _question = self.model.add_text([question], ['sniffer', self.name])  # log it to db (for further reference)
+                _question = self.model.add_text([question])  # log it to db (for further reference)
 
                 if _question:
                     debug_output("Caught DNS question: {}".format(_question['value']))
@@ -419,7 +419,7 @@ class SnifferSession():
 
                     # check if we haven't seen these already
                     if rrname not in self.nodes:
-                        _rrname = self.model.add_text([rrname], ['sniffer', self.name])  # log every discovery to db
+                        _rrname = self.model.add_text([rrname])  # log every discovery to db
 
                         if _rrname != []:
                             self.nodes[_rrname['value']] = _rrname
@@ -429,7 +429,7 @@ class SnifferSession():
                         new_elts.append(_rrname)
 
                     if rdata not in self.nodes:
-                        _rdata = self.model.add_text([rdata], ['sniffer', self.name])  # log every discovery to db
+                        _rdata = self.model.add_text([rdata])  # log every discovery to db
                         if _rdata != []:  # avoid linking elements if only one is found
                             self.nodes[_rdata['value']] = _rdata
                             new_elts.append(_rdata)
