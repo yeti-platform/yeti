@@ -11,7 +11,7 @@ from Malcom.feeds.feed import Feed
 
 class ExportAll(Feed):
 	"""
-	This gets data from https://palevotracker.abuse.ch/?rssfeed
+	This exports data from the db every 1h
 	"""
 	def __init__(self, name):
 		super(ExportAll, self).__init__(name, run_every="1h")
@@ -31,7 +31,7 @@ class ExportAll(Feed):
 			csv = elt.to_csv()
 			self.output_csv.write(u"{}\n".format(csv))
 			self.output_json.write(u"{}, ".format(elt.to_json()))
-		
+
 		self.output_csv.close()
 		self.output_json.seek(-2, 2)  # nasty nasty hack
 		self.output_json.write(u']')
