@@ -19,7 +19,7 @@ class Yara(Module):
         self.name = "yara"
 
         self.rules = self.load_yara_rules(os.path.dirname(os.path.realpath(__file__)))
-        self.matches = self.load_entry()
+        self.matches = self.load_entry() or {}
 
         super(Yara, self).__init__()
 
@@ -37,7 +37,7 @@ class Yara(Module):
                 for rule, match in self.matches[flow.fid].items():
                     m = match[0][0]
                     content +=  "<tr><td><a class='switcher' data-flowid='{}'" +\
-                                " href='#'>{} &#8594; {}</a></td>".format(flow.fid, flow.src_addr, flow.dst_addr)
+                                " href='#'>{} &#8594; {}</a></td>".format(flow.src_addr, flow.dst_addr)
                     content += "<td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(rule,
                                                                                           m[1],
                                                                                           repr(m[2]),

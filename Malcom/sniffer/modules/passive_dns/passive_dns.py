@@ -44,7 +44,8 @@ class PassiveDns(Module):
             # Try to load results from database
             debug_output("Loading entry from DB")
             self.dns_requests = self.load_entry()
-            if not self.dns_requests:
+            if self.dns_requests is None:
+                self.dns_requests = {}
                 debug_output("No results in DB, processing PCAP")
                 filename = self.session.pcap_filename
                 self.session.pkts = sniff(stopper=self.session.stop_sniffing, filter=self.session.filter, prn=self.on_packet, stopperTimeout=1, offline=self.session.engine.setup['SNIFFER_DIR']+"/"+filename)
