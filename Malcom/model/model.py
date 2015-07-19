@@ -413,7 +413,7 @@ class Model:
 
     def clear_db(self):
         for c in self._db.collection_names():
-            if c in ['elements', 'graph', 'sniffer_sessions', 'feeds', 'history']:  # if c != "system.indexes":
+            if c in ['elements', 'graph', 'sniffer_sessions', 'feeds', 'history', 'modules']:  # if c != "system.indexes":
                 self._db[c].drop()
 
     def list_db(self):
