@@ -15,14 +15,6 @@ from Malcom.auxiliary.toolbox import debug_output
 from Malcom.sniffer.messenger import SnifferMessenger
 from Malcom.model.model import Model
 
-try:
-    import yara
-    has_yara = True
-except Exception, e:
-    debug_output("yara-python was not found on system. Please install yara if you want to use your rules.", type='error')
-    has_yara = False
-
-
 types = ['hostname', 'ip', 'url', 'as', 'malware']
 rr_codes = {1: "A", 28: "AAAA", 2: "NS", 5: "CNAME", 15: "MX", 255: 'ANY', 12: "PTR"}
 known_tcp_ports = {'80': 'HTTP', '443': 'HTTPS', '21': 'FTP', '22': 'SSH'}
@@ -33,7 +25,7 @@ NOTROOT = "nobody"
 class SnifferEngine(object):
     """docstring for SnifferEngine"""
 
-    def __init__(self, setup, yara_rules=None):
+    def __init__(self, setup):
         super(SnifferEngine, self).__init__()
         self.setup = setup
         sys.stderr.write("[+] Starting sniffer...\n")
@@ -62,26 +54,6 @@ class SnifferEngine(object):
         self.messenger = SnifferMessenger()
         self.messenger.snifferengine = self
 
-        if has_yara and yara_rules:
-            try:
-                self.yara_rules = self.load_yara_rules(yara_rules)
-            except Exception, e:
-                sys.stderr.write("Could not load yara rules specified in yara_path: {}\n".format(e))
-                exit()
-        else:
-            self.yara_rules = None
-
-    def load_yara_rules(self, path):
-        debug_output("Compiling YARA rules from {}".format(path))
-        if not path.endswith('/'):
-            path += '/'  # add trailing slash if not present
-        filepaths = {}
-        for file in os.listdir(path):
-            if file.endswith('.yar'):
-                print file
-                filepaths[file] = path + file
-        debug_output("Loaded {} YARA rule files in {}".format(len(filepaths), path))
-        return yara.compile(filepaths=filepaths)
 
     def fetch_sniffer_session(self, session_id):
         try:
@@ -267,7 +239,7 @@ class SnifferSession():
         data = {}
         data['flows'] = []
         for fid in self.flows:
-            data['flows'].append(self.flows[fid].get_statistics(self.engine.yara_rules, include_payload, encoding))
+            data['flows'].append(self.flows[fid].get_statistics(include_payload, encoding))
         data['flows'] = sorted(data['flows'], key=lambda x: x['timestamp'])
         return data
 
@@ -575,7 +547,7 @@ class SnifferSession():
 
     def send_flow_statistics(self, flow):
         data = {}
-        data['flow'] = flow.get_statistics(self.engine.yara_rules)
+        data['flow'] = flow.get_statistics()
         data['type'] = 'flow_statistics_update'
         data['session_name'] = self.name
 

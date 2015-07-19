@@ -288,11 +288,6 @@ def account_sessions():
 	sniffer_sessions = len(current_user.sniffer_sessions) > 0
 	return render_template('account/sessions.html', sniffer_sessions=sniffer_sessions)
 
-@app.route("/account/yara")
-@login_required
-def account_yara():
-	return render_template('account/yara.html')
-
 
 # feeds ========================================================
 
@@ -361,7 +356,7 @@ def search(term=""):
 		# user has specified an empty query
 		if query == "":
 			flash('Empty search query is empty.')
-			return redirect(url_for('search'))			
+			return redirect(url_for('search'))
 
 	# query passed tests, process the result set
 	base_elts = []
@@ -389,7 +384,7 @@ def search(term=""):
 				flash('"{}" did not convert to a viable datatype'.format(query))
 			# or do the redirection here
 			return render_template('search.html', term=query, history=g.Model.get_history())
-	
+
 	if len(base_elts) == 0 and request.method == 'POST':
 		flash('Your query did not yield any results. Use the checkbox above to add it to the database')
 		return render_template('search.html', history=g.Model.get_history())

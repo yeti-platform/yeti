@@ -8,20 +8,20 @@ import yara
 from Malcom.sniffer.modules.base_module import Module
 from Malcom.auxiliary.toolbox import debug_output
 
-classname = "Yara"
+classname = "YaraScan"
 
 
-class Yara(Module):
+class YaraScan(Module):
     """Iterates over each flow and runs Yara rules against them"""
     def __init__(self, session):
         self.session = session
         self.display_name = "Yara"
-        self.name = "yara"
+        self.name = "yarascan"
 
         self.rules = self.load_yara_rules(os.path.dirname(os.path.realpath(__file__)))
         self.matches = self.load_entry() or {}
 
-        super(Yara, self).__init__()
+        super(self.__class__, self).__init__()
 
     def bootstrap(self, args):
         content = self.add_static_tags(self.content())
@@ -62,10 +62,10 @@ class Yara(Module):
         if not path.endswith('/'):
             path += '/'  # add trailing slash if not present
         filepaths = {}
-        for file in os.listdir(path):
-            if file.endswith('.yar'):
-                print file
-                filepaths[file] = path + file
+        for filename in os.listdir(path):
+            if filename.endswith('.yar'):
+                print filename
+                filepaths[filename] = path + filename
         debug_output("Loaded {} YARA rule files in {}".format(len(filepaths), path))
         return yara.compile(filepaths=filepaths)
 

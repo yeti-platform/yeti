@@ -76,7 +76,7 @@ if __name__ == "__main__":
 	if setup['SNIFFER']:
 		from Malcom.sniffer import netsniffer
 		yara_rules = setup.get("YARA_PATH", None)
-		setup.sniffer_engine = netsniffer.SnifferEngine(setup, yara_rules=yara_rules)
+		setup.sniffer_engine = netsniffer.SnifferEngine(setup)
 
 
 	# call malcom to run feeds - this will not start the web interface

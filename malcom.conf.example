@@ -86,7 +86,7 @@ ZeusTrackerDropzones
 # according to if you want to use
 # them or not
 
-
+passive_dns
+#yarascan
 #suricata
-#passive_dns
-#yara
+

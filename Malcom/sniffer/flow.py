@@ -290,7 +290,7 @@ class Flow(object):
 
 		return False
 
-	def get_statistics(self, yara_rules=None, include_payload=False, encoding='raw'):
+	def get_statistics(self, include_payload=False, encoding='raw'):
 
 		update = {
 				'timestamp': self.timestamp,
@@ -307,9 +307,6 @@ class Flow(object):
 
 		# we'll use the type and info fields
 		self.decoded_flow = Decoder.decode_flow(self)
-		if yara_rules:
-			matches = self.run_yara(yara_rules)
-			update['yara_matches'] = matches
 
 		update['decoded_flow'] = self.decoded_flow
 
@@ -358,17 +355,6 @@ class Flow(object):
 			return payload.encode('base64')
 		if encoding == 'binary':
 			return Binary(payload)
-
-	def run_yara(self, yara_rules):
-		matches = {}
-		for m in yara_rules.match(data=self.get_payload(encoding='raw')): # match against plaintext / decrypted paylaod
-			if matches.get(m.rule, False) == False:
-				matches[m.rule] = []
-			matches[m.rule].append(m.strings)
-
-		return matches
-
-
 
 	def print_statistics(self):
 		print "%s:%s  ->  %s:%s (%s, %s packets, %s buff)" % (self.src_addr, self.src_port, self.dst_addr, self.dst_port, self.protocol, len(self.packets), len(self.payload))
