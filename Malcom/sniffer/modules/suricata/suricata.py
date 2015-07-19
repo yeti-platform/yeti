@@ -45,7 +45,7 @@ class Suricata(Module):
             self.actions = Actions(interface=interface, conf_sniffer=conf_suricata, mode=mode, socket_unix=socket_unix)
             debug_output('Suricata Start')
             self.actions.start()
-            sleep(10)
+            sleep(3)
 
     def setup(self):
         interface = ''
