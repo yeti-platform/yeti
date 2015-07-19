@@ -101,10 +101,10 @@ class Model:
                 except Exception, e:
                     debug_output("Could not find connection from %s: %s" % (ObjectId(src._id), e), 'error')
 
-
             # if the connection already exists, just modify attributes and last seen time
             if conn:
-                if attribs != "": conn['attribs'] = attribs
+                if attribs != "":
+                    conn['attribs'] = attribs
                 conn['last_seen'] = datetime.datetime.utcnow()
 
             # if not, change the connection
@@ -302,6 +302,7 @@ class Model:
             # critical section starts here
             tags = element.pop('tags', [])  # so tags in the db do not get overwritten
             evil = element.pop('evil', [])
+
             date_first_seen = element.pop('date_first_seen', datetime.datetime.utcnow())
             date_last_seen = element.pop('date_last_seen', datetime.datetime.utcnow())
 
@@ -316,13 +317,14 @@ class Model:
                 except Exception, e:
                     debug_output("Could not fetch %s: %s" % (element['value'], e), 'error')
 
-            if _element != None:
+            if _element is not None:
                 for key in element:
-                    if key == 'tags': continue
+                    if key == 'tags':
+                        continue
                     _element[key] = element[key]
                 _element['tags'] = list(set([t.strip().lower() for t in _element['tags'] + tags]))
-                if evil != []:
-                    _element['evil'] = _element['evil'] + evil
+                for e in evil:
+                    _element.add_evil(e)
                 element = _element
                 new = False
             else:

@@ -74,12 +74,16 @@ class Element(dict):
         if not evil.get('date_added'):
             evil['date_added'] = datetime.datetime.utcnow()
 
-        for i, e in enumerate(self['evil'][:]):
-            if e['source'] == evil['source']:
-                self['evil'][i] = evil
-                break
+        if 'id' in evil:
+            for i, e in enumerate(self['evil'][:]):
+                if e['id'] == evil.get('id'):
+                    self['evil'][i] = evil
+                    break
+            else:
+                self['evil'].append(evil)
         else:
             self['evil'].append(evil)
+            self['evil'] = [dict(t) for t in set([tuple(d.items()) for d in self['evil']])]
 
     def seen(self, first=datetime.datetime.utcnow(), last=datetime.datetime.utcnow()):
         self['date_last_seen'] = last
