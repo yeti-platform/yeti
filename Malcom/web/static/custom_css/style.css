@@ -6,6 +6,25 @@
 	line-height: 12px;
 }
 
+.flow-addr {
+	font-weight: bold;
+}
+
+.flow-port {
+	font-size: x-small;
+	color: #AAA;
+	font-weight: 200;
+}
+
+.flow-timestamp {
+	font-size: x-small;
+}
+
+.flow-payload span.glyphicon {
+	cursor: pointer;
+	margin-left: 5px;
+}
+
 .flow-request {
 	background-color: #d8d5d6;
 }
