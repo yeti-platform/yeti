@@ -37,6 +37,7 @@ class MalcomApi(Api):
             'application/json': output_json,
             'text/html': output_standard,
             'text/javascript': output_standard,
+            'text/css': output_standard,
         }
 
 
