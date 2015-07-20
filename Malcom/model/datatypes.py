@@ -29,17 +29,17 @@ class Element(dict):
         self['refresh_period'] = None
         self['evil'] = []
 
-	def to_json(self):
-		return dumps(self)
+    def to_json(self):
+        return dumps(self)
 
-	def to_csv(self):
-		value = self.get('value', "")
-		_type = self.get('type', "")
-		tags = u"|".join(self.get('tags', []))
-		first_seen = self.get('date_first_seen', "")
-		last_seen = self.get('date_last_seen', "")
-		last_analysis = self.get('last_analysis', "")
-		return u"{},{},{},{},{},{}".format(value, _type, tags, first_seen, last_seen, last_analysis)
+    def to_csv(self):
+        value = self.get('value', "")
+        _type = self.get('type', "")
+        tags = u"|".join(self.get('tags', []))
+        first_seen = self.get('date_first_seen', "")
+        last_seen = self.get('date_last_seen', "")
+        last_analysis = self.get('last_analysis', "")
+        return u"{},{},{},{},{},{}".format(value, _type, tags, first_seen, last_seen, last_analysis)
 
 
     def __getattr__(self, name):
@@ -357,21 +357,21 @@ class Hostname(Element):
 
 
 class Iban(Element):
-	"""docstring for IBAN"""
+    """docstring for IBAN"""
 
-	default_refresh_period = 0
+    default_refresh_period = 0
 
-	def validate(string):
-		pass
+    def validate(string):
+        pass
 
-	def __init__(self, iban=""):
-		super(Iban, self).__init__()
-		self['value'] = iban
-		self['type'] = 'iban'
-		self['refresh_period'] = Iban.default_refresh_period
+    def __init__(self, iban=""):
+        super(Iban, self).__init__()
+        self['value'] = iban
+        self['type'] = 'iban'
+        self['refresh_period'] = Iban.default_refresh_period
 
-	def analytics(self):
-		pass
+    def analytics(self):
+        pass
 
 
 DataTypes = {
