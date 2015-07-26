@@ -22,10 +22,10 @@ class ExportAll(Feed):
 
 	def update(self):
 
-		self.output_csv = codecs.open('{}/export_all.csv'.format(self.engine.configuration['EXPORTS_DIR']), 'w+', "utf-8")
+		self.output_csv = codecs.open('{}/export_all.csv'.format(self.engine.configuration['EXPORTS_DIR']), 'w', "utf-8")
 		self.output_csv.write(u"{},{},{},{},{},{}\n".format('Value', 'Type', 'Tags', 'First seen', 'Last seen', "Analyzed"))
 
-		self.output_json = codecs.open('{}/export_all.json'.format(self.engine.configuration['EXPORTS_DIR']), 'w+', "utf-8")
+		self.output_json = codecs.open('{}/export_all.json'.format(self.engine.configuration['EXPORTS_DIR']), 'w', "utf-8")
 		self.output_json.write(u'[')
 		for elt in self.model.elements.find():
 			csv = elt.to_csv()
