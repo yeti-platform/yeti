@@ -48,7 +48,6 @@ class Worker(Thread):
 
 		# do the actual analysis
 		t = Thread(target=self.work_sync, args=(elt, tags))
-		t.daemon = True
 		t.start()
 
 	def run(self):
@@ -251,12 +250,16 @@ class Analytics(Process):
 		last_connect = elt.get('date_updated', datetime.datetime.utcnow())
 		new_elts = []
 		for n in new:
-			if not n[1]: continue
+			if not n[1]:
+				continue
+
 			saved = self.save_element(n[1])
 
 			# do the link
 			conn = self.data.connect(elt, saved, n[0])
-			if not conn: continue
+			if not conn:
+				continue
+
 			first_seen = conn.get('first_seen', datetime.datetime.utcnow())
 			conn['first_seen'] = first_seen
 			last_seen = conn['last_seen']
@@ -268,10 +271,7 @@ class Analytics(Process):
 			# this will change updated time
 			elt['date_updated'] = last_connect
 
-			new_elts.append(saved)
-
-		# self.process_lock.release()
-		return new_elts
+			self.save_element(elt)
 
 
 	def process(self, batch_size=2000):
