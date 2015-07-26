@@ -1,6 +1,7 @@
 import dateutil, time, threading, pickle, gc, datetime, os
 from bson.objectid import ObjectId
 from multiprocessing import Process#, JoinableQueue as Queue, Lock
+import traceback
 
 import Queue as Queue
 from threading import Thread, Lock
@@ -27,17 +28,18 @@ class Worker(Thread):
 
 	def work_sync(self, elt, tags):
 		tt0 = datetime.datetime.now()
-		new = elt.analytics()
-		debug_output("[%s | PID %s | elt: %s] ANALYTICS DONE (%s NEW) (%s)" % (self.name, os.getpid(), elt['value'], len(new), datetime.datetime.now() -tt0), type='debug')
-		self.engine.process_new(elt, new)
-		debug_output("[%s | PID %s | elt: %s] NEW PROCESSED" % (self.name, os.getpid(), elt['value']), type='debug')
-		self.engine.save_element(elt, tags)
-		debug_output("[%s | PID %s | elt: %s] NEW SAVED" % (self.name, os.getpid(), elt['value']), type='debug')
-		self.engine.progress += 1
-		# self.engine.notify_progress(elt['value'])
-		# debug_output("[%s | PID %s | elt: %s] NOTIFIED" % (self.name, os.getpid(), elt['value']), type='debug')
 
-		# t = datetime.datetime.now()
+		if not elt.last_updated:
+			new = elt.analytics()
+
+			debug_output("[%s | PID %s | elt: %s] ANALYTICS DONE (%s NEW) (%s)" % (self.name, os.getpid(), elt['value'], len(new), datetime.datetime.now() - tt0), type='debug')
+			elt = self.engine.process_new(elt, new)
+
+			debug_output("[%s | PID %s | elt: %s] NEW PROCESSED" % (self.name, os.getpid(), elt['value']), type='debug')
+			self.engine.progress += 1
+
+		elif elt.last_updated + datetime.timedelta(minutes=elt.deprecation) < datetime.datetime.utcnow():
+			self.engine.data.remove_element(elt)
 
 
 	def work_async(self, elt, tags):
@@ -89,7 +91,8 @@ class Worker(Thread):
 			return
 
 		except Exception, e:
-			debug_output("An error occured in [%s | PID %s]: %s\nelt info:\n%s" % (self.name, os.getpid(), e, elt), type="error")
+			debug_output("An error occured in [%s | PID %s]: %s\nelt info:\n%s" % (self.name, os.getpid(), e, repr(elt)), type="error")
+			print traceback.format_exc()
 			with self.queue_lock:
 				self.engine.elements_queue.task_done()
 			return
@@ -107,7 +110,6 @@ class Analytics(Process):
 		self.max_workers = max_workers
 		self.active = False
 		self.active_lock = threading.Lock()
-		# self.process_lock = threading.Lock()
 		self.status = "Inactive"
 		self.thread = None
 		self.progress = 0
@@ -249,6 +251,7 @@ class Analytics(Process):
 		# self.process_lock.acquire()
 		last_connect = elt.get('date_updated', datetime.datetime.utcnow())
 		new_elts = []
+
 		for n in new:
 			if not n[1]:
 				continue
@@ -256,7 +259,9 @@ class Analytics(Process):
 			saved = self.save_element(n[1])
 
 			# do the link
+
 			conn = self.data.connect(elt, saved, n[0])
+
 			if not conn:
 				continue
 
@@ -271,7 +276,9 @@ class Analytics(Process):
 			# this will change updated time
 			elt['date_updated'] = last_connect
 
-			self.save_element(elt)
+		elt = self.data.save(elt)
+
+		return elt
 
 
 	def process(self, batch_size=2000):

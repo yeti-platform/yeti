@@ -326,6 +326,7 @@ class Model:
                 for e in evil:
                     _element.add_evil(e)
                 element = _element
+
                 new = False
             else:
                 new = True
@@ -349,7 +350,9 @@ class Model:
                 element['date_last_seen'] = date_last_seen
 
             # tags are all lowercased and stripped
+
             element['tags'] = [t.lower().strip() for t in element['tags']]
+
 
             while True:
                 try:
