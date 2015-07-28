@@ -22,8 +22,9 @@ from Malcom.feeds.messenger import FeedsMessenger
 
 class Feed(object):
 	"""This is a feed base class. All other feeds must inherit from this class"""
-	def __init__(self, name, run_every="24h"):
-		self.name = name
+
+	def __init__(self, name="", run_every="24h"):
+		self.name = self.__class__.__name__
 
 		# parse timedelta
 		num = int(run_every[:-1])
@@ -280,7 +281,7 @@ class FeedEngine(Process):
 					class_n = modict.get(n)
 
 					if issubclass(class_n, Feed) and class_n not in globals_:
-						new_feed = class_n(n) # create new feed object
+						new_feed = class_n() # create new feed object
 
 						new_feed.model = self.model # attach model instance to feed
 						new_feed.engine = self
