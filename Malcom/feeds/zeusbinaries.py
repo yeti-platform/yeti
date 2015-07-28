@@ -13,9 +13,8 @@ import Malcom.auxiliary.toolbox as toolbox
 
 class ZeusTrackerBinaries(Feed):
 
-    def __init__(self, name):
-        super(ZeusTrackerBinaries, self).__init__(name)
-        self.name = "ZeusTrackerBinaries"
+    def __init__(self):
+        super(ZeusTrackerBinaries, self).__init__()
         self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries"
         self.description = "This feed shows the latest 50 ZeuS binary URLs."
 

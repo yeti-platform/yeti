@@ -11,11 +11,10 @@ class MalwareDomainList(Feed):
 	"""
 	This gets data from http://www.malwaredomainlist.com/hostslist/mdl.xml
 	"""
-	def __init__(self, name):
-		super(MalwareDomainList, self).__init__(name, run_every="12h")
+	def __init__(self):
+		super(MalwareDomainList, self).__init__(run_every="12h")
 		self.source = "http://www.malwaredomainlist.com/hostslist/mdl.xml"
 		self.description = "MalwareDomainList update. This feed shows the latest urls which have been added to our list."
-		self.name = "MalwareDomainList"
 
 	def update(self):
 		for dict in self.update_xml('item', ["title", "link", "description", "guid"]):

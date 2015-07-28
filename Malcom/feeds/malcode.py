@@ -14,9 +14,8 @@ from Malcom.model.datatypes import Url
 
 class MalcodeBinaries(Feed):
 
-	def __init__(self, name):
-		super(MalcodeBinaries, self).__init__(name, run_every="1h")
-		self.name = "MalcodeBinaries"
+	def __init__(self):
+		super(MalcodeBinaries, self).__init__(run_every="1h")
 		self.description = 	"Updated Feed of Malicious Executables"
 		self.source	= "http://malc0de.com/rss/"
 

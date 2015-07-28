@@ -13,9 +13,8 @@ import Malcom.auxiliary.toolbox as toolbox
 
 class ZeusTrackerConfigs(Feed):
 
-	def __init__(self, name):
-		super(ZeusTrackerConfigs, self).__init__(name, run_every="1h")
-		self.name = "ZeusTrackerConfigs"
+	def __init__(self):
+		super(ZeusTrackerConfigs, self).__init__(run_every="1h")
 		self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"
 		self.description = "This feed shows the latest 50 ZeuS config URLs."
 

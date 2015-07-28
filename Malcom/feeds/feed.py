@@ -23,7 +23,7 @@ from Malcom.feeds.messenger import FeedsMessenger
 class Feed(object):
 	"""This is a feed base class. All other feeds must inherit from this class"""
 
-	def __init__(self, name="", run_every="24h"):
+	def __init__(self, run_every="24h"):
 		self.name = self.__class__.__name__
 
 		# parse timedelta

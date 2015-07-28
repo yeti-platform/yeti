@@ -16,10 +16,9 @@ class AsproxTracker(Feed):
 	"""
 	This is a feed that will fetch data from a URL and process it
 	"""
-	def __init__(self, name):
-		super(AsproxTracker, self).__init__(name, run_every="12h")
+	def __init__(self):
+		super(AsproxTracker, self).__init__(run_every="12h")
 
-		self.name = "AsproxTracker"
 		self.source = "http://atrack.h3x.eu/api/asprox_full_csv.php"
 		self.description = "This feed contains known Asprox C2 servers"
 

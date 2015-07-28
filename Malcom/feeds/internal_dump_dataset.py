@@ -13,9 +13,8 @@ class ExportAll(Feed):
 	"""
 	This exports data from the db every 1h
 	"""
-	def __init__(self, name):
-		super(ExportAll, self).__init__(name, run_every="1h")
-		self.name = "ExportAll"
+	def __init__(self):
+		super(ExportAll, self).__init__(run_every="1h")
 		self.description = "Export all the dataset to CSV and JSON"
 		self.source = "local"
 		self.tags = ['private', 'internal']

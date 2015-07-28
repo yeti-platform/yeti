@@ -26,9 +26,8 @@ class FeodoTracker(Feed):
 				'D': "Dridex",
 				}
 
-	def __init__(self, name):
-		super(FeodoTracker, self).__init__(name)
-		self.name = "FeodoTracker"
+	def __init__(self):
+		super(FeodoTracker, self).__init__()
 		self.source = "https://feodotracker.abuse.ch/feodotracker.rss"
 		self.description = "Feodo Tracker RSS Feed. This feed shows the latest twenty Feodo C2 servers which Feodo Tracker has identified."
 
