@@ -621,7 +621,7 @@ function display_generic(d) {
         if (key == 'tags')
           value = display_tags(d.tags)
         if (key == 'value')
-          value = '<a href="/search/?query='+value+'">'+value+'</a>'
+          value = '<a href="'+url_static_prefix+'search/?query='+value+'">'+value+'</a>'
 
       }
 
