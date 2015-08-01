@@ -13,9 +13,8 @@ import Malcom.auxiliary.toolbox as toolbox
 
 class CybercrimeTracker(Feed):
 
-	def __init__(self, name):
-		super(CybercrimeTracker, self).__init__(name, run_every="12h")
-		self.name = "CybercrimeTracker"
+	def __init__(self):
+		super(CybercrimeTracker, self).__init__(run_every="12h")
 		self.description = "CyberCrime Tracker - Latest 20 CnC URLS"
 		self.source = "http://cybercrime-tracker.net/rss.xml"
 		self.confidence = 90

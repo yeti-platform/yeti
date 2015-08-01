@@ -8,8 +8,8 @@ class MalcomBaseFeed(Feed):
 	"""
 	This gets data from other Malcom Instances
 	"""
-	def __init__(self, name):
-		super(MalcomBaseFeed, self).__init__(name, run_every="12h")
+	def __init__(self):
+		super(MalcomBaseFeed, self).__init__(run_every="12h")
 		self.enabled = False
 		self.apikey = "ENTER-YOUR-API-KEY-HERE"
 		self.malcom_host = "malcom.public.instance.com"

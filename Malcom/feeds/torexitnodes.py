@@ -11,9 +11,8 @@ class TorExitNodes(Feed):
 	"""
 	This gets data from https://www.dan.me.uk/tornodes
 	"""
-	def __init__(self, name):
-		super(TorExitNodes, self).__init__(name, run_every="12h")
-		self.name = "TorExitNodes"
+	def __init__(self):
+		super(TorExitNodes, self).__init__(run_every="12h")
 		self.source = "https://www.dan.me.uk/tornodes"
 		self.description = "List of Tor exit nodes"
 		

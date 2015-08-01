@@ -13,9 +13,8 @@ class PalevoTracker(Feed):
 	"""
 	This gets data from https://palevotracker.abuse.ch/?rssfeed
 	"""
-	def __init__(self, name):
-		super(PalevoTracker, self).__init__(name, run_every="1h")
-		self.name = "PalevoTracker"
+	def __init__(self):
+		super(PalevoTracker, self).__init__(run_every="1h")
 		self.description = "List of the twenty most recent Palevo Botnet C&amp;C servers Palevo Tracker came across of."
 		self.source = "https://palevotracker.abuse.ch/?rssfeed"
 
