@@ -73,6 +73,7 @@ class Model:
         self.elements.ensure_index([('date_last_seen', -1), ('value', 1)])
         self.elements.ensure_index('value', unique=True, dropDups=True)
         self.elements.ensure_index('tags')
+        self.elements.ensure_index('evil.source')
         self.elements.ensure_index('next_analysis')
         self.elements.ensure_index('last_analysis')
         self.elements.ensure_index('bgp')
