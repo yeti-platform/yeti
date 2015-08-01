@@ -132,7 +132,7 @@ function get_dataset(query, url) {
 	  				else if (k == 'value') {
 	  					l1 = $("<a class='graphicon' href='"+url_static_prefix+"nodes/value/"+encodeURIComponent(v)+"'><span class='glyphicon glyphicon-map-marker' aria-hidden='true'></span></a>")
 	  					l2 = $('<a href="'+url_static_prefix+'search/?query='+v+'">'+v+'</a>')
-	  					row.append($("<td></td>").append(l1).append(l2))
+	  					row.append($("<td class='value'></td>").append(l1).append(l2))
 	  				}
 	  				else
 	  					row.append("<td>"+v+"</td>")

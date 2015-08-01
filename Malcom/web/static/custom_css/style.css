@@ -79,6 +79,15 @@ img.ssl-smiley {
 
 /* Dataset */
 
+#dataset tr {
+	white-space: nowrap;
+}
+
+#dataset .value {
+	max-width: 400px;
+	overflow: scroll;
+}
+
 a.graphicon {
 	margin-right: 5px;
 }
