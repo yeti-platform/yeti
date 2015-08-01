@@ -79,6 +79,10 @@ img.ssl-smiley {
 
 /* Dataset */
 
+a.graphicon {
+	margin-right: 5px;
+}
+
 .tab-pane {
 	margin-top:20px;
 }
