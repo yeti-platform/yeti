@@ -95,11 +95,6 @@ class MalcomSetup(dict):
             if 'read_preferences' in db_params:
                 self['DATABASE']['READ_PREF'] = db_params['read_preferences']
 
-        if config.has_section('feeds'):
-            self['ACTIVATED_FEEDS'] = []
-            for feed in config.options('feeds'):
-                self['ACTIVATED_FEEDS'].append(feed)
-
         if config.has_section('modules'):
             self['ACTIVATED_MODULES'] = []
             for module in config.options('modules'):

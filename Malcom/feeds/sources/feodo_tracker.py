@@ -8,7 +8,7 @@ from bson.json_util import dumps
 
 import Malcom.auxiliary.toolbox as toolbox
 from Malcom.model.datatypes import Ip, Hostname
-from Malcom.feeds.feed import Feed
+from Malcom.feeds.core import Feed
 
 class FeodoTracker(Feed):
 

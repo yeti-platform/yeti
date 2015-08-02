@@ -82,10 +82,10 @@ if __name__ == "__main__":
 	# call malcom to run feeds - this will not start the web interface
 	if setup['FEEDS']:
 		sys.stderr.write("[+] Importing feeds...\n")
-		from Malcom.feeds.feed import FeedEngine
+		from Malcom.feeds.core import FeedEngine
 		setup.feed_engine = FeedEngine(setup)
 		try:
-			loaded = setup.feed_engine.load_feeds(setup['ACTIVATED_FEEDS'])
+			loaded = setup.feed_engine.load_feeds(setup['FEEDS_DIR'])
 		except Exception, e:
 			sys.stderr.write("Could not load feeds specified in feeds_dir: %s\n" % e)
 			exit()
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 		# launch process
 		if setup['FEEDS_SCHEDULER']:
 			setup.feed_engine.scheduler = True
-			("Starting feed scheduler...\n")
+			sys.stderr.write("Starting feed scheduler...\n")
 		else:
 			setup.feed_engine.scheduler = False
 			sys.stderr.write("[!] Feed scheduler must be started manually.\n")

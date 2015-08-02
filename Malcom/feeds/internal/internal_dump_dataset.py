@@ -6,7 +6,7 @@ import codecs
 
 from bson.json_util import dumps, loads
 
-from Malcom.feeds.feed import Feed
+from Malcom.feeds.core import Feed
 
 
 class ExportAll(Feed):

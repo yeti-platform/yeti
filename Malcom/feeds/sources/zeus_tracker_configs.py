@@ -8,7 +8,7 @@ from bson.objectid import ObjectId
 from bson.json_util import dumps
 
 from Malcom.model.datatypes import Url
-from Malcom.feeds.feed import Feed
+from Malcom.feeds.core import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
 class ZeusTrackerConfigs(Feed):

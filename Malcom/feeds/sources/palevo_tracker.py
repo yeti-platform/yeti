@@ -4,7 +4,7 @@ import md5
 
 from lxml import etree
 
-from Malcom.feeds.feed import Feed
+from Malcom.feeds.core import Feed
 from Malcom.model.datatypes import Hostname
 import Malcom.auxiliary.toolbox as toolbox
 

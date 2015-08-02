@@ -7,7 +7,7 @@ import csv
 from bson.json_util import dumps, loads
 
 from Malcom.model.datatypes import Ip, Url, Hostname, As
-from Malcom.feeds.feed import Feed
+from Malcom.feeds.core import Feed
 import Malcom.auxiliary.toolbox as toolbox
 
 

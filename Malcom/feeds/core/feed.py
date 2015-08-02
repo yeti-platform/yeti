@@ -5,6 +5,8 @@ import threading
 import urllib2
 import bson
 import csv
+import imp
+
 from StringIO import StringIO
 
 from datetime import timedelta, datetime
@@ -15,7 +17,7 @@ import requests
 
 from Malcom.auxiliary.toolbox import debug_output
 from Malcom.model.model import Model
-from Malcom.feeds.messenger import FeedsMessenger
+from Malcom.feeds.core.messenger import FeedsMessenger
 
 
 
@@ -42,7 +44,7 @@ class Feed(object):
 		self.running = False
 		self.elements_fetched = 0
 		self.status = "OK"
-		self.enabled = False
+		self.enabled = True
 		self.model = None
 		self.testing = False
 		self.tags = ['public']
@@ -175,9 +177,9 @@ class Feed(object):
 			self.model.feed_last_run(self.name)
 		except Exception, e:
 			debug_output("Error adding feed {}: {}".format(self.name, e))
-	 		self.status = "ERROR: {}".format(e)
-	 		import traceback
-	 		traceback.print_exc()
+			self.status = "ERROR: {}".format(e)
+			import traceback
+			traceback.print_exc()
 
 		self.running = False
 
@@ -249,68 +251,39 @@ class FeedEngine(Process):
 			except KeyboardInterrupt, e:
 				self.shutdown = True
 
+	def load_feeds(self, feed_directories):
+		debug_output("Loading feeds in {}...".format(feed_directories))
 
+		for d, subd, files in os.walk(feed_directories):
+			if not d.endswith('core'):
+				for f in files:
+					if f.endswith(".py") and f != "__init__.py":
+						full_filename = os.path.join(d, f)
+						module = imp.load_source(f.split('.')[0], full_filename)
 
-	def load_feeds(self, activated_feeds):
+						for name, obj in module.__dict__.items():
+							try:
+								if issubclass(obj, Feed) and obj != Feed:
+									feed = module.__dict__.get(name)()
+									feed.model = self.model
+									feed.engine = self
+									feed.tags = list(set(feed.tags + [d]))
+									self.feeds[name] = feed
+									debug_output("Loaded feed {}".format(name))
+									break
+							except TypeError, e:
+								pass
+						else:
+							debug_output("Something went wrong parsing {}".format(full_filename), type='error')
 
-		globals_, locals_ = globals(), locals()
+		self.load_feed_status()
 
-		feeds_dir = self.configuration['FEEDS_DIR']
-		package_name = 'feeds'
-
-		debug_output("Loading feeds in %s" % feeds_dir)
-
-		for filename in os.listdir(feeds_dir):
-			export_names = []
-			export_classes = []
-
-			modulename, ext = os.path.splitext(filename)
-			if modulename[0] != "_" and ext in ['.py']:
-				subpackage = 'Malcom.%s.%s' % (package_name, modulename)
-				module = __import__(subpackage, globals_, locals_, [modulename])
-
-				modict = module.__dict__
-
-				names = [name for name in modict if name[0] != '_']
-				for n in names:
-
-					# print n, activated_feeds
-					if n == 'Feed' or n.lower() not in activated_feeds:
-						continue
-
-					class_n = modict.get(n)
-
-					if issubclass(class_n, Feed) and class_n not in globals_:
-						new_feed = class_n() # create new feed object
-
-						new_feed.model = self.model # attach model instance to feed
-						new_feed.engine = self
-						self.feeds[n] = new_feed
-
-						self.feeds[n].enabled = True if n.lower() in activated_feeds else False
-
-						# this may be for show for now
-						export_names.append(n)
-						export_classes.append(class_n)
-						sys.stderr.write(" + Loaded %s...\n" % n)
-
-		# now that feeds are loaded, check their state in the db
+	def load_feed_status(self):
 		feed_status = self.model.get_feed_progress([f for f in self.feeds])
 		for status in feed_status:
 			name = status['name']
 			self.feeds[name].last_run = status['last_run']
 			self.feeds[name].next_run = status['last_run'] + self.feeds[name].run_every
-
-
-		globals_.update((export_names[i], c) for i, c in enumerate(export_classes))
-
-		return export_names, export_classes
-
-
-
-
-
-
 
 
 
