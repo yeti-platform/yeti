@@ -47,7 +47,20 @@ function format_date(date, millis)
 	return formattedTime;
 }
 
+function display_tags(tags) {
+  out = ""
 
+  for (i in tags) {
+    tag = tags[i]
+    out += '<span class="label label-tag-'+tag+'">'+tag+'</span>';
+  }
+
+  if (tags.length == 0) {
+    out = '<span class="label label-default">N/A</span>';
+  }
+
+  return out;
+}
 
 
 

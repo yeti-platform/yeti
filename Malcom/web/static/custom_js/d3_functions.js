@@ -579,29 +579,6 @@ function display_data(d)
   display_generic(d);
 }
 
-function display_tags(tags) {
-  out = ""
-
-  for (i in tags) {
-    tag = tags[i]
-
-    html_tag = '<span class="label label-';
-
-    if (tag == 'evil')
-      html_tag += 'danger';
-    else
-      html_tag += 'primary';
-
-    html_tag += '">'+tag+'</span>';
-    out += html_tag
-  }
-
-  if (tags.length == 0) {
-    out = '<span class="label label-default">N/A</span>';
-  }
-
-  return out;
-}
 
 function display_generic(d) {
   if (d.fields != undefined) {

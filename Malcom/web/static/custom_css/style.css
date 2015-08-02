@@ -75,6 +75,27 @@ img.ssl-smiley {
 	background-color: rgba(114, 255, 94, 0.7);
 }
 
+/* tags */
+.label {
+	color: white;
+	background-color: #38a;
+}
+
+
+.label-tag-evil {
+	color: white;
+	background-color: #f33;
+}
+
+.label-tag-sinkhole {
+	background-color: #2a2;
+}
+
+.label-tag-whitelist {
+	color: black;
+	background-color:white;
+	border: 1px solid black;
+}
 
 
 /* Dataset */

@@ -126,7 +126,7 @@ function get_dataset(query, url) {
 	  				if (v == "" || v == undefined)
 	  					row.append($("<td />").text('-'))
 	  				else if (k == 'tags')
-	  					row.append($("<td />").addClass('tags_links'))
+	  					row.append($("<td />").append(display_tags(v)))
 	  				else if (['date_created', 'date_updated', 'last_analysis', 'date_first_seen', 'date_last_seen'].indexOf(k) != -1)
 	  					row.append($("<td />").text(format_date(new Date(v.$date))).addClass('timestamp'))
 	  				else if (k == 'value') {

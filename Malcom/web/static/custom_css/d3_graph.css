@@ -112,8 +112,18 @@ circle.as {
 	stroke: #ff7f0e;
 }
 
+circle.whitelist {
+	fill: #fff !important;
+	stroke: #000 !important;
+}
+
+circle.sinkhole {
+	fill: #2a2 !important;
+	stroke: #000 !important;
+}
+
 circle.evil {
-	fill: #d62728 !important;
+	fill: #f33 !important;
 	stroke: #951b1c !important;
 }
 

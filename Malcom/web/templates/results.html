@@ -6,7 +6,7 @@
 			<span class="label label-default">N/A</span>
 		{%else%}
 			{% for tag in value %}
-				<span class="label label-{%if tag == 'evil'%}danger{%else%}primary{%endif%}">{{tag}}</span>
+				<span class="label label-tag-{{tag}}">{{tag}}</span>
 			{%endfor%}
 		{%endif%}
 	{% else %}
