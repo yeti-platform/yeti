@@ -117,6 +117,7 @@ class Analytics(Process):
 		self.elements_queue = None
 		self.once = False
 		self.run_analysis = False
+		self.setup = setup
 
 
 	def save_element(self, element, tags=[], with_status=False):
@@ -138,7 +139,6 @@ class Analytics(Process):
 			added.append(self.save_element(ip, tags))
 
 		return added
-
 
 	# elements analytics
 
@@ -292,6 +292,9 @@ class Analytics(Process):
 		self.work_done = False
 
 		query = {'next_analysis' : {'$lt': datetime.datetime.utcnow()}}
+		if self.setup['SKIP_WHITELISTED']:
+			query['tags'] = {"$nin": ['whitelist']}
+
 		results = [r for r in self.data.elements.find(query)[:batch_size]]
 		total_elts = 0
 

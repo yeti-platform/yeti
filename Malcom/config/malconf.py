@@ -62,6 +62,7 @@ class MalcomSetup(dict):
         if config.has_section('analytics'):
             self['ANALYTICS'] = config.getboolean('analytics', 'activated')
             self['MAX_WORKERS'] = config.getint('analytics', 'max_workers')
+            self['SKIP_WHITELISTED'] = config.getboolean('analytics', 'skip_whitelisted')
 
         if config.has_section('feeds'):
             self['FEEDS'] = config.getboolean('feeds', 'activated')
