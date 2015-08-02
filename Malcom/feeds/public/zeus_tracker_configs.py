@@ -1,45 +1,40 @@
-import urllib2
 import datetime
 import re
 import md5
 
-from lxml import etree
-from bson.objectid import ObjectId
-from bson.json_util import dumps
-
 from Malcom.model.datatypes import Url
 from Malcom.feeds.core import Feed
-import Malcom.auxiliary.toolbox as toolbox
+
 
 class ZeusTrackerConfigs(Feed):
 
-	def __init__(self):
-		super(ZeusTrackerConfigs, self).__init__(run_every="1h")
-		self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"
-		self.description = "This feed shows the latest 50 ZeuS config URLs."
+    def __init__(self):
+        super(ZeusTrackerConfigs, self).__init__(run_every="1h")
+        self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"
+        self.description = "This feed shows the latest 50 ZeuS config URLs."
 
-	def update(self):
-		for dict in self.update_xml('item', ["title", "link", "description", "guid"]):
-			self.analyze(dict)
+    def update(self):
+        for dict in self.update_xml('item', ["title", "link", "description", "guid"]):
+            self.analyze(dict)
 
-	def analyze(self, dict):
+    def analyze(self, dict):
 
-		evil = dict
+        evil = dict
 
-		url = Url(re.search("URL: (?P<url>\S+),", dict['description']).group('url'))
-		evil['id'] = md5.new(re.search(r"id=(?P<id>[a-f0-9]+)", dict['guid']).group('id')).hexdigest()
+        url = Url(re.search("URL: (?P<url>\S+),", dict['description']).group('url'))
+        evil['id'] = md5.new(re.search(r"id=(?P<id>[a-f0-9]+)", dict['guid']).group('id')).hexdigest()
 
-		try:
-			date_string = re.search(r"\((?P<date>[0-9\-]+)\)", dict['title']).group('date')
-			evil['date_added'] = datetime.datetime.strptime(date_string, "%Y-%m-%d")
-		except AttributeError, e:
-			print "Date not found!"
+        try:
+            date_string = re.search(r"\((?P<date>[0-9\-]+)\)", dict['title']).group('date')
+            evil['date_added'] = datetime.datetime.strptime(date_string, "%Y-%m-%d")
+        except AttributeError:
+            pass
 
-		try:
-			evil['status'] = re.search(r"status: (?P<status>[^,]+)", dict['description']).group('status')
-		except Exception, e:
-			print "status not found!"
+        try:
+            evil['status'] = re.search(r"status: (?P<status>[^,]+)", dict['description']).group('status')
+        except Exception:
+            pass
 
-		url.add_evil(evil)
-		url.seen(first=evil['date_added'])
-		self.commit_to_db(url)
+        url.add_evil(evil)
+        url.seen(first=evil['date_added'])
+        self.commit_to_db(url)

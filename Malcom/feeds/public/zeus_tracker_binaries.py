@@ -1,15 +1,10 @@
-import urllib2
 import datetime
 import re
 import md5
 
-from lxml import etree
-from bson.objectid import ObjectId
-from bson.json_util import dumps
-
 from Malcom.model.datatypes import Url
 from Malcom.feeds.core import Feed
-import Malcom.auxiliary.toolbox as toolbox
+
 
 class ZeusTrackerBinaries(Feed):
 
@@ -31,13 +26,13 @@ class ZeusTrackerBinaries(Feed):
         try:
             date_string = re.search(r"\((?P<date>[0-9\-]+)\)", dict['title']).group('date')
             evil['date_added'] = datetime.datetime.strptime(date_string, "%Y-%m-%d")
-        except AttributeError, e:
-            print "Date not found!"
+        except AttributeError:
+            pass
 
         try:
             evil['status'] = re.search(r"status: (?P<status>[^,]+)", dict['description']).group('status')
-        except Exception, e:
-            print "status not found!"
+        except Exception:
+            pass
 
         url.add_evil(evil)
         url.seen(first=evil['date_added'])
