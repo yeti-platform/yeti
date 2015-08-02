@@ -153,6 +153,9 @@ class Analytics(Process):
 								]
 						}
 
+		if self.setup['SKIP_WHITELISTED']:
+			last_analysis['tags'] = {"$nin": ['whitelist']}
+
 		nobgp = {"$or": [{'bgp': None}, last_analysis ]}
 
 		total = self.data.elements.find({ "$and": [{'type': 'ip'}, nobgp]}).count()
