@@ -16,14 +16,26 @@ exports_dir = exports
 [analytics]
 activated = true
 max_workers = 12
+skip_tags = whitelisted
 
 [sniffer]
+stealth = true
 activated = true
 network = true
 sniffer_dir = sniffer/captures
 modules_dir = sniffer/modules
 tls_proxy_port = 9000
 yara_path = yara
+hide_tags = whitelisted
+
+[modules]
+# You can comment / uncomment modules
+# according to if you want to use
+# them or not
+
+passive_dns
+#yarascan
+#suricata
 
 # databases can be configured here
 
@@ -62,31 +74,4 @@ host = localhost
 # default: None
 #authentication_database = malcom
 
-[feeds]
-# You can comment / uncomment feeds
-# according to if you want to use
-# them or not
-
-AsproxTracker
-CybercrimeTracker
-FeodoTracker
-MalcodeBinaries
-MalwaredRu
-MalwareTrafficAnalysis
-MalwareDomainList
-PalevoTracker
-TorExitNodes
-ZeusTrackerBinaries
-ZeusTrackerConfigs
-ZeusTrackerDropzones
-
-
-[modules]
-# You can comment / uncomment modules
-# according to if you want to use
-# them or not
-
-passive_dns
-#yarascan
-#suricata
 

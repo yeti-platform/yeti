@@ -154,8 +154,8 @@ class Analytics(Process):
                                 ]
                          }
 
-        if self.setup['SKIP_WHITELISTED']:
-            last_analysis['tags'] = {"$nin": ['whitelist']}
+        if self.setup['SKIP_TAGS']:
+            last_analysis['tags'] = {"$nin": self.setup['SKIP_TAGS']}
 
         nobgp = {"$or": [{'bgp': None}, last_analysis]}
 
@@ -292,8 +292,8 @@ class Analytics(Process):
         self.work_done = False
 
         query = {'next_analysis': {'$lt': datetime.datetime.utcnow()}}
-        if self.setup['SKIP_WHITELISTED']:
-            query['tags'] = {"$nin": ['whitelist']}
+        if self.setup['SKIP_TAGS']:
+            query['tags'] = {"$nin": self.setup['SKIP_TAGS']}
 
         results = [r for r in self.data.elements.find(query)[:batch_size]]
         total_elts = 0

@@ -60,9 +60,12 @@ class MalcomSetup(dict):
             self['AUTH'] = config.getboolean('web', 'auth')
 
         if config.has_section('analytics'):
-            self['ANALYTICS'] = config.getboolean('analytics', 'activated')
-            self['MAX_WORKERS'] = config.getint('analytics', 'max_workers')
-            self['SKIP_WHITELISTED'] = config.getboolean('analytics', 'skip_whitelisted')
+            analytics_params = {key.upper(): val for key, val in config.items('analytics')}
+            self.update(analytics_params)
+            self['ANALYTICS'] = bool(analytics_params['ACTIVATED'])
+            self['MAX_WORKERS'] = int(analytics_params['MAX_WORKERS'])
+            self['SKIP_TAGS'] = analytics_params['SKIP_TAGS'].split(',') if analytics_params['SKIP_TAGS'] else []
+            print self
 
         if config.has_section('feeds'):
             self['FEEDS'] = config.getboolean('feeds', 'activated')
@@ -71,12 +74,12 @@ class MalcomSetup(dict):
             self['EXPORTS_DIR'] = config.get('feeds', 'exports_dir')
 
         if config.has_section('sniffer'):
-            self['SNIFFER'] = config.getboolean('sniffer', 'activated')
-            self['SNIFFER_DIR'] = config.get('sniffer', 'sniffer_dir')
-            self['MODULES_DIR'] = config.get('sniffer', 'modules_dir')
-            self['TLS_PROXY_PORT'] = config.getint('sniffer', 'tls_proxy_port')
-            self['YARA_PATH'] = config.get('sniffer', 'yara_path')
-            self['SNIFFER_NETWORK'] = config.getboolean('sniffer', 'network')
+            sniffer_params = {key.upper(): val for key, val in config.items('sniffer')}
+            self.update(sniffer_params)
+            self['SNIFFER'] = bool(sniffer_params['ACTIVATED'])
+            self['TLS_PROXY_PORT'] = int(sniffer_params['TLS_PROXY_PORT'])
+            self['SNIFFER_NETWORK'] = bool(sniffer_params['NETWORK'])
+
 
         if config.has_section('database'):
             self['DATABASE'] = {}
