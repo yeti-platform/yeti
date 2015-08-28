@@ -243,23 +243,25 @@ class FeedEngine(Process):
             if not d.endswith('core'):
                 for f in files:
                     if f.endswith(".py") and f != "__init__.py":
-                        full_filename = os.path.join(d, f)
-                        module = imp.load_source(f.split('.')[0], full_filename)
+                        try:
+                            full_filename = os.path.join(d, f)
+                            module = imp.load_source(f.split('.')[0], full_filename)
 
-                        for name, obj in module.__dict__.items():
-                            try:
-                                if issubclass(obj, Feed) and obj != Feed:
-                                    feed = module.__dict__.get(name)()
-                                    feed.model = self.model
-                                    feed.engine = self
-                                    feed.tags = list(set(feed.tags + [d]))
-                                    self.feeds[name] = feed
-                                    debug_output("Loaded feed {}".format(name))
-                                    break
-                            except TypeError:
-                                pass
-                        else:
+                            for name, obj in module.__dict__.items():
+                                try:
+                                    if issubclass(obj, Feed) and obj != Feed:
+                                        feed = module.__dict__.get(name)()
+                                        feed.model = self.model
+                                        feed.engine = self
+                                        feed.tags = list(set(feed.tags + [d]))
+                                        self.feeds[name] = feed
+                                        debug_output("Loaded feed {}".format(name))
+                                        break
+                                except TypeError:
+                                    pass
+                        except Exception, e:
                             debug_output("Something went wrong parsing {}".format(full_filename), type='error')
+                            raise e
 
         self.load_feed_status()
 
