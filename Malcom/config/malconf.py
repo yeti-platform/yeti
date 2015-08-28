@@ -61,8 +61,9 @@ class MalcomSetup(dict):
 
         if config.has_section('analytics'):
             analytics_params = {key.upper(): val for key, val in config.items('analytics')}
+            print analytics_params
             self.update(analytics_params)
-            self['ANALYTICS'] = bool(analytics_params['ACTIVATED'])
+            self['ANALYTICS'] = True if analytics_params['ACTIVATED'] == 'true' else False
             self['MAX_WORKERS'] = int(analytics_params['MAX_WORKERS'])
             self['SKIP_TAGS'] = analytics_params['SKIP_TAGS'].split(',') if analytics_params['SKIP_TAGS'] else []
             print self
@@ -76,9 +77,9 @@ class MalcomSetup(dict):
         if config.has_section('sniffer'):
             sniffer_params = {key.upper(): val for key, val in config.items('sniffer')}
             self.update(sniffer_params)
-            self['SNIFFER'] = bool(sniffer_params['ACTIVATED'])
+            self['SNIFFER'] = True if sniffer_params['ACTIVATED'] == 'true' else False
             self['TLS_PROXY_PORT'] = int(sniffer_params['TLS_PROXY_PORT'])
-            self['SNIFFER_NETWORK'] = bool(sniffer_params['NETWORK'])
+            self['SNIFFER_NETWORK'] = True if sniffer_params['NETWORK'] == 'true' else False
 
 
         if config.has_section('database'):
