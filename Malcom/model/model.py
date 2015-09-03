@@ -52,6 +52,7 @@ class Model:
 
         # collections
         self.elements = self._db.elements
+        self.tags = self._db.tags
         self.graph = self._db.graph
         self.sniffer_sessions = self._db.sniffer_sessions
         self.feeds = self._db.feeds
@@ -77,6 +78,8 @@ class Model:
         self.elements.ensure_index('next_analysis')
         self.elements.ensure_index('last_analysis')
         self.elements.ensure_index('bgp')
+        self.tags.ensure_index('name', unique=True, dropDups=True)
+        self.tags.ensure_index([('count', 1)])
         self.graph.ensure_index([('src', 1), ('dst', 1)])
         self.graph.ensure_index('src')
         self.graph.ensure_index('dst')
@@ -292,6 +295,15 @@ class Model:
 
         return data
 
+    # ---- tag operations ----
+
+    def add_tags(self, tags):
+        for tag in tags:
+            tag = self.tags.update({'name': tag}, {"$inc": {"count":1}}, upsert=True)
+
+    def get_tags(self):
+        return list(self.tags.find())
+
     # ---- update & save operations ----
 
     def save(self, element, with_status=False):
@@ -301,7 +313,7 @@ class Model:
         with self.db_lock:
 
             # critical section starts here
-            tags = element.pop('tags', [])  # so tags in the db do not get overwritten
+            tags = [t.strip().lower() for t in element.pop('tags', []) if t.strip()]  # so tags in the db do not get overwritten
             evil = element.pop('evil', [])
 
             date_first_seen = element.pop('date_first_seen', datetime.datetime.utcnow())
@@ -323,7 +335,8 @@ class Model:
                     if key == 'tags':
                         continue
                     _element[key] = element[key]
-                _element['tags'] = list(set([t.strip().lower() for t in _element['tags'] + tags]))
+                newtags = [t for t in tags if t not in _element['tags']]
+                _element['tags'] = list(set([t for t in _element['tags'] + tags]))
                 for e in evil:
                     _element.add_evil(e)
                 element = _element
@@ -333,6 +346,9 @@ class Model:
                 new = True
                 element['tags'] = tags
                 element['evil'] = evil
+                newtags = tags
+
+            self.add_tags(newtags)
 
             if not new:
                 debug_output("(updated %s %s)" % (element.type, element.value), type='model')
@@ -417,7 +433,7 @@ class Model:
 
     def clear_db(self):
         for c in self._db.collection_names():
-            if c in ['elements', 'graph', 'sniffer_sessions', 'feeds', 'history', 'modules']:  # if c != "system.indexes":
+            if c in ['elements', 'graph', 'sniffer_sessions', 'feeds', 'history', 'modules', 'tags']:  # if c != "system.indexes":
                 self._db[c].drop()
 
     def list_db(self):

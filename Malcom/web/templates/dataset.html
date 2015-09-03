@@ -27,6 +27,7 @@
 	<ul id='datasetSideTabs' class='nav nav-tabs' role='tablist'>
 		<li class='active'><a href='#search' aria-controls="search" role="tab" data-toggle='tab'>Search</a></li>
 		{% if not g.config['PUBLIC'] %}
+		<li><a href='#tags' aria-controls="tags" role="tab" data-toggle='tab'>Tags</a></li>
 		<li><a href='#add' aria-controls="add" role="tab" data-toggle='tab'>Quick add</a></li>
 		{% endif %}
 	</ul>
@@ -38,7 +39,7 @@
 				<div class='input-group'>
 	    			<input id="query" class="form-control input-sm" data-url="{{ url_for('malcom_api.query') }}" placeholder='tags=evil'>
 					<span class="input-group-btn">
-						<button class='btn btn-primary btn-sm' type='button' onclick="get_dataset($('#query').val(), '{{ url_for('malcom_api.query') }}')">Go</button>
+						<button id='dataset-search' class='btn btn-primary btn-sm' type='button' data-source="{{ url_for('malcom_api.query') }}" onclick="get_dataset($('#query').val(), '{{ url_for('malcom_api.query') }}')">Go</button>
 					</span>
 				</div>
 
@@ -66,6 +67,13 @@
 			</form>
 
 		</div>
+
+		<div role="tabpanel" class='tab-pane' id='tags'>
+			<table class='table table-condensed' id='tag-table' data-source='{{ url_for("malcom_api.tags")}}'>
+				<tr><td>Tag</td><td>Count</td></tr>
+			</table>
+		</div>
+
 		{% if not g.config['PUBLIC'] %}
 		<div role="tabpanel" class='tab-pane' id='add'>
 			<form id='addform' method='POST' enctype='multipart/form-data' action='{{ url_for("add_data") }}'>

@@ -634,7 +634,6 @@ def send_raw_payload(session_id, flowid, session_info=None):
 
 
 
-
 def malcom_app(environ, start_response):
 	if environ.get('HTTP_SCRIPT_NAME'):
 		# update path info

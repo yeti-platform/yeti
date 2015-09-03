@@ -182,6 +182,20 @@ class Neighbors(Resource):
 
 api.add_resource(Neighbors, '/api/neighbors/')
 
+
+class Tags(Resource):
+    decorators = [login_required]
+
+    @swagger.operation(
+        notes='Recursively search for evil elements from a given element',
+        nickname='evil',
+        )
+    def get(self):
+        return g.Model.get_tags()
+
+api.add_resource(Tags, '/api/tags/', endpoint="malcom_api.tags")
+
+
 class Evil(Resource):
     decorators=[login_required]
     parser = reqparse.RequestParser()

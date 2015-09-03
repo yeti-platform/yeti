@@ -79,6 +79,8 @@ img.ssl-smiley {
 .label {
 	color: white;
 	background-color: #38a;
+	font-size: 85%;
+	margin:0 1px 0 1px;
 }
 
 
@@ -99,6 +101,10 @@ img.ssl-smiley {
 
 
 /* Dataset */
+
+#tag-table .label {
+	cursor: pointer;
+}
 
 #dataset tr {
 	white-space: nowrap;

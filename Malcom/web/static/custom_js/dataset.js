@@ -9,7 +9,8 @@ $(function(){
 		}
 	});
 
-	$(get_dataset("", url));
+	get_dataset("", url);
+	get_tags();
 });
 
 
@@ -60,6 +61,28 @@ function change_page(arg, url) {
 	query = $('#query').val()
 	location.hash = arg
 	get_dataset(query, url)
+}
+
+function get_tags() {
+	t = $("#tag-table")
+
+	$.ajax({
+		dataType: "json",
+		type: "GET",
+		url: t.data('source'),
+		success: function(data) {
+			for (var i in data) {
+				row = $("<tr><td><span class='label label-tag-"+data[i]['name']+"' data-tag='"+data[i]['name']+"'>"+data[i]['name']+"</span></td><td>"+data[i]['count']+"</td></tr>")
+				$('.label', row).click(function(){
+					get_dataset('tags='+$(this).data('tag'), $("#dataset-search").data('source'));
+				})
+				t.append(row)
+			}
+		}
+	});
+
+
+
 }
 
 function get_dataset(query, url) {
@@ -177,5 +200,6 @@ function get_dataset(query, url) {
 	  	next.attr('data-nav', next_page)
 	  }
 	});
+
 }
 
