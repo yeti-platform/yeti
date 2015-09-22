@@ -471,7 +471,7 @@ class Export(Resource):
                                         mimetype=output,
                                      )
         except Exception as e:
-            restful_abort(404)
+            restful_abort(404, reason="The export you requested does not exist")
 
 
 api.add_resource(Export, '/api/export/', endpoint="malcom_api.export")
