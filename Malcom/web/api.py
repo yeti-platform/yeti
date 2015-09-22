@@ -1,4 +1,3 @@
-
 from bson.json_util import dumps, loads
 from bson.objectid import ObjectId
 from bson.objectid import InvalidId
@@ -237,12 +236,14 @@ class Evil(Resource):
 api.add_resource(Evil, '/api/evil/')
 
 class QueryAPI(Resource):
-    "Descrption for the querying API"
+    """This resource is used to query / update elements in the Malcom database
+    These are the ressources used by scripts in Malcom."""
     decorators=[login_required]
-    parser = reqparse.RequestParser()
-    parser.add_argument('query', type=loads, default={})
-    parser.add_argument('page', type=int, default=0)
-    parser.add_argument('per_page', type=int, default=50)
+
+    get_parser = reqparse.RequestParser()
+    get_parser.add_argument('query', type=loads, default={})
+    get_parser.add_argument('page', type=int, default=0)
+    get_parser.add_argument('per_page', type=int, default=50)
 
     @swagger.operation(
         notes='Query the Malcom database',
@@ -274,9 +275,9 @@ class QueryAPI(Resource):
             },
         ]
         )
-    def get(self):
 
-        args = QueryAPI.parser.parse_args()
+    def get(self):
+        args = QueryAPI.get_parser.parse_args()
         query = args['query']
         page = args['page']
         per_page = args['per_page']
@@ -311,11 +312,70 @@ class QueryAPI(Resource):
 
         return data
 
+
+    post_parser = reqparse.RequestParser()
+    post_parser.add_argument('id', type=ObjectId, location="args", required=True)
+    post_parser.add_argument('fields', type=dict, required=True)
+
+    @swagger.operation(
+        notes='Update an element in the malcom database',
+        nickname='update',
+        parameters=[
+            {
+                'name': 'id',
+                'description': 'ID of element to act upon',
+                'required': True,
+                'paramType': 'query',
+                "dataType": 'ObjectId',
+            },
+            {
+                'name': 'fields',
+                'description': 'Python-style dictionary containing fields to update',
+                'required': True,
+                'paramType': 'form',
+                "dataType": 'ObjectId',
+            },
+            ])
+    def post(self):
+        args = QueryAPI.post_parser.parse_args()
+        elt = g.Model.get(_id=args['id'])
+        if not elt:
+            abort(404)
+        elt.update(args['fields'])
+        elt = g.Model.save(elt)
+        return elt
+
+
+    delete_parser = reqparse.RequestParser()
+    delete_parser.add_argument('id', type=ObjectId, required=True)
+
+    @swagger.operation(
+        notes='Remove element from the Malcom database',
+        nickname='query',
+        parameters=[
+            {
+                'name': 'id',
+                'description': 'ID of element to act upon',
+                'required': True,
+                'paramType': 'query',
+                "dataType": 'ObjectId',
+            },
+        ])
+    def delete(self):
+        try:
+            _id = request.args.get('id')
+        except InvalidId:
+            return {'error': 'You must specify an ID'}, 400
+
+        result = g.Model.remove_by_id(_id)
+        return result
+
 api.add_resource(QueryAPI, '/api/query/', endpoint="malcom_api.query")
 
 
 class Data(Resource):
     decorators=[login_required]
+
     parser = reqparse.RequestParser()
     parser.add_argument('values', type=str, action='append', default=[])
     parser.add_argument('tags', type=str, action='append', default=[])
@@ -375,9 +435,10 @@ class Export(Resource):
     decorators=[login_required]
     parser = reqparse.RequestParser()
     parser.add_argument('output', type=str, default='json', choices=['csv', 'json'])
+    parser.add_argument('name', required=True, type=str)
 
     @swagger.operation(
-        notes='Get raw, live data from the Malcom database (can be slow on some queries)',
+        notes='Retrieve exports done by Malcom',
         nickname='data',
         parameters=[
             {
@@ -389,41 +450,31 @@ class Export(Resource):
                 "allowableValues": {"values": ["json", "csv"], "valueType": "LIST" },
                 "defaultValue": 'json',
                 "dataType": 'str',
-            }
+            },
+            {
+                'name': 'name',
+                'description': 'Name of export',
+                'required': True,
+                "allowMultiple": False,
+                'paramType': 'query',
+                "dataType": 'str',
+            },
         ]
         )
     def get(self):
         args = Export.parser.parse_args()
         output = args['output']
-        return send_from_directory( g.config['EXPORTS_DIR'],
-                                    'export_all.{}'.format(output),
-                                    mimetype=output,
-                                    )
+        name = args['name']
+        try:
+            return send_from_directory(g.config['EXPORTS_DIR'],
+                                       'export_{}.{}'.format(name, output),
+                                        mimetype=output,
+                                     )
+        except Exception as e:
+            restful_abort(404)
+
 
 api.add_resource(Export, '/api/export/', endpoint="malcom_api.export")
-
-
-# DATA MANIPULATION =======================================================
-
-
-class DatasetAPI(Resource):
-    decorators=[login_required]
-    def get(self, action):
-        if action == 'remove':
-            try:
-                _id = ObjectId(request.args.get('_id'))
-            except InvalidId:
-                return {'error': 'You must specify an ID'}, 400
-
-            result = g.Model.remove_by_id(_id)
-            return result
-
-        if action == 'add':
-            # TODO
-            pass
-
-api.add_resource(DatasetAPI, '/api/dataset/<string:action>/')
-
 
 # SNIFFER API =============================================================
 
