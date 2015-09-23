@@ -76,7 +76,7 @@ class Element(dict):
 
         if 'id' in evil:
             for i, e in enumerate(self['evil'][:]):
-                if e['id'] == evil.get('id'):
+                if e.get('id') == evil.get('id'):
                     self['evil'][i] = evil
                     break
             else:
