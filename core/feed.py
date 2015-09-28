@@ -33,10 +33,7 @@ class FeedEngine(Scheduler):
 
     @property
     def schedule(self):
-        objs = {}
-        for i in self._schedule:
-            objs[i] = ScheduleEntry(name=i, app=self.app, **(self._schedule[i]))
-        return objs
+        return self._schedule
 
     def load_feeds(self):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,11 +49,10 @@ class FeedEngine(Scheduler):
     def setup_schedule(self):
         logging.info("Setting scheduler")
         for module in self.loaded_modules:
-            self._schedule[module] = {  'task': 'core.feed.update_feed',
-                                        'schedule': self.loaded_modules[module][1],
-                                        # 'args': (LOADED_MODULES[module][0], ),
-                                        'args': (module, ),
-                                     }
+            self._schedule[module] = ScheduleEntry(name=module, app=self.app,
+                                                   task= 'core.feed.update_feed',
+                                                   schedule=self.loaded_modules[module][1],
+                                                   args= (module, ))
 
 class BaseFeed(object):
     """Base class for Feeds. All feeds must inherit from this"""
