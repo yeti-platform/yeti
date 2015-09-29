@@ -1,16 +1,17 @@
 import re
-from core.feed import BaseFeed
+from core.feed import Feed
 from core.db.datatypes import Url
 from datetime import timedelta
+from datetime import datetime
+import md5
 
-class ZeusTrackerConfigs(BaseFeed):
+class ZeusTrackerConfigs(Feed):
 
-    FREQUENCY = timedelta(seconds=2)
-
-    def __init__(self):
-        self.name = "ZeusTrackerConfigs"
-        self.source = "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"
-        self.description = "This feed shows the latest 50 ZeuS config URLs."
+    settings = {  "frequency": timedelta(seconds=10),
+                  "name": "ZeusTrackerConfigs",
+                  "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs",
+                  "description": "This feed shows the latest 50 ZeuS config URLs.",
+                }
 
     def update(self):
         for d in self.update_xml('item', ["title", "link", "description", "guid"]):
@@ -18,8 +19,16 @@ class ZeusTrackerConfigs(BaseFeed):
 
     def analyze(self, dict):
         url_string = re.search(r"URL: (?P<url>\S+),", dict['description']).group('url')
-        context = {'type': "c2", "family": "zeus"}
-        n = Url.add_context(url_string, self.name, context)
 
-    def test(self):
-        print "Test: ", self.name
+        context = {}
+        date_string = re.search(r"\((?P<date>[0-9\-]+)\)", dict['title']).group('date')
+        context['date_added'] = datetime.strptime(date_string, "%Y-%m-%d")
+        context['status'] = re.search(r"status: (?P<status>[^,]+)", dict['description']).group('status')
+        context['version'] = int(re.search(r"version: (?P<version>[^,]+)", dict['description']).group('version'))
+        context['guid'] = dict['guid']
+        try:
+            context['md5'] = re.search(r"MD5 hash: (?P<md5>[a-f0-9]+)", dict['description']).group('md5')
+        except AttributeError as e:
+            pass
+
+        n = Url.add_context(url_string, self.name, context)
