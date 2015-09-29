@@ -22,7 +22,7 @@ def update_feed(feed_name):
     f.update()
     f.last_run = datetime.datetime.now()
     f.save()
-    
+
 class FeedEngine(Scheduler):
     """Feed manager class. Starts, stops, monitors feeds"""
 
@@ -49,16 +49,11 @@ class FeedEngine(Scheduler):
                 module = importlib.import_module(name)
                 for name, obj in inspect.getmembers(module, inspect.isclass):
                     if issubclass(obj, Feed) and obj is not Feed:
-                        # logging.info("Loading feed {}".format(obj.name))
                         try:
                             feed = Feed.objects.get(name=obj.settings['name'])
-                            print "Feed found in DB", feed
                         except DoesNotExist as e:
-                            # print "Feed not found"
                             feed = obj(name=obj.settings['name'], source=obj.settings['source'], enabled=True, frequency=obj.settings['frequency']).save()
                             feed.save()
-                        # logging.info("Loaded feed {}".format(feed.name))
-                        # print feed, feed.name, obj.frequency, feed.frequency
                         self.loaded_modules[feed.name] = feed
 
     def setup_schedule(self):
@@ -70,6 +65,7 @@ class FeedEngine(Scheduler):
                                                    args= (module, ))
 
 class Feed(Document):
+
     """Base class for Feeds. All feeds must inherit from this"""
 
     name = StringField(required=True, unique=True)
