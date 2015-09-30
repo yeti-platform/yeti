@@ -59,10 +59,11 @@ class FeedEngine(Scheduler):
     def setup_schedule(self):
         logging.info("Setting scheduler")
         for module in self.loaded_modules:
-            self._schedule[module] = ScheduleEntry(name=module, app=self.app,
-                                                   task= 'core.feed.update_feed',
-                                                   schedule=self.loaded_modules[module].frequency,
-                                                   args= (module, ))
+            self._schedule[module] = ScheduleEntry( name=module,
+                                                    app=self.app,
+                                                    task='core.feed.update_feed',
+                                                    schedule=self.loaded_modules[module].frequency,
+                                                    args=(module, ))
 
 class Feed(Document):
 
