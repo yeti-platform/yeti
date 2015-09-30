@@ -8,7 +8,4 @@ import time
 logging.basicConfig(format='%(levelname)s:%(module)s:%(message)s', level=logging.INFO)
 
 if __name__ == '__main__':
-    fe = FeedEngine()
-
-    while True:
-        time.sleep(1)
+    pass

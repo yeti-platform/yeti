@@ -1,13 +1,15 @@
 import re
-from core.feed import Feed
-from core.db.datatypes import Url
 from datetime import timedelta
 from datetime import datetime
-import md5
+
+from core.feed import Feed
+from core.db.datatypes import Url
 
 class ZeusTrackerConfigs(Feed):
 
-    settings = {  "frequency": timedelta(seconds=10),
+    # tags: zeus, config, evil
+
+    settings = {  "frequency": timedelta(hours=1),
                   "name": "ZeusTrackerConfigs",
                   "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs",
                   "description": "This feed shows the latest 50 ZeuS config URLs.",
