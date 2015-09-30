@@ -4,18 +4,23 @@ from datetime import datetime
 class Element(Document):
 
     value = StringField(required=True, unique=True)
-    context = DictField()
+    context = ListField(DictField())
+    tags = ListField(DictField())
 
     meta = {"allow_inheritance": True}
 
     @classmethod
-    def add_context(cls, value, source, context):
-        qs = cls.objects(value=value)
-        key = "context__{}".format(source)
-        return qs.modify(upsert=True, new=True, **{key: context})
+    def get_or_create(cls, value):
+        return cls.objects(value=value).modify(upsert=True, new=True, value=value)
+
+    def add_context(self, context):
+        # uniqueness logic should come here
+        assert 'source' in context
+        self.update(add_to_set__context=context)
 
     def tag(self, tag):
-        pass
+        for tag in self.tags:
+            pass
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))
@@ -24,13 +29,14 @@ class LinkHistory(EmbeddedDocument):
 
     tag = StringField()
     description = StringField()
-    timestamp = DateTimeField()
+    first_seen = DateTimeField()
+    last_seen = DateTimeField()
 
 class Link(Document):
 
     src = ReferenceField(Element, required=True, reverse_delete_rule=CASCADE)
     dst = ReferenceField(Element, required=True, reverse_delete_rule=CASCADE, unique_with='src')
-    history = SortedListField(EmbeddedDocumentField(LinkHistory), ordering='timestamp', reverse=True)
+    history = SortedListField(EmbeddedDocumentField(LinkHistory), ordering='last_seen', reverse=True)
 
     @staticmethod
     def connect(src, dst):
@@ -40,21 +46,23 @@ class Link(Document):
             l = Link.objects.get(src=src, dst=dst)
         return l
 
-    def add_history(self, tag, description, timestamp=None):
-        if not timestamp:
-            timestamp = datetime.utcnow()
+    def add_history(self, tag, description, first_seen=None, last_seen=None):
+        if not first_seen:
+            first_seen = datetime.utcnow()
+        if not last_seen:
+            last_seen = datetime.utcnow()
 
         if len(self.history) == 0:
-            self.history.insert(0, LinkHistory(tag=tag, description=description, timestamp=timestamp))
+            self.history.insert(0, LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
             return self.save()
 
         last = self.history[0]
         if description == last.description:  # Description is unchanged, do nothing
-            return self
+            self.history[0].last_seen = last_seen
         else:  # Link description has changed, insert in link history
-            self.history.insert(0, LinkHistory(tag=tag, description=description, timestamp=timestamp))
-            if last.timestamp > timestamp:  # we're entering an out-of-order element, list will need sorting
-                self.history.sort(key=lambda x: x.timestamp, reverse=True)
+            self.history.insert(0, LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
+            if last.first_seen > first_seen:  # we're entering an out-of-order element, list will need sorting
+                self.history.sort(key=lambda x: x.last_seen, reverse=True)
 
         return self.save()
 

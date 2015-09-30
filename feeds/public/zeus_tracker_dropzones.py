@@ -5,14 +5,14 @@ from datetime import datetime
 from core.feed import Feed
 from core.db.datatypes import Url
 
-class ZeusTrackerConfigs(Feed):
+class ZeusTrackerDropzones(Feed):
 
-    # tags: zeus, config, evil
+    # tag: zeus, dropzone, evil
 
     settings = {  "frequency": timedelta(hours=1),
-                  "name": "ZeusTrackerConfigs",
-                  "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs",
-                  "description": "This feed shows the latest 50 ZeuS config URLs.",
+                  "name": "ZeusTrackerDropzones",
+                  "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones",
+                  "description": "This feed shows the latest 50 ZeuS dropzone URLs.",
                 }
 
     def update(self):
@@ -26,7 +26,6 @@ class ZeusTrackerConfigs(Feed):
         date_string = re.search(r"\((?P<date>[0-9\-]+)\)", dict['title']).group('date')
         context['date_added'] = datetime.strptime(date_string, "%Y-%m-%d")
         context['status'] = re.search(r"status: (?P<status>[^,]+)", dict['description']).group('status')
-        context['version'] = int(re.search(r"version: (?P<version>[^,]+)", dict['description']).group('version'))
         context['guid'] = dict['guid']
         context['source'] = self.name
         try:
