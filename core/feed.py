@@ -1,19 +1,10 @@
-import logging
-import os
-import pkgutil
-import importlib
-import inspect
 import csv
-import sys
-import datetime
-from StringIO import StringIO
-
 import requests
-from core.config.celeryctl import celery_app
-from celery.beat import Scheduler, ScheduleEntry
 from lxml import etree
-from mongoengine import *
-from core.db.mongoengine_extras import TimedeltaField
+from StringIO import StringIO
+from mongoengine import StringField
+from core.config.celeryctl import celery_app
+from core.scheduling import ScheduleEntry
 
 @celery_app.task
 def update_feed(feed_name):
@@ -23,60 +14,13 @@ def update_feed(feed_name):
     f.last_run = datetime.datetime.now()
     f.save()
 
-class FeedEngine(Scheduler):
-    """Feed manager class. Starts, stops, monitors feeds"""
-
-    def __init__(self, *args, **kwargs):
-        self._schedule = {}
-        self.loaded_modules = {}
-        logging.info("FeedEngine started")
-        self.app = celery_app
-        self.load_feeds()
-
-        if kwargs:
-            super(FeedEngine, self).__init__(*args, **kwargs)
-
-    @property
-    def schedule(self):
-        return self._schedule
-
-    def load_feeds(self):
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        modules_dir = os.path.join(base_dir, 'feeds')
-        sys.path.append(base_dir)
-        for loader, name, ispkg in pkgutil.walk_packages([modules_dir], prefix='feeds.'):
-            if not ispkg:
-                module = importlib.import_module(name)
-                for name, obj in inspect.getmembers(module, inspect.isclass):
-                    if issubclass(obj, Feed) and obj is not Feed:
-                        try:
-                            feed = Feed.objects.get(name=obj.settings['name'])
-                        except DoesNotExist as e:
-                            feed = obj(name=obj.settings['name'], source=obj.settings['source'], enabled=True, frequency=obj.settings['frequency']).save()
-                            feed.save()
-                        self.loaded_modules[feed.name] = feed
-
-    def setup_schedule(self):
-        logging.info("Setting scheduler")
-        for module in self.loaded_modules:
-            self._schedule[module] = ScheduleEntry( name=module,
-                                                    app=self.app,
-                                                    task='core.feed.update_feed',
-                                                    schedule=self.loaded_modules[module].frequency,
-                                                    args=(module, ))
-
-class Feed(Document):
-
+class Feed(ScheduleEntry):
     """Base class for Feeds. All feeds must inherit from this"""
 
-    name = StringField(required=True, unique=True)
-    source = StringField(required=True)
-    enabled = BooleanField()
-    frequency = TimedeltaField(required=True)
-    status = StringField()
-    last_run = DateTimeField()
+    SCHEDULED_TASK = "core.feed.update_feed"
 
-    meta = {"allow_inheritance": True}
+    source = StringField(required=True)
+    description = StringField(required=True)
 
     def update(self):
         """
