@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from core.feed import FeedEngine
 import logging
 import time
 
