@@ -31,7 +31,7 @@ class Element(Document):
         assert 'source' in context
         # uniqueness logic should come here
         if context not in self.context:
-            print self.update(add_to_set__context=context)
+            self.update(add_to_set__context=context)
             self.context.append(context)
         return self
 
