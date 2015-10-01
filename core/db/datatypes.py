@@ -19,6 +19,8 @@ class Element(Document):
     context = ListField(DictField())
     tags = ListField(EmbeddedDocumentField(Tag))
 
+    created = DateTimeField(default=datetime.now)
+
     meta = {"allow_inheritance": True}
 
     @classmethod
