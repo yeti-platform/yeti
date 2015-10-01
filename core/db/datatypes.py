@@ -1,11 +1,23 @@
 from mongoengine import *
-from datetime import datetime
+from core.db.mongoengine_extras import TimedeltaField
+from datetime import datetime, timedelta
+
+class Tag(EmbeddedDocument):
+
+    name = StringField()
+    first_seen = DateTimeField(default=datetime.now)
+    last_seen = DateTimeField(default=datetime.now)
+    expiration = TimedeltaField(default=timedelta(days=365))
+    fresh = BooleanField(default=True)
+
+    def __unicode__(self):
+        return u"{} ({})".format(self.name, "fresh" if self.fresh else "old")
 
 class Element(Document):
 
     value = StringField(required=True, unique=True)
     context = ListField(DictField())
-    tags = ListField(DictField())
+    tags = ListField(EmbeddedDocumentField(Tag))
 
     meta = {"allow_inheritance": True}
 
@@ -14,13 +26,38 @@ class Element(Document):
         return cls.objects(value=value).modify(upsert=True, new=True, value=value)
 
     def add_context(self, context):
-        # uniqueness logic should come here
         assert 'source' in context
-        self.update(add_to_set__context=context)
+        # uniqueness logic should come here
+        if context not in self.context:
+            print self.update(add_to_set__context=context)
+            self.context.append(context)
+        return self
 
-    def tag(self, tag):
+    def tag(self, new_tags):
+        if isinstance(new_tags, (str, unicode)):
+            new_tags = [new_tags]
+
+        for new_tag in new_tags:
+            for tag in self.tags:
+                if tag.name == new_tag:
+                    tag.last_seen = datetime.now()
+                    tag.fresh = True
+                    return self.save()
+            else:
+                if new_tag.strip() != '':
+                    t = Tag(name=new_tag)
+                    self.update(add_to_set__tags=t)
+                    self.tags.append(t)
+        return self
+
+    def check_tags(self):
         for tag in self.tags:
-            pass
+            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.now():
+                tag.fresh = False
+        return self.save()
+
+    def fresh_tags(self):
+        return [tag for tag in self.tags if tag.fresh]
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))
@@ -29,8 +66,8 @@ class LinkHistory(EmbeddedDocument):
 
     tag = StringField()
     description = StringField()
-    first_seen = DateTimeField()
-    last_seen = DateTimeField()
+    first_seen = DateTimeField(default=datetime.now)
+    last_seen = DateTimeField(default=datetime.now)
 
 class Link(Document):
 
