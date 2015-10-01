@@ -5,8 +5,6 @@ from core.feed import Feed
 
 class CybercrimeTracker(Feed):
 
-    # tags = description
-
     settings = {
         "frequency": timedelta(hours=1),
         "name": "CybercrimeTracker",

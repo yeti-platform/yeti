@@ -6,8 +6,6 @@ from core.feed import Feed
 
 class FeodoTracker(Feed):
 
-    # tag = feodo variant
-
     descriptions = {
                 'A': "Hosted on compromised webservers running an nginx proxy on port 8080 TCP forwarding all botnet traffic to a tier 2 proxy node. Botnet traffic usually directly hits these hosts on port 8080 TCP without using a domain name.",
                 'B': "Hosted on servers rented and operated by cybercriminals for the exclusive purpose of hosting a Feodo botnet controller. Usually taking advantage of a domain name within ccTLD .ru. Botnet traffic usually hits these domain names using port 80 TCP.",

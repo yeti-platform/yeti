@@ -7,8 +7,6 @@ from core.feed import Feed
 
 class MalcodeBinaries(Feed):
 
-    # tags: evil
-
     settings = {
         "frequency": timedelta(hours=1),
         "name": "MalcodeBinaries",

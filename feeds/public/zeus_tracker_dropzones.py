@@ -7,8 +7,6 @@ from core.db.datatypes import Url
 
 class ZeusTrackerDropzones(Feed):
 
-    # tag: zeus, dropzone, banker, cimerware, malware,
-
     settings = {  "frequency": timedelta(hours=1),
                   "name": "ZeusTrackerDropzones",
                   "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones",

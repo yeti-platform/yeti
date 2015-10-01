@@ -7,8 +7,6 @@ from core.db.datatypes import Ip
 
 class TorExitNodes(Feed):
 
-    # tags: tor, evil
-
     settings = {
         "frequency": timedelta(hours=1),
         "name": "TorExitNodes",

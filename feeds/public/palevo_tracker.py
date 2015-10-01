@@ -6,8 +6,6 @@ from core.db.datatypes import Hostname
 
 class PalevoTracker(Feed):
 
-    # tags: palevo, evil
-
     settings = {
         "frequency": timedelta(hours=1),
         "name": "PalevoTracker",

@@ -7,8 +7,6 @@ from core.feed import Feed
 
 class AsproxTracker(Feed):
 
-    # tags = "asprox"
-
     settings = {
         "frequency": timedelta(hours=1),
         "name": "AsproxTracker",

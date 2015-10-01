@@ -7,8 +7,6 @@ from core.db.datatypes import Url
 
 class ZeusTrackerConfigs(Feed):
 
-    # tags: zeus, config, evil
-
     settings = {  "frequency": timedelta(hours=1),
                   "name": "ZeusTrackerConfigs",
                   "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=configs",
