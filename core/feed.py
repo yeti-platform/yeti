@@ -1,5 +1,7 @@
 import csv
 import requests
+from datetime import datetime
+
 from lxml import etree
 from StringIO import StringIO
 from mongoengine import StringField
@@ -11,7 +13,7 @@ def update_feed(feed_name):
     print "Running {}".format(feed_name)
     f = Feed.objects.get(name=feed_name)
     f.update()
-    f.last_run = datetime.datetime.now()
+    f.last_run = datetime.now()
     f.save()
 
 class Feed(ScheduleEntry):
