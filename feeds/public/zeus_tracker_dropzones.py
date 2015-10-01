@@ -7,7 +7,7 @@ from core.db.datatypes import Url
 
 class ZeusTrackerDropzones(Feed):
 
-    # tag: zeus, dropzone, evil
+    # tag: zeus, dropzone, banker, cimerware, malware,
 
     settings = {  "frequency": timedelta(hours=1),
                   "name": "ZeusTrackerDropzones",
@@ -35,3 +35,4 @@ class ZeusTrackerDropzones(Feed):
 
         n = Url.get_or_create(url_string)
         n.add_context(context)
+        n.tag(['zeus', 'objective', 'banker', 'cirmeware', 'malware'])

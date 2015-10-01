@@ -31,5 +31,6 @@ class MalcodeBinaries(Feed):
                 d = dict['description'].encode('UTF-8')
                 url = Url.get_or_create(context.pop('url'))
                 url.add_context(context)
+                url.tag(['malware', 'delivery'])
             except UnicodeError:
                 sys.stderr.write('Unicode error: %s' % dict['description'])

@@ -36,3 +36,4 @@ class ZeusTrackerConfigs(Feed):
 
         n = Url.get_or_create(url_string)
         n.add_context(context)
+        n.tag(['zeus', 'c2', 'banker', 'cirmeware', 'malware'])

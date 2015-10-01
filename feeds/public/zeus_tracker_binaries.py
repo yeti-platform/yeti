@@ -35,3 +35,4 @@ class ZeusTrackerBinaries(Feed):
 
         n = Url.get_or_create(url_string)
         n.add_context(context)
+        n.tag(['zeus', 'delivery', 'banker', 'cirmeware', 'malware'])

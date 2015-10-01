@@ -53,3 +53,4 @@ class TorExitNodes(Feed):
 
         ip = Ip.get_or_create(fields[0])
         ip.add_context(context)
+        ip.tag(['tor'])

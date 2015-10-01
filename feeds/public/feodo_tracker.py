@@ -46,12 +46,13 @@ class FeodoTracker(Feed):
         g = g.groupdict()
         context['version'] = g['version']
         context['description'] = FeodoTracker.descriptions[g['version']]
+        context['subfamily'] = FeodoTracker.variants[g['version']]
         context['source'] = self.name
         del context['title']
 
         if re.search(r"[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}", g['host']):
-            ip = Ip.get_or_create(g['host'])
-            ip.add_context(context)
+            new = Ip.get_or_create(g['host'])
         else:
-            hn = Hostname.get_or_create(g['host'])
-            hn.add_context(context)
+            new = Hostname.get_or_create(g['host'])
+        new.add_context(context)
+        new.tag(['dridex', 'malware', 'crimeware', 'banker', 'c2'])

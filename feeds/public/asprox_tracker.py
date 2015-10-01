@@ -44,3 +44,4 @@ class AsproxTracker(Feed):
         context['source'] = self.name
         url = Url.get_or_create(url)
         url.add_context(context)
+        url.tag(['asprox', 'c2', 'scanner'])

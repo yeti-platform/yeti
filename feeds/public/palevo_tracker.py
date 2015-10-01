@@ -39,3 +39,4 @@ class PalevoTracker(Feed):
 
         hn = Hostname.get_or_create(hostname)
         hn.add_context(context)
+        hn.tag(['palevo', 'c2', 'malware', 'crimeware', 'worm'])
