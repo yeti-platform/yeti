@@ -17,6 +17,7 @@ class ScheduleEntry(Document):
 
     name = StringField(required=True, unique=True)
     enabled = BooleanField()
+    description = StringField(required=True)
     frequency = TimedeltaField(required=True)
     status = StringField()
     last_run = DateTimeField()

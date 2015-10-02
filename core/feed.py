@@ -22,7 +22,6 @@ class Feed(ScheduleEntry):
     SCHEDULED_TASK = "core.feed.update_feed"
 
     source = StringField(required=True)
-    description = StringField(required=True)
 
     def update(self):
         """
