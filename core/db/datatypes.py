@@ -142,7 +142,17 @@ class Link(Document):
 
 
 class Url(Element):
-    pass
+
+    def clean(self):
+        """Ensures that URLs are canonized before saving"""
+        try:
+            if not is_url(self.value):
+                raise ValidationError("Invalid URL: {}".format(self.value))
+            if re.match("[a-zA-Z]+://", self.value) is None:
+                self.value = "http://{}".format(self.value)
+            self.value = urlnorm.norm(self.value)
+        except urlnorm.InvalidUrl as e:
+            raise ValidationError("Invalid URL: {}".format(self.value))
 
 class Ip(Element):
     pass
