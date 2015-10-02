@@ -19,7 +19,7 @@ class ZeusTrackerBinaries(Feed):
 
     def analyze(self, dict):
         url_string = re.search(r"URL: (?P<url>\S+),", dict['description']).group('url')
-
+        url_string = url_string.replace('http://https:', 'https://')
         context = {}
         date_string = re.search(r"\((?P<date>[0-9\-]+)\)", dict['title']).group('date')
         context['date_added'] = datetime.strptime(date_string, "%Y-%m-%d")
