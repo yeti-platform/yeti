@@ -32,3 +32,5 @@ class MalcodeBinaries(Feed):
                 url.tag(['malware', 'delivery'])
             except UnicodeError:
                 sys.stderr.write('Unicode error: %s' % dict['description'])
+            except ValueError as e:
+                logging.error('Invalid URL: {}'.format(url_string))

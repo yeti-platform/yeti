@@ -31,6 +31,9 @@ class ZeusTrackerDropzones(Feed):
         except AttributeError as e:
             pass
 
-        n = Url.get_or_create(url_string)
-        n.add_context(context)
-        n.tag(['zeus', 'objective', 'banker', 'cirmeware', 'malware'])
+        try:
+            n = Url.get_or_create(url_string)
+            n.add_context(context)
+            n.tag(['zeus', 'objective', 'banker', 'cirmeware', 'malware'])
+        except ValueError as e:
+            logging.error('Invalid URL: {}'.format(url_string))

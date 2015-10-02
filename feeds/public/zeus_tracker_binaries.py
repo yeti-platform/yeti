@@ -7,7 +7,7 @@ from core.db.datatypes import Url
 
 class ZeusTrackerBinaries(Feed):
 
-    settings = {  "frequency": timedelta(hours=1),
+    settings = {  "frequency": timedelta(minutes=1),
                   "name": "ZeusTrackerBinaries",
                   "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries",
                   "description": "This feed shows the latest 50 ZeuS binaries URLs.",

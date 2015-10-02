@@ -40,6 +40,9 @@ class AsproxTracker(Feed):
         context['abuse_contact'] = Abuse_Contact
         context['description'] = Details if Details else "N/A"
         context['source'] = self.name
-        url = Url.get_or_create(url)
-        url.add_context(context)
-        url.tag(['asprox', 'c2', 'scanner'])
+        try:
+            url = Url.get_or_create(url)
+            url.add_context(context)
+            url.tag(['asprox', 'c2', 'scanner'])
+        except ValueError as e:
+            logging.error('Invalid URL: {}'.format(url_string))
