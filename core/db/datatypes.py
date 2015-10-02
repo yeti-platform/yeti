@@ -18,6 +18,7 @@ class Element(Document):
     value = StringField(required=True, unique=True)
     context = ListField(DictField())
     tags = ListField(EmbeddedDocumentField(Tag))
+    last_analyses = DictField()
 
     created = DateTimeField(default=datetime.now)
 
@@ -60,6 +61,11 @@ class Element(Document):
 
     def fresh_tags(self):
         return [tag for tag in self.tags if tag.fresh]
+
+    def analysis_done(self, module_name):
+        ts = datetime.now()
+        self.update(**{"set__last_analyses__{}".format(module_name): ts})
+        self.reload()
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))
