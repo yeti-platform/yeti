@@ -20,11 +20,10 @@ class Analytics(ScheduleEntry):
 
     @classmethod
     def bulk(cls, elts):
-        print "MAY BE OVERRIDDEN"
+        """Bulk analytics. May be overridden in case the module needs to batch-analyze elements"""
         for e in elts:
             celery_app.send_task("core.analytics_tasks.each", [cls.__name__, e.to_json()])
 
     @classmethod
     def each(cls, element):
-        print "SHOULD BE OVERRIDDEN"
-        print "Generic analysis for {}".format(element.value)
+        raise NotImplementedError("This method must be overridden in each class it inherits from")
