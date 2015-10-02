@@ -64,6 +64,20 @@ class Element(Document):
         self.update(**{"set__last_analyses__{}".format(module_name): ts})
         self.reload()
 
+    # neighbors
+
+    def incoming(self):
+        return [l.src for l in Link.objects(dst=self.id)]
+
+    def outgoing(self):
+        return [l.dst for l in Link.objects(src=self.id)]
+
+    def all_neighbors(self):
+        ids = set()
+        ids |= ({l.src.id for l in Link.objects(dst=self.id)})
+        ids |= ({l.dst.id for l in Link.objects(src=self.id)})
+        return Element.objects(id__in=ids)
+
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))
 
