@@ -41,16 +41,13 @@ class Element(Document):
             new_tags = [new_tags]
 
         for new_tag in new_tags:
-            for tag in self.tags:
-                if tag.name == new_tag:
-                    tag.last_seen = datetime.now()
-                    tag.fresh = True
-                    return self.save()
-            else:
-                if new_tag.strip() != '':
+            if new_tag.strip() != '':
+                if self.__class__.objects(id=self.id, tags__name=new_tag).count() == 1:
+                    self.__class__.objects(id=self.id, tags__name=new_tag).update(set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())
+                else:
                     t = Tag(name=new_tag)
                     self.update(add_to_set__tags=t)
-                    self.tags.append(t)
+        self.reload()
         return self
 
     def check_tags(self):
