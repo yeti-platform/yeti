@@ -1,6 +1,11 @@
-from mongoengine import *
-from core.db.mongoengine_extras import TimedeltaField
 from datetime import datetime, timedelta
+
+from mongoengine import *
+
+from core.db.mongoengine_extras import TimedeltaField
+from core.helpers import is_url, is_ip, is_hostname
+
+
 
 class Tag(EmbeddedDocument):
 
@@ -23,6 +28,19 @@ class Element(Document):
     created = DateTimeField(default=datetime.now)
 
     meta = {"allow_inheritance": True}
+
+    @staticmethod
+    def guess_type(string):
+        if string and string.strip() != '':
+            if is_url(string):
+                return Url
+            elif is_ip(string):
+                return Ip
+            elif is_hostname(string):
+                return Hostname
+            else:
+                raise ValueError("{} was not recognized as a viable datatype".format(string))
+
 
     @classmethod
     def get_or_create(cls, value):
