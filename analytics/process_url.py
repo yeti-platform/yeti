@@ -9,7 +9,7 @@ from core.helpers import url_regex, tlds
 class ProcessUrl(Analytics):
 
     settings = {
-        "frequency": timedelta(minutes=1),
+        "frequency": timedelta(minutes=10),
         "name": "ProcessUrl",
         "description": "Extracts domains from URLs",
     }
