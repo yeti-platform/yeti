@@ -11,7 +11,7 @@ from dns.rdtypes.IN.A import A as A_class
 from core.analytics import Analytics
 from core.db.datatypes import Hostname, Link, Element
 
-class ProcessHostname(Analytics):
+class ResolveHostnames(Analytics):
 
     settings = {
         "frequency": timedelta(seconds=10),
