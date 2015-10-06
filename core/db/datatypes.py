@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
+import re
 
 from mongoengine import *
+import urlnorm
+import idna
 
 from core.db.mongoengine_extras import TimedeltaField
 from core.helpers import is_url, is_ip, is_hostname
-
-
 
 class Tag(EmbeddedDocument):
 
@@ -41,10 +42,9 @@ class Element(Document):
             else:
                 raise ValueError("{} was not recognized as a viable datatype".format(string))
 
-
     @classmethod
     def get_or_create(cls, value):
-        return cls.objects(value=value).modify(upsert=True, new=True, value=value)
+        return cls.objects(value=value).modify(upsert=True, new=True, value=value).save()
 
     def add_context(self, context):
         assert 'source' in context
@@ -121,6 +121,7 @@ class Link(Document):
         return l
 
     def add_history(self, tag, description, first_seen=None, last_seen=None):
+        # this is race-condition prone... think of a better way to do this
         if not first_seen:
             first_seen = datetime.utcnow()
         if not last_seen:
@@ -147,7 +148,7 @@ class Url(Element):
         """Ensures that URLs are canonized before saving"""
         try:
             if not is_url(self.value):
-                raise ValidationError("Invalid URL: {}".format(self.value))
+                raise ValidationError("Invalid URL (is_url={}): {}".format(is_url(self.value), self.value))
             if re.match("[a-zA-Z]+://", self.value) is None:
                 self.value = "http://{}".format(self.value)
             self.value = urlnorm.norm(self.value)
@@ -158,4 +159,19 @@ class Ip(Element):
     pass
 
 class Hostname(Element):
-    pass
+
+    def clean(self):
+        """Performs some normalization on hostnames before saving to the db"""
+        try:
+            self.value = Hostname.normalize(self.value)
+        except Exception as e:
+            raise ValidationError("Invalid hostname: {}".format(self.value))
+
+    @staticmethod
+    def normalize(hostname):
+        if not is_hostname(hostname):
+            raise ValidationError("Invalid Hostname (is_hostname={}): {}".format(is_hostname(hostname), hostname))
+        if hostname.endswith('.'):
+            hostname = hostname[:-1]
+        hostname = unicode(idna.encode(hostname.lower()))
+        return hostname
