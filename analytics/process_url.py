@@ -3,8 +3,7 @@ import re
 import logging
 
 from core.analytics import Analytics
-from core.db.datatypes import Hostname, Link, Element
-from core.helpers import url_regex, tlds
+from core.db.datatypes import Link, Element
 
 class ProcessUrl(Analytics):
 
@@ -26,6 +25,6 @@ class ProcessUrl(Analytics):
             try:
                 logging.info("Extracted {} from {}".format(host, url))
                 h = Element.guess_type(host).get_or_create(value=host)
-                l = Link.connect(src=url, dst=h)
-            except ValueError as e:
+                Link.connect(src=url, dst=h)
+            except ValueError:
                 logging.error("An error occurred when trying to add {} to the database".format(host))
