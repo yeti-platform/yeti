@@ -30,7 +30,7 @@ class Element(Document):
 
     @classmethod
     def add_text(cls, text):
-        return Element.guess(text).get_or_create(cls, text)
+        return Element.guess_type(text).get_or_create(text)
 
     @classmethod
     def get_or_create(cls, value):

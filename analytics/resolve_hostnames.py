@@ -35,7 +35,7 @@ class ResolveHostnames(Analytics):
         h = Hostname.get_or_create(hostname)
         for rtype, results in result.items():
             for rdata in results:
-                e = Element.guess_type(rdata).get_or_create(rdata)
+                e = Element.add_text(rdata)
                 l = Link.connect(h, e)
                 l.add_history(tag=rtype, description='{} record'.format(rtype))
 
