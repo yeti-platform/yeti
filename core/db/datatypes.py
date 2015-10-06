@@ -50,8 +50,7 @@ class Element(Document):
         assert 'source' in context
         # uniqueness logic should come here
         if context not in self.context:
-            self.update(add_to_set__context=context)
-            self.context.append(context)
+            return self.modify(add_to_set__context=context)
         return self
 
     def tag(self, new_tags):
@@ -61,11 +60,12 @@ class Element(Document):
         for new_tag in new_tags:
             if new_tag.strip() != '':
                 if self.__class__.objects(id=self.id, tags__name=new_tag).count() == 1:
-                    self.__class__.objects(id=self.id, tags__name=new_tag).update(set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())
+                    print 'exists'
+                    self.__class__.objects(id=self.id, tags__name=new_tag).modify(new=True, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())
+                    return self.reload()
                 else:
-                    t = Tag(name=new_tag)
-                    self.update(add_to_set__tags=t)
-        self.reload()
+                    print 'not exists'
+                    return self.modify(add_to_set__tags=Tag(name=new_tag))
         return self
 
     def check_tags(self):
@@ -79,8 +79,7 @@ class Element(Document):
 
     def analysis_done(self, module_name):
         ts = datetime.now()
-        self.update(**{"set__last_analyses__{}".format(module_name): ts})
-        self.reload()
+        return self.modify(**{"set__last_analyses__{}".format(module_name): ts})
 
     # neighbors
 
@@ -128,18 +127,13 @@ class Link(Document):
             last_seen = datetime.utcnow()
 
         if len(self.history) == 0:
-            self.history.insert(0, LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
-            return self.save()
+            return self.modify(push__history=LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
 
         last = self.history[0]
-        if description == last.description:  # Description is unchanged, do nothing
-            self.history[0].last_seen = last_seen
+        if description == last.description:  # Description is unchanged, update timestamp
+            return self.modify(set__history__0__last_seen=last_seen)
         else:  # Link description has changed, insert in link history
-            self.history.insert(0, LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
-            if last.first_seen > first_seen:  # we're entering an out-of-order element, list will need sorting
-                self.history.sort(key=lambda x: x.last_seen, reverse=True)
-
-        return self.save()
+            return self.modify(push__history=LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
 
 
 class Url(Element):
