@@ -2,7 +2,7 @@ import urllib2
 from datetime import datetime, timedelta
 import csv
 
-from core.db.datatypes import Url
+from core.datatypes import Url
 from core.feed import Feed
 
 class AsproxTracker(Feed):

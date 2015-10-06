@@ -1,8 +1,8 @@
 from mongoengine.base import BaseField
 from datetime import timedelta
 
-class TimedeltaField(BaseField):
-    """A timedelta field.
+class TimeDeltaField(BaseField):
+    """A TimeDeltaField field.
     Looks to the outside world like a datatime.timedelta, but stores
     in the database as an integer (or float) number of seconds.
     """

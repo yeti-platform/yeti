@@ -2,7 +2,7 @@ from datetime import datetime
 
 from core.config.celeryctl import celery_app
 from core.scheduling import ScheduleEntry
-from core.db.datatypes import Element
+from core.datatypes import Element
 from mongoengine import Q
 
 

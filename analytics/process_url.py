@@ -3,7 +3,7 @@ import re
 import logging
 
 from core.analytics import Analytics
-from core.db.datatypes import Link, Element
+from core.datatypes import Link, Element
 
 class ProcessUrl(Analytics):
 

@@ -9,7 +9,7 @@ from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
 
 from core.analytics import Analytics
-from core.db.datatypes import Hostname, Link, Element
+from core.datatypes import Hostname, Link, Element
 
 class ResolveHostnames(Analytics):
 
@@ -24,8 +24,7 @@ class ResolveHostnames(Analytics):
     EXPIRATION = None  # only run this once
 
     @classmethod
-    def bulk(cls, elements):
-        hostnames = [e for e in elements]
+    def bulk(cls, hostnames):
         p = ParallelDnsResolver()
         results = p.mass_resolve(hostnames)
         for hostname, result in results.items():
@@ -41,7 +40,6 @@ class ResolveHostnames(Analytics):
                 l.add_history(tag=rtype, description='{} record'.format(rtype))
 
         h.analysis_done(cls.__name__)
-
 
 
 class ParallelDnsResolver(object):

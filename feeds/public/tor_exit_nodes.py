@@ -2,7 +2,7 @@ import urllib2
 from datetime import timedelta
 
 from core.feed import Feed
-from core.db.datatypes import Ip
+from core.datatypes import Ip
 
 
 class TorExitNodes(Feed):

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from core.db.datatypes import Url
+from core.datatypes import Url
 from core.feed import Feed
 
 class CybercrimeTracker(Feed):
