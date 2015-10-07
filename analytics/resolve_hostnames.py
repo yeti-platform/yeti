@@ -4,7 +4,7 @@ import logging
 from Queue import Queue
 
 import dns
-from dns.resolver import NoAnswer
+from dns.resolver import NoAnswer, NXDOMAIN, Timeout
 from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
 
@@ -85,5 +85,9 @@ class ParallelDnsResolver(object):
                         else:
                             logging.error("Unknown record type: {}".format(type(r)))
                     self.results[hostname][rtype] = text_results
-            except dns.resolver.NoAnswer, e:
+            except NoAnswer:
+                continue
+            except NXDOMAIN:
+                continue
+            except Timeout:
                 continue
