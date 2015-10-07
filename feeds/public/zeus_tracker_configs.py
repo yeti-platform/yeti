@@ -35,6 +35,6 @@ class ZeusTrackerConfigs(Feed):
         try:
             n = Url.get_or_create(url_string)
             n.add_context(context)
-            n.tag(['zeus', 'c2', 'banker', 'cirmeware', 'malware'])
+            n.tag(['zeus', 'c2', 'banker', 'crimeware', 'malware'])
         except ValueError as e:
             logging.error('Invalid URL: {}'.format(url_string))

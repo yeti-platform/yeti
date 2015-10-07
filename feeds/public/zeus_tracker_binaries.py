@@ -34,6 +34,6 @@ class ZeusTrackerBinaries(Feed):
         try:
             n = Url.get_or_create(url_string)
             n.add_context(context)
-            n.tag(['zeus', 'delivery', 'banker', 'cirmeware', 'malware'])
+            n.tag(['zeus', 'delivery', 'banker', 'crimeware', 'malware'])
         except ValueError as e:
             logging.error('Invalid URL: {}'.format(url_string))
