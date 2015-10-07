@@ -8,7 +8,7 @@ from core.datatypes import Link, Element
 class ProcessUrl(Analytics):
 
     settings = {
-        "frequency": timedelta(minutes=10),
+        "frequency": timedelta(minutes=5),
         "name": "ProcessUrl",
         "description": "Extracts domains from URLs",
     }

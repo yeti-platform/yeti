@@ -14,14 +14,14 @@ from core.datatypes import Hostname, Link, Element
 class ResolveHostnames(Analytics):
 
     settings = {
-        "frequency": timedelta(seconds=10),
+        "frequency": timedelta(minutes=10),
         "name": "ProcessHostname",
         "description": "Resolves hostnames and extracts subdomains",
     }
 
     ACTS_ON = 'Hostname'
     CUSTOM_FILTER = {}
-    EXPIRATION = None  # only run this once
+    EXPIRATION = timedelta(days=1)  # Analysis will expire after 1 day
 
     @classmethod
     def bulk(cls, hostnames):
