@@ -55,12 +55,11 @@ class Element(Document):
 
         for new_tag in new_tags:
             if new_tag.strip() != '':
-                if self.objects(id=self.id, tags__name=new_tag).count() == 1:
-                    self.bjects(id=self.id, tags__name=new_tag).modify(new=True, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())
-                    return self.reload()
+                if self.__class__.objects(id=self.id, tags__name=new_tag).count() == 1:
+                    self.__class__.objects(id=self.id, tags__name=new_tag).modify(new=True, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())
                 else:
-                    return self.modify(add_to_set__tags=Tag(name=new_tag))
-        return self
+                    self.modify(add_to_set__tags=Tag(name=new_tag))
+        return self.reload()
 
     def check_tags(self):
         for tag in self.tags:
