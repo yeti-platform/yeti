@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from core.datatypes import Url
+from core.datatypes import Element
 from core.feed import Feed
 
 class CybercrimeTracker(Feed):
@@ -17,14 +17,14 @@ class CybercrimeTracker(Feed):
             self.analyze(dict)
 
     def analyze(self, dict):
-        url = dict['title']
+        element = dict['title']
         description = dict['description'].lower()
         context = {}
         context['description'] = "{} C2 server".format(description)
         context['date_added'] = datetime.strptime(dict['pubDate'], "%d-%m-%Y")
         context['source'] = self.name
-        url = Url.get_or_create(url)
-        url.add_context(context)
+        e = Element.add_text(element)
+        e.add_context(context)
 
         tags = ['malware', 'c2', description, 'crimeware']
         if description == 'pony':
@@ -33,4 +33,5 @@ class CybercrimeTracker(Feed):
             tags.extend(['stealer', 'ddos'])
         elif description in ['zeus', 'citadel']:
             tags.extend(['banker'])
-        url.tag(tags)
+
+        e.tag(tags)
