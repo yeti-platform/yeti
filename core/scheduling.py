@@ -31,6 +31,16 @@ class ScheduleEntry(Document):
 
     meta = {"allow_inheritance": True}
 
+class OneShotEntry(Document):
+    name = StringField(required=True, unique=True)
+    enabled = BooleanField()
+    description = StringField(required=True)
+
+    # This should be defined in subclasses, to set the field values
+    settings = None
+
+    meta = {"allow_inheritance": True}
+
 class Scheduler(BaseScheduler):
 
     SUBDIRS = ['feeds', 'analytics']
@@ -40,7 +50,8 @@ class Scheduler(BaseScheduler):
         self._loaded_entries = {}
         logging.info("Scheduler started")
         self.app = celery_app
-        self.load_entries()
+        self.load_entries(ScheduleEntry, self.SUBDIRS)
+        self.load_entries(OneShotEntry, self.SUBDIRS)
 
         if kwargs:
             super(Scheduler, self).__init__(*args, **kwargs)
@@ -49,17 +60,17 @@ class Scheduler(BaseScheduler):
     def schedule(self):
         return self._schedule
 
-    def load_entries(self):
+    def load_entries(self, cls, subdirs):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         sys.path.append(base_dir)
 
-        for subdir in self.SUBDIRS:
+        for subdir in subdirs:
             modules_dir = os.path.join(base_dir, subdir)
             for loader, name, ispkg in pkgutil.walk_packages([modules_dir], prefix='{}.'.format(subdir)):
                 if not ispkg:
                     module = importlib.import_module(name)
                     for name, obj in inspect.getmembers(module, inspect.isclass):
-                        if issubclass(obj, ScheduleEntry) and obj.settings is not None:
+                        if issubclass(obj, cls) and obj.settings is not None:
                             try:
                                 entry = obj.objects.get(name=obj.settings['name'])
                             except DoesNotExist:
@@ -71,7 +82,8 @@ class Scheduler(BaseScheduler):
     def setup_schedule(self):
         logging.info("Setting up scheduler")
         for name, entry in self._loaded_entries.iteritems():
-            self._schedule[name] = BaseScheduleEntry(name=name, app=self.app,
-                                                     task=entry.SCHEDULED_TASK,
-                                                     schedule=entry.frequency,
-                                                     args=(name, ))
+            if isinstance(entry, ScheduleEntry):
+                self._schedule[name] = BaseScheduleEntry(name=name, app=self.app,
+                                                         task=entry.SCHEDULED_TASK,
+                                                         schedule=entry.frequency,
+                                                         args=(name, ))

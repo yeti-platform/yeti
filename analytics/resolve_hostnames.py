@@ -8,10 +8,12 @@ from dns.resolver import NoAnswer, NXDOMAIN, Timeout
 from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
 
-from core.analytics import Analytics
+from core.analytics import ScheduledAnalytics
 from core.datatypes import Hostname, Link, Element
+from core.helpers import is_subdomain
 
-class ResolveHostnames(Analytics):
+
+class ResolveHostnames(ScheduledAnalytics):
 
     settings = {
         "frequency": timedelta(minutes=10),
@@ -20,7 +22,6 @@ class ResolveHostnames(Analytics):
     }
 
     ACTS_ON = 'Hostname'
-    CUSTOM_FILTER = {}
     EXPIRATION = timedelta(days=1)  # Analysis will expire after 1 day
 
     @classmethod
@@ -33,6 +34,11 @@ class ResolveHostnames(Analytics):
     @classmethod
     def each(cls, hostname, result):
         h = Hostname.get_or_create(hostname)
+        domain = is_subdomain(hostname)
+        if domain:
+            d = Hostname.get_or_create(domain)
+            l = Link.connect(h, d)
+            l.add_history(tag='domain')
         for rtype, results in result.items():
             for rdata in results:
                 e = Element.add_text(rdata)
@@ -69,7 +75,7 @@ class ParallelDnsResolver(object):
         while True:
             try:
                 hostname, rtype = self.queue.get(False)
-            except Exception as e:
+            except Exception:
                 return
             try:
                 results = dns.resolver.query(hostname, rtype)

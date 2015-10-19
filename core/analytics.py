@@ -1,15 +1,16 @@
 from datetime import datetime
 
 from core.config.celeryctl import celery_app
-from core.scheduling import ScheduleEntry
+from core.scheduling import ScheduleEntry, OneShotEntry
 from core.datatypes import Element
-from mongoengine import Q
+from mongoengine import *
 
 
-class Analytics(ScheduleEntry):
+class ScheduledAnalytics(ScheduleEntry):
     """Base class for analytics. All analytics must inherit from this"""
 
     SCHEDULED_TASK = 'core.analytics_tasks.schedule'
+    CUSTOM_FILTER = {}
 
     def analyze_outdated(self):
         # do outdated logic
@@ -28,3 +29,10 @@ class Analytics(ScheduleEntry):
     @classmethod
     def each(cls, element):
         raise NotImplementedError("This method must be overridden in each class it inherits from")
+
+
+class OneShotAnalytics(OneShotEntry):
+
+    @classmethod
+    def run(cls, e):
+        celery_app.send_task("core.analytics_tasks.single", [cls.__name__, e.to_json()])

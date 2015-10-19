@@ -2,10 +2,11 @@ from datetime import timedelta
 import re
 import logging
 
-from core.analytics import Analytics
+from core.analytics import ScheduledAnalytics
 from core.datatypes import Link, Element
 
-class ProcessUrl(Analytics):
+
+class ProcessUrl(ScheduledAnalytics):
 
     settings = {
         "frequency": timedelta(minutes=5),
@@ -14,7 +15,6 @@ class ProcessUrl(Analytics):
     }
 
     ACTS_ON = 'Url'
-    CUSTOM_FILTER = {}
     EXPIRATION = None  # only run this once
 
     @staticmethod
