@@ -19,7 +19,7 @@ class ProcessUrl(ScheduledAnalytics):
 
     @staticmethod
     def each(url):
-        host = re.search("://(?P<host>[^/]+)/", url.value)
+        host = re.search("://(?P<host>[^/:]+)[/:]", url.value)
         if host:
             host = host.group('host')
             try:
