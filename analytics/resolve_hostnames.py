@@ -4,7 +4,7 @@ import logging
 from Queue import Queue
 
 import dns
-from dns.resolver import NoAnswer, NXDOMAIN, Timeout
+from dns.resolver import NoAnswer, NXDOMAIN, Timeout, NoNameservers
 from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
 
@@ -96,4 +96,6 @@ class ParallelDnsResolver(object):
             except NXDOMAIN:
                 continue
             except Timeout:
+                continue
+            except NoNameservers:
                 continue
