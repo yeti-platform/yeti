@@ -25,7 +25,7 @@ class Link(Document):
             l = Link.objects.get(src=src, dst=dst)
         return l
 
-    def add_history(self, tag, description, first_seen=None, last_seen=None):
+    def add_history(self, tag, description=None, first_seen=None, last_seen=None):
         # this is race-condition prone... think of a better way to do this
         if not first_seen:
             first_seen = datetime.utcnow()
