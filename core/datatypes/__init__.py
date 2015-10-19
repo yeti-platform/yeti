@@ -8,3 +8,4 @@ from core.datatypes.link import LinkHistory, Link
 from core.datatypes.ip import Ip
 from core.datatypes.url import Url
 from core.datatypes.hostname import Hostname
+from core.datatypes.hash import Hash
