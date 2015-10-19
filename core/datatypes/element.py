@@ -4,6 +4,7 @@ from mongoengine import *
 from core.helpers import is_url, is_ip, is_hostname
 from core.datatypes import Tag
 
+
 class Element(Document):
 
     value = StringField(required=True, unique=True)
@@ -36,18 +37,12 @@ class Element(Document):
     def get_or_create(cls, value):
         o = cls(value=value)
         o.clean()
-        try:
-            o = cls.objects.get(value=o.value)
-        except DoesNotExist:
-            o.save()
-        return o
+        return cls.objects(value=o.value).modify(upsert=True, new=True, value=o.value)
 
     def add_context(self, context):
         assert 'source' in context
         # uniqueness logic should come here
-        if context not in self.context:
-            return self.modify(add_to_set__context=context)
-        return self
+        return self.modify(add_to_set__context=context)
 
     def tag(self, new_tags):
         if isinstance(new_tags, (str, unicode)):
