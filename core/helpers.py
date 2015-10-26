@@ -6,26 +6,26 @@ hostname_regex = r"((([\w\-]+\.)*)([\w\-]+))\.?"
 email_regex = r"([\w\-\.\_]+@(([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?"
 hash_regex = r"([a-fA-F0-9]{32,64})"
 url_regex = r"""
+            (
+              ((?P<scheme>[\w]{2,9}):\/\/)?
+              ([\S]*\:[\S]*\@)?
+              (?P<hostname>(
+                          ((([\w\-]+\.)+)
+                          ([a-zA-Z]{2,6}))
+                          |([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})
+                          |([\w\-]+)
+                          )
+              )
+              (\:[\d]{1,5})?
+              (?P<path>(\/[\S]*)?
+                (\?[\S]*)?
+                (\#[\S]*)?)
+            )
+        """
 
-    (
-      ((?P<scheme>[\w]{2,9}):\/\/)?
-      ([\S]*\:[\S]*\@)?
-      (?P<hostname>(
-                  ((([\w\-]+\.)+)
-                  ([a-zA-Z]{2,6}))
-                  |([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})
-                  |([\w\-]+)
-                  )
-      )
-      (\:[\d]{1,5})?
-      (?P<path>(\/[\S]*)?
-        (\?[\S]*)?
-        (\#[\S]*)?)
-    )
-"""
 
 def is_url(url):
-    match = re.match("^"+url_regex+"$", url, re.VERBOSE)
+    match = re.match("^" + url_regex + "$", url, re.VERBOSE)
     if match:
         url = match.group(1)
         if url.find('/') != -1:
@@ -33,21 +33,24 @@ def is_url(url):
     else:
         return None
 
+
 def is_ip(ip):
     if ip:
-        match = re.match("^"+ip_regex+"$", ip)
+        match = re.match("^" + ip_regex + "$", ip)
         if match:
             return match.group(1)
     else:
         return False
 
+
 def is_hostname(hostname):
     if hostname:
-        match = re.match("^"+hostname_regex+"$", hostname)
+        match = re.match("^" + hostname_regex + "$", hostname)
         if match and (hostname.endswith(tuple(tlds)) or hostname[:-1].endswith(tuple(tlds))):
             return match.group(1)
     else:
         return False
+
 
 def is_subdomain(hostname):
     if hostname:
