@@ -1,7 +1,7 @@
 from datetime import timedelta
 import threading
 import logging
-from Queue import Queue
+from Queue import Queue, Empty
 
 import dns
 from dns.resolver import NoAnswer, NXDOMAIN, Timeout, NoNameservers
@@ -47,7 +47,7 @@ class ResolveHostnames(ScheduledAnalytics):
                     l = Link.connect(h, e)
                     l.add_history(tag=rtype, description='{} record'.format(rtype))
                 except ValueError as e:
-                    logging.warning("{} is not a valid datatype".format(rdata))
+                    logging.error("{} is not a valid datatype".format(rdata))
 
         h.analysis_done(cls.__name__)
 
@@ -55,20 +55,22 @@ class ResolveHostnames(ScheduledAnalytics):
 class ParallelDnsResolver(object):
     """Will issue a producer-consumer object to bulk-resolve domains"""
     def __init__(self):
-        self.queue = Queue()
+        self.queue = Queue(1000)
         self.lock = threading.Lock()
         self.results = {}
 
     def mass_resolve(self, domains, num_threads=50):
-        for d in domains:
-            self.queue.put((d.value, 'A'))
-            self.queue.put((d.value, 'NS'))
-
         threads = []
         for _ in xrange(num_threads):
+            logging.debug("Starting thread {}".format(_))
             t = threading.Thread(target=self.consumer)
             t.start()
             threads.append(t)
+
+        for d in domains:
+            logging.debug("Putting {} in resolver queue".format(d))
+            self.queue.put((d.value, 'A'), True)
+            self.queue.put((d.value, 'NS'), True)
 
         for t in threads:
             t.join()
@@ -78,8 +80,11 @@ class ParallelDnsResolver(object):
     def consumer(self):
         while True:
             try:
-                hostname, rtype = self.queue.get(False)
-            except Exception:
+                logging.debug("Getting element")
+                hostname, rtype = self.queue.get(True, 5)
+                logging.debug("Got {}".format(hostname))
+            except Empty:
+                logging.debug("Empty! Bailing")
                 return
             try:
                 results = dns.resolver.query(hostname, rtype)
