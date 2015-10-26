@@ -41,6 +41,7 @@ class ResolveHostnames(ScheduledAnalytics):
             l.add_history(tag='domain')
         for rtype, results in result.items():
             for rdata in results:
+                logging.info("{} resoved to {} ({} record)".format(h.value, rdata, rtype))
                 try:
                     e = Element.add_text(rdata)
                     l = Link.connect(h, e)
