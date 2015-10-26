@@ -70,7 +70,9 @@ class ParallelDnsResolver(object):
         for d in domains:
             logging.debug("Putting {} in resolver queue".format(d))
             self.queue.put((d.value, 'A'), True)
-            self.queue.put((d.value, 'NS'), True)
+            # Avoid ns1.ns1.ns1.domain.com style recursions
+            if d.value.count('.') <= 2:
+                self.queue.put((d.value, 'NS'), True)
 
         for t in threads:
             t.join()
