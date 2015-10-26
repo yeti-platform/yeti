@@ -41,9 +41,12 @@ class ResolveHostnames(ScheduledAnalytics):
             l.add_history(tag='domain')
         for rtype, results in result.items():
             for rdata in results:
-                e = Element.add_text(rdata)
-                l = Link.connect(h, e)
-                l.add_history(tag=rtype, description='{} record'.format(rtype))
+                try:
+                    e = Element.add_text(rdata)
+                    l = Link.connect(h, e)
+                    l.add_history(tag=rtype, description='{} record'.format(rtype))
+                except ValueError as e:
+                    logging.warning("{} is not a valid datatype".format(rdata))
 
         h.analysis_done(cls.__name__)
 
