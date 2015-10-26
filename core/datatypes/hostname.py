@@ -4,13 +4,14 @@ import idna
 from core.datatypes import Element
 from core.helpers import is_hostname
 
+
 class Hostname(Element):
 
     def clean(self):
         """Performs some normalization on hostnames before saving to the db"""
         try:
             self.value = self.normalize(self.value)
-        except Exception as e:
+        except Exception:
             raise ValidationError("Invalid hostname: {}".format(self.value))
 
     @staticmethod
