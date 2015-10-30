@@ -4,17 +4,16 @@ from mongoengine import *
 
 from core.datatypes import Element
 
-
 class Hash(Element):
 
     type = StringField()
 
-    HASH_LENGTHS = {128: 'MD5',
-                    160: 'SHA1',
-                    224: 'SHA-224',
-                    256: 'SHA-256',
-                    384: 'SHA-384',
-                    512: 'SHA-512',
+    HASH_LENGTHS = {128: 'md5',
+                    160: 'sha1',
+                    224: 'sha224',
+                    256: 'sha256',
+                    384: 'sha384',
+                    512: 'sha512',
                     }
 
     def clean(self):
