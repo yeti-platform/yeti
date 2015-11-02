@@ -6,7 +6,7 @@ from core.datatypes import Element
 
 class Hash(Element):
 
-    type = StringField()
+    family = StringField()
 
     HASH_LENGTHS = {128: 'md5',
                     160: 'sha1',
@@ -21,4 +21,4 @@ class Hash(Element):
         if not re.match(r'^[a-f0-9]+$', h):
             raise ValidationError("{} is not a valid hex hash".format(self.value))
         self.value = h
-        self.type = self.HASH_LENGTHS.get((len(h) / 2) * 8, "Unknown")
+        self.family = self.HASH_LENGTHS.get((len(h) / 2) * 8, "Unknown")
