@@ -9,7 +9,7 @@ from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
 
 from core.analytics import ScheduledAnalytics
-from core.datatypes import Hostname, Link, Element
+from core.observables import Hostname, Link, Observable
 from core.helpers import is_subdomain
 
 
@@ -43,7 +43,7 @@ class ResolveHostnames(ScheduledAnalytics):
             for rdata in results:
                 logging.info("{} resoved to {} ({} record)".format(h.value, rdata, rtype))
                 try:
-                    e = Element.add_text(rdata)
+                    e = Observable.add_text(rdata)
                     l = Link.connect(h, e)
                     l.add_history(tag=rtype, description='{} record'.format(rtype))
                 except ValueError as e:
@@ -82,7 +82,7 @@ class ParallelDnsResolver(object):
     def consumer(self):
         while True:
             try:
-                logging.debug("Getting element")
+                logging.debug("Getting observable")
                 hostname, rtype = self.queue.get(True, 5)
                 logging.debug("Got {}".format(hostname))
             except Empty:

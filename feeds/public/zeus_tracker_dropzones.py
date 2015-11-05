@@ -3,7 +3,7 @@ from datetime import timedelta
 from datetime import datetime
 
 from core.feed import Feed
-from core.datatypes import Url
+from core.observables import Url
 
 class ZeusTrackerDropzones(Feed):
 

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from mongoengine import *
 
-from core.datatypes.mongoengine_extras import TimeDeltaField
+from core.config.mongoengine_extras import TimeDeltaField
 
 class Tag(EmbeddedDocument):
 

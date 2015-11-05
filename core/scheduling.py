@@ -10,7 +10,7 @@ from celery.beat import Scheduler as BaseScheduler
 from celery.beat import ScheduleEntry as BaseScheduleEntry
 
 from core.config.celeryctl import celery_app
-from core.datatypes.mongoengine_extras import TimeDeltaField
+from core.config.mongoengine_extras import TimeDeltaField
 
 class ScheduleEntry(Document):
     """Base class for Scheduling Entries. Everything that should be scheduled

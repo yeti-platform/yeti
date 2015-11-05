@@ -2,7 +2,7 @@ import urllib2
 from datetime import datetime, timedelta
 import csv
 
-from core.datatypes import Url
+from core.observables import Url
 from core.feed import Feed
 
 class AsproxTracker(Feed):
@@ -25,7 +25,7 @@ class AsproxTracker(Feed):
         if line[0] == 'Number':
             return
 
-        # split the entry into elements
+        # split the entry into observables
         Number, Status, CC, Host, Port, Protocol, ASN, Last_Updated, First_Seen, Last_Seen, First_Active, Last_Active, SBL, Abuse_Contact, Details = line
 
         url = "{}://{}".format(Protocol, Host)

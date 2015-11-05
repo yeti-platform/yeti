@@ -4,7 +4,7 @@ import logging
 import hashlib
 
 from core.analytics import ScheduledAnalytics
-from core.datatypes import Link, Hash
+from core.observables import Link, Hash
 
 HASH_TYPES_DICT = {'md5': hashlib.md5,
                    'sha1': hashlib.sha1,

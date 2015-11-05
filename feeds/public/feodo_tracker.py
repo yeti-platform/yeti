@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import re
 
-from core.datatypes import Ip, Hostname
+from core.observables import Ip, Hostname
 from core.feed import Feed
 
 class FeodoTracker(Feed):

@@ -4,10 +4,10 @@ import hashlib
 from mongoengine import *
 from mongoengine import errors as MongoErrors
 
-from core.datatypes import Element
-from core.datatypes import Hash
+from core.observables import Observable
+from core.observables import Hash
 
-class File(Element):
+class File(Observable):
 
     mime_type = StringField()
     hashes = ListField(ReferenceField(Hash))

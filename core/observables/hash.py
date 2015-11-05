@@ -2,9 +2,9 @@ import re
 
 from mongoengine import *
 
-from core.datatypes import Element
+from core.observables import Observable
 
-class Hash(Element):
+class Hash(Observable):
 
     family = StringField()
 

@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timedelta
 
 from core.feed import Feed
-from core.datatypes import Hostname
+from core.observables import Hostname
 
 class PalevoTracker(Feed):
 

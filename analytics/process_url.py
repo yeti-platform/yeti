@@ -3,7 +3,7 @@ import re
 import logging
 
 from core.analytics import ScheduledAnalytics
-from core.datatypes import Link, Element
+from core.observables import Link, Observable
 
 
 class ProcessUrl(ScheduledAnalytics):
@@ -24,7 +24,7 @@ class ProcessUrl(ScheduledAnalytics):
             host = host.group('host')
             try:
                 logging.info("Extracted {} from {}".format(host, url))
-                h = Element.guess_type(host).get_or_create(value=host)
+                h = Observable.guess_type(host).get_or_create(value=host)
                 Link.connect(src=url, dst=h)
             except ValueError:
                 logging.error("An error occurred when trying to add {} to the database".format(host))

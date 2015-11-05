@@ -1,9 +1,9 @@
 from mongoengine import *
 import iptools
 
-from core.datatypes import Element
+from core.observables import Observable
 
-class Ip(Element):
+class Ip(Observable):
 
     version = IntField()
 

@@ -3,10 +3,10 @@ import re
 from mongoengine import *
 import urlnorm
 
-from core.datatypes import Element
+from core.observables import Observable
 from core.helpers import is_url
 
-class Url(Element):
+class Url(Observable):
 
     def clean(self):
         """Ensures that URLs are canonized before saving"""

@@ -2,9 +2,9 @@ from datetime import datetime
 
 from mongoengine import *
 from core.helpers import is_url, is_ip, is_hostname
-from core.datatypes import Tag
+from core.observables import Tag
 
-class Element(Document):
+class Observable(Document):
 
     value = StringField(required=True, unique=True)
     context = ListField(DictField())
@@ -17,7 +17,7 @@ class Element(Document):
 
     @staticmethod
     def guess_type(string):
-        from core.datatypes import Url, Ip, Hostname
+        from core.observables import Url, Ip, Hostname
         if string and string.strip() != '':
             if is_url(string):
                 return Url
@@ -30,7 +30,7 @@ class Element(Document):
 
     @classmethod
     def add_text(cls, text):
-        return Element.guess_type(text).get_or_create(text)
+        return Observable.guess_type(text).get_or_create(text)
 
     @classmethod
     def get_or_create(cls, value):
@@ -80,7 +80,7 @@ class Element(Document):
         ids = set()
         ids |= ({l.src.id for l in Link.objects(dst=self.id)})
         ids |= ({l.dst.id for l in Link.objects(src=self.id)})
-        return Element.objects(id__in=ids)
+        return Observable.objects(id__in=ids)
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))
@@ -94,8 +94,8 @@ class LinkHistory(EmbeddedDocument):
 
 class Link(Document):
 
-    src = ReferenceField(Element, required=True, reverse_delete_rule=CASCADE)
-    dst = ReferenceField(Element, required=True, reverse_delete_rule=CASCADE, unique_with='src')
+    src = ReferenceField(Observable, required=True, reverse_delete_rule=CASCADE)
+    dst = ReferenceField(Observable, required=True, reverse_delete_rule=CASCADE, unique_with='src')
     history = SortedListField(EmbeddedDocumentField(LinkHistory), ordering='last_seen', reverse=True)
 
     @staticmethod

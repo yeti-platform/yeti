@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from core.datatypes import Element
+from core.observables import Observable
 from core.feed import Feed
 
 class CybercrimeTracker(Feed):
@@ -17,13 +17,13 @@ class CybercrimeTracker(Feed):
             self.analyze(dict)
 
     def analyze(self, dict):
-        element = dict['title']
+        observable = dict['title']
         description = dict['description'].lower()
         context = {}
         context['description'] = "{} C2 server".format(description)
         context['date_added'] = datetime.strptime(dict['pubDate'], "%d-%m-%Y")
         context['source'] = self.name
-        e = Element.add_text(element)
+        e = Observable.add_text(observable)
         e.add_context(context)
 
         tags = ['malware', 'c2', description, 'crimeware']

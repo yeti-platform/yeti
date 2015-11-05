@@ -7,8 +7,8 @@ class QueryVirusTotal(OneShotAnalytics):
 
     settings = {
         "name": "QueryVirusTotal",
-        "description": "Queries VT for a single hash, adding context to the element "
-                       "and linking to other elements"
+        "description": "Queries VT for a single hash, adding context to the observable "
+                       "and linking to other observables"
     }
 
     ACTS_ON = ["Hash"]

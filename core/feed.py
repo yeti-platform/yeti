@@ -24,13 +24,6 @@ class Feed(ScheduleEntry):
     source = StringField(required=True)
 
     def update(self):
-        """
-        The update() function has to be implemented in each of your feeds.
-        Its role is to:
-         - Fetch data from wherever it needs to
-         - Translate this data into elements understood by Malcom (as defined in malcom.datatypes.element)
-         - Save these newly created elements to the database using the self.model attribute
-        """
         raise NotImplementedError(
             "update: This method must be implemented in your feed class")
 

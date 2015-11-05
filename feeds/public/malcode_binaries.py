@@ -2,7 +2,7 @@ from datetime import timedelta
 import re
 import sys
 
-from core.datatypes import Url
+from core.observables import Url
 from core.feed import Feed
 
 class MalcodeBinaries(Feed):
