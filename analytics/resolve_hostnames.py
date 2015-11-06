@@ -46,7 +46,7 @@ class ResolveHostnames(ScheduledAnalytics):
                     e = Observable.add_text(rdata)
                     l = Link.connect(h, e)
                     l.add_history(tag=rtype, description='{} record'.format(rtype))
-                except ValueError as e:
+                except ValidationError as e:
                     logging.error("{} is not a valid datatype".format(rdata))
 
         h.analysis_done(cls.__name__)

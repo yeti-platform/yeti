@@ -26,7 +26,7 @@ class Observable(Document):
             elif is_hostname(string):
                 return Hostname
             else:
-                raise ValueError("{} was not recognized as a viable datatype".format(string))
+                raise ValidationError("{} was not recognized as a viable datatype".format(string))
 
     @classmethod
     def add_text(cls, text):

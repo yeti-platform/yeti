@@ -48,9 +48,12 @@ class FeodoTracker(Feed):
         context['source'] = self.name
         del context['title']
 
-        if re.search(r"[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}", g['host']):
-            new = Ip.get_or_create(g['host'])
-        else:
-            new = Hostname.get_or_create(g['host'])
-        new.add_context(context)
-        new.tag(['dridex', 'malware', 'crimeware', 'banker', 'c2'])
+        try:
+            if re.search(r"[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}", g['host']):
+                new = Ip.get_or_create(g['host'])
+            else:
+                new = Hostname.get_or_create(g['host'])
+            new.add_context(context)
+            new.tag(['dridex', 'malware', 'crimeware', 'banker', 'c2'])
+        except ValidationError as e:
+            logging.error('Invalid Observable: {}'.format(g['host']))

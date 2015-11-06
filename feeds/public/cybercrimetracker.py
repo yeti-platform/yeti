@@ -23,7 +23,13 @@ class CybercrimeTracker(Feed):
         context['description'] = "{} C2 server".format(description)
         context['date_added'] = datetime.strptime(dict['pubDate'], "%d-%m-%Y")
         context['source'] = self.name
-        e = Observable.add_text(observable)
+
+        try:
+            e = Observable.add_text(observable)
+        except ValidationError as e:
+            logging.error('Invalid Observable: {}'.format(g['host']))
+            return
+
         e.add_context(context)
 
         tags = ['malware', 'c2', description, 'crimeware']

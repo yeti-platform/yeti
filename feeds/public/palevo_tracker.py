@@ -35,6 +35,9 @@ class PalevoTracker(Feed):
         except AttributeError as e:
             pass
 
-        hn = Hostname.get_or_create(hostname)
-        hn.add_context(context)
-        hn.tag(['palevo', 'c2', 'malware', 'crimeware', 'worm'])
+        try:
+            hn = Hostname.get_or_create(hostname)
+            hn.add_context(context)
+            hn.tag(['palevo', 'c2', 'malware', 'crimeware', 'worm'])
+        except ValidationError as e:
+            logging.error('Invalid Hostname: {}'.format(hostname))

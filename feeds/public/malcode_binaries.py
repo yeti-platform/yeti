@@ -25,12 +25,14 @@ class MalcodeBinaries(Feed):
             context = g.groupdict()
             context['link'] = dict['link']
             context['source'] = self.name
+
             try:
+                url_string = context.pop('url')
                 d = dict['description'].encode('UTF-8')
-                url = Url.get_or_create(context.pop('url'))
+                url = Url.get_or_create(url_string)
                 url.add_context(context)
                 url.tag(['malware', 'delivery'])
             except UnicodeError:
                 sys.stderr.write('Unicode error: %s' % dict['description'])
-            except ValueError as e:
+            except ValidationError as e:
                 logging.error('Invalid URL: {}'.format(url_string))

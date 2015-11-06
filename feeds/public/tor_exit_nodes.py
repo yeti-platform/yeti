@@ -48,7 +48,9 @@ class TorExitNodes(Feed):
 
         context['description'] = "Tor exit node: %s (%s)" % (context['name'], ip)
         context['source'] = self.name
-
-        ip = Ip.get_or_create(fields[0])
-        ip.add_context(context)
-        ip.tag(['tor'])
+        try:
+            ip = Ip.get_or_create(fields[0])
+            ip.add_context(context)
+            ip.tag(['tor'])
+        except ValidationError as e:
+            logging.error('Invalid Ip: {}'.format(fields[0]))

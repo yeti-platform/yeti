@@ -44,5 +44,5 @@ class AsproxTracker(Feed):
             url = Url.get_or_create(url)
             url.add_context(context)
             url.tag(['asprox', 'c2', 'scanner'])
-        except ValueError as e:
-            logging.error('Invalid URL: {}'.format(url_string))
+        except ValidationError as e:
+            logging.error('Invalid URL: {}'.format(url))
