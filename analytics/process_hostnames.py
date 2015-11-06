@@ -13,11 +13,11 @@ from core.observables import Hostname, Link, Observable
 from core.helpers import is_subdomain
 
 
-class ResolveHostnames(ScheduledAnalytics):
+class ProcessHostnames(ScheduledAnalytics):
 
     settings = {
         "frequency": timedelta(minutes=10),
-        "name": "ProcessHostname",
+        "name": "ProcessHostnames",
         "description": "Resolves hostnames and extracts subdomains",
     }
 
