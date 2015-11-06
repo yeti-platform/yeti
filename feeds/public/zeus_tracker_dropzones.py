@@ -1,17 +1,19 @@
 import re
 from datetime import timedelta
 from datetime import datetime
+import logging
 
 from core.feed import Feed
 from core.observables import Url
+from core.errors import ObservableValidationError
+
 
 class ZeusTrackerDropzones(Feed):
 
-    settings = {  "frequency": timedelta(hours=1),
-                  "name": "ZeusTrackerDropzones",
-                  "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones",
-                  "description": "This feed shows the latest 50 ZeuS dropzone URLs.",
-                }
+    settings = {"frequency": timedelta(hours=1),
+                "name": "ZeusTrackerDropzones",
+                "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones",
+                "description": "This feed shows the latest 50 ZeuS dropzone URLs."}
 
     def update(self):
         for d in self.update_xml('item', ["title", "link", "description", "guid"]):
@@ -35,5 +37,5 @@ class ZeusTrackerDropzones(Feed):
             n = Url.get_or_create(url_string)
             n.add_context(context)
             n.tag(['zeus', 'objective', 'banker', 'crimeware', 'malware'])
-        except ValidationError as e:
-            logging.error('Invalid URL: {}'.format(url_string))
+        except ObservableValidationError as e:
+            logging.error(e)

@@ -1,10 +1,10 @@
 import re
 
-from mongoengine import *
 import urlnorm
 
 from core.observables import Observable
-from core.helpers import is_url
+from core.errors import ObservableValidationError
+
 
 class Url(Observable):
 
@@ -15,4 +15,4 @@ class Url(Observable):
                 self.value = "http://{}".format(self.value)
             self.value = urlnorm.norm(self.value)
         except urlnorm.InvalidUrl:
-            raise ValidationError("Invalid URL: {}".format(self.value))
+            raise ObservableValidationError("Invalid URL: {}".format(self.value))

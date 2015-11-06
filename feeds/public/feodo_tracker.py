@@ -1,24 +1,23 @@
 from datetime import datetime, timedelta
 import re
+import logging
 
 from core.observables import Ip, Hostname
 from core.feed import Feed
+from core.errors import ObservableValidationError
+
 
 class FeodoTracker(Feed):
 
-    descriptions = {
-                'A': "Hosted on compromised webservers running an nginx proxy on port 8080 TCP forwarding all botnet traffic to a tier 2 proxy node. Botnet traffic usually directly hits these hosts on port 8080 TCP without using a domain name.",
-                'B': "Hosted on servers rented and operated by cybercriminals for the exclusive purpose of hosting a Feodo botnet controller. Usually taking advantage of a domain name within ccTLD .ru. Botnet traffic usually hits these domain names using port 80 TCP.",
-                'C': "Successor of Feodo, completely different code. Hosted on the same botnet infrastructure as Version A (compromised webservers, nginx on port 8080 TCP or port 7779 TCP, no domain names) but using a different URL structure. This Version is also known as Geodo.",
-                'D': "Successor of Cridex. This version is also known as Dridex",
-                }
+    descriptions = {'A': "Hosted on compromised webservers running an nginx proxy on port 8080 TCP forwarding all botnet traffic to a tier 2 proxy node. Botnet traffic usually directly hits these hosts on port 8080 TCP without using a domain name.",
+                    'B': "Hosted on servers rented and operated by cybercriminals for the exclusive purpose of hosting a Feodo botnet controller. Usually taking advantage of a domain name within ccTLD .ru. Botnet traffic usually hits these domain names using port 80 TCP.",
+                    'C': "Successor of Feodo, completely different code. Hosted on the same botnet infrastructure as Version A (compromised webservers, nginx on port 8080 TCP or port 7779 TCP, no domain names) but using a different URL structure. This Version is also known as Geodo.",
+                    'D': "Successor of Cridex. This version is also known as Dridex"}
 
-    variants = {
-                'A': "Feodo",
+    variants = {'A': "Feodo",
                 'B': "Feodo",
                 'C': "Geodo",
-                'D': "Dridex",
-                }
+                'D': "Dridex"}
 
     settings = {
         "frequency": timedelta(hours=1),
@@ -55,5 +54,5 @@ class FeodoTracker(Feed):
                 new = Hostname.get_or_create(g['host'])
             new.add_context(context)
             new.tag(['dridex', 'malware', 'crimeware', 'banker', 'c2'])
-        except ValidationError as e:
-            logging.error('Invalid Observable: {}'.format(g['host']))
+        except ObservableValidationError as e:
+            logging.error(e)

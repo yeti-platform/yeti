@@ -1,9 +1,12 @@
 from datetime import timedelta
 import re
 import sys
+import logging
 
 from core.observables import Url
 from core.feed import Feed
+from core.errors import ObservableValidationError
+
 
 class MalcodeBinaries(Feed):
 
@@ -28,11 +31,11 @@ class MalcodeBinaries(Feed):
 
             try:
                 url_string = context.pop('url')
-                d = dict['description'].encode('UTF-8')
+                context['description'] = dict['description'].encode('UTF-8')
                 url = Url.get_or_create(url_string)
                 url.add_context(context)
                 url.tag(['malware', 'delivery'])
             except UnicodeError:
                 sys.stderr.write('Unicode error: %s' % dict['description'])
-            except ValidationError as e:
-                logging.error('Invalid URL: {}'.format(url_string))
+            except ObservableValidationError as e:
+                logging.error(e)

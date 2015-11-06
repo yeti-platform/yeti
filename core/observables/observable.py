@@ -3,6 +3,8 @@ from datetime import datetime
 from mongoengine import *
 from core.helpers import is_url, is_ip, is_hostname
 from core.observables import Tag
+from core.errors import ObservableValidationError
+
 
 class Observable(Document):
 
@@ -26,7 +28,7 @@ class Observable(Document):
             elif is_hostname(string):
                 return Hostname
             else:
-                raise ValidationError("{} was not recognized as a viable datatype".format(string))
+                raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
 
     @classmethod
     def add_text(cls, text):
@@ -85,12 +87,14 @@ class Observable(Document):
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))
 
+
 class LinkHistory(EmbeddedDocument):
 
     tag = StringField()
     description = StringField()
     first_seen = DateTimeField(default=datetime.now)
     last_seen = DateTimeField(default=datetime.now)
+
 
 class Link(Document):
 

@@ -1,8 +1,11 @@
 import re
 from datetime import datetime, timedelta
+import logging
 
 from core.feed import Feed
 from core.observables import Hostname
+from core.errors import ObservableValidationError
+
 
 class PalevoTracker(Feed):
 
@@ -39,5 +42,5 @@ class PalevoTracker(Feed):
             hn = Hostname.get_or_create(hostname)
             hn.add_context(context)
             hn.tag(['palevo', 'c2', 'malware', 'crimeware', 'worm'])
-        except ValidationError as e:
-            logging.error('Invalid Hostname: {}'.format(hostname))
+        except ObservableValidationError as e:
+            logging.error(e)

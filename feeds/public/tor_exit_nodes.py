@@ -1,8 +1,10 @@
 import urllib2
 from datetime import timedelta
+import logging
 
 from core.feed import Feed
 from core.observables import Ip
+from core.errors import ObservableValidationError
 
 
 class TorExitNodes(Feed):
@@ -52,5 +54,5 @@ class TorExitNodes(Feed):
             ip = Ip.get_or_create(fields[0])
             ip.add_context(context)
             ip.tag(['tor'])
-        except ValidationError as e:
-            logging.error('Invalid Ip: {}'.format(fields[0]))
+        except ObservableValidationError as e:
+            logging.error(e)

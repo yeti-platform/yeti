@@ -1,9 +1,12 @@
 import urllib2
 from datetime import datetime, timedelta
 import csv
+import logging
 
 from core.observables import Url
 from core.feed import Feed
+from core.errors import ObservableValidationError
+
 
 class AsproxTracker(Feed):
 
@@ -44,5 +47,5 @@ class AsproxTracker(Feed):
             url = Url.get_or_create(url)
             url.add_context(context)
             url.tag(['asprox', 'c2', 'scanner'])
-        except ValidationError as e:
-            logging.error('Invalid URL: {}'.format(url))
+        except ObservableValidationError as e:
+            logging.error(e)

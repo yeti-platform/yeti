@@ -4,6 +4,7 @@ from mongoengine import *
 
 from core.config.mongoengine_extras import TimeDeltaField
 
+
 class Tag(EmbeddedDocument):
 
     name = StringField()

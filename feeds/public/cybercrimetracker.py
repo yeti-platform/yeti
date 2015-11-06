@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
+import logging
 
 from core.observables import Observable
 from core.feed import Feed
+from core.errors import ObservableValidationError
+
 
 class CybercrimeTracker(Feed):
 
@@ -26,8 +29,8 @@ class CybercrimeTracker(Feed):
 
         try:
             e = Observable.add_text(observable)
-        except ValidationError as e:
-            logging.error('Invalid Observable: {}'.format(g['host']))
+        except ObservableValidationError as e:
+            logging.error(e)
             return
 
         e.add_context(context)
