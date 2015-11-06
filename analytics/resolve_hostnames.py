@@ -28,26 +28,24 @@ class ResolveHostnames(ScheduledAnalytics):
     def bulk(cls, hostnames):
         p = ParallelDnsResolver()
         results = p.mass_resolve(hostnames)
-        for hostname, result in results.items():
-            cls.each(hostname, result)
 
     @classmethod
-    def each(cls, hostname, result):
+    def each(cls, hostname, rtype, results):
         h = Hostname.get_or_create(hostname)
         domain = is_subdomain(hostname)
         if domain:
             d = Hostname.get_or_create(domain)
             l = Link.connect(h, d)
             l.add_history(tag='domain')
-        for rtype, results in result.items():
-            for rdata in results:
-                logging.info("{} resoved to {} ({} record)".format(h.value, rdata, rtype))
-                try:
-                    e = Observable.add_text(rdata)
-                    l = Link.connect(h, e)
-                    l.add_history(tag=rtype, description='{} record'.format(rtype))
-                except ValidationError as e:
-                    logging.error("{} is not a valid datatype".format(rdata))
+
+        for rdata in results:
+            logging.info("{} resoved to {} ({} record)".format(h.value, rdata, rtype))
+            try:
+                e = Observable.add_text(rdata)
+                l = Link.connect(h, e)
+                l.add_history(tag=rtype, description='{} record'.format(rtype))
+            except ValidationError as e:
+                logging.error("{} is not a valid datatype".format(rdata))
 
         h.analysis_done(cls.__name__)
 
@@ -101,7 +99,7 @@ class ParallelDnsResolver(object):
                             text_results.append(r.to_text())
                         else:
                             logging.error("Unknown record type: {}".format(type(r)))
-                    self.results[hostname][rtype] = text_results
+                    ResolveHostnames.each(hostname, rtype, text_results)
             except NoAnswer:
                 continue
             except NXDOMAIN:
