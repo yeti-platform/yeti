@@ -1,7 +1,5 @@
 from mongoengine import *
 
-connect('malcom-v2')
-
 from core.observables.tag import Tag
 from core.observables.observable import Observable, LinkHistory, Link
 from core.observables.ip import Ip
