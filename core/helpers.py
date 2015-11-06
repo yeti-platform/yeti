@@ -47,7 +47,10 @@ def is_hostname(hostname):
     hostname = hostname.lower()
     if hostname:
         match = re.match("^" + hostname_regex + "$", hostname)
-        if match and (hostname.endswith(tuple(tlds)) or hostname[:-1].endswith(tuple(tlds))):
+        if hostname.endswith('.'):
+            hostname = hostname[:-1]
+        tld = hostname.split('.')[-1:][0]
+        if match and (tld in tlds):
             return match.group(1)
     else:
         return False
