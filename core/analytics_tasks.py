@@ -6,6 +6,7 @@ from core.observables import Observable
 from core.config.celeryimports import loaded_modules
 from core.analytics import ScheduledAnalytics, OneShotAnalytics
 
+from mongoengine import DoesNotExist
 
 @celery_app.task
 def each(module_name, observable_json):
@@ -15,13 +16,27 @@ def each(module_name, observable_json):
     mod.each(o)
     o.analysis_done(module_name)
 
-
 @celery_app.task
 def schedule(name):
     logging.warning("Running analytics {}".format(name))
-    a = ScheduledAnalytics.objects.get(name=name)
-    a.analyze_outdated()
-    a.last_run = datetime.now()
+
+    try:
+        a = ScheduledAnalytics.objects.get(name=name, lock=None)  # check if we have implemented locking mechanisms
+    except DoesNotExist:
+        try:
+            ScheduledAnalytics.objects.get(name=name, lock=False).modify(lock=True)  # get object and change lock
+            a = ScheduledAnalytics.objects.get(name=name)
+        except DoesNotExist as e:
+            # no unlocked ScheduledAnalytics was found, notify and return...
+            logging.info("Task {} is already running...".format(name))
+            return
+
+    if a.enabled:  # check if Analytics is enabled
+        a.analyze_outdated()
+        a.last_run = datetime.now()
+
+    if a.lock:  # release lock if it was set
+        a.lock = False
     a.save()
 
 

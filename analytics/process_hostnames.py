@@ -19,6 +19,7 @@ class ProcessHostnames(ScheduledAnalytics):
         "frequency": timedelta(minutes=10),
         "name": "ProcessHostnames",
         "description": "Resolves hostnames and extracts subdomains",
+        "lock": True,
     }
 
     ACTS_ON = 'Hostname'

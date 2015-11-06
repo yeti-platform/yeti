@@ -17,11 +17,12 @@ class ScheduleEntry(Document):
        must inherit from this"""
 
     name = StringField(required=True, unique=True)
-    enabled = BooleanField()
+    enabled = BooleanField(default=True)
     description = StringField(required=True)
     frequency = TimeDeltaField(required=True)
     status = StringField()
     last_run = DateTimeField()
+    lock = BooleanField()
 
     # This should be defined in subclasses, to define the name of the celery task
     SCHEDULED_TASK = None
