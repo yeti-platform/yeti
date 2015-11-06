@@ -44,6 +44,7 @@ def is_ip(ip):
 
 
 def is_hostname(hostname):
+    hostname = hostname.lower()
     if hostname:
         match = re.match("^" + hostname_regex + "$", hostname)
         if match and (hostname.endswith(tuple(tlds)) or hostname[:-1].endswith(tuple(tlds))):
