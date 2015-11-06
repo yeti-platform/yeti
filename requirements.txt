@@ -2,4 +2,8 @@ mongoengine
 iptools
 urlnorm
 celery
-hashlib
+idna
+requests
+lxml
+dnspython
+redis
