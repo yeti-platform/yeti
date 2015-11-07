@@ -12,6 +12,7 @@ from celery.beat import ScheduleEntry as BaseScheduleEntry
 from core.config.celeryctl import celery_app
 from core.config.mongoengine_extras import TimeDeltaField
 
+
 class ScheduleEntry(Document):
     """Base class for Scheduling Entries. Everything that should be scheduled
        must inherit from this"""
@@ -32,6 +33,7 @@ class ScheduleEntry(Document):
 
     meta = {"allow_inheritance": True}
 
+
 class OneShotEntry(Document):
     name = StringField(required=True, unique=True)
     enabled = BooleanField()
@@ -41,6 +43,7 @@ class OneShotEntry(Document):
     settings = None
 
     meta = {"allow_inheritance": True}
+
 
 class Scheduler(BaseScheduler):
 

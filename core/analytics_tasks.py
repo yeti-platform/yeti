@@ -8,6 +8,7 @@ from core.analytics import ScheduledAnalytics, OneShotAnalytics
 
 from mongoengine import DoesNotExist
 
+
 @celery_app.task
 def each(module_name, observable_json):
     o = Observable.from_json(observable_json)
@@ -15,6 +16,7 @@ def each(module_name, observable_json):
     mod = loaded_modules[module_name]
     mod.each(o)
     o.analysis_done(module_name)
+
 
 @celery_app.task
 def schedule(name):
@@ -26,7 +28,7 @@ def schedule(name):
         try:
             ScheduledAnalytics.objects.get(name=name, lock=False).modify(lock=True)  # get object and change lock
             a = ScheduledAnalytics.objects.get(name=name)
-        except DoesNotExist as e:
+        except DoesNotExist:
             # no unlocked ScheduledAnalytics was found, notify and return...
             logging.info("Task {} is already running...".format(name))
             return
