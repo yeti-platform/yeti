@@ -100,7 +100,7 @@ class ParallelDnsResolver(object):
                             text_results.append(r.to_text())
                         else:
                             logging.error("Unknown record type: {}".format(type(r)))
-                    ResolveHostnames.each(hostname, rtype, text_results)
+                    ProcessHostnames.each(hostname, rtype, text_results)
             except NoAnswer:
                 continue
             except NXDOMAIN:
