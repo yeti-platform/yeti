@@ -11,6 +11,7 @@ from dns.rdtypes.IN.A import A as A_class
 from core.analytics import ScheduledAnalytics
 from core.observables import Hostname, Link, Observable
 from core.helpers import is_subdomain
+from core.errors import ObservableValidationError
 
 
 class ProcessHostnames(ScheduledAnalytics):
@@ -45,7 +46,7 @@ class ProcessHostnames(ScheduledAnalytics):
                 e = Observable.add_text(rdata)
                 l = Link.connect(h, e)
                 l.add_history(tag=rtype, description='{} record'.format(rtype))
-            except ValidationError as e:
+            except ObservableValidationError as e:
                 logging.error("{} is not a valid datatype".format(rdata))
 
         h.analysis_done(cls.__name__)
