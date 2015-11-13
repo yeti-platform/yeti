@@ -1,1 +1,1 @@
-from core.web.app import webapp
+from core.web.webapp import webapp

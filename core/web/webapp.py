@@ -13,4 +13,4 @@ webapp.register_blueprint(api, url_prefix='/api')
 
 @webapp.route('/')
 def index():
-	return "OK\n"
+	return "App OK\n"

@@ -7,3 +7,4 @@ requests
 lxml
 dnspython
 redis
+flask-negotiate
