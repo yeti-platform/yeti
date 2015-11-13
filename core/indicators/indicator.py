@@ -1,11 +1,13 @@
 from mongoengine import *
 
 from core.database import Node
+from core.indicators import DIAMOND_EDGES
 
 class Indicator(Node):
 
     name = StringField(required=True)
     pattern = StringField(required=True)
+    diamond_edge = StringField(choices=DIAMOND_EDGES, required=True)
     description = StringField()
 
     meta = {
