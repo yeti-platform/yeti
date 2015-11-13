@@ -27,7 +27,6 @@ class Ip(Observable):
         """Performs some normalization on IP addresses entered"""
         ip = self.value
         if iptools.ipv4.validate_ip(ip):  # is IPv4
-            # if
             self.value = iptools.ipv4.hex2ip(iptools.ipv4.ip2hex(ip))  # normalize ip
             self.version = 4
         elif iptools.ipv6.validate_ip(ip):  # is IPv6

@@ -4,7 +4,7 @@ KILL_CHAIN_STEPS = (("reconnaisance", "Reconnaissance"),
                     ("exploitation", "Exploitation"),
                     ("installation", "Installation"),
                     ("c2", "C2"),
-                    ("objective", "Act on objectives"),
+                    ("objectives", "Act on objectives"),
                    )
 
 DIAMOND_EDGES = ("Target", "Actor", "Infrastructure", "Capability")
