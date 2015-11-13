@@ -1,21 +1,28 @@
 from datetime import datetime
 
 from mongoengine import *
+
 from core.helpers import is_url, is_ip, is_hostname
+from core.database import Node
 from core.observables import Tag
 from core.errors import ObservableValidationError
 
 
-class Observable(Document):
+class Observable(Node):
 
-    value = StringField(required=True, unique=True)
+    value = StringField(required=True, unique=True, sparse=True)
     context = ListField(DictField())
     tags = ListField(EmbeddedDocumentField(Tag))
     last_analyses = DictField()
 
     created = DateTimeField(default=datetime.now)
 
-    meta = {"allow_inheritance": True}
+    meta = {
+        "allow_inheritance": True,
+    }
+
+    def __unicode__(self):
+        return u"{} ({} context)".format(self.value, len(self.context))
 
     @staticmethod
     def guess_type(string):
@@ -86,42 +93,3 @@ class Observable(Document):
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))
-
-
-class LinkHistory(EmbeddedDocument):
-
-    tag = StringField()
-    description = StringField()
-    first_seen = DateTimeField(default=datetime.now)
-    last_seen = DateTimeField(default=datetime.now)
-
-
-class Link(Document):
-
-    src = ReferenceField(Observable, required=True, reverse_delete_rule=CASCADE)
-    dst = ReferenceField(Observable, required=True, reverse_delete_rule=CASCADE, unique_with='src')
-    history = SortedListField(EmbeddedDocumentField(LinkHistory), ordering='last_seen', reverse=True)
-
-    @staticmethod
-    def connect(src, dst):
-        try:
-            l = Link(src=src, dst=dst).save()
-        except NotUniqueError:
-            l = Link.objects.get(src=src, dst=dst)
-        return l
-
-    def add_history(self, tag, description=None, first_seen=None, last_seen=None):
-        # this is race-condition prone... think of a better way to do this
-        if not first_seen:
-            first_seen = datetime.utcnow()
-        if not last_seen:
-            last_seen = datetime.utcnow()
-
-        if len(self.history) == 0:
-            return self.modify(push__history=LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
-
-        last = self.history[0]
-        if description == last.description:  # Description is unchanged, update timestamp
-            return self.modify(set__history__0__last_seen=last_seen)
-        else:  # Link description has changed, insert in link history
-            return self.modify(push__history=LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
