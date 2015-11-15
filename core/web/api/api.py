@@ -16,17 +16,25 @@ def index():
 # @produces("application/json")
 def query():
     q = request.json
+    print q
 
-    results = {}
+    matches = {}
+    unknown = []
 
-    ko = Observable.objects(value__in=q['observables'])
-    results['known_observables'] = [o for o in ko]
+    # ko = Observable.objects(value__in=q['observables'])
+    # matches['known_observables'] = [o.value for o in ko]
 
-    results['matched_indicators'] = []
-    for i in Indicator.objects():
-        for o in q['observables']:
-            print i, o
+    for o in q['observables']:
+        matches[o] = {}
+        for i in Indicator.objects():
             if i.match(o):
-                results['matched_indicators'].append(i.name)
+                for type, nodes in i.neighbors().items():
+                    for l, node in nodes:
+                        indicator = node.info()
+                        if l.description:
+                            indicator['description'] = l.description
+                        indicator["entity"] = type
+                        matches[o][i.name] = matches[o].get(i.name, []) + [indicator]
+    print matches
 
-    return jsonify(results)
+    return jsonify({"matches": matches, "unknown": unknown})

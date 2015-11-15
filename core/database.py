@@ -23,16 +23,21 @@ class Node(Document):
         return u"{} ({} context)".format(self.value, len(self.context))
 
     def incoming(self):
-        return [l.src for l in Link.objects(dst=self.id)]
+        return [(l, l.src) for l in Link.objects(dst=self.id)]
 
     def outgoing(self):
-        return [l.dst for l in Link.objects(src=self.id)]
+        return [(l, l.dst) for l in Link.objects(src=self.id)]
 
-    def all_neighbors(self):
-        ids = set()
-        ids |= ({l.src.id for l in Link.objects(dst=self.id)})
-        ids |= ({l.dst.id for l in Link.objects(src=self.id)})
-        return Node.objects(id__in=ids)
+    def neighbors(self):
+        links = list(set(self.incoming() + self.outgoing()))
+        info = {}
+        for link, node in links:
+            info[node.__class__.__name__] = info.get(node.__class__.__name__, []) + [(link, node)]
+        return info
+
+    def to_dict(self):
+        return self._fields
+
 
 
 class LinkHistory(EmbeddedDocument):
@@ -49,6 +54,21 @@ class Link(Document):
     dst = ReferenceField(Node, required=True, reverse_delete_rule=CASCADE, unique_with='src')
     history = SortedListField(EmbeddedDocumentField(LinkHistory), ordering='last_seen', reverse=True)
 
+    def __unicode__(self):
+        return u"{} {} {} ({})".format(self.src, self.tag, self.dst, self.description)
+
+    @property
+    def tag(self):
+        return self.history[0].tag
+
+    @property
+    def description(self):
+        return self.history[0].description
+
+    @property
+    def last_seen(self):
+        return self.history[0].last_seen
+
     @staticmethod
     def connect(src, dst):
         try:
@@ -56,6 +76,10 @@ class Link(Document):
         except NotUniqueError:
             l = Link.objects.get(src=src, dst=dst)
         return l
+
+    def info(self):
+        return {"tag": self.tag, "description": self.description}
+        # return {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
 
     def add_history(self, tag, description=None, first_seen=None, last_seen=None):
         # this is race-condition prone... think of a better way to do this

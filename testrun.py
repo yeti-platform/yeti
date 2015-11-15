@@ -1,7 +1,7 @@
 from mongoengine import connect
 
 from core.entities.malware import MalwareFamily, Malware
-from core.indicators import Regex
+from core.indicators import Regex, Indicator
 from core.database import Link
 from core.entities import TTP
 from core.observables import Observable
@@ -41,17 +41,19 @@ dridex.save()
 bartalex_callback = Regex(name="Bartalex callback")
 bartalex_callback.pattern = "/mg.jpg$"
 bartalex_callback.description = "Bartalex [stage2] callback (extracted from macros)"
+bartalex_callback.diamond = "capability"
 bartalex_callback.save()
-bartalex.action('shows', bartalex_callback, description="Bartalex payload URL (Dridex)")
+bartalex_callback.action('indicates', bartalex, description="Bartalex payload URL (Dridex)")
 
 bartalex_callback2 = Regex(name="Bartalex callback")
 bartalex_callback2.pattern = "/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$"
 bartalex_callback2.description = "Bartalex [stage2] callback (extracted from macros)"
+bartalex_callback2.diamond = "capability"
 bartalex_callback2.save()
-bartalex.action("shows", bartalex_callback2, description="Bartalex payload URL (Dridex)")
+bartalex_callback2.action("indicates", bartalex, description="Bartalex payload URL (Dridex)")
 
-dridex.action("is hosted", bartalex_callback, description="Hosting Dridex")
-dridex.action("is hosted", bartalex_callback2, description="Hosting Dridex")
+bartalex_callback.action("hosts", dridex, description="Hosting Dridex")
+bartalex_callback.action("hosts", dridex, description="Hosting Dridex")
 
 bartalex.action("drops", dridex, description="Drops Dridex")
 
@@ -61,19 +63,34 @@ macrodoc = TTP(name="Macro-dropper")
 macrodoc.killchain = "delivery"
 macrodoc.description = "Macro-enabled MS Office document"
 macrodoc.save()
-bartalex.action("uses", macrodoc)
+bartalex.action("leverages", macrodoc)
+# macrodoc.action("contains", bartalex_callback2)
+# macrodoc.action("contains", bartalex_callback)
+bartalex_callback.action("seen in", macrodoc)
+bartalex_callback2.action("seen in", macrodoc)
 
 payload_download = TTP(name="Payload retrieval (HTTP)")
 payload_download.killchain = "delivery"
 payload_download.description = "Payload is retreived from an external URL"
 payload_download.save()
-macrodoc.action("uses", payload_download)
+macrodoc.action("leverages", payload_download)
+bartalex_callback.action("indicates", payload_download)
+bartalex_callback2.action("indicates", payload_download)
 
 # add observables
 o1 = Observable.add_text("85.214.71.240")
-o2 = Observable.add_text("http://soccersisters.net/mg.jpg")
+# o2 = Observable.add_text("http://soccersisters.net/mg.jpg")
 o3 = Observable.add_text("http://agentseek.com/mg.jpg")
 o4 = Observable.add_text("http://www.delianfoods.com/5t546523/lhf3f334f.exe")
 o5 = Observable.add_text("http://sanoko.jp/5t546523/lhf3f334f.exe")
 o6 = Observable.add_text("http://hrakrue-home.de/87yte55/6t45eyv.exe")
 o7 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe")
+
+test = "http://soccersisters.net/mg.jpg"
+
+for i in Indicator.objects():
+    if i.match(test):
+        for type, nodes in i.neighbors().items():
+            print " {}".format(type)
+            for l, node in nodes:
+                print {"type": type, "link": l.info(), "node": node.info()}
