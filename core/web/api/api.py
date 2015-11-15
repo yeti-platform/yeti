@@ -19,10 +19,6 @@ def query():
     print q
 
     matches = {}
-    unknown = []
-
-    # ko = Observable.objects(value__in=q['observables'])
-    # matches['known_observables'] = [o.value for o in ko]
 
     for o in q['observables']:
         matches[o] = {}
@@ -37,4 +33,4 @@ def query():
                         matches[o][i.name] = matches[o].get(i.name, []) + [indicator]
     print matches
 
-    return jsonify({"matches": matches, "unknown": unknown})
+    return jsonify({"matches": matches})

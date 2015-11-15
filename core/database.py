@@ -79,7 +79,6 @@ class Link(Document):
 
     def info(self):
         return {"tag": self.tag, "description": self.description}
-        # return {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
 
     def add_history(self, tag, description=None, first_seen=None, last_seen=None):
         # this is race-condition prone... think of a better way to do this
