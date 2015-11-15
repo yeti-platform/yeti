@@ -7,9 +7,11 @@ from core.indicators import Indicator
 
 api = Blueprint('api', __name__)
 
+
 @api.route("/")
 def index():
     return "API-OK\n"
+
 
 @api.route("/observables", methods=["POST"])
 # @consumes("application/json")
