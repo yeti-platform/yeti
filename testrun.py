@@ -64,8 +64,6 @@ macrodoc.killchain = "delivery"
 macrodoc.description = "Macro-enabled MS Office document"
 macrodoc.save()
 bartalex.action("leverages", macrodoc)
-# macrodoc.action("contains", bartalex_callback2)
-# macrodoc.action("contains", bartalex_callback)
 bartalex_callback.action("seen in", macrodoc)
 bartalex_callback2.action("seen in", macrodoc)
 

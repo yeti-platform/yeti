@@ -11,10 +11,10 @@ api = Blueprint('api', __name__)
 def index():
     return "API-OK\n"
 
-@api.route("/query", methods=["POST"])
+@api.route("/observables", methods=["POST"])
 # @consumes("application/json")
 # @produces("application/json")
-def query():
+def observables():
     q = request.json
     print q
 
@@ -28,7 +28,9 @@ def query():
                     for l, node in nodes:
                         indicator = node.info()
                         if l.description:
-                            indicator['description'] = l.description
+                            indicator['link_description'] = l.description
+                        else:
+                            indicator['link_description'] = l.tag
                         indicator["entity"] = type
                         matches[o][i.name] = matches[o].get(i.name, []) + [indicator]
     print matches
