@@ -18,10 +18,8 @@ def index():
 # @produces("application/json")
 def observables():
     q = request.json
-    print q
 
     matches = {}
-
     for o in q['observables']:
         matches[o] = {}
         for i in Indicator.objects():
@@ -35,6 +33,5 @@ def observables():
                             indicator['link_description'] = l.tag
                         indicator["entity"] = type
                         matches[o][i.name] = matches[o].get(i.name, []) + [indicator]
-    print matches
 
     return jsonify({"matches": matches})
