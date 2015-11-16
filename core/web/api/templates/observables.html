@@ -1,0 +1,6 @@
+<table class="table table-condensed">
+  <tr><th>Observable</th><th>Indicator</th><th>Pattern</th></tr>
+  {% for match in data["matches"]%}
+  <tr><td>{{match['observable']}}</td><td>{{match['name']}}</td><td><code>{{match['pattern']}}</code></td></tr>
+  {%endfor%}
+</table>
