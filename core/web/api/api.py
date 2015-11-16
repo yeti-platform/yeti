@@ -1,9 +1,7 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request
 from flask.ext.negotiation import Render
-from flask.ext.negotiation.renderers import renderer, template_renderer, json_renderer
+from flask.ext.negotiation.renderers import template_renderer, json_renderer
 
-from core.entities import Entity
-from core.observables import Observable
 from core.indicators import Indicator
 
 api = Blueprint("api", __name__, template_folder="templates")
