@@ -10,11 +10,13 @@ api = Blueprint("api", __name__, template_folder="templates")
 
 render = Render(renderers=[template_renderer, json_renderer])
 
+
 @api.route("/")
 def index():
     return "API-OK\n"
 
-@api.route("/observables", methods=["POST"])
+
+@api.route("/observables/", methods=["POST"])
 def observables():
     q = request.json
 
@@ -38,7 +40,8 @@ def observables():
                         node_data["entity"] = type
                         match['related'].append(node_data)
                 data["matches"].append(match)
+
         if not found:
-            data["unknown"].append(o)
+            data["unknown"].append({"observable": o})
 
     return render(data, "observables.html")
