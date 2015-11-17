@@ -46,7 +46,7 @@ class ObservableApi(Resource):
         q = request.get_json(silent=True)
 
         if not q:  # if no json body is present, return list of all observables
-            return [o.info() for o in Observable.objects()]
+            return render([o.info() for o in Observable.objects()])
 
         else:
             data = {"matches": [], "known": [], "unknown": [], "entities": []}
