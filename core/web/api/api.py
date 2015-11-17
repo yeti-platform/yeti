@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 from flask.ext.negotiation import Render
 from flask.ext.negotiation.renderers import renderer, template_renderer, json_renderer
 from bson.json_util import dumps, loads
@@ -21,12 +21,6 @@ render = Render(renderers=[template_renderer, bson_renderer])
 
 class ObservableApi(Resource):
 
-    def get(self):
-        data = []
-        for o in Observable.objects():
-            data.append(o.info())
-        return render(data)
-
     def put(self):
         q = request.json
         data = {"count": 0}
@@ -41,30 +35,59 @@ class ObservableApi(Resource):
         return render(data)
 
     def post(self):
-        data = {"matches": [], "unknown": []}
         q = request.json
-        for o in q["observables"]:
-            found = False
-            for i in Indicator.objects():
-                if i.match(o):
-                    found = True
-                    match = i.info()
-                    match['observable'] = o
-                    match['related'] = []
-                    for type, nodes in i.neighbors().items():
-                        for l, node in nodes:
-                            node_data = node.info()
-                            if l.description:
-                                node_data["link_description"] = l.description
-                            else:
-                                node_data["link_description"] = l.tag
-                            node_data["entity"] = type
-                            match['related'].append(node_data)
-                    data["matches"].append(match)
 
-            if not found:
-                data["unknown"].append({"observable": o})
+        for o in q['observables']:
+            pass
 
-        return render(data, "observables.html")
+
+    def get(self):
+
+        q = request.json
+
+        if not q['observables']:
+            data = []
+            for o in Observable.objects():
+                data.append(o.info())
+            return render(data)
+        else:
+            data = {"matches": [], "known": [], "unknown": [], "entities": []}
+            added_entities = set()
+            for o in q['observables']:
+                indicator_match = False
+                for i in Indicator.objects():
+                    if i.match(o):
+                        indicator_match = True
+                        match = i.info()
+                        match['observable'] = o
+                        match['related'] = []
+                        for _type, nodes in i.neighbors().items():
+                            for l, node in nodes:
+
+                                # add node name and link description to indicator
+                                node_data = {"entity": _type, "name": node.name}
+                                if l.description:
+                                    node_data["link_description"] = l.description
+                                else:
+                                    node_data["link_description"] = l.tag
+                                match["related"].append(node_data)
+
+                                # uniquely add node information to related
+                                # entitites
+                                if node.name not in added_entities:
+                                    nodeinfo = node.info()
+                                    nodeinfo['nodetype'] = node.nodetype
+                                    data["entities"].append(nodeinfo)
+                                    added_entities.add(node.name)
+                        data["matches"].append(match)
+
+                if not indicator_match:
+                    obs = Observable.objects(value=o)
+                    if obs:
+                        data['known'].append(obs[0].info())
+                    else:
+                        data["unknown"].append({"observable": o})
+
+            return render(data, "observables.html")
 
 api_restful.add_resource(ObservableApi, '/observables/')
