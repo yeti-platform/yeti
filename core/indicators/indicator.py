@@ -24,5 +24,8 @@ class Indicator(Node):
     def action(self, verb, target, description=None):
         Link.connect(self, target).add_history(verb, description)
 
+    def generate_tags(self):
+        return [self.name, self.diamond]
+
     def info(self):
         return {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description']}

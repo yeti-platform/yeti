@@ -19,3 +19,6 @@ class Entity(Node):
 
     def action(self, verb, target, description=None):
         Link.connect(self, target).add_history(verb, description)
+
+    def generate_tags(self):
+        raise NotImplementedError("This method must be implemented in subclasses")
