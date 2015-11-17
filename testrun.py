@@ -53,7 +53,7 @@ bartalex_callback2.save()
 bartalex_callback2.action("indicates", bartalex, description="Bartalex payload URL (Dridex)")
 
 bartalex_callback.action("hosts", dridex, description="Hosting Dridex")
-bartalex_callback.action("hosts", dridex, description="Hosting Dridex")
+bartalex_callback2.action("hosts", dridex, description="Hosting Dridex")
 
 bartalex.action("drops", dridex, description="Drops Dridex")
 
