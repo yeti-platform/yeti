@@ -43,7 +43,6 @@ class Node(Document):
         return self._fields
 
 
-
 class LinkHistory(EmbeddedDocument):
 
     tag = StringField()

@@ -98,8 +98,3 @@ class Observable(Node):
         i = {k: v for k, v in self._data.items() if k in ["value", "context", "last_analyses", "created"]}
         i['tags'] = [t.info() for t in self.tags]
         return i
-
-
-
-    def __unicode__(self):
-        return u"{} ({} context)".format(self.value, len(self.context))

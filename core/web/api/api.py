@@ -1,8 +1,8 @@
 from flask import Blueprint, request
-from flask_restful import Resource, Api, reqparse
+from flask_restful import Resource, Api
 from flask.ext.negotiation import Render
-from flask.ext.negotiation.renderers import renderer, template_renderer, json_renderer
-from bson.json_util import dumps, loads
+from flask.ext.negotiation.renderers import renderer, template_renderer
+from bson.json_util import dumps
 
 from core.indicators import Indicator
 from core.entities import Entity
