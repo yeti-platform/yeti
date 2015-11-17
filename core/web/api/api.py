@@ -43,9 +43,10 @@ class ObservableApi(Resource):
 
     def get(self):
 
-        q = request.json
+        # try to get json body
+        q = request.get_json(silent=True)
 
-        if not q['observables']:
+        if not q:  # if no json body is present, return list of all observables
             data = []
             for o in Observable.objects():
                 data.append(o.info())
