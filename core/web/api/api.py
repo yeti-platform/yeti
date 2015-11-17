@@ -40,54 +40,41 @@ class ObservableApi(Resource):
         for o in q['observables']:
             pass
 
-
     def get(self):
 
         # try to get json body
         q = request.get_json(silent=True)
 
         if not q:  # if no json body is present, return list of all observables
-            data = []
-            for o in Observable.objects():
-                data.append(o.info())
-            return render(data)
+            return [o.info() for o in Observable.objects()]
+
         else:
             data = {"matches": [], "known": [], "unknown": [], "entities": []}
             added_entities = set()
-            for o in q['observables']:
-                indicator_match = False
-                for i in Indicator.objects():
-                    if i.match(o):
-                        indicator_match = True
-                        match = i.info()
-                        match['observable'] = o
-                        match['related'] = []
-                        for _type, nodes in i.neighbors().items():
-                            for l, node in nodes:
+            for o, i in Indicator.search(q["observables"]):
+                match = i.info()
+                match.update({"observable": o, "related": []})
 
-                                # add node name and link description to indicator
-                                node_data = {"entity": _type, "name": node.name}
-                                if l.description:
-                                    node_data["link_description"] = l.description
-                                else:
-                                    node_data["link_description"] = l.tag
-                                match["related"].append(node_data)
+                for nodes in i.neighbors().values():
+                    for l, node in nodes:
+                        # add node name and link description to indicator
+                        node_data = {"entity": node.type, "name": node.name, "link_description": l.description or l.tag}
+                        match["related"].append(node_data)
 
-                                # uniquely add node information to related
-                                # entitites
-                                if node.name not in added_entities:
-                                    nodeinfo = node.info()
-                                    nodeinfo['nodetype'] = node.nodetype
-                                    data["entities"].append(nodeinfo)
-                                    added_entities.add(node.name)
-                        data["matches"].append(match)
+                        # uniquely add node information to related entitites
+                        if node.name not in added_entities:
+                            nodeinfo = node.info()
+                            nodeinfo['type'] = node.type
+                            data["entities"].append(nodeinfo)
+                            added_entities.add(node.name)
 
-                if not indicator_match:
-                    obs = Observable.objects(value=o)
-                    if obs:
-                        data['known'].append(obs[0].info())
-                    else:
-                        data["unknown"].append({"observable": o})
+                data["matches"].append(match)
+                # try to fetch the observable from db, if not found
+                # add it to "unkown" array
+                try:
+                    data['known'].append(Observable.obejcts.get(value=o).info())
+                except Exception:
+                    data["unknown"].append({"observable": o})
 
             return render(data, "observables.html")
 

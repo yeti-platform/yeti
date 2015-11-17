@@ -18,6 +18,13 @@ class Indicator(Node):
     def __unicode__(self):
         return u"{} (pattern: '{}')".format(self.name, self.pattern)
 
+    @classmethod
+    def search(cls, observables):
+        for o in observables:
+            for i in Indicator.objects():
+                if i.match(o):
+                    yield o, i
+
     def match(value):
         raise NotImplementedError("match() method must be implemented in Indicator subclasses")
 

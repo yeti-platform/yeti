@@ -14,7 +14,7 @@ class Node(Document):
     }
 
     @property
-    def nodetype(self):
+    def type(self):
         return self._cls.split(".")[-1:][0]
 
     @classmethod
@@ -36,7 +36,7 @@ class Node(Document):
         links = list(set(self.incoming() + self.outgoing()))
         info = {}
         for link, node in links:
-            info[node.nodetype] = info.get(node.nodetype, []) + [(link, node)]
+            info[node.type] = info.get(node.type, []) + [(link, node)]
         return info
 
     def to_dict(self):
