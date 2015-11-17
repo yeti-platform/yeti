@@ -34,48 +34,37 @@ class ObservableApi(Resource):
 
         return render(data)
 
-    def post(self):
-        q = request.json
-
-        for o in q['observables']:
-            pass
-
     def get(self):
+        return render([o.info() for o in Observable.objects()])
 
-        # try to get json body
+    def post(self):
         q = request.get_json(silent=True)
+        data = {"matches": [], "known": [], "unknown": set(q["observables"]), "entities": []}
+        added_entities = set()
+        for o, i in Indicator.search(q["observables"]):
+            # observables matching indicators are probably worth keeping
+            # save automatically
+            o = Observable.add_text(o)
 
-        if not q:  # if no json body is present, return list of all observables
-            return render([o.info() for o in Observable.objects()])
+            match = i.info()
+            match.update({"observable": o.info(), "related": []})
 
-        else:
-            data = {"matches": [], "known": [], "unknown": [], "entities": []}
-            added_entities = set()
-            for o, i in Indicator.search(q["observables"]):
-                match = i.info()
-                match.update({"observable": o, "related": []})
+            for nodes in i.neighbors().values():
+                for l, node in nodes:
+                    # add node name and link description to indicator
+                    node_data = {"entity": node.type, "name": node.name, "link_description": l.description or l.tag}
+                    match["related"].append(node_data)
 
-                for nodes in i.neighbors().values():
-                    for l, node in nodes:
-                        # add node name and link description to indicator
-                        node_data = {"entity": node.type, "name": node.name, "link_description": l.description or l.tag}
-                        match["related"].append(node_data)
+                    # uniquely add node information to related entitites
+                    if node.name not in added_entities:
+                        nodeinfo = node.info()
+                        nodeinfo['type'] = node.type
+                        data["entities"].append(nodeinfo)
+                        added_entities.add(node.name)
 
-                        # uniquely add node information to related entitites
-                        if node.name not in added_entities:
-                            nodeinfo = node.info()
-                            nodeinfo['type'] = node.type
-                            data["entities"].append(nodeinfo)
-                            added_entities.add(node.name)
+            data["matches"].append(match)
+            data["unknown"].remove(o.value)
 
-                data["matches"].append(match)
-                # try to fetch the observable from db, if not found
-                # add it to "unkown" array
-                try:
-                    data['known'].append(Observable.obejcts.get(value=o).info())
-                except Exception:
-                    data["unknown"].append({"observable": o})
-
-            return render(data, "observables.html")
+        return render(data, "observables.html")
 
 api_restful.add_resource(ObservableApi, '/observables/')
