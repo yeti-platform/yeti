@@ -13,6 +13,10 @@ class Node(Document):
         # "abstract": True,
     }
 
+    @property
+    def nodetype(self):
+        return self._cls.split(".")[-1:][0]
+
     @classmethod
     def get_or_create(cls, **kwargs):
         o = cls(**kwargs)
@@ -32,7 +36,7 @@ class Node(Document):
         links = list(set(self.incoming() + self.outgoing()))
         info = {}
         for link, node in links:
-            info[node.__class__.__name__] = info.get(node.__class__.__name__, []) + [(link, node)]
+            info[node.nodetype] = info.get(node.nodetype, []) + [(link, node)]
         return info
 
     def to_dict(self):
