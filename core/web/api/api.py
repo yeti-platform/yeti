@@ -47,7 +47,7 @@ class ObservableApi(Resource):
             o = Observable.add_text(o)
 
             match = i.info()
-            match.update({"observable": o.info(), "related": []})
+            match.update({"observable": o.info(), "related": [], "suggested_tags": set()})
 
             for nodes in i.neighbors().values():
                 for l, node in nodes:
@@ -61,6 +61,9 @@ class ObservableApi(Resource):
                         nodeinfo['type'] = node.type
                         data["entities"].append(nodeinfo)
                         added_entities.add(node.name)
+
+                    o_tags = o.get_tags()
+                    [match["suggested_tags"].add(tag) for tag in node.generate_tags() if tag not in o_tags]
 
             data["matches"].append(match)
             data["unknown"].remove(o.value)

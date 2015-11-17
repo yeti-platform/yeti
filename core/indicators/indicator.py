@@ -32,7 +32,7 @@ class Indicator(Node):
         Link.connect(self, target).add_history(verb, description)
 
     def generate_tags(self):
-        return [self.name, self.diamond]
+        return [self.diamond.lower()]
 
     def info(self):
         return {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description']}

@@ -13,4 +13,4 @@ class TTP(Entity):
         return {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
 
     def generate_tags(self):
-        return [self.name, self.killchain]
+        return [self.killchain.lower()]

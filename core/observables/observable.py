@@ -52,6 +52,9 @@ class Observable(Node):
         # uniqueness logic should come here
         return self.modify(add_to_set__context=context)
 
+    def get_tags(self, fresh=True):
+        return [t.name for t in self.tags if (t.fresh or not fresh)]
+
     def tag(self, new_tags):
         if isinstance(new_tags, (str, unicode)):
             new_tags = [new_tags]

@@ -11,4 +11,4 @@ class Actor(Entity):
         self.reload()
 
     def generate_tags(self):
-        return [self.name]
+        return [self.name.lower()]
