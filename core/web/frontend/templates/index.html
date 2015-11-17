@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block main %}
+
+<div class='col-md-8 col-md-offset-2'>
+	<div class='center-block search'>
+		<h1 class='title'>Search Malcom</h1>
+		<p class="lead">Enter an URL, IP address, or domain name</p>
+		<form action='{{ url_for("frontend.index") }}' method='GET'>
+			<div class='input-group input-group-lg searchbar'>
+				 <div class="input-group-btn">
+			        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false"><span id='selected-field'>Value</span></button>
+			      </div><!-- /btn-group -->
+				<input class="form-control" name='query' autofocus value="{{term}}">
+			</div>
+			<div class="checkbox">
+			    <label>
+			      <input type="checkbox" name="log" checked='checked'> Add element if not found
+			    </label>
+			  </div>
+			{% with messages = get_flashed_messages() %}
+		  		{% if messages %}
+	    		<div class="alert alert-warning clearfix" style='display:inline-block;'>
+	      			{{messages[0]}}
+	      		</div>
+	      		<br class='clearfix' />
+		      	{%endif%}
+	    	{%endwith%}
+			 <input class='btn btn-primary btn-lg' type='submit' value='Search'>
+		</form>
+	</div>
+</div>
+
+{% endblock %}
