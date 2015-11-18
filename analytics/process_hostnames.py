@@ -9,7 +9,8 @@ from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
 
 from core.analytics import ScheduledAnalytics
-from core.observables import Hostname, Link, Observable
+from core.database import Link
+from core.observables import Hostname, Observable
 from core.helpers import is_subdomain
 from core.errors import ObservableValidationError
 

@@ -3,7 +3,8 @@ import re
 import logging
 
 from core.analytics import ScheduledAnalytics
-from core.observables import Link, Observable
+from core.observables import Observable
+from core.database import Link
 
 
 class ProcessUrl(ScheduledAnalytics):
