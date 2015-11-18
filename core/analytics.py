@@ -17,7 +17,7 @@ class ScheduledAnalytics(ScheduleEntry):
         fltr = Q(**{"last_analyses__{}__exists".format(self.name): False})
         if self.EXPIRATION:
             fltr |= Q(**{"last_analyses__{}__lte".format(self.name): datetime.now() - self.EXPIRATION})
-        fltr &= Q(**self.CUSTOM_FILTER) & Q(_cls="Observable.{}".format(self.ACTS_ON))
+        fltr &= Q(**self.CUSTOM_FILTER) & Q(_cls="Node.Observable.{}".format(self.ACTS_ON))
         self.bulk(Observable.objects(fltr))
 
     @classmethod
