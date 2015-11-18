@@ -97,4 +97,5 @@ class Observable(Node):
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["value", "context", "last_analyses", "created"]}
         i['tags'] = [t.info() for t in self.tags]
+        i['id'] = str(self.id)
         return i
