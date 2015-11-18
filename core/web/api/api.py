@@ -41,11 +41,12 @@ class ObservableApi(Resource):
         q = request.get_json(silent=True)
         data = {"matches": [], "known": [], "unknown": set(q["observables"]), "entities": []}
         added_entities = set()
+
         for o, i in Indicator.search(q["observables"]):
             # observables matching indicators are probably worth keeping
             # save automatically
             o = Observable.add_text(o)
-
+            
             match = i.info()
             match.update({"observable": o.info(), "related": [], "suggested_tags": set()})
 
@@ -66,7 +67,13 @@ class ObservableApi(Resource):
                     [match["suggested_tags"].add(tag) for tag in node.generate_tags() if tag not in o_tags]
 
             data["matches"].append(match)
-            data["unknown"].remove(o.value)
+
+        for o in list(data["unknown"]):
+            try:
+                data["known"].append(Observable.objects.get(value=o).info())
+                data["unknown"].remove(o)
+            except Exception as e:
+                pass
 
         return render(data, "observables.html")
 
