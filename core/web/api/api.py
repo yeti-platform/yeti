@@ -3,10 +3,12 @@ from flask_restful import Resource, Api
 from flask.ext.negotiation import Render
 from flask.ext.negotiation.renderers import renderer, template_renderer
 from bson.json_util import dumps
+from mongoengine import *
 
 from core.indicators import Indicator
 from core.entities import Entity
 from core.observables import Observable
+from core.errors import ObservableValidationError
 
 api = Blueprint("api", __name__, template_folder="templates")
 api_restful = Api(api)
@@ -21,35 +23,12 @@ render = Render(renderers=[template_renderer, bson_renderer])
 
 class ObservableApi(Resource):
 
-    def put(self):
-        q = request.json
-        data = {"count": 0}
-        for o in q["observables"]:
-            obs = Observable.add_text(o["value"])
-            if "tags" in o:
-                obs.tag(o["tags"])
-            if "context" in o:
-                obs.add_context(o["context"])
-            data["count"] += 1
-
-        return render(data)
-
-    def get(self):
-        return render([o.info() for o in Observable.objects()])
-
-    def post(self):
-        q = request.get_json(silent=True)
-        data = {"matches": [], "related_observables": [], "unknown": set(q["observables"].keys()), "entities": []}
+    def match_observables(self, observables):
+        data = {"matches": [], "unknown": set(observables), "entities": [], "known": []}
         added_entities = set()
 
-        # Save observables & eventual tags to database
-        for value in q["observables"]:
-            o = Observable.add_text(value)
-            if q["observables"][value]["tags"]:
-                o.tag(q["observables"][value]["tags"])
-
-        for o, i in Indicator.search(q["observables"]):
-            o = Observable.objects(value=o)
+        for o, i in Indicator.search(observables):
+            o = Observable.objects.get(value=o)
             match = i.info()
             match.update({"observable": o.info(), "related": [], "suggested_tags": set()})
 
@@ -71,6 +50,59 @@ class ObservableApi(Resource):
 
             data["matches"].append(match)
             data["unknown"].remove(o.value)
+
+        for o in data["unknown"].copy():
+            try:
+                data["known"].append(Observable.objects.get(value=o).info())
+                data["unknown"].remove(o)
+            except DoesNotExist:
+                continue
+
+        return data
+
+    def put(self):
+        q = request.json
+        data = {"count": 0}
+        for o in q["observables"]:
+            obs = Observable.add_text(o["value"])
+            if "tags" in o:
+                obs.tag(o["tags"])
+            if "context" in o:
+                obs.add_context(o["context"])
+            data["count"] += 1
+
+        return render(data)
+
+    def get(self):
+        q = request.get_json(silent=True)
+        if not q:
+            return render([o.info() for o in Observable.objects()])
+        # else:
+
+
+    def post(self):
+        q = request.get_json()
+
+        # Save observables & eventual tags to database
+        observables = []
+        for value in q["observables"]:
+            try:
+                o = Observable.add_text(value)
+            except ObservableValidationError as e:
+                continue
+            if q["observables"][value]["tags"]:
+                o.tag(q["observables"][value]["tags"])
+            observables.append(o)
+
+        # match observables with known indicators
+        data = self.match_observables(q["observables"])
+
+        # find related observables (eg. URLs for domain, etc.)
+        # related_observables = [obs.get_related() for obs in observables]
+        # data = self.match_observables(related_observable)
+        #
+        # we need to find a way to degrade the "confidence" in
+        # hits obtained from related observables
 
         return render(data, "observables.html")
 
