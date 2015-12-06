@@ -1,0 +1,3 @@
+{% macro display_tags(tags) -%}
+  {% for tag in tags %}<span class="yeti-tag {% if tag['fresh']%} fresh {%endif%}">{{tag['name']}}</span>{% endfor %}
+{%- endmacro %}

@@ -1,0 +1,15 @@
+.yeti-content {
+  font-size: 0.85em;
+  width:100%;
+}
+
+.yeti-tag {
+  /*color: white;*/
+  /*background-color: #38a;*/
+  /*font-size: 85%;*/
+  margin: 0 1px 0 1px;
+}
+
+.table-yeti tbody > tr > th {
+  border-top:0px;
+}

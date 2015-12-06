@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block main %}
+<div class="col-md-9">
+	<div role="tabpanel">
+		<ul id="datasetTabs" class="nav nav-tabs" role="tablist">
+			<li role="presentation" class="active"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
+		</ul>
+		<div id="datasetTabsContent" class="tab-content">
+			<div role="tabpanel" class="tab-pane active" id="observables" data-url="{{ url_for('api.observableapi')}}">
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/browse.js') }}" charset="utf-8"></script>
+{%endblock%}
+
+{% block sidebar %}
+<div class="col-md-3">
+</div>
+{% endblock %}

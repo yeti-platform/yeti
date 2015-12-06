@@ -1,0 +1,8 @@
+{% import 'macros.html' as macros %}
+
+<table>
+  <tr><th>Value</th><th>Type</th><th>Tags</th></tr>
+  {% for observable in data %}
+  <tr><td>{{observable['value']}}</td><td>{{observable['type']}}</td><td>{{macros.display_tags(observable['tags'])}}</td></tr>
+  {% endfor %}
+</table>

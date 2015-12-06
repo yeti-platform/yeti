@@ -4,6 +4,5 @@ frontend = Blueprint("frontend", __name__, template_folder="templates", static_f
 
 
 @frontend.route('/')
-def index():
-    return render_template('index.html')
-    return "It works!"
+def browse():
+    return render_template('browse.html')
