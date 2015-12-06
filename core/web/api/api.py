@@ -74,11 +74,8 @@ class ObservableApi(Resource):
         return render(data)
 
     def get(self):
-        q = request.get_json(silent=True)
-        if not q:
-            return render([o.info() for o in Observable.objects()])
-        # else:
-
+        data = [o.info() for o in Observable.objects()]
+        return render(data, 'observables.html')
 
     def post(self):
         q = request.get_json()
@@ -88,7 +85,7 @@ class ObservableApi(Resource):
         for value in q["observables"]:
             try:
                 o = Observable.add_text(value)
-            except ObservableValidationError as e:
+            except ObservableValidationError:
                 continue
             if q["observables"][value]["tags"]:
                 o.tag(q["observables"][value]["tags"])
