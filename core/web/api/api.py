@@ -1,9 +1,13 @@
+import re
+
 from flask import Blueprint, request
 from flask_restful import Resource, Api
+from flask_restful import abort as restful_abort
 from flask.ext.negotiation import Render
 from flask.ext.negotiation.renderers import renderer, template_renderer
 from bson.json_util import dumps
 from mongoengine import *
+from mongoengine.errors import InvalidQueryError
 
 from core.indicators import Indicator
 from core.entities import Entity
@@ -21,7 +25,7 @@ def bson_renderer(data, template=None, ctx=None):
 render = Render(renderers=[template_renderer, bson_renderer])
 
 
-class ObservableApi(Resource):
+class AnalysisApi(Resource):
 
     def match_observables(self, observables):
         data = {"matches": [], "unknown": set(observables), "entities": [], "known": []}
@@ -60,25 +64,8 @@ class ObservableApi(Resource):
 
         return data
 
-    def put(self):
-        q = request.json
-        data = {"count": 0}
-        for o in q["observables"]:
-            obs = Observable.add_text(o["value"])
-            if "tags" in o:
-                obs.tag(o["tags"])
-            if "context" in o:
-                obs.add_context(o["context"])
-            data["count"] += 1
-
-        return render(data)
-
-    def get(self):
-        data = [o.info() for o in Observable.objects()]
-        return render(data, 'observables.html')
-
     def post(self):
-        q = request.get_json()
+        q = request.get_json(silent=True)
 
         # Save observables & eventual tags to database
         observables = []
@@ -102,5 +89,40 @@ class ObservableApi(Resource):
         # hits obtained from related observables
 
         return render(data, "observables.html")
+
+api_restful.add_resource(AnalysisApi, '/analysis/')
+
+
+class ObservableApi(Resource):
+
+    def put(self):
+        q = request.json
+        data = {"count": 0}
+        for o in q["observables"]:
+            obs = Observable.add_text(o["value"])
+            if "tags" in o:
+                obs.tag(o["tags"])
+            if "context" in o:
+                obs.add_context(o["context"])
+            data["count"] += 1
+
+        return render(data)
+
+    def post(self):
+        query = request.get_json(silent=True)
+        fltr = query['filter']
+        params = query['params']
+
+        if params.pop('regex', False):
+            fltr = {key: re.compile(value) for key, value in fltr.items()}
+
+        print fltr
+
+        try:
+            data = [o.info() for o in Observable.objects(**fltr)]
+        except InvalidQueryError as e:
+            restful_abort(400, invalid_query=str(e))
+
+        return render(data, 'observables.html')
 
 api_restful.add_resource(ObservableApi, '/observables/')

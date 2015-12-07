@@ -20,5 +20,18 @@
 
 {% block sidebar %}
 <div class="col-md-3">
+	<form>
+				<div class="input-group">
+	    			<input id="observable-filter" class="form-control input-sm" placeholder="tags=evil">
+					<span class="input-group-btn">
+						<button id="observable-search" class="btn btn-primary btn-sm" type="button" onclick="refresh_table($('#observable-filter').val())">Go</button>
+					</span>
+				</div>
+				<div class="checkbox input-group-lg">
+					<label class="checkbox">
+					      <input id="regex" type="checkbox"> Regex search (slower)
+					</label>
+				</div>
+			</form>
 </div>
 {% endblock %}
