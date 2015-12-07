@@ -110,8 +110,8 @@ class ObservableApi(Resource):
 
     def post(self):
         query = request.get_json(silent=True)
-        fltr = query['filter']
-        params = query['params']
+        fltr = query.get('filter', {})
+        params = query.get('params', {})
 
         if params.pop('regex', False):
             fltr = {key: re.compile(value) for key, value in fltr.items()}
