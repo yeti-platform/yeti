@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block main %}
+<div class="col-md-12">
+  <div class="panel panel-default main-details">
+  	<div class="panel-body yeti-panel">
+      <h2 class="page-header">{{observable.value}}</h2>
+      <table class="table table-condensed main-table">
+        {% for key, value in observable.info().items() %}
+        {% if key != "context" %}
+          <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
+        {% endif %}
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  {% set context = observable.context %}
+  <div class="yeti-context-panel">
+    {% for ctx in context %}
+      {{macros.display_context(ctx)}}
+    {% endfor %}
+  </div>
+
+
+</div>
+{% endblock %}

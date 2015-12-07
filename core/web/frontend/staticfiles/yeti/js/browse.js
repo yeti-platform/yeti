@@ -46,8 +46,5 @@ function refresh_table(filter) {
 }
 
 function style_table(table) {
-  table.toggleClass("table table-condensed table-yeti table-hover")
-  table.find('.yeti-tag').toggleClass('label label-default')
-  table.find('.yeti-tag.fresh').toggleClass('label-primary')
   return table
 }

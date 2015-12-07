@@ -1,15 +1,34 @@
+/* app-wide changes */
+
 .yeti-content {
   font-size: 0.85em;
   width:100%;
 }
 
+.yeti-table tbody > tr > th {
+  border-top:0px;
+}
+
+
+/* panels */
+
+.yeti-panel h2, .yeti-panel h3 {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  border-bottom:0;
+}
+
+.yeti-panel table {
+  margin-bottom:0px;
+}
+
+/* tag colors */
+
 .yeti-tag {
-  /*color: white;*/
-  /*background-color: #38a;*/
-  /*font-size: 85%;*/
   margin: 0 1px 0 1px;
 }
 
-.table-yeti tbody > tr > th {
-  border-top:0px;
+.tag-evil {
+  color: white;
+	background-color: #f33;
 }
