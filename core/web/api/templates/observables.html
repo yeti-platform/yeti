@@ -1,8 +1,8 @@
 {% import 'macros.html' as macros %}
 
-<table>
-  <tr><th>Value</th><th>Type</th><th>Tags</th></tr>
+<table class="table table-condensed table-yeti table-hover">
+  <tr><th>Value</th><th>Tags</th><th>Context count</th></tr>
   {% for observable in data %}
-  <tr><td>{{observable['value']}}</td><td>{{observable['type']}}</td><td>{{macros.display_tags(observable['tags'])}}</td></tr>
+  <tr><td><a href="{{ url_for('frontend.observable', id=observable['id'])}}">asd{{observable['value']}}</a></td><td>{{macros.display_tags(observable['tags'])}}</td><td>{{observable['context']|length}}</td></tr>
   {% endfor %}
 </table>
