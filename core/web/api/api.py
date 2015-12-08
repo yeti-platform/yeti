@@ -1,6 +1,6 @@
 import re
 
-from flask import Blueprint, request
+from flask import Blueprint, request, url_for
 from flask_restful import Resource, Api
 from flask_restful import abort as restful_abort
 from flask.ext.negotiation import Render
@@ -119,7 +119,12 @@ class ObservableApi(Resource):
         print fltr
 
         try:
-            data = [o.info() for o in Observable.objects(**fltr)]
+            data = []
+            for o in Observable.objects(**fltr)[page * rng:(page + 1) * rng]:
+                info = o.info()
+                info['uri'] = url_for('api.observableapi', id=str(o.id))
+                data.append(info)
+
         except InvalidQueryError as e:
             restful_abort(400, invalid_query=str(e))
 
