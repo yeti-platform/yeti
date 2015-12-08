@@ -18,4 +18,4 @@ from core.web.api.observable import ObservableApi
 from core.web.api.analysis import AnalysisApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
-api_restful.add_resource(ObservableApi, '/observables/')
+api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
