@@ -115,8 +115,10 @@ class ObservableApi(Resource):
 
         if params.pop('regex', False):
             fltr = {key: re.compile(value) for key, value in fltr.items()}
+        page = params.pop('page', 1) - 1
+        rng = params.pop('range', 50)
 
-        print fltr
+        print "Filter:", fltr
 
         try:
             data = []

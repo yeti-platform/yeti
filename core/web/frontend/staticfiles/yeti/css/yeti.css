@@ -9,6 +9,10 @@
   border-top:0px;
 }
 
+.paginator {
+  cursor:pointer;
+}
+
 
 /* panels */
 
