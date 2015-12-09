@@ -84,20 +84,6 @@ class Observable(Node):
         ts = datetime.now()
         return self.modify(**{"set__last_analyses__{}".format(module_name): ts})
 
-    # neighbors
-
-    def incoming(self):
-        return [l.src for l in Link.objects(dst=self.id)]
-
-    def outgoing(self):
-        return [l.dst for l in Link.objects(src=self.id)]
-
-    def all_neighbors(self):
-        ids = set()
-        ids |= ({l.src.id for l in Link.objects(dst=self.id)})
-        ids |= ({l.dst.id for l in Link.objects(src=self.id)})
-        return Observable.objects(id__in=ids)
-
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["value", "context", "last_analyses", "created"]}
         i['tags'] = [t.info() for t in self.tags]

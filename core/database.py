@@ -67,11 +67,7 @@ class Link(Document):
 class Node(Document):
 
     meta = {
-        "allow_inheritance": True,
-        # This should be an abstract class, but mongoengine 0.10.0 cannot reference
-        # abstract classes (see: https://github.com/MongoEngine/mongoengine/issues/837)
-        # thus breaking the refences in Link... Keep calm and wait for the PR to be closed.
-        # "abstract": True,
+        "abstract": True,
     }
 
     @property
@@ -88,10 +84,10 @@ class Node(Document):
         return u"{} ({} context)".format(self.value, len(self.context))
 
     def incoming(self):
-        return [(l, l.src) for l in Link.objects(dst=self.id)]
+        return [(l, l.src) for l in Link.objects(dst=self)]
 
     def outgoing(self):
-        return [(l, l.dst) for l in Link.objects(src=self.id)]
+        return [(l, l.dst) for l in Link.objects(src=self)]
 
     def neighbors(self):
         links = list(set(self.incoming() + self.outgoing()))
@@ -101,7 +97,7 @@ class Node(Document):
         return info
 
     def delete(self):
-        Link.objects(Q(src=self.id) | Q(dst=self.id)).delete()
+        Link.objects(Q(src=self) | Q(dst=self)).delete()
         super(Node, self).delete()
 
     def to_dict(self):
