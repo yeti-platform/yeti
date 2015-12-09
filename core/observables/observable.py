@@ -49,7 +49,7 @@ class Observable(Node):
         try:
             return o.save()
         except NotUniqueError:
-            return cls.objects.get(value=value)
+            return cls.objects.get(value=o.value)
 
     def add_context(self, context):
         assert 'source' in context
