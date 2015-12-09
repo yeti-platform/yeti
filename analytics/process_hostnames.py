@@ -111,3 +111,6 @@ class ParallelDnsResolver(object):
                 continue
             except NoNameservers:
                 continue
+            except Exception as e:
+                logging.error("Unknown error occurred: {}".format(e))
+                continue

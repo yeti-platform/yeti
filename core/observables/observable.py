@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from mongoengine import *
+from mongoengine.errors import NotUniqueError
 
 from core.helpers import is_url, is_ip, is_hostname
 from core.database import Node
@@ -45,7 +46,10 @@ class Observable(Node):
     def get_or_create(cls, value):
         o = cls(value=value)
         o.clean()
-        return cls.objects(value=o.value).modify(upsert=True, new=True, value=o.value)
+        try:
+            return o.save()
+        except NotUniqueError:
+            return cls.objects.get(value=value)
 
     def add_context(self, context):
         assert 'source' in context
