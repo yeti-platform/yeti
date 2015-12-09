@@ -83,6 +83,14 @@ o4 = Observable.add_text("http://www.delianfoods.com/5t546523/lhf3f334f.exe")
 o5 = Observable.add_text("http://sanoko.jp/5t546523/lhf3f334f.exe")
 o6 = Observable.add_text("http://hrakrue-home.de/87yte55/6t45eyv.exe")
 o7 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe")
+o8 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe2")
+
+t1 = Observable.add_text("http://toto.com")
+t2 = Observable.add_text("Http://tata.com")
+l = Link.connect(t1, t2)
+print "Links", Link.objects(src=t1)
+t2.delete()
+print "Links", Link.objects(src=t1)
 
 test = "http://soccersisters.net/mg.jpg"
 
