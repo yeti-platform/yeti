@@ -1,6 +1,7 @@
 import csv
 import requests
 from datetime import datetime
+import logging
 
 from lxml import etree
 from StringIO import StringIO
@@ -8,13 +9,21 @@ from mongoengine import StringField
 from core.config.celeryctl import celery_app
 from core.scheduling import ScheduleEntry
 
+
 @celery_app.task
 def update_feed(feed_name):
     print "Running {}".format(feed_name)
     f = Feed.objects.get(name=feed_name)
-    f.update()
+    try:
+        f.update()
+    except Exception as e:
+        msg = "ERROR updating feed: {}".format(e)
+        logging.error(msg)
+        f.status = msg
+
     f.last_run = datetime.now()
     f.save()
+
 
 class Feed(ScheduleEntry):
     """Base class for Feeds. All feeds must inherit from this"""
