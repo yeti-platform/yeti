@@ -24,6 +24,11 @@
 
 .yeti-panel table {
   margin-bottom:0px;
+  margin-top: 0px;
+}
+
+.yeti-panel tr:first-child td, .yeti-panel tr:first-child th {
+  border-top: 0px;
 }
 
 /* tag colors */

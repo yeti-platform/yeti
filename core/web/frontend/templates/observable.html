@@ -2,27 +2,126 @@
 {% import "macros.html" as macros %}
 
 {% block main %}
-<div class="col-md-12">
-  <div class="panel panel-default main-details">
-  	<div class="panel-body yeti-panel">
-      <h2 class="page-header">{{observable.value}}</h2>
-      <table class="table table-condensed main-table">
-        {% for key, value in observable.info().items() %}
-        {% if key != "context" %}
-          <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
-        {% endif %}
-        {% endfor %}
-      </table>
+
+<div class="row">
+
+<!-- start first column -->
+  <div class="col-md-9">
+
+    <div class="row">
+      <div class="col-md-12">
+
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h1 class="panel-title">{{observable.value}}</h1>
+          </div>
+          <div class="panel-body">
+            Markdown description
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="row">
+          {% set context = observable.context %}
+          <div class="yeti-panel">
+            {% for ctx in context %}
+            {{macros.display_context(ctx)}}
+            {{macros.display_context(ctx)}}
+            {{macros.display_context(ctx)}}
+              {{macros.display_context(ctx)}}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+
+
+
+        <div class="panel panel-default yeti-panel">
+          <div class="panel-heading">
+            <h1 class="panel-title">Related elements</h1>
+          </div>
+          <div class="panel-body">
+
+            <ul class="nav nav-tabs" role="tablist">
+              {% set n = observable.neighbors() %}
+              {% for type in n.keys() %}
+              <li role="presentation" {% if loop.index0 == 0%} class="active" {%endif%}>
+                <a href="#{{type}}" aria-controls="{{type}}" role="tab" data-toggle="tab">{{type}}</a>
+              </li>
+              {% endfor %}
+            </ul>
+
+            <div class="tab-content">
+              {% for type, entry in n.items() %}
+              <div role="tabpanel" class="tab-pane {% if loop.index0 == 0%}active{%endif%}" id="{{type}}">
+                <table class="table table-condensed">
+                {% for link, node in entry %}
+                  <tr>
+                    <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
+                    <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                  </tr>
+                {%endfor%}
+                </table>
+
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+<!-- end first column -->
+
+  <div class="col-md-3">
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class="panel-title">Info</h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-condensed main-table">
+          {% for key, value in observable.info().items() %}
+          {% if key not in ["context", "value", "last_analyses"] %}
+            <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
+          {% endif %}
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+
+    <div class="panel panel-warning">
+      <div class="panel-heading">
+        <h3 class="panel-title">Related entities</h3>
+      </div>
+      <div class="panel-body">
+        INSERT RELATED ENTITIES
+      </div>
+    </div>
+
+    <div class="panel panel-default yeti-panel">
+      <div class="panel-heading">
+        <h4 class="panel-title">Last analyses</h4>
+      </div>
+      <div class="panel-body">
+        <table class="table table-condensed">
+          {% for name, date in observable.info().last_analyses.items() %}
+            <tr><th>{{name}}</th><td>{{macros.display_datetime(date)}}</td></tr>
+          {% endfor %}
+        </table>
+      </div>
     </div>
   </div>
 
-  {% set context = observable.context %}
-  <div class="yeti-context-panel">
-    {% for ctx in context %}
-      {{macros.display_context(ctx)}}
-    {% endfor %}
-  </div>
-
-
 </div>
+
 {% endblock %}
