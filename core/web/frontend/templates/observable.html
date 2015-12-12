@@ -16,7 +16,9 @@
             <h1 class="panel-title">{{observable.value}}</h1>
           </div>
           <div class="panel-body">
-            Markdown description
+            <div class="yeti-observable-description">
+              {{observable.description|markdown}}
+            </div>
           </div>
         </div>
 

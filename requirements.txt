@@ -8,3 +8,5 @@ lxml
 dnspython
 redis
 flask-negotiate
+misaka<2.0
+flask-misaka

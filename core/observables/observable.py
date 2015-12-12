@@ -12,6 +12,7 @@ from core.errors import ObservableValidationError
 class Observable(Node):
 
     value = StringField(required=True, unique=True, sparse=True)
+    description = StringField()
     context = ListField(DictField())
     tags = ListField(EmbeddedDocumentField(Tag))
     last_analyses = DictField()
