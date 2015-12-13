@@ -15,11 +15,13 @@
           <div class="panel-heading">
             <h1 class="panel-title">{{observable.value}}</h1>
           </div>
+          {% if observable.description %}
           <div class="panel-body">
             <div class="yeti-observable-description">
               {{observable.description|markdown}}
             </div>
           </div>
+          {% endif %}
         </div>
 
       </div>
@@ -32,9 +34,6 @@
           <div class="yeti-panel">
             {% for ctx in context %}
             {{macros.display_context(ctx)}}
-            {{macros.display_context(ctx)}}
-            {{macros.display_context(ctx)}}
-              {{macros.display_context(ctx)}}
             {% endfor %}
           </div>
         </div>
@@ -53,22 +52,39 @@
           <div class="panel-body">
 
             <ul class="nav nav-tabs" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#tagged" aria-controls="tagged" role="tab" data-toggle="tab">Tagged</a>
+              </li>
               {% set n = observable.neighbors() %}
               {% for type in n.keys() %}
-              <li role="presentation" {% if loop.index0 == 0%} class="active" {%endif%}>
+              <li role="presentation">
                 <a href="#{{type}}" aria-controls="{{type}}" role="tab" data-toggle="tab">{{type}}</a>
               </li>
               {% endfor %}
             </ul>
 
             <div class="tab-content">
+              <div role="tabpanel" class="tab-pane active" id="tagged">
+                <table class="table table-condensed">
+                {% for type, entry in n.items() %}
+                  {% for link, node in entry if node.tags %}
+                  <tr>
+                    <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
+                    <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                    <td>{{ macros.display_tags(node.tags)}}</td>
+                  </tr>
+                  {% endfor %}
+                {%endfor%}
+                </table>
+              </div>
               {% for type, entry in n.items() %}
-              <div role="tabpanel" class="tab-pane {% if loop.index0 == 0%}active{%endif%}" id="{{type}}">
+              <div role="tabpanel" class="tab-pane" id="{{type}}">
                 <table class="table table-condensed">
                 {% for link, node in entry %}
                   <tr>
                     <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
                     <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                    <td>{{ macros.display_tags(node.tags)}}</td>
                   </tr>
                 {%endfor%}
                 </table>
@@ -86,7 +102,7 @@
 
   <div class="col-md-3">
 
-    <div class="panel panel-primary">
+    <div class="panel panel-primary yeti-panel">
       <div class="panel-heading">
         <h3 class="panel-title">Info</h3>
       </div>
@@ -115,13 +131,19 @@
         <h4 class="panel-title">Last analyses</h4>
       </div>
       <div class="panel-body">
+        {% if observable.last_analyses %}
         <table class="table table-condensed">
           {% for name, date in observable.info().last_analyses.items() %}
             <tr><th>{{name}}</th><td>{{macros.display_datetime(date)}}</td></tr>
           {% endfor %}
         </table>
+        {% else %}
+        None
+        {% endif %}
       </div>
     </div>
+
+
   </div>
 
 </div>
