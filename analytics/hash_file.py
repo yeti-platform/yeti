@@ -33,6 +33,7 @@ class HashFile(ScheduledAnalytics):
         if l > 0:
             for h in HashFile.extract_hashes(f):
                 h = Hash.get_or_create(h.hexdigest()).save()
+                h.add_source("analytics")
                 Link.connect(f, h)
 
     @staticmethod

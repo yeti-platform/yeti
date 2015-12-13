@@ -27,6 +27,7 @@ class ProcessUrl(ScheduledAnalytics):
             try:
                 logging.info("Extracted {} from {}".format(host, url))
                 h = Observable.guess_type(host).get_or_create(value=host)
+                h.add_source("analytics")
                 Link.connect(src=url, dst=h)
             except ObservableValidationError:
                 logging.error("An error occurred when trying to add {} to the database".format(host))

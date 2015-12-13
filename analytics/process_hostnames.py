@@ -38,6 +38,7 @@ class ProcessHostnames(ScheduledAnalytics):
         domain = is_subdomain(hostname)
         if domain:
             d = Hostname.get_or_create(domain)
+            d.add_source("analytics")
             l = Link.connect(h, d)
             l.add_history(tag='domain')
 
@@ -45,6 +46,7 @@ class ProcessHostnames(ScheduledAnalytics):
             logging.info("{} resoved to {} ({} record)".format(h.value, rdata, rtype))
             try:
                 e = Observable.add_text(rdata)
+                e.add_source("analytics")
                 l = Link.connect(h, e)
                 l.add_history(tag=rtype, description='{} record'.format(rtype))
             except ObservableValidationError as e:

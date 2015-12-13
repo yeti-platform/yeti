@@ -12,6 +12,7 @@ from core.errors import ObservableValidationError
 class Observable(Node):
 
     value = StringField(required=True, unique=True, sparse=True)
+    source = ListField(StringField)
     description = StringField()
     context = ListField(DictField())
     tags = ListField(EmbeddedDocumentField(Tag))
@@ -56,6 +57,9 @@ class Observable(Node):
         assert 'source' in context
         # uniqueness logic should come here
         return self.modify(add_to_set__context=context)
+
+    def add_source(self, source):
+        return self.modify(add_to_set__sources=source)
 
     def get_tags(self, fresh=True):
         return [t.name for t in self.tags if (t.fresh or not fresh)]

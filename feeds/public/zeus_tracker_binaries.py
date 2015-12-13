@@ -36,6 +36,7 @@ class ZeusTrackerBinaries(Feed):
         try:
             n = Url.get_or_create(url_string)
             n.add_context(context)
+            n.add_source("feed")
             n.tag(['zeus', 'delivery', 'banker', 'crimeware', 'malware'])
         except ObservableValidationError as e:
             logging.error(e)

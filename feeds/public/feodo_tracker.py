@@ -53,6 +53,7 @@ class FeodoTracker(Feed):
             else:
                 new = Hostname.get_or_create(g['host'])
             new.add_context(context)
+            new.add_source("feed")
             new.tag(['dridex', 'malware', 'crimeware', 'banker', 'c2'])
         except ObservableValidationError as e:
             logging.error(e)

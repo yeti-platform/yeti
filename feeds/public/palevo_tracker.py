@@ -41,6 +41,7 @@ class PalevoTracker(Feed):
         try:
             hn = Hostname.get_or_create(hostname)
             hn.add_context(context)
+            hn.add_source("feed")
             hn.tag(['palevo', 'c2', 'malware', 'crimeware', 'worm'])
         except ObservableValidationError as e:
             logging.error(e)

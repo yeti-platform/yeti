@@ -46,6 +46,7 @@ class AsproxTracker(Feed):
         try:
             url = Url.get_or_create(url)
             url.add_context(context)
+            url.add_source("feed")
             url.tag(['asprox', 'c2', 'scanner'])
         except ObservableValidationError as e:
             logging.error(e)

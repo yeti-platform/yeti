@@ -34,6 +34,7 @@ class CybercrimeTracker(Feed):
             return
 
         e.add_context(context)
+        e.add_source("feed")
 
         tags = ['malware', 'c2', description, 'crimeware']
         if description == 'pony':
