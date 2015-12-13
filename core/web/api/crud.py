@@ -5,7 +5,6 @@ from flask_restful import Resource
 from flask_restful import abort as restful_abort
 from mongoengine.errors import InvalidQueryError
 
-from core.observables import Observable
 from core.web.api.api import render
 
 
@@ -28,7 +27,6 @@ class CrudApi(Resource):
     @classmethod
     def get(cls, id):
         return render(cls.objectmanager.objects.get(id=id).info())
-
 
     @classmethod
     def post(cls):
