@@ -5,6 +5,7 @@ import logging
 from core.analytics import ScheduledAnalytics
 from core.observables import Observable
 from core.database import Link
+from core.errors import ObservableValidationError
 
 
 class ProcessUrl(ScheduledAnalytics):
@@ -27,5 +28,5 @@ class ProcessUrl(ScheduledAnalytics):
                 logging.info("Extracted {} from {}".format(host, url))
                 h = Observable.guess_type(host).get_or_create(value=host)
                 Link.connect(src=url, dst=h)
-            except ValidationError:
+            except ObservableValidationError:
                 logging.error("An error occurred when trying to add {} to the database".format(host))
