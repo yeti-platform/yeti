@@ -22,6 +22,13 @@
   border-bottom:0;
 }
 
+.yeti-observable-description:first-child h1,
+.yeti-observable-description:first-child h2,
+.yeti-observable-description:first-child h3,
+.yeti-observable-description:first-child h4 {
+  margin-top:0;
+}
+
 .yeti-panel table {
   margin-bottom:0px;
   margin-top: 0px;
