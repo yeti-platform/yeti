@@ -7,8 +7,8 @@ from core.entities import TTP
 from core.observables import Observable
 
 ## Clean slate
-db = connect('malcom-v2')
-db.drop_database('malcom-v2')
+db = connect('yeti')
+db.drop_database('yeti')
 
 ## Populate database with initial values
 MalwareFamily("mailer").save()
@@ -100,3 +100,8 @@ for i in Indicator.objects():
             print " {}".format(type)
             for l, node in nodes:
                 print {"type": type, "link": l.info(), "node": node.info()}
+
+print "Test with the following:"
+print o3.value
+print o7.value
+print t1.value
