@@ -6,13 +6,14 @@ from mongoengine.errors import NotUniqueError
 from core.helpers import is_url, is_ip, is_hostname
 from core.database import Node
 from core.observables import Tag
+from core.entities import *
 from core.errors import ObservableValidationError
 
 
 class Observable(Node):
 
     value = StringField(required=True, unique=True, sparse=True)
-    source = ListField(StringField)
+    sources = ListField(StringField())
     description = StringField()
     context = ListField(DictField())
     tags = ListField(EmbeddedDocumentField(Tag))
