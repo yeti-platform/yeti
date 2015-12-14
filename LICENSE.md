@@ -1,5 +1,5 @@
-Malcom - Malware communications analyzer
-Copyright (C) 2013 Thomas Chopitea
+Yeti - Your Everyday Threat Intelligence
+Copyright (C) 2015 Thomas Chopitea
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
