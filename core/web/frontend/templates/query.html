@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block main %}
+<div class="col-md-6">
+	<h3>Bulk query - copy &amp; paste raw text</h3>
+	<p class="help-block">Enter one element per line, followed by eventual tags. Format is the same than for file uploads.</p>
+	<form action="{{ url_for('frontend.query')}}" method="POST">
+		<div class="form-group">
+			<textarea class="form-control" name="bulk-text" rows="8"></textarea>
+			<br>
+			<input class="btn btn-primary btn-sm" type="submit" value="Query">
+		</div>
+	</form>
+</div>
+
+
+<div class="col-md-6">
+	<h3>Bulk query - upload file</h3>
+	<form action="/malcom/populate/add" method="POST" enctype="multipart/form-data">
+		<div class="input-group">
+          <span class="input-group-btn">
+            <input class="btn btn-primary btn-sm" type="submit" value="Upload">
+          </span>
+          <input name="bulk-file" type="file" class="form-control">
+        </div>
+	</form>
+	<p class="help-block">File must have one element per line, followed by eventual tags.<br>Example:</p>
+	<pre id="bulk-example">&lt;element&gt;;&lt;tag1&gt;,&lt;tag2&gt;,&lt;tag3&gt;
+google.com
+http://evildrop.me/drop.php; citadel, evil
+127.0.0.1; localhost, home</pre>
+
+</div>
+
+
+{% endblock %}
