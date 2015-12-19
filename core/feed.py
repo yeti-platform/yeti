@@ -13,12 +13,16 @@ from core.scheduling import ScheduleEntry
 
 @celery_app.task
 def update_feed(feed_name):
-    logging.info("Running {}".format(feed_name))
+
     f = Feed.objects.get(name=feed_name)
     try:
-        f.update_status("Updating...")
-        f.update()
-        f.update_status("OK")
+        if f.enabled:
+            logging.info("Running {}".format(feed_name))
+            f.update_status("Updating...")
+            f.update()
+            f.update_status("OK")
+        else:
+            logging.error("Feed {} has been disabled".format(feed_name))
     except Exception as e:
         msg = "ERROR updating feed: {}".format(e)
         logging.error(msg)

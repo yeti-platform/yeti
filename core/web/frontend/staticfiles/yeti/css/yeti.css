@@ -74,3 +74,7 @@
 .yeti-table tr.disabled {
   opacity: 0.3;
 }
+
+.yeti-table tr.disabled .feed-refresh {
+  cursor: default;
+}

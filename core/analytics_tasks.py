@@ -20,7 +20,6 @@ def each(module_name, observable_json):
 
 @celery_app.task
 def schedule(name):
-    logging.warning("Running analytics {}".format(name))
 
     try:
         a = ScheduledAnalytics.objects.get(name=name, lock=None)  # check if we have implemented locking mechanisms
@@ -33,10 +32,13 @@ def schedule(name):
             logging.info("Task {} is already running...".format(name))
             return
 
-    a.update_status("Running...")
     if a.enabled:  # check if Analytics is enabled
+        logging.warning("Running analytics {}".format(name))
+        a.update_status("Running...")
         a.analyze_outdated()
         a.last_run = datetime.now()
+    else:
+        logging.error("Analytics {} is disabled".format(name))
 
     if a.lock:  # release lock if it was set
         a.lock = False
