@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect, url_for
 
 from core.observables import Observable
 from core.web.api.analysis import match_observables
@@ -7,6 +7,10 @@ frontend = Blueprint("frontend", __name__, template_folder="templates", static_f
 
 
 @frontend.route("/")
+def index():
+    return redirect(url_for('frontend.browse'))
+
+@frontend.route("/browse")
 def browse():
     return render_template("browse.html")
 
