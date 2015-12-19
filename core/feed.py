@@ -13,9 +13,10 @@ from core.scheduling import ScheduleEntry
 
 @celery_app.task
 def update_feed(feed_name):
-    print "Running {}".format(feed_name)
+    logging.info("Running {}".format(feed_name))
     f = Feed.objects.get(name=feed_name)
     try:
+        f.update_status("Updating...")
         f.update()
         f.update_status("OK")
     except Exception as e:
@@ -57,8 +58,6 @@ class Feed(ScheduleEntry):
         else:
             r = requests.get(self.source, headers=headers)
 
-        self.update_status("Update OK")
-
         return self.parse_xml(r.content, main_node, children)
 
     def parse_xml(self, data, main_node, children):
@@ -84,9 +83,6 @@ class Feed(ScheduleEntry):
 
         feed = r.text.split('\n')
 
-        self.update_status("Update OK")
-        self.save()
-
         for line in feed:
             yield line
 
@@ -101,9 +97,6 @@ class Feed(ScheduleEntry):
         feed = r.text.split('\n')
         reader = csv.reader(feed, delimiter=delimiter, quotechar=quotechar)
 
-        self.update_status("Update OK")
-        self.save()
-
         for line in reader:
             yield line
 
@@ -113,12 +106,9 @@ class Feed(ScheduleEntry):
         else:
             r = requests.get(self.source, headers=headers)
 
-        self.update_status("Update OK")
-        self.save()
-
         return r.json()
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source", "status"]}
+        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source", "status", "last_run"]}
         i['frequency'] = str(self.frequency)
         return i

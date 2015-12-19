@@ -1,8 +1,12 @@
 $(function() {
+  scan_populate();
+});
+
+function scan_populate() {
   $(".yeti-populate").each(function() {
     yeti_populate($(this));
   });
-});
+}
 
 function yeti_populate(elt) {
 

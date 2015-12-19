@@ -1,12 +1,12 @@
 {% import 'macros.html' as macros %}
 
 <table class="table table-condensed yeti-table table-hover">
-  <tr><th>Name</th><th>Runs every</th><th>Description</th><th>Status</th><th>Toggle</th><th></th></tr>
+  <tr><th>Name</th><th>Runs every</th><th>Last run</th><th>Description</th><th>Status</th><th>Toggle</th><th></th></tr>
   {% for feed in data %}
   <tr class="{{ "disabled" if not feed["enabled"] }} {{ "error" if (feed["status"] != "OK") else "success" }}" data-name="{{feed["name"]}}">
     <td><a href="{{feed["source"] }}" target="_blank"><span class="glyphicon glyphicon-new-window"></span></a> <strong>{{ feed["name"] }}</strong></td>
     <td>{{ feed["frequency"] }}</td>
-
+    <td>{{ macros.display_datetime(feed["last_run"]) or "Never" }}</td>
     <td>{{ feed["description"] }}</td>
     <td class="status">{{ feed["status"] }}</td>
     <td><span data-url="{{ url_for('api.feedapi', name=feed["name"], action="toggle") }}" class="feed-toggle glyphicon glyphicon-{{ "ok" if feed["enabled"] else "remove" }}"></span></td>

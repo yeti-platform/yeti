@@ -1,7 +1,5 @@
 $(function() {
 
-  reload_feeds();
-
   $("#feed-table").on('click', '.feed-toggle', function() {
     toggle_feed($(this));
   });
@@ -11,21 +9,10 @@ $(function() {
   });
 
   setInterval(function() {
-    reload_feeds();
+    scan_populate();
   }, 2000);
 
 });
-
-function reload_feeds() {
-  $.ajax({
-    method: "GET",
-    contentType: "application/json",
-    url: $("#feed-table").data("url"),
-    success: function(feeds) {
-      $("#feed-table").html(feeds);
-    }
-  });
-}
 
 
 function toggle_feed(button) {
@@ -36,6 +23,7 @@ function toggle_feed(button) {
     success: function(data) {
       button.toggleClass("glyphicon glyphicon-ok");
       button.toggleClass("glyphicon glyphicon-remove");
+      button.parent().parent().toggleClass("disabled")
     }
   });
 }
@@ -45,8 +33,6 @@ function refresh_feed(button) {
     method: "POST",
     headers: {"Accept": "application/json"},
     url: button.data("url"),
-    success: function(data) {
-      button.parent().parent().find(".status").text("Refreshing...");
-    }
+    success: function(data) { }
   });
 }
