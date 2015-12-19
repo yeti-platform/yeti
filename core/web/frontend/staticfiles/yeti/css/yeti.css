@@ -64,3 +64,13 @@
   margin:3px 3px 3px 10px;
   cursor: pointer;
 }
+
+/* feeds */
+
+.feed-toggle, .feed-refresh, .analytics-toggle, .analytics-refresh {
+  cursor:pointer;
+}
+
+.yeti-table tr.disabled {
+  opacity: 0.3;
+}
