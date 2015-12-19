@@ -4,14 +4,16 @@ import urlnorm
 
 from core.observables import Observable
 from core.errors import ObservableValidationError
+from core.helpers import defang
 
 
 class Url(Observable):
 
     def clean(self):
         """Ensures that URLs are canonized before saving"""
+        self.value = defang(self.value)
         try:
-            if re.match("[a-zA-Z]+://", self.value) is None:
+            if re.match(r"[^:]+://", self.value) is None:  # if no schema is specified, assume http://
                 self.value = "http://{}".format(self.value)
             self.value = urlnorm.norm(self.value)
         except urlnorm.InvalidUrl:
