@@ -9,13 +9,35 @@
 
 </ol>
 {% endblock %}
+
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/query.js') }}" charset="utf-8"></script>
 {%endblock%}
 
 {% block main %}
 <div class="row">
+
   <div class="col-md-12">
+    <div class="panel panel-primary yeti-panel">
+      <div class="panel-heading">
+        <h1 class="panel-title">Observables already in database</h1>
+      </div>
+      <div class="panel-body">
+        <table class="table table-condensed">
+          <tr><th>Value</th><th>Tags</th><th>Context count</th><th>Creation date</th></tr>
+          {% for obs in data['known']%}
+          <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|length}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="row">
+
+  <div class="col-md-8">
     <div class="panel panel-danger yeti-panel">
       <div class="panel-heading">
         <h1 class="panel-title">Indicator matches</h1>
@@ -27,24 +49,6 @@
           <tr data-id={{match['observable'].id}}>
             <td>{{match['name']}}</td><td>{{match['observable']['value']}}</td><td>{{match['diamond']}}</td><td>{{macros.display_tags(match['suggested_tags'])}} <span class="glyphicon glyphicon-tags tag-all"></span></td>
           </tr>
-          {% endfor %}
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-md-8">
-    <div class="panel panel-primary yeti-panel">
-      <div class="panel-heading">
-        <h1 class="panel-title">Known observables</h1>
-      </div>
-      <div class="panel-body">
-        <table class="table table-condensed">
-          <tr><th>Value</th><th>Tags</th><th>Context count</th><th>Creation date</th></tr>
-          {% for obs in data['known']%}
-          <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|length}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
           {% endfor %}
         </table>
       </div>

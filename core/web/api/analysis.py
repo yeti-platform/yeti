@@ -35,6 +35,7 @@ def match_observables(observables):
                 [match["suggested_tags"].add(tag) for tag in node.generate_tags() if tag not in o_tags]
 
         data["matches"].append(match)
+        data["known"].append(o.info())
         data["unknown"].remove(o.value)
 
     for o in data["unknown"].copy():
