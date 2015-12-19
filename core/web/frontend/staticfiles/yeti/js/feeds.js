@@ -46,7 +46,6 @@ function refresh_feed(button) {
     headers: {"Accept": "application/json"},
     url: button.data("url"),
     success: function(data) {
-      console
       button.parent().parent().find(".status").text("Refreshing...");
     }
   });

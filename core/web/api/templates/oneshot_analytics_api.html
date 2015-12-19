@@ -1,0 +1,13 @@
+{% import 'macros.html' as macros %}
+
+<table class="table table-condensed yeti-table table-hover">
+  <tr><th>Name</th><th>Acts on</th><th>Description</th><th>Toggle</th></tr>
+  {% for analytics in data %}
+  <tr class="{{ "disabled" if not analytics["enabled"] }}" data-name="{{analytics["name"]}}">
+    <td><strong>{{ analytics["name"] }}</strong></td>
+    <td>{{ analytics["acts_on"] }}</td>
+    <td>{{ analytics["description"] }}</td>
+    <td><span data-url="{{ url_for('api.oneshotanalyticsapi', name=analytics["name"], action="toggle") }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>
+  </tr>
+  {% endfor %}
+</table>

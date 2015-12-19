@@ -30,9 +30,21 @@ class ScheduledAnalytics(ScheduleEntry):
     def each(cls, observable):
         raise NotImplementedError("This method must be overridden in each class it inherits from")
 
+    def info(self):
+        i = {k: v for k, v in self._data.items() if k in ["name", "description", "last_run", "enabled"]}
+        i['frequency'] = str(self.frequency)
+        i['expiration'] = str(self.EXPIRATION)
+        i['acts_on'] = self.ACTS_ON
+        return i
+
 
 class OneShotAnalytics(OneShotEntry):
 
     @classmethod
     def run(cls, e):
         celery_app.send_task("core.analytics_tasks.single", [cls.__name__, e.to_json()])
+
+    def info(self):
+        i = {k: v for k, v in self._data.items() if k in ["name", "description", "enabled"]}
+        i['acts_on'] = self.ACTS_ON
+        return i

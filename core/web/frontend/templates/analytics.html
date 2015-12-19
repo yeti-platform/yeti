@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+  <li>YETI</li>
+  <li>Admin</li>
+  <li class="active">Analyzers</li>
+</ol>
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/analytics.js') }}" charset="utf-8"></script>
+{%endblock%}
+
+
+{% block main %}
+<h3>Scheduled</h3>
+<div id="scheduled-table" class="yeti-populate" data-url="{{ url_for('api.scheduledanalyticsapi') }}">
+
+</div>
+
+<h3>One-shot</h3>
+<div id="oneshot-table" class="yeti-populate" data-url="{{ url_for('api.oneshotanalyticsapi') }}">
+
+</div>
+
+{% endblock %}

@@ -11,7 +11,7 @@ class QueryVirusTotal(OneShotAnalytics):
                        "and linking to other observables"
     }
 
-    ACTS_ON = ["Hash"]
+    ACTS_ON = "Hash"
 
     @staticmethod
     def analyze(hash):

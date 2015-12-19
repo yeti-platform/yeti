@@ -26,6 +26,9 @@ def query():
 def feeds():
     return render_template("feeds.html")
 
+@frontend.route("/analytics")
+def analytics():
+    return render_template("analytics.html")
 
 @frontend.route("/observables/<id>")
 def observable(id):

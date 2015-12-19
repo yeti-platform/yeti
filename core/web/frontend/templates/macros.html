@@ -9,7 +9,9 @@
 {%- endmacro %}
 
 {% macro display_datetime(date) -%}
-  {{ date.strftime("%Y-%m-%d %H:%M") }}
+  {% if date %}
+    {{ date.strftime("%Y-%m-%d %H:%M") }}
+  {% endif%}
 {%- endmacro %}
 
 {% macro display_date(date) -%}

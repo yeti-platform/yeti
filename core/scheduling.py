@@ -36,7 +36,7 @@ class ScheduleEntry(Document):
 
 class OneShotEntry(Document):
     name = StringField(required=True, unique=True)
-    enabled = BooleanField()
+    enabled = BooleanField(default=True)
     description = StringField(required=True)
 
     # This should be defined in subclasses, to set the field values
