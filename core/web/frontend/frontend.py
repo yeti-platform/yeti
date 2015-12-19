@@ -13,7 +13,6 @@ def browse():
 
 @frontend.route("/query", methods=['GET', 'POST'])
 def query():
-
     if request.method == "GET":
         return render_template("query.html")
 
@@ -21,6 +20,12 @@ def query():
         obs = [o.strip() for o in request.form['bulk-text'].split('\n')]
         data = match_observables(obs)
         return render_template("query_results.html", data=data)
+
+
+@frontend.route("/feeds")
+def feeds():
+    return render_template("feeds.html")
+
 
 @frontend.route("/observables/<id>")
 def observable(id):

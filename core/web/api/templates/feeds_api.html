@@ -1,0 +1,14 @@
+{% import 'macros.html' as macros %}
+
+<table class="table table-condensed yeti-table table-hover">
+  <tr><th>Name</th><th>Runs every</th><th>Description</th><th>Source</th><th>Enabled</th></tr>
+  {% for feed in data %}
+  <tr>
+    <td>{{ feed["name"] }}</td>
+    <td>{{ feed["frequency"] }}</td>
+    <td>{{ feed["description"] }}</td>
+    <td>{{ feed["source"] }}</td>
+    <td>{{ feed["enabled"] }}</td>
+  </tr>
+  {% endfor %}
+</table>

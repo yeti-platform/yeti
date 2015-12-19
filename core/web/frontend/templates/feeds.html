@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/feeds.js') }}" charset="utf-8"></script>
+{%endblock%}
+
+{% block main %}
+<div id="feed-table" data-url="{{ url_for('api.feedapi') }}">
+
+</div>
+{% endblock %}

@@ -48,7 +48,7 @@
             <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Admin <span class="caret"></span></a>
             <ul class="dropdown-menu">
-              <li><a href="#">Feeds</a></li>
+              <li><a href="{{ url_for('frontend.feeds') }}">Feeds</a></li>
               <li role="separator" class="divider"></li>
               <li class="dropdown-header">Internals</li>
               <li><a href="#">Settings</a></li>
@@ -63,7 +63,6 @@
 
     <div class="container yeti-content">
 
-      <!-- Main component for a primary marketing message or call to action -->
       {% block main %}
       {% endblock %}
 

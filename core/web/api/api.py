@@ -16,6 +16,8 @@ render = Render(renderers=[template_renderer, bson_renderer])
 
 from core.web.api.observable import ObservableApi
 from core.web.api.analysis import AnalysisApi
+from core.web.api.feeds import FeedApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
+api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>')

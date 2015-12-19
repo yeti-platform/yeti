@@ -108,3 +108,8 @@ class Feed(ScheduleEntry):
         self.status = "Update OK"
 
         return r.json()
+
+    def info(self):
+        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source"]}
+        i['frequency'] = str(self.frequency)
+        return i
