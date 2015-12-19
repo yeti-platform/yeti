@@ -8,10 +8,6 @@ $(function() {
     refresh_feed($(this));
   });
 
-  setInterval(function() {
-    scan_populate();
-  }, 2000);
-
 });
 
 
@@ -32,7 +28,6 @@ function refresh_feed(button) {
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},
-    url: button.data("url"),
-    success: function(data) { }
+    url: button.data("url")
   });
 }

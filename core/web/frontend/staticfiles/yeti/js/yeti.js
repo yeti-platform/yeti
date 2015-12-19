@@ -1,5 +1,9 @@
 $(function() {
   scan_populate();
+
+  setInterval(function() {
+    scan_populate();
+  }, 2000);
 });
 
 function scan_populate() {

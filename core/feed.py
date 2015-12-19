@@ -34,7 +34,6 @@ class Feed(ScheduleEntry):
     SCHEDULED_TASK = "core.feed.update_feed"
 
     source = StringField(required=True)
-    status = StringField(default="N/A")
 
     def update(self):
         raise NotImplementedError(
@@ -45,10 +44,6 @@ class Feed(ScheduleEntry):
             "analyze: This method must be implemented in your feed class")
 
     # Helper functions
-
-    def update_status(self, status):
-        self.status = status
-        self.save()
 
     def update_xml(self, main_node, children, headers={}, auth=None):
         assert self.source is not None

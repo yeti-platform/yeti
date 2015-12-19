@@ -31,7 +31,7 @@ class ScheduledAnalytics(ScheduleEntry):
         raise NotImplementedError("This method must be overridden in each class it inherits from")
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "description", "last_run", "enabled"]}
+        i = {k: v for k, v in self._data.items() if k in ["name", "description", "last_run", "enabled", "status"]}
         i['frequency'] = str(self.frequency)
         i['expiration'] = str(self.EXPIRATION)
         i['acts_on'] = self.ACTS_ON

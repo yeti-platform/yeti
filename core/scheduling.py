@@ -33,6 +33,10 @@ class ScheduleEntry(Document):
 
     meta = {"allow_inheritance": True}
 
+    def update_status(self, status):
+        self.status = status
+        self.save()
+
 
 class OneShotEntry(Document):
     name = StringField(required=True, unique=True)

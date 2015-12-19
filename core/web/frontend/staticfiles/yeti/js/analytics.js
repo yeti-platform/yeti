@@ -18,8 +18,7 @@ function refresh_analytics(button) {
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},
-    url: button.data("url"),
-    success: function(data) { }
+    url: button.data("url")
   });
 }
 

@@ -33,13 +33,16 @@ def schedule(name):
             logging.info("Task {} is already running...".format(name))
             return
 
+    a.update_status("Running...")
     if a.enabled:  # check if Analytics is enabled
         a.analyze_outdated()
         a.last_run = datetime.now()
 
     if a.lock:  # release lock if it was set
         a.lock = False
+
     a.save()
+    a.update_status("OK")
 
 
 @celery_app.task

@@ -8,7 +8,7 @@
     <td>{{ feed["frequency"] }}</td>
     <td>{{ macros.display_datetime(feed["last_run"]) or "Never" }}</td>
     <td>{{ feed["description"] }}</td>
-    <td class="status">{{ feed["status"] }}</td>
+    <td class="status">{{ feed["status"] or "N/A"}}</td>
     <td><span data-url="{{ url_for('api.feedapi', name=feed["name"], action="toggle") }}" class="feed-toggle glyphicon glyphicon-{{ "ok" if feed["enabled"] else "remove" }}"></span></td>
     <td><span data-url="{{ url_for('api.feedapi', name=feed["name"], action="refresh") }}" class="feed-refresh glyphicon glyphicon-refresh"></span></td>
   </tr>
