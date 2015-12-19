@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb">
+  <li>YETI</li>
+  <li>Admin</li>
+  <li class="active">Feeds</li>
+</ol>
+{% endblock %}
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/feeds.js') }}" charset="utf-8"></script>
