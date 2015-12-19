@@ -4,6 +4,5 @@ from core.observables import Observable
 
 class ObservableApi(CrudApi):
 
-    search_template = 'observables.html'
-    api_frontend = 'observableapi'
+    template = 'observable_api.html'
     objectmanager = Observable

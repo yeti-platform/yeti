@@ -25,8 +25,13 @@ class CrudApi(Resource):
         return render(data)
 
     @classmethod
-    def get(cls, id):
-        return render(cls.objectmanager.objects.get(id=id).info())
+    def get(cls, id=None):
+        if id:
+            data = cls.objectmanager.objects.get(id=id).info()
+        else:
+            data = [d.info() for d in cls.objectmanager.objects.all()]
+
+        return render(data, template=cls.template)
 
     @classmethod
     def post(cls):
@@ -45,10 +50,10 @@ class CrudApi(Resource):
             data = []
             for o in cls.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
                 info = o.info()
-                info['uri'] = url_for("api.{}".format(cls.api_frontend), id=str(o.id))
+                info['uri'] = url_for("api.{}".format(cls.__name__.lower()), id=str(o.id))
                 data.append(info)
 
         except InvalidQueryError as e:
             restful_abort(400, invalid_query=str(e))
 
-        return render(data, cls.search_template)
+        return render(data, cls.template)
