@@ -20,4 +20,4 @@ from core.web.api.feeds import FeedApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
-api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>')
+api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:name>/<string:action>')
