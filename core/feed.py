@@ -17,10 +17,11 @@ def update_feed(feed_name):
     f = Feed.objects.get(name=feed_name)
     try:
         f.update()
+        f.update_status("OK")
     except Exception as e:
         msg = "ERROR updating feed: {}".format(e)
         logging.error(msg)
-        f.status = msg
+        f.update_status(msg)
 
     f.last_run = datetime.now()
     f.save()
@@ -32,6 +33,7 @@ class Feed(ScheduleEntry):
     SCHEDULED_TASK = "core.feed.update_feed"
 
     source = StringField(required=True)
+    status = StringField(default="N/A")
 
     def update(self):
         raise NotImplementedError(
@@ -43,6 +45,10 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
+    def update_status(self, status):
+        self.status = status
+        self.save()
+
     def update_xml(self, main_node, children, headers={}, auth=None):
         assert self.source is not None
 
@@ -51,7 +57,7 @@ class Feed(ScheduleEntry):
         else:
             r = requests.get(self.source, headers=headers)
 
-        self.status = "Update OK"
+        self.update_status("Update OK")
 
         return self.parse_xml(r.content, main_node, children)
 
@@ -78,7 +84,8 @@ class Feed(ScheduleEntry):
 
         feed = r.text.split('\n')
 
-        self.status = "Update OK"
+        self.update_status("Update OK")
+        self.save()
 
         for line in feed:
             yield line
@@ -94,7 +101,8 @@ class Feed(ScheduleEntry):
         feed = r.text.split('\n')
         reader = csv.reader(feed, delimiter=delimiter, quotechar=quotechar)
 
-        self.status = "Update OK"
+        self.update_status("Update OK")
+        self.save()
 
         for line in reader:
             yield line
@@ -105,11 +113,12 @@ class Feed(ScheduleEntry):
         else:
             r = requests.get(self.source, headers=headers)
 
-        self.status = "Update OK"
+        self.update_status("Update OK")
+        self.save()
 
         return r.json()
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source"]}
+        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source", "status"]}
         i['frequency'] = str(self.frequency)
         return i
