@@ -62,7 +62,7 @@ function refresh_table() {
       table = style_table($(observables))
       $("#observables").html(table);
     }
-  })
+  });
 }
 
 function style_table(table) {
