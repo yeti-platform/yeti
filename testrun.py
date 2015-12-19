@@ -87,6 +87,7 @@ o8 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe2")
 
 t1 = Observable.add_text("http://toto.com")
 t2 = Observable.add_text("Http://tata.com")
+t3 = Observable.add_text("hxxp://tomchop[.]me")
 l = Link.connect(t1, t2)
 print "Links", Link.objects(src=t1)
 t2.delete()
