@@ -24,7 +24,6 @@ class AsproxTracker(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-
         if line[0] == 'Number':
             return
 

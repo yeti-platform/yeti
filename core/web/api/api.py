@@ -20,7 +20,10 @@ from core.web.api.analysis import AnalysisApi
 from core.web.api.feeds import FeedApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
+
 api_restful.add_resource(ScheduledAnalyticsApi, '/analytics/scheduled', '/analytics/scheduled/<string:name>/<string:action>')
 api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/oneshot/<string:name>/<string:action>')
+
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
+
 api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:name>/<string:action>')

@@ -10,10 +10,12 @@ from core.errors import ObservableValidationError
 
 class ZeusTrackerDropzones(Feed):
 
-    settings = {"frequency": timedelta(hours=1),
-                "name": "ZeusTrackerDropzones",
-                "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones",
-                "description": "This feed shows the latest 50 ZeuS dropzone URLs."}
+    settings = {
+        "frequency": timedelta(hours=1),
+        "name": "ZeusTrackerDropzones",
+        "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones",
+        "description": "Shows the latest 50 ZeuS dropzone URLs.",
+    }
 
     def update(self):
         for d in self.update_xml('item', ["title", "link", "description", "guid"]):
