@@ -7,7 +7,7 @@ import traceback
 from mongoengine import ListField, StringField, Q
 
 from core.config.celeryctl import celery_app
-from core.observables import Observable
+from core.observables import Observable, TagName
 from core.scheduling import ScheduleEntry
 
 
@@ -43,13 +43,15 @@ class Export(ScheduleEntry):
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
         self.export_file_handle = codecs.open(self.output_file, 'w+', "utf-8")
+        self.include_tags_id = list(TagName.objects(name__in=self.include_tags))
+        self.exclude_tags_id = list(TagName.objects(name__in=self.exclude_tags))
 
     @property
     def output_file(self):
         return os.path.abspath(os.path.join(self.output_dir, self.name))
 
     def query(self):
-        q = Q(tags__name__in=self.include_tags) & Q(tags__name__nin=self.exclude_tags)
+        q = Q(tags__name__in=self.include_tags_id) & Q(tags__name__nin=self.exclude_tags_id)
         for o in Observable.objects(q):
             self.format(o)
 

@@ -5,7 +5,7 @@ from mongoengine.errors import NotUniqueError
 
 from core.helpers import is_url, is_ip, is_hostname
 from core.database import Node
-from core.observables import Tag
+from core.observables import Tag, TagName
 from core.errors import ObservableValidationError
 
 
@@ -69,7 +69,7 @@ class Observable(Node):
             new_tags = [new_tags]
 
         for new_tag in new_tags:
-            tag_name = new_tag
+            tag_name = TagName.objects(name=new_tag).modify(set__name=new_tag, upsert=True, new=True)
             if new_tag.strip() != '':
                 if self.__class__.objects(id=self.id, tags__name=tag_name).count() == 1:
                     self.__class__.objects(id=self.id, tags__name=tag_name).modify(new=True, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())
