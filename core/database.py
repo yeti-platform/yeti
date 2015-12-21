@@ -76,9 +76,12 @@ class Node(Document):
 
     @classmethod
     def get_or_create(cls, **kwargs):
-        o = cls(**kwargs)
-        o.clean()
-        return cls.objects(**kwargs).modify(upsert=True, new=True, **kwargs)
+        obj = cls(**kwargs)
+        obj.clean()
+        try:
+            return obj.save()
+        except NotUniqueError:
+            return cls.objects.get(value=obk.value)
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))

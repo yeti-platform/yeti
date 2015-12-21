@@ -51,7 +51,7 @@ class TorExitNodes(Feed):
         context['description'] = "Tor exit node: %s (%s)" % (context['name'], ip)
         context['source'] = self.name
         try:
-            ip = Ip.get_or_create(fields[0])
+            ip = Ip.get_or_create(value=fields[0])
             ip.add_context(context)
             ip.add_source("feed")
             ip.tag(['tor'])

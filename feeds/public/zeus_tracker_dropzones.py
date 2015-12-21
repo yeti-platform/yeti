@@ -36,7 +36,7 @@ class ZeusTrackerDropzones(Feed):
             pass
 
         try:
-            n = Url.get_or_create(url_string)
+            n = Url.get_or_create(value=url_string)
             n.add_context(context)
             n.add_source("feed")
             n.tag(['zeus', 'objective', 'banker', 'crimeware', 'malware'])

@@ -49,9 +49,9 @@ class FeodoTracker(Feed):
 
         try:
             if re.search(r"[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}", g['host']):
-                new = Ip.get_or_create(g['host'])
+                new = Ip.get_or_create(value=g['host'])
             else:
-                new = Hostname.get_or_create(g['host'])
+                new = Hostname.get_or_create(value=g['host'])
             new.add_context(context)
             new.add_source("feed")
             new.tag(['dridex', 'malware', 'crimeware', 'banker', 'c2'])

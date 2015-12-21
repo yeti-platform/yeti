@@ -43,7 +43,7 @@ class AsproxTracker(Feed):
         context['description'] = Details if Details else "N/A"
         context['source'] = self.name
         try:
-            url = Url.get_or_create(url)
+            url = Url.get_or_create(value=url)
             url.add_context(context)
             url.add_source("feed")
             url.tag(['asprox', 'c2', 'scanner'])

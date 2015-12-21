@@ -42,16 +42,7 @@ class Observable(Node):
 
     @classmethod
     def add_text(cls, text):
-        return Observable.guess_type(text).get_or_create(text)
-
-    @classmethod
-    def get_or_create(cls, value):
-        o = cls(value=value)
-        o.clean()
-        try:
-            return o.save()
-        except NotUniqueError:
-            return cls.objects.get(value=o.value)
+        return Observable.guess_type(text).get_or_create(value=text)
 
     def add_context(self, context):
         assert 'source' in context
