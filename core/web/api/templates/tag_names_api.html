@@ -1,0 +1,12 @@
+{% import 'macros.html' as macros %}
+
+<table class="table table-condensed yeti-table table-hover">
+  <tr><th>Name</th><th>Count</th><th>Date created</th></tr>
+  {% for tag in data %}
+  <tr data-name="{{tag["name"]}}">
+    <td><strong>{{ macros.display_tags(tag["name"]) }}</strong></td>
+    <td>{{ tag["count"] }}</td>
+    <td>{{ macros.display_datetime(tag["created"]) }}</td>
+  </tr>
+  {% endfor %}
+</table>

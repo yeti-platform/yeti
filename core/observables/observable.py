@@ -69,7 +69,7 @@ class Observable(Node):
             new_tags = [new_tags]
 
         for new_tag in new_tags:
-            tag_name = TagName.objects(name=new_tag).modify(set__name=new_tag, upsert=True, new=True)
+            tag_name = TagName.objects(name=new_tag).modify(set__name=new_tag, inc__count=1, upsert=True, new=True).save()
             if new_tag.strip() != '':
                 if self.__class__.objects(id=self.id, tags__name=tag_name).count() == 1:
                     self.__class__.objects(id=self.id, tags__name=tag_name).modify(new=True, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())

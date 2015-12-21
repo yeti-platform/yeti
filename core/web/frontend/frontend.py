@@ -10,6 +10,7 @@ frontend = Blueprint("frontend", __name__, template_folder="templates", static_f
 def index():
     return redirect(url_for('frontend.browse'))
 
+
 @frontend.route("/browse")
 def browse():
     return render_template("browse.html")
@@ -26,13 +27,25 @@ def query():
         return render_template("query_results.html", data=data)
 
 
+# Admin section
+
 @frontend.route("/dataflows")
 def dataflows():
     return render_template("dataflows.html")
 
+
 @frontend.route("/analytics")
 def analytics():
     return render_template("analytics.html")
+
+
+@frontend.route("/tags")
+def tags():
+    return render_template("tags.html")
+
+
+# detail section
+
 
 @frontend.route("/observables/<id>")
 def observable(id):

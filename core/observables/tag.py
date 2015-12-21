@@ -6,7 +6,12 @@ from core.config.mongoengine_extras import TimeDeltaField
 
 
 class TagName(Document):
-    name = StringField()
+    name = StringField(required=True)
+    count = IntField(required=True, default=0)
+    created = DateTimeField(default=datetime.now)
+
+    def info(self):
+        return {k: v for k, v in self._data.items() if k in ["name", "count", "created"]}
 
 
 class Tag(EmbeddedDocument):
