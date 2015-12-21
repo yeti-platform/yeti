@@ -11,20 +11,6 @@ from core.web.api.api import render
 class ObservableApi(CrudApi):
 
     @classmethod
-    def put(cls):
-        q = request.json
-        data = {"count": 0}
-        for o in q["observables"]:
-            obs = cls.add_text(o["value"])
-            if "tags" in o:
-                obs.tag(o["tags"])
-            if "context" in o:
-                obs.add_context(o["context"])
-            data["count"] += 1
-
-        return render(data)
-
-    @classmethod
     def post(cls):
         query = request.get_json(silent=True)
         fltr = query.get('filter', {})
