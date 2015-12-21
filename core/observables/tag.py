@@ -7,7 +7,7 @@ from core.database import Node
 
 
 class TagName(Node):
-    name = StringField(required=True)
+    name = StringField(required=True, unique=True)
     count = IntField(required=True, default=0)
     created = DateTimeField(default=datetime.now)
 
