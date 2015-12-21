@@ -65,9 +65,11 @@
   cursor: pointer;
 }
 
-/* feeds */
+/* dataflow */
 
-.feed-toggle, .feed-refresh, .analytics-toggle, .analytics-refresh {
+.feed-toggle, .feed-refresh,
+.export-toggle, .export-refresh,
+.analytics-toggle, .analytics-refresh {
   cursor:pointer;
 }
 
@@ -75,6 +77,7 @@
   opacity: 0.3;
 }
 
-.yeti-table tr.disabled .feed-refresh {
-  cursor: default;
+.yeti-table tr.disabled .feed-refresh,
+.yeti-table tr.disabled .export-refresh {
+  cursor: not-allowed;
 }

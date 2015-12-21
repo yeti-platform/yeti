@@ -1,17 +1,25 @@
 $(function() {
 
   $("#feed-table").on('click', '.feed-toggle', function() {
-    toggle_feed($(this));
+    toggle($(this));
+  });
+
+  $("#export-table").on('click', '.export-toggle', function() {
+    toggle($(this));
   });
 
   $("#feed-table").on('click', '.feed-refresh', function() {
-    refresh_feed($(this));
+    refresh($(this));
+  });
+
+  $("#export-table").on('click', '.export-refresh', function() {
+    refresh($(this));
   });
 
 });
 
 
-function toggle_feed(button) {
+function toggle(button) {
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},
@@ -24,7 +32,7 @@ function toggle_feed(button) {
   });
 }
 
-function refresh_feed(button) {
+function refresh(button) {
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},

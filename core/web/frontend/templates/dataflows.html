@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+  <li>YETI</li>
+  <li>Admin</li>
+  <li class="active">Dataflows (feeds and exports)</li>
+</ol>
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/dataflows.js') }}" charset="utf-8"></script>
+{%endblock%}
+
+{% block main %}
+<ul class="nav nav-tabs" role="tablist">
+   <li role="presentation" class="active"><a href="#import" aria-controls="import" role="tab" data-toggle="tab">Feeds</a></li>
+   <li role="presentation"><a href="#export" aria-controls="export" role="tab" data-toggle="tab">Exports</a></li>
+ </ul>
+
+<div class="tab-content">
+
+  <div role="tabpanel" class="tab-pane active" id="import"> <!-- import feed tab -->
+    <div id="feed-table" class="yeti-populate" data-url="{{ url_for('api.feedapi') }}">
+    </div>
+  </div>
+
+  <div role="tabpanel" class="tab-pane" id="export"> <!-- export feed tab -->
+    <div id="export-table" class="yeti-populate" data-url="{{ url_for('api.exportapi') }}">
+    </div>
+  </div>
+
+</div>
+{% endblock %}

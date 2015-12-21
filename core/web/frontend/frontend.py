@@ -26,9 +26,9 @@ def query():
         return render_template("query_results.html", data=data)
 
 
-@frontend.route("/feeds")
-def feeds():
-    return render_template("feeds.html")
+@frontend.route("/dataflows")
+def dataflows():
+    return render_template("dataflows.html")
 
 @frontend.route("/analytics")
 def analytics():

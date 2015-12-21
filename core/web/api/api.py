@@ -18,6 +18,7 @@ from core.web.api.observable import ObservableApi
 from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
 from core.web.api.analysis import AnalysisApi
 from core.web.api.feeds import FeedApi
+from core.web.api.export import ExportApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
 
@@ -27,3 +28,4 @@ api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
 
 api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:name>/<string:action>')
+api_restful.add_resource(ExportApi, '/export/', '/export/<string:name>/<string:action>')
