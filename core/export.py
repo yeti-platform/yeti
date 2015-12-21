@@ -65,4 +65,5 @@ class Export(ScheduleEntry):
         i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "status", "last_run", "include_tags", "exclude_tags"]}
         i['frequency'] = str(self.frequency)
         i['output_file'] = os.path.abspath(self.output_file)
+        i['id'] = str(self.id)
         return i

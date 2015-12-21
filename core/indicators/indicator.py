@@ -35,4 +35,6 @@ class Indicator(Node):
         return [self.diamond.lower()]
 
     def info(self):
-        return {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description']}
+        i = {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description']}
+        i['id'] = str(self.id)
+        return i

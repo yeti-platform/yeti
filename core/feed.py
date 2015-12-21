@@ -2,9 +2,9 @@ import csv
 import requests
 from datetime import datetime
 import logging
+from StringIO import StringIO
 
 from lxml import etree
-from StringIO import StringIO
 from mongoengine import StringField
 
 from core.config.celeryctl import celery_app
@@ -110,4 +110,5 @@ class Feed(ScheduleEntry):
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source", "status", "last_run"]}
         i['frequency'] = str(self.frequency)
+        i['id'] = str(self.id)
         return i

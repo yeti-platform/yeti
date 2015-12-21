@@ -45,7 +45,7 @@ class Link(Document):
         return l
 
     def info(self):
-        return {"tag": self.tag, "description": self.description}
+        return {"tag": self.tag, "description": self.description, "id": str(self.id)}
 
     def add_history(self, tag, description=None, first_seen=None, last_seen=None):
         # this is race-condition prone... think of a better way to do this
@@ -81,7 +81,13 @@ class Node(Document):
         try:
             return obj.save()
         except NotUniqueError:
-            return cls.objects.get(value=obk.value)
+            return cls.objects.get(value=obj.value)
+
+    @classmethod
+    def update(cls, id, data):
+        o = cls.objects(id=id).modify(new=True, **data)
+        o.clean()
+        o.save()
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))

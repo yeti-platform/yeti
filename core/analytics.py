@@ -35,6 +35,7 @@ class ScheduledAnalytics(ScheduleEntry):
         i['frequency'] = str(self.frequency)
         i['expiration'] = str(self.EXPIRATION)
         i['acts_on'] = self.ACTS_ON
+        i['id'] = str(self.id)
         return i
 
 
@@ -47,4 +48,5 @@ class OneShotAnalytics(OneShotEntry):
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "description", "enabled"]}
         i['acts_on'] = self.ACTS_ON
+        i['id'] = str(self.id)
         return i

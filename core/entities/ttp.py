@@ -10,7 +10,9 @@ class TTP(Entity):
     description = StringField()
 
     def info(self):
-        return {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
+        i = {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
+        i['id'] = str(self.id)
+        return i
 
     def generate_tags(self):
         return [self.killchain.lower()]

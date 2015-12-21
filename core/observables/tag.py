@@ -3,15 +3,18 @@ from datetime import datetime, timedelta
 from mongoengine import *
 
 from core.config.mongoengine_extras import TimeDeltaField
+from core.database import Node
 
 
-class TagName(Document):
+class TagName(Node):
     name = StringField(required=True)
     count = IntField(required=True, default=0)
     created = DateTimeField(default=datetime.now)
 
     def info(self):
-        return {k: v for k, v in self._data.items() if k in ["name", "count", "created"]}
+        i = {k: v for k, v in self._data.items() if k in ["name", "count", "created"]}
+        i['id'] = str(self.id)
+        return i
 
 
 class Tag(EmbeddedDocument):
@@ -28,6 +31,7 @@ class Tag(EmbeddedDocument):
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["first_seen", "last_seen", "fresh"]}
         i['name'] = self.name.name
+        i['id'] = str(self.id)
         return i
 
 
@@ -36,4 +40,6 @@ class TagGroup(Document):
     tags = ListField(TagName)
 
     def info(self):
-        return {"tags": [t.info() for t in self.tags], "name": self.name}
+        i = {"tags": [t.info() for t in self.tags], "name": self.name}
+        i['id'] = str(self.id)
+        return i
