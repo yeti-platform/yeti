@@ -15,7 +15,26 @@
 
 {% block main %}
 <!-- <h3>Tags</h3> -->
-<div id="scheduled-table" class="yeti-populate" data-url="{{ url_for('api.tagnameapi') }}">
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" class="active"><a href="#tags" aria-controls="tags" role="tab" data-toggle="tab">Tags</a></li>
+  <li role="presentation"><a href="#taggroup" aria-controls="taggroup" role="tab" data-toggle="tab">Tag Groups</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <div role="tabpanel" class="tab-pane active" id="tags"> <!-- import feed tab -->
+    <div id="tags-table" class="yeti-populate" data-url="{{ url_for('api.tagnameapi') }}">
+    </div>
+  </div>
+
+  <div role="tabpanel" class="tab-pane" id="taggroup"> <!-- taggroup feed tab -->
+    <div id="taggroup-table" class="yeti-populate" data-url="{{ url_for('api.taggroupapi') }}">
+    </div>
+  </div>
 
 </div>
+
+
+
+
 {% endblock %}

@@ -5,11 +5,10 @@ from core.web.api.api import render
 
 class CrudApi(Resource):
 
-    @classmethod
-    def get(cls, id=None):
+    def get(self, id=None):
         if id:
-            data = cls.objectmanager.objects.get(id=id).info()
+            data = self.objectmanager.objects.get(id=id).info()
         else:
-            data = [d.info() for d in cls.objectmanager.objects.all()]
+            data = [d.info() for d in self.objectmanager.objects.all()]
 
-        return render(data, template=cls.template)
+        return render(data, template=self.template)

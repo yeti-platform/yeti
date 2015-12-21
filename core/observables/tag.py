@@ -29,3 +29,11 @@ class Tag(EmbeddedDocument):
         i = {k: v for k, v in self._data.items() if k in ["first_seen", "last_seen", "fresh"]}
         i['name'] = self.name.name
         return i
+
+
+class TagGroup(Document):
+    name = StringField()
+    tags = ListField(TagName)
+
+    def info(self):
+        return {"tags": [t.info() for t in self.tags], "name": self.name}
