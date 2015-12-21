@@ -34,10 +34,10 @@ class ProcessHostnames(ScheduledAnalytics):
 
     @classmethod
     def each(cls, hostname, rtype, results):
-        h = Hostname.get_or_create(hostname)
+        h = Hostname.get_or_create(value=hostname)
         domain = is_subdomain(hostname)
         if domain:
-            d = Hostname.get_or_create(domain)
+            d = Hostname.get_or_create(value=domain)
             d.add_source("analytics")
             l = Link.connect(h, d)
             l.add_history(tag='domain')
