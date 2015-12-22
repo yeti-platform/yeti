@@ -24,6 +24,8 @@ def update_feed(feed_name):
         else:
             logging.error("Feed {} has been disabled".format(feed_name))
     except Exception as e:
+        import traceback
+        logging.error(traceback.format_exc())
         msg = "ERROR updating feed: {}".format(e)
         logging.error(msg)
         f.update_status(msg)

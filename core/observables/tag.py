@@ -6,7 +6,7 @@ from core.config.mongoengine_extras import TimeDeltaField
 from core.database import Node
 
 
-class TagName(Node):
+class Tag(Node):
     name = StringField(required=True, unique=True)
     count = IntField(required=True, default=0)
     created = DateTimeField(default=datetime.now)
@@ -17,9 +17,9 @@ class TagName(Node):
         return i
 
 
-class Tag(EmbeddedDocument):
+class ObservableTag(EmbeddedDocument):
 
-    name = ReferenceField(TagName)
+    name = StringField(required=True)
     first_seen = DateTimeField(default=datetime.now)
     last_seen = DateTimeField(default=datetime.now)
     expiration = TimeDeltaField(default=timedelta(days=365))
@@ -29,15 +29,13 @@ class Tag(EmbeddedDocument):
         return u"{} ({})".format(self.name, "fresh" if self.fresh else "old")
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["first_seen", "last_seen", "fresh"]}
-        i['name'] = self.name.name
-        i['id'] = str(self.id)
+        i = {k: v for k, v in self._data.items() if k in ["first_seen", "last_seen", "fresh", "name"]}
         return i
 
 
 class TagGroup(Document):
     name = StringField()
-    tags = ListField(TagName)
+    tags = ListField(Tag)
 
     def info(self):
         i = {"tags": [t.info() for t in self.tags], "name": self.name}

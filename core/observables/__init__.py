@@ -1,6 +1,6 @@
 from mongoengine import *
 
-from core.observables.tag import Tag, TagName, TagGroup
+from core.observables.tag import ObservableTag, Tag, TagGroup
 from core.observables.observable import Observable
 from core.observables.ip import Ip
 from core.observables.url import Url

@@ -1,11 +1,10 @@
 from core.web.api.crud import CrudApi
-from core.observables import TagName, TagGroup
-from core.web.api.api import render
+from core.observables import Tag, TagGroup
 
 
-class TagNameApi(CrudApi):
-    template = "tag_names_api.html"
-    objectmanager = TagName
+class TagApi(CrudApi):
+    template = "tag_api.html"
+    objectmanager = Tag
 
 
 class TagGroupApi(CrudApi):
