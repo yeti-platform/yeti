@@ -89,9 +89,6 @@ class Node(Document):
         o.clean()
         o.save()
 
-    def __unicode__(self):
-        return u"{} ({} context)".format(self.value, len(self.context))
-
     def incoming(self):
         return [(l, l.src) for l in Link.objects(dst=self)]
 
