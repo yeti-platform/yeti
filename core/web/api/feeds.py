@@ -12,7 +12,7 @@ class FeedApi(CrudApi):
 
     def post(self, id, action):
         if action not in ["refresh", "toggle"]:
-            restful_abort(400, {"error": "action must be either refresh or toggle"})
+            restful_abort(400, error="action must be either refresh or toggle")
         if action == "refresh":
             update_feed.delay(id)
             return render({"id": id})

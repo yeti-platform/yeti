@@ -32,7 +32,7 @@ class ExportApi(CrudApi):
                 e.save()
                 return render({"id": id, "status": e.enabled})
             else:
-                restful_abort(400, {"error": "action must be either refresh or toggle"})
+                restful_abort(400, error="action must be either refresh or toggle")
         else: # normal crud - se if we can make this DRY
             if not id:
                 return render(self.objectmanager.get_or_create(**request.json).info())
