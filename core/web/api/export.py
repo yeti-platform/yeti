@@ -1,3 +1,6 @@
+from flask import request
+from flask_restful import abort as restful_abort
+
 from core.web.api.crud import CrudApi
 from core.export import Export, execute_export
 from core.web.api.api import render
@@ -5,6 +8,7 @@ from core.web.api.api import render
 
 class ExportApi(CrudApi):
     template = "export_api.html"
+    single_template = "export_api_single.html"
     objectmanager = Export
 
     def get(cls, id=None, output=False):
@@ -15,12 +19,22 @@ class ExportApi(CrudApi):
 
         return render(data, template=cls.template)
 
-    def post(self, name, action):
-        if action == "refresh":
-            execute_export.delay(name)
-            return render({"name": name})
-        elif action == "toggle":
-            f = Export.objects.get(name=name)
-            f.enabled = not f.enabled
-            f.save()
-            return render({"name": name, "status": f.enabled})
+    def post(self, id=None, action=None):
+        # special actions
+        if action:
+            # special actions
+            if action == "refresh":
+                execute_export.delay(id)
+                return render({"id": id})
+            elif action == "toggle":
+                e = Export.objects.get(id=id)
+                e.enabled = not e.enabled
+                e.save()
+                return render({"id": id, "status": e.enabled})
+            else:
+                restful_abort(400, {"error": "action must be either refresh or toggle"})
+        else: # normal crud - se if we can make this DRY
+            if not id:
+                return render(self.objectmanager.get_or_create(**request.json).info())
+            else:
+                self.objectmanager.update(id, request.json)

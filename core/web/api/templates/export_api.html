@@ -10,8 +10,8 @@
     <td>{{ export["description"] }}</td>
     <td>{{ export["output_file"] }}</td>
     <td class="status">{{ export["status"] or "N/A"}}</td>
-    <td><span data-url="{{ url_for('api.exportapi', name=export["name"], action="toggle") }}" class="export-toggle glyphicon glyphicon-{{ "ok" if export["enabled"] else "remove" }}"></span></td>
-    <td><span data-url="{{ url_for('api.exportapi', name=export["name"], action="refresh") }}" class="export-refresh glyphicon glyphicon-refresh"></span></td>
+    <td><span data-url="{{ url_for('api.exportapi', id=export["id"], action="toggle") }}" class="export-toggle glyphicon glyphicon-{{ "ok" if export["enabled"] else "remove" }}"></span></td>
+    <td><span data-url="{{ url_for('api.exportapi', id=export["id"], action="refresh") }}" class="export-refresh glyphicon glyphicon-refresh"></span></td>
   </tr>
   {% endfor %}
 </table>
