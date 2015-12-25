@@ -11,29 +11,34 @@ class ExportApi(CrudApi):
     single_template = "export_api_single.html"
     objectmanager = Export
 
-    def get(cls, id=None, output=False):
+    def get(self, id=None, output=False):
         if id:
-            data = cls.objectmanager.objects.get(id=id).info()
+            data = self.objectmanager.objects.get(id=id).info()
         else:
-            data = [d.info() for d in cls.objectmanager.objects.all()]
+            data = [d.info() for d in self.objectmanager.objects.all()]
 
-        return render(data, template=cls.template)
+        return render(data, template=self.template)
 
     def post(self, id=None, action=None):
+
         # special actions
         if action:
+
             # special actions
             if action == "refresh":
                 execute_export.delay(id)
                 return render({"id": id})
+
             elif action == "toggle":
                 e = Export.objects.get(id=id)
                 e.enabled = not e.enabled
                 e.save()
                 return render({"id": id, "status": e.enabled})
+
             else:
                 restful_abort(400, error="action must be either refresh or toggle")
-        else: # normal crud - se if we can make this DRY
+
+        else:  # normal crud - se if we can make this DRY
             if not id:
                 return render(self.objectmanager.get_or_create(**request.json).info())
             else:
