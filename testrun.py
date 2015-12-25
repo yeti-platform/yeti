@@ -5,6 +5,10 @@ from core.indicators import Regex, Indicator
 from core.database import Link
 from core.entities import TTP
 from core.observables import Observable
+from core.observables import Tag
+
+
+
 
 ## Clean slate
 db = connect('yeti')
@@ -21,6 +25,19 @@ MalwareFamily("passwordstealer").save()
 MalwareFamily("rootkit").save()
 MalwareFamily("trojan").save()
 MalwareFamily("dropper").save()
+
+
+
+Tag.get_or_create(name="zeus").add_implied(["crimeware", "banker", "malware"])
+Tag.get_or_create(name="banker").add_implied(["crimeware", "malware"])
+Tag.get_or_create(name="crimeware").add_implied("malware")
+
+url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
+url.tag(["zeus", "banker"])
+# print url.find_tags()
+
+# import pdb; pdb.set_trace()
+
 
 
 ## Create some instances of malware & co

@@ -12,17 +12,17 @@ from core.scheduling import ScheduleEntry
 
 
 @celery_app.task
-def execute_export(export_name):
+def execute_export(export_id):
 
-    export = Export.objects.get(name=export_name)
+    export = Export.objects.get(id=export_id)
     try:
         if export.enabled:
-            logging.info("Running export {}".format(export_name))
+            logging.info("Running export {}".format(export.name))
             export.update_status("Exporting...")
             export.query()
             export.update_status("OK")
         else:
-            logging.error("Export {} has been disabled".format(export_name))
+            logging.error("Export {} has been disabled".format(export.name))
     except Exception as e:
         msg = "ERROR executing export: {}".format(e)
         logging.error(msg)

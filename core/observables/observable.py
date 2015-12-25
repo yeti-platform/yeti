@@ -55,6 +55,22 @@ class Observable(Node):
     def get_tags(self, fresh=True):
         return [t.name for t in self.tags if (t.fresh or not fresh)]
 
+    def find_tags(self):
+        # find related tags and count them
+        new_tags = {}
+        for tag in self.tags:
+            tag = Tag.objects.get(name=tag.name)
+            for implied in tag.implied:
+                new_tags[implied] = new_tags.get(tag, 0) + 1
+
+        # remove already known tags
+        localtags = [tag.name for tag in self.tags]
+        for tag in new_tags.copy():
+            if tag in localtags:
+                new_tags.pop(tag)
+
+        return new_tags
+
     def tag(self, new_tags):
         if isinstance(new_tags, (str, unicode)):
             new_tags = [new_tags]

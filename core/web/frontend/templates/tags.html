@@ -1,3 +1,5 @@
+{% import 'macros.html' as macros %}
+
 {% extends "base.html" %}
 
 {% block breadcrumb %}
@@ -10,31 +12,35 @@
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/tags.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='bootstrap-tokenfield/js/bootstrap-tokenfield.min.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='jquery-ui/js/jquery-ui.min.js') }}" charset="utf-8"></script>
+
+<link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='jquery-ui/css/jquery-ui.min.css') }}">
+<link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='bootstrap-tokenfield/css/tokenfield-typeahead.min.css') }}">
+<link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='bootstrap-tokenfield/css/bootstrap-tokenfield.min.css') }}">
 {%endblock%}
 
-
 {% block main %}
-<!-- <h3>Tags</h3> -->
-<ul class="nav nav-tabs" role="tablist">
-  <li role="presentation" class="active"><a href="#tags" aria-controls="tags" role="tab" data-toggle="tab">Tags</a></li>
-  <li role="presentation"><a href="#taggroup" aria-controls="taggroup" role="tab" data-toggle="tab">Tag Groups</a></li>
-</ul>
-
-<div class="tab-content">
-
+<div class="col-md-9">
   <div role="tabpanel" class="tab-pane active" id="tags"> <!-- import feed tab -->
     <div id="tags-table" class="yeti-populate" data-url="{{ url_for('api.tagapi') }}">
     </div>
   </div>
-
-  <div role="tabpanel" class="tab-pane" id="taggroup"> <!-- taggroup feed tab -->
-    <div id="taggroup-table" class="yeti-populate" data-url="{{ url_for('api.taggroupapi') }}">
-    </div>
-  </div>
-
 </div>
 
+<div class="col-md-3" id="tag-details" class="">
 
+  <form>
+    <div class="form-group">
+      <label for="tokenfield">Name</label>
+      <input type="text" class="form-control" id="selected-tag" value="" />
+    </div>
+    <div class="form-group">
+      <label for="tagfield">Implied tags</label>
+      <input type="text" class="form-control" id="tagfield" value="" />
+    </div>
+    <button type="button" id="yeti-save-tag" class="btn btn-primary btn-sm" name="save" disabled="disabled">Save</button>
+  </form>
 
-
+</div>
 {% endblock %}

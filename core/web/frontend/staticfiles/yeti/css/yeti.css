@@ -1,5 +1,9 @@
 /* app-wide changes */
 
+.hidden {
+  display:none;
+}
+
 .yeti-content {
   font-size: 0.85em;
   width:100%;
@@ -53,6 +57,14 @@
 .yeti-tag {
   margin: 0 1px 0 1px;
   font-size: 85%;
+  cursor: default;
+}
+
+.yeti-edit-tag:hover .yeti-tag,
+.yeti-edit-tag.selected .yeti-tag,
+.yeti-tag.selected {
+  background-color: #E03030;
+  cursor: pointer;
 }
 
 .tag-evil {

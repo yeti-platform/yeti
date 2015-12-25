@@ -81,7 +81,7 @@ class Node(Document):
         try:
             return obj.save()
         except NotUniqueError:
-            return cls.objects.get(value=obj.value)
+            return cls.objects.get(**kwargs)
 
     @classmethod
     def update(cls, id, data):
