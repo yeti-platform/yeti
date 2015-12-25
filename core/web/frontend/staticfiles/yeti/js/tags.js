@@ -31,7 +31,26 @@ $(function() {
     yeti_save_tag($(this));
   });
 
+  $("#yeti-delete-tag").click(function(){
+    yeti_delete_tag($(this));
+  });
+
 });
+
+function yeti_delete_tag(elt) {
+  url = elt.data('url');
+
+  $.ajax({
+    method: "DELETE",
+    headers: {"Accept": "application/json"},
+    contentType: "application/json",
+    url: url,
+    success: function(data) {
+      scan_populate();
+      $("#yeti-save-tag").addAttr("disabled");
+      $("#yeti-delete-tag").addAttr("disabled");
+    }});
+}
 
 function yeti_save_tag(elt) {
   url = elt.data('url');
@@ -46,13 +65,13 @@ function yeti_save_tag(elt) {
     contentType: "application/json",
     url: url,
     success: function(data) {
-      console.log(data);
       scan_populate();
     }});
 }
 
 function yeti_edit_tag(elt) {
   $("#yeti-save-tag").removeAttr("disabled");
+  $("#yeti-delete-tag").removeAttr("disabled");
   var implied_tags = []
 
   implies = elt.find(".implied span.yeti-tag").each(function(index) {
@@ -64,6 +83,7 @@ function yeti_edit_tag(elt) {
   $("#selected-tag").val(elt.find("span").data('tag'));
   $('#tagfield').tokenfield("setTokens", implied_tags);
   $("#yeti-save-tag").data('url', elt.data('url'));
+  $("#yeti-delete-tag").data('url', elt.data('url'));
 
   // colorize
   $(".yeti-edit-tag").removeClass("selected");

@@ -12,7 +12,7 @@ class Tag(Node):
     name = StringField(required=True, unique=True)
     count = IntField(required=True, default=0)
     created = DateTimeField(default=datetime.now)
-    implied = ListField(ReferenceField("Tag"))
+    implied = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "count", "created"]}

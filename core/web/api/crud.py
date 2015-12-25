@@ -6,6 +6,11 @@ from core.web.api.api import render
 
 class CrudApi(Resource):
 
+    def delete(self, id):
+        obj = self.objectmanager.objects.get(id=id)
+        obj.delete()
+        return render({"status": "ok"})
+
     def get(self, id=None, template=None):
         if id:
             data = self.objectmanager.objects.get(id=id).info()
