@@ -1,3 +1,5 @@
+import re
+
 from flask import request, url_for
 from flask_restful import abort as restful_abort
 from mongoengine.errors import InvalidQueryError
@@ -16,12 +18,19 @@ class ObservableApi(CrudApi):
         fltr = query.get('filter', {})
         params = query.get('params', {})
 
-        if params.pop('regex', False):
+        regex = params.pop('regex', False)
+        if regex:
             fltr = {key: re.compile(value) for key, value in fltr.items()}
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
 
         print "Filter:", fltr
+        for key, value in fltr.copy().items():
+            if key == 'tags':
+                if not regex:
+                    fltr['tags__name__in'] = fltr.pop('tags').split(',')
+                else:
+                    fltr['tags__name'] = fltr.pop('tags')
 
         try:
             data = []
