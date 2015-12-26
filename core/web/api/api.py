@@ -31,4 +31,4 @@ api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:i
 api_restful.add_resource(TagApi, '/tags/', '/tags/<string:id>')
 
 api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>/<string:action>')
-api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>/<string:action>')
+api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>', '/exports/<string:id>/<string:action>')

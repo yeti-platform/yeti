@@ -1,14 +1,16 @@
 {% import 'macros.html' as macros %}
 
 <table class="table table-condensed yeti-table table-hover">
-  <tr><th>Name</th><th>Runs every</th><th>Last run</th><th>Description</th><th>Output file</th><th>Status</th><th>Toggle</th><th></th></tr>
+  <tr><th>Name</th><th>Runs every</th><th>Last run</th><th>Description</th><th>Include</th><th>Exclude</th><th>Output directory</th><th>Status</th><th>Toggle</th><th></th></tr>
   {% for export in data %}
-  <tr class="{{ "disabled" if not export["enabled"] }} {{ "error" if (export["status"] != "OK") else "success" }}" data-name="{{export["name"]}}">
+  <tr data-url="{{ url_for('api.exportapi', id=export["id"]) }}" data-form="export-form" class="yeti-edit-elt {{ "disabled" if not export["enabled"] }} {{ "error" if (export["status"] != "OK") else "success" }}" data-name="{{export["name"]}}">
     <td><strong>{{ export["name"] }}</strong></td>
     <td>{{ export["frequency"] }}</td>
     <td>{{ macros.display_datetime(export["last_run"]) or "Never" }}</td>
     <td>{{ export["description"] }}</td>
-    <td>{{ export["output_file"] }}</td>
+    <td>{{ macros.display_tags(export["include_tags"]) }}</td>
+    <td>{{ macros.display_tags(export["exclude_tags"]) }}</td>
+    <td>{{ export["output_dir"] }}</td>
     <td class="status">{{ export["status"] or "N/A"}}</td>
     <td><span data-url="{{ url_for('api.exportapi', id=export["id"], action="toggle") }}" class="export-toggle glyphicon glyphicon-{{ "ok" if export["enabled"] else "remove" }}"></span></td>
     <td><span data-url="{{ url_for('api.exportapi', id=export["id"], action="refresh") }}" class="export-refresh glyphicon glyphicon-refresh"></span></td>

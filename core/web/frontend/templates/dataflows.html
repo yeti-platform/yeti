@@ -10,6 +10,15 @@
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/dataflows.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/forms.js') }}" charset="utf-8"></script>
+
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='bootstrap-tokenfield/js/bootstrap-tokenfield.min.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='jquery-ui/js/jquery-ui.min.js') }}" charset="utf-8"></script>
+
+<link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='jquery-ui/css/jquery-ui.min.css') }}">
+<link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='bootstrap-tokenfield/css/tokenfield-typeahead.min.css') }}">
+<link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='bootstrap-tokenfield/css/bootstrap-tokenfield.min.css') }}">
+
 {%endblock%}
 
 {% block main %}
@@ -26,9 +35,52 @@
   </div>
 
   <div role="tabpanel" class="tab-pane" id="export"> <!-- export feed tab -->
-    <div id="export-table" class="yeti-populate" data-url="{{ url_for('api.exportapi') }}">
+    <div class="row">
+
+      <div class="col-md-9">
+        <div id="export-table" class="yeti-populate" data-url="{{ url_for('api.exportapi') }}">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="new-export">
+          <h5>New export</h5>
+          <form class="yeti-form" id="export-form" data-url="{{ url_for('api.exportapi') }}">
+            <div class="form-group">
+              <!-- <label for="name">Name</label> -->
+              <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
+            </div>
+            <div class="form-group">
+              <!-- <label for="description">Description</label> -->
+              <input type="text" class="form-control" name="description" value="" placeholder="Description"/>
+            </div>
+            <div class="form-group">
+              <!-- <label for="include">Include tags</label> -->
+              <input type="text" class="form-control tagfield" name="include_tags" data-choices="{{ url_for('api.tagapi') }}" value="" placeholder="Include tags"/>
+            </div>
+            <div class="form-group">
+              <!-- <label for="exclude">Exclude tags</label> -->
+              <input type="text" class="form-control tagfield" name="exclude_tags" data-choices="{{ url_for('api.tagapi') }}" value="" placeholder="Exclude tags"/>
+            </div>
+            <!-- <div class="form-group">
+              <label for="output">Output directory</label>
+              <input type="text" class="form-control" id="output" value="exports" placeholder="Output directory"/>
+            </div>
+            <div class="form-group">
+              <label for="frequency">Frequency</label>
+              <input type="text" class="form-control" id="frequency" value="1:00:00" placeholder="Frequency"/>
+            </div> -->
+            <button type="button" id="yeti-save-button" data-url="{{ url_for('api.exportapi') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
+            <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.exportapi') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
+            <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="delete">Clear</button>
+          </form>
+        </div>
+      </div>
     </div>
+
+
   </div>
 
 </div>
+
 {% endblock %}

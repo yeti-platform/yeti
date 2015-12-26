@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 import traceback
 
-from mongoengine import ListField, StringField, Q
+from mongoengine import ListField, StringField, Q, ReferenceField, PULL
 
 from core.config.celeryctl import celery_app
 from core.observables import Observable, Tag
@@ -34,24 +34,22 @@ def execute_export(export_id):
 
 
 class Export(ScheduleEntry):
-    include_tags = ListField(StringField())
-    exclude_tags = ListField(StringField())
-    output_dir = StringField()
+    include_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
+    exclude_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
+    output_dir = StringField(default='exports')
 
     def __init__(self, *args, **kwargs):
         super(Export, self).__init__(*args, **kwargs)
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
         self.export_file_handle = codecs.open(self.output_file, 'w+', "utf-8")
-        self.include_tags_id = list(Tag.objects(name__in=self.include_tags))
-        self.exclude_tags_id = list(Tag.objects(name__in=self.exclude_tags))
 
     @property
     def output_file(self):
         return os.path.abspath(os.path.join(self.output_dir, self.name))
 
     def query(self):
-        q = Q(tags__name__in=self.include_tags_id) & Q(tags__name__nin=self.exclude_tags_id)
+        q = Q(tags__name__in=self.include_tags) & Q(tags__name__nin=self.exclude_tags)
         for o in Observable.objects(q):
             self.format(o)
 
@@ -62,8 +60,9 @@ class Export(ScheduleEntry):
         self.export_file_handle.write(output)
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "status", "last_run", "include_tags", "exclude_tags"]}
+        i = {k: v for k, v in self._data.items() if k in ["name", "output_dir", "enabled", "description", "status", "last_run", "include_tags", "exclude_tags"]}
         i['frequency'] = str(self.frequency)
-        i['output_file'] = os.path.abspath(self.output_file)
         i['id'] = str(self.id)
+        i['include_tags'] = [tag.name for tag in self.include_tags]
+        i['exclude_tags'] = [tag.name for tag in self.exclude_tags]
         return i
