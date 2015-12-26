@@ -72,6 +72,10 @@ class Scheduler(BaseScheduler):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         sys.path.append(base_dir)
 
+        for sched in ScheduleEntry.objects.all():
+            if sched.enabled:
+                self._loaded_entries[sched.name] = sched
+
         for subdir in subdirs:
             modules_dir = os.path.join(base_dir, subdir)
             for loader, name, ispkg in pkgutil.walk_packages([modules_dir], prefix='{}.'.format(subdir)):

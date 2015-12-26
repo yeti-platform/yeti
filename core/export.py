@@ -49,7 +49,7 @@ class Export(ScheduleEntry):
         return os.path.abspath(os.path.join(self.output_dir, self.name))
 
     def query(self):
-        q = Q(tags__name__in=self.include_tags) & Q(tags__name__nin=self.exclude_tags)
+        q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
         for o in Observable.objects(q):
             self.format(o)
 
