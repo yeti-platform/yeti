@@ -19,26 +19,26 @@ def each(module_name, observable_json):
 
 
 @celery_app.task
-def schedule(name):
+def schedule(id):
 
     try:
-        a = ScheduledAnalytics.objects.get(name=name, lock=None)  # check if we have implemented locking mechanisms
+        a = ScheduledAnalytics.objects.get(id=id, lock=None)  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
-            ScheduledAnalytics.objects.get(name=name, lock=False).modify(lock=True)  # get object and change lock
-            a = ScheduledAnalytics.objects.get(name=name)
+            ScheduledAnalytics.objects.get(id=id, lock=False).modify(lock=True)  # get object and change lock
+            a = ScheduledAnalytics.objects.get(id=id)
         except DoesNotExist:
             # no unlocked ScheduledAnalytics was found, notify and return...
-            logging.info("Task {} is already running...".format(name))
+            logging.info("Task {} is already running...".format(id))
             return
 
     if a.enabled:  # check if Analytics is enabled
-        logging.warning("Running analytics {}".format(name))
+        logging.warning("Running analytics {}".format(id))
         a.update_status("Running...")
         a.analyze_outdated()
         a.last_run = datetime.now()
     else:
-        logging.error("Analytics {} is disabled".format(name))
+        logging.error("Analytics {} is disabled".format(id))
 
     if a.lock:  # release lock if it was set
         a.lock = False
@@ -48,8 +48,8 @@ def schedule(name):
 
 
 @celery_app.task
-def single(name, observable_json):
+def single(id, observable_json):
     o = Observable.from_json(observable_json)
-    logging.warning("Running one-shot query {} on {}".format(name, o))
-    a = OneShotAnalytics.objects.get(name=name)
+    logging.warning("Running one-shot query {} on {}".format(id, o))
+    a = OneShotAnalytics.objects.get(id=id)
     a.analyze(o)

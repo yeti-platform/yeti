@@ -98,4 +98,4 @@ class Scheduler(BaseScheduler):
                 self._schedule[name] = BaseScheduleEntry(name=name, app=self.app,
                                                          task=entry.SCHEDULED_TASK,
                                                          schedule=entry.frequency,
-                                                         args=(name, ))
+                                                         args=(str(entry.id), ))
