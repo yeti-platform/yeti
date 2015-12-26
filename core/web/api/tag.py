@@ -15,15 +15,16 @@ class TagApi(CrudApi):
 
     def post(self, id=None):
         if not id:
-            return render(self.objectmanager.get_or_create(**request.json).info())
+            data = request.json
+            data['implied'] = [Tag.get_or_create(name=t.strip()) for t in request.json['implied'].split(',') if t.strip()]
+            return render(Tag(**data).save().info())
         else:
             try:
-                tag = Tag.objects.get(id=id)
-                tag.implied = [Tag.get_or_create(name=t) for t in request.json['implied'] if t.strip()]
-                tag.name = request.json['name']
-                tag.save()
+                data = request.json
+                data['implied'] = [Tag.get_or_create(name=t.strip()) for t in request.json['implied'].split(',') if t.strip()]
+                Tag.objects(id=id).update(**data)
                 return render({"status": "ok"})
             except TagValidationError as e:
                 restful_abort(400, error=str(e))
             except Exception as e:
-                restful_abort(400, error='Must specify name and imply parameters')
+                restful_abort(400, error='Must specify name and implied parameters')

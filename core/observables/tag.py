@@ -33,6 +33,7 @@ class Tag(Node):
         self.name = re.sub("[^a-z0-9\-_]", "", self.name.lower())
         if not self.name:
             raise TagValidationError("{} is not a valid tag. Valid chars = [a-z0-9\\-_]".format(repr(self.name)))
+        self.implied = list(set(self.implied))
 
     def __unicode__(self):
         return self.name

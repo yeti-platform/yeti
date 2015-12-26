@@ -26,9 +26,8 @@ class CrudApi(Resource):
         return render(data, template=template)
 
     def post(self, id=None):
-        print request.json
         if not id:
-            return render(self.objectmanager.get_or_create(**request.json).info())
+            return render(self.objectmanager(**request.json).save().info())
         else:
             self.objectmanager.update(id, request.json)
 

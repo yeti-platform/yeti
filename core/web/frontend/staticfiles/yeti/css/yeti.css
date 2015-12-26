@@ -60,8 +60,8 @@
   cursor: default;
 }
 
-.yeti-edit-tag:hover .yeti-tag,
-.yeti-edit-tag.selected .yeti-tag,
+.yeti-edit-elt:hover .yeti-tag,
+.yeti-edit-elt.selected .yeti-tag,
 .yeti-tag.selected {
   background-color: #E03030;
   cursor: pointer;
