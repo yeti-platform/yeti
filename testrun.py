@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from mongoengine import connect
 
 from core.entities.malware import MalwareFamily, Malware
@@ -6,9 +8,7 @@ from core.database import Link
 from core.entities import TTP
 from core.observables import Observable
 from core.observables import Tag
-
-
-
+from core.export import Export
 
 ## Clean slate
 db = connect('yeti')
@@ -27,10 +27,12 @@ MalwareFamily("trojan").save()
 MalwareFamily("dropper").save()
 
 
-
-Tag.get_or_create(name="zeus").add_implied(["crimeware", "banker", "malware"])
-Tag.get_or_create(name="banker").add_implied(["crimeware", "malware"])
+t1= Tag.get_or_create(name="zeus").add_implied(["crimeware", "banker", "malware"])
+t2= Tag.get_or_create(name="banker").add_implied(["crimeware", "malware"])
 Tag.get_or_create(name="crimeware").add_implied("malware")
+
+Export(name="TestExport", description="Test description", frequency=timedelta(hours=1), include_tags=[t1, t2]).save()
+
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
 url.tag(["zeus", "banker"])
