@@ -23,29 +23,14 @@
 {%- endmacro %}
 
 {% macro display_context(context) -%}
-<div class="col-md-4">
-
-
-<div class="panel panel-danger yeti-panel">
-    <div class="panel-heading" role="tab">
-      <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" href="#{{context["source"]}}" aria-expanded="true" aria-controls="{{context["source"]}}">
-          {{context["source"]}}
-          <span class="glyphicon glyphicon-plus-sign" style="float:right" aria-hidden="true"></span>
-        </a>
-      </h4>
-    </div>
-    <div id="{{context["source"]}}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
-      <div class="panel-body">
-        <table class="table table-condensed">
-          {% for key, value in context.items() if key not in ["source"]%}
-          <tr><th>{{key}}</th><td>{{value}}</td></tr>
-          {% endfor %}
-        </table>
-      </div>
-    </div>
+  <h4>{{context["source"]}}<span class="small yeti-toggle" data-target="details-{{context["source"]}}">[details]</span></h4>
+  <div id="details-{{context["source"]}}" class="panel-collapse collapse" role="tabpanel">
+    <table class="table table-condensed">
+      {% for key, value in context.items() if key not in ["source"]%}
+      <tr><th>{{key}}</th><td>{{value}}</td></tr>
+      {% endfor %}
+    </table>
   </div>
-</div>
 
 {%- endmacro%}
 

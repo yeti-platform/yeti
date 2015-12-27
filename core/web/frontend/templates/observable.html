@@ -10,93 +10,103 @@
 
     <div class="row">
       <div class="col-md-12">
-
-        <div class="panel panel-primary">
+        <h4 class="panel-title"></h4>
+        <div class="panel panel-default">
           <div class="panel-heading">
-            <h1 class="panel-title">{{observable.value}}</h1>
+            <h3 class="panel-title">{{observable.value}}</h3>
           </div>
-          {% if observable.description %}
           <div class="panel-body">
-            <div class="yeti-observable-description">
-              {{observable.description|markdown}}
+            Description
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#related" aria-controls="related" role="tab" data-toggle="tab">Related</a></li>
+          {% if observable.context %}
+          <li role="presentation"><a href="#context" aria-controls="context" role="tab" data-toggle="tab">Context ({{observable.context|length}})</a></li>
+          {% endif %}
+          <li role="presentation"><a href="#old" aria-controls="old" role="tab" data-toggle="tab">old</a></li>
+        </ul>
+
+        <div class="tab-content">
+          <div role="tabpanel" class="tab-pane active" id="related"> <!-- import feed tab -->
+
+            <div class="row">
+              <div class="col-md-12">
+
+                <ul class="nav nav-tabs" role="tablist">
+                  <li role="presentation" class="active">
+                    <a href="#tagged" aria-controls="tagged" role="tab" data-toggle="tab">Tagged</a>
+                  </li>
+                  {% set n = observable.neighbors() %}
+                  {% for type in n.keys() %}
+                  <li role="presentation">
+                    <a href="#{{type}}" aria-controls="{{type}}" role="tab" data-toggle="tab">{{type}}</a>
+                  </li>
+                  {% endfor %}
+                </ul>
+
+                <div class="tab-content">
+                  <div role="tabpanel" class="tab-pane active" id="tagged">
+                    <table class="table table-condensed">
+                    {% for type, entry in n.items() %}
+                      {% for link, node in entry if node.tags %}
+                      <tr>
+                        <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
+                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{ macros.display_tags(node.tags)}}</td>
+                      </tr>
+                      {% endfor %}
+                    {%endfor%}
+                    </table>
+                  </div>
+                  {% for type, entry in n.items() %}
+                  <div role="tabpanel" class="tab-pane" id="{{type}}">
+                    <table class="table table-condensed">
+                    {% for link, node in entry %}
+                      <tr>
+                        <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
+                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{ macros.display_tags(node.tags)}}</td>
+                      </tr>
+                    {%endfor%}
+                    </table>
+
+                  </div>
+                  {% endfor %}
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {% if observable.context %}
+          <div role="tabpanel" class="tab-pane" id="context"> <!-- import feed tab -->
+            <div class="row">
+              <div class="col-md-12">
+                {% set context = observable.context %}
+                  {% for ctx in context %}
+                    {{macros.display_context(ctx)}}
+                  {% endfor %}
+              </div>
             </div>
           </div>
           {% endif %}
-        </div>
 
+          <div role="tabpanel" class="tab-pane" id="old"> <!-- import feed tab -->
+            old!
+          </div>
+        </div>
+        
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-md-12">
-        <div class="row">
-          {% set context = observable.context %}
-          <div class="yeti-panel">
-            {% for ctx in context %}
-            {{macros.display_context(ctx)}}
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="col-md-12">
-
-
-
-        <div class="panel panel-default yeti-panel">
-          <div class="panel-heading">
-            <h1 class="panel-title">Related elements</h1>
-          </div>
-          <div class="panel-body">
-
-            <ul class="nav nav-tabs" role="tablist">
-              <li role="presentation" class="active">
-                <a href="#tagged" aria-controls="tagged" role="tab" data-toggle="tab">Tagged</a>
-              </li>
-              {% set n = observable.neighbors() %}
-              {% for type in n.keys() %}
-              <li role="presentation">
-                <a href="#{{type}}" aria-controls="{{type}}" role="tab" data-toggle="tab">{{type}}</a>
-              </li>
-              {% endfor %}
-            </ul>
-
-            <div class="tab-content">
-              <div role="tabpanel" class="tab-pane active" id="tagged">
-                <table class="table table-condensed">
-                {% for type, entry in n.items() %}
-                  {% for link, node in entry if node.tags %}
-                  <tr>
-                    <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
-                    <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
-                    <td>{{ macros.display_tags(node.tags)}}</td>
-                  </tr>
-                  {% endfor %}
-                {%endfor%}
-                </table>
-              </div>
-              {% for type, entry in n.items() %}
-              <div role="tabpanel" class="tab-pane" id="{{type}}">
-                <table class="table table-condensed">
-                {% for link, node in entry %}
-                  <tr>
-                    <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
-                    <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
-                    <td>{{ macros.display_tags(node.tags)}}</td>
-                  </tr>
-                {%endfor%}
-                </table>
-
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
   </div>
 <!-- end first column -->
 

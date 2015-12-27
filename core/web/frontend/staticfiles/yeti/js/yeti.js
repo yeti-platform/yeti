@@ -1,10 +1,21 @@
 $(function() {
   scan_populate();
 
+  scan_clickable();
+
+  scan_toggle();
+
   setInterval(function() {
     scan_populate();
   }, 2000);
 });
+
+function scan_toggle() {
+  $(".yeti-content").on('click', ".yeti-toggle", function(){
+    tgt = $("#"+$(this).data('target'))
+    tgt.toggle()
+  });
+}
 
 function scan_populate() {
   $(".yeti-populate").each(function() {
@@ -28,7 +39,7 @@ function yeti_clickable(elt) {
   } else {
     target = elt;
   }
-  
+
   $.ajax({
     method: "GET",
     contentType: "application/json",

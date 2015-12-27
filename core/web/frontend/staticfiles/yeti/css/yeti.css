@@ -9,6 +9,12 @@
   width:100%;
 }
 
+span.yeti-toggle {
+  cursor: pointer;
+  margin-left: 10px;
+  color: #337ab7;
+}
+
 .yeti-table tbody > tr > th {
   border-top:0px;
 }
