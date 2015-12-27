@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for
 
 from core.observables import Observable
 from core.web.api.analysis import match_observables
+from core.helpers import refang
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
 
@@ -22,7 +23,7 @@ def query():
         return render_template("query.html")
 
     elif request.method == "POST":
-        obs = [o.strip() for o in request.form['bulk-text'].split('\n')]
+        obs = [refang(o.strip()) for o in request.form['bulk-text'].split('\n')]
         data = match_observables(obs)
         return render_template("query_results.html", data=data)
 

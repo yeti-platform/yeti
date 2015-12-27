@@ -32,7 +32,7 @@ def string_to_timedelta(string):
     return timedelta(**d)
 
 
-def defang(url):
+def refang(url):
 
     def http(match):
         return "http{}".format(match.group('real'))
@@ -46,7 +46,7 @@ def defang(url):
 
 
 def is_url(url):
-    url = defang(url)
+    url = refang(url)
     match = re.match("^" + url_regex + "$", url, re.VERBOSE)
     if match:
         url = match.group(1)
