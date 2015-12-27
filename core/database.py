@@ -1,3 +1,5 @@
+import logging
+
 from datetime import datetime
 
 from mongoengine import *
@@ -81,7 +83,10 @@ class Node(Document):
         try:
             return obj.save()
         except NotUniqueError:
-            return cls.objects.get(**kwargs)
+            if hasattr(obj, 'name'):
+                return cls.objects.get(name=obj.name)
+            if hasattr(obj, 'value'):
+                return cls.objects.get(value=obj.value)
 
     @classmethod
     def update(cls, id, data):

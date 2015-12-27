@@ -29,16 +29,16 @@ def schedule(id):
             a = ScheduledAnalytics.objects.get(id=id)
         except DoesNotExist:
             # no unlocked ScheduledAnalytics was found, notify and return...
-            logging.info("Task {} is already running...".format(id))
+            logging.info("Task {} is already running...".format(ScheduledAnalytics.objects.get(id=id).name))
             return
 
     if a.enabled:  # check if Analytics is enabled
-        logging.warning("Running analytics {}".format(id))
+        logging.warning("Running analytics {}".format(a.name))
         a.update_status("Running...")
         a.analyze_outdated()
         a.last_run = datetime.now()
     else:
-        logging.error("Analytics {} is disabled".format(id))
+        logging.error("Analytics {} is disabled".format(a.name))
 
     if a.lock:  # release lock if it was set
         a.lock = False
@@ -50,6 +50,6 @@ def schedule(id):
 @celery_app.task
 def single(id, observable_json):
     o = Observable.from_json(observable_json)
-    logging.warning("Running one-shot query {} on {}".format(id, o))
     a = OneShotAnalytics.objects.get(id=id)
+    logging.warning("Running one-shot query {} on {}".format(a.name, o))
     a.analyze(o)

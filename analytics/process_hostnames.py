@@ -43,7 +43,7 @@ class ProcessHostnames(ScheduledAnalytics):
             l.add_history(tag='domain')
 
         for rdata in results:
-            logging.info("{} resoved to {} ({} record)".format(h.value, rdata, rtype))
+            logging.info("{} resolved to {} ({} record)".format(h.value, rdata, rtype))
             try:
                 e = Observable.add_text(rdata)
                 e.add_source("analytics")
@@ -114,5 +114,8 @@ class ParallelDnsResolver(object):
             except NoNameservers:
                 continue
             except Exception as e:
-                logging.error("Unknown error occurred: {}".format(e))
+                import traceback
+                logging.error(traceback.print_exc())
+                logging.error("Unknown error occurred while owrking on {} ({})".format(hostname, rtype))
+                logging.error("\nERROR: {}".format(hostname, rtype, e))
                 continue
