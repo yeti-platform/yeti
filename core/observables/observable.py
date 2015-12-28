@@ -76,11 +76,13 @@ class Observable(Node):
 
         for new_tag in new_tags:
             if new_tag.strip() != '':
+                new_tag = Tag(name=new_tag)
+                new_tag.clean()
 
                 try:  # check if tag is a replacement
-                    tag = Tag.objects.get(replaces=new_tag)
+                    tag = Tag.objects.get(replaces=new_tag.name)
                 except DoesNotExist:
-                    tag = Tag.get_or_create(name=new_tag)
+                    tag = Tag.get_or_create(name=new_tag.name)
 
                 tag.modify(inc__count=1)
                 if self.__class__.objects(id=self.id, tags__name=tag.name).count() == 1:
