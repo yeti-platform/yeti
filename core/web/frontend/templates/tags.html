@@ -45,8 +45,12 @@
           <input type="text" id="tag-name" class="form-control" name="name" value="" />
         </div>
         <div class="form-group">
-          <label for="tagfield">Implied tags</label>
-          <input type="text" class="form-control tagfield" data-choices="{{ url_for("api.tagapi") }}" name="implied" value="" />
+          <label for="produces">Produced tags</label>
+          <input type="text" class="form-control tagfield" data-choices="{{ url_for("api.tagapi") }}" name="produced" value="" />
+        </div>
+        <div class="form-group">
+          <label for="replaces">Replaces</label>
+          <input type="text" class="form-control tagfield" name="replaces" value="" />
         </div>
         <button type="button" id="yeti-save-button" data-url="{{ url_for("api.tagapi") }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
         <button type="button" id="yeti-delete-button" data-url="{{ url_for("api.tagapi") }}" class="btn btn-danger btn-sm yeti-delete" name="delete">Delete</button>
@@ -64,7 +68,13 @@
           <label for="merge">Merge into</label>
           <input type="text" id="merge-into" class="form-control tagfield" data-choices="{{ url_for("api.tagapi") }}" name="merge-into" value="" />
         </div>
+        <div class="checkbox">
+          <label>
+            <input type="checkbox" name="make-dict"> Make Tag dictionary out of merge
+          </label>
+        </div>
         <button type="button" id="tags-merge-selected" data-url="{{ url_for("api.tagactionapi", action="merge") }}" class="btn btn-default btn-sm" name="clear">Merge selected</button>
+
       </form>
     </div>
   </div>

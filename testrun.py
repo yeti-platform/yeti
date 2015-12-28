@@ -27,15 +27,20 @@ MalwareFamily("trojan").save()
 MalwareFamily("dropper").save()
 
 
-t1= Tag.get_or_create(name="zeus").add_implied(["crimeware", "banker", "malware"])
-t2= Tag.get_or_create(name="banker").add_implied(["crimeware", "malware"])
-Tag.get_or_create(name="crimeware").add_implied("malware")
+t1= Tag.get_or_create(name="zeus").add_produces(["crimeware", "banker", "malware"])
+t2= Tag.get_or_create(name="banker").add_produces(["crimeware", "malware"])
+t3= Tag.get_or_create(name="c2")
+t3.add_replaces(["c&c", "cc"])
+
+Tag.get_or_create(name="crimeware").add_produces("malware")
 
 Export(name="TestExport", description="Test description", frequency=timedelta(hours=1), include_tags=[t1, t2]).save()
 
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
-url.tag(["zeus", "banker"])
+url.tag(["zeus", "banker", "cc"])
+print url.tags
+exit()
 # print url.find_tags()
 
 # import pdb; pdb.set_trace()

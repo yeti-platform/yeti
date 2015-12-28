@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from mongoengine import *
-from mongoengine.errors import NotUniqueError
 
 from core.helpers import is_url, is_ip, is_hostname
 from core.database import Node
@@ -60,8 +59,8 @@ class Observable(Node):
         new_tags = {}
         for tag in self.tags:
             tag = Tag.objects.get(name=tag.name)
-            for implied in tag.implied:
-                new_tags[implied] = new_tags.get(tag, 0) + 1
+            for produces in tag.produces:
+                new_tags[produces] = new_tags.get(tag, 0) + 1
 
         # remove already known tags
         localtags = [tag.name for tag in self.tags]
@@ -77,7 +76,12 @@ class Observable(Node):
 
         for new_tag in new_tags:
             if new_tag.strip() != '':
-                tag = Tag.get_or_create(name=new_tag)
+
+                try:  # check if tag is a replacement
+                    tag = Tag.objects.get(replaces=new_tag)
+                except DoesNotExist:
+                    tag = Tag.get_or_create(name=new_tag)
+
                 tag.modify(inc__count=1)
                 if self.__class__.objects(id=self.id, tags__name=tag.name).count() == 1:
                     self.__class__.objects(id=self.id, tags__name=tag.name).modify(new=True, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())

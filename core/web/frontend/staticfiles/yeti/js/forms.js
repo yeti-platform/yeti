@@ -20,10 +20,12 @@ function refresh_tagfields(form) {
         }
         elt
         .on('tokenfield:createtoken', function (e) {
-          re = /^[a-zA-Z0-9_]+$/;
-          charset = re.test(e.attrs.value);
-          unique = $(this).val().split(',').indexOf(e.attrs.value) == -1;
-          return charset && unique;
+          if ($(this).data('choices')) {
+            re = /^[a-zA-Z0-9_]+$/;
+            charset = re.test(e.attrs.value);
+            unique = $(this).val().split(',').indexOf(e.attrs.value) == -1;
+            return charset && unique;
+          }
         })
         .tokenfield({
           autocomplete: {

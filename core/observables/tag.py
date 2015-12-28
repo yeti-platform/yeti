@@ -12,28 +12,35 @@ class Tag(Node):
     name = StringField(required=True, unique=True)
     count = IntField(required=True, default=0)
     created = DateTimeField(default=datetime.now)
-    implied = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
+    produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
+    replaces = ListField(StringField())
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "count", "created"]}
+        i = {k: v for k, v in self._data.items() if k in ["name", "count", "created", "replaces"]}
         i['id'] = str(self.id)
-        i['implied'] = [tag.name for tag in self.implied]
+        i['produces'] = [tag.name for tag in self.produces]
         return i
 
-    def add_implied(self, tags):
+    def add_replaces(self, tags):
+        if isinstance(tags, (str, unicode)):
+            tags = [tags]
+        self.replaces += list(set(tags + self.replaces))
+        return self.save()
+
+    def add_produces(self, tags):
         if isinstance(tags, (str, unicode)):
             tags = [Tag.get_or_create(name=tags)]
         else:
             tags = [Tag.get_or_create(name=t) for t in tags]
 
-        self.implied = tags
+        self.produces = tags
         return self.save()
 
     def clean(self):
         self.name = re.sub("[^a-z0-9\-_]", "", self.name.lower())
         if not self.name:
             raise TagValidationError("{} is not a valid tag. Valid chars = [a-z0-9\\-_]".format(repr(self.name)))
-        self.implied = list(set(self.implied))
+        self.produces = list(set(self.produces))
 
     def __unicode__(self):
         return self.name
