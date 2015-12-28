@@ -47,7 +47,7 @@
                     <td><a href="{{ url_for("frontend.observable", id=node.id)}}">{{node.value}}</a></td>
                     <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                     <td>{{ macros.display_tags(node.tags)}}</td>
-                    <td>{% for ctx in node.context %}{% if loop.index0 != 0%}, {%endif%}{{ctx.source}}{% endfor %}</td>
+                    <td>{{node.context|join(', ', attribute='source')}}</td>
                   </tr>
                   {% endfor %}
                 {%endfor%}

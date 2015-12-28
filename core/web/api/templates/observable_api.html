@@ -6,7 +6,7 @@
   <tr>
     <td><a href="{{ url_for('frontend.observable', id=observable['id'])}}">{{observable['value']}}</a></td>
     <td>{{macros.display_tags(observable['tags'])}}</td>
-    <td>{{observable['context']|length}}</td>
+    <td>{{ observable['context']|join(', ', attribute='source')}}</td>
     <td>{{macros.display_datetime(observable['created'])}}</td>
   </tr>
   {% endfor %}
