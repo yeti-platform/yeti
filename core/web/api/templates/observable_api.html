@@ -1,7 +1,7 @@
 {% import 'macros.html' as macros %}
 
 <table class="table table-condensed yeti-table table-hover">
-  <tr><th>Value</th><th>Tags</th><th>Context count</th><th>Creation date</th></tr>
+  <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
   {% for observable in data %}
   <tr>
     <td><a href="{{ url_for('frontend.observable', id=observable['id'])}}">{{observable['value']}}</a></td>

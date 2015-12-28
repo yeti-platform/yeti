@@ -24,9 +24,9 @@
       </div>
       <div class="panel-body">
         <table class="table table-condensed">
-          <tr><th>Value</th><th>Tags</th><th>Context count</th><th>Creation date</th></tr>
+          <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
           {% for obs in data['known']%}
-          <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|length}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
+          <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|join(', ', attribute='source')}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
           {% endfor %}
         </table>
       </div>
