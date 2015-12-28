@@ -18,7 +18,7 @@ from core.errors import ObservableValidationError
 class ProcessHostnames(ScheduledAnalytics):
 
     settings = {
-        "frequency": timedelta(minutes=10),
+        "frequency": timedelta(minutes=2),
         "name": "ProcessHostnames",
         "description": "Resolves hostnames and extracts subdomains",
         "lock": False,
