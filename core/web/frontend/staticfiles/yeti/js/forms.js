@@ -1,10 +1,12 @@
 
 function refresh_tagfields(form) {
 
-  var global_tags = []
+
 
   // set tagfields
   tagfield = form.find(".tagfield").each(function(index){
+
+    var global_tags = []
 
     var elt = $(this);
     $.ajax({

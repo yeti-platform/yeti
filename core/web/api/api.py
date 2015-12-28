@@ -15,7 +15,7 @@ def bson_renderer(data, template=None, ctx=None):
 render = Render(renderers=[template_renderer, bson_renderer])
 
 from core.web.api.observable import ObservableApi
-from core.web.api.tag import TagApi
+from core.web.api.tag import TagApi, TagActionApi
 from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
 from core.web.api.analysis import AnalysisApi
 from core.web.api.feeds import FeedApi
@@ -28,7 +28,8 @@ api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/
 
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
 
-api_restful.add_resource(TagApi, '/tags/', '/tags/<string:id>')
+api_restful.add_resource(TagApi, '/tags/', '/tags/<string:id>', "/tags/<string:action>")
+api_restful.add_resource(TagActionApi, '/tags/action/<string:action>')
 
 api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>/<string:action>')
 api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>', '/exports/<string:id>/<string:action>')

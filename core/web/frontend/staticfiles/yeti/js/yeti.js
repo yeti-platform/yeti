@@ -6,7 +6,7 @@ $(function() {
   scan_toggle();
 
   setInterval(function() {
-    scan_populate();
+    scan_populate(".auto-update");
   }, 2000);
 });
 
@@ -17,8 +17,11 @@ function scan_toggle() {
   });
 }
 
-function scan_populate() {
-  $(".yeti-populate").each(function() {
+function scan_populate(cls) {
+  if (cls == undefined) {
+    cls = "";
+  }
+  $(".yeti-populate" + cls).each(function() {
     yeti_populate($(this));
   });
 }
