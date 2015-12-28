@@ -37,7 +37,8 @@ class Tag(Node):
         return self.save()
 
     def clean(self):
-        self.name = re.sub("[^a-z0-9\-_]", "", self.name.lower())
+        self.name = re.sub("[^a-z0-9\-_ ]", "", self.name.lower())
+        self.name = re.sub(" ", "_", self.name)
         if not self.name:
             raise TagValidationError("{} is not a valid tag. Valid chars = [a-z0-9\\-_]".format(repr(self.name)))
         self.produces = list(set(self.produces))
