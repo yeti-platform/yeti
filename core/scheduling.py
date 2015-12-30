@@ -69,7 +69,7 @@ class Scheduler(BaseScheduler):
         return self._schedule
 
     def load_entries(self, cls, subdirs):
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'plugins')
         sys.path.append(base_dir)
 
         for sched in ScheduleEntry.objects.all():

@@ -27,18 +27,30 @@ class ProcessHostnames(ScheduledAnalytics):
     ACTS_ON = 'Hostname'
     EXPIRATION = timedelta(days=1)  # Analysis will expire after 1 day
 
+    @staticmethod
+    def analyze_string(hostname_string):
+        return [ProcessHostnames.extract_domain(hostname_string)]
+
+    @staticmethod
+    def extract_domain(hostname_string):
+        domain = is_subdomain(hostname_string)
+        return domain
+
     @classmethod
     def bulk(cls, hostnames):
         p = ParallelDnsResolver()
-        results = p.mass_resolve(hostnames)
+        p.mass_resolve(hostnames)
 
     @classmethod
-    def each(cls, hostname, rtype, results):
-        h = Hostname.get_or_create(value=hostname)
-        domain = is_subdomain(hostname)
+    def each(cls, hostname, rtype=None, results=[]):
+        generated = []
+        h = Hostname.get_or_create(value=hostname.value)
+        domain = ProcessHostnames.extract_domain(h.value)
+
         if domain:
             d = Hostname.get_or_create(value=domain)
             d.add_source("analytics")
+            generated.append(d)
             l = Link.connect(h, d)
             l.add_history(tag='domain')
 
@@ -47,12 +59,14 @@ class ProcessHostnames(ScheduledAnalytics):
             try:
                 e = Observable.add_text(rdata)
                 e.add_source("analytics")
+                generated.append(e)
                 l = Link.connect(h, e)
                 l.add_history(tag=rtype, description='{} record'.format(rtype))
             except ObservableValidationError as e:
                 logging.error("{} is not a valid datatype".format(rdata))
 
         h.analysis_done(cls.__name__)
+        return generated
 
 
 class ParallelDnsResolver(object):
@@ -104,6 +118,7 @@ class ParallelDnsResolver(object):
                             text_results.append(r.to_text())
                         else:
                             logging.error("Unknown record type: {}".format(type(r)))
+                    hostname = Hostname(value=hostname)
                     ProcessHostnames.each(hostname, rtype, text_results)
             except NoAnswer:
                 continue
