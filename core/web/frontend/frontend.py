@@ -9,12 +9,22 @@ frontend = Blueprint("frontend", __name__, template_folder="templates", static_f
 
 @frontend.route("/")
 def index():
-    return redirect(url_for('frontend.browse'))
+    return redirect(url_for('frontend.observables'))
 
 
-@frontend.route("/browse")
-def browse():
-    return render_template("browse.html")
+# observables
+
+@frontend.route("/observables")
+def observables():
+    return render_template("observables.html")
+
+
+@frontend.route("/observables/<id>")
+def observable(id):
+    o = Observable.objects.get(id=id)
+    return render_template("observable.html", observable=o)
+
+
 
 
 @frontend.route("/query", methods=['GET', 'POST'])
@@ -46,9 +56,3 @@ def tags():
 
 
 # detail section
-
-
-@frontend.route("/observables/<id>")
-def observable(id):
-    o = Observable.objects.get(id=id)
-    return render_template("observable.html", observable=o)
