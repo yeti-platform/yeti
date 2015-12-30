@@ -47,7 +47,7 @@ class Link(Document):
         return l
 
     def info(self):
-        return {"tag": self.tag, "description": self.description, "id": str(self.id)}
+        return {"tag": self.tag, "description": self.description, "id": str(self.id), "src": self.src.value, "dst": self.dst.value}
 
     def add_history(self, tag, description=None, first_seen=None, last_seen=None):
         # this is race-condition prone... think of a better way to do this

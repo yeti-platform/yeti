@@ -3,17 +3,49 @@ from flask_restful import Resource
 
 from mongoengine.errors import DoesNotExist
 
-from core.observables import Observable
+from core.observables import Observable, Url, Hostname
 from core.indicators import Indicator
 from core.web.api.api import render
 from core.errors import ObservableValidationError
 
+# load analyzers
+from plugins.analytics.process_hostnames import ProcessHostnames
+from plugins.analytics.process_url import ProcessUrl
+
+analyzers = {
+    Hostname: [ProcessHostnames],
+    Url: [ProcessUrl],
+}
+
+
+def derive(observables):
+    if isinstance(observables, (str, unicode)):
+        observables = [observables]
+
+    new = []
+    for observable in observables:
+        t = Observable.guess_type(observable)
+        for a in analyzers.get(t, []):
+            new.extend([n for n in a.analyze_string(observable) if n and n not in observables])
+
+    if len(new) == 0:
+        return observables
+    else:
+        return derive(new + observables)
+
 
 def match_observables(observables):
-    data = {"matches": [], "unknown": set(observables), "entities": [], "known": []}
+    extended_query = set(observables) | set(derive(observables))
     added_entities = set()
 
-    for o, i in Indicator.search(observables):
+    data = {"matches": [], "unknown": set(observables), "entities": [], "known": [], "interesting_neighbors": []}
+
+    for o in Observable.objects(value__in=list(extended_query)):
+        for link, obs in (o.incoming() + o.outgoing()):
+            if link.src.value not in extended_query or link.dst.value not in extended_query and obs.tags:
+                data['interesting_neighbors'].append((link.info(), obs.info()))
+
+    for o, i in Indicator.search(extended_query):
         o = Observable.add_text(o)
         match = i.info()
         match.update({"observable": o.info(), "related": [], "suggested_tags": set()})

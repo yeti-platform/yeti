@@ -29,6 +29,13 @@
           <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|join(', ', attribute='source')}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
           {% endfor %}
         </table>
+				<h5>Interesting neighbors</h5>
+				<table class="table table-condensed">
+          <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
+          {% for link, obs in data["tagged_neighbors"]%}
+          <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs["value"]}}</a> <span class="small">({{link["description"]}} for {% if obs["value"] == link["dst"]%}{{link["src"]}}{%else%}{{link["dst"]}}{%endif%})</span></td><td>{{macros.display_tags(obs["tags"])}}</td><td>{{obs["context"]|join(", ", attribute="source")}}</td><td>{{macros.display_datetime(obs["created"])}}</td></tr>
+          {% endfor %}
+        </table>
       </div>
     </div>
   </div>
