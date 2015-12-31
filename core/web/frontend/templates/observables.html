@@ -28,9 +28,9 @@
 {% block sidebar %}
 <div class="col-md-3">
 	<form data-target="observables" data-url="{{ url_for('api.observableapi')}}" class="yeti-crud">
-		
+
 		<div class="input-group">
-  			<input class="form-control input-sm crud-filter" placeholder="tags=evil">
+  			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="tags=evil">
 			<span class="input-group-btn">
 				<button class="btn btn-primary btn-sm crud-search" type="button">Go</button>
 			</span>

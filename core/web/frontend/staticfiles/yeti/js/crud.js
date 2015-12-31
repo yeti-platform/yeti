@@ -40,8 +40,9 @@ function change_page(form, direction) {
 }
 
 function refresh_table(form) {
-
-  queries = form.find(".crud-filter").first().val().split(' ');
+  filter = form.find(".crud-filter").first()
+  queries = filter.val().split(' ');
+  default_field = filter.data('default-value');
 	filter = {};
 
   for (var i in queries) {
@@ -49,7 +50,7 @@ function refresh_table(form) {
 		if (splitted.length > 1)
 			filter[splitted[0]] = splitted[1];
 		else if (splitted[0] != "")
-			filter['value'] = splitted[0];
+			filter[default_field] = splitted[0];
 	}
 
   params = {'regex': form.find('.crud-regex').prop('checked') ? true : false,
