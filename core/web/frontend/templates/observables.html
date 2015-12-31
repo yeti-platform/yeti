@@ -22,29 +22,33 @@
 {% endblock %}
 
 {% block custom_head %}
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/observables.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
 {%endblock%}
 
 {% block sidebar %}
 <div class="col-md-3">
-	<form>
+	<form data-target="observables" data-url="{{ url_for('api.observableapi')}}" class="yeti-crud">
+		
 		<div class="input-group">
-  			<input id="observable-filter" class="form-control input-sm" placeholder="tags=evil">
+  			<input class="form-control input-sm crud-filter" placeholder="tags=evil">
 			<span class="input-group-btn">
-				<button id="observable-search" class="btn btn-primary btn-sm" type="button">Go</button>
+				<button class="btn btn-primary btn-sm crud-search" type="button">Go</button>
 			</span>
 		</div>
 		<div class="checkbox input-group-lg">
 			<label class="checkbox">
-			      <input id="regex" type="checkbox"> Regex search (slower)
+			      <input id="regex" type="checkbox" class="crud-regex"> Regex search (slower)
 			</label>
 		</div>
+
+		<ul class="pagination">
+	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
+	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
+	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
+	  </ul>
+
 	</form>
 
-	<ul class="pagination">
-    <li><a class="paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
-    <li><a id="pagination" data-page="1">Page <span id="pagenumber">1</span></a></li>
-    <li><a class="paginator" data-direction="1" aria-label="Next">Next</a></li>
-  </ul>
+
 </div>
 {% endblock %}
