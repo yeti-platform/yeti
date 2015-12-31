@@ -8,6 +8,7 @@ class Indicator(Node):
 
     name = StringField(required=True)
     pattern = StringField(required=True)
+    location = StringField(required=True)
     diamond = StringField(choices=DIAMOND_EDGES, required=True)
     description = StringField()
 
@@ -35,6 +36,6 @@ class Indicator(Node):
         return [self.diamond.lower()]
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description']}
+        i = {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description', 'location']}
         i['id'] = str(self.id)
         return i

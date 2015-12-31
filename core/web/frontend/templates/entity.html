@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block main %}
+
+<div class="row">
+
+<!-- start first column -->
+  <div class="col-md-9">
+
+    <div class="row">
+      <div class="col-md-12">
+        <h4 class="panel-title"></h4>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">{{entity.name}} <span class="small">{{entity.type}}</span></h3>
+          </div>
+          <div class="panel-body">
+            {% if entity.description %}
+            {{entity.description|markdown}}
+            {%else%}
+            <em>No description provided</em>
+            {%endif%}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        {% set n = entity.neighbors() %}
+
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
+          <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
+          <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
+        </ul>
+
+        <div class="tab-content">
+
+            <div role="tabpanel" class="tab-pane active" id="indicators"> <!-- indicators tab -->
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-condensed">
+                    <tr><th>Name</th><th>Link</th><th>Description</th><th>Pattern</th><th>Location</th></tr>
+                    {% for type, entry in n.items() if "Indicator.Regex" in type %}
+                      {% for link, node in entry %}
+                      <tr>
+                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{ node.description }}</td>
+                        <td><code>{{ node.pattern }}</code></td>
+                        <td>{{node.location}}</td>
+                      </tr>
+                      {% endfor %}
+                    {%endfor%}
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="malware"> <!-- malware tab -->
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-condensed">
+                    <tr><th>Name</th><th>Link</th><th>Family</th><th>Aliases</th></tr>
+                    {% for type, entry in n.items() if "Malware" in type %}
+                      {% for link, node in entry %}
+                      <tr>
+                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{ node.family.name }}</td>
+                        <td>{{ macros.display_tags(node.aliases)}}</td>
+                        <td>{{node.context|join(', ', attribute='source')}}</td>
+                      </tr>
+                      {% endfor %}
+                    {%endfor%}
+                  </table>
+
+                </div>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="actors"> <!-- actors tab -->
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-condensed">
+                    <tr><th>Name</th><th>Link</th><th>Pattern</th></tr>
+                    {% for type, entry in n.items() if "Actor" in type %}
+                      {% for link, node in entry %}
+                      <tr>
+                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{ node.pattern }}</td>
+                      </tr>
+                      {% endfor %}
+                    {%endfor%}
+                  </table>
+                </div>
+              </div>
+            </div>
+
+        </div>
+
+      </div>
+    </div>
+
+
+  </div>
+<!-- end first column -->
+
+  <div class="col-md-3">
+
+    <div class="panel panel-primary yeti-panel">
+      <div class="panel-heading">
+        <h3 class="panel-title">Info</h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-condensed main-table">
+          {% for key, value in entity.info().items() %}
+          {% if key not in ["context", "value", "last_analyses"] %}
+            <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
+          {% endif %}
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

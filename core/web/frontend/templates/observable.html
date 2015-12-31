@@ -13,10 +13,14 @@
         <h4 class="panel-title"></h4>
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title">{{observable.value}}</h3>
+            <h3 class="panel-title">{{observable.value}} <small>({{observable.type}})</small></h3>
           </div>
           <div class="panel-body">
-            Description
+            {% if observable.description %}
+            {{observable.description|markdown}}
+            {%else%}
+            <em>No description provided</em>
+            {%endif%}
           </div>
         </div>
 

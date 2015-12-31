@@ -76,6 +76,10 @@ class Node(Document):
     def type(self):
         return self._cls.split(".")[-1:][0]
 
+    @property
+    def full_type(self):
+        return self._cls
+
     @classmethod
     def get_or_create(cls, **kwargs):
         obj = cls(**kwargs)
@@ -104,7 +108,7 @@ class Node(Document):
         links = list(set(self.incoming() + self.outgoing()))
         info = {}
         for link, node in links:
-            info[node.type] = info.get(node.type, []) + [(link, node)]
+            info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
 
     def delete(self):
