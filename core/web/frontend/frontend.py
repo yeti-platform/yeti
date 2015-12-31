@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 
 from core.observables import Observable
+from core.entities import Entity
 from core.web.api.analysis import match_observables
 from core.helpers import refang
 
@@ -23,6 +24,19 @@ def observables():
 def observable(id):
     o = Observable.objects.get(id=id)
     return render_template("observable.html", observable=o)
+
+
+# entities
+
+@frontend.route("/entities")
+def entities():
+    return render_template("entities.html")
+
+
+@frontend.route("/entities/<id>")
+def entity(id):
+    e = Entity.objects.get(id=id)
+    return render_template("entity.html", entity=e)
 
 
 

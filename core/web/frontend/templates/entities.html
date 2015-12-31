@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+	<li class="active">Entities</li>
+</ol>
+{% endblock %}
+
+{% block main %}
+<div class="col-md-9">
+	<div role="tabpanel">
+		<ul id="datasetTabs" class="nav nav-tabs" role="tablist">
+			<li role="presentation" class="active"><a href="#entities" aria-controls="entities" role="tab" data-toggle="tab">Entities</a></li>
+		</ul>
+		<div id="datasetTabsContent" class="tab-content">
+			<div role="tabpanel" class="tab-pane active" id="entities">
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+{%endblock%}
+
+{% block sidebar %}
+<div class="col-md-3">
+	<form data-target="entities" data-url="{{ url_for('api.entityapi')}}" class="yeti-crud">
+
+		<div class="input-group">
+  			<input class="form-control input-sm crud-filter" placeholder="tags=evil">
+			<span class="input-group-btn">
+				<button class="btn btn-primary btn-sm crud-search" type="button">Go</button>
+			</span>
+		</div>
+		<div class="checkbox input-group-lg">
+			<label class="checkbox">
+			      <input type="checkbox" class="crud-regex"> Regex search (slower)
+			</label>
+		</div>
+
+		<ul class="pagination">
+	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
+	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
+	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
+	  </ul>
+
+	</form>
+
+</div>
+{% endblock %}
