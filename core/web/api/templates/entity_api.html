@@ -10,10 +10,12 @@
 
   <div role="tabpanel" class="tab-pane active" id="malware"> <!-- malware tab -->
     <table class="table table-condensed yeti-table table-hover">
-      <tr><th>Name</th></tr>
+      <tr><th>Name</th><th>Family</th><th>Aliases</th></tr>
       {% for entity in data if entity['type'] == "Malware" %}
       <tr>
-        <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}</a></td>
+        <td><a href="{{ url_for("frontend.entity", id=entity['id'])}}">{{entity['name']}}</a></td>
+        <td>{{ entity['family'] }}</td>
+        <td>{{ macros.display_tags(entity['aliases'])}}</td>
       </tr>
       {% endfor %}
     </table>
@@ -21,10 +23,12 @@
 
   <div role="tabpanel" class="tab-pane" id="ttp"> <!-- ttp tab -->
     <table class="table table-condensed yeti-table table-hover">
-      <tr><th>Name</th></tr>
+      <tr><th>Name</th><th>Description</th><th>Killchain</th></tr>
       {% for entity in data if entity['type'] == "TTP" %}
       <tr>
-        <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}{{entity['_cls']}}</a></td>
+        <td><a href="{{ url_for("frontend.entity", id=entity['id'])}}">{{entity['name']}}</a></td>
+        <td>{{ entity['description'] }}</td>
+        <td>{{ entity['killchain'] }}</td>
       </tr>
       {% endfor %}
     </table>

@@ -33,6 +33,7 @@
 
         <ul class="nav nav-tabs" role="tablist">
           <li role="presentation" class="active"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
+          <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
           <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
           <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
         </ul>
@@ -52,6 +53,25 @@
                         <td>{{ node.description }}</td>
                         <td><code>{{ node.pattern }}</code></td>
                         <td>{{node.location}}</td>
+                      </tr>
+                      {% endfor %}
+                    {%endfor%}
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="ttp"> <!-- TTP tab -->
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-condensed">
+                    <tr><th>Name</th><th>Description</th><th>Killchain</th></tr>
+                    {% for type, entry in n.items() if "TTP" in type %}
+                      {% for link, node in entry %}
+                      <tr>
+                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td>{{ node.description }}</td>
+                        <td>{{ node.killchain }}</td>
                       </tr>
                       {% endfor %}
                     {%endfor%}
