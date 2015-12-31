@@ -1,10 +1,44 @@
 {% import 'macros.html' as macros %}
 
-<table class="table table-condensed yeti-table table-hover">
-  <tr><th>Name</th></tr>
-  {% for observable in data %}
-  <tr>
-    <td><a href="{{ url_for('frontend.observable', id=observable['id'])}}">{{observable['value']}}</a></td>
-  </tr>
-  {% endfor %}
-</table>
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" class="active"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
+  <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTPs</a></li>
+  <li role="presentation"><a href="#actor" aria-controls="actor" role="tab" data-toggle="tab">Actors</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <div role="tabpanel" class="tab-pane active" id="malware"> <!-- malware tab -->
+    <table class="table table-condensed yeti-table table-hover">
+      <tr><th>Name</th></tr>
+      {% for entity in data if entity['type'] == "Malware" %}
+      <tr>
+        <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div role="tabpanel" class="tab-pane" id="ttp"> <!-- ttp tab -->
+    <table class="table table-condensed yeti-table table-hover">
+      <tr><th>Name</th></tr>
+      {% for entity in data if entity['type'] == "TTP" %}
+      <tr>
+        <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}{{entity['_cls']}}</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div role="tabpanel" class="tab-pane" id="actor"> <!-- actor tab -->
+    <table class="table table-condensed yeti-table table-hover">
+      <tr><th>Name</th></tr>
+      {% for entity in data if entity['type'] == "Actor" %}
+      <tr>
+        <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+</div>

@@ -27,14 +27,14 @@ class ProcessUrl(ScheduledAnalytics):
     def extract_hostname(url_string):
         host = re.search("://(?P<host>[^/:]+)[/:]?", url_string)
         if host:
-            logging.info("Extracted {} from {}".format(host, url_string))
             host = host.group('host')
+            logging.info("Extracted {} from {}".format(host, url_string))
         return host
 
     @staticmethod
     def each(url):
         try:
-            host = ProcessUrl.analyze_string(url.value)
+            host = ProcessUrl.analyze_string(url.value)[0]
             h = Observable.guess_type(host).get_or_create(value=host)
             h.add_source("analytics")
             Link.connect(src=url, dst=h)

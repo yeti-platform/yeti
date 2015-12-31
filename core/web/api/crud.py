@@ -33,7 +33,7 @@ class CrudSearchApi(Resource):
             data = []
             for o in self.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
                 info = o.info()
-                info['uri'] = url_for("api.{}".format(self.__name__.lower()), id=str(o.id))
+                info['uri'] = url_for("api.{}".format(self.__class__.__name__.lower()), id=str(o.id))
                 data.append(info)
 
         except InvalidQueryError as e:

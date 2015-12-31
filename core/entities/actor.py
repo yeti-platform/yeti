@@ -12,3 +12,8 @@ class Actor(Entity):
 
     def generate_tags(self):
         return [self.name.lower()]
+
+    def info(self):
+        i = {k: v for k, v in self._data.items() if k in ['name', 'aliases']}
+        i['type'] = "Actor"
+        return i
