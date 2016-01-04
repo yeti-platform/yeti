@@ -26,6 +26,12 @@ def observable(id):
     return render_template("observable.html", observable=o)
 
 
+@frontend.route("/graph/<id>")
+def graph(id):
+    o = Observable.objects.get(id=id)
+    return render_template("graph.html", observable=o)
+
+
 # entities
 
 @frontend.route("/entities")
@@ -37,8 +43,6 @@ def entities():
 def entity(id):
     e = Entity.objects.get(id=id)
     return render_template("entity.html", entity=e)
-
-
 
 
 @frontend.route("/query", methods=['GET', 'POST'])
@@ -67,6 +71,3 @@ def analytics():
 @frontend.route("/tags")
 def tags():
     return render_template("tags.html")
-
-
-# detail section
