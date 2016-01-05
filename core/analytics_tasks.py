@@ -4,7 +4,7 @@ import logging
 from core.config.celeryctl import celery_app
 from core.observables import Observable
 from core.config.celeryimports import loaded_modules
-from core.analytics import ScheduledAnalytics, OneShotAnalytics
+from core.analytics import ScheduledAnalytics, AnalyticsResults
 
 from mongoengine import DoesNotExist
 
@@ -48,8 +48,10 @@ def schedule(id):
 
 
 @celery_app.task
-def single(id, observable_json):
-    o = Observable.from_json(observable_json)
-    a = OneShotAnalytics.objects.get(id=id)
-    logging.warning("Running one-shot query {} on {}".format(a.name, o))
-    a.analyze(o)
+def single(results_id):
+    results = AnalyticsResults.objects.get(id=results_id)
+    analytics = loaded_modules[results.analytics]
+    logging.warning("Running one-shot query {} on {}".format(analytics.name, results.observable))
+    results.update(status="running")
+    links = analytics.analyze(results.observable)
+    results.update(status="finished", results=links)

@@ -2,15 +2,24 @@ from flask import Blueprint
 from flask_restful import Api
 from flask.ext.negotiation import Render
 from flask.ext.negotiation.renderers import renderer, template_renderer
-from bson.json_util import dumps
+from json import dumps
+from bson.json_util import default
+from bson.objectid import ObjectId
 
 api = Blueprint("api", __name__, template_folder="templates")
 api_restful = Api(api)
 
 
+def to_json(obj):
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    else:
+        return default(obj)
+
+
 @renderer('application/json')
 def bson_renderer(data, template=None, ctx=None):
-    return dumps(data)
+    return dumps(data, default=to_json)
 
 render = Render(renderers=[template_renderer, bson_renderer])
 

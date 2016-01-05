@@ -39,11 +39,21 @@ class ScheduledAnalytics(ScheduleEntry):
         return i
 
 
+class AnalyticsResults(Document):
+    analytics = StringField(required=True)
+    observable = ReferenceField('Observable', required=True)
+    status = StringField()
+    results = ListField(ReferenceField('Link'))
+
+
 class OneShotAnalytics(OneShotEntry):
 
     @classmethod
     def run(cls, e):
-        celery_app.send_task("core.analytics_tasks.single", [cls.__name__, e.to_json()])
+        results = AnalyticsResults(analytics=cls.__name__, observable=e, status='pending').save()
+        celery_app.send_task("core.analytics_tasks.single", [str(results.id)])
+
+        return results
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "description", "enabled"]}
