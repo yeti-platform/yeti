@@ -7,3 +7,5 @@ from core.observables.url import Url
 from core.observables.hostname import Hostname
 from core.observables.hash import Hash
 from core.observables.file import File
+from core.observables.email import Email
+from core.observables.text import Text

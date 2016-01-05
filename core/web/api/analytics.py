@@ -59,4 +59,17 @@ class OneShotAnalyticsApi(CrudApi):
         args = self.parser.parse_args()
         results = AnalyticsResults.objects.get(id=args['id'])
 
-        return render(results.to_mongo())
+        nodes_id = set()
+        nodes = list()
+        links = list()
+        for link in results.results:
+            for node in (link.src, link.dst):
+                if node.id not in nodes_id:
+                    nodes_id.add(node.id)
+                    nodes.append(node.to_mongo())
+            links.append(link.to_mongo())
+
+        results = results.to_mongo()
+        results['results'] = {'nodes': nodes, 'links': links}
+
+        return render(results)
