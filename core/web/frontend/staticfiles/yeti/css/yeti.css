@@ -163,16 +163,16 @@ span.yeti-toggle {
     font-size: 18px;
 }
 
-#graph-sidebar-links ul {
+.graph-sidebar-links {
     padding: 0;
     list-style-type: none;
 }
 
-/*#graph-sidebar-links li {
+.graph-sidebar-links li {
     border-bottom: 1px dashed #888888;
     padding-bottom: 5px;
     margin-bottom: 5px;
-}*/
+}
 
 .graph-sidebar-link-label {
     color: #BBBBBB;
@@ -204,4 +204,19 @@ span.yeti-toggle {
 
 .graph-sidebar-tags .yeti-tag {
     background-color: #00CCFF;
+}
+
+.glyphicon-spinner .glyphicon {
+    -animation: spin .7s infinite linear;
+    -webkit-animation: spin2 .7s infinite linear;
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg);}
+    to { transform: scale(1) rotate(360deg);}
 }

@@ -24,27 +24,39 @@
 .flaticon-computing10:before {
 	content: "\e003";
 }
-.flaticon-earth213:before {
+.flaticon-document238:before {
 	content: "\e004";
 }
-.flaticon-internet54:before {
+.flaticon-earth213:before {
 	content: "\e005";
 }
-.flaticon-links11:before {
+.flaticon-email106:before {
 	content: "\e006";
 }
-.flaticon-network38:before {
+.flaticon-internet54:before {
 	content: "\e007";
 }
-.flaticon-pci1:before {
+.flaticon-links11:before {
 	content: "\e008";
 }
-.flaticon-server20:before {
+.flaticon-message99:before {
 	content: "\e009";
 }
-.flaticon-website17:before {
+.flaticon-network38:before {
 	content: "\e00a";
 }
-.flaticon-workstation:before {
+.flaticon-pci1:before {
 	content: "\e00b";
+}
+.flaticon-server20:before {
+	content: "\e00c";
+}
+.flaticon-typography2:before {
+	content: "\e00d";
+}
+.flaticon-website17:before {
+	content: "\e00e";
+}
+.flaticon-workstation:before {
+	content: "\e00f";
 }

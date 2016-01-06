@@ -133,22 +133,25 @@
 
     var icons = {
         Ip: flaticon('\ue001'),
-        Hostname: flaticon('\ue009'),
-        Url: flaticon('\ue006'),
+        Hostname: flaticon('\ue00c'),
+        Url: flaticon('\ue008'),
+        Email: flaticon('\ue009'),
+        Text: flaticon('\ue00d'),
     }
 
     var cssicons = {
         Ip: 'flaticon-computer189',
         Hostname: 'flaticon-server20',
         Url: 'flaticon-links11',
+        Email: 'flaticon-message99',
+        Text: 'flaticon-typography2',
     }
-
-    console.log(icons);
 
     // Define initial observable
     var observable = {
         id: '{{observable.id}}',
         label: '{{observable.value}}',
+        type: '{{observable.type}}',
         tags: [],
         contexts: [],
         visible: true,
@@ -163,15 +166,29 @@
     {% for context in observable.context %}
         observable.contexts.push('{{context}}')
     {% endfor %}
-
-    console.log(observable);
 </script>
 
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/graph.js') }}"></script>
 
 {% raw %}
+<script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
+    {{#each analytics}}
+        <div class="graph-sidebar-analytics">
+            <h2>{{name}}</h2>
+            <p>{{description}}</p>
+            <div class="graph-sidebar-analytics-results">
+            </div>
+            <div class="graph-sidebar-analytics-action">
+                <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-name='{{name}}' data-style='slide-up' data-size='s'><span class="ladda-label"><i class="glyphicon glyphicon-refresh"></i> Run</span></button>
+            </div>
+        </div>
+    {{else}}
+        No analytics to display.
+    {{/each}}
+</script>
+
 <script id="graph-sidebar-links-template" type="text/x-handlebars-template">
-    <ul>
+    <ul class="graph-sidebar-links">
         {{#each links}}
             <li>
                 <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}}</div>
@@ -190,7 +207,7 @@
                 <div class="clear"></div>
             </li>
         {{else}}
-            <li>No links to show.</li>
+            <li>No links to dispay.</li>
         {{/each}}
     </ul>
 </script>
@@ -205,7 +222,7 @@
       <li><a data-toggle="pill" href="#graph-sidebar-analytics">Analytics</a></li>
     </ul>
 
-    <div id="graph-sidebar-content" class="tab-content">
+    <div id="graph-sidebar-content" class="tab-content" data-id='{{id}}'>
         <div id="graph-sidebar-info" class="tab-pane active">
             <h1>Tags</h1>
             <div class="graph-sidebar-tags">
@@ -232,118 +249,11 @@
             <div id="graph-sidebar-links-from-{{id}}">Links loading ...</div>
         </div>
 
-            {{!--
-            <h1>Discovery</h1>
-            <p>This URL was first discovered in an email sent to someone, by someone else.</p>
-            <hr>
-            <h2 id="documents">Documents</h2>
-            <p>StackEdit stores your documents in your browser, which means all your documents are automatically saved locally and are accessible <strong>offline!</strong></p>
-            <blockquote>
-                <p><strong>Note:</strong></p>
-                <ul>
-                  <li>StackEdit is accessible offline after the application has been loaded for the first time.</li>
-                  <li>Your local documents are not shared between different browsers or computers.</li>
-                  <li>Clearing your browser’s data may <strong>delete all your local documents!</strong> Make sure your documents are synchronized with <strong>Google Drive</strong> or <strong>Dropbox</strong> (check out the <a href="#synchronization"><i class="icon-refresh"></i> Synchronization</a> section).</li>
-                 </ul>
-             </blockquote>
-        </div>
-        <div id="graph-sidebar-links" class="tab-pane">
-            <h2>Links to observable</h2>
-            <ul>
-                <li>
-                    <div class="graph-sidebar-link-value"><i class="flaticon-links11"></i> http://hrakruehome.de/87yte55/6t45eyv.exe</div>
-                    <div class="graph-sidebar-link-label">
-                        hostname
-                        <div class="graph-sidebar-link-actions">
-                            <i class="flaticon-network38"></i>
-                            <i class="glyphicon glyphicon-list"></i>
-                        </div>
-                    </div>
-                    <div class="clear"></div>
-                </li>
-            </ul>
-            <h2>Links from observable</h2>
-            <ul>
-                <li>
-                    <div class="graph-sidebar-link-value"><i class="flaticon-computer189"></i> 212.40.179.94</div>
-                    <div class="graph-sidebar-tags">
-                        <span data-tag="dridex" class="yeti-tag tag-dridex label label-default  fresh label-primary ">dridex</span>
-                        <span data-tag="malware" class="yeti-tag tag-malware label label-default  fresh label-primary ">malware</span>
-                        <span data-tag="crimeware" class="yeti-tag tag-crimeware label label-default  fresh label-primary ">crimeware</span>
-                        <span data-tag="banker" class="yeti-tag tag-banker label label-default  fresh label-primary ">banker</span>
-                        <span data-tag="c2" class="yeti-tag tag-c2 label label-default  fresh label-primary ">c2</span>
-                    </div>
-                    <div class="graph-sidebar-link-label">
-                        A record
-                        <div class="graph-sidebar-link-actions">
-                            <i class="flaticon-network38"></i>
-                            <i class="glyphicon glyphicon-list"></i>
-                        </div>
-                    </div>
-                    <div class="clear"></div>
-                </li>
-                <li>
-                    <div class="graph-sidebar-link-value"><i class="flaticon-server20"></i> ns1.kabelhosting.net</div>
-                    <div class="graph-sidebar-link-label">
-                        NS record
-                        <div class="graph-sidebar-link-actions">
-                            <i class="flaticon-network38"></i>
-                            <i class="glyphicon glyphicon-list"></i>
-                        </div>
-                    </div>
-                    <div class="clear"></div>
-                </li>
-                <li>
-                    <div class="graph-sidebar-link-value"><i class="flaticon-server20"></i> ns2.kabelhosting.net</div>
-                    <div class="graph-sidebar-link-label">
-                        NS record
-                        <div class="graph-sidebar-link-actions">
-                            <i class="flaticon-network38"></i>
-                            <i class="glyphicon glyphicon-list"></i>
-                        </div>
-                    </div>
-                    <div class="clear"></div>
-                </li>
-                <li>
-                    <div class="graph-sidebar-link-value"><i class="flaticon-server20"></i> ns3.kabelhosting.net</div>
-                    <div class="graph-sidebar-link-label">
-                        NS record
-                        <div class="graph-sidebar-link-actions">
-                            <i class="flaticon-network38"></i>
-                            <i class="glyphicon glyphicon-list"></i>
-                        </div>
-                    </div>
-                    <div class="clear"></div>
-                </li>
-                <li>
-                    <div class="graph-sidebar-link-value"><i class="flaticon-server20"></i> ns4.kabelhosting.net</div>
-                    <div class="graph-sidebar-link-label">
-                        NS record
-                        <div class="graph-sidebar-link-actions">
-                            <i class="flaticon-network38"></i>
-                            <i class="glyphicon glyphicon-list"></i>
-                        </div>
-                    </div>
-                    <div class="clear"></div>
-                </li>
-            </ul>
-        </div>
         <div id="graph-sidebar-analytics" class="tab-pane">
-            <div class="graph-sidebar-analytics">
-                <h2>Whois</h2>
-                <p>Performs a Whois query through DomainTools, and extracts relevant observables.</p>
-                <div class="graph-sidebar-analytics-action">
-                    <button class="btn btn-sm btn-blue"><i class="glyphicon glyphicon-play-circle"></i> Run</button>
-                </div>
+            <div id="graph-sidebar-analytics-{{id}}">
+                Analytics loading ...
             </div>
-            <div class="graph-sidebar-analytics">
-                <h2>Passive DNS</h2>
-                <p>Queries PassiveTotal in order to retrieve all IP addresses that were once pointed by this domain name.</p>
-                <div class="graph-sidebar-analytics-action">
-                    <button class="btn btn-sm btn-blue"><i class="glyphicon glyphicon-play-circle"></i> Run</button>
-                </div>
-            </div>
-        </div>--}}
+        </div>
     </div>
 </script>
 {% endraw %}
