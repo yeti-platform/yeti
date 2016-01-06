@@ -7,7 +7,7 @@ from core.observables import Email, Text
 
 
 def link_from_contact_info(hostname, contact, field, klass, tag, description=None):
-    if field in contact:
+    if contact is not None and field in contact:
         node = klass.get_or_create(value=contact[field])
         link = Link.connect(hostname, node)
         link.add_history(tag=tag, description=description)
