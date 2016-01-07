@@ -1,4 +1,5 @@
 from datetime import datetime
+import operator
 
 from mongoengine import *
 
@@ -45,7 +46,7 @@ class Observable(Node):
 
     def add_context(self, context):
         assert 'source' in context
-        # uniqueness logic should come here
+        context = {k: v for k, v in sorted(context.items(), key=operator.itemgetter(0))}
         return self.modify(add_to_set__context=context)
 
     def add_source(self, source):
