@@ -48,11 +48,14 @@ class ProcessHostnames(ScheduledAnalytics):
         domain = ProcessHostnames.extract_domain(h.value)
 
         if domain:
-            d = Hostname.get_or_create(value=domain)
+            h.update(domain=False)
+            d = Hostname.get_or_create(value=domain, domain=True)
             d.add_source("analytics")
             generated.append(d)
             l = Link.connect(h, d)
             l.add_history(tag='domain')
+        else:
+            h.update(domain=True)
 
         for rdata in results:
             logging.info("{} resolved to {} ({} record)".format(h.value, rdata, rtype))

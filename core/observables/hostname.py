@@ -1,4 +1,5 @@
 import idna
+from mongoengine import BooleanField
 
 from core.observables import Observable
 from core.helpers import is_hostname
@@ -6,6 +7,7 @@ from core.errors import ObservableValidationError
 
 
 class Hostname(Observable):
+    domain = BooleanField()
 
     def clean(self):
         """Performs some normalization on hostnames before saving to the db"""
