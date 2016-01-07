@@ -55,3 +55,4 @@ def single(results_id):
     results.update(status="running")
     links = analytics.analyze(results.observable)
     results.update(status="finished", results=links)
+    results.observable.analysis_done(results.analytics)

@@ -4,6 +4,7 @@ from pythonwhois.parse import parse_raw_whois
 from core.analytics import OneShotAnalytics
 from core.database import Link
 from core.observables import Email, Text
+from core.helpers import is_subdomain
 
 
 def link_from_contact_info(hostname, contact, field, klass, tag, description=None):
@@ -31,20 +32,37 @@ class Whois(OneShotAnalytics):
     def analyze(hostname):
         links = []
 
-        data = get_whois_raw(hostname.value)
-        parsed = parse_raw_whois(data, normalized=True)
+        if not is_subdomain(hostname.value):
+            should_add_context = False
+            for context in hostname.context:
+                if context['source'] == 'Whois':
+                    break
+            else:
+                should_add_context = True
+                context = {'source': 'Whois'}
 
-        if 'registrant' in parsed['contacts']:
-            fields_to_extract = [
-                ('email', Email, 'Registrant', 'Registrant Email'),
-                ('name', Text, 'Registrant', 'Registrant Name'),
-                ('organization', Text, 'Registrant', 'Registrant Organization'),
-                ('phone', Text, 'Registrant', 'Registrant Phone Number'),
-            ]
+            data = get_whois_raw(hostname.value)
+            parsed = parse_raw_whois(data, normalized=True)
+            context['raw'] = data[0]
 
-            for field, klass, tag, description in fields_to_extract:
-                link = link_from_contact_info(hostname, parsed['contacts']['registrant'], field, klass, tag, description)
-                if link is not None:
-                    links.append(link)
+            if 'creation_date' in parsed:
+                context['creation_date'] = parsed['creation_date'][0]
+            if 'registrant' in parsed['contacts']:
+                fields_to_extract = [
+                    ('email', Email, 'Registrant', 'Registrant Email'),
+                    ('name', Text, 'Registrant', 'Registrant Name'),
+                    ('organization', Text, 'Registrant', 'Registrant Organization'),
+                    ('phone', Text, 'Registrant', 'Registrant Phone Number'),
+                ]
+
+                for field, klass, tag, description in fields_to_extract:
+                    link = link_from_contact_info(hostname, parsed['contacts']['registrant'], field, klass, tag, description)
+                    if link is not None:
+                        links.append(link)
+
+            if should_add_context:
+                hostname.add_context(context)
+            else:
+                hostname.save()
 
         return links

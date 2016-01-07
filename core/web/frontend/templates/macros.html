@@ -27,7 +27,7 @@
   <div id="details-{{context["source"]}}" class="panel-collapse collapse" role="tabpanel">
     <table class="table table-condensed">
       {% for key, value in context.items() if key not in ["source"]%}
-      <tr><th>{{key}}</th><td>{{value}}</td></tr>
+      <tr><th>{{key}}</th><td>{{display_yeti(value, key)}}</td></tr>
       {% endfor %}
     </table>
   </div>
@@ -40,6 +40,8 @@
     {{display_last_analyses(element)}}
   {% elif key == "created"%}
     {{display_datetime(element)}}
+  {% elif key == "raw" %}
+    <pre>{{element}}</pre>
   {% else %}
     {{ element }}
   {% endif %}
