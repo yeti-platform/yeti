@@ -4,7 +4,7 @@
   <tr><th></th><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
   {% for observable in data %}
   <tr class="node-line">
-    <td class="graph-link"><a href="{{ url_for('frontend.graph_node', id=observable['id'], klass='observale')}}"><i class="flaticon-network38"></i></a></td>
+    <td class="graph-link"><a href="{{ url_for('frontend.graph_node', id=observable['id'], klass='observable')}}"><i class="flaticon-network38"></i></a></td>
     <td><a href="{{ url_for('frontend.observable', id=observable['id'])}}">{{observable['value']}}</a></td>
     <td>{{macros.display_tags(observable['tags'])}}</td>
     <td>{{ observable['context']|join(', ', attribute='source')}}</td>
