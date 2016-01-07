@@ -13,7 +13,10 @@
         <h4 class="panel-title"></h4>
         <div class="panel panel-default">
           <div class="panel-heading">
-            <h3 class="panel-title">{{entity.name}} <span class="small">{{entity.type}}</span></h3>
+            <h3 class="panel-title">
+                {{entity.name}} <span class="small">{{entity.type}}</span>
+                <a href="{{url_for('frontend.graph_node', id=entity.id, klass='entity')}}" class="btn btn-info btn-xs pull-right new-investigation"><i class="flaticon-network38"></i> New Investigation</a>
+            </h3>
           </div>
           <div class="panel-body">
             {% if entity.description %}

@@ -3,6 +3,8 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from core.observables import Observable
 from core.entities import Entity
 from core.web.api.analysis import match_observables
+from core.web.helpers import get_object_or_404
+from core.web.api.api import bson_renderer
 from core.helpers import refang
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
@@ -30,6 +32,16 @@ def observable(id):
 def graph(id):
     o = Observable.objects.get(id=id)
     return render_template("graph.html", observable=o)
+
+
+@frontend.route("/graph/<klass>/<id>")
+def graph_node(klass, id):
+    if klass == 'entity':
+        node = get_object_or_404(Entity, id=id)
+    else:
+        node = get_object_or_404(Observable, id=id)
+
+    return render_template("graph_node.html", node=bson_renderer(node.to_mongo()))
 
 
 # entities

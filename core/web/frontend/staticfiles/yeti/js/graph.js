@@ -1,200 +1,280 @@
-$(function() {
-  function linksFilter(nodeId, field) {
-    return function(links) {
-      return links[field] == nodeId;
-    };
+//
+// Global Values (DataSets and Templates)
+//
+
+// Compile templates
+var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
+var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
+var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
+
+// Create the nodes dataset and dataview
+var nodes = new vis.DataSet([]);
+var visibleNodes = new vis.DataView(nodes, {
+  filter: function(item) {
+    return item.visible;
+  },
+});
+
+// Create the edges dataset and dataview
+var edges = new vis.DataSet([]);
+var visibleEdges = new vis.DataView(edges, {
+  filter: function(item) {
+    return item.visible;
+  },
+});
+
+// Create the analytics dataset
+var analytics = new vis.DataSet([]);
+
+// Define default icons
+var icons = {
+  'Observable.Ip': flaticon('\ue004'),
+  'Observable.Hostname': flaticon('\ue01d'),
+  'Observable.Url': flaticon('\ue012'),
+  'Observable.Email': flaticon('\ue019'),
+  'Observable.Text': flaticon('\ue021'),
+  'Observable.File': flaticon('\ue020'),
+  'Observable.Hash': flaticon('\ue00d'),
+  'Entity.Malware': flaticon('\ue001'),
+  'Entity.TTP': flaticon('\ue018'),
+  'Indicator.Regex': flaticon('\ue014'),
+};
+
+var cssicons = {
+  'Observable.Ip': 'flaticon-computer189',
+  'Observable.Hostname': 'flaticon-server20',
+  'Observable.Url': 'flaticon-links11',
+  'Observable.Email': 'flaticon-message99',
+  'Observable.Text': 'flaticon-typography2',
+  'Observable.File': 'flaticon-text70',
+  'Observable.Hash': 'flaticon-finger14',
+  'Entity.Malware': 'flaticon-bug24',
+  'Entity.TTP': 'flaticon-maths5',
+  'Indicator.Regex': 'flaticon-magnifying-glass40',
+};
+
+//
+// Functions
+//
+
+function flaticon(code) {
+  return {
+    face: 'Flaticon',
+    code: code,
+    size: 40,
+    color: '#495B6C',
+  };
+}
+
+function buildNodeId(nodeCls, nodeId) {
+  return nodeCls.replace('.', '-') + '-' + nodeId;
+}
+
+function addNode(node) {
+  node.id = buildNodeId(node._cls, node._id);
+
+  var existingNode = nodes.get(node.id);
+
+  if (!existingNode) {
+    if ('value' in node) {
+      node.label = node.value;
+    } else {
+      node.label = node.name;
+    }
+
+    node.shape = 'icon';
+    node.icon = icons[node._cls];
+    node.cssicon = cssicons[node._cls];
+
+    nodes.add(node);
+
+    return node;
+  } else {
+    return existingNode;
   }
+}
 
-  function enrichLink(nodeField) {
-    return function(link) {
-      var node = nodes.get(link[nodeField]);
-      link.nodeId = node.id;
-      link.cssicon = node.cssicon;
-      link.value = node.label;
-      link.tags = node.tags;
-    };
+function addLink(link) {
+  link.id = link._id;
+
+  var existingLink = edges.get(link.id);
+
+  if (!existingLink) {
+    if (link.description) {
+      link.label = link.description;
+    } else if (link.Tag) {
+      link.label = link.tag;
+    }
+
+    link.from = buildNodeId(link.src.cls, link.src.id);
+    link.to = buildNodeId(link.dst.cls, link.dst.id);
+    link.arrows = 'to';
+    edges.add(link);
+
+    return link;
+  } else {
+    return existingLink;
   }
+}
 
-  function displayLinks(nodeId) {
-    var incoming = edges.get({filter: linksFilter(nodeId, 'to')});
-    incoming.forEach(enrichLink('from'));
-    $('#graph-sidebar-links-to-' + nodeId).html(linksTemplate({links: incoming}));
+function displayNode(node) {
+  node = addNode(node);
+  nodes.update({id: node.id, visible: true});
 
-    var outgoing = edges.get({filter: linksFilter(nodeId, 'from')});
-    outgoing.forEach(enrichLink('to'));
-    $('#graph-sidebar-links-from-' + nodeId).html(linksTemplate({links: outgoing}));
+  return node;
+}
+
+function linksFilter(nodeId, field) {
+  return function(links) {
+    return links[field] == nodeId;
+  };
+}
+
+function enrichLink(nodeField) {
+  return function(link) {
+    var node = nodes.get(link[nodeField]);
+    link.nodeId = node.id;
+    link.cssicon = node.cssicon;
+    link.value = node.label;
+    link.tags = node.tags;
+  };
+}
+
+function displayLinks(nodeId) {
+  var incoming = edges.get({filter: linksFilter(nodeId, 'to')});
+  incoming.forEach(enrichLink('from'));
+  $('#graph-sidebar-links-to-' + nodeId).html(linksTemplate({links: incoming}));
+
+  var outgoing = edges.get({filter: linksFilter(nodeId, 'from')});
+  outgoing.forEach(enrichLink('to'));
+  $('#graph-sidebar-links-from-' + nodeId).html(linksTemplate({links: outgoing}));
+}
+
+function displayAnalytics(node) {
+  nodeType = node._cls.split('.');
+  nodeType = nodeType[nodeType.length - 1];
+
+  var availableAnalytics = analytics.get({
+    filter: function(item) {
+      return item.acts_on == nodeType;
+    },
+  });
+
+  $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({analytics: availableAnalytics}));
+}
+
+function retrieveNodeNeighborsCallback(nodeId) {
+  return function(data) {
+    data.links.forEach(addLink);
+    data.nodes.forEach(addNode);
+    nodes.update({id: nodeId, fetched: true});
+
+    displayLinks(nodeId);
+  };
+}
+
+function retrieveNodeNeighbors(node) {
+  $.getJSON('/api/neighbors/' + node._cls + '/' + node._id, retrieveNodeNeighborsCallback(node.id));
+}
+
+function selectNode(nodeId) {
+  var node = nodes.get(nodeId);
+
+  // Update sidebar with content related to this node
+  $('#graph-sidebar').html(nodeTemplate(node));
+
+  // Display analytics
+  displayAnalytics(node);
+
+  // Display links
+  if (node.fetched) {
+    displayLinks(nodeId);
+  } else {
+    retrieveNodeNeighbors(node);
   }
+}
 
-  function displayAnalytics(nodeId, nodeType) {
-    var availableAnalytics = analytics.get({
-      filter: function(item) {
-        return item.acts_on == nodeType;
-      },
-    });
+function refreshAnalytics() {
+  var nodeId = $('#graph-sidebar-content').data('id');
 
-    $('#graph-sidebar-analytics-' + nodeId).html(analyticsTemplate({analytics: availableAnalytics}));
-  }
-
-  function retrieveNodeNeighborsCallback(nodeId) {
-    return function(data) {
-      data.links.forEach(function(link) {
-        if (!edges.get(link.id)) {
-          link.arrows = 'to';
-          edges.add(link);
-        }
-      });
-
-      data.nodes.forEach(function(node) {
-        if (!nodes.get(node.id)) {
-          node.label = node.value;
-          node.shape = 'icon';
-          node.icon = icons[node.type];
-          node.cssicon = cssicons[node.type];
-          nodes.add(node);
-        }
-      });
-
-      nodes.update({id: nodeId, fetched: true});
-
-      displayLinks(nodeId);
-    };
-  }
-
-  function retrieveNodeNeighbors(nodeId) {
-    $.getJSON('/api/graph/neighbors/' + nodeId, retrieveNodeNeighborsCallback(nodeId));
-  }
-
-  function selectNode(nodeId) {
+  if (nodeId) {
     var node = nodes.get(nodeId);
-
-    // Update sidebar with content related to this node
-    $('#graph-sidebar').html(nodeTemplate(node));
-
-    // Display analytics
-    displayAnalytics(nodeId, node.type);
-
-    // Display links
-    if (node.fetched) {
-      displayLinks(nodeId);
-    } else {
-      retrieveNodeNeighbors(nodeId);
-    }
+    displayAnalytics(node);
   }
+}
 
-  function loadAnalytics() {
-    $.getJSON('/api/analytics/oneshot', function(data) {
-      data.forEach(function(item) {
-        if (item.enabled) {
-          analytics.add(item);
+function loadAnalytics() {
+  $.getJSON('/api/analytics/oneshot', function(data) {
+    data.forEach(function(item) {
+      if (item.enabled) {
+        analytics.add(item);
+      }
+    });
+
+    refreshAnalytics();
+  });
+}
+
+function fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button) {
+  return function() {
+    return fetchAnalyticsResults(name, resultsId, resultsDiv, button);
+  };
+}
+
+function fetchAnalyticsResults(name, resultsId, resultsDiv, button) {
+  function callback(data) {
+    if (data.status == 'finished') {
+      var links = [];
+
+      data.results.nodes.forEach(addNode);
+      data.results.links.forEach(function(link) {
+        link = addLink(link);
+
+        if (link.src.id == data.observable) {
+          enrichLink('to')(link);
+          links.push(link);
+        } else if (link.dst.id == data.observable) {
+          enrichLink('from')(link);
+          links.push(link);
         }
       });
-    });
-  }
 
-  function fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button) {
-    return function() {
-      return fetchAnalyticsResults(name, resultsId, resultsDiv, button);
-    };
-  }
-
-  function fetchAnalyticsResults(name, resultsId, resultsDiv, button) {
-    function callback(data) {
-      if (data.status == 'finished') {
-        var links = [];
-
-        data.results.nodes.forEach(function(node) {
-          if (!nodes.get(node._id)) {
-            node.id = node._id;
-            node.type = node._cls.split('.');
-            node.type = node.type[nodeType.length - 1];
-            node.label = node.value;
-            node.shape = 'icon';
-            node.icon = icons[node.type];
-            node.cssicon = cssicons[node.type];
-
-            nodes.add(node);
-          }
-        });
-
-        data.results.links.forEach(function(link) {
-          var existingLink = edges.get(link._id);
-
-          if (existingLink) {
-            existingLink.label = link.description;
-            edges.update({id: link._id, label: link.description});
-
-            link = existingLink;
-          } else {
-            link.arrows = 'to';
-            link.id = link._id;
-            link.from = link.src.id;
-            link.to = link.dst.id;
-            edges.add(link);
-          }
-
-          if (link.from == data.observable) {
-            enrichLink('to')(link);
-            links.push(link);
-          } else if (link.to == data.observable) {
-            enrichLink('from')(link);
-            links.push(link);
-          }
-        });
-
-        resultsDiv.html(linksTemplate({links: links}));
-        button.removeClass('glyphicon-spinner');
-      } else {
-        setTimeout(fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button), 1000);
-      }
+      resultsDiv.html(linksTemplate({links: links}));
+      button.removeClass('glyphicon-spinner');
+    } else {
+      setTimeout(fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button), 1000);
     }
-
-    $.post(
-      '/api/analytics/oneshot/' + name + '/status',
-      {id: resultsId},
-      callback,
-      'json'
-    );
   }
 
-  function runAnalytics(name, nodeId, resultsDiv, progress) {
-    function runCallback(data) {
-      var resultsId = data._id;
+  $.post(
+    '/api/analytics/oneshot/' + name + '/status',
+    {id: resultsId},
+    callback,
+    'json'
+  );
+}
 
-      fetchAnalyticsResults(name, resultsId, resultsDiv, progress);
-    }
+function runAnalytics(name, nodeId, resultsDiv, progress) {
+  function runCallback(data) {
+    var resultsId = data._id;
 
-    $.post(
-      '/api/analytics/oneshot/' + name + '/run',
-      {id: nodeId},
-      runCallback,
-      'json'
-    );
+    fetchAnalyticsResults(name, resultsId, resultsDiv, progress);
   }
 
-  // Compile templates
-  var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
-  var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
-  var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
+  $.post(
+    '/api/analytics/oneshot/' + name + '/run',
+    {id: nodeId},
+    runCallback,
+    'json'
+  );
+}
 
-  // create the observable dataset and dataview
-  var nodes = new vis.DataSet([]);
-  var visibleNodes = new vis.DataView(nodes, {
-    filter: function(item) {
-      return item.visible;
-    },
-  });
+// Compile templates
+var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
+var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
+var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
 
-  // Add the first observable
-  nodes.add(observable);
-
-  // create the edges dataset and dataview
-  var edges = new vis.DataSet([]);
-  var visibleEdges = new vis.DataView(edges, {
-    filter: function(item) {
-      return item.visible;
-    },
-  });
-
+function initGraph() {
   // create a network
   var container = document.getElementById('graph');
   var data = {
@@ -211,19 +291,24 @@ $(function() {
   var network = new vis.Network(container, data, options);
 
   // create analytics
-  var analytics = new vis.DataSet([]);
   loadAnalytics();
 
+  // Define event handlers
   network.on('selectNode', function(params) {
     selectNode(params.nodes[params.nodes.length - 1]);
   });
 
   $('#graph-sidebar').on('click', '.graph-sidebar-display-link', function(e) {
     linkId = $(this).data('link');
-    nodeId = $(this).data('node');
+    link = edges.get(linkId);
 
+    nodes.update([{id: link.from, visible: true}, {id: link.to, visible: true}]);
     edges.update({id: linkId, visible: true});
-    nodes.update({id: nodeId, visible: true});
+  });
+
+  $('#graph-sidebar').on('click', '.graph-sidebar-view-node', function(e) {
+    nodeId = $(this).data('node');
+    selectNode(nodeId);
   });
 
   $('#graph-sidebar').on('click', '.graph-sidebar-run-analytics', function(e) {
@@ -231,10 +316,12 @@ $(function() {
 
     name = button.data('name');
     nodeId = button.parents('#graph-sidebar-content').data('id');
+    nodeId = nodeId.split('-');
+    nodeId = nodeId[nodeId.length - 1];
     resultsDiv = button.parent().prev();
 
     button.addClass('glyphicon-spinner');
 
     runAnalytics(name, nodeId, resultsDiv, button);
   });
-});
+}

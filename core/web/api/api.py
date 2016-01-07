@@ -39,7 +39,7 @@ from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
 from core.web.api.analysis import AnalysisApi
 from core.web.api.feeds import FeedApi
 from core.web.api.export import ExportApi
-from core.web.api.graph import GraphNeighborsApi
+from core.web.api.neighbors import NeighborsApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
 
@@ -57,4 +57,4 @@ api_restful.add_resource(TagActionApi, '/tags/action/<string:action>')
 api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>/<string:action>')
 api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>', '/exports/<string:id>/<string:action>')
 
-api_restful.add_resource(GraphNeighborsApi, '/graph/neighbors/<string:node_id>')
+api_restful.add_resource(NeighborsApi, '/neighbors/<string:klass>/<string:node_id>')

@@ -10,9 +10,12 @@
 
   <div role="tabpanel" class="tab-pane active" id="malware"> <!-- malware tab -->
     <table class="table table-condensed yeti-table table-hover">
-      <tr><th>Name</th><th>Family</th><th>Aliases</th></tr>
+      <tr><th></th><th>Name</th><th>Family</th><th>Aliases</th></tr>
       {% for entity in data if entity['type'] == "Malware" %}
-      <tr>
+      <tr class="node-line">
+        <td class="graph-link">
+            <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
+        </td>
         <td><a href="{{ url_for("frontend.entity", id=entity['id'])}}">{{entity['name']}}</a></td>
         <td>{{ entity['family'] }}</td>
         <td>{{ macros.display_tags(entity['aliases'])}}</td>
@@ -23,9 +26,12 @@
 
   <div role="tabpanel" class="tab-pane" id="ttp"> <!-- ttp tab -->
     <table class="table table-condensed yeti-table table-hover">
-      <tr><th>Name</th><th>Description</th><th>Killchain</th></tr>
+      <tr><th></th><th>Name</th><th>Description</th><th>Killchain</th></tr>
       {% for entity in data if entity['type'] == "TTP" %}
-      <tr>
+      <tr class="node-line">
+        <td class="graph-link">
+          <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
+        </td>
         <td><a href="{{ url_for("frontend.entity", id=entity['id'])}}">{{entity['name']}}</a></td>
         <td>{{ entity['description'] }}</td>
         <td>{{ entity['killchain'] }}</td>
@@ -36,9 +42,12 @@
 
   <div role="tabpanel" class="tab-pane" id="actor"> <!-- actor tab -->
     <table class="table table-condensed yeti-table table-hover">
-      <tr><th>Name</th></tr>
+      <tr><th></th><th>Name</th></tr>
       {% for entity in data if entity['type'] == "Actor" %}
-      <tr>
+      <tr class="node-line">
+        <td class="graph-link">
+          <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
+        </td>
         <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}</a></td>
       </tr>
       {% endfor %}

@@ -49,6 +49,14 @@ class Link(Document):
     def info(self):
         return {"tag": self.tag, "description": self.description, "id": str(self.id), "src": unicode(self.src), "dst": unicode(self.dst)}
 
+    def to_dict(self):
+        result = self.to_mongo()
+        result['tag'] = self.tag
+        result['description'] = self.description
+        del result['history']
+
+        return result
+
     def add_history(self, tag, description=None, first_seen=None, last_seen=None):
         # this is race-condition prone... think of a better way to do this
         if not first_seen:
@@ -74,7 +82,7 @@ class Node(Document):
 
     @property
     def type(self):
-        return self._cls.split(".")[-1:][0]
+        return self._cls.split(".")[-1]
 
     @property
     def full_type(self):
