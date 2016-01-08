@@ -9,11 +9,19 @@ class ObservableApi(CrudApi):
     objectmanager = Observable
 
     def post(self, id=None):
+        params = request.json
+        source = params.pop('source', None)
+
         if not id:
-            return render(self.objectmanager.add_text(request.json['value']).to_mongo())
+            obj = self.objectmanager.add_text(request.json['value'])
         else:
             obj = self.objectmanager.get(id)
-            obj.clean_update(**request.json)
+
+        if source:
+            obj.add_source(source)
+
+        if params:
+            obj.clean_update(**params)
 
         return render({"status": "ok"})
 
