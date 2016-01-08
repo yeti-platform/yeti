@@ -1,13 +1,11 @@
-from datetime import datetime
-
-from mongoengine import *
+from mongoengine import StringField
 
 from core.database import Node, Link
 
 
 class Entity(Node):
 
-    name = StringField(required=True, sparse=True)
+    name = StringField(required=True, unique=True, sparse=True)
     description = StringField()
 
     meta = {
