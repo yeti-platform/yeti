@@ -1,10 +1,10 @@
 from pythonwhois.net import get_whois_raw
 from pythonwhois.parse import parse_raw_whois
+from tldextract import extract
 
 from core.analytics import OneShotAnalytics
 from core.database import Link
 from core.observables import Email, Text
-from core.helpers import is_subdomain
 
 
 def link_from_contact_info(hostname, contact, field, klass, tag, description=None):
@@ -32,7 +32,9 @@ class Whois(OneShotAnalytics):
     def analyze(hostname):
         links = []
 
-        if not is_subdomain(hostname.value):
+        parts = extract(hostname.value)
+
+        if parts.subdomain == '':
             should_add_context = False
             for context in hostname.context:
                 if context['source'] == 'Whois':

@@ -71,6 +71,13 @@ class Observable(Node):
 
         return new_tags
 
+    def has_tag(self, tag_to_search):
+        for tag in self.tags:
+            if tag.name == tag_to_search:
+                return True
+        else:
+            return False
+
     def tag(self, new_tags):
         if isinstance(new_tags, (str, unicode)):
             new_tags = [new_tags]
