@@ -1,12 +1,11 @@
 from flask import request
 from flask_restful import Resource
 
-from mongoengine.errors import DoesNotExist
-
 from core.observables import Observable, Url, Hostname
 from core.indicators import Indicator
 from core.web.api.api import render
 from core.errors import ObservableValidationError
+from core.helpers import del_from_set
 
 # load analyzers
 from plugins.analytics.process_hostnames import ProcessHostnames
@@ -35,15 +34,20 @@ def derive(observables):
 
 
 def match_observables(observables):
+    # Remove empty observables
+    observables = [observable for observable in observables if observable]
     extended_query = set(observables) | set(derive(observables))
     added_entities = set()
 
-    data = {"matches": [], "unknown": set(observables), "entities": [], "known": [], "interesting_neighbors": []}
+    data = {"matches": [], "unknown": set(observables), "entities": [], "known": [], "neighbors": []}
 
     for o in Observable.objects(value__in=list(extended_query)):
+        data['known'].append(o.info())
+        del_from_set(data['unknown'], o.value)
+
         for link, obs in (o.incoming() + o.outgoing()):
-            if link.src.value not in extended_query or link.dst.value not in extended_query and obs.tags:
-                data['interesting_neighbors'].append((link.info(), obs.info()))
+            if (link.src.value not in extended_query or link.dst.value not in extended_query) and obs.tags:
+                data['neighbors'].append((link.info(), obs.info()))
 
     for o, i in Indicator.search(extended_query):
         o = Observable.add_text(o)
@@ -67,15 +71,7 @@ def match_observables(observables):
                 [match["suggested_tags"].add(tag) for tag in node.generate_tags() if tag not in o_tags]
 
         data["matches"].append(match)
-        data["known"].append(o.info())
-        data["unknown"].remove(o.value)
-
-    for o in data["unknown"].copy():
-        try:
-            data["known"].append(Observable.objects.get(value=o).info())
-            data["unknown"].remove(o)
-        except DoesNotExist:
-            continue
+        del_from_set(data["unknown"], o.value)
 
     return data
 

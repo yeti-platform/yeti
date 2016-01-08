@@ -77,3 +77,10 @@ def is_hostname(hostname):
                 return hostname
 
     return False
+
+
+def del_from_set(s, value):
+    try:
+        s.remove(value)
+    except KeyError:
+        pass

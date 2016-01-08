@@ -18,26 +18,32 @@
 <div class="row">
 
   <div class="col-md-12">
+    {% if data['known']|length > 0 or data['neighbors']|length > 0 %}
     <div class="panel panel-primary yeti-panel">
       <div class="panel-heading">
         <h1 class="panel-title">Observables already in database</h1>
       </div>
       <div class="panel-body">
+        {% if data['known']|length > 0 %}
         <table class="table table-condensed">
           <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
           {% for obs in data['known']%}
           <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|join(', ', attribute='source')}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
           {% endfor %}
         </table>
+        {% endif %}
+        {% if data['neighbors']|length > 0 %}
 				<h5>Interesting neighbors</h5>
 				<table class="table table-condensed">
           <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
-          {% for link, obs in data["tagged_neighbors"]%}
-          <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs["value"]}}</a> <span class="small">({{link["description"]}} for {% if obs["value"] == link["dst"]%}{{link["src"]}}{%else%}{{link["dst"]}}{%endif%})</span></td><td>{{macros.display_tags(obs["tags"])}}</td><td>{{obs["context"]|join(", ", attribute="source")}}</td><td>{{macros.display_datetime(obs["created"])}}</td></tr>
+          {% for link, obs in data["neighbors"]%}
+          <tr><td><a href="{{url_for("frontend.observable", id=obs["id"])}}">{{obs["value"]}}</a> <span class="small">({% if obs["value"] == link["dst"]%}{{link["src"]}}{%else%}{{link["dst"]}}{%endif%} - {{link["description"]}})</span></td><td>{{macros.display_tags(obs["tags"])}}</td><td>{{obs["context"]|join(", ", attribute="source")}}</td><td>{{macros.display_datetime(obs["created"])}}</td></tr>
           {% endfor %}
         </table>
+        {% endif %}
       </div>
     </div>
+    {% endif %}
   </div>
 
 </div>
@@ -45,6 +51,7 @@
 <div class="row">
 
   <div class="col-md-8">
+    {% if data['matches']|length > 0%}
     <div class="panel panel-danger yeti-panel">
       <div class="panel-heading">
         <h1 class="panel-title">Indicator matches</h1>
@@ -60,9 +67,11 @@
         </table>
       </div>
     </div>
+    {% endif %}
   </div>
 
   <div class="col-md-4">
+    {% if data['entities']|length > 0%}
     <div class="panel panel-warning yeti-panel">
       <div class="panel-heading">
         <h1 class="panel-title">Related entities</h1>
@@ -76,6 +85,7 @@
         </table>
       </div>
     </div>
+    {% endif %}
   </div>
 
 </div>
