@@ -14,6 +14,6 @@ class Actor(Entity):
         return [self.name.lower()]
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ['name', 'aliases']}
+        i = {k: v for k, v in self._data.items() if k in ['id', 'name', 'aliases']}
         i['type'] = "Actor"
         return i
