@@ -11,4 +11,8 @@ class CeleryConfig:
     CELERY_IMPORTS = ('core.config.celeryimports', 'core.analytics_tasks', 'core.export')
     CELERY_TIMEZONE = 'UTC'
 
+    CELERY_ROUTES = {
+        'core.analytics_tasks.single': {'queue': 'oneshot'}
+    }
+
 celery_app.config_from_object(CeleryConfig)
