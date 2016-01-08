@@ -4,6 +4,7 @@
   <li role="presentation" class="active"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
   <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTPs</a></li>
   <li role="presentation"><a href="#actor" aria-controls="actor" role="tab" data-toggle="tab">Actors</a></li>
+  <li role="presentation"><a href="#company" aria-controls="actor" role="tab" data-toggle="tab">Companies</a></li>
 </ul>
 
 <div class="tab-content">
@@ -38,6 +39,17 @@
     <table class="table table-condensed yeti-table table-hover">
       <tr><th>Name</th></tr>
       {% for entity in data if entity['type'] == "Actor" %}
+      <tr>
+        <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div role="tabpanel" class="tab-pane" id="company"> <!-- actor tab -->
+    <table class="table table-condensed yeti-table table-hover">
+      <tr><th>Name</th></tr>
+      {% for entity in data if entity['type'] == "Company" %}
       <tr>
         <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}</a></td>
       </tr>
