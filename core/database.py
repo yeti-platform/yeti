@@ -92,11 +92,12 @@ class Node(Document):
             if hasattr(obj, 'value'):
                 return cls.objects.get(value=obj.value)
 
-    @classmethod
-    def update(cls, id, data):
-        o = cls.objects(id=id).modify(new=True, **data)
-        o.clean()
-        o.save()
+    def clean_update(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
+        self.validate()
+        self.update(**kwargs)
 
     def incoming(self):
         return [(l, l.src) for l in Link.objects(dst=self)]

@@ -67,6 +67,7 @@ class CrudApi(Resource):
         if not id:
             return render(self.objectmanager(**request.json).save().info())
         else:
-            self.objectmanager.update(id, request.json)
+            obj = self.objectmanager.objects.get(id)
+            obj.clean_update(**request.json)
 
         return render({"status": "ok"})
