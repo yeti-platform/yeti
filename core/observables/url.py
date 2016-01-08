@@ -11,10 +11,10 @@ class Url(Observable):
 
     def clean(self):
         """Ensures that URLs are canonized before saving"""
-        self.value = refang(self.value)
+        self.value = refang(self.value.strip())
         try:
             if re.match(r"[^:]+://", self.value) is None:  # if no schema is specified, assume http://
-                self.value = "http://{}".format(self.value)
+                self.value = u"http://{}".format(self.value)
             self.value = urlnorm.norm(self.value)
         except urlnorm.InvalidUrl:
             raise ObservableValidationError("Invalid URL: {}".format(self.value))
