@@ -33,7 +33,7 @@ render = Render(renderers=[template_renderer, bson_renderer])
 render_json = Render(renderers=[bson_renderer])
 
 from core.web.api.observable import ObservableSearchApi, ObservableApi
-from core.web.api.entity import EntityApi
+from core.web.api.entity import EntityApi, EntitySearchApi
 from core.web.api.tag import TagApi, TagActionApi
 from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
 from core.web.api.analysis import AnalysisApi
@@ -49,7 +49,9 @@ api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/
 api_restful.add_resource(ObservableSearchApi, '/observables/search')
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
 
+api_restful.add_resource(EntitySearchApi, '/entities/search')
 api_restful.add_resource(EntityApi, '/entities/', '/entities/<string:id>')
+
 
 api_restful.add_resource(TagApi, '/tags/', '/tags/<string:id>', "/tags/<string:action>")
 api_restful.add_resource(TagActionApi, '/tags/action/<string:action>')
