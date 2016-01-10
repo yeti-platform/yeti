@@ -67,7 +67,7 @@ class OneShotAnalyticsApi(CrudApi):
                 if node.id not in nodes_id:
                     nodes_id.add(node.id)
                     nodes.append(node.to_mongo())
-            links.append(link.to_mongo())
+            links.append(link.to_dict())
 
         results = results.to_mongo()
         results['results'] = {'nodes': nodes, 'links': links}

@@ -30,6 +30,7 @@ def bson_renderer(data, template=None, ctx=None):
     return dumps(data, default=to_json)
 
 render = Render(renderers=[template_renderer, bson_renderer])
+render_json = Render(renderers=[bson_renderer])
 
 from core.web.api.observable import ObservableSearchApi, ObservableApi
 from core.web.api.entity import EntityApi
@@ -38,6 +39,7 @@ from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
 from core.web.api.analysis import AnalysisApi
 from core.web.api.feeds import FeedApi
 from core.web.api.export import ExportApi
+from core.web.api.neighbors import NeighborsApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
 
@@ -54,3 +56,5 @@ api_restful.add_resource(TagActionApi, '/tags/action/<string:action>')
 
 api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>/<string:action>')
 api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>', '/exports/<string:id>/<string:action>')
+
+api_restful.add_resource(NeighborsApi, '/neighbors/<string:klass>/<string:node_id>')

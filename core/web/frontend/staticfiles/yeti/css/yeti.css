@@ -99,3 +99,160 @@ span.yeti-toggle {
 .yeti-table tr.disabled .export-refresh {
   cursor: not-allowed;
 }
+
+/* graph */
+
+#graph {
+    position: fixed;
+    top: 50px;
+    bottom: 0px;
+    left: 300px;
+    right: 0px;
+}
+
+#graph-sidebar {
+    position: fixed;
+    top: 50px;
+    bottom: 0px;
+    left: 0px;
+    width: 300px;
+    background-color: #495B6C;
+    color: white;
+    padding: 20px;
+    overflow: auto;
+    border-top: 3px solid #00CCFF;
+}
+
+#graph-sidebar-icon {
+    text-align: center;
+    font-size: 50px;
+}
+
+#graph-sidebar-value {
+    text-align: center;
+    font-size: 20px;
+    word-break: break-all;
+}
+
+.graph-sidebar-link-value {
+    word-break: break-all;
+}
+
+#graph-sidebar-tabs {
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+#graph-sidebar-tabs .active a,
+#graph-sidebar-tabs a:hover {
+    background-color: #00CCFF;
+    color: white
+}
+
+#graph-sidebar-tabs a {
+    color: #00CCFF;
+}
+
+#graph-sidebar-content {
+    margin-top: 20px;
+    font-size: 14px;
+    text-align: justify;
+}
+
+#graph-sidebar-content h1 {
+    font-size: 20px;
+}
+
+#graph-sidebar-content h2 {
+    font-size: 18px;
+}
+
+.graph-sidebar-links {
+    padding: 0;
+    list-style-type: none;
+}
+
+.graph-sidebar-links li {
+    border-bottom: 1px dashed #888888;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+
+.graph-sidebar-link-label {
+    color: #BBBBBB;
+    font-style: italic;
+}
+
+.graph-sidebar-link-actions {
+    color: #00CCFF;
+    float: right;
+}
+
+.graph-sidebar-links a {
+    color: #00CCFF;
+}
+
+.graph-sidebar-links a:hover {
+    color: white;
+    text-decoration: none;
+}
+
+.clear {
+    clear: both
+}
+
+.btn-blue {
+    background-color: #00CCFF;
+    color: black;
+}
+
+.btn-blue:hover {
+    color: white;
+}
+
+.graph-sidebar-tags {
+    text-align: left;
+    line-height: 24px;
+}
+
+.graph-sidebar-tags .yeti-tag {
+    background-color: #00CCFF;
+}
+
+.glyphicon-spinner .glyphicon {
+    -animation: spin .7s infinite linear;
+    -webkit-animation: spin2 .7s infinite linear;
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg);}
+    to { transform: scale(1) rotate(360deg);}
+}
+
+.graph-link {
+    width: 10px;
+}
+
+.node-line .graph-link>a {
+    visibility: hidden;
+}
+
+.node-line:hover .graph-link>a {
+    visibility: visible;
+}
+
+.graph-link a:hover {
+    color: #00CCFF;
+    text-decoration: none;
+}
+
+/* Investigation */
+
+.new-investigation {
+    margin-top: -2px;
+}

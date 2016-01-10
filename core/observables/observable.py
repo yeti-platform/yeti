@@ -131,4 +131,5 @@ class Observable(Node):
         i = {k: v for k, v in self._data.items() if k in ["value", "context", "last_analyses", "created"]}
         i['tags'] = [t.info() for t in self.tags]
         i['id'] = str(self.id)
+        i['type'] = self.__class__.__name__
         return i

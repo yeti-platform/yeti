@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block main %}
+</div>
+
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='visjs/vis.min.js') }}"></script>
+<link href="{{ url_for('frontend.static', filename='visjs/vis.min.css') }}" rel="stylesheet" type="text/css" />
+
+<div id="graph-sidebar"><i class="flaticon-network38"></i></div>
+<div id="graph"></div>
+
+{% include "graph_templates.html" %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/graph.js') }}"></script>
+
+<script type="text/javascript">
+    $(function() {
+        // Define initial state
+        var node = JSON.parse({{node|tojson}});
+        displayNode(node);
+
+        // Run graph
+        initGraph();
+
+        // Select node
+        selectNode(node.id);
+    });
+</script>
+
+<div>
+{% endblock %}
