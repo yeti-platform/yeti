@@ -27,9 +27,9 @@ MalwareFamily("trojan").save()
 MalwareFamily("dropper").save()
 
 
-t1= Tag.get_or_create(name="zeus").add_produces(["crimeware", "banker", "malware"])
-t2= Tag.get_or_create(name="banker").add_produces(["crimeware", "malware"])
-t3= Tag.get_or_create(name="c2")
+t1 = Tag.get_or_create(name="zeus").add_produces(["crimeware", "banker", "malware"])
+t2 = Tag.get_or_create(name="banker").add_produces(["crimeware", "malware"])
+t3 = Tag.get_or_create(name="c2")
 t3.add_replaces(["c&c", "cc"])
 
 Tag.get_or_create(name="crimeware").add_produces("malware")
@@ -40,7 +40,7 @@ Export(name="TestExport", description="Test description", frequency=timedelta(ho
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
 url.tag(["zeus", "banker", "cc", "c2"])
 print url.tags
-exit()
+
 # print url.find_tags()
 
 # import pdb; pdb.set_trace()
@@ -65,14 +65,16 @@ dridex.save()
 bartalex_callback = Regex(name="Bartalex callback")
 bartalex_callback.pattern = "/mg.jpg$"
 bartalex_callback.description = "Bartalex [stage2] callback (extracted from macros)"
-bartalex_callback.diamond = "capability"
+bartalex_callback.diamond = "Capability"
+bartalex_callback.location = "network"
 bartalex_callback.save()
 bartalex_callback.action('indicates', bartalex, description="Bartalex payload URL (Dridex)")
 
 bartalex_callback2 = Regex(name="Bartalex callback")
 bartalex_callback2.pattern = "/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$"
 bartalex_callback2.description = "Bartalex [stage2] callback (extracted from macros)"
-bartalex_callback2.diamond = "capability"
+bartalex_callback2.diamond = "Capability"
+bartalex_callback2.location = "network"
 bartalex_callback2.save()
 bartalex_callback2.action("indicates", bartalex, description="Bartalex payload URL (Dridex)")
 
