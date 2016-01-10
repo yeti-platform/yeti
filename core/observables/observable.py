@@ -44,10 +44,20 @@ class Observable(Node):
     def add_text(cls, text):
         return Observable.guess_type(text).get_or_create(value=text)
 
+    @staticmethod
+    def change_all_tags(old_tags, new_tag):
+        if isinstance(old_tags, (str, unicode)):
+            old_tags = [old_tags]
+
+        for o in Observable.objects(tags__name__in=old_tags):
+            for old_tag in old_tags:
+                o.change_tag(old_tag, new_tag)
+
     def add_context(self, context):
         assert 'source' in context
         context = {k: v for k, v in sorted(context.items(), key=operator.itemgetter(0))}
-        return self.modify(add_to_set__context=context)
+        self.modify(add_to_set__context=context)
+        return self.reload()
 
     def add_source(self, source):
         return self.modify(add_to_set__sources=source)
@@ -78,6 +88,12 @@ class Observable(Node):
         else:
             return False
 
+    def change_tag(self, old_tag, new_tag):
+        if not self.modify({"tags__name": old_tag, "tags__name__ne": new_tag}, set__tags__S__name=new_tag):
+            self.modify({"tags__name": old_tag}, pull__tags__name=old_tag)
+            self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.now())
+        return self.reload()
+
     def tag(self, new_tags):
         if isinstance(new_tags, (str, unicode)):
             new_tags = [new_tags]
@@ -92,11 +108,10 @@ class Observable(Node):
                 except DoesNotExist:
                     tag = Tag.get_or_create(name=new_tag.name)
 
-                tag.modify(inc__count=1)
-                if self.__class__.objects(id=self.id, tags__name=tag.name).count() == 1:
-                    self.__class__.objects(id=self.id, tags__name=tag.name).modify(new=True, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now())
-                else:
-                    self.modify(add_to_set__tags=ObservableTag(name=tag.name))
+                if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
+                    self.modify(push__tags=ObservableTag(name=tag.name))
+                    tag.modify(inc__count=1)
+
         return self.reload()
 
     def check_tags(self):

@@ -38,7 +38,7 @@ Export(name="TestExport", description="Test description", frequency=timedelta(ho
 
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
-url.tag(["zeus", "banker", "cc"])
+url.tag(["zeus", "banker", "cc", "c2"])
 print url.tags
 exit()
 # print url.find_tags()
