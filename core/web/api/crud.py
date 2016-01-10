@@ -11,7 +11,7 @@ from core.web.api.api import render
 class CrudSearchApi(Resource):
 
     def post(self):
-        query = request.get_json(silent=True)
+        query = request.get_json(silent=True) or {}
         fltr = query.get('filter', {})
         params = query.get('params', {})
 
@@ -44,6 +44,9 @@ class CrudSearchApi(Resource):
 
 class CrudApi(Resource):
 
+    template = None
+    template_single = None
+
     def delete(self, id):
         obj = self.objectmanager.objects.get(id=id)
         obj.delete()
@@ -53,7 +56,11 @@ class CrudApi(Resource):
         if id:
             data = self.objectmanager.objects.get(id=id).info()
         else:
-            data = [d.info() for d in self.objectmanager.objects.all()]
+            data = []
+            for obj in self.objectmanager.objects.all():
+                info = obj.info()
+                info['uri'] = url_for("api.{}".format(self.__class__.__name__.lower()), id=str(obj.id))
+                data.append(info)
 
         if not template:  # template has not been overridden in URL
             if not id:  # determine if we're listing or displaying a single object
@@ -67,7 +74,7 @@ class CrudApi(Resource):
         if not id:
             return render(self.objectmanager(**request.json).save().info())
         else:
-            obj = self.objectmanager.objects.get(id)
+            obj = self.objectmanager.objects.get(id=id)
             obj.clean_update(**request.json)
 
         return render({"status": "ok"})
