@@ -35,26 +35,6 @@ nosetests.xml
 .project
 .pydevproject
 
-
-# Malcom folders
-env-*
-libs
-
-# do not include private feeds
-Malcom/feeds/private*
-Malcom/feeds/Private*
-
-
-# do not include user-generated pcap files or db exports
-Malcom/sniffer/captures/*.pcap
-Malcom/exports/*
-
-# do not include TLS keys
-Malcom/networking/tlsproxy/keys/server.crt
-Malcom/networking/tlsproxy/keys/server.key
-Malcom/auxiliary/geoIP/*
-*.conf
-
 # MAC OS X stuff
 .fuse_*
 .DS_Store
@@ -65,3 +45,6 @@ Malcom/auxiliary/geoIP/*
 Icon?
 ehthumbs.db
 Thumbs.db
+
+# YETI stuff
+exports/*
