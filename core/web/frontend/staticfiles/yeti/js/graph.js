@@ -28,16 +28,17 @@ var analytics = new vis.DataSet([]);
 
 // Define default icons
 var icons = {
-  'Observable.Ip': flaticon('\ue004'),
-  'Observable.Hostname': flaticon('\ue01d'),
-  'Observable.Url': flaticon('\ue012'),
-  'Observable.Email': flaticon('\ue019'),
-  'Observable.Text': flaticon('\ue021'),
-  'Observable.File': flaticon('\ue020'),
-  'Observable.Hash': flaticon('\ue00d'),
+  'Observable.Ip': flaticon('\ue005'),
+  'Observable.Hostname': flaticon('\ue01E'),
+  'Observable.Url': flaticon('\ue013'),
+  'Observable.Email': flaticon('\ue01A'),
+  'Observable.Text': flaticon('\ue022'),
+  'Observable.File': flaticon('\ue021'),
+  'Observable.Hash': flaticon('\ue00e'),
   'Entity.Malware': flaticon('\ue001'),
-  'Entity.TTP': flaticon('\ue018'),
-  'Indicator.Regex': flaticon('\ue014'),
+  'Entity.TTP': flaticon('\ue019'),
+  'Entity.Company': flaticon('\ue002'),
+  'Indicator.Regex': flaticon('\ue015'),
 };
 
 var cssicons = {
@@ -50,6 +51,7 @@ var cssicons = {
   'Observable.Hash': 'flaticon-finger14',
   'Entity.Malware': 'flaticon-bug24',
   'Entity.TTP': 'flaticon-maths5',
+  'Entity.Company': 'flaticon-building259',
   'Indicator.Regex': 'flaticon-magnifying-glass40',
 };
 
