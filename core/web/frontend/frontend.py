@@ -1,13 +1,21 @@
 from flask import Blueprint, render_template, request, redirect, url_for
+from flask.ext.mongoengine.wtf import model_form
 
 from core.observables import Observable
-from core.entities import Entity
+import core.entities as ent
 from core.web.api.analysis import match_observables
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 from core.helpers import refang
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
+
+ENTITY_CLASS_MAP = {
+    'ttp': ent.TTP,
+    'actor': ent.Actor,
+    'company': ent.Company,
+    'malware': ent.Malware,
+}
 
 
 @frontend.route("/")
@@ -37,14 +45,14 @@ def graph(id):
 @frontend.route("/graph/<klass>/<id>")
 def graph_node(klass, id):
     if klass == 'entity':
-        node = get_object_or_404(Entity, id=id)
+        node = get_object_or_404(ent.Entity, id=id)
     else:
         node = get_object_or_404(Observable, id=id)
 
     return render_template("graph_node.html", node=bson_renderer(node.to_mongo()))
 
 
-# entities
+# Entities
 
 @frontend.route("/entities")
 def entities():
@@ -53,8 +61,46 @@ def entities():
 
 @frontend.route("/entities/<id>")
 def entity(id):
-    e = Entity.objects.get(id=id)
+    e = ent.Entity.objects().get(id=id)
     return render_template("entity.html", entity=e)
+
+
+@frontend.route("/entities/<id>/edit", methods=['GET', 'POST'])
+def entity_edit(id):
+    e = ent.Entity.objects().get(id=id)
+
+    if request.method == "GET":
+        form = model_form(e.__class__)(obj=e)
+        return render_template("entity_new.html", form=form, entity_type=e.__class__.__name__, obj=e)
+
+    elif request.method == "POST":
+
+        form = model_form(e.__class__)(request.form, initial=e._data)
+        if form.validate():
+            form.populate_obj(e)
+            e.save()
+            return redirect(url_for('frontend.entity', id=id))
+        else:
+            return render_template("entity_new.html", form=form, entity_type=e.__class__.__name__, obj=e)
+
+
+@frontend.route("/entities/new/<string:entity_type>", methods=['GET', 'POST'])
+def entity_new(entity_type):
+    klass = ENTITY_CLASS_MAP[entity_type]
+
+    if request.method == "GET":
+        form = model_form(klass)()
+        return render_template("entity_new.html", form=form, entity_type=klass.__name__)
+
+    elif request.method == "POST":
+        form = model_form(klass)(request.form)
+        if form.validate():
+            obj = klass()
+            form.populate_obj(obj)
+            obj.save()
+            return redirect(url_for('frontend.entity', id=obj.id))
+        else:
+            return render_template("entity_new.html", form=form, entity_type=klass.__name__, obj=None)
 
 
 @frontend.route("/query", methods=['GET', 'POST'])

@@ -5,8 +5,8 @@ from core.database import Node, Link
 
 class Entity(Node):
 
-    name = StringField(required=True, unique=True, sparse=True)
-    description = StringField()
+    name = StringField(verbose_name="Name", required=True, unique=True, sparse=True, max_length=255)
+    description = StringField(verbose_name="Description")
 
     meta = {
         "allow_inheritance": True,
