@@ -128,7 +128,7 @@ class Observable(Node):
         return self.modify(**{"set__last_analyses__{}".format(module_name): ts})
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["value", "context", "last_analyses", "created"]}
+        i = {k: v for k, v in self._data.items() if k in ["value", "context", "last_analyses", "created", "sources"]}
         i['tags'] = [t.info() for t in self.tags]
         i['id'] = str(self.id)
         i['type'] = self.__class__.__name__
