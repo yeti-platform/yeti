@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for
+from flask.views import MethodView
 from flask.ext.mongoengine.wtf import model_form
 
 from core.observables import Observable
@@ -54,53 +55,59 @@ def graph_node(klass, id):
 
 # Entities
 
-@frontend.route("/entities")
-def entities():
-    return render_template("entities.html")
-
-
-@frontend.route("/entities/<id>")
-def entity(id):
-    e = ent.Entity.objects().get(id=id)
-    return render_template("entity.html", entity=e)
-
-
-@frontend.route("/entities/<id>/edit", methods=['GET', 'POST'])
-def entity_edit(id):
-    e = ent.Entity.objects().get(id=id)
-
-    if request.method == "GET":
-        form = model_form(e.__class__)(obj=e)
-        return render_template("entity_new.html", form=form, entity_type=e.__class__.__name__, obj=e)
-
-    elif request.method == "POST":
-
-        form = model_form(e.__class__)(request.form, initial=e._data)
-        if form.validate():
-            form.populate_obj(e)
-            e.save()
-            return redirect(url_for('frontend.entity', id=id))
+class EntitiesView(MethodView):
+    def get(self, id=None):
+        if id:
+            e = ent.Entity.objects().get(id=id)
+            return render_template("entity.html", entity=e)
         else:
-            return render_template("entity_new.html", form=form, entity_type=e.__class__.__name__, obj=e)
+            return render_template("entities.html")
+
+frontend.add_url_rule('/entities', view_func=EntitiesView.as_view('entities'))
+frontend.add_url_rule('/entities/<id>', view_func=EntitiesView.as_view('entity'))
 
 
-@frontend.route("/entities/new/<string:entity_type>", methods=['GET', 'POST'])
-def entity_new(entity_type):
-    klass = ENTITY_CLASS_MAP[entity_type]
+class EntitiesEdit(MethodView):
 
-    if request.method == "GET":
-        form = model_form(klass)()
-        return render_template("entity_new.html", form=form, entity_type=klass.__name__)
+    class_map = {
+        'ttp': ent.TTP,
+        'actor': ent.Actor,
+        'company': ent.Company,
+        'malware': ent.Malware,
+    }
 
-    elif request.method == "POST":
-        form = model_form(klass)(request.form)
-        if form.validate():
+    def get(self, id=None, entity_type=None):
+        if not id:  # new
+            klass = self.class_map[entity_type]
+            form = model_form(klass)()
+            e = None
+        else:  # edit form
+            e = ent.Entity.objects().get(id=id)
+            form = model_form(e.__class__)(obj=e)
+            klass = e.__class__
+
+        return render_template("entity_new.html", form=form, entity_type=klass.__name__, obj=e)
+
+    def post(self, id=None, entity_type=None):
+        if not id:
+            klass = self.class_map[entity_type]
             obj = klass()
+            form = model_form(klass)(request.form)
+        else:
+            obj = ent.Entity.objects().get(id=id)
+            klass = obj.__class__
+            form = model_form(klass)(request.form, initial=obj._data)
+
+        if form.validate():
             form.populate_obj(obj)
             obj.save()
             return redirect(url_for('frontend.entity', id=obj.id))
         else:
             return render_template("entity_new.html", form=form, entity_type=klass.__name__, obj=None)
+
+frontend.add_url_rule('/entities/new/<string:entity_type>', view_func=EntitiesEdit.as_view('entity_new'))
+frontend.add_url_rule('/entities/<id>/edit', view_func=EntitiesEdit.as_view('entity_edit'))
+
 
 
 @frontend.route("/query", methods=['GET', 'POST'])
