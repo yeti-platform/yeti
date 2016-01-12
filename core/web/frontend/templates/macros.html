@@ -42,7 +42,9 @@
     {{display_datetime(element)}}
   {% elif key == "raw" %}
     <pre>{{element}}</pre>
-  {% else %}
+  {% elif element is string %}
     {{ element }}
+  {% else %}
+    {{ element|join(', ') }}
   {% endif %}
 {%- endmacro %}
