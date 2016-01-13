@@ -1,5 +1,6 @@
 mongoengine
 iptools
+ipaddress
 urlnorm
 celery
 idna
@@ -8,7 +9,7 @@ lxml
 dnspython
 flask-negotiate
 misaka<2.0
-flask-misaka
+flask-misaka==0.3.0
 flask_restful
 flask-negotiation
 tldextract
