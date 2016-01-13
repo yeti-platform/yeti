@@ -69,7 +69,9 @@ function flaticon(code) {
 }
 
 function buildNodeId(nodeCls, nodeId) {
-  return nodeCls.replace('.', '-') + '-' + nodeId;
+  var collection = nodeCls.split('.')[0].toLowerCase();
+
+  return collection + '-' + nodeId;
 }
 
 function addNode(node) {
@@ -108,8 +110,8 @@ function addLink(link) {
       link.label = link.tag;
     }
 
-    link.from = buildNodeId(link.src.cls, link.src.id);
-    link.to = buildNodeId(link.dst.cls, link.dst.id);
+    link.from = buildNodeId(link.src.collection, link.src.id);
+    link.to = buildNodeId(link.dst.collection, link.dst.id);
     link.arrows = 'to';
     edges.add(link);
 

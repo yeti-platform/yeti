@@ -31,10 +31,6 @@ class NeighborsApi(Resource):
                 node_ids.add(node)
                 result['nodes'].append(node.to_mongo())
 
-            # FIXME: Ugly hack in order to have DBRefs instead of ObjectID.
-            link.src
-            link.dst
-
             result['links'].append(link.to_dict())
 
         return render_json(result)

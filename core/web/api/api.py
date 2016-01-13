@@ -1,28 +1,13 @@
-import datetime
 from flask import Blueprint
 from flask_restful import Api
 from flask.ext.negotiation import Render
 from flask.ext.negotiation.renderers import renderer, template_renderer
 from json import dumps
-from bson.json_util import default
-from bson.objectid import ObjectId
-from bson.dbref import DBRef
 
+from core.web.json import to_json
 
 api = Blueprint("api", __name__, template_folder="templates")
 api_restful = Api(api)
-
-
-def to_json(obj):
-    if isinstance(obj, ObjectId):
-        return str(obj)
-    elif isinstance(obj, DBRef):
-        d = obj.as_doc()
-        return {'cls': d['cls'], 'id': str(d['$id'])}
-    elif isinstance(obj, datetime.datetime):
-        return obj.isoformat()
-    else:
-        return default(obj)
 
 
 @renderer('application/json')

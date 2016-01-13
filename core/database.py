@@ -16,8 +16,8 @@ class LinkHistory(EmbeddedDocument):
 
 class Link(Document):
 
-    src = ReferenceField("Node", required=True)
-    dst = ReferenceField("Node", required=True, unique_with='src')
+    src = ReferenceField("Node", required=True, dbref=True)
+    dst = ReferenceField("Node", required=True, dbref=True, unique_with='src')
     history = SortedListField(EmbeddedDocumentField(LinkHistory), ordering='last_seen', reverse=True)
 
     def __unicode__(self):
