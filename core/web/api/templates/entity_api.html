@@ -17,7 +17,7 @@
         <td class="graph-link">
             <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
         </td>
-        <td><a href="{{ url_for("frontend.entity_display", id=entity['id'])}}">{{entity['name']}}</a></td>
+        <td><a href="{{ url_for("frontend.EntitiesView:get", id=entity['id'])}}">{{entity['name']}}</a></td>
         <td>{{ entity['family'] }}</td>
         <td>{{ macros.display_tags(entity['aliases'])}}</td>
       </tr>
@@ -33,7 +33,7 @@
         <td class="graph-link">
           <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
         </td>
-        <td><a href="{{ url_for("frontend.entity_display", id=entity['id'])}}">{{entity['name']}}</a></td>
+        <td><a href="{{ url_for("frontend.EntitiesView:get", id=entity['id'])}}">{{entity['name']}}</a></td>
         <td>{{ entity['description'] }}</td>
         <td>{{ entity['killchain'] }}</td>
       </tr>
@@ -49,7 +49,7 @@
         <td class="graph-link">
           <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
         </td>
-        <td><a href="{{ url_for('frontend.entity_display', id=entity['id'])}}">{{entity['name']}}</a></td>
+        <td><a href="{{ url_for('frontend.EntitiesView:get', id=entity['id'])}}">{{entity['name']}}</a></td>
       </tr>
       {% endfor %}
     </table>

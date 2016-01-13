@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block main %}
-
+{% set observable = obj %}
 <div class="row">
 
 <!-- start first column -->
@@ -58,7 +58,7 @@
                 {% for type, entry in n.items() %}
                   {% for link, node in entry %}
                   <tr>
-                    <td><a href="{{ url_for("frontend.observable", id=node.id) }}">{{node.value}}</a></td>
+                    <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id) }}">{{node.value}}</a></td>
                     <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                     <td>{{ macros.display_tags(node.tags)}}</td>
                     <td>{{node.context|join(', ', attribute='source')}}</td>

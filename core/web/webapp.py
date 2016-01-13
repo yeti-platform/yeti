@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, url_for
 from flask.ext.misaka import Misaka
 
 from core.web.api import api
@@ -18,3 +18,24 @@ webapp.debug = True
 
 webapp.register_blueprint(api, url_prefix='/api')
 webapp.register_blueprint(frontend)
+
+
+@webapp.route('/list_routes')
+def list_routes():
+    import urllib
+    output = []
+    for rule in webapp.url_map.iter_rules():
+
+        options = {}
+        for arg in rule.arguments:
+            options[arg] = "[{0}]".format(arg)
+
+        methods = ','.join(rule.methods)
+        url = url_for(rule.endpoint, **options)
+        line = urllib.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
+        output.append(line)
+
+    for line in sorted(output):
+        print line
+
+    return "ASD"

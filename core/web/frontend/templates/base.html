@@ -27,13 +27,13 @@
     <nav class="navbar navbar-inverse navbar-static-top">
       <div class="container">
         <div class="navbar-header">
-          <a class="navbar-brand" href="{{ url_for('frontend.observable') }}">YETI</a>
+          <a class="navbar-brand" href="{{ url_for('frontend.ObservablesView:index') }}">YETI</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li {% if request.path == url_for("frontend.observable") %}class="active"{%endif%}><a href="{{ url_for('frontend.observable') }}">Observables</a></li>
+            <li {% if request.path == url_for("frontend.ObservablesView:index") %}class="active"{%endif%}><a href="{{ url_for('frontend.ObservablesView:index') }}">Observables</a></li>
             <li {% if request.path == url_for("frontend.query") %}class="active"{%endif%}><a href="{{ url_for('frontend.query') }}">Query</a></li>
-            <li {% if request.path == url_for("frontend.entity") %}class="active"{%endif%}><a href="{{ url_for('frontend.entity') }}">Entities</a></li>
+            <li {% if request.path == url_for("frontend.EntitiesView:index") %}class="active"{%endif%}><a href="{{ url_for('frontend.EntitiesView:index') }}">Entities</a></li>
             <!-- <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
             <li class="dropdown">
