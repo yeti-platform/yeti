@@ -52,7 +52,7 @@
                     {% for type, entry in n.items() if "Indicator.Regex" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.entity_display", id=node.id)}}">{{node.name}}</a></td>
                         <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                         <td>{{ node.description }}</td>
                         <td><code>{{ node.pattern }}</code></td>
@@ -73,7 +73,7 @@
                     {% for type, entry in n.items() if "TTP" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.entity_display", id=node.id)}}">{{node.name}}</a></td>
                         <td>{{ node.description }}</td>
                         <td>{{ node.killchain }}</td>
                       </tr>
@@ -92,7 +92,7 @@
                     {% for type, entry in n.items() if "Malware" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.entity_display", id=node.id)}}">{{node.name}}</a></td>
                         <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                         <td>{{ node.family.name }}</td>
                         <td>{{ macros.display_tags(node.aliases)}}</td>
@@ -114,7 +114,7 @@
                     {% for type, entry in n.items() if "Actor" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.entity_display", id=node.id)}}">{{node.name}}</a></td>
                         <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                         <td>{{ node.pattern }}</td>
                       </tr>
