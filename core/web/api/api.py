@@ -25,6 +25,8 @@ from core.web.api.analysis import AnalysisApi
 from core.web.api.feeds import FeedApi
 from core.web.api.export import ExportApi
 from core.web.api.neighbors import NeighborsApi
+from core.web.api.investigation import InvestigationApi
+
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
 
@@ -45,3 +47,5 @@ api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>/<string:action>
 api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>', '/exports/<string:id>/<string:action>')
 
 api_restful.add_resource(NeighborsApi, '/neighbors/<string:klass>/<string:node_id>')
+
+api_restful.add_resource(InvestigationApi, '/investigations/', '/investigations/<string:id>', '/investigations/<string:id>/<string:action>')

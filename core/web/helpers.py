@@ -10,7 +10,7 @@ def get_object_or_404(klass, *args, **kwargs):
 
 
 def find_method(instance, method_name, argument_name):
-    if hasattr(instance, method_name):
+    if method_name and hasattr(instance, method_name):
         obj = getattr(instance, method_name)
         if ismethod(obj):
             return obj

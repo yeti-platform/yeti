@@ -1,9 +1,24 @@
-import logging
-
 from datetime import datetime
 
 from mongoengine import *
-from mongoengine import Q
+
+
+class YetiDocument(Document):
+    meta = {
+        "abstract": True,
+    }
+
+    def clean_update(self, **kwargs):
+        for key, value in kwargs.iteritems():
+            setattr(self, key, value)
+
+        self.validate()
+        self.update(**kwargs)
+
+    def add_to_set(self, field, value):
+        result = self.__class__._get_collection().update_one({'_id': self.pk}, {'$addToSet': {field: value}})
+
+        return result.modified_count == 1
 
 
 class LinkHistory(EmbeddedDocument):
@@ -74,7 +89,7 @@ class Link(Document):
             return self.modify(push__history=LinkHistory(tag=tag, description=description, first_seen=first_seen, last_seen=last_seen))
 
 
-class Node(Document):
+class Node(YetiDocument):
 
     meta = {
         "abstract": True,
@@ -99,13 +114,6 @@ class Node(Document):
                 return cls.objects.get(name=obj.name)
             if hasattr(obj, 'value'):
                 return cls.objects.get(value=obj.value)
-
-    def clean_update(self, **kwargs):
-        for key, value in kwargs.iteritems():
-            setattr(self, key, value)
-
-        self.validate()
-        self.update(**kwargs)
 
     def incoming(self):
         return [(l, l.src) for l in Link.objects(dst=self)]

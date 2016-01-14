@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 
+from core.investigation import Investigation
 from core.observables import Observable
 from core.entities import Entity
 from core.web.api.analysis import match_observables
@@ -30,8 +31,8 @@ def observable(id):
 
 @frontend.route("/graph/<id>")
 def graph(id):
-    o = Observable.objects.get(id=id)
-    return render_template("graph.html", observable=o)
+    investigation = get_object_or_404(Investigation, id=id)
+    return render_template("graph.html", investigation=bson_renderer(investigation.info()))
 
 
 @frontend.route("/graph/<klass>/<id>")
@@ -41,7 +42,10 @@ def graph_node(klass, id):
     else:
         node = get_object_or_404(Observable, id=id)
 
-    return render_template("graph_node.html", node=bson_renderer(node.to_mongo()))
+    investigation = Investigation().save()
+    investigation.add([], [node])
+
+    return render_template("graph.html", investigation=bson_renderer(investigation.info()))
 
 
 # entities
