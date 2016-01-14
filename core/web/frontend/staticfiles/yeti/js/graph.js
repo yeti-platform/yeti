@@ -116,7 +116,6 @@ class Investigation {
     });
 
     investigation.links.forEach(function(link) {
-      console.log(link);
       link.from = link.fromnode;
       link.to = link.tonode;
       link.arrows = 'to';
