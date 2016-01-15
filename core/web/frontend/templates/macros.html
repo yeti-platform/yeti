@@ -50,3 +50,31 @@
     {{ element }}
   {% endif %}
 {%- endmacro %}
+
+
+{% macro render(form) -%}
+<form action="{{request.path}}" method="POST">
+{% for field in form %}
+{% if field.type in ['CSRFTokenField', 'HiddenField'] %}
+  {{ field() }}
+{% else %}
+  <div class="form-group {% if field.errors %}error{% endif %}">
+    <!-- {{field.label}}|{{field.name}}|{{field.type}} -->
+    <label for="{{field.name}}">{{field.label}}</label>
+      {{ field(class_="form-control") }}
+      {% if field.errors or field.help_text %}
+        <p class="help-block">
+        {% if field.errors %}
+          {{ field.errors|join(' ') }}
+        {% else %}
+          {{ field.help_text }}
+        {% endif %}
+        </p>
+      {% endif %}
+
+  </div>
+{% endif %}
+{% endfor %}
+<input type="submit" class="btn btn-primary" value="save">
+</form>
+{% endmacro %}

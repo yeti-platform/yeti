@@ -3,31 +3,49 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from core.investigation import Investigation
 from core.observables import Observable
 from core.entities import Entity
+from core.web.frontend.generic import GenericView
 from core.web.api.analysis import match_observables
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 from core.helpers import refang
 
+from core.entities import Entity, TTP, Actor, Company, Malware
+from core.observables import Observable
+
+
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
 
 
+# Landing page - redirect to observable
+
 @frontend.route("/")
 def index():
-    return redirect(url_for('frontend.observables'))
+    return redirect(url_for('frontend.ObservablesView:index'))
 
 
-# observables
+# Entities - Generic View
 
-@frontend.route("/observables")
-def observables():
-    return render_template("observables.html")
+class EntitiesView(GenericView):
+    klass = Entity
+    subclass_map = {
+        'ttp': TTP,
+        'actor': Actor,
+        'company': Company,
+        'malware': Malware,
+    }
+
+EntitiesView.register(frontend)
 
 
-@frontend.route("/observables/<id>")
-def observable(id):
-    o = Observable.objects.get(id=id)
-    return render_template("observable.html", observable=o)
+# Observables - Generic View
 
+class ObservablesView(GenericView):
+    klass = Observable
+
+ObservablesView.register(frontend)
+
+
+# Graph views
 
 @frontend.route("/graph/<id>")
 def graph(id):
@@ -48,18 +66,7 @@ def graph_node(klass, id):
     return render_template("graph.html", investigation=bson_renderer(investigation.info()))
 
 
-# entities
-
-@frontend.route("/entities")
-def entities():
-    return render_template("entities.html")
-
-
-@frontend.route("/entities/<id>")
-def entity(id):
-    e = Entity.objects.get(id=id)
-    return render_template("entity.html", entity=e)
-
+# Query views
 
 @frontend.route("/query", methods=['GET', 'POST'])
 def query():
@@ -72,7 +79,7 @@ def query():
         return render_template("query_results.html", data=data)
 
 
-# Admin section
+# Admin views
 
 @frontend.route("/dataflows")
 def dataflows():

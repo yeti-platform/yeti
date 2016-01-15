@@ -2,9 +2,8 @@
 {% import "macros.html" as macros %}
 
 {% block main %}
-
+{% set entity = obj %}
 <div class="row">
-
 <!-- start first column -->
   <div class="col-md-9">
 
@@ -15,7 +14,8 @@
           <div class="panel-heading">
             <h3 class="panel-title">
                 {{entity.name}} <span class="small">{{entity.type}}</span>
-                <a href="{{url_for('frontend.graph_node', id=entity.id, klass='entity')}}" class="btn btn-info btn-xs pull-right new-investigation"><i class="flaticon-network38"></i> New Investigation</a>
+                <a href="{{url_for('frontend.EntitiesView:edit', id=entity.id)}}" class="btn btn-info btn-xs pull-right"> Edit</a>
+                <a href="{{url_for('frontend.graph_node', id=entity.id, klass='entity')}}" class="btn btn-info btn-xs pull-right"><i class="flaticon-network38"></i> New Investigation</a>
             </h3>
           </div>
           <div class="panel-body">
@@ -51,7 +51,7 @@
                     {% for type, entry in n.items() if "Indicator.Regex" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
                         <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                         <td>{{ node.description }}</td>
                         <td><code>{{ node.pattern }}</code></td>
@@ -72,7 +72,7 @@
                     {% for type, entry in n.items() if "TTP" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
                         <td>{{ node.description }}</td>
                         <td>{{ node.killchain }}</td>
                       </tr>
@@ -91,7 +91,7 @@
                     {% for type, entry in n.items() if "Malware" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
                         <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                         <td>{{ node.family.name }}</td>
                         <td>{{ macros.display_tags(node.aliases)}}</td>
@@ -113,7 +113,7 @@
                     {% for type, entry in n.items() if "Actor" in type %}
                       {% for link, node in entry %}
                       <tr>
-                        <td><a href="{{ url_for("frontend.entity", id=node.id)}}">{{node.name}}</a></td>
+                        <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
                         <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                         <td>{{ node.pattern }}</td>
                       </tr>

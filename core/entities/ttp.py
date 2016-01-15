@@ -6,8 +6,7 @@ from core.entities import KILL_CHAIN_STEPS
 
 class TTP(Entity):
 
-    killchain = StringField(choices=KILL_CHAIN_STEPS, required=True)
-    description = StringField()
+    killchain = StringField(verbose_name="Kill Chain Stage", choices=KILL_CHAIN_STEPS, required=True)
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
