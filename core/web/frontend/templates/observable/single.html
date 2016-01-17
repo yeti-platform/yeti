@@ -48,9 +48,9 @@
     <div class="row">
       <div class="col-md-12">
         <ul class="nav nav-tabs" role="tablist">
-          {% set related = observable.neighbors() %}
+          {% set related = observable.neighbors(neighbor_type="Observable") %}
           <li role="presentation" class="active"><a href="#context" aria-controls="context" role="tab" data-toggle="tab">Context ({{observable.context|length}})</a></li>
-          <li role="presentation"><a href="#related" aria-controls="related" role="tab" data-toggle="tab">Related ({{related.items()|length}})</a></li>
+          <li role="presentation"><a href="#related" aria-controls="related" role="tab" data-toggle="tab">Related observables ({{related.items()|length}})</a></li>
         </ul>
 
         <div class="tab-content">
@@ -125,12 +125,20 @@
       </div>
     </div>
 
-    <div class="panel panel-warning">
+
+    <div class="panel panel-warning yeti-panel">
       <div class="panel-heading">
         <h3 class="panel-title">Related entities</h3>
       </div>
       <div class="panel-body">
-        INSERT RELATED ENTITIES
+        <table class="table table-condensed">
+          {% set related_entities = observable.neighbors(neighbor_type="Entity") %}
+          {% for t, links in related_entities.items() %}
+            {% for link, entity in links %}
+            <tr><td><a href="{{url_for('frontend.EntitiesView:get', id=entity.id)}}">{{entity.name}}</a></td><td>{{link.tag}}</td></tr>
+            {% endfor %}
+          {% endfor %}
+        </table>
       </div>
     </div>
 

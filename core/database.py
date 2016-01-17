@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from mongoengine import *
@@ -123,11 +124,12 @@ class Node(YetiDocument):
     def outgoing(self):
         return [(l, l.dst) for l in Link.objects(src=self)]
 
-    def neighbors(self):
+    def neighbors(self, neighbor_type=""):
         links = list(set(self.incoming() + self.outgoing()))
         info = {}
         for link, node in links:
-            info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
+            if re.search(neighbor_type, node.full_type):
+                info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
 
     def delete(self):
