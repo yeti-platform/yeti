@@ -251,8 +251,9 @@ span.yeti-toggle {
     text-decoration: none;
 }
 
-/* Investigation */
+/* Panel buttons */
 
-.new-investigation {
+.panel-title .btn {
     margin-top: -2px;
+    margin-left:5px;
 }
