@@ -24,7 +24,7 @@
 
 {% macro display_context(context) -%}
   <h4>{{context["source"]}}<span class="small yeti-toggle" data-target="details-{{context["source"]|replace(" ", "-")}}">[details]</span></h4>
-  <div id="details-{{context["source"]|replace(" ", "-")}}" class="panel-collapse collapse" role="tabpanel">
+  <div id="details-{{context["source"]|replace(" ", "-")}}" class="panel-collapse" role="tabpanel">
     <table class="table table-condensed">
       {% for key, value in context.items() if key not in ["source"]%}
       <tr><th>{{key}}</th><td>{{display_yeti(value, key)}}</td></tr>

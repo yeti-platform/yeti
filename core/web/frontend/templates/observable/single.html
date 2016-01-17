@@ -40,22 +40,29 @@
     <div class="row">
       <div class="col-md-12">
         <ul class="nav nav-tabs" role="tablist">
-          <li role="presentation" class="active"><a href="#related" aria-controls="related" role="tab" data-toggle="tab">Related</a></li>
-          {% if observable.context %}
-          <li role="presentation"><a href="#context" aria-controls="context" role="tab" data-toggle="tab">Context ({{observable.context|length}})</a></li>
-          {% endif %}
-          <li role="presentation"><a href="#old" aria-controls="old" role="tab" data-toggle="tab">old</a></li>
+          {% set related = observable.neighbors() %}
+          <li role="presentation" class="active"><a href="#context" aria-controls="context" role="tab" data-toggle="tab">Context ({{observable.context|length}})</a></li>
+          <li role="presentation"><a href="#related" aria-controls="related" role="tab" data-toggle="tab">Related ({{related.items()|length}})</a></li>
         </ul>
 
         <div class="tab-content">
-          <div role="tabpanel" class="tab-pane active" id="related"> <!-- import feed tab -->
 
+          <div role="tabpanel" class="tab-pane active" id="context"> <!-- context content -->
             <div class="row">
               <div class="col-md-12">
-                {% set n = observable.neighbors() %}
+                {% set context = observable.context %}
+                  {% for ctx in context %}
+                    {{macros.display_context(ctx)}}
+                  {% endfor %}
+              </div>
+            </div>
+          </div>
 
+          <div role="tabpanel" class="tab-pane" id="related"> <!-- related content  -->
+            <div class="row">
+              <div class="col-md-12">
                 <table class="table table-condensed">
-                {% for type, entry in n.items() %}
+                {% for type, entry in related.items() %}
                   {% for link, node in entry %}
                   <tr>
                     <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id) }}">{{node.value}}</a></td>
@@ -69,23 +76,6 @@
 
               </div>
             </div>
-          </div>
-
-          {% if observable.context %}
-          <div role="tabpanel" class="tab-pane" id="context"> <!-- import feed tab -->
-            <div class="row">
-              <div class="col-md-12">
-                {% set context = observable.context %}
-                  {% for ctx in context %}
-                    {{macros.display_context(ctx)}}
-                  {% endfor %}
-              </div>
-            </div>
-          </div>
-          {% endif %}
-
-          <div role="tabpanel" class="tab-pane" id="old"> <!-- import feed tab -->
-            old!
           </div>
         </div>
 
