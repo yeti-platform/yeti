@@ -11,7 +11,7 @@ class GenericView(FlaskView):
         return render_template("{}/list.html".format(self.klass.__name__.lower()))
 
     def get(self, id):
-        obj = self.klass.objects().get(id=id)
+        obj = self.klass.objects.get(id=id)
         return render_template("{}/single.html".format(self.klass.__name__.lower()), obj=obj)
 
     @route('/new/', methods=["GET", "POST"])
@@ -28,7 +28,7 @@ class GenericView(FlaskView):
     def edit(self, id):
         if request.method == "POST":
             return self.handle_form(id=id)
-        obj = self.klass.objects().get(id=id)
+        obj = self.klass.objects.get(id=id)
         form = model_form(obj.__class__, exclude=obj.__class__.exclude_fields)(obj=obj)
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=self.klass.__name__, obj=obj)
 
@@ -37,7 +37,7 @@ class GenericView(FlaskView):
             obj = klass()
             form = model_form(klass, exclude=klass.exclude_fields)(request.form)
         else:  # update
-            obj = self.klass.objects().get(id=id)
+            obj = self.klass.objects.get(id=id)
             klass = obj.__class__
             form = model_form(klass, exclude=klass.exclude_fields)(request.form, initial=obj._data)
 
