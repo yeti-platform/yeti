@@ -11,14 +11,19 @@ class ObservableApi(CrudApi):
     def post(self, id=None):
         params = request.json
         source = params.pop('source', None)
+        tags = params.pop('tags', None)
+        strict = bool(params.pop('strict', False))
 
         if not id:
             obj = self.objectmanager.add_text(request.json['value'])
         else:
-            obj = self.objectmanager.get(id)
+            obj = self.objectmanager.objects.get(id=id)
 
         if source:
             obj.add_source(source)
+
+        if tags:
+            obj.tag(tags.split(','), strict)
 
         if params:
             obj.clean_update(**params)

@@ -96,9 +96,14 @@ class Observable(Node):
             self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.now())
         return self.reload()
 
-    def tag(self, new_tags):
+    def tag(self, new_tags, strict=False):
         if isinstance(new_tags, (str, unicode)):
             new_tags = [new_tags]
+
+        if strict:
+            remove = set([t.name for t in self.tags]) - set(new_tags)
+            for tag in remove:
+                self.modify(pull__tags__name=tag)
 
         for new_tag in new_tags:
             if new_tag.strip() != '':

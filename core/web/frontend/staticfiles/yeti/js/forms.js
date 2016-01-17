@@ -1,8 +1,6 @@
 
 function refresh_tagfields(form) {
 
-
-
   // set tagfields
   tagfield = form.find(".tagfield").each(function(index){
 
@@ -20,11 +18,12 @@ function refresh_tagfields(form) {
         }
         elt
         .on('tokenfield:createtoken', function (e) {
+          console.log($(this).val())
           if ($(this).data('choices')) {
             re = /^[a-zA-Z0-9_]+$/;
             charset = re.test(e.attrs.value);
             unique = $(this).val().split(',').indexOf(e.attrs.value) == -1;
-            return charset && unique;
+            return charset;
           }
         })
         .tokenfield({
@@ -118,6 +117,7 @@ function yeti_delete_button(elt) {
 
 function yeti_save_button(elt) {
   var url = elt.data('url');
+  var clear = elt.data('clear');
   var form = elt.closest("form").first();
 
   // operation on forms
@@ -131,7 +131,9 @@ function yeti_save_button(elt) {
     url: url,
     success: function(data) {
       scan_populate();
-      clear_form(form);
+      if (clear) {
+        clear_form();
+      }
       refresh_tagfields(form);
     }});
 }

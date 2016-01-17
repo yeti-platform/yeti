@@ -2,7 +2,14 @@
 {% import "macros.html" as macros %}
 
 {% block custom_head %}
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/forms.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/tags.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/tokenfield-typeahead.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
 {% endblock %}
 
 {% block main %}
@@ -96,11 +103,25 @@
       <div class="panel-body">
         <table class="table table-condensed main-table">
           {% for key, value in observable.info().items() %}
-          {% if key not in ["context", "value", "last_analyses"] %}
+          {% if key not in ["context", "value", "last_analyses", "tags"] %}
             <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
           {% endif %}
           {% endfor %}
         </table>
+      </div>
+    </div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Tags</h3>
+      </div>
+      <div class="panel-body">
+        {% set tags = observable.info()['tags'] %}
+        <form id="tag-form" class="yeti-form" data-url="{{ url_for("api.tagapi") }}">
+          <input type="hidden" name="strict" value="true">
+          <input type="text" class="form-control input-sm tagfield" data-choices="{{ url_for("api.tagapi") }}" name="tags" value="{{tags|join(",", "name")}}" />
+          <button style="margin-top:5px;" type="button" id="yeti-save-button" data-url="{{ url_for("api.observableapi", id=observable.id) }}" class="btn btn-primary btn-sm yeti-save btn-xs pull-right" name="save">Save</button>
+        </form>
       </div>
     </div>
 
