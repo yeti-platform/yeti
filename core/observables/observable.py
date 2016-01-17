@@ -11,14 +11,16 @@ from core.errors import ObservableValidationError
 
 class Observable(Node):
 
-    value = StringField(required=True, unique=True, sparse=True)
-    sources = ListField(StringField())
-    description = StringField()
-    context = ListField(DictField())
-    tags = ListField(EmbeddedDocumentField(ObservableTag))
-    last_analyses = DictField()
+    value = StringField(verbose_name="Value", required=True, unique=True, sparse=True)
+    sources = ListField(StringField(), verbose_name="Sources")
+    description = StringField(verbose_name="Description")
+    context = ListField(DictField(), verbose_name="Context")
+    tags = ListField(EmbeddedDocumentField(ObservableTag), verbose_name="Tags")
+    last_analyses = DictField(verbose_name="Last analyses")
 
     created = DateTimeField(default=datetime.now)
+
+    exclude_fields = ['sources', 'context', 'last_analyses', 'created', 'tags']
 
     meta = {
         "allow_inheritance": True,

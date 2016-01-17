@@ -91,6 +91,8 @@ class Link(Document):
 
 class Node(YetiDocument):
 
+    exclude_fields = []
+
     meta = {
         "abstract": True,
     }
