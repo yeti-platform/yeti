@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for
+from flask.ext.classy import FlaskView, route
 
 from core.investigation import Investigation
 from core.observables import Observable
@@ -34,6 +35,9 @@ class EntitiesView(GenericView):
         'malware': Malware,
     }
 
+    # Query views
+
+
 EntitiesView.register(frontend)
 
 
@@ -41,6 +45,28 @@ EntitiesView.register(frontend)
 
 class ObservablesView(GenericView):
     klass = Observable
+
+    @route("/enrich", methods=['GET', 'POST'])
+    def enrich(self):
+        return "ENRICH"
+        if request.method == "POST":
+            lines = request.form['bulk-text'].split('\n')
+            for l in lines:
+                obs = refang(l.split(',')[0])
+                tags = refang(l.split(',')[1:])
+                o = Observable.add_text(obs)
+                o.tag(tags)
+        return render_template('observable/query.html')
+
+    @route("/query", methods=['GET', 'POST'])
+    def query(self):
+        if request.method == "POST":
+            obs = [refang(o.strip()) for o in request.form['bulk-text'].split('\n')]
+            data = match_observables(obs)
+            return render_template("observable/query_results.html", data=data)
+
+        return render_template("observable/query.html")
+
 
 ObservablesView.register(frontend)
 
@@ -65,18 +91,6 @@ def graph_node(klass, id):
 
     return render_template("graph.html", investigation=bson_renderer(investigation.info()))
 
-
-# Query views
-
-@frontend.route("/query", methods=['GET', 'POST'])
-def query():
-    if request.method == "GET":
-        return render_template("query.html")
-
-    elif request.method == "POST":
-        obs = [refang(o.strip()) for o in request.form['bulk-text'].split('\n')]
-        data = match_observables(obs)
-        return render_template("query_results.html", data=data)
 
 
 # Admin views

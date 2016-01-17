@@ -14,10 +14,15 @@ class GenericView(FlaskView):
         obj = self.klass.objects.get(id=id)
         return render_template("{}/single.html".format(self.klass.__name__.lower()), obj=obj)
 
-    @route('/new/', methods=["GET", "POST"])
     @route('/new/<string:subclass>', methods=["GET", "POST"])
-    def new(self, subclass=None):
+    def new_subclass(self, subclass):
         klass = self.subclass_map.get(subclass, self.klass)
+        return self.new(klass)
+
+    @route('/new/', methods=["GET", "POST"])
+    def new(self, klass=None):
+        if not klass:
+            klass = self.klass
         if request.method == "POST":
             return self.handle_form(klass=klass)
         form = model_form(klass, exclude=klass.exclude_fields)()

@@ -31,9 +31,18 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li {% if request.path == url_for("frontend.ObservablesView:index") %}class="active"{%endif%}><a href="{{ url_for('frontend.ObservablesView:index') }}">Observables</a></li>
-            <li {% if request.path == url_for("frontend.query") %}class="active"{%endif%}><a href="{{ url_for('frontend.query') }}">Query</a></li>
-            <li {% if request.path == url_for("frontend.EntitiesView:index") %}class="active"{%endif%}><a href="{{ url_for('frontend.EntitiesView:index') }}">Entities</a></li>
+
+            <li class="{% if request.path == url_for("frontend.ObservablesView:index") %}active{%endif%} dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Technical <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+              <li><a href="{{ url_for('frontend.ObservablesView:index') }}">List observables</a></li>
+              <li><a href="{{ url_for('frontend.ObservablesView:query') }}">Query</a></li>
+              <li><a href="{{ url_for('frontend.ObservablesView:enrich') }}">Enrich</a></li>
+              </ul>
+            </li>
+
+
+            <li {% if request.path == url_for("frontend.EntitiesView:index") %}class="active"{%endif%}><a href="{{ url_for('frontend.EntitiesView:index') }}">Strategic</a></li>
             <!-- <li><a href="#about">About</a></li>
             <li><a href="#contact">Contact</a></li>
             <li class="dropdown">
