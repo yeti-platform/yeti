@@ -109,7 +109,6 @@ class Node(YetiDocument):
     @classmethod
     def get_or_create(cls, **kwargs):
         obj = cls(**kwargs)
-        obj.clean()
         try:
             return obj.save()
         except NotUniqueError:

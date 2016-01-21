@@ -4,19 +4,14 @@ from datetime import timedelta
 from tldextract import extract
 
 ip_regex = r'([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})'
-hostname_regex = r"((([\w\-]+\.)*)([\w\-]+))\.?"
+hostname_regex = r"((.+\.)(.+))\.?"
 email_regex = r"([\w\-\.\_]+@(([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?"
 hash_regex = r"([a-fA-F0-9]{32,64})"
 url_regex = r"""
             (
               ((?P<scheme>[\w]{2,9}):\/\/)?
               ([\S]*\:[\S]*\@)?
-              (?P<hostname>(
-                          ((([\w\-]+\.)+)([a-zA-Z]{2,6}))
-                          |([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})
-                          |([\w\-]+)
-                          )
-              )
+              (?P<hostname>((([^/:]+\.)([^/:]+))\.?))
               (\:[\d]{1,5})?
               (?P<path>(\/[\S]*)?
                 (\?[\S]*)?
