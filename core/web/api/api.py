@@ -30,8 +30,8 @@ from core.web.api.investigation import InvestigationApi
 
 api_restful.add_resource(AnalysisApi, '/analysis/')
 
-api_restful.add_resource(ScheduledAnalyticsApi, '/analytics/scheduled', '/analytics/scheduled/<string:name>/<string:action>')
-api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/oneshot/<string:name>/<string:action>')
+api_restful.add_resource(ScheduledAnalyticsApi, '/analytics/scheduled', '/analytics/scheduled/<string:id>/<string:action>')
+api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/oneshot/<string:id>/<string:action>')
 
 api_restful.add_resource(ObservableSearchApi, '/observables/search')
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')

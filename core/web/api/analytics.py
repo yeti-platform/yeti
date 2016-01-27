@@ -12,22 +12,22 @@ class ScheduledAnalyticsApi(CrudApi):
     template = 'scheduled_analytics_api.html'
     objectmanager = ScheduledAnalytics
 
-    def post(self, name, action):
+    def post(self, id, action):
         method = find_method(self, action, 'action')
 
-        return method(name)
+        return method(id)
 
-    def refresh(self, name):
-        schedule.delay(name)
+    def refresh(self, id):
+        schedule.delay(id)
 
-        return render({"name": name})
+        return render({"id": id})
 
-    def toggle(self, name):
-        a = ScheduledAnalytics.objects.get(name=name)
+    def toggle(self, id):
+        a = ScheduledAnalytics.objects.get(id=id)
         a.enabled = not a.enabled
         a.save()
 
-        return render({"name": name, "status": a.enabled})
+        return render({"id": id, "status": a.enabled})
 
 
 class OneShotAnalyticsApi(CrudApi):
@@ -37,9 +37,9 @@ class OneShotAnalyticsApi(CrudApi):
     parser = reqparse.RequestParser()
     parser.add_argument('id', required=True, help="You must specify an ID.")
 
-    def post(self, name, action):
+    def post(self, id, action):
         method = find_method(self, action, 'action')
-        analytics = get_object_or_404(OneShotAnalytics, name=name)
+        analytics = get_object_or_404(OneShotAnalytics, id=id)
 
         return method(analytics)
 
@@ -47,7 +47,7 @@ class OneShotAnalyticsApi(CrudApi):
         analytics.enabled = not analytics.enabled
         analytics.save()
 
-        return render({"name": analytics.name, "status": analytics.enabled})
+        return render({"id": analytics.id, "status": analytics.enabled})
 
     def run(self, analytics):
         args = self.parser.parse_args()

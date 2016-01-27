@@ -11,8 +11,8 @@
     <td>{{ analytics["acts_on"] }}</td>
     <td>{{ analytics["description"] }}</td>
     <td>{{ analytics["status"] or "N/A"}}</td>
-    <td><span data-url="{{ url_for('api.scheduledanalyticsapi', name=analytics["name"], action="toggle") }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>
-    <td><span data-url="{{ url_for('api.scheduledanalyticsapi', name=analytics["name"], action="refresh") }}" class="analytics-refresh glyphicon glyphicon-refresh"></span></td>
+    <td><span data-url="{{ url_for('api.scheduledanalyticsapi', id=analytics["id"], action="toggle") }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>
+    <td><span data-url="{{ url_for('api.scheduledanalyticsapi', id=analytics["id"], action="refresh") }}" class="analytics-refresh glyphicon glyphicon-refresh"></span></td>
   </tr>
   {% endfor %}
 </table>
