@@ -25,7 +25,6 @@ def index():
 
 
 # Entities - Generic View
-
 class EntitiesView(GenericView):
     klass = Entity
     subclass_map = {
@@ -34,9 +33,6 @@ class EntitiesView(GenericView):
         'company': Company,
         'malware': Malware,
     }
-
-    # Query views
-
 
 EntitiesView.register(frontend)
 
@@ -66,7 +62,6 @@ class ObservablesView(GenericView):
             return render_template("observable/query_results.html", data=data)
 
         return render_template("observable/query.html")
-
 
 ObservablesView.register(frontend)
 
