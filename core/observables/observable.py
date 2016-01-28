@@ -4,8 +4,9 @@ import operator
 from mongoengine import *
 
 from core.helpers import is_url, is_ip, is_hostname
-from core.database import Node
+from core.database import Node, Link
 from core.observables import ObservableTag, Tag
+from core.entities import Entity
 from core.errors import ObservableValidationError
 
 
@@ -114,6 +115,10 @@ class Observable(Node):
                     tag = Tag.objects.get(replaces=new_tag.name)
                 except DoesNotExist:
                     tag = Tag.get_or_create(name=new_tag.name)
+
+                # search for related entities and link them
+                for e in Entity.objects(tags__in=[tag.name]):
+                    Link.connect(self, e).add_history('Tagged')
 
                 if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
                     self.modify(push__tags=ObservableTag(name=tag.name))

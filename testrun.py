@@ -51,13 +51,21 @@ print url.tags
 bartalex = Malware.get_or_create(name="Bartalex")
 bartalex.family = MalwareFamily.objects.get(name="dropper")
 bartalex.killchain = "delivery"
+bartalex.tags = ["bartalex"]
 bartalex.save()
 
 dridex = Malware.get_or_create(name="Dridex")
 dridex.aliases = ["Cridex", "Drixed"]
 dridex.family = MalwareFamily.objects.get(name="banker")
 dridex.killchain = "objectives"
+dridex.tags = ['dridex']
 dridex.save()
+
+zeus = Malware.get_or_create(name="Zeus")
+zeus.family = MalwareFamily.objects.get(name="banker")
+zeus.killchain = "objectives"
+zeus.tags = ['zeus']
+zeus.save()
 
 ## Create initial intelligence
 
@@ -82,6 +90,14 @@ bartalex_callback.action("hosts", dridex, description="Hosting Dridex")
 bartalex_callback2.action("hosts", dridex, description="Hosting Dridex")
 
 bartalex.action("drops", dridex, description="Drops Dridex")
+
+zeus_callback = Regex(name="Zeus C2 check-in")
+zeus_callback.pattern = "/gate.php$"
+zeus_callback.description = "ZeuS post-infection callback"
+zeus_callback.diamond = "Capability"
+zeus_callback.location = "network"
+zeus_callback.save()
+zeus_callback.action('indicates', zeus)
 
 # TTP
 
@@ -113,6 +129,8 @@ Link.connect(o6, bartalex).add_history("Queries")
 Link.connect(o6, dridex).add_history("Drops")
 o7 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe")
 o8 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe2")
+o9 = Observable.add_text("http://zeuscpanel.com/gate.php")
+o9.tag('zeus')
 
 t1 = Observable.add_text("http://toto.com")
 t2 = Observable.add_text("Http://tata.com")
