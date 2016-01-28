@@ -45,9 +45,10 @@ def match_observables(observables):
         data['known'].append(o.info())
         del_from_set(data['unknown'], o.value)
 
-        for link, obs in (o.incoming() + o.outgoing()):
-            if (link.src.value not in extended_query or link.dst.value not in extended_query) and obs.tags:
-                data['neighbors'].append((link.info(), obs.info()))
+        for link, node in (o.incoming()):
+            if isinstance(node, Observable):
+                if (link.src.value not in extended_query or link.dst.value not in extended_query) and node.tags:
+                    data['neighbors'].append((link.info(), node.info()))
 
     for o, i in Indicator.search(extended_query):
         o = Observable.add_text(o)
