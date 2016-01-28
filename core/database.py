@@ -14,7 +14,12 @@ class YetiDocument(Document):
             setattr(self, key, value)
 
         self.validate()
-        self.update(**kwargs)
+
+        update_dict = {}
+        for key, value in kwargs.iteritems():
+            update_dict[key] = getattr(self, key, value)
+
+        self.update(**update_dict)
 
     def add_to_set(self, field, value):
         result = self.__class__._get_collection().update_one({'_id': self.pk}, {'$addToSet': {field: value}})
