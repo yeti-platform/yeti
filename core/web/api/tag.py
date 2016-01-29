@@ -41,7 +41,7 @@ class TagApi(CrudApi):
     def delete(self, id):
         tag = self.objectmanager.objects.get(id=id)
         tag.delete()
-        Observable.objects(tags__name=tag.name).modify(pull__tags__name=tag.name)
+        Observable.objects(tags__name=tag.name).update(pull__tags__name=tag.name)
         return render({"status": "ok"})
 
     def post(self, id=None):
