@@ -1,5 +1,8 @@
 from flask.ext.classy import FlaskView, route
 from flask import render_template, request, redirect, url_for
+from mongoengine import NotUniqueError
+
+from core.errors import ObservableValidationError
 
 
 class GenericView(FlaskView):
@@ -24,7 +27,7 @@ class GenericView(FlaskView):
             klass = self.klass
         if request.method == "POST":
             return self.handle_form(klass=klass)
-        form = klass.get_form()
+        form = klass.get_form()()
         obj = None
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
 
@@ -48,7 +51,14 @@ class GenericView(FlaskView):
 
         if form.validate():
             form.populate_obj(obj)
-            obj.save()
+            try:
+                obj.save()
+            except (ObservableValidationError, NotUniqueError) as e:
+                # failure - redirect to edit page
+                form.errors['generic'] = [str(e)]
+                return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
+
+            # success - redirect to view page
             return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=obj.id))
         else:
             return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)

@@ -2,17 +2,16 @@ from flask import Blueprint, render_template, request, redirect, url_for
 from flask.ext.classy import route
 
 from core.investigation import Investigation
-from core.observables import Observable
+from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
 from core.entities import Entity
 from core.indicators import Indicator
+from core.analysis import match_observables
 from core.web.frontend.generic import GenericView
-from core.web.api.analysis import match_observables
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
-from core.helpers import refang
-
 from core.entities import TTP, Actor, Company, Malware
 from core.indicators import Regex
+from core.errors import ObservableValidationError
 
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
@@ -50,23 +49,40 @@ class IndicatorsView(GenericView):
 class ObservablesView(GenericView):
     klass = Observable
 
-    @route("/enrich", methods=['GET', 'POST'])
-    def enrich(self):
-        return "ENRICH"
-        if request.method == "POST":
-            lines = request.form['bulk-text'].split('\n')
-            for l in lines:
-                obs = refang(l.split(',')[0])
-                tags = refang(l.split(',')[1:])
-                o = Observable.add_text(obs)
-                o.tag(tags)
-        return render_template('observable/query.html')
+    subclass_map = {
+        'ip': Ip,
+        'hostname': Hostname,
+        'url': Url,
+        'hash': Hash,
+        'file': File,
+        'email': Email,
+        'text': Text,
+    }
 
     @route("/query", methods=['GET', 'POST'])
     def query(self):
         if request.method == "POST":
-            obs = [refang(o.strip()) for o in request.form['bulk-text'].split('\n')]
-            data = match_observables(obs)
+            lines = []
+            obs = {}
+            if request.files.get('bulk-file'): # request files
+                pass
+            else:
+                lines = request.form['bulk-text'].split('\n')
+
+            if bool(request.form.get('add', False)):
+                tags = request.form.get('tags', "").split(',')
+                for l in lines:
+                    try:
+                        o = Observable.add_text(l.strip())
+                        o.tag(tags)
+                    except ObservableValidationError:
+                        continue
+                    obs[o.value] = o
+            else:
+                for l in lines:
+                    obs[l.strip()] = l, None
+
+            data = match_observables(obs.keys())
             return render_template("observable/query_results.html", data=data)
 
         return render_template("observable/query.html")

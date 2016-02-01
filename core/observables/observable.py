@@ -13,7 +13,7 @@ from core.errors import ObservableValidationError
 
 class Observable(Node):
 
-    value = StringField(verbose_name="Value", required=True, unique=True, sparse=True)
+    value = StringField(verbose_name="Value", required=True, unique=True, sparse=True, max_length=1024)
     sources = ListField(StringField(), verbose_name="Sources")
     description = StringField(verbose_name="Description")
     context = ListField(DictField(), verbose_name="Context")

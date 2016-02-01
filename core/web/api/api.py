@@ -21,14 +21,11 @@ from core.web.api.observable import ObservableSearchApi, ObservableApi
 from core.web.api.entity import EntityApi, EntitySearchApi
 from core.web.api.tag import TagApi, TagActionApi
 from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
-from core.web.api.analysis import AnalysisApi
 from core.web.api.feeds import FeedApi
 from core.web.api.export import ExportApi
 from core.web.api.neighbors import NeighborsApi
 from core.web.api.investigation import InvestigationApi
 
-
-api_restful.add_resource(AnalysisApi, '/analysis/')
 
 api_restful.add_resource(ScheduledAnalyticsApi, '/analytics/scheduled', '/analytics/scheduled/<string:id>/<string:action>')
 api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/oneshot/<string:id>/<string:action>')

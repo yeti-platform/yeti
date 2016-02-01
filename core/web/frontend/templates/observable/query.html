@@ -8,37 +8,79 @@
 </ol>
 {% endblock %}
 
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/tokenfield-typeahead.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
+
+<script type="text/javascript">
+$(function() {
+	$("#add-checkbox").click(function() {
+		$("#tags").toggle();
+	});
+});
+</script>
+
+<style media="screen">
+	#insert-form {
+		line-height:35px;
+	}
+
+	#tags{
+		margin-left:20px;
+	}
+
+</style>
+{% endblock %}
+
 {% block main %}
-<div class="col-md-6">
-	<h3>Bulk query - copy &amp; paste raw text</h3>
-	<p class="help-block">Enter one element per line, followed by eventual tags. Format is the same than for file uploads.</p>
-	<form action="{{ url_for('frontend.ObservablesView:query')}}" method="POST">
-		<div class="form-group">
-			<textarea class="form-control" name="bulk-text" rows="8"></textarea>
+
+<div class="row">
+	<div class="col-md-4 user-text">
+		<h3>Bulk operation</h3>
+		<p>Launch bulk queries on YETI's observable database</p>
+		<p>Format: <code>domain.com,tag1,tag2,tag3</code> <br/>(e.g.: <code>suspicious.com,c2,malware,banker</code>)</p>
+		<p>Tags are only used when adding observables to the database</p>
+	</div>
+	<div class="col-md-6" >
+
+		<form action="{{ url_for('frontend.ObservablesView:query')}}" class="yeti-form" method="POST">
+
+			<div class="form-inline" id="insert-form">
+
+				<div class="form-group">
+					<div class="checkbox">
+				    <label>
+				      <input type="checkbox" id="add-checkbox" name="add"> Add unknown observables to database
+				    </label>
+				  </div>
+				</div>
+				<div class="form-group" id="tags" style="display:none">
+					<input type="text" class="form-control tagfield" data-choices="{{url_for('api.tagapi')}}" name="tags" value="" placeholder="Tags">
+				</div>
+			</div>
+
 			<br>
-			<input class="btn btn-primary btn-sm" type="submit" value="Query">
-		</div>
-	</form>
-</div>
+
+			<div class="form-group">
+				<textarea class="form-control" name="bulk-text" rows="8"></textarea>
+			</div>
+
+			<div class="form-group">
+				<input name="bulk-file" type="file">
+				<p class="help-block">Uploaded file will take precedence over text</p>
+		  </div>
 
 
-<div class="col-md-6">
-	<h3>Bulk query - upload file</h3>
-	<form action="/malcom/populate/add" method="POST" enctype="multipart/form-data">
-		<div class="input-group">
-          <span class="input-group-btn">
-            <input class="btn btn-primary btn-sm" type="submit" value="Upload">
-          </span>
-          <input name="bulk-file" type="file" class="form-control">
-        </div>
-	</form>
-	<p class="help-block">File must have one element per line, followed by eventual tags.<br>Example:</p>
-	<pre id="bulk-example">&lt;element&gt;;&lt;tag1&gt;,&lt;tag2&gt;,&lt;tag3&gt;
-google.com
-http://evildrop.me/drop.php; citadel, evil
-127.0.0.1; localhost, home</pre>
+			<input class="btn btn-primary btn-sm" type="submit" value="Launch">
+		</form>
+	</div>
+
 
 </div>
-
 
 {% endblock %}

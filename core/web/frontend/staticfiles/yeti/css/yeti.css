@@ -1,5 +1,13 @@
 /* app-wide changes */
 
+.user-text {
+  font-size: 14px;
+}
+
+.user-text h3 {
+  margin-top:10px;
+}
+
 .hidden {
   display:none;
 }

@@ -6,7 +6,7 @@ from core.database import Node, Link, TagListField
 
 class Entity(Node):
 
-    name = StringField(verbose_name="Name", required=True, unique=True, sparse=True, max_length=255)
+    name = StringField(verbose_name="Name", required=True, unique=True, sparse=True, max_length=1024)
     description = StringField(verbose_name="Description")
     tags = ListField(StringField(), verbose_name="Tags")
 

@@ -16,7 +16,6 @@ analyzers = {
     Url: [ProcessUrl],
 }
 
-
 def derive(observables):
     if isinstance(observables, (str, unicode)):
         observables = [observables]
@@ -78,37 +77,3 @@ def match_observables(observables):
         del_from_set(data["unknown"], o.value)
 
     return data
-
-
-class AnalysisApi(Resource):
-
-    def post(self):
-        q = request.get_json(silent=True)
-        params = q.pop("params", {})
-        observables = []
-
-        for o in q["observables"]:
-            try:
-                obs = Observable.guess_type(o['value'])(value=o['value'])
-                obs.clean()
-                observables.append(obs.value)
-
-                # Save observables & eventual tags to database
-                if params.get('save_query', False):
-                    obs = obs.save()
-                    obs.tag(o.get("tags", []))
-                    obs.add_source("query")
-            except ObservableValidationError:
-                continue
-
-        # match observables with known indicators
-        data = match_observables([o for o in observables])
-
-        # find related observables (eg. URLs for domain, etc.)
-        # related_observables = [obs.get_related() for obs in observables]
-        # data = self.match_observables(related_observable)
-        #
-        # we need to find a way to degrade the "confidence" in
-        # hits obtained from related observables
-
-        return render(data, "analysis.html")

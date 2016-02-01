@@ -75,9 +75,24 @@
         {% endif %}
     </div>
   {% endif %}
-
 {% endmacro %}
 
+
+{% macro render_generic_errors(form) -%}
+  {% if form.errors %}
+  <div class="alert alert-danger" role="alert">
+    {% for field_name, field_errors in form.errors|dictsort if field_errors %}
+        {% for error in field_errors %}
+          {% if field_name not in form %}
+            <p>{{ error }}</p>
+          {% else %}
+           {{field_name}} - {{error}}
+          {% endif %}
+        {% endfor %}
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endmacro %}
 
 {% macro render(form) -%}
 <form action="{{request.path}}" method="POST" class="yeti-form">

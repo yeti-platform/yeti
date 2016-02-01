@@ -6,7 +6,7 @@ from core.indicators import DIAMOND_EDGES
 
 class Indicator(Node):
 
-    name = StringField(required=True)
+    name = StringField(required=True, max_length=1024)
     pattern = StringField(required=True)
     location = StringField(required=True)
     diamond = StringField(choices=DIAMOND_EDGES, required=True)

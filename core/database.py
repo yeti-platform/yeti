@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from wtforms import widgets, Field, StringField
+from mongoengine import NotUniqueError
 
 from mongoengine import *
 from flask.ext.mongoengine.wtf import model_form
@@ -123,7 +124,8 @@ class Node(YetiDocument):
 
     @classmethod
     def get_form(klass):
-        return model_form(klass, exclude=klass.exclude_fields)
+        form = model_form(klass, exclude=klass.exclude_fields)
+        form.name = TextField()
 
     @property
     def type(self):
