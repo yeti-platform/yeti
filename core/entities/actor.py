@@ -4,7 +4,7 @@ from core.entities import Entity
 
 class Actor(Entity):
 
-    aliases = ListField(StringField())
+    aliases = ListField(StringField(), verbose_name="Actor")
 
     def add_alias(alias):
         self.modify(add_to_set__aliases=alias)
