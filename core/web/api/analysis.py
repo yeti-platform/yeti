@@ -23,9 +23,12 @@ def derive(observables):
 
     new = []
     for observable in observables:
-        t = Observable.guess_type(observable)
-        for a in analyzers.get(t, []):
-            new.extend([n for n in a.analyze_string(observable) if n and n not in observables])
+        try:
+            t = Observable.guess_type(observable)
+            for a in analyzers.get(t, []):
+                new.extend([n for n in a.analyze_string(observable) if n and n not in observables])
+        except ObservableValidationError:
+            pass
 
     if len(new) == 0:
         return observables
