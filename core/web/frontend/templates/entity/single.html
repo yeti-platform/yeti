@@ -39,6 +39,7 @@
           <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
           <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
           <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
+          <li role="presentation"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
         </ul>
 
         <div class="tab-content">
@@ -116,6 +117,26 @@
                         <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
                         <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
                         <td>{{ node.pattern }}</td>
+                      </tr>
+                      {% endfor %}
+                    {%endfor%}
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
+              <div class="row">
+                <div class="col-md-12">
+                  <table class="table table-condensed">
+                    <tr><th>Observable</th><th>Link</th><th>Type</th><th>Tags</th></tr>
+                    {% for type, entry in n.items() if "Observable" in type %}
+                      {% for link, node in entry %}
+                      <tr>
+                        <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id)}}">{{node.value}}</a></td>
+                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{ node.type }}</td>
+                        <td>{{ macros.display_tags(node.tags) }}</td>
                       </tr>
                       {% endfor %}
                     {%endfor%}
