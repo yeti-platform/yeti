@@ -1,6 +1,7 @@
 from mongoengine import StringField, ListField
+from flask.ext.mongoengine.wtf import model_form
 
-from core.database import Node, Link
+from core.database import Node, Link, TagListField
 
 
 class Entity(Node):
@@ -12,6 +13,12 @@ class Entity(Node):
     meta = {
         "allow_inheritance": True,
     }
+
+    @classmethod
+    def get_form(klass):
+        form = model_form(klass, exclude=klass.exclude_fields)
+        form.tags = TagListField()
+        return form
 
     def __unicode__(self):
         return u"{}".format(self.name)

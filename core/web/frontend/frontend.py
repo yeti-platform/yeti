@@ -1,17 +1,18 @@
 from flask import Blueprint, render_template, request, redirect, url_for
-from flask.ext.classy import FlaskView, route
+from flask.ext.classy import route
 
 from core.investigation import Investigation
 from core.observables import Observable
 from core.entities import Entity
+from core.indicators import Indicator
 from core.web.frontend.generic import GenericView
 from core.web.api.analysis import match_observables
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 from core.helpers import refang
 
-from core.entities import Entity, TTP, Actor, Company, Malware
-from core.observables import Observable
+from core.entities import TTP, Actor, Company, Malware
+from core.indicators import Regex
 
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
@@ -36,6 +37,13 @@ class EntitiesView(GenericView):
 
 EntitiesView.register(frontend)
 
+# Indicators - Generic View
+
+class IndicatorsView(GenericView):
+    klass = Indicator
+    subclass_map = {
+        'regex': Regex,
+    }
 
 # Observables - Generic View
 

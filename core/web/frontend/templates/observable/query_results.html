@@ -59,9 +59,9 @@
       <div class="panel-body">
         <table class="table table-condensed">
           <tr><th>Name</th><th>Observable</th><th>Diamond edge</th><th>Suggested tags</th></tr>
-          {% for match in data['matches']%}
-          <tr data-id={{match['observable'].id}}>
-            <td>{{match['name']}}</td><td>{{match['observable']['value']}}</td><td>{{match['diamond']}}</td><td>{{macros.display_tags(match['suggested_tags'])}} <span class="glyphicon glyphicon-tags tag-all"></span></td>
+          {% for match in data['matches'] %}
+          <tr data-id="{{match['observable'].id}}">
+            <td><a href="{{ url_for('frontend.EntitiesView:get', id=match['id']) }}">{{match['name']}}</a></td><td>{{match['observable']['value']}}</td><td>{{match['diamond']}}</td><td>{{macros.display_tags(match['suggested_tags'])}} <span class="glyphicon glyphicon-tags tag-all"></span></td>
           </tr>
           {% endfor %}
         </table>
@@ -80,7 +80,7 @@
         <table class="table table-condensed">
           <tr><th>Name</th><th>Type</th><th>
             {% for entity in data['entities']%}
-              <tr><td>{{entity['name']}}</td><td>{{entity['type']}}</td></tr>
+              <tr><td><a href="{{ url_for('frontend.EntitiesView:get', id=entity['id']) }}">{{entity['name']}}</a></td><td>{{entity['type']}}</td></tr>
             {% endfor%}
         </table>
       </div>

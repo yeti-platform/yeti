@@ -15,6 +15,9 @@ class Tag(Node):
     produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
     replaces = ListField(StringField())
 
+    def __unicode__(self):
+        return unicode(name)
+
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "count", "created", "replaces"]}
         i['id'] = str(self.id)
@@ -43,9 +46,6 @@ class Tag(Node):
             raise TagValidationError("{} is not a valid tag. Valid chars = [a-z0-9\\-_]".format(repr(self.name)))
         self.produces = list(set(self.produces))
 
-    def __unicode__(self):
-        return self.name
-
 
 class ObservableTag(EmbeddedDocument):
 
@@ -56,7 +56,7 @@ class ObservableTag(EmbeddedDocument):
     fresh = BooleanField(default=True)
 
     def __unicode__(self):
-        return u"{} ({})".format(self.name, "fresh" if self.fresh else "old")
+        return u"{}".format(self.name)
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["first_seen", "last_seen", "fresh", "name"]}

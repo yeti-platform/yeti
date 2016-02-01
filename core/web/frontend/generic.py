@@ -1,5 +1,4 @@
 from flask.ext.classy import FlaskView, route
-from flask.ext.mongoengine.wtf import model_form
 from flask import render_template, request, redirect, url_for
 
 
@@ -25,7 +24,7 @@ class GenericView(FlaskView):
             klass = self.klass
         if request.method == "POST":
             return self.handle_form(klass=klass)
-        form = model_form(klass, exclude=klass.exclude_fields)()
+        form = klass.get_form()
         obj = None
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
 
@@ -34,17 +33,18 @@ class GenericView(FlaskView):
         if request.method == "POST":
             return self.handle_form(id=id)
         obj = self.klass.objects.get(id=id)
-        form = model_form(obj.__class__, exclude=obj.__class__.exclude_fields)(obj=obj)
+        form_class = obj.__class__.get_form()
+        form = form_class(obj=obj)
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=self.klass.__name__, obj=obj)
 
     def handle_form(self, id=None, klass=None):
         if klass:  # create
             obj = klass()
-            form = model_form(klass, exclude=klass.exclude_fields)(request.form)
+            form = klass.get_form()(request.form)
         else:  # update
             obj = self.klass.objects.get(id=id)
             klass = obj.__class__
-            form = model_form(klass, exclude=klass.exclude_fields)(request.form, initial=obj._data)
+            form = klass.get_form()(request.form, initial=obj._data)
 
         if form.validate():
             form.populate_obj(obj)

@@ -2,9 +2,10 @@ from datetime import datetime
 import operator
 
 from mongoengine import *
+from flask.ext.mongoengine.wtf import model_form
 
 from core.helpers import is_url, is_ip, is_hostname
-from core.database import Node, Link
+from core.database import Node, Link, TagListField
 from core.observables import ObservableTag, Tag
 from core.entities import Entity
 from core.errors import ObservableValidationError
@@ -16,7 +17,7 @@ class Observable(Node):
     sources = ListField(StringField(), verbose_name="Sources")
     description = StringField(verbose_name="Description")
     context = ListField(DictField(), verbose_name="Context")
-    tags = ListField(EmbeddedDocumentField(ObservableTag), verbose_name="Tags")
+    tags = ListField(EmbeddedDocumentField(ObservableTag), verbose_name="Relevant tags")
     last_analyses = DictField(verbose_name="Last analyses")
 
     created = DateTimeField(default=datetime.now)
@@ -26,6 +27,11 @@ class Observable(Node):
     meta = {
         "allow_inheritance": True,
     }
+
+    @classmethod
+    def get_form(klass):
+        form = model_form(klass, exclude=klass.exclude_fields)
+        return form
 
     def __unicode__(self):
         return u"{} ({} context)".format(self.value, len(self.context))

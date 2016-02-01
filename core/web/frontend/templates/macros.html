@@ -51,29 +51,38 @@
   {% endif %}
 {%- endmacro %}
 
+{% macro render_field(field) -%}
+  {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
+    {{ field() }}
+  {% else %}
+    <div class="form-group {% if field.errors %}error{% endif %}">
+      <label for="{{field.name}}">{{field.label}}</label>
+        <!-- field is rendered here -->
+        {% if field.type == "TagListField" %}
+          {% set _kwargs = {"class_": "tagfield form-control input-sm", "data-choices": url_for("api.tagapi") }%}
+          {{ field(**_kwargs)}}
+        {% else %}
+          {{ field(class_="form-control", **kwargs) }}
+        {% endif %}
+        {% if field.errors or field.help_text %}
+          <p class="help-block">
+          {% if field.errors %}
+            {{ field.errors|join(' ') }}
+          {% else %}
+            {{ field.help_text }}
+          {% endif %}
+          </p>
+        {% endif %}
+    </div>
+  {% endif %}
+
+{% endmacro %}
+
 
 {% macro render(form) -%}
-<form action="{{request.path}}" method="POST">
+<form action="{{request.path}}" method="POST" class="yeti-form">
 {% for field in form %}
-{% if field.type in ['CSRFTokenField', 'HiddenField'] %}
-  {{ field() }}
-{% else %}
-  <div class="form-group {% if field.errors %}error{% endif %}">
-    <!-- {{field.label}}|{{field.name}}|{{field.type}} -->
-    <label for="{{field.name}}">{{field.label}}</label>
-      {{ field(class_="form-control") }}
-      {% if field.errors or field.help_text %}
-        <p class="help-block">
-        {% if field.errors %}
-          {{ field.errors|join(' ') }}
-        {% else %}
-          {{ field.help_text }}
-        {% endif %}
-        </p>
-      {% endif %}
-
-  </div>
-{% endif %}
+  {{ render_field(field) }}
 {% endfor %}
 <input type="submit" class="btn btn-primary" value="save">
 </form>

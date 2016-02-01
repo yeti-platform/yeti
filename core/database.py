@@ -1,7 +1,25 @@
 import re
 from datetime import datetime
+from wtforms import widgets, Field, StringField
 
 from mongoengine import *
+from flask.ext.mongoengine.wtf import model_form
+
+
+class TagListField(Field):
+    widget = widgets.TextInput()
+
+    def _value(self):
+        if self.data:
+            return u','.join([unicode(d) for d in self.data])
+        else:
+            return u''
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = [x.strip() for x in valuelist[0].split(',')]
+        else:
+            self.data = []
 
 
 class YetiDocument(Document):
@@ -102,6 +120,10 @@ class Node(YetiDocument):
     meta = {
         "abstract": True,
     }
+
+    @classmethod
+    def get_form(klass):
+        return model_form(klass, exclude=klass.exclude_fields)
 
     @property
     def type(self):
