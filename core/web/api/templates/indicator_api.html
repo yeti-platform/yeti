@@ -1,0 +1,25 @@
+{% import 'macros.html' as macros %}
+
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" class="active"><a href="#regex" aria-controls="regex" role="tab" data-toggle="tab">Regex</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <div role="tabpanel" class="tab-pane active" id="regex"> <!-- regex tab -->
+    <table class="table table-condensed yeti-table table-hover">
+      <tr><th></th><th>Name</th><th>Type</th><th>Pattern</th></tr>
+      {% for indicator in data %}
+      <tr class="node-line">
+        <td class="graph-link">
+            <a href="{{ url_for('frontend.graph_node', id=indicator['id'], klass='indicator')}}"><i class="flaticon-network38"></i></a>
+        </td>
+        <td><a href="{{ url_for('frontend.IndicatorsView:get', id=indicator['id'])}}">{{indicator['name']}}</a></td>
+        <td><code>{{ indicator['type'] }}</code></td>
+        <td><code>{{ indicator['pattern'][:50] }}</code></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+</div>

@@ -25,13 +25,16 @@ from core.web.api.feeds import FeedApi
 from core.web.api.export import ExportApi
 from core.web.api.neighbors import NeighborsApi
 from core.web.api.investigation import InvestigationApi
-
+from core.web.api.indicator import IndicatorApi, IndicatorSearchApi
 
 api_restful.add_resource(ScheduledAnalyticsApi, '/analytics/scheduled', '/analytics/scheduled/<string:id>/<string:action>')
 api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/oneshot/<string:id>/<string:action>')
 
 api_restful.add_resource(ObservableSearchApi, '/observables/search')
 api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
+
+api_restful.add_resource(IndicatorSearchApi, '/indicators/search')
+api_restful.add_resource(IndicatorApi, '/indicators/', '/indicators/<string:id>')
 
 api_restful.add_resource(EntitySearchApi, '/entities/search')
 api_restful.add_resource(EntityApi, '/entities/', '/entities/<string:id>')

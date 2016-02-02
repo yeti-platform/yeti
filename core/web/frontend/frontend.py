@@ -46,6 +46,7 @@ class IndicatorsView(GenericView):
         'regex': Regex,
     }
 
+IndicatorsView.register(frontend)
 
 # Observables - Generic View
 

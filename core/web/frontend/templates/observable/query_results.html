@@ -58,10 +58,18 @@
       </div>
       <div class="panel-body">
         <table class="table table-condensed">
-          <tr><th>Name</th><th>Observable</th><th>Diamond edge</th><th>Suggested tags</th></tr>
+          <tr><th>Name</th><th>Observable</th><th>Diamond edge</th><th>Suggested tags</th><th>Observable ID</th></tr>
           {% for match in data['matches'] %}
           <tr data-id="{{match['observable'].id}}">
-            <td><a href="{{ url_for('frontend.EntitiesView:get', id=match['id']) }}">{{match['name']}}</a></td><td>{{match['observable']['value']}}</td><td>{{match['diamond']}}</td><td>{{macros.display_tags(match['suggested_tags'])}} <span class="glyphicon glyphicon-tags tag-all"></span></td>
+            <td><a href="{{ url_for('frontend.IndicatorsView:get', id=match['id']) }}">{{match['name']}}</a></td>
+						<td>{{match['observable']['value']}}</td>
+						<td>{{match['diamond']}}</td>
+						<td>{% if match['suggested_tags'] %}{{macros.display_tags(match['suggested_tags'])}}{%endif%}</td>
+						{% if match['observable']['id']%}
+						<td><a href="{{url_for('frontend.ObservablesView:get', id=match['observable']['id'])}}">{{match['observable']['id']}}</a></td>
+						{% else %}
+						<td>Not in DB [<a href="#">Add</a>]</td>
+						{% endif %}
           </tr>
           {% endfor %}
         </table>
