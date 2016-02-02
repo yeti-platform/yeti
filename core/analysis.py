@@ -35,7 +35,7 @@ def derive(observables):
         return derive(new + observables)
 
 
-def match_observables(observables):
+def match_observables(observables, save_matches=False):
     # Remove empty observables
     observables = [observable for observable in observables if observable]
     extended_query = set(observables) | set(derive(observables))
@@ -53,7 +53,16 @@ def match_observables(observables):
                     data['neighbors'].append((link.info(), node.info()))
 
     for o, i in Indicator.search(extended_query):
-        o = Observable.add_text(o)
+        if save_matches:
+            o = Observable.add_text(o)
+        else:
+            o = Observable.guess_type(o)(value=o)
+            o.validate()
+            try:
+                o = Observable.objects.get(value=o.value)
+            except Exception:
+                pass
+
         match = i.info()
         match.update({"observable": o.info(), "related": [], "suggested_tags": set()})
 
