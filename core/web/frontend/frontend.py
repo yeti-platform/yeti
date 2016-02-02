@@ -1,21 +1,27 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from flask.ext.classy import route
+from flask import g
 
 from core.investigation import Investigation
 from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
 from core.entities import Entity
-from core.indicators import Indicator
+from core.indicators import Indicator, Regex
 from core.analysis import match_observables
 from core.web.frontend.generic import GenericView
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 from core.entities import TTP, Actor, Company, Malware
-from core.indicators import Regex
 from core.errors import ObservableValidationError
 
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
 
+
+@frontend.before_request
+def before_request():
+    g.entities = [TTP, Actor, Company, Malware]
+    g.observables = [Hostname, Ip, Url, Hash, Text, File, Email]
+    g.indicators = [Regex]
 
 # Landing page - redirect to observable
 
@@ -25,7 +31,6 @@ def index():
 
 
 # Entities - Generic View
-
 class EntitiesView(GenericView):
     klass = Entity
     subclass_map = {

@@ -32,28 +32,36 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
 
-            <li class="{% if request.path == url_for("frontend.ObservablesView:index") %}active{%endif%} dropdown">
+            <li class="{% if url_for("frontend.ObservablesView:index") in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Observables <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('frontend.ObservablesView:new') }}">New</a></li>
                 <li><a href="{{ url_for('frontend.ObservablesView:index') }}">List</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="{{ url_for('frontend.ObservablesView:new') }}">New observable</a></li>
+                <li role="separator" class="divider"></li>
                 <li><a href="{{ url_for('frontend.ObservablesView:query') }}">Bulk operations</a></li>
               </ul>
             </li>
 
-            <li class="{% if request.path == url_for("frontend.ObservablesView:index") %}active{%endif%} dropdown">
+            <li class="{% if url_for("frontend.IndicatorsView:index") in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Indicators <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('frontend.IndicatorsView:new') }}">New</a></li>
                 <li><a href="{{ url_for('frontend.IndicatorsView:index') }}">List</a></li>
+                <li role="separator" class="divider"></li>
+                {% for t in g.indicators %}
+                <li><a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass=t.__name__.lower()) }}">New {{t.__name__}}</a></li>
+                {% endfor %}
               </ul>
             </li>
 
-            <li class="{% if request.path == url_for("frontend.ObservablesView:index") %}active{%endif%} dropdown">
+            <li class="{% if url_for("frontend.EntitiesView:index") in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Entities <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('frontend.EntitiesView:new') }}">New</a></li>
                 <li><a href="{{ url_for('frontend.EntitiesView:index') }}">List</a></li>
+                <li role="separator" class="divider"></li>
+                {% for t in g.entities %}
+                <li><a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass=t.__name__.lower()) }}">New {{t.__name__}}</a></li>
+                {% endfor %}
               </ul>
             </li>
 
