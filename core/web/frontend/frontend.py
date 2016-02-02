@@ -25,6 +25,7 @@ def index():
 
 
 # Entities - Generic View
+
 class EntitiesView(GenericView):
     klass = Entity
     subclass_map = {
@@ -36,6 +37,7 @@ class EntitiesView(GenericView):
 
 EntitiesView.register(frontend)
 
+
 # Indicators - Generic View
 
 class IndicatorsView(GenericView):
@@ -44,20 +46,23 @@ class IndicatorsView(GenericView):
         'regex': Regex,
     }
 
+
 # Observables - Generic View
 
 class ObservablesView(GenericView):
     klass = Observable
 
-    subclass_map = {
-        'ip': Ip,
-        'hostname': Hostname,
-        'url': Url,
-        'hash': Hash,
-        'file': File,
-        'email': Email,
-        'text': Text,
-    }
+    # override to guess observable type
+    @route('/new/', methods=["GET", "POST"])
+    def new(self, klass=None):
+        if not klass:
+            klass = self.klass
+        if request.method == "POST":
+            guessed_type = Observable.guess_type(request.form['value'])
+            return self.handle_form(klass=guessed_type)
+        form = klass.get_form()()
+        obj = None
+        return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
 
     @route("/query", methods=['GET', 'POST'])
     def query(self):
