@@ -2,7 +2,7 @@ from flask import request
 from flask_restful import abort as restful_abort
 
 from core.web.api.crud import CrudApi
-from core.export import Export, execute_export
+from core.exports import Export, execute_export
 from core.web.api.api import render
 from core.helpers import string_to_timedelta
 from core.observables import Tag

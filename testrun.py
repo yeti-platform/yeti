@@ -8,7 +8,7 @@ from core.database import Link
 from core.entities import TTP
 from core.observables import Observable
 from core.observables import Tag
-from core.export import Export
+from core.exports import Export, ExportTemplate
 
 ## Clean slate
 db = connect('yeti')
@@ -34,7 +34,14 @@ t3.add_replaces(["c&c", "cc"])
 
 Tag.get_or_create(name="crimeware").add_produces("malware")
 
-Export(name="TestExport", description="Test description", frequency=timedelta(hours=1), include_tags=[t1, t2]).save()
+
+et = ExportTemplate(name="bluecoat")
+et.template = """define category cert_blocklist
+{% for obs in elements %}{{ obs.value }}
+{% endfor %}end
+"""
+et.save()
+Export(name="TestExport", description="Test description", frequency=timedelta(hours=1), include_tags=[t1, t2], template=et).save()
 
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
@@ -73,7 +80,7 @@ zeus.save()
 bartalex_callback = Regex(name="Bartalex callback")
 bartalex_callback.pattern = "/mg.jpg$"
 bartalex_callback.description = "Bartalex [stage2] callback (extracted from macros)"
-bartalex_callback.diamond = "Capability"
+bartalex_callback.diamond = "capability"
 bartalex_callback.location = "network"
 bartalex_callback.save()
 bartalex_callback.action('indicates', bartalex, description="Bartalex payload URL (Dridex)")
@@ -81,7 +88,7 @@ bartalex_callback.action('indicates', bartalex, description="Bartalex payload UR
 bartalex_callback2 = Regex(name="Bartalex callback")
 bartalex_callback2.pattern = "/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$"
 bartalex_callback2.description = "Bartalex [stage2] callback (extracted from macros)"
-bartalex_callback2.diamond = "Capability"
+bartalex_callback2.diamond = "capability"
 bartalex_callback2.location = "network"
 bartalex_callback2.save()
 bartalex_callback2.action("indicates", bartalex, description="Bartalex payload URL (Dridex)")
@@ -94,7 +101,7 @@ bartalex.action("drops", dridex, description="Drops Dridex")
 zeus_callback = Regex(name="Zeus C2 check-in")
 zeus_callback.pattern = "/gate.php$"
 zeus_callback.description = "ZeuS post-infection callback"
-zeus_callback.diamond = "Capability"
+zeus_callback.diamond = "capability"
 zeus_callback.location = "network"
 zeus_callback.save()
 zeus_callback.action('indicates', zeus)

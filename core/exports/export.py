@@ -4,11 +4,21 @@ import logging
 from datetime import datetime
 import traceback
 
-from mongoengine import ListField, StringField, Q, ReferenceField, PULL
+from mongoengine import Document, ListField, StringField, Q, ReferenceField, PULL
+from jinja2 import Template
 
 from core.config.celeryctl import celery_app
 from core.observables import Observable, Tag
 from core.scheduling import ScheduleEntry
+
+
+class ExportTemplate(Document):
+    name = StringField(required=True, max_length=255, verbose_name="Name")
+    template = StringField(required=True)
+
+    def render(self, elements):
+        t = Template(self.template)
+        return t.render(elements=elements)
 
 
 @celery_app.task
@@ -19,7 +29,7 @@ def execute_export(export_id):
         if export.enabled:
             logging.info("Running export {}".format(export.name))
             export.update_status("Exporting...")
-            export.query()
+            export.execute()
             export.update_status("OK")
         else:
             logging.error("Export {} has been disabled".format(export.name))
@@ -35,12 +45,13 @@ def execute_export(export_id):
 
 class Export(ScheduleEntry):
 
-    SCHEDULED_TASK = 'core.export.execute_export'
+    SCHEDULED_TASK = 'core.exports.execute_export'
     CUSTOM_FILTER = {}
 
     include_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     exclude_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     output_dir = StringField(default='exports')
+    template = ReferenceField(ExportTemplate)
 
     def __init__(self, *args, **kwargs):
         super(Export, self).__init__(*args, **kwargs)
@@ -52,13 +63,10 @@ class Export(ScheduleEntry):
     def output_file(self):
         return os.path.abspath(os.path.join(self.output_dir, self.name))
 
-    def query(self):
+    def execute(self):
         q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
-        for o in Observable.objects(q):
-            self.format(o)
-
-    def format(self, o):
-        self.write("{}\n".format(o.value))
+        output = self.template.render(Observable.objects(q))
+        self.write(output)
 
     def write(self, output):
         self.export_file_handle.write(output)
