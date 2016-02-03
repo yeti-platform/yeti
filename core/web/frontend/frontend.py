@@ -12,7 +12,7 @@ from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 from core.entities import TTP, Actor, Company, Malware
 from core.errors import ObservableValidationError
-
+from core.web.frontend.users import UsersView
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
 
@@ -100,6 +100,7 @@ class ObservablesView(GenericView):
 
 ObservablesView.register(frontend)
 
+UsersView.register(frontend)
 
 # Graph views
 

@@ -7,10 +7,11 @@ from core.observables import Email, Text
 
 class NetworkWhois(OneShotAnalytics):
 
-    settings = {
+    default_values = {
         "name": "NetworkWhois",
         "description": "Perform a Network Whois request on the IP address and tries to"
                        " extract relevant information."
+
     }
 
     ACTS_ON = "Ip"

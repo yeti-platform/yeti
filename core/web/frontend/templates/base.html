@@ -74,9 +74,7 @@
               <li><a href="{{ url_for('frontend.analytics') }}">Analytics</a></li>
               <li><a href="{{ url_for('frontend.tags') }}">Tags</a></li>
               <li role="separator" class="divider"></li>
-              <li class="dropdown-header">Internals</li>
-              <li><a href="#">Settings</a></li>
-              <li><a href="#">Accounts</a></li>
+              <li><a href="{{ url_for('frontend.UsersView:settings') }}">Settings</a></li>
             </ul>
             </li>
           </ul>

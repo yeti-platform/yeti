@@ -3,6 +3,7 @@ from datetime import datetime
 from core.config.celeryctl import celery_app
 from core.scheduling import ScheduleEntry, OneShotEntry
 from core.observables import Observable
+from core.user import User
 from mongoengine import *
 
 
@@ -47,6 +48,13 @@ class AnalyticsResults(Document):
 
 
 class OneShotAnalytics(OneShotEntry):
+
+    def __init__(self, *args, **kwargs):
+        super(OneShotAnalytics, self).__init__(*args, **kwargs)
+
+        if hasattr(self, 'settings'):
+            for setting_id, setting in self.settings.iteritems():
+                User.register_setting(setting_id, setting['name'], setting['description'])
 
     @classmethod
     def run(cls, e):

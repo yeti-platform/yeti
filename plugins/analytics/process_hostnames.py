@@ -10,7 +10,7 @@ SUSPICIOUS_TLDS = ['pw', 'cc', 'nu', 'ms', 'vg', 'cm', 'biz', 'cn', 'kr', 'br', 
 
 class ProcessHostnames(ScheduledAnalytics):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(seconds=10),
         "name": "ProcessHostnames",
         "description": "Extracts and analyze domains",

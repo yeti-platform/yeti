@@ -29,7 +29,7 @@ class ScheduleEntry(Document):
     SCHEDULED_TASK = None
 
     # This should be defined in subclasses, to set the field values
-    settings = None
+    default_values = None
 
     meta = {"allow_inheritance": True}
 
@@ -44,7 +44,7 @@ class OneShotEntry(Document):
     description = StringField(required=True)
 
     # This should be defined in subclasses, to set the field values
-    settings = None
+    default_values = None
 
     meta = {"allow_inheritance": True}
 
@@ -82,11 +82,11 @@ class Scheduler(BaseScheduler):
                 if not ispkg:
                     module = importlib.import_module(name)
                     for name, obj in inspect.getmembers(module, inspect.isclass):
-                        if issubclass(obj, cls) and obj.settings is not None:
+                        if issubclass(obj, cls) and obj.default_values is not None:
                             try:
-                                entry = obj.objects.get(name=obj.settings['name'])
+                                entry = obj.objects.get(name=obj.default_values['name'])
                             except DoesNotExist:
-                                entry = obj(**obj.settings)
+                                entry = obj(**obj.default_values)
                                 entry.save()
 
                             self._loaded_entries[entry.name] = entry

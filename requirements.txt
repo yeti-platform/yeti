@@ -13,6 +13,7 @@ flask-classy
 flask_restful
 flask-negotiation
 flask-mongoengine
+flask-login
 tldextract
 git+git://github.com/joepie91/python-whois#egg=pythonwhois
 ipwhois
