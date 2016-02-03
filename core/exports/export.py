@@ -77,4 +77,5 @@ class Export(ScheduleEntry):
         i['id'] = str(self.id)
         i['include_tags'] = [tag.name for tag in self.include_tags]
         i['exclude_tags'] = [tag.name for tag in self.exclude_tags]
+        i['template'] = self.template.name
         return i
