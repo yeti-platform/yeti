@@ -22,7 +22,7 @@ from core.web.api.entity import EntityApi, EntitySearchApi
 from core.web.api.tag import TagApi, TagActionApi
 from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
 from core.web.api.feeds import FeedApi
-from core.web.api.export import ExportApi
+from core.web.api.export import ExportApi, ExportTemplateApi
 from core.web.api.neighbors import NeighborsApi
 from core.web.api.investigation import InvestigationApi
 from core.web.api.indicator import IndicatorApi, IndicatorSearchApi
@@ -39,12 +39,12 @@ api_restful.add_resource(IndicatorApi, '/indicators/', '/indicators/<string:id>'
 api_restful.add_resource(EntitySearchApi, '/entities/search')
 api_restful.add_resource(EntityApi, '/entities/', '/entities/<string:id>')
 
-
 api_restful.add_resource(TagApi, '/tags/', '/tags/<string:id>', "/tags/<string:action>")
 api_restful.add_resource(TagActionApi, '/tags/action/<string:action>')
 
 api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>/<string:action>')
 api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>', '/exports/<string:id>/<string:action>')
+api_restful.add_resource(ExportTemplateApi, '/export-templates/', '/export-templates/<string:id>')
 
 api_restful.add_resource(NeighborsApi, '/neighbors/<string:klass>/<string:node_id>')
 

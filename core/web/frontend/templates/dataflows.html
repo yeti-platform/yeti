@@ -23,6 +23,7 @@
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" class="active"><a href="#import" aria-controls="import" role="tab" data-toggle="tab">Feeds</a></li>
   <li role="presentation"><a href="#export" aria-controls="export" role="tab" data-toggle="tab">Exports</a></li>
+  <li role="presentation"><a href="#export-templates" aria-controls="export-templates" role="tab" data-toggle="tab">Templates</a></li>
 </ul>
 
 <div class="tab-content">
@@ -45,32 +46,29 @@
           <h5>New export</h5>
           <form class="yeti-form" id="export-form" data-url="{{ url_for('api.exportapi') }}">
             <div class="form-group">
-              <!-- <label for="name">Name</label> -->
               <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
             </div>
             <div class="form-group">
-              <!-- <label for="description">Description</label> -->
               <input type="text" class="form-control" name="description" value="" placeholder="Description"/>
             </div>
             <div class="form-group">
-              <!-- <label for="include">Include tags</label> -->
               <input type="text" class="form-control tagfield" name="include_tags" data-choices="{{ url_for('api.tagapi') }}" value="" placeholder="Include tags"/>
             </div>
             <div class="form-group">
-              <!-- <label for="exclude">Exclude tags</label> -->
               <input type="text" class="form-control tagfield" name="exclude_tags" data-choices="{{ url_for('api.tagapi') }}" value="" placeholder="Exclude tags"/>
             </div>
-            <!-- <div class="form-group">
-              <label for="output">Output directory</label>
-              <input type="text" class="form-control" id="output" value="exports" placeholder="Output directory"/>
+            <div class="form-group">
+              <select class="form-control yeti-select" name="acts_on" placeholder='Acts on'>
+                {% for obs in g.observables %}
+                  <option value="{{obs.__name__}}">{{obs.__name__}}</option>
+                {% endfor %}
+              </select>
             </div>
             <div class="form-group">
-              <label for="frequency">Frequency</label>
-              <input type="text" class="form-control" id="frequency" value="1:00:00" placeholder="Frequency"/>
-            </div> -->
-            <div class="form-group">
-              <select class="form-control" name="template" placeholder='template'>
-                <option>
+              <select class="form-control yeti-select" name="template" placeholder='template'>
+                {% for template in export_templates %}
+                <option value="{{template.name}}">{{template.name}}</option>
+                {% endfor %}
               </select>
             </div>
             <button type="button" id="yeti-save-button" data-url="{{ url_for('api.exportapi') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
@@ -81,6 +79,30 @@
       </div>
     </div>
 
+    <div role="tabpanel" class="tab-pane" id="export-templates"> <!-- export feed tab -->
+      <div class="row">
+
+        <div class="col-md-2">
+          <div id="export-templates" class="yeti-populate" data-url="{{ url_for('api.exporttemplateapi') }}">
+          </div>
+        </div>
+
+        <div class="col-md-9">
+          <form class="yeti-form" id="export-template-form" data-url="{{ url_for('api.exporttemplateapi') }}">
+            <div class="form-group">
+              <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
+            </div>
+            <div class="form-group">
+              <textarea class="form-control" name="template" value="" rows=10 placeholder="Edit your Jinja2 tempate here"/></textarea>
+            </div>
+            <button type="button" id="yeti-save-button" data-url="{{ url_for('api.exporttemplateapi') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
+            <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.exporttemplateapi') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
+            <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="delete">Clear</button>
+          </form>
+        </div>
+
+      </div>
+    </div>
 
   </div>
 

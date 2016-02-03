@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+	<li>Admin</li>
+	<li class="active">Exports</li>
+</ol>
+{% endblock %}
+
+{% import 'macros.html' as macros %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+{% endblock %}
+
+{% block main %}
+
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" class="active"><a href="#export" aria-controls="export" role="tab" data-toggle="tab">Exports</a></li>
+  <li role="presentation"><a href="#export-templates" aria-controls="export-templates" role="tab" data-toggle="tab">Export Templates</a></li>
+</ul>
+
+<div class="tab-content">
+
+	<div role="tabpanel" class="tab-pane active" id="export"> <!-- export feed tab -->
+		<div class="row">
+			<div class="col-md-12">
+			  <div id="export-table" class="yeti-populate" data-url="{{ url_for('api.exportapi') }}">
+			  </div>
+				New export
+			</div>
+		</div>
+	</div>
+
+	<div role="tabpanel" class="tab-pane" id="export-templates"> <!-- export feed tab -->
+		<div class="row">
+			<div class="col-md-12">
+			</div>
+		</div>
+	</div>
+
+</div>
+{% endblock %}

@@ -1,13 +1,14 @@
 {% import 'macros.html' as macros %}
 
 <table class="table table-condensed yeti-table table-hover">
-  <tr><th>Name</th><th>Runs every</th><th>Last run</th><th>Description</th><th>Include</th><th>Exclude</th><th>Template</th><th>Output directory</th><th>Status</th><th>Toggle</th><th></th></tr>
+  <tr><th>Name</th><th>Runs every</th><th>Last run</th><th>Description</th><th>Acts on</th><th>Include</th><th>Exclude</th><th>Template</th><th>Output directory</th><th>Status</th><th>Toggle</th><th></th></tr>
   {% for export in data %}
   <tr data-url="{{ url_for('api.exportapi', id=export["id"]) }}" data-form="export-form" class="yeti-edit-elt {{ "disabled" if not export["enabled"] }} {{ "error" if (export["status"] != "OK") else "success" }}" data-name="{{export["name"]}}">
     <td><strong>{{ export["name"] }}</strong></td>
     <td>{{ export["frequency"] }}</td>
     <td>{{ macros.display_datetime(export["last_run"]) or "Never" }}</td>
     <td>{{ export["description"] }}</td>
+    <td>{{ export["acts_on"] }}</td>
     <td>{{ macros.display_tags(export["include_tags"]) }}</td>
     <td>{{ macros.display_tags(export["exclude_tags"]) }}</td>
     <td>{{ export["template"] }}</td>

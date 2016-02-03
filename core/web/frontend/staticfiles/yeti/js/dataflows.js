@@ -5,7 +5,8 @@ $(function() {
   });
 
   $("#export-table").on('click', '.export-toggle', function() {
-    toggle($(this));
+    // toggle($(this));
+    console.log('toggle')
   });
 
   $("#feed-table").on('click', '.feed-refresh', function() {
@@ -20,6 +21,7 @@ $(function() {
 
 
 function toggle(button) {
+  console.log("TOGGLE")
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},

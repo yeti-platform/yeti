@@ -6,6 +6,7 @@ from core.investigation import Investigation
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 
+from core.web.frontend.exports import ExportsView
 from core.web.frontend.entities import EntitiesView
 from core.web.frontend.observables import ObservablesView
 from core.web.frontend.exports import ExportsView
@@ -14,6 +15,7 @@ from core.web.frontend.indicators import IndicatorsView
 from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
 from core.entities import TTP, Actor, Company, Malware
 from core.indicators import Regex
+from core.exports import ExportTemplate
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
 
@@ -60,7 +62,7 @@ def graph_node(klass, id):
 
 @frontend.route("/dataflows")
 def dataflows():
-    return render_template("dataflows.html")
+    return render_template("dataflows.html", export_templates=ExportTemplate.objects.all())
 
 
 @frontend.route("/analytics")

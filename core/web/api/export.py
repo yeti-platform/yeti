@@ -2,11 +2,14 @@ from flask import request
 from flask_restful import abort as restful_abort
 
 from core.web.api.crud import CrudApi
-from core.exports import Export, execute_export
+from core.exports import Export, execute_export, ExportTemplate
 from core.web.api.api import render
 from core.helpers import string_to_timedelta
 from core.observables import Tag
 
+class ExportTemplateApi(CrudApi):
+    template = "export_template_api"
+    objectmanager = ExportTemplate
 
 class ExportApi(CrudApi):
     template = "export_api.html"
@@ -36,6 +39,7 @@ class ExportApi(CrudApi):
             params['frequency'] = string_to_timedelta(params.get('frequency', '1:00:00'))
             params['include_tags'] = [Tag.objects.get(name=name.strip()) for name in params['include_tags'].split(',') if name.strip()]
             params['exclude_tags'] = [Tag.objects.get(name=name.strip()) for name in params['exclude_tags'].split(',') if name.strip()]
+            params['template'] = ExportTemplate.objects.get(name=params['template'])
             if not id:
                 return render(self.objectmanager(**params).save().info())
             else:

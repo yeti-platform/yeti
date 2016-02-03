@@ -18,7 +18,6 @@ function refresh_tagfields(form) {
         }
         elt
         .on('tokenfield:createtoken', function (e) {
-          console.log($(this).val())
           if ($(this).data('choices')) {
             re = /^[a-zA-Z0-9_]+$/;
             charset = re.test(e.attrs.value);

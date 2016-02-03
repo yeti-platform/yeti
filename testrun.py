@@ -35,13 +35,17 @@ t3.add_replaces(["c&c", "cc"])
 Tag.get_or_create(name="crimeware").add_produces("malware")
 
 
-et = ExportTemplate(name="bluecoat")
+et = ExportTemplate(name="Default")
+et.template = "{{ obs.value }}\n"
+et.save()
+
+et = ExportTemplate(name="Bluecoat")
 et.template = """define category cert_blocklist
 {% for obs in elements %}{{ obs.value }}
 {% endfor %}end
 """
 et.save()
-Export(name="TestExport", description="Test description", frequency=timedelta(hours=1), include_tags=[t1, t2], template=et).save()
+Export(name="TestExport", acts_on="Url", description="Test description", frequency=timedelta(hours=1), include_tags=[t1, t2], template=et).save()
 
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
