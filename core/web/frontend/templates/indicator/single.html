@@ -9,7 +9,6 @@
 
     <div class="row">
       <div class="col-md-12">
-        <h4 class="panel-title"></h4>
         <div class="panel panel-default">
           <div class="panel-heading">
             <h3 class="panel-title">
@@ -24,6 +23,23 @@
             {%else%}
             <em>No description provided</em>
             {%endif%}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+                Pattern
+            </h3>
+          </div>
+          <div class="panel-body">
+            <code>
+              {{ indicator.pattern }}
+            </code>
           </div>
         </div>
       </div>
@@ -140,7 +156,7 @@
       <div class="panel-body">
         <table class="table table-condensed main-table">
           {% for key, value in indicator.info().items() %}
-          {% if key not in ["context", "value", "last_analyses"] %}
+          {% if key not in ["context", "value", "last_analyses", "pattern", "description"] %}
             <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
           {% endif %}
           {% endfor %}

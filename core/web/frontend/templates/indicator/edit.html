@@ -9,25 +9,51 @@
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/tokenfield-typeahead.min.css") }}">
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
+
+<style media="screen">
+  .tab-pane label {
+    display: none;
+  }
+</style>
 {% endblock %}
 
 {% block main %}
 
-  <div class="cold-md-12">
-    <h1>{% if not obj %}New {{obj_type}}{% else %}Editing {{obj.name}}{%endif%}</h1>
-    <form action="{{request.path}}" method="POST" class="yeti-form">
-    <div class="row">
-      <div class="col-md-3">
-        {% for field in form if field.name != 'description'%}
-          {{ macros.render_field(field) }}
-        {% endfor %}
-        <input type="submit" class="btn btn-primary" value="save">
-      </div>
-      <div class="col-md-9">
-        {{ macros.render_field(form.description, rows=12) }}
-      </div>
+<div class="cold-md-12">
+
+  <h1>{% if not obj %}New {{obj_type}}{% else %}Editing {{obj.name}}{%endif%}</h1>
+  <form action="{{request.path}}" method="POST" class="yeti-form">
+  <div class="row">
+
+    <div class="col-md-3">
+      {% for field in form if field.name not in ['description', 'pattern']%}
+        {{ macros.render_field(field) }}
+      {% endfor %}
+      <input type="submit" class="btn btn-primary" value="save">
     </div>
-    </form>
+
+    <div class="col-md-9">
+      <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active"><a href="#description" aria-controls="description" role="tab" data-toggle="tab">Description</a></li>
+        <li role="presentation"><a href="#pattern" aria-controls="pattern" role="tab" data-toggle="tab">Pattern</a></li>
+      </ul>
+
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="description"> <!-- Description tab -->
+          <br>
+          {{ macros.render_field(form.description, rows=12) }}
+        </div>
+        <div role="tabpanel" class="tab-pane" id="pattern"> <!-- Pattern tab -->
+          <br>
+          {{ macros.render_field(form.pattern, rows=12)}}
+        </div>
+      </div>
+
+    </div>
+
+
   </div>
+  </form>
+</div>
 
 {% endblock %}
