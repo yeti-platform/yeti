@@ -1,21 +1,19 @@
-from flask import Blueprint, render_template, request, redirect, url_for
-from flask.ext.classy import route
+from flask import Blueprint, render_template, redirect, url_for
 from flask import g
 
 from core.investigation import Investigation
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 
-from core.web.frontend.exports import ExportsView
 from core.web.frontend.entities import EntitiesView
 from core.web.frontend.observables import ObservablesView
-from core.web.frontend.exports import ExportsView
 from core.web.frontend.indicators import IndicatorsView
 
 from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
-from core.entities import TTP, Actor, Company, Malware
+from core.entities import TTP, Actor, Company, Malware, Entity
 from core.indicators import Regex
 from core.exports import ExportTemplate
+from core.web.frontend.users import UsersView
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
 
@@ -26,11 +24,15 @@ def before_request():
     g.observables = [Hostname, Ip, Url, Hash, Text, File, Email]
     g.indicators = [Regex]
 
+
 # Landing page - redirect to observable
 
 @frontend.route("/")
 def index():
     return redirect(url_for('frontend.ObservablesView:index'))
+
+
+UsersView.register(frontend)
 
 EntitiesView.register(frontend)
 IndicatorsView.register(frontend)
@@ -55,7 +57,6 @@ def graph_node(klass, id):
     investigation.add([], [node])
 
     return render_template("graph.html", investigation=bson_renderer(investigation.info()))
-
 
 
 # Admin views

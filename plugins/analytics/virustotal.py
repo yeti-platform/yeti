@@ -5,7 +5,7 @@ from core.analytics import OneShotAnalytics
 
 class QueryVirusTotal(OneShotAnalytics):
 
-    settings = {
+    default_values = {
         "name": "QueryVirusTotal",
         "description": "Queries VT for a single hash, adding context to the observable "
                        "and linking to other observables"

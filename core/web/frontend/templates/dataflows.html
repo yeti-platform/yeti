@@ -22,7 +22,7 @@
 {% block main %}
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" class="active"><a href="#import" aria-controls="import" role="tab" data-toggle="tab">Feeds</a></li>
-  <li role="presentation"><a href="#export" aria-controls="export" role="tab" data-toggle="tab">Exports</a></li>
+  <li role="presentation"><a href="#exports" aria-controls="exports" role="tab" data-toggle="tab">Exports</a></li>
   <li role="presentation"><a href="#export-templates" aria-controls="export-templates" role="tab" data-toggle="tab">Templates</a></li>
 </ul>
 
@@ -33,7 +33,7 @@
     </div>
   </div>
 
-  <div role="tabpanel" class="tab-pane" id="export"> <!-- export feed tab -->
+  <div role="tabpanel" class="tab-pane" id="exports"> <!-- export feed tab -->
     <div class="row">
 
       <div class="col-md-9">
@@ -78,32 +78,31 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <div role="tabpanel" class="tab-pane" id="export-templates"> <!-- export feed tab -->
-      <div class="row">
+  <div role="tabpanel" class="tab-pane" id="export-templates"> <!-- export feed tab -->
+    <div class="row">
 
-        <div class="col-md-2">
-          <div id="export-templates" class="yeti-populate" data-url="{{ url_for('api.exporttemplateapi') }}">
-          </div>
+      <div class="col-md-2">
+        <div id="export-templates-table" class="yeti-populate" data-url="{{ url_for('api.exporttemplateapi') }}">
         </div>
-
-        <div class="col-md-9">
-          <form class="yeti-form" id="export-template-form" data-url="{{ url_for('api.exporttemplateapi') }}">
-            <div class="form-group">
-              <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
-            </div>
-            <div class="form-group">
-              <textarea class="form-control" name="template" value="" rows=10 placeholder="Edit your Jinja2 tempate here"/></textarea>
-            </div>
-            <button type="button" id="yeti-save-button" data-url="{{ url_for('api.exporttemplateapi') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
-            <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.exporttemplateapi') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
-            <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="delete">Clear</button>
-          </form>
-        </div>
-
       </div>
-    </div>
 
+      <div class="col-md-9">
+        <form class="yeti-form" id="export-template-form" data-url="{{ url_for('api.exporttemplateapi') }}">
+          <div class="form-group">
+            <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
+          </div>
+          <div class="form-group">
+            <textarea class="form-control" name="template" value="" rows=10 placeholder="Edit your Jinja2 tempate here"/></textarea>
+          </div>
+          <button type="button" id="yeti-save-button" data-url="{{ url_for('api.exporttemplateapi') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
+          <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.exporttemplateapi') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
+          <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="delete">Clear</button>
+        </form>
+      </div>
+
+    </div>
   </div>
 
 </div>

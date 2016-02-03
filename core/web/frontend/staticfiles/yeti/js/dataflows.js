@@ -5,8 +5,7 @@ $(function() {
   });
 
   $("#export-table").on('click', '.export-toggle', function() {
-    // toggle($(this));
-    console.log('toggle')
+    toggle($(this));
   });
 
   $("#feed-table").on('click', '.feed-refresh', function() {

@@ -6,7 +6,12 @@
   <tr class="{{ "disabled" if not analytics["enabled"] }}" data-name="{{analytics["name"]}}">
     <td><strong>{{ analytics["name"] }}</strong></td>
     <td>{{ analytics["acts_on"] }}</td>
-    <td>{{ analytics["description"] }}</td>
+    <td>
+        {{ analytics["description"] }}
+        {% if not analytics['available'] %}
+            <span class="text-danger">This plugin requires settings that are not yet defined.</span>
+        {% endif %}
+    </td>
     <td><span data-url="{{ url_for('api.oneshotanalyticsapi', id=analytics["id"], action="toggle") }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>
   </tr>
   {% endfor %}

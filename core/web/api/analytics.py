@@ -1,4 +1,5 @@
 from flask_restful import reqparse
+from flask.ext.login import current_user
 
 from core.observables import Observable
 from core.web.api.crud import CrudApi
@@ -36,6 +37,20 @@ class OneShotAnalyticsApi(CrudApi):
 
     parser = reqparse.RequestParser()
     parser.add_argument('id', required=True, help="You must specify an ID.")
+
+    def get(self, id=None, template=None):
+        data = []
+
+        for obj in self.objectmanager.objects.all():
+            info = obj.info()
+
+            info['available'] = True
+            if hasattr(obj, 'settings') and not current_user.has_settings(obj.settings):
+                info['available'] = False
+
+            data.append(info)
+
+        return render(data, template=self.template)
 
     def post(self, id, action):
         method = find_method(self, action, 'action')

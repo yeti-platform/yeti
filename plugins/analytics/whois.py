@@ -20,7 +20,7 @@ def link_from_contact_info(hostname, contact, field, klass, tag, description=Non
 
 class Whois(OneShotAnalytics):
 
-    settings = {
+    default_values = {
         "name": "Whois",
         "description": "Perform a Whois request on the domain name and tries to"
                        " extract relevant information."

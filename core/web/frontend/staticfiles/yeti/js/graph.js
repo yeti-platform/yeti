@@ -289,7 +289,7 @@ class Investigation {
 
     $.getJSON('/api/analytics/oneshot', function(data) {
       data.forEach(function(item) {
-        if (item.enabled) {
+        if ((item.enabled) && (item.available)) {
           self.analytics.add(item);
         }
       });
