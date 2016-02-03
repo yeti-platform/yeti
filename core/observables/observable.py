@@ -17,12 +17,12 @@ class Observable(Node):
     sources = ListField(StringField(), verbose_name="Sources")
     description = StringField(verbose_name="Description")
     context = ListField(DictField(), verbose_name="Context")
-    tags = ListField(EmbeddedDocumentField(ObservableTag), verbose_name="Relevant tags")
+    tags = ListField(EmbeddedDocumentField(ObservableTag), verbose_name="Tags")
     last_analyses = DictField(verbose_name="Last analyses")
 
     created = DateTimeField(default=datetime.now)
 
-    exclude_fields = ['sources', 'context', 'last_analyses', 'created', 'tags']
+    exclude_fields = ['sources', 'context', 'last_analyses', 'created']
 
     meta = {
         "allow_inheritance": True,
@@ -31,6 +31,7 @@ class Observable(Node):
     @classmethod
     def get_form(klass):
         form = model_form(klass, exclude=klass.exclude_fields)
+        form.tags = TagListField()
         return form
 
     def __unicode__(self):

@@ -58,6 +58,13 @@ IndicatorsView.register(frontend)
 class ObservablesView(GenericView):
     klass = Observable
 
+    def pre_validate(self, obj):
+        tags = obj.tags
+        # redundant, but we need the object to be in the database for .tag to work
+        obj.tags = []
+        obj.save()
+        obj.tag(tags, strict=True)
+
     # override to guess observable type
     @route('/new/', methods=["GET", "POST"])
     def new(self, klass=None):

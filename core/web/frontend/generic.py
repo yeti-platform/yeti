@@ -40,6 +40,9 @@ class GenericView(FlaskView):
         form = form_class(obj=obj)
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=self.klass.__name__, obj=obj)
 
+    def pre_validate(self, obj):
+        pass
+
     def handle_form(self, id=None, klass=None):
         if klass:  # create
             obj = klass()
@@ -52,6 +55,7 @@ class GenericView(FlaskView):
         if form.validate():
             form.populate_obj(obj)
             try:
+                self.pre_validate(obj)
                 obj.save()
             except (ObservableValidationError, NotUniqueError) as e:
                 # failure - redirect to edit page
