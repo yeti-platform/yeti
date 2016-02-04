@@ -298,14 +298,14 @@ class Investigation {
     });
   }
 
-  fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button) {
+  fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button) {
     var self = this;
     return function() {
-      return self.fetchAnalyticsResults(name, resultsId, resultsDiv, button);
+      return self.fetchAnalyticsResults(id, resultsId, resultsDiv, button);
     };
   }
 
-  fetchAnalyticsResults(name, resultsId, resultsDiv, button) {
+  fetchAnalyticsResults(id, resultsId, resultsDiv, button) {
     var self = this;
 
     function callback(data) {
@@ -328,29 +328,29 @@ class Investigation {
         resultsDiv.html(linksTemplate({links: links}));
         button.removeClass('glyphicon-spinner');
       } else {
-        setTimeout(self.fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button), 1000);
+        setTimeout(self.fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button), 1000);
       }
     }
 
     $.post(
-      '/api/analytics/oneshot/' + name + '/status',
+      '/api/analytics/oneshot/' + id + '/status',
       {id: resultsId},
       callback,
       'json'
     );
   }
 
-  runAnalytics(name, nodeId, resultsDiv, progress) {
+  runAnalytics(id, nodeId, resultsDiv, progress) {
     var self = this;
 
     function runCallback(data) {
       var resultsId = data._id;
 
-      self.fetchAnalyticsResults(name, resultsId, resultsDiv, progress);
+      self.fetchAnalyticsResults(id, resultsId, resultsDiv, progress);
     }
 
     $.post(
-      '/api/analytics/oneshot/' + name + '/run',
+      '/api/analytics/oneshot/' + id + '/run',
       {id: nodeId},
       runCallback,
       'json'
@@ -425,7 +425,7 @@ class Investigation {
     $('#graph-sidebar').on('click', '.graph-sidebar-run-analytics', function(e) {
       var button = $(this);
 
-      var name = button.data('name');
+      var id = button.data('id');
       var nodeId = button.parents('#graph-sidebar-content').data('id');
       nodeId = nodeId.split('-');
       nodeId = nodeId[nodeId.length - 1];
@@ -433,7 +433,7 @@ class Investigation {
 
       button.addClass('glyphicon-spinner');
 
-      self.runAnalytics(name, nodeId, resultsDiv, button);
+      self.runAnalytics(id, nodeId, resultsDiv, button);
     });
   }
 

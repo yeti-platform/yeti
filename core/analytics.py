@@ -21,11 +21,10 @@ class ScheduledAnalytics(ScheduleEntry):
         fltr &= Q(**self.CUSTOM_FILTER) & Q(_cls__contains=self.ACTS_ON)
         self.bulk(Observable.objects(fltr))
 
-    @classmethod
-    def bulk(cls, elts):
+    def bulk(self, elts):
         """Bulk analytics. May be overridden in case the module needs to batch-analyze observables"""
         for e in elts:
-            celery_app.send_task("core.analytics_tasks.each", [cls.__name__, e.to_json()])
+            celery_app.send_task("core.analytics_tasks.each", [str(self.id), e.to_json()])
 
     @classmethod
     def each(cls, observable):
@@ -41,10 +40,11 @@ class ScheduledAnalytics(ScheduleEntry):
 
 
 class AnalyticsResults(Document):
-    analytics = StringField(required=True)
+    analytics = ReferenceField('OneShotAnalytics', required=True)
     observable = ReferenceField('Observable', required=True)
     status = StringField()
     results = ListField(ReferenceField('Link'))
+    settings = DictField()
 
 
 class OneShotAnalytics(OneShotEntry):
@@ -56,9 +56,8 @@ class OneShotAnalytics(OneShotEntry):
             for setting_id, setting in self.settings.iteritems():
                 User.register_setting(setting_id, setting['name'], setting['description'])
 
-    @classmethod
-    def run(cls, e):
-        results = AnalyticsResults(analytics=cls.__name__, observable=e, status='pending').save()
+    def run(self, e, settings):
+        results = AnalyticsResults(analytics=self, observable=e, status='pending', settings=settings).save()
         celery_app.send_task("core.analytics_tasks.single", [str(results.id)])
 
         return results

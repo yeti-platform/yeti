@@ -29,8 +29,8 @@ class Whois(OneShotAnalytics):
     ACTS_ON = "Hostname"
 
     @staticmethod
-    def analyze(hostname):
         links = []
+    def analyze(hostname, settings={}):
 
         parts = extract(hostname.value)
 

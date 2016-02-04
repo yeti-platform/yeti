@@ -17,8 +17,8 @@ class NetworkWhois(OneShotAnalytics):
     ACTS_ON = "Ip"
 
     @staticmethod
-    def analyze(ip):
         links = []
+    def analyze(ip, settings={}):
 
         results = IPWhois(ip.value)
         results = results.lookup_rdap()

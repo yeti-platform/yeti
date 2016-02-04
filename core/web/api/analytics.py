@@ -68,7 +68,7 @@ class OneShotAnalyticsApi(CrudApi):
         args = self.parser.parse_args()
         observable = get_object_or_404(Observable, id=args['id'])
 
-        return render(analytics.run(observable).to_mongo())
+        return render(analytics.run(observable, current_user.settings).to_mongo())
 
     def status(self, analytics):
         args = self.parser.parse_args()
