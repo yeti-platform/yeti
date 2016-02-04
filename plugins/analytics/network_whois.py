@@ -31,8 +31,9 @@ class NetworkWhois(OneShotAnalytics):
                 links.update(ip.active_link_to(company, 'hosting', 'Network Whois'))
 
                 # Link it to every email address referenced
-                for email_info in entity['contact']['email']:
-                    email = Email.get_or_create(value=email_info['value'])
-                    links.update(company.link_to(email, None, 'Network Whois'))
+                if entity['contact']['email']:
+                    for email_info in entity['contact']['email']:
+                        email = Email.get_or_create(value=email_info['value'])
+                        links.update(company.link_to(email, None, 'Network Whois'))
 
         return list(links)
