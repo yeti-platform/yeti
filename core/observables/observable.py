@@ -4,8 +4,8 @@ import operator
 from mongoengine import *
 from flask.ext.mongoengine.wtf import model_form
 
-from core.helpers import is_url, is_ip, is_hostname
-from core.database import Node, Link, TagListField
+from core.helpers import is_url, is_ip, is_hostname, iterify
+from core.database import Node, Link
 from core.observables import ObservableTag, Tag
 from core.entities import Entity
 from core.errors import ObservableValidationError
@@ -56,10 +56,7 @@ class Observable(Node):
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):
-        if isinstance(old_tags, (str, unicode)):
-            old_tags = [old_tags]
-
-        for o in Observable.objects(tags__name__in=old_tags):
+        for o in Observable.objects(tags__name__in=iterify(old_tags)):
             for old_tag in old_tags:
                 o.change_tag(old_tag, new_tag)
 
@@ -105,8 +102,7 @@ class Observable(Node):
         return self.reload()
 
     def tag(self, new_tags, strict=False):
-        if isinstance(new_tags, (str, unicode)):
-            new_tags = [new_tags]
+        new_tags = iterify(new_tags)
 
         if strict:
             remove = set([t.name for t in self.tags]) - set(new_tags)

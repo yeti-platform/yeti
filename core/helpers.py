@@ -1,5 +1,6 @@
 import re
 import collections
+from mongoengine import Document
 from datetime import timedelta
 from tldextract import extract
 
@@ -85,7 +86,7 @@ def del_from_set(s, value):
 def iterify(element):
     if element is None:
         return ()
-    elif isinstance(element, collections.Iterable) and not isinstance(element, basestring):
+    elif isinstance(element, collections.Iterable) and not isinstance(element, basestring) and not isinstance(element, Document):
         return element
     else:
         return (element,)

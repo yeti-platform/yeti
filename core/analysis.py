@@ -5,7 +5,7 @@ from core.observables import Observable, Url, Hostname
 from core.indicators import Indicator
 from core.web.api.api import render
 from core.errors import ObservableValidationError
-from core.helpers import del_from_set
+from core.helpers import del_from_set, iterify
 
 # load analyzers
 from plugins.analytics.process_hostnames import ProcessHostnames
@@ -17,11 +17,8 @@ analyzers = {
 }
 
 def derive(observables):
-    if isinstance(observables, (str, unicode)):
-        observables = [observables]
-
     new = []
-    for observable in observables:
+    for observable in iterify(observables):
         try:
             t = Observable.guess_type(observable)
             for a in analyzers.get(t, []):
