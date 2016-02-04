@@ -121,7 +121,7 @@ class Observable(Node):
 
                 # search for related entities and link them
                 for e in Entity.objects(tags__in=[tag.name]):
-                    Link.connect(self, e).add_history('Tagged')
+                    self.link_to(e, 'Tagged', 'tags')
 
                 if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
                     self.modify(push__tags=ObservableTag(name=tag.name))

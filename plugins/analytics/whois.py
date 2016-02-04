@@ -7,15 +7,13 @@ from core.database import Link
 from core.observables import Email, Text
 
 
-def link_from_contact_info(hostname, contact, field, klass, tag, description=None):
+def link_from_contact_info(hostname, contact, field, klass, description):
     if contact is not None and field in contact:
         node = klass.get_or_create(value=contact[field])
-        link = Link.connect(hostname, node)
-        link.add_history(tag=tag, description=description)
 
-        return link
+        return hostname.active_link_to(node, description, 'Whois')
     else:
-        return None
+        return ()
 
 
 class Whois(OneShotAnalytics):
@@ -29,8 +27,8 @@ class Whois(OneShotAnalytics):
     ACTS_ON = "Hostname"
 
     @staticmethod
-        links = []
     def analyze(hostname, settings={}):
+        links = set()
 
         parts = extract(hostname.value)
 
@@ -51,20 +49,18 @@ class Whois(OneShotAnalytics):
                 context['creation_date'] = parsed['creation_date'][0]
             if 'registrant' in parsed['contacts']:
                 fields_to_extract = [
-                    ('email', Email, 'Registrant', 'Registrant Email'),
-                    ('name', Text, 'Registrant', 'Registrant Name'),
-                    ('organization', Text, 'Registrant', 'Registrant Organization'),
-                    ('phone', Text, 'Registrant', 'Registrant Phone Number'),
+                    ('email', Email, 'Registrant Email'),
+                    ('name', Text, 'Registrant Name'),
+                    ('organization', Text, 'Registrant Organization'),
+                    ('phone', Text, 'Registrant Phone Number'),
                 ]
 
-                for field, klass, tag, description in fields_to_extract:
-                    link = link_from_contact_info(hostname, parsed['contacts']['registrant'], field, klass, tag, description)
-                    if link is not None:
-                        links.append(link)
+                for field, klass, description in fields_to_extract:
+                    links.update(link_from_contact_info(hostname, parsed['contacts']['registrant'], field, klass, description))
 
             if should_add_context:
                 hostname.add_context(context)
             else:
                 hostname.save()
 
-        return links
+        return list(links)

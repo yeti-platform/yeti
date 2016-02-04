@@ -87,7 +87,7 @@ bartalex_callback.description = "Bartalex [stage2] callback (extracted from macr
 bartalex_callback.diamond = "capability"
 bartalex_callback.location = "network"
 bartalex_callback.save()
-bartalex_callback.action('indicates', bartalex, description="Bartalex payload URL (Dridex)")
+bartalex_callback.action('indicates', bartalex, 'testrun')
 
 bartalex_callback2 = Regex(name="Bartalex callback")
 bartalex_callback2.pattern = "/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$"
@@ -95,12 +95,12 @@ bartalex_callback2.description = "Bartalex [stage2] callback (extracted from mac
 bartalex_callback2.diamond = "capability"
 bartalex_callback2.location = "network"
 bartalex_callback2.save()
-bartalex_callback2.action("indicates", bartalex, description="Bartalex payload URL (Dridex)")
+bartalex_callback2.action("indicates", bartalex, 'testrun')
 
-bartalex_callback.action("hosts", dridex, description="Hosting Dridex")
-bartalex_callback2.action("hosts", dridex, description="Hosting Dridex")
+bartalex_callback.action("hosts", dridex, 'testrun')
+bartalex_callback2.action("hosts", dridex, 'testrun')
 
-bartalex.action("drops", dridex, description="Drops Dridex")
+bartalex.action("drops", dridex, 'testrun')
 
 zeus_callback = Regex(name="Zeus C2 check-in")
 zeus_callback.pattern = "/gate.php$"
@@ -108,7 +108,7 @@ zeus_callback.description = "ZeuS post-infection callback"
 zeus_callback.diamond = "capability"
 zeus_callback.location = "network"
 zeus_callback.save()
-zeus_callback.action('indicates', zeus)
+zeus_callback.action('indicates', zeus, 'testrun')
 
 # TTP
 
@@ -116,17 +116,17 @@ macrodoc = TTP(name="Macro-dropper")
 macrodoc.killchain = "delivery"
 macrodoc.description = "Macro-enabled MS Office document"
 macrodoc.save()
-bartalex.action("leverages", macrodoc)
-bartalex_callback.action("seen in", macrodoc)
-bartalex_callback2.action("seen in", macrodoc)
+bartalex.action("leverages", macrodoc, 'testrun')
+bartalex_callback.action("seen in", macrodoc, 'testrun')
+bartalex_callback2.action("seen in", macrodoc, 'testrun')
 
 payload_download = TTP(name="Payload retrieval (HTTP)")
 payload_download.killchain = "delivery"
 payload_download.description = "Payload is retreived from an external URL"
 payload_download.save()
-macrodoc.action("leverages", payload_download)
-bartalex_callback.action("indicates", payload_download)
-bartalex_callback2.action("indicates", payload_download)
+macrodoc.action("leverages", payload_download, 'testrun')
+bartalex_callback.action("indicates", payload_download, 'testrun')
+bartalex_callback2.action("indicates", payload_download, 'testrun')
 
 # add observables
 o1 = Observable.add_text("85.214.71.240")
@@ -136,8 +136,8 @@ o4 = Observable.add_text("http://www.delianfoods.com/5t546523/lhf3f334f.exe")
 o5 = Observable.add_text("http://sanoko.jp/5t546523/lhf3f334f.exe")
 o6 = Observable.add_text("http://hrakrue-home.de/87yte55/6t45eyv.exe")
 Link.connect(o6, bartalex_callback2)
-Link.connect(o6, bartalex).add_history("Queries")
-Link.connect(o6, dridex).add_history("Drops")
+Link.connect(o6, bartalex).add_history('testrun', 'Queries')
+Link.connect(o6, dridex).add_history('testrun', 'Drops')
 o7 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe")
 o8 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe2")
 o9 = Observable.add_text("http://zeuscpanel.com/gate.php")

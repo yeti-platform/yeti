@@ -26,8 +26,7 @@ class ResolveHostnames(ScheduledAnalytics):
     ACTS_ON = 'Hostname'
     EXPIRATION = timedelta(days=1)  # Analysis will expire after 1 day
 
-    @classmethod
-    def bulk(cls, hostnames):
+    def bulk(self, hostnames):
         p = ParallelDnsResolver()
         p.mass_resolve(hostnames)
 
@@ -42,10 +41,10 @@ class ResolveHostnames(ScheduledAnalytics):
                 e = Observable.add_text(rdata)
                 e.add_source("analytics")
                 generated.append(e)
-                l = Link.connect(h, e)
-                l.add_history(tag=rtype, description='{} record'.format(rtype))
             except ObservableValidationError as e:
                 logging.error("{} is not a valid datatype".format(rdata))
+
+        h.active_link_to(generated, "{} record".format(rtype), "ResolveHostnames")
 
         h.analysis_done(cls.__name__)
         return generated
