@@ -8,7 +8,7 @@
     <td>{{ analytics["frequency"] }}</td>
     <td>{{ macros.display_datetime(analytics["last_run"]) or "Never"}}</td>
     <td>{{ analytics["expiration"] }}</td>
-    <td>{{ analytics["acts_on"] }}</td>
+    <td>{{ analytics["acts_on"]|join(', ') }}</td>
     <td>{{ analytics["description"] }}</td>
     <td>{{ analytics["status"] or "N/A"}}</td>
     <td><span data-url="{{ url_for('api.scheduledanalyticsapi', id=analytics["id"], action="toggle") }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>

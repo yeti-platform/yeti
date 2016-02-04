@@ -4,6 +4,7 @@ from core.config.celeryctl import celery_app
 from core.scheduling import ScheduleEntry, OneShotEntry
 from core.observables import Observable
 from core.user import User
+from core.helpers import iterify
 from mongoengine import *
 
 
@@ -14,11 +15,15 @@ class ScheduledAnalytics(ScheduleEntry):
     CUSTOM_FILTER = {}
 
     def analyze_outdated(self):
+        class_filter = Q()
+        for acts_on in iterify(self.ACTS_ON):
+            class_filter |= Q(_cls__contains=acts_on)
+
         # do outdated logic
         fltr = Q(**{"last_analyses__{}__exists".format(self.name): False})
         if self.EXPIRATION:
             fltr |= Q(**{"last_analyses__{}__lte".format(self.name): datetime.now() - self.EXPIRATION})
-        fltr &= Q(**self.CUSTOM_FILTER) & Q(_cls__contains=self.ACTS_ON)
+        fltr &= Q(**self.CUSTOM_FILTER) & class_filter
         self.bulk(Observable.objects(fltr))
 
     def bulk(self, elts):
@@ -34,7 +39,7 @@ class ScheduledAnalytics(ScheduleEntry):
         i = {k: v for k, v in self._data.items() if k in ["name", "description", "last_run", "enabled", "status"]}
         i['frequency'] = str(self.frequency)
         i['expiration'] = str(self.EXPIRATION)
-        i['acts_on'] = self.ACTS_ON
+        i['acts_on'] = iterify(self.ACTS_ON)
         i['id'] = str(self.id)
         return i
 
@@ -64,6 +69,6 @@ class OneShotAnalytics(OneShotEntry):
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "description", "enabled"]}
-        i['acts_on'] = self.ACTS_ON
+        i['acts_on'] = iterify(self.ACTS_ON)
         i['id'] = str(self.id)
         return i

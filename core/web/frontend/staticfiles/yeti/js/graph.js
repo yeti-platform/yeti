@@ -235,7 +235,7 @@ class Investigation {
 
     var availableAnalytics = this.analytics.get({
       filter: function(item) {
-        return item.acts_on == nodeType;
+        return $.inArray(nodeType, item.acts_on) != -1;
       },
     });
 
