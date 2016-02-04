@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% import "macros.html" as macros %}
 
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+  <li><a href="{{url_for('frontend.IndicatorsView:index')}}">Indicators</a></li>
+	<li class="active">{% if not obj %}New {{obj_type}}{% else %}Edit{%endif%}</li>
+</ol>
+{% endblock %}
+
+
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
@@ -21,18 +30,20 @@
 
 <div class="cold-md-12">
 
-  <h1>{% if not obj %}New {{obj_type}}{% else %}Editing {{obj.name}}{%endif%}</h1>
   <form action="{{request.path}}" method="POST" class="yeti-form">
   <div class="row">
+    <div class="col-md-10 col-md-offset-1">
+      <h1>{% if not obj %}New {{obj_type}}{% else %}Editing {{obj.name}}{%endif%}</h1>
+    </div>
 
-    <div class="col-md-3">
+    <div class="col-md-3 col-md-offset-1">
       {% for field in form if field.name not in ['description', 'pattern']%}
         {{ macros.render_field(field) }}
       {% endfor %}
-      <input type="submit" class="btn btn-primary" value="save">
+      <input type="submit" class="btn btn-primary" value="Save">
     </div>
 
-    <div class="col-md-9">
+    <div class="col-md-7">
       <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active"><a href="#description" aria-controls="description" role="tab" data-toggle="tab">Description</a></li>
         <li role="presentation"><a href="#pattern" aria-controls="pattern" role="tab" data-toggle="tab">Pattern</a></li>
