@@ -49,8 +49,13 @@
       <div class="col-md-12">
         <ul class="nav nav-tabs" role="tablist">
           {% set related = observable.neighbors(neighbor_type="Observable") %}
+          {% set related_count = [0] %}
+          {% for type, entry in related.items() %}
+            {% if related_count.append(related_count.pop() + entry|length) %}
+            {% endif %}
+          {% endfor %}
           <li role="presentation" class="active"><a href="#context" aria-controls="context" role="tab" data-toggle="tab">Context ({{observable.context|length}})</a></li>
-          <li role="presentation"><a href="#related" aria-controls="related" role="tab" data-toggle="tab">Related observables ({{related.items()|length}})</a></li>
+          <li role="presentation"><a href="#related" aria-controls="related" role="tab" data-toggle="tab">Related observables ({{related_count[0]}})</a></li>
         </ul>
 
         <div class="tab-content">
