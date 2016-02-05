@@ -18,24 +18,51 @@
 <script id="graph-sidebar-links-template" type="text/x-handlebars-template">
     <ul class="graph-sidebar-links">
         {{#each links}}
-            <li>
-                <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}}</div>
-                <div class="graph-sidebar-tags">
-                    {{#each tags}}
-                        <span class="yeti-tag label label-default label-primary ">{{name}}</span>
-                    {{/each}}
-                </div>
-                <div class="graph-sidebar-link-label">
-                    {{label}}
-                    <div class="graph-sidebar-link-actions">
-                        <a class="graph-sidebar-display-link" data-link="{{id}}"><i class="flaticon-network38"></i></a>
-                        <a class="graph-sidebar-view-node" data-node="{{nodeId}}"><i class="glyphicon glyphicon-list"></i></a>
+            {{#equal @key 'null'}}
+                <li class="graph-sidebar-link-description">No description</li>
+            {{else}}
+                <li class="graph-sidebar-link-description">{{@key}}{{../suffix}}</li>
+            {{/equal}}
+            {{#each this}}
+                <li {{#unless @last}}class="graph-sidebar-border-bottom"{{/unless}}>
+                    <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}}</div>
+                    <div class="graph-sidebar-tags">
+                        {{#each tags}}
+                            <span class="yeti-tag label label-default label-primary ">{{name}}</span>
+                        {{/each}}
                     </div>
-                </div>
-                <div class="clear"></div>
-            </li>
-        {{else}}
-            <li>No links to display.</li>
+                    <div class="graph-sidebar-link-label">
+                        {{#if active}}
+                            active
+                        {{else}}
+                            {{date first_seen}} → {{date last_seen}}
+                        {{/if}}
+                        <div class="graph-sidebar-link-actions">
+                            {{#hasMoreHistory this}}
+                                <a tabindex="0" role="button" class="graph-sidebar-display-link" rel="popover" data-popover-content="#graph-sidebar-history-{{id}}"><i class="glyphicon glyphicon-time"></i></a>
+                                <div id="graph-sidebar-history-{{id}}" class="hide">
+                                    <ul class="graph-sidebar-history">
+                                        {{#each history}}
+                                            <li>
+                                                <div>
+                                                    {{date first_seen}} → {{date last_seen}}
+                                                    {{#if description}}
+                                                        ({{description}})
+                                                    {{/if}}
+                                                </div>
+                                                <div class="graph-sidebar-history-sources">Sources: {{sources}}</div>
+                                            </li>
+                                        {{/each}}
+                                    </ul>
+                                </div>
+                            {{/hasMoreHistory}}
+                            <a class="graph-sidebar-display-link" data-link="{{id}}"><i class="flaticon-network38"></i></a>
+                            <a class="graph-sidebar-view-node" data-node="{{nodeId}}"><i class="glyphicon glyphicon-list"></i></a>
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                </li>
+            {{/each}}
         {{/each}}
     </ul>
 </script>
@@ -71,10 +98,8 @@
         </div>
 
         <div id="graph-sidebar-links" class="tab-pane active">
-            <h2>Links to observable</h2>
             <div id="graph-sidebar-links-to-{{id}}">Links loading ...</div>
-            <h2>Links from observable</h2>
-            <div id="graph-sidebar-links-from-{{id}}">Links loading ...</div>
+            <div id="graph-sidebar-links-from-{{id}}"></div>
         </div>
 
         <div id="graph-sidebar-analytics" class="tab-pane">

@@ -181,9 +181,37 @@ span.yeti-toggle {
 }
 
 .graph-sidebar-links li {
-    border-bottom: 1px dashed #888888;
     padding-bottom: 5px;
     margin-bottom: 5px;
+}
+
+li.graph-sidebar-link-description {
+    color: #00CCFF;
+    border-bottom: 1px solid #888888;
+    margin-top: 15px;
+    z-index: 1;
+}
+
+li.graph-sidebar-border-bottom {
+    border-bottom: 1px dashed #888888;
+}
+
+.graph-sidebar-history {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.graph-sidebar-history li {
+    padding: 10px;
+}
+
+.graph-sidebar-history-sources {
+    font-size: 10px;
+}
+
+.popover {
+    max-width: 500px;
 }
 
 .graph-sidebar-link-label {

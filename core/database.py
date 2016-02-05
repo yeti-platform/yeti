@@ -66,6 +66,13 @@ class Link(Document):
         return u"{} -> {} ({})".format(self.src, self.dst, self.description)
 
     @property
+    def active(self):
+        last_history = self._get_last_history()
+
+        if last_history:
+            return last_history.active
+
+    @property
     def description(self):
         last_history = self._get_last_history()
 
@@ -100,7 +107,9 @@ class Link(Document):
     def to_dict(self):
         result = self.to_mongo()
         result['description'] = self.description
-        del result['history']
+        result['first_seen'] = self.first_seen
+        result['last_seen'] = self.last_seen
+        result['active'] = self.active
 
         return result
 
