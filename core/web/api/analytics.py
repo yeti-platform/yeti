@@ -1,4 +1,5 @@
 from flask.ext.login import current_user
+from flask.ext.classy import route
 
 from core.observables import Observable
 from core.web.api.crud import CrudApi
@@ -12,16 +13,12 @@ class ScheduledAnalytics(CrudApi):
     template = 'scheduled_analytics_api.html'
     objectmanager = analytics.ScheduledAnalytics
 
-    def post(self, id, action):
-        method = find_method(self, action, 'action')
-
-        return method(id)
-
+    @route("/<id>/refresh", methods=["POST"])
     def refresh(self, id):
         schedule.delay(id)
-
         return render({"id": id})
 
+    @route("/<id>/toggle", methods=["POST"])
     def toggle(self, id):
         a = self.objectmanager.objects.get(id=id)
         a.enabled = not a.enabled
@@ -48,12 +45,7 @@ class OneShotAnalytics(CrudApi):
 
         return render(data, template=self.template)
 
-    def post(self, id, action):
-        method = find_method(self, action, 'action')
-        analytics = get_object_or_404(self.objectmanager, id=id)
-
-        return method(analytics)
-
+    @route("/<id>/toggle", methods=["POST"])
     def toggle(self, id):
         analytics = get_object_or_404(self.objectmanager, id=id)
         analytics.enabled = not analytics.enabled
@@ -61,6 +53,7 @@ class OneShotAnalytics(CrudApi):
 
         return render({"id": analytics.id, "status": analytics.enabled})
 
+    @route('/<id>/run', methods=["POST"])
     def run(self, id):
         analytics = get_object_or_404(self.objectmanager, id=id)
         args = self.parser.parse_args()

@@ -9,8 +9,8 @@
     <td>{{ macros.display_datetime(feed["last_run"]) or "Never" }}</td>
     <td>{{ feed["description"] }}</td>
     <td class="status">{{ feed["status"] or "N/A"}}</td>
-    <td><span data-url="{{ url_for('api.Feed:get', id=feed["id"], action="toggle") }}" class="feed-toggle glyphicon glyphicon-{{ "ok" if feed["enabled"] else "remove" }}"></span></td>
-    <td><span data-url="{{ url_for('api.Feed:get', id=feed["id"], action="refresh") }}" class="feed-refresh glyphicon glyphicon-refresh"></span></td>
+    <td><span data-url="{{ url_for('api.Feed:toggle', id=feed["id"]) }}" class="feed-toggle glyphicon glyphicon-{{ "ok" if feed["enabled"] else "remove" }}"></span></td>
+    <td><span data-url="{{ url_for('api.Feed:refresh', id=feed["id"]) }}" class="feed-refresh glyphicon glyphicon-refresh"></span></td>
   </tr>
   {% endfor %}
 </table>
