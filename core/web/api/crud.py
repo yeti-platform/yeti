@@ -52,7 +52,6 @@ class CrudApi(FlaskView):
         obj.delete()
         return render({"status": "ok"})
 
-    # @route('/')
     def index(self):
         data = []
         for obj in self.objectmanager.objects.all():
@@ -62,28 +61,27 @@ class CrudApi(FlaskView):
 
         return render(data, template=self.template)
 
-
-    def delete(self, id):
-        obj = self.objectmanager.objects.get(id=id)
-        obj.delete()
-        return render({"status": "ok"})
-
-
     # This method can be overridden if needed
     def parse_request(self, json):
         return json
 
     def get(self, id):
-        data = self.objectmanager.objects.get(id=id).info()
+        obj = self.objectmanager.objects.get(id=id)
+        data = obj.info()
+        data['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
         return render(data, self.template_single)
 
     @route("/", methods=["POST"])
     def new(self):
         params = self.parse_request(request.json)
-        return render(self.objectmanager(**params).save().info())
+        obj = self.objectmanager(**params).save()
+        data = obj.info()
+        data['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
+        return render(data)
 
     def post(self, id):
         obj = self.objectmanager.objects.get(id=id)
         params = self.parse_request(request.json)
-        obj.clean_update(**params)
-        return render({"status": "ok"})
+        info = obj.clean_update(**params).info()
+        info['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
+        return render(info)

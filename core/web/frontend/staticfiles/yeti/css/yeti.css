@@ -70,7 +70,7 @@ span.yeti-toggle {
 
 .yeti-tag {
   margin: 0 1px 0 1px;
-  font-size: 85%;
+  font-size: 100%;
   cursor: default;
 }
 
@@ -81,9 +81,23 @@ span.yeti-toggle {
   cursor: pointer;
 }
 
+.tag-added {
+  color:black;
+  background-color: #55C855;
+}
+
 .tag-evil {
   color: white;
 	background-color: #f33;
+}
+
+.yeti-interact .yeti-tag  {
+  cursor: pointer;
+}
+
+.yeti-disabled .yeti-tag {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .tag-all {
