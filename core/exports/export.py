@@ -63,17 +63,18 @@ class Export(ScheduleEntry):
         super(Export, self).__init__(*args, **kwargs)
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-        self.export_file_handle = codecs.open(self.output_file, 'w+', "utf-8")
 
     @property
     def output_file(self):
         return os.path.abspath(os.path.join(self.output_dir, self.name))
 
     def execute(self):
+        self.export_file_handle = codecs.open(self.output_file, 'w+', "utf-8")
         q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
         q &= Q(_cls__contains=self.acts_on)
         output = self.template.render(Observable.objects(q))
         self.write(output)
+        self.export_file_handle.close()
 
     def write(self, output):
         self.export_file_handle.write(output)

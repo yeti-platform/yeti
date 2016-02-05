@@ -18,7 +18,7 @@ class ObservablesView(GenericView):
         obj.tag(tags, strict=True)
 
     # override to guess observable type
-    @route('/new/', methods=["GET", "POST"])
+    @route('/new', methods=["GET", "POST"])
     def new(self, klass=None):
         if not klass:
             klass = self.klass

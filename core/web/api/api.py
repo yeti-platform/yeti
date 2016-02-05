@@ -19,7 +19,7 @@ render_json = Render(renderers=[bson_renderer])
 
 from core.web.api.observable import ObservableSearchApi, ObservableApi
 from core.web.api.entity import EntityApi, EntitySearchApi
-from core.web.api.tag import TagApi, TagActionApi
+from core.web.api.tag import TagApi
 from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
 from core.web.api.feeds import FeedApi
 from core.web.api.export import ExportApi, ExportTemplateApi
@@ -27,25 +27,24 @@ from core.web.api.neighbors import NeighborsApi
 from core.web.api.investigation import InvestigationApi
 from core.web.api.indicator import IndicatorApi, IndicatorSearchApi
 
-api_restful.add_resource(ScheduledAnalyticsApi, '/analytics/scheduled', '/analytics/scheduled/<string:id>/<string:action>')
-api_restful.add_resource(OneShotAnalyticsApi, '/analytics/oneshot', '/analytics/oneshot/<string:id>/<string:action>')
+ScheduledAnalyticsApi.register(api)
+OneShotAnalyticsApi.register(api, route_base='/analytics/oneshot')
 
-api_restful.add_resource(ObservableSearchApi, '/observables/search')
-api_restful.add_resource(ObservableApi, '/observables/', '/observables/<string:id>')
+ObservableSearchApi.register(api)
+ObservableApi.register(api)
 
-api_restful.add_resource(IndicatorSearchApi, '/indicators/search')
-api_restful.add_resource(IndicatorApi, '/indicators/', '/indicators/<string:id>')
+IndicatorSearchApi.register(api)
+IndicatorApi.register(api)
 
-api_restful.add_resource(EntitySearchApi, '/entities/search')
-api_restful.add_resource(EntityApi, '/entities/', '/entities/<string:id>')
+EntitySearchApi.register(api)
+EntityApi.register(api)
 
-api_restful.add_resource(TagApi, '/tags/', '/tags/<string:id>', "/tags/<string:action>")
-api_restful.add_resource(TagActionApi, '/tags/action/<string:action>')
+TagApi.register(api)
 
-api_restful.add_resource(FeedApi, '/feeds/', '/feeds/<string:id>/<string:action>')
-api_restful.add_resource(ExportApi, '/exports/', '/exports/<string:id>', '/exports/<string:id>/<string:action>')
-api_restful.add_resource(ExportTemplateApi, '/export-templates/', '/export-templates/<string:id>')
+FeedApi.register(api)
+ExportApi.register(api)
+ExportTemplateApi.register(api)
 
-api_restful.add_resource(NeighborsApi, '/neighbors/<string:klass>/<string:node_id>')
+NeighborsApi.register(api, route_base='/neighbors')
 
-api_restful.add_resource(InvestigationApi, '/investigations/', '/investigations/<string:id>', '/investigations/<string:id>/<string:action>')
+InvestigationApi.register(api, route_base='/investigations')

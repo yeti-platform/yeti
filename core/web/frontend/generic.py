@@ -21,7 +21,7 @@ class GenericView(FlaskView):
         klass = self.subclass_map.get(subclass, self.klass)
         return self.new(klass)
 
-    @route('/new/', methods=["GET", "POST"])
+    @route('/new', methods=["GET", "POST"])
     def new(self, klass=None):
         if not klass:
             klass = self.klass

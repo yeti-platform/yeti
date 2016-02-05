@@ -1,4 +1,3 @@
-from flask_restful import reqparse
 from flask.ext.login import current_user
 
 from core.observables import Observable
@@ -35,10 +34,7 @@ class OneShotAnalyticsApi(CrudApi):
     template = "oneshot_analytics_api.html"
     objectmanager = OneShotAnalytics
 
-    parser = reqparse.RequestParser()
-    parser.add_argument('id', required=True, help="You must specify an ID.")
-
-    def get(self, id=None, template=None):
+    def index(self):
         data = []
 
         for obj in self.objectmanager.objects.all():
@@ -58,21 +54,22 @@ class OneShotAnalyticsApi(CrudApi):
 
         return method(analytics)
 
-    def toggle(self, analytics):
+    def toggle(self, id):
+        analytics = get_object_or_404(OneShotAnalytics, id=id)
         analytics.enabled = not analytics.enabled
         analytics.save()
 
         return render({"id": analytics.id, "status": analytics.enabled})
 
-    def run(self, analytics):
+    def run(self, id):
+        analytics = get_object_or_404(OneShotAnalytics, id=id)
         args = self.parser.parse_args()
         observable = get_object_or_404(Observable, id=args['id'])
 
         return render(analytics.run(observable).to_mongo())
 
-    def status(self, analytics):
-        args = self.parser.parse_args()
-        results = AnalyticsResults.objects.get(id=args['id'])
+    def status(self, id):
+        results = AnalyticsResults.objects.get(id=id)
 
         nodes_id = set()
         nodes = list()

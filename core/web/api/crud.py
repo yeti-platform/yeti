@@ -1,14 +1,14 @@
 import re
 
 from flask import request, url_for
-from flask_restful import Resource
+from flask.ext.classy import FlaskView, route
 from flask_restful import abort as restful_abort
 from mongoengine.errors import InvalidQueryError
 
 from core.web.api.api import render
 
 
-class CrudSearchApi(Resource):
+class CrudSearchApi(FlaskView):
 
     def post(self):
         query = request.get_json(silent=True) or {}
@@ -33,7 +33,7 @@ class CrudSearchApi(Resource):
             data = []
             for o in self.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
                 info = o.info()
-                info['uri'] = url_for("api.{}".format(self.__class__.__name__.lower()), id=str(o.id))
+                info['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(o.id))
                 data.append(info)
 
         except InvalidQueryError as e:
@@ -42,7 +42,7 @@ class CrudSearchApi(Resource):
         return render(data, self.template)
 
 
-class CrudApi(Resource):
+class CrudApi(FlaskView):
 
     template = None
     template_single = None
@@ -52,29 +52,38 @@ class CrudApi(Resource):
         obj.delete()
         return render({"status": "ok"})
 
-    def get(self, id=None, template=None):
-        if id:
-            data = self.objectmanager.objects.get(id=id).info()
-        else:
-            data = []
-            for obj in self.objectmanager.objects.all():
-                info = obj.info()
-                info['uri'] = url_for("api.{}".format(self.__class__.__name__.lower()), id=str(obj.id))
-                data.append(info)
+    # @route('/')
+    def index(self):
+        data = []
+        for obj in self.objectmanager.objects.all():
+            info = obj.info()
+            info['uri'] = url_for("api.{}:get".format(self.__class__.__name__), id=str(obj.id))
+            data.append(info)
 
-        if not template:  # template has not been overridden in URL
-            if not id:  # determine if we're listing or displaying a single object
-                template = self.template
-            else:
-                template = self.template_single
+        return render(data, template=self.template)
 
-        return render(data, template=template)
 
-    def post(self, id=None):
-        if not id:
-            return render(self.objectmanager(**request.json).save().info())
-        else:
-            obj = self.objectmanager.objects.get(id=id)
-            obj.clean_update(**request.json)
+    def delete(self, id):
+        obj = self.objectmanager.objects.get(id=id)
+        obj.delete()
+        return render({"status": "ok"})
 
+
+    # This method can be overridden if needed
+    def parse_request(self, json):
+        return json
+
+    def get(self, id):
+        data = self.objectmanager.objects.get(id=id).info()
+        return render(data, self.template_single)
+
+    @route("/", methods=["POST"])
+    def new(self):
+        params = self.parse_request(request.json)
+        return render(self.objectmanager(**params).save().info())
+
+    def post(self, id):
+        obj = self.objectmanager.objects.get(id=id)
+        params = self.parse_request(request.json)
+        obj.clean_update(**params)
         return render({"status": "ok"})

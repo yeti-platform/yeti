@@ -15,12 +15,12 @@
 
 {% block main %}
 <h3>Scheduled</h3>
-<div id="scheduled-table" class="yeti-populate" data-url="{{ url_for('api.scheduledanalyticsapi') }}">
+<div id="scheduled-table" class="yeti-populate" data-url="{{ url_for('api.ScheduledAnalyticsApi:index') }}">
 
 </div>
 
 <h3>One-shot</h3>
-<div id="oneshot-table" class="yeti-populate" data-url="{{ url_for('api.oneshotanalyticsapi') }}">
+<div id="oneshot-table" class="yeti-populate" data-url="{{ url_for('api.OneShotAnalyticsApi:index') }}">
 
 </div>
 

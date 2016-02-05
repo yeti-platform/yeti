@@ -11,9 +11,10 @@ from celery.beat import ScheduleEntry as BaseScheduleEntry
 
 from core.config.celeryctl import celery_app
 from core.config.mongoengine_extras import TimeDeltaField
+from core.database import YetiDocument
 
 
-class ScheduleEntry(Document):
+class ScheduleEntry(YetiDocument):
     """Base class for Scheduling Entries. Everything that should be scheduled
        must inherit from this"""
 
@@ -38,7 +39,7 @@ class ScheduleEntry(Document):
         self.save()
 
 
-class OneShotEntry(Document):
+class OneShotEntry(YetiDocument):
     name = StringField(required=True, unique=True)
     enabled = BooleanField(default=True)
     description = StringField(required=True)

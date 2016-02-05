@@ -332,9 +332,9 @@ class Investigation {
       }
     }
 
-    $.post(
-      '/api/analytics/oneshot/' + name + '/status',
-      {id: resultsId},
+    $.get(
+      '/api/analytics/oneshot/' + resultsId + '/status',
+      {},
       callback,
       'json'
     );
@@ -376,7 +376,7 @@ class Investigation {
     // Persist changes, and update to last version
     $.ajax({
       type: 'POST',
-      url: '/api/investigations/' + self.id + '/add',
+      url: '/api/investigations/add/' + self.id,
       data: JSON.stringify(data),
       success: callback,
       dataType: 'json',

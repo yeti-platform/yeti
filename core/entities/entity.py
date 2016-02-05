@@ -8,7 +8,7 @@ class Entity(Node):
 
     name = StringField(verbose_name="Name", required=True, unique=True, sparse=True, max_length=1024)
     description = StringField(verbose_name="Description")
-    tags = ListField(StringField(), verbose_name="Tags")
+    tags = ListField(StringField(), verbose_name="Relevant tags")
 
     meta = {
         "allow_inheritance": True,
@@ -17,7 +17,7 @@ class Entity(Node):
     @classmethod
     def get_form(klass):
         form = model_form(klass, exclude=klass.exclude_fields)
-        form.tags = TagListField()
+        form.tags = TagListField("Relevant tags")
         return form
 
     def __unicode__(self):

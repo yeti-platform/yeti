@@ -3,6 +3,7 @@ from flask import request
 from core.web.api.crud import CrudApi, CrudSearchApi
 from core.observables import Observable
 from core.web.api.api import render
+from core.analysis import match_observables
 
 
 class ObservableApi(CrudApi):

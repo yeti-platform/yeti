@@ -41,8 +41,16 @@ def match_observables(observables, save_matches=False):
     extended_query = set(observables) | set(derive(observables))
     added_entities = set()
 
-    data = {"matches": [], "unknown": set(observables), "entities": [], "known": [], "neighbors": []}
+    data = {
+        "matches": [],
+        "unknown": set(observables),
+        "entities": [],
+        "known": [],
+        "neighbors": [],
+    }
 
+
+    # add to "known"
     for o in Observable.objects(value__in=list(extended_query)):
         data['known'].append(o.info())
         del_from_set(data['unknown'], o.value)
@@ -52,7 +60,9 @@ def match_observables(observables, save_matches=False):
                 if (link.src.value not in extended_query or link.dst.value not in extended_query) and node.tags:
                     data['neighbors'].append((link.info(), node.info()))
 
+    # add to "matches"
     for o, i in Indicator.search(extended_query):
+        del_from_set(data["unknown"], o)
         if save_matches:
             o = Observable.add_text(o)
         else:
@@ -66,7 +76,7 @@ def match_observables(observables, save_matches=False):
         match = i.info()
         match.update({"observable": o.info(), "related": [], "suggested_tags": set()})
 
-        for nodes in i.neighbors().values():
+        for nodes in i.neighbors("Entity").values():
             for l, node in nodes:
                 # add node name and link description to indicator
                 node_data = {"entity": node.type, "name": node.name, "link_description": l.description or l.tag}

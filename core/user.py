@@ -1,8 +1,10 @@
-from mongoengine import StringField, DictField, Document
+from mongoengine import StringField, DictField
 from flask.ext.mongoengine.wtf import model_form
 
+from core.database import YetiDocument
 
-class User(Document):
+
+class User(YetiDocument):
     available_settings = dict()
 
     login = StringField(required=True, unique=True)

@@ -1,5 +1,5 @@
 from flask import request
-from flask_restful import abort as restful_abort
+from flask.ext.classy import route
 
 from core.web.api.crud import CrudApi
 from core.exports import Export, execute_export, ExportTemplate
@@ -16,31 +16,22 @@ class ExportApi(CrudApi):
     template_single = "export_api_single.html"
     objectmanager = Export
 
-    def post(self, id=None, action=None):
+    @route("/<string:id>/refresh", methods=["POST"])
+    def refresh(self, id):
+        execute_export.delay(id)
+        return render({"id": id})
 
-        # special actions
-        if action:
+    @route("/<string:id>/toggle", methods=["POST"])
+    def toggle(self, id):
+        e = Export.objects.get(id=id)
+        e.enabled = not e.enabled
+        e.save()
+        return render({"id": id, "status": e.enabled})
 
-            # special actions
-            if action == "refresh":
-                execute_export.delay(id)
-                return render({"id": id})
-
-            elif action == "toggle":
-                e = Export.objects.get(id=id)
-                e.enabled = not e.enabled
-                e.save()
-                return render({"id": id, "status": e.enabled})
-            else:
-                restful_abort(400, error="action must be either refresh or toggle")
-
-        else:  # normal crud - se if we can make this DRY
-            params = request.json
-            params['frequency'] = string_to_timedelta(params.get('frequency', '1:00:00'))
-            params['include_tags'] = [Tag.objects.get(name=name.strip()) for name in params['include_tags'].split(',') if name.strip()]
-            params['exclude_tags'] = [Tag.objects.get(name=name.strip()) for name in params['exclude_tags'].split(',') if name.strip()]
-            params['template'] = ExportTemplate.objects.get(name=params['template'])
-            if not id:
-                return render(self.objectmanager(**params).save().info())
-            else:
-                self.objectmanager.objects(id=id).update(**params)
+    def parse_request(self, json):
+        params = json
+        params['frequency'] = string_to_timedelta(params.get('frequency', '1:00:00'))
+        params['include_tags'] = [Tag.objects.get(name=name.strip()) for name in params['include_tags'].split(',') if name.strip()]
+        params['exclude_tags'] = [Tag.objects.get(name=name.strip()) for name in params['exclude_tags'].split(',') if name.strip()]
+        params['template'] = ExportTemplate.objects.get(name=params['template'])
+        return params

@@ -1,7 +1,8 @@
 from flask_restful import Resource
 
 from core.web.api.api import render_json
-
+from core.web.api.api import render
+from core.web.api.crud import CrudApi
 from core.entities import Entity
 from core.observables import Observable
 from core.indicators import Indicator
@@ -13,7 +14,8 @@ NODES_CLASSES = {
 }
 
 
-class NeighborsApi(Resource):
+class NeighborsApi(CrudApi):
+
     def get(self, klass, node_id):
         klass = NODES_CLASSES[klass.lower().split('.')[0]]
         node = klass.objects.get(id=node_id)

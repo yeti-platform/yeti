@@ -10,7 +10,7 @@ User.register_setting('api2', 'Kikou API 2', 'Really 2 important API')
 
 
 class UsersView(FlaskView):
-    @route('/settings/', methods=["GET", "POST"])
+    @route('/settings', methods=["GET", "POST"])
     def settings(self):
         if request.method == "POST":
             for setting in request.form:

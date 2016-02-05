@@ -2,6 +2,7 @@ from datetime import datetime
 import operator
 
 from mongoengine import *
+from mongoengine import signals
 from flask.ext.mongoengine.wtf import model_form
 
 from core.helpers import is_url, is_ip, is_hostname

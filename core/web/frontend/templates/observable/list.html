@@ -14,7 +14,7 @@
 			<li role="presentation" class="active"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
 		</ul>
 		<div id="datasetTabsContent" class="tab-content">
-			<div role="tabpanel" class="tab-pane active" id="observables" data-url="{{ url_for('api.observablesearchapi')}}">
+			<div role="tabpanel" class="tab-pane active" id="observables" data-url="{{ url_for('api.ObservableSearchApi:post')}}">
 			</div>
 		</div>
 	</div>
@@ -27,7 +27,7 @@
 
 {% block sidebar %}
 <div class="col-md-3">
-	<form data-target="observables" data-url="{{ url_for('api.observablesearchapi')}}" class="yeti-crud">
+	<form data-target="observables" data-url="{{ url_for('api.ObservableSearchApi:post')}}" class="yeti-crud">
 
 		<div class="input-group">
   			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="tags=evil">
