@@ -12,7 +12,7 @@
             <span class="text-danger">This plugin requires settings that are not yet defined.</span>
         {% endif %}
     </td>
-    <td><span data-url="{{ url_for('api.OneShotAnalyticsApi:post', id=analytics["id"], action="toggle") }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>
+    <td><span data-url="{{ url_for('api.OneShotAnalytics:post', id=analytics["id"], action="toggle") }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>
   </tr>
   {% endfor %}
 </table>

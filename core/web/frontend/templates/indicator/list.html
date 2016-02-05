@@ -9,7 +9,7 @@
 
 {% block main %}
 <div class="col-md-9">
-	<div class="tab-pane active" id="indicators" data-url="{{ url_for('api.IndicatorSearchApi:post')}}">
+	<div class="tab-pane active" id="indicators" data-url="{{ url_for('api.IndicatorSearch:post')}}">
 	</div>
 </div>
 {% endblock %}
@@ -20,7 +20,7 @@
 
 {% block sidebar %}
 <div class="col-md-3">
-	<form data-target="indicators" data-url="{{ url_for('api.IndicatorSearchApi:post')}}" class="yeti-crud">
+	<form data-target="indicators" data-url="{{ url_for('api.IndicatorSearch:post')}}" class="yeti-crud">
 
 		<div class="input-group">
   			<input class="form-control input-sm crud-filter" data-default-value="name" placeholder="tags=evil">

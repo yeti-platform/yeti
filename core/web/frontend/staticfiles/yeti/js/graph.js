@@ -376,7 +376,7 @@ class Investigation {
     // Persist changes, and update to last version
     $.ajax({
       type: 'POST',
-      url: '/api/investigations/add/' + self.id,
+      url: '/api/investigation/add/' + self.id,
       data: JSON.stringify(data),
       success: callback,
       dataType: 'json',

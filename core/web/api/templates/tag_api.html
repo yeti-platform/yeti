@@ -3,7 +3,7 @@
 <table class="table table-condensed yeti-table table-hover">
   <tr><th>Name</th><th>Count</th><th>Produces</th><th>Replaces</th><th>Date created</th></tr>
   {% for tag in data %}
-  <tr data-name="{{tag["name"]}}" class="yeti-edit-elt" data-form="tag-form" data-url="{{ url_for('api.TagApi:get', id=tag["id"]) }}">
+  <tr data-name="{{tag["name"]}}" class="yeti-edit-elt" data-form="tag-form" data-url="{{ url_for('api.Tag:get', id=tag["id"]) }}">
     <td><strong>{{ macros.display_tags(tag["name"]) }}</strong></td>
     <td>{{ tag["count"] }}</td>
     <td class="produces">{{ macros.display_tags(tag["produces"]) }}</td>

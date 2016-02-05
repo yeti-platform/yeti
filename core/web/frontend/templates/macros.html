@@ -59,7 +59,7 @@
       <label for="{{field.name}}">{{field.label}}</label>
         <!-- field is rendered here -->
         {% if field.type == "TagListField" %}
-          {% set _kwargs = {"class_": "tagfield form-control input-sm", "data-choices": url_for("api.TagApi:index") }%}
+          {% set _kwargs = {"class_": "tagfield form-control input-sm", "data-choices": url_for("api.Tag:index") }%}
           {{ field(**_kwargs)}}
         {% else %}
           {{ field(class_="form-control", **kwargs) }}

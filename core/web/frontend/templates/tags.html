@@ -24,7 +24,7 @@
 {% block main %}
 <div class="col-md-9">
   <div role="tabpanel" class="tab-pane active" id="tags"> <!-- import feed tab -->
-    <div id="tags-table" class="yeti-populate" data-url="{{ url_for("api.TagApi:index") }}">
+    <div id="tags-table" class="yeti-populate" data-url="{{ url_for("api.Tag:index") }}">
     </div>
   </div>
 </div>
@@ -39,41 +39,41 @@
   <div class="tab-content">
 
     <div role="tabpanel" class="tab-pane active" id="edit"> <!-- edit tags -->
-      <form id="tag-form" class="yeti-form" data-url="{{ url_for("api.TagApi:index") }}">
+      <form id="tag-form" class="yeti-form" data-url="{{ url_for("api.Tag:index") }}">
         <div class="form-group">
           <label for="tag-name">Name</label>
           <input type="text" id="tag-name" class="form-control" name="name" value="" />
         </div>
         <div class="form-group">
           <label for="produces">Produced tags</label>
-          <input type="text" class="form-control tagfield" data-choices="{{ url_for("api.TagApi:index") }}" name="produces" value="" />
+          <input type="text" class="form-control tagfield" data-choices="{{ url_for("api.Tag:index") }}" name="produces" value="" />
         </div>
         <div class="form-group">
           <label for="replaces">Replaces</label>
           <input type="text" class="form-control tagfield" name="replaces" value="" />
         </div>
-        <button type="button" id="yeti-save-button" data-url="{{ url_for("api.TagApi:index") }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
-        <button type="button" id="yeti-delete-button" data-url="{{ url_for("api.TagApi:index") }}" class="btn btn-danger btn-sm yeti-delete" name="delete">Delete</button>
+        <button type="button" id="yeti-save-button" data-url="{{ url_for("api.Tag:index") }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
+        <button type="button" id="yeti-delete-button" data-url="{{ url_for("api.Tag:index") }}" class="btn btn-danger btn-sm yeti-delete" name="delete">Delete</button>
         <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="clear">Clear</button>
       </form>
     </div>
 
     <div role="tabpanel" class="tab-pane" id="merge"> <!-- merge tags -->
-      <form id="tag-merge-form" class="yeti-form" data-url="{{ url_for("api.TagApi:merge") }}">
+      <form id="tag-merge-form" class="yeti-form" data-url="{{ url_for("api.Tag:merge") }}">
         <div class="form-group">
           <label for="merge-tag">Merge</label>
-          <input type="text" id="merge-tag" class="form-control tagfield" data-choices="{{ url_for("api.TagApi:index") }}" name="merge-tag" value="" />
+          <input type="text" id="merge-tag" class="form-control tagfield" data-choices="{{ url_for("api.Tag:index") }}" name="merge-tag" value="" />
         </div>
         <div class="form-group">
           <label for="merge">Merge into</label>
-          <input type="text" id="merge-into" class="form-control tagfield" data-choices="{{ url_for("api.TagApi:index") }}" name="merge-into" value="" />
+          <input type="text" id="merge-into" class="form-control tagfield" data-choices="{{ url_for("api.Tag:index") }}" name="merge-into" value="" />
         </div>
         <div class="checkbox">
           <label>
             <input type="checkbox" name="make-dict"> Make Tag dictionary out of merge
           </label>
         </div>
-        <button type="button" id="tags-merge-selected" data-url="{{ url_for("api.TagApi:merge") }}" class="btn btn-default btn-sm" name="clear">Merge selected</button>
+        <button type="button" id="tags-merge-selected" data-url="{{ url_for("api.Tag:merge") }}" class="btn btn-default btn-sm" name="clear">Merge selected</button>
 
       </form>
     </div>

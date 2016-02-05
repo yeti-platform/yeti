@@ -1,12 +1,12 @@
 from core.web.api.crud import CrudSearchApi, CrudApi
-from core.entities import Entity
+from core import entities
 
 
-class EntitySearchApi(CrudSearchApi):
+class EntitySearch(CrudSearchApi):
     template = 'entity_api.html'
-    objectmanager = Entity
+    objectmanager = entities.Entity
 
 
-class EntityApi(CrudApi):
+class Entity(CrudApi):
     template = 'entity_api.html'
-    objectmanager = Entity
+    objectmanager = entities.Entity

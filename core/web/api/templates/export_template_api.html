@@ -3,7 +3,7 @@
 <table class="table table-condensed yeti-table table-hover">
   <tr><th>Name</th></tr>
   {% for template in data %}
-  <tr data-url="{{ url_for('api.ExportTemplateApi:get', id=template["id"]) }}" data-form="export-template-form" class="yeti-edit-elt" data-name="{{template["name"]}}">
+  <tr data-url="{{ url_for('api.ExportTemplate:get', id=template["id"]) }}" data-form="export-template-form" class="yeti-edit-elt" data-name="{{template["name"]}}">
     <td>{{ template["name"] }}</td>
   </tr>
   {% endfor %}

@@ -1,12 +1,12 @@
 from core.web.api.crud import CrudSearchApi, CrudApi
-from core.indicators import Indicator
+from core import indicators
 
 
-class IndicatorSearchApi(CrudSearchApi):
+class IndicatorSearch(CrudSearchApi):
     template = 'indicator_api.html'
-    objectmanager = Indicator
+    objectmanager = indicators.Indicator
 
 
-class IndicatorApi(CrudApi):
+class Indicator(CrudApi):
     template = 'indicator_api.html'
-    objectmanager = Indicator
+    objectmanager = indicators.Indicator

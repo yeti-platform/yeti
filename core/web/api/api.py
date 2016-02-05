@@ -17,34 +17,34 @@ def bson_renderer(data, template=None, ctx=None):
 render = Render(renderers=[template_renderer, bson_renderer])
 render_json = Render(renderers=[bson_renderer])
 
-from core.web.api.observable import ObservableSearchApi, ObservableApi
-from core.web.api.entity import EntityApi, EntitySearchApi
-from core.web.api.tag import TagApi
-from core.web.api.analytics import ScheduledAnalyticsApi, OneShotAnalyticsApi
-from core.web.api.feeds import FeedApi
-from core.web.api.export import ExportApi, ExportTemplateApi
-from core.web.api.neighbors import NeighborsApi
-from core.web.api.investigation import InvestigationApi
-from core.web.api.indicator import IndicatorApi, IndicatorSearchApi
+from core.web.api.observable import ObservableSearch, Observable
+from core.web.api.entity import Entity, EntitySearch
+from core.web.api.tag import Tag
+from core.web.api.analytics import ScheduledAnalytics, OneShotAnalytics
+from core.web.api.feeds import Feed
+from core.web.api.export import Export, ExportTemplate
+from core.web.api.neighbors import Neighbors
+from core.web.api.investigation import Investigation
+from core.web.api.indicator import Indicator, IndicatorSearch
 
-ScheduledAnalyticsApi.register(api)
-OneShotAnalyticsApi.register(api, route_base='/analytics/oneshot')
+ScheduledAnalytics.register(api, route_base='/analytics/scheduled')
+OneShotAnalytics.register(api, route_base='/analytics/oneshot')
 
-ObservableSearchApi.register(api)
-ObservableApi.register(api)
+ObservableSearch.register(api)
+Observable.register(api)
 
-IndicatorSearchApi.register(api)
-IndicatorApi.register(api)
+IndicatorSearch.register(api)
+Indicator.register(api)
 
-EntitySearchApi.register(api)
-EntityApi.register(api)
+EntitySearch.register(api)
+Entity.register(api)
 
-TagApi.register(api)
+Tag.register(api)
 
-FeedApi.register(api)
-ExportApi.register(api)
-ExportTemplateApi.register(api)
+Feed.register(api)
+Export.register(api)
+ExportTemplate.register(api)
 
-NeighborsApi.register(api, route_base='/neighbors')
+Neighbors.register(api)
 
-InvestigationApi.register(api, route_base='/investigations')
+Investigation.register(api)

@@ -20,7 +20,7 @@
 
 {% block sidebar %}
 <div class="col-md-3">
-	<form data-target="entities" data-url="{{ url_for('api.EntitySearchApi:post')}}" class="yeti-crud">
+	<form data-target="entities" data-url="{{ url_for('api.EntitySearch:post')}}" class="yeti-crud">
 
 		<div class="input-group">
   			<input class="form-control input-sm crud-filter" data-default-value="name" placeholder="tags=evil">

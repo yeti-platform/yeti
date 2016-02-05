@@ -6,7 +6,7 @@ from core.web.api.api import render
 from core.analysis import match_observables
 
 
-class AnalysisApi(CrudApi):
+class Analysis(CrudApi):
     objectmanager = Observable
 
     def match(self):
@@ -16,7 +16,7 @@ class AnalysisApi(CrudApi):
 
         if add_unknown:
             for o in observables:
-                Observables.add_text(o)
+                Observable.add_text(o)
 
         data = match_observables(observables, save_matches=add_unknown)
 

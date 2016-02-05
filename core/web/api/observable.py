@@ -1,13 +1,12 @@
 from flask import request
 
 from core.web.api.crud import CrudApi, CrudSearchApi
-from core.observables import Observable
+from core import observables
 from core.web.api.api import render
-from core.analysis import match_observables
 
 
-class ObservableApi(CrudApi):
-    objectmanager = Observable
+class Observable(CrudApi):
+    objectmanager = observables.Observable
 
     def post(self, id=None):
         params = request.json
@@ -32,6 +31,6 @@ class ObservableApi(CrudApi):
         return render({"status": "ok"})
 
 
-class ObservableSearchApi(CrudSearchApi):
+class ObservableSearch(CrudSearchApi):
     template = 'observable_api.html'
-    objectmanager = Observable
+    objectmanager = observables.Observable

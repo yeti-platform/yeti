@@ -29,7 +29,7 @@
 <div class="tab-content">
 
   <div role="tabpanel" class="tab-pane active" id="import"> <!-- import feed tab -->
-    <div id="feed-table" class="yeti-populate" data-url="{{ url_for('api.FeedApi:index') }}">
+    <div id="feed-table" class="yeti-populate" data-url="{{ url_for('api.Feed:index') }}">
     </div>
   </div>
 
@@ -37,14 +37,14 @@
     <div class="row">
 
       <div class="col-md-9">
-        <div id="export-table" class="yeti-populate" data-url="{{ url_for('api.ExportApi:index') }}">
+        <div id="export-table" class="yeti-populate" data-url="{{ url_for('api.Export:index') }}">
         </div>
       </div>
 
       <div class="col-md-3">
         <div class="new-export">
           <h5>New export</h5>
-          <form class="yeti-form" id="export-form" data-url="{{ url_for('api.ExportApi:index') }}">
+          <form class="yeti-form" id="export-form" data-url="{{ url_for('api.Export:index') }}">
             <div class="form-group">
               <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
             </div>
@@ -52,10 +52,10 @@
               <input type="text" class="form-control" name="description" value="" placeholder="Description"/>
             </div>
             <div class="form-group">
-              <input type="text" class="form-control tagfield" name="include_tags" data-choices="{{ url_for('api.TagApi:index') }}" value="" placeholder="Include tags"/>
+              <input type="text" class="form-control tagfield" name="include_tags" data-choices="{{ url_for('api.Tag:index') }}" value="" placeholder="Include tags"/>
             </div>
             <div class="form-group">
-              <input type="text" class="form-control tagfield" name="exclude_tags" data-choices="{{ url_for('api.TagApi:index') }}" value="" placeholder="Exclude tags"/>
+              <input type="text" class="form-control tagfield" name="exclude_tags" data-choices="{{ url_for('api.Tag:index') }}" value="" placeholder="Exclude tags"/>
             </div>
             <div class="form-group">
               <select class="form-control yeti-select" name="acts_on" placeholder='Acts on'>
@@ -71,8 +71,8 @@
                 {% endfor %}
               </select>
             </div>
-            <button type="button" id="yeti-save-button" data-url="{{ url_for('api.ExportApi:index') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
-            <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.ExportApi:index') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
+            <button type="button" id="yeti-save-button" data-url="{{ url_for('api.Export:index') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
+            <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.Export:index') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
             <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="delete">Clear</button>
           </form>
         </div>
@@ -84,20 +84,20 @@
     <div class="row">
 
       <div class="col-md-2">
-        <div id="export-templates-table" class="yeti-populate" data-url="{{ url_for('api.ExportTemplateApi:index') }}">
+        <div id="export-templates-table" class="yeti-populate" data-url="{{ url_for('api.ExportTemplate:index') }}">
         </div>
       </div>
 
       <div class="col-md-9">
-        <form class="yeti-form" id="export-template-form" data-url="{{ url_for('api.ExportTemplateApi:index') }}">
+        <form class="yeti-form" id="export-template-form" data-url="{{ url_for('api.ExportTemplate:index') }}">
           <div class="form-group">
             <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
           </div>
           <div class="form-group">
             <textarea class="form-control" name="template" value="" rows=10 placeholder="Edit your Jinja2 tempate here"/></textarea>
           </div>
-          <button type="button" id="yeti-save-button" data-url="{{ url_for('api.ExportTemplateApi:index') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
-          <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.ExportTemplateApi:index') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
+          <button type="button" id="yeti-save-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
+          <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
           <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="delete">Clear</button>
         </form>
       </div>
