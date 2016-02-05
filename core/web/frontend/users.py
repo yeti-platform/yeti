@@ -5,10 +5,6 @@ from flask.ext.classy import FlaskView, route
 from core.user import User
 
 
-User.register_setting('api', 'Kikou API', 'Really important API')
-User.register_setting('api2', 'Kikou API 2', 'Really 2 important API')
-
-
 class UsersView(FlaskView):
     @route('/settings', methods=["GET", "POST"])
     def settings(self):

@@ -17,8 +17,8 @@ class NetworkWhois(OneShotAnalytics):
     ACTS_ON = "Ip"
 
     @staticmethod
-    def analyze(ip):
-        links = []
+    def analyze(ip, settings={}):
+        links = set()
 
         results = IPWhois(ip.value)
         results = results.lookup_rdap()
@@ -28,14 +28,12 @@ class NetworkWhois(OneShotAnalytics):
             if entity['contact']['kind'] != 'individual':
                 # Create the company
                 company = Company.get_or_create(name=entity['contact']['name'], rdap=entity)
-                link = Link.connect(ip, company)
-                link.add_history('hosting')
-                links.append(link)
+                links.update(ip.active_link_to(company, 'hosting', 'Network Whois'))
 
                 # Link it to every email address referenced
-                for email_info in entity['contact']['email']:
-                    email = Email.get_or_create(value=email_info['value'])
-                    link = Link.connect(company, email)
-                    links.append(link)
+                if entity['contact']['email']:
+                    for email_info in entity['contact']['email']:
+                        email = Email.get_or_create(value=email_info['value'])
+                        links.update(company.link_to(email, None, 'Network Whois'))
 
-        return links
+        return list(links)

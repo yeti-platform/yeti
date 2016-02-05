@@ -8,14 +8,13 @@ from core.analytics import ScheduledAnalytics, AnalyticsResults
 
 from mongoengine import DoesNotExist
 
-
 @celery_app.task
-def each(module_name, observable_json):
+def each(module_id, observable_json):
     o = Observable.from_json(observable_json)
-    logging.warning("Launching {} on {}".format(module_name, o))
-    mod = loaded_modules[module_name]
+    mod = loaded_modules[module_id]
+    logging.warning("Launching {} on {}".format(mod.__class__.__name__, o))
     mod.each(o)
-    o.analysis_done(module_name)
+    o.analysis_done(mod.__class__.__name__)
 
 
 @celery_app.task
@@ -50,9 +49,9 @@ def schedule(id):
 @celery_app.task
 def single(results_id):
     results = AnalyticsResults.objects.get(id=results_id)
-    analytics = loaded_modules[results.analytics]
-    logging.warning("Running one-shot query {} on {}".format(analytics.name, results.observable))
+    analytics = results.analytics
+    logging.warning("Running one-shot query {} on {}".format(analytics.__class__.__name__, results.observable))
     results.update(status="running")
-    links = analytics.analyze(results.observable)
+    links = analytics.analyze(results.observable, results.settings)
     results.update(status="finished", results=links)
-    results.observable.analysis_done(results.analytics)
+    results.observable.analysis_done(analytics.__class__.__name__)

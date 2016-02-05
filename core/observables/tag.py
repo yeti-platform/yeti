@@ -6,6 +6,7 @@ from mongoengine import *
 from core.config.mongoengine_extras import TimeDeltaField
 from core.database import Node
 from core.errors import TagValidationError
+from core.helpers import iterify
 
 
 class Tag(Node):
@@ -25,16 +26,11 @@ class Tag(Node):
         return i
 
     def add_replaces(self, tags):
-        if isinstance(tags, (str, unicode)):
-            tags = [tags]
-        self.replaces += list(set(tags + self.replaces))
+        self.replaces += list(set(iterify(tags) + self.replaces))
         return self.save()
 
     def add_produces(self, tags):
-        if isinstance(tags, (str, unicode)):
-            tags = [Tag.get_or_create(name=tags)]
-        else:
-            tags = [Tag.get_or_create(name=t) for t in tags]
+        tags = [Tag.get_or_create(name=t) for t in iterify(tags)]
 
         self.produces = tags
         return self.save()

@@ -4,6 +4,42 @@
 
 "use strict";
 
+// Add Handlebars helpers
+Handlebars.registerHelper('equal', function(lvalue, rvalue, options) {
+    if (arguments.length < 3)
+        throw new Error("Handlebars Helper equal needs 2 parameters");
+    if( lvalue!=rvalue ) {
+        return options.inverse(this);
+    } else {
+        return options.fn(this);
+    }
+});
+
+Handlebars.registerHelper("date", function(datetime) {
+  var date = new Date(datetime);
+
+  var month = date.getUTCMonth() + 1;
+  if (month < 10) {
+    month = "0" + month;
+  }
+
+  var day = date.getUTCDate();
+  if (day < 10) {
+    day = "0" + day;
+  }
+
+  return date.getUTCFullYear() + "-" + month + "-" + day;
+});
+
+Handlebars.registerHelper("hasMoreHistory", function(link, options) {
+  if ((link.active) || ((link.history) && (link.history.length > 1))) {
+    return options.fn(this);
+  } else {
+    return options.inverse(this);
+  }
+});
+
+
 // Compile templates
 var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
 var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
@@ -70,6 +106,24 @@ function linksFilter(nodeId, field) {
   return function(links) {
     return links[field] == nodeId;
   };
+}
+
+function enablePopovers() {
+  $('[rel="popover"]').popover({
+        container: 'body',
+        html: true,
+        trigger: 'hover',
+        delay: {
+          show: 500,
+          hide: 0
+        },
+        content: function () {
+            var clone = $($(this).data('popover-content')).clone(true).removeClass('hide');
+            return clone;
+        }
+    }).click(function(e) {
+        e.preventDefault();
+    });
 }
 
 // Define Investigation logic
@@ -188,6 +242,15 @@ class Investigation {
       link.from = buildNodeId(link.src.collection, link.src.id);
       link.to = buildNodeId(link.dst.collection, link.dst.id);
       link.arrows = 'to';
+
+      link.first_seen = Date.parse(link.first_seen)
+      link.last_seen = Date.parse(link.last_seen)
+      link.history.forEach(function (history) {
+        history.first_seen = Date.parse(history.first_seen);
+        history.last_seen = Date.parse(history.last_seen);
+        history.sources = history.sources.join(", ");
+      });
+
       this.edges.add(link);
 
       return link;
@@ -219,14 +282,36 @@ class Investigation {
     };
   }
 
+  sortLinks(links) {
+    var result = {};
+
+    links.forEach(function (item) {
+      if (result.hasOwnProperty(item.description)) {
+        result[item.description].push(item);
+      } else {
+        result[item.description] = new Array(item);
+      }
+    });
+
+    Object.keys(result).forEach(function(key) {
+      result[key].sort(function(a, b) {
+        return b.last_seen - a.last_seen;
+      });
+    });
+
+    return result;
+  }
+
   displayLinks(nodeId) {
     var incoming = this.edges.get({filter: linksFilter(nodeId, 'to')});
     incoming.forEach(this.enrichLink('from'));
-    $('#graph-sidebar-links-to-' + nodeId).html(linksTemplate({links: incoming}));
+    $('#graph-sidebar-links-to-' + nodeId).html(linksTemplate({links: this.sortLinks(incoming), suffix: " for"}));
 
     var outgoing = this.edges.get({filter: linksFilter(nodeId, 'from')});
     outgoing.forEach(this.enrichLink('to'));
-    $('#graph-sidebar-links-from-' + nodeId).html(linksTemplate({links: outgoing}));
+    $('#graph-sidebar-links-from-' + nodeId).html(linksTemplate({links: this.sortLinks(outgoing)}));
+
+    enablePopovers();
   }
 
   displayAnalytics(node) {
@@ -235,7 +320,7 @@ class Investigation {
 
     var availableAnalytics = this.analytics.get({
       filter: function(item) {
-        return item.acts_on == nodeType;
+        return $.inArray(nodeType, item.acts_on) != -1;
       },
     });
 
@@ -298,14 +383,14 @@ class Investigation {
     });
   }
 
-  fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button) {
+  fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button) {
     var self = this;
     return function() {
-      return self.fetchAnalyticsResults(name, resultsId, resultsDiv, button);
+      return self.fetchAnalyticsResults(id, resultsId, resultsDiv, button);
     };
   }
 
-  fetchAnalyticsResults(name, resultsId, resultsDiv, button) {
+  fetchAnalyticsResults(id, resultsId, resultsDiv, button) {
     var self = this;
 
     function callback(data) {
@@ -325,10 +410,11 @@ class Investigation {
           }
         });
 
-        resultsDiv.html(linksTemplate({links: links}));
+        resultsDiv.html(linksTemplate({links: self.sortLinks(links)}));
+        enablePopovers();
         button.removeClass('glyphicon-spinner');
       } else {
-        setTimeout(self.fetchAnalyticsResultsCallback(name, resultsId, resultsDiv, button), 1000);
+        setTimeout(self.fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button), 1000);
       }
     }
 
@@ -340,17 +426,17 @@ class Investigation {
     );
   }
 
-  runAnalytics(name, nodeId, resultsDiv, progress) {
+  runAnalytics(id, nodeId, resultsDiv, progress) {
     var self = this;
 
     function runCallback(data) {
       var resultsId = data._id;
 
-      self.fetchAnalyticsResults(name, resultsId, resultsDiv, progress);
+      self.fetchAnalyticsResults(id, resultsId, resultsDiv, progress);
     }
 
     $.post(
-      '/api/analytics/oneshot/' + name + '/run',
+      '/api/analytics/oneshot/' + id + '/run',
       {id: nodeId},
       runCallback,
       'json'
@@ -425,7 +511,7 @@ class Investigation {
     $('#graph-sidebar').on('click', '.graph-sidebar-run-analytics', function(e) {
       var button = $(this);
 
-      var name = button.data('name');
+      var id = button.data('id');
       var nodeId = button.parents('#graph-sidebar-content').data('id');
       nodeId = nodeId.split('-');
       nodeId = nodeId[nodeId.length - 1];
@@ -433,7 +519,7 @@ class Investigation {
 
       button.addClass('glyphicon-spinner');
 
-      self.runAnalytics(name, nodeId, resultsDiv, button);
+      self.runAnalytics(id, nodeId, resultsDiv, button);
     });
   }
 

@@ -75,7 +75,7 @@ class Scheduler(BaseScheduler):
 
         for sched in ScheduleEntry.objects.all():
             if sched.enabled:
-                self._loaded_entries[sched.name] = sched
+                self._loaded_entries[sched.id] = sched
 
         for subdir in subdirs:
             modules_dir = os.path.join(base_dir, subdir)
@@ -90,13 +90,14 @@ class Scheduler(BaseScheduler):
                                 entry = obj(**obj.default_values)
                                 entry.save()
 
-                            self._loaded_entries[entry.name] = entry
+                            self._loaded_entries[str(entry.id)] = entry
 
     def setup_schedule(self):
         logging.info("Setting up scheduler")
-        for name, entry in self._loaded_entries.iteritems():
+        for entry_id, entry in self._loaded_entries.iteritems():
             if isinstance(entry, ScheduleEntry):
-                self._schedule[name] = BaseScheduleEntry(name=name, app=self.app,
-                                                         task=entry.SCHEDULED_TASK,
-                                                         schedule=entry.frequency,
-                                                         args=(str(entry.id), ))
+                self._schedule[entry_id] = BaseScheduleEntry(name=entry.__class__.__name__,
+                                                             app=self.app,
+                                                             task=entry.SCHEDULED_TASK,
+                                                             schedule=entry.frequency,
+                                                             args=(str(entry.id), ))
