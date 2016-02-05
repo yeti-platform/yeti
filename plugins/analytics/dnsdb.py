@@ -15,18 +15,23 @@ class DNSDBApi(object):
     }
 
     API_URL = "https://api.dnsdb.info/lookup"
-    REVERSE_LOOKUP_LIMIT = 10
     RECORD_TYPES = ['A', 'CNAME', 'NS']
 
     @staticmethod
     def rdata_lookup(observable, api_key):
         links = set()
 
-        records = DNSDBApi.lookup('rdata', observable, api_key)
-        if len(records) <= DNSDBApi.REVERSE_LOOKUP_LIMIT:
-            for record in records:
-                observable = Observable.add_text(record['rrname'])
-                links.update(DNSDBApi.rrset_lookup(observable, api_key))
+        for record in DNSDBApi.lookup('rdata', observable, api_key):
+            new = Observable.add_text(record['rrname'])
+            new.add_source('analytics')
+
+            links.update(new.link_to(
+                observable,
+                source='DNSDB Passive DNS',
+                description='{} record'.format(record['rrtype']),
+                first_seen=record['first_seen'],
+                last_seen=record['last_seen']
+            ))
 
         return list(links)
 
@@ -96,8 +101,8 @@ class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
     ACTS_ON = ["Hostname", "Ip"]
 
     @staticmethod
-    def analyze(observable, settings):
-        return DNSDBApi.rdata_lookup(observable, settings['dnsdb_api_key'])
+    def analyze(observable, results):
+        return DNSDBApi.rdata_lookup(observable, results.settings['dnsdb_api_key'])
 
 
 class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
@@ -110,6 +115,5 @@ class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
     ACTS_ON = "Hostname"
 
     @staticmethod
-    def analyze(hostname, settings):
-        print settings
-        return DNSDBApi.rrset_lookup(hostname, settings['dnsdb_api_key'])
+    def analyze(hostname, results):
+        return DNSDBApi.rrset_lookup(hostname, results.settings['dnsdb_api_key'])
