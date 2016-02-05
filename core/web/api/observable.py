@@ -17,7 +17,7 @@ class Observable(CrudApi):
 
         if source:
             observable.add_source(source)
-        if tags:
+        if tags is not None:
             observable.tag(tags.split(','), strict)
         if params:
             observable.clean_update(**params)
