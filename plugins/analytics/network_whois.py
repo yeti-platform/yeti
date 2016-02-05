@@ -1,8 +1,8 @@
+from pprint import pformat
 from ipwhois import IPWhois
 from core.analytics import OneShotAnalytics
-from core.database import Link
 from core.entities import Company
-from core.observables import Email, Text
+from core.observables import Email
 
 
 class NetworkWhois(OneShotAnalytics):
@@ -17,14 +17,15 @@ class NetworkWhois(OneShotAnalytics):
     ACTS_ON = "Ip"
 
     @staticmethod
-    def analyze(ip, settings={}):
+    def analyze(ip, results):
         links = set()
 
-        results = IPWhois(ip.value)
-        results = results.lookup_rdap()
+        r = IPWhois(ip.value)
+        r = r.lookup_rdap()
+        results.update(raw=pformat(r))
 
-        for entity in results['objects']:
-            entity = results['objects'][entity]
+        for entity in r['objects']:
+            entity = r['objects'][entity]
             if entity['contact']['kind'] != 'individual':
                 # Create the company
                 company = Company.get_or_create(name=entity['contact']['name'], rdap=entity)

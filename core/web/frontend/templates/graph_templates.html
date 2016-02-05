@@ -15,6 +15,19 @@
     {{/each}}
 </script>
 
+<script id="graph-sidebar-analytics-results-template" type="text/x-handlebars-template">
+    {{> links}}
+    {{#if error}}
+        <div class="graph-sidebar-analytics-error">{{error}}</div>
+    {{/if}}
+    {{#if raw}}
+        <a class="graph-analytics-results-links" role="button" data-toggle="collapse" href="#graph-sidebar-analytics-results-{{id}}">Display raw results</a>
+        <div class="collapse graph-sidebar-analytics-raw" id="graph-sidebar-analytics-results-{{id}}">
+            <pre>{{raw}}</pre>
+        </div>
+    {{/if}}
+</script>
+
 <script id="graph-sidebar-links-template" type="text/x-handlebars-template">
     <ul class="graph-sidebar-links">
         {{#each links}}
@@ -39,7 +52,7 @@
                         {{/if}}
                         <div class="graph-sidebar-link-actions">
                             {{#hasMoreHistory this}}
-                                <a tabindex="0" role="button" class="graph-sidebar-display-link" rel="popover" data-popover-content="#graph-sidebar-history-{{id}}"><i class="glyphicon glyphicon-time"></i></a>
+                                <a class="graph-sidebar-display-link" rel="popover" data-popover-content="#graph-sidebar-history-{{id}}"><i class="glyphicon glyphicon-time"></i></a>
                                 <div id="graph-sidebar-history-{{id}}" class="hide">
                                     <ul class="graph-sidebar-history">
                                         {{#each history}}

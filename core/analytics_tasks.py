@@ -1,5 +1,6 @@
 from datetime import datetime
 import logging
+import traceback
 
 from core.config.celeryctl import celery_app
 from core.observables import Observable
@@ -52,6 +53,11 @@ def single(results_id):
     analytics = results.analytics
     logging.warning("Running one-shot query {} on {}".format(analytics.__class__.__name__, results.observable))
     results.update(status="running")
-    links = analytics.analyze(results.observable, results.settings)
-    results.update(status="finished", results=links)
+    try:
+        links = analytics.analyze(results.observable, results)
+        results.update(status="finished", results=links)
+    except Exception, e:
+        results.update(status="error", error=str(e))
+        traceback.print_exc()
+
     results.observable.analysis_done(analytics.__class__.__name__)

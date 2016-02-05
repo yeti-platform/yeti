@@ -39,11 +39,13 @@ Handlebars.registerHelper("hasMoreHistory", function(link, options) {
   }
 });
 
-
 // Compile templates
 var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
 var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
 var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
+
+Handlebars.registerPartial("links", linksTemplate);
+var analyticsResultsTemplate = Handlebars.compile($('#graph-sidebar-analytics-results-template').html());
 
 // Define default icons
 var icons = {
@@ -410,8 +412,12 @@ class Investigation {
           }
         });
 
-        resultsDiv.html(linksTemplate({links: self.sortLinks(links)}));
+        data.links = self.sortLinks(links)
+        resultsDiv.html(analyticsResultsTemplate(data));
         enablePopovers();
+        button.removeClass('glyphicon-spinner');
+      } else if (data.status == 'error') {
+        resultsDiv.html(analyticsResultsTemplate(data));
         button.removeClass('glyphicon-spinner');
       } else {
         setTimeout(self.fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button), 1000);

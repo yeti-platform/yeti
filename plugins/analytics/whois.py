@@ -3,7 +3,6 @@ from pythonwhois.parse import parse_raw_whois
 from tldextract import extract
 
 from core.analytics import OneShotAnalytics
-from core.database import Link
 from core.observables import Email, Text
 
 
@@ -27,7 +26,7 @@ class Whois(OneShotAnalytics):
     ACTS_ON = "Hostname"
 
     @staticmethod
-    def analyze(hostname, settings={}):
+    def analyze(hostname, results):
         links = set()
 
         parts = extract(hostname.value)
@@ -42,6 +41,7 @@ class Whois(OneShotAnalytics):
                 context = {'source': 'Whois'}
 
             data = get_whois_raw(hostname.value)
+            results.update(raw=data[0])
             parsed = parse_raw_whois(data, normalized=True)
             context['raw'] = data[0]
 

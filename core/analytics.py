@@ -50,6 +50,8 @@ class AnalyticsResults(Document):
     status = StringField()
     results = ListField(ReferenceField('Link'))
     settings = DictField()
+    raw = StringField()
+    error = StringField()
 
 
 class OneShotAnalytics(OneShotEntry):

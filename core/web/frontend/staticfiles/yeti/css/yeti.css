@@ -224,13 +224,33 @@ li.graph-sidebar-border-bottom {
     float: right;
 }
 
-.graph-sidebar-links a {
+.graph-sidebar-links a,
+a.graph-analytics-results-links {
     color: #00CCFF;
 }
 
-.graph-sidebar-links a:hover {
+.graph-sidebar-links a:hover,
+a.graph-analytics-results-links:hover {
     color: white;
     text-decoration: none;
+}
+
+a.graph-analytics-results-links {
+    display: block;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.graph-sidebar-analytics-error {
+    color: #FF3333;
+    margin-bottom: 10px;
+}
+
+.graph-sidebar-analytics-raw pre {
+    border: none;
+    background-color: #99CCFF;
+    font-size: 10px;
+    word-wrap: normal;
 }
 
 .clear {

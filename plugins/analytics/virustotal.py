@@ -14,6 +14,6 @@ class QueryVirusTotal(OneShotAnalytics):
     ACTS_ON = "Hash"
 
     @staticmethod
-    def analyze(hash, settings={}):
+    def analyze(hash, results):
         logging.warning("Querying hash {} on VT".format(hash))
         return []

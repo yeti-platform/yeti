@@ -23,11 +23,11 @@ class PassiveTotal(OneShotAnalytics):
     API_URL = 'https://api.passivetotal.org/api/v1/passive'
 
     @staticmethod
-    def analyze(observable, settings):
+    def analyze(observable, results):
         links = set()
 
         params = {
-            'api_key': settings['passivetotal_api_key'],
+            'api_key': results.settings['passivetotal_api_key'],
             'query': observable.value
         }
 
