@@ -76,7 +76,7 @@ def match_observables(observables, save_matches=False):
         for nodes in i.neighbors("Entity").values():
             for l, node in nodes:
                 # add node name and link description to indicator
-                node_data = {"entity": node.type, "name": node.name, "link_description": l.description or l.tag}
+                node_data = {"entity": node.type, "name": node.name, "link_description": l.description}
                 match["related"].append(node_data)
 
                 # uniquely add node information to related entitites
