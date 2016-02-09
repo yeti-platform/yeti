@@ -53,7 +53,7 @@
                       {% for link, node in entry %}
                       <tr>
                         <td><a href="{{ url_for("frontend.IndicatorsView:get", id=node.id)}}">{{node.name}}</a></td>
-                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{link.description}}</td>
                         <td>{{ node.description }}</td>
                         <td><code>{{ node.pattern }}</code></td>
                         <td>{{node.location}}</td>
@@ -93,7 +93,7 @@
                       {% for link, node in entry %}
                       <tr>
                         <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
-                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{link.description}}</td>
                         <td>{{ node.family.name }}</td>
                         <td>{{ macros.display_tags(node.aliases)}}</td>
                         <td>{{node.context|join(', ', attribute='source')}}</td>
@@ -115,7 +115,7 @@
                       {% for link, node in entry %}
                       <tr>
                         <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
-                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{link.description}}</td>
                         <td>{{ node.pattern }}</td>
                       </tr>
                       {% endfor %}
@@ -134,7 +134,7 @@
                       {% for link, node in entry %}
                       <tr>
                         <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id)}}">{{node.value}}</a></td>
-                        <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                        <td>{{link.description}}</td>
                         <td>{{ node.type }}</td>
                         <td>{{ macros.display_tags(node.tags) }}</td>
                       </tr>

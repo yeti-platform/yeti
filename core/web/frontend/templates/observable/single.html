@@ -79,7 +79,7 @@
                   {% for link, node in entry %}
                   <tr>
                     <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id) }}">{{node.value}}</a></td>
-                    <td>{% if link.description %}{{link.description}}{%else%}{{link.tag}}{%endif%}</td>
+                    <td>{{link.description}}</td>
                     <td>{{ macros.display_tags(node.tags)}}</td>
                     <td>{{node.context|join(', ', attribute='source')}}</td>
                   </tr>
@@ -140,7 +140,7 @@
           {% set related_entities = observable.neighbors(neighbor_type="Entity") %}
           {% for t, links in related_entities.items() %}
             {% for link, entity in links %}
-            <tr><td><a href="{{url_for('frontend.EntitiesView:get', id=entity.id)}}">{{entity.name}}</a></td><td>{{link.tag}}</td></tr>
+            <tr><td><a href="{{url_for('frontend.EntitiesView:get', id=entity.id)}}">{{entity.name}}</a></td><td>{{link.description}}</td></tr>
             {% endfor %}
           {% endfor %}
         </table>
