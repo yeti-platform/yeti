@@ -1,12 +1,13 @@
 from flask.ext.login import current_user
 from flask.ext.classy import route
+from flask import request
 
 from core.observables import Observable
 from core.web.api.crud import CrudApi
 from core import analytics
 from core.analytics_tasks import schedule
 from core.web.api.api import render
-from core.web.helpers import get_object_or_404, find_method
+from core.web.helpers import get_object_or_404
 
 
 class ScheduledAnalytics(CrudApi):
@@ -56,13 +57,13 @@ class OneShotAnalytics(CrudApi):
     @route('/<id>/run', methods=["POST"])
     def run(self, id):
         analytics = get_object_or_404(self.objectmanager, id=id)
-        args = self.parser.parse_args()
-        observable = get_object_or_404(Observable, id=args['id'])
+        observable = get_object_or_404(Observable, id=request.form.get('id'))
 
         return render(analytics.run(observable, current_user.settings).to_mongo())
 
+    @route('/<id>/status')
     def status(self, id):
-        results = analytics.AnalyticsResults.objects.get(id=id)
+        results = get_object_or_404(analytics.AnalyticsResults, id=id)
 
         nodes_id = set()
         nodes = list()
