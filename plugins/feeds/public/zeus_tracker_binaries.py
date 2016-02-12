@@ -10,7 +10,7 @@ from core.errors import ObservableValidationError
 
 class ZeusTrackerBinaries(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "ZeusTrackerBinaries",
         "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries",

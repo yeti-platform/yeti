@@ -6,7 +6,7 @@ from core.feed import Feed
 
 class DynamicDomains(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=24),
         "name": "DynamicDomains",
         "source": "http://mirror1.malwaredomains.com/files/dynamic_dns.txt",

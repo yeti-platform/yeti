@@ -9,7 +9,7 @@ from core.errors import ObservableValidationError
 
 class PalevoTracker(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "PalevoTracker",
         "source": "https://palevotracker.abuse.ch/?rssfeed",

@@ -10,7 +10,7 @@ from core.errors import ObservableValidationError
 
 class ZeusTrackerDropzones(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "ZeusTrackerDropzones",
         "source": "https://zeustracker.abuse.ch/monitor.php?urlfeed=dropzones",

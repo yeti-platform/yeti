@@ -10,7 +10,7 @@ from core.errors import ObservableValidationError
 
 class MalcodeBinaries(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "MalcodeBinaries",
         "source": "http://malc0de.com/rss/",

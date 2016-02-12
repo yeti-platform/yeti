@@ -10,7 +10,7 @@ from core.errors import ObservableValidationError
 
 class AsproxTracker(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "AsproxTracker",
         "source": "http://atrack.h3x.eu/api/asprox_full_csv.php",

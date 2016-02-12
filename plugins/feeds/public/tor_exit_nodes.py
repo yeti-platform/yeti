@@ -9,7 +9,7 @@ from core.errors import ObservableValidationError
 
 class TorExitNodes(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "TorExitNodes",
         "source": "https://www.dan.me.uk/tornodes",

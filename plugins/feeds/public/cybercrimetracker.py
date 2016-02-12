@@ -8,7 +8,7 @@ from core.errors import ObservableValidationError
 
 class CybercrimeTracker(Feed):
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "CybercrimeTracker",
         "source": "http://cybercrime-tracker.net/rss.xml",

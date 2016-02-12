@@ -19,7 +19,7 @@ class FeodoTracker(Feed):
                 'C': "Geodo",
                 'D': "Dridex"}
 
-    settings = {
+    default_values = {
         "frequency": timedelta(hours=1),
         "name": "FeodoTracker",
         "source": "https://feodotracker.abuse.ch/feodotracker.rss",
