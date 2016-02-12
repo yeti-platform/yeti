@@ -374,7 +374,7 @@ class Investigation {
   loadAnalytics() {
     var self = this;
 
-    $.getJSON('/api/analytics/oneshot', function(data) {
+    $.getJSON('/api/analytics/oneshot/', function(data) {
       data.forEach(function(item) {
         if ((item.enabled) && (item.available)) {
           self.analytics.add(item);
