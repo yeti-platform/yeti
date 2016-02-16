@@ -43,8 +43,10 @@ class ObservablesView(GenericView):
                 tags = request.form.get('tags', "").split(',')
                 for l in lines:
                     try:
-                        o = Observable.add_text(l.strip())
-                        o.tag(tags)
+                        txt = l.strip()
+                        if txt:
+                            o = Observable.add_text(txt)
+                            o.tag(tags)
                     except ObservableValidationError:
                         continue
                     obs[o.value] = o
