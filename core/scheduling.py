@@ -24,7 +24,7 @@ class ScheduleEntry(YetiDocument):
     frequency = TimeDeltaField(required=True)
     status = StringField()
     last_run = DateTimeField()
-    lock = BooleanField()
+    lock = BooleanField(default=False)
 
     # This should be defined in subclasses, to define the name of the celery task
     SCHEDULED_TASK = None

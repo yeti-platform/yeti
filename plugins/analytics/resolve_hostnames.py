@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from datetime import timedelta
 import threading
 import logging
@@ -20,7 +22,6 @@ class ResolveHostnames(ScheduledAnalytics):
         "frequency": timedelta(minutes=2),
         "name": "ResolveHostnames",
         "description": "Resolves hostnames and extracts subdomains",
-        "lock": False,
     }
 
     ACTS_ON = 'Hostname'
