@@ -61,6 +61,9 @@
         {% if field.type == "TagListField" %}
           {% set _kwargs = {"class_": "tagfield form-control input-sm", "data-choices": url_for("api.Tag:index") }%}
           {{ field(**_kwargs)}}
+        {% elif field.type == "StringListField" %}
+          {% set _kwargs = {"class_": "tagfield form-control input-sm"}%}
+          {{ field(**_kwargs)}}
         {% else %}
           {{ field(class_="form-control", **kwargs) }}
         {% endif %}

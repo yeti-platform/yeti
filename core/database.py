@@ -8,7 +8,8 @@ from flask.ext.mongoengine.wtf import model_form
 
 from core.helpers import iterify
 
-class TagListField(Field):
+
+class StringListField(Field):
     widget = widgets.TextInput()
 
     def _value(self):
@@ -22,6 +23,10 @@ class TagListField(Field):
             self.data = [x.strip() for x in valuelist[0].split(',')]
         else:
             self.data = []
+
+
+class TagListField(StringListField):
+    pass
 
 
 class YetiDocument(Document):
