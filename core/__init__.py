@@ -5,4 +5,4 @@ from core.exports import Export
 from core.feed import Feed
 from core.analytics import ScheduledAnalytics
 
-connect('yeti')
+connect('yeti', connect=False)
