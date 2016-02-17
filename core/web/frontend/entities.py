@@ -3,6 +3,7 @@ from core.entities import Entity, TTP, Actor, Company, Malware
 
 
 class EntitiesView(GenericView):
+
     klass = Entity
     subclass_map = {
         'ttp': TTP,
