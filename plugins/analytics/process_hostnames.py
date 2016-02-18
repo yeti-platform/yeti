@@ -36,7 +36,7 @@ class ProcessHostnames(ScheduledAnalytics):
 
             domain = Hostname.get_or_create(value=parts.registered_domain, domain=True)
             domain.add_source("analytics")
-            hostname.active_link_to(domain, "domain", "ProcessHostnames")
+            hostname.active_link_to(domain, "domain", "ProcessHostnames", clean_old=False)
 
             if domain.has_tag('dyndns'):
                 hostname.tag('dyndns')
