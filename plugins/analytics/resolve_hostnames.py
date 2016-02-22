@@ -4,6 +4,8 @@ from datetime import timedelta
 import threading
 import logging
 from Queue import Queue, Empty
+import random
+import time
 
 import dns
 from dns.resolver import NoAnswer, NXDOMAIN, Timeout, NoNameservers
@@ -57,8 +59,11 @@ class ParallelDnsResolver(object):
         self.queue = Queue(1000)
         self.lock = threading.Lock()
         self.results = {}
+        self.resolver = dns.resolver.Resolver()
+        self.resolver.timeout = 3
+        self.resolver.lifetime = 3
 
-    def mass_resolve(self, domains, num_threads=50):
+    def mass_resolve(self, domains, num_threads=500):
         threads = []
         for _ in xrange(num_threads):
             logging.debug("Starting thread {}".format(_))
@@ -81,14 +86,14 @@ class ParallelDnsResolver(object):
     def consumer(self):
         while True:
             try:
-                logging.debug("Getting observable")
                 hostname, rtype = self.queue.get(True, 5)
-                logging.debug("Got {}".format(hostname))
             except Empty:
                 logging.debug("Empty! Bailing")
                 return
             try:
-                results = dns.resolver.query(hostname, rtype)
+                time.sleep(random.random()*2) # sleep to even out requests over 2 seconds
+                logging.debug("Starting work on {}".format(hostname))
+                results = self.resolver.query(hostname, rtype)
                 if results:
                     if hostname not in self.results:
                         self.results[hostname] = {}
@@ -107,12 +112,13 @@ class ParallelDnsResolver(object):
             except NXDOMAIN:
                 continue
             except Timeout:
+                logging.error("Request timed out for {}".format(hostname))
                 continue
             except NoNameservers:
                 continue
             except Exception as e:
                 import traceback
                 logging.error(traceback.print_exc())
-                logging.error("Unknown error occurred while owrking on {} ({})".format(hostname, rtype))
+                logging.error("Unknown error occurred while working on {} ({})".format(hostname, rtype))
                 logging.error("\nERROR: {}".format(hostname, rtype, e))
                 continue
