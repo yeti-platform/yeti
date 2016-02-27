@@ -27,6 +27,14 @@ span.yeti-toggle {
   border-top:0px;
 }
 
+#observables .yeti-table tr {
+  white-space: nowrap;
+}
+
+#datasetTabsContent {
+  overflow-x: scroll;
+}
+
 .paginator {
   cursor:pointer;
 }
@@ -69,8 +77,9 @@ span.yeti-toggle {
 /* tags */
 
 .yeti-tag {
+  background-color: #38a;
   margin: 0 1px 0 1px;
-  font-size: 100%;
+  font-size: 85%;
   cursor: default;
 }
 
