@@ -1,21 +1,34 @@
-from flask import request
+import os
+
+from flask import request, send_from_directory
 from flask.ext.classy import route
 
 from core.web.api.crud import CrudApi
-# from core.exports import Export, execute_export, ExportTemplate
 from core import exports
 from core.web.api.api import render
 from core.helpers import string_to_timedelta
 from core.observables import Tag
 
+
 class ExportTemplate(CrudApi):
     template = "export_template_api"
     objectmanager = exports.ExportTemplate
+
 
 class Export(CrudApi):
     template = "export_api.html"
     template_single = "export_api_single.html"
     objectmanager = exports.Export
+
+    @route("/<string:id>/content")
+    def content(self, id):
+        e = self.objectmanager.objects.get(id=id)
+        if e.output_dir.startswith("/"):
+            d = e.output_dir
+        else:
+            d = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), e.output_dir)
+
+        return send_from_directory(d, e.name, as_attachment=True, attachment_filename=e.name)
 
     @route("/<string:id>/refresh", methods=["POST"])
     def refresh(self, id):
