@@ -1,5 +1,6 @@
 import datetime
-from bson.json_util import default, loads
+from bson.json_util import default, object_hook as bson_hook
+import simplejson
 from bson.objectid import ObjectId
 from bson.dbref import DBRef
 
@@ -15,9 +16,10 @@ def to_json(obj):
         return default(obj)
 
 
-class JSONDecoder:
-    def __init__(self, *args, **kwargs):
-        pass
+class JSONDecoder(simplejson.JSONDecoder):
 
     def decode(self, s):
-        return loads(s)
+        def object_hook(obj):
+            return bson_hook(obj)
+
+        return simplejson.loads(s, object_hook=self.object_hook)

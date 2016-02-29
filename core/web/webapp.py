@@ -12,13 +12,12 @@ from core.web.frontend import frontend
 from core.scheduling import Scheduler
 Scheduler()  # load all schedule modules
 
-
 webapp = Flask(__name__)
-webapp.json_decoder = JSONDecoder
-Misaka(webapp)
-
 webapp.secret_key = os.urandom(24)
+webapp.json_decoder = JSONDecoder
 webapp.debug = True
+
+Misaka(webapp)
 
 login_manager = LoginManager()
 login_manager.init_app(webapp)
@@ -49,8 +48,8 @@ def frontend_login_required():
             return login_manager.unauthorized()
 
 
-webapp.register_blueprint(api, url_prefix='/api')
 webapp.register_blueprint(frontend)
+webapp.register_blueprint(api, url_prefix='/api')
 
 
 @webapp.route('/list_routes')
