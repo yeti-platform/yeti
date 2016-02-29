@@ -7,6 +7,7 @@ import traceback
 from mongoengine import ListField, StringField, Q, ReferenceField, PULL
 from jinja2 import Template
 from flask.ext.mongoengine.wtf import model_form
+from flask import url_for
 
 from core.database import YetiDocument
 from core.config.celeryctl import celery_app
@@ -97,4 +98,5 @@ class Export(ScheduleEntry):
         i['exclude_tags'] = [tag.name for tag in self.exclude_tags]
         i['template'] = self.template.name
         i['acts_on'] = self.acts_on
+        i['content_uri'] = url_for("api.Export:content", id=str(self.id))
         return i
