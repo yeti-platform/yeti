@@ -22,6 +22,12 @@ class ExportTemplate(YetiDocument):
         t = Template(self.template)
         return t.render(elements=elements)
 
+    def stream(self, elements):
+        t = Template(self.template)
+        s = t.stream(elements=elements)
+        s.enable_buffering(5)
+        return s
+
     def info(self):
         return {"name": self.name, "template": self.template, "id": self.id}
 
@@ -72,8 +78,12 @@ class Export(ScheduleEntry):
         self.export_file_handle = codecs.open(self.output_file, 'w+', "utf-8")
         q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
         q &= Q(_cls__contains=self.acts_on)
-        output = self.template.render(Observable.objects(q))
-        self.write(output)
+
+        output = self.template.stream(Observable.objects(q))
+        output.enable_buffering(5)
+        for o in output:
+            self.write(o)
+
         self.export_file_handle.close()
 
     def write(self, output):
