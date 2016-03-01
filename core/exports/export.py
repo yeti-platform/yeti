@@ -80,7 +80,7 @@ class Export(ScheduleEntry):
         q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
         q &= Q(_cls__contains=self.acts_on)
 
-        self.template.stream(Observable.objects(q)).dump(self.output_file, encoding='utf-8')
+        self.template.stream(Observable.objects(q).no_cache()).dump(self.output_file, encoding='utf-8')
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "output_dir", "enabled", "description", "status", "last_run", "include_tags", "exclude_tags"]}
