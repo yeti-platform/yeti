@@ -17,24 +17,16 @@ from core.scheduling import ScheduleEntry
 
 class ExportTemplate(YetiDocument):
     name = StringField(required=True, max_length=255, verbose_name="Name")
-    header = StringField(required=True, default="")
-    footer = StringField(required=True, default="")
     template = StringField(required=True, default="")
 
-    def render(self, output, elements):
-        dynamic_template = Template(self.template)
-        with codecs.open(output, 'w+', encoding="utf-8") as out:
-            out.write("{}\n".format(self.header))
-            for obs in elements:
-                out.write("{}\n".format(dynamic_template.render(obs=obs)))
-            out.write("{}\n".format(self.footer))
+    def render(self, elements, output_file):
+        template = Template(self.template)
+        template.stream(elements=elements).dump(output_file, encoding='utf-8')
 
     def info(self):
         return {
             "name": self.name,
             "template": self.template,
-            "header": self.header,
-            "footer": self.footer,
             "id": self.id
             }
 
@@ -86,7 +78,8 @@ class Export(ScheduleEntry):
         q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
         q &= Q(_cls__contains=self.acts_on)
 
-        self.template.render(self.output_file, Observable.objects(q))
+        self.template.render(Observable.objects(q).no_cache(), self.output_file)
+
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "output_dir", "enabled", "description", "status", "last_run", "include_tags", "exclude_tags"]}

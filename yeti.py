@@ -8,4 +8,4 @@ from core.web import webapp
 logging.basicConfig(format='%(levelname)s:%(module)s:%(message)s', level=logging.INFO)
 
 if __name__ == '__main__':
-    webapp.run()
+    webapp.run(host="0.0.0.0")

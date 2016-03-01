@@ -94,13 +94,7 @@
             <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
           </div>
           <div class="form-group">
-            <textarea class="form-control" name="header" value="" rows=1 placeholder="Output header"/></textarea>
-          </div>
-          <div class="form-group">
             <textarea class="form-control" name="template" value="" rows=10 placeholder="Edit your Jinja2 tempate here"/></textarea>
-          </div>
-          <div class="form-group">
-            <textarea class="form-control" name="footer" value="" rows=1 placeholder="Output footer"/></textarea>
           </div>
           <button type="button" id="yeti-save-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-primary btn-sm yeti-save" name="save">New</button>
           <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
