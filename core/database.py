@@ -45,6 +45,8 @@ class YetiDocument(Document):
             update_dict[key] = getattr(self, key, value)
 
         self.update(**update_dict)
+        self.reload()
+        return self
 
     def add_to_set(self, field, value):
         result = self.__class__._get_collection().update_one({'_id': self.pk}, {'$addToSet': {field: value}})
