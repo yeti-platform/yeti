@@ -56,7 +56,8 @@ class Observable(Node):
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):
-        for o in Observable.objects(tags__name__in=iterify(old_tags)):
+        old_tags = iterify(old_tags)
+        for o in Observable.objects(tags__name__in=old_tags):
             for old_tag in old_tags:
                 o.change_tag(old_tag, new_tag)
 
