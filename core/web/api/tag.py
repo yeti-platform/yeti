@@ -58,8 +58,8 @@ class Tag(CrudApi):
                 observables.Observable.change_all_tags(oldname, data['name'])
             return render({"status": "ok"})
         except TagValidationError as e:
-            abort(400, error=str(e))
+            abort(400)
         except Exception as e:
             import traceback
             traceback.print_exc()
-            abort(400, error='Must specify name and produces parameters')
+            abort(400)
