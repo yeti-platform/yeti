@@ -20,8 +20,9 @@ class Tag(CrudApi):
         make_dict = request.json['make_dict']
 
         merged = 0
+        observables.Observable.change_all_tags(tags, merge_into.name)
+
         for tag in tags:
-            observables.Observable.change_all_tags(tags, merge_into.name)
             oldtag = self.objectmanager.objects.get(name=tag)
             merge_into.count += oldtag.count
             merge_into.produces += [i for i in oldtag.produces if i not in merge_into.produces and i != merge_into]
@@ -50,9 +51,11 @@ class Tag(CrudApi):
         try:
             data = self.parse_request(request.json)
             t = self.objectmanager.objects.get(id=id)
+            oldname = t.name
             t.clean_update(**data)
             # we override this so change_all_tags can be called
-            observables.Observable.change_all_tags(t.name, data['name'])
+            if data['name'] != t.name:
+                observables.Observable.change_all_tags(oldname, data['name'])
             return render({"status": "ok"})
         except TagValidationError as e:
             abort(400, error=str(e))
