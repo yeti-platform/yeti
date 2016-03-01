@@ -17,20 +17,26 @@ from core.scheduling import ScheduleEntry
 
 class ExportTemplate(YetiDocument):
     name = StringField(required=True, max_length=255, verbose_name="Name")
-    template = StringField(required=True)
+    header = StringField(required=True, default="")
+    footer = StringField(required=True, default="")
+    template = StringField(required=True, default="")
 
-    def render(self, elements):
-        t = Template(self.template)
-        return t.render(elements=elements)
-
-    def stream(self, elements):
-        t = Template(self.template)
-        s = t.stream(elements=elements)
-        s.enable_buffering(5)
-        return s
+    def render(self, output, elements):
+        dynamic_template = Template(self.template)
+        with codecs.open(output, 'w+', encoding="utf-8") as out:
+            out.write("{}\n".format(self.header))
+            for obs in elements:
+                out.write("{}\n".format(dynamic_template.render(obs=obs)))
+            out.write("{}\n".format(self.footer))
 
     def info(self):
-        return {"name": self.name, "template": self.template, "id": self.id}
+        return {
+            "name": self.name,
+            "template": self.template,
+            "header": self.header,
+            "footer": self.footer,
+            "id": self.id
+            }
 
 
 @celery_app.task
@@ -80,7 +86,7 @@ class Export(ScheduleEntry):
         q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
         q &= Q(_cls__contains=self.acts_on)
 
-        self.template.stream(Observable.objects(q)).dump(self.output_file, encoding='utf-8')
+        self.template.render(self.output_file, Observable.objects(q))
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "output_dir", "enabled", "description", "status", "last_run", "include_tags", "exclude_tags"]}
