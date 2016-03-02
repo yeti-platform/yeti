@@ -17,7 +17,7 @@ class Tag(Node):
     replaces = ListField(StringField())
 
     def __unicode__(self):
-        return unicode(name)
+        return unicode(self.name)
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "count", "created", "replaces"]}

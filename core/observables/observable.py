@@ -120,13 +120,16 @@ class Observable(Node):
                 except DoesNotExist:
                     tag = Tag.get_or_create(name=new_tag.name)
 
+                extra_tags = tag.produces + [tag]
+
                 # search for related entities and link them
                 for e in Entity.objects(tags__in=[tag.name]):
                     self.link_to(e, 'Tagged', 'tags')
 
-                if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
-                    self.modify(push__tags=ObservableTag(name=tag.name))
-                    tag.modify(inc__count=1)
+                for tag in extra_tags:
+                    if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
+                        self.modify(push__tags=ObservableTag(name=tag.name))
+                        tag.modify(inc__count=1)
 
         return self.reload()
 
