@@ -3,6 +3,7 @@ import codecs
 import logging
 from datetime import datetime
 import traceback
+import hashlib
 
 from mongoengine import ListField, StringField, Q, ReferenceField, PULL
 from jinja2 import Template
@@ -19,9 +20,23 @@ class ExportTemplate(YetiDocument):
     name = StringField(required=True, max_length=255, verbose_name="Name")
     template = StringField(required=True, default="")
 
-    def render(self, elements, output_file):
+    def render(self, elements, output_filename):
         template = Template(self.template)
-        template.stream(elements=elements).dump(output_file, encoding='utf-8')
+        temp_filename = "{}.temp".format(output_filename)
+        m = hashlib.md5()
+        with codecs.open(temp_filename, 'w+', encoding='utf-8') as tmp:
+            for chunk in template.stream(elements=elements):
+                tmp.write(chunk)
+                m.update(chunk)
+
+        try:
+            os.remove(output_filename)
+        except OSError:
+            pass
+        os.rename(temp_filename, output_filename)
+
+        return m.hexdigest()
+
 
     def info(self):
         return {
@@ -39,7 +54,7 @@ def execute_export(export_id):
         if export.enabled:
             logging.info("Running export {}".format(export.name))
             export.update_status("Exporting...")
-            export.execute()
+            export.hash_md5 = export.execute()
             export.update_status("OK")
         else:
             logging.error("Export {} has been disabled".format(export.name))
@@ -63,6 +78,7 @@ class Export(ScheduleEntry):
     output_dir = StringField(default='exports')
     acts_on = StringField(verbose_name="Acts on", required=True)
     template = ReferenceField(ExportTemplate)
+    hash_md5 = StringField(max_length=32)
 
     def __init__(self, *args, **kwargs):
         super(Export, self).__init__(*args, **kwargs)
@@ -78,7 +94,7 @@ class Export(ScheduleEntry):
         q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
         q &= Q(_cls__contains=self.acts_on)
 
-        self.template.render(Observable.objects(q).no_cache(), self.output_file)
+        return self.template.render(Observable.objects(q).no_cache(), self.output_file)
 
 
     def info(self):

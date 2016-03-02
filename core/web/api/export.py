@@ -1,6 +1,6 @@
 import os
 
-from flask import request, send_from_directory
+from flask import send_from_directory, make_response
 from flask.ext.classy import route
 
 from core.web.api.crud import CrudApi
@@ -28,7 +28,9 @@ class Export(CrudApi):
         else:
             d = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), e.output_dir)
 
-        return send_from_directory(d, e.name, as_attachment=True, attachment_filename=e.name)
+        response = make_response(send_from_directory(d, e.name, as_attachment=True, attachment_filename=e.name))
+        response.headers['X-Yeti-Export-MD5'] = e.hash_md5
+        return response
 
     @route("/<string:id>/refresh", methods=["POST"])
     def refresh(self, id):
