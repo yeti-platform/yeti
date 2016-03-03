@@ -15,9 +15,12 @@ class Entity(Node):
     }
 
     @classmethod
-    def get_form(klass):
+    def get_form(klass, override=None):
+        if override:
+            klass = override
         form = model_form(klass, exclude=klass.exclude_fields)
-        form.tags = TagListField("Relevant tags")
+        form.tags = TagListField("Relevant tags (most precise only)")
+        form.links = TagListField("Link with entities")
         return form
 
     def __unicode__(self):
