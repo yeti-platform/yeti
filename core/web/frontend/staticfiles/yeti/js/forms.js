@@ -45,12 +45,16 @@ $(function() {
 
     refresh_tagfields($(this))
 
-    // // set save button
+    $(this).find("button.yeti-new").click(function(){
+      yeti_new_button($(this));
+    });
+
+    // set save button
     $(this).find("button.yeti-save").click(function(){
       yeti_save_button($(this));
     });
 
-    // // set delete button
+    // set delete button
     $(this).find("button.yeti-delete").click(function(){
       yeti_delete_button($(this));
     });
@@ -59,6 +63,10 @@ $(function() {
     $(this).find("button.yeti-clear").click(function(){
       yeti_clear_button($(this));
     });
+
+    if ($(this).data('start-disabled')) {
+      disable_form($(this));
+    }
 
   });
 
@@ -74,10 +82,47 @@ function yeti_clear_button(elt) {
   clear_form(elt.closest("form").first())
 }
 
+function enable_controls(form, controls) {
+  for (var i in controls) {
+    form.find(".yeti-"+controls[i]).removeClass('hidden');
+  }
+}
+
+function disable_controls(form, controls) {
+  for (var i in controls) {
+    form.find(".yeti-"+controls[i]).addClass('hidden');
+  }
+}
+
+function disable_form(form) {
+  console.log(form);
+  form.find(".form-group > input").prop('disabled', true);
+  form.find("textarea").prop('disabled', true);
+  form.find("select").prop('disabled', true);
+  form.find(".tagfield").tokenfield('disable');
+
+  disable_controls(form, ['save', 'delete', 'clear']);
+  enable_controls(form, ['new']);
+}
+
+function enable_form(form) {
+  console.log(form.find("input"));
+  form.find("input").prop('disabled', false);
+  form.find("textarea").prop('disabled', false);
+  form.find("select").prop('disabled', false);
+  form.find(".tagfield").tokenfield('enable');
+
+  disable_controls(form, ['new']);
+  enable_controls(form, ['save', 'delete', 'clear']);
+}
+
+
+
 function clear_form(form) {
 
   // clear input fields
   form.find("input:not(.tagfield)").val("");
+  form.find("textarea").val("");
   form.find("input.tagfield").each(function(){
     $(this).val("");
     $(this).tokenfield("setTokens", []);
@@ -93,8 +138,17 @@ function clear_form(form) {
   // disable delete button
   form.find("button.yeti-delete").first().attr('disabled', 'disabled');
 
+  disable_form(form)
+
 }
 
+function yeti_new_button(elt) {
+  var url = elt.data('url');
+  var form = elt.closest("form").first();
+
+  enable_form(form);
+  disable_controls(form, ['delete']);
+}
 
 function yeti_delete_button(elt) {
   var url = elt.data('url');
@@ -131,7 +185,7 @@ function yeti_save_button(elt) {
     success: function(data) {
       scan_populate();
       if (clear) {
-        clear_form();
+        clear_form(form);
       }
       refresh_tagfields(form);
     }});
@@ -141,6 +195,7 @@ function yeti_edit_elt(elt) {
   // get elt info
   var url = elt.data('url');
   var form = $("#"+elt.data('form'));
+  enable_form(form);
 
   $.ajax({
     method: "GET",

@@ -16,6 +16,10 @@ class Tag(Node):
     produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
     replaces = ListField(StringField())
 
+    meta = {
+        'ordering': ['name']
+    }
+
     def __unicode__(self):
         return unicode(self.name)
 

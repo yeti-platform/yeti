@@ -57,7 +57,7 @@
   {% else %}
     <div class="form-group {% if field.errors %}error{% endif %}">
       <label for="{{field.name}}">{{field.label}}</label>
-        <!-- field is rendered here -->
+        <!-- field is rendered here {{field.type}}-->
         {% if field.type == "TagListField" %}
           {% set _kwargs = {"class_": "tagfield form-control input-sm", "data-choices": url_for("api.Tag:index") }%}
           {{ field(**_kwargs)}}
