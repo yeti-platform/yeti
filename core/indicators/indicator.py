@@ -1,8 +1,10 @@
 from mongoengine import *
 
-from core.database import Node, Link
-from core.indicators import DIAMOND_EDGES
+from flask.ext.mongoengine.wtf import model_form
 
+from core.database import Node
+from core.indicators import DIAMOND_EDGES
+from core.database import Node, EntityListField
 
 class Indicator(Node):
 
@@ -15,6 +17,12 @@ class Indicator(Node):
     meta = {
         "allow_inheritance": True,
     }
+
+    @classmethod
+    def get_form(klass):
+        form = model_form(klass, exclude=klass.exclude_fields)
+        form.links = EntityListField("Link with entities")
+        return form
 
     def __unicode__(self):
         return u"{} (pattern: '{}')".format(self.name, self.pattern)
@@ -30,7 +38,7 @@ class Indicator(Node):
     def match(self, value):
         raise NotImplementedError("match() method must be implemented in Indicator subclasses")
 
-    def action(self, verb, target, source):
+    def action(self, target, source, verb="Indicates"):
         self.link_to(target, verb, source)
 
     def generate_tags(self):

@@ -1,5 +1,10 @@
 {% extends "base.html" %}
-{% import "macros.html" as macros %}
+{% import "macros/generic.html" as macros %}
+{% import "macros/indicators.html" as indicators %}
+{% import "macros/malware.html" as malware %}
+{% import "macros/actors.html" as actors %}
+{% import "macros/ttps.html" as ttps %}
+{% import "macros/observables.html" as observables %}
 
 {% block main %}
 {% set entity = obj %}
@@ -48,19 +53,7 @@
               <div class="row">
                 <div class="col-md-12">
                   <table class="table table-condensed">
-                    <tr><th>Name</th><th>Link</th><th>Description</th><th>Pattern</th><th>Location</th></tr>
-                    {% for type, entry in n.items() if "Indicator.Regex" in type %}
-                      {% for link, node in entry %}
-                      <tr>
-                        <td><a href="{{ url_for("frontend.IndicatorsView:get", id=node.id)}}">{{node.name}}</a></td>
-                        <td>{{link.description}}</td>
-                        <td>{{ node.description }}</td>
-                        <td><code>{{ node.pattern }}</code></td>
-                        <td>{{node.location}}</td>
-                      </tr>
-                      {% endfor %}
-                    {%endfor%}
-                  </table>
+                  {{ indicators.display_table(n, entity)}}
                 </div>
               </div>
             </div>
@@ -68,18 +61,7 @@
             <div role="tabpanel" class="tab-pane" id="ttp"> <!-- TTP tab -->
               <div class="row">
                 <div class="col-md-12">
-                  <table class="table table-condensed">
-                    <tr><th>Name</th><th>Description</th><th>Killchain</th></tr>
-                    {% for type, entry in n.items() if "TTP" in type %}
-                      {% for link, node in entry %}
-                      <tr>
-                        <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
-                        <td>{{ node.description }}</td>
-                        <td>{{ node.killchain }}</td>
-                      </tr>
-                      {% endfor %}
-                    {%endfor%}
-                  </table>
+                  {{ ttps.display_table(n, entity) }}
                 </div>
               </div>
             </div>
@@ -87,21 +69,7 @@
             <div role="tabpanel" class="tab-pane" id="malware"> <!-- malware tab -->
               <div class="row">
                 <div class="col-md-12">
-                  <table class="table table-condensed">
-                    <tr><th>Name</th><th>Link</th><th>Family</th><th>Aliases</th></tr>
-                    {% for type, entry in n.items() if "Malware" in type %}
-                      {% for link, node in entry %}
-                      <tr>
-                        <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
-                        <td>{{link.description}}</td>
-                        <td>{{ node.family.name }}</td>
-                        <td>{{ macros.display_tags(node.aliases)}}</td>
-                        <td>{{node.context|join(', ', attribute='source')}}</td>
-                      </tr>
-                      {% endfor %}
-                    {%endfor%}
-                  </table>
-
+                  {{ malware.display_table(n, entity) }}
                 </div>
               </div>
             </div>
@@ -109,18 +77,7 @@
             <div role="tabpanel" class="tab-pane" id="actors"> <!-- actors tab -->
               <div class="row">
                 <div class="col-md-12">
-                  <table class="table table-condensed">
-                    <tr><th>Name</th><th>Link</th><th>Pattern</th></tr>
-                    {% for type, entry in n.items() if "Actor" in type %}
-                      {% for link, node in entry %}
-                      <tr>
-                        <td><a href="{{ url_for("frontend.EntitiesView:get", id=node.id)}}">{{node.name}}</a></td>
-                        <td>{{link.description}}</td>
-                        <td>{{ node.pattern }}</td>
-                      </tr>
-                      {% endfor %}
-                    {%endfor%}
-                  </table>
+                  {{ actors.display_table(n, entity) }}
                 </div>
               </div>
             </div>
@@ -128,25 +85,12 @@
             <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
               <div class="row">
                 <div class="col-md-12">
-                  <table class="table table-condensed">
-                    <tr><th>Observable</th><th>Link</th><th>Type</th><th>Tags</th></tr>
-                    {% for type, entry in n.items() if "Observable" in type %}
-                      {% for link, node in entry %}
-                      <tr>
-                        <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id)}}">{{node.value}}</a></td>
-                        <td>{{link.description}}</td>
-                        <td>{{ node.type }}</td>
-                        <td>{{ macros.display_tags(node.tags) }}</td>
-                      </tr>
-                      {% endfor %}
-                    {%endfor%}
-                  </table>
+                  {{ observables.display_table(n, entity) }}
                 </div>
               </div>
             </div>
 
         </div>
-
       </div>
     </div>
 
