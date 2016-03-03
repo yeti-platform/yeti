@@ -70,7 +70,7 @@ def execute_export(export_id):
 
 class Export(ScheduleEntry):
 
-    SCHEDULED_TASK = 'core.exports.execute_export'
+    SCHEDULED_TASK = 'core.exports.export.execute_export'
     CUSTOM_FILTER = {}
 
     include_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
