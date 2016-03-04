@@ -42,16 +42,16 @@
 	  </ul>
 
 		<div class="tip">
-			<p>You can run complex queries agains the database using the input field above.
-			By default, text will be matched against the <code>value</code> attribute of the observables.
-			To match against other attributes, use <code>attribute=value</code>.</p>
+			<p>You can run complex queries against the database using the input field above.</p>
+			<p>By default, the query will be matched against the <code>value</code> attribute of the observables.
+			To match against other attributes, use <code>attribute=query</code>.</p>
 
 			<p>Examples:</p>
 			<ul>
 				<li><strong>Generic tag query</strong>: <code>tags=crimeware</code></li>
 				<li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code> (regex <code>on</code>)</li>
 				<li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code></li>
-				<li><strong>Query context</strong>: <code>context.source=ZeusTrackerBinaries</code></li>
+				<li><strong>Context</strong>: <code>context.source=FeodoTracker</code></li>
 
 			</ul>
 
