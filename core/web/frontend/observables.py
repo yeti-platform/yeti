@@ -19,7 +19,7 @@ class ObservablesView(GenericView):
 
     @route('/advanced')
     def advanced(self):
-        return render_template("{}/advanced.html".format(self.klass.__name__.lower()))
+        return render_template("{}/browse.html".format(self.klass.__name__.lower()))
 
     # override to guess observable type
     @route('/new', methods=["GET", "POST"])
@@ -59,6 +59,6 @@ class ObservablesView(GenericView):
                     obs[l.strip()] = l, None
 
             data = match_observables(obs.keys())
-            return render_template("observable/bulk_results.html", data=data)
+            return render_template("observable/search_results.html", data=data)
 
-        return render_template("observable/bulk.html")
+        return render_template("observable/search.html")

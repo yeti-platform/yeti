@@ -4,7 +4,7 @@
 {% block breadcrumb %}
 <ol class="breadcrumb">
 	<li>YETI</li>
-	<li class="active">Bulk operations</li>
+	<li class="active">Search &amp; add</li>
 </ol>
 {% endblock %}
 
@@ -41,9 +41,37 @@ $(function() {
 
 <div class="row">
 	<div class="col-md-4 user-text">
-		<h3>Bulk search</h3>
-		<p>Launch bulk searches on YETI's observable database <em>(read-only)</em></p>
-		<p>Use the checkbox to automatically add unknown observables to the database <em>(write operation)</em></p>
+		<h3>Search &amp; add</h3>
+		<p><strong>Format</strong>: one observable per line (for both text and file)</p>
+		<p>Use the checkbox to automatically <strong>add</strong> unknown observables to the database <em>(write operation)</em></p>
+		<br/>
+
+
+		<div class="panel panel-info yeti-panel">
+      <div class="panel-heading">
+        <h3 class="panel-title">Advanced search</h3>
+      </div>
+      <div class="panel-body">
+				<form action="{{ url_for('frontend.ObservablesView:advanced') }}" method="get">
+					<div class="form-group">
+						<input name="query" class="form-control input-sm" placeholder="Search query + &#9166;">
+					</div>
+				</form>
+
+				<p>By default, the query will be matched against the <code>value</code> attribute of the observables.
+				To match against other attributes, use <code>attribute=query</code>.</p>
+
+				<p>Examples:</p>
+				<ul>
+					<li><strong>Generic tag query</strong>: <code>tags=crimeware</code></li>
+					<li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code> (regex <code>on</code>)</li>
+					<li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code></li>
+					<li><strong>Context</strong>: <code>context.source=FeodoTracker</code></li>
+				</ul>
+      </div>
+    </div>
+
+
 	</div>
 	<div class="col-md-8" >
 
@@ -62,16 +90,14 @@ $(function() {
 					<input type="text" class="form-control tagfield" data-choices="{{url_for('api.Tag:index')}}" name="tags" value="" placeholder="Tags">
 				</div>
 			</div>
-
 			<br>
-
 			<div class="form-group">
-				<textarea class="form-control" name="bulk-text" rows="8"></textarea>
+				<textarea class="form-control" name="bulk-text" rows="14"></textarea>
 			</div>
 
 			<div class="form-group">
 				<input name="bulk-file" type="file">
-				<p class="help-block">Uploaded file will take precedence over text</p>
+				<p class="help-block">Uploaded file will take precedence over text. Format is the same as text, one observable per line.</p>
 		  </div>
 
 

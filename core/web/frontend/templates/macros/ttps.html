@@ -13,6 +13,6 @@
     {% endfor %}
   {%endfor%}
 </table>
-<a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Bind new TTP</a>
+<a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new TTP</a>
 
 {%- endmacro %}

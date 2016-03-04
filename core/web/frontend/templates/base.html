@@ -37,12 +37,10 @@
             <li class="{% if url_for("frontend.ObservablesView:index") in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Observables <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('frontend.ObservablesView:index') }}">Bulk search</a></li>
+                <li><a href="{{ url_for('frontend.ObservablesView:index') }}">Search &amp; add</a></li>
                 <li role="separator" class="divider"></li>
-                <li><a href="{{ url_for('frontend.ObservablesView:advanced') }}">Advanced query</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="{{ url_for('frontend.ObservablesView:new') }}">New observable</a></li>
-
+                <li><a href="{{ url_for('frontend.ObservablesView:advanced') }}">Browse</a></li>
+                
               </ul>
             </li>
 

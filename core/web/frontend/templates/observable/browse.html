@@ -3,7 +3,7 @@
 {% block breadcrumb %}
 <ol class="breadcrumb">
 	<li>YETI</li>
-	<li class="active">Observables</li>
+	<li class="active">Browse</li>
 </ol>
 {% endblock %}
 
@@ -22,7 +22,7 @@
 	<form data-target="observables" data-url="{{ url_for('api.ObservableSearch:post')}}" class="yeti-crud">
 
 		<div class="input-group">
-  			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Enter your search query">
+  			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
 			<span class="input-group-btn">
 				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
 			</span>
@@ -52,7 +52,6 @@
 				<li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code> (regex <code>on</code>)</li>
 				<li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code></li>
 				<li><strong>Context</strong>: <code>context.source=FeodoTracker</code></li>
-
 			</ul>
 
 
