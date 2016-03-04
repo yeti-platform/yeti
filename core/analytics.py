@@ -24,7 +24,7 @@ class ScheduledAnalytics(ScheduleEntry):
         if self.EXPIRATION:
             fltr |= Q(**{"last_analyses__{}__lte".format(self.name): datetime.now() - self.EXPIRATION})
         fltr &= Q(**self.CUSTOM_FILTER) & class_filter
-        self.bulk(Observable.objects(fltr))
+        self.bulk(Observable.objects(fltr).no_cache())
 
     def bulk(self, elts):
         """Bulk analytics. May be overridden in case the module needs to batch-analyze observables"""
