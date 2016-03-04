@@ -87,7 +87,7 @@
     {% for field_name, field_errors in form.errors|dictsort if field_errors %}
         {% for error in field_errors %}
           {% if field_name not in form %}
-            <p>{{ error }}</p>
+            <p><strong>{{field_name}}</strong> - {{ error }}</p>
           {% else %}
            {{field_name}} - {{error}}
           {% endif %}

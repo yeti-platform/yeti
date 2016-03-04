@@ -78,10 +78,15 @@ class GenericView(FlaskView):
                 self.pre_validate(obj, request)
                 obj = obj.save()
                 self.post_save(obj, request)
-            except (ObservableValidationError, NotUniqueError) as e:
+            except ObservableValidationError as e:
                 # failure - redirect to edit page
                 form.errors['generic'] = [str(e)]
                 return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
+            except NotUniqueError as e:
+                form.errors['Duplicate'] = ['Entity "{}" is already in the database'.format(obj)]
+                return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
+
+
 
             # success - redirect to view page
             return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=obj.id))
