@@ -1,8 +1,8 @@
 import re
+import logging
 
-from flask import request, url_for
+from flask import request, url_for, abort
 from flask.ext.classy import FlaskView, route
-from flask_restful import abort as restful_abort
 from mongoengine.errors import InvalidQueryError
 
 from core.web.api.api import render
@@ -13,21 +13,19 @@ class CrudSearchApi(FlaskView):
     def post(self):
         query = request.get_json(silent=True) or {}
         fltr = query.get('filter', {})
+        if 'tags' in fltr:
+            fltr["tags__name"] = fltr.pop('tags')
+        fltr = {key.replace(".", "__")+"__all": value.split(',') for key, value in query.get('filter', {}).items() }
         params = query.get('params', {})
 
         regex = params.pop('regex', False)
         if regex:
-            fltr = {key: re.compile(value) for key, value in fltr.items()}
+            fltr = {key: [re.compile(v) for v in value] for key, value in fltr.items()}
+
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
 
-        print "Filter:", fltr
-        for key, value in fltr.copy().items():
-            if key == 'tags':
-                if not regex:
-                    fltr['tags__name__in'] = fltr.pop('tags').split(',')
-                else:
-                    fltr['tags__name'] = fltr.pop('tags')
+        print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
 
         try:
             data = []
@@ -37,7 +35,8 @@ class CrudSearchApi(FlaskView):
                 data.append(info)
 
         except InvalidQueryError as e:
-            restful_abort(400, invalid_query=str(e))
+            logging.error(e)
+            abort(400)
 
         return render(data, self.template)
 

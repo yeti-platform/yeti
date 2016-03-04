@@ -10,12 +10,16 @@ from core.analysis import match_observables
 class ObservablesView(GenericView):
     klass = Observable
 
-    def pre_validate(self, obj):
+    def pre_validate(self, obj, request):
         tags = obj.tags
         # redundant, but we need the object to be in the database for .tag to work
         obj.tags = []
         obj.save()
         obj.tag(tags, strict=True)
+
+    @route('/advanced')
+    def advanced(self):
+        return render_template("{}/advanced.html".format(self.klass.__name__.lower()))
 
     # override to guess observable type
     @route('/new', methods=["GET", "POST"])
@@ -29,8 +33,8 @@ class ObservablesView(GenericView):
         obj = None
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
 
-    @route("/query", methods=['GET', 'POST'])
-    def query(self):
+    @route("/", methods=['GET', 'POST'])
+    def index(self):
         if request.method == "POST":
             lines = []
             obs = {}
@@ -55,6 +59,6 @@ class ObservablesView(GenericView):
                     obs[l.strip()] = l, None
 
             data = match_observables(obs.keys())
-            return render_template("observable/query_results.html", data=data)
+            return render_template("observable/bulk_results.html", data=data)
 
-        return render_template("observable/query.html")
+        return render_template("observable/bulk.html")

@@ -9,15 +9,7 @@
 
 {% block main %}
 <div class="col-md-9">
-	<div role="tabpanel">
-		<ul id="datasetTabs" class="nav nav-tabs" role="tablist">
-			<li role="presentation" class="active"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
-		</ul>
-		<div id="datasetTabsContent" class="tab-content">
-			<div role="tabpanel" class="tab-pane active" id="observables" data-url="{{ url_for('api.ObservableSearch:post')}}">
-			</div>
-		</div>
-	</div>
+	<div role="tabpanel" class="tab-pane active" id="observables" data-url="{{ url_for('api.ObservableSearch:post')}}"></div>
 </div>
 {% endblock %}
 
@@ -30,9 +22,9 @@
 	<form data-target="observables" data-url="{{ url_for('api.ObservableSearch:post')}}" class="yeti-crud">
 
 		<div class="input-group">
-  			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="tags=evil">
+  			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Enter your search query">
 			<span class="input-group-btn">
-				<button class="btn btn-primary btn-sm crud-search" type="button">Go</button>
+				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
 			</span>
 		</div>
 		<div class="checkbox input-group-lg">
@@ -41,11 +33,30 @@
 			</label>
 		</div>
 
+
+
 		<ul class="pagination">
 	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
 	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
 	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
 	  </ul>
+
+		<div class="tip">
+			<p>You can run complex queries against the database using the input field above.</p>
+			<p>By default, the query will be matched against the <code>value</code> attribute of the observables.
+			To match against other attributes, use <code>attribute=query</code>.</p>
+
+			<p>Examples:</p>
+			<ul>
+				<li><strong>Generic tag query</strong>: <code>tags=crimeware</code></li>
+				<li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code> (regex <code>on</code>)</li>
+				<li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code></li>
+				<li><strong>Context</strong>: <code>context.source=FeodoTracker</code></li>
+
+			</ul>
+
+
+		</div>
 
 	</form>
 

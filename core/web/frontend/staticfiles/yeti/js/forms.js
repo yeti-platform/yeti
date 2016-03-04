@@ -19,7 +19,7 @@ function refresh_tagfields(form) {
         elt
         .on('tokenfield:createtoken', function (e) {
           if ($(this).data('choices')) {
-            re = /^[a-zA-Z0-9_]+$/;
+            re = /^[a-zA-Z0-9_ ()-]+$/;
             charset = re.test(e.attrs.value);
             unique = $(this).val().split(',').indexOf(e.attrs.value) == -1;
             return charset;
@@ -31,7 +31,7 @@ function refresh_tagfields(form) {
             delay: 100
           },
           showAutocompleteOnFocus: true,
-          delimiter: [',', ';', ' '],
+          delimiter: [',', ';'],
           beautify: false
         });
       }

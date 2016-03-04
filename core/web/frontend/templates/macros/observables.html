@@ -1,0 +1,18 @@
+{% import "macros/generic.html" as macros %}
+{% macro display_table(n, obj) -%}
+
+<table class="table table-condensed">
+  <tr><th>Observable</th><th>Link</th><th>Type</th><th>Tags</th></tr>
+  {% for type, entry in n.items() if "Observable" in type %}
+    {% for link, node in entry %}
+    <tr>
+      <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id)}}">{{node.value}}</a></td>
+      <td>{{link.description}}</td>
+      <td>{{ node.type }}</td>
+      <td>{{ macros.display_tags(node.tags) }}</td>
+    </tr>
+    {% endfor %}
+  {%endfor%}
+</table>
+
+{%- endmacro %}

@@ -1,8 +1,8 @@
 import re
 from datetime import datetime
+
 from wtforms import widgets, Field, StringField
 from mongoengine import NotUniqueError
-
 from mongoengine import *
 from flask.ext.mongoengine.wtf import model_form
 
@@ -26,7 +26,11 @@ class StringListField(Field):
 
 
 class TagListField(StringListField):
-    pass
+    endpoint = "api.Tag:index"
+
+
+class EntityListField(StringListField):
+    endpoint = "api.Entity:index"
 
 
 class YetiDocument(Document):

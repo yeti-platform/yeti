@@ -95,7 +95,14 @@
             <input type="text" class="form-control" name="name" value=""  placeholder="Name"/>
           </div>
           <div class="form-group">
-            <textarea class="form-control" name="template" value="" rows=10 placeholder="Edit your Jinja2 tempate here"/></textarea>
+            <textarea class="form-control" name="template" value="" rows=10 placeholder={% raw %}"Define your Jinja2 template here.
+
+Example:
+
+<HEADER>
+{%for obs in elements%}{{ obs.idna }}
+{%endfor%}
+<FOOTER>"{% endraw %}/></textarea>
           </div>
           <button type="button" id="yeti-new-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-default btn-sm yeti-new" name="new">New</button>
           <button type="button" id="yeti-save-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-primary btn-sm yeti-save" data-clear="true" name="save">Save</button>

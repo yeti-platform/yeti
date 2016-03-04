@@ -3,7 +3,16 @@ from flask import render_template, request, redirect, url_for
 from mongoengine import NotUniqueError
 
 from core.errors import ObservableValidationError
+from core.entities import Entity, Malware, Company, TTP, Actor
+from core.indicators import Regex
 
+binding_object_classes = {
+    "malware": Malware,
+    "company": Company,
+    "ttp": TTP,
+    "actor": Actor,
+    "regex": Regex,
+}
 
 class GenericView(FlaskView):
 
@@ -27,7 +36,15 @@ class GenericView(FlaskView):
             klass = self.klass
         if request.method == "POST":
             return self.handle_form(klass=klass)
-        form = klass.get_form()()
+
+        print request.args.get('bind')
+        if 'bind' in request.args and request.args.get("type") in binding_object_classes:
+            objtype = binding_object_classes[request.args.get("type")]
+            binding_obj = objtype.objects.get(id=request.args.get('bind'))
+            form = klass.get_form()(links=[binding_obj.name])
+        else:
+            form = klass.get_form()()
+
         obj = None
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
 
@@ -40,7 +57,10 @@ class GenericView(FlaskView):
         form = form_class(obj=obj)
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=self.klass.__name__, obj=obj)
 
-    def pre_validate(self, obj):
+    def pre_validate(self, obj, request):
+        pass
+
+    def post_save(self, obj, request):
         pass
 
     def handle_form(self, id=None, klass=None):
@@ -55,8 +75,9 @@ class GenericView(FlaskView):
         if form.validate():
             form.populate_obj(obj)
             try:
-                self.pre_validate(obj)
-                obj.save()
+                self.pre_validate(obj, request)
+                obj = obj.save()
+                self.post_save(obj, request)
             except (ObservableValidationError, NotUniqueError) as e:
                 # failure - redirect to edit page
                 form.errors['generic'] = [str(e)]

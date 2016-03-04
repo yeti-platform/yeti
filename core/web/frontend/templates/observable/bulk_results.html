@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% import "macros.html" as macros %}
+{% import "macros/generic.html" as macros %}
 
 {% block breadcrumb %}
 <ol class="breadcrumb">
 	<li>YETI</li>
-	<li><a href="{{ url_for("frontend.ObservablesView:query")}}">Query</a></li>
+	<li><a href="{{ url_for("frontend.ObservablesView:index")}}">Query</a></li>
   <li class="active">Results</li>
 
 </ol>
