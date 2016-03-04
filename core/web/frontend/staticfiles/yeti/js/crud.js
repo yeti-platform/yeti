@@ -40,6 +40,10 @@ function change_page(form, direction) {
 }
 
 function refresh_table(form) {
+  $("#spinner").toggle();
+  $("#go").toggle();
+  $("#go").parent().prop('disabled', true);
+
   filter = form.find(".crud-filter").first()
   queries = filter.val().split(' ');
   default_field = filter.data('default-value');
@@ -67,6 +71,11 @@ function refresh_table(form) {
     success: function(observables) {
       table = style_table($(observables))
       $("#"+form.data('target')).html(table);
+    },
+    complete: function(observables) {
+      $("#spinner").toggle();
+      $("#go").toggle();
+      $("#go").parent().prop('disabled', false);
     }
   });
 }

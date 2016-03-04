@@ -24,7 +24,7 @@
 		<div class="input-group">
   			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Enter your search query">
 			<span class="input-group-btn">
-				<button class="btn btn-primary btn-sm crud-search" type="button">Go</button>
+				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
 			</span>
 		</div>
 		<div class="checkbox input-group-lg">
@@ -32,6 +32,8 @@
 			      <input id="regex" type="checkbox" class="crud-regex"> Regex search (slower)
 			</label>
 		</div>
+
+
 
 		<ul class="pagination">
 	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
