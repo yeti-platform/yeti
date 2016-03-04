@@ -15,7 +15,7 @@ TYPE_DICT = {
 class RansomwareTracker(Feed):
 
     default_values = {
-        "frequency": timedelta(minutes=10),
+        "frequency": timedelta(minutes=20),
         "name": "RansomwareTracker",
         "source": "http://ransomwaretracker.abuse.ch/feeds/csv/",
         "description": "Ransomware Tracker offers various types of blocklists that allows you to block Ransomware botnet C&C traffic.",
