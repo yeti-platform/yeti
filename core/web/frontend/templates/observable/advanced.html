@@ -9,15 +9,7 @@
 
 {% block main %}
 <div class="col-md-9">
-	<div role="tabpanel">
-		<ul id="datasetTabs" class="nav nav-tabs" role="tablist">
-			<li role="presentation" class="active"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
-		</ul>
-		<div id="datasetTabsContent" class="tab-content">
-			<div role="tabpanel" class="tab-pane active" id="observables" data-url="{{ url_for('api.ObservableSearch:post')}}">
-			</div>
-		</div>
-	</div>
+	<div role="tabpanel" class="tab-pane active" id="observables" data-url="{{ url_for('api.ObservableSearch:post')}}"></div>
 </div>
 {% endblock %}
 
@@ -54,9 +46,10 @@
 
 			<p>Examples:</p>
 			<ul>
-				<li><strong>Generic tag query:</strong> <code>tags=crimeware</code>: query all elements tagged <code>crimeware</code></li>
-				<li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code>: query all elements tagged <code>zeus</code> and ending in <code>.php</code></li>
-				<li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code>: query all elements tagged <code>ransomware</code> <strong>and</strong> <code>c2</code></li>
+				<li><strong>Generic tag query</strong>: <code>tags=crimeware</code></li>
+				<li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code> (regex <code>on</code>)</li>
+				<li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code></li>
+				<li><strong>Query context</strong>: <code>context.source=ZeusTrackerBinaries</code></li>
 
 			</ul>
 
