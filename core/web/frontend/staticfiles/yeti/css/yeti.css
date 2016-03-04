@@ -97,6 +97,11 @@ span.yeti-toggle {
 
 .tag-evil {
   color: white;
+  background-color: #f33;
+}
+
+.tag-blocklist {
+  color: white;
 	background-color: #f33;
 }
 
