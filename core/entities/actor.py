@@ -11,8 +11,7 @@ class Actor(Entity):
 
     @classmethod
     def get_form(klass):
-        form = model_form(klass, exclude=klass.exclude_fields)
-        form.tags = TagListField("Relevant tags")
+        form = Entity.get_form(override=klass)
         form.aliases = StringListField("Aliases")
         return form
 
