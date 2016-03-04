@@ -17,6 +17,10 @@ class ObservablesView(GenericView):
         obj.save()
         obj.tag(tags, strict=True)
 
+    @route('/advanced')
+    def advanced(self):
+        return render_template("{}/advanced.html".format(self.klass.__name__.lower()))
+
     # override to guess observable type
     @route('/new', methods=["GET", "POST"])
     def new(self, klass=None):
@@ -29,8 +33,8 @@ class ObservablesView(GenericView):
         obj = None
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
 
-    @route("/query", methods=['GET', 'POST'])
-    def query(self):
+    @route("/", methods=['GET', 'POST'])
+    def index(self):
         if request.method == "POST":
             lines = []
             obs = {}
@@ -55,6 +59,6 @@ class ObservablesView(GenericView):
                     obs[l.strip()] = l, None
 
             data = match_observables(obs.keys())
-            return render_template("observable/query_results.html", data=data)
+            return render_template("observable/bulk_results.html", data=data)
 
-        return render_template("observable/query.html")
+        return render_template("observable/bulk.html")

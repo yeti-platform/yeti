@@ -41,14 +41,13 @@ $(function() {
 
 <div class="row">
 	<div class="col-md-4 user-text">
-		<h3>Bulk operation</h3>
-		<p>Launch bulk queries on YETI's observable database</p>
-		<p>YETI's database can be bulk-queried. Unknown observables can be automatically added to the database (bulk-insert)</p>
-		<p>Tags are only used when doing bulk-inserts</p>
+		<h3>Bulk search</h3>
+		<p>Launch bulk searches on YETI's observable database <em>(read-only)</em></p>
+		<p>Use the checkbox to automatically add unknown observables to the database <em>(write operation)</em></p>
 	</div>
-	<div class="col-md-6" >
+	<div class="col-md-8" >
 
-		<form action="{{ url_for('frontend.ObservablesView:query')}}" class="yeti-form" method="POST">
+		<form action="{{ url_for('frontend.ObservablesView:index')}}" class="yeti-form" method="POST">
 
 			<div class="form-inline" id="insert-form">
 

@@ -30,7 +30,7 @@
 	<form data-target="observables" data-url="{{ url_for('api.ObservableSearch:post')}}" class="yeti-crud">
 
 		<div class="input-group">
-  			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="tags=evil">
+  			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Enter your search query">
 			<span class="input-group-btn">
 				<button class="btn btn-primary btn-sm crud-search" type="button">Go</button>
 			</span>
@@ -46,6 +46,22 @@
 	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
 	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
 	  </ul>
+
+		<div class="tip">
+			<p>You can run complex queries agains the database using the input field above.
+			By default, text will be matched against the <code>value</code> attribute of the observables.
+			To match against other attributes, use <code>attribute=value</code>.</p>
+
+			<p>Examples:</p>
+			<ul>
+				<li><strong>Generic tag query:</strong> <code>tags=crimeware</code>: query all elements tagged <code>crimeware</code></li>
+				<li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code>: query all elements tagged <code>zeus</code> and ending in <code>.php</code></li>
+				<li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code>: query all elements tagged <code>ransomware</code> <strong>and</strong> <code>c2</code></li>
+
+			</ul>
+
+
+		</div>
 
 	</form>
 
