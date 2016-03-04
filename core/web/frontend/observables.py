@@ -10,7 +10,7 @@ from core.analysis import match_observables
 class ObservablesView(GenericView):
     klass = Observable
 
-    def pre_validate(self, obj):
+    def pre_validate(self, obj, request):
         tags = obj.tags
         # redundant, but we need the object to be in the database for .tag to work
         obj.tags = []

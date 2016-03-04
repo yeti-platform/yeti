@@ -60,6 +60,9 @@ class GenericView(FlaskView):
     def pre_validate(self, obj, request):
         pass
 
+    def post_save(self, obj, request):
+        pass
+
     def handle_form(self, id=None, klass=None):
         if klass:  # create
             obj = klass()
