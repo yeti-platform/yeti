@@ -21,7 +21,7 @@ from core.errors import ObservableValidationError
 class ResolveHostnames(ScheduledAnalytics):
 
     default_values = {
-        "frequency": timedelta(minutes=2),
+        "frequency": timedelta(hours=1),
         "name": "ResolveHostnames",
         "description": "Resolves hostnames and extracts subdomains",
     }

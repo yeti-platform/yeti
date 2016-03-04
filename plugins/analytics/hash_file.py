@@ -16,7 +16,7 @@ HASH_TYPES_DICT = {'md5': hashlib.md5,
 class HashFile(ScheduledAnalytics):
 
     default_values = {
-        "frequency": timedelta(seconds=10),
+        "frequency": timedelta(hours=1),
         "name": "HashFile",
         "description": "Extracts MD5, SHA1, SHA256, SHA512 hashes from file",
     }

@@ -12,7 +12,7 @@ from core.errors import ObservableValidationError
 class ProcessUrl(ScheduledAnalytics):
 
     default_values = {
-        "frequency": timedelta(seconds=10),
+        "frequency": timedelta(hours=1),
         "name": "ProcessUrl",
         "description": "Extracts domains from URLs",
     }
