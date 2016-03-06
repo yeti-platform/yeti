@@ -24,11 +24,13 @@ class TagLogic(ScheduledAnalytics):
 
         # if an URL is tagged blocklist, tag all related hostnames
         if obj.type == 'Url' and 'blocklist' in all_tags:
-            for link in obj.neighbors(neighbor_type="Hostname").values()[0]:
-                link[1].tag('blocklist')
+            n = obj.neighbors(neighbor_type="Hostname").values()
+            if n:
+                for link in n[0]:
+                    link[1].tag('blocklist')
 
         # tag absent produced tags
-        for tag in obj.tags:
-            t = Tag.objects.get(name=tag.name)
-            produced_tags = t.produces
+        for tag in all_tags:
+            db_tag = Tag.objects.get(name=tag)
+            produced_tags = db_tag.produces
             obj.tag([t.name for t in produced_tags if t.name not in all_tags])
