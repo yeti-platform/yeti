@@ -12,7 +12,7 @@ class ScheduledAnalytics(ScheduleEntry):
     """Base class for analytics. All analytics must inherit from this"""
 
     SCHEDULED_TASK = 'core.analytics_tasks.schedule'
-    CUSTOM_FILTER = {}
+    CUSTOM_FILTER = Q()
 
     def analyze_outdated(self):
         class_filter = Q()
@@ -23,7 +23,7 @@ class ScheduledAnalytics(ScheduleEntry):
         fltr = Q(**{"last_analyses__{}__exists".format(self.name): False})
         if self.EXPIRATION:
             fltr |= Q(**{"last_analyses__{}__lte".format(self.name): datetime.now() - self.EXPIRATION})
-        fltr &= Q(**self.CUSTOM_FILTER) & class_filter
+        fltr &= self.CUSTOM_FILTER & class_filter
         self.bulk(Observable.objects(fltr).no_cache())
 
     def bulk(self, elts):

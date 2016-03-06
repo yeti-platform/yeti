@@ -71,7 +71,7 @@ def execute_export(export_id):
 class Export(ScheduleEntry):
 
     SCHEDULED_TASK = 'core.exports.export.execute_export'
-    CUSTOM_FILTER = {}
+    CUSTOM_FILTER = Q()
 
     include_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     exclude_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
