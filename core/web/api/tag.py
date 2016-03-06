@@ -54,7 +54,7 @@ class Tag(CrudApi):
             oldname = t.name
             t.clean_update(**data)
             # we override this so change_all_tags can be called
-            if data['name'] != t.name:
+            if data['name'] != oldname:
                 observables.Observable.change_all_tags(oldname, data['name'])
             return render({"status": "ok"})
         except TagValidationError as e:
