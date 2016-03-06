@@ -102,7 +102,7 @@ class Observable(Node):
             self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.now())
         return self.reload()
 
-    def tag(self, new_tags, strict=False):
+    def tag(self, new_tags, strict=False, expiration=None):
         new_tags = iterify(new_tags)
 
         if strict:
@@ -128,12 +128,12 @@ class Observable(Node):
 
                 for tag in extra_tags:
                     if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
-                        self.modify(push__tags=ObservableTag(name=tag.name))
+                        self.modify(push__tags=ObservableTag(name=tag.name, expiration=expiration))
                         tag.modify(inc__count=1)
 
         return self.reload()
 
-    def check_tags(self):
+    def expire_tags(self):
         for tag in self.tags:
             if tag.expiration and (tag.last_seen + tag.expiration) < datetime.now():
                 tag.fresh = False
