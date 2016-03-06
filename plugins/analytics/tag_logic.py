@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 from datetime import timedelta
 import logging
 
+from mongoengine import DoesNotExist
+
 from core.analytics import ScheduledAnalytics
 from core.observables import Tag
 
@@ -31,6 +33,9 @@ class TagLogic(ScheduledAnalytics):
 
         # tag absent produced tags
         for tag in all_tags:
-            db_tag = Tag.objects.get(name=tag)
-            produced_tags = db_tag.produces
-            obj.tag([t.name for t in produced_tags if t.name not in all_tags])
+            try:
+                db_tag = Tag.objects.get(name=tag)
+                produced_tags = db_tag.produces
+                obj.tag([t.name for t in produced_tags if t.name not in all_tags])
+            except DoesNotExist:
+                logging.error("Nonexisting tag: {} (found in {})".format(tag, obj.value))
