@@ -21,9 +21,7 @@ class PropagateBlocklist(ScheduledAnalytics):
 
     @staticmethod
     def each(obj):
-        all_tags = set([t.name for t in obj.tags])
-
-        if obj.type == 'Url' and 'blocklist' in all_tags:
+        if obj.has_tag("blocklist"):
             n = obj.neighbors(neighbor_type="Hostname").values()
             if n:
                 for link in n[0]:
