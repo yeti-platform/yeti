@@ -16,16 +16,16 @@ class TimeDeltaField(BaseField):
     def to_python(self, value):
         if isinstance(value, timedelta):
             return value
-        if isinstance(value, (int, float)):
-            return timedelta(seconds=value)
+        if isinstance(value, (int, float, str, unicode)):
+            return timedelta(seconds=int(value))
 
     def prepare_query_value(self, op, value):
         if value is None:
             return value
         if isinstance(value, timedelta):
             return self.total_seconds(value)
-        if isinstance(value, (int, float)):
-            return value
+        if isinstance(value, (int, float, str, unicode)):
+            return int(value)
 
     @staticmethod
     def total_seconds(value):
