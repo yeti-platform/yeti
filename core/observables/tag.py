@@ -15,6 +15,7 @@ class Tag(Node):
     created = DateTimeField(default=datetime.now)
     produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
     replaces = ListField(StringField())
+    default_expiration = TimeDeltaField(default=timedelta(days=90))
 
     meta = {
         'ordering': ['name']
@@ -27,6 +28,7 @@ class Tag(Node):
         i = {k: v for k, v in self._data.items() if k in ["name", "count", "created", "replaces"]}
         i['id'] = str(self.id)
         i['produces'] = [tag.name for tag in self.produces]
+        i['default_expiration'] = self.default_expiration.total_seconds()
         return i
 
     def add_replaces(self, tags):
@@ -52,7 +54,7 @@ class ObservableTag(EmbeddedDocument):
     name = StringField(required=True)
     first_seen = DateTimeField(default=datetime.now)
     last_seen = DateTimeField(default=datetime.now)
-    expiration = TimeDeltaField(default=timedelta(days=365))
+    expiration = TimeDeltaField(default=timedelta(days=90))
     fresh = BooleanField(default=True)
 
     def __unicode__(self):

@@ -120,6 +120,9 @@ class Observable(Node):
                 except DoesNotExist:
                     tag = Tag.get_or_create(name=new_tag.name)
 
+                if not expiration:
+                    expiration = tag.default_expiration
+
                 extra_tags = tag.produces + [tag]
 
                 # search for related entities and link them
