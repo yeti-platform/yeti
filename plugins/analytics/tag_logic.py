@@ -30,10 +30,6 @@ class TagLogic(ScheduledAnalytics):
 
             all_produces[tag] = [t.name for t in produces]
 
-        print existing_tags.keys()
-        print all_replacements.keys()
-        print all_produces.keys()
-
         exists = Q(tags__exists=True)
         not_in_existing = Q(tags__name__nin=existing_tags.keys())
         must_replace = Q(tags__name__in=all_replacements.keys())
