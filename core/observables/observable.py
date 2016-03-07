@@ -1,5 +1,6 @@
 from datetime import datetime
 import operator
+import pytz
 
 from mongoengine import *
 from flask.ext.mongoengine.wtf import model_form
@@ -138,7 +139,7 @@ class Observable(Node):
 
     def expire_tags(self):
         for tag in self.tags:
-            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow():
+            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow().replace(tzinfo=pytz.utc):
                 tag.fresh = False
         return self.save()
 
