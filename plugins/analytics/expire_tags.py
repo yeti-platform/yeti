@@ -16,7 +16,7 @@ class ExpireTags(ScheduledAnalytics):
     ACTS_ON = []  # act on all observables
 
     # TODO Use server-side JS filter
-    CUSTOM_FILTER = Q(tags__ne=[])  # filter only tagged elements
+    CUSTOM_FILTER = Q(tags__not__size=0)  # filter only tagged elements
 
     EXPIRATION = timedelta(days=1)
 
