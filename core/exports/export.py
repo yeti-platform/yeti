@@ -64,7 +64,7 @@ def execute_export(export_id):
         logging.error(traceback.format_exc())
         export.update_status(msg)
 
-    export.last_run = datetime.now()
+    export.last_run = datetime.utcnow()
     export.save()
 
 

@@ -99,7 +99,7 @@ class Observable(Node):
     def change_tag(self, old_tag, new_tag):
         if not self.modify({"tags__name": old_tag, "tags__name__ne": new_tag}, set__tags__S__name=new_tag):
             self.modify({"tags__name": old_tag}, pull__tags__name=old_tag)
-            self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.now())
+            self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.utcnow())
         return self.reload()
 
     def tag(self, new_tags, strict=False, expiration=None):
@@ -130,7 +130,7 @@ class Observable(Node):
                     self.link_to(e, 'Tagged', 'tags')
 
                 for tag in extra_tags:
-                    if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
+                    if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.utcnow()):
                         self.modify(push__tags=ObservableTag(name=tag.name, expiration=expiration))
                         tag.modify(inc__count=1)
 
@@ -138,7 +138,7 @@ class Observable(Node):
 
     def expire_tags(self):
         for tag in self.tags:
-            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.now():
+            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow():
                 tag.fresh = False
         return self.save()
 
@@ -146,7 +146,7 @@ class Observable(Node):
         return [tag for tag in self.tags if tag.fresh]
 
     def analysis_done(self, module_name):
-        ts = datetime.now()
+        ts = datetime.utcnow()
         return self.modify(**{"set__last_analyses__{}".format(module_name): ts})
 
     def info(self):
