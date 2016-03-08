@@ -37,7 +37,6 @@ class ExportTemplate(YetiDocument):
 
         return m.hexdigest()
 
-
     def info(self):
         return {
             "name": self.name,
@@ -90,8 +89,11 @@ class Export(ScheduleEntry):
         return os.path.abspath(os.path.join(self.output_dir, self.name))
 
     def execute(self):
-        q = Q(tags__name__in=[t.name for t in self.include_tags]) & Q(tags__name__nin=[t.name for t in self.exclude_tags])
-        q &= Q(_cls__contains=self.acts_on)
+        q_include = Q()
+        for t in self.include_tags:
+            q_include |= Q(tags__match={'name': t.name, 'fresh': True})
+        q_exclude = Q(tags__name__nin=[t.name for t in self.exclude_tags])
+        q = q_include & q_exclude & Q(_cls__contains=self.acts_on)
 
         return self.template.render(Observable.objects(q).no_cache(), self.output_file)
 
