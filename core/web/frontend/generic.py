@@ -37,7 +37,6 @@ class GenericView(FlaskView):
         if request.method == "POST":
             return self.handle_form(klass=klass)
 
-        print request.args.get('bind')
         if 'bind' in request.args and request.args.get("type") in binding_object_classes:
             objtype = binding_object_classes[request.args.get("type")]
             binding_obj = objtype.objects.get(id=request.args.get('bind'))

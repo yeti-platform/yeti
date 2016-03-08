@@ -31,7 +31,6 @@ class Indicator(Node):
     def search(cls, observables):
         for o in observables:
             for i in Indicator.objects():
-                print i
                 if i.match(o):
                     yield o, i
 

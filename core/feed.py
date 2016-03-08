@@ -29,7 +29,7 @@ def update_feed(feed_id):
         logging.error(msg)
         f.update_status(msg)
 
-    f.last_run = datetime.now()
+    f.last_run = datetime.utcnow()
     f.save()
 
 

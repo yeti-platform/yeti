@@ -1,5 +1,6 @@
 from datetime import datetime
 import operator
+import pytz
 
 from mongoengine import *
 from flask.ext.mongoengine.wtf import model_form
@@ -20,7 +21,7 @@ class Observable(Node):
     tags = ListField(EmbeddedDocumentField(ObservableTag), verbose_name="Tags")
     last_analyses = DictField(verbose_name="Last analyses")
 
-    created = DateTimeField(default=datetime.now)
+    created = DateTimeField(default=datetime.utcnow)
 
     exclude_fields = ['sources', 'context', 'last_analyses', 'created']
 
@@ -99,10 +100,10 @@ class Observable(Node):
     def change_tag(self, old_tag, new_tag):
         if not self.modify({"tags__name": old_tag, "tags__name__ne": new_tag}, set__tags__S__name=new_tag):
             self.modify({"tags__name": old_tag}, pull__tags__name=old_tag)
-            self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.now())
+            self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.utcnow())
         return self.reload()
 
-    def tag(self, new_tags, strict=False):
+    def tag(self, new_tags, strict=False, expiration=None):
         new_tags = iterify(new_tags)
 
         if strict:
@@ -120,6 +121,9 @@ class Observable(Node):
                 except DoesNotExist:
                     tag = Tag.get_or_create(name=new_tag.name)
 
+                if not expiration:
+                    expiration = tag.default_expiration
+
                 extra_tags = tag.produces + [tag]
 
                 # search for related entities and link them
@@ -127,15 +131,15 @@ class Observable(Node):
                     self.link_to(e, 'Tagged', 'tags')
 
                 for tag in extra_tags:
-                    if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.now()):
-                        self.modify(push__tags=ObservableTag(name=tag.name))
+                    if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.utcnow()):
+                        self.modify(push__tags=ObservableTag(name=tag.name, expiration=expiration))
                         tag.modify(inc__count=1)
 
         return self.reload()
 
-    def check_tags(self):
+    def expire_tags(self):
         for tag in self.tags:
-            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.now():
+            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow().replace(tzinfo=pytz.UTC):
                 tag.fresh = False
         return self.save()
 
@@ -143,7 +147,7 @@ class Observable(Node):
         return [tag for tag in self.tags if tag.fresh]
 
     def analysis_done(self, module_name):
-        ts = datetime.now()
+        ts = datetime.utcnow()
         return self.modify(**{"set__last_analyses__{}".format(module_name): ts})
 
     def info(self):

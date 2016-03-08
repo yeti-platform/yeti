@@ -6,18 +6,37 @@ from mongoengine import DoesNotExist
 
 from core.analytics import ScheduledAnalytics
 from core.observables import Tag
-
+from mongoengine import Q
 
 class TagLogic(ScheduledAnalytics):
 
     default_values = {
-        "frequency": timedelta(hours=1),
+        "frequency": timedelta(minutes=30),
         "name": "TagLogic",
         "description": "Processes some tagging logic",
     }
 
     ACTS_ON = []  # act on all observables
-    EXPIRATION = timedelta(days=1)
+    EXPIRATION = timedelta(seconds=3)
+
+    def __init__(self, *args, **kwargs):
+        super(TagLogic, self).__init__(*args, **kwargs)
+
+        existing_tags = {t.name: (t.replaces, t.produces) for t in Tag.objects.all()}
+        all_replacements = {}
+        all_produces = {}
+        for tag, (replaces, produces) in existing_tags.items():
+            for rep in replaces:
+                if rep:
+                    all_replacements[rep] = tag
+
+            all_produces[tag] = [t.name for t in produces]
+
+        exists = Q(tags__exists=True)
+        not_in_existing = Q(tags__name__nin=existing_tags.keys())
+        must_replace = Q(tags__name__in=all_replacements.keys())
+
+        self.CUSTOM_FILTER = exists & (not_in_existing | must_replace)
 
     @staticmethod
     def each(obj):

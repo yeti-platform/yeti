@@ -36,7 +36,7 @@ def schedule(id):
         logging.warning("Running analytics {}".format(a.name))
         a.update_status("Running...")
         a.analyze_outdated()
-        a.last_run = datetime.now()
+        a.last_run = datetime.utcnow()
     else:
         logging.error("Analytics {} is disabled".format(a.name))
 

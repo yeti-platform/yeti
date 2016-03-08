@@ -12,9 +12,10 @@ from core.helpers import iterify
 class Tag(Node):
     name = StringField(required=True, unique=True)
     count = IntField(required=True, default=0)
-    created = DateTimeField(default=datetime.now)
+    created = DateTimeField(default=datetime.utcnow)
     produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
     replaces = ListField(StringField())
+    default_expiration = TimeDeltaField(default=timedelta(days=90))
 
     meta = {
         'ordering': ['name']
@@ -27,6 +28,8 @@ class Tag(Node):
         i = {k: v for k, v in self._data.items() if k in ["name", "count", "created", "replaces"]}
         i['id'] = str(self.id)
         i['produces'] = [tag.name for tag in self.produces]
+        i['default_expiration'] = self.default_expiration.total_seconds()
+        i['default_expiration_str'] = str(self.default_expiration)
         return i
 
     def add_replaces(self, tags):
@@ -50,9 +53,9 @@ class Tag(Node):
 class ObservableTag(EmbeddedDocument):
 
     name = StringField(required=True)
-    first_seen = DateTimeField(default=datetime.now)
-    last_seen = DateTimeField(default=datetime.now)
-    expiration = TimeDeltaField(default=timedelta(days=365))
+    first_seen = DateTimeField(default=datetime.utcnow)
+    last_seen = DateTimeField(default=datetime.utcnow)
+    expiration = TimeDeltaField(default=timedelta(days=90))
     fresh = BooleanField(default=True)
 
     def __unicode__(self):

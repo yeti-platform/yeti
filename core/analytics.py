@@ -22,7 +22,7 @@ class ScheduledAnalytics(ScheduleEntry):
         # do outdated logic
         fltr = Q(**{"last_analyses__{}__exists".format(self.name): False})
         if self.EXPIRATION:
-            fltr |= Q(**{"last_analyses__{}__lte".format(self.name): datetime.now() - self.EXPIRATION})
+            fltr |= Q(**{"last_analyses__{}__lte".format(self.name): datetime.utcnow() - self.EXPIRATION})
         fltr &= self.CUSTOM_FILTER & class_filter
         self.bulk(Observable.objects(fltr).no_cache())
 
