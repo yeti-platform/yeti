@@ -21,7 +21,7 @@ class Observable(Node):
     tags = ListField(EmbeddedDocumentField(ObservableTag), verbose_name="Tags")
     last_analyses = DictField(verbose_name="Last analyses")
 
-    created = DateTimeField(default=datetime.now)
+    created = DateTimeField(default=datetime.utcnow)
 
     exclude_fields = ['sources', 'context', 'last_analyses', 'created']
 
@@ -139,7 +139,7 @@ class Observable(Node):
 
     def expire_tags(self):
         for tag in self.tags:
-            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow().replace(tzinfo=pytz.utc):
+            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow().replace(tzinfo=pytz.UTC):
                 tag.fresh = False
         return self.save()
 

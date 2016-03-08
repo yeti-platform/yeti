@@ -12,7 +12,7 @@ from core.helpers import iterify
 class Tag(Node):
     name = StringField(required=True, unique=True)
     count = IntField(required=True, default=0)
-    created = DateTimeField(default=datetime.now)
+    created = DateTimeField(default=datetime.utcnow)
     produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
     replaces = ListField(StringField())
     default_expiration = TimeDeltaField(default=timedelta(days=90))
@@ -52,8 +52,8 @@ class Tag(Node):
 class ObservableTag(EmbeddedDocument):
 
     name = StringField(required=True)
-    first_seen = DateTimeField(default=datetime.now)
-    last_seen = DateTimeField(default=datetime.now)
+    first_seen = DateTimeField(default=datetime.utcnow)
+    last_seen = DateTimeField(default=datetime.utcnow)
     expiration = TimeDeltaField(default=timedelta(days=90))
     fresh = BooleanField(default=True)
 

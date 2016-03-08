@@ -61,8 +61,8 @@ class YetiDocument(Document):
 class LinkHistory(EmbeddedDocument):
 
     description = StringField()
-    first_seen = DateTimeField(default=datetime.now)
-    last_seen = DateTimeField(default=datetime.now)
+    first_seen = DateTimeField(default=datetime.utcnow)
+    last_seen = DateTimeField(default=datetime.utcnow)
     sources = ListField(StringField())
     active = BooleanField()
 

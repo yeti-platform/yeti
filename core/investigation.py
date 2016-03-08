@@ -24,7 +24,7 @@ class InvestigationEvent(EmbeddedDocument):
     kind = StringField(required=True)
     links = ListField(EmbeddedDocumentField(InvestigationLink))
     nodes = ListField(ReferenceField('Node'))
-    datetime = DateTimeField(default=datetime.now)
+    datetime = DateTimeField(default=datetime.utcnow)
 
 
 class Investigation(YetiDocument):
