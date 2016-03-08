@@ -86,6 +86,10 @@ class Feed(ScheduleEntry):
         for line in feed:
             yield line
 
+    def utf_8_encoder(self, unicode_csv_data):
+        for line in unicode_csv_data:
+            yield line.encode('utf-8')
+
     def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None):
         assert self.source is not None
 
@@ -95,7 +99,7 @@ class Feed(ScheduleEntry):
             r = requests.get(self.source, headers=headers)
 
         feed = r.text.split('\n')
-        reader = csv.reader(feed, delimiter=delimiter, quotechar=quotechar)
+        reader = csv.reader(self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
 
         for line in reader:
             yield line
