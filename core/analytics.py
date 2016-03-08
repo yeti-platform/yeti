@@ -17,7 +17,7 @@ class ScheduledAnalytics(ScheduleEntry):
     def analyze_outdated(self):
         class_filter = Q()
         for acts_on in iterify(self.ACTS_ON):
-            class_filter |= Q(_cls__contains=acts_on)
+            class_filter |= Q(_cls="Observable.{}".format(acts_on))
 
         # do outdated logic
         fltr = Q(**{"last_analyses__{}__exists".format(self.name): False})

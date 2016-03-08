@@ -93,7 +93,7 @@ class Export(ScheduleEntry):
         for t in self.include_tags:
             q_include |= Q(tags__match={'name': t.name, 'fresh': True})
         q_exclude = Q(tags__name__nin=[t.name for t in self.exclude_tags])
-        q = q_include & q_exclude & Q(_cls__contains=self.acts_on)
+        q = q_include & q_exclude & Q(_cls="Observable.{}".format(self.acts_on))
 
         return self.template.render(Observable.objects(q).no_cache(), self.output_file)
 
