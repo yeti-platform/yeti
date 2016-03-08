@@ -29,6 +29,7 @@ class Tag(Node):
         i['id'] = str(self.id)
         i['produces'] = [tag.name for tag in self.produces]
         i['default_expiration'] = self.default_expiration.total_seconds()
+        i['default_expiration_str'] = str(self.default_expiration)
         return i
 
     def add_replaces(self, tags):
