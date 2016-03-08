@@ -97,7 +97,6 @@ class Export(ScheduleEntry):
 
         return self.template.render(Observable.objects(q).no_cache(), self.output_file)
 
-
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["name", "output_dir", "enabled", "description", "status", "last_run", "include_tags", "exclude_tags"]}
         i['frequency'] = str(self.frequency)

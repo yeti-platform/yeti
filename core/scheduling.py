@@ -52,7 +52,7 @@ class OneShotEntry(YetiDocument):
 
 class Scheduler(BaseScheduler):
 
-    SUBDIRS = ['feeds', 'analytics']
+    SUBDIRS = ['feeds', 'analytics', 'exports']
 
     def __init__(self, *args, **kwargs):
         self._schedule = {}
