@@ -7,8 +7,8 @@ import hashlib
 
 from mongoengine import ListField, StringField, Q, ReferenceField, PULL
 from jinja2 import Template
-from flask.ext.mongoengine.wtf import model_form
 from flask import url_for
+from mongoengine import DoesNotExist
 
 from core.database import YetiDocument
 from core.config.celeryctl import celery_app
@@ -48,7 +48,17 @@ class ExportTemplate(YetiDocument):
 @celery_app.task
 def execute_export(export_id):
 
-    export = Export.objects.get(id=export_id)
+    try:
+        export = Export.objects.get(id=export_id, lock=None)  # check if we have implemented locking mechanisms
+    except DoesNotExist:
+        try:
+            Export.objects.get(id=export_id, lock=False).modify(lock=True)  # get object and change lock
+            export = Export.objects.get(id=export_id)
+        except DoesNotExist:
+            # no unlocked Export was found, notify and return...
+            logging.info("Export {} is already running...".format(Export.objects.get(id=export_id).name))
+            return
+
     try:
         if export.enabled:
             logging.info("Running export {}".format(export.name))
@@ -62,6 +72,9 @@ def execute_export(export_id):
         logging.error(msg)
         logging.error(traceback.format_exc())
         export.update_status(msg)
+
+    if export.lock:  # release lock if it was set
+        export.lock = False
 
     export.last_run = datetime.utcnow()
     export.save()
