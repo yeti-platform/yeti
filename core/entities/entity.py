@@ -20,6 +20,9 @@ class Entity(Node):
 
     meta = {
         "allow_inheritance": True,
+        "indexes": [
+            "tags"
+        ]
     }
 
     @classmethod

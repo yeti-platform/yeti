@@ -73,6 +73,13 @@ class Link(Document):
     dst = ReferenceField("Node", required=True, dbref=True, unique_with='src')
     history = ListField(EmbeddedDocumentField(LinkHistory))
 
+    meta = {
+        "indexes": [
+            "src",
+            "dst"
+        ]
+    }
+
     def __unicode__(self):
         return u"{} -> {} ({})".format(self.src, self.dst, self.description)
 

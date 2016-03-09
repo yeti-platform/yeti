@@ -27,6 +27,10 @@ class Observable(Node):
 
     meta = {
         "allow_inheritance": True,
+        "indexes": [
+            "tags",
+            "last_analyses",
+        ]
     }
 
     @classmethod
