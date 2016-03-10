@@ -62,7 +62,7 @@ def is_ip(ip):
 
 
 def is_hostname(hostname):
-    hostname = hostname.lower()
+    hostname = refang(hostname.lower())
     if hostname:
         match = re.match("^" + hostname_regex + "$", hostname)
         if match:

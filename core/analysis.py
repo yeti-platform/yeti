@@ -5,7 +5,7 @@ from core.observables import Observable, Url, Hostname
 from core.indicators import Indicator
 from core.web.api.api import render
 from core.errors import ObservableValidationError
-from core.helpers import del_from_set, iterify
+from core.helpers import del_from_set, iterify, refang
 
 # load analyzers
 from plugins.analytics.process_hostnames import ProcessHostnames
@@ -34,7 +34,7 @@ def derive(observables):
 
 def match_observables(observables, save_matches=False):
     # Remove empty observables
-    observables = [observable for observable in observables if observable]
+    observables = [refang(observable) for observable in observables if observable]
     extended_query = set(observables) | set(derive(observables))
     added_entities = set()
 
