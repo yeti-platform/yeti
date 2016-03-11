@@ -21,11 +21,14 @@ from core.web.api.observable import ObservableSearch, Observable
 from core.web.api.entity import Entity, EntitySearch
 from core.web.api.tag import Tag
 from core.web.api.analytics import ScheduledAnalytics, OneShotAnalytics
+from core.web.api.analysis import Analysis
 from core.web.api.feeds import Feed
 from core.web.api.export import Export, ExportTemplate
 from core.web.api.neighbors import Neighbors
 from core.web.api.investigation import Investigation
 from core.web.api.indicator import Indicator, IndicatorSearch
+
+Analysis.register(api)
 
 ScheduledAnalytics.register(api, route_base='/analytics/scheduled')
 OneShotAnalytics.register(api, route_base='/analytics/oneshot')

@@ -1,4 +1,5 @@
 from flask import request
+from flask.ext.classy import route
 
 from core.web.api.crud import CrudApi
 from core.observables import Observable
@@ -9,6 +10,7 @@ from core.analysis import match_observables
 class Analysis(CrudApi):
     objectmanager = Observable
 
+    @route("/match", methods=["POST"])
     def match(self):
         params = request.json
         observables = params.pop('observables', [])

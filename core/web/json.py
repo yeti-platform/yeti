@@ -12,6 +12,8 @@ def to_json(obj):
         return {'collection': obj.collection, 'id': str(obj.id)}
     elif isinstance(obj, datetime.datetime):
         return obj.isoformat()
+    elif isinstance(obj, set):
+        return list(obj)
     else:
         return default(obj)
 
