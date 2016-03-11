@@ -1,9 +1,5 @@
-from flask import request
-from flask_restful import Resource
-
 from core.observables import Observable, Url, Hostname
 from core.indicators import Indicator
-from core.web.api.api import render
 from core.errors import ObservableValidationError
 from core.helpers import del_from_set, iterify, refang
 
@@ -15,6 +11,7 @@ analyzers = {
     Hostname: [ProcessHostnames],
     Url: [ProcessUrl],
 }
+
 
 def derive(observables):
     new = []
@@ -45,7 +42,6 @@ def match_observables(observables, save_matches=False):
         "known": [],
         "neighbors": [],
     }
-
 
     # add to "known"
     for o in Observable.objects(value__in=list(extended_query)):

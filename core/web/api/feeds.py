@@ -1,4 +1,3 @@
-from flask_restful import abort as restful_abort
 from flask.ext.classy import route
 
 from core.web.api.crud import CrudApi
