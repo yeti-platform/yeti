@@ -1,5 +1,4 @@
 from mongoengine import *
-
 from flask.ext.mongoengine.wtf import model_form
 
 from core.database import Node
@@ -29,8 +28,9 @@ class Indicator(Node):
 
     @classmethod
     def search(cls, observables):
+        indicators = list(Indicator.objects())
         for o in observables:
-            for i in Indicator.objects():
+            for i in indicators:
                 if i.match(o):
                     yield o, i
 
