@@ -5,7 +5,7 @@ from mongoengine import connect
 from core.entities.malware import MalwareFamily, Malware
 from core.indicators import Regex, Indicator
 from core.database import Link
-from core.entities import TTP
+from core.entities import TTP, Exploit, ExploitKit
 from core.observables import Observable
 from core.observables import Tag
 from core.exports import Export, ExportTemplate
@@ -15,16 +15,67 @@ db = connect('yeti')
 db.drop_database('yeti')
 
 ## Populate database with initial values
-MalwareFamily("mailer").save()
-MalwareFamily("banker").save()
-MalwareFamily("worm").save()
-MalwareFamily("ransomware").save()
-MalwareFamily("backdoor").save()
-MalwareFamily("stealer").save()
-MalwareFamily("passwordstealer").save()
-MalwareFamily("rootkit").save()
-MalwareFamily("trojan").save()
-MalwareFamily("dropper").save()
+mailer = MalwareFamily("mailer").save()
+banker = MalwareFamily("banker").save()
+worm = MalwareFamily("worm").save()
+ransomware = MalwareFamily("ransomware").save()
+backdoor = MalwareFamily("backdoor").save()
+stealer = MalwareFamily("stealer").save()
+passwordstealer = MalwareFamily("passwordstealer").save()
+rootkit = MalwareFamily("rootkit").save()
+trojan = MalwareFamily("trojan").save()
+dropper = MalwareFamily("dropper").save()
+
+# Malware
+e = ExploitKit(name="Angler").save()
+e = ExploitKit(name="Neutrino").save()
+e = Malware(name="Pony").save()
+e.family = dropper
+e.save()
+e = ExploitKit(name="Magnitude").save()
+e = ExploitKit(name="Fiesta").save()
+e = ExploitKit(name="Nuclear").save()
+e = Malware(name="Asprox").save()
+e.family = dropper
+e.save()
+e = Malware(name="Neverquest").save()
+e.family = trojan
+e.save()
+e = ExploitKit(name="Sweet Orange").save()
+e = Malware(name="DarkComet").save()
+e.family = trojan
+e.save()
+e = Malware(name="Upatre").save()
+e.family = trojan
+e.save()
+e = ExploitKit(name="RIG").save()
+e = Malware(name="CryptoWall").save()
+e.family = ransomware
+e.save()
+e = Malware(name="Dridex").save()
+e.family = trojan
+e.save()
+e = ExploitKit(name="BlackHole").save()
+e = Malware(name="AlienSpy").save()
+e.family = trojan
+e.save()
+e = Malware(name="Andromeda").save()
+e.family = dropper
+e.save()
+e = Malware(name="Dyre").save()
+e.family = trojan
+e.save()
+e = Exploit(name="CVE-2015-3113").save()
+e = Malware(name="Teslacrypt").save()
+e.family = ransomware
+e.save()
+e = Malware(name="Alphacrypt").save()
+e.family = ransomware
+e.save()
+e = Malware(name="Locky").save()
+e.family = ransomware
+e.save()
+
 
 
 t1 = Tag.get_or_create(name="zeus").add_produces(["crimeware", "banker", "malware"])
@@ -81,16 +132,14 @@ zeus.save()
 ## Create initial intelligence
 
 # Indicators
-bartalex_callback = Regex(name="Bartalex callback")
-bartalex_callback.pattern = "/mg.jpg$"
+bartalex_callback = Regex(name="Bartalex callback", pattern="/mg.jpg$")
 bartalex_callback.description = "Bartalex [stage2] callback (extracted from macros)"
 bartalex_callback.diamond = "capability"
 bartalex_callback.location = "network"
 bartalex_callback.save()
 bartalex_callback.action(bartalex, 'testrun', verb='indicates')
 
-bartalex_callback2 = Regex(name="Bartalex callback")
-bartalex_callback2.pattern = "/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$"
+bartalex_callback2 = Regex(name="Bartalex callback", pattern="/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$")
 bartalex_callback2.description = "Bartalex [stage2] callback (extracted from macros)"
 bartalex_callback2.diamond = "capability"
 bartalex_callback2.location = "network"
@@ -102,8 +151,7 @@ bartalex_callback2.action(dridex, 'testrun', verb="hosts")
 
 bartalex.action(dridex, 'testrun', verb="drops")
 
-zeus_callback = Regex(name="Zeus C2 check-in")
-zeus_callback.pattern = "/gate.php$"
+zeus_callback = Regex(name="Zeus C2 check-in", pattern="/gate.php$")
 zeus_callback.description = "ZeuS post-infection callback"
 zeus_callback.diamond = "capability"
 zeus_callback.location = "network"
