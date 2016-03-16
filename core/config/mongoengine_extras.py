@@ -14,6 +14,8 @@ class TimeDeltaField(BaseField):
         return self.prepare_query_value(None, value)
 
     def to_python(self, value):
+        if not value:
+            return None
         if isinstance(value, timedelta):
             return value
         if isinstance(value, (int, float, str, unicode)):
