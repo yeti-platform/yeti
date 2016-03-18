@@ -15,4 +15,4 @@ class TTP(Entity):
         return i
 
     def generate_tags(self):
-        return [self.killchain.lower()]
+        return [self.killchain.lower(), self.name.lower()]

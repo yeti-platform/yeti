@@ -41,7 +41,7 @@ class Indicator(Node):
         self.link_to(target, verb, source)
 
     def generate_tags(self):
-        return [self.diamond.lower()]
+        return [self.diamond.lower(), self.name.lower()]
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description', 'location']}
