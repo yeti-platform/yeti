@@ -47,4 +47,4 @@ class Entity(Node):
         self.link_to(target, verb, source)
 
     def generate_tags(self):
-        raise NotImplementedError("This method must be implemented in subclasses")
+        return []
