@@ -58,7 +58,7 @@ class CrudApi(FlaskView):
         return render(data, template=self.template)
 
     # This method can be overridden if needed
-    def parse_request(self, json):
+    def _parse_request(self, json):
         return json
 
     def get(self, id):
@@ -68,14 +68,14 @@ class CrudApi(FlaskView):
 
     @route("/", methods=["POST"])
     def new(self):
-        params = self.parse_request(request.json)
+        params = self._parse_request(request.json)
         obj = self.objectmanager(**params).save()
         obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
         return render(obj)
 
     def post(self, id):
         obj = self.objectmanager.objects.get(id=id)
-        params = self.parse_request(request.json)
+        params = self._parse_request(request.json)
         obj = obj.clean_update(**params)
         obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
         return render(obj)
