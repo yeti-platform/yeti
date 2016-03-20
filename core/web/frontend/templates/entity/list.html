@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros/filterlist.html" as filterlist %}
 
 {% block breadcrumb %}
 <ol class="breadcrumb">
@@ -8,39 +9,34 @@
 {% endblock %}
 
 {% block main %}
-<div class="col-md-9">
-	<div id="entities">
+<ul class="nav nav-tabs" role="tablist">
+  <li role="presentation" class="active"><a href="#malware_tab" aria-controls="malware_tab" role="tab" data-toggle="tab">Malware</a></li>
+  <li role="presentation"><a href="#ttp_tab" aria-controls="ttp_tab" role="tab" data-toggle="tab">TTPs</a></li>
+  <li role="presentation"><a href="#actor_tab" aria-controls="actor_tab" role="tab" data-toggle="tab">Actors</a></li>
+  <li role="presentation"><a href="#company_tab" aria-controls="company_tab" role="tab" data-toggle="tab">Companies</a></li>
+</ul>
+
+<div class="tab-content">
+
+  <div role="tabpanel" class="tab-pane active" id="malware_tab"> <!-- malware tab -->
+		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "malware", _cls='Entity.Malware') }}
 	</div>
+
+	<div role="tabpanel" class="tab-pane" id="ttp_tab">
+		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "ttp", _cls='Entity.TTP') }}
+	</div>
+
+	<div role="tabpanel" class="tab-pane" id="actor_tab">
+		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "actor", _cls='Entity.Actor') }}
+	</div>
+
+	<div role="tabpanel" class="tab-pane" id="company_tab">
+		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "company", _cls='Entity.Company') }}
+	</div>
+
 </div>
 {% endblock %}
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
 {%endblock%}
-
-{% block sidebar %}
-<div class="col-md-3">
-	<form data-target="entities" data-url="{{ url_for('api.EntitySearch:post')}}" class="yeti-crud">
-
-		<div class="input-group">
-  			<input class="form-control input-sm crud-filter" data-default-value="name" placeholder="tags=evil">
-			<span class="input-group-btn">
-				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
-			</span>
-		</div>
-		<div class="checkbox input-group-lg">
-			<label class="checkbox">
-			      <input type="checkbox" class="crud-regex"> Regex search (slower)
-			</label>
-		</div>
-
-		<ul class="pagination">
-	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
-	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
-	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
-	  </ul>
-
-	</form>
-
-</div>
-{% endblock %}

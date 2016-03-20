@@ -57,6 +57,11 @@ function refresh_table(form) {
 			filter[default_field] = splitted[0];
 	}
 
+  // include extra filters from hidden inputs
+  form.find(".extra-filter").each(function() {
+    filter[this.name] = $(this).val()
+  });
+
   params = {'regex': form.find('.crud-regex').prop('checked') ? true : false,
             'page': form.find(".crud-pagination").data('page'),
             }
