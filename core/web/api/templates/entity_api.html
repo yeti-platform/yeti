@@ -60,7 +60,7 @@
       <tr><th>Name</th></tr>
       {% for entity in data if entity['type'] == "Company" %}
       <tr>
-        <td><a href="{{ url_for('frontend.entity', id=entity['id'])}}">{{entity['name']}}</a></td>
+        <td><a href="{{ url_for('frontend.EntitiesView:get', id=entity['id'])}}">{{entity['name']}}</a></td>
       </tr>
       {% endfor %}
     </table>
