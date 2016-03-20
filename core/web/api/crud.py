@@ -30,9 +30,8 @@ class CrudSearchApi(FlaskView):
         try:
             data = []
             for o in self.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
-                info = o.info()
-                info['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(o.id))
-                data.append(info)
+                o.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(o.id))
+                data.append(o)
 
         except InvalidQueryError as e:
             logging.error(e)
@@ -54,10 +53,8 @@ class CrudApi(FlaskView):
     def index(self):
         data = []
         for obj in self.objectmanager.objects.all():
-            info = obj.info()
-            info['uri'] = url_for("api.{}:get".format(self.__class__.__name__), id=str(obj.id))
-            data.append(info)
-
+            obj.uri = url_for("api.{}:get".format(self.__class__.__name__), id=str(obj.id))
+            data.append(obj)
         return render(data, template=self.template)
 
     # This method can be overridden if needed
@@ -66,21 +63,19 @@ class CrudApi(FlaskView):
 
     def get(self, id):
         obj = self.objectmanager.objects.get(id=id)
-        data = obj.info()
-        data['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
-        return render(data, self.template_single)
+        obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
+        return render(obj, self.template_single)
 
     @route("/", methods=["POST"])
     def new(self):
         params = self.parse_request(request.json)
         obj = self.objectmanager(**params).save()
-        data = obj.info()
-        data['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
-        return render(data)
+        obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
+        return render(obj)
 
     def post(self, id):
         obj = self.objectmanager.objects.get(id=id)
         params = self.parse_request(request.json)
-        info = obj.clean_update(**params).info()
-        info['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
-        return render(info)
+        obj = obj.clean_update(**params)
+        obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
+        return render(obj)

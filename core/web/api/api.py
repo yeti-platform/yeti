@@ -4,12 +4,23 @@ from flask.ext.negotiation.renderers import renderer, template_renderer
 from json import dumps
 
 from core.web.json import to_json
+from core.helpers import iterify
+
 
 api = Blueprint("api", __name__, template_folder="templates")
 
 
 @renderer('application/json')
-def bson_renderer(data, template=None, ctx=None):
+def bson_renderer(objects, template=None, ctx=None):
+
+    #  objects can't be sent via json, use the info() function
+    data = []
+    for o in iterify(objects):
+        info = o.info()
+        info['uri'] = o.uri
+        data.append(info)
+    if len(data) == 1:
+        data = data[0]
     return dumps(data, default=to_json)
 
 render = Render(renderers=[template_renderer, bson_renderer])
