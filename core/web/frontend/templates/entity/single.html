@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "macros/generic.html" as macros %}
+{% import "macros/filterlist.html" as filterlist %}
 {% import "macros/indicators.html" as indicators %}
 {% import "macros/malware.html" as malware %}
 {% import "macros/actors.html" as actors %}
@@ -51,10 +52,7 @@
 
             <div role="tabpanel" class="tab-pane active" id="indicators"> <!-- indicators tab -->
               <div class="row">
-                <div class="col-md-12">
-                  <table class="table table-condensed">
-                  {{ indicators.display_table(n, entity)}}
-                </div>
+                {{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "indicator-pivot", _cls='Indicator.Regex') }}
               </div>
             </div>
 
@@ -120,3 +118,7 @@
 </div>
 
 {% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+{%endblock%}

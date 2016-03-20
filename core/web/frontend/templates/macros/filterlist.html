@@ -17,9 +17,52 @@
 </table>
 {%- endmacro %}
 
+{% macro inline_filter(data_source, target)%}
+{% set extra_filters = kwargs %}
 
-{% macro filtered_list(data_source, target) -%}
+<div class="col-md-12" class="filtered-list">
+  <div class="row">
 
+    <div class="col-md-12">
+
+      <div class="filter inline">
+        <form data-target="{{target}}" data-url="{{data_source}}" class="yeti-crud form-inline">
+
+          {% for f in extra_filters %}
+          <input class="extra-filter" type="hidden" name="{{f}}" value="{{extra_filters[f]}}">
+          {% endfor %}
+
+      		<div class="input-group">
+        			<input class="form-control input-sm crud-filter" data-default-value="name" placeholder="tags=evil">
+      			<span class="input-group-btn">
+      				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
+      			</span>
+      		</div>
+      		<div class="checkbox input-group-lg">
+      			<label class="checkbox">
+      			      <input type="checkbox" class="crud-regex"> Regex search (slower)
+      			</label>
+      		</div>
+
+      		<ul class="pagination">
+      	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
+      	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
+      	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
+      	  </ul>
+      	</form>
+      </div>
+
+      <div id="{{target}}">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{%- endmacro%}
+
+
+{% macro sidebar_filter(data_source, target) -%}
 {% set extra_filters = kwargs %}
 
 <div class="col-md-12" class="filtered-list">

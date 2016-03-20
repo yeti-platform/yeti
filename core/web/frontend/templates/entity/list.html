@@ -18,20 +18,20 @@
 
 <div class="tab-content">
 
-  <div role="tabpanel" class="tab-pane active" id="malware_tab"> <!-- malware tab -->
-		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "malware", _cls='Entity.Malware') }}
+  <div role="tabpanel" class="tab-pane active" id="malware_tab">
+		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "malware", _cls='Entity.Malware') }}
 	</div>
 
 	<div role="tabpanel" class="tab-pane" id="ttp_tab">
-		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "ttp", _cls='Entity.TTP') }}
+		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "ttp", _cls='Entity.TTP') }}
 	</div>
 
 	<div role="tabpanel" class="tab-pane" id="actor_tab">
-		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "actor", _cls='Entity.Actor') }}
+		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "actor", _cls='Entity.Actor') }}
 	</div>
 
 	<div role="tabpanel" class="tab-pane" id="company_tab">
-		{{ filterlist.filtered_list(url_for('api.EntitySearch:post'), "company", _cls='Entity.Company') }}
+		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "company", _cls='Entity.Company') }}
 	</div>
 
 </div>
