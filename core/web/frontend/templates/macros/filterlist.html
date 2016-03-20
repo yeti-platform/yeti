@@ -3,7 +3,7 @@
 {% macro list(data, klass) %}
 <table class="table table-condensed yeti-table table-hover">
   <tr>
-    <th></th><th>Name</th>{% for key in data[0]  if key not in ["name", "uri", "type", "id"] %}<th>{{key}}</th>{% endfor %}
+    <th></th>{% for key, label in data[0].DISPLAY_FIELDS %}<th>{{label}}</th>{% endfor %}
   </tr>
   {% for obj in data%}
   <tr class="node-line">
@@ -11,7 +11,7 @@
         <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass=klass)}}"><i class="flaticon-network38"></i></a>
     </td>
     <td><a href="{{ url_for("frontend.EntitiesView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
-    {% for key in data[0] if key not in ["name", "uri", "type", "id"]%}<td>{{obj[key]}}</td>{% endfor %}
+    {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj[key], key)}}</td>{% endfor %}
   </tr>
   {% endfor %}
 </table>

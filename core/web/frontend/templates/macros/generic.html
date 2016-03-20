@@ -44,8 +44,6 @@
     <pre>{{element}}</pre>
   {% elif element is string %}
     {{ element }}
-  {% elif element is iterable %}
-    {{ element|join(', ') }}
   {% else %}
     {{ element }}
   {% endif %}
