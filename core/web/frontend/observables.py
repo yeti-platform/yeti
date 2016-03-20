@@ -51,9 +51,9 @@ class ObservablesView(GenericView):
                         if txt:
                             o = Observable.add_text(txt)
                             o.tag(tags)
+                            obs[o.value] = o
                     except ObservableValidationError:
                         continue
-                    obs[o.value] = o
             else:
                 for l in lines:
                     obs[l.strip()] = l, None
