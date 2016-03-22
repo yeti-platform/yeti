@@ -59,7 +59,10 @@ function refresh_table(form) {
 
   // include extra filters from hidden inputs
   form.find(".extra-filter").each(function() {
-    filter[this.name] = $(this).val()
+    if (this.name in filter == false) {
+      filter[this.name] = [];
+    }
+    filter[this.name].push($(this).val());
   });
 
   params = {'regex': form.find('.crud-regex').prop('checked') ? true : false,
