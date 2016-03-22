@@ -30,7 +30,7 @@ class CrudSearchApi(FlaskView):
         try:
             data = []
             for o in self.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
-                o.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(o.id))
+                o.uri = url_for("api.{}:post".format(self.objectmanager.__name__), id=str(o.id))
                 data.append(o)
 
         except InvalidQueryError as e:
