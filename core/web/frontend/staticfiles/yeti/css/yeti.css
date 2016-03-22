@@ -95,14 +95,24 @@ span.yeti-toggle {
   background-color: #55C855;
 }
 
+.yeti-expired {
+  background-color: #777;
+}
+
 .tag-evil {
   color: white;
-  background-color: #f33;
+  background-color: #e33;
+}
+
+.tag-whitelist {
+  color: black;
+  background-color: white;
+  border: 1px solid black;
 }
 
 .tag-blocklist {
   color: white;
-	background-color: #f33;
+	background-color: #e33;
 }
 
 .yeti-interact .yeti-tag  {

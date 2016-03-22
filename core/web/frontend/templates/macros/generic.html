@@ -1,8 +1,8 @@
 {% macro display_tags(tags) -%}
   {% if tags is string %}
-    <span data-tag="{{tags["name"] or tags}}" class="yeti-tag tag-{{tags["name"] or tags}} label label-default {% if tags["fresh"]%} fresh label-primary {%endif%}">{{tags["name"] or tags}}</span>
+    <span data-tag="{{tags["name"] or tags}}" class="yeti-tag tag-{{tags["name"] or tags}} label label-default {% if not tags["fresh"]%} yeti-expired {%endif%}">{{tags["name"] or tags}}</span>
   {% else%}
-    {% for tag in tags %}<span data-tag="{{tag["name"] or tag}}" class="yeti-tag tag-{{tag["name"] or tag}} label label-default {% if tag["fresh"]%} fresh label-primary {%endif%}">{{tag["name"] or tag}}</span>{% endfor %}
+    {% for tag in tags %}<span data-tag="{{tag["name"] or tag}}" class="yeti-tag tag-{{tag["name"] or tag}} label label-default {% if not tag["fresh"]%} yeti-expired {%endif%}">{{tag["name"] or tag}}</span>{% endfor %}
   {% endif %}
 {%- endmacro %}
 
