@@ -17,9 +17,9 @@ def bson_renderer(objects, template=None, ctx=None):
         #  list of nodes can't be sent via json, use the info() function
         data = []
         for o in iterify(objects):
-                info = o.info()
-                info['uri'] = o.uri
-                data.append(info)
+            info = o.info()
+            info['uri'] = o.uri
+            data.append(info)
 
         if len(data) == 1:
             data = data[0]
