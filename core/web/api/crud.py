@@ -15,7 +15,7 @@ class CrudSearchApi(FlaskView):
         fltr = query.get('filter', {})
         if 'tags' in fltr:
             fltr["tags__name"] = fltr.pop('tags')
-        fltr = {key.replace(".", "__")+"__all": value.split(',') for key, value in query.get('filter', {}).items() }
+        fltr = {key.replace(".", "__")+"__all": value for key, value in query.get('filter', {}).items()}
         params = query.get('params', {})
 
         regex = params.pop('regex', False)

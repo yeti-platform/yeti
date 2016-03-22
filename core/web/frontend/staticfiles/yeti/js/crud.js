@@ -52,7 +52,7 @@ function refresh_table(form) {
   for (var i in queries) {
 		splitted = queries[i].split('=');
 		if (splitted.length > 1)
-			filter[splitted[0]] = splitted[1];
+			filter[splitted[0]] = splitted[1].split(',');
 		else if (splitted[0] != "")
 			filter[default_field] = splitted[0];
 	}
