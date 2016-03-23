@@ -53,7 +53,7 @@ class NetworkWhois(OneShotAnalytics):
 
         # Add the network whois to the context if not already present
         for context in ip.context:
-            if context['source'] == 'Network Whois':
+            if context['source'] == 'network_whois':
                 break
         else:
             # Remove the nets info (the main one was copied)
@@ -63,7 +63,7 @@ class NetworkWhois(OneShotAnalytics):
             result.pop("referral", None)
             result.pop("query", None)
 
-            result['source'] = 'Network Whois'
+            result['source'] = 'network_whois'
             ip.add_context(result)
 
         return list(links)

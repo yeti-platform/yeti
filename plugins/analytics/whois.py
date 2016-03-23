@@ -34,11 +34,11 @@ class Whois(OneShotAnalytics):
         if parts.subdomain == '':
             should_add_context = False
             for context in hostname.context:
-                if context['source'] == 'Whois':
+                if context['source'] == 'whois':
                     break
             else:
                 should_add_context = True
-                context = {'source': 'Whois'}
+                context = {'source': 'whois'}
 
             data = get_whois_raw(hostname.value)
             results.update(raw=data[0])
