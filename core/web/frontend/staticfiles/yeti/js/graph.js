@@ -417,10 +417,14 @@ class Investigation {
           }
         });
 
-        data.links = self.sortLinks(links)
+        data.links = self.sortLinks(links);
         resultsDiv.html(analyticsResultsTemplate(data));
         enablePopovers();
         button.removeClass('glyphicon-spinner');
+
+        // Enable HighlightJS on raw results
+        hljs.initHighlighting.called = false;
+        hljs.initHighlighting();
       } else if (data.status == 'error') {
         resultsDiv.html(analyticsResultsTemplate(data));
         button.removeClass('glyphicon-spinner');
