@@ -11,7 +11,7 @@ $(function() {
 });
 
 function scan_toggle() {
-  $(".yeti-content").on('click', ".yeti-toggle", function(){
+  $("body").on('click', ".yeti-toggle", function(){
     tgt = $("#"+$(this).data('target'))
     tgt.toggle()
   });

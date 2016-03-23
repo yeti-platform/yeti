@@ -17,8 +17,11 @@
   width:100%;
 }
 
+.yeti-toggle {
+    cursor: pointer;
+}
+
 span.yeti-toggle {
-  cursor: pointer;
   margin-left: 10px;
   color: #337ab7;
 }
@@ -190,7 +193,6 @@ span.yeti-toggle {
 }
 
 #graph-sidebar-content {
-    margin-top: 20px;
     font-size: 14px;
     text-align: justify;
 }
@@ -201,6 +203,15 @@ span.yeti-toggle {
 
 #graph-sidebar-content h2 {
     font-size: 18px;
+}
+
+#graph-sidebar-content h4 {
+    color: #00CCFF;
+}
+
+#graph-sidebar-content h5 {
+    padding-bottom: 3px;
+    border-bottom: 1px dashed #888888;
 }
 
 .graph-sidebar-links {
@@ -274,11 +285,16 @@ a.graph-analytics-results-links {
     margin-bottom: 10px;
 }
 
-.graph-sidebar-analytics-raw pre {
+#graph-sidebar pre {
     border: none;
-    background-color: #99CCFF;
     font-size: 10px;
     word-wrap: normal;
+}
+
+#graph-sidebar pre>code {
+    word-wrap: normal;
+    white-space: pre;
+    overflow: auto;
 }
 
 .clear {

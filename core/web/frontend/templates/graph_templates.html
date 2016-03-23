@@ -103,7 +103,20 @@
             <h1>Contexts</h1>
             <div class="graph-sidebar-contexts">
                 {{#each context}}
-                    {{source}}
+                    <h4 class="yeti-toggle" data-target="{{source}}">{{source}}</h4>
+                    <div id="{{source}}">
+                        {{#each this}}
+                            {{#equal @key 'source'}}
+                            {{else}}
+                                <h5>{{@key}}</h5>
+                                {{#equal @key 'raw'}}
+                                    <pre><code>{{this}}</pre></code>
+                                {{else}}
+                                    <span class="small">{{this}}</span>
+                                {{/equal}}
+                            {{/equal}}
+                        {{/each}}
+                    </div>
                 {{else}}
                     No context to display.
                 {{/each}}

@@ -352,6 +352,10 @@ class Investigation {
     // Update sidebar with content related to this node
     $('#graph-sidebar').html(nodeTemplate(node));
 
+    // Enable HighlightJS
+    hljs.initHighlighting.called = false;
+    hljs.initHighlighting();
+
     // Display analytics
     this.displayAnalytics(node);
 
