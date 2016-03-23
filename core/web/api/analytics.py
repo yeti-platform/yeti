@@ -68,6 +68,11 @@ class OneShotAnalytics(CrudApi):
         nodes_id = set()
         nodes = list()
         links = list()
+
+        # First, add the analyzed node
+        nodes_id.add(results.observable.id)
+        nodes.append(results.observable.to_mongo())
+
         for link in results.results:
             for node in (link.src, link.dst):
                 if node.id not in nodes_id:

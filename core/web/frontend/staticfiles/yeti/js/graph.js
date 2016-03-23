@@ -208,6 +208,7 @@ class Investigation {
 
       return node;
     } else {
+      this.nodes.update({id: node.id, context: node.context, tags: node.tags});
       return existingNode;
     }
   }
