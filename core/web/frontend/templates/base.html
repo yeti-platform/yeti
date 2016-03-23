@@ -19,6 +19,9 @@
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/flaticon.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='font-awesome/css/font-awesome.min.css') }}">
     <script src="{{url_for('frontend.static', filename='yeti/js/yeti.js')}}"></script>
+
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='highlightjs/highlightjs.min.css') }}">
+    <script src="{{url_for('frontend.static', filename='highlightjs/highlightjs.min.js')}}"></script>
     {% block custom_head %}
     {% endblock %}
   </head>
@@ -40,7 +43,7 @@
                 <li><a href="{{ url_for('frontend.ObservablesView:index') }}">Search &amp; add</a></li>
                 <li role="separator" class="divider"></li>
                 <li><a href="{{ url_for('frontend.ObservablesView:advanced') }}">Browse</a></li>
-                
+
               </ul>
             </li>
 
@@ -102,5 +105,9 @@
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="{{url_for('frontend.static', filename='bootstrap/js/bootstrap.min.js')}}"></script>
+
+    <script>
+        hljs.initHighlightingOnLoad();
+    </script>
   </body>
 </html>

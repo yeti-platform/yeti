@@ -341,3 +341,15 @@ a.graph-analytics-results-links {
     margin-top: -2px;
     margin-left:5px;
 }
+
+pre>code {
+    margin: -9.5px;
+}
+
+.tab-pane {
+    padding-top: 20px;
+}
+
+.context-key {
+    width: 130px;
+}
