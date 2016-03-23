@@ -536,6 +536,30 @@ class Investigation {
 
       self.runAnalytics(id, nodeId, resultsDiv, button);
     });
+
+    // Allow sidebar to be resized
+    var sidebar_min = 300;
+    var sidebar_max = 1000;
+
+    $('#graph-sidebar-resize').on('mousedown', function(e) {
+      e.preventDefault();
+
+      $(document).mousemove(function (e) {
+        e.preventDefault();
+
+        var x = e.pageX - $('#graph-sidebar').offset().left;
+
+        if (x > sidebar_min && x < sidebar_max) {
+          $('#graph-sidebar').css("width", x);
+          $('#graph-sidebar-resize').css("left", x);
+          $('#graph').css("left", x + 5);
+        }
+      });
+    });
+
+    $(document).mouseup(function (e) {
+      $(document).unbind('mousemove');
+    });
   }
 
 }
