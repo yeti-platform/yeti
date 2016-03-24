@@ -36,72 +36,6 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-md-12">
-
-        {% set n = entity.neighbors() %}
-
-        <ul class="nav nav-tabs" role="tablist">
-          <li role="presentation" class="active"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
-          <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
-          <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
-          <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
-          <li role="presentation"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
-        </ul>
-
-        <div class="tab-content">
-
-            <div role="tabpanel" class="tab-pane active" id="indicators"> <!-- indicators tab -->
-              <div class="row">
-                <div class="col-md-12">
-                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
-                  <a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
-                </div>
-              </div>
-            </div>
-
-            <div role="tabpanel" class="tab-pane" id="ttp"> <!-- TTP tab -->
-              <div class="row">
-                <div class="col-md-12">
-                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="ttp"), "ttp-pivot") }}
-                  <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new TTP</a>
-
-                </div>
-              </div>
-            </div>
-
-            <div role="tabpanel" class="tab-pane" id="malware"> <!-- malware tab -->
-              <div class="row">
-                <div class="col-md-12">
-                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="malware"), "malware-pivot") }}
-                  <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="malware", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Malware</a>
-
-                </div>
-              </div>
-            </div>
-
-            <div role="tabpanel" class="tab-pane" id="actors"> <!-- actors tab -->
-              <div class="row">
-                <div class="col-md-12">
-                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="actor"), "actor-pivot") }}
-                  <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="actor", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Actor</a>
-                </div>
-              </div>
-            </div>
-
-            <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
-              <div class="row">
-                <div class="col-md-12">
-                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="observable"), "observable-pivot", default_key="value") }}
-                </div>
-              </div>
-            </div>
-
-        </div>
-      </div>
-    </div>
-
-
   </div>
 <!-- end first column -->
 
@@ -122,8 +56,73 @@
       </div>
     </div>
 
-  </div>
+  </div> <!-- end second column -->
 
+</div><!-- end row -->
+
+<div class="row">
+  <div class="col-md-12">
+
+    {% set n = entity.neighbors() %}
+
+    <ul class="nav nav-tabs" role="tablist">
+      <li role="presentation" class="active"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
+      <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
+      <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
+      <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
+      <li role="presentation"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div role="tabpanel" class="tab-pane active" id="indicators"> <!-- indicators tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
+              <a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="ttp"> <!-- TTP tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="ttp"), "ttp-pivot") }}
+              <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new TTP</a>
+
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="malware"> <!-- malware tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="malware"), "malware-pivot") }}
+              <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="malware", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Malware</a>
+
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="actors"> <!-- actors tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="actor"), "actor-pivot") }}
+              <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="actor", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Actor</a>
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="observable"), "observable-pivot", default_key="value") }}
+            </div>
+          </div>
+        </div>
+
+    </div>
+  </div>
 </div>
 
 {% endblock %}
