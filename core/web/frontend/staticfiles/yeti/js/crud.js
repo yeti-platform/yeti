@@ -54,7 +54,7 @@ function refresh_table(form) {
 		if (splitted.length > 1)
 			filter[splitted[0]] = splitted[1].split(',');
 		else if (splitted[0] != "")
-			filter[default_field] = splitted[0];
+			filter[default_field] = [splitted[0]];
 	}
 
   // include extra filters from hidden inputs
