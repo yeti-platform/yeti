@@ -55,6 +55,7 @@
               <div class="row">
                 <div class="col-md-12">
                   {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
+                  <a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
                 </div>
               </div>
             </div>
@@ -63,6 +64,8 @@
               <div class="row">
                 <div class="col-md-12">
                   {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="ttp"), "ttp-pivot") }}
+                  <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new TTP</a>
+
                 </div>
               </div>
             </div>
@@ -71,6 +74,8 @@
               <div class="row">
                 <div class="col-md-12">
                   {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="malware"), "malware-pivot") }}
+                  <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="malware", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Malware</a>
+
                 </div>
               </div>
             </div>
@@ -79,6 +84,7 @@
               <div class="row">
                 <div class="col-md-12">
                   {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="actor"), "actor-pivot") }}
+                  <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="actor", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Actor</a>
                 </div>
               </div>
             </div>
