@@ -43,7 +43,7 @@ def recursive_encoder(objects, template=None, ctx=None):
 
         return data
     else:
-        return data
+        return objects
 
 
 render = Render(renderers=[template_renderer, bson_renderer])
