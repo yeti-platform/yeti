@@ -1,6 +1,11 @@
-from core.web.api.api import render_json
+import re
+
+from flask import url_for, request
+from flask.ext.classy import route
+
+from core.web.api.api import render_json, render
 from core.web.api.crud import CrudApi
-from core.entities import Entity
+from core.entities import Entity, Malware, TTP, Actor
 from core.observables import Observable
 from core.indicators import Indicator
 
@@ -8,6 +13,9 @@ NODES_CLASSES = {
     'entity': Entity,
     'observable': Observable,
     'indicator': Indicator,
+    'malware': Malware,
+    'ttp': TTP,
+    'actor': Actor,
 }
 
 
@@ -33,3 +41,46 @@ class Neighbors(CrudApi):
             result['links'].append(link.to_dict())
 
         return render_json(result)
+
+    @route("/tuples/<klass>/<node_id>/<type_filter>", methods=["POST"])
+    def tuples(self, klass, node_id, type_filter):
+        query = request.get_json(silent=True) or {}
+        fltr = query.get("filter", {})
+        params = query.get("params", {})
+
+        klass = NODES_CLASSES[klass.lower().split('.')[0]]
+        filter_class = NODES_CLASSES[type_filter.lower().split('.')[0]]
+        node = klass.objects.get(id=node_id)
+
+        # code taken from CrudSearchApi. See if we can replicate the inheritance here
+        if 'tags' in fltr:
+            fltr["tags__name"] = fltr.pop('tags')
+        fltr = {key.replace(".", "__")+"__all": value for key, value in query.get('filter', {}).items()}
+        regex = params.pop('regex', False)
+        if regex:
+            fltr = {key: [re.compile(v) for v in value] for key, value in fltr.items()}
+
+        print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
+        # end of c/c code
+
+        neighbors = node.neighbors_advanced(filter_class, params=params, filter=fltr)
+
+        _all = []
+        links = []
+        objs = []
+
+        for link, obj in neighbors:
+            links.append(link)
+            objs.append(obj)
+            _all.append((link, obj))
+
+        data = {"data": objs, "links": links}
+        # First argument of render is the "data" variable in the template.
+        # We override this behavior for these templates to include links
+        # using the ctx argument
+        if issubclass(filter_class, Entity):
+            return render(data, template='entity_api.html', ctx=data)
+        if issubclass(filter_class, Indicator):
+            return render(data, template='indicator_api.html', ctx=data)
+        if issubclass(filter_class, Observable):
+            return render(data, template='observable_api.html', ctx=data)
