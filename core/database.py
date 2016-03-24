@@ -225,18 +225,38 @@ class Node(YetiDocument):
                 return cls.objects.get(value=obj.value)
 
     def incoming(self):
-        return [(l, l.src) for l in Link.objects(dst=self)]
+        return [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id})]
 
     def outgoing(self):
-        return [(l, l.dst) for l in Link.objects(src=self)]
+        return [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id})]
 
     def neighbors(self, neighbor_type=""):
         links = list(set(self.incoming() + self.outgoing()))
         info = {}
         for link, node in links:
-            if re.search(neighbor_type, node.full_type):
+            if re.search(neighbor_type.lower(), node.full_type.lower()):
                 info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
+
+    def neighbors_advanced(self, klass, filter={}, params={}):
+
+        page = params.pop('page', 1) - 1
+        rng = params.pop('range', 50)
+
+        print "Filtering links on", klass._class_name
+
+        print {"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}
+
+        out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
+        inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
+
+        all_links = {ref.id: link for link, ref in inc + out}
+        filter['id__in'] = all_links.keys()
+
+        objs = list(klass.objects(**filter).limit(rng).skip(page*rng))
+        final_list = [(all_links[obj.id], obj) for obj in objs]
+
+        return final_list
 
     def delete(self):
         Link.objects(Q(src=self) | Q(dst=self)).delete()
