@@ -10,8 +10,7 @@ from core.web.api.api import render
 
 class CrudSearchApi(FlaskView):
 
-    def post(self):
-        query = request.get_json(silent=True) or {}
+    def search(self, query):
         fltr = query.get('filter', {})
         if 'tags' in fltr:
             fltr["tags__name"] = fltr.pop('tags')
@@ -27,12 +26,19 @@ class CrudSearchApi(FlaskView):
 
         print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
 
-        try:
-            data = []
-            for o in self.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
-                o.uri = url_for("api.{}:post".format(self.objectmanager.__name__), id=str(o.id))
-                data.append(o)
+        data = []
+        for o in self.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
+            o.uri = url_for("api.{}:post".format(self.objectmanager.__name__), id=str(o.id))
+            data.append(o)
 
+        return data
+
+
+    def post(self):
+        query = request.get_json(silent=True) or {}
+
+        try:
+            data = self.search(query)
         except InvalidQueryError as e:
             logging.error(e)
             abort(400)
