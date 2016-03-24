@@ -1,5 +1,6 @@
 {% import "macros/generic.html" as macros %}
 
+{% if data|length > 0 %}
 <ul class="nav nav-tabs" role="tablist">
   <li role="presentation" class="active"><a href="#regex" aria-controls="regex" role="tab" data-toggle="tab">Regex</a></li>
 </ul>
@@ -8,9 +9,10 @@
 
   <div role="tabpanel" class="tab-pane active" id="regex"> <!-- regex tab -->
     <table class="table table-condensed yeti-table table-hover">
-      <tr><th></th><th>Name</th><th>Type</th><th>Pattern</th></tr>
+      <tr>{% if links %}<th>Link</th>{% endif %}<th></th><th>Name</th><th>Type</th><th>Pattern</th></tr>
       {% for indicator in data %}
       <tr class="node-line">
+        {% if links %}<td>{{links[loop.index0]['description']}}</td>{% endif %}
         <td class="graph-link">
             <a href="{{ url_for('frontend.graph_node', id=indicator['id'], klass='indicator')}}"><i class="flaticon-network38"></i></a>
         </td>
@@ -23,3 +25,8 @@
   </div>
 
 </div>
+{% else %}
+<div class='no-results'>
+  No results found
+</div>
+{% endif %}

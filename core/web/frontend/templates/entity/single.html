@@ -38,6 +38,7 @@
 
     <div class="row">
       <div class="col-md-12">
+
         {% set n = entity.neighbors() %}
 
         <ul class="nav nav-tabs" role="tablist">
@@ -52,14 +53,16 @@
 
             <div role="tabpanel" class="tab-pane active" id="indicators"> <!-- indicators tab -->
               <div class="row">
-                {{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "indicator-pivot", _cls='Indicator.Regex') }}
+                <div class="col-md-12">
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
+                </div>
               </div>
             </div>
 
             <div role="tabpanel" class="tab-pane" id="ttp"> <!-- TTP tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ ttps.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="ttp"), "ttp-pivot") }}
                 </div>
               </div>
             </div>
@@ -67,7 +70,7 @@
             <div role="tabpanel" class="tab-pane" id="malware"> <!-- malware tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ malware.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="malware"), "malware-pivot") }}
                 </div>
               </div>
             </div>
@@ -75,7 +78,7 @@
             <div role="tabpanel" class="tab-pane" id="actors"> <!-- actors tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ actors.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="actor"), "actor-pivot") }}
                 </div>
               </div>
             </div>
@@ -83,7 +86,7 @@
             <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ observables.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="observable"), "observable-pivot", default_key="value") }}
                 </div>
               </div>
             </div>

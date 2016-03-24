@@ -351,3 +351,23 @@ a.graph-analytics-results-links {
     margin-top: -2px;
     margin-left:5px;
 }
+
+/* Inline search form*/
+
+ul.pagination {
+  margin: 0 10px 0 0;
+  vertical-align: middle;
+}
+
+div.filter.inline {
+  margin:5px 0 5px 0;
+}
+
+div.filter {
+  margin-top:10px;
+}
+
+.no-results {
+  margin-top: 10px;
+  font-size: 16px;
+}
