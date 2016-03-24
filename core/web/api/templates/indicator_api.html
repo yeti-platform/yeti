@@ -9,10 +9,10 @@
 
   <div role="tabpanel" class="tab-pane active" id="regex"> <!-- regex tab -->
     <table class="table table-condensed yeti-table table-hover">
-      <tr>{% if links %}<th>Link</th>{% endif %}<th></th><th>Name</th><th>Type</th><th>Pattern</th></tr>
+      <tr>{% if links %}<th>Timeframe</th><th>Link</th>{% endif %}<th></th><th>Name</th><th>Type</th><th>Pattern</th></tr>
       {% for indicator in data %}
       <tr class="node-line">
-        {% if links %}<td>{{links[loop.index0]['description']}}</td>{% endif %}
+        {% if links %}<td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td><td>{{links[loop.index0]['description']}}</td>{% endif %}
         <td class="graph-link">
             <a href="{{ url_for('frontend.graph_node', id=indicator['id'], klass='indicator')}}"><i class="flaticon-network38"></i></a>
         </td>
