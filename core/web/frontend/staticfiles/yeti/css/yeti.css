@@ -387,10 +387,11 @@ pre>code {
 
 .context-key {
     width: 130px;
+}
 
 /* Inline search form*/
 
-ul.pagination {
+.inline ul.pagination {
   margin: 0 10px 0 0;
   vertical-align: middle;
 }
