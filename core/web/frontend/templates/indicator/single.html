@@ -4,6 +4,8 @@
 {% import "macros/actors.html" as actors %}
 {% import "macros/ttps.html" as ttps %}
 {% import "macros/observables.html" as observables %}
+{% import "macros/observables.html" as observables %}
+{% import "macros/filterlist.html" as filterlist %}
 
 {% block main %}
 {% set indicator = obj %}
@@ -57,7 +59,7 @@
           <li role="presentation" class="active"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
           <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
           <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
-          <li role="presentation"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
+          <!-- <li role="presentation"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li> -->
         </ul>
 
         <div class="tab-content">
@@ -65,7 +67,7 @@
           <div role="tabpanel" class="tab-pane active" id="ttp"> <!-- TTP tab -->
             <div class="row">
               <div class="col-md-12">
-                {{ ttps.display_table(n, indicator) }}
+                {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="ttp"), "ttp-pivot") }}
               </div>
             </div>
           </div>
@@ -73,7 +75,7 @@
           <div role="tabpanel" class="tab-pane" id="malware"> <!-- malware tab -->
             <div class="row">
               <div class="col-md-12">
-                {{ malware.display_table(n, indicator) }}
+                {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="malware"), "malware-pivot") }}
               </div>
             </div>
           </div>
@@ -81,7 +83,7 @@
           <div role="tabpanel" class="tab-pane" id="actors"> <!-- actors tab -->
             <div class="row">
               <div class="col-md-12">
-                {{ actors.display_table(n, indicator) }}
+                {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="actor"), "actor-pivot") }}
               </div>
             </div>
           </div>
@@ -89,7 +91,7 @@
           <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
             <div class="row">
               <div class="col-md-12">
-                {{ observables.display_table(n, indicator) }}
+                {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="observable"), "observable-pivot") }}
               </div>
             </div>
           </div>
@@ -125,3 +127,7 @@
 </div>
 
 {% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+{%endblock%}
