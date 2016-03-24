@@ -5,7 +5,7 @@
 <table class="table table-condensed yeti-table table-hover">
   <tr>
     {% if links%}<th>Link</th>{% endif %}
-    <th></th>{% for key, label in data[0].DISPLAY_FIELDS if key != "name" %}<th>{{label}}</th>{% endfor %}
+    <th><!-- graph icon column --></th><th>Name</th>{% for key, label in data[0].DISPLAY_FIELDS if key != "name" %}<th>{{label}}</th>{% endfor %}
   </tr>
   {% for obj in data %}
   <tr class="node-line">
