@@ -8,6 +8,8 @@ class TTP(Entity):
 
     killchain = StringField(verbose_name="Kill Chain Stage", choices=KILL_CHAIN_STEPS, required=True)
 
+    DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("killchain", "Kill Chain")]
+
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
         i['id'] = str(self.id)

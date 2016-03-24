@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "macros/generic.html" as macros %}
+{% import "macros/filterlist.html" as filterlist %}
 {% import "macros/indicators.html" as indicators %}
 {% import "macros/malware.html" as malware %}
 {% import "macros/actors.html" as actors %}
@@ -37,6 +38,7 @@
 
     <div class="row">
       <div class="col-md-12">
+
         {% set n = entity.neighbors() %}
 
         <ul class="nav nav-tabs" role="tablist">
@@ -52,8 +54,7 @@
             <div role="tabpanel" class="tab-pane active" id="indicators"> <!-- indicators tab -->
               <div class="row">
                 <div class="col-md-12">
-                  <table class="table table-condensed">
-                  {{ indicators.display_table(n, entity)}}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
                 </div>
               </div>
             </div>
@@ -61,7 +62,7 @@
             <div role="tabpanel" class="tab-pane" id="ttp"> <!-- TTP tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ ttps.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="ttp"), "ttp-pivot") }}
                 </div>
               </div>
             </div>
@@ -69,7 +70,7 @@
             <div role="tabpanel" class="tab-pane" id="malware"> <!-- malware tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ malware.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="malware"), "malware-pivot") }}
                 </div>
               </div>
             </div>
@@ -77,7 +78,7 @@
             <div role="tabpanel" class="tab-pane" id="actors"> <!-- actors tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ actors.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="actor"), "actor-pivot") }}
                 </div>
               </div>
             </div>
@@ -85,7 +86,7 @@
             <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
               <div class="row">
                 <div class="col-md-12">
-                  {{ observables.display_table(n, entity) }}
+                  {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="observable"), "observable-pivot", default_key="value") }}
                 </div>
               </div>
             </div>
@@ -120,3 +121,7 @@
 </div>
 
 {% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+{%endblock%}

@@ -7,6 +7,8 @@ from core.database import Node, EntityListField
 
 class Indicator(Node):
 
+    DISPLAY_FIELDS = [("name", "Name"), ("pattern", "Pattern"), ("location", "Location"), ("diamond", "Diamond")]
+
     name = StringField(required=True, max_length=1024, verbose_name="Name")
     pattern = StringField(required=True, verbose_name="Pattern")
     location = StringField(required=True, max_length=255, verbose_name="Location")

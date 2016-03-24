@@ -1,69 +1,25 @@
 {% import "macros/generic.html" as macros %}
+{% import "macros/filterlist.html" as filterlist %}
 
-<ul class="nav nav-tabs" role="tablist">
-  <li role="presentation" class="active"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
-  <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTPs</a></li>
-  <li role="presentation"><a href="#actor" aria-controls="actor" role="tab" data-toggle="tab">Actors</a></li>
-  <li role="presentation"><a href="#company" aria-controls="actor" role="tab" data-toggle="tab">Companies</a></li>
-</ul>
-
-<div class="tab-content">
-
-  <div role="tabpanel" class="tab-pane active" id="malware"> <!-- malware tab -->
-    <table class="table table-condensed yeti-table table-hover">
-      <tr><th></th><th>Name</th><th>Family</th><th>Aliases</th></tr>
-      {% for entity in data if entity['type'] == "Malware" %}
-      <tr class="node-line">
-        <td class="graph-link">
-            <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
-        </td>
-        <td><a href="{{ url_for("frontend.EntitiesView:get", id=entity['id'])}}">{{entity['name']}}</a></td>
-        <td>{{ entity['family'] }}</td>
-        <td>{{ macros.display_tags(entity['aliases'])}}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-
-  <div role="tabpanel" class="tab-pane" id="ttp"> <!-- ttp tab -->
-    <table class="table table-condensed yeti-table table-hover">
-      <tr><th></th><th>Name</th><th>Description</th><th>Killchain</th></tr>
-      {% for entity in data if entity['type'] == "TTP" %}
-      <tr class="node-line">
-        <td class="graph-link">
-          <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
-        </td>
-        <td><a href="{{ url_for("frontend.EntitiesView:get", id=entity['id'])}}">{{entity['name']}}</a></td>
-        <td>{{ entity['description'] }}</td>
-        <td>{{ entity['killchain'] }}</td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-
-  <div role="tabpanel" class="tab-pane" id="actor"> <!-- actor tab -->
-    <table class="table table-condensed yeti-table table-hover">
-      <tr><th></th><th>Name</th></tr>
-      {% for entity in data if entity['type'] == "Actor" %}
-      <tr class="node-line">
-        <td class="graph-link">
-          <a href="{{ url_for('frontend.graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
-        </td>
-        <td><a href="{{ url_for('frontend.EntitiesView:get', id=entity['id'])}}">{{entity['name']}}</a></td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-
-  <div role="tabpanel" class="tab-pane" id="company"> <!-- actor tab -->
-    <table class="table table-condensed yeti-table table-hover">
-      <tr><th>Name</th></tr>
-      {% for entity in data if entity['type'] == "Company" %}
-      <tr>
-        <td><a href="{{ url_for('frontend.EntitiesView:get', id=entity['id'])}}">{{entity['name']}}</a></td>
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-
+{% if data|length > 0 %}
+<table class="table table-condensed yeti-table table-hover">
+  <tr>
+    {% if links%}<th>Link</th>{% endif %}
+    <th></th>{% for key, label in data[0].DISPLAY_FIELDS if key != "name" %}<th>{{label}}</th>{% endfor %}
+  </tr>
+  {% for obj in data %}
+  <tr class="node-line">
+    {% if links%}<td>{{ links[loop.index0]['description']}}</td>{% endif %}
+    <td class="graph-link">
+        <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass="entity")}}"><i class="flaticon-network38"></i></a>
+    </td>
+    <td><a href="{{ url_for("frontend.EntitiesView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
+    {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj[key], key)}}</td>{% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class='no-results'>
+  No results found
 </div>
+{% endif %}

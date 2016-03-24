@@ -1,0 +1,110 @@
+{% import "macros/generic.html" as macros %}
+
+{% macro list(data, klass) %}
+<table class="table table-condensed yeti-table table-hover">
+  <tr>
+    <th></th>{% for key, label in data[0].DISPLAY_FIELDS if key != "name" %}<th>{{label}}</th>{% endfor %}
+  </tr>
+  {% for obj in data%}
+  <tr class="node-line">
+    <td class="graph-link">
+        <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass=klass)}}"><i class="flaticon-network38"></i></a>
+    </td>
+    <td><a href="{{ url_for("frontend.EntitiesView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
+    {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj[key], key)}}</td>{% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+{%- endmacro %}
+
+{% macro inline_filter(data_source, target, default_key="name")%}
+{% set extra_filters = kwargs %}
+
+<div class="col-md-12" class="filtered-list">
+  <div class="row">
+
+    <div class="col-md-12">
+
+      <div class="filter inline">
+        <form data-target="{{target}}" data-url="{{data_source}}" class="yeti-crud form-inline">
+
+          {% for f in extra_filters %}
+          <input class="extra-filter" type="hidden" name="{{f}}" value="{{extra_filters[f]}}">
+          {% endfor %}
+
+          <ul class="pagination">
+      	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
+      	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
+      	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
+      	  </ul>
+
+      		<div class="input-group">
+        			<input class="form-control input-sm crud-filter" data-default-value={{default_key}} placeholder="tags=evil">
+      			<span class="input-group-btn">
+      				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Filter</span></button>
+      			</span>
+      		</div>
+      		<div class="checkbox input-group-lg">
+      			<label class="checkbox">
+      			      <input type="checkbox" class="crud-regex"> Regex
+      			</label>
+      		</div>
+
+      	</form>
+      </div>
+
+      <div id="{{target}}">
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{%- endmacro%}
+
+
+{% macro sidebar_filter(data_source, target) -%}
+{% set extra_filters = kwargs %}
+
+<div class="col-md-12" class="filtered-list">
+  <div class="row">
+
+    <div class="col-md-9">
+      <div id="{{target}}">
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="filter">
+        <form data-target="{{target}}" data-url="{{data_source}}" class="yeti-crud">
+
+          {% for f in extra_filters %}
+          <input class="extra-filter" type="hidden" name="{{f}}" value="{{extra_filters[f]}}">
+          {% endfor %}
+
+      		<div class="input-group">
+        			<input class="form-control input-sm crud-filter" data-default-value="name" placeholder="tags=evil">
+      			<span class="input-group-btn">
+      				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
+      			</span>
+      		</div>
+      		<div class="checkbox input-group-lg">
+      			<label class="checkbox">
+      			      <input type="checkbox" class="crud-regex"> Regex search (slower)
+      			</label>
+      		</div>
+
+      		<ul class="pagination">
+      	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
+      	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
+      	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
+      	  </ul>
+      	</form>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+{%- endmacro %}

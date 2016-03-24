@@ -6,10 +6,10 @@ $(function(){
 
     $(this).find(".crud-search").click(function() {
       form = $(this).closest("form").first();
-      refresh_table(form)
+      refresh_table(form);
     });
 
-    $(".crud-filter").keydown(function (event) {
+    $(this).find(".crud-filter").keydown(function (event) {
   		if (event.which == 13) {
   			event.preventDefault();
         form = $(this).closest("form").first();
@@ -17,7 +17,7 @@ $(function(){
   		}
   	});
 
-    $(".crud-paginator").click(function(event){
+    $(this).find(".crud-paginator").click(function(event){
       event.preventDefault();
       direction = $(this).data('direction')
       form = $(this).closest("form").first();
@@ -52,14 +52,23 @@ function refresh_table(form) {
   for (var i in queries) {
 		splitted = queries[i].split('=');
 		if (splitted.length > 1)
-			filter[splitted[0]] = splitted[1];
+			filter[splitted[0]] = splitted[1].split(',');
 		else if (splitted[0] != "")
 			filter[default_field] = splitted[0];
 	}
 
-  params = {'regex': form.find('.crud-regex').prop('checked') ? true : false,
-            'page': form.find(".crud-pagination").data('page'),
-            }
+  // include extra filters from hidden inputs
+  form.find(".extra-filter").each(function() {
+    if (this.name in filter == false) {
+      filter[this.name] = [];
+    }
+    filter[this.name].push($(this).val());
+  });
+
+  params = {
+    'regex': form.find('.crud-regex').prop('checked') ? true : false,
+    'page': form.find(".crud-pagination").data('page'),
+  }
 
   query = {'filter': filter, 'params': params}
 
@@ -68,9 +77,8 @@ function refresh_table(form) {
     data: JSON.stringify(query),
     contentType: "application/json",
     url: form.data("url"),
-    success: function(observables) {
-      table = style_table($(observables))
-      $("#"+form.data('target')).html(table);
+    success: function(data) {
+      $("#"+form.data('target')).html(data);
     },
     complete: function(observables) {
       $("#spinner").toggle();
@@ -78,8 +86,4 @@ function refresh_table(form) {
       $("#go").parent().prop('disabled', false);
     }
   });
-}
-
-function style_table(table) {
-  return table
 }
