@@ -6,10 +6,10 @@ $(function(){
 
     $(this).find(".crud-search").click(function() {
       form = $(this).closest("form").first();
-      refresh_table(form)
+      refresh_table(form);
     });
 
-    $(".crud-filter").keydown(function (event) {
+    $(this).find(".crud-filter").keydown(function (event) {
   		if (event.which == 13) {
   			event.preventDefault();
         form = $(this).closest("form").first();
@@ -17,7 +17,7 @@ $(function(){
   		}
   	});
 
-    $(".crud-paginator").click(function(event){
+    $(this).find(".crud-paginator").click(function(event){
       event.preventDefault();
       direction = $(this).data('direction')
       form = $(this).closest("form").first();
@@ -65,9 +65,10 @@ function refresh_table(form) {
     filter[this.name].push($(this).val());
   });
 
-  params = {'regex': form.find('.crud-regex').prop('checked') ? true : false,
-            'page': form.find(".crud-pagination").data('page'),
-            }
+  params = {
+    'regex': form.find('.crud-regex').prop('checked') ? true : false,
+    'page': form.find(".crud-pagination").data('page'),
+  }
 
   query = {'filter': filter, 'params': params}
 
@@ -76,9 +77,8 @@ function refresh_table(form) {
     data: JSON.stringify(query),
     contentType: "application/json",
     url: form.data("url"),
-    success: function(observables) {
-      table = style_table($(observables))
-      $("#"+form.data('target')).html(table);
+    success: function(data) {
+      $("#"+form.data('target')).html(data);
     },
     complete: function(observables) {
       $("#spinner").toggle();
@@ -86,8 +86,4 @@ function refresh_table(form) {
       $("#go").parent().prop('disabled', false);
     }
   });
-}
-
-function style_table(table) {
-  return table
 }
