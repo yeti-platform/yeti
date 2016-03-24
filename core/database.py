@@ -242,11 +242,7 @@ class Node(YetiDocument):
 
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
-
-        print "Filtering links on", klass._class_name
-
-        print {"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}
-
+        
         out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
         inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
 
