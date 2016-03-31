@@ -44,7 +44,7 @@ class Export(CrudApi):
         e.save()
         return render({"id": id, "status": e.enabled})
 
-    def parse_request(self, json):
+    def _parse_request(self, json):
         params = json
         params['frequency'] = string_to_timedelta(params.get('frequency', '1:00:00'))
         params['include_tags'] = [Tag.objects.get(name=name.strip()) for name in params['include_tags'].split(',') if name.strip()]

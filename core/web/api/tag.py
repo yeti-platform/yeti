@@ -41,7 +41,7 @@ class Tag(CrudApi):
         observables.Observable.objects(tags__name=tag.name).update(pull__tags__name=tag.name)
         return render({"status": "ok"})
 
-    def parse_request(self, json):
+    def _parse_request(self, json):
         params = json
         params['produces'] = [self.objectmanager.get_or_create(name=t.strip()) for t in json['produces'].split(',') if t.strip()]
         params['replaces'] = json['replaces'].split(',')
