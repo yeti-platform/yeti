@@ -3,9 +3,7 @@ from flask.ext.negotiation import Render
 from flask.ext.negotiation.renderers import renderer, template_renderer
 from json import dumps
 
-from core.web.json import to_json
-from core.helpers import iterify
-from core.database import Node, Link
+from core.web.json import to_json, recursive_encoder
 
 
 api = Blueprint("api", __name__, template_folder="templates")
@@ -15,35 +13,6 @@ api = Blueprint("api", __name__, template_folder="templates")
 def bson_renderer(objects, template=None, ctx=None):
     data = recursive_encoder(objects)
     return dumps(data, default=to_json)
-
-
-def recursive_encoder(objects, template=None, ctx=None):
-
-    if isinstance(objects, dict):
-        for (key, value) in objects.items():
-            objects[key] = recursive_encoder(value)
-        return objects
-
-    elif isinstance(objects, list):
-        return [recursive_encoder(o) for o in objects]
-
-    elif isinstance(objects, tuple):
-        return tuple(recursive_encoder(o) for o in objects)
-
-    elif isinstance(objects, (Node, Link)):
-        data = []
-        for o in iterify(objects):
-            info = o.info()
-            if hasattr(o, 'uri'):
-                info['uri'] = o.uri
-            data.append(info)
-
-        if len(data) == 1:
-            data = data[0]
-
-        return data
-    else:
-        return objects
 
 
 render = Render(renderers=[template_renderer, bson_renderer])
