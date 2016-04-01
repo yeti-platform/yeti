@@ -101,6 +101,10 @@ class Export(ScheduleEntry):
     def output_file(self):
         return os.path.abspath(os.path.join(self.output_dir, self.name))
 
+    @property
+    def content_uri(self):
+        return url_for("api.Export:content", id=str(self.id))
+
     def execute(self):
         q_include = Q()
         for t in self.include_tags:
@@ -118,5 +122,5 @@ class Export(ScheduleEntry):
         i['exclude_tags'] = [tag.name for tag in self.exclude_tags]
         i['template'] = self.template.name
         i['acts_on'] = self.acts_on
-        i['content_uri'] = url_for("api.Export:content", id=str(self.id))
+        i['content_uri'] = self.content_uri
         return i
