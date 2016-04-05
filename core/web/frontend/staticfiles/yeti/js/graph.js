@@ -235,6 +235,14 @@ class Investigation {
 
     var existingLink = this.edges.get(link.id);
 
+    link.first_seen = Date.parse(link.first_seen);
+    link.last_seen = Date.parse(link.last_seen);
+    link.history.forEach(function (history) {
+      history.first_seen = Date.parse(history.first_seen);
+      history.last_seen = Date.parse(history.last_seen);
+      history.sources = history.sources.join(", ");
+    });
+
     if (!existingLink) {
       if (link.description) {
         link.label = link.description;
@@ -246,18 +254,18 @@ class Investigation {
       link.to = buildNodeId(link.dst.collection, link.dst.id);
       link.arrows = 'to';
 
-      link.first_seen = Date.parse(link.first_seen)
-      link.last_seen = Date.parse(link.last_seen)
-      link.history.forEach(function (history) {
-        history.first_seen = Date.parse(history.first_seen);
-        history.last_seen = Date.parse(history.last_seen);
-        history.sources = history.sources.join(", ");
-      });
-
       this.edges.add(link);
 
       return link;
     } else {
+      this.edges.update({
+        id: link.id,
+        active: link.active,
+        first_seen: link.first_seen,
+        last_seen: link.last_seen,
+        history: link.history
+      });
+
       return existingLink;
     }
   }

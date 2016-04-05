@@ -1,5 +1,6 @@
 from flask import request
 from flask.ext.classy import route
+from bson.json_util import loads
 
 from core.helpers import iterify
 from core import investigation
@@ -14,6 +15,7 @@ class Investigation(CrudApi):
     @route("/add/<string:id>", methods=['POST'])
     def add(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
-        i.add(iterify(request.json['links']), iterify(request.json['nodes']))
+        data = loads(request.data)
+        i.add(iterify(data['links']), iterify(data['nodes']))
 
         return render(i.info())
