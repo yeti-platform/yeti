@@ -408,3 +408,35 @@ div.filter {
   margin-top: 10px;
   font-size: 16px;
 }
+
+.hover-block a.hover-link {
+    visibility: hidden;
+}
+
+.hover-block:hover a.hover-link {
+    visibility: visible;
+}
+
+.unsaved {
+    font-style: italic;
+}
+
+#graph-sidebar-investigation-name {
+    font-size: 14pt;
+    margin-bottom: 15px;
+    color: #00CCFF;
+    text-align: center;
+}
+
+#graph-sidebar-investigation-name a {
+    color: white;
+}
+
+#graph-sidebar-investigation-name input {
+    background-color: transparent;
+    border: 1px solid #00CCFF;
+}
+
+#graph-sidebar-investigation-name form {
+    display: inline;
+}

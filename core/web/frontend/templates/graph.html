@@ -8,10 +8,24 @@
 <link href="{{ url_for('frontend.static', filename='visjs/vis.min.css') }}" rel="stylesheet" type="text/css" />
 
 <div id="graph-sidebar">
-    <div id="graph-sidebar-icon" class="flaticon-network38"></div>
-    <div id="graph-sidebar-value">Investigation</value></div>
-    <div id="graph-sidebar-content">
-        <p>Click on a node to get info.</p>
+    <div id="graph-sidebar-investigation-name" class="hover-block">
+        {% if investigation.name %}
+            <span>{{investigation.name}}</span>
+        {% else %}
+            <span class="unsaved">Unnamed Investigation</span>
+        {% endif %}
+        <form>
+            <input type="text" class="hidden" />
+        </form>
+        <div class="pull-right">
+            <a class="hover-link"><i class="glyphicon glyphicon-edit"></i></a>
+        </div>
+    </div>
+    <div id="graph-sidebar-dynamic">
+        <div id="graph-sidebar-icon" class="flaticon-network38"></div>
+        <div id="graph-sidebar-content">
+            <p>Click on a node to get info.</p>
+        </div>
     </div>
 </div>
 <div id="graph-sidebar-resize"></div>

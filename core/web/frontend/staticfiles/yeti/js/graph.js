@@ -360,7 +360,7 @@ class Investigation {
     var node = this.nodes.get(nodeId);
 
     // Update sidebar with content related to this node
-    $('#graph-sidebar').html(nodeTemplate(node));
+    $('#graph-sidebar-dynamic').html(nodeTemplate(node));
 
     // Enable HighlightJS
     hljs.initHighlighting.called = false;
@@ -569,6 +569,48 @@ class Investigation {
 
     $(document).mouseup(function (e) {
       $(document).unbind('mousemove');
+    });
+
+    // Renaming Investigation
+    $('#graph-sidebar-investigation-name a').on('click', function(e) {
+      e.preventDefault();
+
+      var nameElement = $('#graph-sidebar-investigation-name span');
+      var form = $('#graph-sidebar-investigation-name form');
+      var input = $('#graph-sidebar-investigation-name input');
+      var name = nameElement.text();
+
+      if (name == "Unnamed Investigation") {
+          input.val('');
+      } else {
+          input.val(name);
+      }
+      nameElement.addClass('hidden');
+      input.removeClass('hidden');
+      input.focus();
+
+      function validateNameChange(e) {
+        e.preventDefault();
+
+        var newName = input.val();
+
+        $.ajax({
+          type: 'POST',
+          url: '/api/investigation/rename/' + self.id,
+          data: JSON.stringify({name: newName}),
+          dataType: 'json',
+          contentType: 'application/json',
+        }).fail(function (d) {
+          notify('Could not save new name.', 'danger');
+        });
+
+        input.addClass('hidden');
+        nameElement.text(newName);
+        nameElement.removeClass('hidden unsaved');
+      }
+
+      form.on('submit', validateNameChange);
+      input.focusout(validateNameChange);
     });
   }
 

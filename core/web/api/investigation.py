@@ -19,3 +19,10 @@ class Investigation(CrudApi):
         i.add(iterify(data['links']), iterify(data['nodes']))
 
         return render(i.info())
+
+    @route("/rename/<string:id>", methods=['POST'])
+    def rename(self, id):
+        i = get_object_or_404(self.objectmanager, id=id)
+        i.modify(name=request.json['name'])
+
+        return render("ok")
