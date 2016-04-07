@@ -117,20 +117,11 @@
       {% if messages %}
         <script>
         {% for category, message in messages %}
-          $.notify({
-              message: "{{message}}"
-          }, {
-              offset: {
-                  y: 50,
-                  x: 30
-              },
-              {% if category == "message" %}
-                type: "info"
-              {% else %}
-                type: "{{category}}"
-              {% endif %}
-          });
-          console.log("{{category}}");
+            {% if category == "message" %}
+                notify("{{message}}", 'info');
+            {% else %}
+                notify("{{message}}", "{{category}}");
+            {% endif %}
         {% endfor %}
         </script>
       {% endif %}

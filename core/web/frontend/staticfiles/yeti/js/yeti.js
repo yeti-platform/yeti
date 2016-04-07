@@ -75,3 +75,16 @@ function yeti_populate(elt) {
   });
 
 }
+
+// Helper for notifications
+function notify(message, type) {
+  $.notify({
+      message: message
+    }, {
+      offset: {
+        y: 50,
+        x: 30
+      },
+      type: type
+  });
+}
