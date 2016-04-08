@@ -49,7 +49,7 @@ class Tag(CrudApi):
 
     def post(self, id):
         try:
-            data = self.parse_request(request.json)
+            data = self._parse_request(request.json)
             t = self.objectmanager.objects.get(id=id)
             oldname = t.name
             data['default_expiration'] = int(data['default_expiration'])

@@ -27,6 +27,8 @@ function tags_merge_selected(button) {
     success: function(data) {
       scan_populate();
     }
+  }).fail(function (data) {
+    notify("Could not merge selected tags.", "danger");
   });
 
 }

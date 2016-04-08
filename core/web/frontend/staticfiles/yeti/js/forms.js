@@ -188,7 +188,9 @@ function yeti_save_button(elt) {
         clear_form(form);
       }
       refresh_tagfields(form);
-    }});
+    }}).fail(function(data) {
+      notify("Could not save changes to tag.", "danger");
+    });
 }
 
 function yeti_edit_elt(elt) {
