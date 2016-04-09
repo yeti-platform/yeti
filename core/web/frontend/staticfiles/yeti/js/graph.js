@@ -114,6 +114,12 @@ function linksFilter(nodeId, field) {
   };
 }
 
+function invisibleLinksFilter(nodeId, field) {
+  return function (links) {
+    return links[field] == nodeId && !links.visible;
+  };
+}
+
 function enablePopovers() {
   $('[rel="popover"]').popover({
         container: 'body',
@@ -262,6 +268,10 @@ class Investigation {
     return existingLink;
   }
 
+  isNodeVisible(nodeId) {
+    return this.visibleNodes.get(nodeId);
+  }
+
   addLink(link) {
     link.id = link._id;
 
@@ -303,10 +313,50 @@ class Investigation {
   }
 
   displayLink(link) {
-    link = this.addLink(link);
     this.edges.update({id: link.id, visible: true});
+  }
 
-    return link;
+  displayNodeId(nodeId) {
+    this.nodes.update({id: nodeId, visible: true});
+  }
+
+  enableLinksAndNodes(links, nodeIds) {
+    links.forEach(function (link) {
+      nodeIds.push(link.from);
+      nodeIds.push(link.to);
+    });
+
+    links = links.concat(this.linksForNodes(nodeIds));
+
+    // Effectively display elements on the graph
+    nodeIds.forEach(this.displayNodeId.bind(this));
+    links.forEach(this.displayLink.bind(this));
+
+    // Save them to the investigation
+    this.add(links, nodeIds.map(dbref));
+  }
+
+  linksForNodes(nodeIds) {
+    var self = this;
+    var links = [];
+
+    nodeIds.forEach(function (nodeId) {
+      var incoming = self.edges.get({filter: invisibleLinksFilter(nodeId, 'to')});
+      incoming.forEach(function (link) {
+        if (self.isNodeVisible(link.from)) {
+          links.push(link);
+        }
+      });
+
+      var outgoing = self.edges.get({filter: invisibleLinksFilter(nodeId, 'from')});
+      outgoing.forEach(function (link) {
+        if (self.isNodeVisible(link.to)) {
+          links.push(link);
+        }
+      });
+    });
+
+    return links;
   }
 
   hideLink(linkId) {
@@ -498,21 +548,17 @@ class Investigation {
     );
   }
 
-  enableLink(link) {
+  add(links, nodes) {
     var self = this;
 
     var data = {
-      links: [link],
-      nodes: [dbref(link.from), dbref(link.to)],
+      links: links,
+      nodes: nodes,
     };
-
-    // Effectively display elements on the graph
-    this.nodes.update([{id: link.from, visible: true}, {id: link.to, visible: true}]);
-    this.edges.update({id: link.id, visible: true});
 
     function callback(investigation) {
       self.update(investigation);
-    };
+    }
 
     // Persist changes, and update to last version
     $.ajax({
@@ -555,7 +601,7 @@ class Investigation {
       var linkId = $(this).data('link');
       var link = self.edges.get(linkId);
 
-      self.enableLink(link);
+      self.enableLinksAndNodes([link], []);
     });
 
     $('#graph-sidebar').on('click', '.graph-sidebar-view-node', function(e) {
@@ -644,6 +690,7 @@ class Investigation {
     });
 
     // Quick add
+    // FIXME: fetch links before calling linksForNodes ?
     $('.typeahead').typeahead({
       hint: true,
       highlight: true,
@@ -659,7 +706,8 @@ class Investigation {
     });
 
     $('.typeahead').bind('typeahead:select', function(ev, suggestion) {
-      self.displayNode(suggestion);
+      suggestion = self.addNode(suggestion);
+      self.enableLinksAndNodes([], [suggestion.id]);
       $(this).typeahead('val', '');
     });
 
