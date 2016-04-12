@@ -9,8 +9,7 @@ from core.web.api.api import render
 class Observable(CrudApi):
     objectmanager = observables.Observable
 
-    def modify_observable(self, observable):
-        params = request.json
+    def _modify_observable(self, observable, params={}):
         source = params.pop('source', None)
         tags = params.pop('tags', None)
         strict = bool(params.pop('strict', False))
@@ -18,22 +17,33 @@ class Observable(CrudApi):
         if source:
             observable.add_source(source)
         if tags is not None:
-            observable.tag(tags.split(','), strict)
+            observable.tag(tags, strict)
         if params:
             observable.clean_update(**params)
 
         info = observable.info()
         info['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(observable.id))
-        return render(info)
+        return info
 
     @route("/", methods=["POST"])
     def new(self):
-        obs = self.objectmanager.add_text(request.json['value'])
-        return self.modify_observable(obs)
+        params = request.json
+        obs = self.objectmanager.add_text(params.pop('value'))
+        return render(self._modify_observable(obs, params))
+
+    @route("/bulk", methods=["POST"])
+    def bulk(self):
+        added = []
+        params = request.json
+        observables = params.pop('observables', [])
+        for item in observables:
+            obs = self.objectmanager.add_text(item)
+            added.append(self._modify_observable(obs, params))
+        return render(added)
 
     def post(self, id):
         obs = self.objectmanager.objects.get(id=id)
-        return self.modify_observable(obs)
+        return render(self._modify_observable(obs, request.json))
 
 class ObservableSearch(CrudSearchApi):
     template = 'observable_api.html'
