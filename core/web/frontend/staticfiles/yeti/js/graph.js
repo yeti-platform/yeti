@@ -169,8 +169,6 @@ class Investigation {
     this.quickadd_search = new Bloodhound({
       datumTokenizer: Bloodhound.tokenizers.obj.whitespace('label'),
       queryTokenizer: Bloodhound.tokenizers.whitespace,
-      // datumTokenizer: function(obj) { return [obj['label']]; },
-      // queryTokenizer: function(obj) { return [obj]; },
       sufficient: 1,
       identify: function(obj) { return obj.id; },
       remote: {
@@ -321,42 +319,69 @@ class Investigation {
   }
 
   enableLinksAndNodes(links, nodeIds) {
+    var self = this;
+
     links.forEach(function (link) {
       nodeIds.push(link.from);
       nodeIds.push(link.to);
     });
 
-    links = links.concat(this.linksForNodes(nodeIds));
+    this.linksForNodes(nodeIds, function(newLinks) {
+      links = links.concat(newLinks);
 
-    // Effectively display elements on the graph
-    nodeIds.forEach(this.displayNodeId.bind(this));
-    links.forEach(this.displayLink.bind(this));
+      // Effectively display elements on the graph
+      nodeIds.forEach(self.displayNodeId.bind(self));
+      links.forEach(self.displayLink.bind(self));
 
-    // Save them to the investigation
-    this.add(links, nodeIds.map(dbref));
+      // Save them to the investigation
+      self.add(links, nodeIds.map(dbref));
+    });
   }
 
-  linksForNodes(nodeIds) {
+  linksForNodes(nodeIds, callback) {
     var self = this;
-    var links = [];
+    var linksPromises = [false];
 
+    // First, make sure all nodes have their links fetched
     nodeIds.forEach(function (nodeId) {
-      var incoming = self.edges.get({filter: invisibleLinksFilter(nodeId, 'to')});
-      incoming.forEach(function (link) {
-        if (self.isNodeVisible(link.from)) {
-          links.push(link);
-        }
-      });
+      var node = self.nodes.get(nodeId);
 
-      var outgoing = self.edges.get({filter: invisibleLinksFilter(nodeId, 'from')});
-      outgoing.forEach(function (link) {
-        if (self.isNodeVisible(link.to)) {
-          links.push(link);
-        }
-      });
+      if (!node.fetched) {
+        linksPromises.push($.getJSON('/api/neighbors/' + node._cls + '/' + node._id));
+      }
     });
 
-    return links;
+    $.when.apply($, linksPromises).done(function () {
+      var links = [];
+
+      for (var i=0; i < arguments.length; i++) {
+        if (arguments[i]) {
+          arguments[i][0].links.forEach(self.addLink.bind(self));
+          arguments[i][0].nodes.forEach(self.addNode.bind(self));
+        }
+      }
+
+      // Then, see if any link needs to be displayed
+      nodeIds.forEach(function (nodeId) {
+        self.nodes.update({id: nodeId, fetched: true});
+
+        var incoming = self.edges.get({filter: invisibleLinksFilter(nodeId, 'to')});
+        incoming.forEach(function (link) {
+          if (self.isNodeVisible(link.from)) {
+            links.push(link);
+          }
+        });
+
+        var outgoing = self.edges.get({filter: invisibleLinksFilter(nodeId, 'from')});
+        outgoing.forEach(function (link) {
+          if (self.isNodeVisible(link.to)) {
+            links.push(link);
+          }
+        });
+      });
+
+      callback(links);
+    });
   }
 
   hideLink(linkId) {
@@ -689,8 +714,6 @@ class Investigation {
       input.focusout(validateNameChange);
     });
 
-    // Quick add
-    // FIXME: fetch links before calling linksForNodes ?
     $('.typeahead').typeahead({
       hint: true,
       highlight: true,
