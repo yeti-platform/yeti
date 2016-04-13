@@ -40,8 +40,10 @@ class Investigation(CrudApi):
     def nodesearch(self, query):
         result = []
 
-        observables = Observable.objects(value=re.compile("^{}".format(query))).limit(5)
-        entities = Entity.objects(name=re.compile("^{}".format(query))).limit(5)
+        query = re.compile("^{}".format(query), re.IGNORECASE)
+
+        observables = Observable.objects(value=query).limit(5)
+        entities = Entity.objects(name=query).limit(5)
 
         for results in [observables, entities]:
             for node in results:
