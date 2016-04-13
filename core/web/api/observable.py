@@ -4,6 +4,8 @@ from flask import request, url_for
 from core.web.api.crud import CrudApi, CrudSearchApi
 from core import observables
 from core.web.api.api import render
+from core.helpers import refang
+
 
 
 class Observable(CrudApi):
@@ -11,11 +13,14 @@ class Observable(CrudApi):
 
     def _modify_observable(self, observable, params={}):
         source = params.pop('source', None)
+        context = params.pop('context', None)
         tags = params.pop('tags', None)
         strict = bool(params.pop('strict', False))
 
         if source:
             observable.add_source(source)
+        if context:
+            observable.add_context(context)
         if tags is not None:
             observable.tag(tags, strict)
         if params:
@@ -28,7 +33,10 @@ class Observable(CrudApi):
     @route("/", methods=["POST"])
     def new(self):
         params = request.json
-        obs = self.objectmanager.add_text(params.pop('value'))
+        if params.pop('refang', None):
+            obs = self.objectmanager.add_text(refang(params.pop('value')))
+        else:
+            obs = self.objectmanager.add_text(params.pop('value'))
         return render(self._modify_observable(obs, params))
 
     @route("/bulk", methods=["POST"])
@@ -37,8 +45,12 @@ class Observable(CrudApi):
         params = request.json
         observables = params.pop('observables', [])
         for item in observables:
-            obs = self.objectmanager.add_text(item)
-            added.append(self._modify_observable(obs, params))
+            if params.pop('refang', None):
+                obs = self.objectmanager.add_text(refang(item))
+            else:
+                obs = self.objectmanager.add_text(item)
+
+            added.append(self._modify_observable(obs, params.copy()))
         return render(added)
 
     def post(self, id):
