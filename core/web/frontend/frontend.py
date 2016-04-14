@@ -12,7 +12,7 @@ from core.web.frontend.investigations import InvestigationsView
 
 from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
 from core.entities import TTP, Actor, Company, Malware, Entity
-from core.indicators import Regex
+from core.indicators import Indicator, Regex
 from core.exports import ExportTemplate
 from core.web.frontend.users import UsersView
 
@@ -52,6 +52,8 @@ def graph(id):
 def graph_node(klass, id):
     if klass == 'entity':
         node = get_object_or_404(Entity, id=id)
+    elif klass == 'indicator':
+        node = get_object_or_404(Indicator, id=id)
     else:
         node = get_object_or_404(Observable, id=id)
 

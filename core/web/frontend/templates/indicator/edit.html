@@ -30,37 +30,48 @@
 
 <div class="cold-md-12">
 
-  <form action="{{request.path}}" method="POST" class="yeti-form">
+  <form action="{{request.path}}" method="POST" class="yeti-form yeti-add-node">
   <div class="row">
     <div class="col-md-10 col-md-offset-1">
       <h1>{% if not obj %}New {{obj_type}}{% else %}Editing {{obj.name}}{%endif%}</h1>
-			{{ macros.render_generic_errors(form)}}
     </div>
 
-    <div class="col-md-3 col-md-offset-1">
-      {% for field in form if field.name not in ['description', 'pattern']%}
-        {{ macros.render_field(field) }}
-      {% endfor %}
-      <input type="submit" class="btn btn-primary" value="Save">
+    <div class="form-content">
+        <div class="row">
+            <div class="col-md-10 col-md-offset-1">
+                {{ macros.render_generic_errors(form)}}
+            </div>
+            <div class="col-md-3 col-md-offset-1">
+              {% for field in form if field.name not in ['description', 'pattern']%}
+                {{ macros.render_field(field) }}
+              {% endfor %}
+
+            </div>
+
+            <div class="col-md-7">
+              <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a href="#description" aria-controls="description" role="tab" data-toggle="tab">Description</a></li>
+                <li role="presentation"><a href="#pattern" aria-controls="pattern" role="tab" data-toggle="tab">Pattern</a></li>
+              </ul>
+
+              <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="description"> <!-- Description tab -->
+                  <br>
+                  {{ macros.render_field(form.description, rows=12) }}
+                </div>
+                <div role="tabpanel" class="tab-pane" id="pattern"> <!-- Pattern tab -->
+                  <br>
+                  {{ macros.render_field(form.pattern, rows=12)}}
+                </div>
+              </div>
+
+            </div>
+        </div>
     </div>
-
-    <div class="col-md-7">
-      <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active"><a href="#description" aria-controls="description" role="tab" data-toggle="tab">Description</a></li>
-        <li role="presentation"><a href="#pattern" aria-controls="pattern" role="tab" data-toggle="tab">Pattern</a></li>
-      </ul>
-
-      <div class="tab-content">
-        <div role="tabpanel" class="tab-pane active" id="description"> <!-- Description tab -->
-          <br>
-          {{ macros.render_field(form.description, rows=12) }}
+    <div class="row">
+        <div class="col-md-3 col-md-offset-1">
+            <input type="submit" class="btn btn-primary" value="Save">
         </div>
-        <div role="tabpanel" class="tab-pane" id="pattern"> <!-- Pattern tab -->
-          <br>
-          {{ macros.render_field(form.pattern, rows=12)}}
-        </div>
-      </div>
-
     </div>
 
 

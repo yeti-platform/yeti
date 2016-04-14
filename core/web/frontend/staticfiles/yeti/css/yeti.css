@@ -190,6 +190,15 @@ span.yeti-toggle {
     border-left: 1px solid grey;
 }
 
+#graph-toolbar a {
+    color: white;
+}
+
+#graph-toolbar a:hover {
+    color: #00CCFF;
+    text-decoration: none;
+}
+
 #graph-network {
     height: 100%;
 }
@@ -499,4 +508,8 @@ div.filter {
 
 .graph-quick-add-result:last-child {
     border-bottom: 0;
+}
+
+ul.ui-autocomplete {
+    z-index: 1100;
 }

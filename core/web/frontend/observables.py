@@ -2,7 +2,7 @@ from flask import request, render_template
 from flask.ext.classy import route
 
 from core.web.frontend.generic import GenericView
-from core.observables import Observable
+from core.observables import *
 from core.errors import ObservableValidationError
 from core.analysis import match_observables
 
@@ -26,9 +26,22 @@ class ObservablesView(GenericView):
     def new(self, klass=None):
         if not klass:
             klass = self.klass
+
         if request.method == "POST":
-            guessed_type = Observable.guess_type(request.form['value'])
+            if (request.form['type']
+                and request.form['type'] in globals()
+                and issubclass(globals()[request.form['type']], Observable)):
+                guessed_type = globals()[request.form['type']]
+            else:
+                try:
+                    guessed_type = Observable.guess_type(request.form['value'])
+                except ObservableValidationError, e:
+                    form = klass.get_form()(request.form)
+                    form.errors['generic'] = [str(e)]
+                    return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
+
             return self.handle_form(klass=guessed_type)
+
         form = klass.get_form()()
         obj = None
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)

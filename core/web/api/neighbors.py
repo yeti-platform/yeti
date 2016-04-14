@@ -30,6 +30,8 @@ class Neighbors(CrudApi):
             'nodes': list()
         }
 
+        result['nodes'].append(node.to_mongo())
+
         node_ids = set()
         links = list(set(node.incoming() + node.outgoing()))
 

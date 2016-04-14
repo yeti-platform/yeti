@@ -22,21 +22,31 @@
 {% block main %}
 
   <div class="cold-md-12">
-    <form action="{{request.path}}" method="POST" class="yeti-form">
+    <form action="{{request.path}}" method="POST" class="yeti-form yeti-add-node">
     <div class="row">
       <div class="col-md-10 col-md-offset-1">
         <h1>{% if not obj %}New {{obj_type}}{% else %}Editing {{obj.name}}{%endif%}</h1>
-				{{ macros.render_generic_errors(form)}}
       </div>
-      <div class="col-md-3 col-md-offset-1">
-        {% for field in form if field.name != 'description'%}
-          {{ macros.render_field(field) }}
-        {% endfor %}
-        <input type="submit" class="btn btn-primary" value="Save">
+      <div class="form-content">
+          <div class="row">
+              <div class="col-md-10 col-md-offset-1">
+                  {{ macros.render_generic_errors(form)}}
+              </div>
+              <div class="col-md-3 col-md-offset-1">
+                {% for field in form if field.name != 'description'%}
+                  {{ macros.render_field(field) }}
+                {% endfor %}
+              </div>
+              <div class="col-md-7">
+                {{ macros.render_field(form.description, rows=12) }}
+              </div>
+          </div>
       </div>
-      <div class="col-md-7">
-        {{ macros.render_field(form.description, rows=12) }}
-      </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3 col-md-offset-1">
+            <input type="submit" class="btn btn-primary" value="Save">
+        </div>
     </div>
     </form>
   </div>

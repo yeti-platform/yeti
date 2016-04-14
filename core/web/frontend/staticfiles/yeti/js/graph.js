@@ -714,6 +714,7 @@ class Investigation {
       input.focusout(validateNameChange);
     });
 
+    // Quick Add
     $('.typeahead').typeahead({
       hint: true,
       highlight: true,
@@ -732,6 +733,56 @@ class Investigation {
       suggestion = self.addNode(suggestion);
       self.enableLinksAndNodes([], [suggestion.id]);
       $(this).typeahead('val', '');
+    });
+
+    // Add node buttons
+    $('.graph-add-node').click(function (e) {
+      e.preventDefault();
+
+      var url = $(this).attr('href');
+      var value = $('.tt-input').val();
+
+      $.get(url).done(function (html) {
+        var title = $(html).find('h1').text();
+        var content = $(html).find('.form-content').html();
+
+        $('#graph-modal h4').text(title);
+        $('#graph-modal .modal-body').html(content);
+        $('#graph-modal #name').val(value);
+        $('#graph-modal #value').val(value);
+
+        refresh_tagfields($('#graph-modal .modal-body'));
+
+        $('#graph-modal').modal('show');
+
+        $('#graph-mobal-submit').off().on('click', function (e) {
+          $.post(url, $('#graph-modal form').serialize()).done(function (data) {
+            // Errors in the submission
+            if ($(data).find('.yeti-add-node').length) {
+              content = $(data).find('.form-content').html();
+              $('#graph-modal .modal-body').html(content);
+              refresh_tagfields($('#graph-modal .modal-body'));
+            }
+            // Everything fine, proceed
+            else {
+              var nameElt = $(data).find('#yeti-node-name');
+              var id = nameElt.data('id');
+              var klass = nameElt.data('class');
+
+              $.getJSON('/api/neighbors/' + klass + '/' + id, function(result) {
+                result.links.forEach(self.addLink.bind(self));
+                result.nodes.forEach(self.addNode.bind(self));
+                self.nodes.update({id: id, fetched: true});
+
+                self.enableLinksAndNodes([], [buildNodeId(klass, id)]);
+
+                $(this).typeahead('val', '');
+                $('#graph-modal').modal('hide');
+              });
+            }
+          });
+        });
+      });
     });
 
   }
