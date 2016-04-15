@@ -183,6 +183,10 @@ class Investigation {
     // Setup initial data
     this.update(investigation);
 
+    // Setup Layout options
+    this.layout_directions = ["", "UD", "DU", "LR", "RL"];
+    this.layout_cycle = 0;
+
     // Display graph
     this.initGraph();
   }
@@ -205,6 +209,7 @@ class Investigation {
 
       if (link.id.startsWith('local')) {
         link.active = true;
+        link.color = {color:'red'};
       }
 
       if (!self.hasLink(link)) {
@@ -611,18 +616,22 @@ class Investigation {
     data.arrows = 'to';
     data.active = true;
     data.label = label;
+    data.color = {color:'red'};
 
     callback(data);
     this.enableLinksAndNodes([data], []);
   }
 
-  initGraph() {
-    // create a network
+  toggleLayout() {
     var container = document.getElementById('graph-network');
     var data = {
       nodes: this.visibleNodes,
       edges: this.visibleEdges,
     };
+
+    var direction = this.layout_directions[this.layout_cycle % 5];
+    this.layout_cycle += 1;
+
     var options = {
       physics: {
         barnesHut: {
@@ -634,7 +643,26 @@ class Investigation {
         addEdge: this.addManualLink.bind(this)
       }
     };
-    var network = new vis.Network(container, data, options);
+
+    if (direction !== '') {
+      options.layout = {
+        hierarchical: {
+          direction: direction
+        }
+      };
+    }
+
+    if ((this.network !== undefined) && (this.network !== null)) {
+      this.network.destroy();
+      this.network = null;
+    }
+
+    this.network = new vis.Network(container, data, options);
+  }
+
+  initGraph() {
+    // create a network
+    this.toggleLayout();
 
     // create analytics
     this.loadAnalytics();
@@ -642,7 +670,7 @@ class Investigation {
     var self = this;
 
     // Define event handlers
-    network.on('selectNode', function(params) {
+    this.network.on('selectNode', function(params) {
       self.selectNode(params.nodes[params.nodes.length - 1]);
     });
 
@@ -762,7 +790,13 @@ class Investigation {
     // Add link button
     $('#graph-add-link').click(function (e) {
       e.preventDefault();
-      network.addEdgeMode();
+      this.network.addEdgeMode();
+    });
+
+    // Hierachical Layout
+    $('#graph-hierarchical').click(function (e) {
+      e.preventDefault();
+      self.toggleLayout();
     });
 
     // Add node buttons
