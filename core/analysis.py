@@ -14,6 +14,21 @@ analyzers = {
 
 
 def derive(observables):
+    """Indicate that the module needs a specific attribute to work properly.
+
+    This function is only useful in abstract modules, in order to make sure
+    that modules that inherit from this class correctly defines needed class
+    attributes.
+
+    Args:
+        variables: a string or an array of strings containing the name of
+            needed class attributes.
+
+    Raises:
+        ModuleInitializationError: One of the needed attributes is not
+            correctly defined.
+    """
+
     new = []
     for observable in iterify(observables):
         try:

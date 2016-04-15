@@ -1,0 +1,1393 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Teh API &mdash; YETI 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="YETI 1.0 documentation" href="index.html"/>
+        <link rel="prev" title="Welcome to YETI’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> YETI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Teh API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">YETI</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Teh API</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/api.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="teh-api">
+<h1>Teh API<a class="headerlink" href="#teh-api" title="Permalink to this headline">¶</a></h1>
+<dl class="get">
+<dt id="get--api-analytics-scheduled-">
+<code class="descname">GET </code><code class="descname">/api/analytics/scheduled/</code><a class="headerlink" href="#get--api-analytics-scheduled-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-scheduled-">
+<code class="descname">POST </code><code class="descname">/api/analytics/scheduled/</code><a class="headerlink" href="#post--api-analytics-scheduled-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-oneshot-">
+<code class="descname">POST </code><code class="descname">/api/analytics/oneshot/</code><a class="headerlink" href="#post--api-analytics-oneshot-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analysis-match">
+<code class="descname">POST </code><code class="descname">/api/analysis/match</code><a class="headerlink" href="#post--api-analysis-match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Match observables against Yeti&#8217;s intelligence repository.</p>
+<p>Takes an array of observables, expands them and tries to match them against specific indicators or known observables.</p>
+<p>To &#8220;expand&#8221; an observable means to enrich the query. For instance, if the arrays of observables contains the URL <code class="docutils literal"><span class="pre">http://google.com</span></code>,
+the &#8220;expanded&#8221; observable array will also include the hostname <code class="docutils literal"><span class="pre">google.com</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>observables</strong> (<em>[string]</em>) &#8211; An array of observables to be matched</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>entities</strong> (<em>[Entity]</em>) &#8211; Related <code class="docutils literal"><span class="pre">Entity</span></code> objects</li>
+<li><strong>known</strong> (<em>[Observable]</em>) &#8211; <code class="docutils literal"><span class="pre">Observable</span></code> objects that are already present in database</li>
+<li><strong>matches</strong> (<em>[Indicator]</em>) &#8211; Indicators that matched observables</li>
+<li><strong>matches[].observable</strong> (<em>Observable</em>) &#8211; The Observable object that matched the Indicator</li>
+<li><strong>unknown</strong> (<em>string</em>) &#8211; Array of observable strings that didn&#8217;t match indicators and are unknown to Yeti</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-observablesearch-">
+<code class="descname">POST </code><code class="descname">/api/observablesearch/</code><a class="headerlink" href="#post--api-observablesearch-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Launches a simple search against the database</p>
+<p>This function is used by paginators in Yeti.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object specifying the <code class="docutils literal"><span class="pre">page</span></code>, <code class="docutils literal"><span class="pre">range</span></code> and <code class="docutils literal"><span class="pre">regex</span></code> variables.</li>
+<li><strong>params.page</strong> (<em>integer</em>) &#8211; Page or results to return (default: 1)</li>
+<li><strong>params.range</strong> (<em>integer</em>) &#8211; How many results to return (default: 50)</li>
+<li><strong>params.regex</strong> (<em>boolean</em>) &#8211; Set to true if the arrays in <code class="docutils literal"><span class="pre">filter</span></code> are to be treated as regular expressions (default: false)</li>
+<li><strong>filter</strong> (<em>object</em>) &#8211; JSON object specifying keys to be matched in the database. Each key must contain an array of OR-matched values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request Headers:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1">Accept</a> &#8211; must be set to <code class="docutils literal"><span class="pre">application/json</span></code></li>
+<li><a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.17">Content-Type</a> &#8211; must be set to <code class="docutils literal"><span class="pre">application/json</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-indicatorsearch-">
+<code class="descname">POST </code><code class="descname">/api/indicatorsearch/</code><a class="headerlink" href="#post--api-indicatorsearch-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Launches a simple search against the database</p>
+<p>This function is used by paginators in Yeti.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object specifying the <code class="docutils literal"><span class="pre">page</span></code>, <code class="docutils literal"><span class="pre">range</span></code> and <code class="docutils literal"><span class="pre">regex</span></code> variables.</li>
+<li><strong>params.page</strong> (<em>integer</em>) &#8211; Page or results to return (default: 1)</li>
+<li><strong>params.range</strong> (<em>integer</em>) &#8211; How many results to return (default: 50)</li>
+<li><strong>params.regex</strong> (<em>boolean</em>) &#8211; Set to true if the arrays in <code class="docutils literal"><span class="pre">filter</span></code> are to be treated as regular expressions (default: false)</li>
+<li><strong>filter</strong> (<em>object</em>) &#8211; JSON object specifying keys to be matched in the database. Each key must contain an array of OR-matched values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request Headers:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1">Accept</a> &#8211; must be set to <code class="docutils literal"><span class="pre">application/json</span></code></li>
+<li><a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.17">Content-Type</a> &#8211; must be set to <code class="docutils literal"><span class="pre">application/json</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-exporttemplate-">
+<code class="descname">GET </code><code class="descname">/api/exporttemplate/</code><a class="headerlink" href="#get--api-exporttemplate-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-exporttemplate-">
+<code class="descname">POST </code><code class="descname">/api/exporttemplate/</code><a class="headerlink" href="#post--api-exporttemplate-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-investigation-">
+<code class="descname">GET </code><code class="descname">/api/investigation/</code><a class="headerlink" href="#get--api-investigation-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-investigation-">
+<code class="descname">POST </code><code class="descname">/api/investigation/</code><a class="headerlink" href="#post--api-investigation-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-entitysearch-">
+<code class="descname">POST </code><code class="descname">/api/entitysearch/</code><a class="headerlink" href="#post--api-entitysearch-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Launches a simple search against the database</p>
+<p>This function is used by paginators in Yeti.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object specifying the <code class="docutils literal"><span class="pre">page</span></code>, <code class="docutils literal"><span class="pre">range</span></code> and <code class="docutils literal"><span class="pre">regex</span></code> variables.</li>
+<li><strong>params.page</strong> (<em>integer</em>) &#8211; Page or results to return (default: 1)</li>
+<li><strong>params.range</strong> (<em>integer</em>) &#8211; How many results to return (default: 50)</li>
+<li><strong>params.regex</strong> (<em>boolean</em>) &#8211; Set to true if the arrays in <code class="docutils literal"><span class="pre">filter</span></code> are to be treated as regular expressions (default: false)</li>
+<li><strong>filter</strong> (<em>object</em>) &#8211; JSON object specifying keys to be matched in the database. Each key must contain an array of OR-matched values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request Headers:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1">Accept</a> &#8211; must be set to <code class="docutils literal"><span class="pre">application/json</span></code></li>
+<li><a class="reference external" href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.17">Content-Type</a> &#8211; must be set to <code class="docutils literal"><span class="pre">application/json</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-observable-">
+<code class="descname">GET </code><code class="descname">/api/observable/</code><a class="headerlink" href="#get--api-observable-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-indicator-">
+<code class="descname">GET </code><code class="descname">/api/indicator/</code><a class="headerlink" href="#get--api-indicator-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-indicator-">
+<code class="descname">POST </code><code class="descname">/api/indicator/</code><a class="headerlink" href="#post--api-indicator-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-neighbors-">
+<code class="descname">GET </code><code class="descname">/api/neighbors/</code><a class="headerlink" href="#get--api-neighbors-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-neighbors-">
+<code class="descname">POST </code><code class="descname">/api/neighbors/</code><a class="headerlink" href="#post--api-neighbors-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-analysis-">
+<code class="descname">GET </code><code class="descname">/api/analysis/</code><a class="headerlink" href="#get--api-analysis-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analysis-">
+<code class="descname">POST </code><code class="descname">/api/analysis/</code><a class="headerlink" href="#post--api-analysis-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-entity-">
+<code class="descname">GET </code><code class="descname">/api/entity/</code><a class="headerlink" href="#get--api-entity-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-entity-">
+<code class="descname">POST </code><code class="descname">/api/entity/</code><a class="headerlink" href="#post--api-entity-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-export-">
+<code class="descname">GET </code><code class="descname">/api/export/</code><a class="headerlink" href="#get--api-export-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-export-">
+<code class="descname">POST </code><code class="descname">/api/export/</code><a class="headerlink" href="#post--api-export-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-feed-">
+<code class="descname">GET </code><code class="descname">/api/feed/</code><a class="headerlink" href="#get--api-feed-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-feed-">
+<code class="descname">POST </code><code class="descname">/api/feed/</code><a class="headerlink" href="#post--api-feed-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-tag-">
+<code class="descname">GET </code><code class="descname">/api/tag/</code><a class="headerlink" href="#get--api-tag-" title="Permalink to this definition">¶</a></dt>
+<dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-tag-">
+<code class="descname">POST </code><code class="descname">/api/tag/</code><a class="headerlink" href="#post--api-tag-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-analytics-scheduled-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/analytics/scheduled/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-analytics-scheduled-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-analytics-scheduled-(id)">
+<code class="descname">GET </code><code class="descname">/api/analytics/scheduled/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-analytics-scheduled-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-scheduled-(id)">
+<code class="descname">POST </code><code class="descname">/api/analytics/scheduled/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-analytics-scheduled-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-analytics-oneshot-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/analytics/oneshot/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-analytics-oneshot-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-analytics-oneshot-(id)">
+<code class="descname">GET </code><code class="descname">/api/analytics/oneshot/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-analytics-oneshot-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-oneshot-(id)">
+<code class="descname">POST </code><code class="descname">/api/analytics/oneshot/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-analytics-oneshot-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-export-(string-id)-content">
+<code class="descname">GET </code><code class="descname">/api/export/</code><span class="sig-paren">(</span><em class="property">string: </em><em>id</em><span class="sig-paren">)</span><code class="descname">/content</code><a class="headerlink" href="#get--api-export-(string-id)-content" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return export content</p>
+<p>Returns a given export&#8217;s content.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Export ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response Headers:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><em>X-Yeti-Export-MD5</em> &#8211; The MD5 hash of the exported content. Use it to check the export&#8217;s integrity</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-export-(string-id)-refresh">
+<code class="descname">POST </code><code class="descname">/api/export/</code><span class="sig-paren">(</span><em class="property">string: </em><em>id</em><span class="sig-paren">)</span><code class="descname">/refresh</code><a class="headerlink" href="#post--api-export-(string-id)-refresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refresh an export</p>
+<p>Manually executes an export if it is not already exporting.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Export ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; The export&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-export-(string-id)-toggle">
+<code class="descname">POST </code><code class="descname">/api/export/</code><span class="sig-paren">(</span><em class="property">string: </em><em>id</em><span class="sig-paren">)</span><code class="descname">/toggle</code><a class="headerlink" href="#post--api-export-(string-id)-toggle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Toggle an export</p>
+<p>Toggles an export. A deactivated export will not execute when called (manually or scheduled)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Export ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; The export&#8217;s ObjectID</li>
+<li><strong>status</strong> (<em>boolean</em>) &#8211; The result of the toggle operation (<code class="docutils literal"><span class="pre">true</span></code> means the export has been enabled, <code class="docutils literal"><span class="pre">false</span></code> means it has been disabled)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-exporttemplate-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/exporttemplate/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-exporttemplate-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-exporttemplate-(id)">
+<code class="descname">GET </code><code class="descname">/api/exporttemplate/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-exporttemplate-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-exporttemplate-(id)">
+<code class="descname">POST </code><code class="descname">/api/exporttemplate/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-exporttemplate-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-investigation-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/investigation/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-investigation-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-investigation-(id)">
+<code class="descname">GET </code><code class="descname">/api/investigation/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-investigation-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-investigation-(id)">
+<code class="descname">POST </code><code class="descname">/api/investigation/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-investigation-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-observable-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/observable/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-observable-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-observable-(id)">
+<code class="descname">GET </code><code class="descname">/api/observable/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-observable-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-indicator-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/indicator/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-indicator-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-indicator-(id)">
+<code class="descname">GET </code><code class="descname">/api/indicator/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-indicator-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-indicator-(id)">
+<code class="descname">POST </code><code class="descname">/api/indicator/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-indicator-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-neighbors-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/neighbors/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-neighbors-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-neighbors-(id)">
+<code class="descname">POST </code><code class="descname">/api/neighbors/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-neighbors-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-analysis-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/analysis/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-analysis-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-analysis-(id)">
+<code class="descname">GET </code><code class="descname">/api/analysis/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-analysis-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analysis-(id)">
+<code class="descname">POST </code><code class="descname">/api/analysis/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-analysis-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-entity-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/entity/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-entity-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-entity-(id)">
+<code class="descname">GET </code><code class="descname">/api/entity/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-entity-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-entity-(id)">
+<code class="descname">POST </code><code class="descname">/api/entity/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-entity-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-export-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/export/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-export-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-export-(id)">
+<code class="descname">GET </code><code class="descname">/api/export/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-export-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-export-(id)">
+<code class="descname">POST </code><code class="descname">/api/export/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-export-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="delete">
+<dt id="delete--api-feed-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/feed/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-feed-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes the corresponding entry from the database</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-feed-(id)">
+<code class="descname">GET </code><code class="descname">/api/feed/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-feed-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-feed-(id)">
+<code class="descname">POST </code><code class="descname">/api/feed/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-feed-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new element</p>
+<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-tag-(id)">
+<code class="descname">GET </code><code class="descname">/api/tag/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-tag-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get details on a specific element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--staticfiles-(path-filename)">
+<code class="descname">GET </code><code class="descname">/staticfiles/</code><span class="sig-paren">(</span><em class="property">path: </em><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#get--staticfiles-(path-filename)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function used internally to send static files from the static
+folder to the browser.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.5.</span></p>
+</div>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to YETI’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Thomas Chopitea, Gael Muller.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
