@@ -32,7 +32,7 @@ Handlebars.registerHelper("date", function(datetime) {
 });
 
 Handlebars.registerHelper("hasMoreHistory", function(link, options) {
-  if ((link.active) || ((link.history) && (link.history.length > 1))) {
+  if ((link.history) && ((link.active) || (link.history.length > 1))) {
     return options.fn(this);
   } else {
     return options.inverse(this);
@@ -202,6 +202,10 @@ class Investigation {
       link.from = link.fromnode;
       link.to = link.tonode;
       link.arrows = 'to';
+
+      if (link.id.startsWith('local')) {
+        link.active = true;
+      }
 
       if (!self.hasLink(link)) {
         self.edges.add(link);
@@ -404,10 +408,10 @@ class Investigation {
     var result = {};
 
     links.forEach(function (item) {
-      if (result.hasOwnProperty(item.description)) {
-        result[item.description].push(item);
+      if (result.hasOwnProperty(item.label)) {
+        result[item.label].push(item);
       } else {
-        result[item.description] = new Array(item);
+        result[item.label] = new Array(item);
       }
     });
 
@@ -596,6 +600,22 @@ class Investigation {
     });
   }
 
+  addManualLink(data, callback) {
+    var label = prompt("Label", "");
+
+    if (label === "") {
+      label = null;
+    }
+
+    data.id = "local-" + Date.now();
+    data.arrows = 'to';
+    data.active = true;
+    data.label = label;
+
+    callback(data);
+    this.enableLinksAndNodes([data], []);
+  }
+
   initGraph() {
     // create a network
     var container = document.getElementById('graph-network');
@@ -609,6 +629,10 @@ class Investigation {
           springLength: 300,
         },
       },
+      manipulation: {
+        enabled: false,
+        addEdge: this.addManualLink.bind(this)
+      }
     };
     var network = new vis.Network(container, data, options);
 
@@ -733,6 +757,12 @@ class Investigation {
       suggestion = self.addNode(suggestion);
       self.enableLinksAndNodes([], [suggestion.id]);
       $(this).typeahead('val', '');
+    });
+
+    // Add link button
+    $('#graph-add-link').click(function (e) {
+      e.preventDefault();
+      network.addEdgeMode();
     });
 
     // Add node buttons

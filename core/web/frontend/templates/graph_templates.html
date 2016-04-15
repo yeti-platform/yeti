@@ -52,7 +52,11 @@
             {{#equal @key 'null'}}
                 <li class="graph-sidebar-link-description">No description</li>
             {{else}}
-                <li class="graph-sidebar-link-description">{{@key}}{{../suffix}}</li>
+                {{#equal @key 'undefined'}}
+                    <li class="graph-sidebar-link-description">No description</li>
+                {{else}}
+                    <li class="graph-sidebar-link-description">{{@key}}{{../suffix}}</li>
+                {{/equal}}
             {{/equal}}
             {{#each this}}
                 <li {{#unless @last}}class="graph-sidebar-border-bottom"{{/unless}}>
