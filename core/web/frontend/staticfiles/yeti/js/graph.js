@@ -209,7 +209,7 @@ class Investigation {
 
       if (link.id.startsWith('local')) {
         link.active = true;
-        link.color = {color:'red'};
+        link.color = 'red';
       }
 
       if (!self.hasLink(link)) {
@@ -616,21 +616,46 @@ class Investigation {
     data.arrows = 'to';
     data.active = true;
     data.label = label;
-    data.color = {color:'red'};
+    data.color = 'red';
 
     callback(data);
     this.enableLinksAndNodes([data], []);
   }
 
   toggleLayout() {
+    var self = this;
     var container = document.getElementById('graph-network');
+
+    //
+    // This part is kind of ugly
+    // We have to use new DataSets using the same data
+    // Otherwise, visjs seem to have some kind of bug after switching
+    // from one layout to another.
+    //
+    var edges = new vis.DataSet();
+
+    self.edges.get().forEach(function (edge) {
+      edges.add(edge);
+    });
+
+    self.edges = edges;
+
+    this.visibleEdges = new vis.DataView(this.edges, {
+      filter: function(item) {
+        return item.visible;
+      },
+    });
+    //
+    // End of uglyness
+    //
+
     var data = {
-      nodes: this.visibleNodes,
-      edges: this.visibleEdges,
+      nodes: self.visibleNodes,
+      edges: self.visibleEdges,
     };
 
-    var direction = this.layout_directions[this.layout_cycle % 5];
-    this.layout_cycle += 1;
+    var direction = self.layout_directions[self.layout_cycle % 5];
+    self.layout_cycle += 1;
 
     var options = {
       physics: {
@@ -640,7 +665,7 @@ class Investigation {
       },
       manipulation: {
         enabled: false,
-        addEdge: this.addManualLink.bind(this)
+        addEdge: self.addManualLink.bind(self)
       }
     };
 
@@ -652,12 +677,16 @@ class Investigation {
       };
     }
 
-    if ((this.network !== undefined) && (this.network !== null)) {
-      this.network.destroy();
-      this.network = null;
+    if ((self.network !== undefined) && (self.network !== null)) {
+      self.network.destroy();
+      self.network = null;
     }
 
-    this.network = new vis.Network(container, data, options);
+    self.network = new vis.Network(container, data, options);
+
+    self.network.on('selectNode', function(params) {
+      self.selectNode(params.nodes[params.nodes.length - 1]);
+    });
   }
 
   initGraph() {
@@ -670,10 +699,6 @@ class Investigation {
     var self = this;
 
     // Define event handlers
-    this.network.on('selectNode', function(params) {
-      self.selectNode(params.nodes[params.nodes.length - 1]);
-    });
-
     $('#graph-sidebar').on('click', '.graph-sidebar-display-link', function(e) {
       var linkId = $(this).data('link');
       var link = self.edges.get(linkId);
