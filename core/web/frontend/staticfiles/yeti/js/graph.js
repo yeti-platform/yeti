@@ -185,7 +185,7 @@ class Investigation {
 
     // Setup Layout options
     this.layout_directions = ["", "UD", "DU", "LR", "RL"];
-    this.layout_cycle = 0;
+    this.layout_cycle = -1;
 
     // Display graph
     this.initGraph();
@@ -654,8 +654,8 @@ class Investigation {
       edges: self.visibleEdges,
     };
 
-    var direction = self.layout_directions[self.layout_cycle % 5];
     self.layout_cycle += 1;
+    var direction = self.layout_directions[self.layout_cycle % 5];
 
     var options = {
       physics: {
@@ -815,7 +815,12 @@ class Investigation {
     // Add link button
     $('#graph-add-link').click(function (e) {
       e.preventDefault();
-      this.network.addEdgeMode();
+      if (self.layout_cycle % 5 === 0) {
+        self.network.addEdgeMode();
+      }
+      else {
+        notify("Link creation not available when in hierarchical layout", "warning");
+      }
     });
 
     // Hierachical Layout
