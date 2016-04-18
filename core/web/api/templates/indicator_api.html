@@ -2,7 +2,7 @@
 
 {% for indicator in data %}
     {% if loop.first %}
-        <ul class="nav {% if nav_style %}{{nav-style}}{% else %}nav-tabs{% endif %}" role="tablist">
+        <ul class="nav {% if nav_style %}{{nav_style}}{% else %}nav-tabs{% endif %}" role="tablist">
           <li role="presentation" class="active"><a href="#regex" aria-controls="regex" role="tab" data-toggle="tab">Regex</a></li>
         </ul>
 
