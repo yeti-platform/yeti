@@ -9,30 +9,51 @@ from core.web.api.api import render
 
 
 class CrudSearchApi(FlaskView):
+    SEARCH_ALIASES = {
+        'tags': 'tags__name',
+    }
+
+    def get_queryset(self, filters, regex):
+        result_filters = dict()
+
+        queryset = self.objectmanager.objects
+        if "order_by" in filters:
+            queryset = queryset.order_by(filters.pop("order_by"))
+
+        for alias in self.SEARCH_ALIASES:
+            if alias in filters:
+                filters[self.SEARCH_ALIASES[alias]] = filters.pop(alias)
+
+        for key, value in filters.items():
+            key = key.replace(".", "__")
+            if key in self.SEARCH_ALIASES:
+                key = self.SEARCH_ALIASES[key]
+
+            if regex:
+                value = re.compile(value)
+
+            if isinstance(value, list):
+                key += "__all"
+
+            result_filters[key] = value
+
+        print "[{}] Filter: {}".format(self.__class__.__name__, result_filters)
+
+        return queryset.filter(**result_filters)
 
     def search(self, query):
         fltr = query.get('filter', {})
-        if 'tags' in fltr:
-            fltr["tags__name"] = fltr.pop('tags')
-        fltr = {key.replace(".", "__")+"__all": value for key, value in query.get('filter', {}).items()}
         params = query.get('params', {})
-
         regex = params.pop('regex', False)
-        if regex:
-            fltr = {key: [re.compile(v) for v in value] for key, value in fltr.items()}
-
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
 
-        print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
-
         data = []
-        for o in self.objectmanager.objects(**fltr)[page * rng:(page + 1) * rng]:
+        for o in self.get_queryset(fltr, regex)[page * rng:(page + 1) * rng]:
             o.uri = url_for("api.{}:post".format(self.objectmanager.__name__), id=str(o.id))
             data.append(o)
 
         return data
-
 
     def post(self):
         query = request.get_json(silent=True) or {}

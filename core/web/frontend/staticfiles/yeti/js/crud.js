@@ -39,38 +39,58 @@ function change_page(form, direction) {
   form.find(".crud-pagenumber").text(newpage);
 }
 
+function add_to_filters(filters, key, value) {
+  if (value instanceof Array) {
+    return value.forEach(function (val) {
+      add_to_filters(filters, key, val);
+    });
+  }
+
+  if (value.toLowerCase() == "true")
+    value = true;
+  else if (value.toLowerCase() == "false")
+    value = false;
+
+  if (key in filters) {
+    if (filters[key] instanceof Array)
+      filters[key].push(value);
+    else
+      filters[key] = [filters[key], value];
+  }
+  else
+    filters[key] = value;
+}
+
 function refresh_table(form) {
   $("#spinner").toggle();
   $("#go").toggle();
   $("#go").parent().prop('disabled', true);
 
-  filter = form.find(".crud-filter").first()
-  queries = filter.val().split(' ');
-  default_field = filter.data('default-value');
-	filter = {};
+  var filter = form.find(".crud-filter").first();
+  var queries = filter.val().split(' ');
+  var default_field = filter.data('default-value');
+
+  filter = {};
 
   for (var i in queries) {
-		splitted = queries[i].split('=');
-		if (splitted.length > 1)
-			filter[splitted[0]] = splitted[1].split(',');
-		else if (splitted[0] != "")
-			filter[default_field] = [splitted[0]];
-	}
+    splitted = queries[i].split('=');
+    if (splitted.length > 1)
+      add_to_filters(filter, splitted[0], splitted[1].split(','));
+    else if (splitted[0] !== "")
+      add_to_filters(filter, default_field, splitted[0]);
+  }
 
   // include extra filters from hidden inputs
   form.find(".extra-filter").each(function() {
-    if (this.name in filter == false) {
-      filter[this.name] = [];
-    }
-    filter[this.name].push($(this).val());
+    add_to_filters(filter, this.name, $(this).val());
   });
 
   params = {
     'regex': form.find('.crud-regex').prop('checked') ? true : false,
     'page': form.find(".crud-pagination").data('page'),
-  }
+  };
 
-  query = {'filter': filter, 'params': params}
+  query = {'filter': filter, 'params': params};
 
   $.ajax({
     method: "POST",
