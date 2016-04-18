@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import request
 from flask.ext.classy import route
 from bson.json_util import loads
@@ -23,6 +24,6 @@ class Investigation(CrudApi):
     @route("/rename/<string:id>", methods=['POST'])
     def rename(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
-        i.modify(name=request.json['name'])
+        i.modify(name=request.json['name'], updated=datetime.utcnow())
 
         return render("ok")

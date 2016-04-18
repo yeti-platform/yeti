@@ -33,6 +33,8 @@ class Investigation(YetiDocument):
     links = ListField(EmbeddedDocumentField(InvestigationLink))
     nodes = ListField(ReferenceField('Node', dbref=True))
     events = ListField(EmbeddedDocumentField(InvestigationEvent))
+    created = DateTimeField(default=datetime.utcnow)
+    updated = DateTimeField(default=datetime.utcnow)
 
     def info(self):
         result = self.to_mongo()
@@ -56,4 +58,4 @@ class Investigation(YetiDocument):
                 event.nodes.append(node)
 
         if len(event.nodes) > 0 or len(event.links) > 0:
-            self.modify(push__events=event)
+            self.modify(push__events=event, updated=datetime.utcnow())
