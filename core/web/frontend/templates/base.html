@@ -70,6 +70,12 @@
               </ul>
             </li>
 
+            <li class="{% if url_for("frontend.InvestigationsView:index") in request.path %}active{%endif%} dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Investigations <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ url_for('frontend.InvestigationsView:index') }}">List</a></li>
+              </ul>
+            </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li class="dropdown">

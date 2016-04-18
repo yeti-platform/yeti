@@ -5,9 +5,14 @@ from bson.json_util import loads
 
 from core.helpers import iterify
 from core import investigation
-from core.web.api.crud import CrudApi
+from core.web.api.crud import CrudApi, CrudSearchApi
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
+
+
+class InvestigationSearch(CrudSearchApi):
+    template = 'investigation_api.html'
+    objectmanager = investigation.Investigation
 
 
 class Investigation(CrudApi):

@@ -26,7 +26,7 @@ from core.web.api.analysis import Analysis
 from core.web.api.feeds import Feed
 from core.web.api.export import Export, ExportTemplate
 from core.web.api.neighbors import Neighbors
-from core.web.api.investigation import Investigation
+from core.web.api.investigation import Investigation, InvestigationSearch
 from core.web.api.indicator import Indicator, IndicatorSearch
 
 Analysis.register(api)
@@ -52,3 +52,4 @@ ExportTemplate.register(api)
 Neighbors.register(api)
 
 Investigation.register(api)
+InvestigationSearch.register(api)

@@ -8,6 +8,7 @@ from core.web.api.api import bson_renderer
 from core.web.frontend.entities import EntitiesView
 from core.web.frontend.observables import ObservablesView
 from core.web.frontend.indicators import IndicatorsView
+from core.web.frontend.investigations import InvestigationsView
 
 from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
 from core.entities import TTP, Actor, Company, Malware, Entity
@@ -37,6 +38,7 @@ UsersView.register(frontend)
 EntitiesView.register(frontend)
 IndicatorsView.register(frontend)
 ObservablesView.register(frontend)
+InvestigationsView.register(frontend)
 
 # Graph views
 

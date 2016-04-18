@@ -1,0 +1,29 @@
+{% import "macros/generic.html" as macros %}
+{% import "macros/filterlist.html" as filterlist %}
+
+{% if data|length > 0 %}
+<table class="table table-condensed yeti-table table-hover">
+  <tr>
+    <th><!-- graph icon column --></th>
+    <th>Name</th>
+    <th>Created</th>
+    <th>Updated</th>
+    <th>Nodes</th>
+  </tr>
+  {% for obj in data %}
+  <tr class="node-line">
+    <td class="graph-link">
+        <a href="{{ url_for('frontend.graph', id=obj['id']) }}"><i class="flaticon-network38"></i></a>
+    </td>
+    <td><a href="{{ url_for("frontend.InvestigationsView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
+    <td>{{macros.display_datetime(obj.created)}}</td>
+    <td>{{macros.display_datetime(obj.updated)}}</td>
+    <td>{{obj.nodes|length}}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<div class='no-results'>
+  No results found
+</div>
+{% endif %}

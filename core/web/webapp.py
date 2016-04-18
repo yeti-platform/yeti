@@ -71,3 +71,8 @@ def list_routes():
         print line
 
     return "ASD"
+
+
+@webapp.template_test()
+def startswith(string, pattern):
+    return string.startswith(pattern)

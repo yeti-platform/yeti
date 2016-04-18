@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% import "macros/generic.html" as macros %}
+{% import "macros/filterlist.html" as filterlist %}
+{% import "macros/indicators.html" as indicators %}
+{% import "macros/malware.html" as malware %}
+{% import "macros/actors.html" as actors %}
+{% import "macros/ttps.html" as ttps %}
+{% import "macros/observables.html" as observables %}
+
+{% block main %}
+{% set investigation = obj %}
+<div class="row">
+<!-- start first column -->
+  <div class="col-md-9">
+
+    <div class="row">
+      <div class="col-md-12">
+        <h4 class="panel-title"></h4>
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h3 class="panel-title">
+                {{investigation.name}}
+                <a href="{{url_for('frontend.graph', id=investigation.id)}}" class="btn btn-default btn-xs pull-right"><i class="flaticon-network38"></i> Go To Graph</a>
+            </h3>
+          </div>
+          <div class="panel-body">
+            {% if investigation.description %}
+            {{investigation.description|markdown}}
+            {%else%}
+            <em>No description provided</em>
+            {%endif%}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+<!-- end first column -->
+
+  <div class="col-md-3">
+
+    <div class="panel panel-primary yeti-panel">
+      <div class="panel-heading">
+        <h3 class="panel-title">Info</h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-condensed main-table">
+          {% for key, value in investigation.info().items() %}
+          {% if key not in ["links", "nodes", "events", "name"] %}
+            <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
+          {% endif %}
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+
+  </div> <!-- end second column -->
+
+</div><!-- end row -->
+
+<div class="row">
+  <div class="col-md-12">
+
+    <ul class="nav nav-tabs" role="tablist">
+      <li role="presentation" class="active"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
+      <li role="presentation"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
+      <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
+      <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
+      <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
+      <li role="presentation"><a href="#companies" aria-controls="companies" role="tab" data-toggle="tab">Companies</a></li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div role="tabpanel" class="tab-pane active" id="observables">
+          <div class="row">
+            <div class="col-md-12">
+                {% with data=investigation.nodes|selectattr("_cls", "startswith", "Observable") %}
+                {% include "observable_api.html" %}
+                {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="indicators">
+          <div class="row">
+            <div class="col-md-12">
+                {% with data=investigation.nodes|selectattr("_cls", "startswith", "Indicator") %}
+                {% include "indicator_api.html" %}
+                {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="ttp">
+          <div class="row">
+            <div class="col-md-12">
+                {% with data=investigation.nodes|selectattr("_cls", "equalto", "Entity.TTP") %}
+                {% include "entity_api.html" %}
+                {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="malware">
+          <div class="row">
+            <div class="col-md-12">
+                {% with data=investigation.nodes|selectattr("_cls", "equalto", "Entity.Malware") %}
+                {% include "entity_api.html" %}
+                {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="actors">
+          <div class="row">
+            <div class="col-md-12">
+                {% with data=investigation.nodes|selectattr("_cls", "equalto", "Entity.Actor") %}
+                {% include "entity_api.html" %}
+                {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="companies">
+          <div class="row">
+            <div class="col-md-12">
+                {% with data=investigation.nodes|selectattr("_cls", "equalto", "Entity.Company") %}
+                {% include "entity_api.html" %}
+                {% endwith %}
+            </div>
+          </div>
+        </div>
+
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+{%endblock%}
