@@ -159,6 +159,41 @@ span.yeti-toggle {
     right: 0px;
 }
 
+#graph-quick-add {
+    border: 1px solid #00CCFF;
+    background-color: transparent;
+    color: white;
+    width: 300px;
+}
+
+#graph-toolbar {
+    border-top: 3px solid #00CCFF;
+    background-color: #495B6C;
+    color: white;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: -15px;
+}
+
+#graph-toolbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#graph-toolbar li {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+#graph-toolbar li.sep {
+    border-left: 1px solid grey;
+}
+
+#graph-network {
+    height: 100%;
+}
+
 #graph-sidebar {
     position: fixed;
     top: 50px;
@@ -438,4 +473,30 @@ div.filter {
 
 #graph-sidebar-investigation-name form {
     display: inline;
+}
+
+/* Quick add */
+
+.tt-menu {
+    border-radius: 3px;
+    border: 1px solid #666666;
+    padding: 2px;
+    background-color: white;
+    min-width: 300px;
+    color: #666666;
+}
+
+.tt-cursor {
+    background-color: #495B6C;
+    color: white;
+}
+
+.graph-quick-add-result {
+    padding: 5px;
+    line-height: 24px;
+    border-bottom: 1px solid #CCCCCC;
+}
+
+.graph-quick-add-result:last-child {
+    border-bottom: 0;
 }

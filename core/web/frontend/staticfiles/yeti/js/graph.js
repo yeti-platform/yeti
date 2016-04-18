@@ -43,6 +43,8 @@ Handlebars.registerHelper("hasMoreHistory", function(link, options) {
 var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
 var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
 var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
+var quickAddResult = Handlebars.compile($('#graph-quick-add-result').html());
+var quickAddEmpty = Handlebars.compile($('#graph-quick-add-empty').html());
 
 Handlebars.registerPartial("links", linksTemplate);
 var analyticsResultsTemplate = Handlebars.compile($('#graph-sidebar-analytics-results-template').html());
@@ -133,6 +135,8 @@ function enablePopovers() {
 // Define Investigation logic
 class Investigation {
   constructor(investigation) {
+    var self = this;
+
     this.id = investigation._id;
     console.log(this.id);
 
@@ -154,6 +158,23 @@ class Investigation {
 
     // Create the analytics dataset
     this.analytics = new vis.DataSet([]);
+
+    // Create the quick add suggestion engine
+    this.quickadd_search = new Bloodhound({
+      datumTokenizer: Bloodhound.tokenizers.obj.whitespace('label'),
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      // datumTokenizer: function(obj) { return [obj['label']]; },
+      // queryTokenizer: function(obj) { return [obj]; },
+      sufficient: 1,
+      identify: function(obj) { return obj.id; },
+      remote: {
+        url: '/api/investigation/nodesearch/%QUERY',
+        wildcard: '%QUERY',
+        transform: function(results) {
+          return results.map(self.buildNode);
+        }
+      }
+    });
 
     // Setup initial data
     this.update(investigation);
@@ -190,23 +211,32 @@ class Investigation {
     visibleEdges.forEach(self.hideLink.bind(self));
   }
 
+  buildNode(node) {
+    node.id = buildNodeId(node._cls, node._id);
+
+    if ('value' in node) {
+      node.label = node.value;
+    } else {
+      node.label = node.name;
+    }
+
+    node.shape = 'icon';
+    node.icon = icons[node._cls];
+    node.cssicon = cssicons[node._cls];
+
+    return node;
+  }
+
   addNode(node) {
     node.id = buildNodeId(node._cls, node._id);
 
     var existingNode = this.nodes.get(node.id);
 
     if (!existingNode) {
-      if ('value' in node) {
-        node.label = node.value;
-      } else {
-        node.label = node.name;
-      }
-
-      node.shape = 'icon';
-      node.icon = icons[node._cls];
-      node.cssicon = cssicons[node._cls];
+      node = this.buildNode(node);
 
       this.nodes.add(node);
+      this.quickadd_search.add([node]);
 
       return node;
     } else {
@@ -497,7 +527,7 @@ class Investigation {
 
   initGraph() {
     // create a network
-    var container = document.getElementById('graph');
+    var container = document.getElementById('graph-network');
     var data = {
       nodes: this.visibleNodes,
       edges: this.visibleEdges,
@@ -612,6 +642,27 @@ class Investigation {
       form.on('submit', validateNameChange);
       input.focusout(validateNameChange);
     });
+
+    // Quick add
+    $('.typeahead').typeahead({
+      hint: true,
+      highlight: true,
+      minLength: 1
+    },
+    {
+      displayKey: 'label',
+      templates: {
+        suggestion: quickAddResult,
+        empty: quickAddEmpty
+      },
+      source: self.quickadd_search
+    });
+
+    $('.typeahead').bind('typeahead:select', function(ev, suggestion) {
+      self.displayNode(suggestion);
+      $(this).typeahead('val', '');
+    });
+
   }
 
 }

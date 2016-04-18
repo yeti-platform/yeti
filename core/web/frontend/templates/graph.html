@@ -4,6 +4,7 @@
 </div>
 
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='typeahead/typeahead.bundle.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='visjs/vis.min.js') }}"></script>
 <link href="{{ url_for('frontend.static', filename='visjs/vis.min.css') }}" rel="stylesheet" type="text/css" />
 
@@ -29,7 +30,25 @@
     </div>
 </div>
 <div id="graph-sidebar-resize"></div>
-<div id="graph"></div>
+<div id="graph">
+    <div id="graph-toolbar">
+        <ul>
+            <li><input class="form-control typeahead" type="text" id="graph-quick-add" placeholder="Quick Add" /></li>
+            <li class="sep">&nbsp;</li>
+            <li><i class="fa fa-plus"></i></li>
+            <li class="sep">&nbsp;</li>
+            <li><i class="flaticon-magnifying-glass40"></i></li>
+            <li class="sep">&nbsp;</li>
+            <li><i class="flaticon-bug24"></i></li>
+            <li><i class="flaticon-malware"></i></li>
+            <li><i class="flaticon-maths5"></i></li>
+            <li><i class="flaticon-building259"></i></li>
+            <li class="sep">&nbsp;</li>
+            <li><i class="fa fa-expand"></i></li>
+        </ul>
+    </div>
+    <div id="graph-network"></div>
+</div>
 
 {% include "graph_templates.html" %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/graph.js') }}"></script>

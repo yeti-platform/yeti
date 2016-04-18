@@ -1,4 +1,22 @@
 {% raw %}
+
+<script id="graph-quick-add-result" type="text/x-handlebars-template">
+    <div class="graph-quick-add-result">
+        <i class="{{cssicon}}"></i> {{label}}
+        <div class="graph-quick-add-result-tags">
+            {{#each tags}}
+                <span class="yeti-tag label label-default">{{name}}</span>
+            {{/each}}
+        </div>
+    </div>
+</script>
+
+<script id="graph-quick-add-empty" type="text/x-handlebars-template">
+    <div class="graph-quick-add-result">
+        No result found.
+    </div>
+</script>
+
 <script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
     {{#each analytics}}
         <div class="graph-sidebar-analytics">

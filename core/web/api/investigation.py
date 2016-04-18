@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from flask import request
 from flask.ext.classy import route
@@ -6,6 +7,8 @@ from bson.json_util import loads
 from core.helpers import iterify
 from core import investigation
 from core.web.api.crud import CrudApi, CrudSearchApi
+from core.observables import Observable
+from core.entities import Entity
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 
@@ -32,3 +35,16 @@ class Investigation(CrudApi):
         i.modify(name=request.json['name'], updated=datetime.utcnow())
 
         return render("ok")
+
+    @route("/nodesearch/<path:query>", methods=['GET'])
+    def nodesearch(self, query):
+        result = []
+
+        observables = Observable.objects(value=re.compile("^{}".format(query))).limit(5)
+        entities = Entity.objects(name=re.compile("^{}".format(query))).limit(5)
+
+        for results in [observables, entities]:
+            for node in results:
+                result.append(node.to_mongo())
+
+        return render(result)
