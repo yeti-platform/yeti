@@ -234,6 +234,12 @@ span.yeti-toggle {
     text-align: center;
     font-size: 20px;
     word-break: break-all;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+#graph-sidebar-value-actions {
+    padding-top: 5px;
 }
 
 .graph-sidebar-link-value {
@@ -251,6 +257,7 @@ span.yeti-toggle {
     color: white
 }
 
+#graph-sidebar-value-actions a,
 #graph-sidebar-tabs a {
     color: #00CCFF;
 }
@@ -331,6 +338,7 @@ a.graph-analytics-results-links {
     color: #00CCFF;
 }
 
+#graph-sidebar-value-actions a:hover,
 .graph-sidebar-links a:hover,
 a.graph-analytics-results-links:hover {
     color: white;

@@ -91,8 +91,8 @@
                                     </ul>
                                 </div>
                             {{/hasMoreHistory}}
-                            <a class="graph-sidebar-display-link" data-link="{{id}}"><i class="flaticon-network38"></i></a>
-                            <a class="graph-sidebar-view-node" data-node="{{nodeId}}"><i class="glyphicon glyphicon-list"></i></a>
+                            <a class="graph-sidebar-display-link" data-link="{{id}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add To Graph"><i class="flaticon-network38"></i></a>
+                            <a class="graph-sidebar-view-node" data-node="{{nodeId}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="See Node Info"><i class="glyphicon glyphicon-list"></i></a>
                         </div>
                     </div>
                     <div class="clear"></div>
@@ -104,7 +104,14 @@
 
 <script id="graph-sidebar-node-template" type="text/x-handlebars-template">
     <div id="graph-sidebar-icon" class="{{cssicon}}"></div>
-    <div id="graph-sidebar-value">{{label}}</value></div>
+    <div id="graph-sidebar-value-actions" class="pull-right">
+        {{#if visible}}
+            <a class="graph-sidebar-remove-node" data-node="{{id}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Remove from Graph"><i class="fa fa-remove"></i></a>
+        {{else}}
+            <a class="graph-sidebar-display-node" data-node="{{id}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add To Graph"><i class="flaticon-network38"></i></a>
+        {{/if}}
+    </div>
+    <div id="graph-sidebar-value">{{label}}</div>
 
     <ul id="graph-sidebar-tabs" class="nav nav-pills nav-justified">
       <li><a data-toggle="pill" href="#graph-sidebar-info">Info</a></li>

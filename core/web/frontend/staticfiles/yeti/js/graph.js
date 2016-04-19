@@ -114,6 +114,12 @@ function linksFilter(nodeId, field) {
   };
 }
 
+function visibleLinksFilter(nodeId, field) {
+  return function (links) {
+    return links[field] == nodeId && links.visible;
+  };
+}
+
 function invisibleLinksFilter(nodeId, field) {
   return function (links) {
     return links[field] == nodeId && !links.visible;
@@ -136,6 +142,9 @@ function enablePopovers() {
     }).click(function(e) {
         e.preventDefault();
     });
+
+  // Also enable tooltips
+  $('[data-toggle="tooltip"]').tooltip();
 }
 
 // Define Investigation logic
@@ -319,12 +328,32 @@ class Investigation {
     }
   }
 
+  hideLink(link) {
+    this.edges.update({id: link.id, visible: false});
+  }
+
   displayLink(link) {
     this.edges.update({id: link.id, visible: true});
   }
 
   displayNodeId(nodeId) {
     this.nodes.update({id: nodeId, visible: true});
+  }
+
+  disableNodes(nodeIds) {
+    var self = this;
+    var links = [];
+
+    nodeIds.forEach(function (nodeId) {
+      links = links.concat(self.edges.get({filter: visibleLinksFilter(nodeId, 'to')}));
+      links = links.concat(self.edges.get({filter: visibleLinksFilter(nodeId, 'from')}));
+
+      self.nodes.update({id: nodeId, visible: false});
+    });
+
+    links.forEach(self.hideLink.bind(self));
+
+    self.remove(links, nodeIds.map(dbref));
   }
 
   enableLinksAndNodes(links, nodeIds) {
@@ -393,7 +422,7 @@ class Investigation {
     });
   }
 
-  hideLink(linkId) {
+  hideLink(link) {
     this.edges.update({id: link.id, visible: false});
   }
 
@@ -583,6 +612,14 @@ class Investigation {
   }
 
   add(links, nodes) {
+    return this.save_changes('add', links, nodes);
+  }
+
+  remove(links, nodes) {
+    return this.save_changes('remove', links, nodes);
+  }
+
+  save_changes(action, links, nodes) {
     var self = this;
 
     var data = {
@@ -597,7 +634,7 @@ class Investigation {
     // Persist changes, and update to last version
     $.ajax({
       type: 'POST',
-      url: '/api/investigation/add/' + self.id,
+      url: '/api/investigation/' + action + '/' + self.id,
       data: JSON.stringify(data),
       success: callback,
       dataType: 'json',
@@ -708,6 +745,18 @@ class Investigation {
 
     $('#graph-sidebar').on('click', '.graph-sidebar-view-node', function(e) {
       var nodeId = $(this).data('node');
+      self.selectNode(nodeId);
+    });
+
+    $('#graph-sidebar').on('click', '.graph-sidebar-display-node', function (e) {
+      var nodeId = $(this).data('node');
+      self.enableLinksAndNodes([], [nodeId]);
+      self.selectNode(nodeId);
+    });
+
+    $('#graph-sidebar').on('click', '.graph-sidebar-remove-node', function (e) {
+      var nodeId = $(this).data('node');
+      self.disableNodes([nodeId]);
       self.selectNode(nodeId);
     });
 

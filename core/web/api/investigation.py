@@ -29,6 +29,14 @@ class Investigation(CrudApi):
 
         return render(i.info())
 
+    @route("/remove/<string:id>", methods=['POST'])
+    def remove(self, id):
+        i = get_object_or_404(self.objectmanager, id=id)
+        data = loads(request.data)
+        i.remove(iterify(data['links']), iterify(data['nodes']))
+
+        return render(i.info())
+
     @route("/rename/<string:id>", methods=['POST'])
     def rename(self, id):
         i = get_object_or_404(self.objectmanager, id=id)

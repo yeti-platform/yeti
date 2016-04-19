@@ -52,10 +52,16 @@ class YetiDocument(Document):
         self.reload()
         return self
 
-    def add_to_set(self, field, value):
-        result = self.__class__._get_collection().update_one({'_id': self.pk}, {'$addToSet': {field: value}})
+    def _set_update(self, method, field, value):
+        result = self.__class__._get_collection().update_one({'_id': self.pk}, {method: {field: value}})
 
         return result.modified_count == 1
+
+    def add_to_set(self, field, value):
+        return self._set_update('$addToSet', field, value)
+
+    def remove_from_set(self, field, value):
+        return self._set_update('$pull', field, value)
 
 
 class LinkHistory(EmbeddedDocument):
@@ -242,7 +248,7 @@ class Node(YetiDocument):
 
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
-        
+
         out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
         inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
 
