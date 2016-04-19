@@ -15,6 +15,18 @@ class Tag(CrudApi):
 
     @route("/merge", methods=['POST'])
     def merge(self):
+        """Merge one or more tags
+
+        Merge one or more tags into a single tag. This is useful for
+        replacing one or several tags with other tags.
+
+        :<json [String] merge: Array of Strings (tag names) representing tags to be merged.
+        :<json String merge_into: The tag to merge into
+        :<json boolean make_dict: Create a Tag dictionary out of this merge.
+                                    In the future, tags included in the ``merge``
+                                    object will be automatically
+                                    replaced by the tag specified in ``merge_into``.
+        """
         tags = request.json['merge']
         merge_into = self.objectmanager.objects.get(name=request.json['merge_into'])
         make_dict = request.json['make_dict']
@@ -36,10 +48,17 @@ class Tag(CrudApi):
         return render({"merged": merged, "into": merge_into.name})
 
     def delete(self, id):
+        """Deletes a Tag
+
+        Also remove the tag from any tagged elements.
+
+        :query ObjectID id: Element ID
+        :>json string deleted: The deleted element's ObjectID
+        """
         tag = self.objectmanager.objects.get(id=id)
         tag.delete()
         observables.Observable.objects(tags__name=tag.name).update(pull__tags__name=tag.name)
-        return render({"status": "ok"})
+        return render({"deleted": id})
 
     def _parse_request(self, json):
         params = json
@@ -48,6 +67,15 @@ class Tag(CrudApi):
         return params
 
     def post(self, id):
+        """Create a new Tag
+
+        Edit an existing Tag according to the JSON object passed in the ``POST`` data.
+        If the name of a tag is changed, it will repeat the change in all Observables associated
+        with this tag.
+
+        :query ObjectID id: Element ID
+        :<json object params: JSON object containing fields to set
+        """
         try:
             data = self._parse_request(request.json)
             t = self.objectmanager.objects.get(id=id)

@@ -128,6 +128,26 @@
             
   <div class="section" id="teh-api">
 <h1>Teh API<a class="headerlink" href="#teh-api" title="Permalink to this headline">¶</a></h1>
+<dl class="post">
+<dt id="post--api-observable-bulk">
+<code class="descname">POST </code><code class="descname">/api/observable/bulk</code><a class="headerlink" href="#post--api-observable-bulk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bulk-add observables</p>
+<p>Bulk-add Observables from an array of strings.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>observables</strong> (<em>[String]</em>) &#8211; Array of Strings representing observables (URLs, IPs, hostnames, etc.)</li>
+<li><strong>refang</strong> (<em>boolean</em>) &#8211; If set, the observables will be refanged before being added to the database</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="get">
 <dt id="get--api-analytics-scheduled-">
 <code class="descname">GET </code><code class="descname">/api/analytics/scheduled/</code><a class="headerlink" href="#get--api-analytics-scheduled-" title="Permalink to this definition">¶</a></dt>
@@ -138,7 +158,7 @@
 <dt id="post--api-analytics-scheduled-">
 <code class="descname">POST </code><code class="descname">/api/analytics/scheduled/</code><a class="headerlink" href="#post--api-analytics-scheduled-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -157,7 +177,7 @@
 <dt id="post--api-analytics-oneshot-">
 <code class="descname">POST </code><code class="descname">/api/analytics/oneshot/</code><a class="headerlink" href="#post--api-analytics-oneshot-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -185,7 +205,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
 <tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
-<li><strong>observables</strong> (<em>[string]</em>) &#8211; An array of observables to be matched</li>
+<li><strong>observables</strong> (<em>[string]</em>) &#8211; An array of observables to be analyzed</li>
 </ul>
 </td>
 </tr>
@@ -193,9 +213,34 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
 <li><strong>entities</strong> (<em>[Entity]</em>) &#8211; Related <code class="docutils literal"><span class="pre">Entity</span></code> objects</li>
 <li><strong>known</strong> (<em>[Observable]</em>) &#8211; <code class="docutils literal"><span class="pre">Observable</span></code> objects that are already present in database</li>
-<li><strong>matches</strong> (<em>[Indicator]</em>) &#8211; Indicators that matched observables</li>
-<li><strong>matches[].observable</strong> (<em>Observable</em>) &#8211; The Observable object that matched the Indicator</li>
-<li><strong>unknown</strong> (<em>string</em>) &#8211; Array of observable strings that didn&#8217;t match indicators and are unknown to Yeti</li>
+<li><strong>matches</strong> (<em>[Indicator]</em>) &#8211; <code class="docutils literal"><span class="pre">Indicators</span></code> that matched observables</li>
+<li><strong>matches[].observable</strong> (<em>Observable</em>) &#8211; The <code class="docutils literal"><span class="pre">Observable</span></code> object that matched the <code class="docutils literal"><span class="pre">Indicator</span></code></li>
+<li><strong>unknown</strong> (<em>string</em>) &#8211; Array of observable strings that didn&#8217;t match any <code class="docutils literal"><span class="pre">Indicators</span></code> and are unknown to Yeti</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-tag-merge">
+<code class="descname">POST </code><code class="descname">/api/tag/merge</code><a class="headerlink" href="#post--api-tag-merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge one or more tags</p>
+<p>Merge one or more tags into a single tag. This is useful for
+replacing one or several tags with other tags.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>merge</strong> (<em>[String]</em>) &#8211; Array of Strings (tag names) representing tags to be merged.</li>
+<li><strong>merge_into</strong> (<em>String</em>) &#8211; The tag to merge into</li>
+<li><strong>make_dict</strong> (<em>boolean</em>) &#8211; Create a Tag dictionary out of this merge.
+In the future, tags included in the <code class="docutils literal"><span class="pre">merge</span></code>
+object will be automatically
+replaced by the tag specified in <code class="docutils literal"><span class="pre">merge_into</span></code>.</li>
 </ul>
 </td>
 </tr>
@@ -207,7 +252,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-observablesearch-">
 <code class="descname">POST </code><code class="descname">/api/observablesearch/</code><a class="headerlink" href="#post--api-observablesearch-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Launches a simple search against the database</p>
-<p>This function is used by paginators in Yeti.</p>
+<p>This endpoint is mostly used by paginators in Yeti.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -237,7 +282,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-indicatorsearch-">
 <code class="descname">POST </code><code class="descname">/api/indicatorsearch/</code><a class="headerlink" href="#post--api-indicatorsearch-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Launches a simple search against the database</p>
-<p>This function is used by paginators in Yeti.</p>
+<p>This endpoint is mostly used by paginators in Yeti.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -273,7 +318,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-exporttemplate-">
 <code class="descname">POST </code><code class="descname">/api/exporttemplate/</code><a class="headerlink" href="#post--api-exporttemplate-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -298,7 +343,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-investigation-">
 <code class="descname">POST </code><code class="descname">/api/investigation/</code><a class="headerlink" href="#post--api-investigation-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -317,7 +362,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-entitysearch-">
 <code class="descname">POST </code><code class="descname">/api/entitysearch/</code><a class="headerlink" href="#post--api-entitysearch-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Launches a simple search against the database</p>
-<p>This function is used by paginators in Yeti.</p>
+<p>This endpoint is mostly used by paginators in Yeti.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -349,6 +394,26 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dd><p>List all corresponding entries in the database. <strong>Do not use on large datasets!</strong></p>
 </dd></dl>
 
+<dl class="post">
+<dt id="post--api-observable-">
+<code class="descname">POST </code><code class="descname">/api/observable/</code><a class="headerlink" href="#post--api-observable-" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new Observable</p>
+<p>Create a new Observable from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+<li><strong>refang</strong> (<em>boolean</em>) &#8211; If set, the observable will be refanged before being added to the database</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="get">
 <dt id="get--api-indicator-">
 <code class="descname">GET </code><code class="descname">/api/indicator/</code><a class="headerlink" href="#get--api-indicator-" title="Permalink to this definition">¶</a></dt>
@@ -359,7 +424,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-indicator-">
 <code class="descname">POST </code><code class="descname">/api/indicator/</code><a class="headerlink" href="#post--api-indicator-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -384,7 +449,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-neighbors-">
 <code class="descname">POST </code><code class="descname">/api/neighbors/</code><a class="headerlink" href="#post--api-neighbors-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -409,7 +474,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-analysis-">
 <code class="descname">POST </code><code class="descname">/api/analysis/</code><a class="headerlink" href="#post--api-analysis-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -434,7 +499,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-entity-">
 <code class="descname">POST </code><code class="descname">/api/entity/</code><a class="headerlink" href="#post--api-entity-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -459,7 +524,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-export-">
 <code class="descname">POST </code><code class="descname">/api/export/</code><a class="headerlink" href="#post--api-export-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -484,7 +549,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-feed-">
 <code class="descname">POST </code><code class="descname">/api/feed/</code><a class="headerlink" href="#post--api-feed-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -509,7 +574,7 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dt id="post--api-tag-">
 <code class="descname">POST </code><code class="descname">/api/tag/</code><a class="headerlink" href="#post--api-tag-" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a new element</p>
-<p>This endpoint will create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<p>Create a new element from the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -517,6 +582,148 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <tr class="field-odd field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
 <tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
 <li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-scheduled-(id)-refresh">
+<code class="descname">POST </code><code class="descname">/api/analytics/scheduled/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><code class="descname">/refresh</code><a class="headerlink" href="#post--api-analytics-scheduled-(id)-refresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a Scheduled Analytics</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Scheduled Analytics ObjectID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; ID of refreshed Scheduled Analytics</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-scheduled-(id)-toggle">
+<code class="descname">POST </code><code class="descname">/api/analytics/scheduled/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><code class="descname">/toggle</code><a class="headerlink" href="#post--api-analytics-scheduled-(id)-toggle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Toggles a Scheduled Analytics</p>
+<p>Scheduled Analytics can be individually disabled using this endpoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Analytics ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; The Analytics&#8217;s ObjectID</li>
+<li><strong>status</strong> (<em>boolean</em>) &#8211; The result of the toggle operation (<code class="docutils literal"><span class="pre">true</span></code> means the export has been enabled, <code class="docutils literal"><span class="pre">false</span></code> means it has been disabled)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="get">
+<dt id="get--api-analytics-oneshot-(id)-status">
+<code class="descname">GET </code><code class="descname">/api/analytics/oneshot/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><code class="descname">/status</code><a class="headerlink" href="#get--api-analytics-oneshot-(id)-status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Query an analytics status</p>
+<p>Query the status of an <code class="docutils literal"><span class="pre">AnalyticsResults</span></code> entry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; <code class="docutils literal"><span class="pre">AnalyticsResults</span></code> ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The response is a JSON object representing the <code class="docutils literal"><span class="pre">AnalyticsResults</span></code> instance.
+The response object also contains a <code class="docutils literal"><span class="pre">results</span></code> field:</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>results</strong> (<em>object</em>) &#8211; JSON object containing two arrays representing the <code class="docutils literal"><span class="pre">nodes</span></code> and <code class="docutils literal"><span class="pre">links</span></code> generated by the analytics</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-oneshot-(id)-toggle">
+<code class="descname">POST </code><code class="descname">/api/analytics/oneshot/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><code class="descname">/toggle</code><a class="headerlink" href="#post--api-analytics-oneshot-(id)-toggle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Toggles a One-shot Analytics</p>
+<p>One-Shot Analytics can be individually disabled using this endpoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Analytics ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; The Analytics&#8217;s ObjectID</li>
+<li><strong>status</strong> (<em>boolean</em>) &#8211; The result of the toggle operation (<code class="docutils literal"><span class="pre">true</span></code> means the export has been enabled, <code class="docutils literal"><span class="pre">false</span></code> means it has been disabled)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-analytics-oneshot-(id)-run">
+<code class="descname">POST </code><code class="descname">/api/analytics/oneshot/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><code class="descname">/run</code><a class="headerlink" href="#post--api-analytics-oneshot-(id)-run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a One-Shot Analytics</p>
+<p>Asynchronously runs a One-Shot Analytics against a given observable.
+Returns an <code class="docutils literal"><span class="pre">AnalyticsResults</span></code> instance, which can then be used to fetch
+the analytics results</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Analytics ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Form Parameters:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>ObjectID id</strong> &#8211; Observable ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>object</strong> &#8211; JSON object representing the <code class="docutils literal"><span class="pre">AnalyticsResults</span></code> instance</li>
 </ul>
 </td>
 </tr>
@@ -569,8 +776,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-analytics-scheduled-(id)">
 <code class="descname">POST </code><code class="descname">/api/analytics/scheduled/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-analytics-scheduled-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -636,8 +843,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-analytics-oneshot-(id)">
 <code class="descname">POST </code><code class="descname">/api/analytics/oneshot/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-analytics-oneshot-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -734,6 +941,56 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 </table>
 </dd></dl>
 
+<dl class="post">
+<dt id="post--api-feed-(id)-refresh">
+<code class="descname">POST </code><code class="descname">/api/feed/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><code class="descname">/refresh</code><a class="headerlink" href="#post--api-feed-(id)-refresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a Feed</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Feed ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectId</em>) &#8211; Feed ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-feed-(id)-toggle">
+<code class="descname">POST </code><code class="descname">/api/feed/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><code class="descname">/toggle</code><a class="headerlink" href="#post--api-feed-(id)-toggle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Toggles a Feed</p>
+<p>Feeds can be individually disabled using this endpoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Analytics ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; The Analytics&#8217;s ObjectID</li>
+<li><strong>status</strong> (<em>boolean</em>) &#8211; The result of the toggle operation (<code class="docutils literal"><span class="pre">true</span></code> means the export has been enabled, <code class="docutils literal"><span class="pre">false</span></code> means it has been disabled)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="delete">
 <dt id="delete--api-exporttemplate-(id)">
 <code class="descname">DELETE </code><code class="descname">/api/exporttemplate/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-exporttemplate-(id)" title="Permalink to this definition">¶</a></dt>
@@ -779,8 +1036,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-exporttemplate-(id)">
 <code class="descname">POST </code><code class="descname">/api/exporttemplate/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-exporttemplate-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -846,8 +1103,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-investigation-(id)">
 <code class="descname">POST </code><code class="descname">/api/investigation/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-investigation-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -955,8 +1212,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-indicator-(id)">
 <code class="descname">POST </code><code class="descname">/api/indicator/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-indicator-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1004,8 +1261,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-neighbors-(id)">
 <code class="descname">POST </code><code class="descname">/api/neighbors/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-neighbors-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1071,8 +1328,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-analysis-(id)">
 <code class="descname">POST </code><code class="descname">/api/analysis/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-analysis-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1138,8 +1395,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-entity-(id)">
 <code class="descname">POST </code><code class="descname">/api/entity/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-entity-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1205,8 +1462,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-export-(id)">
 <code class="descname">POST </code><code class="descname">/api/export/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-export-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1272,8 +1529,8 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <dl class="post">
 <dt id="post--api-feed-(id)">
 <code class="descname">POST </code><code class="descname">/api/feed/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-feed-(id)" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a new element</p>
-<p>This endpoint will edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
+<dd><p>Modify an element</p>
+<p>Edit an existing element according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1294,6 +1551,31 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 </table>
 </dd></dl>
 
+<dl class="delete">
+<dt id="delete--api-tag-(id)">
+<code class="descname">DELETE </code><code class="descname">/api/tag/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#delete--api-tag-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes a Tag</p>
+<p>Also remove the tag from any tagged elements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Response JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>deleted</strong> (<em>string</em>) &#8211; The deleted element&#8217;s ObjectID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="get">
 <dt id="get--api-tag-(id)">
 <code class="descname">GET </code><code class="descname">/api/tag/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#get--api-tag-(id)" title="Permalink to this definition">¶</a></dt>
@@ -1305,6 +1587,33 @@ the &#8220;expanded&#8221; observable array will also include the hostname <code
 <tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
 <tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
 <li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="post">
+<dt id="post--api-tag-(id)">
+<code class="descname">POST </code><code class="descname">/api/tag/</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="headerlink" href="#post--api-tag-(id)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new Tag</p>
+<p>Edit an existing Tag according to the JSON object passed in the <code class="docutils literal"><span class="pre">POST</span></code> data.
+If the name of a tag is changed, it will repeat the change in all Observables associated
+with this tag.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Query Parameters:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body"><ul class="first simple">
+<li><strong>id</strong> (<em>ObjectID</em>) &#8211; Element ID</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Request JSON Object:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>object</em>) &#8211; JSON object containing fields to set</li>
 </ul>
 </td>
 </tr>

@@ -37,7 +37,7 @@ class CrudSearchApi(FlaskView):
     def post(self):
         """Launches a simple search against the database
 
-        This function is used by paginators in Yeti.
+        This endpoint is mostly used by paginators in Yeti.
 
         :<json object params: JSON object specifying the ``page``, ``range`` and ``regex`` variables.
         :<json integer params.page: Page or results to return (default: 1)
@@ -101,7 +101,7 @@ class CrudApi(FlaskView):
     def new(self):
         """Create a new element
 
-        This endpoint will create a new element from the JSON object passed in the ``POST`` data.
+        Create a new element from the JSON object passed in the ``POST`` data.
 
         :<json object params: JSON object containing fields to set
         """
@@ -111,9 +111,9 @@ class CrudApi(FlaskView):
         return render(obj)
 
     def post(self, id):
-        """Create a new element
+        """Modify an element
 
-        This endpoint will edit an existing element according to the JSON object passed in the ``POST`` data.
+        Edit an existing element according to the JSON object passed in the ``POST`` data.
 
         :query ObjectID id: Element ID
         :<json object params: JSON object containing fields to set
