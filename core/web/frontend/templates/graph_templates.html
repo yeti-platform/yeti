@@ -59,7 +59,7 @@
                 {{/equal}}
             {{/equal}}
             {{#each this}}
-                <li {{#unless @last}}class="graph-sidebar-border-bottom"{{/unless}}>
+                <li class="{{#unless @last}}graph-sidebar-border-bottom{{/unless}} {{#if visible}}graph-sidebar-visible-link{{/if}}">
                     <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}}</div>
                     <div class="graph-sidebar-tags">
                         {{#each tags}}
@@ -91,7 +91,9 @@
                                     </ul>
                                 </div>
                             {{/hasMoreHistory}}
-                            <a class="graph-sidebar-display-link" data-link="{{id}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add To Graph"><i class="flaticon-network38"></i></a>
+                            {{#unless visible}}
+                                <a class="graph-sidebar-display-link" data-link="{{id}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add To Graph"><i class="flaticon-network38"></i></a>
+                            {{/unless}}
                             <a class="graph-sidebar-view-node" data-node="{{nodeId}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="See Node Info"><i class="glyphicon glyphicon-list"></i></a>
                         </div>
                     </div>

@@ -521,3 +521,9 @@ div.filter {
 ul.ui-autocomplete {
     z-index: 1100;
 }
+
+.graph-sidebar-visible-link {
+    border-left: 3px solid #00CCFF;
+    margin-left: -10px;
+    padding-left: 10px;
+}
