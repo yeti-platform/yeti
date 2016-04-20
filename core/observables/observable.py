@@ -13,6 +13,22 @@ from core.errors import ObservableValidationError
 
 
 class Observable(Node):
+    """Base class for Observables in Yeti
+
+    Observables describe elements that can be seen in investigations,
+    incidents, reports, intelligence, etc. They are usually technical data about
+    specific threats or actors.
+
+    Attributes:
+        value: The observable's technical value (the observed URL, hostname, IP address...)
+        sources: An array of strings that define how the observable was inserted
+        description: A free-text description of the observable
+        context: A JSON object providing extra information as to why the observable was added. Context can be added trough the API or through Feeds
+        tags: An array of :class:`core.observables.tag.ObservableTag` objects
+        last_analyses: An array of JSON objects indicating the last analysis time for a particular analytics
+        created: Creation date
+        exclude_fields: Fields to be excluded from automatic form creation
+    """
 
     DISPLAY_FIELDS = [("value", "Value"), ("context", "Context"), ("tags", "Tags")]
 
@@ -37,6 +53,7 @@ class Observable(Node):
 
     @classmethod
     def get_form(klass):
+        """Gets the appropriate form for a given obseravble"""
         form = model_form(klass, exclude=klass.exclude_fields)
         form.tags = TagListField()
         return form
@@ -46,6 +63,17 @@ class Observable(Node):
 
     @staticmethod
     def guess_type(string):
+        """Tries to guess the type of observable given a ``string``.
+
+        Args:
+            string: The string that will be used to guess the observable type from.
+
+        Returns:
+            An observable Class.
+
+        Raises:
+            ObservableValidationError if no type could be guessed.
+        """
         from core.observables import Url, Ip, Hostname
         if string and string.strip() != '':
             if is_url(string):
@@ -59,25 +87,71 @@ class Observable(Node):
 
     @classmethod
     def add_text(cls, text):
+        """Adds and returns an observable for a given string.
+
+        Args:
+            text: the text that will be used to add an Observable from.
+
+        Returns:
+            A saved Observable instance.
+
+        """
         return Observable.guess_type(text).get_or_create(value=text)
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):
+        """Changes tags on all observables
+
+        Args:
+            old_tags: A string or array of strings representing tag names to change
+            new_tag: The new tag name by which all ``old_tags`` should be replaced
+
+        """
         old_tags = iterify(old_tags)
         for o in Observable.objects(tags__name__in=old_tags):
             for old_tag in old_tags:
                 o.change_tag(old_tag, new_tag)
 
     def add_context(self, context):
+        """Adds context to an Observable.
+
+        "Context" is represented by a JSON object (or Python ``dict()``) that will
+        be added to the Observable's ``context`` set. Context should provide information
+        on why the Observable has been added to the database.
+
+        Context can be any information, but it needs to have a ``source`` key that can
+        point the analyst to the source of the context.
+
+        Args:
+            context: a JSON object representing the context to be added.
+
+        Returns:
+            A fresh instance of the Observable as it exists in the database.
+
+        """
         assert 'source' in context
         context = {k: v for k, v in sorted(context.items(), key=operator.itemgetter(0))}
         self.modify(add_to_set__context=context)
         return self.reload()
 
     def add_source(self, source):
+        """Adds a source to the observable instance
+
+        Args:
+            source: a string to add to the array of sources.
+        """
         return self.modify(add_to_set__sources=source)
 
     def get_tags(self, fresh=True):
+        """Returns an array of strings containing an observables' fresh tags names.
+
+        Args:
+            fresh: set to ``False`` to also include non-fresh tags in the result
+
+        Returns:
+            Array of strings containing an observables' fresh tags names.
+
+        """
         return [t.name for t in self.tags if (t.fresh or not fresh)]
 
     def find_tags(self):

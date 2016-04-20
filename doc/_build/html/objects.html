@@ -1,0 +1,370 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Yeti objects &mdash; YETI 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="YETI 1.0 documentation" href="index.html"/>
+        <link rel="next" title="The API" href="api.html"/>
+        <link rel="prev" title="Welcome to YETI’s documentation!" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> YETI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Yeti objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">The API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">YETI</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Yeti objects</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/objects.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="yeti-objects">
+<h1>Yeti objects<a class="headerlink" href="#yeti-objects" title="Permalink to this headline">¶</a></h1>
+<p>Yeti relies on several objects, bla bla bla.</p>
+<dl class="class">
+<dt id="core.observables.Observable">
+<em class="property">class </em><code class="descclassname">core.observables.</code><code class="descname">Observable</code><span class="sig-paren">(</span><em>*args</em>, <em>**values</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for Observables in Yeti</p>
+<p>Observables describe elements that can be seen in investigations,
+incidents, reports, intelligence, etc. They are usually technical data about
+specific threats or actors.</p>
+<dl class="attribute">
+<dt id="Observable.value">
+<code class="descname">value</code><a class="headerlink" href="#Observable.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>The observable&#8217;s technical value (the observed URL, hostname, IP address...)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Observable.sources">
+<code class="descname">sources</code><a class="headerlink" href="#Observable.sources" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array of strings that define how the observable was inserted</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Observable.description">
+<code class="descname">description</code><a class="headerlink" href="#Observable.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>A free-text description of the observable</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Observable.context">
+<code class="descname">context</code><a class="headerlink" href="#Observable.context" title="Permalink to this definition">¶</a></dt>
+<dd><p>A JSON object providing extra information as to why the observable was added. Context can be added trough the API or through Feeds</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Observable.tags">
+<code class="descname">tags</code><a class="headerlink" href="#Observable.tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array of <code class="xref py py-class docutils literal"><span class="pre">core.observables.tag.ObservableTag</span></code> objects</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Observable.last_analyses">
+<code class="descname">last_analyses</code><a class="headerlink" href="#Observable.last_analyses" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array of JSON objects indicating the last analysis time for a particular analytics</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Observable.created">
+<code class="descname">created</code><a class="headerlink" href="#Observable.created" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creation date</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Observable.exclude_fields">
+<code class="descname">exclude_fields</code><a class="headerlink" href="#Observable.exclude_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fields to be excluded from automatic form creation</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.observables.Observable.add_context">
+<code class="descname">add_context</code><span class="sig-paren">(</span><em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.add_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.add_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds context to an Observable.</p>
+<p>&#8220;Context&#8221; is represented by a JSON object (or Python <code class="docutils literal"><span class="pre">dict()</span></code>) that will
+be added to the Observable&#8217;s <code class="docutils literal"><span class="pre">context</span></code> set. Context should provide information
+on why the Observable has been added to the database.</p>
+<p>Context can be any information, but it needs to have a <code class="docutils literal"><span class="pre">source</span></code> key that can
+point the analyst to the source of the context.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>context</strong> &#8211; a JSON object representing the context to be added.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A fresh instance of the Observable as it exists in the database.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.observables.Observable.add_source">
+<code class="descname">add_source</code><span class="sig-paren">(</span><em>source</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.add_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.add_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a source to the observable instance</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>source</strong> &#8211; a string to add to the array of sources.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="core.observables.Observable.add_text">
+<em class="property">classmethod </em><code class="descname">add_text</code><span class="sig-paren">(</span><em>text</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.add_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.add_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds and returns an observable for a given string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>text</strong> &#8211; the text that will be used to add an Observable from.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A saved Observable instance.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="core.observables.Observable.change_all_tags">
+<em class="property">static </em><code class="descname">change_all_tags</code><span class="sig-paren">(</span><em>old_tags</em>, <em>new_tag</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.change_all_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.change_all_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changes tags on all observables</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>old_tags</strong> &#8211; A string or array of strings representing tag names to change</li>
+<li><strong>new_tag</strong> &#8211; The new tag name by which all <code class="docutils literal"><span class="pre">old_tags</span></code> should be replaced</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="core.observables.Observable.get_form">
+<em class="property">classmethod </em><code class="descname">get_form</code><span class="sig-paren">(</span><em>klass</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.get_form"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.get_form" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the appropriate form for a given obseravble</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.observables.Observable.get_tags">
+<code class="descname">get_tags</code><span class="sig-paren">(</span><em>fresh=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.get_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.get_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an array of strings containing an observables&#8217; fresh tags names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fresh</strong> &#8211; set to <code class="docutils literal"><span class="pre">False</span></code> to also include non-fresh tags in the result</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Array of strings containing an observables&#8217; fresh tags names.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="core.observables.Observable.guess_type">
+<em class="property">static </em><code class="descname">guess_type</code><span class="sig-paren">(</span><em>string</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.guess_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.guess_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to guess the type of observable given a <code class="docutils literal"><span class="pre">string</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>string</strong> &#8211; The string that will be used to guess the observable type from.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An observable Class.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">ObservableValidationError if no type could be guessed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api.html" class="btn btn-neutral float-right" title="The API" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="Welcome to YETI’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Thomas Chopitea, Gael Muller.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

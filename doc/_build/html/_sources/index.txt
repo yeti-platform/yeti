@@ -9,9 +9,8 @@ Welcome to YETI's documentation!
 LOLs
 
 Contents:
+---------
 
 .. toctree::
-   api
-
-
-asd
+  objects
+  api

@@ -70,4 +70,4 @@ def list_routes():
     for line in sorted(output):
         print line
 
-    return "ASD"
+    return "<br>".join(output)
