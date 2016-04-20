@@ -31,6 +31,22 @@ Handlebars.registerHelper("date", function(datetime) {
   return date.getUTCFullYear() + "-" + month + "-" + day;
 });
 
+Handlebars.registerHelper("datetime", function(datetime) {
+  var date = new Date(datetime);
+
+  var month = date.getUTCMonth() + 1;
+  if (month < 10) {
+    month = "0" + month;
+  }
+
+  var day = date.getUTCDate();
+  if (day < 10) {
+    day = "0" + day;
+  }
+
+  return date.getUTCFullYear() + "-" + month + "-" + day + " " + date.getUTCHours() + ":" + date.getUTCMinutes();
+});
+
 Handlebars.registerHelper("hasMoreHistory", function(link, options) {
   if ((link.history) && ((link.active) || (link.history.length > 1))) {
     return options.fn(this);
@@ -153,7 +169,6 @@ class Investigation {
     var self = this;
 
     this.id = investigation._id;
-    console.log(this.id);
 
     // Create the nodes dataset and dataview
     this.nodes = new vis.DataSet([]);
@@ -242,6 +257,7 @@ class Investigation {
       node.label = node.name;
     }
 
+    node.analytics = {};
     node.shape = 'icon';
     node.icon = icons[node._cls];
     node.cssicon = cssicons[node._cls];
@@ -386,6 +402,7 @@ class Investigation {
 
       if (!node.fetched) {
         linksPromises.push($.getJSON('/api/neighbors/' + node._cls + '/' + node._id));
+        self.retrieveAnalyticsResults(node);
       }
     });
 
@@ -470,17 +487,57 @@ class Investigation {
     enablePopovers();
   }
 
-  displayAnalytics(node) {
+  availableAnalyticsFor(node) {
     var nodeType = node._cls.split('.');
     nodeType = nodeType[nodeType.length - 1];
 
-    var availableAnalytics = this.analytics.get({
+    return this.analytics.get({
       filter: function(item) {
         return $.inArray(nodeType, item.acts_on) != -1;
       },
     });
+  }
 
-    $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({analytics: availableAnalytics}));
+  displayAnalytics(node) {
+    var availableAnalytics = this.availableAnalyticsFor(node);
+    $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({analytics: availableAnalytics, nodeId: node._id}));
+  }
+
+  displayAnalyticsResultsForNode(node) {
+    var self = this;
+    var availableAnalytics = this.availableAnalyticsFor(node);
+    availableAnalytics.forEach(function (analytics) {
+      var analyticsDiv = $('#analytics-' + analytics.id + '-' + node._id);
+      var data;
+
+      if (analytics.id in node.analytics)
+        data = node.analytics[analytics.id];
+
+      var resultsDiv = analyticsDiv.find('.graph-sidebar-analytics-results');
+      self.displayAnalyticsResults(data, resultsDiv, analytics.id);
+    });
+  }
+
+  retrieveAnalyticsResults(node) {
+    var self = this;
+    var availableAnalytics = this.availableAnalyticsFor(node);
+
+    availableAnalytics.forEach(function (analytics) {
+      function callback(data) {
+        var analyticsDiv = $('#analytics-' + analytics.id + '-' + node._id);
+
+        if (data) {
+            data = self.saveAnalyticsResults(data);
+        }
+
+        if (analyticsDiv.length) {
+          var resultsDiv = analyticsDiv.find('.graph-sidebar-analytics-results');
+          self.displayAnalyticsResults(data, resultsDiv, analytics.id);
+        }
+      }
+
+      $.getJSON('/api/analytics/oneshot/' + analytics.id + '/last/' + node._id).done(callback);
+    });
   }
 
   retrieveNodeNeighborsCallback(nodeId) {
@@ -515,8 +572,10 @@ class Investigation {
     // Display links
     if (node.fetched) {
       this.displayLinks(nodeId);
+      this.displayAnalyticsResultsForNode(node);
     } else {
       this.retrieveNodeNeighbors(node);
+      this.retrieveAnalyticsResults(node);
     }
   }
 
@@ -543,64 +602,76 @@ class Investigation {
     });
   }
 
-  fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button) {
-    var self = this;
-    return function() {
-      return self.fetchAnalyticsResults(id, resultsId, resultsDiv, button);
-    };
+  displayAnalyticsResults(data, resultsDiv, analyticsId) {
+    resultsDiv.html(analyticsResultsTemplate({results: data, analytics: analyticsId}));
+    enablePopovers();
+
+    // Enable HighlightJS on raw results
+    hljs.initHighlighting.called = false;
+    hljs.initHighlighting();
   }
 
-  fetchAnalyticsResults(id, resultsId, resultsDiv, button) {
+  saveAnalyticsResults(data) {
+    var self = this;
+    var links = [];
+
+    data.results.nodes.forEach(self.addNode.bind(self));
+    data.results.links.forEach(function(link) {
+      link = self.addLink(link);
+
+      if (link.src.id == data.observable) {
+        self.enrichLink('to')(link);
+        links.push(link);
+      } else if (link.dst.id == data.observable) {
+        self.enrichLink('from')(link);
+        links.push(link);
+      }
+    });
+
+    data.links = self.sortLinks(links);
+
+    var node = self.nodes.get('observable-' + data.observable);
+    node.analytics[data.analytics] = data;
+    self.nodes.update({id: node.id, analytics: node.analytics});
+
+    return data;
+  }
+
+  fetchAnalyticsResults(id) {
     var self = this;
 
     function callback(data) {
+      var analyticsDiv = $('#analytics-' + data.analytics + '-' + data.observable);
+      var resultsDiv = analyticsDiv.find('.graph-sidebar-analytics-results');
+      var button = analyticsDiv.find('.graph-sidebar-run-analytics');
+
       if (data.status == 'finished') {
-        var links = [];
-
-        data.results.nodes.forEach(self.addNode.bind(self));
-        data.results.links.forEach(function(link) {
-          link = self.addLink(link);
-
-          if (link.src.id == data.observable) {
-            self.enrichLink('to')(link);
-            links.push(link);
-          } else if (link.dst.id == data.observable) {
-            self.enrichLink('from')(link);
-            links.push(link);
-          }
-        });
-
-        data.links = self.sortLinks(links);
-        resultsDiv.html(analyticsResultsTemplate(data));
-        enablePopovers();
+        data = self.saveAnalyticsResults(data, resultsDiv);
+        self.displayAnalyticsResults(data, resultsDiv, data.analytics);
         button.removeClass('glyphicon-spinner');
-
-        // Enable HighlightJS on raw results
-        hljs.initHighlighting.called = false;
-        hljs.initHighlighting();
       } else if (data.status == 'error') {
         resultsDiv.html(analyticsResultsTemplate(data));
         button.removeClass('glyphicon-spinner');
       } else {
-        setTimeout(self.fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button), 1000);
+        setTimeout(self.fetchAnalyticsResults.bind(self, id), 1000);
       }
     }
 
     $.get(
-      '/api/analytics/oneshot/' + resultsId + '/status',
+      '/api/analytics/oneshot/' + id + '/status',
       {},
       callback,
       'json'
     );
   }
 
-  runAnalytics(id, nodeId, resultsDiv, progress) {
+  runAnalytics(id, nodeId) {
     var self = this;
 
     function runCallback(data) {
       var resultsId = data._id;
 
-      self.fetchAnalyticsResults(id, resultsId, resultsDiv, progress);
+      self.fetchAnalyticsResults(resultsId);
     }
 
     $.post(
@@ -767,11 +838,11 @@ class Investigation {
       var nodeId = button.parents('#graph-sidebar-content').data('id');
       nodeId = nodeId.split('-');
       nodeId = nodeId[nodeId.length - 1];
-      var resultsDiv = button.parent().prev();
+      // var resultsDiv = button.parent().prev();
 
       button.addClass('glyphicon-spinner');
 
-      self.runAnalytics(id, nodeId, resultsDiv, button);
+      self.runAnalytics(id, nodeId);
     });
 
     // Allow sidebar to be resized

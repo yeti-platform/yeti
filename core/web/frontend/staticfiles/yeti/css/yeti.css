@@ -527,3 +527,12 @@ ul.ui-autocomplete {
     margin-left: -10px;
     padding-left: 10px;
 }
+
+.graph-sidebar-run-analytics {
+    margin-right: 10px;
+}
+
+.graph-sidebar-analytics-last-run {
+    font-style: italic;
+    color: #BBBBBB;
+}

@@ -61,10 +61,7 @@ class OneShotAnalytics(CrudApi):
 
         return render(analytics.run(observable, current_user.settings).to_mongo())
 
-    @route('/<id>/status')
-    def status(self, id):
-        results = get_object_or_404(analytics.AnalyticsResults, id=id)
-
+    def _analytics_results(self, results):
         nodes_id = set()
         nodes = list()
         links = list()
@@ -83,4 +80,18 @@ class OneShotAnalytics(CrudApi):
         results = results.to_mongo()
         results['results'] = {'nodes': nodes, 'links': links}
 
-        return render(results)
+        return results
+
+    @route('/<id>/status')
+    def status(self, id):
+        results = get_object_or_404(analytics.AnalyticsResults, id=id)
+
+        return render(self._analytics_results(results))
+
+    @route('/<id>/last/<observable_id>')
+    def last(self, id, observable_id):
+        try:
+            results = analytics.AnalyticsResults.objects(analytics=id, observable=observable_id, status="finished").order_by('-datetime').limit(1)
+            return render(self._analytics_results(results[0]))
+        except:
+            return render(None)
