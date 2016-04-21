@@ -68,7 +68,28 @@
             {{/equal}}
             {{#each this}}
                 <li class="{{#unless @last}}graph-sidebar-border-bottom{{/unless}} {{#if visible}}graph-sidebar-visible-link{{/if}}">
-                    <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}}</div>
+                    <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}} {{#isInterestingNode this}}<span class="badge" rel="popover" data-popover-content="#graph-sidebar-links-of-interest-{{id}}">{{dictLength links_of_interest}}</span>{{/isInterestingNode}}</div>
+                    <div id="graph-sidebar-links-of-interest-{{id}}" class="hide">
+                        <ul class="graph-sidebar-history">
+                            {{#each links_of_interest}}
+                                <li>
+                                    <div>
+                                        {{value}}
+                                        {{#if description}}
+                                            ({{description}})
+                                        {{/if}}
+                                    </div>
+                                    <div class="graph-sidebar-history-sources">
+                                        {{#if active}}
+                                            active
+                                        {{else}}
+                                            {{date first_seen}} → {{date last_seen}}
+                                        {{/if}}
+                                    </div>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
                     <div class="graph-sidebar-tags">
                         {{#each tags}}
                             <span class="yeti-tag label label-default label-primary ">{{name}}</span>

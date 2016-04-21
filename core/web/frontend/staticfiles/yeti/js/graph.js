@@ -55,6 +55,18 @@ Handlebars.registerHelper("hasMoreHistory", function(link, options) {
   }
 });
 
+Handlebars.registerHelper("isInterestingNode", function (link, options) {
+  if ((!link.visible) && (Object.keys(link.links_of_interest).length >= 2)) {
+    return options.fn(this);
+  } else {
+    return options.inverse(this);
+  }
+});
+
+Handlebars.registerHelper("dictLength", function(dict) {
+  return Object.keys(dict).length;
+});
+
 // Compile templates
 var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
 var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
@@ -258,6 +270,7 @@ class Investigation {
     }
 
     node.analytics = {};
+    node.links_of_interest = {};
     node.shape = 'icon';
     node.icon = icons[node._cls];
     node.cssicon = cssicons[node._cls];
@@ -304,6 +317,33 @@ class Investigation {
     return this.visibleNodes.get(nodeId);
   }
 
+  addToLinksOfInterest(link, direction) {
+    var inverse_direction = direction == 'to' ? 'from': 'to';
+    var node = this.nodes.get(link[direction]);
+    this.enrichLink(inverse_direction)(link);
+    delete link['links_of_interest'];
+    node.links_of_interest[direction + '-' + link[inverse_direction]] = link;
+    this.nodes.update({id: node.id, links_of_interest: node.links_of_interest});
+  }
+
+  removeFromLinksOfInterest(link, direction) {
+    var inverse_direction = direction == 'to' ? 'from': 'to';
+    var node = this.nodes.get(link[direction]);
+    delete node.links_of_interest[direction + '-' + link[inverse_direction]];
+    this.nodes.update({id: node.id, links_of_interest: node.links_of_interest});
+  }
+
+  updateLinksOfInterest(link) {
+    var nodeTo = this.nodes.get(link.to);
+    var nodeFrom = this.nodes.get(link.from);
+
+    if (nodeTo.visible)
+      this.addToLinksOfInterest(link, 'from');
+
+    if (nodeFrom.visible)
+      this.addToLinksOfInterest(link, 'to');
+  }
+
   addLink(link) {
     link.id = link._id;
 
@@ -329,6 +369,7 @@ class Investigation {
       link.arrows = 'to';
 
       this.edges.add(link);
+      this.updateLinksOfInterest(link);
 
       return link;
     } else {
@@ -361,8 +402,21 @@ class Investigation {
     var links = [];
 
     nodeIds.forEach(function (nodeId) {
-      links = links.concat(self.edges.get({filter: visibleLinksFilter(nodeId, 'to')}));
-      links = links.concat(self.edges.get({filter: visibleLinksFilter(nodeId, 'from')}));
+      var incoming = self.edges.get({filter: linksFilter(nodeId, 'to')});
+      incoming.forEach(function (link) {
+        self.removeFromLinksOfInterest(link, 'from');
+        if (link.visible) {
+          links.push(link);
+        }
+      });
+
+      var outgoing = self.edges.get({filter: linksFilter(nodeId, 'from')});
+      outgoing.forEach(function (link) {
+        self.removeFromLinksOfInterest(link, 'to');
+        if (link.visible) {
+          links.push(link);
+        }
+      });
 
       self.nodes.update({id: nodeId, visible: false});
     });
@@ -411,8 +465,8 @@ class Investigation {
 
       for (var i=0; i < arguments.length; i++) {
         if (arguments[i]) {
-          arguments[i][0].links.forEach(self.addLink.bind(self));
           arguments[i][0].nodes.forEach(self.addNode.bind(self));
+          arguments[i][0].links.forEach(self.addLink.bind(self));
         }
       }
 
@@ -420,16 +474,18 @@ class Investigation {
       nodeIds.forEach(function (nodeId) {
         self.nodes.update({id: nodeId, fetched: true});
 
-        var incoming = self.edges.get({filter: invisibleLinksFilter(nodeId, 'to')});
+        var incoming = self.edges.get({filter: linksFilter(nodeId, 'to')});
         incoming.forEach(function (link) {
-          if (self.isNodeVisible(link.from)) {
+          self.addToLinksOfInterest(link, 'from');
+          if ((!link.visible) && (self.isNodeVisible(link.from))) {
             links.push(link);
           }
         });
 
-        var outgoing = self.edges.get({filter: invisibleLinksFilter(nodeId, 'from')});
+        var outgoing = self.edges.get({filter: linksFilter(nodeId, 'from')});
         outgoing.forEach(function (link) {
-          if (self.isNodeVisible(link.to)) {
+          self.addToLinksOfInterest(link, 'to');
+          if ((!link.visible) && (self.isNodeVisible(link.to))) {
             links.push(link);
           }
         });
@@ -452,6 +508,7 @@ class Investigation {
       link.cssicon = node.cssicon;
       link.value = node.label;
       link.tags = node.tags;
+      link.links_of_interest = node.links_of_interest;
     };
   }
 
@@ -544,8 +601,8 @@ class Investigation {
     var self = this;
 
     return function(data) {
-      data.links.forEach(self.addLink.bind(self));
       data.nodes.forEach(self.addNode.bind(self));
+      data.links.forEach(self.addLink.bind(self));
       self.nodes.update({id: nodeId, fetched: true});
 
       self.displayLinks(nodeId);

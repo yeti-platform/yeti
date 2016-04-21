@@ -536,3 +536,8 @@ ul.ui-autocomplete {
     font-style: italic;
     color: #BBBBBB;
 }
+
+#graph-sidebar .badge {
+    background-color: #00CCFF;
+    margin-top: -4px;
+}
