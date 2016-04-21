@@ -44,6 +44,8 @@
     {{display_last_analyses(element)}}
   {% elif key == "created"%}
     {{display_datetime(element)}}
+  {% elif key == "pattern" %}
+    <code>{{element}}</code>
   {% elif key == "raw" %}
     <pre><code>{{element}}</code></pre>
   {% elif element is string %}
