@@ -12,7 +12,7 @@ from core.web.frontend.investigations import InvestigationsView
 
 from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
 from core.entities import TTP, Actor, Company, Malware, Entity
-from core.indicators import Indicator, Regex
+from core.indicators import Indicator, Regex, Yara
 from core.exports import ExportTemplate
 from core.web.frontend.users import UsersView
 
@@ -23,8 +23,7 @@ frontend = Blueprint("frontend", __name__, template_folder="templates", static_f
 def before_request():
     g.entities = [TTP, Actor, Company, Malware]
     g.observables = [Hostname, Ip, Url, Hash, Text, File, Email]
-    g.indicators = [Regex]
-
+    g.indicators = [Regex, Yara]
 
 # Landing page - redirect to observable
 

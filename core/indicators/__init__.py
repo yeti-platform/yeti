@@ -5,3 +5,4 @@ DIAMOND_EDGES = (('target', "Target"),
 
 from core.indicators.indicator import Indicator
 from core.indicators.regex import Regex
+from core.indicators.yara_rules import Yara
