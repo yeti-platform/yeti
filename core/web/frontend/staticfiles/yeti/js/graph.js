@@ -31,12 +31,40 @@ Handlebars.registerHelper("date", function(datetime) {
   return date.getUTCFullYear() + "-" + month + "-" + day;
 });
 
+Handlebars.registerHelper("datetime", function(datetime) {
+  var date = new Date(datetime);
+
+  var month = date.getUTCMonth() + 1;
+  if (month < 10) {
+    month = "0" + month;
+  }
+
+  var day = date.getUTCDate();
+  if (day < 10) {
+    day = "0" + day;
+  }
+
+  return date.getUTCFullYear() + "-" + month + "-" + day + " " + date.getUTCHours() + ":" + date.getUTCMinutes();
+});
+
 Handlebars.registerHelper("hasMoreHistory", function(link, options) {
   if ((link.history) && ((link.active) || (link.history.length > 1))) {
     return options.fn(this);
   } else {
     return options.inverse(this);
   }
+});
+
+Handlebars.registerHelper("isInterestingNode", function (link, options) {
+  if ((!link.visible) && (Object.keys(link.links_of_interest).length >= 2)) {
+    return options.fn(this);
+  } else {
+    return options.inverse(this);
+  }
+});
+
+Handlebars.registerHelper("dictLength", function(dict) {
+  return Object.keys(dict).length;
 });
 
 // Compile templates
@@ -153,7 +181,6 @@ class Investigation {
     var self = this;
 
     this.id = investigation._id;
-    console.log(this.id);
 
     // Create the nodes dataset and dataview
     this.nodes = new vis.DataSet([]);
@@ -242,6 +269,8 @@ class Investigation {
       node.label = node.name;
     }
 
+    node.analytics = {};
+    node.links_of_interest = {};
     node.shape = 'icon';
     node.icon = icons[node._cls];
     node.cssicon = cssicons[node._cls];
@@ -288,6 +317,33 @@ class Investigation {
     return this.visibleNodes.get(nodeId);
   }
 
+  addToLinksOfInterest(link, direction) {
+    var inverse_direction = direction == 'to' ? 'from': 'to';
+    var node = this.nodes.get(link[direction]);
+    this.enrichLink(inverse_direction)(link);
+    delete link['links_of_interest'];
+    node.links_of_interest[direction + '-' + link[inverse_direction]] = link;
+    this.nodes.update({id: node.id, links_of_interest: node.links_of_interest});
+  }
+
+  removeFromLinksOfInterest(link, direction) {
+    var inverse_direction = direction == 'to' ? 'from': 'to';
+    var node = this.nodes.get(link[direction]);
+    delete node.links_of_interest[direction + '-' + link[inverse_direction]];
+    this.nodes.update({id: node.id, links_of_interest: node.links_of_interest});
+  }
+
+  updateLinksOfInterest(link) {
+    var nodeTo = this.nodes.get(link.to);
+    var nodeFrom = this.nodes.get(link.from);
+
+    if (nodeTo.visible)
+      this.addToLinksOfInterest(link, 'from');
+
+    if (nodeFrom.visible)
+      this.addToLinksOfInterest(link, 'to');
+  }
+
   addLink(link) {
     link.id = link._id;
 
@@ -313,6 +369,7 @@ class Investigation {
       link.arrows = 'to';
 
       this.edges.add(link);
+      this.updateLinksOfInterest(link);
 
       return link;
     } else {
@@ -345,8 +402,21 @@ class Investigation {
     var links = [];
 
     nodeIds.forEach(function (nodeId) {
-      links = links.concat(self.edges.get({filter: visibleLinksFilter(nodeId, 'to')}));
-      links = links.concat(self.edges.get({filter: visibleLinksFilter(nodeId, 'from')}));
+      var incoming = self.edges.get({filter: linksFilter(nodeId, 'to')});
+      incoming.forEach(function (link) {
+        self.removeFromLinksOfInterest(link, 'from');
+        if (link.visible) {
+          links.push(link);
+        }
+      });
+
+      var outgoing = self.edges.get({filter: linksFilter(nodeId, 'from')});
+      outgoing.forEach(function (link) {
+        self.removeFromLinksOfInterest(link, 'to');
+        if (link.visible) {
+          links.push(link);
+        }
+      });
 
       self.nodes.update({id: nodeId, visible: false});
     });
@@ -386,6 +456,7 @@ class Investigation {
 
       if (!node.fetched) {
         linksPromises.push($.getJSON('/api/neighbors/' + node._cls + '/' + node._id));
+        self.retrieveAnalyticsResults(node);
       }
     });
 
@@ -394,8 +465,8 @@ class Investigation {
 
       for (var i=0; i < arguments.length; i++) {
         if (arguments[i]) {
-          arguments[i][0].links.forEach(self.addLink.bind(self));
           arguments[i][0].nodes.forEach(self.addNode.bind(self));
+          arguments[i][0].links.forEach(self.addLink.bind(self));
         }
       }
 
@@ -403,16 +474,18 @@ class Investigation {
       nodeIds.forEach(function (nodeId) {
         self.nodes.update({id: nodeId, fetched: true});
 
-        var incoming = self.edges.get({filter: invisibleLinksFilter(nodeId, 'to')});
+        var incoming = self.edges.get({filter: linksFilter(nodeId, 'to')});
         incoming.forEach(function (link) {
-          if (self.isNodeVisible(link.from)) {
+          self.addToLinksOfInterest(link, 'from');
+          if ((!link.visible) && (self.isNodeVisible(link.from))) {
             links.push(link);
           }
         });
 
-        var outgoing = self.edges.get({filter: invisibleLinksFilter(nodeId, 'from')});
+        var outgoing = self.edges.get({filter: linksFilter(nodeId, 'from')});
         outgoing.forEach(function (link) {
-          if (self.isNodeVisible(link.to)) {
+          self.addToLinksOfInterest(link, 'to');
+          if ((!link.visible) && (self.isNodeVisible(link.to))) {
             links.push(link);
           }
         });
@@ -435,6 +508,7 @@ class Investigation {
       link.cssicon = node.cssicon;
       link.value = node.label;
       link.tags = node.tags;
+      link.links_of_interest = node.links_of_interest;
     };
   }
 
@@ -470,25 +544,65 @@ class Investigation {
     enablePopovers();
   }
 
-  displayAnalytics(node) {
+  availableAnalyticsFor(node) {
     var nodeType = node._cls.split('.');
     nodeType = nodeType[nodeType.length - 1];
 
-    var availableAnalytics = this.analytics.get({
+    return this.analytics.get({
       filter: function(item) {
         return $.inArray(nodeType, item.acts_on) != -1;
       },
     });
+  }
 
-    $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({analytics: availableAnalytics}));
+  displayAnalytics(node) {
+    var availableAnalytics = this.availableAnalyticsFor(node);
+    $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({analytics: availableAnalytics, nodeId: node._id}));
+  }
+
+  displayAnalyticsResultsForNode(node) {
+    var self = this;
+    var availableAnalytics = this.availableAnalyticsFor(node);
+    availableAnalytics.forEach(function (analytics) {
+      var analyticsDiv = $('#analytics-' + analytics.id + '-' + node._id);
+      var data;
+
+      if (analytics.id in node.analytics)
+        data = node.analytics[analytics.id];
+
+      var resultsDiv = analyticsDiv.find('.graph-sidebar-analytics-results');
+      self.displayAnalyticsResults(data, resultsDiv, analytics.id);
+    });
+  }
+
+  retrieveAnalyticsResults(node) {
+    var self = this;
+    var availableAnalytics = this.availableAnalyticsFor(node);
+
+    availableAnalytics.forEach(function (analytics) {
+      function callback(data) {
+        var analyticsDiv = $('#analytics-' + analytics.id + '-' + node._id);
+
+        if (data) {
+            data = self.saveAnalyticsResults(data);
+        }
+
+        if (analyticsDiv.length) {
+          var resultsDiv = analyticsDiv.find('.graph-sidebar-analytics-results');
+          self.displayAnalyticsResults(data, resultsDiv, analytics.id);
+        }
+      }
+
+      $.getJSON('/api/analytics/oneshot/' + analytics.id + '/last/' + node._id).done(callback);
+    });
   }
 
   retrieveNodeNeighborsCallback(nodeId) {
     var self = this;
 
     return function(data) {
-      data.links.forEach(self.addLink.bind(self));
       data.nodes.forEach(self.addNode.bind(self));
+      data.links.forEach(self.addLink.bind(self));
       self.nodes.update({id: nodeId, fetched: true});
 
       self.displayLinks(nodeId);
@@ -515,8 +629,10 @@ class Investigation {
     // Display links
     if (node.fetched) {
       this.displayLinks(nodeId);
+      this.displayAnalyticsResultsForNode(node);
     } else {
       this.retrieveNodeNeighbors(node);
+      this.retrieveAnalyticsResults(node);
     }
   }
 
@@ -543,64 +659,76 @@ class Investigation {
     });
   }
 
-  fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button) {
-    var self = this;
-    return function() {
-      return self.fetchAnalyticsResults(id, resultsId, resultsDiv, button);
-    };
+  displayAnalyticsResults(data, resultsDiv, analyticsId) {
+    resultsDiv.html(analyticsResultsTemplate({results: data, analytics: analyticsId}));
+    enablePopovers();
+
+    // Enable HighlightJS on raw results
+    hljs.initHighlighting.called = false;
+    hljs.initHighlighting();
   }
 
-  fetchAnalyticsResults(id, resultsId, resultsDiv, button) {
+  saveAnalyticsResults(data) {
+    var self = this;
+    var links = [];
+
+    data.results.nodes.forEach(self.addNode.bind(self));
+    data.results.links.forEach(function(link) {
+      link = self.addLink(link);
+
+      if (link.src.id == data.observable) {
+        self.enrichLink('to')(link);
+        links.push(link);
+      } else if (link.dst.id == data.observable) {
+        self.enrichLink('from')(link);
+        links.push(link);
+      }
+    });
+
+    data.links = self.sortLinks(links);
+
+    var node = self.nodes.get('observable-' + data.observable);
+    node.analytics[data.analytics] = data;
+    self.nodes.update({id: node.id, analytics: node.analytics});
+
+    return data;
+  }
+
+  fetchAnalyticsResults(id) {
     var self = this;
 
     function callback(data) {
+      var analyticsDiv = $('#analytics-' + data.analytics + '-' + data.observable);
+      var resultsDiv = analyticsDiv.find('.graph-sidebar-analytics-results');
+      var button = analyticsDiv.find('.graph-sidebar-run-analytics');
+
       if (data.status == 'finished') {
-        var links = [];
-
-        data.results.nodes.forEach(self.addNode.bind(self));
-        data.results.links.forEach(function(link) {
-          link = self.addLink(link);
-
-          if (link.src.id == data.observable) {
-            self.enrichLink('to')(link);
-            links.push(link);
-          } else if (link.dst.id == data.observable) {
-            self.enrichLink('from')(link);
-            links.push(link);
-          }
-        });
-
-        data.links = self.sortLinks(links);
-        resultsDiv.html(analyticsResultsTemplate(data));
-        enablePopovers();
+        data = self.saveAnalyticsResults(data, resultsDiv);
+        self.displayAnalyticsResults(data, resultsDiv, data.analytics);
         button.removeClass('glyphicon-spinner');
-
-        // Enable HighlightJS on raw results
-        hljs.initHighlighting.called = false;
-        hljs.initHighlighting();
       } else if (data.status == 'error') {
         resultsDiv.html(analyticsResultsTemplate(data));
         button.removeClass('glyphicon-spinner');
       } else {
-        setTimeout(self.fetchAnalyticsResultsCallback(id, resultsId, resultsDiv, button), 1000);
+        setTimeout(self.fetchAnalyticsResults.bind(self, id), 1000);
       }
     }
 
     $.get(
-      '/api/analytics/oneshot/' + resultsId + '/status',
+      '/api/analytics/oneshot/' + id + '/status',
       {},
       callback,
       'json'
     );
   }
 
-  runAnalytics(id, nodeId, resultsDiv, progress) {
+  runAnalytics(id, nodeId) {
     var self = this;
 
     function runCallback(data) {
       var resultsId = data._id;
 
-      self.fetchAnalyticsResults(id, resultsId, resultsDiv, progress);
+      self.fetchAnalyticsResults(resultsId);
     }
 
     $.post(
@@ -767,11 +895,11 @@ class Investigation {
       var nodeId = button.parents('#graph-sidebar-content').data('id');
       nodeId = nodeId.split('-');
       nodeId = nodeId[nodeId.length - 1];
-      var resultsDiv = button.parent().prev();
+      // var resultsDiv = button.parent().prev();
 
       button.addClass('glyphicon-spinner');
 
-      self.runAnalytics(id, nodeId, resultsDiv, button);
+      self.runAnalytics(id, nodeId);
     });
 
     // Allow sidebar to be resized

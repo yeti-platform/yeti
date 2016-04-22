@@ -19,13 +19,11 @@
 
 <script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
     {{#each analytics}}
-        <div class="graph-sidebar-analytics">
+        <div class="graph-sidebar-analytics" id="analytics-{{id}}-{{../nodeId}}">
             <h2>{{name}}</h2>
             <p>{{description}}</p>
             <div class="graph-sidebar-analytics-results">
-            </div>
-            <div class="graph-sidebar-analytics-action">
-                <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{id}}' data-style='slide-up' data-size='s'><span class="ladda-label"><i class="glyphicon glyphicon-refresh"></i> Run</span></button>
+                Loading ...
             </div>
         </div>
     {{else}}
@@ -34,16 +32,26 @@
 </script>
 
 <script id="graph-sidebar-analytics-results-template" type="text/x-handlebars-template">
-    {{> links}}
-    {{#if error}}
-        <div class="graph-sidebar-analytics-error">{{error}}</div>
-    {{/if}}
-    {{#if raw}}
-        <a class="graph-analytics-results-links" role="button" data-toggle="collapse" href="#graph-sidebar-analytics-results-{{id}}">Display raw results</a>
-        <div class="collapse graph-sidebar-analytics-raw" id="graph-sidebar-analytics-results-{{id}}">
-            <pre><code>{{raw}}</code></pre>
+    {{#with results}}
+        {{> links}}
+        {{#if error}}
+            <div class="graph-sidebar-analytics-error">{{error}}</div>
+        {{/if}}
+        {{#if raw}}
+            <a class="graph-analytics-results-links" role="button" data-toggle="collapse" href="#graph-sidebar-analytics-results-{{_id}}">Display raw results</a>
+            <div class="collapse graph-sidebar-analytics-raw" id="graph-sidebar-analytics-results-{{_id}}">
+                <pre><code>{{raw}}</code></pre>
+            </div>
+        {{/if}}
+        <div class="graph-sidebar-analytics-action">
+            <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{analytics}}'><i class="glyphicon glyphicon-refresh"></i> Run</button>
+            <span class="graph-sidebar-analytics-last-run">Last: {{datetime datetime}}</span>
         </div>
-    {{/if}}
+    {{else}}
+        <div class="graph-sidebar-analytics-action">
+            <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{analytics}}'><i class="glyphicon glyphicon-refresh"></i> Run</button>
+        </div>
+    {{/with}}
 </script>
 
 <script id="graph-sidebar-links-template" type="text/x-handlebars-template">
@@ -59,8 +67,29 @@
                 {{/equal}}
             {{/equal}}
             {{#each this}}
-                <li {{#unless @last}}class="graph-sidebar-border-bottom"{{/unless}}>
-                    <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}}</div>
+                <li class="{{#unless @last}}graph-sidebar-border-bottom{{/unless}} {{#if visible}}graph-sidebar-visible-link{{/if}}">
+                    <div class="graph-sidebar-link-value"><i class="{{cssicon}}"></i> {{value}} {{#isInterestingNode this}}<span class="badge" rel="popover" data-popover-content="#graph-sidebar-links-of-interest-{{id}}">{{dictLength links_of_interest}}</span>{{/isInterestingNode}}</div>
+                    <div id="graph-sidebar-links-of-interest-{{id}}" class="hide">
+                        <ul class="graph-sidebar-history">
+                            {{#each links_of_interest}}
+                                <li>
+                                    <div>
+                                        {{value}}
+                                        {{#if description}}
+                                            ({{description}})
+                                        {{/if}}
+                                    </div>
+                                    <div class="graph-sidebar-history-sources">
+                                        {{#if active}}
+                                            active
+                                        {{else}}
+                                            {{date first_seen}} → {{date last_seen}}
+                                        {{/if}}
+                                    </div>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
                     <div class="graph-sidebar-tags">
                         {{#each tags}}
                             <span class="yeti-tag label label-default label-primary ">{{name}}</span>
@@ -91,7 +120,9 @@
                                     </ul>
                                 </div>
                             {{/hasMoreHistory}}
-                            <a class="graph-sidebar-display-link" data-link="{{id}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add To Graph"><i class="flaticon-network38"></i></a>
+                            {{#unless visible}}
+                                <a class="graph-sidebar-display-link" data-link="{{id}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add To Graph"><i class="flaticon-network38"></i></a>
+                            {{/unless}}
                             <a class="graph-sidebar-view-node" data-node="{{nodeId}}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="See Node Info"><i class="glyphicon glyphicon-list"></i></a>
                         </div>
                     </div>

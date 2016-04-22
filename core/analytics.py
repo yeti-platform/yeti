@@ -52,6 +52,7 @@ class AnalyticsResults(Document):
     settings = DictField()
     raw = StringField()
     error = StringField()
+    datetime = DateTimeField(default=datetime.utcnow)
 
 
 class OneShotAnalytics(OneShotEntry):
