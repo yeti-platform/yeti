@@ -397,6 +397,7 @@ a.graph-analytics-results-links {
     background-color: #00CCFF;
 }
 
+.spinner, 
 .glyphicon-spinner .glyphicon {
     -animation: spin .7s infinite linear;
     -webkit-animation: spin2 .7s infinite linear;
@@ -547,4 +548,23 @@ ul.ui-autocomplete {
 #graph-sidebar .badge {
     background-color: #00CCFF;
     margin-top: -4px;
+}
+
+.selected-line {
+    margin-left: -3px;
+    margin-right: -3px;
+    border-left: 3px solid #38a;
+    border-right: 3px solid #38a;
+}
+
+.selection-actions .panel-title {
+    font-size: 10pt;
+}
+
+#selection {
+    margin-top: 20px;
+}
+
+#selection p {
+    margin-left: 5px;
 }

@@ -5,7 +5,7 @@
         <table class="table table-condensed yeti-table table-hover">
           <tr>{% if links %}<th>Timeframe</th><th>Link</th>{%endif%}<th></th><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
     {% endif %}
-      <tr class="node-line">
+      <tr class="node-line" data-id="{{observable['id']}}">
         {% if links %}<td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td><td>{{links[loop.index0]['description']}}</td>{%endif%}
         <td class="graph-link"><a href="{{ url_for('frontend.graph_node', id=observable['id'], klass='observable')}}"><i class="flaticon-network38"></i></a></td>
         <td><a href="{{ url_for('frontend.ObservablesView:get', id=observable['id'])}}">{{observable['value']}}</a></td>
