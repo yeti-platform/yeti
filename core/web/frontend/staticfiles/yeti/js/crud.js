@@ -90,6 +90,13 @@ function refresh_table(form) {
     'page': form.find(".crud-pagination").data('page'),
   };
 
+  // include extra params from hidden inputs
+  form.find(".extra-param").each(function() {
+    params[this.name] = $(this).val()
+  });
+
+  console.log(params)
+
   query = {'filter': filter, 'params': params};
 
   $.ajax({

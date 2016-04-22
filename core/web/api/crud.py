@@ -13,7 +13,7 @@ class CrudSearchApi(FlaskView):
         'tags': 'tags__name',
     }
 
-    def get_queryset(self, filters, regex):
+    def get_queryset(self, filters, regex, ignorecase):
         result_filters = dict()
 
         queryset = self.objectmanager.objects
@@ -30,7 +30,10 @@ class CrudSearchApi(FlaskView):
                 key = self.SEARCH_ALIASES[key]
 
             if regex:
-                value = re.compile(value)
+                flags = 0
+                if ignorecase:
+                    flags |= re.I
+                value = re.compile(value, flags=flags)
 
             if isinstance(value, list):
                 key += "__all"
@@ -45,11 +48,12 @@ class CrudSearchApi(FlaskView):
         fltr = query.get('filter', {})
         params = query.get('params', {})
         regex = params.pop('regex', False)
+        ignorecase = params.pop('ignorecase', False)
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
 
         data = []
-        for o in self.get_queryset(fltr, regex)[page * rng:(page + 1) * rng]:
+        for o in self.get_queryset(fltr, regex, ignorecase)[page * rng:(page + 1) * rng]:
             o.uri = url_for("api.{}:post".format(self.objectmanager.__name__), id=str(o.id))
             data.append(o)
 
