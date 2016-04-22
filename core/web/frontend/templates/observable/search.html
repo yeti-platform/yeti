@@ -21,6 +21,7 @@
 $(function() {
 	$("#add-checkbox").click(function() {
 		$("#tags").toggle();
+		$("#force-type").toggle();
 	});
 });
 </script>
@@ -88,6 +89,14 @@ $(function() {
 				</div>
 				<div class="form-group" id="tags" style="display:none">
 					<input type="text" class="form-control tagfield" data-choices="{{url_for('api.Tag:index')}}" name="tags" value="" placeholder="Tags">
+				</div>
+				<div class="form-group" id="force-type" style="display:none">
+					<select class="form-control" name="force-type">
+							<option value="">Guess type</option>
+							{% for t in g.observables %}
+									<option value="{{t.__name__}}">{{t.__name__}}</option>
+							{% endfor %}
+					</select>
 				</div>
 			</div>
 			<br>

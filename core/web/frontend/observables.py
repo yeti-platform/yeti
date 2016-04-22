@@ -1,4 +1,4 @@
-from flask import request, render_template, send_file
+from flask import request, render_template, send_file, flash
 from flask.ext.classy import route
 from uuid import uuid4
 from tempfile import gettempdir
@@ -61,23 +61,38 @@ class ObservablesView(GenericView):
             else:
                 lines = request.form['bulk-text'].split('\n')
 
+
+            invalid_observables = 0
             if bool(request.form.get('add', False)):
                 tags = request.form.get('tags', "").split(',')
                 for l in lines:
                     try:
                         txt = l.strip()
                         if txt:
-                            o = Observable.add_text(txt)
+                            if (request.form['force-type']
+                                and request.form['force-type'] in globals()
+                                and issubclass(globals()[request.form['force-type']], Observable)):
+                                print globals()[request.form['force-type']]
+                                o = globals()[request.form['force-type']].get_or_create(value=txt)
+                            else:
+                                o = Observable.add_text(txt)
                             o.tag(tags)
                             obs[o.value] = o
-                    except ObservableValidationError:
+                    except ObservableValidationError as e:
+                        print "Error validating {}: {}".format(txt, e)
+                        invalid_observables += 1
                         continue
             else:
                 for l in lines:
                     obs[l.strip()] = l, None
 
-            data = match_observables(obs.keys())
-            return render_template("observable/search_results.html", data=data)
+            if len(obs) > 0:
+                data = match_observables(obs.keys())
+                return render_template("observable/search_results.html", data=data)
+            else:
+                if invalid_observables:
+                    flash("Type guessing failed for {} observables. Try setting it manually.".format(invalid_observables), "danger")
+                    return render_template("observable/search.html")
 
         return render_template("observable/search.html")
 
