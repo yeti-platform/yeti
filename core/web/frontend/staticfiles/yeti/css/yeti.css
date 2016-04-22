@@ -42,6 +42,13 @@ span.yeti-toggle {
   cursor:pointer;
 }
 
+/* forms */
+
+#pattern textarea {
+  font-family: monospace;
+  font-size: 12px;
+}
+
 /* panels */
 
 .yeti-panel .yeti-tag {

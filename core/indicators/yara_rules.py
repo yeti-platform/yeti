@@ -1,9 +1,27 @@
+from mongoengine import StringField
 import yara
 
 from core.indicators import Indicator
 
+rule_template = """rule yeti_rule
+{
+    meta:
+        description = "This is just an example"
+        more_info = "http://yara.readthedocs.org/en/v3.4.0/writingrules.html#hexadecimal-strings"
+
+    strings:
+        $hex1 = { 6A 40 68 ?? 30 00 [4-6] 6A 14 8D 91 }
+        $string1 = "UVODFRYSIHLNWPEJXQZAKCBGMT" wide ascii
+        $regex1 = /md5: [0-9a-zA-Z]{32}/
+
+    condition:
+        all of ($hex*) and ($string1 or $regex1)
+}"""
+
 
 class Yara(Indicator):
+
+    pattern = StringField(required=True, verbose_name="Pattern", default=rule_template)
 
     def __init__(self, *args, **kwargs):
         super(Yara, self).__init__(*args, **kwargs)
