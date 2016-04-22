@@ -109,6 +109,10 @@ class Observable(Node):
             self.modify({"tags__name": new_tag}, set__tags__S__last_seen=datetime.utcnow())
         return self.reload()
 
+    def untag(self, tags):
+        for tag in iterify(tags):
+            self.modify(pull__tags__name=tag)
+
     def tag(self, new_tags, strict=False, expiration=None):
         new_tags = iterify(new_tags)
 

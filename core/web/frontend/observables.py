@@ -1,10 +1,15 @@
-from flask import request, render_template
+from flask import request, render_template, send_file
 from flask.ext.classy import route
+from uuid import uuid4
+from tempfile import gettempdir
+from os import path
 
 from core.web.frontend.generic import GenericView
 from core.observables import *
+from core.exports import ExportTemplate
 from core.errors import ObservableValidationError
 from core.analysis import match_observables
+from core.web.helpers import get_object_or_404
 
 
 class ObservablesView(GenericView):
@@ -19,7 +24,7 @@ class ObservablesView(GenericView):
 
     @route('/advanced')
     def advanced(self):
-        return render_template("{}/browse.html".format(self.klass.__name__.lower()))
+        return render_template("{}/browse.html".format(self.klass.__name__.lower()), export_templates=ExportTemplate.objects.all())
 
     # override to guess observable type
     @route('/new', methods=["GET", "POST"])
@@ -75,3 +80,33 @@ class ObservablesView(GenericView):
             return render_template("observable/search_results.html", data=data)
 
         return render_template("observable/search.html")
+
+    @route("/export", methods=['POST'])
+    def export(self):
+        template = get_object_or_404(ExportTemplate, id=request.form['template'])
+        ids = request.form.getlist('ids')
+
+        filepath = path.join(gettempdir(), 'yeti_{}.txt'.format(uuid4()))
+        template.render(Observable.objects(id__in=ids), filepath)
+
+        return send_file(filepath)
+
+    @route("/tag", methods=['POST'])
+    def tag(self):
+        ids = request.form.getlist('ids')
+        tags = request.form['tags'].split(',')
+
+        for observable in Observable.objects(id__in=ids):
+            observable.tag(tags)
+
+        return ('', 200)
+
+    @route("/untag", methods=['POST'])
+    def untag(self):
+        ids = request.form.getlist('ids')
+        tags = request.form['tags'].split(',')
+
+        for observable in Observable.objects(id__in=ids):
+            observable.untag(tags)
+
+        return ('', 200)
