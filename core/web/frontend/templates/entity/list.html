@@ -10,29 +10,19 @@
 
 {% block main %}
 <ul class="nav nav-tabs" role="tablist">
-  <li role="presentation" class="active"><a href="#malware_tab" aria-controls="malware_tab" role="tab" data-toggle="tab">Malware</a></li>
-  <li role="presentation"><a href="#ttp_tab" aria-controls="ttp_tab" role="tab" data-toggle="tab">TTPs</a></li>
-  <li role="presentation"><a href="#actor_tab" aria-controls="actor_tab" role="tab" data-toggle="tab">Actors</a></li>
-  <li role="presentation"><a href="#company_tab" aria-controls="company_tab" role="tab" data-toggle="tab">Companies</a></li>
+	{% for t in g.entities %}
+	<li role="presentation" {%if loop.first%}class="active"{%endif%}><a href="#{{t.__name__.lower()}}_tab" aria-controls="{{t.__name__.lower()}}_tab" role="tab" data-toggle="tab">{{t.__name__}}</a></li>
+	{% endfor %}
+
 </ul>
 
 <div class="tab-content">
 
-  <div role="tabpanel" class="tab-pane active" id="malware_tab">
-		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "malware", _cls='Entity.Malware') }}
+	{% for t in g.entities %}
+	<div role="tabpanel" class="tab-pane {%if loop.first%}active{%endif%}" id="{{t.__name__.lower()}}_tab">
+		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), t.__name__.lower(), _cls='Entity.'+t.__name__) }}
 	</div>
-
-	<div role="tabpanel" class="tab-pane" id="ttp_tab">
-		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "ttp", _cls='Entity.TTP') }}
-	</div>
-
-	<div role="tabpanel" class="tab-pane" id="actor_tab">
-		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "actor", _cls='Entity.Actor') }}
-	</div>
-
-	<div role="tabpanel" class="tab-pane" id="company_tab">
-		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), "company", _cls='Entity.Company') }}
-	</div>
+	{% endfor %}
 
 </div>
 {% endblock %}

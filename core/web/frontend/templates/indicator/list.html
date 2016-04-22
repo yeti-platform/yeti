@@ -10,19 +10,18 @@
 
 {% block main %}
 <ul class="nav nav-tabs" role="tablist">
-  <li role="presentation" class="active"><a href="#regex_tab" aria-controls="regex_tab" role="tab" data-toggle="tab">Regex</a></li>
-  <li role="presentation"><a href="#yara_tab" aria-controls="yara_tab" role="tab" data-toggle="tab">Yara rules</a></li>
+	{% for t in g.indicators %}
+	<li role="presentation" {%if loop.first%}class="active"{%endif%}><a href="#{{t.__name__.lower()}}_tab" aria-controls="{{t.__name__.lower()}}_tab" role="tab" data-toggle="tab">{{t.__name__}}</a></li>
+	{% endfor %}
 </ul>
 
 <div class="tab-content">
 
-	<div role="tabpanel" class="tab-pane active" id="regex_tab">
-		{{ filterlist.sidebar_filter(url_for('api.IndicatorSearch:post'), "regex", _cls='Indicator.Regex') }}
+	{% for t in g.indicators %}
+	<div role="tabpanel" class="tab-pane {%if loop.first%}active{%endif%}" id="{{t.__name__.lower()}}_tab">
+		{{ filterlist.sidebar_filter(url_for('api.IndicatorSearch:post'), t.__name__.lower(), _cls='Indicator.'+t.__name__) }}
 	</div>
-
-	<div role="tabpanel" class="tab-pane" id="yara_tab">
-		{{ filterlist.sidebar_filter(url_for('api.IndicatorSearch:post'), "yara", _cls='Indicator.Yara') }}
-	</div>
+	{% endfor %}
 
 </div>
 {% endblock %}
