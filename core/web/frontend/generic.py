@@ -85,8 +85,6 @@ class GenericView(FlaskView):
                 form.errors['Duplicate'] = ['Entity "{}" is already in the database'.format(obj)]
                 return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
 
-
-
             # success - redirect to view page
             return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=obj.id))
         else:
