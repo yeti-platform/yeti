@@ -25,8 +25,8 @@ class Hostname(Observable):
             raise ObservableValidationError("Invalid hostname: {}".format(self.value))
 
     def normalize(self, hostname):
-        if not Hostname.is_hostname(hostname):
-            raise ObservableValidationError("Invalid Hostname (is_hostname={}): {}".format(Hostname.is_hostname(hostname), hostname))
+        if not Hostname.check_type(hostname):
+            raise ObservableValidationError("Invalid Hostname (check_type={}): {}".format(Hostname.check_type(hostname), hostname))
         if hostname.endswith('.'):
             hostname = hostname[:-1]
         self.idna = unicode(idna.encode(hostname.lower()))
