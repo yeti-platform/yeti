@@ -9,6 +9,18 @@ from core.helpers import refang
 
 class Url(Observable):
 
+    regex = r"""
+                (
+                  ((?P<scheme>[\w]{2,9}):\/\/)?
+                  ([\S]*\:[\S]*\@)?
+                  (?P<hostname>((([^/:]+\.)([^/:]+))\.?))
+                  (\:[\d]{1,5})?
+                  (?P<path>(\/[\S]*)?
+                    (\?[\S]*)?
+                    (\#[\S]*)?)
+                )
+            """
+
     def clean(self):
         """Ensures that URLs are canonized before saving"""
         self.value = refang(self.value.strip())
@@ -18,3 +30,14 @@ class Url(Observable):
             self.value = urlnorm.norm(self.value)
         except urlnorm.InvalidUrl:
             raise ObservableValidationError("Invalid URL: {}".format(self.value))
+
+    @staticmethod
+    def check_type(txt):
+        url = refang(txt)
+        match = re.match("^" + Url.regex + "$", url, re.VERBOSE)
+        if match:
+            url = match.group(1)
+            if url.find('/') != -1:
+                return match.group(1)
+        else:
+            return None

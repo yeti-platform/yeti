@@ -5,7 +5,7 @@ import pytz
 from mongoengine import *
 from flask.ext.mongoengine.wtf import model_form
 
-from core.helpers import is_url, is_ip, is_hostname, iterify
+from core.helpers import iterify
 from core.database import Node, TagListField
 from core.observables import ObservableTag, Tag
 from core.entities import Entity
@@ -46,20 +46,21 @@ class Observable(Node):
 
     @staticmethod
     def guess_type(string):
-        from core.observables import Url, Ip, Hostname
+        from core.observables import Url, Ip, Hostname, Email, Hash, Text
         if string and string.strip() != '':
-            if is_url(string):
-                return Url
-            elif is_ip(string):
-                return Ip
-            elif is_hostname(string):
-                return Hostname
+            for t in [Url, Ip, Email, Hostname, Hash]:
+                if t.check_type(string):
+                    return t
             else:
                 raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
 
     @classmethod
     def add_text(cls, text):
         return Observable.guess_type(text).get_or_create(value=text)
+
+    @staticmethod
+    def check_type(txt):
+        raise NotImplementedError("Implement this in subclasses")
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):

@@ -1,3 +1,5 @@
+import re
+
 from mongoengine import *
 import iptools
 
@@ -6,6 +8,8 @@ from core.errors import ObservableValidationError
 
 
 class Ip(Observable):
+
+    regex = r'([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})'
 
     version = IntField()
 
@@ -36,3 +40,12 @@ class Ip(Observable):
             self.version = 6
         else:
             raise ObservableValidationError("{} is not a valid IP address".format(ip))
+
+    @staticmethod
+    def check_type(txt):
+        if txt:
+            match = re.match("^" + Ip.regex + "$", txt)
+            if match:
+                return match.group(1)
+        else:
+            return False

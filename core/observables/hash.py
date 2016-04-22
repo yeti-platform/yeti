@@ -18,6 +18,12 @@ class Hash(Observable):
                     512: 'sha512',
                     }
 
+    @staticmethod
+    def check_type(txt):
+        print "Hash checking", txt
+        if re.match(r'^[a-f0-9]+$', txt.lower()):
+            return True
+
     def clean(self):
         h = self.value.lower()
         if not re.match(r'^[a-f0-9]+$', h):
