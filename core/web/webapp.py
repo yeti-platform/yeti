@@ -70,8 +70,7 @@ def list_routes():
     for line in sorted(output):
         print line
 
-    return "ASD"
-
+    return "<br>".join(output)
 
 @webapp.template_test()
 def startswith(string, pattern):

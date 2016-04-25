@@ -60,6 +60,20 @@ class CrudSearchApi(FlaskView):
         return data
 
     def post(self):
+        """Launches a simple search against the database
+
+        This endpoint is mostly used by paginators in Yeti.
+
+        :<json object params: JSON object specifying the ``page``, ``range`` and ``regex`` variables.
+        :<json integer params.page: Page or results to return (default: 1)
+        :<json integer params.range: How many results to return (default: 50)
+        :<json boolean params.regex: Set to true if the arrays in ``filter`` are to be treated as regular expressions (default: false)
+        :<json object filter: JSON object specifying keys to be matched in the database. Each key must contain an array of OR-matched values.
+
+        :reqheader Accept: must be set to ``application/json``
+        :reqheader Content-Type: must be set to ``application/json``
+
+        """
         query = request.get_json(silent=True) or {}
 
         try:
@@ -77,11 +91,18 @@ class CrudApi(FlaskView):
     template_single = None
 
     def delete(self, id):
+        """Deletes the corresponding entry from the database
+
+        :query ObjectID id: Element ID
+        :>json string deleted: The deleted element's ObjectID
+        """
         obj = self.objectmanager.objects.get(id=id)
         obj.delete()
-        return render({"status": "ok"})
+        return render({"deleted": id})
 
     def index(self):
+        """List all corresponding entries in the database. **Do not use on large datasets!**
+        """
         data = []
         for obj in self.objectmanager.objects.all():
             obj.uri = url_for("api.{}:get".format(self.__class__.__name__), id=str(obj.id))
@@ -93,18 +114,35 @@ class CrudApi(FlaskView):
         return json
 
     def get(self, id):
+        """Get details on a specific element
+
+        :query ObjectID id: Element ID
+        """
         obj = self.objectmanager.objects.get(id=id)
-        obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
+        obj.uri = url_for("api.{}:get".format(self.__class__.__name__), id=str(obj.id))
         return render(obj, self.template_single)
 
     @route("/", methods=["POST"])
     def new(self):
+        """Create a new element
+
+        Create a new element from the JSON object passed in the ``POST`` data.
+
+        :<json object params: JSON object containing fields to set
+        """
         params = self._parse_request(request.json)
         obj = self.objectmanager(**params).save()
         obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
         return render(obj)
 
     def post(self, id):
+        """Modify an element
+
+        Edit an existing element according to the JSON object passed in the ``POST`` data.
+
+        :query ObjectID id: Element ID
+        :<json object params: JSON object containing fields to set
+        """
         obj = self.objectmanager.objects.get(id=id)
         params = self._parse_request(request.json)
         obj = obj.clean_update(**params)
