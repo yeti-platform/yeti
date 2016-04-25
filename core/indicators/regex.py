@@ -1,9 +1,16 @@
 import re
 
 from core.indicators import Indicator
+from core.errors import IndicatorValidationError
 
 
 class Regex(Indicator):
+
+    def clean(self):
+        try:
+            re.compile(self.pattern)
+        except re.error as e:
+            raise IndicatorValidationError("Regex compilation error {}:".format(e))
 
     def __init__(self, *args, **kwargs):
         super(Regex, self).__init__(*args, **kwargs)
