@@ -221,6 +221,7 @@ class Node(YetiDocument):
 
     @classmethod
     def get_or_create(cls, **kwargs):
+        """Attempts to fetch a node in the database, and creates it if nonexistent"""
         obj = cls(**kwargs)
         try:
             return obj.save()

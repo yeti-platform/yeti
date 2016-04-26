@@ -82,6 +82,7 @@
             
                 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../objects.html">Yeti objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending.html">Extending Yeti</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">The API</a></li>
 </ul>
 
@@ -135,7 +136,7 @@
 <span class="kn">from</span> <span class="nn">mongoengine</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">flask.ext.mongoengine.wtf</span> <span class="kn">import</span> <span class="n">model_form</span>
 
-<span class="kn">from</span> <span class="nn">core.helpers</span> <span class="kn">import</span> <span class="n">is_url</span><span class="p">,</span> <span class="n">is_ip</span><span class="p">,</span> <span class="n">is_hostname</span><span class="p">,</span> <span class="n">iterify</span>
+<span class="kn">from</span> <span class="nn">core.helpers</span> <span class="kn">import</span> <span class="n">iterify</span>
 <span class="kn">from</span> <span class="nn">core.database</span> <span class="kn">import</span> <span class="n">Node</span><span class="p">,</span> <span class="n">TagListField</span>
 <span class="kn">from</span> <span class="nn">core.observables</span> <span class="kn">import</span> <span class="n">ObservableTag</span><span class="p">,</span> <span class="n">Tag</span>
 <span class="kn">from</span> <span class="nn">core.entities</span> <span class="kn">import</span> <span class="n">Entity</span>
@@ -204,14 +205,12 @@
 <span class="sd">        Raises:</span>
 <span class="sd">            ObservableValidationError if no type could be guessed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">core.observables</span> <span class="kn">import</span> <span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Hostname</span>
+        <span class="kn">from</span> <span class="nn">core.observables</span> <span class="kn">import</span> <span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Hostname</span><span class="p">,</span> <span class="n">Email</span><span class="p">,</span> <span class="n">Hash</span>
+
         <span class="k">if</span> <span class="n">string</span> <span class="ow">and</span> <span class="n">string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">is_url</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">Url</span>
-            <span class="k">elif</span> <span class="n">is_ip</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">Ip</span>
-            <span class="k">elif</span> <span class="n">is_hostname</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">Hostname</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Email</span><span class="p">,</span> <span class="n">Hostname</span><span class="p">,</span> <span class="n">Hash</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">check_type</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">t</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ObservableValidationError</span><span class="p">(</span><span class="s2">&quot;{} was not recognized as a viable datatype&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
 
@@ -227,6 +226,10 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Observable</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">text</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">check_type</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Implement this in subclasses&quot;</span><span class="p">)</span>
 
     <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="Observable.change_all_tags"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.change_all_tags">[docs]</a>    <span class="k">def</span> <span class="nf">change_all_tags</span><span class="p">(</span><span class="n">old_tags</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">):</span>
@@ -313,7 +316,27 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s2">&quot;tags__name&quot;</span><span class="p">:</span> <span class="n">new_tag</span><span class="p">},</span> <span class="n">set__tags__S__last_seen</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">())</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
 
-    <span class="k">def</span> <span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_tags</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">untag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">iterify</span><span class="p">(</span><span class="n">tags</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__tags__name</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Observable.tag"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.tag">[docs]</a>    <span class="k">def</span> <span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_tags</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Tags an observable.</span>
+
+<span class="sd">        An observable can be tagged to add more information as to what it represents.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            new_tags:</span>
+<span class="sd">                An array of strings to tag the observable with.</span>
+<span class="sd">            strict:</span>
+<span class="sd">                Set to ``True`` to replace all existing tags with the ``new_tags``.</span>
+<span class="sd">            expiration:</span>
+<span class="sd">                Timedelta field after which the Tag will not be considered fresh anymore.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A fresh Observable instance as reloaded from the database.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">new_tags</span> <span class="o">=</span> <span class="n">iterify</span><span class="p">(</span><span class="n">new_tags</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
@@ -345,7 +368,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">push__tags</span><span class="o">=</span><span class="n">ObservableTag</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">))</span>
                         <span class="n">tag</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">inc__count</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
 
     <span class="k">def</span> <span class="nf">expire_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>

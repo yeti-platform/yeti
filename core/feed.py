@@ -28,29 +28,85 @@ def update_feed(feed_id):
         msg = "ERROR updating feed: {}".format(e)
         logging.error(msg)
         f.update_status(msg)
+        return False
 
     f.last_run = datetime.utcnow()
     f.save()
+    return True
 
 
 class Feed(ScheduleEntry):
-    """Base class for Feeds. All feeds must inherit from this"""
+    """Base class for Feeds. All feeds must inherit from this.
+
+    Feeds describe the way Yeti automatically collects and processes data.
+
+    Attributes:
+        frequency:
+            Required. A ``timedelta`` variable defining the frequency at which a feed is to be ran. Example: ``timedelta(hours=1)``
+        name:
+            Required. The feed's name. Must be the same as the class name. Example: ``"ZeusTrackerConfigs"``
+        source:
+            Required if working with helpers. This designates URL on which to fetch the data. Example: ``"https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"``
+        description:
+            Required. Bref feed description. Example: ``"This feed shows the latest 50 ZeuS config URLs."``
+
+    .. note::
+        These attributes must be defined in every class inheriting from ``Feed`` as the key - value items of a ``default_values`` attribute. See :ref:`creating-feed` for more details
+
+    """
 
     SCHEDULED_TASK = "core.feed.update_feed"
 
     source = StringField(required=True)
 
     def update(self):
+        """Function responsible for retreiving the data for a feed and calling
+        the ``analyze`` function on its data, typically one line at a time.
+
+        Helper functions may be called to facilitate parsing of common data formats.
+
+        Raises:
+            NotImplementedError if no function has been implemented.
+        """
+
         raise NotImplementedError(
             "update: This method must be implemented in your feed class")
 
-    def analyze(self):
+    def analyze(self, line):
+        """Function responsible for processing the line / data unit passed on by
+        the ``update`` function.
+
+        Raises:
+            NotImplementedError if no function has been implemented.
+        """
         raise NotImplementedError(
             "analyze: This method must be implemented in your feed class")
 
     # Helper functions
 
     def update_xml(self, main_node, children, headers={}, auth=None):
+        """Helper function. Performs an HTTP request on ``source`` and treats
+        the response as an XML object, yielding a ``dict`` for each parsed
+        element.
+
+        The XML must have a ``main_node``, and an array of ``children``. For example::
+
+            <main_node>
+                <child1></child1>
+                <child1></child2>
+                <child1></child3>
+            </main_node>
+
+        Args:
+            main_node:  A string defining the parent node that delimitates a ``dict`` to be yielded.
+            children:   An array of strings defining the children of the parent node.
+                        These will be the keys of the ``dict``.
+            headers:    Optional headers to be added to the HTTP request.
+            auth:       Username / password tuple to be sent along with the HTTP request.
+
+        Returns:
+            Yields Python ``dictionary`` objects. The dicitonary keys are the strings specified in the ``children`` array.
+        """
         assert self.source is not None
 
         if auth:
@@ -61,6 +117,7 @@ class Feed(ScheduleEntry):
         return self.parse_xml(r.content, main_node, children)
 
     def parse_xml(self, data, main_node, children):
+        """Helper function used to parse XML. See :func:`core.feed.Feed.update_xml` for details"""
 
         tree = etree.parse(StringIO(data))
 
@@ -74,6 +131,17 @@ class Feed(ScheduleEntry):
             yield context
 
     def update_lines(self, headers={}, auth=None):
+        """Helper function. Performs an HTTP request on ``source`` and treats each
+        line of the response separately.
+
+
+        Args:
+            headers:    Optional headers to be added to the HTTP request.
+            auth:       Username / password tuple to be sent along with the HTTP request.
+
+        Returns:
+            Yields string lines from the HTTP response.
+        """
         assert self.source is not None
 
         if auth:
@@ -91,6 +159,18 @@ class Feed(ScheduleEntry):
             yield line.encode('utf-8')
 
     def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None):
+        """Helper function. Performs an HTTP request on ``source`` and treats
+        the response as an CSV file, yielding a ``dict`` for each parsed line.
+
+        Args:
+            delimiter:  A string delimiting fields in the CSV. Default is ``;``.
+            quotechar:  A string used to know when to ignore delimiters / carriage returns. Default is ``'``.
+            headers:    Optional headers to be added to the HTTP request.
+            auth:       Username / password tuple to be sent along with the HTTP request.
+
+        Returns:
+            Yields arrays of UTF-8 strings that correspond to each comma separated field
+        """
         assert self.source is not None
 
         if auth:
@@ -105,6 +185,16 @@ class Feed(ScheduleEntry):
             yield line
 
     def update_json(self, headers={}, auth=None):
+        """Helper function. Performs an HTTP request on ``source`` and parses
+        the response JSON, returning a Python ``dict`` object.
+
+        Args:
+            headers:    Optional headers to be added to the HTTP request.
+            auth:       Username / password tuple to be sent along with the HTTP request.
+
+        Returns:
+            Python ``dict`` object representing the response JSON.
+        """
         if auth:
             r = requests.get(self.source, headers=headers, auth=auth)
         else:

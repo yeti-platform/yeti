@@ -6,11 +6,12 @@
 Welcome to YETI's documentation!
 ================================
 
-LOLs
+Yeti - your everyday Threat Intelligence is a platform that makes managing technical and tactical threat intelligence simple.
 
 Contents:
 ---------
 
 .. toctree::
   objects
+  extending
   api

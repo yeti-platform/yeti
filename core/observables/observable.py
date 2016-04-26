@@ -190,6 +190,22 @@ class Observable(Node):
             self.modify(pull__tags__name=tag)
 
     def tag(self, new_tags, strict=False, expiration=None):
+        """Tags an observable.
+
+        An observable can be tagged to add more information as to what it represents.
+
+        Args:
+            new_tags:
+                An array of strings to tag the observable with.
+            strict:
+                Set to ``True`` to replace all existing tags with the ``new_tags``.
+            expiration:
+                Timedelta field after which the Tag will not be considered fresh anymore.
+
+        Returns:
+            A fresh Observable instance as reloaded from the database.
+
+        """
         new_tags = iterify(new_tags)
 
         if strict:

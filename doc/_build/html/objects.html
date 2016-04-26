@@ -31,7 +31,7 @@
 
   
     <link rel="top" title="YETI 1.0 documentation" href="index.html"/>
-        <link rel="next" title="The API" href="api.html"/>
+        <link rel="next" title="Extending Yeti" href="extending.html"/>
         <link rel="prev" title="Welcome to YETI’s documentation!" href="index.html"/> 
 
   
@@ -82,7 +82,12 @@
             
             
                 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Yeti objects</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Yeti objects</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#observables">Observables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feeds">Feeds</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extending.html">Extending Yeti</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">The API</a></li>
 </ul>
 
@@ -131,6 +136,8 @@
   <div class="section" id="yeti-objects">
 <h1>Yeti objects<a class="headerlink" href="#yeti-objects" title="Permalink to this headline">¶</a></h1>
 <p>Yeti relies on several objects, bla bla bla.</p>
+<div class="section" id="observables">
+<h2>Observables<a class="headerlink" href="#observables" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="core.observables.Observable">
 <em class="property">class </em><code class="descclassname">core.observables.</code><code class="descname">Observable</code><span class="sig-paren">(</span><em>*args</em>, <em>**values</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable" title="Permalink to this definition">¶</a></dt>
@@ -295,8 +302,209 @@ point the analyst to the source of the context.</p>
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="core.observables.Observable.tag">
+<code class="descname">tag</code><span class="sig-paren">(</span><em>new_tags</em>, <em>strict=False</em>, <em>expiration=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.tag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tags an observable.</p>
+<p>An observable can be tagged to add more information as to what it represents.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>new_tags</strong> &#8211; An array of strings to tag the observable with.</li>
+<li><strong>strict</strong> &#8211; Set to <code class="docutils literal"><span class="pre">True</span></code> to replace all existing tags with the <code class="docutils literal"><span class="pre">new_tags</span></code>.</li>
+<li><strong>expiration</strong> &#8211; Timedelta field after which the Tag will not be considered fresh anymore.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A fresh Observable instance as reloaded from the database.</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
+</dd></dl>
+
+</div>
+<div class="section" id="feeds">
+<h2>Feeds<a class="headerlink" href="#feeds" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="core.feed.Feed">
+<em class="property">class </em><code class="descclassname">core.feed.</code><code class="descname">Feed</code><span class="sig-paren">(</span><em>*args</em>, <em>**values</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for Feeds. All feeds must inherit from this.</p>
+<p>Feeds describe the way Yeti automatically collects and processes data.</p>
+<dl class="attribute">
+<dt id="Feed.frequency">
+<code class="descname">frequency</code><a class="headerlink" href="#Feed.frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required. A <code class="docutils literal"><span class="pre">timedelta</span></code> variable defining the frequency at which a feed is to be ran. Example: <code class="docutils literal"><span class="pre">timedelta(hours=1)</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Feed.name">
+<code class="descname">name</code><a class="headerlink" href="#Feed.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required. The feed&#8217;s name. Must be the same as the class name. Example: <code class="docutils literal"><span class="pre">&quot;ZeusTrackerConfigs&quot;</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Feed.source">
+<code class="descname">source</code><a class="headerlink" href="#Feed.source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required if working with helpers. This designates URL on which to fetch the data. Example: <code class="docutils literal"><span class="pre">&quot;https://zeustracker.abuse.ch/monitor.php?urlfeed=configs&quot;</span></code></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="Feed.description">
+<code class="descname">description</code><a class="headerlink" href="#Feed.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>Required. Bref feed description. Example: <code class="docutils literal"><span class="pre">&quot;This</span> <span class="pre">feed</span> <span class="pre">shows</span> <span class="pre">the</span> <span class="pre">latest</span> <span class="pre">50</span> <span class="pre">ZeuS</span> <span class="pre">config</span> <span class="pre">URLs.&quot;</span></code></p>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">These attributes must be defined in every class inheriting from <code class="docutils literal"><span class="pre">Feed</span></code> as the key - value items of a <code class="docutils literal"><span class="pre">default_values</span></code> attribute. See <a class="reference internal" href="extending.html#creating-feed"><span class="std std-ref">Creating feeds</span></a> for more details</p>
+</div>
+<dl class="method">
+<dt id="core.feed.Feed.analyze">
+<code class="descname">analyze</code><span class="sig-paren">(</span><em>line</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed.analyze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed.analyze" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function responsible for processing the line / data unit passed on by
+the <code class="docutils literal"><span class="pre">update</span></code> function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">NotImplementedError if no function has been implemented.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.feed.Feed.parse_xml">
+<code class="descname">parse_xml</code><span class="sig-paren">(</span><em>data</em>, <em>main_node</em>, <em>children</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed.parse_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed.parse_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function used to parse XML. See <a class="reference internal" href="#core.feed.Feed.update_xml" title="core.feed.Feed.update_xml"><code class="xref py py-func docutils literal"><span class="pre">core.feed.Feed.update_xml()</span></code></a> for details</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.feed.Feed.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function responsible for retreiving the data for a feed and calling
+the <code class="docutils literal"><span class="pre">analyze</span></code> function on its data, typically one line at a time.</p>
+<p>Helper functions may be called to facilitate parsing of common data formats.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">NotImplementedError if no function has been implemented.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.feed.Feed.update_csv">
+<code class="descname">update_csv</code><span class="sig-paren">(</span><em>delimiter=';'</em>, <em>quotechar=&quot;'&quot;</em>, <em>headers={}</em>, <em>auth=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed.update_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed.update_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function. Performs an HTTP request on <code class="docutils literal"><span class="pre">source</span></code> and treats
+the response as an CSV file, yielding a <code class="docutils literal"><span class="pre">dict</span></code> for each parsed line.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>delimiter</strong> &#8211; A string delimiting fields in the CSV. Default is <code class="docutils literal"><span class="pre">;</span></code>.</li>
+<li><strong>quotechar</strong> &#8211; A string used to know when to ignore delimiters / carriage returns. Default is <code class="docutils literal"><span class="pre">'</span></code>.</li>
+<li><strong>headers</strong> &#8211; Optional headers to be added to the HTTP request.</li>
+<li><strong>auth</strong> &#8211; Username / password tuple to be sent along with the HTTP request.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Yields arrays of UTF-8 strings that correspond to each comma separated field</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.feed.Feed.update_json">
+<code class="descname">update_json</code><span class="sig-paren">(</span><em>headers={}</em>, <em>auth=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed.update_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed.update_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function. Performs an HTTP request on <code class="docutils literal"><span class="pre">source</span></code> and parses
+the response JSON, returning a Python <code class="docutils literal"><span class="pre">dict</span></code> object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>headers</strong> &#8211; Optional headers to be added to the HTTP request.</li>
+<li><strong>auth</strong> &#8211; Username / password tuple to be sent along with the HTTP request.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Python <code class="docutils literal"><span class="pre">dict</span></code> object representing the response JSON.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.feed.Feed.update_lines">
+<code class="descname">update_lines</code><span class="sig-paren">(</span><em>headers={}</em>, <em>auth=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed.update_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed.update_lines" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function. Performs an HTTP request on <code class="docutils literal"><span class="pre">source</span></code> and treats each
+line of the response separately.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>headers</strong> &#8211; Optional headers to be added to the HTTP request.</li>
+<li><strong>auth</strong> &#8211; Username / password tuple to be sent along with the HTTP request.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Yields string lines from the HTTP response.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.feed.Feed.update_xml">
+<code class="descname">update_xml</code><span class="sig-paren">(</span><em>main_node</em>, <em>children</em>, <em>headers={}</em>, <em>auth=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/feed.html#Feed.update_xml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.feed.Feed.update_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function. Performs an HTTP request on <code class="docutils literal"><span class="pre">source</span></code> and treats
+the response as an XML object, yielding a <code class="docutils literal"><span class="pre">dict</span></code> for each parsed
+element.</p>
+<p>The XML must have a <code class="docutils literal"><span class="pre">main_node</span></code>, and an array of <code class="docutils literal"><span class="pre">children</span></code>. For example:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">main_node</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">child1</span><span class="o">&gt;&lt;/</span><span class="n">child1</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">child1</span><span class="o">&gt;&lt;/</span><span class="n">child2</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">child1</span><span class="o">&gt;&lt;/</span><span class="n">child3</span><span class="o">&gt;</span>
+<span class="o">&lt;/</span><span class="n">main_node</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>main_node</strong> &#8211; A string defining the parent node that delimitates a <code class="docutils literal"><span class="pre">dict</span></code> to be yielded.</li>
+<li><strong>children</strong> &#8211; An array of strings defining the children of the parent node.
+These will be the keys of the <code class="docutils literal"><span class="pre">dict</span></code>.</li>
+<li><strong>headers</strong> &#8211; Optional headers to be added to the HTTP request.</li>
+<li><strong>auth</strong> &#8211; Username / password tuple to be sent along with the HTTP request.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Yields Python <code class="docutils literal"><span class="pre">dictionary</span></code> objects. The dicitonary keys are the strings specified in the <code class="docutils literal"><span class="pre">children</span></code> array.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -306,7 +514,7 @@ point the analyst to the source of the context.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api.html" class="btn btn-neutral float-right" title="The API" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="extending.html" class="btn btn-neutral float-right" title="Extending Yeti" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral" title="Welcome to YETI’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
