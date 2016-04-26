@@ -33,7 +33,11 @@ class CrudSearchApi(FlaskView):
                 flags = 0
                 if ignorecase:
                     flags |= re.I
-                value = re.compile(value, flags=flags)
+
+                if isinstance(value, (str, unicode)):
+                    value = re.compile(value, flags=flags)
+                elif isinstance(value, list):
+                    value = [re.compile(v, flags=flags) for v in value]
 
             if isinstance(value, list):
                 key += "__all"
