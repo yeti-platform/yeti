@@ -30,6 +30,8 @@ class Neighbors(CrudApi):
             'nodes': list()
         }
 
+        result['nodes'].append(node.to_mongo())
+
         node_ids = set()
         links = list(set(node.incoming() + node.outgoing()))
 
@@ -58,7 +60,10 @@ class Neighbors(CrudApi):
         fltr = {key.replace(".", "__")+"__all": value for key, value in query.get('filter', {}).items()}
         regex = params.pop('regex', False)
         if regex:
-            fltr = {key: [re.compile(v) for v in value] for key, value in fltr.items()}
+            flags = 0
+            if params.pop('ignorecase', False):
+                flags |= re.I
+            fltr = {key: [re.compile(v, flags=flags) for v in value] for key, value in fltr.items()}
 
         print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
         # end of c/c code

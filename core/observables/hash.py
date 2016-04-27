@@ -10,13 +10,19 @@ class Hash(Observable):
 
     family = StringField()
 
-    HASH_LENGTHS = {128: 'md5',
-                    160: 'sha1',
-                    224: 'sha224',
-                    256: 'sha256',
-                    384: 'sha384',
-                    512: 'sha512',
-                    }
+    HASH_LENGTHS = {
+        128: 'md5',
+        160: 'sha1',
+        224: 'sha224',
+        256: 'sha256',
+        384: 'sha384',
+        512: 'sha512',
+    }
+
+    @staticmethod
+    def check_type(txt):
+        if re.match(r'^[a-f0-9]+$', txt.lower()):
+            return True
 
     def clean(self):
         h = self.value.lower()

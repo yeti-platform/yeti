@@ -14,7 +14,15 @@
 {% endblock %}
 
 {% block custom_head %}
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/selection.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/tokenfield-typeahead.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
 {%endblock%}
 
 {% block sidebar %}
@@ -59,6 +67,65 @@
 
 	</form>
 
+    <div id="selection" class="hidden">
+        <h5>Selection</h5>
 
+        <p><span id="selection-count">0</span> items selected</p>
+
+        <div class="panel-group selection-actions" id="accordion">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a class="collapsed" data-toggle="collapse" data-parent="#accordion" href="#selection-tags">
+                  Manage Tags
+                </a>
+              </h4>
+            </div>
+            <div id="selection-tags" class="panel-collapse collapse" role="tabpanel">
+              <div class="panel-body">
+                  <form id="tag-form" class="yeti-form" method="post">
+                    <input type="hidden" name="strict" value="true">
+                    <div class="form-group">
+                        <input type="text" class="form-control input-sm tagfield" data-choices="{{ url_for("api.Tag:index") }}" name="tags" />
+                        <div class="selection-ids"></div>
+                    </div>
+                    <div class="pull-right">
+                        <button class="btn btn-primary btn-sm selection-tags-action" data-action="{{url_for('frontend.ObservablesView:tag')}}"><span class="hidden"><i class="fa fa-spinner spinner"></i> </span>Add</button>
+                        <button class="btn btn-danger btn-sm selection-tags-action" data-action="{{url_for('frontend.ObservablesView:untag')}}"><span class="hidden"><i class="fa fa-spinner spinner"></i> </span>Remove</button>
+                    </div>
+                  </form>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <a class="collapsed" data-toggle="collapse" data-parent="#accordion" href="#selection-export">
+                  Export
+                </a>
+              </h4>
+            </div>
+            <div id="selection-export" class="panel-collapse collapse">
+              <div class="panel-body">
+                  <form action="{{url_for('frontend.ObservablesView:export')}}" method="post" class="selection-form" target="_blank">
+                      <div class="form-group">
+                        <select class="form-control yeti-select" name="template">
+                          {% for template in export_templates %}
+                          <option value="{{template.id}}">{{template.name}}</option>
+                          {% endfor %}
+                        </select>
+                        <div class="selection-ids"></div>
+                      </div>
+                      <button class="btn btn-primary btn-sm yeti-save pull-right">Export</button>
+                  </form>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
 </div>
+
+<script type="text/javascript">
+    var selectionManager = new SelectionManager();
+</script>
 {% endblock %}

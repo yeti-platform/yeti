@@ -1,8 +1,8 @@
 {% macro display_tags(tags) -%}
   {% if tags is string %}
     <span data-tag="{{tags["name"] or tags}}" class="yeti-tag tag-{{tags["name"] or tags}} label label-default {% if not tags["fresh"]%} yeti-expired {%endif%}">{{tags["name"] or tags}}</span>
-  {% else%}
-    {% for tag in tags %}<span data-tag="{{tag["name"] or tag}}" class="yeti-tag tag-{{tag["name"] or tag}} label label-default {% if not tag["fresh"]%} yeti-expired {%endif%}">{{tag["name"] or tag}}</span>{% endfor %}
+  {% elif tags %}
+    {% for tag in tags if tag%}<span data-tag="{{tag["name"] or tag}}" class="yeti-tag tag-{{tag["name"] or tag}} label label-default {% if not tag["fresh"]%} yeti-expired {%endif%}">{{tag["name"] or tag}}</span>{% endfor %}
   {% endif %}
 {%- endmacro %}
 
@@ -44,6 +44,8 @@
     {{display_last_analyses(element)}}
   {% elif key == "created"%}
     {{display_datetime(element)}}
+  {% elif key == "pattern" %}
+    <code>{{element}}</code>
   {% elif key == "raw" %}
     <pre><code>{{element}}</code></pre>
   {% elif element is string %}

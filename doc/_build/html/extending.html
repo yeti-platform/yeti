@@ -1,0 +1,294 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Extending Yeti &mdash; YETI 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="YETI 1.0 documentation" href="index.html"/>
+        <link rel="next" title="The API" href="api.html"/>
+        <link rel="prev" title="Yeti objects" href="objects.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> YETI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="objects.html">Yeti objects</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Extending Yeti</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#feeds">Feeds</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#creating-feeds">Creating feeds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-feeds">Testing feeds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pushing-into-production">Pushing into production</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">The API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">YETI</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Extending Yeti</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/extending.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="extending-yeti">
+<h1>Extending Yeti<a class="headerlink" href="#extending-yeti" title="Permalink to this headline">¶</a></h1>
+<p>Yeti can be extended to suit most use-cases. Extension is usually made via three vectors:</p>
+<ul class="simple">
+<li><strong>Feeds</strong>: Your basic data source. Feeds can be customized to automatically collect and processes external data.</li>
+<li><strong>Analytics</strong>: Analytics are meant to enrich data that is already present in the database. Extract hostnames from URLs, resolve hostnames, etc.</li>
+<li><strong>Exports</strong>: The way Yeti disseminates data. Exports use templates to format and export data that may be consumed by proxy appliances, scripts, etc.</li>
+</ul>
+<div class="section" id="feeds">
+<h2>Feeds<a class="headerlink" href="#feeds" title="Permalink to this headline">¶</a></h2>
+<p>Feeds are Yeti&#8217;s main way of automatically collecting and parsing data into searchable objects. These can be Observables (URLs, IP addresses, hashes, etc.), Indicators (regular expressions, Yara rules), or Entities (Exploit Kits, Malware, etc.).</p>
+<p>The most common use-case for Feeds is to quickly and regularly import large amounts of Observables or Indicatos from various sources.</p>
+<div class="section" id="creating-feeds">
+<span id="creating-feed"></span><h3>Creating feeds<a class="headerlink" href="#creating-feeds" title="Permalink to this headline">¶</a></h3>
+<p>Creating a feed is pretty straightforward. Yeti will recursively load all <a class="reference internal" href="objects.html#core.feed.Feed" title="core.feed.Feed"><code class="xref py py-class docutils literal"><span class="pre">core.feed.Feed</span></code></a> objects defined in the <code class="docutils literal"><span class="pre">/plugins/feed/</span></code> directory.</p>
+<p>New feeds need to have <code class="docutils literal"><span class="pre">default_values</span></code> attribute which sets some of the necessary fields (see the class attributes for details).</p>
+<ul class="simple">
+<li><strong>frequency</strong>: A <code class="docutils literal"><span class="pre">timedelta</span></code> field designating the delta between runs.</li>
+<li><strong>name</strong>: The name of the feed.</li>
+<li><strong>source</strong>: The URL which the feed will use to query data.</li>
+<li><strong>description</strong>: A short description of the feed.</li>
+</ul>
+<p>For example, in the :class:<code class="docutils literal"><span class="pre">ZeusTrackerConfigs</span></code> feed, the class is defined as follows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ZeusTrackerConfigs</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+
+    <span class="n">default_values</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;frequency&quot;</span><span class="p">:</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;ZeusTrackerConfigs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="s2">&quot;https://zeustracker.abuse.ch/monitor.php?urlfeed=configs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;This feed shows the latest 50 ZeuS config URLs.&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p>After that, two functions need to be created: <a class="reference internal" href="objects.html#core.feed.Feed.update" title="core.feed.Feed.update"><code class="xref py py-func docutils literal"><span class="pre">core.feed.Feed.update()</span></code></a> and <a class="reference internal" href="objects.html#core.feed.Feed.analyze" title="core.feed.Feed.analyze"><code class="xref py py-func docutils literal"><span class="pre">core.feed.Feed.analyze()</span></code></a>. The goal of the <code class="docutils literal"><span class="pre">update</span></code> function is to fetch the remote data, and the goal of <code class="docutils literal"><span class="pre">analyze</span></code> is to parse it and translate it into Observables, Indicators, or Entities that Yeti can store and later analyze.</p>
+<p><code class="docutils literal"><span class="pre">ZeusTrackerConfigs</span></code>&#8216;s update function looks like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+      <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_xml</span><span class="p">(</span><span class="s1">&#39;item&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;link&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;guid&quot;</span><span class="p">]):</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">analyze</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See how the <a class="reference internal" href="objects.html#core.feed.Feed.update_xml" title="core.feed.Feed.update_xml"><code class="xref py py-func docutils literal"><span class="pre">core.feed.Feed.update_xml()</span></code></a> helper is used. Since the <code class="docutils literal"><span class="pre">source</span></code> URL returns XML data, <code class="docutils literal"><span class="pre">update_xml</span></code> will know how to parse it and produce python dictionaries that can then be passed to the <a class="reference internal" href="objects.html#core.feed.Feed.analyze" title="core.feed.Feed.analyze"><code class="xref py py-func docutils literal"><span class="pre">core.feed.Feed.analyze()</span></code></a> function:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+      <span class="n">url_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;URL: (?P&lt;url&gt;\S+),&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">)</span>
+
+      <span class="n">context</span> <span class="o">=</span> <span class="p">{}</span>
+      <span class="n">date_string</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;\((?P&lt;date&gt;[0-9\-]+)\)&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">)</span>
+      <span class="n">context</span><span class="p">[</span><span class="s1">&#39;date_added&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date_string</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+      <span class="n">context</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;status: (?P&lt;status&gt;[^,]+)&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
+      <span class="n">context</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;version: (?P&lt;version&gt;[^,]+)&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;version&#39;</span><span class="p">))</span>
+      <span class="n">context</span><span class="p">[</span><span class="s1">&#39;guid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;guid&#39;</span><span class="p">]</span>
+      <span class="n">context</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+      <span class="k">try</span><span class="p">:</span>
+          <span class="n">context</span><span class="p">[</span><span class="s1">&#39;md5&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s2">r&quot;MD5 hash: (?P&lt;md5&gt;[a-f0-9]+)&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;md5&#39;</span><span class="p">)</span>
+      <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+          <span class="k">pass</span>
+
+      <span class="k">try</span><span class="p">:</span>
+          <span class="n">n</span> <span class="o">=</span> <span class="n">Url</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">url_string</span><span class="p">)</span>
+          <span class="n">n</span><span class="o">.</span><span class="n">add_context</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+          <span class="n">n</span><span class="o">.</span><span class="n">add_source</span><span class="p">(</span><span class="s2">&quot;feed&quot;</span><span class="p">)</span>
+          <span class="n">n</span><span class="o">.</span><span class="n">tag</span><span class="p">([</span><span class="s1">&#39;zeus&#39;</span><span class="p">,</span> <span class="s1">&#39;c2&#39;</span><span class="p">,</span> <span class="s1">&#39;banker&#39;</span><span class="p">,</span> <span class="s1">&#39;crimeware&#39;</span><span class="p">,</span> <span class="s1">&#39;malware&#39;</span><span class="p">])</span>
+      <span class="k">except</span> <span class="n">ObservableValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+          <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here some pretty basic parsing using regular expressions is being done. Since the parsing is done using Python code, feeds can parse virtually any data in any format.</p>
+<p>To avoid having to deal with duplicate elements, the use of <code class="xref py py-func docutils literal"><span class="pre">core.observables.Observable.get_or_create()</span></code>, <code class="xref py py-func docutils literal"><span class="pre">core.indicators.Indicator.get_or_create()</span></code> or <code class="xref py py-func docutils literal"><span class="pre">core.entities.Entity.get_or_create()</span></code> is recommended.</p>
+<p>Context, tags, and sources can also be added to Observables. To do so, use the  <a class="reference internal" href="objects.html#core.observables.Observable.add_context" title="core.observables.Observable.add_context"><code class="xref py py-func docutils literal"><span class="pre">core.observables.Observable.add_context()</span></code></a>, <a class="reference internal" href="objects.html#core.observables.Observable.tag" title="core.observables.Observable.tag"><code class="xref py py-func docutils literal"><span class="pre">core.observables.Observable.tag()</span></code></a>, or <a class="reference internal" href="objects.html#core.observables.Observable.add_source" title="core.observables.Observable.add_source"><code class="xref py py-func docutils literal"><span class="pre">core.observables.Observable.add_source()</span></code></a> accordingly.</p>
+</div>
+<div class="section" id="testing-feeds">
+<h3>Testing feeds<a class="headerlink" href="#testing-feeds" title="Permalink to this headline">¶</a></h3>
+<p>Before pushing a feed into production, it is recommended to test them with the simple script <code class="docutils literal"><span class="pre">testfeeds.py</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python testfeeds.py ZeusTrackerConfigs
+Running ZeusTrackerConfigs...
+ZeusTrackerConfigs: success!
+</pre></div>
+</div>
+<p>Any raised exception will be displayed.</p>
+</div>
+<div class="section" id="pushing-into-production">
+<h3>Pushing into production<a class="headerlink" href="#pushing-into-production" title="Permalink to this headline">¶</a></h3>
+<p>Once the feed is in its corresponding directory, it will show up in the URL <code class="docutils literal"><span class="pre">/dataflows</span></code>. Any errors raised by the feeds will show up here. Feeds can also be individually refreshed or toggled. A green row confirms that your feed is up and running!</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api.html" class="btn btn-neutral float-right" title="The API" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="objects.html" class="btn btn-neutral" title="Yeti objects" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Thomas Chopitea, Gael Muller.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

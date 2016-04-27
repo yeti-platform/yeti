@@ -42,6 +42,13 @@ span.yeti-toggle {
   cursor:pointer;
 }
 
+/* forms */
+
+#pattern textarea {
+  font-family: monospace;
+  font-size: 12px;
+}
+
 /* panels */
 
 .yeti-panel .yeti-tag {
@@ -159,6 +166,50 @@ span.yeti-toggle {
     right: 0px;
 }
 
+#graph-quick-add {
+    border: 1px solid #00CCFF;
+    background-color: transparent;
+    color: white;
+    width: 300px;
+}
+
+#graph-toolbar {
+    border-top: 3px solid #00CCFF;
+    background-color: #495B6C;
+    color: white;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-left: -15px;
+}
+
+#graph-toolbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#graph-toolbar li {
+    display: inline-block;
+    margin-left: 10px;
+}
+
+#graph-toolbar li.sep {
+    border-left: 1px solid grey;
+}
+
+#graph-toolbar a {
+    color: white;
+}
+
+#graph-toolbar a:hover {
+    color: #00CCFF;
+    text-decoration: none;
+}
+
+#graph-network {
+    height: 100%;
+}
+
 #graph-sidebar {
     position: fixed;
     top: 50px;
@@ -190,6 +241,12 @@ span.yeti-toggle {
     text-align: center;
     font-size: 20px;
     word-break: break-all;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+#graph-sidebar-value-actions {
+    padding-top: 5px;
 }
 
 .graph-sidebar-link-value {
@@ -207,6 +264,7 @@ span.yeti-toggle {
     color: white
 }
 
+#graph-sidebar-value-actions a,
 #graph-sidebar-tabs a {
     color: #00CCFF;
 }
@@ -287,6 +345,7 @@ a.graph-analytics-results-links {
     color: #00CCFF;
 }
 
+#graph-sidebar-value-actions a:hover,
 .graph-sidebar-links a:hover,
 a.graph-analytics-results-links:hover {
     color: white;
@@ -338,6 +397,7 @@ a.graph-analytics-results-links {
     background-color: #00CCFF;
 }
 
+.spinner, 
 .glyphicon-spinner .glyphicon {
     -animation: spin .7s infinite linear;
     -webkit-animation: spin2 .7s infinite linear;
@@ -406,7 +466,6 @@ div.filter {
 
 .no-results {
   margin-top: 10px;
-  font-size: 16px;
 }
 
 .hover-block a.hover-link {
@@ -439,4 +498,73 @@ div.filter {
 
 #graph-sidebar-investigation-name form {
     display: inline;
+}
+
+/* Quick add */
+
+.tt-menu {
+    border-radius: 3px;
+    border: 1px solid #666666;
+    padding: 2px;
+    background-color: white;
+    min-width: 300px;
+    color: #666666;
+}
+
+.tt-cursor {
+    background-color: #495B6C;
+    color: white;
+}
+
+.graph-quick-add-result {
+    padding: 5px;
+    line-height: 24px;
+    border-bottom: 1px solid #CCCCCC;
+}
+
+.graph-quick-add-result:last-child {
+    border-bottom: 0;
+}
+
+ul.ui-autocomplete {
+    z-index: 1100;
+}
+
+.graph-sidebar-visible-link {
+    border-left: 3px solid #00CCFF;
+    margin-left: -10px;
+    padding-left: 10px;
+}
+
+.graph-sidebar-run-analytics {
+    margin-right: 10px;
+}
+
+.graph-sidebar-analytics-last-run {
+    font-style: italic;
+    color: #BBBBBB;
+}
+
+#graph-sidebar .badge {
+    background-color: #00CCFF;
+    margin-top: -4px;
+}
+
+.selected-line {
+    margin-left: -3px;
+    margin-right: -3px;
+    border-left: 3px solid #38a;
+    border-right: 3px solid #38a;
+}
+
+.selection-actions .panel-title {
+    font-size: 10pt;
+}
+
+#selection {
+    margin-top: 20px;
+}
+
+#selection p {
+    margin-left: 5px;
 }

@@ -31,6 +31,10 @@
           <input class="extra-filter" type="hidden" name="{{f}}" value="{{extra_filters[f]}}">
           {% endfor %}
 
+          <input class="extra-param" type="hidden" name="regex" value="true">
+          <input class="extra-param" type="hidden" name="ignorecase" value="true">
+
+
           <ul class="pagination">
       	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
       	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
@@ -42,11 +46,6 @@
       			<span class="input-group-btn">
       				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Filter</span></button>
       			</span>
-      		</div>
-      		<div class="checkbox input-group-lg">
-      			<label class="checkbox">
-      			      <input type="checkbox" class="crud-regex"> Regex
-      			</label>
       		</div>
 
       	</form>
@@ -80,16 +79,15 @@
           <input class="extra-filter" type="hidden" name="{{f}}" value="{{extra_filters[f]}}">
           {% endfor %}
 
+          <input class="extra-param" type="hidden" name="regex" value="true">
+          <input class="extra-param" type="hidden" name="ignorecase" value="true">
+
+
       		<div class="input-group">
         			<input class="form-control input-sm crud-filter" data-default-value="name" placeholder="tags=evil">
       			<span class="input-group-btn">
       				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
       			</span>
-      		</div>
-      		<div class="checkbox input-group-lg">
-      			<label class="checkbox">
-      			      <input type="checkbox" class="crud-regex"> Regex search (slower)
-      			</label>
       		</div>
 
       		<ul class="pagination">

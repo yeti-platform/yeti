@@ -2,23 +2,6 @@ import re
 import collections
 from mongoengine import Document
 from datetime import timedelta
-from tldextract import extract
-
-ip_regex = r'([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})'
-hostname_regex = r"((.+\.)(.+))\.?"
-email_regex = r"([\w\-\.\_]+@(([\w\-]+\.)+)([a-zA-Z]{2,6}))\.?"
-hash_regex = r"([a-fA-F0-9]{32,64})"
-url_regex = r"""
-            (
-              ((?P<scheme>[\w]{2,9}):\/\/)?
-              ([\S]*\:[\S]*\@)?
-              (?P<hostname>((([^/:]+\.)([^/:]+))\.?))
-              (\:[\d]{1,5})?
-              (?P<path>(\/[\S]*)?
-                (\?[\S]*)?
-                (\#[\S]*)?)
-            )
-        """
 
 timedelta_regex = re.compile(r"(((?P<hours>[0-9]{1,2}):)?((?P<minutes>[0-9]{1,2}):))?(?P<seconds>[0-9]{1,2})$")
 
@@ -39,41 +22,6 @@ def refang(url):
     url = schema_re.sub(http, url)
     url = domain_re.sub(".", url)
     return url
-
-
-def is_url(url):
-    url = refang(url)
-    match = re.match("^" + url_regex + "$", url, re.VERBOSE)
-    if match:
-        url = match.group(1)
-        if url.find('/') != -1:
-            return match.group(1)
-    else:
-        return None
-
-
-def is_ip(ip):
-    if ip:
-        match = re.match("^" + ip_regex + "$", ip)
-        if match:
-            return match.group(1)
-    else:
-        return False
-
-
-def is_hostname(hostname):
-    hostname = refang(hostname.lower())
-    if hostname:
-        match = re.match("^" + hostname_regex + "$", hostname)
-        if match:
-            if hostname.endswith('.'):
-                hostname = hostname[:-1]
-
-            parts = extract(hostname)
-            if parts.suffix and parts.domain:
-                return hostname
-
-    return False
 
 
 def del_from_set(s, value):

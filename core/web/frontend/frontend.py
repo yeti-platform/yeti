@@ -8,10 +8,11 @@ from core.web.api.api import bson_renderer
 from core.web.frontend.entities import EntitiesView
 from core.web.frontend.observables import ObservablesView
 from core.web.frontend.indicators import IndicatorsView
+from core.web.frontend.investigations import InvestigationsView
 
-from core.observables import Observable, Hostname, Ip, Url, Hash, Text, File, Email
-from core.entities import TTP, Actor, Company, Malware, Entity
-from core.indicators import Regex
+from core.observables import *
+from core.entities import *
+from core.indicators import *
 from core.exports import ExportTemplate
 from core.web.frontend.users import UsersView
 
@@ -20,10 +21,19 @@ frontend = Blueprint("frontend", __name__, template_folder="templates", static_f
 
 @frontend.before_request
 def before_request():
-    g.entities = [TTP, Actor, Company, Malware]
-    g.observables = [Hostname, Ip, Url, Hash, Text, File, Email]
-    g.indicators = [Regex]
-
+    g.entities = []
+    g.observables = []
+    g.indicators = []
+    for key, value in globals().items():
+        try:
+            if issubclass(value, Entity) and value is not Entity:
+                g.entities.append(value)
+            if issubclass(value, Observable) and value is not Observable:
+                g.observables.append(value)
+            if issubclass(value, Indicator) and value is not Indicator:
+                g.indicators.append(value)
+        except TypeError:
+            pass
 
 # Landing page - redirect to observable
 
@@ -37,6 +47,7 @@ UsersView.register(frontend)
 EntitiesView.register(frontend)
 IndicatorsView.register(frontend)
 ObservablesView.register(frontend)
+InvestigationsView.register(frontend)
 
 # Graph views
 
@@ -50,6 +61,8 @@ def graph(id):
 def graph_node(klass, id):
     if klass == 'entity':
         node = get_object_or_404(Entity, id=id)
+    elif klass == 'indicator':
+        node = get_object_or_404(Indicator, id=id)
     else:
         node = get_object_or_404(Observable, id=id)
 

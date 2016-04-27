@@ -2,7 +2,7 @@ from flask.ext.classy import FlaskView, route
 from flask import render_template, request, redirect, url_for
 from mongoengine import NotUniqueError
 
-from core.errors import ObservableValidationError
+from core.errors import GenericValidationError
 from core.entities import Entity, Malware, Company, TTP, Actor
 from core.indicators import Regex
 
@@ -77,15 +77,13 @@ class GenericView(FlaskView):
                 self.pre_validate(obj, request)
                 obj = obj.save()
                 self.post_save(obj, request)
-            except ObservableValidationError as e:
+            except GenericValidationError as e:
                 # failure - redirect to edit page
-                form.errors['generic'] = [str(e)]
+                form.errors['General Error'] = [e]
                 return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
             except NotUniqueError as e:
                 form.errors['Duplicate'] = ['Entity "{}" is already in the database'.format(obj)]
                 return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
-
-
 
             # success - redirect to view page
             return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=obj.id))

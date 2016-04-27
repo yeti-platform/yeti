@@ -1,25 +1,29 @@
 {% import "macros/generic.html" as macros %}
 {% import "macros/filterlist.html" as filterlist %}
 
-{% if data|length > 0 %}
-<table class="table table-condensed yeti-table table-hover">
-  <tr>
-    {% if links%}<th>Timeframe</th><th>Link</th>{% endif %}
-    <th><!-- graph icon column --></th><th>Name</th>{% for key, label in data[0].DISPLAY_FIELDS if key != "name" %}<th>{{label}}</th>{% endfor %}
-  </tr>
-  {% for obj in data %}
-  <tr class="node-line">
-    {% if links%}<td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td><td>{{ links[loop.index0]['description']}}</td>{% endif %}
-    <td class="graph-link">
-        <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass="entity")}}"><i class="flaticon-network38"></i></a>
-    </td>
-    <td><a href="{{ url_for("frontend.EntitiesView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
-    {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj[key], key)}}</td>{% endfor %}
-  </tr>
-  {% endfor %}
-</table>
+{% for obj in data %}
+    {% if loop.first %}
+    <table class="table table-condensed yeti-table table-hover">
+      <tr>
+        {% if links%}<th>Timeframe</th><th>Link</th>{% endif %}
+        <th><!-- graph icon column --></th><th>Name</th>{% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<th>{{label}}</th>{% endfor %}
+      </tr>
+    {% endif %}
+
+    <tr class="node-line">
+      {% if links%}<td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td><td>{{ links[loop.index0]['description']}}</td>{% endif %}
+      <td class="graph-link">
+          <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass="entity")}}"><i class="flaticon-network38"></i></a>
+      </td>
+      <td><a href="{{ url_for("frontend.EntitiesView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
+      {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj[key], key)}}</td>{% endfor %}
+    </tr>
+
+    {% if loop.last %}
+    </table>
+    {% endif %}
 {% else %}
 <div class='no-results'>
   No results found
 </div>
-{% endif %}
+{% endfor %}

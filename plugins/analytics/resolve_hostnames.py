@@ -1,11 +1,9 @@
 from __future__ import unicode_literals
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 import threading
 import logging
 from Queue import Queue, Empty
-import random
-import time
 
 import dns
 from dns.resolver import NoAnswer, NXDOMAIN, Timeout, NoNameservers
@@ -13,7 +11,6 @@ from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
 
 from core.analytics import ScheduledAnalytics
-from core.database import Link
 from core.observables import Hostname, Observable
 from core.errors import ObservableValidationError
 
@@ -30,8 +27,9 @@ class ResolveHostnames(ScheduledAnalytics):
     EXPIRATION = timedelta(days=3)  # Analysis will expire after 1 day
 
     def bulk(self, hostnames):
-        p = ParallelDnsResolver()
-        p.mass_resolve(hostnames)
+        if 20 < datetime.utcnow().hour or datetime.utcnow().hour < 8:
+            p = ParallelDnsResolver()
+            p.mass_resolve(hostnames)
 
     @classmethod
     def each(cls, hostname, rtype=None, results=[]):
@@ -63,7 +61,7 @@ class ParallelDnsResolver(object):
         self.resolver.timeout = 2
         self.resolver.lifetime = 2
 
-    def mass_resolve(self, domains, num_threads=500):
+    def mass_resolve(self, domains, num_threads=100):
         threads = []
         for _ in xrange(num_threads):
             logging.debug("Starting thread {}".format(_))

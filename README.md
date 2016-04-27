@@ -12,5 +12,7 @@ Start the web UI (will spawn a listener on `http://localhost:5000`:
 
 To to start celery jobs (feeds and analysis):
 
-    $ celery -A core.config.celeryctl worker --loglevel=INFO
+    $ celery -A core.config.celeryctl.celery_app worker --loglevel=INFO -c 4 -Q feeds -n feeds --purge
+    $ celery -A core.config.celeryctl.celery_app worker --loglevel=INFO -c 4 -Q oneshot -n oneshot --purge
+    $ celery -A core.config.celeryctl.celery_app worker --loglevel=INFO -Ofair -c 10 --purge
     $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=INFO

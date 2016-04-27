@@ -18,3 +18,4 @@ git+git://github.com/joepie91/python-whois#egg=pythonwhois
 ipwhois
 blinker
 simplejson
+yara-python

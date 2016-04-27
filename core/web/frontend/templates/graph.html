@@ -1,11 +1,19 @@
 {% extends "base.html" %}
 
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='typeahead/typeahead.bundle.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='visjs/vis.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
+<link href="{{ url_for('frontend.static', filename='visjs/vis.min.css') }}" rel="stylesheet" type="text/css" />
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
+{% endblock %}
+
 {% block main %}
 </div>
-
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/handlebars.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='visjs/vis.min.js') }}"></script>
-<link href="{{ url_for('frontend.static', filename='visjs/vis.min.css') }}" rel="stylesheet" type="text/css" />
 
 <div id="graph-sidebar">
     <div id="graph-sidebar-investigation-name" class="hover-block">
@@ -29,7 +37,46 @@
     </div>
 </div>
 <div id="graph-sidebar-resize"></div>
-<div id="graph"></div>
+<div id="graph">
+    <div id="graph-toolbar">
+        <ul>
+            <li><input class="form-control typeahead" type="text" id="graph-quick-add" placeholder="Quick Add" /></li>
+            <li class="sep">&nbsp;</li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.ObservablesView:new') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Observable"><i class="fa fa-plus"></i></a></li>
+            <li class="sep">&nbsp;</li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass='regex') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Regex Indicator"><i class="flaticon-magnifying-glass40"></i></a></li>
+            <li class="sep">&nbsp;</li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='malware') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Malware"><i class="flaticon-bug24"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='actor') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Actor"><i class="flaticon-malware"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='ttp') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add TTP"><i class="flaticon-maths5"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='company') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Company"><i class="flaticon-building259"></i></a></li>
+            <li class="sep">&nbsp;</li>
+            <li><a id="graph-add-link" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Link"><i class="fa fa-expand"></i></a></li>
+            <li class="sep">&nbsp;</li>
+            <li><a id="graph-hierarchical" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Cycle through layouts"><i class="fa fa-sitemap"></i></a></li>
+        </ul>
+    </div>
+    <div id="graph-network"></div>
+</div>
+
+<div class="modal fade" id="graph-modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title"></h4>
+      </div>
+      <form>
+          <div class="modal-body">
+          </div>
+      </form>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="graph-mobal-submit">Add</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
 
 {% include "graph_templates.html" %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/graph.js') }}"></script>

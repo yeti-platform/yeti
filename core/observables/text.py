@@ -4,4 +4,7 @@ from core.observables import Observable
 
 
 class Text(Observable):
-    pass
+
+    @staticmethod
+    def check_type(txt):
+        return True

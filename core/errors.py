@@ -1,15 +1,29 @@
-class GenericYetiErrorError(Exception):
+class GenericYetiError(Exception):
 
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
-        return repr(self.value)
+        return self.value
 
 
-class ObservableValidationError(GenericYetiErrorError):
+# Validation errors
+
+class GenericValidationError(GenericYetiError):
     pass
 
 
-class TagValidationError(GenericYetiErrorError):
+class ObservableValidationError(GenericValidationError):
+    pass
+
+
+class IndicatorValidationError(GenericValidationError):
+    pass
+
+
+class EntityValidationError(GenericValidationError):
+    pass
+
+
+class TagValidationError(GenericYetiError):
     pass

@@ -32,6 +32,14 @@ class Observable(CrudApi):
 
     @route("/", methods=["POST"])
     def new(self):
+        """Create a new Observable
+
+        Create a new Observable from the JSON object passed in the ``POST`` data.
+
+        :<json object params: JSON object containing fields to set
+        :<json boolean refang: If set, the observable will be refanged before being added to the database
+
+        """
         params = request.json
         if params.pop('refang', None):
             obs = self.objectmanager.add_text(refang(params.pop('value')))
@@ -41,6 +49,14 @@ class Observable(CrudApi):
 
     @route("/bulk", methods=["POST"])
     def bulk(self):
+        """Bulk-add observables
+
+        Bulk-add Observables from an array of strings.
+
+        :<json [String] observables: Array of Strings representing observables (URLs, IPs, hostnames, etc.)
+        :<json boolean refang: If set, the observables will be refanged before being added to the database
+
+        """
         added = []
         params = request.json
         observables = params.pop('observables', [])

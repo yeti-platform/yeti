@@ -22,6 +22,13 @@ class Export(CrudApi):
 
     @route("/<string:id>/content")
     def content(self, id):
+        """Return export content
+
+        Returns a given export's content.
+
+        :query ObjectID id: Export ID
+        :resheader X-Yeti-Export-MD5: The MD5 hash of the exported content. Use it to check the export's integrity
+        """
         e = self.objectmanager.objects.get(id=id)
         if e.output_dir.startswith("/"):
             d = e.output_dir
@@ -34,11 +41,26 @@ class Export(CrudApi):
 
     @route("/<string:id>/refresh", methods=["POST"])
     def refresh(self, id):
+        """Refresh an export
+
+        Manually executes an export if it is not already exporting.
+
+        :query ObjectID id: Export ID
+        :>json ObjectID id: The export's ObjectID
+        """
         exports.execute_export.delay(id)
         return render({"id": id})
 
     @route("/<string:id>/toggle", methods=["POST"])
     def toggle(self, id):
+        """Toggle an export
+
+        Toggles an export. A deactivated export will not execute when called (manually or scheduled)
+
+        :query ObjectID id: Export ID
+        :>json ObjectID id: The export's ObjectID
+        :>json boolean status: The result of the toggle operation (``true`` means the export has been enabled, ``false`` means it has been disabled)
+        """
         e = self.objectmanager.objects.get(id=id)
         e.enabled = not e.enabled
         e.save()

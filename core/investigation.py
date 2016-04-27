@@ -33,6 +33,8 @@ class Investigation(YetiDocument):
     links = ListField(EmbeddedDocumentField(InvestigationLink))
     nodes = ListField(ReferenceField('Node', dbref=True))
     events = ListField(EmbeddedDocumentField(InvestigationEvent))
+    created = DateTimeField(default=datetime.utcnow)
+    updated = DateTimeField(default=datetime.utcnow)
 
     def info(self):
         result = self.to_mongo()
@@ -40,20 +42,26 @@ class Investigation(YetiDocument):
 
         return result
 
-    def add(self, links, nodes):
-        event = InvestigationEvent(kind='add')
+    def _node_changes(self, kind, method, links, nodes):
+        event = InvestigationEvent(kind=kind)
 
         for link in links:
             link = InvestigationLink.build(link)
-            if self.add_to_set('links', link.to_mongo()):
+            if method('links', link.to_mongo()):
                 event.links.append(link)
 
         for node in nodes:
             if not isinstance(node, DBRef):
                 node = node.to_dbref()
 
-            if self.add_to_set('nodes', node):
+            if method('nodes', node):
                 event.nodes.append(node)
 
         if len(event.nodes) > 0 or len(event.links) > 0:
-            self.modify(push__events=event)
+            self.modify(push__events=event, updated=datetime.utcnow())
+
+    def add(self, links, nodes):
+        self._node_changes('add', self.add_to_set, links, nodes)
+
+    def remove(self, links, nodes):
+        self._node_changes('remove', self.remove_from_set, links, nodes)

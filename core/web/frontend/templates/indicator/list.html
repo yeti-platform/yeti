@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros/filterlist.html" as filterlist %}
 
 {% block breadcrumb %}
 <ol class="breadcrumb">
@@ -8,40 +9,23 @@
 {% endblock %}
 
 {% block main %}
-<div class="col-md-9">
-	<div class="tab-pane active" id="indicators" data-url="{{ url_for('api.IndicatorSearch:post')}}">
+<ul class="nav nav-tabs" role="tablist">
+	{% for t in g.indicators %}
+	<li role="presentation" {%if loop.first%}class="active"{%endif%}><a href="#{{t.__name__.lower()}}_tab" aria-controls="{{t.__name__.lower()}}_tab" role="tab" data-toggle="tab">{{t.__name__}}</a></li>
+	{% endfor %}
+</ul>
+
+<div class="tab-content">
+
+	{% for t in g.indicators %}
+	<div role="tabpanel" class="tab-pane {%if loop.first%}active{%endif%}" id="{{t.__name__.lower()}}_tab">
+		{{ filterlist.sidebar_filter(url_for('api.IndicatorSearch:post'), t.__name__.lower(), _cls='Indicator.'+t.__name__) }}
 	</div>
+	{% endfor %}
+
 </div>
 {% endblock %}
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
 {%endblock%}
-
-{% block sidebar %}
-<div class="col-md-3">
-	<form data-target="indicators" data-url="{{ url_for('api.IndicatorSearch:post')}}" class="yeti-crud">
-
-		<div class="input-group">
-  			<input class="form-control input-sm crud-filter" data-default-value="name" placeholder="tags=evil">
-			<span class="input-group-btn">
-				<button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
-			</span>
-		</div>
-		<div class="checkbox input-group-lg">
-			<label class="checkbox">
-			      <input id="regex" type="checkbox" class="crud-regex"> Regex search (slower)
-			</label>
-		</div>
-
-		<ul class="pagination">
-	    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
-	    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
-	    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
-	  </ul>
-
-	</form>
-
-
-</div>
-{% endblock %}
