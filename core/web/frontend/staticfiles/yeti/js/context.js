@@ -59,17 +59,17 @@ function add_context() {
 
   markup = $(`<div class="panel panel-default yeti-panel context-panel">
                 <div class="panel-heading">
-                  <h4 class="panel-title"><span class="content">Analyst</span>
-                  <button class="btn btn-default btn-xs pull-right more-context" style="display: none;"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> More</button>
-                  <button class="btn btn-default btn-xs pull-right context-save" style="display: none;"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> Save</button>
+                  <h4 class="panel-title"><span class="content"><input type="text" class="inline" value="Analyst"></span>
+                  <button class="btn btn-default btn-xs pull-right more-context"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> More</button>
+                  <button class="btn btn-default btn-xs pull-right context-save"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span> Save</button>
                   <button class="btn btn-danger btn-xs pull-right context-delete" style="display: none;"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</button>
-                  <button class="btn btn-default btn-xs pull-right context-edit"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</button>
+                  <button class="btn btn-default btn-xs pull-right context-edit" style="display: none;"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</button>
                   </h4>
                 </div>
                 <div class="panel-body panel-collapse" id="details-`+counter+`" role="tabpanel">
                   <form class="context-form">
                     <table class="table table-condensed">
-                      <tr><th class="context-key">key</th><td class='context-value'>value</td></tr>
+                      <tr><th class="context-key"><input type="text" class="inline" value="key" name="keys"></th><td class="context-value"><input type="text" class="inline" name="values" value="value"></td></tr>
                     </table>
                   </form>
                 </div>

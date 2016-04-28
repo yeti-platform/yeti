@@ -126,7 +126,8 @@ class Observable(Node):
 
         Args:
             context: a JSON object representing the context to be added.
-            unique_source: If set to true, will remove context with identical source before adding.
+            replace_source: If defined, contexts having a ``source`` attribute
+                            set to ``replace_source`` will be deleted before insert
 
         Returns:
             A fresh instance of the Observable as it exists in the database.
