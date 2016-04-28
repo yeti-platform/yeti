@@ -4,8 +4,8 @@ from flask import request, url_for
 from core.web.api.crud import CrudApi, CrudSearchApi
 from core import observables
 from core.web.api.api import render
+from core.web.helpers import get_object_or_404
 from core.helpers import refang
-
 
 
 class Observable(CrudApi):
@@ -55,7 +55,6 @@ class Observable(CrudApi):
 
         :<json [String] observables: Array of Strings representing observables (URLs, IPs, hostnames, etc.)
         :<json boolean refang: If set, the observables will be refanged before being added to the database
-
         """
         added = []
         params = request.json
@@ -68,6 +67,32 @@ class Observable(CrudApi):
 
             added.append(self._modify_observable(obs, params.copy()))
         return render(added)
+
+    @route("/<id>/context", methods=["POST"])
+    def context(self, id):
+        """Add context to an observable
+
+        :<json object context: Context JSON to be added. Must include a ``source`` key.
+        :<json string old_source: String defining the source to be replaced.
+        :>json object: The context object that was actually added
+        """
+        observable = get_object_or_404(self.objectmanager, id=id)
+        context = request.json.pop('context', {})
+        old_source = request.json.pop('old_source', None)
+        observable.add_context(context, replace_source=old_source)
+        return render(context)
+
+    @route("/<id>/context", methods=["DELETE"])
+    def remove_context(self, id):
+        """Removes context from an observable
+
+        :<json object context: Context JSON to be added. Must include a ``source`` key.
+        :>json object: The context object that was actually delete
+        """
+        observable = get_object_or_404(self.objectmanager, id=id)
+        context = request.json.pop('context', {})
+        observable.remove_context(context)
+        return render(context)
 
     def post(self, id):
         obs = self.objectmanager.objects.get(id=id)

@@ -114,7 +114,7 @@ class Observable(Node):
             for old_tag in old_tags:
                 o.change_tag(old_tag, new_tag)
 
-    def add_context(self, context):
+    def add_context(self, context, replace_source=None):
         """Adds context to an Observable.
 
         "Context" is represented by a JSON object (or Python ``dict()``) that will
@@ -126,6 +126,7 @@ class Observable(Node):
 
         Args:
             context: a JSON object representing the context to be added.
+            unique_source: If set to true, will remove context with identical source before adding.
 
         Returns:
             A fresh instance of the Observable as it exists in the database.
@@ -133,7 +134,26 @@ class Observable(Node):
         """
         assert 'source' in context
         context = {k: v for k, v in sorted(context.items(), key=operator.itemgetter(0))}
+        if replace_source:
+            # This does not work : cannot traverse and set context atomically
+            # self.modify({"context__source": c}, set__context__S=context)
+            self.modify(pull__context__source=replace_source)
         self.modify(add_to_set__context=context)
+
+        return self.reload()
+
+    def remove_context(self, context):
+        """Removes Context from an observable.
+
+        Args:
+            context: a JSON object representing the context to be removed.
+
+        Returns:
+            A fresh instance of the Observable as it exists in the database.
+
+        """
+        context = {k: v for k, v in sorted(context.items(), key=operator.itemgetter(0))}
+        self.modify(pull__context=context)
         return self.reload()
 
     def add_source(self, source):
