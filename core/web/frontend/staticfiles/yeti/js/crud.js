@@ -61,11 +61,7 @@ function add_to_filters(filters, key, value) {
     filters[key] = value;
 }
 
-function refresh_table(form) {
-  $("#spinner").toggle();
-  $("#go").toggle();
-  $("#go").parent().prop('disabled', true);
-
+function build_params(form) {
   var filter = form.find(".crud-filter").first();
   var queries = filter.val().split(' ');
   var default_field = filter.data('default-value');
@@ -90,14 +86,15 @@ function refresh_table(form) {
     'page': form.find(".crud-pagination").data('page'),
   };
 
-  // include extra params from hidden inputs
-  form.find(".extra-param").each(function() {
-    params[this.name] = $(this).val()
-  });
+  return {'filter': filter, 'params': params};
+}
 
-  console.log(params)
+function refresh_table(form) {
+  $("#spinner").toggle();
+  $("#go").toggle();
+  $("#go").parent().prop('disabled', true);
 
-  query = {'filter': filter, 'params': params};
+  query = build_params(form);
 
   $.ajax({
     method: "POST",

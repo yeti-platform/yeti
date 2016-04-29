@@ -579,5 +579,8 @@ input.inline {
 
 td input.inline {
   width:100%;
+}
 
+#selection-count {
+    font-weight: bold;
 }

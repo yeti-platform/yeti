@@ -1,3 +1,4 @@
+import json
 from flask import request, render_template, send_file, flash
 from flask.ext.classy import route
 from uuid import uuid4
@@ -9,7 +10,7 @@ from core.observables import *
 from core.exports import ExportTemplate
 from core.errors import ObservableValidationError
 from core.analysis import match_observables
-from core.web.helpers import get_object_or_404
+from core.web.helpers import get_object_or_404, get_queryset
 
 
 class ObservablesView(GenericView):
@@ -96,32 +97,44 @@ class ObservablesView(GenericView):
 
         return render_template("observable/search.html")
 
+    def _get_queryset(self, form_params):
+        ids = form_params.getlist('ids')
+        query = form_params.get('query')
+
+        if ids:
+            return Observable.objects(id__in=ids)
+        else:
+            query = json.loads(query)
+            fltr = query.get('filter', {})
+            params = query.get('params', {})
+            regex = params.pop('regex', False)
+            ignorecase = params.pop('ignorecase', False)
+
+            return get_queryset(Observable, fltr, regex, ignorecase)
+
     @route("/export", methods=['POST'])
     def export(self):
         template = get_object_or_404(ExportTemplate, id=request.form['template'])
-        ids = request.form.getlist('ids')
 
         filepath = path.join(gettempdir(), 'yeti_{}.txt'.format(uuid4()))
-        template.render(Observable.objects(id__in=ids), filepath)
+        template.render(self._get_queryset(request.form), filepath)
 
         return send_file(filepath)
 
     @route("/tag", methods=['POST'])
     def tag(self):
-        ids = request.form.getlist('ids')
         tags = request.form['tags'].split(',')
 
-        for observable in Observable.objects(id__in=ids):
+        for observable in self._get_queryset(request.form):
             observable.tag(tags)
 
         return ('', 200)
 
     @route("/untag", methods=['POST'])
     def untag(self):
-        ids = request.form.getlist('ids')
         tags = request.form['tags'].split(',')
 
-        for observable in Observable.objects(id__in=ids):
+        for observable in self._get_queryset(request.form):
             observable.untag(tags)
 
         return ('', 200)

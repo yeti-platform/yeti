@@ -14,9 +14,11 @@ class SelectionManager {
     $('#selection-count').text(this.selected.size);
 
     if (this.selected.size === 0) {
-      $('#selection').addClass('hidden');
+      $('#selection-specific').addClass('hidden');
+      $('#selection-all').removeClass('hidden');
     } else {
-      $('#selection').removeClass('hidden');
+      $('#selection-specific').removeClass('hidden');
+      $('#selection-all').addClass('hidden');
     }
   }
 
@@ -39,13 +41,18 @@ class SelectionManager {
     });
   }
 
-  updateIdsInForm(form) {
+  enrichForm(form) {
     var self = this;
     var idsDiv = form.find('.selection-ids');
 
     idsDiv.html('');
-    for (let id of self.selected) {
-      idsDiv.append("<input type='hidden' name='ids' value='" + id + "' />");
+    if (self.selected.size === 0) {
+      idsDiv.append("<input type='hidden' name='query' value='" + JSON.stringify(build_params($('.yeti-crud'))) + "' />");
+    }
+    else {
+      for (let id of self.selected) {
+        idsDiv.append("<input type='hidden' name='ids' value='" + id + "' />");
+      }
     }
   }
 
@@ -53,7 +60,7 @@ class SelectionManager {
     var self = this;
 
     $('.selection-form').on('submit', function (e) {
-      self.updateIdsInForm($(this));
+      self.enrichForm($(this));
     });
 
     $('.selection-tags-action').on('click', function (e) {
@@ -64,7 +71,7 @@ class SelectionManager {
       var spinner = $(this).find('span');
       spinner.removeClass('hidden');
 
-      self.updateIdsInForm(form);
+      self.enrichForm(form);
       $.post(url, form.serialize()).done(function (data) {
         refresh_table($('.yeti-crud'));
         spinner.addClass('hidden');
