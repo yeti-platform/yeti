@@ -75,9 +75,6 @@ $(function() {
     yeti_edit_elt($(this));
   });
 
-  // set context behavior
-  edit_context_listeners();
-
 });
 
 function yeti_clear_button(elt) {

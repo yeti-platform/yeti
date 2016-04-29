@@ -1,3 +1,9 @@
+
+$(function() {
+  // set context behavior
+  edit_context_listeners();
+}
+
 function edit_context_listeners() {
 
   $("#context").on("click", "#add-context", function() {
