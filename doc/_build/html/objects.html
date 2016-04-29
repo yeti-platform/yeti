@@ -32,7 +32,7 @@
   
     <link rel="top" title="YETI 1.0 documentation" href="index.html"/>
         <link rel="next" title="Extending Yeti" href="extending.html"/>
-        <link rel="prev" title="Welcome to YETI’s documentation!" href="index.html"/> 
+        <link rel="prev" title="Installation" href="installation.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -82,6 +82,7 @@
             
             
                 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Yeti objects</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#observables">Observables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#feeds">Feeds</a></li>
@@ -195,7 +196,7 @@ specific threats or actors.</p>
 
 <dl class="method">
 <dt id="core.observables.Observable.add_context">
-<code class="descname">add_context</code><span class="sig-paren">(</span><em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.add_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.add_context" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_context</code><span class="sig-paren">(</span><em>context</em>, <em>replace_source=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.add_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.add_context" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds context to an Observable.</p>
 <p>&#8220;Context&#8221; is represented by a JSON object (or Python <code class="docutils literal"><span class="pre">dict()</span></code>) that will
 be added to the Observable&#8217;s <code class="docutils literal"><span class="pre">context</span></code> set. Context should provide information
@@ -206,9 +207,15 @@ point the analyst to the source of the context.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>context</strong> &#8211; a JSON object representing the context to be added.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>context</strong> &#8211; a JSON object representing the context to be added.</li>
+<li><strong>replace_source</strong> &#8211; If defined, contexts having a <code class="docutils literal"><span class="pre">source</span></code> attribute
+set to <code class="docutils literal"><span class="pre">replace_source</span></code> will be deleted before insert</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A fresh instance of the Observable as it exists in the database.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A fresh instance of the Observable as it exists in the database.</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -297,6 +304,22 @@ point the analyst to the source of the context.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">An observable Class.</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body">ObservableValidationError if no type could be guessed.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="core.observables.Observable.remove_context">
+<code class="descname">remove_context</code><span class="sig-paren">(</span><em>context</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/core/observables/observable.html#Observable.remove_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#core.observables.Observable.remove_context" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes Context from an observable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>context</strong> &#8211; a JSON object representing the context to be removed.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A fresh instance of the Observable as it exists in the database.</td>
 </tr>
 </tbody>
 </table>
@@ -517,7 +540,7 @@ These will be the keys of the <code class="docutils literal"><span class="pre">d
         <a href="extending.html" class="btn btn-neutral float-right" title="Extending Yeti" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome to YETI’s documentation!" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

@@ -12,6 +12,7 @@ Contents:
 ---------
 
 .. toctree::
+  installation
   objects
   extending
   api

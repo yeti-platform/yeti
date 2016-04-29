@@ -81,6 +81,7 @@
             
             
                 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../objects.html">Yeti objects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../extending.html">Extending Yeti</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">The API</a></li>
@@ -245,7 +246,7 @@
             <span class="k">for</span> <span class="n">old_tag</span> <span class="ow">in</span> <span class="n">old_tags</span><span class="p">:</span>
                 <span class="n">o</span><span class="o">.</span><span class="n">change_tag</span><span class="p">(</span><span class="n">old_tag</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Observable.add_context"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_context">[docs]</a>    <span class="k">def</span> <span class="nf">add_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+<div class="viewcode-block" id="Observable.add_context"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_context">[docs]</a>    <span class="k">def</span> <span class="nf">add_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">replace_source</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Adds context to an Observable.</span>
 
 <span class="sd">        &quot;Context&quot; is represented by a JSON object (or Python ``dict()``) that will</span>
@@ -257,6 +258,8 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            context: a JSON object representing the context to be added.</span>
+<span class="sd">            replace_source: If defined, contexts having a ``source`` attribute</span>
+<span class="sd">                            set to ``replace_source`` will be deleted before insert</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A fresh instance of the Observable as it exists in the database.</span>
@@ -264,7 +267,26 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="s1">&#39;source&#39;</span> <span class="ow">in</span> <span class="n">context</span>
         <span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))}</span>
+        <span class="k">if</span> <span class="n">replace_source</span><span class="p">:</span>
+            <span class="c1"># This does not work : cannot traverse and set context atomically</span>
+            <span class="c1"># self.modify({&quot;context__source&quot;: c}, set__context__S=context)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__context__source</span><span class="o">=</span><span class="n">replace_source</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">add_to_set__context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Observable.remove_context"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.remove_context">[docs]</a>    <span class="k">def</span> <span class="nf">remove_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes Context from an observable.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            context: a JSON object representing the context to be removed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A fresh instance of the Observable as it exists in the database.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="Observable.add_source"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_source">[docs]</a>    <span class="k">def</span> <span class="nf">add_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
