@@ -7,7 +7,7 @@ import traceback
 import hashlib
 
 from mongoengine import ListField, StringField, Q, ReferenceField, PULL
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 from flask import url_for
 from mongoengine import DoesNotExist
 
@@ -22,7 +22,8 @@ class ExportTemplate(YetiDocument):
     template = StringField(required=True, default="")
 
     def render(self, elements, output_filename):
-        template = Template(self.template)
+        env = Environment(loader=FileSystemLoader('core/web/frontend/templates'))
+        template = env.from_string(self.template)
         temp_filename = "{}.temp".format(output_filename)
         m = hashlib.md5()
         with codecs.open(temp_filename, 'w+', encoding='utf-8') as tmp:
