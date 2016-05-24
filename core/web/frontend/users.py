@@ -12,7 +12,11 @@ class UsersView(FlaskView):
             for setting in request.form:
                 if request.form[setting]:
                     current_user.settings[setting] = request.form[setting]
-                else:
+
+            current_user.save()
+
+            for setting in request.form:
+                if not request.form[setting]:
                     current_user.settings.pop(setting, None)
 
             current_user.save()
