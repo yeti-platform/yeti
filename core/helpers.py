@@ -38,3 +38,15 @@ def iterify(element):
         return element
     else:
         return (element,)
+
+
+def get_value_at(data, path):
+    path = path.split('.')
+
+    for path_elt in path:
+        if data is None or path_elt not in data:
+            return None
+        else:
+            data = data[path_elt]
+
+    return data

@@ -8,25 +8,13 @@ from mongoengine import FieldDoesNotExist
 from datetime import datetime
 from tldextract import extract
 
-from core.helpers import iterify
+from core.helpers import iterify, get_value_at
 from core.analytics import OneShotAnalytics
 from core.entities import Company
 from core.observables import Hostname, Email, Text
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
-
-
-def get_value_at(data, path):
-    path = path.split('.')
-
-    for path_elt in path:
-        if data is None or path_elt not in data:
-            return None
-        else:
-            data = data[path_elt]
-
-    return data
 
 
 def link_from_data(observable, data, path, klass, description):
