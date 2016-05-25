@@ -73,6 +73,10 @@ class DomainToolsApi(object):
         s = requests.Session()
         s.mount('https://', TlsAdapter())
         r = s.get(DomainToolsApi.API_URL + uri, params=params)
+        r = r.json()
+
+        if 'error' in r:
+            raise LookupError(r['error']['message'])
 
         return r.json()
 

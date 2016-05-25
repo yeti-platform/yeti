@@ -707,7 +707,7 @@ class Investigation {
         self.displayAnalyticsResults(data, resultsDiv, data.analytics);
         button.removeClass('glyphicon-spinner');
       } else if (data.status == 'error') {
-        resultsDiv.html(analyticsResultsTemplate(data));
+        self.displayAnalyticsResults(data, resultsDiv, data.analytics);
         button.removeClass('glyphicon-spinner');
       } else {
         setTimeout(self.fetchAnalyticsResults.bind(self, id), 1000);
