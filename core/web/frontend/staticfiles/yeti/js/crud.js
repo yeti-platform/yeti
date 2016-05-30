@@ -86,6 +86,10 @@ function build_params(form) {
     'page': form.find(".crud-pagination").data('page'),
   };
 
+  form.find(".extra-param").each(function() {
+    add_to_filters(params, this.name, $(this).val());
+  });
+
   return {'filter': filter, 'params': params};
 }
 
