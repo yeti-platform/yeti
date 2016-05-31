@@ -16,7 +16,7 @@
           <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass="indicator")}}"><i class="flaticon-network38"></i></a>
       </td>
       <td><a href="{{ url_for("frontend.IndicatorsView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
-      {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj[key], key)}}</td>{% endfor %}
+      {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj, key)}}</td>{% endfor %}
     </tr>
 
     {% if loop.last %}

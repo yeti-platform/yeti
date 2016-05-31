@@ -36,7 +36,7 @@
     <form>
       <table class="table table-condensed">
         {% for key, value in context.items() if key not in ["source"]%}
-        <tr><th class="context-key">{{key}}</th><td>{{display_yeti(value, key)}}</td></tr>
+        <tr><th class="context-key">{{key}}</th><td>{{display_yeti(context, key)}}</td></tr>
         {% endfor %}
       </table>
     </form>
@@ -44,7 +44,8 @@
 </div>
 {%- endmacro%}
 
-{% macro display_yeti(element, key) -%}
+{% macro display_yeti(obj, key) -%}
+  {% set element = obj[key] %}
   {% if key == "tags" or key == "aliases" %}
     {{display_tags(element)}}
   {% elif key == "last_analyses"%}
@@ -55,8 +56,8 @@
     <code>{{element}}</code>
   {% elif key == "raw" %}
     <pre><code>{{element}}</code></pre>
-  {% elif element is string %}
-    {{ element }}
+  {% elif obj["get_{}_display".format(key)] %}
+    {{ obj["get_{}_display".format(key)]() }}
   {% else %}
     {{ element }}
   {% endif %}

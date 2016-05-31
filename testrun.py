@@ -112,20 +112,20 @@ print url.tags
 ## Create some instances of malware & co
 bartalex = Malware.get_or_create(name="Bartalex")
 bartalex.family = MalwareFamily.objects.get(name="dropper")
-bartalex.killchain = "delivery"
+bartalex.killchain = "3"
 bartalex.tags = ["bartalex"]
 bartalex.save()
 
 dridex = Malware.get_or_create(name="Dridex")
 dridex.aliases = ["Cridex", "Drixed"]
 dridex.family = MalwareFamily.objects.get(name="banker")
-dridex.killchain = "objectives"
+dridex.killchain = "7"
 dridex.tags = ['dridex']
 dridex.save()
 
 zeus = Malware.get_or_create(name="Zeus")
 zeus.family = MalwareFamily.objects.get(name="banker")
-zeus.killchain = "objectives"
+zeus.killchain = "7"
 zeus.tags = ['zeus']
 zeus.save()
 
@@ -161,7 +161,7 @@ zeus_callback.action(zeus, 'testrun', verb='indicates')
 # TTP
 
 macrodoc = TTP(name="Macro-dropper")
-macrodoc.killchain = "delivery"
+macrodoc.killchain = "3"
 macrodoc.description = "Macro-enabled MS Office document"
 macrodoc.save()
 bartalex.action(macrodoc, 'testrun', verb="leverages")
@@ -172,7 +172,7 @@ bartalex_callback.action(macrodoc, 'testrun', verb="seen in")
 bartalex_callback2.action(macrodoc, 'testrun', verb="seen in")
 
 payload_download = TTP(name="Payload retrieval (HTTP)")
-payload_download.killchain = "delivery"
+payload_download.killchain = "3"
 payload_download.description = "Payload is retreived from an external URL"
 payload_download.save()
 macrodoc.action(payload_download, 'testrun', verb="leverages")

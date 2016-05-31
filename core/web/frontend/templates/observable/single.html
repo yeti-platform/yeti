@@ -111,7 +111,7 @@
         <table class="table table-condensed main-table">
           {% for key, value in observable.info().items() %}
           {% if key not in ["context", "value", "last_analyses", "tags"] %}
-            <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
+            <tr><th>{{key}}</th><td>{{macros.display_yeti(observable, key)}}</td></tr>
           {% endif %}
           {% endfor %}
         </table>

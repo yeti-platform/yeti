@@ -42,7 +42,7 @@
             <table class="table table-condensed main-table">
               {% for key, value in indicator.info().items() %}
               {% if key not in ["context", "value", "last_analyses", "pattern", "description"] %}
-                <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
+                <tr><th>{{key}}</th><td>{{macros.display_yeti(indicator, key)}}</td></tr>
               {% endif %}
               {% endfor %}
             </table>

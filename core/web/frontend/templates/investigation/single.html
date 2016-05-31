@@ -48,7 +48,7 @@
         <table class="table table-condensed main-table">
           {% for key, value in investigation.info().items() %}
           {% if key not in ["links", "nodes", "events", "name"] %}
-            <tr><th>{{key}}</th><td>{{macros.display_yeti(value, key)}}</td></tr>
+            <tr><th>{{key}}</th><td>{{macros.display_yeti(investigation, key)}}</td></tr>
           {% endif %}
           {% endfor %}
         </table>

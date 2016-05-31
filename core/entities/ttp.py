@@ -1,18 +1,30 @@
 from mongoengine import *
 
 from core.entities import Entity
-from core.entities import KILL_CHAIN_STEPS
 
 
 class TTP(Entity):
 
-    killchain = StringField(verbose_name="Kill Chain Stage", choices=KILL_CHAIN_STEPS, required=True)
+    KILL_CHAIN_STEPS = {"1": "Reconnaissance",
+                        "2": "Weaponisation",
+                        "3": "Delivery",
+                        "4": "Exploitation",
+                        "5": "Installation",
+                        "6": "C2",
+                        "7": "Objectives"}
+
+    killchain = StringField(verbose_name="Kill Chain Stage", choices=KILL_CHAIN_STEPS.items(), required=True)
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("killchain", "Kill Chain")]
 
     meta = {
         "ordering": ["killchain"],
     }
+
+    def __init__(self, *args, **kwargs):
+        super(TTP, self).__init__(*args, **kwargs)
+        self.get_killchain_display = self.get_killchain_display
+
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
         i['id'] = str(self.id)
