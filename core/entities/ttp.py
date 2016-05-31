@@ -10,6 +10,9 @@ class TTP(Entity):
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("killchain", "Kill Chain")]
 
+    meta = {
+        "ordering": ["killchain"],
+    }
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
         i['id'] = str(self.id)

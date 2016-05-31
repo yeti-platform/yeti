@@ -24,7 +24,8 @@ class Entity(Node):
         "allow_inheritance": True,
         "indexes": [
             "tags"
-        ]
+        ],
+        "ordering": ["name"],
     }
 
     @classmethod

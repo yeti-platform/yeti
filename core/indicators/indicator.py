@@ -17,6 +17,7 @@ class Indicator(Node):
 
     meta = {
         "allow_inheritance": True,
+        "ordering": ["name"],
     }
 
     @classmethod
