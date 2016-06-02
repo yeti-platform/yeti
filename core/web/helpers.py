@@ -40,7 +40,7 @@ def get_queryset(collection, filters, regex, ignorecase):
         if key in SEARCH_ALIASES:
             key = SEARCH_ALIASES[key]
 
-        if regex:
+        if regex and isinstance(value, basestring):
             flags = 0
             if ignorecase:
                 flags |= re.I
