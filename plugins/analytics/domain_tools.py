@@ -78,7 +78,7 @@ class DomainToolsApi(object):
         if 'error' in r:
             raise LookupError(r['error']['message'])
 
-        return r.json()
+        return r
 
 
 class DTReverseIP(OneShotAnalytics, DomainToolsApi):
