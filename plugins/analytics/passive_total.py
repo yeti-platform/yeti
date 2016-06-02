@@ -138,12 +138,14 @@ class PassiveTotalReverseWhois(OneShotAnalytics, PassiveTotalApi):
         data = PassiveTotalApi.get('/whois/search', results.settings, params)
 
         for record in data['results']:
+            print record
             domain = Hostname.get_or_create(value=record['domain'])
             links.update(domain.active_link_to(observable, "Registrant Email", 'PassiveTotal'))
 
             for ns in record['nameServers']:
-                ns = Hostname.get_or_create(value=ns)
-                links.update(domain.active_link_to(ns, "NS record", 'PassiveTotal'))
+                if ns != "No nameserver":
+                    ns = Hostname.get_or_create(value=ns)
+                    links.update(domain.active_link_to(ns, "NS record", 'PassiveTotal'))
 
         return list(links)
 
