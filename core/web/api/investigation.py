@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from flask import request
-from flask.ext.classy import route
+from flask_classy import route
 from bson.json_util import loads
 
 from core.helpers import iterify

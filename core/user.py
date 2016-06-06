@@ -1,5 +1,5 @@
 from mongoengine import StringField, DictField
-from flask.ext.mongoengine.wtf import model_form
+from flask_mongoengine.wtf import model_form
 
 from core.database import YetiDocument
 

@@ -1,7 +1,7 @@
 import logging
 
 from flask import request, url_for, abort
-from flask.ext.classy import FlaskView, route
+from flask_classy import FlaskView, route
 from mongoengine.errors import InvalidQueryError
 
 from core.web.api.api import render

@@ -4,7 +4,7 @@ from datetime import datetime
 from wtforms import widgets, Field, StringField
 from mongoengine import NotUniqueError
 from mongoengine import *
-from flask.ext.mongoengine.wtf import model_form
+from flask_mongoengine.wtf import model_form
 
 from core.helpers import iterify
 

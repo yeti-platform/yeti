@@ -1,6 +1,6 @@
 import json
 from flask import request, render_template, send_file, flash
-from flask.ext.classy import route
+from flask_classy import route
 from uuid import uuid4
 from tempfile import gettempdir
 from os import path

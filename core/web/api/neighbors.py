@@ -1,7 +1,7 @@
 import re
 
 from flask import url_for, request
-from flask.ext.classy import route
+from flask_classy import route
 
 from core.web.api.api import render_json, render
 from core.web.api.crud import CrudApi

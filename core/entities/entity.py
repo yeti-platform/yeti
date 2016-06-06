@@ -1,5 +1,5 @@
 from mongoengine import StringField, ListField
-from flask.ext.mongoengine.wtf import model_form
+from flask_mongoengine.wtf import model_form
 from flask import url_for
 
 from core.database import Node, TagListField, EntityListField

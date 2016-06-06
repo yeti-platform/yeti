@@ -1,8 +1,8 @@
 import os
 
 from flask import Flask, url_for, request
-from flask.ext.login import LoginManager, login_required, current_user
-from flask.ext.misaka import Misaka
+from flask_login import LoginManager, login_required, current_user
+from flask_misaka import Misaka
 
 from core.user import User
 from core.web.json import JSONDecoder

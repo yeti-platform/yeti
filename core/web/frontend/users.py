@@ -1,6 +1,6 @@
 from flask import render_template, request
-from flask.ext.login import current_user
-from flask.ext.classy import FlaskView, route
+from flask_login import current_user
+from flask_classy import FlaskView, route
 
 from core.user import User
 

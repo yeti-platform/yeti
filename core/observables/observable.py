@@ -3,7 +3,7 @@ import operator
 import pytz
 
 from mongoengine import *
-from flask.ext.mongoengine.wtf import model_form
+from flask_mongoengine.wtf import model_form
 
 from core.helpers import iterify
 from core.database import Node, TagListField

@@ -1,4 +1,4 @@
-from flask.ext.classy import route
+from flask_classy import route
 
 from core.web.api.crud import CrudApi
 from core import feed

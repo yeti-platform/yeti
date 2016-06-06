@@ -1,6 +1,6 @@
 from flask import Blueprint
-from flask.ext.negotiation import Render
-from flask.ext.negotiation.renderers import renderer, template_renderer
+from flask_negotiation import Render
+from flask_negotiation.renderers import renderer, template_renderer
 from json import dumps
 
 from core.web.json import to_json, recursive_encoder

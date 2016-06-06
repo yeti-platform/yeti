@@ -1,5 +1,5 @@
-from flask.ext.login import current_user
-from flask.ext.classy import route
+from flask_login import current_user
+from flask_classy import route
 from flask import request
 
 from core.observables import Observable
