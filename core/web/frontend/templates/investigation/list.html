@@ -14,17 +14,17 @@ Investigations
 
 {% block main %}
 <ul class="nav nav-tabs" role="tablist">
-  <li role="presentation" class="active"><a href="#saved_tab" aria-controls="saved_tab" role="tab" data-toggle="tab">Saved Investigations</a></li>
-  <li role="presentation"><a href="#unnamed_tab" aria-controls="unnamed_tab" role="tab" data-toggle="tab">Unnamed</a></li>
+  <li role="presentation" class="active"><a href="#saved" aria-controls="saved" role="tab" data-toggle="tab">Saved Investigations</a></li>
+  <li role="presentation"><a href="#unnamed" aria-controls="unnamed" role="tab" data-toggle="tab">Unnamed</a></li>
 </ul>
 
 <div class="tab-content">
 
-  <div role="tabpanel" class="tab-pane active" id="saved_tab">
+  <div role="tabpanel" class="tab-pane active" id="saved">
       {{ filterlist.sidebar_filter(url_for('api.InvestigationSearch:post'), "saved_investigations", name__exists=True, order_by="-updated") }}
   </div>
 
-  <div role="tabpanel" class="tab-pane" id="unnamed_tab">
+  <div role="tabpanel" class="tab-pane" id="unnamed">
       {{ filterlist.sidebar_filter(url_for('api.InvestigationSearch:post'), "unnamed_investigations", name__exists=False, order_by="-updated") }}
   </div>
 

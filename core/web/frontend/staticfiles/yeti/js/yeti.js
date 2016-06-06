@@ -5,10 +5,26 @@ $(function() {
 
   scan_toggle();
 
+  permanent_tabs();
+
   setInterval(function() {
     scan_populate(".auto-update");
   }, 2000);
 });
+
+
+function permanent_tabs() {
+  h = window.location.hash
+
+  if (h != undefined ) {
+    $('a[href="'+h+'"]').tab('show');
+  }
+
+  $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        window.location.hash = $(this).attr('href');
+  });
+
+}
 
 function scan_toggle() {
   $("body").on('click', ".yeti-toggle", function(){
