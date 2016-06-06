@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from flask_login import current_user
 from flask_classy import route
 from flask import request

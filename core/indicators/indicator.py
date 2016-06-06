@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
 

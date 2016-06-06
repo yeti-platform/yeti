@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from flask_classy import FlaskView, route
 from flask import render_template, request, redirect, url_for
 from mongoengine import NotUniqueError

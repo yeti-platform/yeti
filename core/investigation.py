@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from bson.dbref import DBRef
 from datetime import datetime
 from mongoengine import *

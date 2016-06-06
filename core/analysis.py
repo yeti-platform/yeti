@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from core.observables import Observable, Url, Hostname
 from core.indicators import Indicator
 from core.errors import ObservableValidationError

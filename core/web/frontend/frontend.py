@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from flask import Blueprint, render_template, redirect, url_for
 from flask import g
 

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from flask_classy import route
 
 from core.web.api.crud import CrudApi

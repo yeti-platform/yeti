@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from flask import request, abort
 from flask_classy import route
 

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from mongoengine import *
 
 from core.entities import Entity

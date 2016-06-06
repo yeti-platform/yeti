@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import re
 
 from core.indicators import Indicator

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import json
 from flask import request, render_template, send_file, flash
 from flask_classy import route

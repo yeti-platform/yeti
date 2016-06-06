@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import datetime
 from bson.json_util import default, object_hook as bson_hook
 import simplejson
@@ -27,7 +29,7 @@ def recursive_encoder(objects, template=None, ctx=None):
                 info = o.info()
             else:
                 info = o.to_mongo()
-                
+
             if hasattr(o, 'uri'):
                 info['uri'] = o.uri
             data.append(info)

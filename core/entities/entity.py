@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from mongoengine import StringField, ListField
 from flask_mongoengine.wtf import model_form
 from flask import url_for

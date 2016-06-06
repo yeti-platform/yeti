@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from flask_classy import route
 from flask import request, url_for
 

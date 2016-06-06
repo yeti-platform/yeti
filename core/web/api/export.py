@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os
 
 from flask import send_from_directory, make_response

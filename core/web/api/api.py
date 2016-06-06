@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from flask import Blueprint
 from flask_negotiation import Render
 from flask_negotiation.renderers import renderer, template_renderer

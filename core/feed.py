@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import csv
 import requests
 from datetime import datetime

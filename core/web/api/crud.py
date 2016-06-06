@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import logging
 
 from flask import request, url_for, abort

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from core.web.frontend.generic import GenericView
 from core.indicators import Indicator, Regex, Yara
 from core.entities import Entity

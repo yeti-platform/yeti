@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from core.web.frontend.generic import GenericView
 from core.entities import Entity, TTP, Actor, Company, Malware
 

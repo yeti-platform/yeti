@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from celery import Celery
 
 celery_app = Celery('yeti')
