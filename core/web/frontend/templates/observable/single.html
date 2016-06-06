@@ -13,6 +13,10 @@
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
 {% endblock %}
 
+{% block title %}
+{{obj.value}}
+{% endblock %}
+
 {% block main %}
 {% set observable = obj %}
 <div class="row">

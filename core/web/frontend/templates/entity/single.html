@@ -7,6 +7,10 @@
 {% import "macros/ttps.html" as ttps %}
 {% import "macros/observables.html" as observables %}
 
+{% block title %}
+{{obj.name}}
+{% endblock %}
+
 {% block main %}
 {% set entity = obj %}
 <div class="row">

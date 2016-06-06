@@ -7,6 +7,10 @@
 {% import "macros/observables.html" as observables %}
 {% import "macros/filterlist.html" as filterlist %}
 
+{% block title %}
+{{obj.name}}
+{% endblock %}
+
 {% block main %}
 {% set indicator = obj %}
 <div class="row">

@@ -10,7 +10,7 @@
     <script type="text/javascript" src="{{ url_for('frontend.static', filename='jquery-ui/js/jquery.js') }}" charset="utf-8"></script>
 
 
-    <title>YETI</title>
+    <title>{% block title %}Your Everyday Threat Intelligence{%endblock%} - YETI</title>
 
     <!-- Bootstrap core CSS -->
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='bootstrap/css/bootstrap.min.css') }}">

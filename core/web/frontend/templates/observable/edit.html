@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% import "macros/generic.html" as macros %}
 
+{% block title %}
+{% if not obj %}New {{obj_type}}{% else %}Editing {{obj.name}}{%endif%}
+{% endblock %}
+
 {% block breadcrumb %}
 <ol class="breadcrumb">
 	<li>YETI</li>
