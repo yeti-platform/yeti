@@ -50,8 +50,8 @@
             <li class="{% if url_for("frontend.IndicatorsView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Indicators <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                {% for t in g.indicators %}
-                <li><a href="{{ url_for('frontend.IndicatorsView:index') }}#{{t.__name__.lower()}}">List {{t.__name__}}</a></li>
+                {% for link, label in [("regex", "Regular expressions"), ("yara", "Yara rules")] %}
+                <li><a onclick="location.reload()" href="{{ url_for('frontend.IndicatorsView:index') }}#{{link}}">{{label}}</a></li>
                 {% endfor %}
               </ul>
             </li>
@@ -59,8 +59,8 @@
             <li class="{% if url_for("frontend.EntitiesView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Entities <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                {% for t in g.entities %}
-                <li><a onclick="location.reload()" href="{{ url_for('frontend.EntitiesView:index') }}#{{t.__name__.lower()}}">List {{t.__name__}}</a></li>
+                {% for link, label in [ ("malware", "Malware"), ("ttp", "TTPs"), ("actor", "Actors"), ("exploit", "Exploits"), ("exploitkit", "Exploit kits"), ("company", "Companies")] %}
+                <li><a onclick="location.reload()" href="{{ url_for('frontend.EntitiesView:index') }}#{{link}}">{{label}}</a></li>
                 {% endfor %}
               </ul>
             </li>
