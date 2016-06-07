@@ -82,7 +82,7 @@
               </ul>
             </li>
 
-            <li class="separator wide"></li>
+            <li class="separator"></li>
 
             <li class="{% if url_for("frontend.InvestigationsView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
               <a href="{{ url_for('frontend.InvestigationsView:index') }}">Investigations</span></a>
