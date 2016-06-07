@@ -58,6 +58,13 @@ class GenericView(FlaskView):
         form = form_class(obj=obj)
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=self.klass.__name__, obj=obj)
 
+    @route('/delete/<string:id>', methods=["GET"])
+    def delete(self, id):
+        obj = self.klass.objects.get(id=id)
+        obj.delete()
+        return redirect(url_for('frontend.{}:index'.format(self.__class__.__name__)))
+
+
     def pre_validate(self, obj, request):
         pass
 

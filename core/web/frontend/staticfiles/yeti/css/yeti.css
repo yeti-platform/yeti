@@ -457,6 +457,10 @@ pre>code {
     width: 130px;
 }
 
+.panel-heading .btn-danger {
+  color: #fff;
+}
+
 /* Inline search form*/
 
 .inline ul.pagination {
