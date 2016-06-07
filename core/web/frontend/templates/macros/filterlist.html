@@ -8,7 +8,7 @@
   {% for obj in data%}
   <tr class="node-line">
     <td class="graph-link">
-        <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass=klass)}}"><i class="flaticon-network38"></i></a>
+        <a href="{{ url_for('frontend.InvestigationsView:graph_node', id=obj['id'], klass=klass)}}"><i class="flaticon-network38"></i></a>
     </td>
     <td><a href="{{ url_for("frontend.EntitiesView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
     {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj, key)}}</td>{% endfor %}

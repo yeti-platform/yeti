@@ -51,28 +51,6 @@ IndicatorsView.register(frontend)
 ObservablesView.register(frontend)
 InvestigationsView.register(frontend)
 
-# Graph views
-
-@frontend.route("/graph/<id>")
-def graph(id):
-    investigation = get_object_or_404(Investigation, id=id)
-    return render_template("graph.html", investigation=bson_renderer(investigation.info()))
-
-
-@frontend.route("/graph/<klass>/<id>")
-def graph_node(klass, id):
-    if klass == 'entity':
-        node = get_object_or_404(Entity, id=id)
-    elif klass == 'indicator':
-        node = get_object_or_404(Indicator, id=id)
-    else:
-        node = get_object_or_404(Observable, id=id)
-
-    investigation = Investigation().save()
-    investigation.add([], [node])
-
-    return render_template("graph.html", investigation=bson_renderer(investigation.info()))
-
 
 # Admin views
 

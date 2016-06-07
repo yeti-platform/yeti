@@ -13,7 +13,7 @@
     <tr class="node-line">
       {% if links%}<td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td><td>{{ links[loop.index0]['description']}}</td>{% endif %}
       <td class="graph-link">
-          <a href="{{ url_for('frontend.graph_node', id=obj['id'], klass="indicator")}}"><i class="flaticon-network38"></i></a>
+          <a href="{{ url_for('frontend.InvestigationsView:graph_node', id=obj['id'], klass="indicator")}}"><i class="flaticon-network38"></i></a>
       </td>
       <td><a href="{{ url_for("frontend.IndicatorsView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
       {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj, key)}}</td>{% endfor %}

@@ -13,7 +13,7 @@
   {% for obj in data %}
   <tr class="node-line">
     <td class="graph-link">
-        <a href="{{ url_for('frontend.graph', id=obj['id']) }}"><i class="flaticon-network38"></i></a>
+        <a href="{{ url_for('frontend.InvestigationsView:graph', id=obj['id']) }}"><i class="flaticon-network38"></i></a>
     </td>
     <td><a href="{{ url_for("frontend.InvestigationsView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
     <td>{{macros.display_datetime(obj.created)}}</td>
