@@ -1,5 +1,7 @@
 $(function(){
 
+  table_delete();
+
   $("form.yeti-crud").each(function(){
 
     refresh_table($(this));
@@ -26,8 +28,31 @@ $(function(){
     });
 
   });
-
 });
+
+function table_delete() {
+  $("body").on('click', '.crud-table-delete', function(){
+
+    event.preventDefault();
+
+    endpoint = $(this).data('url');
+    row = $(this).closest('tr').first();
+
+    $.ajax({
+      method: "DELETE",
+      headers: {"Accept": "application/json"},
+      contentType: "application/json",
+      url: endpoint,
+      success: function(data) {
+        row.remove();
+      },
+      error: function(data) {
+        notify("Error deleting element.", "danger");
+      }
+    });
+
+  });
+}
 
 function change_page(form, direction) {
   page = form.find(".crud-pagination").data('page');

@@ -88,6 +88,10 @@ span.yeti-toggle {
   margin-top: 0px;
 }
 
+.yeti-table th.unlink {
+  width: 10px;
+}
+
 .yeti-panel tr:first-child td, .yeti-panel tr:first-child th {
   border-top: 0px;
 }
