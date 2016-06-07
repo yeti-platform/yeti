@@ -1,5 +1,13 @@
 /* app-wide changes */
 
+.navbar-nav .separator {
+  height: 50px;
+  border-left: 1px solid #454545;
+}
+
+.separator.wide {
+}
+
 .user-text {
   font-size: 14px;
 }
