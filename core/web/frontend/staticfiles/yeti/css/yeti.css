@@ -425,19 +425,19 @@ a.graph-analytics-results-links {
     to { transform: scale(1) rotate(360deg);}
 }
 
-.graph-link {
+.graph-link, .unlink {
     width: 10px;
 }
 
-.node-line .graph-link>a {
+.node-line .graph-link>a, .node-line a.crud-table-delete {
     visibility: hidden;
 }
 
-.node-line:hover .graph-link>a {
+.node-line:hover .graph-link>a, .node-line:hover a.crud-table-delete {
     visibility: visible;
 }
 
-.graph-link a:hover {
+.graph-link a:hover, a.crud-table-delete:hover {
     color: #00CCFF;
     text-decoration: none;
 }
