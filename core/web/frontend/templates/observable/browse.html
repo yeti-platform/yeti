@@ -19,9 +19,9 @@ Browse
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/crud.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/selection.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/selection.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
 
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
@@ -31,7 +31,7 @@ Browse
 
 {% block sidebar %}
 <div class="col-md-3">
-	<form data-target="observables" data-url="{{ url_for('api.ObservableSearch:post')}}" class="yeti-crud">
+	<form data-target="observables" data-url="{{ url_for("api.ObservableSearch:post")}}" class="yeti-crud">
 
 		<div class="input-group">
   			<input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
