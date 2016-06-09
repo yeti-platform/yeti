@@ -78,14 +78,8 @@ class CrudApi(FlaskView):
         """
         data = loads(request.data)
         ids = iterify(data['ids'])
-        deld = []
-        for _id in ids:
-            try:
-                self.objectmanager.objects.get(id=_id).delete()
-                deld.append(_id)
-            except DoesNotExist:
-                pass
-        return render({"deleted": deld})
+        self.objectmanager.objects(id__in=ids).delete()
+        return render({"deleted": ids})
 
     @route("/multiupdate", methods=['POST'])
     def multiupdate(self):
