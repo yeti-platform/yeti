@@ -19,3 +19,4 @@ ipwhois
 blinker
 simplejson
 yara-python
+redis
