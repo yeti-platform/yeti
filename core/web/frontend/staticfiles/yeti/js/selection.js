@@ -147,7 +147,7 @@ class GenericSelector {
 }
 
 
-function unlink(btn, form, container) {
+function unlink(btn, form) {
   url = btn.data('action');
   ids = form.serializeObject();
 
@@ -159,7 +159,7 @@ function unlink(btn, form, container) {
     data: JSON.stringify(ids),
     success: function(data) {
       for (var i in data['deleted']) {
-        container.find(".node-line[data-element-id='"+data['deleted'][i]+"']").remove();
+        $(".node-line[data-element-id='"+data['deleted'][i]+"']").remove();
       }
     },
     error: function(data) {
@@ -200,7 +200,7 @@ function edit(btn, form) {
         data: JSON.stringify(data),
         success: function(data) {
           for (let id of data['updated']) {
-            $("tr[data-element-id="+ids+"]").find("td.link-description").text(newDescription);
+            $("tr[data-element-id="+id+"]").find("td.link-description").text(newDescription);
           }
         },
         error: function(data) {
