@@ -132,7 +132,7 @@
 </div>
 
 <script type="text/javascript">
-  for (let type of ["indicators", "ttp", "malware", "actors", "observables", "entity"]) {
+  for (let type of ["indicators", "ttp", "malware", "actors", "observables"]) {
     var s = new GenericSelector("#"+type, ".node-line", "#"+type+"-multiple-actions");
     s.bindCallback(".btn-unlink", unlink);
     s.bindCallback(".btn-edit", edit);
