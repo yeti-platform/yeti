@@ -10,8 +10,12 @@
       </tr>
     {% endif %}
 
-    <tr class="node-line">
-      {% if links%}<td><a class="crud-table-delete" data-url="{{ url_for('api.Link:delete', id=links[loop.index0].id) }}" href="#"><i class="fa fa-chain-broken" aria-hidden="true"></i></a></td><td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td><td>{{ links[loop.index0]['description']}}</td>{% endif %}
+    <tr class="node-line" {%if links%} data-element-id="{{links[loop.index0].id}}" {%endif%}>
+      {% if links %}
+        <td><a class="crud-table-delete" data-url="{{ url_for('api.Link:delete', id=links[loop.index0].id) }}" href="#"><i class="fa fa-chain-broken" aria-hidden="true"></i></a></td>
+        <td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td>
+        <td class="link-description">{{ links[loop.index0]['description']}}</td>
+      {% endif %}
       <td class="graph-link">
           <a href="{{ url_for('frontend.InvestigationsView:graph_node', id=obj['id'], klass="entity")}}"><i class="flaticon-network38"></i></a>
       </td>

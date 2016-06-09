@@ -7,7 +7,7 @@ from flask_classy import route
 
 from core.web.api.api import render_json, render
 from core.web.api.crud import CrudApi
-from core.entities import Entity, Malware, TTP, Actor
+from core.entities import Entity, Malware, TTP, Actor, ExploitKit
 from core.observables import Observable
 from core.indicators import Indicator
 
@@ -18,6 +18,7 @@ NODES_CLASSES = {
     'malware': Malware,
     'ttp': TTP,
     'actor': Actor,
+    'exploitkit': ExploitKit,
 }
 
 

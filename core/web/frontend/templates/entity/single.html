@@ -82,7 +82,8 @@
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
-              <a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
+              <a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
+              {{ macros.table_controls("indicators") }}
             </div>
           </div>
         </div>
@@ -92,7 +93,7 @@
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="ttp"), "ttp-pivot") }}
               <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new TTP</a>
-
+              {{ macros.table_controls("ttp") }}
             </div>
           </div>
         </div>
@@ -102,7 +103,7 @@
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="malware"), "malware-pivot") }}
               <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="malware", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Malware</a>
-
+              {{ macros.table_controls("malware") }}
             </div>
           </div>
         </div>
@@ -112,6 +113,7 @@
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="actor"), "actor-pivot") }}
               <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="actor", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Actor</a>
+              {{ macros.table_controls("actors") }}
             </div>
           </div>
         </div>
@@ -120,6 +122,7 @@
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="observable"), "observable-pivot", default_key="value") }}
+              {{ macros.table_controls("observables") }}
             </div>
           </div>
         </div>
@@ -128,8 +131,17 @@
   </div>
 </div>
 
+<script type="text/javascript">
+  for (let type of ["indicators", "ttp", "malware", "actors", "observables", "entity"]) {
+    var s = new GenericSelector("#"+type, ".node-line", "#"+type+"-multiple-actions");
+    s.bindCallback(".btn-unlink", unlink);
+    s.bindCallback(".btn-edit", edit);
+  }
+</script>
+
 {% endblock %}
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/selection.js') }}" charset="utf-8"></script>
 {%endblock%}

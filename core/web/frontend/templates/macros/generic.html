@@ -117,3 +117,11 @@
 <input type="submit" class="btn btn-primary" value="save">
 </form>
 {% endmacro %}
+
+{% macro table_controls(type) %}
+<form class="pull-left" id="{{type}}-multiple-actions">
+  <span class="selection-all"><p style="margin:3px 0 0 3px;"><strong>Tip:</strong> Click on table rows to select them</p></span>
+  <button class="btn btn-default btn-xs btn-unlink selection-specific" data-action="{{ url_for('api.Link:multidelete') }}"> Unlink</button>
+  <button class="btn btn-default btn-xs btn-edit selection-specific" data-action="{{ url_for('api.Link:multiupdate') }}"> Edit</button>
+</form>
+{%- endmacro%}

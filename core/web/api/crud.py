@@ -2,13 +2,15 @@ from __future__ import unicode_literals
 
 import logging
 
+from bson.json_util import loads
 from flask import request, url_for, abort
 from flask_classy import FlaskView, route
 from mongoengine.errors import InvalidQueryError
 
 from core.web.api.api import render
 from core.web.helpers import get_queryset
-
+from core.helpers import iterify
+from core.database import DoesNotExist
 
 class CrudSearchApi(FlaskView):
     def search(self, query):
@@ -66,6 +68,38 @@ class CrudApi(FlaskView):
         obj = self.objectmanager.objects.get(id=id)
         obj.delete()
         return render({"deleted": id})
+
+    @route("/multidelete", methods=['POST'])
+    def multidelete(self):
+        """Deletes multiple entries from the database
+
+        :query [ObjectID] ids: Array of Element IDs
+        :>json [ObjectID] deleted: Array of Element IDs that were successfully deleted
+        """
+        data = loads(request.data)
+        ids = iterify(data['ids'])
+        deld = []
+        for _id in ids:
+            try:
+                self.objectmanager.objects.get(id=_id).delete()
+                deld.append(_id)
+            except DoesNotExist:
+                pass
+        return render({"deleted": deld})
+
+    @route("/multiupdate", methods=['POST'])
+    def multiupdate(self):
+        """Updates multiple entries from the database
+
+        :query [ObjectID] ids: Array of Element IDs
+        :query [Object] new: JSON object representing fields to update
+        :>json [ObjectID] updated: Array of Element IDs that were successfully updated
+        """
+        data = loads(request.data)
+        ids = iterify(data['ids'])
+        new_data = data['new']
+        self.objectmanager.objects(id__in=ids).update(new_data)
+        return render({"updated": list(self.objectmanager.objects(ids__in=ids))})
 
     def index(self):
         """List all corresponding entries in the database. **Do not use on large datasets!**

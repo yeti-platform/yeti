@@ -105,6 +105,13 @@ class Link(Document):
         if last_history:
             return last_history.description
 
+    @description.setter
+    def description(self, value):
+        last_history = self._get_last_history()
+
+        if last_history:
+            last_history.description = value
+
     @property
     def last_seen(self):
         last_history = self._get_last_history()
