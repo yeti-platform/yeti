@@ -26,16 +26,18 @@ class Link(CrudApi):
         :>json string deleted: The deleted element's ObjectID
         """
         obj = self.objectmanager.objects.get(id=id)
+        for i, inv in enumerate(Investigation.objects(links__id=id)):
+            inv.modify({"links__id": id}, set__links__S__id="local-{}-{}".format(time.time(), i))
         obj.delete()
-        Investigation.objects(links__id=id).update(set__links__S__id="local-{}".format(time.time()))
         return render({"deleted": id})
 
     @route("/multidelete", methods=['POST'])
     def multidelete(self):
         data = loads(request.data)
         ids = iterify(data['ids'])
+        for i, inv in enumerate(Investigation.objects(links__id__in=ids)):
+            inv.modify({"links__id": id}, set__links__S__id="local-{}-{}".format(time.time(), i))
         self.objectmanager.objects(id__in=ids).delete()
-        Investigation.objects(links__id__in=ids).update(set__links__S__id="local-{}".format(time.time()))
         return render({"deleted": ids})
 
     @route("/multiupdate", methods=['POST'])
