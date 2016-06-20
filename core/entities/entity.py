@@ -30,6 +30,9 @@ class Entity(Node):
         "ordering": ["name"],
     }
 
+    def clean(self):
+        self.tags = [t.lower().strip() for t in self.tags]
+
     @classmethod
     def get_form(klass, override=None):
         if override:
