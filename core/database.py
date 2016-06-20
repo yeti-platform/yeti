@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import re
+import os
 from datetime import datetime
 
 from wtforms import widgets, Field, StringField
@@ -8,7 +9,8 @@ from mongoengine import NotUniqueError
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
 
-from core.helpers import iterify
+from core.constants import STORAGE_ROOT
+from core.helpers import iterify, stream_sha256
 
 
 class StringListField(Field):
@@ -308,3 +310,34 @@ class Node(YetiDocument):
                             link.save(validate=False)
 
         return list(links)
+
+
+class AttachedFile(YetiDocument):
+    filename = StringField(required=True)
+    sha256 = StringField(required=True)
+    content_type = StringField(required=True)
+
+    @staticmethod
+    def from_upload(file):
+        sha256 = stream_sha256(file.stream)
+
+        try:
+            return AttachedFile.objects.get(sha256=sha256)
+        except DoesNotExist:
+            # First, make sure the storage dir exists
+            try:
+                os.makedirs(STORAGE_ROOT)
+            except:
+                pass
+
+            fd = open(os.path.join(STORAGE_ROOT, sha256), 'wb')
+            fd.write(file.stream.read())
+            fd.close()
+
+            f = AttachedFile(filename=file.filename, content_type=file.content_type, sha256=sha256)
+            f.save()
+
+            return f
+
+    def filepath(self):
+        return os.path.join(STORAGE_ROOT, self.sha256)

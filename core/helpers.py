@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import re
+import hashlib
 import collections
 from mongoengine import Document
 from datetime import timedelta
@@ -52,3 +53,17 @@ def get_value_at(data, path):
             data = data[path_elt]
 
     return data
+
+
+def stream_sha256(stream):
+    sha256 = hashlib.sha256()
+
+    while True:
+        data = stream.read(4096)
+        if data:
+            sha256.update(data)
+        else:
+            stream.seek(0, 0)
+            break
+
+    return sha256.hexdigest()
