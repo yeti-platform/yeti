@@ -52,6 +52,9 @@
               <input type="text" class="form-control" name="description" value="" placeholder="Description"/>
             </div>
             <div class="form-group">
+              <input type="text" class="form-control tagfield" name="ignore_tags" data-choices="{{ url_for('api.Tag:index') }}" value="" placeholder="Ignore tags"/>
+            </div>
+            <div class="form-group">
               <input type="text" class="form-control tagfield" name="include_tags" data-choices="{{ url_for('api.Tag:index') }}" value="" placeholder="Include tags"/>
             </div>
             <div class="form-group">
@@ -81,7 +84,7 @@
     </div>
   </div>
 
-  <div role="tabpanel" class="tab-pane" id="export-templates"> <!-- export feed tab -->
+  <div role="tabpanel" class="tab-pane" id="export-templates"> <!-- Templates tab -->
     <div class="row">
 
       <div class="col-md-2">
