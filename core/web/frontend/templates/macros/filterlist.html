@@ -7,7 +7,7 @@
   </tr>
   {% for obj in data%}
   <tr class="node-line">
-    <td class="graph-link">
+    <td class="icon-cell">
         <a href="{{ url_for('frontend.InvestigationsView:graph_node', id=obj['id'], klass=klass)}}"><i class="flaticon-network38"></i></a>
     </td>
     <td><a href="{{ url_for("frontend.EntitiesView:get", id=obj['id'])}}">{{obj['name']}}</a></td>

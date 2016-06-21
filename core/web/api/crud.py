@@ -3,14 +3,16 @@ from __future__ import unicode_literals
 import logging
 
 from bson.json_util import loads
-from flask import request, url_for, abort
+from flask import request, url_for, abort, send_file, make_response
 from flask_classy import FlaskView, route
 from mongoengine.errors import InvalidQueryError
 
 from core.web.api.api import render
 from core.web.helpers import get_queryset
 from core.helpers import iterify
-from core.database import DoesNotExist
+from core.database import AttachedFile
+from core.web.helpers import get_object_or_404
+
 
 class CrudSearchApi(FlaskView):
     def search(self, query):
@@ -143,3 +145,29 @@ class CrudApi(FlaskView):
         obj = obj.clean_update(**params)
         obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
         return render(obj)
+
+    @route('/<string:id>/files', methods=["GET"])
+    def list_files(self, id):
+        """List files attached to an element
+
+        :query ObjectID id: Element ID
+        :<json object files: JSON object containing a list of serialized AttachedFile objects
+        """
+        l = []
+        entity = get_object_or_404(self.objectmanager, id=id)
+        for f in entity.attached_files:
+            i = f.info()
+            i['content_uri'] = url_for("api.Entity:file_content", sha256=f.sha256)
+            l.append(i)
+        print l
+        return render(l)
+
+    @route('/files/<string:sha256>', methods=["GET"])
+    def file_content(self, sha256):
+        """Get a file's contents
+
+        :query string sha256: The file's SHA-256 hash
+        :response object files: Content of files, served as an attachment
+        """
+        f = get_object_or_404(AttachedFile, sha256=sha256)
+        return make_response(send_file(f.filepath, as_attachment=True, attachment_filename=f.filename))

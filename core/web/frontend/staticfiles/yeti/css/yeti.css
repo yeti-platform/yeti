@@ -88,10 +88,6 @@ span.yeti-toggle {
   margin-top: 0px;
 }
 
-.yeti-table th.unlink {
-  width: 10px;
-}
-
 .yeti-panel tr:first-child td, .yeti-panel tr:first-child th {
   border-top: 0px;
 }
@@ -425,19 +421,21 @@ a.graph-analytics-results-links {
     to { transform: scale(1) rotate(360deg);}
 }
 
-.graph-link, .unlink {
+.icon-cell {
     width: 10px;
 }
 
-.node-line .graph-link>a, .node-line a.crud-table-delete {
+.node-line .icon-cell>a,
+.node-line a.crud-table-delete {
     visibility: hidden;
 }
 
-.node-line:hover .graph-link>a, .node-line:hover a.crud-table-delete {
+.node-line:hover .icon-cell>a,
+.node-line:hover a.crud-table-delete {
     visibility: visible;
 }
 
-.graph-link a:hover, a.crud-table-delete:hover {
+.icon-cell a:hover, a.crud-table-delete:hover {
     color: #00CCFF;
     text-decoration: none;
 }

@@ -61,6 +61,42 @@
       </div>
     </div>
 
+    <div class="panel panel-primary yeti-panel">
+      <div class="panel-heading">
+        <h3 class="panel-title">Files</h3>
+      </div>
+      <div class="panel-body">
+        <table class="table table-condensed">
+          {% for f in entity.attached_files %}
+          <tr class="node-line">
+            <td class='icon-cell'>
+              <a href="{{url_for("api.Entity:file_content", sha256=f.sha256)}}">
+                <i class="fa fa-download" aria-hidden="true"></i>
+              </a>
+            </td>
+
+            <td>{{f.filename}}</td>
+            <td class='icon-cell'>
+              <a onclick="return confirm('Are you sure?')" href="{{url_for("frontend.EntitiesView:remove_file", id=entity.id, fileid=f.id)}}">
+                <i class="fa fa-trash-o" aria-hidden="true"></i>
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          No files for now.
+          {% endfor %}
+        </table>
+        <form clas='form-inline' action="{{ url_for("frontend.EntitiesView:attach_file", id=entity.id) }}" method="post" enctype=multipart/form-data>
+          <div class="form-group pull-right">
+            <input type="submit" value="Attach">
+          </div>
+          <div class="form-group">
+            <input type="file" name="file">
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div> <!-- end second column -->
 
 </div><!-- end row -->

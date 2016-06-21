@@ -14,7 +14,7 @@
       <tr><th></th><th>Name</th><th>Family</th><th>Aliases</th></tr>
       {% for entity in data if entity['type'] == "Malware" %}
       <tr class="node-line">
-        <td class="graph-link">
+        <td class="icon-cell">
             <a href="{{ url_for('frontend.InvestigationsView:graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
         </td>
         <td><a href="{{ url_for("frontend.EntitiesView:get", id=entity['id'])}}">{{entity['name']}}</a></td>
@@ -30,7 +30,7 @@
       <tr><th></th><th>Name</th><th>Description</th><th>Killchain</th></tr>
       {% for entity in data if entity['type'] == "TTP" %}
       <tr class="node-line">
-        <td class="graph-link">
+        <td class="icon-cell">
           <a href="{{ url_for('frontend.InvestigationsView:graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
         </td>
         <td><a href="{{ url_for("frontend.EntitiesView:get", id=entity['id'])}}">{{entity['name']}}</a></td>
@@ -46,7 +46,7 @@
       <tr><th></th><th>Name</th></tr>
       {% for entity in data if entity['type'] == "Actor" %}
       <tr class="node-line">
-        <td class="graph-link">
+        <td class="icon-cell">
           <a href="{{ url_for('frontend.InvestigationsView:graph_node', id=entity['id'], klass='entity')}}"><i class="flaticon-network38"></i></a>
         </td>
         <td><a href="{{ url_for('frontend.EntitiesView:get', id=entity['id'])}}">{{entity['name']}}</a></td>

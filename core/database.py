@@ -209,9 +209,51 @@ class Link(Document):
         return last_history
 
 
+class AttachedFile(YetiDocument):
+    filename = StringField(required=True)
+    sha256 = StringField(required=True)
+    content_type = StringField(required=True)
+
+    @staticmethod
+    def from_upload(file):
+        sha256 = stream_sha256(file.stream)
+
+        try:
+            return AttachedFile.objects.get(sha256=sha256)
+        except DoesNotExist:
+            # First, make sure the storage dir exists
+            try:
+                os.makedirs(STORAGE_ROOT)
+            except:
+                pass
+
+            fd = open(os.path.join(STORAGE_ROOT, sha256), 'wb')
+            fd.write(file.stream.read())
+            fd.close()
+            print repr(file.filename), bool(file.filename)
+            if file.filename:
+                f = AttachedFile(filename=file.filename, content_type=file.content_type, sha256=sha256)
+                f.save()
+                return f
+            else:
+                return None
+
+    @property
+    def filepath(self):
+        return os.path.join(STORAGE_ROOT, self.sha256)
+
+    def contents(self):
+        return open(self.filepath, 'rb')
+
+    def info(self):
+        i = {k: v for k, v in self._data.items() if k in ["filename", "sha256", "content_type"]}
+        return i
+
+
 class Node(YetiDocument):
 
     exclude_fields = []
+    attached_files = ListField(ReferenceField(AttachedFile, reverse_delete_rule=PULL))
 
     meta = {
         "abstract": True,
@@ -310,34 +352,3 @@ class Node(YetiDocument):
                             link.save(validate=False)
 
         return list(links)
-
-
-class AttachedFile(YetiDocument):
-    filename = StringField(required=True)
-    sha256 = StringField(required=True)
-    content_type = StringField(required=True)
-
-    @staticmethod
-    def from_upload(file):
-        sha256 = stream_sha256(file.stream)
-
-        try:
-            return AttachedFile.objects.get(sha256=sha256)
-        except DoesNotExist:
-            # First, make sure the storage dir exists
-            try:
-                os.makedirs(STORAGE_ROOT)
-            except:
-                pass
-
-            fd = open(os.path.join(STORAGE_ROOT, sha256), 'wb')
-            fd.write(file.stream.read())
-            fd.close()
-
-            f = AttachedFile(filename=file.filename, content_type=file.content_type, sha256=sha256)
-            f.save()
-
-            return f
-
-    def filepath(self):
-        return os.path.join(STORAGE_ROOT, self.sha256)

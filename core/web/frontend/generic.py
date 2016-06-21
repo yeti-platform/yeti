@@ -1,12 +1,14 @@
 from __future__ import unicode_literals
 
 from flask_classy import FlaskView, route
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, abort
 from mongoengine import NotUniqueError
 
 from core.errors import GenericValidationError
-from core.entities import Entity, Malware, Company, TTP, Actor
+from core.entities import Malware, Company, TTP, Actor
 from core.indicators import Regex
+from core.database import AttachedFile
+from core.web.helpers import get_object_or_404
 
 binding_object_classes = {
     "malware": Malware,
@@ -15,6 +17,7 @@ binding_object_classes = {
     "actor": Actor,
     "regex": Regex,
 }
+
 
 class GenericView(FlaskView):
 
@@ -64,7 +67,6 @@ class GenericView(FlaskView):
         obj.delete()
         return redirect(url_for('frontend.{}:index'.format(self.__class__.__name__)))
 
-
     def pre_validate(self, obj, request):
         pass
 
@@ -98,3 +100,21 @@ class GenericView(FlaskView):
             return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=obj.id))
         else:
             return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
+
+    @route('/<string:id>/attach-file', methods=["POST"])
+    def attach_file(self, id):
+        if 'file' not in request.files:
+            abort(400)
+
+        e = get_object_or_404(self.klass, id=id)
+        f = AttachedFile.from_upload(request.files['file'])
+        if f:
+            e.attached_files.append(f)
+            e.save()
+        return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=e.id))
+
+    @route('/<string:id>/files/delete/<string:fileid>', methods=["GET"])
+    def remove_file(self, id, fileid):
+        f = get_object_or_404(AttachedFile, id=fileid)
+        f.delete()
+        return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=id))
