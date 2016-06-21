@@ -43,7 +43,7 @@ class Url(Observable):
         parsed = urlparse(self.value)
         self.parsed_url = {
             "scheme": parsed.scheme,
-            "netcoc": parsed.netloc,
+            "netloc": parsed.netloc,
             "path": parsed.path,
             "params": parsed.params,
             "query": parsed.query,

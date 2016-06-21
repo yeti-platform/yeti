@@ -5,7 +5,6 @@ import logging
 
 from core.analytics import ScheduledAnalytics
 from core.observables import Observable
-from core.database import Link
 from core.errors import ObservableValidationError
 
 
