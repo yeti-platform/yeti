@@ -30,7 +30,7 @@ class ExportTemplate(YetiDocument):
         with codecs.open(temp_filename, 'w+', encoding='utf-8') as tmp:
             for chunk in template.stream(elements=elements):
                 tmp.write(chunk)
-                m.update(chunk)
+                m.update(chunk.encode('utf-8'))
 
         try:
             os.remove(output_filename)
