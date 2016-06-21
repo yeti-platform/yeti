@@ -213,6 +213,7 @@ class AttachedFile(YetiDocument):
     filename = StringField(required=True)
     sha256 = StringField(required=True)
     content_type = StringField(required=True)
+    references = IntField(default=0)
 
     @staticmethod
     def from_upload(file):
@@ -248,6 +249,18 @@ class AttachedFile(YetiDocument):
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["filename", "sha256", "content_type"]}
         return i
+
+    def attach(self, obj):
+        obj.attached_files.append(self)
+        obj.save()
+        self.update(inc__references=1)
+
+    def detach(self, obj):
+        obj.update(pull__attached_files=self)
+        self.modify(dec__references=1)
+        if self.references == 0:
+            os.remove(self.filepath)
+            self.delete()
 
 
 class Node(YetiDocument):

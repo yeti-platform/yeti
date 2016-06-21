@@ -77,7 +77,7 @@
 
             <td>{{f.filename}}</td>
             <td class='icon-cell'>
-              <a onclick="return confirm('Are you sure?')" href="{{url_for("frontend.EntitiesView:remove_file", id=entity.id, fileid=f.id)}}">
+              <a onclick="return confirm('Are you sure?')" href="{{url_for("frontend.EntitiesView:detach_file", id=entity.id, fileid=f.id)}}">
                 <i class="fa fa-trash-o" aria-hidden="true"></i>
               </a>
             </td>

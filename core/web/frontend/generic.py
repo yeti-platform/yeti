@@ -109,12 +109,12 @@ class GenericView(FlaskView):
         e = get_object_or_404(self.klass, id=id)
         f = AttachedFile.from_upload(request.files['file'])
         if f:
-            e.attached_files.append(f)
-            e.save()
+            f.attach(e)
         return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=e.id))
 
-    @route('/<string:id>/files/delete/<string:fileid>', methods=["GET"])
-    def remove_file(self, id, fileid):
+    @route('/<string:id>/detach-file/<string:fileid>', methods=["GET"])
+    def detach_file(self, id, fileid):
         f = get_object_or_404(AttachedFile, id=fileid)
-        f.delete()
+        e = get_object_or_404(self.klass, id=id)
+        f.detach(e)
         return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=id))
