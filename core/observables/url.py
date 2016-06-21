@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
 import re
+from urlparse import urlparse
 
 import urlnorm
+from mongoengine import DictField
 
 from core.observables import Observable
 from core.errors import ObservableValidationError
@@ -23,15 +25,30 @@ class Url(Observable):
                 )
             """
 
+    parsed_url = DictField()
+
     def clean(self):
         """Ensures that URLs are canonized before saving"""
         self.value = refang(self.value.strip())
         try:
-            if re.match(r"[^:]+://", self.value) is None:  # if no schema is specified, assume http://
+            if re.match(r"[^:]+://", self.value) is None:
+                # if no schema is specified, assume http://
                 self.value = u"http://{}".format(self.value)
             self.value = urlnorm.norm(self.value)
+            self.parse()
         except urlnorm.InvalidUrl:
             raise ObservableValidationError("Invalid URL: {}".format(self.value))
+
+    def parse(self):
+        parsed = urlparse(self.value)
+        self.parsed_url = {
+            "scheme": parsed.scheme,
+            "netcoc": parsed.netloc,
+            "path": parsed.path,
+            "params": parsed.params,
+            "query": parsed.query,
+            "fragment": parsed.fragment
+        }
 
     @staticmethod
     def check_type(txt):
