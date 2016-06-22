@@ -41,9 +41,11 @@ class Url(Observable):
 
     def parse(self):
         parsed = urlparse(self.value)
+
         self.parsed_url = {
             "scheme": parsed.scheme,
-            "netloc": parsed.netloc,
+            "netloc": parsed.netloc.split(":")[0],
+            "port": parsed.port if parsed.port else "80",
             "path": parsed.path,
             "params": parsed.params,
             "query": parsed.query,
