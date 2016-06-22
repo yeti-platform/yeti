@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from core.web.frontend.generic import GenericView
-from core.entities import Entity, TTP, Actor, Company, Malware
+from core.entities import Entity, TTP, Actor, Company, Malware, Campaign
 
 
 class EntitiesView(GenericView):
@@ -12,6 +12,7 @@ class EntitiesView(GenericView):
         'actor': Actor,
         'company': Company,
         'malware': Malware,
+        'campaign': Campaign
     }
 
     def post_save(self, e, request):
