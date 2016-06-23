@@ -31,6 +31,7 @@ from core.web.api.neighbors import Neighbors
 from core.web.api.investigation import Investigation, InvestigationSearch
 from core.web.api.indicator import Indicator, IndicatorSearch
 from core.web.api.links import Link
+from core.web.api.files import Files
 
 Analysis.register(api)
 
@@ -58,3 +59,5 @@ Investigation.register(api)
 InvestigationSearch.register(api)
 
 Link.register(api)
+
+Files.register(api)

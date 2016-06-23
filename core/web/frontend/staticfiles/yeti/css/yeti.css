@@ -598,3 +598,9 @@ td input.inline {
 #selection-count {
     font-weight: bold;
 }
+
+.markdown-text img,
+.editor-preview img,
+.editor-preview-side img {
+    max-width: 100%;
+}

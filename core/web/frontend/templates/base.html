@@ -18,11 +18,17 @@
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/flaticon.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='font-awesome/css/font-awesome.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='animate/animate.min.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='simplemde/simplemde.min.css') }}">
     <script src="{{url_for('frontend.static', filename='bootstrap-notify/bootstrap-notify.min.js')}}"></script>
     <script src="{{url_for('frontend.static', filename='yeti/js/yeti.js')}}"></script>
 
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='highlightjs/highlightjs.min.css') }}">
     <script src="{{url_for('frontend.static', filename='highlightjs/highlightjs.min.js')}}"></script>
+
+    <script src="{{url_for('frontend.static', filename='simplemde/simplemde.min.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='simplemde/inline-attachment.min.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='simplemde/codemirror.inline-attachment.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='yeti/js/markdown.js')}}"></script>
     {% block custom_head %}
     {% endblock %}
   </head>
