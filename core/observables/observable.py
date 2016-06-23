@@ -43,7 +43,7 @@ class Observable(Node):
 
     created = DateTimeField(default=datetime.utcnow)
 
-    exclude_fields = ['sources', 'context', 'last_analyses', 'created']
+    exclude_fields = ['sources', 'context', 'last_analyses', 'created', 'attached_files']
 
     meta = {
         "allow_inheritance": True,
