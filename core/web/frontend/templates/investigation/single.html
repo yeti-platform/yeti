@@ -28,13 +28,7 @@
                 <a href="{{url_for('frontend.InvestigationsView:graph', id=investigation.id)}}" class="btn btn-default btn-xs pull-right"><i class="flaticon-network38"></i> Go To Graph</a>
             </h3>
           </div>
-          <div class="panel-body markdown-text">
-            {% if investigation.description %}
-            {{investigation.description|markdown}}
-            {%else%}
-            <em>No description provided</em>
-            {%endif%}
-          </div>
+          <div class="panel-body markdown-text hide">{% if investigation.description %}{{investigation.description}}{%else%}No description provided{%endif%}</div>
         </div>
 
       </div>

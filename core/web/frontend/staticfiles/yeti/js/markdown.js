@@ -21,4 +21,12 @@ $(function () {
       }
     });
   });
+
+  $('.markdown-text').each(function (index) {
+    var elt = $(this);
+
+    md = elt.text();
+    elt.html(marked(md));
+    elt.removeClass('hide');
+  });
 });

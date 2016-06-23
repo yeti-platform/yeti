@@ -4,7 +4,6 @@ import os
 
 from flask import Flask, url_for, request
 from flask_login import LoginManager, login_required, current_user
-from flask_misaka import Misaka
 
 from core.user import User
 from core.web.json import JSONDecoder
@@ -19,7 +18,6 @@ webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
 webapp.debug = True
 
-Misaka(webapp)
 
 login_manager = LoginManager()
 login_manager.init_app(webapp)
@@ -73,6 +71,7 @@ def list_routes():
         print line
 
     return "<br>".join(output)
+
 
 @webapp.template_test()
 def startswith(string, pattern):
