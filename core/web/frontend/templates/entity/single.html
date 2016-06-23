@@ -47,7 +47,7 @@
       <div class="panel-body">
         <table class="table table-condensed main-table">
           {% for key, value in entity.info().items() %}
-          {% if key not in ["context", "value", "last_analyses"] %}
+          {% if key not in ["context", "value", "last_analyses", "description"] %}
             <tr><th>{{key}}</th><td>{{macros.display_yeti(entity, key)}}</td></tr>
           {% endif %}
           {% endfor %}
