@@ -28,7 +28,6 @@ class Analysis(CrudApi):
         :>json [Indicator] matches: ``Indicators`` that matched observables
         :>json Observable matches[].observable: The ``Observable`` object that matched the ``Indicator``
         :>json string unknown: Array of observable strings that didn't match any ``Indicators`` and are unknown to Yeti
-
         """
 
         params = request.json
