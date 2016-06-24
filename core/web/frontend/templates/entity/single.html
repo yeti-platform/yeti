@@ -29,13 +29,7 @@
                 <a href="{{url_for('frontend.EntitiesView:edit', id=entity.id)}}" class="btn btn-default btn-xs pull-right"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</a>
             </h3>
           </div>
-          <div class="panel-body">
-            {% if entity.description %}
-            {{entity.description|markdown}}
-            {%else%}
-            <em>No description provided</em>
-            {%endif%}
-          </div>
+          <div class="panel-body markdown-text hide">{% if entity.description %}{{entity.description}}{%else%}No description provided{%endif%}</div>
         </div>
 
       </div>
@@ -53,7 +47,7 @@
       <div class="panel-body">
         <table class="table table-condensed main-table">
           {% for key, value in entity.info().items() %}
-          {% if key not in ["context", "value", "last_analyses"] %}
+          {% if key not in ["context", "value", "last_analyses", "description"] %}
             <tr><th>{{key}}</th><td>{{macros.display_yeti(entity, key)}}</td></tr>
           {% endif %}
           {% endfor %}
@@ -109,6 +103,9 @@
       <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
       <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
       <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
+      <li role="presentation"><a href="#campaigns" aria-controls="campaigns" role="tab" data-toggle="tab">Campaigns</a></li>
+      <li role="presentation"><a href="#exploits" aria-controls="exploits" role="tab" data-toggle="tab">Exploits</a></li>
+      <li role="presentation"><a href="#exploitkits" aria-controls="exploitkits" role="tab" data-toggle="tab">ExploitKits</a></li>
       <li role="presentation"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
     </ul>
 
@@ -154,6 +151,37 @@
           </div>
         </div>
 
+        <div role="tabpanel" class="tab-pane" id="campaigns"> <!-- campaigns tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="campaign"), "campaign-pivot") }}
+              <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="campaign", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Campaign</a>
+              {{ macros.table_controls("campaigns") }}
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="exploits"> <!-- exploits tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="exploit"), "exploit-pivot") }}
+              <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="exploit", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Exploit</a>
+              {{ macros.table_controls("exploits") }}
+            </div>
+          </div>
+        </div>
+
+        <div role="tabpanel" class="tab-pane" id="exploitkits"> <!-- exploitkits tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="exploitkit"), "exploitkit-pivot") }}
+              <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="exploitkit", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new ExploitKit</a>
+              {{ macros.table_controls("exploitkits") }}
+            </div>
+          </div>
+        </div>
+
+
         <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
           <div class="row">
             <div class="col-md-12">
@@ -168,7 +196,7 @@
 </div>
 
 <script type="text/javascript">
-  for (let type of ["indicators", "ttp", "malware", "actors", "observables"]) {
+  for (let type of ["indicators", "ttp", "malware", "actors", "campaigns", "exploits", "exploitkits", "observables"]) {
     var s = new GenericSelector("#"+type, ".node-line", "#"+type+"-multiple-actions");
     s.bindCallback(".btn-unlink", unlink);
     s.bindCallback(".btn-edit", edit);

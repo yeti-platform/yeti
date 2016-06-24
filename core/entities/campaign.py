@@ -1,14 +1,10 @@
-from __future__ import unicode_literals
-
-from mongoengine import *
-from flask_mongoengine.wtf import model_form
+from mongoengine import ListField, StringField
 
 from core.entities import Entity
-from core.database import TagListField, StringListField
+from core.database import StringListField
 
 
-class Actor(Entity):
-
+class Campaign(Entity):
     aliases = ListField(StringField(), verbose_name="Aliases")
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("aliases", "Aliases")]
@@ -24,5 +20,5 @@ class Actor(Entity):
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ['id', 'name', 'aliases']}
-        i['type'] = "Actor"
+        i['type'] = "Campaign"
         return i

@@ -265,7 +265,7 @@ class AttachedFile(YetiDocument):
 
 class Node(YetiDocument):
 
-    exclude_fields = []
+    exclude_fields = ['attached_files']
     attached_files = ListField(ReferenceField(AttachedFile, reverse_delete_rule=PULL))
 
     meta = {
