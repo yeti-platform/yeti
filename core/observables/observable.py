@@ -6,6 +6,7 @@ import pytz
 
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
+from flask import url_for
 
 from core.helpers import iterify
 from core.database import Node, TagListField
@@ -281,4 +282,7 @@ class Observable(Node):
         if self.id:
             i['id'] = str(self.id)
         i['type'] = self.__class__.__name__
+        i['uri'] = url_for("api.Observable:post", id=str(self.id), _external=True)
+        i['api_uri'] = url_for("api.Observable:post", id=str(self.id), _external=True)
+        i['human_uri'] = url_for("frontend.ObservablesView:get", id=str(self.id), _external=True)
         return i

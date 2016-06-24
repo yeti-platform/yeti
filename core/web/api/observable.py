@@ -29,7 +29,6 @@ class Observable(CrudApi):
             observable.clean_update(**params)
 
         info = observable.info()
-        info['uri'] = url_for("api.{}:post".format(self.__class__.__name__), id=str(observable.id))
         return info
 
     @route("/", methods=["POST"])
@@ -40,7 +39,6 @@ class Observable(CrudApi):
 
         :<json object params: JSON object containing fields to set
         :<json boolean refang: If set, the observable will be refanged before being added to the database
-
         """
         params = request.json
         if params.pop('refang', None):
