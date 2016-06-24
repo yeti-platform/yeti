@@ -72,7 +72,6 @@ def match_observables(observables, save_matches=False):
 
     # add to "matches"
     for o, i in Indicator.search(extended_query):
-        del_from_set(data["unknown"], o)
         if save_matches:
             o = Observable.add_text(o)
         else:
@@ -103,6 +102,5 @@ def match_observables(observables, save_matches=False):
                 [match["suggested_tags"].add(tag) for tag in node.generate_tags() if tag not in o_tags]
 
         data["matches"].append(match)
-        del_from_set(data["unknown"], o.value)
 
     return data
