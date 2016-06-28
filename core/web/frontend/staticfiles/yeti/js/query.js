@@ -52,7 +52,7 @@ function add_observable(elt) {
     data: JSON.stringify({"value": value}),
     success: function(data) {
       a = $("<a>");
-      a.attr("href", data['uri'].replace(/^\/api/, ''));
+      a.attr("href", data['human_uri']);
       a.text(data['id']);
       tr = elt.closest('tr');
       tr.find(".yeti-disabled").removeClass('yeti-disabled');

@@ -23,12 +23,7 @@ class CrudSearchApi(FlaskView):
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
 
-        data = []
-        for o in get_queryset(self.objectmanager, fltr, regex, ignorecase)[page * rng:(page + 1) * rng]:
-            o.uri = url_for("api.{}:post".format(self.objectmanager.__name__), id=str(o.id))
-            data.append(o)
-
-        return data
+        return list(get_queryset(self.objectmanager, fltr, regex, ignorecase)[page * rng:(page + 1) * rng])
 
     def post(self):
         """Launches a simple search against the database
@@ -100,11 +95,7 @@ class CrudApi(FlaskView):
     def index(self):
         """List all corresponding entries in the database. **Do not use on large datasets!**
         """
-        data = []
-        for obj in self.objectmanager.objects.all():
-            obj.uri = url_for("api.{}:get".format(self.__class__.__name__), id=str(obj.id))
-            data.append(obj)
-        return render(data, template=self.template)
+        return render(self.objectmanager.objects.all(), template=self.template)
 
     # This method can be overridden if needed
     def _parse_request(self, json):
@@ -116,7 +107,6 @@ class CrudApi(FlaskView):
         :query ObjectID id: Element ID
         """
         obj = self.objectmanager.objects.get(id=id)
-        obj.uri = url_for("api.{}:get".format(self.__class__.__name__), id=str(obj.id))
         return render(obj, self.template_single)
 
     @route("/", methods=["POST"])
@@ -129,7 +119,6 @@ class CrudApi(FlaskView):
         """
         params = self._parse_request(request.json)
         obj = self.objectmanager(**params).save()
-        obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
         return render(obj)
 
     def post(self, id):
@@ -143,7 +132,6 @@ class CrudApi(FlaskView):
         obj = self.objectmanager.objects.get(id=id)
         params = self._parse_request(request.json)
         obj = obj.clean_update(**params)
-        obj.uri = url_for("api.{}:post".format(self.__class__.__name__), id=str(obj.id))
         return render(obj)
 
     @route('/<string:id>/files', methods=["GET"])
