@@ -5,7 +5,7 @@ from flask_mongoengine.wtf import model_form
 from flask import url_for
 
 from core.database import Node, TagListField, EntityListField
-
+from core.observables import Tag
 
 class Entity(Node):
 
@@ -31,7 +31,10 @@ class Entity(Node):
     }
 
     def clean(self):
-        self.tags = [t.lower().strip() for t in self.tags]
+        tags = []
+        for t in self.tags:
+            tags.append(Tag.get_or_create(name=t.lower().strip()))
+        self.tags = [t.name for t in tags]
 
     @classmethod
     def get_form(klass, override=None):
