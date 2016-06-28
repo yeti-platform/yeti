@@ -39,9 +39,7 @@ class Tag(Node):
         return self.save()
 
     def add_produces(self, tags):
-        tags = [Tag.get_or_create(name=t) for t in iterify(tags)]
-
-        self.produces = tags
+        self.produces = [Tag.get_or_create(name=t) for t in iterify(tags)]
         return self.save()
 
     def clean(self):
