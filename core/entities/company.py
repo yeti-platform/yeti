@@ -12,6 +12,7 @@ class Company(Entity):
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("rdap", "RDAP")]
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ['id', 'name', 'rdap']}
+        i = Entity.info(self)
+        i['rdap'] = self.rdap
         i['type'] = "Company"
         return i

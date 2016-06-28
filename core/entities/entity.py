@@ -59,3 +59,6 @@ class Entity(Node):
 
     def generate_tags(self):
         return []
+
+    def info(self):
+        return {"name": self.name, "description": self.description, "tags": self.tags}

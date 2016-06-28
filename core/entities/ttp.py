@@ -28,7 +28,8 @@ class TTP(Entity):
         self.get_killchain_display = self.get_killchain_display
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ['name', 'killchain', 'description']}
+        i = Entity.info(self)
+        i['killchain'] = self.KILL_CHAIN_STEPS[self.killchain]
         i['id'] = str(self.id)
         i['type'] = 'TTP'
         return i
