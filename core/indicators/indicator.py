@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
+from flask import url_for
 
 from core.database import Node
 from core.indicators import DIAMOND_EDGES
@@ -51,5 +52,7 @@ class Indicator(Node):
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description', 'location']}
         i['id'] = str(self.id)
+        i['url'] = url_for("api.Indicator:post", id=str(self.id), _external=True)
+        i['human_url'] = url_for("frontend.IndicatorsView:get", id=str(self.id), _external=True)
         i['type'] = self.type
         return i

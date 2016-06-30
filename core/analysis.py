@@ -50,12 +50,11 @@ def match_observables(observables, save_matches=False):
     # Remove empty observables
     observables = [refang(observable) for observable in observables if observable]
     extended_query = set(observables) | set(derive(observables))
-    added_entities = set()
 
     data = {
         "matches": [],
         "unknown": set(observables),
-        "entities": [],
+        "entities": {},
         "known": [],
         "neighbors": [],
     }
@@ -70,13 +69,34 @@ def match_observables(observables, save_matches=False):
                 if (link.src.value not in extended_query or link.dst.value not in extended_query) and node.tags:
                     data['neighbors'].append((link.info(), node.info()))
 
+        for nodes in o.neighbors("Entity").values():
+            for l, node in nodes:
+                # add node name and link description to indicator
+                node_data = {"entity": node.type, "name": node.name, "link_description": l.description}
+
+                # uniquely add node information to related entitites
+                ent = data['entities'].get(node.name, node.info())
+                if 'matches' not in ent:
+                    ent['matches'] = {"observables": []}
+                if 'observables' not in ent['matches']:
+                    ent['matches']['observables'] = []
+
+                info = node.info()
+                info['matched_observable'] = {"value": o.value, "tags": [t.name for t in o.tags]}
+                if info not in ent['matches']['observables']:
+                    ent['matches']['observables'].append(info)
+                data['entities'][node.name] = ent
+
     # add to "matches"
     for o, i in Indicator.search(extended_query):
         if save_matches:
             o = Observable.add_text(o)
         else:
             o = Observable.guess_type(o)(value=o)
-            o.validate()
+            try:
+                o.validate()
+            except ObservableValidationError:
+                pass
             try:
                 o = Observable.objects.get(value=o.value)
             except Exception:
@@ -92,15 +112,22 @@ def match_observables(observables, save_matches=False):
                 match["related"].append(node_data)
 
                 # uniquely add node information to related entitites
-                if node.name not in added_entities:
-                    nodeinfo = node.info()
-                    nodeinfo['type'] = node.type
-                    data["entities"].append(nodeinfo)
-                    added_entities.add(node.name)
+                ent = data['entities'].get(node.name, node.info())
+                if 'matches' not in ent:
+                    ent['matches'] = {"indicators": []}
+                if 'indicators' not in ent['matches']:
+                    ent['matches']['indicators'] = []
+
+                info = i.info()
+                info['matched_observable'] = o.value
+                if info not in ent['matches']['indicators']:
+                    ent['matches']['indicators'].append(info)
+                data['entities'][node.name] = ent
 
                 o_tags = o.get_tags()
                 [match["suggested_tags"].add(tag) for tag in node.generate_tags() if tag not in o_tags]
 
         data["matches"].append(match)
 
+    data['entities'] = data['entities'].values()
     return data
