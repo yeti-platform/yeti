@@ -82,7 +82,13 @@ def match_observables(observables, save_matches=False):
                     ent['matches']['observables'] = []
 
                 info = node.info()
-                info['matched_observable'] = {"value": o.value, "tags": [t.name for t in o.tags]}
+                o_info = o.info()
+                info['matched_observable'] = {
+                    "value": o_info['value'],
+                    "tags": [t['name'] for t in o_info['tags']],
+                    "human_url": o_info['human_url'],
+                    "url": o_info['url']
+                }
                 if info not in ent['matches']['observables']:
                     ent['matches']['observables'].append(info)
                 data['entities'][node.name] = ent
