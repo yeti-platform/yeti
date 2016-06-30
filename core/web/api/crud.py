@@ -147,7 +147,6 @@ class CrudApi(FlaskView):
             i = f.info()
             i['content_uri'] = url_for("api.Entity:file_content", sha256=f.sha256)
             l.append(i)
-        print l
         return render(l)
 
     @route('/files/<string:sha256>', methods=["GET"])
