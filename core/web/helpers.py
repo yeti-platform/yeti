@@ -48,7 +48,7 @@ def get_queryset(collection, filters, regex, ignorecase):
                 flags |= re.I
             value = re.compile(value, flags=flags)
 
-        if isinstance(value, list):
+        if isinstance(value, list) and not key.endswith("__in"):
             key += "__all"
 
         result_filters[key] = value

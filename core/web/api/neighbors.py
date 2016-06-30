@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import re
-
 from flask import request
 from flask_classy import route
 
@@ -59,21 +57,14 @@ class Neighbors(CrudApi):
         filter_class = NODES_CLASSES[type_filter.lower().split('.')[0]]
         node = klass.objects.get(id=node_id)
 
-        # code taken from CrudSearchApi. See if we can replicate the inheritance here
-        if 'tags' in fltr:
-            fltr["tags__name"] = fltr.pop('tags')
-        fltr = {key.replace(".", "__")+"__all": value for key, value in query.get('filter', {}).items()}
-        regex = params.pop('regex', False)
-        if regex:
-            flags = 0
-            if params.pop('ignorecase', False):
-                flags |= re.I
-            fltr = {key: [re.compile(v, flags=flags) for v in value] for key, value in fltr.items()}
+        regex = bool(params.pop('regex', False))
+        ignorecase = bool(params.pop('ignorecase', False))
+        page = int(params.pop("page", 1)) - 1
+        rng = int(params.pop("range", 50))
 
         print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
-        # end of c/c code
 
-        neighbors = node.neighbors_advanced(filter_class, params=params, filter=fltr)
+        neighbors = node.neighbors_advanced(filter_class, fltr, regex, ignorecase, page, rng)
 
         _all = []
         links = []

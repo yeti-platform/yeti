@@ -5,7 +5,6 @@ import os
 from datetime import datetime
 
 from wtforms import widgets, Field, StringField
-from mongoengine import NotUniqueError
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
 
@@ -311,18 +310,17 @@ class Node(YetiDocument):
                 info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
 
-    def neighbors_advanced(self, klass, filter={}, params={}):
+    def neighbors_advanced(self, klass, filter, regex, ignorecase, page, rng):
+        from core.web.helpers import get_queryset
 
-        page = params.pop('page', 1) - 1
-        rng = params.pop('range', 50)
-
-        out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
-        inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page*rng)]
+        out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page * rng)]
+        inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page * rng)]
 
         all_links = {ref.id: link for link, ref in inc + out}
         filter['id__in'] = all_links.keys()
 
-        objs = list(klass.objects(**filter).limit(rng).skip(page*rng))
+        objs = list(get_queryset(klass, filter, regex, ignorecase).limit(rng).skip(page * rng))
+
         final_list = [(all_links[obj.id], obj) for obj in objs]
 
         return final_list
