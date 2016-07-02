@@ -33,7 +33,8 @@ class Entity(Node):
     def clean(self):
         tags = []
         for t in self.tags:
-            tags.append(Tag.get_or_create(name=t.lower().strip()))
+            if t:
+                tags.append(Tag.get_or_create(name=t.lower().strip()))
         self.tags = [t.name for t in tags]
 
     @classmethod
