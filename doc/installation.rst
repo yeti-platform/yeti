@@ -33,11 +33,31 @@ Daemonisation
 
 For production use, it may be better to daemonize Yeti. You can use the following ``systemd`` scripts.
 
+Start off with:
+
+  $ sudo apt-get install nginx uwsgi
+
 systemd protips::
 
   $ sudo service yeti_web start|stop|restart
   or
   $ sudo systemctl start|status|stop yeti_web
+
+
+Some optimizations for redis (taken from [here](https://www.techandme.se/performance-tips-for-redis-cache-server/)):
+
+Add the following lines in `/etc/sysctl.conf`
+
+  # redis tweak
+  vm.overcommit_memory = 1
+
+Add the following lines in `/etc/rc.local`
+
+  # disable transparent huge pages (redis tweak)
+  echo never > /sys/kernel/mm/transparent_hugepage/enabled
+  # increase max connections
+  echo 512 > /proc/sys/net/core/somaxconn or (sysctl -w net.core.somaxconn=65535)
+  exit 0
 
 
 Web interface & API
@@ -47,6 +67,7 @@ File ``/lib/systemd/system/yeti_web.service``::
 
   [Unit]
   Description=Yeti web servers
+  After=mongodb.service redis.service
 
   [Service]
   Type=simple
@@ -62,6 +83,7 @@ Or if you want to use using UWSGI (taken from http://uwsgi-docs.readthedocs.io/e
 
   [Unit]
   Description=Yeti UWSGI server
+  After=mongodb.service redis.service
 
   [Service]
   Type=simple
@@ -97,6 +119,7 @@ File - ``/lib/systemd/system/yeti_oneshot.service``::
 
   [Unit]
   Description=Yeti workers - Oneshot
+  After=mongodb.service redis.service
 
   [Service]
   Type=simple
@@ -113,6 +136,7 @@ File - ``/lib/systemd/system/yeti_feeds.service``::
 
   [Unit]
   Description=Yeti workers - Feeds
+  After=mongodb.service redis.service
 
   [Service]
   Type=simple
@@ -129,6 +153,7 @@ File - ``/lib/systemd/system/yeti_analytics.service``::
 
   [Unit]
   Description=Yeti workers - Analytics
+  After=mongodb.service redis.service
 
   [Service]
   Type=simple
@@ -146,6 +171,7 @@ File - ``/lib/systemd/system/yeti_beat.service``::
 
   [Unit]
   Description=Yeti beat scheduler
+  After=mongodb.service redis.service
 
   [Service]
   Type=simple
