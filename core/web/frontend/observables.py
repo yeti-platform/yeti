@@ -15,7 +15,7 @@ from core.analysis import match_observables
 from core.web.helpers import get_object_or_404, get_queryset
 
 
-class ObservablesView(GenericView):
+class ObservableView(GenericView):
     klass = Observable
 
     def pre_validate(self, obj, request):

@@ -42,14 +42,14 @@
         <ul>
             <li><input class="form-control typeahead" type="text" id="graph-quick-add" placeholder="Quick Add" /></li>
             <li class="sep">&nbsp;</li>
-            <li><a class="graph-add-node" href="{{ url_for('frontend.ObservablesView:new') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Observable"><i class="fa fa-plus"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.ObservableView:new') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Observable"><i class="fa fa-plus"></i></a></li>
             <li class="sep">&nbsp;</li>
-            <li><a class="graph-add-node" href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass='regex') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Regex Indicator"><i class="flaticon-magnifying-glass40"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.IndicatorView:new_subclass', subclass='regex') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Regex Indicator"><i class="flaticon-magnifying-glass40"></i></a></li>
             <li class="sep">&nbsp;</li>
-            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='malware') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Malware"><i class="flaticon-bug24"></i></a></li>
-            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='actor') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Actor"><i class="flaticon-malware"></i></a></li>
-            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='ttp') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add TTP"><i class="flaticon-maths5"></i></a></li>
-            <li><a class="graph-add-node" href="{{ url_for('frontend.EntitiesView:new_subclass', subclass='company') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Company"><i class="flaticon-building259"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntityView:new_subclass', subclass='malware') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Malware"><i class="flaticon-bug24"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntityView:new_subclass', subclass='actor') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Actor"><i class="flaticon-malware"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntityView:new_subclass', subclass='ttp') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add TTP"><i class="flaticon-maths5"></i></a></li>
+            <li><a class="graph-add-node" href="{{ url_for('frontend.EntityView:new_subclass', subclass='company') }}" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Company"><i class="flaticon-building259"></i></a></li>
             <li class="sep">&nbsp;</li>
             <li><a id="graph-add-link" data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Add Link"><i class="fa fa-expand"></i></a></li>
             <li class="sep">&nbsp;</li>

@@ -23,9 +23,9 @@
           <div class="panel-heading">
             <h3 class="panel-title" id="yeti-node-name" data-id="{{indicator.id}}" data-class="indicator">
                 {{indicator.name}} <span class="small">{{indicator.type}}</span>
-                <a href="{{url_for('frontend.IndicatorsView:delete', id=indicator.id)}}" class="btn btn-danger btn-xs pull-right object-delete" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</a>
-                <a href="{{url_for('frontend.InvestigationsView:graph_node', id=indicator.id, klass='indicator')}}" class="btn btn-default btn-xs pull-right"><i class="flaticon-network38"></i> New Investigation</a>
-                <a href="{{url_for('frontend.IndicatorsView:edit', id=indicator.id)}}" class="btn btn-default btn-xs pull-right"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</a>
+                <a href="{{url_for('frontend.IndicatorView:delete', id=indicator.id)}}" class="btn btn-danger btn-xs pull-right object-delete" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</a>
+                <a href="{{url_for('frontend.InvestigationView:graph_node', id=indicator.id, klass='indicator')}}" class="btn btn-default btn-xs pull-right"><i class="flaticon-network38"></i> New Investigation</a>
+                <a href="{{url_for('frontend.IndicatorView:edit', id=indicator.id)}}" class="btn btn-default btn-xs pull-right"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</a>
             </h3>
           </div>
           <div class="panel-body markdown-text hide">{% if indicator.description %}{{indicator.description}}{%else%}No description provided{%endif%}</div>
@@ -93,8 +93,8 @@
             <div class="row">
               <div class="col-md-12">
                 {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="ttp"), "ttp-pivot") }}
-                <a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
-                <a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="yara", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Yara rule</a>
+                <a href="{{ url_for('frontend.IndicatorView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
+                <a href="{{ url_for('frontend.IndicatorView:new_subclass', subclass="yara", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Yara rule</a>
                 {{ macros.table_controls("ttp") }}
               </div>
             </div>
@@ -104,7 +104,7 @@
             <div class="row">
               <div class="col-md-12">
                 {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="malware"), "malware-pivot") }}
-                <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="malware", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Malware</a>
+                <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="malware", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Malware</a>
                 {{ macros.table_controls("malware") }}
               </div>
             </div>
@@ -114,7 +114,7 @@
             <div class="row">
               <div class="col-md-12">
                 {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="actor"), "actor-pivot") }}
-                <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="actor", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Actor</a>
+                <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="actor", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Actor</a>
                 {{ macros.table_controls("actors") }}
               </div>
             </div>
@@ -124,7 +124,7 @@
             <div class="row">
               <div class="col-md-12">
                 {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="indicator", node_id=indicator.id, type_filter="exploitkit"), "exploitkit-pivot") }}
-                <a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass="exploitkit", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Exploit kit</a>
+                <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="exploitkit", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Exploit kit</a>
                 {{ macros.table_controls("exploitkits") }}
               </div>
             </div>

@@ -14,7 +14,7 @@ from core.observables import Observable
 from core.web.api.api import bson_renderer
 
 
-class InvestigationsView(GenericView):
+class InvestigationView(GenericView):
 
     klass = Investigation
 

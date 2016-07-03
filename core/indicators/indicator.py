@@ -53,6 +53,6 @@ class Indicator(Node):
         i = {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description', 'location']}
         i['id'] = str(self.id)
         i['url'] = url_for("api.Indicator:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for("frontend.IndicatorsView:get", id=str(self.id), _external=True)
+        i['human_url'] = url_for("frontend.IndicatorView:get", id=str(self.id), _external=True)
         i['type'] = self.type
         return i

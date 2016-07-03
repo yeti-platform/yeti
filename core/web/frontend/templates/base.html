@@ -40,34 +40,34 @@
     <nav class="navbar navbar-inverse navbar-static-top">
       <div class="container">
         <div class="navbar-header">
-          <a class="navbar-brand" href="{{ url_for('frontend.ObservablesView:index') }}">YETI</a>
+          <a class="navbar-brand" href="{{ url_for('frontend.ObservableView:index') }}">YETI</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
 
-            <li class="{% if url_for("frontend.ObservablesView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
+            <li class="{% if url_for("frontend.ObservableView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Observables <span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('frontend.ObservablesView:index') }}">Search &amp; add</a></li>
+                <li><a href="{{ url_for('frontend.ObservableView:index') }}">Search &amp; add</a></li>
                 <li role="separator" class="divider"></li>
-                <li><a href="{{ url_for('frontend.ObservablesView:advanced') }}">Browse</a></li>
+                <li><a href="{{ url_for('frontend.ObservableView:advanced') }}">Browse</a></li>
               </ul>
             </li>
 
-            <li class="{% if url_for("frontend.IndicatorsView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
+            <li class="{% if url_for("frontend.IndicatorView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Indicators <span class="caret"></span></a>
               <ul class="dropdown-menu">
                 {% for name, label in [("regex", "Regular expressions"), ("yara", "Yara rules")] %}
-                <li><a onclick="location.reload()" href="{{ url_for('frontend.IndicatorsView:index') }}#{{name}}">{{label}}</a></li>
+                <li><a onclick="location.reload()" href="{{ url_for('frontend.IndicatorView:index') }}#{{name}}">{{label}}</a></li>
                 {% endfor %}
               </ul>
             </li>
 
-            <li class="{% if url_for("frontend.EntitiesView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
+            <li class="{% if url_for("frontend.EntityView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Entities <span class="caret"></span></a>
               <ul class="dropdown-menu">
                 {% for name, label in [("malware", "Malware"), ("ttp", "TTPs"), ("actor", "Actors"), ("campaign", "Campaigns"), ("exploit", "Exploits"), ("exploitkit", "Exploit kits"), ("company", "Companies")] %}
-                <li><a onclick="location.reload()" href="{{ url_for('frontend.EntitiesView:index') }}#{{name}}">{{label}}</a></li>
+                <li><a onclick="location.reload()" href="{{ url_for('frontend.EntityView:index') }}#{{name}}">{{label}}</a></li>
                 {% endfor %}
               </ul>
             </li>
@@ -79,20 +79,20 @@
               <ul class="dropdown-menu">
                 <li class="dropdown-header">New entity</li>
                 {% for name, label in [("malware", "Malware"), ("ttp", "TTP"), ("actor", "Actor"), ("campaign", "Campaign"), ("exploit", "Exploit"), ("exploitkit", "Exploit kit"), ("company", "Company")] %}
-                <li><a href="{{ url_for('frontend.EntitiesView:new_subclass', subclass=name) }}">{{label}}</a></li>
+                <li><a href="{{ url_for('frontend.EntityView:new_subclass', subclass=name) }}">{{label}}</a></li>
                 {% endfor %}
                 <li role="separator" class="divider"></li>
                 <li class="dropdown-header">New indicator</li>
                 {% for name, label in [("regex", "Regular expression"), ("yara", "Yara rule")] %}
-                <li><a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass=name) }}">{{label}}</a></li>
+                <li><a href="{{ url_for('frontend.IndicatorView:new_subclass', subclass=name) }}">{{label}}</a></li>
                 {% endfor %}
               </ul>
             </li>
 
             <li class="separator"></li>
 
-            <li class="{% if url_for("frontend.InvestigationsView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
-              <a href="{{ url_for('frontend.InvestigationsView:index') }}">Investigations</span></a>
+            <li class="{% if url_for("frontend.InvestigationView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
+              <a href="{{ url_for('frontend.InvestigationView:index') }}">Investigations</span></a>
             </li>
 
           </ul>

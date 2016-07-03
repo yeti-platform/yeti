@@ -8,7 +8,7 @@ Search results
 {% block breadcrumb %}
 <ol class="breadcrumb">
 	<li>YETI</li>
-	<li><a href="{{ url_for("frontend.ObservablesView:index")}}">Query</a></li>
+	<li><a href="{{ url_for("frontend.ObservableView:index")}}">Query</a></li>
   <li class="active">Results</li>
 
 </ol>
@@ -32,7 +32,7 @@ Search results
         <table class="table table-condensed">
           <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
           {% for obs in data['known']%}
-          <tr><td><a href="{{url_for("frontend.ObservablesView:get", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|join(', ', attribute='source')}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
+          <tr><td><a href="{{url_for("frontend.ObservableView:get", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|join(', ', attribute='source')}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
           {% endfor %}
         </table>
         {% endif %}
@@ -41,7 +41,7 @@ Search results
 				<table class="table table-condensed">
           <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
           {% for link, obs in data["neighbors"]%}
-          <tr><td><a href="{{url_for("frontend.ObservablesView:get", id=obs["id"])}}">{{obs["value"]}}</a> <span class="small">({% if obs["value"] == link["dst"]%}{{link["src"]}}{%else%}{{link["dst"]}}{%endif%}{%if link["description"]%} - {{link["description"]}}{%endif%})</span></td><td>{{macros.display_tags(obs["tags"])}}</td><td>{{obs["context"]|join(", ", attribute="source")}}</td><td>{{macros.display_datetime(obs["created"])}}</td></tr>
+          <tr><td><a href="{{url_for("frontend.ObservableView:get", id=obs["id"])}}">{{obs["value"]}}</a> <span class="small">({% if obs["value"] == link["dst"]%}{{link["src"]}}{%else%}{{link["dst"]}}{%endif%}{%if link["description"]%} - {{link["description"]}}{%endif%})</span></td><td>{{macros.display_tags(obs["tags"])}}</td><td>{{obs["context"]|join(", ", attribute="source")}}</td><td>{{macros.display_datetime(obs["created"])}}</td></tr>
           {% endfor %}
         </table>
         {% endif %}
@@ -68,12 +68,12 @@ Search results
 						{% if not match['observable'].id %}
 							<input type="hidden" name="observable_value" value="match['observable']['value']">
 						{% endif %}
-            <td><a href="{{ url_for('frontend.IndicatorsView:get', id=match['id']) }}">{{match['name']}}</a></td>
+            <td><a href="{{ url_for('frontend.IndicatorView:get', id=match['id']) }}">{{match['name']}}</a></td>
 						<td>{{match['observable']['value']}}</td>
 						<td>{{match['diamond']}}</td>
 						<td {%if not match['observable'].id %}class="yeti-disabled"{%endif%}>{{macros.display_tags(match['suggested_tags'])}}</td>
 						{% if match['observable']['id']%}
-							<td><a href="{{url_for('frontend.ObservablesView:get', id=match['observable']['id'])}}">{{match['observable']['id']}}</a></td>
+							<td><a href="{{url_for('frontend.ObservableView:get', id=match['observable']['id'])}}">{{match['observable']['id']}}</a></td>
 						{% else %}
 							<td>
 								<button type="button" data-value="{{match['observable']['value']}}" data-url="{{ url_for("api.Observable:new")}}" class="btn btn-default btn-xs add-observable" aria-label="Left Align">
@@ -99,7 +99,7 @@ Search results
         <table class="table table-condensed">
           <tr><th>Name</th><th>Type</th><th>
             {% for entity in data['entities']%}
-              <tr><td><a href="{{ url_for('frontend.EntitiesView:get', id=entity['id']) }}">{{entity['name']}}</a></td><td>{{entity['type']}}</td></tr>
+              <tr><td><a href="{{ url_for('frontend.EntityView:get', id=entity['id']) }}">{{entity['name']}}</a></td><td>{{entity['type']}}</td></tr>
             {% endfor%}
         </table>
       </div>

@@ -11,8 +11,8 @@
           <td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td>
           <td class="link-description">{{links[loop.index0]['description']}}</td>
         {%endif%}
-        <td class="icon-cell"><a href="{{ url_for('frontend.InvestigationsView:graph_node', id=observable['id'], klass='observable')}}"><i class="flaticon-network38"></i></a></td>
-        <td><a href="{{ url_for('frontend.ObservablesView:get', id=observable['id'])}}">{{observable['value']}}</a></td>
+        <td class="icon-cell"><a href="{{ url_for('frontend.InvestigationView:graph_node', id=observable['id'], klass='observable')}}"><i class="flaticon-network38"></i></a></td>
+        <td><a href="{{ url_for('frontend.ObservableView:get', id=observable['id'])}}">{{observable['value']}}</a></td>
         <td>{{macros.display_tags(observable['tags'])}}</td>
         <td>{{ observable['context']|join(', ', attribute='source')}}</td>
         <td>{{macros.display_datetime(observable['created'])}}</td>

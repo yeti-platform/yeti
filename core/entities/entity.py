@@ -65,5 +65,5 @@ class Entity(Node):
     def info(self):
         i = {"name": self.name, "description": self.description, "tags": self.tags}
         i['url'] = url_for("api.Entity:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for("frontend.EntitiesView:get", id=str(self.id), _external=True)
+        i['human_url'] = url_for("frontend.EntityView:get", id=str(self.id), _external=True)
         return i

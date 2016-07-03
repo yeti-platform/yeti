@@ -5,7 +5,7 @@ from core.indicators import Indicator, Regex, Yara
 from core.entities import Entity
 
 
-class IndicatorsView(GenericView):
+class IndicatorView(GenericView):
     klass = Indicator
     subclass_map = {
         'regex': Regex,

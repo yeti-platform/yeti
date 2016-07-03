@@ -6,7 +6,7 @@
   {% for type, entry in n.items() if "Observable" in type %}
     {% for link, node in entry %}
     <tr>
-      <td><a href="{{ url_for("frontend.ObservablesView:get", id=node.id)}}">{{node.value}}</a></td>
+      <td><a href="{{ url_for("frontend.ObservableView:get", id=node.id)}}">{{node.value}}</a></td>
       <td>{{link.description}}</td>
       <td>{{ node.type }}</td>
       <td>{{ macros.display_tags(node.tags) }}</td>

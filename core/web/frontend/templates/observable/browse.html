@@ -95,8 +95,8 @@ Browse
                         <div class="selection-ids"></div>
                     </div>
                     <div class="pull-right">
-                        <button class="btn btn-primary btn-sm selection-tags-action" data-action="{{url_for('frontend.ObservablesView:tag')}}"><span class="hidden"><i class="fa fa-spinner spinner"></i> </span>Add</button>
-                        <button class="btn btn-danger btn-sm selection-tags-action" data-action="{{url_for('frontend.ObservablesView:untag')}}"><span class="hidden"><i class="fa fa-spinner spinner"></i> </span>Remove</button>
+                        <button class="btn btn-primary btn-sm selection-tags-action" data-action="{{url_for('frontend.ObservableView:tag')}}"><span class="hidden"><i class="fa fa-spinner spinner"></i> </span>Add</button>
+                        <button class="btn btn-danger btn-sm selection-tags-action" data-action="{{url_for('frontend.ObservableView:untag')}}"><span class="hidden"><i class="fa fa-spinner spinner"></i> </span>Remove</button>
                     </div>
                   </form>
               </div>
@@ -112,7 +112,7 @@ Browse
             </div>
             <div id="selection-export" class="panel-collapse collapse">
               <div class="panel-body">
-                  <form action="{{url_for('frontend.ObservablesView:export')}}" method="post" class="selection-form" target="_blank">
+                  <form action="{{url_for('frontend.ObservableView:export')}}" method="post" class="selection-form" target="_blank">
                       <div class="form-group">
                         <select class="form-control yeti-select" name="template">
                           {% for template in export_templates %}

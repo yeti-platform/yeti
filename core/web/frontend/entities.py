@@ -4,7 +4,7 @@ from core.web.frontend.generic import GenericView
 from core.entities import Entity, TTP, Actor, Company, Malware, Campaign, ExploitKit, Exploit
 
 
-class EntitiesView(GenericView):
+class EntityView(GenericView):
 
     klass = Entity
     subclass_map = {

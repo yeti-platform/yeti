@@ -5,7 +5,7 @@
 {% for type, entry in n.items() if "Indicator.Regex" in type %}
   {% for link, node in entry %}
   <tr>
-    <td><a href="{{ url_for("frontend.IndicatorsView:get", id=node.id)}}">{{node.name}}</a></td>
+    <td><a href="{{ url_for("frontend.IndicatorView:get", id=node.id)}}">{{node.name}}</a></td>
     <td>{{link.description}}</td>
     <td>{{ node.description }}</td>
     <td><code>{{ node.pattern }}</code></td>
@@ -14,6 +14,6 @@
   {% endfor %}
 {%endfor%}
 </table>
-<a href="{{ url_for('frontend.IndicatorsView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
+<a href="{{ url_for('frontend.IndicatorView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
 
 {%- endmacro %}

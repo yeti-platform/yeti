@@ -8,7 +8,7 @@
 {% block breadcrumb %}
 <ol class="breadcrumb">
 	<li>YETI</li>
-  <li><a href="{{url_for('frontend.ObservablesView:index')}}">Observables</a></li>
+  <li><a href="{{url_for('frontend.ObservableView:index')}}">Observables</a></li>
 	<li class="active">{% if not obj %}New {{obj_type}}{% else %}Edit{%endif%}</li>
 </ol>
 {% endblock %}

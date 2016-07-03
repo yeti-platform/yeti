@@ -7,10 +7,10 @@ from core.investigation import Investigation
 from core.web.helpers import get_object_or_404
 from core.web.api.api import bson_renderer
 
-from core.web.frontend.entities import EntitiesView
-from core.web.frontend.observables import ObservablesView
-from core.web.frontend.indicators import IndicatorsView
-from core.web.frontend.investigations import InvestigationsView
+from core.web.frontend.entities import EntityView
+from core.web.frontend.observables import ObservableView
+from core.web.frontend.indicators import IndicatorView
+from core.web.frontend.investigations import InvestigationView
 
 from core.observables import *
 from core.entities import *
@@ -41,15 +41,15 @@ def before_request():
 
 @frontend.route("/")
 def index():
-    return redirect(url_for('frontend.ObservablesView:index'))
+    return redirect(url_for('frontend.ObservableView:index'))
 
 
 UsersView.register(frontend)
 
-EntitiesView.register(frontend)
-IndicatorsView.register(frontend)
-ObservablesView.register(frontend)
-InvestigationsView.register(frontend)
+EntityView.register(frontend)
+IndicatorView.register(frontend)
+ObservableView.register(frontend)
+InvestigationView.register(frontend)
 
 
 # Admin views
