@@ -110,8 +110,8 @@ function build_params(form) {
     'page': form.find(".crud-pagination").data('page'),
   };
 
-  if (form.find('.curd-regex').length > 0) {
-    params['regex'] = form.find('.curd-regex').prop('checked') ? true : false
+  if (form.find('.crud-regex').length > 0) {
+    params['regex'] = form.find('.crud-regex').prop('checked') ? true : false
   }
 
   form.find(".extra-param").each(function() {
