@@ -38,7 +38,7 @@ class ObservableView(GenericView):
         if request.method == "POST":
             if (request.form['type']
                 and request.form['type'] in globals()
-                and issubclass(globals()[request.form['type']], Observable)):
+                    and issubclass(globals()[request.form['type']], Observable)):
                 guessed_type = globals()[request.form['type']]
             else:
                 try:
@@ -64,7 +64,6 @@ class ObservableView(GenericView):
             else:
                 lines = request.form['bulk-text'].split('\n')
 
-
             invalid_observables = 0
             if bool(request.form.get('add', False)):
                 tags = request.form.get('tags', "").split(',')
@@ -74,7 +73,7 @@ class ObservableView(GenericView):
                         if txt:
                             if (request.form['force-type']
                                 and request.form['force-type'] in globals()
-                                and issubclass(globals()[request.form['force-type']], Observable)):
+                                    and issubclass(globals()[request.form['force-type']], Observable)):
                                 print globals()[request.form['force-type']]
                                 o = globals()[request.form['force-type']].get_or_create(value=txt)
                             else:
