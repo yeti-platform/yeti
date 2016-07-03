@@ -7,10 +7,11 @@ from flask import url_for
 from core.database import Node, TagListField, EntityListField
 from core.observables import Tag
 
+
 class Entity(Node):
 
     VERB_DICT = {
-        "Malware": { "Actor": "Used by", "TTP": "Leverages"},
+        "Malware": {"Actor": "Used by", "TTP": "Leverages"},
         "Actor": {"Malware": "Uses", "TTP": "Leverages"},
         "Company": {},
         "TTP": {"Actor": "Leveraged by", "Malware": "Observed in"},
