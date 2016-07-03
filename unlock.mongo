@@ -1,0 +1,2 @@
+use yeti;
+db.schedule_entry.update({lock: true}, {$set: {lock: false, status: "Unlocked..."}}, {multi: true});
