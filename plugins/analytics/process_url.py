@@ -28,7 +28,7 @@ class ProcessUrl(ScheduledAnalytics):
         host = re.search("://(?P<host>[^/:]+)[/:]?", url_string)
         if host:
             host = host.group('host')
-            logging.info("Extracted {} from {}".format(host, url_string))
+            logging.debug("Extracted {} from {}".format(host, url_string))
         return host
 
     @staticmethod

@@ -37,7 +37,7 @@ class ResolveHostnames(ScheduledAnalytics):
         h = Hostname.get_or_create(value=hostname.value)
 
         for rdata in results:
-            logging.info("{} resolved to {} ({} record)".format(h.value, rdata, rtype))
+            logging.debug("{} resolved to {} ({} record)".format(h.value, rdata, rtype))
             try:
                 e = Observable.add_text(rdata)
                 e.add_source("analytics")
@@ -109,13 +109,14 @@ class ParallelDnsResolver(object):
             except NXDOMAIN:
                 continue
             except Timeout:
-                logging.error("Request timed out for {}".format(hostname))
+                logging.debug("Request timed out for {}".format(hostname))
                 continue
             except NoNameservers:
                 continue
             except Exception as e:
                 import traceback
-                logging.error(traceback.print_exc())
                 logging.error("Unknown error occurred while working on {} ({})".format(hostname, rtype))
                 logging.error("\nERROR: {}".format(hostname, rtype, e))
+                logging.error(traceback.print_exc())
+
                 continue

@@ -59,17 +59,17 @@ def execute_export(export_id):
             export = Export.objects.get(id=export_id)
         except DoesNotExist:
             # no unlocked Export was found, notify and return...
-            logging.info("Export {} is already running...".format(Export.objects.get(id=export_id).name))
+            logging.debug("Export {} is already running...".format(Export.objects.get(id=export_id).name))
             return
 
     try:
         if export.enabled:
-            logging.info("Running export {}".format(export.name))
+            logging.debug("Running export {}".format(export.name))
             export.update_status("Exporting...")
             export.hash_md5 = export.execute()
             export.update_status("OK")
         else:
-            logging.error("Export {} has been disabled".format(export.name))
+            logging.debug("Export {} has been disabled".format(export.name))
     except Exception as e:
         msg = "ERROR executing export: {}".format(e)
         logging.error(msg)

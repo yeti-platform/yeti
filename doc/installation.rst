@@ -21,10 +21,10 @@ Start the web UI (will spawn a HTTP server on ``http://localhost:5000``)::
 
 This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well::
 
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=INFO -c 4 -Q feeds -n feeds --purge
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=INFO -c 4 -Q oneshot -n oneshot --purge
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=INFO -Ofair -c 10 --purge
-  $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=INFO
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 4 -Q feeds -n feeds --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 4 -Q oneshot -n oneshot --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 10 --purge
+  $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 
 
 

@@ -15,7 +15,7 @@ from mongoengine import DoesNotExist
 def each(module_id, observable_json):
     o = Observable.from_json(observable_json)
     mod = loaded_modules[module_id]
-    logging.warning("Launching {} on {}".format(mod.__class__.__name__, o))
+    logging.debug("Launching {} on {}".format(mod.__class__.__name__, o))
     mod.each(o)
     o.analysis_done(mod.__class__.__name__)
 
@@ -31,16 +31,16 @@ def schedule(id):
             a = ScheduledAnalytics.objects.get(id=id)
         except DoesNotExist:
             # no unlocked ScheduledAnalytics was found, notify and return...
-            logging.info("Task {} is already running...".format(ScheduledAnalytics.objects.get(id=id).name))
+            logging.debug("Task {} is already running...".format(ScheduledAnalytics.objects.get(id=id).name))
             return
 
     if a.enabled:  # check if Analytics is enabled
-        logging.warning("Running analytics {}".format(a.name))
+        logging.debug("Running analytics {}".format(a.name))
         a.update_status("Running...")
         a.analyze_outdated()
         a.last_run = datetime.utcnow()
     else:
-        logging.error("Analytics {} is disabled".format(a.name))
+        logging.debug("Analytics {} is disabled".format(a.name))
 
     if a.lock:  # release lock if it was set
         a.lock = False
@@ -53,7 +53,7 @@ def schedule(id):
 def single(results_id):
     results = AnalyticsResults.objects.get(id=results_id)
     analytics = results.analytics
-    logging.warning("Running one-shot query {} on {}".format(analytics.__class__.__name__, results.observable))
+    logging.debug("Running one-shot query {} on {}".format(analytics.__class__.__name__, results.observable))
     results.update(status="running")
     try:
         links = analytics.analyze(results.observable, results)

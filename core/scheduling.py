@@ -59,7 +59,7 @@ class Scheduler(BaseScheduler):
     def __init__(self, *args, **kwargs):
         self._schedule = {}
         self._loaded_entries = {}
-        logging.info("Scheduler started")
+        logging.debug("Scheduler started")
         self.app = celery_app
         self.load_entries(ScheduleEntry, self.SUBDIRS)
         self.load_entries(OneShotEntry, self.SUBDIRS)
@@ -95,7 +95,7 @@ class Scheduler(BaseScheduler):
                             self._loaded_entries[str(entry.id)] = entry
 
     def setup_schedule(self):
-        logging.info("Setting up scheduler")
+        logging.debug("Setting up scheduler")
         for entry_id, entry in self._loaded_entries.iteritems():
             if isinstance(entry, ScheduleEntry):
                 self._schedule[entry_id] = BaseScheduleEntry(name=entry.__class__.__name__,

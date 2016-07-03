@@ -18,12 +18,12 @@ def update_feed(feed_id):
     f = Feed.objects.get(id=feed_id)
     try:
         if f.enabled:
-            logging.info("Running {} (ID: {})".format(f.name, f.id))
+            logging.debug("Running {} (ID: {})".format(f.name, f.id))
             f.update_status("Updating...")
             f.update()
             f.update_status("OK")
         else:
-            logging.error("Feed {} has been disabled".format(f.name))
+            logging.debug("Feed {} has been disabled".format(f.name))
     except Exception as e:
         import traceback
         logging.error(traceback.format_exc())
