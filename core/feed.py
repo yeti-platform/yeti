@@ -8,6 +8,7 @@ from StringIO import StringIO
 
 from lxml import etree
 from mongoengine import StringField
+from mongoengine import DoesNotExist
 
 from core.config.celeryctl import celery_app
 from core.scheduling import ScheduleEntry
@@ -15,6 +16,18 @@ from core.scheduling import ScheduleEntry
 
 @celery_app.task
 def update_feed(feed_id):
+
+    try:
+        a = Feed.objects.get(id=feed_id, lock=None)  # check if we have implemented locking mechanisms
+    except DoesNotExist:
+        try:
+            Feed.objects.get(id=feed_id, lock=False).modify(lock=True)  # get object and change lock
+            a = Feed.objects.get(id=feed_id)
+        except DoesNotExist:
+            # no unlocked Feed was found, notify and return...
+            logging.debug("Feed {} is already running...".format(Feed.objects.get(id=feed_id).name))
+            return False
+
     f = Feed.objects.get(id=feed_id)
     try:
         if f.enabled:
@@ -33,6 +46,8 @@ def update_feed(feed_id):
         return False
 
     f.last_run = datetime.utcnow()
+    if f.lock:  # release lock if it was set
+        f.lock = False
     f.save()
     return True
 
