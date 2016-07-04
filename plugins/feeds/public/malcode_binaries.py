@@ -40,3 +40,5 @@ class MalcodeBinaries(Feed):
                 sys.stderr.write('Unicode error: %s' % dict['description'])
             except ObservableValidationError as e:
                 logging.error(e)
+            except Exception as e:
+                logging.error("UNKNOWN EXCEPTION: {}".format(e))
