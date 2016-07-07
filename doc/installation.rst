@@ -21,17 +21,17 @@ Start the web UI (will spawn a HTTP server on ``http://localhost:5000``)::
 
 This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well::
 
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 4 -Q feeds -n feeds --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 8 -Q feeds -n feeds --purge
   $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 4 -Q oneshot -n oneshot --purge
   $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 10 --purge
   $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 
 
 
-Daemonisation
--------------
+Production use
+--------------
 
-For production use, it may be better to daemonize Yeti. You can use the following ``systemd`` scripts.
+For production use, it may be better to daemonize Yeti and tweak redis for performance.
 
 Start off with:
 
@@ -42,6 +42,10 @@ systemd protips::
   $ sudo service yeti_web start|stop|restart
   or
   $ sudo systemctl start|status|stop yeti_web
+
+To enable the systemd scripts once you've installed them::
+
+  sudo systemctl enable yeti_web
 
 
 Some optimizations for redis (taken from [here](https://www.techandme.se/performance-tips-for-redis-cache-server/)):
@@ -141,7 +145,7 @@ File - ``/lib/systemd/system/yeti_feeds.service``::
   [Service]
   Type=simple
   User=user
-  ExecStart=/bin/bash -c "source /home/user/env-yeti/bin/activate; cd /home/user/yeti; celery -A core.config.celeryctl.celery_app worker -c 4 -Q feeds -n feeds --purge"
+  ExecStart=/bin/bash -c "source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q feeds -n feeds --purge
 
   [Install]
   WantedBy=multi-user.target
