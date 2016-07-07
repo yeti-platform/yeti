@@ -313,8 +313,8 @@ class Node(YetiDocument):
     def neighbors_advanced(self, klass, filter, regex, ignorecase, page, rng):
         from core.web.helpers import get_queryset
 
-        out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page * rng)]
-        inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference().limit(rng).skip(page * rng)]
+        out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference()]
+        inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference()]
 
         all_links = {ref.id: link for link, ref in inc + out}
         filter['id__in'] = all_links.keys()
