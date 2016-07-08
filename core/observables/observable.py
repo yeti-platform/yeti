@@ -30,6 +30,7 @@ class Observable(Node):
         tags: An array of :class:`core.observables.tag.ObservableTag` objects
         last_analyses: An array of JSON objects indicating the last analysis time for a particular analytics
         created: Creation date
+        last_tagged: Date when a given observable was last tagged
         exclude_fields: Fields to be excluded from automatic form creation
     """
 
@@ -43,8 +44,9 @@ class Observable(Node):
     last_analyses = DictField(verbose_name="Last analyses")
 
     created = DateTimeField(default=datetime.utcnow)
+    last_tagged = DateTimeField(default=None)
 
-    exclude_fields = ['sources', 'context', 'last_analyses', 'created', 'attached_files']
+    exclude_fields = ['sources', 'context', 'last_analyses', 'created', 'attached_files', 'last_tagged']
 
     meta = {
         "allow_inheritance": True,
@@ -230,6 +232,7 @@ class Observable(Node):
             A fresh Observable instance as reloaded from the database.
 
         """
+
         new_tags = iterify(new_tags)
 
         if strict:
@@ -237,8 +240,11 @@ class Observable(Node):
             for tag in remove:
                 self.modify(pull__tags__name=tag)
 
+        tagged = False
         for new_tag in new_tags:
             if new_tag.strip() != '':
+                tagged = True
+
                 new_tag = Tag(name=new_tag)
                 new_tag.clean()
 
@@ -261,7 +267,22 @@ class Observable(Node):
                         self.modify(push__tags=ObservableTag(name=tag.name, expiration=expiration))
                         tag.modify(inc__count=1)
 
+        if tagged:
+            self.update(set__last_tagged=datetime.utcnow())
+
         return self.reload()
+
+    def get_last_tagged(self):
+        if not self.last_tagged:
+            last = datetime(1970, 1, 1)
+            for tag in self.tags:
+                if tag.last_seen > last:
+                    last = tag.last_seen
+            self.update(set__last_tagged=last)
+            return last
+        else:
+            return self.last_tagged
+
 
     def expire_tags(self):
         for tag in self.tags:
