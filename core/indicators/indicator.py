@@ -44,7 +44,7 @@ class Indicator(Node):
         raise NotImplementedError("match() method must be implemented in Indicator subclasses")
 
     def action(self, target, source, verb="Indicates"):
-        self.link_to(target, verb, source)
+        self.active_link_to(target, verb, source)
 
     def generate_tags(self):
         return [self.diamond.lower(), self.name.lower()]

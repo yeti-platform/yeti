@@ -57,7 +57,7 @@ class Entity(Node):
                 verb = "Related {}".format(self.__class__.__name__)
             else:
                 verb = Entity.VERB_DICT.get(self.__class__.__name__, {}).get(target.__class__.__name__, "Relates to")
-        self.link_to(target, verb, source)
+        self.active_link_to(target, verb, source)
 
     def generate_tags(self):
         return []
