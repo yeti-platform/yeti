@@ -260,7 +260,7 @@ class Observable(Node):
 
                 # search for related entities and link them
                 for e in Entity.objects(tags__in=[tag.name]):
-                    self.active_link_to(e, 'Tagged', 'tags', clean_old=True)
+                    self.active_link_to(e, 'Tagged', 'tags', clean_old=False)
 
                 for tag in extra_tags:
                     if not self.modify({"tags__name": tag.name}, set__tags__S__fresh=True, set__tags__S__last_seen=datetime.utcnow()):
