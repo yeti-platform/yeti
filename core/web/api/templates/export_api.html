@@ -13,7 +13,7 @@
     <td>{{ macros.display_tags(export["ignore_tags"]) }}</td>
     <td>{{ macros.display_tags(export["include_tags"]) }}</td>
     <td>{{ macros.display_tags(export["exclude_tags"]) }}</td>
-    <td>{{ export["template"] }}</td>
+    <td>{{ export["template"]["name"] }}</td>
     <td class="status">{{ export["status"] or "N/A"}}</td>
     <td><span data-url="{{ url_for('api.Export:toggle', id=export["id"]) }}" class="export-toggle glyphicon glyphicon-{{ "ok" if export["enabled"] else "remove" }}"></span></td>
     <td><span data-url="{{ url_for('api.Export:refresh', id=export["id"]) }}" class="export-refresh glyphicon glyphicon-refresh"></span></td>
