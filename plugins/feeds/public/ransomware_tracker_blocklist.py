@@ -57,7 +57,7 @@ class RansomwareTracker(Feed):
                 if ip != hostname:
                     try:
                         i = Ip.get_or_create(value=ip)
-                        i.active_link_to(hostname, "First seen IP", self.name)
+                        i.active_link_to(hostname, "First seen IP", self.name, clean_old=False)
                     except ObservableValidationError as e:
                         logging.error("Invalid Observable: {}".format(e))
 
