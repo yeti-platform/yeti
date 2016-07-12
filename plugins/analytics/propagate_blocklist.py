@@ -10,7 +10,7 @@ class PropagateBlocklist(ScheduledAnalytics):
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "PropagateBlocklist",
-        "description": "Expires tags in observables",
+        "description": "Propagates blocklist from URLs to hostnames",
     }
 
     ACTS_ON = 'Url'  # act on Urls only
