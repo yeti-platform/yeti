@@ -42,6 +42,9 @@ def update_feed(feed_id):
         msg = "ERROR updating feed: {}".format(e)
         logging.error(msg)
         f.update_status(msg)
+        if f.lock:  # release lock if it was set
+            f.lock = False
+        f.save()
         return False
 
     f.last_run = datetime.utcnow()
