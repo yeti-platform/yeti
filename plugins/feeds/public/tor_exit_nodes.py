@@ -44,7 +44,6 @@ class TorExitNodes(Feed):
         context['router-port'] = fields[2]
         context['directory-port'] = fields[3]
         context['flags'] = fields[4]
-        context['uptime'] = fields[5]
         context['version'] = fields[6]
         context['contactinfo'] = fields[7]
 
