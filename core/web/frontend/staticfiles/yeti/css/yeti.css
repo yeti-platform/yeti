@@ -690,3 +690,14 @@ td input.inline {
 #import_view {
     height: calc(100vh - 140px);
 }
+
+#import_observables {
+    height: calc(100vh - 140px);
+    overflow: auto;
+}
+
+#import_observables ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}

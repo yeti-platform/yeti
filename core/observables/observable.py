@@ -100,7 +100,7 @@ class Observable(Node):
 
         results = dict()
         for t in [Url, Ip, Email, Hostname, Hash]:
-            results.update(t.extract(string))
+            results[t.__name__] = t.extract(string)
 
         return results
 

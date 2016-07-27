@@ -103,7 +103,7 @@ class ImportMethod(OneShotEntry):
         results.investigation.import_document = target
         results.investigation.save()
         results.save()
-        celery_app.send_task("core.investigation.import_task", [str(results.id), target.filepath()])
+        celery_app.send_task("core.investigation.import_task", [str(results.id), target.filepath])
 
         return results
 

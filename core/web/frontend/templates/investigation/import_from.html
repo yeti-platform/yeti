@@ -15,13 +15,26 @@ Investigations - Import
 {% block main %}
     <div class="row" id="import_view">
         <div class="col-md-7 pdfviewer">
-            <iframe src="{{ url_for('frontend.static', filename='pdf/web/viewer.html') }}">
+            <iframe id="pdfviewer" src="{{ url_for('frontend.static', filename='pdf/web/viewer.html', file=url_for('api.Files:get', id=investigation.import_document.id)) }}">
             </iframe>
         </div>
-        <!-- <div class="col-md-5">
-            {% for match in observables %}
-                <div>{{match}} ({{observables[match].value}})</div>
+        <div class="col-md-5" id="import_observables">
+            {% for match_type in observables %}
+                <div>
+                    <h4>{{match_type}}</h4>
+                    {% for match in observables[match_type] %}
+                        <ul>
+                            <li>
+                                <span class="hide match">{{match}}</span>
+                                <div class="import-node-value" data-type="{{match_type}}">{{observables[match_type][match].value}}</div>
+                            </li>
+                        </ul>
+                    {% endfor %}
+                </div>
             {% endfor %}
-        </div> -->
+            <button id="import_send" class="btn btn-primary">Import</button>
+        </div>
     </div>
+
+    <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/import.js") }}" charset="utf-8"></script>
 {% endblock %}

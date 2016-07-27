@@ -17,11 +17,51 @@ function fetchImportResults(url) {
   );
 }
 
-$(function () {
-  var import_results = $('#investigation-import');
-  if (import_results.length) {
-    var url = import_results.data('url');
+function highlight(term) {
+    var win = document.getElementById('pdfviewer').contentWindow;
 
-    fetchImportResults(url);
-  }
+    win.PDFViewerApplication.findBar.open();
+    $(win.PDFViewerApplication.findBar.findField).val(term);
+
+    var event = document.createEvent('CustomEvent');
+    event.initCustomEvent('findagain', true, true, {
+        query: term,
+        caseSensitive: $("#findMatchCase").prop('checked'),
+        highlightAll: $("#findHighlightAll").prop('checked', true),
+        findPrevious: undefined
+    });
+
+    win.PDFViewerApplication.findBar.dispatchEvent('');
+
+    return event;
+}
+
+$(function () {
+    $('#import_observables li').click(function (e) {
+        var observable_div = $(this);
+        match = observable_div.find('.match').text();
+        highlight(match);
+    });
+
+    $('#import_send').click(function (e) {
+      e.preventDefault();
+      var nodes = [];
+
+      $('.import-node-value').each(function(i) {
+        var node = $(this);
+        nodes.push({
+            'type': node.data('type'),
+            'value': node.text(),
+        });
+      });
+
+      console.log(nodes);
+    });
+
+    var import_results = $('#investigation-import');
+    if (import_results.length) {
+      var url = import_results.data('url');
+
+      fetchImportResults(url);
+    }
 });

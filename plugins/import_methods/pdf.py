@@ -2,6 +2,8 @@ from cStringIO import StringIO
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import TextConverter
 from pdfminer.pdfpage import PDFPage
+from pdfminer.layout import LAParams
+
 
 from core.investigation import ImportMethod
 
@@ -18,12 +20,20 @@ class ImportPDF(ImportMethod):
         buff = StringIO()
         fp = open(filepath, 'rb')
 
+        laparams = LAParams()
+        laparams.all_texts = True
         rsrcmgr = PDFResourceManager()
-        device = TextConverter(rsrcmgr, buff)
-        interpreter = PDFPageInterpreter(rsrcmgr, device)
+        pagenos = set()
 
-        for page in PDFPage.get_pages(fp, set()):
+        page_num = 0
+        for page in PDFPage.get_pages(fp, pagenos, check_extractable=True):
+            page_num += 1
+
+            device = TextConverter(rsrcmgr, buff, codec='utf-8', laparams=laparams)
+            interpreter = PDFPageInterpreter(rsrcmgr, device)
             interpreter.process_page(page)
+
+            buff.write("\n")
 
         results.investigation.update(import_text=buff.getvalue())
 

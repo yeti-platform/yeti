@@ -22,7 +22,6 @@ class Hostname(Observable):
     def is_valid(cls, match):
         # Check that the domain is not preceded or followed by a '/'
         # This ensures that we do not match URLs
-        print match.group('search')
         if match.group('pre') != '/' and match.group('post') != '/':
             # Check that the domain is valid (by checking TLD)
             value = refang(match.group('search'))
@@ -33,7 +32,6 @@ class Hostname(Observable):
         return False
 
     def normalize(self):
-        print self.value
         self.value = refang(self.value.lower())
         try:
             self.idna = unicode(idna.encode(self.value))

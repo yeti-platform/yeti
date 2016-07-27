@@ -9,7 +9,7 @@ from bson.json_util import loads
 from core.helpers import iterify
 from core import investigation
 from core.web.api.crud import CrudApi, CrudSearchApi
-from core.observables import Observable
+from core.observables import *
 from core.investigation import ImportResults
 from core.entities import Entity
 from core.web.api.api import render
@@ -72,3 +72,17 @@ class Investigation(CrudApi):
         results = get_object_or_404(ImportResults, id=id)
 
         return render(results.to_mongo())
+
+    @route('/bulk_add/<string:id>', methods=['POST'])
+    def bulk_add(self, id):
+        i = get_object_or_404(self.objectmanager, id=id)
+        data = loads(request.data)
+
+        for node in data['nodes']:
+            if node['type'] in globals() and issubclass(globals()[node['type']], Observable):
+                _type = globals()[node['type']]
+
+            observable = _type.get_or_create(value=node['value'])
+
+
+        return render("ok")

@@ -14,9 +14,9 @@ Investigations - Import
 
 {% block main %}
 {% if import_results %}
-    <div id="investigation-import" data-url="{{url_for('api.Investigation:import_results', id=import_results.id)}}" data-next="{{url_for('frontend.InvestigationsView:import_from', id=import_results.investigation.id)}}">Please wait for the import process to finish ...</div>
+    <div id="investigation-import" data-url="{{url_for('api.Investigation:import_results', id=import_results.id)}}" data-next="{{url_for('frontend.InvestigationView:import_from', id=import_results.investigation.id)}}">Please wait for the import process to finish ...</div>
 {% else %}
-    <form method="post" action="{{url_for('frontend.InvestigationsView:inv_import')}}" enctype="multipart/form-data">
+    <form method="post" action="{{url_for('frontend.InvestigationView:inv_import')}}" enctype="multipart/form-data">
         <input type=file name="file" />
         <input type="submit" value="import" />
     </form>
