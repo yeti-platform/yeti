@@ -38,5 +38,6 @@ class ProcessUrl(ScheduledAnalytics):
             h = Observable.guess_type(host).get_or_create(value=host)
             h.add_source("analytics")
             url.active_link_to(h, "hostname", "ProcessUrl", clean_old=False)
+            return h
         except ObservableValidationError:
             logging.error("An error occurred when trying to add {} to the database".format(host))
