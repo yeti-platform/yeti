@@ -38,6 +38,10 @@ class TagLogic(ScheduledAnalytics):
 
         self.CUSTOM_FILTER = exists & (not_in_existing | must_replace)
 
+    def bulk(self, observables):
+        for o in observables:
+            self.each(o)
+
     @staticmethod
     def each(obj):
 

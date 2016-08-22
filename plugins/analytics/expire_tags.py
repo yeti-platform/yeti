@@ -20,6 +20,10 @@ class ExpireTags(ScheduledAnalytics):
 
     EXPIRATION = timedelta(days=1)
 
+    def bulk(self, observables):
+        for o in observables:
+            self.each(o)
+
     @staticmethod
     def each(obj):
         obj.expire_tags()
