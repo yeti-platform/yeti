@@ -37,16 +37,20 @@ def schedule(id):
     if a.enabled:  # check if Analytics is enabled
         logging.debug("Running analytics {}".format(a.name))
         a.update_status("Running...")
-        a.analyze_outdated()
-        a.last_run = datetime.utcnow()
+        try:
+            a.analyze_outdated()
+            a.last_run = datetime.utcnow()
+            a.update_status("OK")
+        except Exception as e:
+            logging.error("Error running Analytics {}: {}".format(a.name, e))
+            a.update_status("ERROR")
+
     else:
         logging.debug("Analytics {} is disabled".format(a.name))
 
     if a.lock:  # release lock if it was set
         a.lock = False
-
     a.save()
-    a.update_status("OK")
 
 
 @celery_app.task
