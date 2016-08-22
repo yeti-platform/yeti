@@ -286,7 +286,7 @@ class Observable(Node):
 
     def expire_tags(self):
         for tag in self.tags:
-            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow().replace(tzinfo=pytz.UTC):
+            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow():
                 tag.fresh = False
         return self.save()
 
