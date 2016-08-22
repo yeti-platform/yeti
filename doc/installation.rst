@@ -150,6 +150,24 @@ File - ``/lib/systemd/system/yeti_feeds.service``::
   [Install]
   WantedBy=multi-user.target
 
+Exports
+^^^^^^^
+
+File - ``/lib/systemd/system/yeti_feeds.service``::
+
+  [Unit]
+  Description=Yeti workers - Feeds
+  After=mongodb.service redis.service
+
+  [Service]
+  Type=simple
+  User=user
+  ExecStart=/bin/bash -c "source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q exports -n exports --purge
+
+  [Install]
+  WantedBy=multi-user.target
+
+
 Analytics
 ^^^^^^^^^
 
@@ -162,7 +180,7 @@ File - ``/lib/systemd/system/yeti_analytics.service``::
   [Service]
   Type=simple
   User=user
-  ExecStart=/bin/bash -c "source /home/user/env-yeti/bin/activate; cd /home/user/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 10 --purge"
+  ExecStart=/bin/bash -c "source /home/user/env-yeti/bin/activate; cd /home/user/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 10 --purge -Q analytics -n analytics"
 
   [Install]
   WantedBy=multi-user.target

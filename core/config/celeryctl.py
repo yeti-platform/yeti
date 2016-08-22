@@ -15,7 +15,10 @@ class CeleryConfig:
 
     CELERY_ROUTES = {
         'core.analytics_tasks.single': {'queue': 'oneshot'},
-        'core.feed.update_feed': {'queue': 'feeds'}
+        'core.feed.update_feed': {'queue': 'feeds'},
+        'core.exports.export.execute_export': {'queue': 'exports'},
+        'core.analytics_tasks.each': {'queue': 'analytics'},
+        'core.analytics_tasks.schedule': {'queue': 'analytics'},
     }
 
 celery_app.config_from_object(CeleryConfig)
