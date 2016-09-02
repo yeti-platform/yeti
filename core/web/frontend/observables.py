@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
 import json
+import logging
+
 from flask import request, render_template, send_file, flash
 from flask_classy import route
 from uuid import uuid4
@@ -80,8 +82,8 @@ class ObservableView(GenericView):
                                 o = Observable.add_text(txt)
                             o.tag(tags)
                             obs[o.value] = o
-                    except ObservableValidationError as e:
-                        print "Error validating {}: {}".format(txt, e)
+                    except (ObservableValidationError, ValueError) as e:
+                        logging.error("Error validating {}: {}".format(txt, e))
                         invalid_observables += 1
                         continue
             else:
