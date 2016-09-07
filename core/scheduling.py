@@ -92,13 +92,13 @@ class Scheduler(BaseScheduler):
                                 entry = obj(**obj.default_values)
                                 entry.save()
 
-                            self._loaded_entries[str(entry.id)] = entry
+                            self._loaded_entries[entry.name] = entry
 
     def setup_schedule(self):
         logging.debug("Setting up scheduler")
-        for entry_id, entry in self._loaded_entries.iteritems():
+        for entry_name, entry in self._loaded_entries.iteritems():
             if isinstance(entry, ScheduleEntry):
-                self._schedule[entry_id] = BaseScheduleEntry(name=entry.__class__.__name__,
+                self._schedule[entry_name] = BaseScheduleEntry(name=entry_name,
                                                              app=self.app,
                                                              task=entry.SCHEDULED_TASK,
                                                              schedule=entry.frequency,
