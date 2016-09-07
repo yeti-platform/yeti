@@ -77,7 +77,7 @@ class Scheduler(BaseScheduler):
 
         for sched in ScheduleEntry.objects.all():
             if sched.enabled:
-                self._loaded_entries[str(sched.id)] = sched
+                self._loaded_entries[sched.name] = sched
 
         for subdir in subdirs:
             modules_dir = os.path.join(base_dir, subdir)
