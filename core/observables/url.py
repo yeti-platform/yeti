@@ -38,6 +38,9 @@ class Url(Observable):
             self.parse()
         except urlnorm.InvalidUrl:
             raise ObservableValidationError("Invalid URL: {}".format(self.value))
+        except UnicodeDecodeError:
+            raise ObservableValidationError("Invalid URL (UTF-8 decode error): {}".format(self.value))
+
 
     def parse(self):
         parsed = urlparse(self.value)
