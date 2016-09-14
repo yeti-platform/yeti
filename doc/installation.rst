@@ -21,9 +21,9 @@ Start the web UI (will spawn a HTTP server on ``http://localhost:5000``)::
 
 This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well::
 
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 8 -Q feeds -n feeds --purge
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 4 -Q oneshot -n oneshot --purge
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 10 --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 -Q feeds -n feeds --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 2 -Q oneshot -n oneshot --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 --purge
   $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 
 
@@ -58,9 +58,9 @@ Add the following lines in `/etc/sysctl.conf`
 Add the following lines in `/etc/rc.local`
 
   # disable transparent huge pages (redis tweak)
-  echo never > /sys/kernel/mm/transparent_hugepage/enabled
+  See here for details: https://docs.mongodb.com/manual/tutorial/transparent-huge-pages/
   # increase max connections
-  echo 512 > /proc/sys/net/core/somaxconn or (sysctl -w net.core.somaxconn=65535)
+  echo 65535 > /proc/sys/net/core/somaxconn or (sysctl -w net.core.somaxconn=65535)
   exit 0
 
 
@@ -92,7 +92,7 @@ Or if you want to use using UWSGI (taken from http://uwsgi-docs.readthedocs.io/e
   [Service]
   Type=simple
   User=user
-  ExecStart=/bin/bach -c "source /home/user/env-yeti/bin/activate; cd /home/user/yeti; uwsgi --socket 127.0.0.1:8000 -w yeti --callable webapp"
+  ExecStart=/bin/bach -c "source /home/user/env-yeti/bin/activate; cd /home/user/yeti; uwsgi --socket 127.0.0.1:8000 -w yeti --callable webapp --processes 4 --threads 2 --stats 127.0.0.1:9191"
   Restart=always
   KillSignal=SIGQUIT
   Type=notify
