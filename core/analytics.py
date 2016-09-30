@@ -31,7 +31,7 @@ class ScheduledAnalytics(ScheduleEntry):
     def bulk(self, elts):
         """Bulk analytics. May be overridden in case the module needs to batch-analyze observables"""
         for e in elts:
-            celery_app.send_task("core.analytics_tasks.each", [str(self.id), e.to_json()])
+            celery_app.send_task("core.analytics_tasks.each", [str(self.name), e.to_json()])
 
     @classmethod
     def each(cls, observable):

@@ -12,9 +12,9 @@ from core.analytics import ScheduledAnalytics, AnalyticsResults
 from mongoengine import DoesNotExist
 
 @celery_app.task
-def each(module_id, observable_json):
+def each(module_name, observable_json):
     o = Observable.from_json(observable_json)
-    mod = loaded_modules[module_id]
+    mod = loaded_modules[module_name]
     logging.debug("Launching {} on {}".format(mod.__class__.__name__, o))
     mod.each(o)
     o.analysis_done(mod.__class__.__name__)
