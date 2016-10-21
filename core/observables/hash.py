@@ -30,5 +30,7 @@ class Hash(Observable):
         h = self.value.lower()
         if not re.match(r'^[a-f0-9]+$', h):
             raise ObservableValidationError("{} is not a valid hex hash".format(self.value))
+        self.family = self.HASH_LENGTHS.get((len(h) / 2) * 8)
+        if self.family is None:
+            raise ObservableValidationError("{} is not a valid hash (md5, sha1, sha224, sha256, sha384, sha512)".format(self.value))
         self.value = h
-        self.family = self.HASH_LENGTHS.get((len(h) / 2) * 8, "Unknown")
