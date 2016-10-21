@@ -18,6 +18,8 @@ class Hostname(Observable):
     domain = BooleanField()
     idna = StringField()
 
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("domain", "Domain?"), ("idna", "IDNA")]
+
     def clean(self):
         """Performs some normalization on hostnames before saving to the db"""
         try:

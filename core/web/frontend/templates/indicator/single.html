@@ -4,7 +4,6 @@
 {% import "macros/actors.html" as actors %}
 {% import "macros/ttps.html" as ttps %}
 {% import "macros/observables.html" as observables %}
-{% import "macros/observables.html" as observables %}
 {% import "macros/filterlist.html" as filterlist %}
 
 {% block title %}
@@ -39,9 +38,12 @@
           </div>
           <div class="panel-body">
             <table class="table table-condensed main-table">
-              {% for key, value in indicator.info().items() %}
-              {% if key not in ["context", "value", "last_analyses", "pattern", "description"] %}
-                <tr><th>{{key}}</th><td>{{macros.display_yeti(indicator, key)}}</td></tr>
+              {% for key, value in indicator.DISPLAY_FIELDS %}
+              {% if key not in ["pattern", "name", "value", "last_analyses", "description"] %}
+                {% set output = macros.display_yeti(indicator, key) %}
+                {% if output %}
+                  <tr><th>{{value}}</th><td>{{macros.display_yeti(indicator, key)}}</td></tr>
+                {% endif %}
               {% endif %}
               {% endfor %}
             </table>

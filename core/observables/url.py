@@ -27,6 +27,15 @@ class Url(Observable):
 
     parsed_url = DictField()
 
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [
+        ("parsed_url__netloc", "Host"),
+        ("parsed_url__params", "Parameters"),
+        ("parsed_url__path", "Path"),
+        ("parsed_url__query", "Query"),
+        ("parsed_url__scheme", "Scheme"),
+        ("parsed_url__port", "Port"),
+    ]
+
     def clean(self):
         """Ensures that URLs are canonized before saving"""
         self.value = refang(self.value.strip())

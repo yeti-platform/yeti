@@ -21,6 +21,8 @@ class Hash(Observable):
         512: 'sha512',
     }
 
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("family", "Family")]
+
     @staticmethod
     def check_type(txt):
         if re.match(r'^[a-f0-9]+$', txt.lower()):

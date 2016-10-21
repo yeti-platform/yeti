@@ -12,6 +12,8 @@ class Bitcoin(Observable):
 
     format = StringField()
 
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("format", "Format")]
+
     @staticmethod
     def check_type(txt):
         if re.match(r'^(1|3)[\w]{25,34}$', txt) and (re.search("[A-Za-z]", txt) and re.search("[0-9]", txt)):

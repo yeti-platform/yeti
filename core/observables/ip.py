@@ -17,6 +17,8 @@ class Ip(Observable):
 
     exclude_fields = Observable.exclude_fields + ['version']
 
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("version", "IP version")]
+
     IPV4_IGNORE_RANGE = iptools.IpRangeList(iptools.ipv4.BENCHMARK_TESTS,
                                             iptools.ipv4.BROADCAST,
                                             iptools.ipv4.DUAL_STACK_LITE,

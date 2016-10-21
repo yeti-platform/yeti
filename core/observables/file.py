@@ -12,6 +12,8 @@ class File(Observable):
     hashes = ListField(ReferenceField(Hash), verbose_name="Hashes")
     body = FileField(verbose_name="File content")
 
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("mime_type", "MIME Type")]
+
     @staticmethod
     def check_type(txt):
         return True

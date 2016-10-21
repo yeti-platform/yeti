@@ -1,25 +1,25 @@
 {% macro display_tags(tags) -%}
-  {% if tags is string %}
+  {% if tags is string -%}
     <span data-tag="{{tags["name"] or tags}}" class="yeti-tag tag-{{tags["name"] or tags}} label label-default {% if not tags["fresh"]%} yeti-expired {%endif%}">{{tags["name"] or tags}}</span>
-  {% elif tags %}
-    {% for tag in tags if tag%}<span data-tag="{{tag["name"] or tag}}" class="yeti-tag tag-{{tag["name"] or tag}} label label-default {% if not tag["fresh"]%} yeti-expired {%endif%}">{{tag["name"] or tag}}</span>{% endfor %}
-  {% endif %}
+  {% elif tags -%}
+    {% for tag in tags if tag -%}<span data-tag="{{tag["name"] or tag}}" class="yeti-tag tag-{{tag["name"] or tag}} label label-default {% if not tag["fresh"]%} yeti-expired {%endif%}">{{tag["name"] or tag}}</span>{% endfor %}
+  {% endif -%}
 {%- endmacro %}
 
 {% macro display_last_analyses(last_analyses) -%}
-  {% for last in last_analyses %}
-  {{last}} <small>({{display_datetime(last_analyses[last])}})</small>
-  {% endfor %}
+  {% for last in last_analyses -%}
+  {{last}} <small>({{display_datetime(last_analyses[last]) -}})</small>
+  {% endfor -%}
 {%- endmacro %}
 
 {% macro display_datetime(date) -%}
-  {% if date %}
-    {{ date.strftime("%Y-%m-%d %H:%M") }}
-  {% endif%}
+  {% if date -%}
+    {{ date.strftime("%Y-%m-%d %H:%M") -}}
+  {% endif -%}
 {%- endmacro %}
 
 {% macro display_date(date) -%}
-  {{ date.strftime("%Y-%m-%d") }}
+  {{ date.strftime("%Y-%m-%d") -}}
 {%- endmacro %}
 
 {% macro display_context(context) -%}
@@ -45,23 +45,27 @@
 {%- endmacro%}
 
 {% macro display_yeti(obj, key) -%}
-  {% set element = obj[key] %}
-  {% if key == "tags" or key == "aliases" %}
-    {{display_tags(element)}}
-  {% elif key == "last_analyses"%}
-    {{display_last_analyses(element)}}
-  {% elif key == "created"%}
-    {{display_datetime(element)}}
-  {% elif key == "pattern" %}
-    <code>{{element}}</code>
-  {% elif key == "raw" %}
-    <pre><code>{{element}}</code></pre>
-  {% elif obj["get_{}_display".format(key)] %}
-    {{ obj["get_{}_display".format(key)]() }}
-  {% else %}
-    {{ element }}
-  {% endif %}
-{%- endmacro %}
+  {% set element = obj[key] -%}
+  {% if "__" in key -%}
+    {% set element = obj[key.split("__")[0]][key.split("__")[1]] -%}
+    {% set key = key.split("__")[1] -%}
+  {%endif -%}
+  {% if key == "tags" or key == "aliases" or key == "sources" -%}
+    {{display_tags(element) -}}
+  {% elif key == "last_analyses" -%}
+    {{display_last_analyses(element) -}}
+  {% elif key == "created" -%}
+    {{display_datetime(element) -}}
+  {% elif key == "pattern" -%}
+    <code>{{element -}}</code>
+  {% elif key == "raw" -%}
+    <pre><code>{{element -}}</code></pre>
+  {% elif obj["get_{}_display".format(key)] -%}
+    {{ obj["get_{}_display".format(key)]() -}}
+  {% else -%}
+    {{ element -}}
+  {% endif -%}
+{%- endmacro -%}
 
 {% macro render_field(field) -%}
   {% if field.type in ['CSRFTokenField', 'HiddenField'] %}
