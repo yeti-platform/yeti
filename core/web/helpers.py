@@ -1,12 +1,17 @@
 from __future__ import unicode_literals
 
 import re
-from flask import abort
-
 from inspect import ismethod
+
+from flask import abort
+from mongoengine import *
 
 
 SEARCH_ALIASES = {
+    'name': 'aliases',
+}
+
+SEARCH_REPLACE = {
     'tags': 'tags__name',
 }
 
@@ -33,14 +38,10 @@ def get_queryset(collection, filters, regex, ignorecase):
     if "order_by" in filters:
         queryset = queryset.order_by(filters.pop("order_by"))
 
-    for alias in SEARCH_ALIASES:
-        if alias in filters:
-            filters[SEARCH_ALIASES[alias]] = filters.pop(alias)
-
     for key, value in filters.items():
         key = key.replace(".", "__")
-        if key in SEARCH_ALIASES:
-            key = SEARCH_ALIASES[key]
+        if key in SEARCH_REPLACE:
+            key = SEARCH_REPLACE[key]
 
         if regex and isinstance(value, basestring):
             flags = 0
@@ -53,6 +54,12 @@ def get_queryset(collection, filters, regex, ignorecase):
 
         result_filters[key] = value
 
-    print "Filter: {}".format(result_filters)
+    q = Q()
+    for alias in SEARCH_ALIASES:
+        if alias in filters:
+            q &= Q(**{SEARCH_ALIASES[alias]: result_filters[alias]}) | Q(**{alias: result_filters[alias]})
+            result_filters.pop(alias)
 
-    return queryset.filter(**result_filters)
+    print "Filter: {}".format(result_filters), q.to_query(collection)
+
+    return queryset.filter(**result_filters).filter(q)
