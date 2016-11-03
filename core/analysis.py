@@ -6,8 +6,8 @@ from core.errors import ObservableValidationError
 from core.helpers import del_from_set, iterify, refang
 
 # load analyzers
-from plugins.analytics.process_hostnames import ProcessHostnames
-from plugins.analytics.process_url import ProcessUrl
+from plugins.analytics.public.process_hostnames import ProcessHostnames
+from plugins.analytics.public.process_url import ProcessUrl
 
 analyzers = {
     Hostname: [ProcessHostnames],
