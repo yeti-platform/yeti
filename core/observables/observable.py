@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 import operator
-import pytz
 
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
@@ -285,7 +284,6 @@ class Observable(Node):
             return last
         else:
             return self.last_tagged
-
 
     def expire_tags(self):
         for tag in self.tags:
