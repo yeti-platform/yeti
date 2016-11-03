@@ -44,5 +44,7 @@ class Yara(Indicator):
 
     def match(self, value):
         if not self.error:
+            if isinstance(value, unicode):
+                value = value.encode('utf-8')
             matches = self.compiled_yara.match(data=value)
             return True if matches else False
