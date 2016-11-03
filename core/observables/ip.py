@@ -12,12 +12,12 @@ from core.errors import ObservableValidationError
 class Ip(Observable):
 
     regex = r'([\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3}\.[\d+]{1,3})'
-
+    geoip = DictField()
     version = IntField()
 
     exclude_fields = Observable.exclude_fields + ['version']
 
-    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("version", "IP version")]
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("version", "IP version"), ("geoip__country", "Country"), ("geoip__city", "City")]
 
     IPV4_IGNORE_RANGE = iptools.IpRangeList(iptools.ipv4.BENCHMARK_TESTS,
                                             iptools.ipv4.BROADCAST,
