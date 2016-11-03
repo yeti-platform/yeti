@@ -53,7 +53,10 @@ class Observable(Node):
         "indexes": [
             "tags",
             "last_analyses",
-        ]
+            "created",
+        ],
+        "index_backgroud": True,
+        "ordering": ["-created"],
     }
 
     @classmethod
