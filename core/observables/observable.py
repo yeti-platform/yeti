@@ -33,6 +33,8 @@ class Observable(Node):
         exclude_fields: Fields to be excluded from automatic form creation
     """
 
+    SEARCH_ALIASES = {}
+
     DISPLAY_FIELDS = [("value", "Value"), ("context", "Context"), ("tags", "Tags"), ("sources", "Sources"), ("created", "Created")]
 
     value = StringField(verbose_name="Value", required=True, unique=True, sparse=True, max_length=1024)

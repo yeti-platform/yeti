@@ -10,6 +10,10 @@ from core.observables import Tag
 
 class Entity(Node):
 
+    SEARCH_ALIASES = {
+        'name': 'aliases',
+    }
+
     VERB_DICT = {
         "Malware": {"Actor": "Used by", "TTP": "Leverages"},
         "Actor": {"Malware": "Uses", "TTP": "Leverages"},

@@ -10,6 +10,8 @@ from core.database import Node, EntityListField
 
 class Indicator(Node):
 
+    SEARCH_ALIASES = {}
+
     DISPLAY_FIELDS = [("name", "Name"), ("pattern", "Pattern"), ("location", "Location"), ("diamond", "Diamond")]
 
     name = StringField(required=True, max_length=1024, verbose_name="Name")

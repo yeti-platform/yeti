@@ -6,11 +6,6 @@ from inspect import ismethod
 from flask import abort
 from mongoengine import *
 
-
-SEARCH_ALIASES = {
-    'name': 'aliases',
-}
-
 SEARCH_REPLACE = {
     'tags': 'tags__name',
 }
@@ -55,9 +50,9 @@ def get_queryset(collection, filters, regex, ignorecase):
         result_filters[key] = value
 
     q = Q()
-    for alias in SEARCH_ALIASES:
+    for alias in collection.SEARCH_ALIASES:
         if alias in filters:
-            q &= Q(**{SEARCH_ALIASES[alias]: result_filters[alias]}) | Q(**{alias: result_filters[alias]})
+            q &= Q(**{collection.SEARCH_ALIASES[alias]: result_filters[alias]}) | Q(**{alias: result_filters[alias]})
             result_filters.pop(alias)
 
     print "Filter: {}".format(result_filters), q.to_query(collection)
