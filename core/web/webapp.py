@@ -9,6 +9,7 @@ from core.user import User
 from core.web.json import JSONDecoder
 from core.web.api import api
 from core.web.frontend import frontend
+from core.auth.local import auth
 
 from core.scheduling import Scheduler
 
@@ -23,7 +24,8 @@ webapp.debug = True
 
 login_manager = LoginManager()
 login_manager.init_app(webapp)
-
+login_manager.login_view = '/login'
+webapp.register_blueprint(auth)
 
 # Handle authentication
 @login_manager.user_loader
@@ -35,7 +37,6 @@ def load_user(user_id):
         return None
 
 login_manager.anonymous_user = User.get_default_user
-
 
 @api.before_request
 @login_required
