@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <script type="text/javascript" src="{{ url_for('frontend.static', filename='jquery-ui/js/jquery.js') }}" charset="utf-8"></script>
+
+
+    <title>The Yeti - Login</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='bootstrap/css/bootstrap.min.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/yeti.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/flaticon.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='font-awesome/css/font-awesome.min.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='animate/animate.min.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='simplemde/simplemde.min.css') }}">
+    <script src="{{url_for('frontend.static', filename='bootstrap-notify/bootstrap-notify.min.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='yeti/js/yeti.js')}}"></script>
+
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='highlightjs/highlightjs.min.css') }}">
+    <script src="{{url_for('frontend.static', filename='highlightjs/highlightjs.min.js')}}"></script>
+
+    <script src="{{url_for('frontend.static', filename='simplemde/marked.min.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='simplemde/simplemde.min.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='simplemde/inline-attachment.min.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='simplemde/codemirror.inline-attachment.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='yeti/js/markdown.js')}}"></script>
+  </head>
+
+  <body>
+    <div class="container" style="margin-top:22vh;">
+
+        <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
+
+          <form class="form-signin" method="POST">
+            <h2 class="form-signin-heading">Log in to Yeti</h2>
+            <label for="inputEmail" class="sr-only">Login</label>
+            <input type="text" name="login" id="login" class="form-control" placeholder="Login" required autofocus>
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" value="remember-me"> Remember me
+              </label>
+            </div>
+            <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+          </form>
+
+        </div> <!-- /container -->
+
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="{{url_for('frontend.static', filename='bootstrap/js/bootstrap.min.js')}}"></script>
+
+    <script>
+        hljs.initHighlightingOnLoad();
+
+        // Enable tooltips
+        $('[data-toggle="tooltip"]').tooltip();
+    </script>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <script>
+        {% for category, message in messages %}
+            {% if category == "message" %}
+                notify("{{message}}", 'info');
+            {% else %}
+                notify("{{message}}", "{{category}}");
+            {% endif %}
+        {% endfor %}
+        </script>
+      {% endif %}
+    {% endwith %}
+  </body>
+</html>
