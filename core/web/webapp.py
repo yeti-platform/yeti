@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import os
+from bson import ObjectId
 
 from flask import Flask, url_for, request
 from flask_login import LoginManager, login_required, current_user
@@ -27,16 +28,17 @@ login_manager.init_app(webapp)
 login_manager.login_view = '/login'
 webapp.register_blueprint(auth)
 
+
 # Handle authentication
 @login_manager.user_loader
 def load_user(user_id):
-    print "user:", user_id
     try:
-        return User.get(user_id)
+        return User.objects.get(id=user_id)
     except:
         return None
 
 login_manager.anonymous_user = User.get_default_user
+
 
 @api.before_request
 @login_required
