@@ -121,12 +121,17 @@
         <h3 class="panel-title">Tags</h3>
       </div>
       <div class="panel-body">
+        {% if current_user.has_permission('observable', 'tag')%}
         {% set tags = observable.info()['tags'] %}
         <form id="tag-form" class="yeti-form" data-url="{{ url_for("api.Tag:index") }}">
           <input type="hidden" name="strict" value="true">
           <input type="text" class="form-control input-sm tagfield" data-choices="{{ url_for("api.Tag:index") }}" name="tags" value="{{tags|join(",", "name")}}" />
           <button style="margin-top:5px;" type="button" id="yeti-save-button" data-url="{{ url_for("api.Observable:get", id=observable.id) }}" class="btn btn-primary btn-sm yeti-save btn-xs pull-right" name="save">Save</button>
         </form>
+        {%else%}
+        {{ macros.display_tags(observable.tags)}}
+        {%endif%}
+
       </div>
     </div>
 

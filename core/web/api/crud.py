@@ -12,9 +12,11 @@ from core.web.helpers import get_queryset
 from core.helpers import iterify
 from core.database import AttachedFile
 from core.web.helpers import get_object_or_404
+from core.web.helpers import requires_permissions
 
 
 class CrudSearchApi(FlaskView):
+
     def search(self, query):
         fltr = query.get('filter', {})
         params = query.get('params', {})
@@ -25,6 +27,7 @@ class CrudSearchApi(FlaskView):
 
         return list(get_queryset(self.objectmanager, fltr, regex, ignorecase)[page * rng:(page + 1) * rng])
 
+    @requires_permissions('read')
     def post(self):
         """Launches a simple search against the database
 
@@ -56,6 +59,7 @@ class CrudApi(FlaskView):
     template = None
     template_single = None
 
+    @requires_permissions('write')
     def delete(self, id):
         """Deletes the corresponding entry from the database
 
@@ -67,6 +71,7 @@ class CrudApi(FlaskView):
         return render({"deleted": id})
 
     @route("/multidelete", methods=['POST'])
+    @requires_permissions('write')
     def multidelete(self):
         """Deletes multiple entries from the database
 
@@ -79,6 +84,7 @@ class CrudApi(FlaskView):
         return render({"deleted": ids})
 
     @route("/multiupdate", methods=['POST'])
+    @requires_permissions('write')
     def multiupdate(self):
         """Updates multiple entries from the database
 
@@ -92,6 +98,7 @@ class CrudApi(FlaskView):
         self.objectmanager.objects(id__in=ids).update(new_data)
         return render({"updated": list(self.objectmanager.objects(ids__in=ids))})
 
+    @requires_permissions('read')
     def index(self):
         """List all corresponding entries in the database. **Do not use on large datasets!**
         """
@@ -101,6 +108,7 @@ class CrudApi(FlaskView):
     def _parse_request(self, json):
         return json
 
+    @requires_permissions('read')
     def get(self, id):
         """Get details on a specific element
 
@@ -110,6 +118,7 @@ class CrudApi(FlaskView):
         return render(obj, self.template_single)
 
     @route("/", methods=["POST"])
+    @requires_permissions('write')
     def new(self):
         """Create a new element
 
@@ -121,6 +130,7 @@ class CrudApi(FlaskView):
         obj = self.objectmanager(**params).save()
         return render(obj)
 
+    @requires_permissions('write')
     def post(self, id):
         """Modify an element
 
@@ -135,6 +145,7 @@ class CrudApi(FlaskView):
         return render(obj)
 
     @route('/<string:id>/files', methods=["GET"])
+    @requires_permissions('read')
     def list_files(self, id):
         """List files attached to an element
 
@@ -150,6 +161,7 @@ class CrudApi(FlaskView):
         return render(l)
 
     @route('/files/<string:sha256>', methods=["GET"])
+    @requires_permissions('read')
     def file_content(self, sha256):
         """Get a file's contents
 

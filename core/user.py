@@ -6,11 +6,12 @@ from flask_mongoengine.wtf import model_form
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.database import YetiDocument
+from core.helpers import iterify
 
-DEFAULT_ROLES = {
-    "observables": ["read", "write", "tag"],
-    "indicators": ["read", "write"],
-    "entities": ["read", "write"],
+DEFAULT_PERMISSIONS = {
+    "observable": ["read", "write", "tag"],
+    "indicator": ["read", "write"],
+    "entity": ["read", "write"],
     "admin": True,
 }
 
@@ -21,14 +22,15 @@ class User(YetiDocument):
     username = StringField(required=True, unique=True)
     password = StringField(required=True)
     enabled = BooleanField(required=True, default=True)
-    roles = DictField(verbose_name="Roles", default=DEFAULT_ROLES)
+    permissions = DictField(verbose_name="Permissions", default=DEFAULT_PERMISSIONS)
     settings = DictField(verbose_name="Settings")
 
     def is_authenticated(self):
         return self.enabled
 
+    @property
     def is_admin(self):
-        return self.roles.get('admin', False)
+        return self.permissions.get('admin', False)
 
     def is_active(self):
         return True
@@ -44,6 +46,12 @@ class User(YetiDocument):
             if setting not in self.settings:
                 return False
         return True
+
+    def has_permission(self, object_name, permission):
+        return permission in self.permissions.get(object_name, [])
+
+    def is_role(self, role):
+        return self.permissions.get(role, False)
 
     def __unicode__(self):
         return u"<User: {}>".format(self.username)
@@ -65,8 +73,8 @@ class User(YetiDocument):
         return User.objects(username='yeti').modify(upsert=True, new=True, username='yeti', password="yeti")
 
     @staticmethod
-    def create_user(username, password, roles=DEFAULT_ROLES):
-        u = User(username=username, roles=roles)
+    def create_user(username, password, permissions=DEFAULT_PERMISSIONS):
+        u = User(username=username, permissions=permissions)
         u.password = generate_password_hash(password)
         return u.save()
 

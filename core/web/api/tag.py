@@ -6,8 +6,8 @@ from flask_classy import route
 from core.web.api.crud import CrudApi
 from core import observables
 from core.web.api.api import render
-
 from core.errors import TagValidationError
+from core.web.helpers import requires_permissions
 
 
 class Tag(CrudApi):
@@ -15,7 +15,9 @@ class Tag(CrudApi):
     template_single = "tag_api_single.html"
     objectmanager = observables.Tag
 
+
     @route("/merge", methods=['POST'])
+    @requires_permissions('write')
     def merge(self):
         """Merge one or more tags
 
@@ -49,6 +51,7 @@ class Tag(CrudApi):
 
         return render({"merged": merged, "into": merge_into.name})
 
+    @requires_permissions('write')
     def delete(self, id):
         """Deletes a Tag
 
@@ -68,6 +71,7 @@ class Tag(CrudApi):
         params['replaces'] = json['replaces'].split(',')
         return params
 
+    @requires_permissions('write')
     def post(self, id):
         """Create a new Tag
 

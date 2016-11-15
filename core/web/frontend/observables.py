@@ -4,12 +4,14 @@ import json
 import logging
 
 from flask import request, render_template, send_file, flash
+from flask_login import current_user
 from flask_classy import route
 from uuid import uuid4
 from tempfile import gettempdir
 from os import path
 
 from core.web.frontend.generic import GenericView
+from core.web.helpers import requires_permissions
 from core.observables import *
 from core.exports import ExportTemplate
 from core.errors import ObservableValidationError
@@ -28,10 +30,12 @@ class ObservableView(GenericView):
         obj.tag(tags, strict=True)
 
     @route('/advanced')
+    @requires_permissions("read", "observable")
     def advanced(self):
         return render_template("{}/browse.html".format(self.klass.__name__.lower()), export_templates=ExportTemplate.objects.all())
 
     # override to guess observable type
+    @requires_permissions("write", "observable")
     @route('/new', methods=["GET", "POST"])
     def new(self, klass=None):
         if not klass:
@@ -57,6 +61,7 @@ class ObservableView(GenericView):
         return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
 
     @route("/", methods=['GET', 'POST'])
+    @requires_permissions("read", "observable")
     def index(self):
         if request.method == "POST":
             lines = []
@@ -67,7 +72,7 @@ class ObservableView(GenericView):
                 lines = request.form['bulk-text'].split('\n')
 
             invalid_observables = 0
-            if bool(request.form.get('add', False)):
+            if bool(request.form.get('add', False)) and current_user.has_permission("observable", "write"):
                 tags = request.form.get('tags', "").split(',')
                 for l in lines:
                     try:
@@ -115,6 +120,7 @@ class ObservableView(GenericView):
 
             return get_queryset(Observable, fltr, regex, ignorecase)
 
+    @requires_permissions("read", "observable")
     @route("/export", methods=['POST'])
     def export(self):
         template = get_object_or_404(ExportTemplate, id=request.form['template'])
@@ -124,6 +130,7 @@ class ObservableView(GenericView):
 
         return send_file(filepath)
 
+    @requires_permissions("tag", "observable")
     @route("/tag", methods=['POST'])
     def tag(self):
         tags = request.form['tags'].split(',')
@@ -133,6 +140,7 @@ class ObservableView(GenericView):
 
         return ('', 200)
 
+    @requires_permissions("tag", "observable")
     @route("/untag", methods=['POST'])
     def untag(self):
         tags = request.form['tags'].split(',')

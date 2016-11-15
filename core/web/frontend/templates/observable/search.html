@@ -8,7 +8,7 @@ Search
 {% block breadcrumb %}
 <ol class="breadcrumb">
 	<li>YETI</li>
-	<li class="active">Search &amp; add</li>
+	<li class="active">Search {% if current_user.has_permission("observable", "write") %}&amp; add{% endif %}</li>
 </ol>
 {% endblock %}
 
@@ -46,9 +46,11 @@ $(function() {
 
 <div class="row">
 	<div class="col-md-4 user-text">
-		<h3>Search &amp; add</h3>
+		<h3>Search {% if current_user.has_permission("observable", "write") %}&amp; add{% endif %}</h3>
 		<p><strong>Format</strong>: one observable per line (for both text and file)</p>
+		{% if current_user.has_permission("observable", "write") %}
 		<p>Use the checkbox to automatically <strong>add</strong> unknown observables to the database <em>(write operation)</em></p>
+		{% endif %}
 		<br/>
 
 
@@ -81,7 +83,7 @@ $(function() {
 	<div class="col-md-8" >
 
 		<form action="{{ url_for('frontend.ObservableView:index')}}" class="yeti-form" method="POST">
-
+			{% if current_user.has_permission("observable", "write") %}
 			<div class="form-inline" id="insert-form">
 
 				<div class="form-group">
@@ -104,6 +106,7 @@ $(function() {
 				</div>
 			</div>
 			<br>
+			{% endif %}
 			<div class="form-group">
 				<textarea class="form-control" name="bulk-text" rows="14"></textarea>
 			</div>

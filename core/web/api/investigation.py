@@ -13,7 +13,7 @@ from core.observables import Observable
 from core.entities import Entity
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
-
+from core.web.helpers import requires_permissions
 
 class InvestigationSearch(CrudSearchApi):
     template = 'investigation_api.html'
@@ -24,6 +24,7 @@ class Investigation(CrudApi):
     objectmanager = investigation.Investigation
 
     @route("/add/<string:id>", methods=['POST'])
+    @requires_permissions('write')
     def add(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         data = loads(request.data)
@@ -32,6 +33,7 @@ class Investigation(CrudApi):
         return render(i.info())
 
     @route("/remove/<string:id>", methods=['POST'])
+    @requires_permissions('write')
     def remove(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         data = loads(request.data)
@@ -40,6 +42,7 @@ class Investigation(CrudApi):
         return render(i.info())
 
     @route("/rename/<string:id>", methods=['POST'])
+    @requires_permissions('write')
     def rename(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         i.modify(name=request.json['name'], updated=datetime.utcnow())
@@ -47,6 +50,7 @@ class Investigation(CrudApi):
         return render("ok")
 
     @route("/nodesearch/<path:query>", methods=['GET'])
+    @requires_permissions('read')
     def nodesearch(self, query):
         result = []
 
