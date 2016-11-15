@@ -78,6 +78,7 @@ Browse
         <p id="selection-specific" class="hidden">Actions below apply only on <span id="selection-count">0</span> items selected.</p>
 
         <div class="panel-group selection-actions" id="accordion">
+					{% if current_user.has_permission("observable", "write") %}
           <div class="panel panel-default">
             <div class="panel-heading">
               <h4 class="panel-title">
@@ -102,6 +103,7 @@ Browse
               </div>
             </div>
           </div>
+					{% endif %}
           <div class="panel panel-default">
             <div class="panel-heading">
               <h4 class="panel-title">

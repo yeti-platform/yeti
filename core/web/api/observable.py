@@ -8,6 +8,7 @@ from core import observables
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 from core.helpers import refang
+from core.web.helpers import requires_permissions
 
 
 class Observable(CrudApi):
@@ -32,6 +33,7 @@ class Observable(CrudApi):
         return info
 
     @route("/", methods=["POST"])
+    @requires_permissions('write')
     def new(self):
         """Create a new Observable
 
@@ -48,6 +50,7 @@ class Observable(CrudApi):
         return render(self._modify_observable(obs, params))
 
     @route("/bulk", methods=["POST"])
+    @requires_permissions('write')
     def bulk(self):
         """Bulk-add observables
 
@@ -69,6 +72,7 @@ class Observable(CrudApi):
         return render(added)
 
     @route("/<id>/context", methods=["POST"])
+    @requires_permissions('read')
     def context(self, id):
         """Add context to an observable
 
@@ -83,6 +87,7 @@ class Observable(CrudApi):
         return render(context)
 
     @route("/<id>/context", methods=["DELETE"])
+    @requires_permissions('write')
     def remove_context(self, id):
         """Removes context from an observable
 
@@ -94,6 +99,7 @@ class Observable(CrudApi):
         observable.remove_context(context)
         return render(context)
 
+    @requires_permissions('write')
     def post(self, id):
         obs = self.objectmanager.objects.get(id=id)
         return render(self._modify_observable(obs, request.json))

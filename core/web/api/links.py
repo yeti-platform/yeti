@@ -10,6 +10,7 @@ from core import database
 from core.web.api.api import render
 from core.helpers import iterify
 from core.investigation import Investigation
+from core.web.helpers import requires_permissions
 
 
 class LinkSearch(CrudSearchApi):
@@ -19,6 +20,7 @@ class LinkSearch(CrudSearchApi):
 class Link(CrudApi):
     objectmanager = database.Link
 
+    @requires_permissions('write')
     def delete(self, id):
         """Deletes the corresponding entry from the database
 
@@ -32,6 +34,7 @@ class Link(CrudApi):
         return render({"deleted": id})
 
     @route("/multidelete", methods=['POST'])
+    @requires_permissions('write')
     def multidelete(self):
         data = loads(request.data)
         ids = iterify(data['ids'])
@@ -41,6 +44,7 @@ class Link(CrudApi):
         return render({"deleted": ids})
 
     @route("/multiupdate", methods=['POST'])
+    @requires_permissions('write')
     def multiupdate(self):
         data = loads(request.data)
         ids = data['ids']

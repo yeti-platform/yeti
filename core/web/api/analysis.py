@@ -7,12 +7,13 @@ from core.web.api.crud import CrudApi
 from core.observables import Observable
 from core.web.api.api import render
 from core.analysis import match_observables
-
+from core.web.helpers import requires_permissions
 
 class Analysis(CrudApi):
     objectmanager = Observable
 
     @route("/match", methods=["POST"])
+    @requires_permissions("read")
     def match(self):
         """Match observables against Yeti's intelligence repository.
 

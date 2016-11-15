@@ -10,6 +10,7 @@ from core import analytics
 from core.analytics_tasks import schedule
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
+from core.web.helpers import requires_role, requires_permissions
 
 
 class ScheduledAnalytics(CrudApi):
@@ -17,6 +18,7 @@ class ScheduledAnalytics(CrudApi):
     objectmanager = analytics.ScheduledAnalytics
 
     @route("/<id>/refresh", methods=["POST"])
+    @requires_role("admin")
     def refresh(self, id):
         """Runs a Scheduled Analytics
 
@@ -27,6 +29,7 @@ class ScheduledAnalytics(CrudApi):
         return render({"id": id})
 
     @route("/<id>/toggle", methods=["POST"])
+    @requires_role("admin")
     def toggle(self, id):
         """Toggles a Scheduled Analytics
 
@@ -47,6 +50,7 @@ class OneShotAnalytics(CrudApi):
     template = "oneshot_analytics_api.html"
     objectmanager = analytics.OneShotAnalytics
 
+    @requires_permissions("read")
     def index(self):
         data = []
 
@@ -62,6 +66,7 @@ class OneShotAnalytics(CrudApi):
         return render(data, template=self.template)
 
     @route("/<id>/toggle", methods=["POST"])
+    @requires_role("admin")
     def toggle(self, id):
         """Toggles a One-shot Analytics
 
@@ -78,6 +83,7 @@ class OneShotAnalytics(CrudApi):
         return render({"id": analytics.id, "status": analytics.enabled})
 
     @route('/<id>/run', methods=["POST"])
+    @requires_role("admin")
     def run(self, id):
         """Runs a One-Shot Analytics
 
@@ -128,12 +134,14 @@ class OneShotAnalytics(CrudApi):
         return results
 
     @route('/<id>/status')
+    @requires_permissions("read")
     def status(self, id):
         results = get_object_or_404(analytics.AnalyticsResults, id=id)
 
         return render(self._analytics_results(results))
 
     @route('/<id>/last/<observable_id>')
+    @requires_permissions("read")
     def last(self, id, observable_id):
         try:
             results = analytics.AnalyticsResults.objects(analytics=id, observable=observable_id, status="finished").order_by('-datetime').limit(1)

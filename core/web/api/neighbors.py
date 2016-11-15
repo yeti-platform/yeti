@@ -8,6 +8,7 @@ from core.web.api.crud import CrudApi
 from core.entities import Entity, Malware, TTP, Actor, ExploitKit, Exploit, Campaign
 from core.observables import Observable
 from core.indicators import Indicator
+from core.web.helpers import requires_permissions
 
 NODES_CLASSES = {
     'entity': Entity,
@@ -24,6 +25,7 @@ NODES_CLASSES = {
 
 class Neighbors(CrudApi):
 
+    @requires_permissions('read')
     def get(self, klass, node_id):
         klass = NODES_CLASSES[klass.lower().split('.')[0]]
         node = klass.objects.get(id=node_id)
@@ -48,6 +50,7 @@ class Neighbors(CrudApi):
         return render_json(result)
 
     @route("/tuples/<klass>/<node_id>/<type_filter>", methods=["POST"])
+    @requires_permissions('read')
     def tuples(self, klass, node_id, type_filter):
         query = request.get_json(silent=True) or {}
         fltr = query.get("filter", {})

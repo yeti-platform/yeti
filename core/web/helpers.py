@@ -2,13 +2,48 @@ from __future__ import unicode_literals
 
 import re
 from inspect import ismethod
+from functools import wraps
 
-from flask import abort
+from core.helpers import iterify
+
+from flask import abort, request
+from flask_login import current_user
 from mongoengine import *
 
 SEARCH_REPLACE = {
     'tags': 'tags__name',
 }
+
+
+def requires_permissions(permissions, object_name=None):
+    def wrapper(f):
+        @wraps(f)
+        def inner(*args, **kwargs):
+            oname = object_name
+            if not oname:
+                oname = getattr(args[0], 'klass', getattr(args[0], 'objectmanager', "")).__name__.lower()
+            # a user must have all permissions in order to be granted access
+            for p in iterify(permissions):
+                if not current_user.has_permission(oname, p):
+                    # improve this and make it redirect to login
+                    abort(401)
+            else:
+                return f(*args, **kwargs)
+        return inner
+    return wrapper
+
+def requires_role(*roles):
+    def wrapper(f):
+        @wraps(f)
+        def inner(*args, **kwargs):
+            # a user needs at least one of the roles to be granted access
+            for r in iterify(roles[0]):
+                if current_user.is_role(r):
+                    return f(*args, **kwargs)
+            else:
+                abort(401)
+        return inner
+    return wrapper
 
 
 def get_object_or_404(klass, *args, **kwargs):

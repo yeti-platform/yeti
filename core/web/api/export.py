@@ -10,6 +10,7 @@ from core import exports
 from core.web.api.api import render
 from core.helpers import string_to_timedelta
 from core.observables import Tag
+from core.web.helpers import requires_role, requires_permissions
 
 
 class ExportTemplate(CrudApi):
@@ -23,6 +24,7 @@ class Export(CrudApi):
     objectmanager = exports.Export
 
     @route("/<string:id>/content")
+    @requires_permissions('read')
     def content(self, id):
         """Return export content
 
@@ -42,6 +44,7 @@ class Export(CrudApi):
         return response
 
     @route("/<string:id>/refresh", methods=["POST"])
+    @requires_role('admin')
     def refresh(self, id):
         """Refresh an export
 
@@ -54,6 +57,7 @@ class Export(CrudApi):
         return render({"id": id})
 
     @route("/<string:id>/toggle", methods=["POST"])
+    @requires_role('admin')
     def toggle(self, id):
         """Toggle an export
 
