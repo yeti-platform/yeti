@@ -37,8 +37,8 @@ def before_request():
         except TypeError:
             pass
 
-# Landing page - redirect to observable
 
+# Landing page - redirect to observable
 @frontend.route("/")
 def index():
     return redirect(url_for('frontend.ObservableView:index'))

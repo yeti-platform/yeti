@@ -15,7 +15,6 @@ class Tag(CrudApi):
     template_single = "tag_api_single.html"
     objectmanager = observables.Tag
 
-
     @route("/merge", methods=['POST'])
     @requires_permissions('write')
     def merge(self):
@@ -92,9 +91,9 @@ class Tag(CrudApi):
             if data['name'] != oldname:
                 observables.Observable.change_all_tags(oldname, data['name'])
             return render({"status": "ok"})
-        except TagValidationError as e:
+        except TagValidationError:
             abort(400)
-        except Exception as e:
+        except Exception:
             import traceback
             traceback.print_exc()
             abort(400)

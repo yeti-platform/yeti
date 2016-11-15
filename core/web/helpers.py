@@ -6,9 +6,9 @@ from functools import wraps
 
 from core.helpers import iterify
 
-from flask import abort, request
+from flask import abort
 from flask_login import current_user
-from mongoengine import *
+from mongoengine import Q
 
 SEARCH_REPLACE = {
     'tags': 'tags__name',
@@ -31,6 +31,7 @@ def requires_permissions(permissions, object_name=None):
                 return f(*args, **kwargs)
         return inner
     return wrapper
+
 
 def requires_role(*roles):
     def wrapper(f):

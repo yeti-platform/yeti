@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from flask_classy import route
-from flask import request, url_for
+from flask import request
 
 from core.web.api.crud import CrudApi, CrudSearchApi
 from core import observables
@@ -103,6 +103,7 @@ class Observable(CrudApi):
     def post(self, id):
         obs = self.objectmanager.objects.get(id=id)
         return render(self._modify_observable(obs, request.json))
+
 
 class ObservableSearch(CrudSearchApi):
     template = 'observable_api.html'

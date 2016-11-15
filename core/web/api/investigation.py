@@ -15,6 +15,7 @@ from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions
 
+
 class InvestigationSearch(CrudSearchApi):
     template = 'investigation_api.html'
     objectmanager = investigation.Investigation

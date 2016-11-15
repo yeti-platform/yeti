@@ -9,6 +9,7 @@ from core.web.api.api import render
 from core.analysis import match_observables
 from core.web.helpers import requires_permissions
 
+
 class Analysis(CrudApi):
     objectmanager = Observable
 
