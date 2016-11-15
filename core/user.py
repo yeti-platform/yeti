@@ -6,7 +6,6 @@ from flask_mongoengine.wtf import model_form
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.database import YetiDocument
-from core.helpers import iterify
 
 DEFAULT_PERMISSIONS = {
     "observable": ["read", "write", "tag"],

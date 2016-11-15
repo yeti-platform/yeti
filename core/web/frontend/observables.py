@@ -42,9 +42,9 @@ class ObservableView(GenericView):
             klass = self.klass
 
         if request.method == "POST":
-            if (request.form['type']
-                and request.form['type'] in globals()
-                    and issubclass(globals()[request.form['type']], Observable)):
+            if request.form['type'] and \
+               request.form['type'] in globals() and \
+               issubclass(globals()[request.form['type']], Observable):
                 guessed_type = globals()[request.form['type']]
             else:
                 try:
