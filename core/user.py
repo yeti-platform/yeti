@@ -8,9 +8,15 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from core.database import YetiDocument
 
 DEFAULT_PERMISSIONS = {
-    "observable": ["read", "write", "tag"],
     "indicator": ["read", "write"],
+    "observable": ["read", "write"],
+    "tag": ["read", "write"],
     "entity": ["read", "write"],
+    "feed": ["read", "write"],
+    "analytics": ["read", "write"],
+    "export": ["read", "write"],
+    "exporttemplate": ["read", "write"],
+    "files": ["read", "write"],
     "admin": True,
 }
 
