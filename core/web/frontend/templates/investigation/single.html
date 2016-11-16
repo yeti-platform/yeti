@@ -61,27 +61,32 @@
 <div class="row">
   <div class="col-md-12">
 
+    {% set link_write = current_user.has_permission("link", "write") %}
+    {% set indicator_write = current_user.has_permission("indicator", "write") %}
+    {% set indicator_read = current_user.has_permission("indicator", "read") %}
+    {% set entity_write = current_user.has_permission("entity", "write") %}
+    {% set entity_read = current_user.has_permission("entity", "read") %}
+    {% set observable_read = current_user.has_permission("observable", "read") %}
+
+
     <ul class="nav nav-tabs" role="tablist">
-      <li role="presentation" class="active"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
+      {% if indicator_read %}
       <li role="presentation"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
+      {%endif%}
+      {% if observable_read %}
+      <li role="presentation" class="active"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
+      {%endif%}
+      {% if entity_read %}
       <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
       <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
       <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
       <li role="presentation"><a href="#companies" aria-controls="companies" role="tab" data-toggle="tab">Companies</a></li>
+      {%endif%}
     </ul>
 
     <div class="tab-content">
 
-        <div role="tabpanel" class="tab-pane active" id="observables">
-          <div class="row">
-            <div class="col-md-12">
-                {% with data=investigation.nodes|selectattr("_cls", "startswith", "Observable") %}
-                {% include "observable_api.html" %}
-                {% endwith %}
-            </div>
-          </div>
-        </div>
-
+        {% if indicator_read %}
         <div role="tabpanel" class="tab-pane" id="indicators">
           <div class="row">
             <div class="col-md-12">
@@ -91,7 +96,21 @@
             </div>
           </div>
         </div>
+        {%endif%}
 
+        {% if observable_read %}
+        <div role="tabpanel" class="tab-pane active" id="observables">
+          <div class="row">
+            <div class="col-md-12">
+                {% with data=investigation.nodes|selectattr("_cls", "startswith", "Observable") %}
+                {% include "observable_api.html" %}
+                {% endwith %}
+            </div>
+          </div>
+        </div>
+        {%endif%}
+
+        {% if entity_read %}
         <div role="tabpanel" class="tab-pane" id="ttp">
           <div class="row">
             <div class="col-md-12">
@@ -131,6 +150,7 @@
             </div>
           </div>
         </div>
+        {%endif%}
 
     </div>
   </div>
