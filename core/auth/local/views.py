@@ -29,3 +29,9 @@ def logout():
     logout_user()
     flash("Logged out", "info")
     return redirect('/login')
+
+
+@auth.route('/createuser/<username>/<password>')
+def user(username, password):
+    create_user(username, password)
+    return redirect('/login')
