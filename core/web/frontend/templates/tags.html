@@ -21,14 +21,17 @@
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
 {%endblock%}
 
+{% set write = current_user.has_permission('tag', 'write') %}
+
 {% block main %}
-<div class="col-md-9">
+<div class="col-md-{{ "9" if write else "12" }}">
   <div role="tabpanel" class="tab-pane active" id="tags"> <!-- import feed tab -->
     <div id="tags-table" class="yeti-populate" data-url="{{ url_for("api.Tag:index") }}">
     </div>
   </div>
 </div>
 
+{% if write %}
 <div class="col-md-3" id="tag-details" class="">
 
   <ul class="nav nav-tabs" role="tablist">
@@ -37,7 +40,6 @@
   </ul>
 
   <div class="tab-content">
-
     <div role="tabpanel" class="tab-pane active" id="edit"> <!-- edit tags -->
       <form data-start-disabled="true" id="tag-form" class="yeti-form" data-url="{{ url_for("api.Tag:index") }}">
         <div class="form-group">
@@ -85,4 +87,5 @@
   </div>
 
 </div>
+{%endif%}
 {% endblock %}

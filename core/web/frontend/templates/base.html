@@ -117,13 +117,16 @@
           <ul class="nav navbar-nav navbar-right">
             <p class="navbar-text">Signed in as: <strong>{{current_user.username}}</strong></p>
             <li><a href="{{ url_for('frontend.UsersView:settings') }}">Settings</a></li>
-            {% if current_user.is_admin %}
+            {% set d = current_user.has_permission("feed", "read") or current_user.has_permission("exporttemplates", "read") or current_user.has_permission("export", "read") %}
+            {% set a = current_user.has_permission("scheduledanalytics", "read") or current_user.has_permission("oneshotanalytics", "read") %}
+            {% set t = current_user.has_permission("tag", "read") %}
+            {% if et or a or d %}
               <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Admin<span class="caret"></span></a>
               <ul class="dropdown-menu">
-                <li><a href="{{ url_for('frontend.dataflows') }}">Dataflows</a></li>
-                <li><a href="{{ url_for('frontend.analytics') }}">Analytics</a></li>
-                <li><a href="{{ url_for('frontend.tags') }}">Tags</a></li>
+                {% if d %}<li><a href="{{ url_for('frontend.dataflows') }}">Dataflows</a></li>{%endif%}
+                {% if a %}<li><a href="{{ url_for('frontend.analytics') }}">Analytics</a></li>{%endif%}
+                {% if t %}<li><a href="{{ url_for('frontend.tags') }}">Tags</a></li>{%endif%}
               </ul>
             {% endif %}
             </ul>

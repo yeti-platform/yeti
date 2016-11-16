@@ -18,7 +18,7 @@ class ScheduledAnalytics(CrudApi):
     objectmanager = analytics.ScheduledAnalytics
 
     @route("/<id>/refresh", methods=["POST"])
-    @requires_role("admin")
+    @requires_permissions("refresh")
     def refresh(self, id):
         """Runs a Scheduled Analytics
 
@@ -29,7 +29,7 @@ class ScheduledAnalytics(CrudApi):
         return render({"id": id})
 
     @route("/<id>/toggle", methods=["POST"])
-    @requires_role("admin")
+    @requires_permissions("toggle")
     def toggle(self, id):
         """Toggles a Scheduled Analytics
 
@@ -66,7 +66,7 @@ class OneShotAnalytics(CrudApi):
         return render(data, template=self.template)
 
     @route("/<id>/toggle", methods=["POST"])
-    @requires_role("admin")
+    @requires_permissions("toggle")
     def toggle(self, id):
         """Toggles a One-shot Analytics
 
@@ -83,7 +83,7 @@ class OneShotAnalytics(CrudApi):
         return render({"id": analytics.id, "status": analytics.enabled})
 
     @route('/<id>/run', methods=["POST"])
-    @requires_role("admin")
+    @requires_permissions("run")
     def run(self, id):
         """Runs a One-Shot Analytics
 
