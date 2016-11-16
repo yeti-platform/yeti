@@ -5,7 +5,7 @@ from flask_classy import route
 from core.web.api.crud import CrudApi
 from core import feed
 from core.web.api.api import render
-from core.web.helpers import requires_role
+from core.web.helpers import requires_permissions
 
 
 class Feed(CrudApi):
@@ -14,7 +14,7 @@ class Feed(CrudApi):
     objectmanager = feed.Feed
 
     @route("/<id>/refresh", methods=["POST"])
-    @requires_role('admin')
+    @requires_permissions("refresh")
     def refresh(self, id):
         """Runs a Feed
 
@@ -26,7 +26,7 @@ class Feed(CrudApi):
         return render({"id": id})
 
     @route("/<id>/toggle", methods=["POST"])
-    @requires_role('admin')
+    @requires_permissions("toggle")
     def toggle(self, id):
         """Toggles a Feed
 

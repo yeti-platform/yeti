@@ -21,26 +21,39 @@
 
 {% block main %}
 <ul class="nav nav-tabs" role="tablist">
-  <li role="presentation" class="active"><a href="#import" aria-controls="import" role="tab" data-toggle="tab">Feeds</a></li>
-  <li role="presentation"><a href="#exports" aria-controls="exports" role="tab" data-toggle="tab">Exports</a></li>
-  <li role="presentation"><a href="#export-templates" aria-controls="export-templates" role="tab" data-toggle="tab">Templates</a></li>
+  {% if current_user.has_permission("feed", "read")%}
+    <li role="presentation" class="active"><a href="#import" aria-controls="import" role="tab" data-toggle="tab">Feeds</a></li>
+  {% endif %}
+  {% if current_user.has_permission("export", "read")%}
+    <li role="presentation"><a href="#exports" aria-controls="exports" role="tab" data-toggle="tab">Exports</a></li>
+  {% endif %}
+  {% if current_user.has_permission("exporttemplate", "read")%}
+    <li role="presentation"><a href="#export-templates" aria-controls="export-templates" role="tab" data-toggle="tab">Templates</a></li>
+  {% endif %}
 </ul>
 
 <div class="tab-content">
 
+  {% if current_user.has_permission("feed", "read")%}
   <div role="tabpanel" class="tab-pane active" id="import"> <!-- import feed tab -->
     <div id="feed-table" class="yeti-populate" data-url="{{ url_for('api.Feed:index') }}">
     </div>
   </div>
+  {%endif%}
 
+
+  {% if current_user.has_permission("export", "read")%}
   <div role="tabpanel" class="tab-pane" id="exports"> <!-- export feed tab -->
     <div class="row">
 
-      <div class="col-md-9">
+      {%set write = current_user.has_permission("export", "write") %}
+      <div class="col-md-{{9 if write else 12}}">
+
         <div id="export-table" class="yeti-populate" data-url="{{ url_for('api.Export:index') }}">
         </div>
       </div>
 
+      {% if write %}
       <div class="col-md-3">
         <div class="new-export">
           <h5>New export</h5>
@@ -81,9 +94,13 @@
           </form>
         </div>
       </div>
+      {% endif %}
+
     </div>
   </div>
+  {%endif%}
 
+  {% if current_user.has_permission("exporttemplate", "read")%}
   <div role="tabpanel" class="tab-pane" id="export-templates"> <!-- Templates tab -->
     <div class="row">
 
@@ -107,15 +124,18 @@ Example:
 {%endfor%}
 <FOOTER>"{% endraw %}/></textarea>
           </div>
+          {% if current_user.has_permission("exporttemplate", "write")%}
           <button type="button" id="yeti-new-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-default btn-sm yeti-new" name="new">New</button>
           <button type="button" id="yeti-save-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-primary btn-sm yeti-save" data-clear="true" name="save">Save</button>
           <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.ExportTemplate:index') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>
           <button type="button" id="yeti-clear-button" class="btn btn-default btn-sm yeti-clear" name="delete">Clear</button>
+          {% endif %}
         </form>
       </div>
 
     </div>
   </div>
+  {%endif%}
 
 </div>
 

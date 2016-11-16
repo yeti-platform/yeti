@@ -44,7 +44,7 @@ class Export(CrudApi):
         return response
 
     @route("/<string:id>/refresh", methods=["POST"])
-    @requires_role('admin')
+    @requires_permissions('refresh')
     def refresh(self, id):
         """Refresh an export
 
@@ -57,7 +57,7 @@ class Export(CrudApi):
         return render({"id": id})
 
     @route("/<string:id>/toggle", methods=["POST"])
-    @requires_role('admin')
+    @requires_permissions('toggle')
     def toggle(self, id):
         """Toggle an export
 
