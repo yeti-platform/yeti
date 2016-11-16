@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import os
 from importlib import import_module
+from bson.json_util import dumps
 
 from flask import Flask, url_for, request
 from flask_login import LoginManager, current_user
@@ -48,10 +49,6 @@ def api_auth(request):
     except DoesNotExist:
         return None
 
-@api.before_request
-@login_required
-def api_login_required():
-    pass
 login_manager.anonymous_user = auth_module.get_default_user
 
 
@@ -59,6 +56,12 @@ login_manager.anonymous_user = auth_module.get_default_user
 def frontend_login_required():
     if not current_user.is_active and (request.endpoint and request.endpoint != 'frontend.static'):
         return login_manager.unauthorized()
+
+
+@api.before_request
+def api_login_required():
+    if not current_user.is_active:
+        return dumps({"error": "X-API-KEY header missing or invalid"}), 401
 
 
 webapp.register_blueprint(frontend)
