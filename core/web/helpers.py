@@ -21,7 +21,7 @@ def requires_permissions(permissions, object_name=None):
         def inner(*args, **kwargs):
             oname = object_name
             if not oname:
-                oname = getattr(args[0], 'klass', getattr(args[0], 'objectmanager', "")).__name__.lower()
+                oname = getattr(args[0], 'klass', getattr(args[0], 'objectmanager', args[0].__class__)).__name__.lower()
             # a user must have all permissions in order to be granted access
             for p in iterify(permissions):
                 if not current_user.has_permission(oname, p):
