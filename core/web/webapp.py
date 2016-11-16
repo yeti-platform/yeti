@@ -61,7 +61,7 @@ def frontend_login_required():
 @api.before_request
 def api_login_required():
     if not current_user.is_active:
-        return dumps({"error": "X-API-KEY header missing or invalid"}), 401
+        return dumps({"error": "X-Api-Key header missing or invalid"}), 401
 
 
 webapp.register_blueprint(frontend)
