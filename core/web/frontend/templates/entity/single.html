@@ -101,35 +101,40 @@
 <div class="row">
   <div class="col-md-12">
 
+    {% set link_write = current_user.has_permission("link", "write") %}
+    {% set indicator_write = current_user.has_permission("indicator", "write") %}
+    {% set indicator_read = current_user.has_permission("indicator", "read") %}
+    {% set entity_write = current_user.has_permission("entity", "write") %}
+    {% set entity_read = current_user.has_permission("entity", "read") %}
+    {% set observable_read = current_user.has_permission("observable", "read") %}
+    {% set observable_write = current_user.has_permission("observable", "write") %}
+
+
     <ul class="nav nav-tabs" role="tablist">
-      <li role="presentation" class="active"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
-      <li role="presentation"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
+      <li role="presentation" class="active"><a href="#ttp" aria-controls="ttp" role="tab" data-toggle="tab">TTP</a></li>
       <li role="presentation"><a href="#malware" aria-controls="malware" role="tab" data-toggle="tab">Malware</a></li>
       <li role="presentation"><a href="#actors" aria-controls="actors" role="tab" data-toggle="tab">Actors</a></li>
       <li role="presentation"><a href="#campaigns" aria-controls="campaigns" role="tab" data-toggle="tab">Campaigns</a></li>
       <li role="presentation"><a href="#exploits" aria-controls="exploits" role="tab" data-toggle="tab">Exploits</a></li>
       <li role="presentation"><a href="#exploitkits" aria-controls="exploitkits" role="tab" data-toggle="tab">ExploitKits</a></li>
+      {% if indicator_read %}
+      <li role="presentation"><a href="#indicators" aria-controls="indicators" role="tab" data-toggle="tab">Indicators</a></li>
+      {% endif %}
+      {% if observable_read %}
       <li role="presentation"><a href="#observables" aria-controls="observables" role="tab" data-toggle="tab">Observables</a></li>
+      {% endif %}
     </ul>
 
     <div class="tab-content">
 
-        <div role="tabpanel" class="tab-pane active" id="indicators"> <!-- indicators tab -->
-          <div class="row">
-            <div class="col-md-12">
-              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
-              <a href="{{ url_for('frontend.IndicatorView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
-              {{ macros.table_controls("indicators") }}
-            </div>
-          </div>
-        </div>
-
-        <div role="tabpanel" class="tab-pane" id="ttp"> <!-- TTP tab -->
+        <div role="tabpanel" class="tab-pane active" id="ttp"> <!-- TTP tab -->
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="ttp"), "ttp-pivot") }}
-              <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new TTP</a>
-              {{ macros.table_controls("ttp") }}
+              {% if link_write and entity_write %}
+                <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="ttp", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new TTP</a>
+                {{ macros.table_controls("ttp") }}
+              {% endif %}
             </div>
           </div>
         </div>
@@ -138,8 +143,10 @@
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="malware"), "malware-pivot") }}
+              {% if link_write and entity_write %}
               <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="malware", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Malware</a>
               {{ macros.table_controls("malware") }}
+              {% endif %}
             </div>
           </div>
         </div>
@@ -148,8 +155,10 @@
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="actor"), "actor-pivot") }}
+              {% if link_write and entity_write %}
               <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="actor", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Actor</a>
               {{ macros.table_controls("actors") }}
+              {% endif %}
             </div>
           </div>
         </div>
@@ -158,8 +167,10 @@
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="campaign"), "campaign-pivot") }}
+              {% if link_write and entity_write %}
               <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="campaign", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Campaign</a>
               {{ macros.table_controls("campaigns") }}
+              {% endif %}
             </div>
           </div>
         </div>
@@ -168,8 +179,10 @@
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="exploit"), "exploit-pivot") }}
+              {% if link_write and entity_write %}
               <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="exploit", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Exploit</a>
               {{ macros.table_controls("exploits") }}
+              {% endif %}
             </div>
           </div>
         </div>
@@ -178,21 +191,40 @@
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="exploitkit"), "exploitkit-pivot") }}
+              {% if link_write and entity_write %}
               <a href="{{ url_for('frontend.EntityView:new_subclass', subclass="exploitkit", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new ExploitKit</a>
               {{ macros.table_controls("exploitkits") }}
+              {% endif %}
             </div>
           </div>
         </div>
 
+        {% if indicator_read %}
+        <div role="tabpanel" class="tab-pane" id="indicators"> <!-- indicators tab -->
+          <div class="row">
+            <div class="col-md-12">
+              {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="indicator"), "indicator-pivot") }}
+              {% if link_write and indicator_write %}
+              <a href="{{ url_for('frontend.IndicatorView:new_subclass', subclass="regex", bind=obj.id, type=obj.type.lower()) }}" class="btn btn-default btn-xs pull-left"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Bind new Regex</a>
+              {{ macros.table_controls("indicators") }}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
 
+        {% if observable_read %}
         <div role="tabpanel" class="tab-pane" id="observables"> <!-- Observables tab -->
           <div class="row">
             <div class="col-md-12">
               {{ filterlist.inline_filter(url_for("api.Neighbors:tuples", klass="entity", node_id=entity.id, type_filter="observable"), "observable-pivot", default_key="value") }}
+              {% if link_write and observable_write %}
               {{ macros.table_controls("observables") }}
+              {% endif %}
             </div>
           </div>
         </div>
+        {% endif %}
 
     </div>
   </div>
