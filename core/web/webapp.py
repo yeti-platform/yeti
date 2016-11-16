@@ -1,16 +1,16 @@
 from __future__ import unicode_literals
 
 import os
-from bson import ObjectId
+from importlib import import_module
 
 from flask import Flask, url_for, request
-from flask_login import LoginManager, login_required, current_user
+from flask_login import LoginManager, current_user
 
 from core.user import User
 from core.web.json import JSONDecoder
 from core.web.api import api
 from core.web.frontend import frontend
-from core.auth.local import auth
+from mongoengine.errors import DoesNotExist
 
 from core.scheduling import Scheduler
 
@@ -26,31 +26,39 @@ webapp.debug = True
 login_manager = LoginManager()
 login_manager.init_app(webapp)
 login_manager.login_view = '/login'
-webapp.register_blueprint(auth)
+
+auth_module = import_module('core.auth.local')
+webapp.register_blueprint(auth_module.auth)
 
 
 # Handle authentication
 @login_manager.user_loader
-def load_user(user_id):
+def load_user(session_token):
     try:
-        return User.objects.get(id=user_id)
-    except:
+        return User.objects.get(session_token=session_token)
+    except DoesNotExist:
         return None
 
-login_manager.anonymous_user = User.get_default_user
 
+@login_manager.request_loader
+def api_auth(request):
+    print request.headers
+    try:
+        return User.objects.get(api_key=request.headers.get('X-Api-Key'))
+    except DoesNotExist:
+        return None
 
 @api.before_request
 @login_required
 def api_login_required():
     pass
+login_manager.anonymous_user = auth_module.get_default_user
 
 
 @frontend.before_request
 def frontend_login_required():
-    if not current_user.is_authenticated():
-        if (request.endpoint and request.endpoint != 'frontend.static'):
-            return login_manager.unauthorized()
+    if not current_user.is_active and (request.endpoint and request.endpoint != 'frontend.static'):
+        return login_manager.unauthorized()
 
 
 webapp.register_blueprint(frontend)

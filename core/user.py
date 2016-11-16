@@ -1,24 +1,11 @@
 from __future__ import unicode_literals
 
+import os
+
 from mongoengine import StringField, DictField, BooleanField
-from mongoengine import DoesNotExist
 from flask_mongoengine.wtf import model_form
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.database import YetiDocument
-
-DEFAULT_PERMISSIONS = {
-    "indicator": ["read", "write"],
-    "observable": ["read", "write"],
-    "tag": ["read", "write"],
-    "entity": ["read", "write"],
-    "feed": ["read", "write"],
-    "analytics": ["read", "write"],
-    "export": ["read", "write"],
-    "exporttemplate": ["read", "write"],
-    "files": ["read", "write"],
-    "admin": True,
-}
 
 
 class User(YetiDocument):
@@ -27,9 +14,12 @@ class User(YetiDocument):
     username = StringField(required=True, unique=True)
     password = StringField(required=True)
     enabled = BooleanField(required=True, default=True)
-    permissions = DictField(verbose_name="Permissions", default=DEFAULT_PERMISSIONS)
+    permissions = DictField(verbose_name="Permissions")
     settings = DictField(verbose_name="Settings")
+    api_key = StringField(required=True, unique=True)
+    session_token = StringField()
 
+    @property
     def is_authenticated(self):
         return self.enabled
 
@@ -37,14 +27,16 @@ class User(YetiDocument):
     def is_admin(self):
         return self.permissions.get('admin', False)
 
+    @property
     def is_active(self):
-        return True
+        return self.enabled
 
+    @property
     def is_anonymous(self):
         return False
 
     def get_id(self):
-        return unicode(self.id)
+        return unicode(self.session_token)
 
     def has_settings(self, settings):
         for setting in settings:
@@ -72,24 +64,6 @@ class User(YetiDocument):
             'description': description
         }
 
-    # This is only used because user management / access control is not yet implemented
     @staticmethod
-    def get_default_user():
-        return User.objects(username='yeti').modify(upsert=True, new=True, username='yeti', password="yeti")
-
-    @staticmethod
-    def create_user(username, password, permissions=DEFAULT_PERMISSIONS):
-        u = User(username=username, permissions=permissions)
-        u.password = generate_password_hash(password)
-        return u.save()
-
-    @staticmethod
-    def authenticate(username, password):
-        try:
-            u = User.objects.get(username=username)
-            if check_password_hash(u.password, password):
-                return u
-            else:
-                return False
-        except DoesNotExist:
-            return False
+    def genereate_api_key():
+        return os.urandom(40).encode('hex')
