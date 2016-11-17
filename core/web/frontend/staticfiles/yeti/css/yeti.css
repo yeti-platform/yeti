@@ -610,3 +610,20 @@ td input.inline {
 .editor-preview-side {
     z-index: 2000 !important;
 }
+
+/* profile */
+
+.profile-panel table,
+.profile-panel th,
+.profile-panel td {
+  /*border-collapse: collapse;*/
+  border: none;
+}
+
+.profile-panel td, .profile-panel th {
+  vertical-align: middle !important;
+}
+
+.profile-panel th {
+  text-align: right;
+}

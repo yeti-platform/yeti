@@ -47,7 +47,7 @@ class User(YetiDocument):
     def has_permission(self, object_name, permission):
         return permission in self.permissions.get(object_name, [])
 
-    def is_role(self, role):
+    def has_role(self, role):
         return self.permissions.get(role, False)
 
     def __unicode__(self):
@@ -65,5 +65,5 @@ class User(YetiDocument):
         }
 
     @staticmethod
-    def genereate_api_key():
+    def generate_api_key():
         return os.urandom(40).encode('hex')
