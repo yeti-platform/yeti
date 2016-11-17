@@ -175,9 +175,6 @@ function yeti_save_button(elt) {
 
   // operation on forms
   data = form.serializeYetiObject();
-
-  console.log('yay');
-
   $.ajax({
     method: "POST",
     data: JSON.stringify(data),
@@ -190,8 +187,9 @@ function yeti_save_button(elt) {
         clear_form(form);
       }
       refresh_tagfields(form);
+      notify("Changes saved successfully", "success")
     }}).fail(function(data) {
-      notify("Could not save changes to tag.", "danger");
+      notify("Could not save changes", "danger");
     });
 }
 
