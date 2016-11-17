@@ -38,6 +38,8 @@ class Investigation(YetiDocument):
     created = DateTimeField(default=datetime.utcnow)
     updated = DateTimeField(default=datetime.utcnow)
 
+    SEARCH_ALIASES = {}
+
     def info(self):
         result = self.to_mongo()
         result['nodes'] = [node.to_mongo() for node in self.nodes]
