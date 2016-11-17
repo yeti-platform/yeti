@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
 from flask_classy import route
-from flask import request
+from flask import request, abort
+from flask_login import current_user
 
 from core.web.api.crud import CrudApi, CrudSearchApi
 from core import observables
@@ -102,6 +103,9 @@ class Observable(CrudApi):
     @requires_permissions('write')
     def post(self, id):
         obs = self.objectmanager.objects.get(id=id)
+        j = request.json
+        if not current_user.has_permission('observable', 'tag') and 'tags' in j:
+            abort(401)
         return render(self._modify_observable(obs, request.json))
 
 
