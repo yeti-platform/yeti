@@ -1,7 +1,7 @@
 {% import "macros/generic.html" as macros %}
-
+{% set toggle = current_user.has_permission("oneshotanalytics", "toggle") %}
 <table class="table table-condensed yeti-table table-hover">
-  <tr><th>Name</th><th>Acts on</th><th>Description</th><th>Toggle</th></tr>
+  <tr><th>Name</th><th>Acts on</th><th>Description</th>{% if toggle %}<th>Toggle</th>{%endif%}</tr>
   {% for analytics in data %}
   <tr class="{{ "disabled" if not analytics["enabled"] }}" data-name="{{analytics["name"]}}">
     <td><strong>{{ analytics["name"] }}</strong></td>
@@ -12,7 +12,9 @@
             <span class="text-danger">This plugin requires settings that are not yet defined.</span>
         {% endif %}
     </td>
+    {% if toggle %}
     <td><span data-url="{{ url_for('api.OneShotAnalytics:toggle', id=analytics["id"]) }}" class="analytics-toggle glyphicon glyphicon-{{ "ok" if analytics["enabled"] else "remove" }}"></span></td>
+    {% endif %}
   </tr>
   {% endfor %}
 </table>
