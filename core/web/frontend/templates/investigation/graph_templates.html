@@ -48,9 +48,11 @@
             <span class="graph-sidebar-analytics-last-run">Last: {{datetime datetime}}</span>
         </div>
     {{else}}
+    {% endraw %}{% if current_user.has_permission('oneshotanalytics', 'run') %}{% raw %}
         <div class="graph-sidebar-analytics-action">
             <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{analytics}}'><i class="glyphicon glyphicon-refresh"></i> Run</button>
         </div>
+    {% endraw %}{% endif %}{% raw %}
     {{/with}}
 </script>
 
