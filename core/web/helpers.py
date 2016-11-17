@@ -39,7 +39,7 @@ def requires_role(*roles):
         def inner(*args, **kwargs):
             # a user needs at least one of the roles to be granted access
             for r in iterify(roles[0]):
-                if current_user.is_role(r):
+                if current_user.has_role(r):
                     return f(*args, **kwargs)
             else:
                 abort(401)

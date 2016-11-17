@@ -31,9 +31,7 @@ def get_default_user():
 
 def create_user(username, password, permissions=DEFAULT_PERMISSIONS):
     u = User(username=username, permissions=permissions)
-    u.password = generate_password_hash(password, method='pbkdf2:sha256:20000')
-    u.api_key = User.genereate_api_key()
-    u.session_token = generate_session_token(u)
+    u = set_password(u, password)
     return u.save()
 
 
@@ -50,3 +48,10 @@ def authenticate(username, password):
 
 def generate_session_token(user):
     return os.urandom(12).encode('hex') + make_secure_token(user.username + user.password)
+
+
+def set_password(user, password):
+    user.password = generate_password_hash(password, method='pbkdf2:sha256:20000')
+    user.api_key = User.generate_api_key()
+    user.session_token = generate_session_token(user)
+    return user
