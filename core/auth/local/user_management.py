@@ -8,15 +8,20 @@ from mongoengine import DoesNotExist
 
 
 DEFAULT_PERMISSIONS = {
+    "feed": ["read", "write", "toggle", "refresh"],
+    "observable": ["read", "write", "tag"],
     "indicator": ["read", "write"],
-    "observable": ["read", "write"],
-    "tag": ["read", "write"],
-    "entity": ["read", "write"],
-    "feed": ["read", "write"],
-    "analytics": ["read", "write"],
-    "export": ["read", "write"],
     "exporttemplate": ["read", "write"],
+    "entity": ["read", "write"],
+    "scheduledanalytics": ["read", "write", "toggle", "refresh"],
+    "oneshotanalytics": ["read", "write", "toggle", "run"],
+    "tag": ["read", "write"],
+    "export": ["read", "write"],
     "files": ["read", "write"],
+    "link": ["read", "write"],
+    "neighbors": ["read", "write"],
+    "investigation": ["read", "write"],
+    "user": ["read", "write"],
     "admin": True,
 }
 
