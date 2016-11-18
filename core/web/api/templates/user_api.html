@@ -1,0 +1,19 @@
+{% import "macros/generic.html" as macros %}
+
+{% for user in data %}
+    {% if loop.first %}
+        <table class="table table-condensed yeti-table table-hover">
+          <tr><th>Username</th><th>API key</th></tr>
+    {% endif %}
+      <tr class="node-line" data-id="{{user['id']}}">
+        <td><a href="{{ url_for('frontend.UsersView:profile', id=user['id'] )}}">{{user['username']}}</a></td>
+        <td><code>{{ user['api_key']}}</code> <a class='btn btn-xs btn-default' href="{{ url_for("frontend.UserAdminView:reset_api", id=user['id'])}}">Reset</a></td>
+      </tr>
+    {% if loop.last %}
+        </table>
+    {% endif %}
+{% else %}
+<div class='no-results'>
+No results found
+</div>
+{% endfor %}

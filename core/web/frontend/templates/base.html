@@ -115,23 +115,28 @@
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
-            <p class="navbar-text">Signed in as: <strong>{{current_user.username}}</strong></p>
-            <li><a href="{{ url_for('frontend.UsersView:settings') }}">Settings</a></li>
+            <li><a href="{{ url_for('frontend.UsersView:profile') }}">Profile</a></li>
             {% set d = current_user.has_permission("feed", "read") or current_user.has_permission("exporttemplates", "read") or current_user.has_permission("export", "read") %}
             {% set a = current_user.has_permission("scheduledanalytics", "read") or current_user.has_permission("oneshotanalytics", "read") %}
             {% set t = current_user.has_permission("tag", "read") %}
             {% if et or a or d %}
               <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Admin<span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                {% if d %}<li><a href="{{ url_for('frontend.dataflows') }}">Dataflows</a></li>{%endif%}
-                {% if a %}<li><a href="{{ url_for('frontend.analytics') }}">Analytics</a></li>{%endif%}
-                {% if t %}<li><a href="{{ url_for('frontend.tags') }}">Tags</a></li>{%endif%}
-              </ul>
+                <ul class="dropdown-menu">
+                  {% if d %}<li><a href="{{ url_for('frontend.dataflows') }}">Dataflows</a></li>{%endif%}
+                  {% if a %}<li><a href="{{ url_for('frontend.analytics') }}">Analytics</a></li>{%endif%}
+                  {% if t %}<li><a href="{{ url_for('frontend.tags') }}">Tags</a></li>{%endif%}
+                  {% if current_user.has_role('admin') %}
+                    <li role="separator" class="divider"></li>
+                    <li><a href="{{ url_for('frontend.UserAdminView:index') }}">User administration</a></li>
+                  {%endif %}
+                </ul>
+              </li>
             {% endif %}
+            <p class="navbar-text">User: <strong>{{current_user.username}}</strong> <a href="#">[logout]</a></p>
+
             </ul>
-            </li>
-          </ul>
+
         </div><!--/.nav-collapse -->
       </div>
     </nav>

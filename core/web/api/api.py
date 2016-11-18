@@ -38,6 +38,7 @@ from core.web.api.investigation import Investigation, InvestigationSearch
 from core.web.api.indicator import Indicator, IndicatorSearch
 from core.web.api.links import Link
 from core.web.api.files import Files
+from core.web.api.useradmin import UserAdmin, UserAdminSearch
 
 Analysis.register(api)
 
@@ -67,3 +68,6 @@ InvestigationSearch.register(api)
 Link.register(api)
 
 Files.register(api)
+
+UserAdmin.register(api)
+UserAdminSearch.register(api)

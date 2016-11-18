@@ -1,6 +1,10 @@
+{% if user != current_user %}
+{% set admin = current_user.has_role('admin') %}
+{% endif %}
+
 <table class='table'>
-  <form action="{{ url_for("auth.change_password") }}" method="POST">
-    <tr><th>Password change</th><td><input type="password" class="form-control" name="current" placeholder='Current password'/></td><td></td></tr>
+  <form action="{{ url_for("auth.change_password", id=user.id) }}" method="POST">
+    <tr><th>Password change {{"(admin)" if admin }}</th><td><input type="password" class="form-control" name="current" placeholder='Current password' {{ "disabled" if admin }}/></td><td></td></tr>
     <tr><th></th><td><input type="password" class="form-control" name="new" placeholder="New password"/></td><td></td></tr>
     <tr><th></th><td><input type="password" class="form-control" name="bis" placeholder="New password... again"/></td><td><button type="submit" class="btn btn-default btn-sm">Reset password</button></td></tr>
   </form>

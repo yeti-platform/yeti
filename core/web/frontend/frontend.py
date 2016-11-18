@@ -16,7 +16,7 @@ from core.observables import *
 from core.entities import *
 from core.indicators import *
 from core.exports import ExportTemplate
-from core.web.frontend.users import UsersView
+from core.web.frontend.users import UsersView, UserAdminView
 
 frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
 
@@ -45,7 +45,7 @@ def index():
 
 
 UsersView.register(frontend)
-
+UserAdminView.register(frontend)
 EntityView.register(frontend)
 IndicatorView.register(frontend)
 ObservableView.register(frontend)
