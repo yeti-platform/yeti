@@ -5,6 +5,7 @@ from werkzeug.security import check_password_hash
 
 from core.auth.local.user_management import authenticate, create_user, set_password
 from core.user import User
+from core.web.helpers import get_object_or_404
 
 
 auth = Blueprint('auth', __name__, template_folder='templates')
@@ -40,28 +41,29 @@ def user(username, password):
     return redirect('/login')
 
 
-@auth.route("/changepassword", methods=['POST'])
+@auth.route("/change-password", methods=['POST'])
 def change_password():
-    u = current_user
-    if current_user.has_role('admin'):
-        if request.form.get('username'):
-            try:
-                u = User.objects.get(username=request.form.get('username'))
-            except DoesNotExist:
-                abort(404)
+    if current_user.has_role('admin') and request.args.get('id'):
+        u = get_object_or_404(User, id=request.args.get('id'))
+    else:
+        u = current_user
 
     current = request.form.get("current", "")
     new = request.form.get("new", "")
     bis = request.form.get("bis", "")
 
-    if not check_password_hash(u.password, current):
-        flash('Current password is invalid', 'danger')
-    elif new != bis:
+    if not current_user.has_role('admin'):
+        if not check_password_hash(u.password, current):
+            flash('Current password is invalid', 'danger')
+            return redirect(request.referrer)
+
+    if new != bis:
         flash('Password confirmation differs from new password.', 'danger')
     else:
         u = set_password(u, new)
         u.save()
-        login_user(u)
+        if not (current_user.has_role('admin') and request.args.get('id')):
+            login_user(u)
         flash('Password was successfully changed.', 'success')
 
     return redirect(request.referrer)

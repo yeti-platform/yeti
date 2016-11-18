@@ -4,6 +4,7 @@ import os
 
 from mongoengine import StringField, DictField, BooleanField
 from flask_mongoengine.wtf import model_form
+from flask import url_for
 
 from core.database import YetiDocument
 
@@ -18,6 +19,8 @@ class User(YetiDocument):
     settings = DictField(verbose_name="Settings")
     api_key = StringField(required=True, unique=True)
     session_token = StringField()
+
+    SEARCH_ALIASES = {}
 
     @property
     def is_authenticated(self):
@@ -67,3 +70,9 @@ class User(YetiDocument):
     @staticmethod
     def generate_api_key():
         return os.urandom(40).encode('hex')
+
+    def info(self):
+        i = {k: v for k, v in self._data.items() if k in ["username", "enabled", "permissions", "api_key"]}
+        i['url'] = url_for("api.UserAdmin:post", id=str(self.id), _external=True)
+        i['human_url'] = url_for("frontend.UsersView:profile", id=str(self.id), _external=True)
+        return i

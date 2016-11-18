@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% import "macros/filterlist.html" as filterlist %}
+
+{% block title %}
+Users
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+  <li>Admin</li>
+	<li class="active">User admin</li>
+</ol>
+{% endblock %}
+
+{% block main %}
+<div class="col-md-9">
+	<div role="tabpanel" class="tab-pane active" id="users" data-url="{{ url_for('api.UserAdminSearch:post')}}"></div>
+</div>
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/crud.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/selection.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+{%endblock%}
+
+
+{% block sidebar %}
+<div class="col-md-3">
+<form data-target="users" data-url="{{ url_for("api.UserAdminSearch:post")}}" class="yeti-crud">
+
+  <div class="input-group">
+      <input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
+    <span class="input-group-btn">
+      <button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
+    </span>
+  </div>
+  <div class="checkbox input-group-lg">
+    <label class="checkbox">
+          <input id="regex" type="checkbox" class="crud-regex"> Regex search (slower)
+    </label>
+  </div>
+
+  <ul class="pagination">
+    <li><a class="crud-paginator" data-direction="-1" aria-label="Previous">Prev</a></li>
+    <li><a class="crud-pagination" data-page="1">Page <span class="crud-pagenumber">1</span></a></li>
+    <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
+  </ul>
+
+  <div class="tip">
+    <p>You can run complex queries against the database using the input field above.</p>
+    <p>By default, the query will be matched against the <code>value</code> attribute of the observables.
+    To match against other attributes, use <code>attribute=query</code>.</p>
+
+    <p>Examples:</p>
+    <ul>
+      <li><strong>Generic tag query</strong>: <code>tags=crimeware</code></li>
+      <li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code> (regex <code>on</code>)</li>
+      <li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code></li>
+      <li><strong>Context</strong>: <code>context.source=FeodoTracker</code></li>
+    </ul>
+  </div>
+
+</form>
+</div>
+{% endblock %}
