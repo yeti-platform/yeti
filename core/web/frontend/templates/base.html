@@ -133,7 +133,7 @@
                 </ul>
               </li>
             {% endif %}
-            <p class="navbar-text">User: <strong>{{current_user.username}}</strong> <a href="#">[logout]</a></p>
+            <p class="navbar-text">User: <strong>{{current_user.username}}</strong> <a href="{{ url_for("auth.logout")}}">[logout]</a></p>
 
             </ul>
 
