@@ -47,16 +47,23 @@ class UsersView(GenericView):
         return redirect(request.referrer)
 
 
-
 class UserAdminView(GenericView):
-    klass = User
+    # klass = User
 
     @route('/reset-api/<id>', methods=["GET"])
     @requires_role('admin')
     def reset_api(self, id):
-        print id, type(id)
         user = get_object_or_404(User, id=id)
         user.api_key = User.generate_api_key()
         user.save()
         flash("API key reset", "success")
         return redirect(request.referrer)
+
+    @route("/permissions/<id>", methods=['GET', 'POST'])
+    @requires_role('admin')
+    def permissions(self, id):
+        user = get_object_or_404(User, id=id)
+        if request.method == "POST":
+            user.permissions = request.json
+            user.save()
+        return render_template("user/permissions.html", user=user)

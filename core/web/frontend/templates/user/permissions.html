@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% import "macros/generic.html" as macros %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+    <li>Admin</li>
+    <li>User admin</li>
+    <li class="active">Permissions</li>
+</ol>
+
+{% endblock %}
+
+{% if user != current_user %}
+{% set admin = current_user.has_role('admin') %}
+{% endif %}
+
+{% block main %}
+<div class="cold-md-12">
+
+	<div class="row">
+		<div class="col-md-6">
+
+		</div>
+
+		<div class="col-md-6">
+
+		</div>
+
+
+	</div>
+
+	{% include 'auth_profile.html' ignore missing %}
+
+
+
+</div>
+
+{% endblock %}
