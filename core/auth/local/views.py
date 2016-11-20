@@ -62,7 +62,8 @@ def change_password():
     else:
         u = set_password(u, new)
         u.save()
-        if not (current_user.has_role('admin') and request.args.get('id')):
+        # re-execute the login if the changes were made on current_user
+        if u.id == current_user.id:
             login_user(u)
         flash('Password was successfully changed.', 'success')
 
