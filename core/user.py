@@ -13,7 +13,7 @@ class User(YetiDocument):
     available_settings = dict()
 
     username = StringField(required=True, unique=True)
-    password = StringField(required=True)
+    password = StringField()
     enabled = BooleanField(required=True, default=True)
     permissions = DictField(verbose_name="Permissions")
     settings = DictField(verbose_name="Settings")
