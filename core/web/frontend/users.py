@@ -49,7 +49,7 @@ class UsersView(GenericView):
 class UserAdminView(GenericView):
     klass = User
 
-    @route('/reset-api/<id>', methods=["GET"])
+    @route('/reset-api/<id>', methods=["GET", "POST"])
     @requires_role('admin')
     def reset_api(self, id):
         user = get_object_or_404(User, id=id)
