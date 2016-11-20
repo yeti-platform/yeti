@@ -33,7 +33,10 @@ class UsersView(GenericView):
 
             user.save()
 
-        return render_template("user/profile.html", available_settings=User.available_settings, user=user)
+        if current_user.has_role('admin') and user.id != current_user.id:
+            return render_template("user/profile_admin.html", available_settings=User.available_settings, user=user)
+        else:
+            return render_template("user/profile.html", available_settings=User.available_settings, user=user)
 
     @route('/reset-api', methods=["POST"])
     def reset_api(self):
@@ -48,7 +51,7 @@ class UsersView(GenericView):
 
 
 class UserAdminView(GenericView):
-    # klass = User
+    klass = User
 
     @route('/reset-api/<id>', methods=["GET"])
     @requires_role('admin')
@@ -63,7 +66,18 @@ class UserAdminView(GenericView):
     @requires_role('admin')
     def permissions(self, id):
         user = get_object_or_404(User, id=id)
+        permdict = {}
         if request.method == "POST":
-            user.permissions = request.json
+            for object_name, permissions in user.permissions.items():
+                if not isinstance(permissions, dict):
+                    permdict[object_name] = bool(request.form.get("{}".format(object_name), False))
+                else:
+                    if object_name not in permdict:
+                        permdict[object_name] = {}
+                    for p in permissions:
+                        permdict[object_name][p] = bool(request.form.get("{}_{}".format(object_name, p), False))
+            user.permissions = permdict
             user.save()
+            flash("Permissions changed successfully", "success")
+        return redirect(request.referrer)
         return render_template("user/permissions.html", user=user)
