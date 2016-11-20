@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% import "macros/generic.html" as macros %}
+
+{% if user != current_user %}
+{% set admin = current_user.has_role('admin') %}
+{% endif %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+    <li>User</li>
+    <li class="active">Settings for user {{user.username}}</li>
+</ol>
+
+{% endblock %}
+
+
+
+{% block main %}
+<div class="cold-md-12">
+
+	<div class="row">
+		<div class="col-md-6">
+			<div class="panel panel-primary profile-panel">
+				<div class="panel-heading">
+					<h3 class="panel-title">Profile information</h3>
+				</div>
+				<table class='table profile'>
+					<tr><th>Username</th><td>{{user.username}}</td><td></td></tr>
+					<tr><th>API key</th><td><code>{{user.api_key}}</code></td>
+						<td>
+							<form action={{ url_for("frontend.UsersView:reset_api", id=user.id) }} method="post">
+								<button type="submit" class="btn btn-default btn-sm">Reset API key</button>
+							</form>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div class="col-md-6">
+			<div class="panel panel-warning profile-panel">
+				<div class="panel-heading">
+					<h3 class="panel-title">Authentication information</h3>
+				</div>
+				{% include 'auth_info.html' ignore missing %}
+			</div>
+		</div>
+
+
+	</div>
+
+
+
+	{% include 'auth_profile.html' ignore missing %}
+
+	<div class="panel panel-info">
+	  <div class="panel-heading">
+	    <h3 class="panel-title">Permissions and roles</h3>
+	  </div>
+		<form class="form-horizontal" action="{{ url_for("frontend.UserAdminView:permissions", id=user.id) }}" method="POST">
+	  <div class="panel-body">
+			Yeti users can have different roles and permissions which can be adjusted to different granularity levels, according to what you want to let your users do:
+
+			<ul>
+				<li>Most setups should give their users the <code>read</code> property on every object</li>
+				<li><code>write</code> permissions should only be given to users which are trusted not to corrupt or insert garbage into the database</li>
+				<li>Give the <code>toggle</code> and <code>refresh</code> permissions to users that may need to temporarily deactivate a feed or refresh it frequently</li>
+				<li>The <code>tag</code> permission gives a user the ability to tag existing observables even if they don't have the <code>write</code> permission on observables</li>
+				<li>The <code>admin</code> role enables a user to reset other user's passwords, API keys, and permissions. <strong>Distribute with caution!</strong></li>
+			</ul>
+
+			<h4>Roles</h4>
+      {% for obj in user.permissions if user.permissions[obj] is not mapping %}
+        <label><input type='checkbox' name="{{obj}}" {{"checked=true" if user.permissions[obj]}}> {{obj}}</label> <br />
+      {% endfor %}
+			<h4>Permissions</h4>
+
+	  </div>
+      <table class='table table-condensed'>
+				{% for obj in user.permissions if user.permissions[obj] is mapping %}
+		      <tr id='{{obj}}'>
+		        <th>{{obj}}</th>
+		        {% for permtype in user.permissions[obj] %}
+		        <td><label><input type='checkbox' name="{{obj}}_{{permtype}}" {{"checked=true" if user.permissions[obj][permtype]}}> {{permtype}}</label></td>
+		        {% endfor %}
+		      </tr>
+				{% endfor %}
+      </table>
+			<button type="submit" class="btn btn-primary" style='margin:10px;'>Save</button>
+		</form>
+	</div>
+
+
+</div>
+
+{% endblock %}
