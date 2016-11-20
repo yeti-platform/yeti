@@ -9,7 +9,7 @@ Users
 <ol class="breadcrumb">
 	<li>YETI</li>
   <li>Admin</li>
-	<li class="active">User admin</li>
+	<li class="active">User administration</li>
 </ol>
 {% endblock %}
 
@@ -21,6 +21,7 @@ Users
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/useradmin.js') }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/crud.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/selection.js") }}" charset="utf-8"></script>
@@ -31,17 +32,13 @@ Users
 {% block sidebar %}
 <div class="col-md-3">
 <form data-target="users" data-url="{{ url_for("api.UserAdminSearch:post")}}" class="yeti-crud">
-
+	<input class="extra-param" type="hidden" name="regex" value="true">
+	<input class="extra-param" type="hidden" name="ignorecase" value="true">
   <div class="input-group">
-      <input class="form-control input-sm crud-filter" data-default-value="value" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
+      <input class="form-control input-sm crud-filter" data-default-value="username" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
     <span class="input-group-btn">
       <button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
     </span>
-  </div>
-  <div class="checkbox input-group-lg">
-    <label class="checkbox">
-          <input id="regex" type="checkbox" class="crud-regex"> Regex search (slower)
-    </label>
   </div>
 
   <ul class="pagination">
@@ -51,17 +48,9 @@ Users
   </ul>
 
   <div class="tip">
-    <p>You can run complex queries against the database using the input field above.</p>
-    <p>By default, the query will be matched against the <code>value</code> attribute of the observables.
-    To match against other attributes, use <code>attribute=query</code>.</p>
-
-    <p>Examples:</p>
-    <ul>
-      <li><strong>Generic tag query</strong>: <code>tags=crimeware</code></li>
-      <li><strong>Gate URLs</strong>: <code>tags=zeus .php$</code> (regex <code>on</code>)</li>
-      <li><strong>Ransomware C2s</strong>: <code>tags=c2,ransomware</code></li>
-      <li><strong>Context</strong>: <code>context.source=FeodoTracker</code></li>
-    </ul>
+    <p>You can reset any user's API key by clicking on the <code>reset</code> button.</p>
+		<p>To temporarily prevent a user from logging in, you can disable their account by clicking on the checkbox</p>
+    <p><strong>Warning:</strong> Removing users cannot be undone</p>
   </div>
 
 </form>

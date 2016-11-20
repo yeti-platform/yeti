@@ -627,3 +627,7 @@ td input.inline {
 .profile-panel th {
   text-align: right;
 }
+
+.user-toggle, .user-remove {
+  cursor:pointer;
+}
