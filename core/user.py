@@ -48,7 +48,7 @@ class User(YetiDocument):
         return True
 
     def has_permission(self, object_name, permission):
-        return permission in self.permissions.get(object_name, [])
+        return self.permissions.get(object_name, {}).get(permission)
 
     def has_role(self, role):
         return self.permissions.get(role, False)
