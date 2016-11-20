@@ -115,7 +115,6 @@
           </ul>
 
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="{{ url_for('frontend.UsersView:profile') }}">Profile</a></li>
             {% set d = current_user.has_permission("feed", "read") or current_user.has_permission("exporttemplates", "read") or current_user.has_permission("export", "read") %}
             {% set a = current_user.has_permission("scheduledanalytics", "read") or current_user.has_permission("oneshotanalytics", "read") %}
             {% set t = current_user.has_permission("tag", "read") %}
@@ -133,7 +132,7 @@
                 </ul>
               </li>
             {% endif %}
-            <p class="navbar-text">User: <strong>{{current_user.username}}</strong> <a href="{{ url_for("auth.logout")}}">[logout]</a></p>
+            <p class="navbar-text">User: <strong>{{current_user.username}}</strong> <small>[ <a href="{{ url_for('frontend.UsersView:profile') }}">profile</a> | <a href="{{ url_for("auth.logout")}}">logout</a> ]</small></p>
 
             </ul>
 
