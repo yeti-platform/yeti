@@ -121,7 +121,7 @@
             {% set t = current_user.has_permission("tag", "read") %}
             {% if et or a or d %}
               <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Admin<span class="caret"></span></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Settings<span class="caret"></span></a>
                 <ul class="dropdown-menu">
                   {% if d %}<li><a href="{{ url_for('frontend.dataflows') }}">Dataflows</a></li>{%endif%}
                   {% if a %}<li><a href="{{ url_for('frontend.analytics') }}">Analytics</a></li>{%endif%}
