@@ -40,12 +40,8 @@ class UsersView(GenericView):
 
     @route('/reset-api', methods=["POST"])
     def reset_api(self):
-        if request.args.get('id') and current_user.has_role('admin'):
-            user = get_object_or_404(User, id=request.args.get('id'))
-        else:
-            user = current_user
-        user.api_key = User.generate_api_key()
-        user.save()
+        current_user.api_key = User.generate_api_key()
+        current_user.save()
         flash("API key reset", "success")
         return redirect(request.referrer)
 
