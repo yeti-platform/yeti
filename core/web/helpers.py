@@ -3,10 +3,11 @@ from __future__ import unicode_literals
 import re
 from inspect import ismethod
 from functools import wraps
-
+import urlparse
+from werkzeug.exceptions import Forbidden
 from core.helpers import iterify
 
-from flask import abort
+from flask import abort, request
 from flask_login import current_user
 from mongoengine import Q
 
@@ -94,3 +95,29 @@ def get_queryset(collection, filters, regex, ignorecase):
     print "Filter: {}".format(result_filters), q.to_query(collection)
 
     return queryset.filter(**result_filters).filter(q)
+
+
+def different_origin(referer, target):
+    p1, p2 = urlparse.urlparse(referer), urlparse.urlparse(target)
+    origin1 = p1.scheme, p1.hostname, p1.port
+    origin2 = p2.scheme, p2.hostname, p2.port
+
+    return origin1 != origin2
+
+
+def csrf_protect():
+    if request.method not in ('GET', 'HEAD', 'OPTIONS', 'TRACE'):
+        referer = request.headers.get('Referer')
+        print referer
+
+        if referer is None or different_origin(referer, request.url_root):
+            raise Forbidden(description="Referer check failed.")
+
+
+def prevent_csrf(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        csrf_protect()
+        return func(*args, **kwargs)
+
+    return inner
