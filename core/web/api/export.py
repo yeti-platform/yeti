@@ -4,6 +4,7 @@ import os
 
 from flask import send_from_directory, make_response
 from flask_classy import route
+from mongoengine.errors import DoesNotExist
 
 from core.web.api.crud import CrudApi
 from core import exports
@@ -33,7 +34,10 @@ class Export(CrudApi):
         :query ObjectID id: Export ID
         :resheader X-Yeti-Export-MD5: The MD5 hash of the exported content. Use it to check the export's integrity
         """
-        e = self.objectmanager.objects.get(id=id)
+        try:
+            e = self.objectmanager.objects.get(id=id)
+        except DoesNotExist:
+            return render({"error": "No Export found for id {}".format(id)}), 404
         if e.output_dir.startswith("/"):
             d = e.output_dir
         else:
