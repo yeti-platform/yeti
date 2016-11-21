@@ -5,7 +5,7 @@
         <table class="table table-condensed yeti-table table-hover">
           <tr><th>Username</th><th>API key</th><th>Enabled</th><th>Remove</th></tr>
     {% endif %}
-      <tr class="node-line" data-id="{{user['id']}}">
+      <tr class="node-line {{"disabled" if not user['enabled']}}" data-id="{{user['id']}}">
         <td><a href="{{ url_for('frontend.UsersView:profile', id=user['id'] )}}">{{user['username']}}</a></td>
         <td><code>{{ user['api_key']}}</code> <a class='btn btn-xs btn-default' href="{{ url_for("frontend.UserAdminView:reset_api", id=user['id'])}}">Reset</a></td>
         <td><span data-url="{{ url_for('api.UserAdminSearch:toggle', id=user["id"]) }}" class="user-toggle glyphicon glyphicon-{{ "ok" if user["enabled"] else "remove" }}"></span></td>
