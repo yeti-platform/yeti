@@ -1,7 +1,9 @@
 import os
+import hmac
+from hashlib import sha512
 
+from flask import current_app
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask_login import make_secure_token
 
 from core.user import User
 from mongoengine import DoesNotExist
@@ -52,7 +54,8 @@ def authenticate(username, password):
 
 
 def generate_session_token(user):
-    return os.urandom(12).encode('hex') + make_secure_token(user.username + user.password)
+    key = current_app.config['SECRET_KEY']
+    return hmac(key, (user.username + user.password + os.urandom(12).encode('hex')), sha512).hexdigest()
 
 
 def set_password(user, password):
