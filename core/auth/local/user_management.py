@@ -55,7 +55,7 @@ def authenticate(username, password):
 
 def generate_session_token(user):
     key = current_app.config['SECRET_KEY']
-    return hmac(key, (user.username + user.password + os.urandom(12).encode('hex')), sha512).hexdigest()
+    return hmac.new(key, (user.username + user.password + os.urandom(12).encode('hex')), sha512).hexdigest()
 
 
 def set_password(user, password):
