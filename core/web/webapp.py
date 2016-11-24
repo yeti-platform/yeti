@@ -43,7 +43,6 @@ def load_user(session_token):
 
 @login_manager.request_loader
 def api_auth(request):
-    print request.headers
     try:
         return User.objects.get(api_key=request.headers.get('X-Api-Key'))
     except DoesNotExist:
@@ -60,7 +59,7 @@ def frontend_login_required():
 
 @api.before_request
 def api_login_required():
-    if not current_user.is_active:
+    if not current_user.is_active and not request.method == "OPTIONS":
         return dumps({"error": "X-Api-Key header missing or invalid"}), 401
 
 
