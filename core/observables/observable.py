@@ -93,7 +93,7 @@ class Observable(Node):
                 raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
 
     @classmethod
-    def add_text(cls, text):
+    def add_text(cls, text, tags=[]):
         """Adds and returns an observable for a given string.
 
         Args:
@@ -103,7 +103,9 @@ class Observable(Node):
             A saved Observable instance.
 
         """
-        return Observable.guess_type(text).get_or_create(value=text)
+        o = Observable.guess_type(text).get_or_create(value=text)
+        if tags:
+            o.tag(tags)
 
     @staticmethod
     def check_type(txt):
