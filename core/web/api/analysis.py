@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from flask import request
 from flask_classy import route
+from flask_login import current_user
 
 from core.web.api.crud import CrudApi
 from core.observables import Observable
@@ -36,10 +37,10 @@ class Analysis(CrudApi):
         observables = params.pop('observables', [])
         add_unknown = bool(params.pop('add_unknown', False))
 
-        if add_unknown:
+        if add_unknown and current_user.has_permission('observable', 'write'):
             for o in observables:
                 Observable.add_text(o)
 
-        data = match_observables(observables, save_matches=add_unknown)
+        data = match_observables(observables, save_matches=add_unknown and current_user.has_permission('observable', 'write'))
 
         return render(data)
