@@ -57,19 +57,21 @@ class Observable(CrudApi):
 
         Bulk-add Observables from an array of strings.
 
-        :<json [String] observables: Array of Strings representing observables (URLs, IPs, hostnames, etc.)
+        :<json [{string: observable, tags: [string]}] observables: Array of Strings representing observables (URLs, IPs, hostnames, etc.)
         :<json boolean refang: If set, the observables will be refanged before being added to the database
         """
         added = []
         params = request.json
         observables = params.pop('observables', [])
         for item in observables:
+            obs = item['value']
+            tags = item['tags']
             if params.pop('refang', None):
-                obs = self.objectmanager.add_text(refang(item))
+                obs = self.objectmanager.add_text(refang(obs), tags)
             else:
-                obs = self.objectmanager.add_text(item)
+                obs = self.objectmanager.add_text(obs, tags)
 
-            added.append(self._modify_observable(obs, params.copy()))
+            added.append(obs)
         return render(added)
 
     @route("/<id>/context", methods=["POST"])
