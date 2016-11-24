@@ -32,9 +32,14 @@ def derive(observables):
     """
 
     new = []
-    for observable in iterify(observables):
+    observables = list(iterify(observables))
+    for i, observable in enumerate(observables):
         try:
             t = Observable.guess_type(observable)
+            temp = t(value=observable)
+            temp.clean()
+            observable = temp.value
+            observables[i] = observable
             for a in analyzers.get(t, []):
                 new.extend([n for n in a.analyze_string(observable) if n and n not in observables])
         except ObservableValidationError:
@@ -43,7 +48,7 @@ def derive(observables):
     if len(new) == 0:
         return observables
     else:
-        return derive(new + observables)
+        return observables + derive(new)
 
 
 def match_observables(observables, save_matches=False):
