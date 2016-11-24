@@ -4,12 +4,13 @@ import logging
 class YetiApi(object):
     """Python class for interacting with the Yeti API"""
 
-    def __init__(self, url, auth=tuple()):
+    def __init__(self, url, auth=tuple(), api_key=None):
         super(YetiApi, self).__init__()
         if not url.endswith('/'):
             url += "/"
         self.yeti_url = url
         self.auth = auth
+        self.api_key = api_key
         self._test_connection()
 
     def analysis_match(self, observables):
@@ -47,10 +48,16 @@ class YetiApi(object):
 
     def _make_request(self, url, method="GET", payload={}):
         url = "{}{}".format(self.yeti_url, url)
+
+        headers = {}
+        if self.api_key:
+            headers.update({"X-Api-Key": self.api_key})
+
         if method == "POST":
-            r = requests.post(url, headers={'Accept': 'application/json'}, auth=self.auth, json=payload)
+            headers.update({'Accept': 'application/json'})
+            r = requests.post(url, headers=headers, auth=self.auth, json=payload)
         else:
-            r = requests.get(url, auth=self.auth)
+            r = requests.get(url, auth=self.auth, headers=headers)
 
         if r.status_code == 200:
             logging.debug("Success ({})".format(r.status_code))
