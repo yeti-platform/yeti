@@ -106,6 +106,7 @@ class Observable(Node):
         o = Observable.guess_type(text).get_or_create(value=text)
         if tags:
             o.tag(tags)
+        return o
 
     @staticmethod
     def check_type(txt):
