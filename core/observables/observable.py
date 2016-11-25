@@ -292,9 +292,14 @@ class Observable(Node):
 
     def expire_tags(self):
         for tag in self.tags:
-            if tag.expiration and (tag.last_seen + tag.expiration) < datetime.utcnow():
-                tag.fresh = False
-        return self.save()
+            if tag.expiration:
+                if (tag.last_seen + tag.expiration) < datetime.utcnow() and tag.fresh:
+                    tag.fresh = False
+                    self.save()
+                elif (tag.last_seen + tag.expiration) > datetime.utcnow() and not tag.fresh:
+                    tag.fresh = True
+                    self.save()
+        return self
 
     def fresh_tags(self):
         return [tag for tag in self.tags if tag.fresh]
