@@ -35,12 +35,13 @@ class Analysis(CrudApi):
 
         params = request.json
         observables = params.pop('observables', [])
+        fetch_neighbors = params.pop('fetch_neighbors', True)
         add_unknown = bool(params.pop('add_unknown', False))
 
         if add_unknown and current_user.has_permission('observable', 'write'):
             for o in observables:
                 Observable.add_text(o)
 
-        data = match_observables(observables, save_matches=add_unknown and current_user.has_permission('observable', 'write'))
+        data = match_observables(observables, save_matches=add_unknown and current_user.has_permission('observable', 'write'), fetch_neighbors=fetch_neighbors)
 
         return render(data)

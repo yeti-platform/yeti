@@ -51,7 +51,7 @@ def derive(observables):
         return observables + derive(new)
 
 
-def match_observables(observables, save_matches=False):
+def match_observables(observables, save_matches=False, fetch_neighbors=True):
     # Remove empty observables
     observables = [refang(observable) for observable in observables if observable]
     extended_query = set(observables) | set(derive(observables))
@@ -69,10 +69,11 @@ def match_observables(observables, save_matches=False):
         data['known'].append(o.info())
         del_from_set(data['unknown'], o.value)
 
-        for link, node in (o.incoming()):
-            if isinstance(node, Observable):
-                if (link.src.value not in extended_query or link.dst.value not in extended_query) and node.tags:
-                    data['neighbors'].append((link.info(), node.info()))
+        if fetch_neighbors:
+            for link, node in (o.incoming()):
+                if isinstance(node, Observable):
+                    if (link.src.value not in extended_query or link.dst.value not in extended_query) and node.tags:
+                        data['neighbors'].append((link.info(), node.info()))
 
         for nodes in o.neighbors("Entity").values():
             for l, node in nodes:
