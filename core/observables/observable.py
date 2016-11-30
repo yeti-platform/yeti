@@ -290,6 +290,13 @@ class Observable(Node):
         else:
             return self.last_tagged
 
+    def get_first_tagged(self):
+        first_tagged = None
+        for tag in self.tags:
+            if not first_tagged or tag.first_seen < first_tagged:
+                first_tagged = tag.first_seen
+        return first_tagged
+
     def expire_tags(self):
         for tag in self.tags:
             if tag.expiration:
