@@ -18,7 +18,7 @@ DEFAULT_PERMISSIONS = {
     "scheduledanalytics": {"read": True, "write": True, "toggle": True, "refresh": True},
     "oneshotanalytics": {"read": True, "write": True, "toggle": True, "run": True},
     "tag": {"read": True, "write": True},
-    "export": {"read": True, "write": True},
+    "export": {"read": True, "write": True, "toggle": True, "refresh": True},
     "files": {"read": True, "write": True},
     "link": {"read": True, "write": True},
     "neighbors": {"read": True, "write": True},
