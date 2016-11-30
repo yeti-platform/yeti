@@ -297,17 +297,22 @@ class Node(YetiDocument):
                 return cls.objects.get(value=obj.value)
 
     def incoming(self):
-        return [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id})]
+        for l in Link.objects(__raw__={"dst.$id": self.id}):
+            yield (l, l.src)
 
     def outgoing(self):
-        return [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id})]
+        for l in Link.objects(__raw__={"src.$id": self.id}):
+            yield (l, l.dst)
 
     def neighbors(self, neighbor_type=""):
-        links = list(set(self.incoming() + self.outgoing()))
+        links = []
+        for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(neighbor_type)}):
+            links.append((l, l.src))
+        for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(neighbor_type)}):
+            links.append((l, l.dst))
         info = {}
         for link, node in links:
-            if re.search(neighbor_type.lower(), node.full_type.lower()):
-                info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
+            info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
 
     def neighbors_advanced(self, klass, filter, regex, ignorecase, page, rng):
