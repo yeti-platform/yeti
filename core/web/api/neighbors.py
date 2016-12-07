@@ -38,7 +38,7 @@ class Neighbors(CrudApi):
         result['nodes'].append(node.to_mongo())
 
         node_ids = set()
-        links = list(set(node.incoming() + node.outgoing()))
+        links = list(set(list(node.incoming()) + list(node.outgoing())))
 
         for link, node in links:
             if node.id not in node_ids:
