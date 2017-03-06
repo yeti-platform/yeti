@@ -13,6 +13,7 @@ from core.errors import ObservableValidationError
 
 class Hostname(Observable):
 
+    # TODO: Use a smarter regex
     regex = r"((.+\.)(.+))\.?"
 
     domain = BooleanField()

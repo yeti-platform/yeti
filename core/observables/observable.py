@@ -83,10 +83,9 @@ class Observable(Node):
         Raises:
             ObservableValidationError if no type could be guessed.
         """
-        from core.observables import Url, Ip, Hostname, Email, Hash, Bitcoin
-
+        from core.observables import Url, Ip, Email, Path, Hostname, Hash, Bitcoin
         if string and string.strip() != '':
-            for t in [Url, Ip, Email, Hostname, Hash, Bitcoin]:
+            for t in [Url, Ip, Email, Path, Hostname, Hash, Bitcoin]:
                 if t.check_type(string):
                     return t
             else:
