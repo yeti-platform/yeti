@@ -184,9 +184,10 @@
 </pre></div>
 </div>
 <p>This will only enable the web interface - if you want to use Feeds and Analytics, you&#8217;ll be better off starting the workers as well:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 -Q feeds -n feeds --purge
-$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 2 -Q oneshot -n oneshot --purge
-$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 --purge
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q exports -n exports -Ofair -c 2 --purge
+$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q feeds -n feeds -Ofair -c 2 --purge
+$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q analytics -n analytics -Ofair -c 2 --purge
+$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q oneshot -n oneshot -c 2 --purge
 $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 </pre></div>
 </div>
@@ -307,9 +308,9 @@ $ sudo systemctl start|status|stop yeti_web
 </div>
 <div class="section" id="exports">
 <h3>Exports<a class="headerlink" href="#exports" title="Permalink to this headline">¶</a></h3>
-<p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_feeds.service</span></code>:</p>
+<p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_exports.service</span></code>:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">workers</span> <span class="o">-</span> <span class="n">Feeds</span>
+<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">workers</span> <span class="o">-</span> <span class="n">Exports</span>
 <span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
 
 <span class="p">[</span><span class="n">Service</span><span class="p">]</span>
@@ -344,7 +345,7 @@ $ sudo systemctl start|status|stop yeti_web
 <p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_beat.service</span></code>:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
 <span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">beat</span> <span class="n">scheduler</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
+<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span> <span class="n">yeti_feeds</span><span class="o">.</span><span class="n">service</span> <span class="n">yeti_oneshot</span><span class="o">.</span><span class="n">service</span> <span class="n">yeti_exports</span><span class="o">.</span><span class="n">service</span> <span class="n">yeti_analytics</span><span class="o">.</span><span class="n">service</span>
 
 <span class="p">[</span><span class="n">Service</span><span class="p">]</span>
 <span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
