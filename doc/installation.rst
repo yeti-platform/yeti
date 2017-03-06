@@ -23,9 +23,10 @@ Start the web UI (will spawn a HTTP server on ``http://localhost:5000``)::
 
 This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well::
 
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 -Q feeds -n feeds --purge
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 2 -Q oneshot -n oneshot --purge
-  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q exports -n exports -Ofair -c 2 --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q feeds -n feeds -Ofair -c 2 --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q analytics -n analytics -Ofair -c 2 --purge
+  $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q oneshot -n oneshot -c 2 --purge
   $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 
 
@@ -155,10 +156,10 @@ File - ``/lib/systemd/system/yeti_feeds.service``::
 Exports
 ^^^^^^^
 
-File - ``/lib/systemd/system/yeti_feeds.service``::
+File - ``/lib/systemd/system/yeti_exports.service``::
 
   [Unit]
-  Description=Yeti workers - Feeds
+  Description=Yeti workers - Exports
   After=mongodb.service redis.service
 
   [Service]
@@ -195,7 +196,7 @@ File - ``/lib/systemd/system/yeti_beat.service``::
 
   [Unit]
   Description=Yeti beat scheduler
-  After=mongodb.service redis.service
+  After=mongodb.service redis.service yeti_feeds.service yeti_oneshot.service yeti_exports.service yeti_analytics.service
 
   [Service]
   Type=simple
