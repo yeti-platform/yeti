@@ -58,7 +58,7 @@ class Scheduler(BaseScheduler):
 
     def __init__(self, *args, **kwargs):
         self._schedule = {}
-        self._loaded_entries = {}
+        self.loaded_entries = {}
         logging.debug("Scheduler started")
         self.app = celery_app
         self.load_entries(ScheduleEntry, self.SUBDIRS)
@@ -77,7 +77,7 @@ class Scheduler(BaseScheduler):
 
         for sched in ScheduleEntry.objects.all():
             if sched.enabled:
-                self._loaded_entries[sched.name] = sched
+                self.loaded_entries[sched.name] = sched
 
         for subdir in subdirs:
             modules_dir = os.path.join(base_dir, subdir)
@@ -92,11 +92,11 @@ class Scheduler(BaseScheduler):
                                 entry = obj(**obj.default_values)
                                 entry.save()
 
-                            self._loaded_entries[entry.name] = entry
+                            self.loaded_entries[entry.name] = entry
 
     def setup_schedule(self):
         logging.debug("Setting up scheduler")
-        for entry_name, entry in self._loaded_entries.iteritems():
+        for entry_name, entry in self.loaded_entries.iteritems():
             if isinstance(entry, ScheduleEntry):
                 self._schedule[entry_name] = BaseScheduleEntry(name=entry_name,
                                                              app=self.app,
