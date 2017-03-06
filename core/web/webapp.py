@@ -21,7 +21,6 @@ webapp = Flask(__name__)
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
-webapp.debug = True
 
 
 login_manager = LoginManager()
