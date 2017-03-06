@@ -15,8 +15,8 @@ knowledge on threat actors in a single, unified repository. Ideally, this
 repository should be queryable in an automated way by other tools (spoiler:
 it is!)
 
-Malware & persistence
----------------------
+Malware stolen data
+-------------------
 
 You just analyzed the latest Dridex sample and you figured out that it's using
 a subdirectory in the user's ``Roaming`` directory to store its data, and you'd
@@ -117,10 +117,134 @@ Head over to **New > Regular expression** and complete as follows:
 
 Short explanation on fields:
 
-* Location - This helps the analyst know where it can find this indicator. This
-  is free-text and useful values are *Filesystem*, *HTTP headers*, *HTTP URI*, *Registry*, etc.
-* Diamond edge - Corresponding Diamond Model edge.
-* Link with entities - Link this Indicator to other entities. In this case we want to link it to Dridex.
-* Pattern - Complete this with your regular expression or Yara rule. 
+* **Location** - This helps the analyst know where it can find this indicator.
+  This is free-text and useful values could be *Filesystem*, *HTTP headers*,
+  *HTTP URI*, *Registry*, etc.
+* **Diamond edge** - Corresponding Diamond Model edge.
+* **Link with entities** - Link this Indicator to other entities. In this case
+  we want to link it to Dridex.
+* **Pattern** - Complete this with your regular expression or Yara rule.
 
 .. image:: _static/indicator_dridex.png
+
+Note how the **Malware** tab now shows a link to the Dridex malware. Opening the
+Dridex entity and selecting the **Indicators** tab also reflects this
+relationship:
+
+.. image:: _static/dridex_indicators.png
+
+Automation
+^^^^^^^^^^
+
+All this information can be queried from other software (think incident
+management platforms, forensic frameworks...) using Yeti's API::
+
+  $ http -vv --json POST localhost:5000/api/observablesearch/ filter:='{"value": "Roaming"}' params:='{"regex": "true"}'
+  POST /api/observablesearch/ HTTP/1.1
+  Accept: application/json, */*
+  Accept-Encoding: gzip, deflate
+  Connection: keep-alive
+  Content-Length: 61
+  Content-Type: application/json
+  Host: localhost:5000
+  User-Agent: HTTPie/0.9.8
+
+  {
+      "filter": {
+          "value": "Roaming"
+      },
+      "params": {
+          "regex": "true"
+      }
+  }
+
+  HTTP/1.0 200 OK
+  Content-Length: 2033
+  Content-Type: application/json
+  Date: Mon, 06 Mar 2017 17:38:50 GMT
+  Server: Werkzeug/0.11.15 Python/2.7.13
+
+  [
+      {
+          "context": [],
+          "created": "2017-03-06T17:35:07.614000",
+          "human_url": "http://localhost:5000/observable/58bd9dcb10c553738521480e",
+          "id": "58bd9dcb10c553738521480e",
+          "last_analyses": {},
+          "sources": [],
+          "tags": [
+              {
+                  "first_seen": "2017-03-06T17:35:07.627000",
+                  "fresh": true,
+                  "last_seen": "2017-03-06T17:35:07.627000",
+                  "name": "dridex"
+              }
+          ],
+          "type": "Path",
+          "url": "http://localhost:5000/api/observable/58bd9dcb10c553738521480e",
+          "value": "C:\\Users\\admin\\AppData\\Roaming\\Lzmoo"
+      },
+      {
+          "context": [],
+          "created": "2017-03-06T17:35:07.592000",
+          "human_url": "http://localhost:5000/observable/58bd9dcb10c553738521480b",
+          "id": "58bd9dcb10c553738521480b",
+          "last_analyses": {},
+          "sources": [],
+          "tags": [
+              {
+                  "first_seen": "2017-03-06T17:35:07.606000",
+                  "fresh": true,
+                  "last_seen": "2017-03-06T17:35:07.606000",
+                  "name": "dridex"
+              }
+          ],
+          "type": "Path",
+          "url": "http://localhost:5000/api/observable/58bd9dcb10c553738521480b",
+          "value": "C:\\Users\\admin\\AppData\\Roaming\\Thssk"
+      },
+      {
+          "context": [],
+          "created": "2017-03-06T17:35:07.565000",
+          "human_url": "http://localhost:5000/observable/58bd9dcb10c5537385214808",
+          "id": "58bd9dcb10c5537385214808",
+          "last_analyses": {},
+          "sources": [],
+          "tags": [
+              {
+                  "first_seen": "2017-03-06T17:35:07.585000",
+                  "fresh": true,
+                  "last_seen": "2017-03-06T17:35:07.585000",
+                  "name": "dridex"
+              },
+              {
+                  "first_seen": "2017-03-06T17:35:21.268000",
+                  "fresh": true,
+                  "last_seen": "2017-03-06T17:35:21.268000",
+                  "name": "banker"
+              }
+          ],
+          "type": "Path",
+          "url": "http://localhost:5000/api/observable/58bd9dcb10c5537385214808",
+          "value": "C:\\Users\\admin\\AppData\\Roaming\\Famas"
+      },
+      {
+          "context": [],
+          "created": "2017-03-06T17:17:00.572000",
+          "human_url": "http://localhost:5000/observable/58bd998c10c55366bedca50b",
+          "id": "58bd998c10c55366bedca50b",
+          "last_analyses": {},
+          "sources": [],
+          "tags": [
+              {
+                  "first_seen": "2017-03-06T17:17:00.595000",
+                  "fresh": true,
+                  "last_seen": "2017-03-06T17:17:00.595000",
+                  "name": "dridex"
+              }
+          ],
+          "type": "Path",
+          "url": "http://localhost:5000/api/observable/58bd998c10c55366bedca50b",
+          "value": "C:\\Users\\tomchop\\AppData\\Roaming\\stolen.dat"
+      }
+  ]
