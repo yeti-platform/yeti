@@ -1,3 +1,5 @@
+.. _installation:
+
 Installation
 ============
 
@@ -33,7 +35,7 @@ Production use
 
 For production use, it may be better to daemonize Yeti and tweak redis for performance.
 
-Start off with:
+Start off with::
 
   $ sudo apt-get install nginx uwsgi
 
@@ -48,14 +50,14 @@ To enable the systemd scripts once you've installed them::
   sudo systemctl enable yeti_web
 
 
-Some optimizations for redis (taken from [here](https://www.techandme.se/performance-tips-for-redis-cache-server/)):
+Some optimizations for redis (taken from `here <https://www.techandme.se/performance-tips-for-redis-cache-server/>`_):
 
-Add the following lines in `/etc/sysctl.conf`
+Add the following lines in ``/etc/sysctl.conf``::
 
   # redis tweak
   vm.overcommit_memory = 1
 
-Add the following lines in `/etc/rc.local`
+Add the following lines in ``/etc/rc.local``::
 
   # disable transparent huge pages (redis tweak)
   See here for details: https://docs.mongodb.com/manual/tutorial/transparent-huge-pages/

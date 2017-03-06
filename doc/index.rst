@@ -13,6 +13,7 @@ Contents:
 
 .. toctree::
   installation
+  getting-started
   objects
   extending
   api
