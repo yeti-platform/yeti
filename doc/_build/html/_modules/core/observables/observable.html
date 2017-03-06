@@ -1,0 +1,546 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>core.observables.observable &mdash; YETI 1.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="YETI 1.0 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> YETI
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../objects.html">Yeti objects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../extending.html">Extending Yeti</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">The API</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">YETI</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>core.observables.observable</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for core.observables.observable</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">flask_mongoengine.wtf</span> <span class="k">import</span> <span class="n">model_form</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="k">import</span> <span class="n">url_for</span>
+
+<span class="kn">from</span> <span class="nn">core.helpers</span> <span class="k">import</span> <span class="n">iterify</span>
+<span class="kn">from</span> <span class="nn">core.database</span> <span class="k">import</span> <span class="n">Node</span><span class="p">,</span> <span class="n">TagListField</span>
+<span class="kn">from</span> <span class="nn">core.observables</span> <span class="k">import</span> <span class="n">ObservableTag</span><span class="p">,</span> <span class="n">Tag</span>
+<span class="kn">from</span> <span class="nn">core.entities</span> <span class="k">import</span> <span class="n">Entity</span>
+<span class="kn">from</span> <span class="nn">core.errors</span> <span class="k">import</span> <span class="n">ObservableValidationError</span>
+
+
+<div class="viewcode-block" id="Observable"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable">[docs]</a><span class="k">class</span> <span class="nc">Observable</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for Observables in Yeti</span>
+
+<span class="sd">    Observables describe elements that can be seen in investigations,</span>
+<span class="sd">    incidents, reports, intelligence, etc. They are usually technical data about</span>
+<span class="sd">    specific threats or actors.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        value: The observable&#39;s technical value (the observed URL, hostname, IP address...)</span>
+<span class="sd">        sources: An array of strings that define how the observable was inserted</span>
+<span class="sd">        description: A free-text description of the observable</span>
+<span class="sd">        context: A JSON object providing extra information as to why the observable was added. Context can be added trough the API or through Feeds</span>
+<span class="sd">        tags: An array of :class:`core.observables.tag.ObservableTag` objects</span>
+<span class="sd">        last_analyses: An array of JSON objects indicating the last analysis time for a particular analytics</span>
+<span class="sd">        created: Creation date</span>
+<span class="sd">        last_tagged: Date when a given observable was last tagged</span>
+<span class="sd">        exclude_fields: Fields to be excluded from automatic form creation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SEARCH_ALIASES</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">DISPLAY_FIELDS</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;Value&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="s2">&quot;Context&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">,</span> <span class="s2">&quot;Tags&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;sources&quot;</span><span class="p">,</span> <span class="s2">&quot;Sources&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;Created&quot;</span><span class="p">)]</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">verbose_name</span><span class="o">=</span><span class="s2">&quot;Value&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">StringField</span><span class="p">(),</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s2">&quot;Sources&quot;</span><span class="p">)</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="n">StringField</span><span class="p">(</span><span class="n">verbose_name</span><span class="o">=</span><span class="s2">&quot;Description&quot;</span><span class="p">)</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">DictField</span><span class="p">(),</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s2">&quot;Context&quot;</span><span class="p">)</span>
+    <span class="n">tags</span> <span class="o">=</span> <span class="n">ListField</span><span class="p">(</span><span class="n">EmbeddedDocumentField</span><span class="p">(</span><span class="n">ObservableTag</span><span class="p">),</span> <span class="n">verbose_name</span><span class="o">=</span><span class="s2">&quot;Tags&quot;</span><span class="p">)</span>
+    <span class="n">last_analyses</span> <span class="o">=</span> <span class="n">DictField</span><span class="p">(</span><span class="n">verbose_name</span><span class="o">=</span><span class="s2">&quot;Last analyses&quot;</span><span class="p">)</span>
+
+    <span class="n">created</span> <span class="o">=</span> <span class="n">DateTimeField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+    <span class="n">last_tagged</span> <span class="o">=</span> <span class="n">DateTimeField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">exclude_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sources&#39;</span><span class="p">,</span> <span class="s1">&#39;context&#39;</span><span class="p">,</span> <span class="s1">&#39;last_analyses&#39;</span><span class="p">,</span> <span class="s1">&#39;created&#39;</span><span class="p">,</span> <span class="s1">&#39;attached_files&#39;</span><span class="p">,</span> <span class="s1">&#39;last_tagged&#39;</span><span class="p">]</span>
+
+    <span class="n">meta</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;allow_inheritance&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;indexes&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;tags&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;last_analyses&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;created&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;index_backgroud&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;ordering&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;-created&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observable.get_form"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.get_form">[docs]</a>    <span class="k">def</span> <span class="nf">get_form</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Gets the appropriate form for a given obseravble&quot;&quot;&quot;</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">model_form</span><span class="p">(</span><span class="n">klass</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">exclude_fields</span><span class="p">)</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">TagListField</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">form</span></div>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">u</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2"> context)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Observable.guess_type"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.guess_type">[docs]</a>    <span class="k">def</span> <span class="nf">guess_type</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Tries to guess the type of observable given a ``string``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            string: The string that will be used to guess the observable type from.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An observable Class.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ObservableValidationError if no type could be guessed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">core.observables</span> <span class="k">import</span> <span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Email</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">Hostname</span><span class="p">,</span> <span class="n">Hash</span><span class="p">,</span> <span class="n">Bitcoin</span>
+        <span class="k">if</span> <span class="n">string</span> <span class="ow">and</span> <span class="n">string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Email</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">Hostname</span><span class="p">,</span> <span class="n">Hash</span><span class="p">,</span> <span class="n">Bitcoin</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">check_type</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">t</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ObservableValidationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> was not recognized as a viable datatype&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Observable.add_text"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_text">[docs]</a>    <span class="k">def</span> <span class="nf">add_text</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;Adds and returns an observable for a given string.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text: the text that will be used to add an Observable from.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A saved Observable instance.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">Observable</span><span class="o">.</span><span class="n">guess_type</span><span class="p">(</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tags</span><span class="p">:</span>
+            <span class="n">o</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">o</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">check_type</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Implement this in subclasses&quot;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Observable.change_all_tags"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.change_all_tags">[docs]</a>    <span class="k">def</span> <span class="nf">change_all_tags</span><span class="p">(</span><span class="n">old_tags</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Changes tags on all observables</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            old_tags: A string or array of strings representing tag names to change</span>
+<span class="sd">            new_tag: The new tag name by which all ``old_tags`` should be replaced</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">old_tags</span> <span class="o">=</span> <span class="n">iterify</span><span class="p">(</span><span class="n">old_tags</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">Observable</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">tags__name__in</span><span class="o">=</span><span class="n">old_tags</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">old_tag</span> <span class="ow">in</span> <span class="n">old_tags</span><span class="p">:</span>
+                <span class="n">o</span><span class="o">.</span><span class="n">change_tag</span><span class="p">(</span><span class="n">old_tag</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Observable.add_context"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_context">[docs]</a>    <span class="k">def</span> <span class="nf">add_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">replace_source</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds context to an Observable.</span>
+
+<span class="sd">        &quot;Context&quot; is represented by a JSON object (or Python ``dict()``) that will</span>
+<span class="sd">        be added to the Observable&#39;s ``context`` set. Context should provide information</span>
+<span class="sd">        on why the Observable has been added to the database.</span>
+
+<span class="sd">        Context can be any information, but it needs to have a ``source`` key that can</span>
+<span class="sd">        point the analyst to the source of the context.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            context: a JSON object representing the context to be added.</span>
+<span class="sd">            replace_source: If defined, contexts having a ``source`` attribute</span>
+<span class="sd">                            set to ``replace_source`` will be deleted before insert</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A fresh instance of the Observable as it exists in the database.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="s1">&#39;source&#39;</span> <span class="ow">in</span> <span class="n">context</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))}</span>
+        <span class="k">if</span> <span class="n">replace_source</span><span class="p">:</span>
+            <span class="c1"># This does not work : cannot traverse and set context atomically</span>
+            <span class="c1"># self.modify({&quot;context__source&quot;: c}, set__context__S=context)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__context__source</span><span class="o">=</span><span class="n">replace_source</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">add_to_set__context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Observable.remove_context"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.remove_context">[docs]</a>    <span class="k">def</span> <span class="nf">remove_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes Context from an observable.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            context: a JSON object representing the context to be removed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A fresh instance of the Observable as it exists in the database.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Observable.add_source"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_source">[docs]</a>    <span class="k">def</span> <span class="nf">add_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a source to the observable instance</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source: a string to add to the array of sources.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">add_to_set__sources</span><span class="o">=</span><span class="n">source</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Observable.get_tags"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.get_tags">[docs]</a>    <span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fresh</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns an array of strings containing an observables&#39; fresh tags names.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fresh: set to ``False`` to also include non-fresh tags in the result</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of strings containing an observables&#39; fresh tags names.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">fresh</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">fresh</span><span class="p">)]</span></div>
+
+    <span class="k">def</span> <span class="nf">find_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># find related tags and count them</span>
+        <span class="n">new_tags</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">produces</span> <span class="ow">in</span> <span class="n">tag</span><span class="o">.</span><span class="n">produces</span><span class="p">:</span>
+                <span class="n">new_tags</span><span class="p">[</span><span class="n">produces</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># remove already known tags</span>
+        <span class="n">localtags</span> <span class="o">=</span> <span class="p">[</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">new_tags</span><span class="o">.</span><span class="n">copy</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">localtags</span><span class="p">:</span>
+                <span class="n">new_tags</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_tags</span>
+
+    <span class="k">def</span> <span class="nf">has_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag_to_search</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">tag_to_search</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">change_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old_tag</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s2">&quot;tags__name&quot;</span><span class="p">:</span> <span class="n">old_tag</span><span class="p">,</span> <span class="s2">&quot;tags__name__ne&quot;</span><span class="p">:</span> <span class="n">new_tag</span><span class="p">},</span> <span class="n">set__tags__S__name</span><span class="o">=</span><span class="n">new_tag</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s2">&quot;tags__name&quot;</span><span class="p">:</span> <span class="n">old_tag</span><span class="p">},</span> <span class="n">pull__tags__name</span><span class="o">=</span><span class="n">old_tag</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s2">&quot;tags__name&quot;</span><span class="p">:</span> <span class="n">new_tag</span><span class="p">},</span> <span class="n">set__tags__S__last_seen</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">untag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">iterify</span><span class="p">(</span><span class="n">tags</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__tags__name</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Observable.tag"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.tag">[docs]</a>    <span class="k">def</span> <span class="nf">tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_tags</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Tags an observable.</span>
+
+<span class="sd">        An observable can be tagged to add more information as to what it represents.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            new_tags:</span>
+<span class="sd">                An array of strings to tag the observable with.</span>
+<span class="sd">            strict:</span>
+<span class="sd">                Set to ``True`` to replace all existing tags with the ``new_tags``.</span>
+<span class="sd">            expiration:</span>
+<span class="sd">                Timedelta field after which the Tag will not be considered fresh anymore.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A fresh Observable instance as reloaded from the database.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">new_tags</span> <span class="o">=</span> <span class="n">iterify</span><span class="p">(</span><span class="n">new_tags</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="n">remove</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">])</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">new_tags</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">remove</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__tags__name</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+
+        <span class="n">tagged</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">new_tag</span> <span class="ow">in</span> <span class="n">new_tags</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">new_tag</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">tagged</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="n">new_tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">new_tag</span><span class="p">)</span>
+                <span class="n">new_tag</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+                <span class="k">try</span><span class="p">:</span>  <span class="c1"># check if tag is a replacement</span>
+                    <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">replaces</span><span class="o">=</span><span class="n">new_tag</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">DoesNotExist</span><span class="p">:</span>
+                    <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">new_tag</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">expiration</span><span class="p">:</span>
+                    <span class="n">expiration</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">default_expiration</span>
+
+                <span class="n">extra_tags</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">produces</span> <span class="o">+</span> <span class="p">[</span><span class="n">tag</span><span class="p">]</span>
+
+                <span class="c1"># search for related entities and link them</span>
+                <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">Entity</span><span class="o">.</span><span class="n">objects</span><span class="p">(</span><span class="n">tags__in</span><span class="o">=</span><span class="p">[</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">]):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">active_link_to</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;Tagged&#39;</span><span class="p">,</span> <span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">clean_old</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">extra_tags</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s2">&quot;tags__name&quot;</span><span class="p">:</span> <span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">},</span> <span class="n">set__tags__S__fresh</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">set__tags__S__last_seen</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">push__tags</span><span class="o">=</span><span class="n">ObservableTag</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">expiration</span><span class="o">=</span><span class="n">expiration</span><span class="p">))</span>
+                        <span class="n">tag</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">inc__count</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tagged</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">set__last_tagged</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">get_last_tagged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_tagged</span><span class="p">:</span>
+            <span class="n">last</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">1970</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">last_seen</span> <span class="o">&gt;</span> <span class="n">last</span><span class="p">:</span>
+                    <span class="n">last</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">last_seen</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">set__last_tagged</span><span class="o">=</span><span class="n">last</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">last</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_tagged</span>
+
+    <span class="k">def</span> <span class="nf">get_first_tagged</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">first_tagged</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">first_tagged</span> <span class="ow">or</span> <span class="n">tag</span><span class="o">.</span><span class="n">first_seen</span> <span class="o">&lt;</span> <span class="n">first_tagged</span><span class="p">:</span>
+                <span class="n">first_tagged</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">first_seen</span>
+        <span class="k">return</span> <span class="n">first_tagged</span>
+
+    <span class="k">def</span> <span class="nf">expire_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">expiration</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">tag</span><span class="o">.</span><span class="n">last_seen</span> <span class="o">+</span> <span class="n">tag</span><span class="o">.</span><span class="n">expiration</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="ow">and</span> <span class="n">tag</span><span class="o">.</span><span class="n">fresh</span><span class="p">:</span>
+                    <span class="n">tag</span><span class="o">.</span><span class="n">fresh</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="n">tag</span><span class="o">.</span><span class="n">last_seen</span> <span class="o">+</span> <span class="n">tag</span><span class="o">.</span><span class="n">expiration</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tag</span><span class="o">.</span><span class="n">fresh</span><span class="p">:</span>
+                    <span class="n">tag</span><span class="o">.</span><span class="n">fresh</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">fresh_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">tag</span> <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">fresh</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">analysis_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">):</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;set__last_analyses__</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">module_name</span><span class="p">):</span> <span class="n">ts</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="s2">&quot;last_analyses&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;sources&quot;</span><span class="p">]}</span>
+        <span class="n">i</span><span class="p">[</span><span class="s1">&#39;tags&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="n">i</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="n">i</span><span class="p">[</span><span class="s1">&#39;url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;api.Observable:post&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">_external</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">i</span><span class="p">[</span><span class="s1">&#39;human_url&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">url_for</span><span class="p">(</span><span class="s2">&quot;frontend.ObservableView:get&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">),</span> <span class="n">_external</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">i</span></div>
+</pre></div>
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Thomas Chopitea, Gael Muller.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'1.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
