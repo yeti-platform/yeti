@@ -71,6 +71,24 @@ class Scheduler(BaseScheduler):
     def schedule(self):
         return self._schedule
 
+    @staticmethod
+    def get_entries():
+        entries = {}
+        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'plugins')
+        sys.path.append(base_dir)
+
+        for subdir in Scheduler.SUBDIRS:
+            modules_dir = os.path.join(base_dir, subdir)
+            for loader, name, ispkg in pkgutil.walk_packages([modules_dir], prefix='{}.'.format(subdir)):
+                if not ispkg:
+                    module = importlib.import_module(name)
+                    for name, obj in inspect.getmembers(module, inspect.isclass):
+                        if issubclass(obj, (ScheduleEntry, OneShotEntry)) and obj.default_values is not None:
+                            entries[obj.default_values['name']] = obj
+                            if obj.default_values['name'] == 'dridex_paths':
+                                print obj, name, base_dir, subdir
+        return entries
+
     def load_entries(self, cls, subdirs):
         base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'plugins')
         sys.path.append(base_dir)

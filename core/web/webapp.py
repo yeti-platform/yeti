@@ -15,8 +15,6 @@ from mongoengine.errors import DoesNotExist
 
 from core.scheduling import Scheduler
 
-Scheduler()  # load all schedule modules
-
 webapp = Flask(__name__)
 
 webapp.secret_key = os.urandom(24)
