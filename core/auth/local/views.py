@@ -12,6 +12,8 @@ auth = Blueprint('auth', __name__, template_folder='templates')
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect("/observable/")
     if request.method == 'GET':
         return render_template('login.html')
 
