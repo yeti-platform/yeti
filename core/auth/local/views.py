@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, flash, abort
 from flask_login import login_user, logout_user, current_user
-from mongoengine.errors import DoesNotExist
 from werkzeug.security import check_password_hash
 
 from core.auth.local.user_management import authenticate, create_user, set_password
@@ -37,7 +36,8 @@ def logout():
 
 @auth.route('/createuser/<username>/<password>')
 def user(username, password):
-    create_user(username, password)
+    if current_user.has_role('admin') and current_user.is_active:
+        create_user(username, password)
     return redirect('/login')
 
 
