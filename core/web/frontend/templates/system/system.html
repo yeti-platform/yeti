@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "macros/generic.html" as generic %}
+
+{% block title %}
+Users
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+  <li>Admin</li>
+	<li class="active">System</li>
+</ol>
+{% endblock %}
+
+{% block main %}
+<div class="col-md-9">
+	<a href="{{ url_for("frontend.SystemView:restart_beat") }}" class="btn btn-default btn-sm" role="button">Restart Scheduler</a>
+	<br>
+	<br>
+	<table class='table table-compact'>
+		<tr><th>Registered workers</th><th>Processes</th><th>Active</th><th>Restart</th></tr>
+		{% for key, value in registered.items() %}
+			<tr><td>{{key}}</td><td>{{ generic.display_tags(value['processes'], "primary")}}</td><td>{{"Yes" if value['active'] else "No"}}</td><td><a href="{{ url_for("frontend.SystemView:restart_worker", name=key) }}">Restsart</a></td></tr>
+		{%endfor%}
+	</table>
+
+	<table class='table table-compact'>
+		<tr><th>Running workers</th><th>Active tasks</th></tr>
+		{% for key, value in active.items() %}
+			{% if value[key] %}
+			<tr><td>{{key}}</td><td>{{ generic.display_tags(value['running']) }}</td><td></td></tr>
+			{% endif %}
+		{%endfor%}
+	</table>
+</div>
+{% endblock %}
+
+{% block custom_head %}
+
+{%endblock%}
+
+
+{% block sidebar %}
+
+{% endblock %}
