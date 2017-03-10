@@ -40,6 +40,10 @@ class ScheduleEntry(YetiDocument):
         self.status = status
         self.save()
 
+    @classmethod
+    def unlock_all(klass):
+        print klass.objects(lock=True).modify(lock=False)
+
 
 class OneShotEntry(YetiDocument):
     name = StringField(required=True, unique=True)

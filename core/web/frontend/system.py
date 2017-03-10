@@ -24,28 +24,39 @@ class Inspector(threading.Thread):
 
 class SystemView(FlaskView):
 
-    INSPECT_METHODS=('stats', 'active_queues', 'registered', 'scheduled',
-                       'active', 'reserved', 'revoked', 'conf')
+    INSPECT_METHODS = ('registered', 'active', 'stats')
 
     @requires_role('admin')
-    @route("/restart/worker/<name>", methods=["GET"])
-    def restart_worker(self, name):
+    @route("/restart/worker/<name>")
+    def restart_worker(self, name="all"):
         response = celery_app.control.broadcast(
             'pool_restart',
             arguments={'reload': True},
-            destination=[name],
+            destination=[name] if name != "all" else None,
             reply=True,
         )
-        if response and 'ok' in response[0][name]:
-            flash("Worker {} restarted successfully".format(response[0][name]), "success")
-        else:
-            flash("Failed to restart worker {}".format(response[0][name]), "danger")
+
+        nok = []
+        for r in response:
+            for name in r:
+                if 'ok' not in r[name]:
+                    nok.append(name)
+        if nok:
+            flash("Some workers failed to restart: {}".format(", ".join(nok)), "danger")
+        flash("Succesfully restarted {} workers".format(len(response)), "success")
 
         return redirect(request.referrer)
 
     @requires_role('admin')
+    @route("/restart", methods=["GET"])
+    def restart_system(self):
+        self.restart_beat(restart_workers=True)
+        flash("System restarted", "success")
+        return redirect(request.referrer)
+
+    @requires_role('admin')
     @route("/restart/beat")
-    def restart_beat(self):
+    def restart_beat(self, restart_workers=False):
         pids = psutil.pids()
 
         for pid in pids:
@@ -60,14 +71,15 @@ class SystemView(FlaskView):
 
         if pid:
             psutil.Process(pid).terminate()
+            if restart_workers:
+                ScheduleEntry.unlock_all()
+                self.restart_worker()
             p = subprocess.Popen(cmd.split(" "))
             flash("Scheduler restarted successfully (PID: {})".format(p.pid), "success")
         else:
             flash("Error restaring scheduler", "danger")
 
         return redirect(request.referrer)
-
-
 
     @requires_role('admin')
     def index(self):

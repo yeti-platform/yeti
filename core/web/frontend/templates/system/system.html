@@ -15,9 +15,7 @@ Users
 
 {% block main %}
 <div class="col-md-9">
-	<a href="{{ url_for("frontend.SystemView:restart_beat") }}" class="btn btn-default btn-sm" role="button">Restart Scheduler</a>
-	<br>
-	<br>
+
 	<table class='table table-compact'>
 		<tr><th>Registered workers</th><th>Processes</th><th>Active</th><th>Restart</th></tr>
 		{% for key, value in registered.items() %}
@@ -42,5 +40,13 @@ Users
 
 
 {% block sidebar %}
-
+<div class="col-md-3">
+	<a href="{{ url_for("frontend.SystemView:restart_beat") }}" class="btn btn-default" role="button">Restart Scheduler</a>
+	<br />
+	<br />
+	<a href="{{ url_for("frontend.SystemView:restart_worker", name='all') }}" class="btn btn-default" role="button">Restart all workers</a>
+	<br />
+	<br />
+	<a href="{{ url_for("frontend.SystemView:restart_system") }}" class="btn btn-danger" role="button">Restart system (scheduler + workers)</a>
+</div>
 {% endblock %}
