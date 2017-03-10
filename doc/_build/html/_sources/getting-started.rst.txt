@@ -40,7 +40,7 @@ This is done by:
 * Export the data in user-defined formats so that they can be ingested by
   third-party applications (think blocklists, SIEM).
 
-Do get you started, let's explore a few things that can be done with Yeti.
+To get you started, let's explore a few things that can be done with Yeti.
 You will need to have a running install of Yeti for this to make any sense.
 Please refer to the :ref:`installation` section of the documentation.
 
