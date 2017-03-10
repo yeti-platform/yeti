@@ -1,5 +1,7 @@
 # Yeti - Your everyday threat intelligence
 
+Full documentation on ReadTheDocs: http://yeti-platform.readthedocs.io/en/latest/
+
 ## What is this?
 
 Yeti is a platform meant to organize observables, indicators of compromise,
