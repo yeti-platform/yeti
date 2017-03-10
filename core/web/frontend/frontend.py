@@ -11,6 +11,7 @@ from core.web.frontend.entities import EntityView
 from core.web.frontend.observables import ObservableView
 from core.web.frontend.indicators import IndicatorView
 from core.web.frontend.investigations import InvestigationView
+from core.web.frontend.system import SystemView
 
 from core.observables import *
 from core.entities import *
@@ -50,7 +51,7 @@ EntityView.register(frontend)
 IndicatorView.register(frontend)
 ObservableView.register(frontend)
 InvestigationView.register(frontend)
-
+SystemView.register(frontend)
 
 # Admin views
 
@@ -67,3 +68,7 @@ def analytics():
 @frontend.route("/tags")
 def tags():
     return render_template("tags.html")
+
+# @frontend.route("/system")
+# def system():
+#     return render_template("system.html")

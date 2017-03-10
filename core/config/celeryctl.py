@@ -12,7 +12,7 @@ class CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json']
     CELERY_IMPORTS = ('core.config.celeryimports', 'core.analytics_tasks', 'core.exports.export', 'core.feed')
     CELERY_TIMEZONE = 'UTC'
-
+    CELERYD_POOL_RESTARTS = True
     CELERY_ROUTES = {
         'core.analytics_tasks.single': {'queue': 'oneshot'},
         'core.feed.update_feed': {'queue': 'feeds'},

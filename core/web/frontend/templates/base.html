@@ -128,6 +128,7 @@
                   {% if current_user.has_role('admin') %}
                     <li role="separator" class="divider"></li>
                     <li><a href="{{ url_for('frontend.UserAdminView:index') }}">User administration</a></li>
+                    <li><a href="{{ url_for('frontend.SystemView:index') }}">System</a></li>
                   {%endif %}
                 </ul>
               </li>
