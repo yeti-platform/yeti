@@ -1,6 +1,9 @@
 # Yeti - Your everyday threat intelligence
 
-Full documentation on ReadTheDocs: http://yeti-platform.readthedocs.io/en/latest/
+**Useful links**
+
+* [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
+* [Project website & blog](https://yeti-platform.github.io)
 
 ## What is this?
 
@@ -12,8 +15,8 @@ UI) and one for machines (web API) so that your other tools can talk nicely to
 it.
 
 Yeti was born out of frustration of having to answer the question "where have
-I seen this artifact before?" or Googling crimeware domains to tie them to a
-family.
+I seen this artifact before?" or Googling shady domains to tie them to a
+malware family.
 
 In a nutshell, Yeti allows you to:
 
@@ -36,7 +39,7 @@ This is done by:
 
 ## Quick & dirty install
 
-Please refer to the full documentation for more detailed steps.
+Please refer to the [full documentation](http://yeti-platform.readthedocs.io/en/latest/installation.html) for more detailed steps.
 
 Install dependencies:
 

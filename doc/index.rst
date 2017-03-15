@@ -6,6 +6,13 @@
 Welcome to YETI's documentation!
 ================================
 
+**Useful links**
+
+* [Project website & blog](https://yeti-platform.github.io/)
+* [Code repository](https://github.com/yeti-platform/yeti)
+* [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
+* [Getting started](http://yeti-platform.readthedocs.io/en/latest/getting-started.html)
+
 Yeti is a platform meant to organize observables, indicators of compromise,
 TTPs, and knowledge on threats in a single, unified repository. Yeti will also
 automatically enrich observables (e.g. resolve domains, geolocate IPs) so that
@@ -14,8 +21,8 @@ UI) and one for machines (web API) so that your other tools can talk nicely to
 it.
 
 Yeti was born out of frustration of having to answer the question "where have
-I seen this artifact before?" or Googling crimeware domains to tie them to a
-family.
+I seen this artifact before?" or Googling shady domains to tie them to a
+malware family.
 
 In a nutshell, Yeti allows you to:
 
