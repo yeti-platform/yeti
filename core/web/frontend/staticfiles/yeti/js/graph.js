@@ -90,6 +90,7 @@ var icons = {
   'Entity.TTP': flaticon('\ue019'),
   'Entity.Company': flaticon('\ue002'),
   'Entity.Actor': flaticon('\ue017'),
+  'Entity.Campaign': flaticon('\ue003'),
   'Indicator.Regex': flaticon('\ue015'),
 };
 
@@ -104,6 +105,7 @@ var cssicons = {
   'Entity.Malware': 'flaticon-bug24',
   'Entity.TTP': 'flaticon-maths5',
   'Entity.Company': 'flaticon-building259',
+  'Entity.Campaign': 'flaticon-businessman116',
   'Entity.Actor': 'flaticon-malware',
   'Indicator.Regex': 'flaticon-magnifying-glass40',
 };
