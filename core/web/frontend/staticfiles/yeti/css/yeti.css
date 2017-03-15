@@ -701,3 +701,36 @@ td input.inline {
     margin: 0;
     padding: 0;
 }
+
+#import-nodes-lists {
+    margin-bottom: 20px;
+}
+
+.import-node:hover {
+    background-color: #EEEEEE;
+    cursor: pointer;
+}
+
+.import-node .import-node-edit,
+.import-node .import-node-remove {
+    visibility: hidden;
+}
+
+.import-node:hover .import-node-edit,
+.import-node:hover .import-node-remove {
+    visibility: visible;
+}
+
+#import-nodes-lists .tokenfield {
+    border: none;
+    background: transparent;
+    box-shadow: none !important;
+    padding: 6px 0px 6px 0px;
+    margin: 0;
+    outline: medium none !important;
+    display: none;
+}
+
+#import-nodes-lists .import-node:hover .tokenfield {
+    display: block !important;
+}

@@ -33,6 +33,7 @@ function refresh_tagfields(form) {
           showAutocompleteOnFocus: true,
           delimiter: [',', ';'],
           beautify: false,
+          createTokensOnBlur: true,
         });
       }
     });

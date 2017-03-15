@@ -63,4 +63,4 @@ class InvestigationView(GenericView):
         investigation = get_object_or_404(Investigation, id=id)
         observables = Observable.from_string(investigation.import_text)
 
-        return render_template("{}/import_from.html".format(self.klass.__name__.lower()), investigation=investigation, observables=observables)
+        return render_template("{}/import_from.html".format(self.klass.__name__.lower()), investigation=investigation, observables=bson_renderer(observables))

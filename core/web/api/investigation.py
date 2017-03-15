@@ -77,12 +77,15 @@ class Investigation(CrudApi):
     def bulk_add(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         data = loads(request.data)
+        nodes = []
 
         for node in data['nodes']:
             if node['type'] in globals() and issubclass(globals()[node['type']], Observable):
                 _type = globals()[node['type']]
 
-            observable = _type.get_or_create(value=node['value'])
+            n = _type.get_or_create(value=node['value'])
+            nodes.append(n)
 
+        i.add([], nodes)
 
         return render("ok")
