@@ -8,10 +8,10 @@ Welcome to YETI's documentation!
 
 **Useful links**
 
-* [Project website & blog](https://yeti-platform.github.io/)
-* [Code repository](https://github.com/yeti-platform/yeti)
-* [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
-* [Getting started](http://yeti-platform.readthedocs.io/en/latest/getting-started.html)
+* `Project website & blog <https://yeti-platform.github.io/>`_
+* `Code repository <https://github.com/yeti-platform/yeti>`_
+* `Installation <http://yeti-platform.readthedocs.io/en/latest/installation.html>`_
+* `Getting started <http://yeti-platform.readthedocs.io/en/latest/getting-started.html>`_
 
 Yeti is a platform meant to organize observables, indicators of compromise,
 TTPs, and knowledge on threats in a single, unified repository. Yeti will also
