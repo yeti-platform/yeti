@@ -148,7 +148,7 @@ File - ``/lib/systemd/system/yeti_feeds.service``::
   [Service]
   Type=simple
   User=user
-  ExecStart=/bin/bash -c "source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q feeds -n feeds --purge
+  ExecStart=/bin/bash -c "source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q feeds -n feeds --purge"
 
   [Install]
   WantedBy=multi-user.target
@@ -165,7 +165,7 @@ File - ``/lib/systemd/system/yeti_exports.service``::
   [Service]
   Type=simple
   User=user
-  ExecStart=/bin/bash -c "source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q exports -n exports --purge
+  ExecStart=/bin/bash -c "source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q exports -n exports --purge"
 
   [Install]
   WantedBy=multi-user.target
