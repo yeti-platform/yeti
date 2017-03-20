@@ -1,13 +1,12 @@
 # Yeti - Your everyday threat intelligence
 
-<<<<<<< HEAD
 **Useful links**
 
 * [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
 * [Project website & blog](https://yeti-platform.github.io)
+* [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
+* [Getting started](http://yeti-platform.readthedocs.io/en/latest/getting-started.html)
 
-=======
->>>>>>> doc
 ## What is this?
 
 Yeti is a platform meant to organize observables, indicators of compromise,
@@ -18,13 +17,8 @@ UI) and one for machines (web API) so that your other tools can talk nicely to
 it.
 
 Yeti was born out of frustration of having to answer the question "where have
-<<<<<<< HEAD
 I seen this artifact before?" or Googling shady domains to tie them to a
 malware family.
-=======
-I seen this artifact before?" or Googling crimeware domains to tie them to a
-family.
->>>>>>> doc
 
 In a nutshell, Yeti allows you to:
 
@@ -47,11 +41,7 @@ This is done by:
 
 ## Quick & dirty install
 
-<<<<<<< HEAD
 Please refer to the [full documentation](http://yeti-platform.readthedocs.io/en/latest/installation.html) for more detailed steps.
-=======
-Please refer to the full documentation for more detailed steps.
->>>>>>> doc
 
 Install dependencies:
 
@@ -68,19 +58,8 @@ Start the web UI (will spawn a HTTP server on ``http://localhost:5000``):
 
 This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well:
 
-<<<<<<< HEAD
     $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q exports -n exports -Ofair -c 2 --purge
     $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q feeds -n feeds -Ofair -c 2 --purge
     $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q analytics -n analytics -Ofair -c 2 --purge
     $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q oneshot -n oneshot -c 2 --purge
     $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
-=======
-    $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 4
-    -Q feeds -n feeds --purge
-    $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 4
-    -Q oneshot -n oneshot --purge
-    $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair
-     -c 10 --purge
-    $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler
-    --loglevel=ERROR
->>>>>>> doc
