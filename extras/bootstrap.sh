@@ -14,7 +14,6 @@ pip install uwsgi
 # Configure services
 useradd yeti
 cp yeti/extras/systemd/*.service /lib/systemd/system/
-systemctl enable yeti_web.service
 systemctl enable yeti_uwsgi.service
 systemctl enable yeti_oneshot.service
 systemctl enable yeti_feeds.service
