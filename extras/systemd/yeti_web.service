@@ -1,0 +1,12 @@
+[Unit]
+Description=Yeti web servers
+After=mongodb.service redis.service
+
+[Service]
+Type=simple
+User=yeti
+WorkingDirectory=/opt/yeti
+ExecStart=/opt/yeti/yeti.py
+
+[Install]
+WantedBy=multi-user.target

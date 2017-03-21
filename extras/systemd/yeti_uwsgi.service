@@ -1,0 +1,17 @@
+[Unit]
+Description=Yeti UWSGI server
+After=mongodb.service redis.service
+
+[Service]
+Type=simple
+User=yeti
+WorkingDirectory=/opt/yeti
+ExecStart=/usr/local/bin/uwsgi --socket 127.0.0.1:8000 -w yeti --callable webapp --processes 4 --threads 2 --stats 127.0.0.1:9191
+Restart=always
+KillSignal=SIGQUIT
+Type=notify
+StandardError=syslog
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
