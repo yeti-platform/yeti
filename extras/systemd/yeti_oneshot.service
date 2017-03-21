@@ -1,0 +1,12 @@
+[Unit]
+Description=Yeti workers - Oneshot
+After=mongodb.service redis.service
+
+[Service]
+Type=simple
+User=yeti
+WorkingDirectory=/opt/yeti
+ExecStart=/usr/local/bin/celery -A core.config.celeryctl.celery_app worker -c 4 -Q oneshot -n oneshot --purge
+
+[Install]
+WantedBy=multi-user.target
