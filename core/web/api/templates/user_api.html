@@ -8,8 +8,8 @@
       <tr class="node-line {{"disabled" if not user['enabled']}}" data-id="{{user['id']}}">
         <td><a href="{{ url_for('frontend.UsersView:profile', id=user['id'] )}}">{{user['username']}}</a></td>
         <td><code>{{ user['api_key']}}</code> <a class='btn btn-xs btn-default' href="{{ url_for("frontend.UserAdminView:reset_api", id=user['id'])}}">Reset</a></td>
-        <td><span data-url="{{ url_for('api.UserAdminSearch:toggle', id=user["id"]) }}" class="user-toggle glyphicon glyphicon-{{ "ok" if user["enabled"] else "remove" }}"></span></td>
-        <td><span data-url="{{ url_for('api.UserAdminSearch:remove', id=user["id"]) }}" class="user-remove glyphicon glyphicon-trash"></span></td>
+        <td><span data-url="{{ url_for('api.UserAdminSearch:toggle', id=user["id"]) }}" class="{% if user['id'] != current_user.id %}user-toggle {%endif%} glyphicon glyphicon-{{ "ok" if user["enabled"] else "remove" }}"></span></td>
+        <td>{% if user['id'] != current_user.id %}<span data-url="{{ url_for('api.UserAdminSearch:remove', id=user["id"]) }}" class="user-remove glyphicon glyphicon-trash"></span>{%endif%}</td>
       </tr>
     {% if loop.last %}
         </table>
