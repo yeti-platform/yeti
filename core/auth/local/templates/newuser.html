@@ -1,0 +1,24 @@
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      <a class="collapsed" data-toggle="collapse" data-parent="#accordion" href="#selection-tags">
+        Add new user
+      </a>
+    </h4>
+  </div>
+  <div id="selection-tags" class="panel-collapse collapse" role="tabpanel">
+    <div class="panel-body">
+        <form method="post" action="{{ url_for("auth.new_user") }}">
+          <div class="form-group">
+              <input type="text" class="form-control" name="username" placeholder="Username" required/>
+          </div>
+          <div class="form-group">
+              <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
+          </div>
+          <div class="pull-right">
+              <input class="btn btn-primary btn-sm" type="submit" name="" value="Add user">
+          </div>
+        </form>
+    </div>
+  </div>
+</div>

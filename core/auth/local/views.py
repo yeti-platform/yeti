@@ -36,11 +36,13 @@ def logout():
     return redirect('/login')
 
 
-@auth.route('/createuser/<username>/<password>')
-def user(username, password):
+@auth.route('/createuser', methods=["POST"])
+def new_user():
+    username = request.form.get("username")
+    password = request.form.get("password")
     if current_user.has_role('admin') and current_user.is_active:
         create_user(username, password)
-    return redirect('/login')
+    return redirect(request.referrer)
 
 
 @auth.route("/change-password", methods=['POST'])
