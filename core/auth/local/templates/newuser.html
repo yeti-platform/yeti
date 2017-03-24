@@ -7,7 +7,13 @@
     </h4>
   </div>
   <div id="selection-tags" class="panel-collapse collapse" role="tabpanel">
+
     <div class="panel-body">
+      <p>
+        The <code>yeti</code> user exists to enable anonymous access to
+        Yeti. Disable it after logging in as a new user if you only want to
+        allow authenticated access.
+      </p>
         <form method="post" action="{{ url_for("auth.new_user") }}">
           <div class="form-group">
               <input type="text" class="form-control" name="username" placeholder="Username" required/>
