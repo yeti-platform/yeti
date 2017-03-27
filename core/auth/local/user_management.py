@@ -3,6 +3,7 @@ import hmac
 from hashlib import sha512
 
 from flask import current_app
+from flask_login.mixins import AnonymousUserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.user import User
@@ -28,10 +29,12 @@ DEFAULT_PERMISSIONS = {
 }
 
 
-# This should be used for anonymous access
 def get_default_user():
     try:
-        return User.objects.get(username="yeti")
+        # Assume authentication is anonymous if only 1 user
+        if User.objects.count() == 1:
+            return User.objects.get(username="yeti")
+        return AnonymousUserMixin()
     except DoesNotExist:
         return create_user("yeti", "yeti")
 
