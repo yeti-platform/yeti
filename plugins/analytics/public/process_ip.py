@@ -13,9 +13,9 @@ try:
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "GeoLite2-City.mmdb")
     reader = geoip2.database.Reader(path)
 except IOError as e:
-    logging.error(
+    logging.info(
         "Could not open GeoLite2-City.mmdb. Will proceed without GeoIP data")
-    logging.error(e)
+    logging.info(e)
     reader = False
 
 
