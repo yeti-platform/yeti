@@ -32,7 +32,7 @@ DEFAULT_PERMISSIONS = {
 def get_default_user():
     try:
         # Assume authentication is anonymous if only 1 user
-        if User.objects.count() == 1:
+        if User.objects.count() < 2:
             return User.objects.get(username="yeti")
         return AnonymousUserMixin()
     except DoesNotExist:
