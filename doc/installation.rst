@@ -9,9 +9,13 @@ Install dependencies::
 
   $ sudo apt-get install build-essential git python-dev mongodb redis-server libxml2-dev libxslt-dev zlib1g-dev python-virtualenv
 
+Download Yeti:
+
+  $ git clone https://github.com/yeti-platform/yeti.git
+
 Activate virtualenv if you want to, then ``pip install`` requirements::
 
-  $ [sudo] pip install -r requirements.txt
+  $ [sudo] pip install -r yeti/requirements.txt
 
 
 Quick & dirty
