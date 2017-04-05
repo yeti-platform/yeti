@@ -183,6 +183,7 @@ class Investigation {
     var self = this;
 
     this.id = investigation._id;
+    this.name = investigation.name;
 
     // Create the nodes dataset and dataview
     this.nodes = new vis.DataSet([]);
@@ -929,6 +930,10 @@ class Investigation {
     });
 
     // Renaming Investigation
+    if (self.name) {
+      $('#graph-sidebar-investigation-name span').text(self.name);
+    }
+
     $('#graph-sidebar-investigation-name a').on('click', function(e) {
       e.preventDefault();
 
