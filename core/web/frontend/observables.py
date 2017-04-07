@@ -67,7 +67,7 @@ class ObservableView(GenericView):
             lines = []
             obs = {}
             if request.files.get('bulk-file'):  # request files
-                pass
+                lines = request.files.get('bulk-file').readlines()
             else:
                 lines = request.form['bulk-text'].split('\n')
 

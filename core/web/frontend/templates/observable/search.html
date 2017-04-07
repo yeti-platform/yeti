@@ -82,7 +82,7 @@ $(function() {
 	</div>
 	<div class="col-md-8" >
 
-		<form action="{{ url_for('frontend.ObservableView:index')}}" class="yeti-form" method="POST">
+		<form action="{{ url_for('frontend.ObservableView:index')}}" class="yeti-form" method="POST" enctype=multipart/form-data>
 			{% if current_user.has_permission("observable", "write") %}
 			<div class="form-inline" id="insert-form">
 
