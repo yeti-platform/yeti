@@ -9,4 +9,5 @@ logging.basicConfig(format='%(levelname)s:%(module)s:%(message)s', level=logging
 
 if __name__ == '__main__':
     print "[+] Yeti started. Point browser to http://localhost:5000/"
+    webapp.debug = True
     webapp.run(host="0.0.0.0")

@@ -10,7 +10,8 @@ class File(Observable):
 
     mime_type = StringField(verbose_name="MIME type")
     hashes = ListField(ReferenceField(Hash), verbose_name="Hashes")
-    body = FileField(verbose_name="File content")
+    body = ReferenceField("AttachedFile")
+    filenames = ListField(StringField(), verbose_name="Filenames")
 
     DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("mime_type", "MIME Type")]
 

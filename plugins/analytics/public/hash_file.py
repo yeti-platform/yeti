@@ -31,15 +31,17 @@ class HashFile(ScheduledAnalytics):
         except AttributeError as e:  # File item has no content
             l = 0
         if l > 0:
-            for h in HashFile.extract_hashes(f):
+            for hash_type, h in HashFile.extract_hashes(f.body):
                 h = Hash.get_or_create(value=h.hexdigest()).save()
                 h.add_source("analytics")
-                Link.connect(f, h)
+                l = Link.connect(f, h)
+                l.description(hash_type)
+                l.save()
 
     @staticmethod
-    def extract_hashes(f):
+    def extract_hashes(body):
         hashes = []
-        f = f.body
+        f = body
         hashers = {k: HASH_TYPES_DICT[k]() for k in HASH_TYPES_DICT}
 
         while True:
@@ -49,4 +51,4 @@ class HashFile(ScheduledAnalytics):
             for h in hashers.itervalues():
                 h.update(chunk)
 
-        return hashers.values()
+        return hashers.items()
