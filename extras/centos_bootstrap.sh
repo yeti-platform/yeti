@@ -1,16 +1,15 @@
 ### You'll need to run this as a user with escalated privileges. 
 
 ### Create the MongoDB Yum repository
-#######################################################
-# This needs work, not sure how to do this properly yet
-#######################################################
-# echo "[mongodb-org-3.4]
-# name=MongoDB Repository
-# baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.4/x86_64/
-# gpgcheck=1
-# enabled=1
-# gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc" > /etc/yum.repos.d/mongodb.repo
 
+cat << EOF > /etc/yum.repos.d/mongodb-org-3.4.repo
+[mongodb-org-3.4]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/3.4/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc
+EOF
 ### Update the OS
 yum update -y && yum upgrade -y
 
