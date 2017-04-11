@@ -24,11 +24,9 @@ git clone https://github.com/yeti-platform/yeti.git
 pip install -r yeti/requirements.txt
 
 ### Secure your instance
-# Add firewall rules for Redis, Mongodb, and YETI
+# Add firewall rules for YETI
 systemctl enable firewalld
 systemctl start firewalld
-firewall-cmd  --permanent --zone=public --add-port 6379/tcp
-firewall-cmd  --permanent --zone=public --add-port 27017/tcp
 firewall-cmd  --permanent --zone=public --add-port 5000/tcp
 firewall-cmd --reload
 
