@@ -5,7 +5,7 @@ from core.observables import Hostname
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
-class HostsFile_Phishing(Feed):
+class HostsFile_EXP(Feed):
 	default_values = {
 		'frequency': timedelta(hours=4),
 		'source': 'https://hosts-file.net/exp.txt',
