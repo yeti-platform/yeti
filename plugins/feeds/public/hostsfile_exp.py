@@ -45,7 +45,7 @@ class HostsFile_EXP(Feed):
 				host = Hostname.get_or_create(value=hostname)
 				host.add_context(context)
 				host.add_source('feed')
-				host.tag(['phish', 'phishing', 'blocklist'])
+				host.tag(['exploit', 'blocklist'])
 			except ObservableValidationError as e:
 				logging.error(e)
 		except Exception as e:
