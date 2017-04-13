@@ -1,8 +1,5 @@
-
-
 from datetime import datetime, timedelta
 import logging
-import re
 
 from core.observables import Hostname
 from core.feed import Feed
@@ -16,9 +13,6 @@ class HostsFile_Phishing(Feed):
 		'description': 'Domains associated to phishing attempts.'
 
 	}
-
-
-	regex = re.compile('^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+([^\n]+)$')
 
 	def set(self, type, value):
 		if type == 'default':
@@ -35,19 +29,25 @@ class HostsFile_Phishing(Feed):
 			self.analyze(line)
 
 	def analyze(self, line):
+		if line.startswith('#'):
+			return
+
 		try:
-			match = line.match(regex)
+			line = line.strip()
+			parts = line.split()
+
+			hostname = str(parts[1]).strip()
 			context = {
 				'source': self.name
 			}
-			if match:
-				try:
-					host = Hostname.get_or_create(value=match.group(1))
-					host.add_context(self.context)
-					host.add_source('feed')
-					host.tag(['phish', 'phishing', 'blocklist'])
-				except ObservableValidationError as e:
-					logging.error(e)
+			
+			try:
+				host = Hostname.get_or_create(value=hostname)
+				host.add_context(context)
+				host.add_source('feed')
+				host.tag(['phish', 'phishing', 'blocklist'])
+			except ObservableValidationError as e:
+				logging.error(e)
 		except Exception as e:
 			logging.debug(e)
 
