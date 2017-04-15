@@ -5,24 +5,15 @@ from core.observables import Hostname
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
-class HostsFile_EMD(Feed):
+class HostsFileEMD(Feed):
 	default_values = {
 		'frequency': timedelta(hours=4),
 		'source': 'https://hosts-file.net/emd.txt',
-		'name': 'Hosts_File_EMD',
+		'name': 'HostsFileEMD',
 		'description': 'Sites engaged in malware distribution.'
 
 	}
 
-	def set(self, type, value):
-		if type == 'default':
-			self.default_values.update(value)
-
-		if type == 'context':
-			self.context.update(value)
-
-		if type == 'tags':
-			self.tags.append(value)
 
 	def update(self):
 		for line in self.update_lines():

@@ -26,8 +26,9 @@ class OpenPhish(Feed):
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
     def analyze(self, url):
-        context = {}
-        context['source'] = self.name
+        context = {
+            'source': self.name
+        }
         
         try:
             if len(url) > 1023:
@@ -36,6 +37,6 @@ class OpenPhish(Feed):
                 url = Url.get_or_create(value=url)
                 url.add_context(context)
                 url.add_source('feed')
-                url.tag(['phishing', 'phish'])
+                url.tag(['phishing'])
         except ObservableValidationError as e:
             logging.error(e)

@@ -5,24 +5,14 @@ from core.observables import Hostname
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
-class HostsFile_Phishing(Feed):
+class HostsFilePSH(Feed):
 	default_values = {
 		'frequency': timedelta(hours=4),
 		'source': 'https://hosts-file.net/psh.txt',
-		'name': 'Hosts_File_Phishing',
+		'name': 'HostsFilePSH',
 		'description': 'Domains associated to phishing attempts.'
 
 	}
-
-	def set(self, type, value):
-		if type == 'default':
-			self.default_values.update(value)
-
-		if type == 'context':
-			self.context.update(value)
-
-		if type == 'tags':
-			self.tags.append(value)
 
 	def update(self):
 		for line in self.update_lines():
@@ -45,7 +35,7 @@ class HostsFile_Phishing(Feed):
 				host = Hostname.get_or_create(value=hostname)
 				host.add_context(context)
 				host.add_source('feed')
-				host.tag(['phish', 'phishing', 'blocklist'])
+				host.tag(['phishing', 'blocklist'])
 			except ObservableValidationError as e:
 				logging.error(e)
 		except Exception as e:

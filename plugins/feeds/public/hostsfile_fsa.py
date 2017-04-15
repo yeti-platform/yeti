@@ -5,24 +5,14 @@ from core.observables import Hostname
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
-class HostsFile_FSA(Feed):
+class HostsFileFSA(Feed):
 	default_values = {
 		'frequency': timedelta(hours=4),
 		'source': 'https://hosts-file.net/fsa.txt',
-		'name': 'Hosts_File_FSA',
+		'name': 'HostsFileFSA',
 		'description': 'Sites engaged in the selling or distribution of bogus or fraudulent applications and/or provision of fraudulent services.'
 
 	}
-
-	def set(self, type, value):
-		if type == 'default':
-			self.default_values.update(value)
-
-		if type == 'context':
-			self.context.update(value)
-
-		if type == 'tags':
-			self.tags.append(value)
 
 	def update(self):
 		for line in self.update_lines():

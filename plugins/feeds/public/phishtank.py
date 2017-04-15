@@ -31,7 +31,7 @@ class PhishTank(Feed):
 
         phish_id,url,phish_detail_url,submission_time,verified,verification_time,online,target = tuple(data)
         
-        tags = ['phishing', 'phish']
+        tags = ['phishing']
 
         context = {
             'source': self.name,

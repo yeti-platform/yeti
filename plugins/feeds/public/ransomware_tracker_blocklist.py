@@ -54,7 +54,7 @@ class RansomwareTracker(Feed):
             hostname.tag(tags + ['blocklist'])
 
             for ip in ips.split("|"):
-                if ip != hostname:
+                if ip != hostname and ip is not None and ip != '':
                     try:
                         i = Ip.get_or_create(value=ip)
                         i.active_link_to(hostname, "First seen IP", self.name, clean_old=False)
