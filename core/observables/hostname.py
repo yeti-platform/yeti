@@ -32,9 +32,11 @@ class Hostname(Observable):
         hostname = Hostname.check_type(hostname)
         if not hostname:
             raise ObservableValidationError("Invalid Hostname (check_type={}): {}".format(Hostname.check_type(hostname), hostname))
-
-        self.idna = unicode(idna.encode(hostname.lower()))
-        self.value = unicode(idna.decode(hostname.lower()))
+        self.value = unicode(hostname.lower())
+        try:
+            self.idna = unicode(idna.encode(hostname.lower()))
+        except idna.core.InvalidCodepoint:
+            pass
 
     @staticmethod
     def check_type(txt):
