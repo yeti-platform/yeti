@@ -5,7 +5,7 @@ from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
-class VxVaultUrl(Feed):
+class VXVaultUrl(Feed):
 
     # set default values for feed
     default_values = {
@@ -35,7 +35,7 @@ class VxVaultUrl(Feed):
                 context = {
                     'source': self.name
                 }
-                
+
                 try:
                     url = Url.get_or_create(value=data)
                     url.add_context(context)
