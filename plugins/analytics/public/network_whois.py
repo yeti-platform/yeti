@@ -21,7 +21,7 @@ class NetworkWhois(OneShotAnalytics):
         links = set()
 
         r = IPWhois(ip.value)
-        result = r.lookup()
+        result = r.lookup_whois()
         results.update(raw=pformat(result))
 
         # Let's focus on the most specific information
