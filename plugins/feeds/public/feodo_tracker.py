@@ -12,12 +12,14 @@ class FeodoTracker(Feed):
     descriptions = {'A': "Hosted on compromised webservers running an nginx proxy on port 8080 TCP forwarding all botnet traffic to a tier 2 proxy node. Botnet traffic usually directly hits these hosts on port 8080 TCP without using a domain name.",
                     'B': "Hosted on servers rented and operated by cybercriminals for the exclusive purpose of hosting a Feodo botnet controller. Usually taking advantage of a domain name within ccTLD .ru. Botnet traffic usually hits these domain names using port 80 TCP.",
                     'C': "Successor of Feodo, completely different code. Hosted on the same botnet infrastructure as Version A (compromised webservers, nginx on port 8080 TCP or port 7779 TCP, no domain names) but using a different URL structure. This Version is also known as Geodo.",
-                    'D': "Successor of Cridex. This version is also known as Dridex"}
+                    'D': "Successor of Cridex. This version is also known as Dridex",
+                    'E': "Successor of Geodo / Emotet (Version C) called Heodo. First appeared in March 2017."}
 
     variants = {'A': "Feodo",
                 'B': "Feodo",
                 'C': "Geodo",
-                'D': "Dridex"}
+                'D': "Dridex",
+                'E': "Heodo"}
 
     default_values = {
         "frequency": timedelta(hours=1),
@@ -47,6 +49,7 @@ class FeodoTracker(Feed):
         context['source'] = self.name
         del context['title']
 
+        variant_tag = FeodoTracker.variants[g['version']].lower()
         try:
             if re.search(r"[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}", g['host']):
                 new = Ip.get_or_create(value=g['host'])
@@ -54,6 +57,6 @@ class FeodoTracker(Feed):
                 new = Hostname.get_or_create(value=g['host'])
             new.add_context(context)
             new.add_source("feed")
-            new.tag(['dridex', 'malware', 'crimeware', 'banker', 'c2'])
+            new.tag([variant_tag, 'malware', 'crimeware', 'banker', 'c2'])
         except ObservableValidationError as e:
             logging.error(e)
