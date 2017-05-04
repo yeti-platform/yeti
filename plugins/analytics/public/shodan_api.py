@@ -2,7 +2,7 @@ from pprint import pformat
 import shodan
 from core.analytics import OneShotAnalytics
 from core.entities import Company
-from core.observables import Text, Hostname, Tag
+from core.observables import Text, Hostname
 
 
 class ShodanApi(object):
@@ -47,7 +47,7 @@ class ShodanQuery(OneShotAnalytics, ShodanApi):
         if 'hostnames' in result and result['hostnames'] is not None:
             for hostname in result['hostnames']:
                 h = Hostname.get_or_create(value=hostname)
-                links.update(ip.active_link_to(h, 'A record', 'Shodan Query'))
+                links.update(h.active_link_to(ip, 'A record', 'Shodan Query'))
 
         if 'isp' in result and result['isp'] is not None:
             o_isp = Company.get_or_create(name=result['isp'])
