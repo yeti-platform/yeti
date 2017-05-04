@@ -37,8 +37,8 @@ class ShodanQuery(OneShotAnalytics, ShodanApi):
         result = ShodanApi.fetch(ip, results.settings['shodan_api_key'])
         results.update(raw=pformat(result))
 
-        if 'tag' in result and result['tag'] is not None:
-            o_tag = Tag.get_or_create(result['tag'])
+        if 'tags' in result and result['tags'] is not None:
+            ip.tag(result['tags'])
 
         if 'asn' in result and result['asn'] is not None:
             o_asn = Text.get_or_create(value=result['asn'])
@@ -47,18 +47,17 @@ class ShodanQuery(OneShotAnalytics, ShodanApi):
         if 'hostnames' in result and result['hostnames'] is not None:
             for hostname in result['hostnames']:
                 h = Hostname.get_or_create(value=hostname)
-                links.update(ip.active_link_to(h, 'hosts', 'Shodan Query'))
+                links.update(ip.active_link_to(h, 'A record', 'Shodan Query'))
 
         if 'isp' in result and result['isp'] is not None:
             o_isp = Company.get_or_create(name=result['isp'])
             links.update(ip.active_link_to(o_isp, 'hosting', 'Shodan Query'))
 
-        # Add the network whois to the context if not already present
         for context in ip.context:
             if context['source'] == 'shodan_query':
                 break
         else:
-            # Remove the nets info (the main one was copied)
+            # Remove the data part (Shodan Crawler Data, etc.)
             result.pop("data", None)
 
             result['source'] = 'shodan_query'
