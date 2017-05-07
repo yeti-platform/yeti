@@ -136,12 +136,16 @@
             {% if current_user.has_permission("investigation", "read") %}
             <li class="separator"></li>
 
-            <li class="{% if url_for("frontend.InvestigationView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
-              <a href="{{ url_for('frontend.InvestigationView:index') }}">Investigations</span></a>
+            <li class="{% if url_for("frontend.InvestigationsView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Investigations <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ url_for('frontend.InvestigationsView:index') }}">List</span></a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="{{ url_for('frontend.InvestigationsView:inv_import') }}">Import</a></li>
+              </ul>
+              {% endif %}
+
             </li>
-            {% endif %}
-
-
           </ul>
 
           <ul class="nav navbar-nav navbar-right">

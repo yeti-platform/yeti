@@ -680,3 +680,13 @@ td input.inline {
 #insert-form .tokenfield {
     width: auto !important;
 }
+
+.pdfviewer iframe {
+    width: 100%;
+    height: calc(100vh - 140px);
+    border: 1px solid #474747;
+}
+
+#import_view {
+    height: calc(100vh - 140px);
+}

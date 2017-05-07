@@ -99,7 +99,7 @@ class Observable(Node):
         from core.observables import Url, Ip, Hostname, Email, Hash
 
         results = dict()
-        for t in [Hash]:
+        for t in [Url, Ip, Email, Hostname, Hash]:
             results.update(t.extract(string))
 
         return results
@@ -131,8 +131,8 @@ class Observable(Node):
     @classmethod
     def extract(cls, txt):
         results = {}
-        search_regex = re.compile(cls.regex)
-        for match in re.finditer(search_regex, txt, re.UNICODE):
+        search_regex = re.compile(cls.regex, re.UNICODE)
+        for match in re.finditer(search_regex, txt):
             if cls.is_valid(match):
                 observable = cls(value=match.group('search'))
                 observable.normalize()
