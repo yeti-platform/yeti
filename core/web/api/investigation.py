@@ -10,6 +10,7 @@ from core.helpers import iterify
 from core import investigation
 from core.web.api.crud import CrudApi, CrudSearchApi
 from core.observables import Observable
+from core.investigation import ImportResults
 from core.entities import Entity
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
@@ -65,3 +66,9 @@ class Investigation(CrudApi):
                 result.append(node.to_mongo())
 
         return render(result)
+
+    @route('/import_results/<string:id>')
+    def import_results(self, id):
+        results = get_object_or_404(ImportResults, id=id)
+
+        return render(results.to_mongo())

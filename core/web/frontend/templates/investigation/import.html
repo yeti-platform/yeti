@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+Investigations - Import
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+	<li>Investigations</li>
+    <li class="active">Import</li>
+</ol>
+{% endblock %}
+
+{% block main %}
+{% if import_results %}
+    <div id="investigation-import" data-url="{{url_for('api.Investigation:import_results', id=import_results.id)}}" data-next="{{url_for('frontend.InvestigationsView:import_from', id=import_results.investigation.id)}}">Please wait for the import process to finish ...</div>
+{% else %}
+    <form method="post" action="{{url_for('frontend.InvestigationsView:inv_import')}}" enctype="multipart/form-data">
+        <input type=file name="file" />
+        <input type="submit" value="import" />
+    </form>
+{% endif %}
+
+
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/import.js") }}" charset="utf-8"></script>
+{% endblock %}

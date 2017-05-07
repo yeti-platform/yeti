@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}
+Investigations - Import
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+	<li>Investigations</li>
+    <li class="active">Import</li>
+</ol>
+{% endblock %}
+
+{% block main %}
+    {% for match in observables %}
+        <div>{{match}} ({{observables[match].value}})</div>
+    {% endfor %}
+
+    <pre>{{investigation.import_text}}</pre>
+{% endblock %}
+
+{% block custom_head %}
+{% endblock %}

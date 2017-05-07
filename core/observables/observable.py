@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
+import re
 import operator
 
 from mongoengine import *
@@ -91,6 +92,16 @@ class Observable(Node):
             else:
                 raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
 
+    @staticmethod
+    def from_string(string):
+        from core.observables import Url, Ip, Hostname, Email, Hash
+
+        results = dict()
+        for t in [Hash]:
+            results.update(t.extract(string))
+
+        return results
+
     @classmethod
     def add_text(cls, text, tags=[]):
         """Adds and returns an observable for a given string.
@@ -107,9 +118,34 @@ class Observable(Node):
             o.tag(tags)
         return o
 
-    @staticmethod
-    def check_type(txt):
-        raise NotImplementedError("Implement this in subclasses")
+    @classmethod
+    def check_type(cls, txt):
+        if re.match('^{}$'.format(cls.regex)):
+            return True
+
+    @classmethod
+    def extract(cls, txt):
+        results = {}
+        search_regex = re.compile(cls.regex)
+        for match in re.finditer(search_regex, txt):
+            if cls.is_valid(match.group(0)):
+                results[match.group(0)] = cls(value=match.group(0))
+                results[match.group(0)].normalize()
+
+        return results
+
+    @classmethod
+    def is_valid(cls, value):
+        return True
+
+    def normalize(self):
+        pass
+
+    def clean(self):
+        if self.check_type(self.value):
+            self.normalize()
+        else:
+            raise ObservableValidationError("'{}' is not a valid ''".format(self.value, self.__class__.__name__))
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):
