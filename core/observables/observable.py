@@ -61,6 +61,8 @@ class Observable(Node):
         "ordering": ["-created"],
     }
 
+    ignore = []
+
     @classmethod
     def get_form(klass):
         """Gets the appropriate form for a given obseravble"""
@@ -120,22 +122,27 @@ class Observable(Node):
 
     @classmethod
     def check_type(cls, txt):
-        if re.match('^{}$'.format(cls.regex)):
-            return True
+        match = re.match('^{}$'.format(cls.regex), txt, re.UNICODE)
+        if match:
+            return cls.is_valid(match)
+
+        return False
 
     @classmethod
     def extract(cls, txt):
         results = {}
         search_regex = re.compile(cls.regex)
-        for match in re.finditer(search_regex, txt):
-            if cls.is_valid(match.group(0)):
-                results[match.group(0)] = cls(value=match.group(0))
-                results[match.group(0)].normalize()
+        for match in re.finditer(search_regex, txt, re.UNICODE):
+            if cls.is_valid(match):
+                observable = cls(value=match.group('search'))
+                observable.normalize()
+                if observable.value not in cls.ignore:
+                    results[match.group('search')] = observable
 
         return results
 
     @classmethod
-    def is_valid(cls, value):
+    def is_valid(cls, match):
         return True
 
     def normalize(self):
