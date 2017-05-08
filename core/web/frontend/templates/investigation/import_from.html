@@ -47,13 +47,15 @@ Investigations - Import
     </script>
 
     <script id="import-node-template" type="text/x-handlebars-template">
-        <li class="import-node" id="import-node-{{id}}" data-id="{{id}}">
+        <li class="import-node form-inline" id="import-node-{{id}}" data-id="{{id}}">
             <span class="hide match">{{match}}</span>
             <div class="pull-right">
                 <a href="#"><i class="glyphicon glyphicon-edit import-node-edit"></i></a>
                 <a href="#"><i class="glyphicon glyphicon-remove import-node-remove"></i></a>
             </div>
-            <div class="import-node-value">{{value}}</div>
+            <div class="import-node-value">
+                {{value}}
+            </div>
             <input class="tokenfield" type="text" value="{{join tags}}" placeholder="+" />
         </li>
     </script>

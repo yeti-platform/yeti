@@ -21,6 +21,7 @@ class Import {
 
       nodeObject.id = self.next_id;
       nodeObject.match = match;
+      nodeObject.new_tags = '';
       nodeObject.to_import = true;
       self.nodes.add(nodeObject);
       self.displayNode(nodeObject);
@@ -42,7 +43,7 @@ class Import {
     $('#import-nodes-' + node.type).append(nodeTemplate(node));
 
     // Enable tokenfield
-    $('#import-node-' + node.id + ' input').tokenfield();
+    self.initTokenField(node.id);
   }
 
   // Highlight a term in the PDF reader
@@ -60,7 +61,7 @@ class Import {
       findPrevious: undefined
     });
 
-    win.PDFViewerApplication.findBar.dispatchEvent('');
+    win.PDFViewerApplication.findBar.dispatchEvent(event);
 
     return event;
   }
@@ -68,9 +69,15 @@ class Import {
   nodeClicked(event) {
     var self = this;
 
-    console.log(event.currentTarget);
     var match = $(event.currentTarget).find('.match').text();
-    self.highlight(match);
+    var hlEvent = self.highlight(match);
+
+    // Give focus to the tag input
+    var target = $(event.currentTarget);
+    if (!target.is('input')) {
+      target = target.find('input.tokenfield');
+    }
+    target.data('bs.tokenfield').focusInput(hlEvent);
   }
 
   nodeRemoved(event) {
@@ -87,7 +94,6 @@ class Import {
     self.nodes.update({id: nodeId, to_import: false});
 
     var list = $('#import-nodes-' + nodeObject.type);
-    console.log(list);
     if (list.children().length === 0) {
       list.closest('.import-type').remove();
     }
@@ -117,29 +123,42 @@ class Import {
     var form = $(event.currentTarget);
     var node = form.closest('li');
     var nodeId = node.data('id');
-    var newValue = form.find('input').val();
+
+    var newValue = '';
+    if (form.is('input')) {
+      newValue = form.val();
+    } else {
+      newValue = form.find('input').val();
+    }
 
     self.nodes.update({id: nodeId, value: newValue});
     node.replaceWith(nodeTemplate(self.nodes.get(nodeId)));
+    self.initTokenField(nodeId);
   }
 
-  focusOnTags(event) {
-    event.stopPropagation();
+  saveTags(event) {
+    var self = this;
 
-    $(event.currentTarget).css('display', 'block');
+    var field = $(event.currentTarget);
+    var nodeId = field.closest('li').data('id');
+    var tokenfield = field.data('bs.tokenfield');
+
+    self.nodes.update({id: nodeId, new_tags: tokenfield.getTokensList()});
   }
 
-  focusoutOnTags(event) {
-    console.log('focus out');
+  initTokenField(nodeId) {
+    var self = this;
 
-    console.log($(event.currentTarget).find('input.tokenfield').val());
-    var value = $(event.currentTarget).find('.token-input').val();
+    var node = self.nodes.get(nodeId);
 
-    console.log($(event.currentTarget).find('.token-input'));
+    // Initialize tokenfield and event listener
+    $('#import-node-' + nodeId + ' input')
+    .on('tokenfield:createdtoken', self.saveTags.bind(self))
+    .on('tokenfield:removedtoken', self.saveTags.bind(self))
+    .tokenfield({createTokensOnBlur: true});
 
-    if (value === '') {
-      $(event.currentTarget).css('display', 'none');
-    }
+    // Add saved tags
+    $('#import-node-' + nodeId + ' input').tokenfield('setTokens', node.new_tags);
   }
 
   // Bind functions to events
@@ -151,8 +170,6 @@ class Import {
     $('#import-nodes-lists').on('click', '.import-node-edit', self.nodeEdit.bind(self));
     $('#import-nodes-lists').on('submit', '.import-node-form', self.nodeEdited.bind(self));
     $('#import-nodes-lists').on('focusout', '.import-node-form input', self.nodeEdited.bind(self));
-    $('#import-nodes-lists').on('click', '.tokenfield', self.focusOnTags.bind(self));
-    $('#import-nodes-lists').on('focusout', '.tokenfield', self.focusoutOnTags.bind(self));
   }
 }
 
