@@ -24,3 +24,4 @@ sphinxcontrib-httpdomain
 geoip2
 psutil
 shodan
+python-magic
