@@ -21,7 +21,7 @@ class NetworkWhois(OneShotAnalytics):
         links = set()
 
         r = IPWhois(ip.value)
-        result = r.lookup()
+        result = r.lookup_whois()
         results.update(raw=pformat(result))
 
         # Let's focus on the most specific information
@@ -42,7 +42,7 @@ class NetworkWhois(OneShotAnalytics):
 
             # Link it to every email address referenced
             if smallest_subnet['emails']:
-                for email_address in smallest_subnet['emails'].split("\n"):
+                for email_address in smallest_subnet['emails']:
                     email = Email.get_or_create(value=email_address)
                     links.update(company.link_to(email, None, 'Network Whois'))
 
