@@ -12,7 +12,7 @@ flask-negotiation
 flask-mongoengine
 flask-login
 tldextract
-git+git://github.com/joepie91/python-whois#egg=pythonwhois
+git+https://github.com/joepie91/python-whois#egg=pythonwhois
 ipwhois
 blinker
 simplejson
@@ -23,3 +23,4 @@ sphinx_rtd_theme
 sphinxcontrib-httpdomain
 geoip2
 psutil
+shodan

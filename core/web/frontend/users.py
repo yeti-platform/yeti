@@ -34,9 +34,9 @@ class UsersView(GenericView):
             user.save()
 
         if current_user.has_role('admin') and user.id != current_user.id:
-            return render_template("user/profile_admin.html", available_settings=User.available_settings, user=user)
+            return render_template("user/profile_admin.html", available_settings=User.get_available_settings(), user=user)
         else:
-            return render_template("user/profile.html", available_settings=User.available_settings, user=user)
+            return render_template("user/profile.html", available_settings=User.get_available_settings(), user=user)
 
     @route('/reset-api', methods=["POST"])
     def reset_api(self):

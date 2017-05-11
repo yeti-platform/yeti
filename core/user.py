@@ -67,6 +67,15 @@ class User(YetiDocument):
             'description': description
         }
 
+    @classmethod
+    def get_available_settings(klass):
+        # We have to load all OneShotAnalytics in order to make sure
+        # available_settings are up to date
+        from core.analytics import OneShotAnalytics
+        list(OneShotAnalytics.objects)
+
+        return klass.available_settings
+
     @staticmethod
     def generate_api_key():
         return os.urandom(40).encode('hex')

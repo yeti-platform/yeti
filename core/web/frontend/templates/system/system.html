@@ -19,7 +19,7 @@ Users
 	<table class='table table-compact'>
 		<tr><th>Registered workers</th><th>Processes</th><th>Active</th><th>Restart</th></tr>
 		{% for key, value in registered.items() %}
-			<tr><td>{{key}}</td><td>{{ generic.display_tags(value['processes'], "primary")}}</td><td>{{"Yes" if value['active'] else "No"}}</td><td><a href="{{ url_for("frontend.SystemView:restart_worker", name=key) }}">Restsart</a></td></tr>
+			<tr><td>{{key}}</td><td>{{ generic.display_tags(value['processes'], "primary")}}</td><td>{{"Yes" if value['active'] else "No"}}</td><td><a href="{{ url_for("frontend.SystemView:restart_worker", name=key) }}">Restart</a></td></tr>
 		{%endfor%}
 	</table>
 
