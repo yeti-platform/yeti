@@ -8,6 +8,8 @@ from core.observables import Hash
 
 class File(Observable):
 
+    value = StringField(verbose_name="SHA256 hash")
+
     mime_type = StringField(verbose_name="MIME type")
     hashes = ListField(ReferenceField(Hash), verbose_name="Hashes")
     body = ReferenceField("AttachedFile")

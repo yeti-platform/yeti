@@ -26,26 +26,20 @@ class HashFile(ScheduledAnalytics):
 
     @staticmethod
     def each(f):
-        try:
-            l = f.body.length
-        except AttributeError as e:  # File item has no content
-            l = 0
-        if l > 0:
-            for hash_type, h in HashFile.extract_hashes(f.body):
-                h = Hash.get_or_create(value=h.hexdigest()).save()
+        if f.body:
+            for hash_type, h in HashFile.extract_hashes(f.body.contents):
+                h = Hash.get_or_create(value=h.hexdigest())
                 h.add_source("analytics")
-                l = Link.connect(f, h)
-                l.description(hash_type)
-                l.save()
+                h.save()
+                f.active_link_to(h, has_type, "HashFile", clean_old=False)
 
     @staticmethod
-    def extract_hashes(body):
+    def extract_hashes(body_contents):
         hashes = []
-        f = body
         hashers = {k: HASH_TYPES_DICT[k]() for k in HASH_TYPES_DICT}
 
         while True:
-            chunk = f.read(512*16)
+            chunk = body_contents.read(512*16)
             if not chunk:
                 break
             for h in hashers.itervalues():
