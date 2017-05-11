@@ -215,7 +215,7 @@ class AttachedFile(YetiDocument):
     references = IntField(default=0)
 
     @staticmethod
-    def from_upload(file):
+    def from_upload(file, force_mime=False):
         sha256 = stream_sha256(file.stream)
 
         try:
@@ -230,9 +230,8 @@ class AttachedFile(YetiDocument):
             fd = open(os.path.join(STORAGE_ROOT, sha256), 'wb')
             fd.write(file.stream.read())
             fd.close()
-            print repr(file.filename), bool(file.filename)
             if file.filename:
-                f = AttachedFile(filename=file.filename, content_type=file.content_type, sha256=sha256)
+                f = AttachedFile(filename=file.filename, content_type=force_mime or file.content_type, sha256=sha256)
                 f.save()
                 return f
             else:
@@ -242,6 +241,7 @@ class AttachedFile(YetiDocument):
     def filepath(self):
         return os.path.join(STORAGE_ROOT, self.sha256)
 
+    @property
     def contents(self):
         return open(self.filepath, 'rb')
 
