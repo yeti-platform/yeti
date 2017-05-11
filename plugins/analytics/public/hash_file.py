@@ -31,7 +31,7 @@ class HashFile(ScheduledAnalytics):
                 h = Hash.get_or_create(value=h.hexdigest())
                 h.add_source("analytics")
                 h.save()
-                f.active_link_to(h, has_type, "HashFile", clean_old=False)
+                f.active_link_to(h, "{} hash".format(hash_type.upper()), "HashFile", clean_old=False)
 
     @staticmethod
     def extract_hashes(body_contents):
