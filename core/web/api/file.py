@@ -7,7 +7,7 @@ import magic
 from core.web.api.crud import CrudSearchApi, CrudApi
 from core import observables
 from core.web.helpers import requires_permissions
-from core.web.api.api import render
+from core.web.api.api import render_json
 from core.helpers import stream_sha256
 from core.database import AttachedFile
 
@@ -15,7 +15,7 @@ class File(CrudApi):
     objectmanager = observables.File
 
     @route("/addfile", methods=["POST"])
-    # @requires_permissions('write')
+    @requires_permissions('write')
     def add_file(self):
         """Adds a new File
 
@@ -35,4 +35,4 @@ class File(CrudApi):
             body.seek(0)
             f.body = AttachedFile.from_upload(body, force_mime=f.mime_type)
 
-        return render(f.save())
+        return render_json(f.save())
