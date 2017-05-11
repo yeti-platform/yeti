@@ -15,9 +15,9 @@ from mongoengine import DoesNotExist
 def each(module_name, observable_json):
     o = Observable.from_json(observable_json)
     mod = loaded_modules[module_name]
-    logging.debug("Launching {} on {}".format(mod.__class__.__name__, o))
+    logging.debug("Launching {} on {}".format(mod.__name__, o))
     mod.each(o)
-    o.analysis_done(mod.__class__.__name__)
+    o.analysis_done(mod.__name__)
 
 
 @celery_app.task
