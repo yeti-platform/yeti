@@ -28,10 +28,12 @@ class HashFile(ScheduledAnalytics):
     def each(f):
         if f.body:
             for hash_type, h in HashFile.extract_hashes(f.body.contents):
-                h = Hash.get_or_create(value=h.hexdigest())
-                h.add_source("analytics")
-                h.save()
-                f.active_link_to(h, "{} hash".format(hash_type.upper()), "HashFile", clean_old=False)
+                hash_object = Hash.get_or_create(value=h.hexdigest())
+                hash_object.add_source("analytics")
+                hash_object.save()
+                f.active_link_to(hash_object, "{} hash".format(hash_type.upper()), "HashFile", clean_old=False)
+                f.hashes[hash_type] = h.hexdigest()
+            f.save()
 
     @staticmethod
     def extract_hashes(body_contents):
