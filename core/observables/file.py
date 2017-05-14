@@ -11,7 +11,7 @@ class File(Observable):
     value = StringField(verbose_name="SHA256 hash")
 
     mime_type = StringField(verbose_name="MIME type")
-    hashes = ListField(ReferenceField(Hash), verbose_name="Hashes")
+    hashes = DictField(verbose_name="Hashes")
     body = ReferenceField("AttachedFile")
     filenames = ListField(StringField(), verbose_name="Filenames")
 
@@ -20,3 +20,9 @@ class File(Observable):
     @staticmethod
     def check_type(txt):
         return True
+
+    def info(self):
+        i = Observable.info(self)
+        i['mime_type'] = self.mime_type
+        i['hashes'] = self.hashes
+        return i
