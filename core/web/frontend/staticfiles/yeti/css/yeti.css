@@ -681,6 +681,17 @@ td input.inline {
     width: auto !important;
 }
 
+#textviewer {
+    padding: 10px;
+    height: calc(100vh - 140px);
+    border: 1px solid #474747;
+    overflow: auto;
+}
+
+#textviewer mark {
+    background-color: #FF8C00;
+}
+
 .pdfviewer iframe {
     width: 100%;
     height: calc(100vh - 140px);

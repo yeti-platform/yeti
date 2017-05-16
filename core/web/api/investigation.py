@@ -68,12 +68,14 @@ class Investigation(CrudApi):
         return render(result)
 
     @route('/import_results/<string:id>')
+    @requires_permissions('read')
     def import_results(self, id):
         results = get_object_or_404(ImportResults, id=id)
 
         return render(results.to_mongo())
 
     @route('/bulk_add/<string:id>', methods=['POST'])
+    @requires_permissions('write')
     def bulk_add(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         data = loads(request.data)
@@ -84,6 +86,8 @@ class Investigation(CrudApi):
                 _type = globals()[node['type']]
 
             n = _type.get_or_create(value=node['value'])
+            if node['new_tags']:
+                n.tag(node['new_tags'].split(', '))
             nodes.append(n)
 
         i.add([], nodes)

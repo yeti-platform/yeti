@@ -17,8 +17,11 @@ Investigations - Import
     <div id="investigation-import" data-url="{{url_for('api.Investigation:import_results', id=import_results.id)}}" data-next="{{url_for('frontend.InvestigationView:import_from', id=import_results.investigation.id)}}">Please wait for the import process to finish ...</div>
 {% else %}
     <form method="post" action="{{url_for('frontend.InvestigationView:inv_import')}}" enctype="multipart/form-data">
-        <input type=file name="file" />
-        <input type="submit" value="import" />
+        <h3>Import from text</h3>
+        <textarea class="form-control" name="text" rows=14></textarea>
+        <h3>Or from a file</h3>
+        <input type=file name="file" /><br />
+        <input class="btn btn-primary" type="submit" value="Start Import" />
     </form>
 {% endif %}
 

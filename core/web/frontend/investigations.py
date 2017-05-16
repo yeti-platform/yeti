@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from flask_classy import route
-from flask import render_template, request, flash
+from flask import render_template, request, flash, redirect, url_for
 from mongoengine import DoesNotExist
 
 from core.web.frontend.generic import GenericView
@@ -43,22 +43,31 @@ class InvestigationView(GenericView):
         return render_template("{}/graph.html".format(self.klass.__name__.lower()), investigation=bson_renderer(investigation.info()))
 
     @route("/import", methods=['GET', 'POST'])
+    @requires_permissions("write", "investigation")
     def inv_import(self):
         if request.method == "GET":
             return render_template("{}/import.html".format(self.klass.__name__.lower()))
         else:
-            file = request.files['file']
-            try:
-                import_method = ImportMethod.objects.get(acts_on=file.content_type)
-                f = AttachedFile.from_upload(file)
-                results = import_method.run(f)
+            text = request.form.get('text')
 
-                return render_template("{}/import.html".format(self.klass.__name__.lower()), import_results=results)
-            except DoesNotExist:
-                flash("This file type ('{}') is not supported.".format(file.content_type), "danger")
-                return render_template("{}/import.html".format(self.klass.__name__.lower()))
+            if text:
+                investigation = Investigation(import_text=text)
+                investigation.save()
+                return redirect(url_for('frontend.InvestigationView:import_from', id=investigation.id))
+            else:
+                file = request.files['file']
+                try:
+                    import_method = ImportMethod.objects.get(acts_on=file.content_type)
+                    f = AttachedFile.from_upload(file)
+                    results = import_method.run(f)
+
+                    return render_template("{}/import.html".format(self.klass.__name__.lower()), import_results=results)
+                except DoesNotExist:
+                    flash("This file type ('{}') is not supported.".format(file.content_type), "danger")
+                    return render_template("{}/import.html".format(self.klass.__name__.lower()))
 
     @route("/<id>/import", methods=['GET'])
+    @requires_permissions("write", "investigation")
     def import_from(self, id):
         investigation = get_object_or_404(Investigation, id=id)
         observables = Observable.from_string(investigation.import_text)

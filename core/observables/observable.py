@@ -137,6 +137,12 @@ class Observable(Node):
                 observable = cls(value=match.group('search'))
                 observable.normalize()
                 if observable.value not in cls.ignore:
+                    # Replace with existing observable if there is one
+                    try:
+                        observable = cls.objects.get(value=observable.value)
+                    except cls.DoesNotExist:
+                        pass
+
                     results[match.group('search')] = observable
 
         return results

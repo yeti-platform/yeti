@@ -10,6 +10,7 @@ Investigations - Import
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='visjs/vis.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="markjs/jquery.mark.min.js") }}" charset="utf-8"></script>
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
 <link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
 {% endblock %}
@@ -25,14 +26,20 @@ Investigations - Import
 
 {% block main %}
     <div class="row" id="import_view" data-investigation-url="{{url_for('frontend.InvestigationView:get', id=investigation.id)}}">
-        <div class="col-md-7 pdfviewer">
-            <iframe id="pdfviewer" src="{{ url_for('frontend.static', filename='pdf/web/viewer.html', file=url_for('api.Files:get', id=investigation.import_document.id)) }}">
-            </iframe>
-        </div>
+        {% if investigation.import_document and investigation.import_document.content_type == "application/pdf" %}
+            <div class="col-md-7 pdfviewer">
+                <iframe id="pdfviewer" src="{{ url_for('frontend.static', filename='pdf/web/viewer.html', file=url_for('api.Files:get', id=investigation.import_document.id)) }}">
+                </iframe>
+            </div>
+        {% else %}
+            <div class="col-md-7">
+                <div id="textviewer" class=" markdown-text">{{investigation.import_text}}</div>
+            </div>
+        {% endif %}
         <div class="col-md-5" id="import_observables">
             <div id="import-nodes-lists">
             </div>
-            <button id="import_send" data-url="{{ url_for("api.Investigation:bulk_add", id=investigation.id) }}" class="btn btn-primary">Import</button>
+            <button id="import_send" data-url="{{ url_for("api.Investigation:bulk_add", id=investigation.id) }}" class="btn btn-primary"><i class="hide glyphicon glyphicon-refresh"></i> Import</button>
         </div>
     </div>
 
@@ -56,7 +63,10 @@ Investigations - Import
             <div class="import-node-value">
                 {{value}}
             </div>
-            <input class="tokenfield" type="text" value="{{join tags}}" placeholder="+" />
+            {{#each tags}}
+                <span class="yeti-tag label label-default">{{name}}</span>
+            {{/each}}
+            <input class="tokenfield" type="text" value="" placeholder="+" />
         </li>
     </script>
 
@@ -74,6 +84,7 @@ Investigations - Import
     <script type="text/javascript">
         var observables = JSON.parse({{observables|tojson}});
         var importObject = new Import();
+        importObject.setTemplates();
 
         Object.keys(observables).forEach(function (type) {
             importObject.addNodes(this[type]);
