@@ -7,7 +7,7 @@ from datetime import datetime
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
 
-from core.database import YetiDocument
+from core.database import YetiDocument, AttachedFile
 from core.scheduling import OneShotEntry
 from core.config.celeryctl import celery_app
 
@@ -44,6 +44,7 @@ class Investigation(YetiDocument):
     created = DateTimeField(default=datetime.utcnow)
     updated = DateTimeField(default=datetime.utcnow)
     import_document = ReferenceField('AttachedFile')
+    import_url = StringField()
     import_text = StringField()
 
     exclude_fields = ['links', 'nodes', 'events', 'created', 'updated']
@@ -100,23 +101,29 @@ class ImportMethod(OneShotEntry):
     def run(self, target):
         results = ImportResults(import_method=self, status='pending')
         results.investigation = Investigation()
-        results.investigation.import_document = target
+
+        if isinstance(target, AttachedFile):
+            results.investigation.import_document = target
+            target = target.filepath
+        else:
+            results.investigation.import_url = target
+
         results.investigation.save()
         results.save()
-        celery_app.send_task("core.investigation.import_task", [str(results.id), target.filepath])
+        celery_app.send_task("core.investigation.import_task", [str(results.id), target])
 
         return results
 
 
 @celery_app.task
-def import_task(results_id, filepath):
+def import_task(results_id, target):
     results = ImportResults.objects.get(id=results_id)
     import_method = results.import_method
-    logging.warning("Running one-shot import {} on {}".format(import_method.__class__.__name__, filepath))
+    logging.warning("Running one-shot import {} on {}".format(import_method.__class__.__name__, target))
     results.update(status="running")
 
     try:
-        import_method.do_import(results, filepath)
+        import_method.do_import(results, target)
         results.update(status="finished")
     except Exception, e:
         results.update(status="error", error=str(e))

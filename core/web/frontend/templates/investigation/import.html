@@ -19,6 +19,8 @@ Investigations - Import
     <form method="post" action="{{url_for('frontend.InvestigationView:inv_import')}}" enctype="multipart/form-data">
         <h3>Import from text</h3>
         <textarea class="form-control" name="text" rows=14></textarea>
+        <h3>From a URL</h3>
+        <input class="form-control" type="text" name="url" placeholder="https://blog.com/post" />
         <h3>Or from a file</h3>
         <input type=file name="file" /><br />
         <input class="btn btn-primary" type="submit" value="Start Import" />

@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
+import requests
 from flask_classy import route
+from StringIO import StringIO
 from flask import render_template, request, flash, redirect, url_for
 from mongoengine import DoesNotExist
 
@@ -49,21 +51,25 @@ class InvestigationView(GenericView):
             return render_template("{}/import.html".format(self.klass.__name__.lower()))
         else:
             text = request.form.get('text')
+            url = request.form.get('url')
 
             if text:
                 investigation = Investigation(import_text=text)
                 investigation.save()
                 return redirect(url_for('frontend.InvestigationView:import_from', id=investigation.id))
             else:
-                file = request.files['file']
                 try:
-                    import_method = ImportMethod.objects.get(acts_on=file.content_type)
-                    f = AttachedFile.from_upload(file)
-                    results = import_method.run(f)
+                    if url:
+                        import_method = ImportMethod.objects.get(acts_on="url")
+                        results = import_method.run(url)
+                    else:
+                        target = AttachedFile.from_upload(request.files['file'])
+                        import_method = ImportMethod.objects.get(acts_on=target.content_type)
+                        results = import_method.run(target)
 
                     return render_template("{}/import.html".format(self.klass.__name__.lower()), import_results=results)
                 except DoesNotExist:
-                    flash("This file type ('{}') is not supported.".format(file.content_type), "danger")
+                    flash("This file type is not supported.", "danger")
                     return render_template("{}/import.html".format(self.klass.__name__.lower()))
 
     @route("/<id>/import", methods=['GET'])
