@@ -28,3 +28,4 @@ python-magic
 pdfkit
 pdfminer
 html2text
+readability-lxml
