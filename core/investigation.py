@@ -58,7 +58,7 @@ class Investigation(YetiDocument):
     SEARCH_ALIASES = {}
 
     def info(self):
-        result = {k: v for k, v in self._data.items() if k in ["created", "updated"]}
+        result = self.to_mongo()
         result['nodes'] = [node.to_mongo() for node in self.nodes]
 
         return result

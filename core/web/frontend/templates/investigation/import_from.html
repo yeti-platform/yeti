@@ -25,7 +25,7 @@ Investigations - Import
 {% endblock %}
 
 {% block main %}
-    <div class="row" id="import_view" data-investigation-url="{{url_for('frontend.InvestigationView:get', id=investigation.id)}}">
+    <div class="row" id="import_view" data-investigation-url="{{url_for('frontend.InvestigationView:graph', id=investigation.id)}}">
         {% if investigation.import_document and investigation.import_document.content_type == "application/pdf" %}
             <div class="col-md-7 pdfviewer">
                 <iframe id="pdfviewer" src="{{ url_for('frontend.static', filename='pdf/web/viewer.html', file=url_for('api.Files:get', id=investigation.import_document.id)) }}">
