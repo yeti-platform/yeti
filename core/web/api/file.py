@@ -24,15 +24,19 @@ class File(CrudApi):
 
         :<body form parameter: Field containing file to store
         """
-        body = request.files.get('body')
-        value = "FILE:{}".format(stream_sha256(body))
-        f = observables.File.get_or_create(value=value)
-        f.mime_type = magic.from_buffer(body.read(100), mime=True)
-        if body.filename not in f.filenames:
-            f.filenames.append(body.filename)
+        files = []
+        for uploaded_file in request.files.getlist("files"):
+            print uploaded_file
+            value = "FILE:{}".format(stream_sha256(uploaded_file))
+            f = observables.File.get_or_create(value=value)
+            f.mime_type = magic.from_buffer(uploaded_file.read(100), mime=True)
+            if uploaded_file.filename not in f.filenames:
+                f.filenames.append(uploaded_file.filename)
 
-        if not f.body:
-            body.seek(0)
-            f.body = AttachedFile.from_upload(body, force_mime=f.mime_type)
+            if not f.body:
+                uploaded_file.seek(0)
+                f.body = AttachedFile.from_upload(uploaded_file, force_mime=f.mime_type)
 
-        return render_json(f.save())
+            files.append(f.save())
+
+        return render_json(files)

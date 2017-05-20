@@ -50,6 +50,19 @@ span.yeti-toggle {
   cursor:pointer;
 }
 
+/* Dropzone */
+
+input.dropzone {
+  font-size: 1.25rem;
+  background-color: #c8dadf;
+  position: relative;
+  padding: 100px 20px;
+  outline: 2px dashed #92b0b3;
+  outline-offset: -10px;
+  width: 100%;
+}
+
+
 /* forms */
 
 #pattern textarea {
