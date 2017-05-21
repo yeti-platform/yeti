@@ -28,12 +28,14 @@ $(function () {
     form = $(this)
     ajaxFormData = new FormData();
 
-    files = form.find("input")[0].files
+    files = form.find("input[type=file]")[0].files
 
     for (var i = 0; i < files.length; i++) {
       console.log(files[i])
       ajaxFormData.append("files", files[i], files[i].name);
     }
+
+    ajaxFormData.append("unzip", form.find(".checkbox.zip input").prop('checked'))
 
     console.log($(this).attr('action'))
     $.ajax({
