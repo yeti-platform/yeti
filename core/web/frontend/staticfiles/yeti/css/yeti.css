@@ -90,6 +90,10 @@ input.dropzone {
   z-index: 50;
 }
 
+.checkbox.zip {
+  float: left;
+}
+
 
 /* forms */
 
