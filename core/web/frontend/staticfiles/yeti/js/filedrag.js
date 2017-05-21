@@ -25,7 +25,10 @@ $(function () {
   $("form.dropzone").on('submit', function(e) {
     e.preventDefault();
     e.stopPropagation();
+
     form = $(this)
+    form.find(".btn.upload").prop('disabled', true)
+    form.find('span').html("<strong>Uploading...</strong>")
     ajaxFormData = new FormData();
 
     files = form.find("input[type=file]")[0].files
@@ -50,6 +53,7 @@ $(function () {
         notify("Succesfully uploaded " + data.length + " files.", "success");
         form.find('span').html("<strong>Drag &amp; drop</strong> or <strong>click</strong> to add files")
         form.find("input").val('');
+        form.find(".btn.upload").prop('disabled', false)
       }
     });
 
