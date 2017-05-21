@@ -44,19 +44,20 @@
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title">Upload files</h4>
           </div>
+          <form class="dropzone" method="post" action="{{ url_for('api.File:add_file') }}" enctype="multipart/form-data">
 
           <div class="modal-body">
             <div id="dropzone">
-              <form class="dropzone" method="post" action="{{ url_for('api.File:add_file') }}" enctype="multipart/form-data">
-                  <input class="dropzone" type="file" name="files" id="file" multiple />
-                  <button class='btn btn-small' type="submit">Upload</button>
-              </form>
+              <span><strong>Drag &amp; drop</strong> or <strong>click</strong> to add files</span>
+              <input class="dropzone" type="file" name="files" id="file" multiple />
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary">Save changes</button>
+            <button type="submit" class="btn btn-primary">Upload</button>
           </div>
+        </form>
+
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
