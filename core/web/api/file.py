@@ -19,14 +19,15 @@ class File(CrudApi):
     def add_file(self):
         """Adds a new File
 
-        Create a new File from the JSON object passed in the ``POST`` data.
+        Create a new File from the form passed in the ``POST`` data. Each file
+        should be passed in the ``files`` parameter. Multiple files can be
+        added in one request.
         The file body will be stored as an AttachedFile object
 
-        :<body form parameter: Field containing file to store
+        :<file form parameter: Field containing file(s) to store
         """
         files = []
         for uploaded_file in request.files.getlist("files"):
-            print uploaded_file
             value = "FILE:{}".format(stream_sha256(uploaded_file))
             f = observables.File.get_or_create(value=value)
             f.mime_type = magic.from_buffer(uploaded_file.read(100), mime=True)
