@@ -40,9 +40,11 @@ class File(CrudApi):
         Create a new File from the form passed in the ``POST`` data. Each file
         should be passed in the ``files`` parameter. Multiple files can be
         added in one request.
-        The file body will be stored as an AttachedFile object
+        The file body will be stored as an AttachedFile object.
 
         :<file form parameter: Field containing file(s) to store
+        :<unzip form parameter ([true|false]): Uncompress archive and add files
+        separately
         """
         files = []
         for uploaded_file in request.files.getlist("files"):

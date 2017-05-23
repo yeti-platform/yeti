@@ -19,7 +19,7 @@ class AttachedFiles(FlaskView):
             else:
                 abort(400)
 
-        return render({'filename': url_for('api.Files:get', id=f.id)})
+        return render({'filename': url_for('api.AttachedFiles:get', id=f.id)})
 
     def get(self, id):
         f = get_object_or_404(AttachedFile, id=id)

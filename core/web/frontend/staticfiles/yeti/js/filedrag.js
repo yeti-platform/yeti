@@ -1,12 +1,10 @@
 $(function () {
 
   $("#dropzone").on('dragenter', function(e) {
-    console.log('asd');
     $(this).addClass("dragging");
   });
 
   $("#dropzone").on('dragleave', function(e) {
-    console.log('asd');
     $(this).removeClass("dragging");
   });
 
@@ -34,13 +32,11 @@ $(function () {
     files = form.find("input[type=file]")[0].files
 
     for (var i = 0; i < files.length; i++) {
-      console.log(files[i])
       ajaxFormData.append("files", files[i], files[i].name);
     }
 
     ajaxFormData.append("unzip", form.find(".checkbox.zip input").prop('checked'))
 
-    console.log($(this).attr('action'))
     $.ajax({
       method: "POST",
       headers: {"Accept": "application/json"},
