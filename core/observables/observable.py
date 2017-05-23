@@ -91,8 +91,8 @@ class Observable(Node):
             for t in [Url, Ip, Email, Path, Hostname, Hash, Bitcoin]:
                 if t.check_type(string):
                     return t
-            else:
-                raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
+
+        raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
 
     @staticmethod
     def from_string(string):

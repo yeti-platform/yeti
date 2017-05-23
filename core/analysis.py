@@ -20,15 +20,15 @@ def derive(strings):
     observables = set()
 
     for string in iterify(strings):
-        try:
-            t = Observable.guess_type(string)
-            observable = t(string)
-            observable.normalize()
-            observables.add(observable)
-            values.add(observable.value)
-        except ObservableValidationError:
-            values.add(string)
-            # pass
+        if string:
+            try:
+                t = Observable.guess_type(string)
+                observable = t(value=string)
+                observable.normalize()
+                observables.add(observable)
+                values.add(observable.value)
+            except ObservableValidationError:
+                values.add(string)
 
     new = []
     for observable in observables:
@@ -46,7 +46,6 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
     # Remove empty observables
     observables, extended_query = derive(observables)
     observables = list(observables)
-    added_entities = set()
 
     data = {
         "matches": [],
