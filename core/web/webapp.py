@@ -15,7 +15,7 @@ from mongoengine.errors import DoesNotExist
 
 from core.scheduling import Scheduler
 
-webapp = Flask(__name__)
+webapp = Flask(__name__, static_folder='../../node_modules', static_url_path='/static')
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder

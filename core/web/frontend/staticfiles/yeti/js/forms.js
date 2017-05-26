@@ -32,7 +32,7 @@ function refresh_tagfields(form) {
           },
           showAutocompleteOnFocus: true,
           delimiter: [',', ';'],
-          beautify: false
+          beautify: false,
         });
       }
     });

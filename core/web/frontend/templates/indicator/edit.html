@@ -16,12 +16,12 @@
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("static", filename="bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.js") }}" charset="utf-8"></script>
 
-<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
-<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/tokenfield-typeahead.min.css") }}">
-<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("static", filename="bootstrap-tokenfield/dist/css/tokenfield-typeahead.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("static", filename="bootstrap-tokenfield/dist/css/bootstrap-tokenfield.min.css") }}">
 
 <style media="screen">
   .tab-pane label {

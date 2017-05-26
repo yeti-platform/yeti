@@ -50,3 +50,6 @@ Thumbs.db
 exports/*
 storage/*
 celerybeat.pid
+
+# Frontend Dependencies
+node_modules

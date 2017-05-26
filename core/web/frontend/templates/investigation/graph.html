@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
 {% block custom_head %}
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/handlebars.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='typeahead/typeahead.bundle.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='visjs/vis.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='handlebars/dist/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='typeahead.js/dist/typeahead.bundle.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='vis/dist/vis.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for("static", filename="bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
-<link href="{{ url_for('frontend.static', filename='visjs/vis.min.css') }}" rel="stylesheet" type="text/css" />
-<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
-<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
+<link href="{{ url_for('static', filename='vis/dist/vis.min.css') }}" rel="stylesheet" type="text/css" />
+<link rel=stylesheet type=text/css href="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("static", filename="bootstrap-tokenfield/dist/css/bootstrap-tokenfield.min.css") }}">
 {% endblock %}
 
 {% block main %}

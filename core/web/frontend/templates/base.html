@@ -7,28 +7,28 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <meta name="description" content="">
     <meta name="author" content="">
-    <script type="text/javascript" src="{{ url_for('frontend.static', filename='jquery-ui/js/jquery.js') }}" charset="utf-8"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='jquery/dist/jquery.min.js') }}" charset="utf-8"></script>
 
 
     <title>{% block title %}The Yeti{%endblock%} - YETI</title>
 
     <!-- Bootstrap core CSS -->
-    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='bootstrap/css/bootstrap.min.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='bootstrap/dist/css/bootstrap.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/yeti.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/flaticon.css') }}">
-    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='font-awesome/css/font-awesome.min.css') }}">
-    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='animate/animate.min.css') }}">
-    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='simplemde/simplemde.min.css') }}">
-    <script src="{{url_for('frontend.static', filename='bootstrap-notify/bootstrap-notify.min.js')}}"></script>
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='font-awesome/css/font-awesome.min.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='animate.css/animate.min.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='simplemde/dist/simplemde.min.css') }}">
+    <script src="{{url_for('static', filename='bootstrap-notify/bootstrap-notify.min.js')}}"></script>
     <script src="{{url_for('frontend.static', filename='yeti/js/yeti.js')}}"></script>
 
-    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='highlightjs/highlightjs.min.css') }}">
-    <script src="{{url_for('frontend.static', filename='highlightjs/highlightjs.min.js')}}"></script>
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='highlight.js/styles/obsidian.css') }}">
+    <script src="{{url_for('static', filename='highlight.js/lib/highlight.js')}}"></script>
 
-    <script src="{{url_for('frontend.static', filename='simplemde/marked.min.js')}}"></script>
-    <script src="{{url_for('frontend.static', filename='simplemde/simplemde.min.js')}}"></script>
-    <script src="{{url_for('frontend.static', filename='simplemde/inline-attachment.min.js')}}"></script>
-    <script src="{{url_for('frontend.static', filename='simplemde/codemirror.inline-attachment.js')}}"></script>
+    <script src="{{url_for('static', filename='marked/marked.min.js')}}"></script>
+    <script src="{{url_for('static', filename='simplemde/dist/simplemde.min.js')}}"></script>
+    <script src="{{url_for('static', filename='inline-attachment/src/inline-attachment.js')}}"></script>
+    <script src="{{url_for('static', filename='inline-attachment/src/codemirror-4.inline-attachment.js')}}"></script>
     <script src="{{url_for('frontend.static', filename='yeti/js/markdown.js')}}"></script>
     {% block custom_head %}
     {% endblock %}
@@ -159,7 +159,7 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="{{url_for('frontend.static', filename='bootstrap/js/bootstrap.min.js')}}"></script>
+    <script src="{{url_for('static', filename='bootstrap/dist/js/bootstrap.min.js')}}"></script>
 
     <script>
         hljs.initHighlightingOnLoad();
