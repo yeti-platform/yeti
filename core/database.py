@@ -66,6 +66,18 @@ class YetiDocument(Document):
     def remove_from_set(self, field, value):
         return self._set_update('$pull', field, value)
 
+    @classmethod
+    def get_or_create(cls, **kwargs):
+        """Attempts to fetch a node in the database, and creates it if nonexistent"""
+        obj = cls(**kwargs)
+        try:
+            return obj.save()
+        except NotUniqueError:
+            if hasattr(obj, 'name'):
+                return cls.objects.get(name=obj.name)
+            if hasattr(obj, 'value'):
+                return cls.objects.get(value=obj.value)
+
 
 class LinkHistory(EmbeddedDocument):
 
@@ -283,18 +295,6 @@ class Node(YetiDocument):
     @property
     def full_type(self):
         return self._cls
-
-    @classmethod
-    def get_or_create(cls, **kwargs):
-        """Attempts to fetch a node in the database, and creates it if nonexistent"""
-        obj = cls(**kwargs)
-        try:
-            return obj.save()
-        except NotUniqueError:
-            if hasattr(obj, 'name'):
-                return cls.objects.get(name=obj.name)
-            if hasattr(obj, 'value'):
-                return cls.objects.get(value=obj.value)
 
     def incoming(self):
         for l in Link.objects(__raw__={"dst.$id": self.id}):
