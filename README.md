@@ -57,7 +57,7 @@ Activate virtualenv, then install requirements:
 
 Start the web UI (will spawn a HTTP server on ``http://localhost:5000``):
 
-    $ ./yeti.py
+    $ ./yeti.py webserver
 
 This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well:
 
