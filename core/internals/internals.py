@@ -31,8 +31,8 @@ class Internals(YetiDocument):
     @classmethod
     def apply_migrations(klass, current_version, target_version):
         print "    Applying migrations..."
-        print "    Current DB version: {}".format(current_version)
-        print "    Target DB version: {}".format(target_version)
+        print "    Current version: {}".format(current_version)
+        print "    Syncing to version: {}".format(target_version)
         internal_version = current_version
 
         for loader, name, ispkg in pkgutil.walk_packages([MIGRATIONS_DIRECTORY], prefix="."):
