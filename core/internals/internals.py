@@ -40,8 +40,10 @@ class Internals(YetiDocument):
         for loader, name, ispkg in sorted(migrations, key=lambda m: int(m[1].split("_")[1])):
             migration_version = int(name.split("_")[1])
             if internal_version < target_version and migration_version <= target_version:
-                print "        * Migrating database: {} -> {}".format(current_version, migration_version)
                 migration = importlib.import_module(name, package='core.internals.migrations')
+                description = migration.__description__
+                print "        * Applying change ({} -> {}): {}".format(
+                    current_version, migration_version, description)
                 migration.migrate()
                 klass.__internal.db_version = migration_version
                 klass.__internal.save()
