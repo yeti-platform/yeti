@@ -35,7 +35,9 @@ class Internals(YetiDocument):
         print "    Syncing to version: {}".format(target_version)
         internal_version = current_version
 
-        for loader, name, ispkg in pkgutil.walk_packages([MIGRATIONS_DIRECTORY], prefix="."):
+        migrations = pkgutil.walk_packages([MIGRATIONS_DIRECTORY], prefix=".")
+
+        for loader, name, ispkg in sorted(migrations, key=lambda m: int(m[1].split("_")[1])):
             migration_version = int(name.split("_")[1])
             if internal_version < target_version and migration_version <= target_version:
                 print "        * Migrating database: {} -> {}".format(current_version, migration_version)
