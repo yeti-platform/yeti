@@ -9,7 +9,7 @@ from core.constants import DB_VERSION
 from core.constants import MIGRATIONS_DIRECTORY
 
 class Internals(YetiDocument):
-    db_version = IntField(default=0)
+    db_version = IntField(default=DB_VERSION)
     name = StringField(default="default", unique=True)
     __internal = None
 
