@@ -108,3 +108,16 @@ server directives::
   }
 
 Replace the ``listen`` and ``server_name`` directives as you see fit.
+
+Keeping Yeti up-to-date
+-----------------------
+
+Keeping Yeti up-to-date is not that hard. You just need to ``cd`` into the
+directory and `git pull`. In some cases, the database schema might change
+a bit, and we always recommend running::
+
+    $ ./yeti.py syncdb
+
+before restarting Yeti. Note that Yeti will automatically check if its code and
+databases are not synchronized and will apply migrations automatically when
+the webserver is launched.
