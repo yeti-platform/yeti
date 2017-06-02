@@ -23,7 +23,7 @@ Quick & dirty
 
 Start the web UI (will spawn a HTTP server on ``http://localhost:5000``)::
 
-  $ ./yeti.py
+  $ ./yeti.py webserver
 
 This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well::
 
@@ -36,7 +36,7 @@ This will only enable the web interface - if you want to use Feeds and Analytics
 Or, to bootstrap a production use instance of Yeti on Ubuntu 16.04 (without the Redis tweaks), everyone's favorite command::
 
   $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/bootstrap.sh | sudo /bin/bash
-  
+
 There is also support for other platforms:
 
 * CentOS: ``extras/centos_bootstrap.sh``
@@ -108,3 +108,16 @@ server directives::
   }
 
 Replace the ``listen`` and ``server_name`` directives as you see fit.
+
+Keeping Yeti up-to-date
+-----------------------
+
+Keeping Yeti up-to-date is not that hard. You just need to ``cd`` into the
+directory and `git pull`. In some cases, the database schema might change
+a bit, and we always recommend running::
+
+    $ ./yeti.py syncdb
+
+before restarting Yeti. Note that Yeti will automatically check if its code and
+databases are not synchronized and will apply migrations automatically when
+the webserver is launched.
