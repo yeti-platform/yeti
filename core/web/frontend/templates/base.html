@@ -44,17 +44,17 @@
             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             <h4 class="modal-title">Upload files</h4>
           </div>
-          <form class="dropzone" method="post" action="{{ url_for('api.File:add_file') }}" enctype="multipart/form-data">
+          <form class="dropzone" method="post" action="{{ url_for('frontend.ObservableView:add_files') }}" enctype="multipart/form-data">
 
           <div class="modal-body">
             <div id="dropzone">
               <span><strong>Drag &amp; drop</strong> or <strong>click</strong> to add files</span>
-              <input class="dropzone" type="file" name="files" id="file" multiple />
+              <input class="dropzone" type="file" name="files" id="file" multiple required />
             </div>
           </div>
           <div class="modal-footer">
             <div class="checkbox zip">
-              <label><input type="checkbox" value="" name="unzip">Decompress archive (ZIP)</label>
+              <label><input type="checkbox" name="unzip">Decompress archive (ZIP)</label>
             </div>
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             <button type="submit" class="btn btn-primary upload">Upload</button>
