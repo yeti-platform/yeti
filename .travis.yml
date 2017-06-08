@@ -19,6 +19,6 @@ install:
   - pip install -r requirements.txt
 
 script:
-  - ./yeti.py &
+  - ./yeti.py webserver &
   - sleep 5
   - curl -I -L http://127.0.0.1:5000

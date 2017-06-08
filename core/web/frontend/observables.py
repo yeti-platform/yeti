@@ -17,6 +17,7 @@ from core.exports import ExportTemplate
 from core.errors import ObservableValidationError
 from core.analysis import match_observables
 from core.web.helpers import get_object_or_404, get_queryset
+from core.web.api.file import save_uploaded_files
 
 
 class ObservableView(GenericView):
@@ -104,6 +105,29 @@ class ObservableView(GenericView):
                     return render_template("observable/search.html")
 
         return render_template("observable/search.html")
+
+    @route("/add_files", methods=['POST'])
+    @requires_permissions("write", "file")
+    def add_files(self):
+        files = save_uploaded_files()
+
+        data = {
+            "matches": [],
+            "unknown": [],
+            "entities": {},
+            "known": [o.info() for o in files],
+            "neighbors": [],
+        }
+
+        for observable in files:
+            neighbors = observable.neighbors()
+            for otype in neighbors:
+                for (link, node) in neighbors[otype]:
+                    if isinstance(node, Observable):
+                        if node.tags:
+                            data['neighbors'].append((link.info(), node.info()))
+
+        return render_template("observable/search_results.html", data=data)
 
     def _get_queryset(self, form_params):
         ids = form_params.getlist('ids')

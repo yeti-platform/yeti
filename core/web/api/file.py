@@ -1,17 +1,18 @@
 from __future__ import unicode_literals
 
 from flask_classy import route
-from flask import request, abort
+from flask import request
 import magic
 from StringIO import StringIO
 import zipfile
 
-from core.web.api.crud import CrudSearchApi, CrudApi
+from core.web.api.crud import CrudApi
 from core import observables
 from core.web.helpers import requires_permissions
 from core.web.api.api import render_json
 from core.helpers import stream_sha256
 from core.database import AttachedFile
+
 
 def save_file(uploaded_file, filename=None):
     value = "FILE:{}".format(stream_sha256(uploaded_file))
@@ -28,6 +29,26 @@ def save_file(uploaded_file, filename=None):
         f.body = AttachedFile.from_upload(uploaded_file, force_mime=f.mime_type)
 
     return f.save()
+
+
+def save_uploaded_files():
+    files = []
+    unzip = bool(request.form.get('unzip') in ["true", "on"])
+
+    for uploaded_file in request.files.getlist("files"):
+        if unzip and zipfile.is_zipfile(uploaded_file):
+                with zipfile.ZipFile(uploaded_file, 'r') as zf:
+                    for info in zf.infolist():
+                        name = info.filename
+                        size = info.file_size
+                        data = StringIO(zf.read(name))
+                        if size > 0:
+                            files.append(save_file(data, filename=name.split("/")[-1]))
+        else:
+            files.append(save_file(uploaded_file))
+
+    return files
+
 
 class File(CrudApi):
     objectmanager = observables.File
@@ -46,22 +67,6 @@ class File(CrudApi):
         :<unzip form parameter ([true|false]): Uncompress archive and add files
         separately
         """
-        files = []
-        for uploaded_file in request.files.getlist("files"):
-            unzip = bool(request.form.get('unzip') == "true")
-            if unzip:
-                if zipfile.is_zipfile(uploaded_file):
-                    with zipfile.ZipFile(uploaded_file, 'r') as zf:
-                        for info in zf.infolist():
-                            name = info.filename
-                            size = info.file_size
-                            data = StringIO(zf.read(name))
-                            if size > 0:
-                                files.append(save_file(data, filename=name.split("/")[-1]))
-                else:
-                    return (render_json({"error": "Invalid Zipfile"}), 400)
-
-            else:
-                files.append(save_file(uploaded_file))
+        files = save_uploaded_files()
 
         return render_json(files)
