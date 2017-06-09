@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
 
-from flask_classy import route
-from flask import request
-import magic
 from StringIO import StringIO
 import zipfile
+
+from flask_classy import route
+from flask import request, Response, abort
+import magic
+from mongoengine import DoesNotExist
 
 from core.web.api.crud import CrudApi
 from core import observables
@@ -37,13 +39,13 @@ def save_uploaded_files():
 
     for uploaded_file in request.files.getlist("files"):
         if unzip and zipfile.is_zipfile(uploaded_file):
-                with zipfile.ZipFile(uploaded_file, 'r') as zf:
-                    for info in zf.infolist():
-                        name = info.filename
-                        size = info.file_size
-                        data = StringIO(zf.read(name))
-                        if size > 0:
-                            files.append(save_file(data, filename=name.split("/")[-1]))
+            with zipfile.ZipFile(uploaded_file, 'r') as zf:
+                for info in zf.infolist():
+                    name = info.filename
+                    size = info.file_size
+                    data = StringIO(zf.read(name))
+                    if size > 0:
+                        files.append(save_file(data, filename=name.split("/")[-1]))
         else:
             files.append(save_file(uploaded_file))
 
@@ -52,6 +54,32 @@ def save_uploaded_files():
 
 class File(CrudApi):
     objectmanager = observables.File
+
+    @route("/get/id/<id>", methods=["GET"])
+    @requires_permissions("read")
+    def get_id(self, id):
+        """Retrieves a file's content.
+
+        :<id ObjectId corresponding to the file ObjectId
+        """
+        try:
+            fileobj = self.objectmanager.objects.get(id=id)
+            return Response(fileobj.body.stream_contents())
+        except DoesNotExist:
+            abort(404)
+
+    @route("/get/hash/<hash>", methods=["GET"])
+    @requires_permissions("read")
+    def get_hash(self, hash):
+        """Retrieves a file's content.
+
+        :<id ObjectId corresponding to the file ObjectId
+        """
+        try:
+            fileobj = self.objectmanager.objects.get(hashes__value=hash)
+            return Response(fileobj.body.stream_contents())
+        except DoesNotExist:
+            abort(404)
 
     @route("/addfile", methods=["POST"])
     @requires_permissions('write')

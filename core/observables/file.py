@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-from flask import url_for
 from flask_mongoengine.wtf import model_form
 from mongoengine import *
 
@@ -13,7 +12,7 @@ class File(Observable):
 
     value = StringField(verbose_name="Value")
     mime_type = StringField(verbose_name="MIME type")
-    hashes = DictField(verbose_name="Hashes")
+    hashes = ListField(DictField(), verbose_name="Hashes")
     body = ReferenceField("AttachedFile")
     filenames = ListField(StringField(), verbose_name="Filenames")
 

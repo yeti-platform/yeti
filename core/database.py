@@ -260,6 +260,19 @@ class AttachedFile(YetiDocument):
     def contents(self):
         return open(self.filepath, 'rb')
 
+    def stream_contents(self):
+        """Generator; reads a file in 1KB chunks.
+
+        :<fd file object: File descriptor for the file
+        """
+        fd = self.contents
+        while True:
+            data = fd.read(1024*1024)
+            if not data:
+                return
+            else:
+                yield data
+
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["filename", "sha256", "content_type"]}
         return i
