@@ -30,11 +30,40 @@
     <script src="{{url_for('frontend.static', filename='simplemde/inline-attachment.min.js')}}"></script>
     <script src="{{url_for('frontend.static', filename='simplemde/codemirror.inline-attachment.js')}}"></script>
     <script src="{{url_for('frontend.static', filename='yeti/js/markdown.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='yeti/js/filedrag.js')}}"></script>
     {% block custom_head %}
     {% endblock %}
   </head>
 
   <body>
+
+    <div id="file-upload-modal" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Upload files</h4>
+          </div>
+          <form class="dropzone" method="post" action="{{ url_for('frontend.ObservableView:add_files') }}" enctype="multipart/form-data">
+
+          <div class="modal-body">
+            <div id="dropzone">
+              <span><strong>Drag &amp; drop</strong> or <strong>click</strong> to add files</span>
+              <input class="dropzone" type="file" name="files" id="file" multiple required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <div class="checkbox zip">
+              <label><input type="checkbox" name="unzip">Decompress archive (ZIP)</label>
+            </div>
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary upload">Upload</button>
+          </div>
+        </form>
+
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
 
     <!-- Static navbar -->
     <nav class="navbar navbar-inverse navbar-static-top">
@@ -50,6 +79,7 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Observables <span class="caret"></span></a>
               <ul class="dropdown-menu">
                 <li><a href="{{ url_for('frontend.ObservableView:index') }}">Search {% if current_user.has_permission("observable", "write") %} &amp; add {% endif %}</a></li>
+                {% if current_user.has_permission("file", "write") %}<li><a href="#" data-toggle="modal" data-target="#file-upload-modal">Upload files</a></li>{% endif %}
                 <li role="separator" class="divider"></li>
                 <li><a href="{{ url_for('frontend.ObservableView:advanced') }}">Browse</a></li>
               </ul>

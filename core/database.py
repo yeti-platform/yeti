@@ -227,8 +227,11 @@ class AttachedFile(YetiDocument):
     references = IntField(default=0)
 
     @staticmethod
-    def from_upload(file):
-        sha256 = stream_sha256(file.stream)
+    def from_upload(file, force_mime=False):
+        stream = getattr(file, "stream", file)
+        filename = getattr(file, "filename", None)
+
+        sha256 = stream_sha256(stream)
 
         try:
             return AttachedFile.objects.get(sha256=sha256)
@@ -240,11 +243,10 @@ class AttachedFile(YetiDocument):
                 pass
 
             fd = open(os.path.join(STORAGE_ROOT, sha256), 'wb')
-            fd.write(file.stream.read())
+            fd.write(stream.read())
             fd.close()
-            print repr(file.filename), bool(file.filename)
-            if file.filename:
-                f = AttachedFile(filename=file.filename, content_type=file.content_type, sha256=sha256)
+            if filename:
+                f = AttachedFile(filename=filename, content_type=force_mime or file.content_type, sha256=sha256)
                 f.save()
                 return f
             else:
@@ -254,8 +256,22 @@ class AttachedFile(YetiDocument):
     def filepath(self):
         return os.path.join(STORAGE_ROOT, self.sha256)
 
+    @property
     def contents(self):
         return open(self.filepath, 'rb')
+
+    def stream_contents(self):
+        """Generator; reads a file in 1KB chunks.
+
+        :<fd file object: File descriptor for the file
+        """
+        fd = self.contents
+        while True:
+            data = fd.read(1024*1024)
+            if not data:
+                return
+            else:
+                yield data
 
     def info(self):
         i = {k: v for k, v in self._data.items() if k in ["filename", "sha256", "content_type"]}

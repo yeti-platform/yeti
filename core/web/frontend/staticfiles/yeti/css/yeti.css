@@ -50,6 +50,51 @@ span.yeti-toggle {
   cursor:pointer;
 }
 
+/* Dropzone */
+
+#dropzone {
+  font-size: 1.25rem;
+  /*background-color: #c8dadf;*/
+  background-color: #d9edf7;
+  position: relative;
+  height:200px;
+  /*outline: 2px dashed #92b0b3;*/
+  outline: 2px dashed  #31708f;
+  outline-offset: -10px;
+  width: 100%;
+}
+
+#dropzone.dragging {
+  background-color: #d9edf7;
+  outline: 2px dashed #3e5c5f;
+  outline-offset: -20px;
+}
+
+#dropzone span {
+  text-align: center;
+  position: relative;
+  font-size: 20px;
+  color: #333;
+  top: 87px;
+  margin: 0 auto;
+  display: block;
+  width: 357px;
+}
+
+input.dropzone {
+  position: relative;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 50;
+}
+
+.checkbox.zip {
+  float: left;
+}
+
+
 /* forms */
 
 #pattern textarea {
