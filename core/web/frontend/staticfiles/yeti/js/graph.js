@@ -384,6 +384,8 @@ class Investigation {
         history: link.history
       });
 
+      $.extend(existingLink, link);
+
       return existingLink;
     }
   }
