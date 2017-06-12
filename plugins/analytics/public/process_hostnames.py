@@ -1,31 +1,27 @@
-from datetime import timedelta
 from tldextract import extract
-from core.analytics import ScheduledAnalytics
-from core.database import Link
+from core.analytics import InlineAnalytics
 from core.observables import Hostname
 
 
 SUSPICIOUS_TLDS = ['pw', 'cc', 'nu', 'ms', 'vg', 'cm', 'biz', 'cn', 'kr', 'br', 'ws', 'me']
 
 
-class ProcessHostnames(ScheduledAnalytics):
+class ProcessHostnames(InlineAnalytics):
 
     default_values = {
-        "frequency": timedelta(hours=1),
         "name": "ProcessHostnames",
         "description": "Extracts and analyze domains",
     }
 
     ACTS_ON = 'Hostname'
-    EXPIRATION = None
 
     @staticmethod
     def analyze_string(hostname_string):
         parts = extract(hostname_string)
         return [parts.registered_domain]
 
-    @classmethod
-    def each(cls, hostname, rtype=None, results=[]):
+    @staticmethod
+    def each(hostname):
         parts = extract(hostname.value)
 
         if parts.suffix in SUSPICIOUS_TLDS:

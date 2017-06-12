@@ -10,7 +10,7 @@ from core import analytics
 from core.analytics_tasks import schedule
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
-from core.web.helpers import requires_role, requires_permissions
+from core.web.helpers import requires_permissions
 
 
 class ScheduledAnalytics(CrudApi):
@@ -42,6 +42,30 @@ class ScheduledAnalytics(CrudApi):
         a = self.objectmanager.objects.get(id=id)
         a.enabled = not a.enabled
         a.save()
+
+        return render({"id": id, "status": a.enabled})
+
+
+class InlineAnalytics(CrudApi):
+    template = 'inline_analytics_api.html'
+    objectmanager = analytics.InlineAnalytics
+
+    @route("/<id>/toggle", methods=["POST"])
+    @requires_permissions("toggle")
+    def toggle(self, id):
+        """Toggles a Inline Analytics
+
+        Inline Analytics can be individually disabled using this endpoint.
+
+        :query ObjectID id: Analytics ID
+        :>json ObjectID id: The Analytics's ObjectID
+        :>json boolean status: The result of the toggle operation (``true`` means the export has been enabled, ``false`` means it has been disabled)
+        """
+        a = self.objectmanager.objects.get(id=id)
+        a.enabled = not a.enabled
+        a.save()
+
+        analytics.InlineAnalytics.analytics[a.name] = a
 
         return render({"id": id, "status": a.enabled})
 

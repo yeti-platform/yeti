@@ -29,7 +29,7 @@ render_json = Render(renderers=[bson_renderer])
 from core.web.api.observable import ObservableSearch, Observable
 from core.web.api.entity import Entity, EntitySearch
 from core.web.api.tag import Tag
-from core.web.api.analytics import ScheduledAnalytics, OneShotAnalytics
+from core.web.api.analytics import ScheduledAnalytics, OneShotAnalytics, InlineAnalytics
 from core.web.api.analysis import Analysis
 from core.web.api.feeds import Feed
 from core.web.api.export import Export, ExportTemplate
@@ -45,6 +45,7 @@ Analysis.register(api)
 
 ScheduledAnalytics.register(api, route_base='/analytics/scheduled')
 OneShotAnalytics.register(api, route_base='/analytics/oneshot')
+InlineAnalytics.register(api, route_base='/analytics/inline')
 
 ObservableSearch.register(api)
 Observable.register(api)

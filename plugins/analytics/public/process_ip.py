@@ -1,9 +1,8 @@
 from __future__ import unicode_literals
-from datetime import timedelta
 import logging
 import os
 
-from core.analytics import ScheduledAnalytics
+from core.analytics import InlineAnalytics
 from core.errors import ObservableValidationError
 import geoip2.database
 from geoip2.errors import AddressNotFoundError
@@ -19,18 +18,14 @@ except IOError as e:
     reader = False
 
 
-
-
-class ProcessIp(ScheduledAnalytics):
+class ProcessIp(InlineAnalytics):
 
     default_values = {
-        "frequency": timedelta(hours=1),
         "name": "ProcessIp",
         "description": "Extracts information from IP addresses",
     }
 
     ACTS_ON = 'Ip'
-    EXPIRATION = None  # only run this once
 
     @staticmethod
     def each(ip):
@@ -41,7 +36,7 @@ class ProcessIp(ScheduledAnalytics):
                     "country": response.country.iso_code,
                     "city": response.city.name
                 }
-            ip.save()
+                ip.save()
         except ObservableValidationError:
             logging.error("An error occurred when trying to add {} to the database".format(ip.value))
         except AddressNotFoundError:
