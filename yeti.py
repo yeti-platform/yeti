@@ -13,6 +13,7 @@ def webserver(args):
     # Enable debug and autoreload in dev
     webapp.debug = args.debug
     if webapp.debug:
+        webapp.jinja_env.auto_reload = True
         webapp.config['TEMPLATES_AUTO_RELOAD'] = True
 
     syncdb()
