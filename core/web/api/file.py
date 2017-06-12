@@ -18,17 +18,15 @@ from core.database import AttachedFile
 
 def save_file(uploaded_file, filename=None):
     value = "FILE:{}".format(stream_sha256(uploaded_file))
-    f = observables.File.get_or_create(value=value)
-    f.mime_type = magic.from_buffer(uploaded_file.read(100), mime=True)
+    mime_type = magic.from_buffer(uploaded_file.read(100), mime=True)
+    uploaded_file.seek(0)
+    body = AttachedFile.from_upload(uploaded_file, force_mime=mime_type)
+    f = observables.File.get_or_create(value=value, body=body, mime_type=mime_type)
 
     if not filename:
         filename = uploaded_file.filename
     if filename not in f.filenames:
         f.filenames.append(filename)
-
-    if not f.body:
-        uploaded_file.seek(0)
-        f.body = AttachedFile.from_upload(uploaded_file, force_mime=f.mime_type)
 
     return f.save()
 
