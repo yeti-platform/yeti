@@ -15,7 +15,7 @@ $(function () {
     input.data('editor', simplemde);
 
     inlineAttachment.editors.codemirror4.attach(simplemde.codemirror, {
-      uploadUrl: '/api/files/',
+      uploadUrl: '/api/attachedfiles/',
       extraHeaders: {
         Accept: 'application/json'
       }
