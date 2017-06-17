@@ -1,10 +1,7 @@
 from datetime import timedelta
-import re
-import logging
 import hashlib
 
 from core.analytics import ScheduledAnalytics
-from core.database import Link
 from core.observables import Hash
 
 HASH_TYPES_DICT = {'md5': hashlib.md5,
@@ -26,27 +23,26 @@ class HashFile(ScheduledAnalytics):
 
     @staticmethod
     def each(f):
-        try:
-            l = f.body.length
-        except AttributeError as e:  # File item has no content
-            l = 0
-        if l > 0:
-            for h in HashFile.extract_hashes(f):
-                h = Hash.get_or_create(value=h.hexdigest()).save()
-                h.add_source("analytics")
-                Link.connect(f, h)
+        if f.body:
+            f.hashes = []
+            for hash_type, h in HashFile.extract_hashes(f.body.contents):
+                hash_object = Hash.get_or_create(value=h.hexdigest())
+                hash_object.add_source("analytics")
+                hash_object.save()
+                f.active_link_to(hash_object, "{} hash".format(hash_type.upper()), "HashFile", clean_old=False)
+                f.hashes.append({"hash": hash_type, "value": h.hexdigest()})
+            f.save()
 
     @staticmethod
-    def extract_hashes(f):
+    def extract_hashes(body_contents):
         hashes = []
-        f = f.body
         hashers = {k: HASH_TYPES_DICT[k]() for k in HASH_TYPES_DICT}
 
         while True:
-            chunk = f.read(512*16)
+            chunk = body_contents.read(512*16)
             if not chunk:
                 break
             for h in hashers.itervalues():
                 h.update(chunk)
 
-        return hashers.values()
+        return hashers.items()
