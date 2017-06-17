@@ -676,3 +676,7 @@ td input.inline {
 .user-toggle, .user-remove {
   cursor:pointer;
 }
+
+#insert-form .tokenfield {
+    width: auto !important;
+}

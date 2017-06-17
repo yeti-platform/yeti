@@ -9,14 +9,21 @@ Install dependencies::
 
   $ sudo apt-get install build-essential git python-dev mongodb redis-server libxml2-dev libxslt-dev zlib1g-dev python-virtualenv
 
+Install Yarn::
+
+  $ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+  $ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+  $ sudo apt-get update && sudo apt-get install yarn
+
 Download Yeti:
 
   $ git clone https://github.com/yeti-platform/yeti.git
 
-Activate virtualenv if you want to, then ``pip install`` requirements::
+Activate virtualenv if you want to, then install requirements::
 
-  $ [sudo] pip install -r yeti/requirements.txt
-
+  $ cd yeti
+  $ [sudo] pip install -r requirements.txt
+  $ yarn install
 
 Quick & dirty
 -------------
@@ -94,7 +101,7 @@ To enable the systemd scripts once you've installed them::
 
     sudo systemctl enable yeti_web
 
-If you're running nginx, add the following configuraiton to one of the nginx
+If you're running nginx, add the following configuration to one of the nginx
 server directives::
 
   server {
