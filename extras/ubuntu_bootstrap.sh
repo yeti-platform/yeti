@@ -42,3 +42,5 @@ sudo systemctl start yeti_feeds.service
 sudo systemctl start yeti_exports.service
 sudo systemctl start yeti_analytics.service
 sudo systemctl start yeti_beat.service
+
+echo "[+] Yeti succesfully installed. Webserver listening on tcp/80"
