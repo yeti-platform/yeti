@@ -4,12 +4,12 @@
 import logging
 import argparse
 
+from core.web import webapp
+
 logging.basicConfig(format='%(levelname)s:%(module)s:%(message)s', level=logging.ERROR)
 
 
 def webserver(args):
-    from core.web import webapp
-
     # Enable debug and autoreload in dev
     webapp.debug = args.debug
     if webapp.debug:
