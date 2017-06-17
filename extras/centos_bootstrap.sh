@@ -40,3 +40,7 @@ firewall-cmd --reload
 # Prepare for startup
 systemctl enable mongod
 systemctl start mongod
+
+# Launch Yeti
+cd yeti
+./yeti.py webserver
