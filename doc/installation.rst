@@ -35,7 +35,7 @@ This will only enable the web interface - if you want to use Feeds and Analytics
 
 Or, to bootstrap a production use instance of Yeti on Ubuntu 16.04 (without the Redis tweaks), everyone's favorite command::
 
-  $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/bootstrap.sh | sudo /bin/bash
+  $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/ubuntu_bootstrap.sh | sudo /bin/bash
 
 There is also support for other platforms:
 
