@@ -66,7 +66,7 @@ class CrudApi(FlaskView):
         :query ObjectID id: Element ID
         :>json string deleted: The deleted element's ObjectID
         """
-        obj = self.objectmanager.objects.get(id=id)
+        obj = get_object_or_404(self.objectmanager, id=id)
         obj.delete()
         return render({"deleted": id})
 
@@ -115,7 +115,7 @@ class CrudApi(FlaskView):
 
         :query ObjectID id: Element ID
         """
-        obj = self.objectmanager.objects.get(id=id)
+        obj = get_object_or_404(self.objectmanager, id=id)
         return render(obj, self.template_single)
 
     @route("/", methods=["POST"])
@@ -140,7 +140,7 @@ class CrudApi(FlaskView):
         :query ObjectID id: Element ID
         :<json object params: JSON object containing fields to set
         """
-        obj = self.objectmanager.objects.get(id=id)
+        obj = get_object_or_404(self.objectmanager, id=id)
         params = self._parse_request(request.json)
         obj = obj.clean_update(**params)
         return render(obj)
