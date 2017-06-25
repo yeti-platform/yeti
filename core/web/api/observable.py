@@ -44,10 +44,14 @@ class Observable(CrudApi):
         :<json boolean refang: If set, the observable will be refanged before being added to the database
         """
         params = request.json
-        if params.pop('refang', None):
-            obs = self.objectmanager.add_text(refang(params.pop('value')))
+
+        if 'id' in params:
+            obs = self.objectmanager.objects.get(id=params.pop("id"))
         else:
-            obs = self.objectmanager.add_text(params.pop('value'))
+            if params.pop('refang', None):
+                obs = self.objectmanager.add_text(refang(params.pop('value')))
+            else:
+                obs = self.objectmanager.add_text(params.pop('value'))
         return render(self._modify_observable(obs, params))
 
     @route("/bulk", methods=["POST"])
@@ -62,11 +66,12 @@ class Observable(CrudApi):
         """
         added = []
         params = request.json
-        observables = params.pop('observables', [])
-        for item in observables:
+        bulk = params.pop('observables', [])
+        refang = params.pop('refang', False)
+        for item in bulk:
             obs = item['value']
             tags = item['tags']
-            if params.pop('refang', None):
+            if refang:
                 obs = self.objectmanager.add_text(refang(obs), tags)
             else:
                 obs = self.objectmanager.add_text(obs, tags)
