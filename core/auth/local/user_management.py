@@ -18,6 +18,7 @@ DEFAULT_PERMISSIONS = {
     "entity": {"read": True, "write": True},
     "scheduledanalytics": {"read": True, "write": True, "toggle": True, "refresh": True},
     "oneshotanalytics": {"read": True, "write": True, "toggle": True, "run": True},
+    "inlineanalytics": {"read": True, "write": True, "toggle": True},
     "tag": {"read": True, "write": True},
     "export": {"read": True, "write": True, "toggle": True, "refresh": True},
     "attachedfiles": {"read": True, "write": True},

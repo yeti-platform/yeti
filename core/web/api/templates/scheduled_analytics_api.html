@@ -4,7 +4,7 @@
 {% set refresh = current_user.has_permission("scheduledanalytics", "refresh") %}
 
 <table class="table table-condensed yeti-table table-hover">
-  <tr><th>Name</th><th>Runs every</th><th>Last run</th><th>Expiration</th><th>Acts on</th><th>Description</th><th>Status</th>{% if toggle %}<th>Toggle</th>{%endif%}{% if toggle %}<th>Refresh</th>{%endif%}</tr>
+  <tr><th>Name</th><th>Runs every</th><th>Last run</th><th>Expiration</th><th>Acts on</th><th>Description</th><th>Status</th>{% if toggle %}<th>Toggle</th>{%endif%}{% if refresh %}<th>Refresh</th>{%endif%}</tr>
   {% for analytics in data %}
   <tr class="{{ "disabled" if not analytics["enabled"] }} {{ "error" if (analytics["status"] != "OK") else "success" }}" data-name="{{analytics["name"]}}">
     <td><strong>{{ analytics["name"] }}</strong></td>

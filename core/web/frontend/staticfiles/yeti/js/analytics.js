@@ -12,6 +12,10 @@ $(function() {
     toggle_analytics($(this));
   });
 
+  $("#inline-table").on('click', '.analytics-toggle', function() {
+    toggle_analytics($(this));
+  });
+
 });
 
 function refresh_analytics(button) {

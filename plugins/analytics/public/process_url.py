@@ -1,23 +1,20 @@
 from __future__ import unicode_literals
-from datetime import timedelta
 import re
 import logging
 
-from core.analytics import ScheduledAnalytics
+from core.analytics import InlineAnalytics
 from core.observables import Observable
 from core.errors import ObservableValidationError
 
 
-class ProcessUrl(ScheduledAnalytics):
+class ProcessUrl(InlineAnalytics):
 
     default_values = {
-        "frequency": timedelta(hours=1),
         "name": "ProcessUrl",
         "description": "Extracts domains from URLs",
     }
 
     ACTS_ON = 'Url'
-    EXPIRATION = None  # only run this once
 
     @staticmethod
     def analyze_string(url_string):

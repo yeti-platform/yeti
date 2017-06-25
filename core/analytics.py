@@ -3,11 +3,62 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 from core.config.celeryctl import celery_app
+from core.database import YetiDocument
 from core.scheduling import ScheduleEntry, OneShotEntry
 from core.observables import Observable
 from core.user import User
 from core.helpers import iterify
 from mongoengine import *
+from mongoengine import signals
+
+
+class AnalyticsResults(Document):
+    analytics = ReferenceField('OneShotAnalytics', required=True)
+    observable = ReferenceField('Observable', required=True)
+    status = StringField()
+    results = ListField(ReferenceField('Link'))
+    settings = DictField()
+    raw = StringField()
+    error = StringField()
+    datetime = DateTimeField(default=datetime.utcnow)
+
+
+class InlineAnalytics(YetiDocument):
+    name = StringField(required=True, unique=True)
+    enabled = BooleanField(default=True)
+    description = StringField(required=True)
+
+    ACTS_ON = []
+    default_values = None
+    analytics = {}
+
+    meta = {"allow_inheritance": True}
+
+    def __init__(self, *args, **kwargs):
+        YetiDocument.__init__(self, *args, **kwargs)
+
+        InlineAnalytics.analytics[self.name] = self
+
+    @staticmethod
+    def each(observable):
+        raise NotImplementedError("This method must be overridden in each class it inherits from")
+
+    def info(self):
+        i = {k: v for k, v in self._data.items() if k in ["name", "description", "enabled"]}
+        i['acts_on'] = iterify(self.ACTS_ON)
+        i['id'] = str(self.id)
+        return i
+
+    @classmethod
+    def post_save(cls, sender, document, created):
+        if issubclass(sender, Observable):
+            if created:
+                for analytics in cls.analytics.itervalues():
+                    if analytics.enabled and sender.__name__ in iterify(analytics.ACTS_ON):
+                        analytics.each(document)
+
+
+signals.post_save.connect(InlineAnalytics.post_save)
 
 
 class ScheduledAnalytics(ScheduleEntry):
@@ -44,17 +95,6 @@ class ScheduledAnalytics(ScheduleEntry):
         i['acts_on'] = iterify(self.ACTS_ON)
         i['id'] = str(self.id)
         return i
-
-
-class AnalyticsResults(Document):
-    analytics = ReferenceField('OneShotAnalytics', required=True)
-    observable = ReferenceField('Observable', required=True)
-    status = StringField()
-    results = ListField(ReferenceField('Link'))
-    settings = DictField()
-    raw = StringField()
-    error = StringField()
-    datetime = DateTimeField(default=datetime.utcnow)
 
 
 class OneShotAnalytics(OneShotEntry):

@@ -12,8 +12,10 @@ from core.web.json import JSONDecoder
 from core.web.api import api
 from core.web.frontend import frontend
 from mongoengine.errors import DoesNotExist
+from core.yeti_plugins import get_plugins
 
-from core.scheduling import Scheduler
+# Make sure plugins are loaded
+get_plugins()
 
 webapp = Flask(__name__, static_folder='../../node_modules', static_url_path='/static')
 

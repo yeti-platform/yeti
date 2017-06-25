@@ -11,6 +11,7 @@ from core.analytics import ScheduledAnalytics, AnalyticsResults
 
 from mongoengine import DoesNotExist
 
+
 @celery_app.task
 def each(module_name, observable_json):
     o = Observable.from_json(observable_json)

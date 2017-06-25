@@ -1,13 +1,8 @@
 from __future__ import unicode_literals
 
-import os
-import sys
-import pkgutil
 import logging
-import importlib
-import inspect
 
-from mongoengine import *
+from mongoengine import StringField, BooleanField, DateTimeField
 from celery.beat import Scheduler as BaseScheduler
 from celery.beat import ScheduleEntry as BaseScheduleEntry
 
@@ -58,15 +53,11 @@ class OneShotEntry(YetiDocument):
 
 class Scheduler(BaseScheduler):
 
-    SUBDIRS = ['feeds', 'analytics', 'exports']
-
     def __init__(self, *args, **kwargs):
         self._schedule = {}
-        self.loaded_entries = {}
         logging.debug("Scheduler started")
         self.app = celery_app
-        self.load_entries(ScheduleEntry, self.SUBDIRS)
-        self.load_entries(OneShotEntry, self.SUBDIRS)
+        self.load_entries()
 
         if kwargs:
             super(Scheduler, self).__init__(*args, **kwargs)
@@ -75,53 +66,16 @@ class Scheduler(BaseScheduler):
     def schedule(self):
         return self._schedule
 
-    @staticmethod
-    def get_entries():
-        entries = {}
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'plugins')
-        sys.path.append(base_dir)
-
-        for subdir in Scheduler.SUBDIRS:
-            modules_dir = os.path.join(base_dir, subdir)
-            for loader, name, ispkg in pkgutil.walk_packages([modules_dir], prefix='{}.'.format(subdir)):
-                if not ispkg:
-                    module = importlib.import_module(name)
-                    for name, obj in inspect.getmembers(module, inspect.isclass):
-                        if issubclass(obj, (ScheduleEntry, OneShotEntry)) and obj.default_values is not None:
-                            entries[obj.default_values['name']] = obj
-                            if obj.default_values['name'] == 'dridex_paths':
-                                print obj, name, base_dir, subdir
-        return entries
-
-    def load_entries(self, cls, subdirs):
-        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'plugins')
-        sys.path.append(base_dir)
-
-        for sched in ScheduleEntry.objects.all():
-            if sched.enabled:
-                self.loaded_entries[sched.name] = sched
-
-        for subdir in subdirs:
-            modules_dir = os.path.join(base_dir, subdir)
-            for loader, name, ispkg in pkgutil.walk_packages([modules_dir], prefix='{}.'.format(subdir)):
-                if not ispkg:
-                    module = importlib.import_module(name)
-                    for name, obj in inspect.getmembers(module, inspect.isclass):
-                        if issubclass(obj, cls) and obj.default_values is not None:
-                            try:
-                                entry = obj.objects.get(name=obj.default_values['name'])
-                            except DoesNotExist:
-                                entry = obj(**obj.default_values)
-                                entry.save()
-
-                            self.loaded_entries[entry.name] = entry
+    def load_entries(self):
+        from core.yeti_plugins import get_plugins
+        self.loaded_entries = get_plugins()
 
     def setup_schedule(self):
         logging.debug("Setting up scheduler")
         for entry_name, entry in self.loaded_entries.iteritems():
             if isinstance(entry, ScheduleEntry):
                 self._schedule[entry_name] = BaseScheduleEntry(name=entry_name,
-                                                             app=self.app,
-                                                             task=entry.SCHEDULED_TASK,
-                                                             schedule=entry.frequency,
-                                                             args=(str(entry.id), ))
+                                                               app=self.app,
+                                                               task=entry.SCHEDULED_TASK,
+                                                               schedule=entry.frequency,
+                                                               args=(str(entry.id), ))
