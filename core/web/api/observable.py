@@ -67,15 +67,19 @@ class Observable(CrudApi):
         added = []
         params = request.json
         bulk = params.pop('observables', [])
-        refang = params.pop('refang', False)
+        _refang = params.pop('refang', False)
         for item in bulk:
-            obs = item['value']
+            value = item['value']
             tags = item['tags']
-            if refang:
-                obs = self.objectmanager.add_text(refang(obs), tags)
-            else:
-                obs = self.objectmanager.add_text(obs, tags)
 
+            if _refang:
+                obs = self.objectmanager.add_text(refang(value), tags)
+            else:
+                obs = self.objectmanager.add_text(value, tags)
+            self._modify_observable(obs, {
+                'source': item.get('source'),
+                'context': item.get('context'),
+            })
             added.append(obs)
         return render(added)
 
