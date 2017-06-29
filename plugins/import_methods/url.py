@@ -1,3 +1,4 @@
+import magic
 import pdfkit
 import requests
 from os import path
@@ -28,19 +29,19 @@ class ImportURL(ImportMethod):
             }
 
             pdfkit.from_url(url, path.join(tmpdir, 'out.pdf'), options=options)
+
+            with open(path.join(tmpdir, 'out.pdf'), 'rb') as pdf:
+                pdf_import = AttachedFile.from_content(pdf, 'import.pdf', 'application/pdf')
+
+            results.investigation.update(import_document=pdf_import)
         except Exception, e:
             print e
-
-        with open(path.join(tmpdir, 'out.pdf'), 'rb') as pdf:
-            pdf_import = AttachedFile.from_content(pdf, 'import.pdf', 'application/pdf')
-
-        results.investigation.update(import_document=pdf_import)
 
         rmtree(tmpdir)
 
     def do_import(self, results, url):
         response = requests.get(url)
-        content_type = response.headers['content-type'].split(';')[0]
+        content_type = magic.from_buffer(response.content, mime=True)
 
         if content_type == "text/html":
             content = Document(response.content)
@@ -53,5 +54,8 @@ class ImportURL(ImportMethod):
         else:
             target = AttachedFile.from_content(StringIO(response.content), url, content_type)
             results.investigation.update(import_document=target)
-            method = ImportMethod.objects.get(acts_on=content_type)
-            method.do_import(results, target.filepath)
+            try:
+                method = ImportMethod.objects.get(acts_on=content_type)
+                method.do_import(results, target.filepath)
+            except:
+                raise ValueError("unsupported file type: '{}'".format(content_type))
