@@ -220,7 +220,13 @@ class Import {
     });
 
     function callback(data) {
-      window.location = $('#import_view').data('investigation-url');
+      if (data.status === 'error') {
+        notify(data.message, "danger");
+      } else {
+        window.location = $('#import_view').data('investigation-url');
+      }
+
+      spinner.addClass('hide');
     }
 
     spinner.removeClass('hide');
@@ -254,7 +260,7 @@ function fetchImportResults(url) {
     if (data.status == 'finished') {
       window.location = $('#investigation-import').data('next');
     } else if (data.status == 'error') {
-      $('#investigation-import').text('Error during import:' + data.error);
+      $('#investigation-import').text('Error during import: ' + data.error);
     } else {
       setTimeout(fetchImportResults.bind(undefined, url), 1000);
     }

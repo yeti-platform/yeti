@@ -134,16 +134,19 @@ class Observable(Node):
         search_regex = re.compile(cls.regex, re.UNICODE)
         for match in re.finditer(search_regex, txt):
             if cls.is_valid(match):
-                observable = cls(value=match.group('search'))
-                observable.normalize()
-                if observable.value not in cls.ignore:
-                    # Replace with existing observable if there is one
-                    try:
-                        observable = cls.objects.get(value=observable.value)
-                    except cls.DoesNotExist:
-                        pass
+                try:
+                    observable = cls(value=match.group('search'))
+                    observable.normalize()
+                    if observable.value not in cls.ignore:
+                        # Replace with existing observable if there is one
+                        try:
+                            observable = cls.objects.get(value=observable.value)
+                        except cls.DoesNotExist:
+                            pass
 
-                    results[match.group('search')] = observable
+                        results[match.group('search')] = observable
+                except ObservableValidationError:
+                    pass
 
         return results
 
@@ -158,7 +161,7 @@ class Observable(Node):
         if self.check_type(self.value):
             self.normalize()
         else:
-            raise ObservableValidationError("'{}' is not a valid ''".format(self.value, self.__class__.__name__))
+            raise ObservableValidationError("'{}' is not a valid '{}'".format(self.value, self.__class__.__name__))
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):

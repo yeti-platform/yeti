@@ -81,15 +81,26 @@ class Investigation(CrudApi):
         data = loads(request.data)
         nodes = []
 
-        for node in data['nodes']:
-            if node['type'] in globals() and issubclass(globals()[node['type']], Observable):
-                _type = globals()[node['type']]
+        response = {
+            'status': 'ok',
+            'message': ''
+        }
 
-            n = _type.get_or_create(value=node['value'])
-            if node['new_tags']:
-                n.tag(node['new_tags'].split(', '))
-            nodes.append(n)
+        try:
+            for node in data['nodes']:
+                if node['type'] in globals() and issubclass(globals()[node['type']], Observable):
+                    _type = globals()[node['type']]
 
-        i.add([], nodes)
+                n = _type.get_or_create(value=node['value'])
+                if node['new_tags']:
+                    n.tag(node['new_tags'].split(', '))
+                nodes.append(n)
 
-        return render("ok")
+            i.add([], nodes)
+        except Exception, e:
+            response = {
+                'status': 'error',
+                'message': str(e)
+            }
+
+        return render(response)

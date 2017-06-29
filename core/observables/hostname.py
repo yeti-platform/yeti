@@ -25,9 +25,11 @@ class Hostname(Observable):
         if match.group('pre') != '/' and match.group('post') != '/':
             # Check that the domain is valid (by checking TLD)
             value = refang(match.group('search'))
-            parts = extract(value)
-            if parts.suffix and parts.domain:
-                return True
+
+            if len(value) <= 255:
+                parts = extract(value)
+                if parts.suffix and parts.domain:
+                    return True
 
         return False
 
