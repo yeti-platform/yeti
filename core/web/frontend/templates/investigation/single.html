@@ -37,7 +37,7 @@
               <div id="investigation_source" class="hide">
                   {% if investigation.import_document and investigation.import_document.content_type == "application/pdf" %}
                   <div class="pdfviewer">
-                      <iframe id="pdfviewer" src="{{ url_for('frontend.static', filename='pdf/web/viewer.html', file=url_for('api.Files:get', id=investigation.import_document.id)) }}">
+                      <iframe id="pdfviewer" src="{{ url_for('static', filename='pdfjs-dist-viewer-min/build/minified/web/viewer.html', file=url_for('api.AttachedFiles:get', id=investigation.import_document.id)) }}">
                       </iframe>
                   </div>
                   {% else %}
@@ -62,7 +62,7 @@
       <div class="panel-body">
         <table class="table table-condensed main-table">
           {% for key, value in investigation.info().items() %}
-          {% if key not in ["links", "nodes", "events", "name"] %}
+          {% if key not in ["_id", "links", "nodes", "events", "name", "import_document", "import_text"] %}
             <tr><th>{{key}}</th><td>{{macros.display_yeti(investigation, key)}}</td></tr>
           {% endif %}
           {% endfor %}

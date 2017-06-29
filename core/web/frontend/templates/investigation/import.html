@@ -31,6 +31,6 @@ Investigations - Import
 {% endblock %}
 
 {% block custom_head %}
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='handlebars/dist/handlebars.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/import.js") }}" charset="utf-8"></script>
 {% endblock %}

@@ -239,7 +239,7 @@ class AttachedFile(YetiDocument):
                 pass
 
             fd = open(os.path.join(STORAGE_ROOT, sha256), 'wb')
-            fd.write(stream.read())
+            fd.write(content.read())
             fd.close()
             if filename:
                 f = AttachedFile(filename=filename, content_type=content_type, sha256=sha256)

@@ -743,7 +743,7 @@ td input.inline {
     padding: 4px 0px 2px 0px;
     margin: 0;
     outline: medium none !important;
-    width: auto;
+    width: auto !important;
     min-height: inherit;
     font-size: 12px;
 }

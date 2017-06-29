@@ -5,14 +5,14 @@ Investigations - Import
 {% endblock %}
 
 {% block custom_head %}
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='handlebars/dist/handlebars.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/helpers.js') }}"></script>
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='visjs/vis.min.js') }}"></script>
-<script type="text/javascript" src="{{ url_for("frontend.static", filename="bootstrap-tokenfield/js/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for("frontend.static", filename="jquery-ui/js/jquery-ui.min.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for("frontend.static", filename="markjs/jquery.mark.min.js") }}" charset="utf-8"></script>
-<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="jquery-ui/css/jquery-ui.min.css") }}">
-<link rel=stylesheet type=text/css href="{{ url_for("frontend.static", filename="bootstrap-tokenfield/css/bootstrap-tokenfield.min.css") }}">
+<script type="text/javascript" src="{{ url_for('static', filename='vis/dist/vis.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for("static", filename="bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("static", filename="front-markjs/dist/jquery.mark.min.js") }}" charset="utf-8"></script>
+<link rel=stylesheet type=text/css href="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.css") }}">
+<link rel=stylesheet type=text/css href="{{ url_for("static", filename="bootstrap-tokenfield/dist/css/bootstrap-tokenfield.min.css") }}">
 {% endblock %}
 
 
@@ -28,7 +28,7 @@ Investigations - Import
     <div class="row" id="import_view" data-investigation-url="{{url_for('frontend.InvestigationView:graph', id=investigation.id)}}">
         {% if investigation.import_document and investigation.import_document.content_type == "application/pdf" %}
             <div class="col-md-7 pdfviewer">
-                <iframe id="pdfviewer" src="{{ url_for('frontend.static', filename='pdf/web/viewer.html', file=url_for('api.Files:get', id=investigation.import_document.id)) }}">
+                <iframe id="pdfviewer" src="{{ url_for('static', filename='pdfjs-dist-viewer-min/build/minified/web/viewer.html', file=url_for('api.AttachedFiles:get', id=investigation.import_document.id)) }}">
                 </iframe>
             </div>
         {% else %}
