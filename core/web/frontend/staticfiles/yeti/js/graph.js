@@ -10,8 +10,10 @@ var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html()
 var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
 var quickAddResult = Handlebars.compile($('#graph-quick-add-result').html());
 var quickAddEmpty = Handlebars.compile($('#graph-quick-add-empty').html());
+var tagsTemplate = Handlebars.compile($('#graph-sidebar-tags').html());
 
 Handlebars.registerPartial("links", linksTemplate);
+Handlebars.registerPartial("tags", tagsTemplate);
 var analyticsResultsTemplate = Handlebars.compile($('#graph-sidebar-analytics-results-template').html());
 
 // Define default icons
@@ -155,6 +157,13 @@ class Investigation {
         }
       }
     });
+
+    // Create actions
+    this.manageTags = new ManageTags('#action-managetags-template');
+    this.manageTags.on('tags.added', this.addedTags.bind(this));
+    this.manageTags.on('tags.removed', this.removedTags.bind(this));
+
+    this.export = new Export('#action-export-template');
 
     // Setup initial data
     this.update(investigation);
@@ -565,6 +574,13 @@ class Investigation {
     hljs.initHighlighting.called = false;
     hljs.initHighlighting();
 
+    // Update actions
+    this.manageTags.selectOne(nodeId);
+    this.manageTags.displayIn('#accordion');
+
+    this.export.selectOne(nodeId);
+    this.export.displayIn('#accordion');
+
     // Display analytics
     this.displayAnalytics(node);
 
@@ -793,6 +809,56 @@ class Investigation {
 
     self.network.on('selectNode', function(params) {
       self.selectNode(params.nodes[params.nodes.length - 1]);
+    });
+  }
+
+  addedTags(data) {
+    var self = this;
+
+    data.selection.forEach(function (nodeId) {
+      if (nodeId.startsWith('observable-')) {
+        var alreadyIn = [];
+        var node = self.nodes.get(nodeId);
+
+        node.tags.forEach(function (tag) {
+          if (data.tags.includes(tag.name)) {
+            alreadyIn.push(tag.name);
+          }
+        });
+
+        data.tags.forEach(function (tag) {
+          if (!alreadyIn.includes(tag)) {
+            node.tags.push({'name': tag});
+          }
+        });
+
+        self.nodes.update(node);
+        $('#graph-sidebar-taglist-' + nodeId).html(tagsTemplate(node));
+      }
+    });
+  }
+
+  removedTags(data) {
+    var self = this;
+
+    data.selection.forEach(function (nodeId) {
+      if (nodeId.startsWith('observable-')) {
+        var newTags = [];
+        var node = self.nodes.get(nodeId);
+
+        node.tags.forEach(function (tag) {
+          if (!data.tags.includes(tag.name)) {
+            newTags.push(tag);
+          }
+        });
+
+        console.log(newTags);
+        node.tags = newTags;
+        console.log(node);
+
+        self.nodes.update(node);
+        $('#graph-sidebar-taglist-' + nodeId).html(tagsTemplate(node));
+      }
     });
   }
 

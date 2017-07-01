@@ -2,6 +2,7 @@
 {% import "macros/generic.html" as macros %}
 
 {% block custom_head %}
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/tagfields.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/tags.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/context.js") }}" charset="utf-8"></script>

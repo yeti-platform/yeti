@@ -1,14 +1,10 @@
 from __future__ import unicode_literals
 
-import json
 import logging
 
-from flask import request, render_template, send_file, flash
+from flask import request, render_template, flash
 from flask_login import current_user
 from flask_classy import route
-from uuid import uuid4
-from tempfile import gettempdir
-import os
 
 from core.web.frontend.generic import GenericView
 from core.web.helpers import requires_permissions
@@ -16,7 +12,6 @@ from core.observables import *
 from core.exports import ExportTemplate
 from core.errors import ObservableValidationError
 from core.analysis import match_observables
-from core.web.helpers import get_object_or_404, get_queryset
 from core.web.api.file import save_uploaded_files
 
 
@@ -128,48 +123,3 @@ class ObservableView(GenericView):
                             data['neighbors'].append((link.info(), node.info()))
 
         return render_template("observable/search_results.html", data=data)
-
-    def _get_queryset(self, form_params):
-        ids = form_params.getlist('ids')
-        query = form_params.get('query')
-
-        if ids:
-            return Observable.objects(id__in=ids)
-        else:
-            query = json.loads(query)
-            fltr = query.get('filter', {})
-            params = query.get('params', {})
-            regex = params.pop('regex', False)
-            ignorecase = params.pop('ignorecase', False)
-
-            return get_queryset(Observable, fltr, regex, ignorecase)
-
-    @requires_permissions("read", "observable")
-    @route("/export", methods=['POST'])
-    def export(self):
-        template = get_object_or_404(ExportTemplate, id=request.form['template'])
-
-        filepath = os.path.join(gettempdir(), 'yeti_{}.txt'.format(uuid4()))
-        template.render(self._get_queryset(request.form), filepath)
-
-        return send_file(filepath)
-
-    @requires_permissions("tag", "observable")
-    @route("/tag", methods=['POST'])
-    def tag(self):
-        tags = request.form['tags'].split(',')
-
-        for observable in self._get_queryset(request.form):
-            observable.tag(tags)
-
-        return ('', 200)
-
-    @requires_permissions("tag", "observable")
-    @route("/untag", methods=['POST'])
-    def untag(self):
-        tags = request.form['tags'].split(',')
-
-        for observable in self._get_queryset(request.form):
-            observable.untag(tags)
-
-        return ('', 200)

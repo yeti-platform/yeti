@@ -135,6 +135,12 @@
     </ul>
 </script>
 
+<script id="graph-sidebar-tags" type="text/x-handlebars-template">
+    {{#each tags}}
+        <span class="yeti-tag label label-default">{{name}}</span>
+    {{/each}}
+</script>
+
 <script id="graph-sidebar-node-template" type="text/x-handlebars-template">
     <div id="graph-sidebar-icon" class="{{cssicon}}"></div>
     <div id="graph-sidebar-value-actions" class="pull-right">
@@ -146,22 +152,16 @@
     </div>
     <div id="graph-sidebar-value">{{label}}</div>
 
+    <div id="graph-sidebar-taglist-{{id}}" class="graph-sidebar-taglist text-center">{{> tags}}</div>
+
     <ul id="graph-sidebar-tabs" class="nav nav-pills nav-justified">
       <li><a data-toggle="pill" href="#graph-sidebar-info">Info</a></li>
       <li class="active"><a data-toggle="pill" href="#graph-sidebar-links">Links</a></li>
-      <li><a data-toggle="pill" href="#graph-sidebar-analytics">Analytics</a></li>
+      <li><a data-toggle="pill" href="#graph-sidebar-actions">Actions</a></li>
     </ul>
 
     <div id="graph-sidebar-content" class="tab-content" data-id='{{id}}'>
         <div id="graph-sidebar-info" class="tab-pane">
-            <h1>Tags</h1>
-            <div class="graph-sidebar-tags">
-                {{#each tags}}
-                    <span class="yeti-tag label label-default">{{name}}</span>
-                {{else}}
-                    No tags to display.
-                {{/each}}
-            </div>
             <h1>Contexts</h1>
             <div class="graph-sidebar-contexts">
                 {{#each context}}
@@ -190,10 +190,28 @@
             <div id="graph-sidebar-links-from-{{id}}"></div>
         </div>
 
-        <div id="graph-sidebar-analytics" class="tab-pane">
-            <div id="graph-sidebar-analytics-{{id}}">
-                Analytics loading ...
+        <div id="graph-sidebar-actions" class="tab-pane">
+
+            <div class="panel-group graph-panels" id="accordion">
+
+              <div class="panel panel-default">
+                <div class="panel-heading">
+                  <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#selection-analytics">
+                      Analytics
+                    </a>
+                  </h4>
+                </div>
+                <div id="selection-analytics" class="panel-collapse collapse in" role="tabpanel">
+                  <div class="panel-body">
+                      <div id="graph-sidebar-analytics-{{id}}">
+                          Analytics loading ...
+                      </div>
+                  </div>
+                </div>
+              </div>
             </div>
+
         </div>
     </div>
 </script>

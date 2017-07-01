@@ -450,6 +450,16 @@ a.graph-analytics-results-links {
     background-color: #00CCFF;
 }
 
+.graph-sidebar-taglist {
+    line-height: 24px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.graph-sidebar-taglist .yeti-tag {
+    background-color: #00CCFF;
+}
+
 .spinner,
 .glyphicon-spinner .glyphicon {
     -animation: spin .7s infinite linear;
@@ -756,4 +766,29 @@ td input.inline {
 .alert h1 {
     margin-top: 0;
     font-size: 13px;
+}
+
+.graph-panels .panel {
+    background-color: transparent;
+    border: 0;
+    margin-left: -20px;
+    margin-right: -20px;
+}
+
+.graph-panels .panel-heading {
+    background-color: #00CCFF;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.graph-panels .panel-title>a {
+    color: white;
+}
+
+.graph-panels .btn-primary {
+    background-color: #00CCFF;
+}
+
+.graph-panels h4 {
+    font-weight: normal;
 }

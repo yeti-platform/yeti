@@ -7,6 +7,7 @@
 <script type="text/javascript" src="{{ url_for('static', filename='vis/dist/vis.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for("static", filename="bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/tagfields.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
 <link href="{{ url_for('static', filename='vis/dist/vis.min.css') }}" rel="stylesheet" type="text/css" />
 <link rel=stylesheet type=text/css href="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.css") }}">
@@ -76,6 +77,8 @@
 </div><!-- /.modal -->
 
 {% include "investigation/graph_templates.html" %}
+{% include "actions_templates.html" %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/actions.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/graph.js') }}"></script>
 
 <script type="text/javascript">
