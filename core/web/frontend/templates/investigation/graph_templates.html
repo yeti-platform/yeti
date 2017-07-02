@@ -215,4 +215,27 @@
         </div>
     </div>
 </script>
+
+<script id="graph-sidebar-no-selection" type="text/x-handlebars-template">
+    <div id="graph-sidebar-icon" class="flaticon-network38"></div>
+    <div id="graph-sidebar-content">
+        <p>Click on a node to get info.</p>
+    </div>
+</script>
+
+<script id="graph-sidebar-nodes-template" type="text/x-handlebars-template">
+    <div>
+        {{#each this}}
+            <div class="graph-sidebar-selected-node graph-sidebar-tags">
+                <i class="{{cssicon}}"></i> {{label}}
+                <span id="graph-sidebar-taglist-{{id}}">{{> tags}}</span>
+            </div>
+        {{/each}}
+    </div>
+
+    <div id="graph-sidebar-actions" class="tab-pane">
+        <div class="panel-group graph-panels" id="accordion">
+        </div>
+    </div>
+</script>
 {% endraw %}

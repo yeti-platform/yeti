@@ -6,11 +6,13 @@
 
 // Compile templates
 var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
+var nodesTemplate = Handlebars.compile($('#graph-sidebar-nodes-template').html());
 var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
 var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
 var quickAddResult = Handlebars.compile($('#graph-quick-add-result').html());
 var quickAddEmpty = Handlebars.compile($('#graph-quick-add-empty').html());
 var tagsTemplate = Handlebars.compile($('#graph-sidebar-tags').html());
+var noSelectionTemplate = Handlebars.compile($('#graph-sidebar-no-selection').html());
 
 Handlebars.registerPartial("links", linksTemplate);
 Handlebars.registerPartial("tags", tagsTemplate);
@@ -564,6 +566,44 @@ class Investigation {
     $.getJSON('/api/neighbors/' + node._cls + '/' + node._id, this.retrieveNodeNeighborsCallback(node.id));
   }
 
+  changeSelection(params) {
+    var self = this;
+
+    console.log('changeSelection');
+
+    var selectedNodes = params.nodes;
+
+    console.log(selectedNodes.length);
+
+    if (selectedNodes.length == 1) {
+      this.selectNode(selectedNodes[0]);
+    } else if (selectedNodes.length === 0) {
+      $('#graph-sidebar-dynamic').html(noSelectionTemplate({}));
+    } else {
+      this.selectMultipleNodes(selectedNodes);
+    }
+  }
+
+  selectMultipleNodes(nodeIds) {
+    var self = this;
+    var nodes = [];
+
+    // Get information for each selected node
+    nodeIds.forEach(function (nodeId) {
+      nodes.push(self.nodes.get(nodeId));
+    });
+
+    // Update sidebar with multi-selection content
+    $('#graph-sidebar-dynamic').html(nodesTemplate(nodes));
+
+    // Update actions
+    this.manageTags.changeSelection(nodeIds);
+    this.manageTags.displayIn('#accordion');
+
+    this.export.changeSelection(nodeIds);
+    this.export.displayIn('#accordion');
+  }
+
   selectNode(nodeId) {
     var node = this.nodes.get(nodeId);
 
@@ -789,6 +829,9 @@ class Investigation {
       manipulation: {
         enabled: false,
         addEdge: self.addManualLink.bind(self)
+      },
+      interaction: {
+        multiselect: true,
       }
     };
 
@@ -807,8 +850,8 @@ class Investigation {
 
     self.network = new vis.Network(container, data, options);
 
-    self.network.on('selectNode', function(params) {
-      self.selectNode(params.nodes[params.nodes.length - 1]);
+    self.network.on('select', function(params) {
+      self.changeSelection(params);
     });
   }
 

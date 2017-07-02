@@ -66,6 +66,13 @@ class Action {
     this.addToSelection(id);
   }
 
+  changeSelection(ids) {
+    var self = this;
+
+    self.reset();
+    ids.forEach(self.addToSelection.bind(self));
+  }
+
   reset() {
     this.selected.clear();
   }

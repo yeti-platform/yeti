@@ -792,3 +792,12 @@ td input.inline {
 .graph-panels h4 {
     font-weight: normal;
 }
+
+.graph-sidebar-selected-node {
+    padding: 5px;
+    border-bottom: 1px dashed #888888;
+}
+
+.graph-sidebar-selected-node:last-child {
+    border-bottom: 0;
+}
