@@ -317,6 +317,7 @@ input.dropzone {
     color: white
 }
 
+#graph-sidebar-content a,
 #graph-sidebar-value-actions a,
 #graph-sidebar-tabs a {
     color: #00CCFF;

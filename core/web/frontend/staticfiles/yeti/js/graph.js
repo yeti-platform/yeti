@@ -568,12 +568,7 @@ class Investigation {
 
   changeSelection(params) {
     var self = this;
-
-    console.log('changeSelection');
-
     var selectedNodes = params.nodes;
-
-    console.log(selectedNodes.length);
 
     if (selectedNodes.length == 1) {
       this.selectNode(selectedNodes[0]);
@@ -895,14 +890,22 @@ class Investigation {
           }
         });
 
-        console.log(newTags);
         node.tags = newTags;
-        console.log(node);
-
         self.nodes.update(node);
         $('#graph-sidebar-taglist-' + nodeId).html(tagsTemplate(node));
       }
     });
+  }
+
+  selectAllNodes() {
+    var self = this;
+
+    var nodeIds = self.nodes.getIds({filter: function(item) {
+      return item.visible;
+    }});
+
+    self.network.selectNodes(nodeIds);
+    self.changeSelection({'nodes': nodeIds});
   }
 
   initGraph() {
@@ -915,6 +918,11 @@ class Investigation {
     var self = this;
 
     // Define event handlers
+    $('#graph-sidebar').on('click', '#graph-select-all', function(e) {
+      e.preventDefault();
+      self.selectAllNodes();
+    });
+
     $('#graph-sidebar').on('click', '.graph-sidebar-display-link', function(e) {
       var linkId = $(this).data('link');
       var link = self.edges.get(linkId);
