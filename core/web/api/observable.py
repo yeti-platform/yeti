@@ -70,7 +70,7 @@ class Observable(CrudApi):
         _refang = params.pop('refang', False)
         for item in bulk:
             value = item['value']
-            tags = item['tags']
+            tags = item.get('tags', [])
 
             if _refang:
                 obs = self.objectmanager.add_text(refang(value), tags)
