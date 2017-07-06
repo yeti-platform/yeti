@@ -8,14 +8,16 @@
 var nodeTemplate = Handlebars.compile($('#graph-sidebar-node-template').html());
 var nodesTemplate = Handlebars.compile($('#graph-sidebar-nodes-template').html());
 var linksTemplate = Handlebars.compile($('#graph-sidebar-links-template').html());
-var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
 var quickAddResult = Handlebars.compile($('#graph-quick-add-result').html());
 var quickAddEmpty = Handlebars.compile($('#graph-quick-add-empty').html());
 var tagsTemplate = Handlebars.compile($('#graph-sidebar-tags').html());
 var noSelectionTemplate = Handlebars.compile($('#graph-sidebar-no-selection').html());
+var analyticsGroupTemplate = Handlebars.compile($('#graph-sidebar-analytics-group-template').html());
 
 Handlebars.registerPartial("links", linksTemplate);
 Handlebars.registerPartial("tags", tagsTemplate);
+Handlebars.registerPartial("analyticsGroup", analyticsGroupTemplate);
+var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
 var analyticsResultsTemplate = Handlebars.compile($('#graph-sidebar-analytics-results-template').html());
 
 // Define default icons
@@ -498,25 +500,41 @@ class Investigation {
   }
 
   availableAnalyticsFor(node) {
+    var results = {};
     var nodeType = node._cls.split('.');
     nodeType = nodeType[nodeType.length - 1];
 
-    return this.analytics.get({
+    this.analytics.get({
       filter: function(item) {
         return $.inArray(nodeType, item.acts_on) != -1;
       },
+    }).forEach(function (analytics) {
+      if (!(analytics.group in results)) {
+        results[analytics.group] = [];
+      }
+      results[analytics.group].push(analytics);
     });
+
+    return results;
+  }
+
+  forEachAnalytics(groupedAnalytics, cb) {
+    for (var group in groupedAnalytics) {
+      groupedAnalytics[group].forEach(cb);
+    }
   }
 
   displayAnalytics(node) {
     var availableAnalytics = this.availableAnalyticsFor(node);
-    $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({analytics: availableAnalytics, nodeId: node._id}));
+    console.log(availableAnalytics);
+    $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({groups: availableAnalytics, nodeId: node._id}));
   }
 
   displayAnalyticsResultsForNode(node) {
     var self = this;
     var availableAnalytics = this.availableAnalyticsFor(node);
-    availableAnalytics.forEach(function (analytics) {
+
+    self.forEachAnalytics(availableAnalytics, function (analytics) {
       var analyticsDiv = $('#analytics-' + analytics.id + '-' + node._id);
       var data;
 
@@ -532,7 +550,7 @@ class Investigation {
     var self = this;
     var availableAnalytics = this.availableAnalyticsFor(node);
 
-    availableAnalytics.forEach(function (analytics) {
+    self.forEachAnalytics(availableAnalytics, function (analytics) {
       function callback(data) {
         var analyticsDiv = $('#analytics-' + analytics.id + '-' + node._id);
 

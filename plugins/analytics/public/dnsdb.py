@@ -94,7 +94,8 @@ class DNSDBApi(object):
 class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
 
     default_values = {
-        "name": "DNSDB Reverse Passive DNS",
+        "group": "DNSDB",
+        "name": "Reverse Passive DNS",
         "description": "Perform passive DNS reverse lookups on domain names or IP addresses."
     }
 
@@ -108,7 +109,8 @@ class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
 class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
 
     default_values = {
-        "name": "DNSDB Passive DNS",
+        "group": "DNSDB",
+        "name": "Passive DNS",
         "description": "Perform passive DNS lookups on domain names."
     }
 

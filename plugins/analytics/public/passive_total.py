@@ -1,7 +1,6 @@
 import requests
 from datetime import datetime
 
-from core.helpers import get_value_at
 from core.analytics import OneShotAnalytics
 from core.observables import Observable, Hostname, Hash, Email, Text
 
@@ -92,7 +91,8 @@ class PassiveTotalApi(object):
 class PassiveTotalPassiveDNS(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
-        "name": "PassiveTotal Passive DNS",
+        "group": "PassiveTotal",
+        "name": "Passive DNS",
         "description": "Perform passive DNS (reverse) lookups on domain names or IP addresses."
     }
 
@@ -124,7 +124,8 @@ class PassiveTotalPassiveDNS(OneShotAnalytics, PassiveTotalApi):
 class PassiveTotalMalware(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
-        "name": "PassiveTotal Get Malware",
+        "group": "PassiveTotal",
+        "name": "Get Malware",
         "description": "Find malware related to domain names or IP addresses."
     }
 
@@ -152,7 +153,8 @@ class PassiveTotalMalware(OneShotAnalytics, PassiveTotalApi):
 class PassiveTotalSubdomains(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
-        "name": "PassiveTotal Get Subdomains",
+        "group": "PassiveTotal",
+        "name": "Get Subdomains",
         "description": "Find all known subdomains."
     }
 
@@ -203,8 +205,9 @@ class PassiveTotalWhois(OneShotAnalytics, PassiveTotalApi):
 class PassiveTotalReverseWhois(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
-        "name": "PassiveTotal Reverse Whois",
-        "description": "Find all known domain names for a specific Whois field."
+        "group": "PassiveTotal",
+        "name": "Reverse Whois",
+        "description": "Find all known domain names for a specific whois field."
     }
 
     ACTS_ON = ["Email", "Text"]
@@ -237,8 +240,9 @@ class PassiveTotalReverseWhois(OneShotAnalytics, PassiveTotalApi):
 class PassiveTotalReverseNS(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
-        "name": "PassiveTotal Reverse NS",
-        "description": "Find all known domain names for a specific NS server (from Whois data)"
+        "group": "PassiveTotal",
+        "name": "Reverse NS",
+        "description": "Find all known domain names for a specific NS server."
     }
 
     ACTS_ON = ["Hostname"]

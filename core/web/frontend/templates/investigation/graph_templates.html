@@ -17,8 +17,8 @@
     </div>
 </script>
 
-<script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
-    {{#each analytics}}
+<script id="graph-sidebar-analytics-group-template" type="text/x-handlebars-template">
+    {{#each group}}
         <div class="graph-sidebar-analytics" id="analytics-{{id}}-{{../nodeId}}">
             <h2>{{name}}</h2>
             <p>{{description}}</p>
@@ -26,6 +26,17 @@
                 Loading ...
             </div>
         </div>
+    {{/each}}
+</script>
+
+<script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
+    {{> analyticsGroup group=(lookup groups "") nodeId=nodeId}}
+    {{#each groups}}
+        {{#equal @key ''}}
+        {{else}}
+            <h4>{{@key}}</h4>
+            {{> analyticsGroup group=this nodeId=../nodeId}}
+        {{/equal}}
     {{else}}
         No analytics to display.
     {{/each}}
