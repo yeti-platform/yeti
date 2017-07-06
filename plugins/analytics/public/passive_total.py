@@ -3,7 +3,65 @@ from datetime import datetime
 
 from core.helpers import get_value_at
 from core.analytics import OneShotAnalytics
-from core.observables import Observable, Hostname, Hash, Email
+from core.observables import Observable, Hostname, Hash, Email, Text
+
+
+def whois_links(observable, whois):
+    links = set()
+
+    to_extract = [
+        {
+            "field": "organization",
+            "type": Text,
+            "label": "Registrant Organization",
+        },
+        {
+            "field": "registrar",
+            "type": Text,
+            "label": "Registrar",
+        },
+        {
+            "field": "contactEmail",
+            "type": Email,
+            "label": "Registrant Email",
+        },
+        {
+            "field": "name",
+            "type": Text,
+            "label": "Registrant Name",
+        },
+        {
+            "field": "telephone",
+            "type": Text,
+            "label": "Registrant Phone",
+            "record_type": "phone"
+        }
+    ]
+
+    for field in to_extract:
+        if field['field'] in whois and whois[field['field']] != 'N/A':
+            node = field['type'].get_or_create(value=whois[field['field']])
+            if field['type'] == Text:
+                if "record_type" in field:
+                    node.update(record_type=field['record_type'])
+                else:
+                    node.update(record_type=field['field'])
+
+            links.update(observable.active_link_to(node, field['label'], 'PassiveTotal'))
+
+    if 'nameServers' in whois:
+        nameservers = []
+        for ns in whois['nameServers']:
+            if ns not in ["No nameserver", "not.defined"]:
+                try:
+                    nameservers.append(Hostname.get_or_create(value=ns))
+                except Exception, e:
+                    print e
+
+        if nameservers:
+            links.update(observable.active_link_to(nameservers, "NS record", 'PassiveTotal'))
+
+    return list(links)
 
 
 class PassiveTotalApi(object):
@@ -56,9 +114,9 @@ class PassiveTotalPassiveDNS(OneShotAnalytics, PassiveTotalApi):
 
             new = Observable.add_text(record['resolve'])
             if isinstance(observable, Hostname):
-                links.update(observable.link_to(new, "A record", 'PassiveTotal', first_seen, last_seen))
+                links.update(observable.link_to(new, "{} record".format(record['recordType']), 'PassiveTotal', first_seen, last_seen))
             else:
-                links.update(new.link_to(observable, "A record", 'PassiveTotal', first_seen, last_seen))
+                links.update(new.link_to(observable, "{} record".format(record['recordType']), 'PassiveTotal', first_seen, last_seen))
 
         return list(links)
 
@@ -117,35 +175,61 @@ class PassiveTotalSubdomains(OneShotAnalytics, PassiveTotalApi):
         return list(links)
 
 
+class PassiveTotalWhois(OneShotAnalytics, PassiveTotalApi):
+    default_values = {
+        "name": "PassiveTotal Whois",
+        "description": "Get Whois information for a specific domain name."
+    }
+
+    ACTS_ON = ["Hostname"]
+
+    @staticmethod
+    def analyze(observable, results):
+        params = {
+            'query': observable.value,
+        }
+
+        data = PassiveTotalApi.get('/whois', results.settings, params)
+
+        context = {
+            'source': 'PassiveTotal Whois',
+            'raw': data
+        }
+        observable.add_context(context)
+
+        return whois_links(observable, data)
+
+
 class PassiveTotalReverseWhois(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
         "name": "PassiveTotal Reverse Whois",
-        "description": "Find all known domain names for a specific email address."
+        "description": "Find all known domain names for a specific Whois field."
     }
 
-    ACTS_ON = ["Email"]
+    ACTS_ON = ["Email", "Text"]
 
     @staticmethod
     def analyze(observable, results):
         links = set()
 
+        if isinstance(observable, Email):
+            field = 'email'
+        elif observable.record_type:
+            field = observable.record_type
+        else:
+            raise ValueError("Could not determine field for this observable")
+
         params = {
             'query': observable.value,
-            'field': 'email'
+            'field': field
         }
 
         data = PassiveTotalApi.get('/whois/search', results.settings, params)
 
         for record in data['results']:
-            print record
             domain = Hostname.get_or_create(value=record['domain'])
-            links.update(domain.active_link_to(observable, "Registrant Email", 'PassiveTotal'))
-
-            for ns in record['nameServers']:
-                if ns != "No nameserver":
-                    ns = Hostname.get_or_create(value=ns)
-                    links.update(domain.active_link_to(ns, "NS record", 'PassiveTotal'))
+            links.update(whois_links(domain, record))
 
         return list(links)
 
@@ -154,7 +238,7 @@ class PassiveTotalReverseNS(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
         "name": "PassiveTotal Reverse NS",
-        "description": "Find all known domain names for a specific NS server."
+        "description": "Find all known domain names for a specific NS server (from Whois data)"
     }
 
     ACTS_ON = ["Hostname"]
@@ -172,11 +256,6 @@ class PassiveTotalReverseNS(OneShotAnalytics, PassiveTotalApi):
 
         for record in data['results']:
             domain = Hostname.get_or_create(value=record['domain'])
-            links.update(domain.active_link_to(observable, "NS record", 'PassiveTotal'))
-
-            registrant_email = get_value_at(record, 'registrant.email')
-            if registrant_email:
-                registrant = Email.get_or_create(value=registrant_email)
-                links.update(domain.active_link_to(registrant, "Registrant Email", 'PassiveTotal'))
+            links.update(whois_links(domain, record))
 
         return list(links)

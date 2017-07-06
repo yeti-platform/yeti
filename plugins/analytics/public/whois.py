@@ -8,7 +8,11 @@ from core.observables import Email, Text
 
 def link_from_contact_info(hostname, contact, field, klass, description):
     if contact is not None and field in contact:
-        node = klass.get_or_create(value=contact[field])
+        if klass == Text:
+            node = klass.get_or_create(value=contact[field])
+            node.update(record_type=field)
+        else:
+            node = klass.get_or_create(value=contact[field])
 
         return hostname.active_link_to(node, description, 'Whois')
     else:
