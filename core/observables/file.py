@@ -33,4 +33,5 @@ class File(Observable):
         i = Observable.info(self)
         i['mime_type'] = self.mime_type
         i['hashes'] = self.hashes
+        i['filenames'] = self.filenames
         return i

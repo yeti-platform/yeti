@@ -62,7 +62,7 @@ class File(CrudApi):
         """
         try:
             fileobj = self.objectmanager.objects.get(id=id)
-            return Response(fileobj.body.stream_contents())
+            return Response(fileobj.body.stream_contents(), mimetype=fileobj.mime_type)
         except DoesNotExist:
             abort(404)
 
@@ -75,7 +75,7 @@ class File(CrudApi):
         """
         try:
             fileobj = self.objectmanager.objects.get(hashes__value=hash)
-            return Response(fileobj.body.stream_contents())
+            return Response(fileobj.body.stream_contents(), mimetype=fileobj.mime_type)
         except DoesNotExist:
             abort(404)
 

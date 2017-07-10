@@ -261,7 +261,7 @@ class AttachedFile(YetiDocument):
         return open(self.filepath, 'rb')
 
     def stream_contents(self):
-        """Generator; reads a file in 1KB chunks.
+        """Generator; reads a file in 1MB chunks.
 
         :<fd file object: File descriptor for the file
         """
