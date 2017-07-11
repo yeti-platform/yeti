@@ -44,6 +44,7 @@ class Investigation(YetiDocument):
     created = DateTimeField(default=datetime.utcnow)
     updated = DateTimeField(default=datetime.utcnow)
     import_document = ReferenceField('AttachedFile')
+    import_md = StringField()
     import_url = StringField()
     import_text = StringField()
 

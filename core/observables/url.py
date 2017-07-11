@@ -17,6 +17,7 @@ class Url(Observable):
 
     parsed_url = DictField()
     regex = r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>" + Hostname.main_regex + ")(\:[\d]{1,5})?(?P<path>(\/[\S]*)?(\?[\S]*)?(\#[\S]*)?))"
+    search_regex = r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>" + Hostname.main_regex + ")(\:[\d]{1,5})?(?P<path>((\/[\S]*)?(\?[\S]*)?(\#[\S]*)?)[\w/])?)"
 
     DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [
         ("parsed_url__netloc", "Host"),
@@ -40,7 +41,7 @@ class Url(Observable):
             if re.match(r"[^:]+://", self.value) is None:
                 # if no schema is specified, assume http://
                 self.value = u"http://{}".format(self.value)
-            self.value = urlnorm.norm(self.value)
+            self.value = urlnorm.norm(self.value).replace(' ', '%20')
             self.parse()
         except urlnorm.InvalidUrl:
             raise ObservableValidationError("Invalid URL: {}".format(self.value))

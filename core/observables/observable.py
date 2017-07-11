@@ -62,6 +62,7 @@ class Observable(Node):
     }
 
     ignore = []
+    search_regex = None
 
     @classmethod
     def get_form(klass):
@@ -131,7 +132,11 @@ class Observable(Node):
     @classmethod
     def extract(cls, txt):
         results = {}
-        search_regex = re.compile(cls.regex, re.UNICODE)
+        if cls.search_regex:
+            search_regex = re.compile(cls.search_regex, re.UNICODE)
+        else:
+            search_regex = re.compile(cls.regex, re.UNICODE)
+
         for match in re.finditer(search_regex, txt):
             if cls.is_valid(match):
                 try:

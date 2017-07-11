@@ -1,7 +1,20 @@
 from readability.readability import Document
 from html2text import HTML2Text
+from bs4 import BeautifulSoup
 
 from core.investigation import ImportMethod
+
+
+def import_html(results, content):
+    content = Document(content)
+
+    converter = HTML2Text()
+    converter.body_width = 0
+
+    body = content.summary()
+    text = BeautifulSoup(body).get_text(" ")
+
+    results.investigation.update(name=content.short_title(), import_md=converter.handle(body), import_text=text)
 
 
 class ImportHTML(ImportMethod):
@@ -16,9 +29,5 @@ class ImportHTML(ImportMethod):
         html_file = open(filepath, "r")
         html = html_file.read()
         html_file.close()
-        content = Document(html)
 
-        converter = HTML2Text()
-        converter.body_width = 0
-
-        results.investigation.update(name=content.short_title(), import_text=converter.handle(content.summary()))
+        import_html(results, html)

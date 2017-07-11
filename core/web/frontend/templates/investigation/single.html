@@ -40,8 +40,10 @@
                       <iframe id="pdfviewer" src="{{ url_for('static', filename='pdfjs-dist-viewer-min/build/minified/web/viewer.html', file=url_for('api.AttachedFiles:get', id=investigation.import_document.id)) }}">
                       </iframe>
                   </div>
+                  {% elif investigation.import_md %}
+                    <div class="panel-body markdown-text">{{investigation.import_md}}</div>
                   {% else %}
-                      <div class="panel-body markdown-text">{{investigation.import_text}}</div>
+                      <div class="panel-body"><pre>{{investigation.import_text}}</pre></div>
                   {% endif %}
               </div>
            {% endif %}
@@ -62,7 +64,7 @@
       <div class="panel-body">
         <table class="table table-condensed main-table">
           {% for key, value in investigation.info().items() %}
-          {% if key not in ["_id", "links", "nodes", "events", "name", "import_document", "import_text"] %}
+          {% if key not in ["_id", "links", "nodes", "events", "name", "import_document", "import_text", "import_md"] %}
             <tr><th>{{key}}</th><td>{{macros.display_yeti(investigation, key)}}</td></tr>
           {% endif %}
           {% endfor %}

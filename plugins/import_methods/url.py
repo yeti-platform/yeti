@@ -5,9 +5,8 @@ from os import path
 from shutil import rmtree
 from tempfile import mkdtemp
 from StringIO import StringIO
-from readability.readability import Document
-from html2text import HTML2Text
 
+from plugins.import_methods.html import import_html
 from core.database import AttachedFile
 from core.investigation import ImportMethod
 
@@ -44,12 +43,7 @@ class ImportURL(ImportMethod):
         content_type = magic.from_buffer(response.content, mime=True)
 
         if content_type == "text/html":
-            content = Document(response.content)
-            converter = HTML2Text()
-            converter.body_width = 0
-
-            results.investigation.update(name=content.short_title(), import_text=converter.handle(content.summary()))
-
+            import_html(results, response.content)
             self.save_as_pdf(results, url)
         else:
             target = AttachedFile.from_content(StringIO(response.content), url, content_type)

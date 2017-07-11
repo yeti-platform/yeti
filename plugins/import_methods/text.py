@@ -7,7 +7,7 @@ class ImportText(ImportMethod):
         with open(filepath, 'r') as f:
             content = f.read()
 
-        results.investigation.update(import_text="```\n{}\n```".format(content))
+        results.investigation.update(import_text=content)
 
 
 class ImportTextPlain(ImportText):

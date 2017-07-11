@@ -29,3 +29,4 @@ pdfkit
 pdfminer
 html2text
 readability-lxml
+beautifulsoup4

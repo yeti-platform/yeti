@@ -4,6 +4,7 @@ import idna
 from mongoengine import BooleanField, StringField
 from tldextract import extract
 
+from core.errors import ObservableValidationError
 from core.observables import Observable
 from core.helpers import refang
 
@@ -39,3 +40,5 @@ class Hostname(Observable):
             self.idna = unicode(idna.encode(self.value))
         except idna.core.InvalidCodepoint:
             pass
+        except Exception, e:
+            raise ObservableValidationError(e.message)
