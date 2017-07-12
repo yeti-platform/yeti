@@ -1,12 +1,13 @@
 import logging
 import requests
-from lxml import etree
+from csv import DictReader
 from urlparse import urljoin
 from mongoengine import DictField
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from core.feed import Feed
-from core.observables import Observable
+from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin
+
 from core.errors import ObservableValidationError
 from core.config.config import yeti_config
 
@@ -20,6 +21,20 @@ class MispFeed(Feed):
         "name": "MispFeed",
         "description": "Parses events from a given MISP instance",
         "source": "MISP"
+    }
+
+    TYPES_TO_IMPORT = {
+        'domain': Hostname,
+        'ip-dst': Ip,
+        'ip-src': Ip,
+        'url': Url,
+        'hostname': Hostname,
+        'md5': Hash,
+        'sha1': Hash,
+        'sha256': Hash,
+        'btc': Bitcoin,
+        'email-src': Email,
+        'email-dst': Email
     }
 
     def __init__(self, *args, **kwargs):
@@ -62,11 +77,11 @@ class MispFeed(Feed):
 
     def week_events(self, instance):
         one_week = timedelta(days=7)
-        url = urljoin(self.instances[instance]['url'], '/events/xml/download.json')
+        url = urljoin(self.instances[instance]['url'], '/events/csv/download')
         headers = {'Authorization': self.instances[instance]['key']}
         to = date.today()
         fromdate = to - timedelta(days=6)
-        time_filter = {'request': {}}
+        time_filter = {'request': {'ignore': True, 'includeContext': True}}
 
         while True:
             imported = 0
@@ -79,10 +94,10 @@ class MispFeed(Feed):
                 msg = r.json()
                 raise AttributeError(msg['message'])
             except ValueError:
-                tree = etree.fromstring(r.content)
+                csvreader = DictReader(r.content.splitlines())
 
-                for event in tree.findall(".//Event"):
-                    self.analyze(event, instance)
+                for row in csvreader:
+                    self.analyze(row, instance)
                     imported += 1
 
                 yield fromdate, to, imported
@@ -95,7 +110,7 @@ class MispFeed(Feed):
         seen_last_run = False
 
         for date_from, date_to, imported in self.week_events(instance):
-            print date_from, date_to
+            print date_from, date_to, imported
 
             if seen_last_run:
                 break
@@ -108,7 +123,7 @@ class MispFeed(Feed):
         had_results = True
 
         for date_from, date_to, imported in self.week_events(instance):
-            print date_from, date_to
+            print date_from, date_to, imported
 
             if imported == 0:
                 if had_results:
@@ -129,28 +144,25 @@ class MispFeed(Feed):
 
             self.modify(**{"set__last_runs__{}".format(instance): date.today().isoformat()})
 
-    def analyze(self, event, instance):
-        context = {}
-        org = self.instances[instance]['organisations'][event.findtext('orgc_id')]
-        context['org'] = org
-        context['uuid'] = event.findtext('uuid')
-        context['id'] = int(event.findtext('id'))
-        context['link'] = urljoin(self.instances[instance]['url'], "/events/{}".format(context['id']))
-        context['timestamp'] = datetime.fromtimestamp(float(event.findtext('timestamp')))
-        context['source'] = self.instances[instance]['name']
-        context['description'] = event.findtext('info')
+    def analyze(self, attribute, instance):
+        if attribute['type'] in self.TYPES_TO_IMPORT:
+            context = {
+                'org': attribute['event_source_org'],
+                'id': attribute['event_id'],
+                'link': urljoin(self.instances[instance]['url'], '/events/{}'.format(attribute['event_id'])),
+                'date': attribute['event_date'],
+                'source': self.instances[instance]['name'],
+                'description': attribute['event_info'],
+                'comment': attribute['comment']
+            }
 
-        for attr in event.findall('Attribute'):
-            type = attr.findtext('type')
-            category = attr.findtext('category').replace(' ', '_')
-            value = attr.findtext('value')
-            context['comment'] = attr.findtext('comment') or "N/A"
+            try:
+                klass = self.TYPES_TO_IMPORT[attribute['type']]
+                obs = klass.get_or_create(value=attribute['value'])
 
-            if type in ['domain', 'ip-dst', 'ip-src', 'url', 'hostname']:
-                try:
-                    obs = Observable.add_text(value)
-                    if obs:
-                        obs.tag(category)
-                        obs.add_context(context)
-                except ObservableValidationError:
-                    logging.error("{}: error adding {}".format(self.__class__.name, value))
+                if attribute['category']:
+                    obs.tag(attribute['category'].replace(' ', '_'))
+
+                obs.add_context(context)
+            except ObservableValidationError:
+                logging.error("{}: error adding {}".format('MispFeed', attribute['value']))
