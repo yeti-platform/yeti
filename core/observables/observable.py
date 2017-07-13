@@ -55,8 +55,12 @@ class Observable(Node):
             "tags",
             "last_analyses",
             "created",
+            {
+                "fields": ["#value"],
+                "cls": False
+            }
         ],
-        "index_backgroud": True,
+        "index_background": True,
         "ordering": ["-created"],
     }
 
