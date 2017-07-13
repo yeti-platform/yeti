@@ -1,11 +1,14 @@
 import sys
+import logging
 
 from core.feed import Feed, update_feed
 from core.scheduling import Scheduler
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
+
     Scheduler()
-    # feeds = {f.name: f for f in }
+
     if len(sys.argv) == 1:
         print "Re-run using a feed name as argument"
         for f in Feed.objects():
