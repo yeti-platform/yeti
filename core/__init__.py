@@ -8,7 +8,7 @@ from core.analytics import ScheduledAnalytics
 from core.config.config import yeti_config
 
 connect(
-    'yeti',
+    yeti_config.mongodb.database,
     host=yeti_config.mongodb.host,
     port=yeti_config.mongodb.port,
     username=yeti_config.mongodb.username,
