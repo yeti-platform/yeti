@@ -7,8 +7,6 @@ from datetime import date, timedelta
 
 from core.feed import Feed
 from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin
-
-from core.errors import ObservableValidationError
 from core.config.config import yeti_config
 
 
@@ -94,7 +92,8 @@ class MispFeed(Feed):
                 msg = r.json()
                 raise AttributeError(msg['message'])
             except ValueError:
-                csvreader = DictReader(r.content.splitlines())
+                lines = [l for l in r.content.splitlines() if '\0' not in l]
+                csvreader = DictReader(lines)
 
                 for row in csvreader:
                     self.analyze(row, instance)
@@ -105,12 +104,12 @@ class MispFeed(Feed):
                 fromdate = fromdate - one_week
 
     def get_last_events(self, instance):
-        print "Getting last events for {}".format(instance)
+        logging.debug("Getting last events for {}".format(instance))
         last_run = self.last_run_for(instance)
         seen_last_run = False
 
         for date_from, date_to, imported in self.week_events(instance):
-            print date_from, date_to, imported
+            logging.debug("Imported {} attributes from {} to {}".format(imported, date_from, date_to))
 
             if seen_last_run:
                 break
@@ -119,11 +118,11 @@ class MispFeed(Feed):
                 seen_last_run = True
 
     def get_all_events(self, instance):
-        print "Getting all events for {}".format(instance)
+        logging.debug("Getting all events for {}".format(instance))
         had_results = True
 
         for date_from, date_to, imported in self.week_events(instance):
-            print date_from, date_to, imported
+            logging.debug("Imported {} attributes from {} to {}".format(imported, date_from, date_to))
 
             if imported == 0:
                 if had_results:
@@ -135,7 +134,7 @@ class MispFeed(Feed):
 
     def update(self):
         for instance in self.instances:
-            print "Processing instance {}".format(instance)
+            logging.debug("Processing instance {}".format(instance))
             self.get_organisations(instance)
             if instance in self.last_runs:
                 self.get_last_events(instance)
@@ -145,7 +144,7 @@ class MispFeed(Feed):
             self.modify(**{"set__last_runs__{}".format(instance): date.today().isoformat()})
 
     def analyze(self, attribute, instance):
-        if attribute['type'] in self.TYPES_TO_IMPORT:
+        if 'type' in attribute and attribute['type'] in self.TYPES_TO_IMPORT:
             context = {
                 'org': attribute['event_source_org'],
                 'id': attribute['event_id'],
@@ -164,5 +163,5 @@ class MispFeed(Feed):
                     obs.tag(attribute['category'].replace(' ', '_'))
 
                 obs.add_context(context)
-            except ObservableValidationError:
+            except:
                 logging.error("{}: error adding {}".format('MispFeed', attribute['value']))
