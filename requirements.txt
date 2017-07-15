@@ -25,3 +25,5 @@ geoip2
 psutil
 shodan
 python-magic
+python-dateutil
+OTXv2
