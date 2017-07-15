@@ -20,7 +20,8 @@ class Tag(Node):
     default_expiration = TimeDeltaField(default=timedelta(days=90))
 
     meta = {
-        'ordering': ['name']
+        'ordering': ['name'],
+        'indexes': ['name', 'replaces']
     }
 
     def __unicode__(self):

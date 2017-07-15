@@ -1,13 +1,13 @@
 from __future__ import unicode_literals
 
 from celery import Celery
+from core.config.config import yeti_config
 
 celery_app = Celery('yeti')
 
 
 class CeleryConfig:
-    # BROKER_URL = 'mongodb://localhost:27017/'
-    BROKER_URL = 'redis://localhost:6379/0'
+    BROKER_URL = 'redis://{}:{}/{}'.format(yeti_config.redis.host, yeti_config.redis.port, yeti_config.redis.database)
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_ACCEPT_CONTENT = ['json']
     CELERY_IMPORTS = ('core.config.celeryimports', 'core.analytics_tasks', 'core.exports.export', 'core.feed')

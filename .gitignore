@@ -50,6 +50,7 @@ Thumbs.db
 exports/*
 storage/*
 celerybeat.pid
+yeti.conf
 
 # Frontend Dependencies
 node_modules

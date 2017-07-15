@@ -1,0 +1,45 @@
+[mongodb]
+
+##
+## Use these settings to configure how to connect to your MongoDB database.
+## All settings are optional, with default values being the one in the comment.
+## If you do not specify a username and password, there will be no authentication.
+##
+
+# host = 127.0.0.1
+# port = 27017
+# database = yeti
+# username = yeti
+# password = STRONG_PASSWORD
+
+[redis]
+
+##
+## Use these settings to configure how to connect to your redis server.
+## All settings are optional, with default values being the one in the comment.
+##
+
+# host = 127.0.0.1
+# port = 6379
+# database = 0
+
+[misp]
+
+##
+## Use this setting in order to specify a comma-separated list of MISP instances
+## that should be taken into account by the MISP feed.
+##
+
+# instances = misp_1
+
+[misp_1]
+
+##
+## For each instance in the 'misp.instances' setting, you should specify a
+## configuration block with this format, in order to specify at least the URL
+## and the auth key.
+##
+
+# name = MISP_1
+# url = MISP_URL
+# key = MISP_AUTH_KEY
