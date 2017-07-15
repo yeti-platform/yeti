@@ -8,7 +8,7 @@ from flask_login import current_user
 from flask_classy import route
 from uuid import uuid4
 from tempfile import gettempdir
-from os import path
+import os
 
 from core.web.frontend.generic import GenericView
 from core.web.helpers import requires_permissions
@@ -149,7 +149,7 @@ class ObservableView(GenericView):
     def export(self):
         template = get_object_or_404(ExportTemplate, id=request.form['template'])
 
-        filepath = path.join(gettempdir(), 'yeti_{}.txt'.format(uuid4()))
+        filepath = os.path.join(gettempdir(), 'yeti_{}.txt'.format(uuid4()))
         template.render(self._get_queryset(request.form), filepath)
 
         return send_file(filepath)
