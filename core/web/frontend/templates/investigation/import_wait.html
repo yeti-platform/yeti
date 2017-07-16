@@ -13,15 +13,13 @@ Investigations - Import
 {% endblock %}
 
 {% block main %}
-    <form method="post" action="{{url_for('frontend.InvestigationView:inv_import')}}" enctype="multipart/form-data">
-        <h3>Import from text</h3>
-        <textarea class="form-control" name="text" rows=14></textarea>
-        <h3>From a URL</h3>
-        <input class="form-control" type="text" name="url" placeholder="https://blog.com/post" />
-        <h3>Or from a file</h3>
-        <input type=file name="file" /><br />
-        <input class="btn btn-primary" type="submit" value="Start Import" />
-    </form>
+<div id="investigation-import" data-url="{{url_for('api.Investigation:import_results', id=import_results.id)}}" data-next="{{url_for('frontend.InvestigationView:import_from', id=import_results.investigation.id)}}">Please wait for the import process to finish ...</div>
+<br />
+<div class="progress">
+  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+    <span class="sr-only">45% Complete</span>
+  </div>
+</div>
 {% endblock %}
 
 {% block custom_head %}

@@ -1,13 +1,11 @@
 from __future__ import unicode_literals
 
-import requests
 from flask_classy import route
-from StringIO import StringIO
 from flask import render_template, request, flash, redirect, url_for
 from mongoengine import DoesNotExist
 
 from core.web.frontend.generic import GenericView
-from core.investigation import Investigation, ImportMethod
+from core.investigation import Investigation, ImportMethod, ImportResults
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions
 
@@ -44,6 +42,13 @@ class InvestigationView(GenericView):
 
         return render_template("{}/graph.html".format(self.klass.__name__.lower()), investigation=bson_renderer(investigation.info()))
 
+    @route("/import/<id>", methods=['GET'])
+    @requires_permissions("write", "investigation")
+    def import_wait(self, id):
+        results = get_object_or_404(ImportResults, id=id)
+
+        return render_template("{}/import_wait.html".format(self.klass.__name__.lower()), import_results=results)
+
     @route("/import", methods=['GET', 'POST'])
     @requires_permissions("write", "investigation")
     def inv_import(self):
@@ -67,7 +72,7 @@ class InvestigationView(GenericView):
                         import_method = ImportMethod.objects.get(acts_on=target.content_type)
                         results = import_method.run(target)
 
-                    return render_template("{}/import.html".format(self.klass.__name__.lower()), import_results=results)
+                    return redirect(url_for('frontend.InvestigationView:import_wait', id=results.id))
                 except DoesNotExist:
                     flash("This file type is not supported.", "danger")
                     return render_template("{}/import.html".format(self.klass.__name__.lower()))
