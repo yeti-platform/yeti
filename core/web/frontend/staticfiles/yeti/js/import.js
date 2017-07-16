@@ -81,7 +81,8 @@ class Import {
         var current = results.eq(0);
 
         if (current.length) {
-          content.scrollTop(current[0].offsetTop - 20);
+          content.scrollTop(0);
+          content.scrollTop(current.offset().top - content.offset().top - 20);
         }
       }
     }
