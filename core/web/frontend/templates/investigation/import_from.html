@@ -40,10 +40,25 @@ Investigations - Import
                 <div id="textviewer"><pre>{{investigation.import_text}}</pre></div>
             </div>
         {% endif %}
-        <div class="col-md-5" id="import_observables">
-            <div id="import-nodes-lists">
+        <div class="col-md-5">
+            <div class="alert alert-info alert-dismissable">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <h1>How-to use this view ?</h1>
+                <ul>
+                    <li>You can scroll through your document on the left side.</li>
+                    <li>All observables that were automatically parsed are listed on the right.</li>
+                    <li><strong>Click on any observable</strong> in order to put it in focus. It will highlight it in your document.</li>
+                    <li>Once an observable is in focus, you can <strong>type tags</strong> that should be associated with it.</li>
+                    <li>Click on <strong><i class="glyphicon glyphicon-edit"></i></strong> in order to edit the observable's value.</li>
+                    <li>Click on <strong><i class="glyphicon glyphicon-remove"></i></strong> to discard this observable.</li>
+                    <li>When you are done, click on <strong>Import</strong> to validate.</li>
+                </ul>
             </div>
-            <button id="import_send" data-url="{{ url_for("api.Investigation:bulk_add", id=investigation.id) }}" class="btn btn-primary"><i class="hide glyphicon glyphicon-refresh"></i> Import</button>
+            <div id="import_observables">
+                <div id="import-nodes-lists">
+                </div>
+                <button id="import_send" data-url="{{ url_for("api.Investigation:bulk_add", id=investigation.id) }}" class="btn btn-primary"><i class="hide glyphicon glyphicon-refresh"></i> Import</button>
+            </div>
         </div>
     </div>
 

@@ -752,3 +752,8 @@ td input.inline {
     height: auto;
     margin: 0px 2px 0px 2px;
 }
+
+.alert h1 {
+    margin-top: 0;
+    font-size: 13px;
+}
