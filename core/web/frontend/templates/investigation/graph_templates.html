@@ -18,15 +18,27 @@
 </script>
 
 <script id="graph-sidebar-analytics-group-template" type="text/x-handlebars-template">
-    {{#each group}}
-        <div class="graph-sidebar-analytics" id="analytics-{{id}}-{{../nodeId}}">
-            <h2>{{name}}</h2>
-            <p>{{description}}</p>
-            <div class="graph-sidebar-analytics-results">
-                Loading ...
+    <div>
+        {{#each group}}
+            <div class="graph-sidebar-analytics" id="graph-sidebar-analytics-{{id}}">
+                {{name}}
+                <div class="graph-sidebar-analytics-actions graph-sidebar-links">
+                    <a rel="popover" data-popover-content="#graph-sidebar-analytics-help-{{id}}"><i class="fa fa-question-circle"></i></a>
+                    <div id="graph-sidebar-analytics-help-{{id}}" class="hide">
+                        {{description}}
+                    </div>
+
+                    <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Run" class="graph-sidebar-run-analytics" data-id="{{id}}">
+                        <i class="fa fa-spinner spinner"></i>
+                        <i class="glyphicon glyphicon-play hide"></i>
+                        <i class="glyphicon glyphicon-refresh hide"></i>
+                    </a>
+                </div>
+
+                <div class="analytics-results" id="analytics-{{id}}-{{../nodeId}}"></div>
             </div>
-        </div>
-    {{/each}}
+        {{/each}}
+    </div>
 </script>
 
 <script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
@@ -34,7 +46,7 @@
     {{#each groups}}
         {{#equal @key ''}}
         {{else}}
-            <h4>{{@key}}</h4>
+            <h4 class="graph-sidebar-analytics-group">{{@key}}</h4>
             {{> analyticsGroup group=this nodeId=../nodeId}}
         {{/equal}}
     {{else}}
@@ -54,20 +66,11 @@
                 <pre><code>{{raw}}</code></pre>
             </div>
         {{/if}}
-        <div class="graph-sidebar-analytics-action">
-            <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{analytics}}'><i class="glyphicon glyphicon-refresh"></i> Run</button>
-            <span class="graph-sidebar-analytics-last-run">Last: {{datetime datetime}}</span>
-        </div>
-    {{else}}
-    {% endraw %}{% if current_user.has_permission('oneshotanalytics', 'run') %}{% raw %}
-        <div class="graph-sidebar-analytics-action">
-            <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{analytics}}'><i class="glyphicon glyphicon-refresh"></i> Run</button>
-        </div>
-    {% endraw %}{% endif %}{% raw %}
     {{/with}}
 </script>
 
 <script id="graph-sidebar-links-template" type="text/x-handlebars-template">
+    {{#isNotEmpty links}}
     <ul class="graph-sidebar-links">
         {{#each links}}
             {{#equal @key 'null'}}
@@ -144,6 +147,7 @@
             {{/each}}
         {{/each}}
     </ul>
+    {{/isNotEmpty}}
 </script>
 
 <script id="graph-sidebar-tags" type="text/x-handlebars-template">
