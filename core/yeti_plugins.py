@@ -24,6 +24,7 @@ def get_plugins():
                         entry = obj(**obj.default_values)
                         entry.save()
 
-                    entries[entry.name] = entry
+    for sched in ScheduleEntry.objects.all():
+        entries[sched.name] = sched
 
     return entries
