@@ -13,29 +13,29 @@ EOF
 
 ### Prepare the field for Yarn
 curl --silent --location https://rpm.nodesource.com/setup_6.x | bash -
-wget https://dl.yarnpkg.com/rpm/yarn.repo -O /etc/yum.repos.d/yarn.repo
+curl -L https://dl.yarnpkg.com/rpm/yarn.repo -o /etc/yum.repos.d/yarn.repo
 
 ### Update the OS
-yum update -y && yum upgrade -y
+sudo yum update -y && yum upgrade -y
 
 ### Install the YETI Dependencies
-yum groupinstall "Development Tools" -y
-yum install epel-release
-yum install python-pip git mongodb-org python-devel libxml2-devel libxslt-devel zlib-devel redis firewalld yarn -y
-pip install --upgrade pip
+sudo yum groupinstall "Development Tools" -y
+sudo yum install epel-release
+sudo yum install python-pip git mongodb-org python-devel nodejs libxml2-devel libxslt-devel zlib-devel redis firewalld yarn -y
+sudo pip install --upgrade pip
 
 ### Install YETI
 git clone https://github.com/yeti-platform/yeti.git
 cd yeti
-pip install -r requirements.txt
+sudo pip install -r requirements.txt
 yarn install
 
 ### Secure your instance
 # Add firewall rules for YETI
-systemctl enable firewalld
-systemctl start firewalld
-firewall-cmd  --permanent --zone=public --add-port 5000/tcp
-firewall-cmd --reload
+sudo systemctl enable firewalld
+sudo systemctl start firewalld
+sudo firewall-cmd --add-port 5000/tcp --permanent
+sudo firewall-cmd --reload
 
 # Prepare for startup
 systemctl enable mongod
