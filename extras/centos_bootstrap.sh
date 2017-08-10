@@ -21,11 +21,11 @@ yum update -y && yum upgrade -y
 yum groupinstall "Development Tools" -y
 yum install epel-release -y
 yes | yum install python-pip git mongodb-org gcc-c++ make python-devel libxml2-devel libxslt-devel zlib-devel redis firewalld yarn nginx nodejs uwsgi -y
-pip install --upgrade pip
 
 ### Install YETI
 mkdir /opt/yeti
 git clone https://github.com/yeti-platform/yeti.git /opt/yeti
+pip install --upgrade pip
 pip install -r /opt/yeti/requirements.txt
 # Need to do the yarn install without having to go into the directory
 cd /opt/yeti
@@ -35,7 +35,7 @@ cd ~
 # Create the YETI user
 useradd -s /usr/sbin/nologin yeti
 
-# Give the Etherpad user ownership of the /opt/etherpad directory
+# Give the yeti user ownership of the /opt/yeti directory
 chown -R yeti:yeti /opt/yeti
 
 ### Secure your instance
@@ -60,6 +60,9 @@ sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_oneshot.servic
 sed -i 's/\/usr\/local\/bin/\/sbin/' /opt/yeti/extras/systemd/yeti_uwsgi.service
 cp /opt/yeti/extras/systemd/* /lib/systemd/system/
 
+# Prep nginx
+cp /opt/yeti/extras/nginx/yeti /etc/nginx/conf.d/yeti.conf
+
 # Configure services to start on boot
 systemctl enable mongod.service
 systemctl enable redis.service
@@ -83,6 +86,6 @@ systemctl start yeti_oneshot.service
 systemctl start yeti_uwsgi.service
 systemctl start nginx.service
 
-# Launch Yeti
+# Launch Yeti < should be replaced by uwsgi
 # cd yeti
 # ./yeti.py webserver
