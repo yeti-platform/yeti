@@ -72,7 +72,7 @@ systemctl enable yeti_beat.service
 systemctl enable yeti_exports.service
 systemctl enable yeti_feeds.service
 systemctl enable yeti_oneshot.service
-systemctl enable yeti_uwsgi.service
+# systemctl enable yeti_uwsgi.service
 systemctl enable nginx.service
 
 # Start all the YETI services
@@ -83,7 +83,7 @@ systemctl start yeti_beat.service
 systemctl start yeti_exports.service
 systemctl start yeti_feeds.service
 systemctl start yeti_oneshot.service
-systemctl start yeti_uwsgi.service
+# systemctl start yeti_uwsgi.service
 systemctl start nginx.service
 
 # Launch Yeti < should be replaced by uwsgi
