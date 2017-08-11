@@ -20,7 +20,7 @@ yum update -y && yum upgrade -y
 ### Install the YETI Dependencies
 yum groupinstall "Development Tools" -y
 yum install epel-release -y
-yes | yum install python-pip git mongodb-org gcc-c++ make python-devel libxml2-devel libxslt-devel zlib-devel redis firewalld yarn nginx nodejs uwsgi -y
+yes | yum install python-pip git mongodb-org gcc-c++ make python-devel libxml2-devel libxslt-devel zlib-devel redis firewalld yarn nginx nodejs uwsgi uwsgi-plugin-python -y
 
 ### Install YETI
 mkdir /opt/yeti
@@ -48,8 +48,6 @@ systemctl start firewalld
 firewall-cmd --add-port=80/tcp --add-port=8000/tcp --add-port=9191/tcp --add-port=5000/tcp --permanent
 firewall-cmd --reload
 
-## snapshot 8/9/17
-
 # Create systemd services
 rm -f /opt/yeti/extras/systemd/yeti_web.service
 sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_analytics.service
@@ -58,6 +56,8 @@ sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_exports.servic
 sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_feeds.service
 sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_oneshot.service
 sed -i 's/\/usr\/local\/bin/\/sbin/' /opt/yeti/extras/systemd/yeti_uwsgi.service
+# sed -i 's/\/usr\/local\/bin\/uwsgi/\/sbin\/uwsgi\ --plugin\ python' /opt/yeti/extras/systemd/yeti_uwsgi.service
+
 cp /opt/yeti/extras/systemd/* /lib/systemd/system/
 
 # Prep nginx
