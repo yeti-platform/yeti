@@ -79,10 +79,10 @@ systemctl enable nginx.service
 systemctl start mongod.service
 systemctl start redis.service
 systemctl start yeti_analytics.service
-systemctl start yeti_beat.service
-systemctl start yeti_exports.service
 systemctl start yeti_feeds.service
 systemctl start yeti_oneshot.service
+systemctl start yeti_exports.service
+systemctl start yeti_beat.service
 # systemctl start yeti_uwsgi.service
 systemctl start nginx.service
 
