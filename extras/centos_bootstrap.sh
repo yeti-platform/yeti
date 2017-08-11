@@ -55,8 +55,8 @@ sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_beat.service
 sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_exports.service
 sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_feeds.service
 sed -i 's/\/usr\/local\/bin/\/bin/' /opt/yeti/extras/systemd/yeti_oneshot.service
-sed -i 's/\/usr\/local\/bin/\/sbin/' /opt/yeti/extras/systemd/yeti_uwsgi.service
-# sed -i 's/\/usr\/local\/bin\/uwsgi/\/sbin\/uwsgi\ --plugin\ python' /opt/yeti/extras/systemd/yeti_uwsgi.service
+sed -i 's/\/usr\/local\/bin\/uwsgi/\/sbin\/uwsgi\ --plugin\ python/' /opt/yeti/extras/systemd/yeti_uwsgi.service
+# sed -i 's/\/usr\/local\/bin/\/sbin/' /opt/yeti/extras/systemd/yeti_uwsgi.service
 
 cp /opt/yeti/extras/systemd/* /lib/systemd/system/
 
