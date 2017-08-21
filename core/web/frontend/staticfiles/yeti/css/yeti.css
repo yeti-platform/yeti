@@ -680,3 +680,80 @@ td input.inline {
 #insert-form .tokenfield {
     width: auto !important;
 }
+
+#textviewer {
+    padding: 10px;
+    height: calc(100vh - 140px);
+    border: 1px solid #474747;
+    overflow: auto;
+}
+
+#textviewer mark {
+    background-color: #FF8C00;
+}
+
+.pdfviewer iframe {
+    width: 100%;
+    height: calc(100vh - 140px);
+    border: 1px solid #474747;
+}
+
+#import_view {
+    height: calc(100vh - 140px);
+}
+
+#import_observables {
+    height: calc(100vh - 140px);
+    overflow: auto;
+}
+
+#import_observables ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#import-nodes-lists {
+    margin-bottom: 20px;
+}
+
+.import-node:hover {
+    background-color: #EEEEEE;
+    cursor: pointer;
+}
+
+.import-node .import-node-edit,
+.import-node .import-node-remove {
+    visibility: hidden;
+}
+
+.import-node:hover .import-node-edit,
+.import-node:hover .import-node-remove {
+    visibility: visible;
+}
+
+.import-node-value {
+    display: inline-block;
+}
+
+#import-nodes-lists .tokenfield {
+    border: none;
+    background: transparent;
+    box-shadow: none !important;
+    padding: 4px 0px 2px 0px;
+    margin: 0;
+    outline: medium none !important;
+    width: auto !important;
+    min-height: inherit;
+    font-size: 12px;
+}
+
+#import-nodes-lists .tokenfield .token {
+    height: auto;
+    margin: 0px 2px 0px 2px;
+}
+
+.alert h1 {
+    margin-top: 0;
+    font-size: 13px;
+}

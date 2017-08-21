@@ -19,6 +19,7 @@ class CeleryConfig:
         'core.exports.export.execute_export': {'queue': 'exports'},
         'core.analytics_tasks.each': {'queue': 'analytics'},
         'core.analytics_tasks.schedule': {'queue': 'analytics'},
+        'core.investigation.import_task': {'queue': 'oneshot'},
     }
 
 celery_app.config_from_object(CeleryConfig)

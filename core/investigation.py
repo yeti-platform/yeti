@@ -1,10 +1,15 @@
 from __future__ import unicode_literals
 
+import logging
+import traceback
 from bson.dbref import DBRef
 from datetime import datetime
 from mongoengine import *
+from flask_mongoengine.wtf import model_form
 
-from core.database import YetiDocument
+from core.database import YetiDocument, AttachedFile
+from core.scheduling import OneShotEntry
+from core.config.celeryctl import celery_app
 
 
 class InvestigationLink(EmbeddedDocument):
@@ -30,13 +35,26 @@ class InvestigationEvent(EmbeddedDocument):
 
 
 class Investigation(YetiDocument):
-    name = StringField()
-    description = StringField()
+    name = StringField(verbose_name="Name")
+    description = StringField(verbose_name="Description")
+    origin = StringField(verbose_name="Origin")
     links = ListField(EmbeddedDocumentField(InvestigationLink))
     nodes = ListField(ReferenceField('Node', dbref=True))
     events = ListField(EmbeddedDocumentField(InvestigationEvent))
     created = DateTimeField(default=datetime.utcnow)
     updated = DateTimeField(default=datetime.utcnow)
+    import_document = ReferenceField('AttachedFile')
+    import_md = StringField()
+    import_url = StringField()
+    import_text = StringField()
+
+    exclude_fields = ['links', 'nodes', 'events', 'created', 'updated']
+
+    @classmethod
+    def get_form(klass):
+        """Gets the appropriate form for a given investigation"""
+        form = model_form(klass, exclude=klass.exclude_fields)
+        return form
 
     SEARCH_ALIASES = {}
 
@@ -69,3 +87,45 @@ class Investigation(YetiDocument):
 
     def remove(self, links, nodes):
         self._node_changes('remove', self.remove_from_set, links, nodes)
+
+
+class ImportResults(Document):
+    import_method = ReferenceField('ImportMethod', required=True)
+    status = StringField(required=True)
+    investigation = ReferenceField('Investigation')
+    error = StringField()
+
+
+class ImportMethod(OneShotEntry):
+    acts_on = StringField(required=True)
+
+    def run(self, target):
+        results = ImportResults(import_method=self, status='pending')
+        results.investigation = Investigation()
+
+        if isinstance(target, AttachedFile):
+            results.investigation.import_document = target
+            target = target.filepath
+        else:
+            results.investigation.import_url = target
+
+        results.investigation.save()
+        results.save()
+        celery_app.send_task("core.investigation.import_task", [str(results.id), target])
+
+        return results
+
+
+@celery_app.task
+def import_task(results_id, target):
+    results = ImportResults.objects.get(id=results_id)
+    import_method = results.import_method
+    logging.warning("Running one-shot import {} on {}".format(import_method.__class__.__name__, target))
+    results.update(status="running")
+
+    try:
+        import_method.do_import(results, target)
+        results.update(status="finished")
+    except Exception, e:
+        results.update(status="error", error=str(e))
+        traceback.print_exc()
