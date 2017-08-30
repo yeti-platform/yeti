@@ -179,7 +179,8 @@ class PassiveTotalSubdomains(OneShotAnalytics, PassiveTotalApi):
 
 class PassiveTotalWhois(OneShotAnalytics, PassiveTotalApi):
     default_values = {
-        "name": "PassiveTotal Whois",
+        "group": "PassiveTotal",
+        "name": "Whois",
         "description": "Get Whois information for a specific domain name."
     }
 

@@ -13,9 +13,11 @@ var quickAddEmpty = Handlebars.compile($('#graph-quick-add-empty').html());
 var tagsTemplate = Handlebars.compile($('#graph-sidebar-tags').html());
 var noSelectionTemplate = Handlebars.compile($('#graph-sidebar-no-selection').html());
 var analyticsGroupTemplate = Handlebars.compile($('#graph-sidebar-analytics-group-template').html());
+var analyticsPanelTemplate = Handlebars.compile($('#graph-sidebar-analytics-panel').html());
 
 Handlebars.registerPartial("links", linksTemplate);
 Handlebars.registerPartial("tags", tagsTemplate);
+Handlebars.registerPartial("analyticsPanel", analyticsPanelTemplate);
 Handlebars.registerPartial("analyticsGroup", analyticsGroupTemplate);
 var analyticsTemplate = Handlebars.compile($('#graph-sidebar-analytics-template').html());
 var analyticsResultsTemplate = Handlebars.compile($('#graph-sidebar-analytics-results-template').html());
@@ -411,7 +413,7 @@ class Investigation {
 
       if (!node.fetched) {
         linksPromises.push($.getJSON('/api/neighbors/' + node._cls + '/' + node._id));
-        self.retrieveAnalyticsResults(node);
+        self.retrieveAnalyticsResults([node]);
       }
     });
 
@@ -499,70 +501,93 @@ class Investigation {
     enablePopovers();
   }
 
-  availableAnalyticsFor(node) {
+  availableAnalyticsFor(nodes) {
+    var self = this;
     var results = {};
-    var nodeType = node._cls.split('.');
-    nodeType = nodeType[nodeType.length - 1];
 
-    this.analytics.get({
-      filter: function(item) {
-        return $.inArray(nodeType, item.acts_on) != -1;
-      },
-    }).forEach(function (analytics) {
-      if (!(analytics.group in results)) {
-        results[analytics.group] = [];
-      }
-      results[analytics.group].push(analytics);
+    nodes.forEach(function (node) {
+      var nodeType = node._cls.split('.');
+      nodeType = nodeType[nodeType.length - 1];
+
+      self.analytics.get({
+        filter: function(item) {
+          return $.inArray(nodeType, item.acts_on) != -1;
+        },
+      }).forEach(function (analytics) {
+        if (!(analytics.group in results)) {
+          results[analytics.group] = {};
+        }
+        if (!(analytics.id in results[analytics.group]))
+        {
+          results[analytics.group][analytics.id] = {
+            analytics: analytics,
+            nodes: [node],
+            nodeIds: [node._id]
+          };
+        }
+        else {
+          results[analytics.group][analytics.id].nodes.push(node);
+          results[analytics.group][analytics.id].nodeIds.push(node._id);
+        }
+      });
     });
 
     return results;
   }
 
   forEachAnalytics(groupedAnalytics, cb) {
+    function eachAnalytics(group, id) {
+      cb(groupedAnalytics[group][id]);
+    }
+
     for (var group in groupedAnalytics) {
-      groupedAnalytics[group].forEach(cb);
+      var cb2 = eachAnalytics.bind(null, group);
+      Object.keys(groupedAnalytics[group]).forEach(cb2);
     }
   }
 
-  displayAnalytics(node) {
-    var availableAnalytics = this.availableAnalyticsFor(node);
-    $('#graph-sidebar-analytics-' + node.id).html(analyticsTemplate({groups: availableAnalytics, nodeId: node._id}));
+  displayAnalytics(nodes, multiple) {
+    var availableAnalytics = this.availableAnalyticsFor(nodes);
+    $('#graph-sidebar-analytics').html(analyticsTemplate({groups: availableAnalytics, multiple: multiple}));
   }
 
-  displayAnalyticsResultsForNode(node) {
+  displayAnalyticsResultsForNodes(nodes) {
     var self = this;
-    var availableAnalytics = this.availableAnalyticsFor(node);
+    var availableAnalytics = this.availableAnalyticsFor(nodes);
 
     self.forEachAnalytics(availableAnalytics, function (analytics) {
-      var analyticsDiv = $('#analytics-' + analytics.id + '-' + node._id);
-      var data;
+      analytics.nodes.forEach(function (node) {
+        var resultsDiv = $('#analytics-' + analytics.analytics.id + '-' + node._id);
+        var data;
 
-      if (analytics.id in node.analytics)
-        data = node.analytics[analytics.id];
+        if (analytics.analytics.id in node.analytics)
+          data = node.analytics[analytics.analytics.id];
 
-      var resultsDiv = analyticsDiv.find('.graph-sidebar-analytics-results');
-      self.displayAnalyticsResults(data, resultsDiv, analytics.id);
+        self.displayAnalyticsResults(data, resultsDiv);
+      });
     });
   }
 
-  retrieveAnalyticsResults(node) {
+  retrieveAnalyticsResults(nodes) {
     var self = this;
-    var availableAnalytics = this.availableAnalyticsFor(node);
+    var availableAnalytics = this.availableAnalyticsFor(nodes);
 
     self.forEachAnalytics(availableAnalytics, function (analytics) {
-      function callback(data) {
-        var resultsDiv = $('#analytics-' + analytics.id + '-' + node._id);
+      function callback(node, data) {
+        var resultsDiv = $('#analytics-' + analytics.analytics.id + '-' + node._id);
 
         if (data) {
             data = self.saveAnalyticsResults(data);
         }
 
         if (resultsDiv.length) {
-          self.displayAnalyticsResults(data, resultsDiv, analytics.id);
+          self.displayAnalyticsResults(data, resultsDiv);
         }
       }
 
-      $.getJSON('/api/analytics/oneshot/' + analytics.id + '/last/' + node._id).done(callback);
+      analytics.nodes.forEach(function (node) {
+        $.getJSON('/api/analytics/oneshot/' + analytics.analytics.id + '/last/' + node._id).done(callback.bind(null, node));
+      });
     });
   }
 
@@ -608,11 +633,28 @@ class Investigation {
     $('#graph-sidebar-dynamic').html(nodesTemplate(nodes));
 
     // Update actions
-    this.manageTags.changeSelection(nodeIds);
-    this.manageTags.displayIn('#accordion');
+    self.manageTags.changeSelection(nodeIds);
+    self.manageTags.displayIn('#accordion');
 
-    this.export.changeSelection(nodeIds);
-    this.export.displayIn('#accordion');
+    self.export.changeSelection(nodeIds);
+    self.export.displayIn('#accordion');
+
+    // Display analytics
+    self.displayAnalytics(nodes, true);
+
+    // Fetch nodes / display analytics results
+    var unfetched = [];
+    var fetched = [];
+    nodes.forEach(function (node) {
+      if (node.fetched) {
+        fetched.push(node);
+      } else {
+        self.retrieveNodeNeighbors(node);
+        unfetched.push(node);
+      }
+    });
+    self.displayAnalyticsResultsForNodes(fetched);
+    self.retrieveAnalyticsResults(unfetched);
   }
 
   selectNode(nodeId) {
@@ -633,15 +675,15 @@ class Investigation {
     this.export.displayIn('#accordion');
 
     // Display analytics
-    this.displayAnalytics(node);
+    this.displayAnalytics([node], false);
 
     // Display links
     if (node.fetched) {
       this.displayLinks(nodeId);
-      this.displayAnalyticsResultsForNode(node);
+      this.displayAnalyticsResultsForNodes([node]);
     } else {
       this.retrieveNodeNeighbors(node);
-      this.retrieveAnalyticsResults(node);
+      this.retrieveAnalyticsResults([node]);
     }
   }
 
@@ -668,16 +710,15 @@ class Investigation {
     });
   }
 
-  displayAnalyticsResults(data, resultsDiv, analyticsId) {
-    resultsDiv.html(analyticsResultsTemplate({results: data, analytics: analyticsId}));
-    enablePopovers();
+  displayAnalyticsResults(data, resultsDiv) {
 
-    var analyticsDiv = $('#graph-sidebar-analytics-' + analyticsId);
-    analyticsDiv.find('.fa-spinner').addClass('hide');
+    resultsDiv.find('.fa-spinner').addClass('hide');
     if (data) {
-      analyticsDiv.find('.glyphicon-refresh').removeClass('hide');
+      resultsDiv.find('.analytics-results').html(analyticsResultsTemplate(data));
+      enablePopovers();
+      resultsDiv.find('.glyphicon-refresh').removeClass('hide');
     } else {
-      analyticsDiv.find('.glyphicon-play').removeClass('hide');
+      resultsDiv.find('.glyphicon-play').removeClass('hide');
     }
 
     // Enable HighlightJS on raw results
@@ -721,11 +762,11 @@ class Investigation {
 
       if (data.status == 'finished') {
         data = self.saveAnalyticsResults(data, resultsDiv);
-        self.displayAnalyticsResults(data, resultsDiv, data.analytics);
+        self.displayAnalyticsResults(data, resultsDiv);
         button.find('.glyphicon-play').addClass('hide');
         button.find('.fa-spinner').removeClass('hide');
       } else if (data.status == 'error') {
-        self.displayAnalyticsResults(data, resultsDiv, data.analytics);
+        self.displayAnalyticsResults(data, resultsDiv);
         button.find('.glyphicon-play').addClass('hide');
         button.find('.fa-spinner').removeClass('hide');
       } else {
@@ -744,6 +785,7 @@ class Investigation {
   runAnalytics(id, nodeId) {
     var self = this;
 
+    // Run the analytics
     function runCallback(data) {
       var resultsId = data._id;
 
@@ -756,6 +798,12 @@ class Investigation {
       runCallback,
       'json'
     );
+
+    // Give proper feedback
+    var link = $('#analytics-' + id + '-' + nodeId);
+    link.find('.glyphicon-play').addClass('hide');
+    link.find('.glyphicon-refresh').addClass('hide');
+    link.find('.fa-spinner').removeClass('hide');
   }
 
   add(links, nodes) {
@@ -976,15 +1024,11 @@ class Investigation {
     $('#graph-sidebar').on('click', '.graph-sidebar-run-analytics', function(e) {
       var link = $(this);
       var id = link.data('id');
-      var nodeId = link.parents('#graph-sidebar-content').data('id');
-      nodeId = nodeId.split('-');
-      nodeId = nodeId[nodeId.length - 1];
+      var nodeIds = link.data('node-id').split(',');
 
-      link.find('.glyphicon-play').addClass('hide');
-      link.find('.glyphicon-refresh').addClass('hide');
-      link.find('.fa-spinner').removeClass('hide');
-
-      self.runAnalytics(id, nodeId);
+      nodeIds.forEach(function (nodeId) {
+        self.runAnalytics(id, nodeId);
+      });
     });
 
     // Allow sidebar to be resized
