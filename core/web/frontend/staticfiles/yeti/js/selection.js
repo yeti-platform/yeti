@@ -58,6 +58,15 @@ class SelectionManager {
         self.updateSelectedCount();
       }
     });
+
+    $(table_selector).on('refresh', function(e) {
+      $(table_selector).find(row_selector).each(function (index) {
+        var id = $(this).data('id');
+        if (self.selected.has(id)) {
+          $(this).addClass('selected-line');
+        }
+      });
+    });
   }
 }
 
