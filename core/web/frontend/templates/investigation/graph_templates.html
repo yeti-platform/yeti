@@ -20,56 +20,61 @@
 <script id="graph-sidebar-analytics-group-template" type="text/x-handlebars-template">
     <div>
         {{#each group}}
-            <div class="graph-sidebar-analytics"  {{#unless ../multiple}}id="analytics-{{analytics.id}}-{{nodes.0._id}}"{{/unless}}>
+            <div class="graph-sidebar-analytics">
                 {{analytics.name}}
                 <div class="graph-sidebar-analytics-actions graph-sidebar-links">
+                    <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="See Results" class="graph-sidebar-show-results hide">
+                        <i class="glyphicon glyphicon-list"></i>
+                    </a>
+
                     <a rel="popover" data-popover-content="#graph-sidebar-analytics-help-{{analytics.id}}"><i class="fa fa-question-circle"></i></a>
                     <div id="graph-sidebar-analytics-help-{{analytics.id}}" class="hide">
                         {{analytics.description}}
                     </div>
 
                     <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Run" class="graph-sidebar-run-analytics" data-id="{{analytics.id}}" data-node-id="{{nodeIds}}">
-                        {{#if ../multiple}}
-                            <i class="fa fa-spinner spinner hide"></i>
-                            <i class="glyphicon glyphicon-play"></i>
-                            <i class="glyphicon glyphicon-refresh hide"></i>
-                        {{else}}
-                            <i class="fa fa-spinner spinner"></i>
-                            <i class="glyphicon glyphicon-play hide"></i>
-                            <i class="glyphicon glyphicon-refresh hide"></i>
-                        {{/if}}
+                        <i class="fa fa-spinner spinner"></i>
+                        <i class="glyphicon glyphicon-play hide"></i>
+                        <i class="glyphicon glyphicon-refresh hide"></i>
                     </a>
                 </div>
 
-                {{#if ../multiple}}
+                <div class="analytics-results-slider no-overflow">
+                    <h4 class="analytics-results-title">
+                        {{analytics.name}} Results
+                        <a class="analytics-results-close"><i class="glyphicon glyphicon-remove"></i></a>
+                    </h4>
+
                     {{#each nodes}}
                         <div id="analytics-{{../analytics.id}}-{{_id}}">
-                            <i class="{{cssicon}}"></i> {{label}}
-                            <div class="graph-sidebar-analytics-actions graph-sidebar-links">
-                                <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Run" class="graph-sidebar-run-analytics" data-id="{{../analytics.id}}"  data-node-id="{{_id}}">
-                                    <i class="fa fa-spinner spinner"></i>
-                                    <i class="glyphicon glyphicon-play hide"></i>
-                                    <i class="glyphicon glyphicon-refresh hide"></i>
-                                </a>
+                            <div class="analytics-results-node">
+                                <i class="{{cssicon}}"></i> {{label}}
+                                <div class="graph-sidebar-analytics-actions graph-sidebar-links">
+                                    <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Run" class="graph-sidebar-run-analytics" data-id="{{../analytics.id}}"  data-node-id="{{_id}}">
+                                        <i class="fa fa-spinner spinner"></i>
+                                        <i class="glyphicon glyphicon-play hide"></i>
+                                        <i class="glyphicon glyphicon-refresh hide"></i>
+                                    </a>
+                                </div>
                             </div>
-                            <div class="analytics-results"></div>
+                            <div class="analytics-results">
+                                No results to show.
+                            </div>
                         </div>
                     {{/each}}
-                {{else}}
-                    <div class="analytics-results"></div>
-                {{/if}}
+                </div>
             </div>
         {{/each}}
     </div>
 </script>
 
 <script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
-    {{> analyticsGroup group=(lookup groups "") multiple=multiple}}
+    {{> analyticsGroup group=(lookup groups "")}}
     {{#each groups}}
         {{#equal @key ''}}
         {{else}}
             <h4 class="graph-sidebar-analytics-group">{{@key}}</h4>
-            {{> analyticsGroup group=this multiple=../multiple}}
+            {{> analyticsGroup group=this}}
         {{/equal}}
     {{else}}
         No analytics to display.
@@ -77,7 +82,16 @@
 </script>
 
 <script id="graph-sidebar-analytics-results-template" type="text/x-handlebars-template">
-    {{> links}}
+    {{#isNotEmpty links}}
+        {{> links}}
+    {{else}}
+        {{#unless error}}
+            {{#unless raw}}
+                No results to show.
+            {{/unless}}
+        {{/unless}}
+    {{/isNotEmpty}}
+
     {{#if error}}
         <div class="graph-sidebar-analytics-error">{{error}}</div>
     {{/if}}
@@ -244,7 +258,7 @@
           </h4>
         </div>
         <div id="selection-analytics" class="panel-collapse collapse in" role="tabpanel">
-          <div class="panel-body">
+          <div class="panel-body sliding-container">
               <div id="graph-sidebar-analytics">
                   Analytics loading ...
               </div>

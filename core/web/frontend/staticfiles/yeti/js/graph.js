@@ -546,9 +546,9 @@ class Investigation {
     }
   }
 
-  displayAnalytics(nodes, multiple) {
+  displayAnalytics(nodes) {
     var availableAnalytics = this.availableAnalyticsFor(nodes);
-    $('#graph-sidebar-analytics').html(analyticsTemplate({groups: availableAnalytics, multiple: multiple}));
+    $('#graph-sidebar-analytics').html(analyticsTemplate({groups: availableAnalytics}));
   }
 
   displayAnalyticsResultsForNodes(nodes) {
@@ -640,7 +640,7 @@ class Investigation {
     self.export.displayIn('#accordion');
 
     // Display analytics
-    self.displayAnalytics(nodes, true);
+    self.displayAnalytics(nodes);
 
     // Fetch nodes / display analytics results
     var unfetched = [];
@@ -675,7 +675,7 @@ class Investigation {
     this.export.displayIn('#accordion');
 
     // Display analytics
-    this.displayAnalytics([node], false);
+    this.displayAnalytics([node]);
 
     // Display links
     if (node.fetched) {
@@ -711,15 +711,18 @@ class Investigation {
   }
 
   displayAnalyticsResults(data, resultsDiv) {
+    var self = this;
 
     resultsDiv.find('.fa-spinner').addClass('hide');
     if (data) {
       resultsDiv.find('.analytics-results').html(analyticsResultsTemplate(data));
       enablePopovers();
       resultsDiv.find('.glyphicon-refresh').removeClass('hide');
+      resultsDiv.closest('.graph-sidebar-analytics').find('.graph-sidebar-show-results').removeClass('hide');
     } else {
       resultsDiv.find('.glyphicon-play').removeClass('hide');
     }
+    self.updateAnalyticsLinks(resultsDiv);
 
     // Enable HighlightJS on raw results
     hljs.initHighlighting.called = false;
@@ -804,6 +807,27 @@ class Investigation {
     link.find('.glyphicon-play').addClass('hide');
     link.find('.glyphicon-refresh').addClass('hide');
     link.find('.fa-spinner').removeClass('hide');
+
+    self.updateAnalyticsLinks(link);
+  }
+
+  updateAnalyticsLinks(resultsDiv) {
+    var parent = resultsDiv.parents('.graph-sidebar-analytics');
+    var parentLinks = parent.children('.graph-sidebar-links');
+    var subresults = parent.find('.analytics-results-slider');
+
+    parentLinks.find('.glyphicon-play').addClass('hide');
+    parentLinks.find('.glyphicon-refresh').addClass('hide');
+    parentLinks.find('.fa-spinner').addClass('hide');
+
+    if (subresults.find('.fa-spinner:not(.hide)').length) {
+      parentLinks.find('.fa-spinner').removeClass('hide');
+    } else if (subresults.find('.glyphicon-play:not(.hide)').length) {
+      parentLinks.find('.glyphicon-play').removeClass('hide');
+    } else {
+      parentLinks.find('.glyphicon-refresh').removeClass('hide');
+    }
+
   }
 
   add(links, nodes) {
@@ -1029,6 +1053,22 @@ class Investigation {
       nodeIds.forEach(function (nodeId) {
         self.runAnalytics(id, nodeId);
       });
+    });
+
+    $('#graph-sidebar').on('click', '.graph-sidebar-show-results', function(e) {
+      var resultsDiv = $(this).parents('.graph-sidebar-analytics').find('.analytics-results-slider');
+      resultsDiv.removeClass('no-overflow');
+      resultsDiv.addClass('slide-right');
+    });
+
+    $('#graph-sidebar').on('click', '.analytics-results-close', function(e) {
+      var resultsDiv =
+      $(this).parents('.analytics-results-slider');
+
+      resultsDiv.removeClass('slide-right');
+      setTimeout(function() {
+        resultsDiv.addClass('no-overflow');
+      }, 210);
     });
 
     // Allow sidebar to be resized

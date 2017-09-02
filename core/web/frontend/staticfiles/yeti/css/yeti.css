@@ -390,11 +390,8 @@ li.graph-sidebar-border-bottom {
 }
 
 .analytics-results {
-    margin-left: -20px;
-    margin-right: -20px;
-    padding-left: 20px;
-    padding-right: 20px;
-    background-color: #242d36;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .graph-sidebar-analytics {
@@ -421,6 +418,10 @@ li.graph-sidebar-border-bottom {
 .graph-sidebar-link-actions {
     color: #00CCFF;
     float: right;
+}
+
+.graph-sidebar-analytics-actions a {
+    margin: 0;
 }
 
 .graph-sidebar-links a,
@@ -635,10 +636,6 @@ ul.ui-autocomplete {
     padding-left: 10px;
 }
 
-.graph-sidebar-run-analytics {
-    margin-right: 10px;
-}
-
 .graph-sidebar-analytics-last-run {
     font-style: italic;
     color: #BBBBBB;
@@ -830,4 +827,65 @@ td input.inline {
 
 .graph-sidebar-selected-node:last-child {
     border-bottom: 0;
+}
+
+.sliding-container {
+    position: relative;
+}
+
+.analytics-results-slider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -100%;
+    left: 100%;
+    background-color: #495B6C;
+    transition: right 0.2s ease 0.01s, left 0.2s ease 0.01s;
+    z-index: 50;
+    padding-bottom: 20px;
+}
+
+.analytics-results-slider.no-overflow {
+    overflow: hidden;
+    height: 0;
+    width: 0;
+}
+
+.analytics-results-slider.slide-right {
+    right: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.analytics-results-close {
+    float: right;
+    color: white;
+    background-color: transparent;
+    border: 0;
+    margin-right: 15px;
+}
+
+.analytics-results-close:hover {
+    color: white;
+}
+
+
+#graph-sidebar h4.analytics-results-title {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    padding-left: 20px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.analytics-results-node {
+    border-bottom: 2px solid #00CCFF;
+    padding-bottom: 5px;
+    padding-left: 20px;
+    padding-right: 15px;
+    margin-top: 20px;
+    margin-bottom: 10px;
 }
