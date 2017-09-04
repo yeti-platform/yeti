@@ -6,7 +6,6 @@ import traceback
 
 from core.config.celeryctl import celery_app
 from core.observables import Observable
-from core.config.celeryimports import loaded_modules
 from core.analytics import ScheduledAnalytics, AnalyticsResults
 
 from mongoengine import DoesNotExist
@@ -15,7 +14,7 @@ from mongoengine import DoesNotExist
 @celery_app.task
 def each(module_name, observable_json):
     o = Observable.from_json(observable_json)
-    mod = loaded_modules[module_name]
+    mod = ScheduledAnalytics.objects.get(name=module_name)
     logging.debug("Launching {} on {}".format(mod.name, o))
     mod.each(o)
     o.analysis_done(mod.name)
