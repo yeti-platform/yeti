@@ -4,6 +4,7 @@ from datetime import datetime
 
 from core.analytics import OneShotAnalytics
 from core.observables import Observable, Hostname
+from core.config.config import yeti_config
 
 
 class DNSDBApi(object):
@@ -68,7 +69,7 @@ class DNSDBApi(object):
 
         url = "{}/{}/{}/{}".format(DNSDBApi.API_URL, type, obs_type, observable.value)
 
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code == 200:
             records = []

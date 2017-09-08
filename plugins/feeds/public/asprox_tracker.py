@@ -1,4 +1,4 @@
-import urllib2
+import requests
 from datetime import datetime, timedelta
 import csv
 import logging
@@ -6,6 +6,7 @@ import logging
 from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
+from core.config.config import yeti_config
 
 
 class AsproxTracker(Feed):
@@ -18,8 +19,9 @@ class AsproxTracker(Feed):
     }
 
     def update(self):
-        request = urllib2.Request(self.source)
-        reader = csv.reader(urllib2.urlopen(request), delimiter=',', quotechar="'")
+        #request = urllib2.Request(self.source)
+        resp = requests.get(self.source, proxies=yeti_config.proxy)
+        reader = csv.reader(resp.text, delimiter=',', quotechar="'")
         for line in reader:
             self.analyze(line)
 
