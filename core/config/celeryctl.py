@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
 from celery import Celery
+from celery.signals import celeryd_init
+
 from core.config.config import yeti_config
 
 celery_app = Celery('yeti')
@@ -23,3 +25,22 @@ class CeleryConfig:
     }
 
 celery_app.config_from_object(CeleryConfig)
+
+
+@celeryd_init.connect
+def unlock_scheduled_entries(**kwargs):
+    from core.analytics import ScheduledAnalytics
+    from core.feed import Feed
+    from core.exports.export import Export
+
+    locked_entries = {
+        'analytics': ScheduledAnalytics,
+        'exports': Export,
+        'feeds': Feed,
+    }
+
+    queues = kwargs['options']['queues'].split(',')
+
+    for queue in queues:
+        if queue in locked_entries:
+            locked_entries[queue].objects(lock=True).update(lock=False, status='Unlocked')
