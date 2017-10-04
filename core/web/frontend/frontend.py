@@ -3,15 +3,12 @@ from __future__ import unicode_literals
 from flask import Blueprint, render_template, redirect, url_for
 from flask import g
 
-from core.investigation import Investigation
-from core.web.helpers import get_object_or_404
-from core.web.api.api import bson_renderer
-
 from core.web.frontend.entities import EntityView
 from core.web.frontend.observables import ObservableView
 from core.web.frontend.indicators import IndicatorView
 from core.web.frontend.investigations import InvestigationView
 from core.web.frontend.system import SystemView
+from core.web.frontend.actions import ActionsView
 
 from core.observables import *
 from core.entities import *
@@ -52,6 +49,7 @@ IndicatorView.register(frontend)
 ObservableView.register(frontend)
 InvestigationView.register(frontend)
 SystemView.register(frontend)
+ActionsView.register(frontend)
 
 # Admin views
 

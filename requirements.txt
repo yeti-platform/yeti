@@ -26,3 +26,8 @@ psutil
 shodan
 python-magic
 webpack
+pdfkit
+pdfminer
+html2text
+readability-lxml
+beautifulsoup4

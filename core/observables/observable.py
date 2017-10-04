@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
+import re
 import operator
 
 from mongoengine import *
@@ -64,6 +65,9 @@ class Observable(Node):
         "ordering": ["-created"],
     }
 
+    ignore = []
+    search_regex = None
+
     @classmethod
     def get_form(klass):
         """Gets the appropriate form for a given obseravble"""
@@ -92,8 +96,18 @@ class Observable(Node):
             for t in [Url, Ip, Email, Path, Hostname, Hash, Bitcoin]:
                 if t.check_type(string):
                     return t
-            else:
-                raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
+
+        raise ObservableValidationError("{} was not recognized as a viable datatype".format(string))
+
+    @staticmethod
+    def from_string(string):
+        from core.observables import Url, Ip, Hostname, Email, Hash
+
+        results = dict()
+        for t in [Url, Ip, Email, Hostname, Hash]:
+            results[t.__name__] = t.extract(string)
+
+        return results
 
     @classmethod
     def add_text(cls, text, tags=[]):
@@ -111,9 +125,52 @@ class Observable(Node):
             o.tag(tags)
         return o
 
-    @staticmethod
-    def check_type(txt):
-        raise NotImplementedError("Implement this in subclasses")
+    @classmethod
+    def check_type(cls, txt):
+        match = re.match('^{}$'.format(cls.regex), txt, re.UNICODE)
+        if match:
+            return cls.is_valid(match)
+
+        return False
+
+    @classmethod
+    def extract(cls, txt):
+        results = {}
+        if cls.search_regex:
+            search_regex = re.compile(cls.search_regex, re.UNICODE)
+        else:
+            search_regex = re.compile(cls.regex, re.UNICODE)
+
+        for match in re.finditer(search_regex, txt):
+            if cls.is_valid(match):
+                try:
+                    observable = cls(value=match.group('search'))
+                    observable.normalize()
+                    if observable.value not in cls.ignore:
+                        # Replace with existing observable if there is one
+                        try:
+                            observable = cls.objects.get(value=observable.value)
+                        except cls.DoesNotExist:
+                            pass
+
+                        results[match.group('search')] = observable
+                except ObservableValidationError:
+                    pass
+
+        return results
+
+    @classmethod
+    def is_valid(cls, match):
+        return True
+
+    def normalize(self):
+        pass
+
+    def clean(self):
+        if self.check_type(self.value):
+            self.normalize()
+        else:
+            raise ObservableValidationError("'{}' is not a valid '{}'".format(self.value, self.__class__.__name__))
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):
