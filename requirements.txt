@@ -25,6 +25,7 @@ geoip2
 psutil
 shodan
 python-magic
+webpack
 pdfkit
 pdfminer
 html2text
