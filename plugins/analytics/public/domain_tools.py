@@ -12,6 +12,7 @@ from core.helpers import iterify, get_value_at
 from core.analytics import OneShotAnalytics
 from core.entities import Company
 from core.observables import Hostname, Email, Text
+from core.config.config import yeti_config
 
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
@@ -70,7 +71,7 @@ class DomainToolsApi(object):
         }
         params.update(_params)
 
-        s = requests.Session()
+        s = requests.Session(proxies=yeti_config.proxy)
         s.mount('https://', TlsAdapter())
         r = s.get(DomainToolsApi.API_URL + uri, params=params)
         r = r.json()

@@ -3,6 +3,7 @@ from datetime import datetime
 
 from core.analytics import OneShotAnalytics
 from core.observables import Observable, Hostname, Hash, Email, Text
+from core.config.config import yeti_config
 
 
 def whois_links(observable, whois):
@@ -82,7 +83,7 @@ class PassiveTotalApi(object):
         url = PassiveTotalApi.API_URL + uri
         auth = (settings['passivetotal_api_username'], settings['passivetotal_api_key'])
 
-        response = requests.get(url, auth=auth, params=params)
+        response = requests.get(url, auth=auth, params=params, proxies=yeti_config.proxy)
         response.raise_for_status()
 
         return response.json()

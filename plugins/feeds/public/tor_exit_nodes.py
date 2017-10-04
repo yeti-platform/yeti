@@ -1,10 +1,11 @@
-import urllib2
+import requests
 from datetime import timedelta
 import logging
 
 from core.feed import Feed
 from core.observables import Ip
 from core.errors import ObservableValidationError
+from core.config.config import yeti_config
 
 
 class TorExitNodes(Feed):
@@ -17,7 +18,7 @@ class TorExitNodes(Feed):
     }
 
     def update(self):
-        feed = urllib2.urlopen(self.source).read()
+        feed = requests.get(self.source, proxies=yeti_config.proxy).text
 
         start = feed.find('<!-- __BEGIN_TOR_NODE_LIST__ //-->') + len('<!-- __BEGIN_TOR_NODE_LIST__ //-->')
         end = feed.find('<!-- __END_TOR_NODE_LIST__ //-->')

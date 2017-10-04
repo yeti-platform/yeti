@@ -66,7 +66,7 @@ class MispFeed(Feed):
             'Accept': 'application/json'
         }
 
-        orgs = requests.get(url, headers=headers).json()
+        orgs = requests.get(url, headers=headers, proxies=yeti_config.proxy).json()
 
         for org in orgs:
             org_id = org['Organisation']['id']
@@ -86,7 +86,7 @@ class MispFeed(Feed):
 
             time_filter['request']['to'] = to.isoformat()
             time_filter['request']['from'] = fromdate.isoformat()
-            r = requests.post(url, headers=headers, json=time_filter)
+            r = requests.post(url, headers=headers, json=time_filter, proxies=yeti_config.proxy)
 
             try:
                 msg = r.json()
