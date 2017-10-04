@@ -99,6 +99,8 @@ class ScheduledAnalytics(ScheduleEntry):
 
 class OneShotAnalytics(OneShotEntry):
 
+    group = StringField(default='')
+
     def __init__(self, *args, **kwargs):
         super(OneShotAnalytics, self).__init__(*args, **kwargs)
 
@@ -113,7 +115,7 @@ class OneShotAnalytics(OneShotEntry):
         return results
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "description", "enabled"]}
+        i = {k: v for k, v in self._data.items() if k in ["name", "description", "enabled", "group"]}
         i['acts_on'] = iterify(self.ACTS_ON)
         i['id'] = str(self.id)
         return i

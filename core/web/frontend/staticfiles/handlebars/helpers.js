@@ -48,6 +48,14 @@ Handlebars.registerHelper("hasMoreHistory", function(link, options) {
   }
 });
 
+Handlebars.registerHelper("isNotEmpty", function(links, options) {
+  if (Object.keys(links).length > 0) {
+    return options.fn(this);
+  } else {
+    return options.inverse(this);
+  }
+});
+
 Handlebars.registerHelper("isInterestingNode", function (link, options) {
   if ((!link.visible) && (Object.keys(link.links_of_interest).length >= 2)) {
     return options.fn(this);
@@ -63,5 +71,5 @@ Handlebars.registerHelper("dictLength", function(dict) {
 Handlebars.registerHelper('join', function(val, delimiter) {
     var arry = [].concat(val);
     delimiter = ( typeof delimiter == "string" ? delimiter : ',' );
-    return arry.join(delimiter); 
+    return arry.join(delimiter);
 });

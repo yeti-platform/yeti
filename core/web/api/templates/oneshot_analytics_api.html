@@ -4,7 +4,12 @@
   <tr><th>Name</th><th>Acts on</th><th>Description</th>{% if toggle %}<th>Toggle</th>{%endif%}</tr>
   {% for analytics in data %}
   <tr class="{{ "disabled" if not analytics["enabled"] }}" data-name="{{analytics["name"]}}">
-    <td><strong>{{ analytics["name"] }}</strong></td>
+    <td><strong>
+        {% if analytics["group"] %}
+            {{ analytics["group"] }} -
+        {% endif %}
+        {{ analytics["name"] }}
+    </strong></td>
     <td>{{ analytics["acts_on"]|join(', ') }}</td>
     <td>
         {{ analytics["description"] }}

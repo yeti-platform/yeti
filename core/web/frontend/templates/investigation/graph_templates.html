@@ -17,46 +17,94 @@
     </div>
 </script>
 
-<script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
-    {{#each analytics}}
-        <div class="graph-sidebar-analytics" id="analytics-{{id}}-{{../nodeId}}">
-            <h2>{{name}}</h2>
-            <p>{{description}}</p>
-            <div class="graph-sidebar-analytics-results">
-                Loading ...
+<script id="graph-sidebar-analytics-group-template" type="text/x-handlebars-template">
+    <div>
+        {{#each group}}
+            <div class="graph-sidebar-analytics">
+                {{analytics.name}}
+                <div class="graph-sidebar-analytics-actions graph-sidebar-links">
+                    <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="See Results" class="graph-sidebar-show-results hide">
+                        <i class="glyphicon glyphicon-list"></i>
+                    </a>
+
+                    <a rel="popover" data-popover-content="#graph-sidebar-analytics-help-{{analytics.id}}"><i class="fa fa-question-circle"></i></a>
+                    <div id="graph-sidebar-analytics-help-{{analytics.id}}" class="hide">
+                        {{analytics.description}}
+                    </div>
+
+                    <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Run" class="graph-sidebar-run-analytics" data-id="{{analytics.id}}" data-node-id="{{nodeIds}}">
+                        <i class="fa fa-spinner spinner"></i>
+                        <i class="glyphicon glyphicon-play hide"></i>
+                        <i class="glyphicon glyphicon-refresh hide"></i>
+                    </a>
+                </div>
+
+                <div class="analytics-results-slider no-overflow">
+                    <h4 class="analytics-results-title">
+                        {{analytics.name}} Results
+                        <a class="analytics-results-close"><i class="glyphicon glyphicon-remove"></i></a>
+                    </h4>
+
+                    {{#each nodes}}
+                        <div id="analytics-{{../analytics.id}}-{{_id}}">
+                            <div class="analytics-results-node">
+                                <i class="{{cssicon}}"></i> {{label}}
+                                <div class="graph-sidebar-analytics-actions graph-sidebar-links">
+                                    <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Run" class="graph-sidebar-run-analytics" data-id="{{../analytics.id}}"  data-node-id="{{_id}}">
+                                        <i class="fa fa-spinner spinner"></i>
+                                        <i class="glyphicon glyphicon-play hide"></i>
+                                        <i class="glyphicon glyphicon-refresh hide"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="analytics-results">
+                                No results to show.
+                            </div>
+                        </div>
+                    {{/each}}
+                </div>
             </div>
-        </div>
+        {{/each}}
+    </div>
+</script>
+
+<script id="graph-sidebar-analytics-template" type="text/x-handlebars-template">
+    {{> analyticsGroup group=(lookup groups "")}}
+    {{#each groups}}
+        {{#equal @key ''}}
+        {{else}}
+            <h4 class="graph-sidebar-analytics-group">{{@key}}</h4>
+            {{> analyticsGroup group=this}}
+        {{/equal}}
     {{else}}
         No analytics to display.
     {{/each}}
 </script>
 
 <script id="graph-sidebar-analytics-results-template" type="text/x-handlebars-template">
-    {{#with results}}
+    {{#isNotEmpty links}}
         {{> links}}
-        {{#if error}}
-            <div class="graph-sidebar-analytics-error">{{error}}</div>
-        {{/if}}
-        {{#if raw}}
-            <a class="graph-analytics-results-links" role="button" data-toggle="collapse" href="#graph-sidebar-analytics-results-{{_id}}">Display raw results</a>
+    {{else}}
+        {{#unless error}}
+            {{#unless raw}}
+                No results to show.
+            {{/unless}}
+        {{/unless}}
+    {{/isNotEmpty}}
+
+    {{#if error}}
+        <div class="graph-sidebar-analytics-error">{{error}}</div>
+    {{/if}}
+    {{#if raw}}
+        <a class="graph-analytics-results-links" role="button" data-toggle="collapse" href="#graph-sidebar-analytics-results-{{_id}}">Display raw results</a>
             <div class="collapse graph-sidebar-analytics-raw" id="graph-sidebar-analytics-results-{{_id}}">
                 <pre><code>{{raw}}</code></pre>
             </div>
-        {{/if}}
-        <div class="graph-sidebar-analytics-action">
-            <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{analytics}}'><i class="glyphicon glyphicon-refresh"></i> Run</button>
-            <span class="graph-sidebar-analytics-last-run">Last: {{datetime datetime}}</span>
-        </div>
-    {{else}}
-    {% endraw %}{% if current_user.has_permission('oneshotanalytics', 'run') %}{% raw %}
-        <div class="graph-sidebar-analytics-action">
-            <button class="btn btn-sm btn-blue graph-sidebar-run-analytics" data-id='{{analytics}}'><i class="glyphicon glyphicon-refresh"></i> Run</button>
-        </div>
-    {% endraw %}{% endif %}{% raw %}
-    {{/with}}
+    {{/if}}
 </script>
 
 <script id="graph-sidebar-links-template" type="text/x-handlebars-template">
+    {{#isNotEmpty links}}
     <ul class="graph-sidebar-links">
         {{#each links}}
             {{#equal @key 'null'}}
@@ -133,6 +181,13 @@
             {{/each}}
         {{/each}}
     </ul>
+    {{/isNotEmpty}}
+</script>
+
+<script id="graph-sidebar-tags" type="text/x-handlebars-template">
+    {{#each tags}}
+        <span class="yeti-tag label label-default">{{name}}</span>
+    {{/each}}
 </script>
 
 <script id="graph-sidebar-node-template" type="text/x-handlebars-template">
@@ -146,22 +201,16 @@
     </div>
     <div id="graph-sidebar-value">{{label}}</div>
 
+    <div id="graph-sidebar-taglist-{{id}}" class="graph-sidebar-taglist text-center">{{> tags}}</div>
+
     <ul id="graph-sidebar-tabs" class="nav nav-pills nav-justified">
       <li><a data-toggle="pill" href="#graph-sidebar-info">Info</a></li>
       <li class="active"><a data-toggle="pill" href="#graph-sidebar-links">Links</a></li>
-      <li><a data-toggle="pill" href="#graph-sidebar-analytics">Analytics</a></li>
+      <li><a data-toggle="pill" href="#graph-sidebar-actions">Actions</a></li>
     </ul>
 
     <div id="graph-sidebar-content" class="tab-content" data-id='{{id}}'>
         <div id="graph-sidebar-info" class="tab-pane">
-            <h1>Tags</h1>
-            <div class="graph-sidebar-tags">
-                {{#each tags}}
-                    <span class="yeti-tag label label-default">{{name}}</span>
-                {{else}}
-                    No tags to display.
-                {{/each}}
-            </div>
             <h1>Contexts</h1>
             <div class="graph-sidebar-contexts">
                 {{#each context}}
@@ -190,10 +239,54 @@
             <div id="graph-sidebar-links-from-{{id}}"></div>
         </div>
 
-        <div id="graph-sidebar-analytics" class="tab-pane">
-            <div id="graph-sidebar-analytics-{{id}}">
-                Analytics loading ...
+        <div id="graph-sidebar-actions" class="tab-pane">
+            <div class="panel-group graph-panels" id="accordion">
+                {{> analyticsPanel}}
             </div>
+        </div>
+    </div>
+</script>
+
+<script id="graph-sidebar-analytics-panel" type="text/x-handlebars-template">
+
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+            <a data-toggle="collapse" data-parent="#accordion" href="#selection-analytics">
+              Analytics
+            </a>
+          </h4>
+        </div>
+        <div id="selection-analytics" class="panel-collapse collapse in" role="tabpanel">
+          <div class="panel-body sliding-container">
+              <div id="graph-sidebar-analytics">
+                  Analytics loading ...
+              </div>
+          </div>
+        </div>
+      </div>
+</script>
+
+<script id="graph-sidebar-no-selection" type="text/x-handlebars-template">
+    <div id="graph-sidebar-icon" class="flaticon-network38"></div>
+    <div id="graph-sidebar-content">
+        <p>Click on a node to get info, or <a href="#" id="graph-select-all">select all nodes</a>.</p>
+    </div>
+</script>
+
+<script id="graph-sidebar-nodes-template" type="text/x-handlebars-template">
+    <div>
+        {{#each this}}
+            <div class="graph-sidebar-selected-node graph-sidebar-tags">
+                <i class="{{cssicon}}"></i> {{label}}
+                <span id="graph-sidebar-taglist-{{id}}">{{> tags}}</span>
+            </div>
+        {{/each}}
+    </div>
+
+    <div id="graph-sidebar-actions" class="tab-pane">
+        <div class="panel-group graph-panels" id="accordion">
+            {{> analyticsPanel}}
         </div>
     </div>
 </script>
