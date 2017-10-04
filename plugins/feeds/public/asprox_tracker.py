@@ -19,7 +19,6 @@ class AsproxTracker(Feed):
     }
 
     def update(self):
-        #request = urllib2.Request(self.source)
         resp = requests.get(self.source, proxies=yeti_config.proxy)
         reader = csv.reader(resp.text, delimiter=',', quotechar="'")
         for line in reader:
