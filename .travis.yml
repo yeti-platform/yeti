@@ -22,3 +22,5 @@ script:
   - ./yeti.py webserver &
   - sleep 5
   - curl -I -L http://127.0.0.1:5000
+  - git clone https://github.com/yeti-platform/pyeti.git
+  - cd pyeti && python setup.py test
