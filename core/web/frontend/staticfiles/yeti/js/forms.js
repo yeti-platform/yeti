@@ -1,50 +1,8 @@
-
-function refresh_tagfields(form) {
-
-  // set tagfields
-  tagfield = form.find(".tagfield").each(function(index){
-
-    var global_tags = []
-
-    var elt = $(this);
-    $.ajax({
-      method: "GET",
-      headers: {"Accept": "application/json"},
-      contentType: "application/json",
-      url: elt.data('choices'),
-      success: function(data) {
-        for (i in data) {
-          global_tags.push(data[i].name);
-        }
-        elt
-        .on('tokenfield:createtoken', function (e) {
-          if ($(this).data('choices')) {
-            re = /^[a-zA-Z0-9_ ()-]+$/;
-            charset = re.test(e.attrs.value);
-            unique = $(this).val().split(',').indexOf(e.attrs.value) == -1;
-            return charset;
-          }
-        })
-        .tokenfield({
-          autocomplete: {
-            source: global_tags,
-            delay: 100
-          },
-          showAutocompleteOnFocus: true,
-          delimiter: [',', ';'],
-          beautify: false,
-          createTokensOnBlur: true,
-        });
-      }
-    });
-  });
-}
-
 $(function() {
 
   $(".yeti-form").each(function() {
 
-    refresh_tagfields($(this))
+    refresh_tagfields($(this));
 
     $(this).find("button.yeti-new").click(function(){
       yeti_new_button($(this));

@@ -14,13 +14,12 @@ from core.web.frontend import frontend
 from mongoengine.errors import DoesNotExist
 from core.yeti_plugins import get_plugins
 
-# Make sure plugins are loaded
-get_plugins()
 
 webapp = Flask(__name__, static_folder='../../node_modules', static_url_path='/static')
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
+webapp.before_first_request(get_plugins)
 
 
 login_manager = LoginManager()

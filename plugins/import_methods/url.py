@@ -9,6 +9,7 @@ from StringIO import StringIO
 from plugins.import_methods.html import import_html
 from core.database import AttachedFile
 from core.investigation import ImportMethod
+from core.config.config import yeti_config
 
 
 class ImportURL(ImportMethod):
@@ -39,7 +40,7 @@ class ImportURL(ImportMethod):
         rmtree(tmpdir)
 
     def do_import(self, results, url):
-        response = requests.get(url)
+        response = requests.get(url, proxies=yeti_config.proxy)
         content_type = magic.from_buffer(response.content, mime=True)
 
         if content_type == "text/html":
