@@ -54,3 +54,7 @@ yeti.conf
 
 # Frontend Dependencies
 node_modules
+
+#IntelliJ
+*.iml
+.idea/
