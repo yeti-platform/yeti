@@ -1,0 +1,21 @@
+[otx]
+
+##
+## Use this setting to subscribe Yeti to OTX pulses.
+## pulses: a comma-separated list of pulse entries you wish to subscribe to
+## key: Your OTX API key
+##
+
+# pulses = otx_pulse1
+# key = OTX_API_KEY
+
+[otx_pulse1]
+
+##
+## For every OTX pulse, you need to specify a pulse ID and a boolean indicating
+## if you want tag observables with tags coming from this pulse.
+## "Y" will tag observables, and any other value won't.
+##
+
+# pulse_id = PULSE_ID
+# use_otx_tags = Y
