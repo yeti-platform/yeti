@@ -40,7 +40,7 @@ contrib
         ├── my_feed.py        # 1. The core of your contribution!
         ├── config.txt        # 2. Any extra configuration sections that need to go in the config file.
         ├── requirements.txt  # 3. Any additional python library your code uses.
-        └── README.md         # Please provide a descirption & explanation on how to install your plugin
+        └── README.md         # Please provide a descirption & explanation on how to install your plugin.
 ```
 
 After you're all set, submit your PR and let us review your code!
