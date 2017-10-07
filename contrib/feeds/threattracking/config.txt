@@ -1,0 +1,12 @@
+[threattracking]
+
+# https://developers.google.com/sheets/api/quickstart/python
+# activate google sheet api in https://console.developers.google.com/apis/api/sheets.googleapis.com/overview?project=api-project-xxxx
+# create an API key account https://console.developers.google.com/apis/credentials
+
+google_api_key = "wefkjlwfklweklfwefhklwefhklwefhkl"
+
+# The threat tracking spreadsheet key here (http://apt.threattracking.com)
+# https://docs.google.com/spreadsheets/u/1/d/1H9_xaxQHpWaa4O_Son4Gx0YOIzlcBWMsdvePFX68EKU/pubhtml
+# (this is not a confidential key. It is the public spreadsheet id. keep this unmodified.
+sheet_key = "1H9_xaxQHpWaa4O_Son4Gx0YOIzlcBWMsdvePFX68EKU"
