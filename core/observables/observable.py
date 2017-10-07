@@ -143,9 +143,10 @@ class Observable(Node):
             context: a JSON object representing the context to be added.
             replace_source: If defined, contexts having a ``source`` attribute
                             set to ``replace_source`` will be deleted before insert
-            dedup_list: takes a list of fields to ignore during dedup comparison..
-                         i.e. date/count type fields. Empty list will compare all, 'None' will
-                         skip dedup.
+            dedup_list: takes a list of fields to ignore during dedup comparison.
+                         i.e. date/count type fields. Empty list will
+                         skip dedup the partial dedup as dedup for the exact same context
+                         is already builtin.
         Returns:
             A fresh instance of the Observable as it exists in the database.
 
