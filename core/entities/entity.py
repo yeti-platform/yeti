@@ -23,7 +23,7 @@ class Entity(Node):
 
     DISPLAY_FIELDS = [("name", "Name"), ("tags", "Tags")]
 
-    name = StringField(verbose_name="Name", required=True, unique=True, sparse=True, max_length=1024)
+    name = StringField(verbose_name="Name", required=True, unique_with="_cls", sparse=True, max_length=1024)
     description = StringField(verbose_name="Description")
     tags = ListField(StringField(), verbose_name="Relevant tags")
 

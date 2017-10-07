@@ -41,7 +41,7 @@ class ScheduleEntry(YetiDocument):
 
 
 class OneShotEntry(YetiDocument):
-    name = StringField(required=True, unique=True)
+    name = StringField(required=True)
     enabled = BooleanField(default=True)
     description = StringField(required=True)
 

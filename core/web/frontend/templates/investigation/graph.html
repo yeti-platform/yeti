@@ -2,10 +2,12 @@
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('static', filename='handlebars/dist/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='handlebars/helpers.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='typeahead.js/dist/typeahead.bundle.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='vis/dist/vis.min.js') }}"></script>
 <script type="text/javascript" src="{{ url_for("static", filename="bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.js") }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/tagfields.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
 <link href="{{ url_for('static', filename='vis/dist/vis.min.css') }}" rel="stylesheet" type="text/css" />
 <link rel=stylesheet type=text/css href="{{ url_for("static", filename="jquery-ui-dist/jquery-ui.min.css") }}">
@@ -28,7 +30,7 @@
     <div id="graph-sidebar-dynamic">
         <div id="graph-sidebar-icon" class="flaticon-network38"></div>
         <div id="graph-sidebar-content">
-            <p>Click on a node to get info.</p>
+            <p>Click on a node to get info, or <a href="#" id="graph-select-all">select all nodes</a>.</p>
         </div>
     </div>
 </div>
@@ -75,6 +77,8 @@
 </div><!-- /.modal -->
 
 {% include "investigation/graph_templates.html" %}
+{% include "actions_templates.html" %}
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/actions.js') }}"></script>
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/graph.js') }}"></script>
 
 <script type="text/javascript">

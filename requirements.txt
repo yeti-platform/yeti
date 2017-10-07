@@ -4,7 +4,7 @@ ipaddress
 urlnorm
 celery
 idna
-requests
+requests>2.10.0
 lxml
 dnspython
 flask-classy
@@ -25,4 +25,9 @@ geoip2
 psutil
 shodan
 python-magic
-hammock
+pdfkit
+pdfminer
+html2text
+readability-lxml
+beautifulsoup4
+requests[socks]

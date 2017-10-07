@@ -43,3 +43,8 @@
 # name = MISP_1
 # url = MISP_URL
 # key = MISP_AUTH_KEY
+
+[proxy]
+
+# http = socks5://user:pass@host:port
+# https = socks5://user:pass@host:port

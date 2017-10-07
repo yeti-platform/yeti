@@ -26,9 +26,27 @@
                 {{investigation.name}}
                 <a href="{{url_for('frontend.InvestigationView:delete', id=investigation.id)}}" class="btn btn-danger btn-xs pull-right object-delete" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</a>
                 <a href="{{url_for('frontend.InvestigationView:graph', id=investigation.id)}}" class="btn btn-default btn-xs pull-right"><i class="flaticon-network38"></i> Go To Graph</a>
+                {% if investigation.import_text %}
+                    <a id="show_import" href="#" class="btn btn-default btn-xs pull-right"><i class="glyphicon glyphicon-paperclip"></i> See Import Source</a>
+                    <a id="show_description" href="#" class="hide btn btn-default btn-xs pull-right"><i class="glyphicon glyphicon-align-left"></i> See Description</a>
+                {% endif %}
             </h3>
           </div>
-          <div class="panel-body markdown-text hide">{% if investigation.description %}{{investigation.description}}{%else%}No description provided{%endif%}</div>
+          <div id="investigation_description" class="panel-body markdown-text">{% if investigation.description %}{{investigation.description}}{%else%}No description provided{%endif%}</div>
+          {% if investigation.import_text %}
+              <div id="investigation_source" class="hide">
+                  {% if investigation.import_document and investigation.import_document.content_type == "application/pdf" %}
+                  <div class="pdfviewer">
+                      <iframe id="pdfviewer" src="{{ url_for('static', filename='pdfjs-dist-viewer-min/build/minified/web/viewer.html', file=url_for('api.AttachedFiles:get', id=investigation.import_document.id)) }}">
+                      </iframe>
+                  </div>
+                  {% elif investigation.import_md %}
+                    <div class="panel-body markdown-text">{{investigation.import_md}}</div>
+                  {% else %}
+                      <div class="panel-body"><pre>{{investigation.import_text}}</pre></div>
+                  {% endif %}
+              </div>
+           {% endif %}
         </div>
 
       </div>
@@ -46,7 +64,7 @@
       <div class="panel-body">
         <table class="table table-condensed main-table">
           {% for key, value in investigation.info().items() %}
-          {% if key not in ["links", "nodes", "events", "name"] %}
+          {% if key not in ["_id", "links", "nodes", "events", "name", "import_document", "import_text", "import_md"] %}
             <tr><th>{{key}}</th><td>{{macros.display_yeti(investigation, key)}}</td></tr>
           {% endif %}
           {% endfor %}
@@ -161,4 +179,5 @@
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/crud.js') }}" charset="utf-8"></script>
+<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/import.js') }}" charset="utf-8"></script>
 {%endblock%}
