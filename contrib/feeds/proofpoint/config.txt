@@ -1,0 +1,11 @@
+[proofpoint]
+
+# The ProofPoint API credentials set must be obtained by an Tenant administrator
+api_user = 12345678-1234-1234-1234-1234585686896896
+api_password = wiq3890ijwdfwefwe8f9fwehiofwehkefwhiwefiohwefohi...
+
+# Then Tenant id is the uuid showing in the Web_UI queries
+tenant_id = 09872137821783-1234-1234-1234-121239086896896
+
+# do we want email metadata
+import_email_metadata = False
