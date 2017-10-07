@@ -9,7 +9,8 @@ from bson.json_util import loads
 from core.helpers import iterify
 from core import investigation
 from core.web.api.crud import CrudApi, CrudSearchApi
-from core.observables import Observable
+from core.observables import *
+from core.investigation import ImportResults
 from core.entities import Entity
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
@@ -65,3 +66,41 @@ class Investigation(CrudApi):
                 result.append(node.to_mongo())
 
         return render(result)
+
+    @route('/import_results/<string:id>')
+    @requires_permissions('read')
+    def import_results(self, id):
+        results = get_object_or_404(ImportResults, id=id)
+
+        return render(results.to_mongo())
+
+    @route('/bulk_add/<string:id>', methods=['POST'])
+    @requires_permissions('write')
+    def bulk_add(self, id):
+        i = get_object_or_404(self.objectmanager, id=id)
+        data = loads(request.data)
+        nodes = []
+
+        response = {
+            'status': 'ok',
+            'message': ''
+        }
+
+        try:
+            for node in data['nodes']:
+                if node['type'] in globals() and issubclass(globals()[node['type']], Observable):
+                    _type = globals()[node['type']]
+
+                n = _type.get_or_create(value=node['value'])
+                if node['new_tags']:
+                    n.tag(node['new_tags'].split(', '))
+                nodes.append(n)
+
+            i.add([], nodes)
+        except Exception, e:
+            response = {
+                'status': 'error',
+                'message': str(e)
+            }
+
+        return render(response)

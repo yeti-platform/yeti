@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from datetime import timedelta
 
+from plugins.analytics.public.process_url import ProcessUrl
 from core.analytics import ScheduledAnalytics
 from mongoengine import Q
 
@@ -26,5 +27,6 @@ class PropagateBlocklist(ScheduledAnalytics):
             for link in n[0]:
                 link[1].tag('blocklist')
         else:
-            h = ScheduledAnalytics.objects.get(name="ProcessUrl").each(obj)
-            h.tag('blocklist')
+            h = ProcessUrl.each(obj)
+            if h is not None:
+                h.tag('blocklist')

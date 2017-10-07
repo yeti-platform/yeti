@@ -135,6 +135,7 @@ function refresh_table(form) {
     url: form.data("url"),
     success: function(data) {
       $("#"+form.data('target')).html(data);
+      $("#"+form.data('target')).trigger('refresh');
     },
     complete: function(observables) {
       $("#spinner").toggle();

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from core.analytics import OneShotAnalytics
 from core.observables import Observable, Hostname
+from core.config.config import yeti_config
 
 
 class DNSDBApi(object):
@@ -68,7 +69,7 @@ class DNSDBApi(object):
 
         url = "{}/{}/{}/{}".format(DNSDBApi.API_URL, type, obs_type, observable.value)
 
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code == 200:
             records = []
@@ -94,7 +95,8 @@ class DNSDBApi(object):
 class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
 
     default_values = {
-        "name": "DNSDB Reverse Passive DNS",
+        "group": "DNSDB",
+        "name": "Reverse Passive DNS",
         "description": "Perform passive DNS reverse lookups on domain names or IP addresses."
     }
 
@@ -108,7 +110,8 @@ class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
 class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
 
     default_values = {
-        "name": "DNSDB Passive DNS",
+        "group": "DNSDB",
+        "name": "Passive DNS",
         "description": "Perform passive DNS lookups on domain names."
     }
 

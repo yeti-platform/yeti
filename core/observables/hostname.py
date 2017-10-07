@@ -1,54 +1,44 @@
 from __future__ import unicode_literals
 
-import re
-
 import idna
 from mongoengine import BooleanField, StringField
 from tldextract import extract
 
+from core.errors import ObservableValidationError
 from core.observables import Observable
 from core.helpers import refang
-from core.errors import ObservableValidationError
 
 
 class Hostname(Observable):
 
-    # TODO: Use a smarter regex
-    regex = r"((.+\.)(.+))\.?"
+    main_regex = r'[-.\w[\]]+\[?\.\]?[\w]+'
+    regex = r'(?P<pre>\W?)(?P<search>' + main_regex + ')(?P<post>\W?)'
 
     domain = BooleanField()
     idna = StringField()
 
     DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("domain", "Domain?"), ("idna", "IDNA")]
 
-    def clean(self):
-        """Performs some normalization on hostnames before saving to the db"""
-        try:
-            self.normalize(self.value)
-        except Exception:
-            raise ObservableValidationError("Invalid hostname: {}".format(self.value))
+    @classmethod
+    def is_valid(cls, match):
+        # Check that the domain is not preceded or followed by a '/'
+        # This ensures that we do not match URLs
+        if match.group('pre') != '/' and match.group('post') != '/':
+            # Check that the domain is valid (by checking TLD)
+            value = refang(match.group('search'))
 
-    def normalize(self, hostname):
-        hostname = Hostname.check_type(hostname)
-        if not hostname:
-            raise ObservableValidationError("Invalid Hostname (check_type={}): {}".format(Hostname.check_type(hostname), hostname))
-        self.value = unicode(hostname.lower())
-        try:
-            self.idna = unicode(idna.encode(hostname.lower()))
-        except idna.core.InvalidCodepoint:
-            pass
-
-    @staticmethod
-    def check_type(txt):
-        hostname = refang(txt.lower())
-        if hostname:
-            match = re.match("^" + Hostname.regex + "$", hostname)
-            if match:
-                if hostname.endswith('.'):
-                    hostname = hostname[:-1]
-
-                parts = extract(hostname)
+            if len(value) <= 255:
+                parts = extract(value)
                 if parts.suffix and parts.domain:
-                    return hostname
+                    return True
 
         return False
+
+    def normalize(self):
+        self.value = refang(self.value.lower())
+        try:
+            self.idna = unicode(idna.encode(self.value))
+        except idna.core.InvalidCodepoint:
+            pass
+        except Exception, e:
+            raise ObservableValidationError(e.message)

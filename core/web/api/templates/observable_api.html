@@ -3,7 +3,7 @@
 {% for observable in data %}
     {% if loop.first %}
         <table class="table table-condensed yeti-table table-hover">
-          <tr>{% if links %}{% if link_write %}<th class="icon-cell"></th>{%endif%}<th>Timeframe</th><th>Link</th>{%endif%}<th></th><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
+          <tr>{% if links %}{% if link_write %}<th class="icon-cell"></th>{%endif%}<th>Timeframe</th><th>Link</th>{%endif%}<th></th><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th><th>Source</th></tr>
     {% endif %}
       <tr class="node-line" data-id="{{observable['id']}}" {%if links%} data-element-id="{{links[loop.index0].id}}" {%endif%}>
         {% if links %}
@@ -16,6 +16,7 @@
         <td>{{macros.display_tags(observable['tags'])}}</td>
         <td>{{ observable['context']|join(', ', attribute='source')}}</td>
         <td>{{macros.display_datetime(observable['created'])}}</td>
+        <td>{{ observable['sources']|join(', ')}}</td>
       </tr>
 
     {% if loop.last %}

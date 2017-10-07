@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}
+Investigations - Import
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+	<li>Investigations</li>
+    <li class="active">Import</li>
+</ol>
+{% endblock %}
+
+{% block main %}
+    <form method="post" action="{{url_for('frontend.InvestigationView:inv_import')}}" enctype="multipart/form-data">
+        <h3>Import from text</h3>
+        <textarea class="form-control" name="text" rows=14></textarea>
+        <h3>From a URL</h3>
+        <input class="form-control" type="text" name="url" placeholder="https://blog.com/post" />
+        <h3>Or from a file</h3>
+        <input type=file name="file" /><br />
+        <input class="btn btn-primary" type="submit" value="Start Import" />
+    </form>
+{% endblock %}
+
+{% block custom_head %}
+<script type="text/javascript" src="{{ url_for('static', filename='handlebars/dist/handlebars.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/import.js") }}" charset="utf-8"></script>
+{% endblock %}

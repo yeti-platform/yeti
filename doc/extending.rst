@@ -97,3 +97,9 @@ Pushing into production
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Once the feed is in its corresponding directory, it will show up in the URL ``/dataflows``. Any errors raised by the feeds will show up here. Feeds can also be individually refreshed or toggled. A green row confirms that your feed is up and running!
+
+
+Contributing
+------------
+
+Want to contribute? Awesome! Please follow the instructions in `contrib <https://github.com/yeti-platform/yeti/tree/master/contrib/>`_ to make sure everything goes smoothly.

@@ -7,7 +7,7 @@ Installing Yeti is pretty straightforward. This procedure was tested on Ubuntu 1
 
 Install dependencies::
 
-  $ sudo apt-get install build-essential git python-dev mongodb redis-server libxml2-dev libxslt-dev zlib1g-dev python-virtualenv
+  $ sudo apt-get install build-essential git python-dev mongodb redis-server libxml2-dev libxslt-dev zlib1g-dev python-virtualenv wkhtmltopdf
 
 Install Yarn::
 
