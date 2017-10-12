@@ -27,32 +27,28 @@ class VirustotalApi(object):
     }
 
     @staticmethod
-    def get_ip_report(ip, api_key):
+    def fetch(observable, api_key):
         try:
-            params = BASE_IP_PARAMS
-            params['ip'] = ip
-            params['apikey'] = api_key
-            response = urllib.urlopen('%s?%s' % (BASE_IP_URL, urllib.urlencode(params))).read()
+            response = None
+            if isinstance(observable, Hostname):
+                params = BASE_URL_PARAMS
+                params['resource'] = observable.value
+                params['apikey'] = api_key
+                response = urllib.urlopen('%s?%s' % (BASE_URL_URL, urllib.urlencode(params)))
+            elif isinstance(observable, Ip):
+                params = BASE_IP_PARAMS
+                params['ip'] = observable.value
+                response = urllib.urlopen('%s?%s' % (BASE_IP_URL, urllib.urlencode(params)))
+
             if response.code == 200:
                 # self.last_query['time'] = datetime.now()
                 # self.last_query['count'] += 1
-                return response
+                return response.read()
+            else:
+                return None
         except Exception as e:
             print 'Exception while getting ip report %s' % e.message
-
-    @staticmethod
-    def get_url_report(url, api_key):
-        try:
-            params = BASE_URL_PARAMS
-            params['resource'] = url
-            params['apikey'] = api_key
-            response = urllib.urlopen('%s?%s' % (BASE_URL_URL, urllib.urlencode(params))).read()
-            if response.code == 200:
-                # self.last_query['time'] = datetime.now()
-                # self.last_query['count'] += 1
-                return response
-        except Exception as e:
-            print 'Exception while getting url report %s' % e.message
+            return None
 
 
 class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
@@ -66,14 +62,7 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
     @staticmethod
     def analyze(observable, results):
         links = set()
-        apikey = results.settings['virutotal_api_key']
-        result = None
-
-        if isinstance(observable, Hostname):
-            result = VirustotalApi.get_url_report(observable, apikey)
-        elif isinstance(observable, Ip):
-            result = VirustotalApi.get_ip_report(observable, apikey)
-
+        result = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
         results.update(raw=pformat(result))
 
         if 'tags' in result and result['tags'] is not None:
