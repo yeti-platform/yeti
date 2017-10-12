@@ -31,4 +31,3 @@ html2text
 readability-lxml
 beautifulsoup4
 requests[socks]
-virustotal==1.0.3
