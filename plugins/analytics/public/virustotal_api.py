@@ -15,7 +15,7 @@ class VirustotalApi(object):
     def fetch(observable, api_key):
         try:
             vt = virustotal.VirusTotal(api_key)
-            r = vt.get(observable)
+            r = vt.get(observable.value)
         except Exception:
             raise
         return r
