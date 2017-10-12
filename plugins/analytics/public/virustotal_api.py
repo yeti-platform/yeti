@@ -41,6 +41,7 @@ class VirustotalApi(object):
             elif isinstance(observable, Ip):
                 params = BASE_IP_PARAMS
                 params['ip'] = observable.value
+                params['apikey'] = api_key
                 response = urllib.urlopen('%s?%s' % (BASE_IP_URL, urllib.urlencode(params)))
 
             if response.code == 200:
@@ -66,8 +67,8 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
     def analyze(observable, results):
         links = set()
         response = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
-        results.update(raw=pformat(response))
         json_result = json.loads(response)
+        results.update(raw=json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': ')))
         result = {}
 
         if isinstance(observable, Ip):
