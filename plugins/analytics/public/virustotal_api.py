@@ -20,9 +20,9 @@ class VirustotalApi(object):
     limit rejection, as it could cause api key deactivation.
     """
     settings = {
-        "virutotal_api_key": {
-            "name": "Virustotal API Key",
-            "description": "API Key provided by virustotal.com."
+        'virutotal_api_key': {
+            'name': 'Virustotal API Key',
+            'description': 'API Key provided by virustotal.com.'
         }
     }
 
@@ -53,20 +53,17 @@ class VirustotalApi(object):
 
 class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
     default_values = {
-        "name": "Virustotal",
-        "description": "Perform a Virustotal query."
+        'name': 'Virustotal',
+        'description': 'Perform a Virustotal query.',
     }
 
-    ACTS_ON = "Ip"
+    ACTS_ON = ['Ip', 'Hostname']
 
     @staticmethod
     def analyze(observable, results):
         links = set()
         result = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
         results.update(raw=pformat(result))
-
-        if 'tags' in result and result['tags'] is not None:
-            observable.tag(result['tags'])
 
         for context in observable.context:
             if context['source'] == 'virustotal_query':
