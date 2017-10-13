@@ -74,27 +74,27 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
         if isinstance(observable, Ip):
             # Parse results for ip
-            if json_result['as_owner'] and json_result['as_owner'] is not None:
+            if 'as_owner' in json_result and json_result['as_owner'] is not None:
                 result['Owner'] = json_result['as_owner']
                 o_isp = Company.get_or_create(name=json_result['as_owner'])
                 links.update(observable.active_link_to(o_isp, 'hosting', VT_QUERY))
 
-            if json_result['detected_urls'] and json_result['detected_urls'] is not None:
+            if 'detected_urls' in json_result and json_result['detected_urls'] is not None:
                 result['detected_urls'] = json_result['detected_urls']
                 for detected_url in json_result['detected_urls']:
                     o_url = Url.get_or_create(value=detected_url['url'])
                     links.update(o_url.active_link_to(o_url, 'hostname', VT_QUERY))
 
         elif isinstance(observable, Hostname):
-            if json_result['permalink'] and json_result['permalink'] is not None:
+            if 'permalink' in json_result and json_result['permalink'] is not None:
                 result['permalink'] = json_result['permalink']
 
-            if json_result['positives'] and json_result['positives'] is not None:
+            if 'positives' in json_result and json_result['positives'] is not None:
                 result['positives'] = json_result['positives']
             else:
                 result['positives'] = 0
 
-            if json_result['total'] and json_result['total'] is not None:
+            if 'total' in json_result and json_result['total'] is not None:
                 result['total'] = json_result['total']
 
         for context in observable.context:
