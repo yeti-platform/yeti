@@ -69,7 +69,8 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
         response = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
         json_result = json.loads(response)
         results.update(raw=json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': ')))
-        result = {}
+        result = dict()
+        result['raw'] = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
 
         if isinstance(observable, Ip):
             # Parse results for ip
@@ -90,6 +91,8 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
             if json_result['positives'] and json_result['positives'] is not None:
                 result['positives'] = json_result['positives']
+            else:
+                result['positives'] = 0
 
             if json_result['total'] and json_result['total'] is not None:
                 result['total'] = json_result['total']
