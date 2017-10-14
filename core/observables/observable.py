@@ -186,7 +186,7 @@ class Observable(Node):
             for old_tag in old_tags:
                 o.change_tag(old_tag, new_tag)
 
-    def add_context(self, context, replace_source=None):
+    def add_context(self, context, replace_source=None, dedup_list=[]):
         """Adds context to an Observable.
 
         "Context" is represented by a JSON object (or Python ``dict()``) that will
@@ -200,7 +200,9 @@ class Observable(Node):
             context: a JSON object representing the context to be added.
             replace_source: If defined, contexts having a ``source`` attribute
                             set to ``replace_source`` will be deleted before insert
-
+            dedup_list: takes a list of fields to ignore during dedup comparison.
+                         i.e. date/count type fields. Empty list will skip the partial
+                         dedup as dedup for the exact same context is already builtin.
         Returns:
             A fresh instance of the Observable as it exists in the database.
 
@@ -211,6 +213,17 @@ class Observable(Node):
             # This does not work : cannot traverse and set context atomically
             # self.modify({"context__source": c}, set__context__S=context)
             self.modify(pull__context__source=replace_source)
+        if dedup_list:
+            for c in self.context:
+                remove = True
+                for key in c:
+                    if key in dedup_list:
+                        continue
+                    if c[key] != context.get(key, ''):
+                        remove = False
+                        break
+                if remove:
+                    self.modify(pull__context=c)
         self.modify(add_to_set__context=context)
 
         return self.reload()

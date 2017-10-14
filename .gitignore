@@ -18,6 +18,10 @@ develop-eggs
 lib
 lib64
 __pycache__
+/local
+/include
+/share
+pip-selfcheck.json
 
 # Installer logs
 pip-log.txt
