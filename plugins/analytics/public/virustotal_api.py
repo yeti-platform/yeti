@@ -1,15 +1,8 @@
 from core.analytics import OneShotAnalytics
 from core.observables import Hostname, Ip, Url
 from core.entities import Company
-import urllib
+import requests
 import json
-
-
-BASE_IP_URL = 'https://www.virustotal.com/vtapi/v2/ip-address/report'
-BASE_URL_URL = 'https://www.virustotal.com/vtapi/v2/url/report'
-BASE_IP_PARAMS = {'ip': None, 'apikey': None}
-BASE_URL_PARAMS = {'resource': None, 'apikey': None}
-VT_QUERY = 'Virustotal Query'
 
 
 class VirustotalApi(object):
@@ -30,27 +23,36 @@ class VirustotalApi(object):
 
     @staticmethod
     def fetch(observable, api_key):
+        """
+        :param observable: The extended observable klass
+        :param api_key: The api key obtained from VirusTotal
+        :return:  virustotal json response or None if error
+        """
         try:
             response = None
             if isinstance(observable, Hostname):
-                params = BASE_URL_PARAMS
+                params = dict()
                 params['resource'] = observable.value
                 params['apikey'] = api_key
-                response = urllib.urlopen('%s?%s' % (BASE_URL_URL, urllib.urlencode(params)))
+                # response = urllib.urlopen()
+                response = requests.get('https://www.virustotal.com/vtapi/v2/url/report', params)
+
             elif isinstance(observable, Ip):
-                params = BASE_IP_PARAMS
+                """ 
+                VirusTotal base url: https://www.virustotal.com/vtapi/v2/ip-address/report
+                Params required: ip, key
+                """
+                params = dict()
                 params['ip'] = observable.value
                 params['apikey'] = api_key
-                response = urllib.urlopen('%s?%s' % (BASE_IP_URL, urllib.urlencode(params)))
+                response = requests.get('https://www.virustotal.com/vtapi/v2/ip-address/report', params)
 
-            if response.code == 200:
-                # self.last_query['time'] = datetime.now()
-                # self.last_query['count'] += 1
-                return response.read()
+            if response.ok:
+                return response.json()
             else:
                 return None
         except Exception as e:
-            print 'Exception while getting ip report %s' % e.message
+            print 'Exception while getting ip report {}'.format(e.message)
             return None
 
 
@@ -73,27 +75,27 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
         if isinstance(observable, Ip):
             # Parse results for ip
-            if 'as_owner' in json_result and json_result['as_owner'] is not None:
+            if json_result.get('as_owner') and json_result['as_owner'] is not None:
                 result['Owner'] = json_result['as_owner']
                 o_isp = Company.get_or_create(name=json_result['as_owner'])
-                links.update(observable.active_link_to(o_isp, 'hosting', VT_QUERY))
+                links.update(observable.active_link_to(o_isp, 'hosting', 'virustotal_query'))
 
-            if 'detected_urls' in json_result and json_result['detected_urls'] is not None:
+            if json_result.get('detected_urls') and json_result['detected_urls'] is not None:
                 result['detected_urls'] = json_result['detected_urls']
                 for detected_url in json_result['detected_urls']:
                     o_url = Url.get_or_create(value=detected_url['url'])
-                    links.update(o_url.active_link_to(o_url, 'hostname', VT_QUERY))
+                    links.update(o_url.active_link_to(o_url, 'hostname', 'virustotal_query'))
 
         elif isinstance(observable, Hostname):
-            if 'permalink' in json_result and json_result['permalink'] is not None:
+            if json_result.get('permalink') and json_result['permalink'] is not None:
                 result['permalink'] = json_result['permalink']
 
-            if 'positives' in json_result and json_result['positives'] is not None:
+            if json_result.get('positives') and json_result['positives'] is not None:
                 result['positives'] = json_result['positives']
             else:
                 result['positives'] = 0
 
-            if 'total' in json_result and json_result['total'] is not None:
+            if json_result.get('total') and json_result['total'] is not None:
                 result['total'] = json_result['total']
 
         for context in observable.context:
