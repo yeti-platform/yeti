@@ -67,8 +67,7 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
     @staticmethod
     def analyze(observable, results):
         links = set()
-        response = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
-        json_result = json.loads(response)
+        json_result = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
         results.update(raw=json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': ')))
         result = dict()
         result['raw'] = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
