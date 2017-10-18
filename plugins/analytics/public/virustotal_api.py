@@ -38,10 +38,6 @@ class VirustotalApi(object):
                 response = requests.get('https://www.virustotal.com/vtapi/v2/url/report', params)
 
             elif isinstance(observable, Ip):
-                """ 
-                VirusTotal base url: https://www.virustotal.com/vtapi/v2/ip-address/report
-                Params required: ip, key
-                """
                 params = dict()
                 params['ip'] = observable.value
                 params['apikey'] = api_key
