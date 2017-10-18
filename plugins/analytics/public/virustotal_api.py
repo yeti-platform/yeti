@@ -1,8 +1,11 @@
+from __future__ import unicode_literals
+
+import json
+
 from core.analytics import OneShotAnalytics
 from core.observables import Hostname, Ip, Url
 from core.entities import Company
 import requests
-import json
 
 
 class VirustotalApi(object):
@@ -31,16 +34,11 @@ class VirustotalApi(object):
         try:
             response = None
             if isinstance(observable, Hostname):
-                params = dict()
-                params['resource'] = observable.value
-                params['apikey'] = api_key
-                # response = urllib.urlopen()
+                params = {'resource': observable.value, 'apikey': api_key}
                 response = requests.get('https://www.virustotal.com/vtapi/v2/url/report', params)
 
             elif isinstance(observable, Ip):
-                params = dict()
-                params['ip'] = observable.value
-                params['apikey'] = api_key
+                params = {'ip': observable.value, 'apikey': api_key}
                 response = requests.get('https://www.virustotal.com/vtapi/v2/ip-address/report', params)
 
             if response.ok:
@@ -64,9 +62,9 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
     def analyze(observable, results):
         links = set()
         json_result = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
-        results.update(raw=json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': ')))
-        result = dict()
-        result['raw'] = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
+        json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
+        results.update(raw=json_string)
+        result = {'raw': json_string}
 
         if isinstance(observable, Ip):
             # Parse results for ip
@@ -85,18 +83,11 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
             if json_result.get('permalink'):
                 result['permalink'] = json_result['permalink']
 
-            if json_result.get('positives'):
-                result['positives'] = json_result['positives']
-            else:
-                result['positives'] = 0
+            result['positives'] = json_result.get('positives', 0)
 
             if json_result.get('total'):
                 result['total'] = json_result['total']
 
-        for context in observable.context:
-            if context['source'] == 'virustotal_query':
-                break
-        else:
-            result['source'] = 'virustotal_query'
-            observable.add_context(result)
+        result['source'] = 'virustotal_query'
+        observable.add_context(result)
         return list(links)
