@@ -36,11 +36,13 @@ ln -s /etc/nginx/sites-available/yeti /etc/nginx/sites-enabled/yeti
 service nginx restart
 
 # Start services
-sudo systemctl start yeti_uwsgi.service
+echo "[+] Starting services..."
 sudo systemctl start yeti_oneshot.service
+sleep 5
 sudo systemctl start yeti_feeds.service
 sudo systemctl start yeti_exports.service
 sudo systemctl start yeti_analytics.service
 sudo systemctl start yeti_beat.service
+sudo systemctl start yeti_uwsgi.service
 
 echo "[+] Yeti succesfully installed. Webserver listening on tcp/80"
