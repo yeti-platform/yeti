@@ -36,6 +36,9 @@ class Hostname(Observable):
 
     def normalize(self):
         self.value = refang(self.value.lower())
+        # Remove trailing dot if existing
+        if self.value.endswith("."):
+            self.value = self.value[:-1]
         try:
             self.idna = unicode(idna.encode(self.value))
         except idna.core.InvalidCodepoint:
