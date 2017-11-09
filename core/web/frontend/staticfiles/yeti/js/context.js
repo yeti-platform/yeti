@@ -52,7 +52,7 @@ function edit_context_listeners() {
     // swap controls
     panel.find(".context-edit").toggle();
     panel.find(".context-save").toggle();
-    panel.find(".context-delete").toggle();
+    panel.find(".context-delete").hide();
     panel.find(".more-context").toggle();
 
   });
