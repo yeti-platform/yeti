@@ -84,3 +84,7 @@ class InvestigationView(GenericView):
         observables = Observable.from_string(investigation.import_text)
 
         return render_template("{}/import_from.html".format(self.klass.__name__.lower()), investigation=investigation, observables=bson_renderer(observables))
+
+    def handle_form(self, *args, **kwargs):
+        kwargs['skip_validation'] = True
+        return super(InvestigationView, self).handle_form(*args, **kwargs)

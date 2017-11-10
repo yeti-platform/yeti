@@ -4,8 +4,8 @@ from flask_classy import FlaskView, route
 from flask import render_template, request, redirect, url_for, abort
 from mongoengine import NotUniqueError
 
-from core.errors import GenericValidationError
 from core.entities import Malware, Company, TTP, Actor
+from core.errors import  GenericValidationError
 from core.indicators import Regex
 from core.database import AttachedFile
 from core.web.helpers import get_object_or_404
@@ -80,7 +80,7 @@ class GenericView(FlaskView):
     def post_save(self, obj, request):
         pass
 
-    def handle_form(self, id=None, klass=None):
+    def handle_form(self, id=None, klass=None, skip_validation=False):
         if klass:  # create
             obj = klass()
             form = klass.get_form()(request.form)
@@ -93,7 +93,7 @@ class GenericView(FlaskView):
             form.populate_obj(obj)
             try:
                 self.pre_validate(obj, request)
-                obj = obj.save()
+                obj = obj.save(validate=not skip_validation)
                 self.post_save(obj, request)
             except GenericValidationError as e:
                 # failure - redirect to edit page
