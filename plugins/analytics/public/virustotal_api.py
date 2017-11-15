@@ -5,6 +5,7 @@ import json
 from core.analytics import OneShotAnalytics
 from core.observables import Hostname, Ip, Url
 from core.entities import Company
+from core.config.config import yeti_config
 import requests
 
 
@@ -35,11 +36,11 @@ class VirustotalApi(object):
             response = None
             if isinstance(observable, Hostname):
                 params = {'resource': observable.value, 'apikey': api_key}
-                response = requests.get('https://www.virustotal.com/vtapi/v2/url/report', params)
+                response = requests.get('https://www.virustotal.com/vtapi/v2/url/report', params, proxies=yeti_config.proxy)
 
             elif isinstance(observable, Ip):
                 params = {'ip': observable.value, 'apikey': api_key}
-                response = requests.get('https://www.virustotal.com/vtapi/v2/ip-address/report', params)
+                response = requests.get('https://www.virustotal.com/vtapi/v2/ip-address/report', params, proxies=yeti_config.proxy)
 
             if response.ok:
                 return response.json()
