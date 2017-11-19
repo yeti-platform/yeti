@@ -46,7 +46,7 @@ span.yeti-toggle {
   overflow-x: scroll;
 }
 
-.paginator {
+.paginator, .crud-paginator {
   cursor:pointer;
 }
 
