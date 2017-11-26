@@ -289,89 +289,78 @@ Try matching an new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``
   User-Agent: HTTPie/0.9.9
 
   {
-      "observables": [
-          "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
-      ]
+    "observables": [
+        "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
+    ]
   }
 
   HTTP/1.0 200 OK
-  Content-Length: 1707
+  Content-Length: 1449
   Content-Type: application/json
-  Date: Sun, 26 Nov 2017 17:57:08 GMT
+  Date: Sun, 26 Nov 2017 18:06:37 GMT
   Server: Werkzeug/0.11.15 Python/2.7.13
 
   {
-      "entities": [
-          {
-              "description": "Dridex is a common **banking trojan**.",
-              "family": "banker",
-              "human_url": "http://localhost:5000/entity/5a1add5c10c5537472a8cbd1",
-              "id": "5a1add5c10c5537472a8cbd1",
-              "matches": {
-                  "indicators": [
-                      {
-                          "description": "",
-                          "diamond": "target",
-                          "human_url": "http://localhost:5000/indicator/5a1ae41610c5537472a8cbd5",
-                          "id": "5a1ae41610c5537472a8cbd5",
-                          "location": "Filesystem",
-                          "matched_observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz",
-                          "name": "Dridex stolen data",
-                          "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
-                          "type": "Regex",
-                          "url": "http://localhost:5000/api/indicator/5a1ae41610c5537472a8cbd5"
-                      }
-                  ]
-              },
-              "name": "Dridex",
-              "tags": [
-                  "dridex"
-              ],
-              "type": "Malware",
-              "url": "http://localhost:5000/api/entity/5a1add5c10c5537472a8cbd1"
-          }
-      ],
-      "known": [],
-      "matches": [
-          {
-              "description": "",
-              "diamond": "target",
-              "human_url": "http://localhost:5000/indicator/5a1ae41610c5537472a8cbd5",
-              "id": "5a1ae41610c5537472a8cbd5",
-              "location": "Filesystem",
-              "name": "Dridex stolen data",
-              "observable": {
-                  "context": [],
-                  "created": "2017-11-26T17:57:08.176418",
-                  "description": null,
-                  "human_url": "http://localhost:5000/observable/None",
-                  "last_analyses": {},
-                  "sources": [],
-                  "tags": [],
-                  "type": "Path",
-                  "url": "http://localhost:5000/api/observable/None",
-                  "value": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
-              },
-              "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
-              "related": [
-                  {
-                      "entity": "Malware",
-                      "link_description": "Indicates",
-                      "name": "Dridex"
-                  }
-              ],
-              "suggested_tags": [
-                  "dridex",
-                  "banker"
-              ],
-              "type": "Regex",
-              "url": "http://localhost:5000/api/indicator/5a1ae41610c5537472a8cbd5"
-          }
-      ],
-      "neighbors": [],
-      "unknown": [
-          "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
-      ]
+    "entities": [
+        {
+            "description": "Dridex is a common **banking trojan**.",
+            "family": "banker",
+            "human_url": "http://localhost:5000/entity/5a1add5c10c5537472a8cbd1",
+            "id": "5a1add5c10c5537472a8cbd1",
+            "matches": {
+                "indicators": [
+                    {
+                        "description": "",
+                        "diamond": "target",
+                        "human_url": "http://localhost:5000/indicator/5a1ae41610c5537472a8cbd5",
+                        "id": "5a1ae41610c5537472a8cbd5",
+                        "location": "Filesystem",
+                        "matched_observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz",
+                        "name": "Dridex stolen data",
+                        "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
+                        "type": "Regex",
+                        "url": "http://localhost:5000/api/indicator/5a1ae41610c5537472a8cbd5"
+                    }
+                ]
+            },
+            "name": "Dridex",
+            "tags": [
+                "dridex"
+            ],
+            "type": "Malware",
+            "url": "http://localhost:5000/api/entity/5a1add5c10c5537472a8cbd1"
+        }
+    ],
+    "known": [],
+    "matches": [
+        {
+            "description": "",
+            "diamond": "target",
+            "human_url": "http://localhost:5000/indicator/5a1ae41610c5537472a8cbd5",
+            "id": "5a1ae41610c5537472a8cbd5",
+            "location": "Filesystem",
+            "name": "Dridex stolen data",
+            "observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz",
+            "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
+            "related": [
+                {
+                    "entity": "Malware",
+                    "link_description": "Indicates",
+                    "name": "Dridex"
+                }
+            ],
+            "suggested_tags": [
+                "dridex",
+                "banker"
+            ],
+            "type": "Regex",
+            "url": "http://localhost:5000/api/indicator/5a1ae41610c5537472a8cbd5"
+        }
+    ],
+    "neighbors": [],
+    "unknown": [
+        "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
+    ]
   }
 
 
