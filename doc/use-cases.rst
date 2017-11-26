@@ -272,7 +272,113 @@ all observables with a value matching the regular expression ``r"Roaming"``::
 
 
 We can also match observables against indicators, just like in the "Search & Add"
-page.
+page. This is typically what you'd want to implement in your sandbox's code, so
+that it can **automatically query Yeti with any observables it finds** and return any interesting
+results based on your intelligence!
+
+Try matching an new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``::
+
+  $ http -jvv POST http://localhost:5000/api/analysis/match observables:='["C:\\\\Users\\\\admin\\\\AppData\\\\Roaming\\\\Ijhsz"]'
+  POST /api/analysis/match HTTP/1.1
+  Accept: application/json, */*
+  Accept-Encoding: gzip, deflate
+  Connection: keep-alive
+  Content-Length: 62
+  Content-Type: application/json
+  Host: localhost:5000
+  User-Agent: HTTPie/0.9.9
+
+  {
+      "observables": [
+          "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
+      ]
+  }
+
+  HTTP/1.0 200 OK
+  Content-Length: 1707
+  Content-Type: application/json
+  Date: Sun, 26 Nov 2017 17:57:08 GMT
+  Server: Werkzeug/0.11.15 Python/2.7.13
+
+  {
+      "entities": [
+          {
+              "description": "Dridex is a common **banking trojan**.",
+              "family": "banker",
+              "human_url": "http://localhost:5000/entity/5a1add5c10c5537472a8cbd1",
+              "id": "5a1add5c10c5537472a8cbd1",
+              "matches": {
+                  "indicators": [
+                      {
+                          "description": "",
+                          "diamond": "target",
+                          "human_url": "http://localhost:5000/indicator/5a1ae41610c5537472a8cbd5",
+                          "id": "5a1ae41610c5537472a8cbd5",
+                          "location": "Filesystem",
+                          "matched_observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz",
+                          "name": "Dridex stolen data",
+                          "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
+                          "type": "Regex",
+                          "url": "http://localhost:5000/api/indicator/5a1ae41610c5537472a8cbd5"
+                      }
+                  ]
+              },
+              "name": "Dridex",
+              "tags": [
+                  "dridex"
+              ],
+              "type": "Malware",
+              "url": "http://localhost:5000/api/entity/5a1add5c10c5537472a8cbd1"
+          }
+      ],
+      "known": [],
+      "matches": [
+          {
+              "description": "",
+              "diamond": "target",
+              "human_url": "http://localhost:5000/indicator/5a1ae41610c5537472a8cbd5",
+              "id": "5a1ae41610c5537472a8cbd5",
+              "location": "Filesystem",
+              "name": "Dridex stolen data",
+              "observable": {
+                  "context": [],
+                  "created": "2017-11-26T17:57:08.176418",
+                  "description": null,
+                  "human_url": "http://localhost:5000/observable/None",
+                  "last_analyses": {},
+                  "sources": [],
+                  "tags": [],
+                  "type": "Path",
+                  "url": "http://localhost:5000/api/observable/None",
+                  "value": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
+              },
+              "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
+              "related": [
+                  {
+                      "entity": "Malware",
+                      "link_description": "Indicates",
+                      "name": "Dridex"
+                  }
+              ],
+              "suggested_tags": [
+                  "dridex",
+                  "banker"
+              ],
+              "type": "Regex",
+              "url": "http://localhost:5000/api/indicator/5a1ae41610c5537472a8cbd5"
+          }
+      ],
+      "neighbors": [],
+      "unknown": [
+          "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
+      ]
+  }
+
+
+Ingesting and enriching a third-party report
+--------------------------------------------
+
+
 
 
 Creating a blocklist
