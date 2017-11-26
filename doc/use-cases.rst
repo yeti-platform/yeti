@@ -1,5 +1,5 @@
-Getting started
-===============
+Use-cases
+=========
 
 So Yeti sounds cool, but how to I actually use it? Glad you asked. even though
 great efforts have been made to "build the manual into the UI", it's natural
@@ -15,23 +15,19 @@ knowledge on threat actors in a single, unified repository. Ideally, this
 repository should be queryable in an automated way by other tools (spoiler:
 it is!)
 
-Malware stolen data
--------------------
+Documenting malware intelligence
+--------------------------------
 
-You just analyzed the latest Dridex sample and you figured out that it's using
-a subdirectory in the user's ``Roaming`` directory to store its data, and you'd
-like to document this. *(Whether this is a strong indicator or not is another
-story)*.
-
-You start by adding a new **Entity** of type **Malware** called Dridex. Navigate
-to **New > Malware**, and populate the fields.
+Your sandbox just spat out its analysis of the latest Dridex sample and you
+figured out that it's using a subdirectory in the user's ``Roaming`` directory
+to store the data it steals. You'd like to document this so that another analyst
+can quickly know that this is typical Dridex behavior.
 
 Creating a Malware Entity
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You start by adding the observable in Yeti's repository. Navigate to
-**Observables > Search & Add** (which also happens to be the landing page). This page allows you
-to add one or more observables to the repository and tag them accordingly.
+You start by adding a new **Entity** of type **Malware** called Dridex. Navigate
+to **New > Malware**, and populate the fields.
 
 .. image:: _static/new_malware.png
 
@@ -39,7 +35,7 @@ Most fields are self-explanatory. As for the others:
 
 * **Tags that link to this entity** - Observables tagged with the Tags specified
   here will be linked to this Entity. See note below for more information.
-* **Bind to entities** - Allows you to bind this entity to another one. malware to TTPs, actors to malware, etc.
+* **Bind to entities** - Allows you to bind this entity to another one. Malware to TTPs, actors to malware, etc.
 * **Aliases** - Other known names for this entity. This field will be indexed in search too.
 
 .. note:: Tags are a way to quickly assess an Observable's context. Yeti also uses tags
@@ -71,6 +67,10 @@ Observables, you can specify one or more Tags for your observable as well as the
 Guessing should be fine for most observable types (URLs, IP addresses, hostnames)
 but make sure you specify it if it gets ambiguous (e.g. Bitcoin address vs. Hash).
 
+Let's add the following observable::
+
+  C:\Users\admin\AppData\Roaming\Adada\stolen.dat
+
 .. image:: _static/add_observable.png
 
 Click on **Launch** to launch the Search / Add procedure.
@@ -84,8 +84,9 @@ analyst searches for the same observable, they will leverage Yeti's database and
 see the newly created association (you can try this by just searching for your
 Observable again, with the "Add to database" checkbox off.).
 
-Going back to the Dridex page and selecting the "Observables" tab shows the link
-was successful. You can break the link between Entities and Observables by hovering
+You can navigate back to the Dridex page by clicking on the link under *Related
+Entities*. Notice how the "Observables" tab shows the link
+was successful. You can always break the link between Entities and Observables by hovering
 on the line and clicking the "Unlink" icon, as can be seen below:
 
 .. image:: _static/malware_observable.png
@@ -93,7 +94,7 @@ on the line and clicking the "Unlink" icon, as can be seen below:
 Adding indicators
 ^^^^^^^^^^^^^^^^^
 
-The following week, you run into a new sample of Dridex which has changed. It
+The following week, you run into a new sample of Dridex seems to have changed. It
 now stores its data in a random subdirectory under ``Roaming``. You've observed
 the following paths:
 
@@ -101,23 +102,29 @@ the following paths:
 * ``C:\Users\admin\AppData\Roaming\Thssk``
 * ``C:\Users\admin\AppData\Roaming\Lzmoo``
 
+At this point, it seems pretty clear that the subdirectory name consists of 1 uppercase letter
+followed by 3 lowercase letters, all chosen randomly.
 You add the three observables to the database as seen before, tagging them
 ``dridex``. But what if an analyst searches for
 ``C:\Users\admin\AppData\Roaming\Enxa`` or ``C:\Users\admin\AppData\Roaming\Xiwa``?
 This is precisely what indicators are for.
 
-Think of indicators as an "enhanced Observable". Indicators come in two flavors,
-simple regular expressions or Yara rules. When submitting Observables in "Search
-& Add", they will be compared to all the Indicators in Yeti's database and any
-matches will be displayed.
+Think of indicators as an "enhanced Observable". Indicators come in different flavors,
+simple regular expressions or Yara rules (other indicator types will be included in the future).
+When submitting Observables in "Search & Add", Yeti will run all your indicators on them
+and any matches will be put forward.
 
-Head over to **New > Regular expression** and complete as follows:
+Head over to **New > Regular expression** and complete the **Pattern** tab as follows::
+
+  [A-Z]:\\Users\\[a-z]+\\AppData\\Roaming\\[A-Z][a-z]{3}
+
+Make sure you add "Dridex" in the "Link with entities" field.
 
 .. image:: _static/indicator_new.png
 
 Short explanation on fields:
 
-* **Location** - This helps the analyst know where it can find this indicator.
+* **Location** - This helps the analyst know where they can find this indicator.
   This is free-text and useful values could be *Filesystem*, *HTTP headers*,
   *HTTP URI*, *Registry*, etc.
 * **Diamond edge** - Corresponding Diamond Model edge.
@@ -127,17 +134,31 @@ Short explanation on fields:
 
 .. image:: _static/indicator_dridex.png
 
-Note how the **Malware** tab now shows a link to the Dridex malware. Opening the
+Note how the **Malware** tab in the indicator page on the screenshot above now shows a link to the Dridex malware. Opening the
 Dridex entity and selecting the **Indicators** tab also reflects this
 relationship:
 
 .. image:: _static/dridex_indicators.png
 
+Good! Now any analysts who wonder if a weirdly-named directory under ``Roaming`` is
+actually malware, they can look it up in the **Observables > Search & Add** page with or without
+checking the "Add unknown" checkbox.
+
+.. image:: _static/indicator_match.png
+
+In our example, we haven't checked the "Add" checkbox, so we can add the observable
+and tag it directly from this page.
+
+.. note:: The "suggested tags" are generated by the Entity name and any associated tags the entity has.
+   In this case, Dridex is tagged with "dridex" and "banker".
+
+
 Automation
 ^^^^^^^^^^
 
 All this information can be queried from other software (think incident
-management platforms, forensic frameworks...) using Yeti's API::
+management platforms, forensic frameworks...) using Yeti's API. Let's search for
+all observables with a value matching the regular expression ``r"Roaming"``::
 
   $ http -vv --json POST localhost:5000/api/observablesearch/ filter:='{"value": "Roaming"}' params:='{"regex": "true"}'
   POST /api/observablesearch/ HTTP/1.1
@@ -248,6 +269,11 @@ management platforms, forensic frameworks...) using Yeti's API::
           "value": "C:\\Users\\tomchop\\AppData\\Roaming\\stolen.dat"
       }
   ]
+
+
+We can also match observables against indicators, just like in the "Search & Add"
+page.
+
 
 Creating a blocklist
 --------------------

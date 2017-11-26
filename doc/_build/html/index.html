@@ -86,7 +86,7 @@
             
                 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use-cases.html">Use-cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="objects.html">Yeti objects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extending.html">Extending Yeti</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">The API</a></li>
@@ -155,7 +155,41 @@
             
   <div class="section" id="welcome-to-yeti-s-documentation">
 <h1>Welcome to YETI&#8217;s documentation!<a class="headerlink" href="#welcome-to-yeti-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Yeti - your everyday Threat Intelligence is a platform that makes managing technical and tactical threat intelligence simple.</p>
+<p><strong>Useful links</strong></p>
+<ul class="simple">
+<li><a class="reference external" href="https://yeti-platform.github.io/">Project website &amp; blog</a></li>
+<li><a class="reference external" href="https://github.com/yeti-platform/yeti">Code repository</a></li>
+<li><a class="reference external" href="http://yeti-platform.readthedocs.io/en/latest/installation.html">Installation</a></li>
+<li><a class="reference external" href="http://yeti-platform.readthedocs.io/en/latest/getting-started.html">Getting started</a></li>
+</ul>
+<p>Yeti is a platform meant to organize observables, indicators of compromise,
+TTPs, and knowledge on threats in a single, unified repository. Yeti will also
+automatically enrich observables (e.g. resolve domains, geolocate IPs) so that
+you don&#8217;t have to. Yeti provides an interface for humans (shiny Bootstrap-based
+UI) and one for machines (web API) so that your other tools can talk nicely to
+it.</p>
+<p>Yeti was born out of frustration of having to answer the question &#8220;where have
+I seen this artifact before?&#8221; or Googling shady domains to tie them to a
+malware family.</p>
+<p>In a nutshell, Yeti allows you to:</p>
+<ul class="simple">
+<li>Submit observables and get a pretty good guess on the nature of the threat.</li>
+<li>Inversely, focus on a threat and quickly list all TTPs, Observables, and
+associated malware.</li>
+<li>Let responders skip the &#8220;Google the artifact&#8221; stage of incident response.</li>
+<li>Let analysts focus on adding intelligence rather than worrying about
+machine-readable export formats.</li>
+<li>Visualize relationship graphs between different threats.</li>
+</ul>
+<p>This is done by:</p>
+<ul class="simple">
+<li>Collecting and processing observables from a wide array of different sources
+(MISP instances, malware trackers, XML feeds, JSON feeds...)</li>
+<li>Providing a web API to automate queries (think incident management platform)
+and enrichment (think malware sandbox).</li>
+<li>Export the data in user-defined formats so that they can be ingested by
+third-party applications (think blocklists, SIEM).</li>
+</ul>
 <div class="section" id="contents">
 <h2>Contents:<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
@@ -163,22 +197,23 @@
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#quick-dirty">Quick &amp; dirty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation.html#production-use">Production use</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#web-interface-api">Web interface &amp; API</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#oneshot-analytics">Oneshot analytics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#feeds">Feeds</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#exports">Exports</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#analytics">Analytics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation.html#scheduler">Scheduler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#optimize-redis">Optimize redis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#install-systemd-services">Install systemd services</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#keeping-yeti-up-to-date">Keeping Yeti up-to-date</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="getting-started.html#malware-stolen-data">Malware stolen data</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="getting-started.html#creating-a-malware-entity">Creating a Malware Entity</a></li>
-<li class="toctree-l3"><a class="reference internal" href="getting-started.html#adding-observables">Adding Observables</a></li>
-<li class="toctree-l3"><a class="reference internal" href="getting-started.html#adding-indicators">Adding indicators</a></li>
-<li class="toctree-l3"><a class="reference internal" href="getting-started.html#automation">Automation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use-cases.html">Use-cases</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="use-cases.html#documenting-malware-intelligence">Documenting malware intelligence</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="use-cases.html#creating-a-malware-entity">Creating a Malware Entity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="use-cases.html#adding-observables">Adding Observables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="use-cases.html#adding-indicators">Adding indicators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="use-cases.html#automation">Automation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="use-cases.html#creating-a-blocklist">Creating a blocklist</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="use-cases.html#creating-an-export-template">Creating an export template</a></li>
 </ul>
 </li>
 </ul>
@@ -195,6 +230,7 @@
 <li class="toctree-l3"><a class="reference internal" href="extending.html#pushing-into-production">Pushing into production</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="extending.html#contributing">Contributing</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">The API</a><ul>

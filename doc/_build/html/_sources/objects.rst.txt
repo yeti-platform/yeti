@@ -1,7 +1,7 @@
 Yeti objects
 ============
 
-Yeti relies on several objects, bla bla bla.
+Yeti relies on several objects, which are defined here.
 
 Observables
 -----------

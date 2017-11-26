@@ -15,13 +15,13 @@ $(function() {
 
 function add_tag(elt) {
   tag = elt.data('tag');
-  uri = elt.closest('tr').data('uri');
+  url = elt.closest('tr').data('url');
 
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},
     contentType: "application/json",
-    url: uri,
+    url: url,
     data: JSON.stringify({"tags": tag}),
     success: function(data) {
       console.log(data);
@@ -52,11 +52,11 @@ function add_observable(elt) {
     data: JSON.stringify({"value": value}),
     success: function(data) {
       a = $("<a>");
-      a.attr("href", data['human_uri']);
+      a.attr("href", data['human_url']);
       a.text(data['id']);
       tr = elt.closest('tr');
       tr.find(".yeti-disabled").removeClass('yeti-disabled');
-      tr.data('uri', data['uri']);
+      tr.data('url', data['url']);
       elt.replaceWith(a);
     }
   });

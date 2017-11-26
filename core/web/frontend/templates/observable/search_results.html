@@ -64,7 +64,7 @@ Search results
         <table class="table table-condensed">
           <tr><th>Name</th><th>Observable</th><th>Diamond edge</th><th>Suggested tags</th><th>Observable ID</th></tr>
           {% for match in data['matches'] %}
-          <tr data-uri="{{url_for("api.Observable:post", id=match['observable'].id) }}">
+          <tr data-url="{{url_for("api.Observable:post", id=match['observable'].id) }}">
 						{% if not match['observable'].id %}
 							<input type="hidden" name="observable_value" value="match['observable']['value']">
 						{% endif %}
@@ -73,7 +73,7 @@ Search results
 						<td>{{match['diamond']}}</td>
 						<td {%if not match['observable'].id %}class="yeti-disabled"{%endif%}>{{macros.display_tags(match['suggested_tags'])}}</td>
 						{% if match['observable']['id']%}
-							<td><a href="{{url_for('frontend.ObservableView:get', id=match['observable']['id'])}}">{{match['observable']['id']}}</a></td>
+							<td><a href="{{url_for('api.Observable:get', id=match['observable']['id'])}}">{{match['observable']['id']}}</a></td>
 						{% else %}
 							<td>
 								<button type="button" data-value="{{match['observable']['value']}}" data-url="{{ url_for("api.Observable:new")}}" class="btn btn-default btn-xs add-observable" aria-label="Left Align">

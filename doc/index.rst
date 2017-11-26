@@ -48,7 +48,7 @@ Contents:
 
 .. toctree::
   installation
-  getting-started
+  use-cases
   objects
   extending
   api
