@@ -367,7 +367,54 @@ Try matching an new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``
 Ingesting and enriching a third-party report
 --------------------------------------------
 
+An abundant source (but of uneven quality) of intelligence on adversaries can be found
+in the different reports that are published by vendors, CERTs, etc. Yeti provides
+an easy way to parse information from a variety of sources (blogposts, PDF files, raw text)
+and integrate them in Yeti.
 
+Starting an Investigation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The "ingestion" of a report in Yeti parlance typically means the creation of an
+Investigation, from which you will be able to add observables and tie them to existing or new Entities
+like Actors, Malware, or TTPs.
+
+Let's try creating an investigation out of this blogpost. Head to **Investigations > Import**::
+
+  https://badcyber.com/technical-analysis-of-recent-attacks-against-polish-banks/
+
+.. image:: _static/investigation_new.png
+
+.. note:: Investigations can be started on your own, from a single Observable or Entity,
+  using the ``New Investigation`` button on their corresponding page.
+
+Clicking on **Start Import** will lead you to the Import page where all the magic happens.
+On the **left pane** is the parsed Markdown document corresponding to the document you just imported.
+On the **right pane** you'll see and be able to tag all the Observables that were parsed from it. Clicking on one of those
+will scroll the left pane until you see the observable in its original context. Once you know what it is,
+you can tag the observable by clicking on the right of the + sign.
+
+.. image:: _static/investigation_importing.png
+
+You can always discard or edit an observable by hovering and clicking on the corresponding symbol.
+
+Once you have tagged all your observables accordingly, it's time to link them together so that you
+can better represent the attack flow. Click on **Import**.
+
+.. image:: _static/investigation_post_import.png
+
+This is a mess! Now it's up to you to link the entities with each other. You do that by Clicking
+on the **Add link** button in the toolbar, then by drawing the link you want between entities.
+You'll have something like this.
+
+.. image:: _static/investigation_post_link.png
+
+Once you have a clear picture of what's happening in that blogpost and the links between observables,
+you can start creating or adding Indicators, TTPs, Actors, and linking them to each other.
+
+.. note:: Links made during an investigation exist only in the investigation and **have no effect
+  outside of it**. This is to separate every analyst's work. We're still thinking of the best way to include
+  this information (once confirmed? vetted?) in the largest Yeti corpus. Stay tuned!
 
 
 Creating a blocklist
