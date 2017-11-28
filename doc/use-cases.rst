@@ -94,13 +94,13 @@ on the line and clicking the "Unlink" icon, as can be seen below:
 Adding indicators
 ^^^^^^^^^^^^^^^^^
 
-The following week, you run into a new sample of Dridex seems to have changed. It
+The following week, you run into a new sample of Dridex which seems to have changed. It
 now stores its data in a random subdirectory under ``Roaming``. You've observed
 the following paths:
 
-* ``C:\Users\admin\AppData\Roaming\Famas``
-* ``C:\Users\admin\AppData\Roaming\Thssk``
-* ``C:\Users\admin\AppData\Roaming\Lzmoo``
+* ``C:\Users\admin\AppData\Roaming\Faas``
+* ``C:\Users\admin\AppData\Roaming\Thsk``
+* ``C:\Users\admin\AppData\Roaming\Lzoo``
 
 At this point, it seems pretty clear that the subdirectory name consists of 1 uppercase letter
 followed by 3 lowercase letters, all chosen randomly.
@@ -276,7 +276,7 @@ page. This is typically what you'd want to implement in your sandbox's code, so
 that it can **automatically query Yeti with any observables it finds** and return any interesting
 results based on your intelligence!
 
-Try matching an new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``::
+Try matching a new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``::
 
   $ http -jvv POST http://localhost:5000/api/analysis/match observables:='["C:\\\\Users\\\\admin\\\\AppData\\\\Roaming\\\\Ijhsz"]'
   POST /api/analysis/match HTTP/1.1
@@ -389,10 +389,10 @@ Let's try creating an investigation out of this blogpost. Head to **Investigatio
   using the ``New Investigation`` button on their corresponding page.
 
 Clicking on **Start Import** will lead you to the Import page where all the magic happens.
-On the **left pane** is the parsed Markdown document corresponding to the document you just imported.
-On the **right pane** you'll see and be able to tag all the Observables that were parsed from it. Clicking on one of those
-will scroll the left pane until you see the observable in its original context. Once you know what it is,
-you can tag the observable by clicking on the right of the + sign.
+On the **left pane** is the processed document (a generated PDF or Markdown, depending on whether `wkhtmltopdf` is installed)
+corresponding to the document you just imported. On the **right pane** you'll see and be able to tag all
+the Observables that were parsed from it. Clicking on one of those will scroll the left pane until
+you see the observable in its original context. Once you know what it is, you can tag the observable by clicking on the right of the + sign.
 
 .. image:: _static/investigation_importing.png
 
