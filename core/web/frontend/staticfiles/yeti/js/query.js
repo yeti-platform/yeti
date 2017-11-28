@@ -14,8 +14,9 @@ $(function() {
 });
 
 function add_tag(elt) {
-  tag = elt.data('tag');
-  url = elt.closest('tr').data('url');
+  var tag;
+  tag = elt.data("tag");
+  url = elt.closest("tr").data("url");
 
   $.ajax({
     method: "POST",
@@ -52,11 +53,11 @@ function add_observable(elt) {
     data: JSON.stringify({"value": value}),
     success: function(data) {
       a = $("<a>");
-      a.attr("href", data['human_url']);
+      a.attr("href", data["human_url"]);
       a.text(data['id']);
-      tr = elt.closest('tr');
-      tr.find(".yeti-disabled").removeClass('yeti-disabled');
-      tr.data('url', data['url']);
+      tr = elt.closest("tr");
+      tr.find(".yeti-disabled").removeClass("yeti-disabled");
+      tr.data("url", data["url"]);
       elt.replaceWith(a);
     }
   });
