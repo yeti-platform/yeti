@@ -203,7 +203,7 @@ all observables with a value matching the regular expression ``r"Roaming"``::
           ],
           "type": "Path",
           "url": "http://localhost:5000/api/observable/58bd9dcb10c553738521480e",
-          "value": "C:\\Users\\admin\\AppData\\Roaming\\Lzmoo"
+          "value": "C:\\Users\\admin\\AppData\\Roaming\\Lzoo"
       },
       {
           "context": [],
@@ -222,7 +222,7 @@ all observables with a value matching the regular expression ``r"Roaming"``::
           ],
           "type": "Path",
           "url": "http://localhost:5000/api/observable/58bd9dcb10c553738521480b",
-          "value": "C:\\Users\\admin\\AppData\\Roaming\\Thssk"
+          "value": "C:\\Users\\admin\\AppData\\Roaming\\Thsk"
       },
       {
           "context": [],
@@ -247,7 +247,7 @@ all observables with a value matching the regular expression ``r"Roaming"``::
           ],
           "type": "Path",
           "url": "http://localhost:5000/api/observable/58bd9dcb10c5537385214808",
-          "value": "C:\\Users\\admin\\AppData\\Roaming\\Famas"
+          "value": "C:\\Users\\admin\\AppData\\Roaming\\Faas"
       },
       {
           "context": [],
