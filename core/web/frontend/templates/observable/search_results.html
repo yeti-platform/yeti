@@ -66,17 +66,17 @@ Search results
           {% for match in data['matches'] %}
           <tr data-url="{{url_for("api.Observable:post", id=match['observable'].id) }}">
 						{% if not match['observable'].id %}
-							<input type="hidden" name="observable_value" value="match['observable']['value']">
+							<input type="hidden" name="observable_value" value="{{match['observable']['value']}}">
 						{% endif %}
             <td><a href="{{ url_for('frontend.IndicatorView:get', id=match['id']) }}">{{match['name']}}</a></td>
-						<td>{{match['observable']['value']}}</td>
+						<td>{{match['observable']['value'] or match['observable']}}</td>
 						<td>{{match['diamond']}}</td>
 						<td {%if not match['observable'].id %}class="yeti-disabled"{%endif%}>{{macros.display_tags(match['suggested_tags'])}}</td>
 						{% if match['observable']['id']%}
-							<td><a href="{{url_for('api.Observable:get', id=match['observable']['id'])}}">{{match['observable']['id']}}</a></td>
+							<td><a href="{{url_for('frontend.ObservableView:get', id=match['observable']['id'])}}">{{match['observable']['id']}}</a></td>
 						{% else %}
 							<td>
-								<button type="button" data-value="{{match['observable']['value']}}" data-url="{{ url_for("api.Observable:new")}}" class="btn btn-default btn-xs add-observable" aria-label="Left Align">
+								<button type="button" data-value="{{ match['observable']}}" data-url="{{ url_for("api.Observable:new")}}" class="btn btn-default btn-xs add-observable" aria-label="Left Align">
 								  <span class="glyphicon glyphicon-plus" aria-hidden="true">Add</span>
 								</button>
 							</td>

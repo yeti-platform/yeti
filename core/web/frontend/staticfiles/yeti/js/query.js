@@ -21,7 +21,7 @@ function add_tag(elt) {
     method: "POST",
     headers: {"Accept": "application/json"},
     contentType: "application/json",
-    url: url,
+    url,
     data: JSON.stringify({"tags": tag}),
     success: function(data) {
       console.log(data);
