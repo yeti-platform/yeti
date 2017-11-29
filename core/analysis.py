@@ -106,7 +106,7 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
                 pass
 
         match = i.info()
-        match.update({"observable": o.info(), "related": [], "suggested_tags": set()})
+        match.update({"observable": o.info() if o.id else o.value, "related": [], "suggested_tags": set()})
 
         for nodes in i.neighbors("Entity").values():
             for l, node in nodes:

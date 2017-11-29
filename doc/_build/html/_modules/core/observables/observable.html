@@ -86,7 +86,7 @@
             
                 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../use-cases.html">Use-cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../objects.html">Yeti objects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../extending.html">Extending Yeti</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">The API</a></li>
@@ -157,6 +157,7 @@
 <span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span>
 
 <span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">operator</span>
 
 <span class="kn">from</span> <span class="nn">mongoengine</span> <span class="k">import</span> <span class="o">*</span>
@@ -211,10 +212,17 @@
             <span class="s2">&quot;tags&quot;</span><span class="p">,</span>
             <span class="s2">&quot;last_analyses&quot;</span><span class="p">,</span>
             <span class="s2">&quot;created&quot;</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;fields&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;#value&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;cls&quot;</span><span class="p">:</span> <span class="kc">False</span>
+            <span class="p">}</span>
         <span class="p">],</span>
-        <span class="s2">&quot;index_backgroud&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;index_background&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;ordering&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;-created&quot;</span><span class="p">],</span>
     <span class="p">}</span>
+
+    <span class="n">ignore</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">search_regex</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Observable.get_form"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.get_form">[docs]</a>    <span class="k">def</span> <span class="nf">get_form</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
@@ -244,8 +252,18 @@
             <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Email</span><span class="p">,</span> <span class="n">Path</span><span class="p">,</span> <span class="n">Hostname</span><span class="p">,</span> <span class="n">Hash</span><span class="p">,</span> <span class="n">Bitcoin</span><span class="p">]:</span>
                 <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">check_type</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
                     <span class="k">return</span> <span class="n">t</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ObservableValidationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> was not recognized as a viable datatype&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
+
+        <span class="k">raise</span> <span class="n">ObservableValidationError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> was not recognized as a viable datatype&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">string</span><span class="p">))</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">core.observables</span> <span class="k">import</span> <span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Hostname</span><span class="p">,</span> <span class="n">Email</span><span class="p">,</span> <span class="n">Hash</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Url</span><span class="p">,</span> <span class="n">Ip</span><span class="p">,</span> <span class="n">Email</span><span class="p">,</span> <span class="n">Hostname</span><span class="p">,</span> <span class="n">Hash</span><span class="p">]:</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span>
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Observable.add_text"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_text">[docs]</a>    <span class="k">def</span> <span class="nf">add_text</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">tags</span><span class="o">=</span><span class="p">[]):</span>
@@ -263,9 +281,52 @@
             <span class="n">o</span><span class="o">.</span><span class="n">tag</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">o</span></div>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">check_type</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Implement this in subclasses&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">check_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;^</span><span class="si">{}</span><span class="s1">$&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">regex</span><span class="p">),</span> <span class="n">txt</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">match</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">extract</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">search_regex</span><span class="p">:</span>
+            <span class="n">search_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">search_regex</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">search_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">regex</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">UNICODE</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">search_regex</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">match</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">observable</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;search&#39;</span><span class="p">))</span>
+                    <span class="n">observable</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">observable</span><span class="o">.</span><span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">ignore</span><span class="p">:</span>
+                        <span class="c1"># Replace with existing observable if there is one</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">observable</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">observable</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                            <span class="k">pass</span>
+
+                        <span class="n">results</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;search&#39;</span><span class="p">)]</span> <span class="o">=</span> <span class="n">observable</span>
+                <span class="k">except</span> <span class="n">ObservableValidationError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="n">results</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">is_valid</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">match</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ObservableValidationError</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; is not a valid &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
 
     <span class="nd">@staticmethod</span>
 <div class="viewcode-block" id="Observable.change_all_tags"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.change_all_tags">[docs]</a>    <span class="k">def</span> <span class="nf">change_all_tags</span><span class="p">(</span><span class="n">old_tags</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">):</span>
@@ -281,7 +342,7 @@
             <span class="k">for</span> <span class="n">old_tag</span> <span class="ow">in</span> <span class="n">old_tags</span><span class="p">:</span>
                 <span class="n">o</span><span class="o">.</span><span class="n">change_tag</span><span class="p">(</span><span class="n">old_tag</span><span class="p">,</span> <span class="n">new_tag</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Observable.add_context"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_context">[docs]</a>    <span class="k">def</span> <span class="nf">add_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">replace_source</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Observable.add_context"><a class="viewcode-back" href="../../../objects.html#core.observables.Observable.add_context">[docs]</a>    <span class="k">def</span> <span class="nf">add_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">replace_source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dedup_list</span><span class="o">=</span><span class="p">[]):</span>
         <span class="sd">&quot;&quot;&quot;Adds context to an Observable.</span>
 
 <span class="sd">        &quot;Context&quot; is represented by a JSON object (or Python ``dict()``) that will</span>
@@ -295,7 +356,9 @@
 <span class="sd">            context: a JSON object representing the context to be added.</span>
 <span class="sd">            replace_source: If defined, contexts having a ``source`` attribute</span>
 <span class="sd">                            set to ``replace_source`` will be deleted before insert</span>
-
+<span class="sd">            dedup_list: takes a list of fields to ignore during dedup comparison.</span>
+<span class="sd">                         i.e. date/count type fields. Empty list will skip the partial</span>
+<span class="sd">                         dedup as dedup for the exact same context is already builtin.</span>
 <span class="sd">        Returns:</span>
 <span class="sd">            A fresh instance of the Observable as it exists in the database.</span>
 
@@ -306,6 +369,17 @@
             <span class="c1"># This does not work : cannot traverse and set context atomically</span>
             <span class="c1"># self.modify({&quot;context__source&quot;: c}, set__context__S=context)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__context__source</span><span class="o">=</span><span class="n">replace_source</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dedup_list</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">:</span>
+                <span class="n">remove</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dedup_list</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+                        <span class="n">remove</span> <span class="o">=</span> <span class="kc">False</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="n">remove</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">pull__context</span><span class="o">=</span><span class="n">c</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">add_to_set__context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span></div>
@@ -471,7 +545,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s2">&quot;set__last_analyses__</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">module_name</span><span class="p">):</span> <span class="n">ts</span><span class="p">})</span>
 
     <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">i</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="s2">&quot;last_analyses&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;sources&quot;</span><span class="p">]}</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="s2">&quot;last_analyses&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;sources&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">]}</span>
         <span class="n">i</span><span class="p">[</span><span class="s1">&#39;tags&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">info</span><span class="p">()</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
             <span class="n">i</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
