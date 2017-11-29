@@ -276,9 +276,9 @@ page. This is typically what you'd want to implement in your sandbox's code, so
 that it can **automatically query Yeti with any observables it finds** and return any interesting
 results based on your intelligence!
 
-Try matching a new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``::
+Try matching a new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhz``::
 
-  $ http -jvv POST http://localhost:5000/api/analysis/match observables:='["C:\\\\Users\\\\admin\\\\AppData\\\\Roaming\\\\Ijhsz"]'
+  $ http -jvv POST http://localhost:5000/api/analysis/match observables:='["C:\\\\Users\\\\admin\\\\AppData\\\\Roaming\\\\Ijhz"]'
   POST /api/analysis/match HTTP/1.1
   Accept: application/json, */*
   Accept-Encoding: gzip, deflate
@@ -290,7 +290,7 @@ Try matching a new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``:
 
   {
     "observables": [
-        "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
+        "C:\\Users\\admin\\AppData\\Roaming\\Ijhz"
     ]
   }
 
@@ -315,7 +315,7 @@ Try matching a new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``:
                         "human_url": "http://localhost:5000/indicator/5a1ae41610c5537472a8cbd5",
                         "id": "5a1ae41610c5537472a8cbd5",
                         "location": "Filesystem",
-                        "matched_observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz",
+                        "matched_observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhz",
                         "name": "Dridex stolen data",
                         "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
                         "type": "Regex",
@@ -340,7 +340,7 @@ Try matching a new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``:
             "id": "5a1ae41610c5537472a8cbd5",
             "location": "Filesystem",
             "name": "Dridex stolen data",
-            "observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz",
+            "observable": "C:\\Users\\admin\\AppData\\Roaming\\Ijhz",
             "pattern": "[A-Z]:\\\\Users\\\\[a-z]+\\\\AppData\\\\Roaming\\\\[A-Z][a-z]{3}",
             "related": [
                 {
@@ -359,7 +359,7 @@ Try matching a new, unknown observable ``C:\Users\admin\AppData\Roaming\Ijhsz``:
     ],
     "neighbors": [],
     "unknown": [
-        "C:\\Users\\admin\\AppData\\Roaming\\Ijhsz"
+        "C:\\Users\\admin\\AppData\\Roaming\\Ijhz"
     ]
   }
 
