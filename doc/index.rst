@@ -9,6 +9,7 @@ Welcome to YETI's documentation!
 **Useful links**
 
 * `Project website & blog <https://yeti-platform.github.io/>`_
+* `Yeti Users mailing list <https://groups.google.com/forum/#!forum/yeti-users>`_
 * `Code repository <https://github.com/yeti-platform/yeti>`_
 * `Installation <http://yeti-platform.readthedocs.io/en/latest/installation.html>`_
 * `Getting started <http://yeti-platform.readthedocs.io/en/latest/getting-started.html>`_
