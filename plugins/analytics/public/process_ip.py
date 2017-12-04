@@ -2,14 +2,15 @@ from __future__ import unicode_literals
 import logging
 import os
 
-from core.analytics import InlineAnalytics
-from core.errors import ObservableValidationError
 import geoip2.database
 from geoip2.errors import AddressNotFoundError
 
+from core.analytics import InlineAnalytics
+from core.config.config import yeti_config
+from core.errors import ObservableValidationError
 
 try:
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "GeoLite2-City.mmdb")
+    path = yeti_config.maxmind.path
     reader = geoip2.database.Reader(path)
 except IOError as e:
     logging.info(
