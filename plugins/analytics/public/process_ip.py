@@ -10,8 +10,9 @@ from core.config.config import yeti_config
 from core.errors import ObservableValidationError
 
 try:
-    path = yeti_config.maxmind.path
-    reader = geoip2.database.Reader(path)
+    path = yeti_config.get('maxmind', 'path')
+    if path:
+        reader = geoip2.database.Reader(path)
 except IOError as e:
     logging.info(
         "Could not open GeoLite2-City.mmdb. Will proceed without GeoIP data")
