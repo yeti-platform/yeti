@@ -37,7 +37,7 @@ class VXVaultUrl(Feed):
                 }
 
                 try:
-                    url = Url.get_or_create(value=data)
+                    url = Url.get_or_create(value=data.rstrip())
                     url.add_context(context)
                     url.add_source('feed')
                     url.tag(tags)
