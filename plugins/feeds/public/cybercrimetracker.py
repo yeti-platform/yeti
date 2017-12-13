@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import logging
 
+from dateutil import parser
+
 from core.observables import Observable
 from core.feed import Feed
 from core.errors import ObservableValidationError
@@ -24,7 +26,7 @@ class CybercrimeTracker(Feed):
         description = dict['description'].lower()
         context = {}
         context['description'] = "{} C2 server".format(description)
-        context['date_added'] = datetime.strptime(dict['pubDate'], "%d-%m-%Y")
+        context['date_added'] = parser.parse(dict['pubDate'])
         context['source'] = self.name
 
         try:
