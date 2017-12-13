@@ -46,7 +46,7 @@ class RansomwareTracker(Feed):
         }
 
         try:
-            url = Url.get_or_create(value=url)
+            url = Url.get_or_create(value=url.rstrip())
             url.add_context(context)
             url.tag(tags)
 
