@@ -9,6 +9,7 @@ from core.analytics import InlineAnalytics
 from core.config.config import yeti_config
 from core.errors import ObservableValidationError
 
+reader = None
 try:
     path = yeti_config.get('maxmind', 'path')
     if path:
