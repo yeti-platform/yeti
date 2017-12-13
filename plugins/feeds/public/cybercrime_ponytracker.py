@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import logging
 import re
-
+from dateutil import parser
 from core.observables import Hash, Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
@@ -24,14 +24,14 @@ class CybercrimePonyTracker(Feed):
         observable_sample = dict['title']
         context_sample = {}
         context_sample['description'] = "Pony sample"
-        context_sample['date_added'] = datetime.strptime(dict['pubDate'], "%d-%m-%Y")
+        context_sample['date_added'] = parser.parse(dict['pubDate'])
         context_sample['source'] = self.name
 
         link_c2 = re.search("https?://[^ ]*", dict['description'].lower()).group()
         observable_c2 = link_c2
         context_c2 = {}
         context_c2['description'] = "Pony c2"
-        context_c2['date_added'] = datetime.strptime(dict['pubDate'], "%d-%m-%Y")
+        context_c2['date_added'] = parser.parse(dict['pubDate'])
         context_c2['source'] = self.name
 
         try:
