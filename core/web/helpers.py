@@ -63,7 +63,7 @@ def find_method(instance, method_name, argument_name):
     abort(404)
 
 
-def get_queryset(collection, filters, regex, ignorecase):
+def get_queryset(collection, filters, regex, ignorecase, replace=True):
     result_filters = dict()
 
     queryset = collection.objects
@@ -72,8 +72,9 @@ def get_queryset(collection, filters, regex, ignorecase):
 
     for key, value in filters.items():
         key = key.replace(".", "__")
-        if key in SEARCH_REPLACE:
-            key = SEARCH_REPLACE[key]
+        if replace:
+            if key in SEARCH_REPLACE:
+                key = SEARCH_REPLACE[key]
 
         if regex and isinstance(value, basestring):
             flags = 0
