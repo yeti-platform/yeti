@@ -1,11 +1,11 @@
 from datetime import datetime, timedelta
 import re
 import logging
-
-from core.observables import Ip, Hostname
+from lxml import html
+from core.observables import Ip, Hostname, Hash,Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
-
+import requests
 
 class FeodoTracker(Feed):
 
@@ -48,7 +48,7 @@ class FeodoTracker(Feed):
         context['subfamily'] = FeodoTracker.variants[g['version']]
         context['source'] = self.name
         del context['title']
-
+        new = None
         variant_tag = FeodoTracker.variants[g['version']].lower()
         try:
             if re.search(r"[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}", g['host']):
@@ -58,5 +58,42 @@ class FeodoTracker(Feed):
             new.add_context(context)
             new.add_source("feed")
             new.tag([variant_tag, 'malware', 'crimeware', 'banker', 'c2'])
+
+        except ObservableValidationError as e:
+            logging.error(e)
+
+
+
+        try:
+            url_fedeo = context['guid']
+            r = requests.get(url_fedeo)
+            if r.status_code == 200:
+                s = r.text
+
+                xml = html.fromstring(s)
+                res = xml.xpath('//table[@class="sortable"]/tr/td')
+
+                results = [{'timestamp': res[i].text,
+                            'md5_hash': res[i + 1].text,
+                            'filesize': res[i + 2].text,
+                            'VT': res[i + 3].text,
+                            'Host': res[i + 4].text,
+                            'Port': res[i + 5].text,
+                            'SSL Certif or method': res[i + 6].text
+
+                            } for i in range(0, len(res), 7)]
+
+                for r in results:
+                    new_hash = Hash.get_or_create(value=r['md5_hash'])
+                    new_hash.add_context(context)
+                    new_hash.add_source('feed')
+                    new_hash.tag([variant_tag,'malware', 'crimeware', 'banker', 'payload'])
+                    new_hash.active_link_to(new, 'c2', self.name, clean_old=False)
+                    host = Url.get_or_create(value='https://%s:%s' % (g['host'] , r['Port']))
+                    host.add_source('feed')
+                    host.add_context(context)
+                    host.tag([variant_tag, 'malware', 'crimeware', 'banker', 'c2'])
+                    new_hash.active_link_to(host,'c2',self.name,clean_old=False)
+
         except ObservableValidationError as e:
             logging.error(e)
