@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
 import re
 import logging
-from lxml import html
+
+from bs4 import BeautifulSoup
 from core.observables import Ip, Hostname, Hash,Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
 import requests
+
 
 class FeodoTracker(Feed):
 
@@ -70,8 +72,9 @@ class FeodoTracker(Feed):
             if r.status_code == 200:
                 s = r.text
 
-                xml = html.fromstring(s)
-                res = xml.xpath('//table[@class="sortable"]/tr/td')
+                soup = BeautifulSoup(s, 'html.parser')
+                res = soup.find_all('table')
+                res = res[1].find_all('td')
 
                 results = [{'timestamp': res[i].text,
                             'md5_hash': res[i + 1].text,
