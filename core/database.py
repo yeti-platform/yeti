@@ -354,9 +354,6 @@ class Node(YetiDocument):
 
         match = {"$match": result_filters}
 
-        {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": {"$arrayElemAt": [{"$objectToArray": "$dst"},1]}}},
-        {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": "$oid.v"}},
-
         pipeline = [
           {"$match": {"{}.$id".format(e1): self.id, "{}.$ref".format(e2): collection_name}},
           {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": {"$arrayElemAt": [{"$objectToArray": "${}".format(e2)},1]}}},
