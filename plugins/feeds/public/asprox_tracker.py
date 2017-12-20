@@ -4,7 +4,7 @@ import requests
 from datetime import datetime, timedelta
 import csv
 import logging
-import cStringIO
+
 from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
