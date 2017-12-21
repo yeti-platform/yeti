@@ -1,5 +1,3 @@
-import codecs
-
 import requests
 from datetime import datetime, timedelta
 import csv

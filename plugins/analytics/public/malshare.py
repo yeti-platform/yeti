@@ -67,6 +67,7 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
                     links.update(observable.active_link_to(new_url, 'c2', 'malshare_query'))
                 except ObservableValidationError:
                     logging.error("An error occurred when trying to add {} to the database".format(source.strip()))
+            result['nb C2'] = len(json_result['SOURCES'])
         try:
             new_hash = Hash.get_or_create(value=json_result['MD5'])
             links.update(new_hash.active_link_to(observable,'md5','malshare_query'))
