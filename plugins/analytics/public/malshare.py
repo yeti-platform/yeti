@@ -13,8 +13,8 @@ class MalshareAPI(object):
         Base class for querying the Malshare API.
         This is the public API,  1000 samples per day.
 
-        limit rejection, as it could cause api key deactivation.
-        """
+        Limit rejection, as it could cause api key deactivation.
+    """
     settings = {
         'malshare_api_key': {
             'name': 'Malshare API Key',
@@ -23,7 +23,7 @@ class MalshareAPI(object):
     }
 
     @staticmethod
-    def fetch(observable,api_key):
+    def fetch(observable, api_key):
         """
         :param observable: The extended observable klass
         :param api_key: The api key obtained from Malshare
@@ -43,7 +43,6 @@ class MalshareAPI(object):
 
 
 class MalshareQuery(OneShotAnalytics, MalshareAPI):
-
     default_values = {
         'name': 'MalShare',
         'description': 'Perform a MalShare query.',
@@ -70,7 +69,7 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
             result['nb C2'] = len(json_result['SOURCES'])
         try:
             new_hash = Hash.get_or_create(value=json_result['MD5'])
-            links.update(new_hash.active_link_to(observable,'md5','malshare_query'))
+            links.update(new_hash.active_link_to(observable, 'md5', 'malshare_query'))
             new_hash = Hash.get_or_create(value=json_result['SHA1'])
             links.update(new_hash.active_link_to(observable, 'sha1', 'malshare_query'))
             new_hash = Hash.get_or_create(value=json_result['SHA256'])

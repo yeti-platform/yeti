@@ -1,7 +1,6 @@
 import json
 import logging
 
-
 import datetime
 import requests
 
@@ -12,15 +11,13 @@ from core.observables import Hostname, Email, Ip, Hash
 
 class ThreatCrowdAPI(object):
     """
-        Base class for querying the Malshare API.
-        This is the public API,  1000 samples per day.
+        Base class for querying the ThreatCrowd API.
 
-        limit rejection, as it could cause api key deactivation.
     """
 
     @staticmethod
     def fetch(observable):
-        base_url_api='https://www.threatcrowd.org/searchApi/v2'
+        base_url_api = 'https://www.threatcrowd.org/searchApi/v2'
         if isinstance(observable, Hostname):
 
             url = base_url_api + '/domain/report/'
@@ -72,7 +69,6 @@ class ThreatCrowdAPI(object):
 
 
 class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
-
     default_values = {
         'name': 'ThreatCrowd',
         'description': 'Perform a ThreatCrowd query.',
@@ -81,7 +77,7 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
     ACTS_ON = ['Ip', 'Hostname', 'Hash', 'Email']
 
     @staticmethod
-    def analyze(observable,results):
+    def analyze(observable, results):
         links = set()
         json_result = ThreatCrowdAPI.fetch(observable)
         json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
@@ -103,7 +99,8 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                                 result['ip on this domains'] += 1
                             except ObservableValidationError:
                                 logging.error(
-                                    "An error occurred when trying to add subdomain {} to the database".format(ip['ip_address']))
+                                    "An error occurred when trying to add subdomain {} to the database".format(
+                                        ip['ip_address']))
 
             if 'emails' in json_result:
 
@@ -142,11 +139,13 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                         try:
                             last_resolved = datetime.datetime.strptime(domain['last_resolved'], "%Y-%m-%d")
                             new_domain = Hostname.get_or_create(value=domain['domain'].strip())
-                            links.update(new_domain.active_link_to(observable, 'A Record', 'ThreatCrowd', last_resolved))
+                            links.update(
+                                new_domain.active_link_to(observable, 'A Record', 'ThreatCrowd', last_resolved))
                             result['domains resolved'] += 1
                         except ObservableValidationError:
                             logging.error(
-                            "An error occurred when trying to add domain {} to the database".format(domain['domain']))
+                                "An error occurred when trying to add domain {} to the database".format(
+                                    domain['domain']))
 
             if 'hashes' in json_result and len(json_result['hashes']) > 0:
 

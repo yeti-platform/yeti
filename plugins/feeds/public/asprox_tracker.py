@@ -20,9 +20,11 @@ class AsproxTracker(Feed):
 
     def update(self):
         resp = requests.get(self.source, proxies=yeti_config.proxy)
+
         if resp.ok:
 
             reader = csv.reader(resp.content.splitlines(), quotechar="'")
+
             for line in reader:
                 self.analyze(line)
 
@@ -31,7 +33,6 @@ class AsproxTracker(Feed):
             return
 
         # split the entry into observables
-
         Number, Status, CC, Host, Port, Protocol, ASN, Last_Updated, First_Seen, Last_Seen, First_Active, Last_Active, SBL, Abuse_Contact, Details = line
 
         url = "{}://{}".format(Protocol, Host)
