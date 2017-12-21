@@ -1,6 +1,6 @@
 import json
 import logging
-from urlparse import urljoin
+
 
 import datetime
 import requests
