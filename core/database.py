@@ -342,7 +342,7 @@ class Node(YetiDocument):
             info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
 
-    def _neighbors_aggregation(self, way, klass, result_filters, regex, skip, limit):
+    def _neighbors_aggregation(self, way, klass, result_filters, skip, limit):
         if way == "in":
             e1, e2 = "dst", "src"
         if way == "out":
@@ -352,16 +352,16 @@ class Node(YetiDocument):
         match = {"$match": result_filters}
 
         pipeline = [
-          {"$match": {"{}.$id".format(e1): self.id, "{}.$ref".format(e2): collection_name}},
-          {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": {"$arrayElemAt": [{"$objectToArray": "${}".format(e2)},1]}}},
-          {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": "$oid.v"}},
-          {"$lookup": {
-            "from": collection_name,
-            "localField": "oid",
-            "foreignField": "_id",
-            "as": "related",
-          }},
-          {"$unwind" : "$related"},
+            {"$match": {"{}.$id".format(e1): self.id, "{}.$ref".format(e2): collection_name}},
+            {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": {"$arrayElemAt": [{"$objectToArray": "${}".format(e2)}, 1]}}},
+            {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": "$oid.v"}},
+            {"$lookup": {
+                "from": collection_name,
+                "localField": "oid",
+                "foreignField": "_id",
+                "as": "related",
+            }},
+            {"$unwind" : "$related"},
         ]
         pipeline.extend([match, {"$skip": skip*limit}, {"$limit": limit}])
         results = list(Link.objects.aggregate(*pipeline))
@@ -386,8 +386,8 @@ class Node(YetiDocument):
                 value = {"$in": value}
             result_filters["related."+key] = value
 
-        outnodes = self._neighbors_aggregation("out", klass, result_filters, regex, page, rng)
-        innodes = self._neighbors_aggregation("in", klass, result_filters, regex, page, rng)
+        outnodes = self._neighbors_aggregation("out", klass, result_filters, page, rng)
+        innodes = self._neighbors_aggregation("in", klass, result_filters, page, rng)
         final_list = []
         for node in outnodes + innodes:
             n = node.pop('related')
