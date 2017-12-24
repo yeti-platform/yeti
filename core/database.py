@@ -11,9 +11,6 @@ from flask_mongoengine.wtf import model_form
 
 from core.constants import STORAGE_ROOT
 from core.helpers import iterify, stream_sha256
-SEARCH_REPLACE = {
-    'tags': 'tags__name',
-}
 
 
 class StringListField(Field):
@@ -373,17 +370,20 @@ class Node(YetiDocument):
     def neighbors_advanced(self, klass, filters, regex, ignorecase, page, rng):
         result_filters = dict()
 
+        search_replace = {
+            'tags': 'tags.name',
+        }
+
         for key, value in filters.items():
-            key = key.replace(".", "__")
-            if key in SEARCH_REPLACE:
-                key = SEARCH_REPLACE[key]
+            if key in search_replace:
+                key = search_replace[key]
 
             if regex and isinstance(value, basestring):
                 value = {"$regex": value}
                 if ignorecase:
                     value["$options"] = "i"
             if isinstance(value, list) and not key.endswith("__in"):
-                key += "__all"
+                value = {"$in": value}
             result_filters["related."+key] = value
 
         outnodes = self._neighbors_aggregation("out", klass, result_filters, regex, page, rng)
