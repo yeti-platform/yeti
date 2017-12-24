@@ -20,9 +20,13 @@ class AsproxTracker(Feed):
 
     def update(self):
         resp = requests.get(self.source, proxies=yeti_config.proxy)
-        reader = csv.reader(resp.text, quotechar="'")
-        for line in reader:
-            self.analyze(line)
+
+        if resp.ok:
+
+            reader = csv.reader(resp.content.splitlines(), quotechar="'")
+
+            for line in reader:
+                self.analyze(line)
 
     def analyze(self, line):
         if line[0] == 'Number':
