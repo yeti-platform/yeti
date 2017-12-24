@@ -34,8 +34,8 @@ class FeodoTracker(Feed):
         for data_dict in self.update_xml('item', ["title", "link", "description", "guid"]):
             self.analyze(data_dict)
 
-    def analyze(self, context):
-
+    def analyze(self, dict):
+        context = dict
         date_string = re.search(r"\((?P<datetime>[\d\- :]+)\)", context['title']).group('datetime')
         try:
             context['date_added'] = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
