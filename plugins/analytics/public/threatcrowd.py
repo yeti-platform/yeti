@@ -10,10 +10,7 @@ from core.observables import Hostname, Email, Ip, Hash
 
 
 class ThreatCrowdAPI(object):
-    """
-        Base class for querying the ThreatCrowd API.
-
-    """
+    """Base class for querying the ThreatCrowd API."""
 
     @staticmethod
     def fetch(observable):
@@ -98,9 +95,7 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                                 links.update(new_ip.active_link_to(observable, 'IP', 'ThreatCrowd', last_resolved))
                                 result['ip on this domains'] += 1
                             except ObservableValidationError:
-                                logging.error(
-                                    "An error occurred when trying to add subdomain {} to the database".format(
-                                        ip['ip_address']))
+                                logging.error("An error occurred when trying to add subdomain {} to the database".format(ip['ip_address']))
 
             if 'emails' in json_result:
 
@@ -112,8 +107,7 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                         links.update(new_email.active_link_to(observable, 'Used by', 'ThreatCrowd'))
                         result['nb emails'] += 1
                     except ObservableValidationError:
-                        logging.error(
-                            "An error occurred when trying to add email {} to the database".format(email))
+                        logging.error("An error occurred when trying to add email {} to the database".format(email))
 
             if 'subdomains' in json_result:
 
@@ -125,8 +119,7 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                         links.update(observable.active_link_to(new_domain, 'subdomain', 'ThreatCrowd'))
                         result['nb subdomains'] += 1
                     except ObservableValidationError:
-                        logging.error(
-                            "An error occurred when trying to add subdomain {} to the database".format(subdomain))
+                        logging.error("An error occurred when trying to add subdomain {} to the database".format(subdomain))
 
         if isinstance(observable, Ip):
 
@@ -139,18 +132,13 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                         try:
                             last_resolved = datetime.datetime.strptime(domain['last_resolved'], "%Y-%m-%d")
                             new_domain = Hostname.get_or_create(value=domain['domain'].strip())
-                            links.update(
-                                new_domain.active_link_to(observable, 'A Record', 'ThreatCrowd', last_resolved))
+                            links.update(new_domain.active_link_to(observable, 'A Record', 'ThreatCrowd', last_resolved))
                             result['domains resolved'] += 1
                         except ObservableValidationError:
-                            logging.error(
-                                "An error occurred when trying to add domain {} to the database".format(
-                                    domain['domain']))
+                            logging.error("An error occurred when trying to add domain {} to the database".format(domain['domain']))
 
             if 'hashes' in json_result and len(json_result['hashes']) > 0:
-
                 result['malwares'] = 0
-
                 for h in json_result['hashes']:
                     new_hash = Hash.get_or_create(value=h)
                     links.update(new_hash.active_link_to(observable, 'hash', 'ThreatCrowd'))
@@ -158,9 +146,7 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
 
         if isinstance(observable, Email):
             if 'domains' in json_result and len(json_result) > 0:
-
                 result['domains recorded by email'] = 0
-
                 for domain in json_result['domains']:
                     new_domain = Hostname.get_or_create(value=domain)
                     links.update(new_domain.active_link_to(observable, 'recorded by', 'ThreatCrowd'))
@@ -182,14 +168,12 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                 links.update(new_hash.active_link_to(observable, 'sha256', 'ThreadCrowd'))
 
             if 'domains' in json_result and len(json_result['domains']):
-
                 for domain in json_result['domains']:
                     new_domain = Hostname.get_or_create(value=domain)
                     links.update(observable.active_link_to(new_domain, 'c2', 'ThreatCrowd'))
                     result['nb c2'] += 1
 
             if 'ips' in json_result and len(json_result['ips']):
-
                 for ip in json_result['ips']:
                     new_ip = Ip.get_or_create(value=ip.strip())
                     links.update(observable.active_link_to(new_ip, 'c2', 'ThreatCrowd'))

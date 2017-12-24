@@ -9,11 +9,10 @@ from core.observables import Url, Hash
 
 
 class MalshareAPI(object):
-    """
-        Base class for querying the Malshare API.
-        This is the public API,  1000 samples per day.
+    """Base class for querying the Malshare API.
+    This is the public API, 1000 samples per day.
 
-        Limit rejection, as it could cause api key deactivation.
+    Limit rejection, as it could cause api key deactivation.
     """
     settings = {
         'malshare_api_key': {
@@ -38,6 +37,7 @@ class MalshareAPI(object):
             else:
                 return None
         except Exception as e:
+            # TODO(sebdraven): Catch a better exception
             print 'Exception while getting ip report {}'.format(e.message)
         return None
 

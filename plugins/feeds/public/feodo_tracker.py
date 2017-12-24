@@ -31,19 +31,18 @@ class FeodoTracker(Feed):
     }
 
     def update(self):
-        for dict in self.update_xml('item', ["title", "link", "description", "guid"]):
-            self.analyze(dict)
+        for data_dict in self.update_xml('item', ["title", "link", "description", "guid"]):
+            self.analyze(data_dict)
 
-    def analyze(self, dict):
-        context = dict
+    def analyze(self, context):
 
-        date_string = re.search(r"\((?P<datetime>[\d\- :]+)\)", dict['title']).group('datetime')
+        date_string = re.search(r"\((?P<datetime>[\d\- :]+)\)", context['title']).group('datetime')
         try:
             context['date_added'] = datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S")
         except ValueError:
             pass
 
-        g = re.match(r'^Host: (?P<host>.+), Version: (?P<version>\w)', dict['description'])
+        g = re.match(r'^Host: (?P<host>.+), Version: (?P<version>\w)', context['description'])
         g = g.groupdict()
         context['version'] = g['version']
         context['description'] = FeodoTracker.descriptions[g['version']]
@@ -74,15 +73,15 @@ class FeodoTracker(Feed):
                 res = soup.find_all('table')
                 res = res[1].find_all('td')
 
-                results = [{'timestamp': res[i].text,
-                            'md5_hash': res[i + 1].text,
-                            'filesize': res[i + 2].text,
-                            'VT': res[i + 3].text,
-                            'Host': res[i + 4].text,
-                            'Port': res[i + 5].text,
-                            'SSL Certif or method': res[i + 6].text
-
-                            } for i in range(0, len(res), 7)]
+                results = [{
+                    'timestamp': res[i].text,
+                    'md5_hash': res[i + 1].text,
+                    'filesize': res[i + 2].text,
+                    'VT': res[i + 3].text,
+                    'Host': res[i + 4].text,
+                    'Port': res[i + 5].text,
+                    'SSL Certif or method': res[i + 6].text
+                } for i in range(0, len(res), 7)]
 
                 for r in results:
                     new_hash = Hash.get_or_create(value=r['md5_hash'])

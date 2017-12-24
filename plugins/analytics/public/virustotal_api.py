@@ -9,8 +9,7 @@ import requests
 
 
 class VirustotalApi(object):
-    """
-    Base class for querying the VirusTotal API.
+    """Base class for querying the VirusTotal API.
     This is the public API, so there is a limit for up to 3
     requests per minute.
 
@@ -101,7 +100,6 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
                 result['total'] = json_result['total']
 
             hashes ={ 'md5': json_result['md5'], 'sha1': json_result['sha1'], 'sha256': json_result['sha256']}
-
             create_hashes = [(k, v) for k,v in hashes.items() if v != observable.value]
 
             for k, v in create_hashes:
