@@ -18,7 +18,8 @@ class CybercrimeTracker(Feed):
     }
 
     def update(self):
-        for dict in self.update_xml('item', ["title", "link", "pubDate", "description"]):
+        for dict in self.update_xml(
+                'item', ["title", "link", "pubDate", "description"]):
             self.analyze(dict)
 
     def analyze(self, dict):

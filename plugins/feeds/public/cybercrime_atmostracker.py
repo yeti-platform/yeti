@@ -19,7 +19,8 @@ class CybercrimeAtmosTracker(Feed):
     }
 
     def update(self):
-        for dict in self.update_xml('item', ["title", "link", "pubDate", "description"]):
+        for dict in self.update_xml(
+                'item', ["title", "link", "pubDate", "description"]):
             self.analyze(dict)
 
     def analyze(self, dict):
@@ -29,7 +30,9 @@ class CybercrimeAtmosTracker(Feed):
         context_sample['date_added'] = parser.parse(dict['pubDate'])
         context_sample['source'] = self.name
 
-        link_c2 = re.search("<a href[^>]+>(?P<url>[^<]+)", dict['description'].lower()).group("url")
+        link_c2 = re.search(
+            "<a href[^>]+>(?P<url>[^<]+)",
+            dict['description'].lower()).group("url")
         observable_c2 = link_c2
         context_c2 = {}
         context_c2['description'] = "Atmos c2"

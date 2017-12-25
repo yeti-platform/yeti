@@ -19,14 +19,20 @@ from core.scheduling import ScheduleEntry
 def update_feed(feed_id):
 
     try:
-        f = Feed.objects.get(id=feed_id, lock=None)  # check if we have implemented locking mechanisms
+        f = Feed.objects.get(
+            id=feed_id,
+            lock=None)  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
-            Feed.objects.get(id=feed_id, lock=False).modify(lock=True)  # get object and change lock
+            Feed.objects.get(
+                id=feed_id, lock=False).modify(
+                    lock=True)  # get object and change lock
             f = Feed.objects.get(id=feed_id)
         except DoesNotExist:
             # no unlocked Feed was found, notify and return...
-            logging.debug("Feed {} is already running...".format(Feed.objects.get(id=feed_id).name))
+            logging.debug(
+                "Feed {} is already running...".format(
+                    Feed.objects.get(id=feed_id).name))
             return False
 
     try:
@@ -125,9 +131,14 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         return self.parse_xml(r.content, main_node, children)
 
@@ -160,9 +171,14 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         feed = r.text.split('\n')
 
@@ -189,12 +205,18 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         feed = r.text.split('\n')
-        reader = csv.reader(self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
+        reader = csv.reader(
+            self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
 
         for line in reader:
             yield line
@@ -211,14 +233,24 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         return r.json()
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source", "status", "last_run"]}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in
+            ["name", "enabled", "description", "source", "status", "last_run"]
+        }
         i['frequency'] = str(self.frequency)
         i['id'] = str(self.id)
         return i

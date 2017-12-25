@@ -46,14 +46,15 @@ class OtxFeed(Feed):
         self.otx = OTXv2(yeti_config.get('otx', 'key'))
         self.get_pulses()
 
-
     def get_pulses(self):
         self.pulses = {}
 
         for pulse in yeti_config.get('otx', 'pulses', '').split(','):
             config = {
-                'pulse_id': yeti_config.get(pulse, 'pulse_id'),
-                'use_otx_tags': yeti_config.get(pulse, 'use_otx_tags') == "Y" or False
+                'pulse_id':
+                    yeti_config.get(pulse, 'pulse_id'),
+                'use_otx_tags':
+                    yeti_config.get(pulse, 'use_otx_tags') == "Y" or False
             }
 
             if config['pulse_id']:
@@ -80,15 +81,20 @@ class OtxFeed(Feed):
             }
 
             for indicator in pulse_details['indicators']:
-                self.analyze(indicator, pulse_context, use_otx_tags=pulse['use_otx_tags'])
+                self.analyze(
+                    indicator,
+                    pulse_context,
+                    use_otx_tags=pulse['use_otx_tags'])
 
     def analyze(self, indicator_context, pulse_context, use_otx_tags=False):
         context = pulse_context.copy()
         value = indicator_context.pop('indicator')
-        context['date_dadded'] = dateutil.parser.parse(indicator_context.pop('created'))
+        context['date_dadded'] = dateutil.parser.parse(
+            indicator_context.pop('created'))
         context.update(indicator_context)
 
-        observable = OBSERVABLE_TYPES[indicator_context['type']].get_or_create(value=value)
+        observable = OBSERVABLE_TYPES[indicator_context['type']].get_or_create(
+            value=value)
         observable.add_context(context)
         if use_otx_tags:
             observable.tag(pulse_context['tags'])

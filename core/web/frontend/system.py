@@ -10,6 +10,7 @@ import subprocess
 from core.config.celeryctl import celery_app
 from core.scheduling import ScheduleEntry
 
+
 class Inspector(threading.Thread):
 
     def __init__(self, inspect, method, *args, **kwargs):
@@ -42,8 +43,11 @@ class SystemView(FlaskView):
                 if 'ok' not in r[name]:
                     nok.append(name)
         if nok:
-            flash("Some workers failed to restart: {}".format(", ".join(nok)), "danger")
-        flash("Succesfully restarted {} workers".format(len(response)), "success")
+            flash(
+                "Some workers failed to restart: {}".format(", ".join(nok)),
+                "danger")
+        flash(
+            "Succesfully restarted {} workers".format(len(response)), "success")
 
         return redirect(request.referrer)
 
@@ -75,7 +79,9 @@ class SystemView(FlaskView):
                 ScheduleEntry.unlock_all()
                 self.restart_worker()
             p = subprocess.Popen(cmd.split(" "))
-            flash("Scheduler restarted successfully (PID: {})".format(p.pid), "success")
+            flash(
+                "Scheduler restarted successfully (PID: {})".format(p.pid),
+                "success")
         else:
             flash("Error restaring scheduler", "danger")
 
@@ -108,11 +114,15 @@ class SystemView(FlaskView):
         if results['active']:
             for key in results['active']:
                 active[key] = {
-                    "running": [ScheduleEntry.objects.get(id=re.sub(r"[^0-9a-f]", "", i['args'])) for i in results["active"][key]],
+                    "running": [
+                        ScheduleEntry.objects.get(
+                            id=re.sub(r"[^0-9a-f]", "", i['args']))
+                        for i in results["active"][key]
+                    ],
                 }
 
         return render_template(
             "system/system.html",
             registered=registered,
             active=active,
-            )
+        )

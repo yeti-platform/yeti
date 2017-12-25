@@ -12,7 +12,6 @@ from core.config.config import yeti_config
 from core.entities import Actor, Campaign, Malware
 from core.feed import Feed
 
-
 # # add configuration to yeti.conf
 # [threattracking]
 # # https://developers.google.com/sheets/api/quickstart/python
@@ -36,34 +35,53 @@ class ThreatTracking(Feed):
     }
 
     # define a static index table for each sheet
-    target_sheet = {'China': {'aliases': 'A3:L75',
-                              'campaigns': 'M:P',
-                              'tools': 'Q'},
-                    'Russia': {'aliases': 'A3:L17',
-                               'campaigns': 'M:R',
-                               'tools': 'S'},
-                    'North Korea': {'aliases': 'A3:J9',
-                                    'campaigns': 'K:L',
-                                    'tools': 'M'},
-                    'Iran': {'aliases': 'A3:F18',
-                             'campaigns': 'G:I',
-                             'tools': 'J'},
-                    'Israel': {'aliases': 'A3:B4',
-                               'campaigns': 'C:D',
-                               'tools': 'E'},
-                    'Middle East': {'aliases': 'A3:D14',
-                                    'campaigns': 'E:F',
-                                    'tools': 'G'},
-                    'NATO': {'aliases': 'A3:E4',
-                             'campaigns': 'F:H',
-                             'tools': 'I'},
-                    'Others': {'aliases': 'A3:D19',
-                               'campaigns': 'E:G',
-                               'tools': 'H'},
-                    'Unknown': {'aliases': 'A3:G24',
-                                'campaigns': 'H:I',
-                                'tools': 'J'},
-                    }
+    target_sheet = {
+        'China': {
+            'aliases': 'A3:L75',
+            'campaigns': 'M:P',
+            'tools': 'Q'
+        },
+        'Russia': {
+            'aliases': 'A3:L17',
+            'campaigns': 'M:R',
+            'tools': 'S'
+        },
+        'North Korea': {
+            'aliases': 'A3:J9',
+            'campaigns': 'K:L',
+            'tools': 'M'
+        },
+        'Iran': {
+            'aliases': 'A3:F18',
+            'campaigns': 'G:I',
+            'tools': 'J'
+        },
+        'Israel': {
+            'aliases': 'A3:B4',
+            'campaigns': 'C:D',
+            'tools': 'E'
+        },
+        'Middle East': {
+            'aliases': 'A3:D14',
+            'campaigns': 'E:F',
+            'tools': 'G'
+        },
+        'NATO': {
+            'aliases': 'A3:E4',
+            'campaigns': 'F:H',
+            'tools': 'I'
+        },
+        'Others': {
+            'aliases': 'A3:D19',
+            'campaigns': 'E:G',
+            'tools': 'H'
+        },
+        'Unknown': {
+            'aliases': 'A3:G24',
+            'campaigns': 'H:I',
+            'tools': 'J'
+        },
+    }
 
     def __init__(self, *args, **kwargs):
         super(ThreatTracking, self).__init__(*args, **kwargs)
@@ -75,22 +93,25 @@ class ThreatTracking(Feed):
         params = {'key': yeti_config.get('threattracking', 'google_api_key')}
         # , 'includeGridData': 'True'} - we don't want to do that. 200Mo file.
 
-        base = "https://sheets.googleapis.com/v4/spreadsheets/" + yeti_config.get('threattracking', 'sheet_key')
+        base = "https://sheets.googleapis.com/v4/spreadsheets/" + yeti_config.get(
+            'threattracking', 'sheet_key')
         self.api = hammock.Hammock(base, params=params)
         if False:
             r = self.api.GET()
             if r.status_code != 200:
                 raise requests.ConnectionError(
-                    'Return code for {query} is {code}'.format(query=r.request.url, code=r.status_code))
+                    'Return code for {query} is {code}'.format(
+                        query=r.request.url, code=r.status_code))
             sheets = r.json()['sheets']
             json.dump(sheets, open("actor.sheets.json", "w"))
         else:
-            sheets = json.load(open("actor.sheets.json","r"))
+            sheets = json.load(open("actor.sheets.json", "r"))
         # print(pprint.pformat(sheets))
         for s_p in sheets:
             s = s_p['properties']
             title = s['title']
-            if title in ['Home', '_Malware', '_Download', '_Schemes', '_Sources']:
+            if title in ['Home', '_Malware', '_Download', '_Schemes',
+                         '_Sources']:
                 continue
             size = s['gridProperties']
             # print(title, size['columnCount'], size['rowCount'])
@@ -130,7 +151,7 @@ class ThreatTracking(Feed):
             while '???' in actor_aliases:
                 actor_aliases.remove('???')
             if len(actor_aliases) == 0:
-                actor_aliases.append(sheet_name+'-ACTOR-%d'%i)
+                actor_aliases.append(sheet_name + '-ACTOR-%d' % i)
             else:
                 l = []
                 for alias in actor_aliases:
@@ -151,12 +172,13 @@ class ThreatTracking(Feed):
         # get the numeric ranges
         row_start, row_end = start[1:], end[1:]
         # bring it back together
-        return ':'.join([start_col+row_start, end_col+row_end])
+        return ':'.join([start_col + row_start, end_col + row_end])
 
     def get_campaign(self, sheet_name, range_info):
         """ returns the list of list of campaigns."""
         campaign_range = range_info['campaigns'].split(":")
-        campaign_value_range = self._get_numeric_range(range_info, campaign_range[0], campaign_range[1])
+        campaign_value_range = self._get_numeric_range(
+            range_info, campaign_range[0], campaign_range[1])
         campaign_value_range = '!'.join([sheet_name, campaign_value_range])
         _ = self.api.values.GET(campaign_value_range).json()
         campaign_names = _['values']
@@ -171,7 +193,8 @@ class ThreatTracking(Feed):
     def get_tools(self, sheet_name, range_info):
         """ returns the list of list of tools."""
         tool_col = range_info['tools']
-        tool_value_range = self._get_numeric_range(range_info, tool_col, tool_col)
+        tool_value_range = self._get_numeric_range(
+            range_info, tool_col, tool_col)
         tool_value_range = '!'.join([sheet_name, tool_value_range])
         _ = self.api.values.GET(tool_value_range).json()
         tools_names = _['values']
@@ -202,7 +225,7 @@ class ThreatTracking(Feed):
                 try:
                     _campaign = Campaign.get_or_create(name=c)
                 except DoesNotExist:
-                    _campaign = Campaign.get_or_create(name="CAMPAIGN-"+c)
+                    _campaign = Campaign.get_or_create(name="CAMPAIGN-" + c)
                 _actor.action(_campaign, self.name)
             # create the tools
             for mal in tools:
@@ -210,7 +233,7 @@ class ThreatTracking(Feed):
                 try:
                     _mal = Malware.get_or_create(name=mal)
                 except DoesNotExist:
-                    _mal = Malware.get_or_create(name="MALWARE-"+mal)
+                    _mal = Malware.get_or_create(name="MALWARE-" + mal)
                 _actor.action(_mal, self.name)
         return
 

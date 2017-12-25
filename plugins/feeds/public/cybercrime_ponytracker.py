@@ -17,7 +17,8 @@ class CybercrimePonyTracker(Feed):
     }
 
     def update(self):
-        for dict in self.update_xml('item', ["title", "link", "pubDate", "description"]):
+        for dict in self.update_xml(
+                'item', ["title", "link", "pubDate", "description"]):
             self.analyze(dict)
 
     def analyze(self, dict):
@@ -27,7 +28,8 @@ class CybercrimePonyTracker(Feed):
         context_sample['date_added'] = parser.parse(dict['pubDate'])
         context_sample['source'] = self.name
 
-        link_c2 = re.search("https?://[^ ]*", dict['description'].lower()).group()
+        link_c2 = re.search("https?://[^ ]*",
+                            dict['description'].lower()).group()
         observable_c2 = link_c2
         context_c2 = {}
         context_c2['description'] = "Pony c2"

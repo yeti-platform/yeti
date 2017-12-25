@@ -17,7 +17,8 @@ class Internals(YetiDocument):
     def syncdb(klass):
         current_version = klass.get_internals().db_version
         if DB_VERSION > current_version:
-            print "[+] Database version outdated: {} vs. {}".format(current_version, DB_VERSION)
+            print "[+] Database version outdated: {} vs. {}".format(
+                current_version, DB_VERSION)
             klass.apply_migrations(current_version, DB_VERSION)
         else:
             print "[+] Database version is synced with code."
@@ -37,10 +38,12 @@ class Internals(YetiDocument):
 
         migrations = pkgutil.walk_packages([MIGRATIONS_DIRECTORY], prefix=".")
 
-        for loader, name, ispkg in sorted(migrations, key=lambda m: int(m[1].split("_")[-1])):
+        for loader, name, ispkg in sorted(
+                migrations, key=lambda m: int(m[1].split("_")[-1])):
             migration_version = int(name.split("_")[-1])
             if internal_version < target_version and migration_version <= target_version and migration_version > internal_version:
-                migration = importlib.import_module(name, package='core.internals.migrations')
+                migration = importlib.import_module(
+                    name, package='core.internals.migrations')
                 description = migration.__description__
                 print "        * Applying change ({} -> {}): {}".format(
                     internal_version, migration_version, description)

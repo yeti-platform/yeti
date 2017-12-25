@@ -14,13 +14,12 @@ from core.web.frontend import frontend
 from mongoengine.errors import DoesNotExist
 from core.yeti_plugins import get_plugins
 
-
-webapp = Flask(__name__, static_folder='../../node_modules', static_url_path='/static')
+webapp = Flask(
+    __name__, static_folder='../../node_modules', static_url_path='/static')
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
 webapp.before_first_request(get_plugins)
-
 
 login_manager = LoginManager()
 login_manager.init_app(webapp)
@@ -46,12 +45,14 @@ def api_auth(request):
     except DoesNotExist:
         return None
 
+
 login_manager.anonymous_user = auth_module.get_default_user
 
 
 @frontend.before_request
 def frontend_login_required():
-    if not current_user.is_active and (request.endpoint and request.endpoint != 'frontend.static'):
+    if not current_user.is_active and (request.endpoint and
+                                       request.endpoint != 'frontend.static'):
         return login_manager.unauthorized()
 
 
@@ -77,7 +78,8 @@ def list_routes():
 
         methods = ','.join(rule.methods)
         url = url_for(rule.endpoint, **options)
-        line = urllib.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
+        line = urllib.unquote(
+            "{:50s} {:20s} {}".format(rule.endpoint, methods, url))
         output.append(line)
 
     for line in sorted(output):

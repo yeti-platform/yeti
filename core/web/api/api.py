@@ -7,7 +7,6 @@ from json import dumps
 
 from core.web.json import to_json, recursive_encoder
 
-
 api = Blueprint("api", __name__, template_folder="templates")
 
 # If you're querying Yeti's API from another app,

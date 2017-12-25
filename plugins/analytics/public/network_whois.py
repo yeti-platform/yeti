@@ -9,9 +9,9 @@ class NetworkWhois(OneShotAnalytics):
 
     default_values = {
         "name": "NetworkWhois",
-        "description": "Perform a Network Whois request on the IP address and tries to"
-                       " extract relevant information."
-
+        "description":
+            "Perform a Network Whois request on the IP address and tries to"
+            " extract relevant information."
     }
 
     ACTS_ON = "Ip"
@@ -37,7 +37,8 @@ class NetworkWhois(OneShotAnalytics):
 
         if smallest_subnet:
             # Create the company
-            company = Company.get_or_create(name=smallest_subnet['description'].split("\n")[0])
+            company = Company.get_or_create(
+                name=smallest_subnet['description'].split("\n")[0])
             links.update(ip.active_link_to(company, 'hosting', 'Network Whois'))
 
             # Link it to every email address referenced

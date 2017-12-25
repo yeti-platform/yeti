@@ -37,7 +37,8 @@ class ResolveHostnames(ScheduledAnalytics):
         h = Hostname.get_or_create(value=hostname.value)
 
         for rdata in results:
-            logging.debug("{} resolved to {} ({} record)".format(h.value, rdata, rtype))
+            logging.debug(
+                "{} resolved to {} ({} record)".format(h.value, rdata, rtype))
             try:
                 e = Observable.add_text(rdata)
                 e.add_source("analytics")
@@ -45,7 +46,8 @@ class ResolveHostnames(ScheduledAnalytics):
             except ObservableValidationError as e:
                 logging.error("{} is not a valid datatype".format(rdata))
 
-        h.active_link_to(generated, "{} record".format(rtype), "ResolveHostnames")
+        h.active_link_to(
+            generated, "{} record".format(rtype), "ResolveHostnames")
 
         h.analysis_done(cls.__name__)
         return generated
@@ -53,6 +55,7 @@ class ResolveHostnames(ScheduledAnalytics):
 
 class ParallelDnsResolver(object):
     """Will issue a producer-consumer object to bulk-resolve domains"""
+
     def __init__(self):
         self.queue = Queue(1000)
         self.lock = threading.Lock()
@@ -101,7 +104,8 @@ class ParallelDnsResolver(object):
                         elif isinstance(r, A_class):
                             text_results.append(r.to_text())
                         else:
-                            logging.error("Unknown record type: {}".format(type(r)))
+                            logging.error(
+                                "Unknown record type: {}".format(type(r)))
                     hostname = Hostname(value=hostname)
                     ResolveHostnames.each(hostname, rtype, text_results)
             except NoAnswer:
@@ -115,7 +119,9 @@ class ParallelDnsResolver(object):
                 continue
             except Exception as e:
                 import traceback
-                logging.error("Unknown error occurred while working on {} ({})".format(hostname, rtype))
+                logging.error(
+                    "Unknown error occurred while working on {} ({})".format(
+                        hostname, rtype))
                 logging.error("\nERROR: {}".format(hostname, rtype, e))
                 logging.error(traceback.print_exc())
 

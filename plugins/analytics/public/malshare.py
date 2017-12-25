@@ -30,7 +30,11 @@ class MalshareAPI(object):
         """
 
         try:
-            params = {'hash': observable.value, 'api_key': api_key, 'action': 'details'}
+            params = {
+                'hash': observable.value,
+                'api_key': api_key,
+                'action': 'details'
+            }
             response = requests.get('https://malshare.com/api.php', params)
             if response.ok:
                 return response.json()
@@ -53,8 +57,10 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
     @staticmethod
     def analyze(observable, results):
         links = set()
-        json_result = MalshareAPI.fetch(observable, results.settings['malshare_api_key'])
-        json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
+        json_result = MalshareAPI.fetch(
+            observable, results.settings['malshare_api_key'])
+        json_string = json.dumps(
+            json_result, sort_keys=True, indent=4, separators=(',', ': '))
         results.update(raw=json_string)
         result = {'raw': json_string}
 
@@ -63,18 +69,27 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
                 new_url = None
                 try:
                     new_url = Url.get_or_create(value=source.strip())
-                    links.update(observable.active_link_to(new_url, 'c2', 'malshare_query'))
+                    links.update(
+                        observable.active_link_to(
+                            new_url, 'c2', 'malshare_query'))
                 except ObservableValidationError:
-                    logging.error("An error occurred when trying to add {} to the database".format(source.strip()))
+                    logging.error(
+                        "An error occurred when trying to add {} to the database".
+                        format(source.strip()))
             result['nb C2'] = len(json_result['SOURCES'])
         try:
             new_hash = Hash.get_or_create(value=json_result['MD5'])
-            links.update(new_hash.active_link_to(observable, 'md5', 'malshare_query'))
+            links.update(
+                new_hash.active_link_to(observable, 'md5', 'malshare_query'))
             new_hash = Hash.get_or_create(value=json_result['SHA1'])
-            links.update(new_hash.active_link_to(observable, 'sha1', 'malshare_query'))
+            links.update(
+                new_hash.active_link_to(observable, 'sha1', 'malshare_query'))
             new_hash = Hash.get_or_create(value=json_result['SHA256'])
-            links.update(new_hash.active_link_to(observable, 'sha256', 'malshare_query'))
+            links.update(
+                new_hash.active_link_to(observable, 'sha256', 'malshare_query'))
         except ObservableValidationError:
-            logging.error("An error occurred when trying to add hashes {} to the database".format(json_string))
+            logging.error(
+                "An error occurred when trying to add hashes {} to the database".
+                format(json_string))
 
         return list(links)

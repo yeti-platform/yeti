@@ -23,7 +23,8 @@ class ExportTemplate(YetiDocument):
     template = StringField(required=True, default="")
 
     def render(self, elements, output_filename):
-        env = Environment(loader=FileSystemLoader('core/web/frontend/templates'))
+        env = Environment(
+            loader=FileSystemLoader('core/web/frontend/templates'))
         template = env.from_string(self.template)
         temp_filename = "{}.temp".format(output_filename)
         m = hashlib.md5()
@@ -41,25 +42,27 @@ class ExportTemplate(YetiDocument):
         return m.hexdigest()
 
     def info(self):
-        return {
-            "name": self.name,
-            "template": self.template,
-            "id": self.id
-            }
+        return {"name": self.name, "template": self.template, "id": self.id}
 
 
 @celery_app.task
 def execute_export(export_id):
 
     try:
-        export = Export.objects.get(id=export_id, lock=None)  # check if we have implemented locking mechanisms
+        export = Export.objects.get(
+            id=export_id,
+            lock=None)  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
-            Export.objects.get(id=export_id, lock=False).modify(lock=True)  # get object and change lock
+            Export.objects.get(
+                id=export_id, lock=False).modify(
+                    lock=True)  # get object and change lock
             export = Export.objects.get(id=export_id)
         except DoesNotExist:
             # no unlocked Export was found, notify and return...
-            logging.debug("Export {} is already running...".format(Export.objects.get(id=export_id).name))
+            logging.debug(
+                "Export {} is already running...".format(
+                    Export.objects.get(id=export_id).name))
             return
 
     try:
@@ -114,9 +117,15 @@ class Export(ScheduleEntry):
         for t in self.include_tags:
             q_include |= Q(tags__match={'name': t.name, 'fresh': True})
         q_exclude = Q(tags__name__nin=[t.name for t in self.exclude_tags])
-        q = Q(tags__not__size=0, tags__match={'fresh': True}) & q_include & q_exclude & Q(_cls="Observable.{}".format(self.acts_on))
+        q = Q(
+            tags__not__size=0, tags__match={
+                'fresh': True
+            }) & q_include & q_exclude & Q(
+                _cls="Observable.{}".format(self.acts_on))
 
-        return self.template.render(self.filter_ignore_tags(Observable.objects(q).no_cache()), self.output_file)
+        return self.template.render(
+            self.filter_ignore_tags(Observable.objects(q).no_cache()),
+            self.output_file)
 
     def filter_ignore_tags(self, elements):
         ignore = set([t.name for t in self.ignore_tags])
@@ -125,7 +134,14 @@ class Export(ScheduleEntry):
                 yield e
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "output_dir", "enabled", "description", "status", "last_run", "ignore_tags", "include_tags", "exclude_tags"]}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in [
+                "name", "output_dir", "enabled", "description", "status",
+                "last_run", "ignore_tags", "include_tags", "exclude_tags"
+            ]
+        }
         i['frequency'] = str(self.frequency)
         i['id'] = str(self.id)
         i['ignore_tags'] = [tag.name for tag in self.ignore_tags]

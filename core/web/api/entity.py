@@ -17,7 +17,10 @@ class EntitySearch(CrudSearchApi):
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
 
-        return list(get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)[page * rng:(page + 1) * rng])
+        return list(
+            get_queryset(
+                self.objectmanager, fltr, regex, ignorecase,
+                replace=False)[page * rng:(page + 1) * rng])
 
 
 class Entity(CrudApi):
