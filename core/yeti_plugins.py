@@ -13,8 +13,8 @@ PLUGIN_CLASSES = (ScheduleEntry, OneShotEntry, InlineAnalytics)
 def get_plugins():
     entries = {}
 
-    for loader, name, ispkg in pkgutil.walk_packages([PLUGINS_ROOT],
-                                                     prefix="plugins."):
+    for _, name, ispkg in pkgutil.walk_packages([PLUGINS_ROOT],
+                                                prefix="plugins."):
         if not ispkg:
             module = importlib.import_module(name)
             for name, obj in inspect.getmembers(module, inspect.isclass):

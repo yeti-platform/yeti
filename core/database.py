@@ -185,7 +185,7 @@ class Link(Document):
                 return self
         # Do we have to extend an inactive record ?
         else:
-            index, overlapping_history = self._get_overlapping(
+            _, overlapping_history = self._get_overlapping(
                 description, first_seen, last_seen)
             if overlapping_history:
                 if source not in overlapping_history.sources:

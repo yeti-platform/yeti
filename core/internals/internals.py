@@ -38,7 +38,7 @@ class Internals(YetiDocument):
 
         migrations = pkgutil.walk_packages([MIGRATIONS_DIRECTORY], prefix=".")
 
-        for loader, name, ispkg in sorted(
+        for _, name, _ in sorted(
                 migrations, key=lambda m: int(m[1].split("_")[-1])):
             migration_version = int(name.split("_")[-1])
             if internal_version < target_version and migration_version <= target_version and migration_version > internal_version:

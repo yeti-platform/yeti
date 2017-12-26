@@ -144,11 +144,9 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
                 data['entities'][node.name] = ent
 
                 o_tags = o.get_tags()
-                [
-                    match["suggested_tags"].add(tag)
-                    for tag in node.generate_tags()
-                    if tag not in o_tags
-                ]
+                for tag in node.generate_tags():
+                    if tag not in o_tags:
+                        match["suggested_tags"].add(tag)
 
         data["matches"].append(match)
 

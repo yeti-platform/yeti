@@ -33,7 +33,7 @@ class PhishTank(Feed):
         if not data or data[0].startswith('phish_id'):
             return
 
-        phish_id, url, phish_detail_url, submission_time, verified, verification_time, online, target = tuple(
+        _, url, phish_detail_url, submission_time, verified, verification_time, online, target = tuple(
             data)
 
         tags = ['phishing']
