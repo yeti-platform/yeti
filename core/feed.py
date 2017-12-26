@@ -93,8 +93,8 @@ class Feed(ScheduleEntry):
         raise NotImplementedError(
             "update: This method must be implemented in your feed class")
 
-    def analyze(self, line):
-        """Function responsible for processing the line / data unit passed on by
+    def analyze(self, item):
+        """Function responsible for processing the item passed on by
         the ``update`` function.
 
         Raises:

@@ -18,32 +18,32 @@ class MalcodeBinaries(Feed):
     }
 
     def update(self):
-        for dict in self.update_xml('item', [
+        for item in self.update_xml('item', [
                 'title', 'description', 'link'
         ], headers={"User-Agent":
             "Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11"
                    }):
-            self.analyze(dict)
+            self.analyze(item)
         return True
 
-    def analyze(self, dict):
+    def analyze(self, item):
         g = re.match(
             r'^URL: (?P<url>.+), IP Address: (?P<ip>[\d.]+), Country: (?P<country>[A-Z]{2}), ASN: (?P<asn>\d+), MD5: (?P<md5>[a-f0-9]+)$',
-            dict['description'])
+            item['description'])
         if g:
             context = g.groupdict()
-            context['link'] = dict['link']
+            context['link'] = item['link']
             context['source'] = self.name
 
             try:
                 url_string = context.pop('url')
-                context['description'] = dict['description'].encode('UTF-8')
+                context['description'] = item['description'].encode('UTF-8')
                 url = Url.get_or_create(value=url_string)
                 url.add_context(context)
                 url.add_source("feed")
                 url.tag(['malware', 'delivery'])
             except UnicodeError:
-                sys.stderr.write('Unicode error: %s' % dict['description'])
+                sys.stderr.write('Unicode error: %s' % item['description'])
             except ObservableValidationError as e:
                 logging.error(e)
             except Exception as e:

@@ -43,12 +43,12 @@ class FeodoTracker(Feed):
     }
 
     def update(self):
-        for data_dict in self.update_xml(
+        for item in self.update_xml(
                 'item', ["title", "link", "description", "guid"]):
-            self.analyze(data_dict)
+            self.analyze(item)
 
-    def analyze(self, dict):
-        context = dict
+    def analyze(self, item):
+        context = item
         date_string = re.search(
             r"\((?P<datetime>[\d\- :]+)\)", context['title']).group('datetime')
         try:

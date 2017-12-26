@@ -18,27 +18,27 @@ class ZeusTrackerBinaries(Feed):
     }
 
     def update(self):
-        for d in self.update_xml('item',
-                                 ["title", "link", "description", "guid"]):
-            self.analyze(d)
+        for item in self.update_xml('item',
+                                    ["title", "link", "description", "guid"]):
+            self.analyze(item)
 
-    def analyze(self, dict):
+    def analyze(self, item):
         url_string = re.search(r"URL: (?P<url>\S+),",
-                               dict['description']).group('url')
+                               item['description']).group('url')
         url_string = url_string.replace(
             'http://https://', 'https://')  # feed malformed, nasty hack
         context = {}
         date_string = re.search(r"\((?P<date>[0-9\-]+)\)",
-                                dict['title']).group('date')
+                                item['title']).group('date')
         context['date_added'] = datetime.strptime(date_string, "%Y-%m-%d")
         context['status'] = re.search(
-            r"status: (?P<status>[^,]+)", dict['description']).group('status')
-        context['guid'] = dict['guid']
+            r"status: (?P<status>[^,]+)", item['description']).group('status')
+        context['guid'] = item['guid']
         context['source'] = self.name
         try:
             context['md5'] = re.search(
                 r"MD5 hash: (?P<md5>[a-f0-9]+)",
-                dict['description']).group('md5')
+                item['description']).group('md5')
         except AttributeError as e:
             pass
 
