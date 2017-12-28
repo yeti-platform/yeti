@@ -7,7 +7,7 @@ from core.errors import ObservableValidationError
 
 class HostsFileEMD(Feed):
 	default_values = {
-		'frequency': timedelta(hours=4),
+		'frequency': timedelta(hours=1),
 		'source': 'https://hosts-file.net/emd.txt',
 		'name': 'HostsFileEMD',
 		'description': 'Sites engaged in malware distribution.'
