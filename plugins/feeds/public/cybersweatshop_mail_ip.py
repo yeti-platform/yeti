@@ -41,8 +41,8 @@ class CyberSweatShopMailIP(Feed):
                 ip.add_context(context)
                 ip.add_source('feed')
                 ip.tag(['blocklist', 'spam', 'honeypot'])
-        except ObservableValidationError as e:
-            logging.error("Invalid line: {}\nLine: {}".format(e, line))
+            except ObservableValidationError as e:
+                logging.error("Invalid line: {}\nLine: {}".format(e, line))
 
 except ValueError:
     logging.error("Error unpacking line: {}".format(line))
