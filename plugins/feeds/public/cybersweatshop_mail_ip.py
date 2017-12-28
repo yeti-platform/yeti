@@ -6,10 +6,6 @@ from core.errors import ObservableValidationError
 from core.observables import Ip
 
 
-def strip(str):
-    return str.strip()
-
-
 class CyberSweatShopMailIP(Feed):
     default_values = {
         "frequency": timedelta(minutes=60),
