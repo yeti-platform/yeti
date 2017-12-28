@@ -45,5 +45,5 @@ class CyberSweatShopPortscanIP(Feed):
             except ObservableValidationError as e:
                 logging.error("Invalid line: {}\nLine: {}".format(e, line))
 
-    except ValueError:
-        logging.error('Error unpacking line: {}'.format(line))
+        except ValueError:
+            logging.error('Error unpacking line: {}'.format(line))
