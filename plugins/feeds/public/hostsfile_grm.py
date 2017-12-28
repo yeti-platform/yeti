@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
 import logging
+from datetime import timedelta
 
 from core.observables import Hostname
 from core.feed import Feed
