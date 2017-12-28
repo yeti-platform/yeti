@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 import logging
 
 from core.observables import Hostname
