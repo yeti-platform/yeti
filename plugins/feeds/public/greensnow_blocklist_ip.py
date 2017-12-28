@@ -11,7 +11,7 @@ class GreensnowBlocklistIP(Feed):
         'frequency': timedelta(hours=1),
         'source': 'https://blocklist.greensnow.co/greensnow.txt',
         'name': 'GreensnowBlocklistIP',
-        'description': 'GreenSnow is a team consisting of the best specialists in computer security, we harvest a large number of IPs from different computers located around the world. GreenSnow is comparable with SpamHaus.org for attacks of any kind except for spam.Attacks / bruteforce that are monitored are: Scan Port, FTP, POP3, mod_security, IMAP, SMTP, SSH, cPanel ...'
+        'description': 'GreenSnow is a team consisting of the best specialists in computer security, we harvest a large number of IPs from different computers located around the world. GreenSnow is comparable with SpamHaus.org for attacks of any kind except for spam. Attacks / bruteforce that are monitored are: Scan Port, FTP, POP3, mod_security, IMAP, SMTP, SSH, cPanel ...'
     }
 
     def update(self):
