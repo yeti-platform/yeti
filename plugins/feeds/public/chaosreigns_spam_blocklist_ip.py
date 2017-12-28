@@ -1,18 +1,17 @@
 import logging
 from datetime import timedelta
 
-from core.observables import Hostname
+from core.observables import Ip
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class HostsFileFSA(Feed):
+class ChaosReignsSpamBlocklistIP(Feed):
     default_values = {
-        'frequency': timedelta(hours=4),
-        'source': 'https://hosts-file.net/fsa.txt',
-        'name': 'HostsFileFSA',
-        'description': 'Sites engaged in the selling or distribution of bogus or fraudulent applications and/or provision of fraudulent services.'
-
+        'frequency': timedelta(hours=1),
+        'source': 'http://www.chaosreigns.com/iprep/bind_zone.txt',
+        'name': 'ChaosReignsSpamBlocklistIP',
+        'description': 'Chaorsreigns SPAM IP Blocklist (for Mail Servers)'
     }
 
     def update(self):
@@ -27,16 +26,16 @@ class HostsFileFSA(Feed):
             line = line.strip()
             parts = line.split()
 
-            hostname = str(parts[1]).strip()
+            ip = str(parts[0]).strip()
             context = {
                 'source': self.name
             }
 
             try:
-                host = Hostname.get_or_create(value=hostname)
-                host.add_context(context)
-                host.add_source('feed')
-                host.tag(['fraud', 'blocklist'])
+                ip = Ip.get_or_create(value=ip)
+                ip.add_context(context)
+                ip.add_source('feed')
+                ip.tag(['blocklist', 'spam'])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:

@@ -1,17 +1,17 @@
 import logging
 from datetime import timedelta
 
-from core.observables import Hostname
+from core.observables import Ip
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class HostsFileFSA(Feed):
+class BlocklistdeSSHip(Feed):
     default_values = {
-        'frequency': timedelta(hours=4),
-        'source': 'https://hosts-file.net/fsa.txt',
-        'name': 'HostsFileFSA',
-        'description': 'Sites engaged in the selling or distribution of bogus or fraudulent applications and/or provision of fraudulent services.'
+        'frequency': timedelta(hours=1),
+        'source': 'https://lists.blocklist.de/lists/ssh.txt',
+        'name': 'BlocklistdeSSHip',
+        'description': 'Blocklist.de SSH IP Blocklistt: All IP addresses which have been reported within the last 48 hours as having run attacks on the service SSH.'
 
     }
 
@@ -27,16 +27,16 @@ class HostsFileFSA(Feed):
             line = line.strip()
             parts = line.split()
 
-            hostname = str(parts[1]).strip()
+            ip = str(parts[0]).strip()
             context = {
                 'source': self.name
             }
 
             try:
-                host = Hostname.get_or_create(value=hostname)
-                host.add_context(context)
-                host.add_source('feed')
-                host.tag(['fraud', 'blocklist'])
+                ip = Ip.get_or_create(value=ip)
+                ip.add_context(context)
+                ip.add_source('feed')
+                ip.tag(['blocklist', 'ssh'])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:
