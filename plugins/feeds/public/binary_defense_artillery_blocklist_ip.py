@@ -1,10 +1,5 @@
-from datetime import datetime, timedelta
 import logging
-
-from core.observables import Ip
-from core.feed import Feed
-from core.errors import ObservableValidationError
-
+from datetime import timedelta
 
 class BinaryDefenseBlocklistIP(Feed):
     default_values = {
