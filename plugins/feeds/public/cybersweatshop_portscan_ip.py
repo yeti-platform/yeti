@@ -11,7 +11,7 @@ class CyberSweatShopPortscanIP(Feed):
         "frequency": timedelta(hours=1),
         "name": "CyberSweatShopPortscanIP",
         "source": "https://cybersweat.shop/iprep/iprep_duke.txt",
-        "description": "CyberSweatShop: IP addresses have been detected performing TCP SYN to 152.3.52.134 to a non-listening service or daemon",
+        "description": "CyberSweatShop: IP addresses have been detected performing TCP SYN scans to 152.3.52.134 to a non-listening service or daemon",
     }
 
     def update(self):

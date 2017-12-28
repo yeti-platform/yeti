@@ -11,7 +11,7 @@ class CyberSweatShopMailIP(Feed):
         "frequency": timedelta(hours=1),
         "name": "CyberSweatShopMailIP",
         "source": "https://cybersweat.shop/iprep/iprep_mail.txt",
-        "description": "CyberSweatShop: IP addresses have been detected performing behavior not in compliance with the requirements within the requirements for proper email acceptance.",
+        "description": "CyberSweatShop: IP addresses have been detected performing behavior not in compliance within the requirements for proper email acceptance.",
     }
 
     def update(self):
