@@ -1,5 +1,5 @@
-import logging
 from datetime import timedelta
+import logging
 
 from core.observables import Ip
 from core.feed import Feed
@@ -11,7 +11,7 @@ class BlocklistdeFTPIP(Feed):
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/ftp.txt',
         'name': 'BlocklistdeFTPIP',
-        'description': 'Blocklist.de FTP IP Blocklist: All IP addresses which have been reported within the last 48 hours for attacks on the Service FTP.'
+        'description': 'Blocklist.de FTP IP Blocklist: All IP addresses which have been reported within the last 48 hours for attacks against FTP servers.'
     }
 
     def update(self):
@@ -23,9 +23,7 @@ class BlocklistdeFTPIP(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name

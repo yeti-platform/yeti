@@ -23,9 +23,7 @@ class BlocklistdePort143IP(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name

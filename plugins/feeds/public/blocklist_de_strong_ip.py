@@ -6,11 +6,11 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdeStrongip(Feed):
+class BlocklistdeStrongIP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/strongips.txt',
-        'name': 'BlocklistdeStrongip',
+        'name': 'BlocklistdeStrongIP',
         'description': 'Blocklist.de Strong IP Blocklist: All IPs which are older then 2 month and have more then 5.000 attacks.'
     }
 
@@ -23,9 +23,7 @@ class BlocklistdeStrongip(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name

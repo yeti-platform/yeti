@@ -6,12 +6,12 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdeSSHip(Feed):
+class BlocklistdeSSHIP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/ssh.txt',
-        'name': 'BlocklistdeSSHip',
-        'description': 'Blocklist.de SSH IP Blocklistt: All IP addresses which have been reported within the last 48 hours as having run attacks on the service SSH.'
+        'name': 'BlocklistdeSSHIP',
+        'description': 'Blocklist.de SSH IP Blocklistt: All IP addresses which have been reported within the last 48 hours as having run attacks on SSH servers.'
 
     }
 
@@ -24,9 +24,7 @@ class BlocklistdeSSHip(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name

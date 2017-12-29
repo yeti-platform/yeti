@@ -6,11 +6,11 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdeSIPip(Feed):
+class BlocklistdeSIPIP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/sip.txt',
-        'name': 'BlocklistdeSIPip',
+        'name': 'BlocklistdeSIPIP',
         'description': 'Blocklist.de SIP/VOIP IP Blocklist: All IP addresses that tried to login in a SIP, VOIP, or Asterisk-Server and are included in the IPs-List from http://www.infiltrated.net/ (Twitter)'
 
     }
@@ -24,9 +24,7 @@ class BlocklistdeSIPip(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name

@@ -6,11 +6,11 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdePort993(Feed):
+class BlocklistdePort993IP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/993.txt',
-        'name': 'BlocklistdePort993',
+        'name': 'BlocklistdePort993IP',
         'description': 'Blocklist.de IMAPS IP blocklist: IPs performing attacks on port 933 (IMAP Secure)'
     }
 
@@ -23,9 +23,7 @@ class BlocklistdePort993(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name

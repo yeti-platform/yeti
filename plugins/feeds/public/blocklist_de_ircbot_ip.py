@@ -6,11 +6,11 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdeIRCBOTip(Feed):
+class BlocklistdeIRCBOTIP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/ircbot.txt',
-        'name': 'BlocklistdeIRCBOTip',
+        'name': 'BlocklistdeIRCBOTIP',
         'description': 'Blocklist.de Strong IP Blocklist: All IPs are known IRC Bots'
     }
 
@@ -23,9 +23,8 @@ class BlocklistdeIRCBOTip(Feed):
             return
 
         try:
-            line = line.strip()
-            parts = line.split()
 
+            parts = line.split()
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name

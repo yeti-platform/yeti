@@ -6,11 +6,11 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdePort443(Feed):
+class BlocklistdePort443IP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/443.txt',
-        'name': 'BlocklistdePort443',
+        'name': 'BlocklistdePort443IP',
         'description': 'Blocklist.de IMAP IP blocklist: IPs performing attacks on port 443 (WEB Encrypted)'
 
     }
@@ -24,9 +24,7 @@ class BlocklistdePort443(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name
