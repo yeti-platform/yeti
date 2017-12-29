@@ -1,17 +1,17 @@
-from datetime import timedelta
 import logging
+from datetime import timedelta
 
 from core.observables import Ip
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdePort80(Feed):
+class BlocklistdePort21IP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
-        'source': 'https://lists.blocklist.de/lists/80.txt',
-        'name': 'BlocklistdePort80',
-        'description': 'Blocklist.de IMAP IP blocklist: IPs performing attacks on port 80 (WEB)'
+        'source': 'https://lists.blocklist.de/lists/21.txt',
+        'name': 'BlocklistdePort21IP',
+        'description': 'Blocklist.de IMAP IP blocklist: IPs performing attacks on port 21 (FTP)'
     }
 
     def update(self):
@@ -35,7 +35,7 @@ class BlocklistdePort80(Feed):
                 ip = Ip.get_or_create(value=ip)
                 ip.add_context(context)
                 ip.add_source('feed')
-                ip.tag(['blocklist', 'http'])
+                ip.tag(['blocklist', 'ftp'])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:

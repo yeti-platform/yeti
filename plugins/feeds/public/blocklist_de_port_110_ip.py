@@ -6,11 +6,11 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdePort110(Feed):
+class BlocklistdePort110IP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://lists.blocklist.de/lists/110.txt',
-        'name': 'BlocklistdePort110',
+        'name': 'BlocklistdePort110IP',
         'description': 'Blocklist.de IMAP IP blocklist: IPs performing attacks on port 110 (POP3)'
     }
 

@@ -1,16 +1,16 @@
-import logging
 from datetime import timedelta
+import logging
 
 from core.observables import Ip
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
 # Time ranges for BadIp can be specified by y=year, day=d, minute=m, month=M
-class BadIPApacheDDOSIP(Feed):
+class BadipApacheDDOSIP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
-        'source': 'https://www.badips.com/get/list/apacheddos/0?age=1d',
-        'name': 'BadIPApacheDDOSIP',
+        'source': 'https://www.badips.com/get/list/apacheddos/0?age=2h',
+        'name': 'BadipApacheDDOSIP',
         'description': 'Badips.com is a community based IP blacklist service. This list is known hosts performing DDoS against Web Servers.'
     }
 
@@ -28,10 +28,8 @@ class BadIPApacheDDOSIP(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
-            ip = str(parts[0]).strip()
+            ip = str(parts[0])
             context = {
                 'source': self.name
             }

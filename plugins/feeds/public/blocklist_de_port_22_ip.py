@@ -6,12 +6,12 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class BlocklistdePort143(Feed):
+class BlocklistdePort22IP(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
-        'source': 'https://lists.blocklist.de/lists/143.txt',
-        'name': 'BlocklistdePort143',
-        'description': 'Blocklist.de IMAP IP blocklist: IPs performing attacks on port 143 (IMAP)'
+        'source': 'https://lists.blocklist.de/lists/22.txt',
+        'name': 'BlocklistdePort22IP',
+        'description': 'Blocklist.de IMAP IP blocklist: IPs performing attacks on port 22 (SSH)'
     }
 
     def update(self):
@@ -35,7 +35,7 @@ class BlocklistdePort143(Feed):
                 ip = Ip.get_or_create(value=ip)
                 ip.add_context(context)
                 ip.add_source('feed')
-                ip.tag(['blocklist', 'imap'])
+                ip.tag(['blocklist', 'ssh'])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:
