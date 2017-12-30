@@ -6,12 +6,12 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class HostsFileGRM(Feed):
+class HostsFileGRMDomains(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'source': 'https://hosts-file.net/grm.txt',
-        'name': 'HostsFileGRM',
-        'description': 'Contains sites spamming sites listed sites listed in the hpHosts database.'
+        'name': 'HostsFileGRMDomains',
+        'description': 'Contains spamming sites listed sites listed in the hpHosts database by Domain.'
     }
 
     def update(self):
@@ -23,9 +23,7 @@ class HostsFileGRM(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             hostname = str(parts[1]).strip()
             context = {
                 'source': self.name
