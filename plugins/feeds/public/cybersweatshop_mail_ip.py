@@ -25,7 +25,7 @@ class CyberSweatShopMailIP(Feed):
             return
 
         try:
-            ip, last_seen, details = tuple(map(strip, line))
+            ip, last_seen, details = tuple(line)
             context = {
                 "last_seen": last_seen,
                 "details": details,
