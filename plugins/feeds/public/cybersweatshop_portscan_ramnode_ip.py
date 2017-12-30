@@ -25,7 +25,7 @@ class CyberSweatShopPortscanRamnodeIP(Feed):
             return
 
         try:
-            ip, last_seen, honeypot_history, honeypot_history_totals = tuple(map(strip, line))
+            ip, last_seen, honeypot_history, honeypot_history_totals = tuple(line)
             context = {
                 "last_seen": last_seen,
                 "honeypot_history": honeypot_history,
