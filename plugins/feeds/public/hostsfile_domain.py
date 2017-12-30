@@ -23,9 +23,7 @@ class HostsFileHosts(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             hostname = str(parts[1]).strip()
             context = {
                 'source': self.name
