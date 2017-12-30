@@ -11,7 +11,7 @@ class ChaosReignsSpamBlocklistIP(Feed):
         'frequency': timedelta(hours=1),
         'source': 'http://www.chaosreigns.com/iprep/bind_zone.txt',
         'name': 'ChaosReignsSpamBlocklistIP',
-        'description': 'Chaorsreigns SPAM IP Blocklist (for Mail Servers)'
+        'description': 'Chaorsreigns SPAM IP Blocklist (for Mail Servers).'
     }
 
     def update(self):
@@ -23,9 +23,7 @@ class ChaosReignsSpamBlocklistIP(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[0]).strip()
             context = {
                 'source': self.name
