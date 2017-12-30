@@ -11,7 +11,7 @@ class CyberSweatShopIMAPSIP(Feed):
         'frequency': timedelta(hours=1),
         'source': 'https://cybersweat.shop/iprep/iprep_imaps.txt',
         'name': 'CyberSweatShopIMAPSIP',
-        'description': 'CyberSweatShop: IP addresses that have been detected as a result of a failed login to IMAPS servers'
+        'description': 'CyberSweatShop: IP addresses that have been detected as a result of a failed login to IMAPS servers.'
     }
 
     def update(self):
@@ -23,9 +23,7 @@ class CyberSweatShopIMAPSIP(Feed):
             return
 
         try:
-            line = line.strip()
             parts = line.split()
-
             ip = str(parts[3]).strip()
             last_seen = str(parts[0:3]).encode('utf-8').strip()
             username = str(parts[4]).strip()
