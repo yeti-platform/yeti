@@ -11,7 +11,7 @@ class HostsFileHFSDomains(Feed):
         'frequency': timedelta(hours=1),
         'source': 'https://hosts-file.net/hfs.txt',
         'name': 'HostsFileHFSDomains',
-        'description': 'Contains spamming sites listed sites listed in the hpHosts database by Domain Name.'
+        'description': 'Contains spamming sites listed in the hpHosts database by Domain Name.'
     }
 
     def update(self):
