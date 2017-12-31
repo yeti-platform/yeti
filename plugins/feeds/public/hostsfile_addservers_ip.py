@@ -11,7 +11,7 @@ class HostsFileAddserver(Feed):
         'frequency': timedelta(hours=1),
         'source': 'https://hosts-file.net/ad_servers.txt',
         'name': 'HostsFileAddserver',
-        'description': 'Contains ad/tracking servers listed in the hpHosts database.'
+        'description': 'Contains ad/tracking servers listed in the hpHosts database by Domain.'
     }
 
     def update(self):
@@ -24,7 +24,6 @@ class HostsFileAddserver(Feed):
 
         try:
             parts = line.split()
-
             hostname = str(parts[1]).strip()
             context = {
                 'source': self.name

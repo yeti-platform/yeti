@@ -6,12 +6,12 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 
-class HostsFileFSA(Feed):
+class HostsFileWarezDomains(Feed):
     default_values = {
-        'frequency': timedelta(hours=4),
-        'source': 'https://hosts-file.net/fsa.txt',
-        'name': 'HostsFileFSA',
-        'description': 'Sites engaged in the selling or distribution of bogus or fraudulent applications and/or provision of fraudulent services.'
+        'frequency': timedelta(hours=1),
+        'source': 'https://hosts-file.net/emd.txt',
+        'name': 'HostsFileWarezDomains',
+        'description': 'Contains warez/piracy sites listed in the hpHosts database by Domain.'
     }
 
     def update(self):
@@ -33,7 +33,7 @@ class HostsFileFSA(Feed):
                 host = Hostname.get_or_create(value=hostname)
                 host.add_context(context)
                 host.add_source('feed')
-                host.tag(['fraud'])
+                host.tag(['warez'])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:

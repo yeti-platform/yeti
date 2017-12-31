@@ -11,7 +11,7 @@ class HostsFileHosts(Feed):
         'frequency': timedelta(hours=24),
         'source': 'http://issviews.com/hphosts/hosts.txt',
         'name': 'HostsFileHosts',
-        'description': 'Contains sites assoicated in; malware, fraud, phishing, spam, exploits, and/or phrama.  Contents come from hpHosts database.'
+        'description': 'Contains sites assoicated in; malware, fraud, phishing, spam, exploits, and/or phrama.  Contents come from hpHosts database by Domain.'
     }
 
     def update(self):
@@ -33,7 +33,7 @@ class HostsFileHosts(Feed):
                 host = Hostname.get_or_create(value=hostname)
                 host.add_context(context)
                 host.add_source('feed')
-                host.tag(['blocklist', 'malware', 'fraud', 'phishing', 'spam', 'exploits', 'pharma'])
+                host.tag(['malware', 'fraud', 'phishing', 'spam', 'exploits', 'pharma'])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:
