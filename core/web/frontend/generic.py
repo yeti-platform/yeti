@@ -30,7 +30,7 @@ class GenericView(FlaskView):
 
     @requires_permissions("read")
     def get(self, id):
-        obj = self.klass.objects.get(id=id)
+        obj = get_object_or_404(self.klass, id=id)
         return render_template("{}/single.html".format(self.klass.__name__.lower()), obj=obj)
 
     @requires_permissions("write")
