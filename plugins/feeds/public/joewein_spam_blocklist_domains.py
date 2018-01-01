@@ -25,7 +25,7 @@ class JoeweinSpamBlocklistDomain(Feed):
 
         try:
             parts = line.split(';')
-            hostname = str(parts[0]).strip()
+            hostname = str(parts[0])
             context = {
                 'source': self.name
             }

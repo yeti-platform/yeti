@@ -26,7 +26,7 @@ class BlocklistdeApacheIP(Feed):
             line = line.replace()
             parts = line.split()
 
-            ip = str(parts[0]).strip()
+            ip = str(parts[0])
             context = {
                 'source': self.name
             }

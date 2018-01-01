@@ -18,7 +18,6 @@ class DynamicDomains(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-        line = line.strip()
         sline = line.split()
 
         try:

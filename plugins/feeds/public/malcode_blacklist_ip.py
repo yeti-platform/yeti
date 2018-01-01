@@ -22,9 +22,8 @@ class MalcodeBlocklistIP(Feed):
         if line.startswith('//'):
             return
         try:
-            line = line.strip()
             parts = line.split()
-            ip = str(parts[0]).strip()
+            ip = str(parts[0])
             context = {
                 'source': self.name
             }

@@ -24,7 +24,7 @@ class HostsFileWarezDomains(Feed):
 
         try:
             parts = line.split()
-            hostname = str(parts[1]).strip()
+            hostname = str(parts[1])
             context = {
                 'source': self.name
             }

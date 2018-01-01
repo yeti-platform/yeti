@@ -24,9 +24,9 @@ class CyberSweatShopIMAPSIP(Feed):
 
         try:
             parts = line.split()
-            ip = str(parts[3]).strip()
-            last_seen = str(parts[0:3]).encode('utf-8').strip()
-            username = str(parts[4]).strip()
+            ip = str(parts[3])
+            last_seen = str(parts[0:3]).encode('utf-8')
+            username = str(parts[4])
             context = {
                 'source': self.name,
                 'last_seen': last_seen,

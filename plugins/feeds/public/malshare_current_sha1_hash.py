@@ -24,7 +24,7 @@ class MalshareCurrentSHA1(Feed):
 
         try:
             parts = line.split()
-            hash = str(parts[0]).strip()
+            hash = str(parts[0])
             context = {
                 'source': self.name
             }

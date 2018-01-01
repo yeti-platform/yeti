@@ -24,7 +24,7 @@ class YoyoAdserversIP(Feed):
 
         try:
             parts = line.split()
-            ip = str(parts[1]).strip()
+            ip = str(parts[1])
             context = {
                 'source': self.name
             }

@@ -22,7 +22,7 @@ class SagadcZeusGameoverDomains(Feed):
         if line.startswith('#'):
             return
         try:
-            hostname = str(parts[0]).strip()
+            hostname = str(parts[0])
             context = {
                 'source': self.name
             }

@@ -26,10 +26,10 @@ class SpyMeAnonProxyIP(Feed):
         try:
             line = line.replace(":", " ")
             parts = line.split()
-            ip = str(parts[0]).strip()
-            port = str(parts[1]).strip()
-            spycountry = str(parts[2]).strip()
-            spygoogle = str(parts[3]).strip()
+            ip = str(parts[0])
+            port = str(parts[1])
+            spycountry = str(parts[2])
+            spygoogle = str(parts[3])
             context = {
                 'source': self.name,
                 'port': port,

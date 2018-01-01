@@ -23,7 +23,7 @@ class HostsFileHFSDomains(Feed):
             return
 
         try:
-            hostname = str(parts[1]).strip()
+            hostname = str(parts[1])
             context = {
                 'source': self.name
             }
