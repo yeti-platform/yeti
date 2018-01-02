@@ -1,0 +1,20 @@
+version: '3'
+services:
+  yeti:
+    build:
+      context: ../../
+      dockerfile: ./extras/docker/Dockerfile
+    ports:
+      - "5000:5000"
+    links:
+      - redis
+      - mongodb
+    command: ./yeti.py webserver
+    restart: always
+  redis:
+    image: redis:latest
+  mongodb:
+    image: mongo:latest
+    environment:
+      - MONGO_LOG_DIR=/dev/null
+    command: mongod

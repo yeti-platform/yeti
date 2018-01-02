@@ -1,32 +1,28 @@
 FROM ubuntu:16.04
 
 RUN apt-get update && apt-get dist-upgrade -y && apt-get autoremove -y && apt-get clean && apt-get install -y \
-  build-essential\
-  git \
+  build-essential \
   python-dev \
-  mongodb \
-  redis-server \
   libxml2-dev \
   libxslt-dev \
   zlib1g-dev \
   python-virtualenv \
   python-pip \
-  nginx \
-  locales \
-  wget \
-  unzip
+  git \
+  locales
 
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 
-RUN wget https://github.com/yeti-platform/yeti/archive/master.zip && \
-  unzip master.zip && \
-  pip install -r yeti-master/requirements.txt
+ADD . /opt/yeti
+WORKDIR /opt/yeti
+RUN pip install -r requirements.txt
 
-WORKDIR yeti-master
+RUN mv yeti.conf.sample yeti.conf
+RUN sed -i '9s/# host = 127.0.0.1/host = mongodb/' yeti.conf
+RUN sed -i '22s/# host = 127.0.0.1/host = redis/' yeti.conf
 
-RUN mongod --fork --config /etc/mongodb.conf
 EXPOSE 5000
 
 CMD ["./yeti.py", "webserver"]
