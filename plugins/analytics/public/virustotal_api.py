@@ -36,17 +36,22 @@ class VirustotalApi(object):
             if isinstance(observable, Hostname):
                 params = {'resource': observable.value, 'apikey': api_key}
                 response = requests.get(
-                    'https://www.virustotal.com/vtapi/v2/url/report', params)
+                    'https://www.virustotal.com/vtapi/v2/url/report',
+                    params,
+                    proxies=yeti_config.proxy)
 
             elif isinstance(observable, Ip):
                 params = {'ip': observable.value, 'apikey': api_key}
                 response = requests.get(
                     'https://www.virustotal.com/vtapi/v2/ip-address/report',
-                    params)
+                    params,
+                    proxies=yeti_config.proxy)
             elif isinstance(observable, Hash):
                 params = {'resource': observable.value, 'apikey': api_key}
                 response = requests.get(
-                    'https://www.virustotal.com/vtapi/v2/file/report', params)
+                    'https://www.virustotal.com/vtapi/v2/file/report',
+                    params,
+                    proxies=yeti_config.proxy)
             if response.ok:
                 return response.json()
             else:
