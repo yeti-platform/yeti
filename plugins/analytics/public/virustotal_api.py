@@ -3,14 +3,13 @@ from __future__ import unicode_literals
 import json
 
 from core.analytics import OneShotAnalytics
-from core.observables import Hostname, Ip, Url
+from core.observables import Hostname, Ip, Url, Hash
 from core.entities import Company
 import requests
 
 
 class VirustotalApi(object):
-    """
-    Base class for querying the VirusTotal API.
+    """Base class for querying the VirusTotal API.
     This is the public API, so there is a limit for up to 3
     requests per minute.
 
@@ -40,7 +39,9 @@ class VirustotalApi(object):
             elif isinstance(observable, Ip):
                 params = {'ip': observable.value, 'apikey': api_key}
                 response = requests.get('https://www.virustotal.com/vtapi/v2/ip-address/report', params)
-
+            elif isinstance(observable,Hash):
+                params ={'resource': observable.value, 'apikey': api_key}
+                response = requests.get('https://www.virustotal.com/vtapi/v2/file/report', params)
             if response.ok:
                 return response.json()
             else:
@@ -56,7 +57,7 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
         'description': 'Perform a Virustotal query.',
     }
 
-    ACTS_ON = ['Ip', 'Hostname']
+    ACTS_ON = ['Ip', 'Hostname', 'Hash']
 
     @staticmethod
     def analyze(observable, results):
@@ -87,6 +88,24 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
             if json_result.get('total'):
                 result['total'] = json_result['total']
+
+        elif isinstance(observable, Hash):
+
+            result['positives'] = json_result['positives']
+
+            if 'permalink' in json_result:
+                result['permalink'] = json_result['permalink']
+
+            if 'total' in json_result:
+                result['total'] = json_result['total']
+
+            hashes ={ 'md5': json_result['md5'], 'sha1': json_result['sha1'], 'sha256': json_result['sha256']}
+            create_hashes = [(k, v) for k,v in hashes.items() if v != observable.value]
+
+            for k, v in create_hashes:
+                new_hash = Hash.get_or_create(value=v)
+                new_hash.tag(observable.get_tags())
+                links.update(new_hash.active_link_to(observable, k, 'virustotal_query'))
 
         result['source'] = 'virustotal_query'
         observable.add_context(result)
