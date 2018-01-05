@@ -378,18 +378,47 @@ class Node(YetiDocument):
         match = {"$match": result_filters}
 
         pipeline = [
-            {"$match": {"{}.$id".format(e1): self.id, "{}.$ref".format(e2): collection_name}},
-            {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": {"$arrayElemAt": [{"$objectToArray": "${}".format(e2)}, 1]}}},
-            {"$project": {"_id": True, "src": True, "dst": True, "history": True, "oid": "$oid.v"}},
-            {"$lookup": {
-                "from": collection_name,
-                "localField": "oid",
-                "foreignField": "_id",
-                "as": "related",
-            }},
-            {"$unwind" : "$related"},
+            {
+                "$match": {
+                    "{}.$id".format(e1): self.id,
+                    "{}.$ref".format(e2): collection_name
+                }
+            },
+            {
+                "$project": {
+                    "_id": True,
+                    "src": True,
+                    "dst": True,
+                    "history": True,
+                    "oid": {
+                        "$arrayElemAt": [{
+                            "$objectToArray": "${}".format(e2)
+                        }, 1]
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "_id": True,
+                    "src": True,
+                    "dst": True,
+                    "history": True,
+                    "oid": "$oid.v"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": collection_name,
+                    "localField": "oid",
+                    "foreignField": "_id",
+                    "as": "related",
+                }
+            },
+            {
+                "$unwind": "$related"
+            },
         ]
-        pipeline.extend([match, {"$skip": skip*limit}, {"$limit": limit}])
+        pipeline.extend([match, {"$skip": skip * limit}, {"$limit": limit}])
         results = list(Link.objects.aggregate(*pipeline))
         return results
 
@@ -410,16 +439,18 @@ class Node(YetiDocument):
                     value["$options"] = "i"
             if isinstance(value, list) and not key.endswith("__in"):
                 value = {"$in": value}
-            result_filters["related."+key] = value
+            result_filters["related." + key] = value
 
-        outnodes = self._neighbors_aggregation("out", klass, result_filters, page, rng)
-        innodes = self._neighbors_aggregation("in", klass, result_filters, page, rng)
+        outnodes = self._neighbors_aggregation(
+            "out", klass, result_filters, page, rng)
+        innodes = self._neighbors_aggregation(
+            "in", klass, result_filters, page, rng)
         final_list = []
         for node in outnodes + innodes:
             n = node.pop('related')
             node.pop('oid')
             node['id'] = node.pop('_id')
-            l = Link(**node) # necessary for first_seen and last_seen functions
+            l = Link(**node)  # necessary for first_seen and last_seen functions
             final_list.append((l, n))
 
         return final_list
