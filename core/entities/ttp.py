@@ -7,15 +7,20 @@ from core.entities import Entity
 
 class TTP(Entity):
 
-    KILL_CHAIN_STEPS = {"1": "Reconnaissance",
-                        "2": "Weaponisation",
-                        "3": "Delivery",
-                        "4": "Exploitation",
-                        "5": "Installation",
-                        "6": "C2",
-                        "7": "Objectives"}
+    KILL_CHAIN_STEPS = {
+        "1": "Reconnaissance",
+        "2": "Weaponisation",
+        "3": "Delivery",
+        "4": "Exploitation",
+        "5": "Installation",
+        "6": "C2",
+        "7": "Objectives"
+    }
 
-    killchain = StringField(verbose_name="Kill Chain Stage", choices=KILL_CHAIN_STEPS.items(), required=True)
+    killchain = StringField(
+        verbose_name="Kill Chain Stage",
+        choices=KILL_CHAIN_STEPS.items(),
+        required=True)
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("killchain", "Kill Chain")]
 

@@ -57,7 +57,13 @@ class YetiDocument(Document):
         return self
 
     def _set_update(self, method, field, value):
-        result = self.__class__._get_collection().update_one({'_id': self.pk}, {method: {field: value}})
+        result = self.__class__._get_collection().update_one({
+            '_id': self.pk
+        }, {
+            method: {
+                field: value
+            }
+        })
 
         return result.modified_count == 1
 
@@ -95,12 +101,7 @@ class Link(Document):
     dst = ReferenceField("Node", required=True, dbref=True, unique_with='src')
     history = ListField(EmbeddedDocumentField(LinkHistory))
 
-    meta = {
-        "indexes": [
-            "src",
-            "dst"
-        ]
-    }
+    meta = {"indexes": ["src", "dst"]}
 
     def __unicode__(self):
         return u"{} -> {} ({})".format(self.src, self.dst, self.description)
@@ -149,7 +150,12 @@ class Link(Document):
         return l
 
     def info(self):
-        return {"description": self.description, "id": str(self.id), "src": unicode(self.src), "dst": unicode(self.dst)}
+        return {
+            "description": self.description,
+            "id": str(self.id),
+            "src": unicode(self.src),
+            "dst": unicode(self.dst)
+        }
 
     def to_dict(self):
         result = self.to_mongo()
@@ -160,7 +166,13 @@ class Link(Document):
 
         return result
 
-    def add_history(self, source, description=None, first_seen=None, last_seen=None, active=False):
+    def add_history(
+            self,
+            source,
+            description=None,
+            first_seen=None,
+            last_seen=None,
+            active=False):
         last_seen = last_seen or datetime.utcnow()
         first_seen = first_seen or datetime.utcnow()
 
@@ -173,13 +185,16 @@ class Link(Document):
                 return self
         # Do we have to extend an inactive record ?
         else:
-            index, overlapping_history = self._get_overlapping(description, first_seen, last_seen)
+            _, overlapping_history = self._get_overlapping(
+                description, first_seen, last_seen)
             if overlapping_history:
                 if source not in overlapping_history.sources:
                     overlapping_history.sources.append(source)
 
-                overlapping_history.first_seen = min(overlapping_history.first_seen, first_seen)
-                overlapping_history.last_seen = max(overlapping_history.last_seen, last_seen)
+                overlapping_history.first_seen = min(
+                    overlapping_history.first_seen, first_seen)
+                overlapping_history.last_seen = max(
+                    overlapping_history.last_seen, last_seen)
                 self.save(validate=False)
                 return self
 
@@ -204,7 +219,8 @@ class Link(Document):
             if (description == item.description and
                 ((item.first_seen <= first_seen <= item.last_seen) or
                  (item.first_seen <= last_seen <= item.last_seen) or
-                 (first_seen <= item.first_seen <= item.last_seen <= last_seen))):
+                 (first_seen <= item.first_seen <= item.last_seen <=
+                  last_seen))):
                 return index, item
 
         return None, None
@@ -242,7 +258,8 @@ class AttachedFile(YetiDocument):
             fd.write(content.read())
             fd.close()
             if filename:
-                f = AttachedFile(filename=filename, content_type=content_type, sha256=sha256)
+                f = AttachedFile(
+                    filename=filename, content_type=content_type, sha256=sha256)
                 f.save()
                 return f
             else:
@@ -252,7 +269,8 @@ class AttachedFile(YetiDocument):
     def from_content(content, filename, content_type):
         sha256 = stream_sha256(content)
 
-        return AttachedFile.get_or_create(sha256, content, filename, content_type)
+        return AttachedFile.get_or_create(
+            sha256, content, filename, content_type)
 
     @staticmethod
     def from_upload(file, force_mime=False):
@@ -261,7 +279,8 @@ class AttachedFile(YetiDocument):
 
         sha256 = stream_sha256(stream)
 
-        return AttachedFile.get_or_create(sha256, stream, filename, force_mime or file.content_type)
+        return AttachedFile.get_or_create(
+            sha256, stream, filename, force_mime or file.content_type)
 
     @property
     def filepath(self):
@@ -278,14 +297,18 @@ class AttachedFile(YetiDocument):
         """
         fd = self.contents
         while True:
-            data = fd.read(1024*1024)
+            data = fd.read(1024 * 1024)
             if not data:
                 return
             else:
                 yield data
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["filename", "sha256", "content_type"]}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in ["filename", "sha256", "content_type"]
+        }
         return i
 
     def attach(self, obj):
@@ -304,7 +327,8 @@ class AttachedFile(YetiDocument):
 class Node(YetiDocument):
 
     exclude_fields = ['attached_files']
-    attached_files = ListField(ReferenceField(AttachedFile, reverse_delete_rule=PULL))
+    attached_files = ListField(
+        ReferenceField(AttachedFile, reverse_delete_rule=PULL))
 
     meta = {
         "abstract": True,
@@ -333,9 +357,11 @@ class Node(YetiDocument):
 
     def neighbors(self, neighbor_type=""):
         links = []
-        for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(neighbor_type)}):
+        for l in Link.objects(__raw__={"dst.$id": self.id,
+                                       "src.cls": re.compile(neighbor_type)}):
             links.append((l, l.src))
-        for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(neighbor_type)}):
+        for l in Link.objects(__raw__={"src.$id": self.id,
+                                       "dst.cls": re.compile(neighbor_type)}):
             links.append((l, l.dst))
         info = {}
         for link, node in links:
@@ -406,7 +432,8 @@ class Node(YetiDocument):
         return self._fields
 
     # This will only create unactive outgoing links
-    def link_to(self, nodes, description, source, first_seen=None, last_seen=None):
+    def link_to(
+            self, nodes, description, source, first_seen=None, last_seen=None):
         links = set()
         nodes = iterify(nodes)
 

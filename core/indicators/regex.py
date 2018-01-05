@@ -12,7 +12,8 @@ class Regex(Indicator):
         try:
             re.compile(self.pattern)
         except re.error as e:
-            raise IndicatorValidationError("Regex compilation error {}:".format(e))
+            raise IndicatorValidationError(
+                "Regex compilation error {}:".format(e))
 
     def __init__(self, *args, **kwargs):
         super(Regex, self).__init__(*args, **kwargs)

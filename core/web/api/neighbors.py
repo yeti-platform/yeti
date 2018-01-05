@@ -30,10 +30,7 @@ class Neighbors(CrudApi):
         klass = NODES_CLASSES[klass.lower().split('.')[0]]
         node = klass.objects.get(id=node_id)
 
-        result = {
-            'links': list(),
-            'nodes': list()
-        }
+        result = {'links': list(), 'nodes': list()}
 
         result['nodes'].append(node.to_mongo())
 
@@ -67,7 +64,8 @@ class Neighbors(CrudApi):
 
         print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
 
-        neighbors = node.neighbors_advanced(filter_class, fltr, regex, ignorecase, page, rng)
+        neighbors = node.neighbors_advanced(
+            filter_class, fltr, regex, ignorecase, page, rng)
 
         _all = []
         links = []

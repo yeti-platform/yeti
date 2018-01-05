@@ -74,8 +74,9 @@ class Scheduler(BaseScheduler):
         logging.debug("Setting up scheduler")
         for entry_name, entry in self.loaded_entries.iteritems():
             if isinstance(entry, ScheduleEntry):
-                self._schedule[entry_name] = BaseScheduleEntry(name=entry_name,
-                                                               app=self.app,
-                                                               task=entry.SCHEDULED_TASK,
-                                                               schedule=entry.frequency,
-                                                               args=(str(entry.id), ))
+                self._schedule[entry_name] = BaseScheduleEntry(
+                    name=entry_name,
+                    app=self.app,
+                    task=entry.SCHEDULED_TASK,
+                    schedule=entry.frequency,
+                    args=(str(entry.id),))

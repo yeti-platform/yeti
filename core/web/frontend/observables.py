@@ -28,7 +28,9 @@ class ObservableView(GenericView):
     @route('/advanced')
     @requires_permissions("read", "observable")
     def advanced(self):
-        return render_template("{}/browse.html".format(self.klass.__name__.lower()), export_templates=ExportTemplate.objects.all())
+        return render_template(
+            "{}/browse.html".format(self.klass.__name__.lower()),
+            export_templates=ExportTemplate.objects.all())
 
     # override to guess observable type
     @requires_permissions("write", "observable")
@@ -48,13 +50,21 @@ class ObservableView(GenericView):
                 except ObservableValidationError, e:
                     form = klass.get_form()(request.form)
                     form.errors['generic'] = [str(e)]
-                    return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
+                    return render_template(
+                        "{}/edit.html".format(self.klass.__name__.lower()),
+                        form=form,
+                        obj_type=klass.__name__,
+                        obj=None)
 
             return self.handle_form(klass=guessed_type)
 
         form = klass.get_form()()
         obj = None
-        return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
+        return render_template(
+            "{}/edit.html".format(self.klass.__name__.lower()),
+            form=form,
+            obj_type=klass.__name__,
+            obj=obj)
 
     @route("/", methods=['GET', 'POST'])
     @requires_permissions("read", "observable")
@@ -68,17 +78,22 @@ class ObservableView(GenericView):
                 lines = request.form['bulk-text'].split('\n')
 
             invalid_observables = 0
-            if bool(request.form.get('add', False)) and current_user.has_permission("observable", "write"):
+            if bool(request.form.get(
+                    'add', False)) and current_user.has_permission("observable",
+                                                                   "write"):
                 tags = request.form.get('tags', "").split(',')
                 for l in lines:
                     try:
                         txt = l.strip()
                         if txt:
-                            if (request.form['force-type']
-                                and request.form['force-type'] in globals()
-                                    and issubclass(globals()[request.form['force-type']], Observable)):
+                            if (request.form['force-type'] and
+                                    request.form['force-type'] in globals() and
+                                    issubclass(
+                                        globals()[request.form['force-type']],
+                                        Observable)):
                                 print globals()[request.form['force-type']]
-                                o = globals()[request.form['force-type']].get_or_create(value=txt)
+                                o = globals()[request.form[
+                                    'force-type']].get_or_create(value=txt)
                             else:
                                 o = Observable.add_text(txt)
                             o.tag(tags)
@@ -93,10 +108,13 @@ class ObservableView(GenericView):
 
             if len(obs) > 0:
                 data = match_observables(obs.keys())
-                return render_template("observable/search_results.html", data=data)
+                return render_template(
+                    "observable/search_results.html", data=data)
             else:
                 if invalid_observables:
-                    flash("Type guessing failed for {} observables. Try setting it manually.".format(invalid_observables), "danger")
+                    flash(
+                        "Type guessing failed for {} observables. Try setting it manually.".
+                        format(invalid_observables), "danger")
                     return render_template("observable/search.html")
 
         return render_template("observable/search.html")

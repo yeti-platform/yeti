@@ -81,7 +81,13 @@ class User(YetiDocument):
         return os.urandom(40).encode('hex')
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["username", "enabled", "permissions", "api_key"]}
-        i['url'] = url_for("api.UserAdmin:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for("frontend.UsersView:profile", id=str(self.id), _external=True)
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in ["username", "enabled", "permissions", "api_key"]
+        }
+        i['url'] = url_for(
+            "api.UserAdmin:post", id=str(self.id), _external=True)
+        i['human_url'] = url_for(
+            "frontend.UsersView:profile", id=str(self.id), _external=True)
         return i
