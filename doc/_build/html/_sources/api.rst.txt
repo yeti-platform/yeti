@@ -3,6 +3,10 @@ The API
 
 This part details the various API endpoints that can be used within YETI.
 
+API bindings:
+
+  * Python: `pyeti <https://github.com/yeti-platform/pyeti/>`_
+
 
 Observables, Indicators and Entities
 ------------------------------------

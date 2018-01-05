@@ -37,13 +37,22 @@ class Export(CrudApi):
         try:
             e = self.objectmanager.objects.get(id=id)
         except DoesNotExist:
-            return render({"error": "No Export found for id {}".format(id)}), 404
+            return render({
+                "error": "No Export found for id {}".format(id)
+            }), 404
         if e.output_dir.startswith("/"):
             d = e.output_dir
         else:
-            d = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), e.output_dir)
+            d = os.path.join(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(
+                            os.path.dirname(os.path.abspath(__file__))))),
+                e.output_dir)
 
-        response = make_response(send_from_directory(d, e.name, as_attachment=True, attachment_filename=e.name))
+        response = make_response(
+            send_from_directory(
+                d, e.name, as_attachment=True, attachment_filename=e.name))
         response.headers['X-Yeti-Export-MD5'] = e.hash_md5
         return response
 
@@ -78,9 +87,23 @@ class Export(CrudApi):
 
     def _parse_request(self, json):
         params = json
-        params['frequency'] = string_to_timedelta(params.get('frequency', '1:00:00'))
-        params['ignore_tags'] = [Tag.objects.get(name=name.strip()) for name in params['ignore_tags'].split(',') if name.strip()]
-        params['include_tags'] = [Tag.objects.get(name=name.strip()) for name in params['include_tags'].split(',') if name.strip()]
-        params['exclude_tags'] = [Tag.objects.get(name=name.strip()) for name in params['exclude_tags'].split(',') if name.strip()]
-        params['template'] = exports.ExportTemplate.objects.get(name=params['template'])
+        params['frequency'] = string_to_timedelta(
+            params.get('frequency', '1:00:00'))
+        params['ignore_tags'] = [
+            Tag.objects.get(name=name.strip())
+            for name in params['ignore_tags'].split(',')
+            if name.strip()
+        ]
+        params['include_tags'] = [
+            Tag.objects.get(name=name.strip())
+            for name in params['include_tags'].split(',')
+            if name.strip()
+        ]
+        params['exclude_tags'] = [
+            Tag.objects.get(name=name.strip())
+            for name in params['exclude_tags'].split(',')
+            if name.strip()
+        ]
+        params['template'] = exports.ExportTemplate.objects.get(
+            name=params['template'])
         return params

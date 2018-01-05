@@ -19,16 +19,17 @@ class Tag(Node):
     replaces = ListField(StringField())
     default_expiration = TimeDeltaField(default=timedelta(days=90))
 
-    meta = {
-        'ordering': ['name'],
-        'indexes': ['name', 'replaces']
-    }
+    meta = {'ordering': ['name'], 'indexes': ['name', 'replaces']}
 
     def __unicode__(self):
         return unicode(self.name)
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "count", "created", "replaces"]}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in ["name", "count", "created", "replaces"]
+        }
         i['id'] = str(self.id)
         i['produces'] = [tag.name for tag in self.produces]
         i['default_expiration'] = self.default_expiration.total_seconds()
@@ -47,7 +48,9 @@ class Tag(Node):
         self.name = re.sub("[^a-z0-9\-_ ]", "", self.name.lower())
         self.name = re.sub(" ", "_", self.name)
         if not self.name:
-            raise TagValidationError("{} is not a valid tag. Valid chars = [a-z0-9\\-_]".format(repr(self.name)))
+            raise TagValidationError(
+                "{} is not a valid tag. Valid chars = [a-z0-9\\-_]".format(
+                    repr(self.name)))
         self.produces = list(set(self.produces))
 
 
@@ -63,5 +66,9 @@ class ObservableTag(EmbeddedDocument):
         return u"{}".format(self.name)
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["first_seen", "last_seen", "fresh", "name"]}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in ["first_seen", "last_seen", "fresh", "name"]
+        }
         return i

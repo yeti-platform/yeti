@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import logging
 
+from dateutil import parser
+
 from core.observables import Observable
 from core.feed import Feed
 from core.errors import ObservableValidationError
@@ -16,15 +18,16 @@ class CybercrimeTracker(Feed):
     }
 
     def update(self):
-        for dict in self.update_xml('item', ["title", "link", "pubDate", "description"]):
-            self.analyze(dict)
+        for item in self.update_xml(
+                'item', ["title", "link", "pubDate", "description"]):
+            self.analyze(item)
 
-    def analyze(self, dict):
-        observable = dict['title']
-        description = dict['description'].lower()
+    def analyze(self, item):
+        observable = item['title']
+        description = item['description'].lower()
         context = {}
         context['description'] = "{} C2 server".format(description)
-        context['date_added'] = datetime.strptime(dict['pubDate'], "%d-%m-%Y")
+        context['date_added'] = parser.parse(item['pubDate'])
         context['source'] = self.name
 
         try:

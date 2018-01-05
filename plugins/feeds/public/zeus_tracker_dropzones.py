@@ -18,20 +18,26 @@ class ZeusTrackerDropzones(Feed):
     }
 
     def update(self):
-        for d in self.update_xml('item', ["title", "link", "description", "guid"]):
-            self.analyze(d)
+        for item in self.update_xml('item',
+                                 ["title", "link", "description", "guid"]):
+            self.analyze(item)
 
-    def analyze(self, dict):
-        url_string = re.search(r"URL: (?P<url>\S+),", dict['description']).group('url')
+    def analyze(self, item):
+        url_string = re.search(r"URL: (?P<url>\S+),",
+                               item['description']).group('url')
 
         context = {}
-        date_string = re.search(r"\((?P<date>[0-9\-]+)\)", dict['title']).group('date')
+        date_string = re.search(r"\((?P<date>[0-9\-]+)\)",
+                                item['title']).group('date')
         context['date_added'] = datetime.strptime(date_string, "%Y-%m-%d")
-        context['status'] = re.search(r"status: (?P<status>[^,]+)", dict['description']).group('status')
-        context['guid'] = dict['guid']
+        context['status'] = re.search(
+            r"status: (?P<status>[^,]+)", item['description']).group('status')
+        context['guid'] = item['guid']
         context['source'] = self.name
         try:
-            context['md5'] = re.search(r"MD5 hash: (?P<md5>[a-f0-9]+)", dict['description']).group('md5')
+            context['md5'] = re.search(
+                r"MD5 hash: (?P<md5>[a-f0-9]+)",
+                item['description']).group('md5')
         except AttributeError as e:
             pass
 

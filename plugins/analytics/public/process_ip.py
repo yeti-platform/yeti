@@ -2,15 +2,18 @@ from __future__ import unicode_literals
 import logging
 import os
 
-from core.analytics import InlineAnalytics
-from core.errors import ObservableValidationError
 import geoip2.database
 from geoip2.errors import AddressNotFoundError
 
+from core.analytics import InlineAnalytics
+from core.config.config import yeti_config
+from core.errors import ObservableValidationError
 
+reader = None
 try:
-    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "GeoLite2-City.mmdb")
-    reader = geoip2.database.Reader(path)
+    path = yeti_config.get('maxmind', 'path')
+    if path:
+        reader = geoip2.database.Reader(path)
 except IOError as e:
     logging.info(
         "Could not open GeoLite2-City.mmdb. Will proceed without GeoIP data")
@@ -38,6 +41,9 @@ class ProcessIp(InlineAnalytics):
                 }
                 ip.save()
         except ObservableValidationError:
-            logging.error("An error occurred when trying to add {} to the database".format(ip.value))
+            logging.error(
+                "An error occurred when trying to add {} to the database".
+                format(ip.value))
         except AddressNotFoundError:
-            logging.error("{} was not found in the GeoIp database".format(ip.value))
+            logging.error(
+                "{} was not found in the GeoIp database".format(ip.value))

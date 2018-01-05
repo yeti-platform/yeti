@@ -13,5 +13,4 @@ connect(
     port=yeti_config.mongodb.port,
     username=yeti_config.mongodb.username,
     password=yeti_config.mongodb.password,
-    connect=False
-)
+    connect=False)

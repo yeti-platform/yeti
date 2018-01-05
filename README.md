@@ -3,6 +3,7 @@
 **Useful links**
 
 * [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
+* [Yeti users mailing list](https://groups.google.com/forum/#!forum/yeti-users)
 * [Project website & blog](https://yeti-platform.github.io)
 * [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
 * [Getting started](http://yeti-platform.readthedocs.io/en/latest/getting-started.html)

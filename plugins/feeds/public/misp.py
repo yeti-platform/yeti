@@ -59,14 +59,16 @@ class MispFeed(Feed):
         return date(*last_run)
 
     def get_organisations(self, instance):
-        url = urljoin(self.instances[instance]['url'], '/organisations/index/scope:all')
+        url = urljoin(
+            self.instances[instance]['url'], '/organisations/index/scope:all')
         headers = {
             'Authorization': self.instances[instance]['key'],
             'Content-type': 'application/json',
             'Accept': 'application/json'
         }
 
-        orgs = requests.get(url, headers=headers, proxies=yeti_config.proxy).json()
+        orgs = requests.get(
+            url, headers=headers, proxies=yeti_config.proxy).json()
 
         for org in orgs:
             org_id = org['Organisation']['id']
@@ -86,7 +88,11 @@ class MispFeed(Feed):
 
             time_filter['request']['to'] = to.isoformat()
             time_filter['request']['from'] = fromdate.isoformat()
-            r = requests.post(url, headers=headers, json=time_filter, proxies=yeti_config.proxy)
+            r = requests.post(
+                url,
+                headers=headers,
+                json=time_filter,
+                proxies=yeti_config.proxy)
 
             try:
                 msg = r.json()
@@ -109,7 +115,9 @@ class MispFeed(Feed):
         seen_last_run = False
 
         for date_from, date_to, imported in self.week_events(instance):
-            logging.debug("Imported {} attributes from {} to {}".format(imported, date_from, date_to))
+            logging.debug(
+                "Imported {} attributes from {} to {}".format(
+                    imported, date_from, date_to))
 
             if seen_last_run:
                 break
@@ -122,7 +130,9 @@ class MispFeed(Feed):
         had_results = True
 
         for date_from, date_to, imported in self.week_events(instance):
-            logging.debug("Imported {} attributes from {} to {}".format(imported, date_from, date_to))
+            logging.debug(
+                "Imported {} attributes from {} to {}".format(
+                    imported, date_from, date_to))
 
             if imported == 0:
                 if had_results:
@@ -141,18 +151,31 @@ class MispFeed(Feed):
             else:
                 self.get_all_events(instance)
 
-            self.modify(**{"set__last_runs__{}".format(instance): date.today().isoformat()})
+            self.modify(
+                **{
+                    "set__last_runs__{}".format(instance):
+                        date.today().isoformat()
+                })
 
     def analyze(self, attribute, instance):
         if 'type' in attribute and attribute['type'] in self.TYPES_TO_IMPORT:
             context = {
-                'org': attribute['event_source_org'],
-                'id': attribute['event_id'],
-                'link': urljoin(self.instances[instance]['url'], '/events/{}'.format(attribute['event_id'])),
-                'date': attribute['event_date'],
-                'source': self.instances[instance]['name'],
-                'description': attribute['event_info'],
-                'comment': attribute['comment']
+                'org':
+                    attribute['event_source_org'],
+                'id':
+                    attribute['event_id'],
+                'link':
+                    urljoin(
+                        self.instances[instance]['url'], '/events/{}'.format(
+                            attribute['event_id'])),
+                'date':
+                    attribute['event_date'],
+                'source':
+                    self.instances[instance]['name'],
+                'description':
+                    attribute['event_info'],
+                'comment':
+                    attribute['comment']
             }
 
             try:
@@ -164,4 +187,6 @@ class MispFeed(Feed):
 
                 obs.add_context(context)
             except:
-                logging.error("{}: error adding {}".format('MispFeed', attribute['value']))
+                logging.error(
+                    "{}: error adding {}".format(
+                        'MispFeed', attribute['value']))

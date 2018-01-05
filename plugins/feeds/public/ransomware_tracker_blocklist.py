@@ -15,10 +15,14 @@ TYPE_DICT = {
 class RansomwareTracker(Feed):
 
     default_values = {
-        "frequency": timedelta(minutes=20),
-        "name": "RansomwareTracker",
-        "source": "http://ransomwaretracker.abuse.ch/feeds/csv/",
-        "description": "Ransomware Tracker offers various types of blocklists that allows you to block Ransomware botnet C&C traffic.",
+        "frequency":
+            timedelta(minutes=20),
+        "name":
+            "RansomwareTracker",
+        "source":
+            "http://ransomwaretracker.abuse.ch/feeds/csv/",
+        "description":
+            "Ransomware Tracker offers various types of blocklists that allows you to block Ransomware botnet C&C traffic.",
     }
 
     def update(self):
@@ -30,7 +34,8 @@ class RansomwareTracker(Feed):
         if not line or line[0].startswith("#"):
             return
 
-        date, _type, family, hostname, url, status, registrar, ips, asns, countries = tuple(line)
+        date, _type, family, hostname, url, status, registrar, ips, asns, countries = tuple(
+            line)
 
         tags = []
         tags += TYPE_DICT[_type]
@@ -46,7 +51,7 @@ class RansomwareTracker(Feed):
         }
 
         try:
-            url = Url.get_or_create(value=url)
+            url = Url.get_or_create(value=url.rstrip())
             url.add_context(context)
             url.tag(tags)
 
@@ -57,7 +62,11 @@ class RansomwareTracker(Feed):
                 if ip != hostname and ip is not None and ip != '':
                     try:
                         i = Ip.get_or_create(value=ip)
-                        i.active_link_to(hostname, "First seen IP", self.name, clean_old=False)
+                        i.active_link_to(
+                            hostname,
+                            "First seen IP",
+                            self.name,
+                            clean_old=False)
                     except ObservableValidationError as e:
                         logging.error("Invalid Observable: {}".format(e))
 

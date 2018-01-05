@@ -1,3 +1,7 @@
+Before opening an issue, please make do a quick search through the current issues
+and the mailing list (https://groups.google.com/forum/#!forum/yeti-users) to see
+if it hasn't been answered already.
+
 ### Description
 [Please provide a description of the issue encountered]
 

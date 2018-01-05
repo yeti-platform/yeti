@@ -33,7 +33,10 @@ def derive(strings):
     new = []
     for observable in observables:
         for a in analyzers.get(observable.__class__, []):
-            new.extend([n for n in a.analyze_string(observable.value) if n and n not in values])
+            new.extend([
+                n for n in a.analyze_string(observable.value)
+                if n and n not in values
+            ])
 
     if len(new) == 0:
         return values, values
@@ -63,13 +66,18 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
         if fetch_neighbors:
             for link, node in (o.incoming()):
                 if isinstance(node, Observable):
-                    if (link.src.value not in extended_query or link.dst.value not in extended_query) and node.tags:
+                    if (link.src.value not in extended_query or
+                            link.dst.value not in extended_query) and node.tags:
                         data['neighbors'].append((link.info(), node.info()))
 
         for nodes in o.neighbors("Entity").values():
             for l, node in nodes:
                 # add node name and link description to indicator
-                node_data = {"entity": node.type, "name": node.name, "link_description": l.description}
+                node_data = {
+                    "entity": node.type,
+                    "name": node.name,
+                    "link_description": l.description
+                }
 
                 # uniquely add node information to related entitites
                 ent = data['entities'].get(node.name, node.info())
@@ -106,12 +114,20 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
                 pass
 
         match = i.info()
-        match.update({"observable": o.info(), "related": [], "suggested_tags": set()})
+        match.update({
+            "observable": o.info() if o.id else o.value,
+            "related": [],
+            "suggested_tags": set()
+        })
 
         for nodes in i.neighbors("Entity").values():
             for l, node in nodes:
                 # add node name and link description to indicator
-                node_data = {"entity": node.type, "name": node.name, "link_description": l.description}
+                node_data = {
+                    "entity": node.type,
+                    "name": node.name,
+                    "link_description": l.description
+                }
                 match["related"].append(node_data)
 
                 # uniquely add node information to related entitites
@@ -128,7 +144,9 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
                 data['entities'][node.name] = ent
 
                 o_tags = o.get_tags()
-                [match["suggested_tags"].add(tag) for tag in node.generate_tags() if tag not in o_tags]
+                for tag in node.generate_tags():
+                    if tag not in o_tags:
+                        match["suggested_tags"].add(tag)
 
         data["matches"].append(match)
 

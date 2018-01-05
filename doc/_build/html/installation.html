@@ -34,7 +34,7 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="YETI 1.0 documentation" href="index.html"/>
-        <link rel="next" title="Getting started" href="getting-started.html"/>
+        <link rel="next" title="Use-cases" href="use-cases.html"/>
         <link rel="prev" title="Welcome to YETI’s documentation!" href="index.html"/> 
 
   
@@ -89,17 +89,14 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#quick-dirty">Quick &amp; dirty</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#production-use">Production use</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#web-interface-api">Web interface &amp; API</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#oneshot-analytics">Oneshot analytics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#feeds">Feeds</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#exports">Exports</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#analytics">Analytics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#scheduler">Scheduler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optimize-redis">Optimize redis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#install-systemd-services">Install systemd services</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#keeping-yeti-up-to-date">Keeping Yeti up-to-date</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="getting-started.html">Getting started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="use-cases.html">Use-cases</a></li>
 <li class="toctree-l1"><a class="reference internal" href="objects.html">Yeti objects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extending.html">Extending Yeti</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">The API</a></li>
@@ -170,44 +167,56 @@
 <span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <p>Installing Yeti is pretty straightforward. This procedure was tested on Ubuntu 16.04, but YMMV.</p>
 <p>Install dependencies:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt-get install build-essential git python-dev mongodb redis libxml2-dev libxslt-dev zlib1g-dev python-virtualenv
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt-get install build-essential git python-dev mongodb redis-server libxml2-dev libxslt-dev zlib1g-dev python-virtualenv wkhtmltopdf
 </pre></div>
 </div>
-<p>Activate virtualenv if you want to, then <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span></code> requirements:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ [sudo] pip install -r requirements.txt
+<p>Install Yarn:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+$ echo &quot;deb https://dl.yarnpkg.com/debian/ stable main&quot; | sudo tee /etc/apt/sources.list.d/yarn.list
+$ sudo apt-get update &amp;&amp; sudo apt-get install yarn
+</pre></div>
+</div>
+<p>Download Yeti:</p>
+<blockquote>
+<div>$ git clone <a class="reference external" href="https://github.com/yeti-platform/yeti.git">https://github.com/yeti-platform/yeti.git</a></div></blockquote>
+<p>Activate virtualenv if you want to, then install requirements:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd yeti
+$ [sudo] pip install -r requirements.txt
+$ yarn install
 </pre></div>
 </div>
 <div class="section" id="quick-dirty">
 <h2>Quick &amp; dirty<a class="headerlink" href="#quick-dirty" title="Permalink to this headline">¶</a></h2>
 <p>Start the web UI (will spawn a HTTP server on <code class="docutils literal"><span class="pre">http://localhost:5000</span></code>):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ ./yeti.py
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ./yeti.py webserver
 </pre></div>
 </div>
 <p>This will only enable the web interface - if you want to use Feeds and Analytics, you&#8217;ll be better off starting the workers as well:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 -Q feeds -n feeds --purge
-$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -c 2 -Q oneshot -n oneshot --purge
-$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Ofair -c 2 --purge
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q exports -n exports -Ofair -c 2 --purge
+$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q feeds -n feeds -Ofair -c 2 --purge
+$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q analytics -n analytics -Ofair -c 2 --purge
+$ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q oneshot -n oneshot -c 2 --purge
 $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 </pre></div>
 </div>
+<p>Or, to bootstrap a production use instance of Yeti on Ubuntu 16.04 (without the Redis tweaks), everyone&#8217;s favorite command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/ubuntu_bootstrap.sh | sudo /bin/bash
+</pre></div>
+</div>
+<p>There is also support for other platforms:</p>
+<ul class="simple">
+<li>CentOS: <code class="docutils literal"><span class="pre">extras/centos_bootstrap.sh</span></code></li>
+</ul>
 </div>
 <div class="section" id="production-use">
 <h2>Production use<a class="headerlink" href="#production-use" title="Permalink to this headline">¶</a></h2>
 <p>For production use, it may be better to daemonize Yeti and tweak redis for performance.</p>
-<p>Start off with:</p>
+<p>Install <code class="docutils literal"><span class="pre">nginx</span></code> and <code class="docutils literal"><span class="pre">uwsgi</span></code>:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt-get install nginx uwsgi
 </pre></div>
 </div>
-<p>systemd protips:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service yeti_web start|stop|restart
-or
-$ sudo systemctl start|status|stop yeti_web
-</pre></div>
-</div>
-<p>To enable the systemd scripts once you&#8217;ve installed them:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">systemctl</span> <span class="n">enable</span> <span class="n">yeti_web</span>
-</pre></div>
-</div>
+<div class="section" id="optimize-redis">
+<h3>Optimize redis<a class="headerlink" href="#optimize-redis" title="Permalink to this headline">¶</a></h3>
 <p>Some optimizations for redis (taken from <a class="reference external" href="https://www.techandme.se/performance-tips-for-redis-cache-server/">here</a>):</p>
 <p>Add the following lines in <code class="docutils literal"><span class="pre">/etc/sysctl.conf</span></code>:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># redis tweak</span>
@@ -222,42 +231,32 @@ $ sudo systemctl start|status|stop yeti_web
 <span class="n">exit</span> <span class="mi">0</span>
 </pre></div>
 </div>
-<div class="section" id="web-interface-api">
-<h3>Web interface &amp; API<a class="headerlink" href="#web-interface-api" title="Permalink to this headline">¶</a></h3>
-<p>File <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_web.service</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">web</span> <span class="n">servers</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
-
-<span class="p">[</span><span class="n">Service</span><span class="p">]</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
-<span class="n">User</span><span class="o">=</span><span class="n">user</span>
-<span class="n">ExecStart</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;source /home/user/env-yeti/bin/activate; cd /home/user/yeti; python yeti.py&quot;</span>
-
-<span class="p">[</span><span class="n">Install</span><span class="p">]</span>
-<span class="n">WantedBy</span><span class="o">=</span><span class="n">multi</span><span class="o">-</span><span class="n">user</span><span class="o">.</span><span class="n">target</span>
+</div>
+<div class="section" id="install-systemd-services">
+<h3>Install systemd services<a class="headerlink" href="#install-systemd-services" title="Permalink to this headline">¶</a></h3>
+<p>Copy all files in <code class="docutils literal"><span class="pre">extras/systemd/*</span></code> to <code class="docutils literal"><span class="pre">/lib/systemd/system/</span></code>. If you&#8217;d
+rather have the web content served through nginx (recommended for production),
+copy <code class="docutils literal"><span class="pre">yeti_uwsgi.service</span></code>, otherwise you&#8217;ll be fine with <code class="docutils literal"><span class="pre">yeti_web.service</span></code>.</p>
+<p>Enable the scripts with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo systemctl enable yeti_&lt;SERVICENAME&gt;.service
 </pre></div>
 </div>
-<p>Or if you want to use using UWSGI (taken from <a class="reference external" href="http://uwsgi-docs.readthedocs.io/en/latest/Systemd.html">http://uwsgi-docs.readthedocs.io/en/latest/Systemd.html</a>):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">UWSGI</span> <span class="n">server</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
-
-<span class="p">[</span><span class="n">Service</span><span class="p">]</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
-<span class="n">User</span><span class="o">=</span><span class="n">user</span>
-<span class="n">ExecStart</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bach</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;source /home/user/env-yeti/bin/activate; cd /home/user/yeti; uwsgi --socket 127.0.0.1:8000 -w yeti --callable webapp --processes 4 --threads 2 --stats 127.0.0.1:9191&quot;</span>
-<span class="n">Restart</span><span class="o">=</span><span class="n">always</span>
-<span class="n">KillSignal</span><span class="o">=</span><span class="n">SIGQUIT</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">notify</span>
-<span class="n">StandardError</span><span class="o">=</span><span class="n">syslog</span>
-<span class="n">NotifyAccess</span><span class="o">=</span><span class="nb">all</span>
-
-<span class="p">[</span><span class="n">Install</span><span class="p">]</span>
-<span class="n">WantedBy</span><span class="o">=</span><span class="n">multi</span><span class="o">-</span><span class="n">user</span><span class="o">.</span><span class="n">target</span>
+<p>And start with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo systemctl start yeti_&lt;SERVICENAME&gt;.service
 </pre></div>
 </div>
-<p>For this to work, you&#8217;ll need to have an nginx configuration like the following one:</p>
+<p>systemd protips:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service yeti_web start|stop|restart
+or
+$ sudo systemctl start|status|stop yeti_web
+</pre></div>
+</div>
+<p>To enable the systemd scripts once you&#8217;ve installed them:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">systemctl</span> <span class="n">enable</span> <span class="n">yeti_web</span>
+</pre></div>
+</div>
+<p>If you&#8217;re running nginx, add the following configuration to one of the nginx
+server directives:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">server</span> <span class="p">{</span>
     <span class="n">listen</span> <span class="mi">80</span><span class="p">;</span>
     <span class="n">server_name</span> <span class="n">yeti</span><span class="p">;</span>
@@ -271,91 +270,18 @@ $ sudo systemctl start|status|stop yeti_web
 </div>
 <p>Replace the <code class="docutils literal"><span class="pre">listen</span></code> and <code class="docutils literal"><span class="pre">server_name</span></code> directives as you see fit.</p>
 </div>
-<div class="section" id="oneshot-analytics">
-<h3>Oneshot analytics<a class="headerlink" href="#oneshot-analytics" title="Permalink to this headline">¶</a></h3>
-<p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_oneshot.service</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">workers</span> <span class="o">-</span> <span class="n">Oneshot</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
-
-<span class="p">[</span><span class="n">Service</span><span class="p">]</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
-<span class="n">User</span><span class="o">=</span><span class="n">user</span>
-<span class="n">ExecStart</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;source /home/user/env-yeti/bin/activate; cd /home/user/yeti; celery -A core.config.celeryctl.celery_app worker -c 4 -Q oneshot -n oneshot --purge&quot;</span>
-
-<span class="p">[</span><span class="n">Install</span><span class="p">]</span>
-<span class="n">WantedBy</span><span class="o">=</span><span class="n">multi</span><span class="o">-</span><span class="n">user</span><span class="o">.</span><span class="n">target</span>
+</div>
+<div class="section" id="keeping-yeti-up-to-date">
+<h2>Keeping Yeti up-to-date<a class="headerlink" href="#keeping-yeti-up-to-date" title="Permalink to this headline">¶</a></h2>
+<p>Keeping Yeti up-to-date is not that hard. You just need to <code class="docutils literal"><span class="pre">cd</span></code> into the
+directory and <cite>git pull</cite>. In some cases, the database schema might change
+a bit, and we always recommend running:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ./yeti.py syncdb
 </pre></div>
 </div>
-</div>
-<div class="section" id="feeds">
-<h3>Feeds<a class="headerlink" href="#feeds" title="Permalink to this headline">¶</a></h3>
-<p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_feeds.service</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">workers</span> <span class="o">-</span> <span class="n">Feeds</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
-
-<span class="p">[</span><span class="n">Service</span><span class="p">]</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
-<span class="n">User</span><span class="o">=</span><span class="n">user</span>
-<span class="n">ExecStart</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q feeds -n feeds --purge</span>
-
-<span class="p">[</span><span class="n">Install</span><span class="p">]</span>
-<span class="n">WantedBy</span><span class="o">=</span><span class="n">multi</span><span class="o">-</span><span class="n">user</span><span class="o">.</span><span class="n">target</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="exports">
-<h3>Exports<a class="headerlink" href="#exports" title="Permalink to this headline">¶</a></h3>
-<p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_feeds.service</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">workers</span> <span class="o">-</span> <span class="n">Feeds</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
-
-<span class="p">[</span><span class="n">Service</span><span class="p">]</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
-<span class="n">User</span><span class="o">=</span><span class="n">user</span>
-<span class="n">ExecStart</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;source /home/cert/env-yeti/bin/activate; cd /home/cert/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 8 -Q exports -n exports --purge</span>
-
-<span class="p">[</span><span class="n">Install</span><span class="p">]</span>
-<span class="n">WantedBy</span><span class="o">=</span><span class="n">multi</span><span class="o">-</span><span class="n">user</span><span class="o">.</span><span class="n">target</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="analytics">
-<h3>Analytics<a class="headerlink" href="#analytics" title="Permalink to this headline">¶</a></h3>
-<p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_analytics.service</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">workers</span> <span class="o">-</span> <span class="n">Analytics</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
-
-<span class="p">[</span><span class="n">Service</span><span class="p">]</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
-<span class="n">User</span><span class="o">=</span><span class="n">user</span>
-<span class="n">ExecStart</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;source /home/user/env-yeti/bin/activate; cd /home/user/yeti; celery -A core.config.celeryctl.celery_app worker -Ofair -c 10 --purge -Q analytics -n analytics&quot;</span>
-
-<span class="p">[</span><span class="n">Install</span><span class="p">]</span>
-<span class="n">WantedBy</span><span class="o">=</span><span class="n">multi</span><span class="o">-</span><span class="n">user</span><span class="o">.</span><span class="n">target</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="scheduler">
-<h3>Scheduler<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h3>
-<p>File - <code class="docutils literal"><span class="pre">/lib/systemd/system/yeti_beat.service</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Unit</span><span class="p">]</span>
-<span class="n">Description</span><span class="o">=</span><span class="n">Yeti</span> <span class="n">beat</span> <span class="n">scheduler</span>
-<span class="n">After</span><span class="o">=</span><span class="n">mongodb</span><span class="o">.</span><span class="n">service</span> <span class="n">redis</span><span class="o">.</span><span class="n">service</span>
-
-<span class="p">[</span><span class="n">Service</span><span class="p">]</span>
-<span class="n">Type</span><span class="o">=</span><span class="n">simple</span>
-<span class="n">User</span><span class="o">=</span><span class="n">user</span>
-<span class="n">ExecStart</span><span class="o">=/</span><span class="nb">bin</span><span class="o">/</span><span class="n">bash</span> <span class="o">-</span><span class="n">c</span> <span class="s2">&quot;source /home/user/env-yeti/bin/activate; cd /home/user/yeti; celery -A core.config.celeryctl beat -S core.scheduling.Scheduler&quot;</span>
-
-<span class="p">[</span><span class="n">Install</span><span class="p">]</span>
-<span class="n">WantedBy</span><span class="o">=</span><span class="n">multi</span><span class="o">-</span><span class="n">user</span><span class="o">.</span><span class="n">target</span>
-</pre></div>
-</div>
-</div>
+<p>before restarting Yeti. Note that Yeti will automatically check if its code and
+databases are not synchronized and will apply migrations automatically when
+the webserver is launched.</p>
 </div>
 </div>
 
@@ -369,7 +295,7 @@ $ sudo systemctl start|status|stop yeti_web
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="getting-started.html" class="btn btn-neutral float-right" title="Getting started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="use-cases.html" class="btn btn-neutral float-right" title="Use-cases" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral" title="Welcome to YETI’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

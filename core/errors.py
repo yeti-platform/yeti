@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+
 class GenericYetiError(Exception):
 
     def __init__(self, value):
@@ -10,6 +11,7 @@ class GenericYetiError(Exception):
 
 
 # Validation errors
+
 
 class GenericValidationError(GenericYetiError):
     pass

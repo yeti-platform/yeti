@@ -31,7 +31,8 @@ class Tag(CrudApi):
                                     replaced by the tag specified in ``merge_into``.
         """
         tags = request.json['merge']
-        merge_into = self.objectmanager.objects.get(name=request.json['merge_into'])
+        merge_into = self.objectmanager.objects.get(
+            name=request.json['merge_into'])
         make_dict = request.json['make_dict']
 
         merged = 0
@@ -40,7 +41,10 @@ class Tag(CrudApi):
         for tag in tags:
             oldtag = self.objectmanager.objects.get(name=tag)
             merge_into.count += oldtag.count
-            merge_into.produces += [i for i in oldtag.produces if i not in merge_into.produces and i != merge_into]
+            merge_into.produces += [
+                i for i in oldtag.produces
+                if i not in merge_into.produces and i != merge_into
+            ]
             merge_into.save()
             oldtag.delete()
             merged += 1
@@ -61,12 +65,17 @@ class Tag(CrudApi):
         """
         tag = self.objectmanager.objects.get(id=id)
         tag.delete()
-        observables.Observable.objects(tags__name=tag.name).update(pull__tags__name=tag.name)
+        observables.Observable.objects(tags__name=tag.name).update(
+            pull__tags__name=tag.name)
         return render({"deleted": id})
 
     def _parse_request(self, json):
         params = json
-        params['produces'] = [self.objectmanager.get_or_create(name=t.strip()) for t in json['produces'].split(',') if t.strip()]
+        params['produces'] = [
+            self.objectmanager.get_or_create(name=t.strip())
+            for t in json['produces'].split(',')
+            if t.strip()
+        ]
         params['replaces'] = json['replaces'].split(',')
         return params
 

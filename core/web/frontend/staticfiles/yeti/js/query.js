@@ -14,14 +14,14 @@ $(function() {
 });
 
 function add_tag(elt) {
-  tag = elt.data('tag');
-  uri = elt.closest('tr').data('uri');
+  var tag = elt.data("tag");
+  var url = elt.closest("tr").data("url");
 
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},
     contentType: "application/json",
-    url: uri,
+    url,
     data: JSON.stringify({"tags": tag}),
     success: function(data) {
       console.log(data);
@@ -51,12 +51,12 @@ function add_observable(elt) {
     url: url,
     data: JSON.stringify({"value": value}),
     success: function(data) {
-      a = $("<a>");
-      a.attr("href", data['human_uri']);
+      var a = $("<a>");
+      a.attr("href", data["human_url"]);
       a.text(data['id']);
-      tr = elt.closest('tr');
-      tr.find(".yeti-disabled").removeClass('yeti-disabled');
-      tr.data('uri', data['uri']);
+      var tr = elt.closest("tr");
+      tr.find(".yeti-disabled").removeClass("yeti-disabled");
+      tr.data("url", data["url"]);
       elt.replaceWith(a);
     }
   });

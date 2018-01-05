@@ -30,9 +30,9 @@ class Url(Observable):
 
     @classmethod
     def is_valid(cls, match):
-        return ((match.group('search').find('/') != -1) and
-                (Hostname.check_type(match.group('hostname')) or
-                 Ip.check_type(match.group('hostname'))))
+        return ((match.group('search').find('/') != -1) and (
+            Hostname.check_type(match.group('hostname')) or
+            Ip.check_type(match.group('hostname'))))
 
     def normalize(self):
         self.value = refang(self.value)
@@ -44,9 +44,11 @@ class Url(Observable):
             self.value = urlnorm.norm(self.value).replace(' ', '%20')
             self.parse()
         except urlnorm.InvalidUrl:
-            raise ObservableValidationError("Invalid URL: {}".format(self.value))
+            raise ObservableValidationError(
+                "Invalid URL: {}".format(self.value))
         except UnicodeDecodeError:
-            raise ObservableValidationError("Invalid URL (UTF-8 decode error): {}".format(self.value))
+            raise ObservableValidationError(
+                "Invalid URL (UTF-8 decode error): {}".format(self.value))
 
     def parse(self):
         parsed = urlparse(self.value)

@@ -22,7 +22,7 @@ Entities
 <div class="tab-content">
 	{% for t in g.entities %}
 	<div role="tabpanel" class="tab-pane {%if loop.first%}active{%endif%}" id="{{t.__name__.lower()}}">
-		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), t.__name__.lower()+"_content", _cls='Entity.'+t.__name__) }}
+		{{ filterlist.sidebar_filter(url_for('api.EntitySearch:post'), t.__name__.lower()+"_content", _cls='^Entity.'+t.__name__+'$') }}
 	</div>
 	{% endfor %}
 </div>
