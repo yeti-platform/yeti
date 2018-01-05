@@ -18,15 +18,16 @@ class CybercrimeTracker(Feed):
     }
 
     def update(self):
-        for dict in self.update_xml('item', ["title", "link", "pubDate", "description"]):
-            self.analyze(dict)
+        for item in self.update_xml(
+                'item', ["title", "link", "pubDate", "description"]):
+            self.analyze(item)
 
-    def analyze(self, dict):
-        observable = dict['title']
-        description = dict['description'].lower()
+    def analyze(self, item):
+        observable = item['title']
+        description = item['description'].lower()
         context = {}
         context['description'] = "{} C2 server".format(description)
-        context['date_added'] = parser.parse(dict['pubDate'])
+        context['date_added'] = parser.parse(item['pubDate'])
         context['source'] = self.name
 
         try:

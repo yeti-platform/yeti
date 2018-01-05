@@ -42,6 +42,10 @@ class Analysis(CrudApi):
             for o in observables:
                 Observable.add_text(o)
 
-        data = match_observables(observables, save_matches=add_unknown and current_user.has_permission('observable', 'write'), fetch_neighbors=fetch_neighbors)
+        data = match_observables(
+            observables,
+            save_matches=add_unknown and
+            current_user.has_permission('observable', 'write'),
+            fetch_neighbors=fetch_neighbors)
 
         return render(data)

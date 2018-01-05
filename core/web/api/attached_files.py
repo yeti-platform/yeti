@@ -9,6 +9,7 @@ from core.web.api.api import render
 
 
 class AttachedFiles(FlaskView):
+
     def post(self):
         if 'file' in request.files:
             f = AttachedFile.from_upload(request.files['file'])

@@ -76,15 +76,13 @@ e = Malware(name="Locky").save()
 e.family = ransomware
 e.save()
 
-
-
-t1 = Tag.get_or_create(name="zeus").add_produces(["crimeware", "banker", "malware"])
+t1 = Tag.get_or_create(name="zeus").add_produces(
+    ["crimeware", "banker", "malware"])
 t2 = Tag.get_or_create(name="banker").add_produces(["crimeware", "malware"])
 t3 = Tag.get_or_create(name="c2")
 t3.add_replaces(["c&c", "cc"])
 
 Tag.get_or_create(name="crimeware").add_produces("malware")
-
 
 et = ExportTemplate(name="Default")
 et.template = "{{ obs.value }}\n"
@@ -96,8 +94,13 @@ et.template = """define category cert_blocklist
 {% endfor %}end
 """
 et.save()
-Export(name="TestExport", acts_on="Url", description="Test description", frequency=timedelta(hours=1), include_tags=[t1, t2], template=et).save()
-
+Export(
+    name="TestExport",
+    acts_on="Url",
+    description="Test description",
+    frequency=timedelta(hours=1),
+    include_tags=[t1, t2],
+    template=et).save()
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
 url.tag(["zeus", "banker", "cc", "c2"])
@@ -106,8 +109,6 @@ print url.tags
 # print url.find_tags()
 
 # import pdb; pdb.set_trace()
-
-
 
 ## Create some instances of malware & co
 bartalex = Malware.get_or_create(name="Bartalex")
@@ -139,7 +140,8 @@ bartalex_callback.location = "network"
 bartalex_callback.save()
 bartalex_callback.action(bartalex, 'testrun', verb='indicates')
 
-bartalex_callback2 = Regex(name="Bartalex callback", pattern="/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$")
+bartalex_callback2 = Regex(
+    name="Bartalex callback", pattern="/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$")
 bartalex_callback2.description = "Bartalex [stage2] callback (extracted from macros)"
 bartalex_callback2.diamond = "capability"
 bartalex_callback2.location = "network"

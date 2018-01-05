@@ -3,11 +3,13 @@ from __future__ import unicode_literals
 from mongoengine.base import BaseField
 from datetime import timedelta
 
+
 class TimeDeltaField(BaseField):
     """A TimeDeltaField field.
     Looks to the outside world like a datatime.timedelta, but stores
     in the database as an integer (or float) number of seconds.
     """
+
     def validate(self, value):
         if not isinstance(value, (timedelta, int, float)):
             self.error(u'cannot parse timedelta "%r"' % value)

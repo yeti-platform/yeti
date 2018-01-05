@@ -82,7 +82,9 @@ class OneShotAnalytics(CrudApi):
             info = obj.info()
 
             info['available'] = True
-            if hasattr(obj, 'settings') and not current_user.has_settings(obj.settings):
+            if hasattr(
+                    obj,
+                    'settings') and not current_user.has_settings(obj.settings):
                 info['available'] = False
 
             data.append(info)
@@ -122,7 +124,8 @@ class OneShotAnalytics(CrudApi):
         analytics = get_object_or_404(self.objectmanager, id=id)
         observable = get_object_or_404(Observable, id=request.form.get('id'))
 
-        return render(analytics.run(observable, current_user.settings).to_mongo())
+        return render(
+            analytics.run(observable, current_user.settings).to_mongo())
 
     def _analytics_results(self, results):
         """Query an analytics status
@@ -168,7 +171,9 @@ class OneShotAnalytics(CrudApi):
     @requires_permissions("read")
     def last(self, id, observable_id):
         try:
-            results = analytics.AnalyticsResults.objects(analytics=id, observable=observable_id, status="finished").order_by('-datetime').limit(1)
+            results = analytics.AnalyticsResults.objects(
+                analytics=id, observable=observable_id,
+                status="finished").order_by('-datetime').limit(1)
             return render(self._analytics_results(results[0]))
         except:
             return render(None)

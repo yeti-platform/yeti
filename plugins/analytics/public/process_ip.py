@@ -41,6 +41,9 @@ class ProcessIp(InlineAnalytics):
                 }
                 ip.save()
         except ObservableValidationError:
-            logging.error("An error occurred when trying to add {} to the database".format(ip.value))
+            logging.error(
+                "An error occurred when trying to add {} to the database".
+                format(ip.value))
         except AddressNotFoundError:
-            logging.error("{} was not found in the GeoIp database".format(ip.value))
+            logging.error(
+                "{} was not found in the GeoIp database".format(ip.value))

@@ -81,14 +81,12 @@ class Investigation(CrudApi):
         data = loads(request.data)
         nodes = []
 
-        response = {
-            'status': 'ok',
-            'message': ''
-        }
+        response = {'status': 'ok', 'message': ''}
 
         try:
             for node in data['nodes']:
-                if node['type'] in globals() and issubclass(globals()[node['type']], Observable):
+                if node['type'] in globals() and issubclass(
+                        globals()[node['type']], Observable):
                     _type = globals()[node['type']]
 
                 n = _type.get_or_create(value=node['value'])
@@ -98,9 +96,6 @@ class Investigation(CrudApi):
 
             i.add([], nodes)
         except Exception, e:
-            response = {
-                'status': 'error',
-                'message': str(e)
-            }
+            response = {'status': 'error', 'message': str(e)}
 
         return render(response)

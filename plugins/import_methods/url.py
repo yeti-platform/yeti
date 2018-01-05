@@ -24,14 +24,13 @@ class ImportURL(ImportMethod):
         tmpdir = mkdtemp()
 
         try:
-            options = {
-                "load-error-handling": "ignore"
-            }
+            options = {"load-error-handling": "ignore"}
 
             pdfkit.from_url(url, path.join(tmpdir, 'out.pdf'), options=options)
 
             with open(path.join(tmpdir, 'out.pdf'), 'rb') as pdf:
-                pdf_import = AttachedFile.from_content(pdf, 'import.pdf', 'application/pdf')
+                pdf_import = AttachedFile.from_content(
+                    pdf, 'import.pdf', 'application/pdf')
 
             results.investigation.update(import_document=pdf_import)
         except Exception, e:
@@ -47,10 +46,12 @@ class ImportURL(ImportMethod):
             import_html(results, response.content)
             self.save_as_pdf(results, url)
         else:
-            target = AttachedFile.from_content(StringIO(response.content), url, content_type)
+            target = AttachedFile.from_content(
+                StringIO(response.content), url, content_type)
             results.investigation.update(import_document=target)
             try:
                 method = ImportMethod.objects.get(acts_on=content_type)
                 method.do_import(results, target.filepath)
             except:
-                raise ValueError("unsupported file type: '{}'".format(content_type))
+                raise ValueError(
+                    "unsupported file type: '{}'".format(content_type))

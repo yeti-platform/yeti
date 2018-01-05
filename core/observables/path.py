@@ -11,7 +11,7 @@ class Path(Observable):
 
     fs = StringField(verbose_name="Filesystem")
 
-    # TODO: Use a smarter regex    
+    # TODO: Use a smarter regex
     regex = re.compile(r"""([A-Z]:\\|/)""")
 
     DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("fs", "Filesystem")]

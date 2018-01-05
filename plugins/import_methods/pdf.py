@@ -4,7 +4,6 @@ from pdfminer.converter import TextConverter
 from pdfminer.pdfpage import PDFPage
 from pdfminer.layout import LAParams
 
-
 from core.investigation import ImportMethod
 
 
@@ -29,7 +28,8 @@ class ImportPDF(ImportMethod):
         for page in PDFPage.get_pages(fp, pagenos, check_extractable=True):
             page_num += 1
 
-            device = TextConverter(rsrcmgr, buff, codec='utf-8', laparams=laparams)
+            device = TextConverter(
+                rsrcmgr, buff, codec='utf-8', laparams=laparams)
             interpreter = PDFPageInterpreter(rsrcmgr, device)
             interpreter.process_page(page)
 

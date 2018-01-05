@@ -2,8 +2,9 @@ from tldextract import extract
 from core.analytics import InlineAnalytics
 from core.observables import Hostname
 
-
-SUSPICIOUS_TLDS = ['pw', 'cc', 'nu', 'ms', 'vg', 'cm', 'biz', 'cn', 'kr', 'br', 'ws', 'me']
+SUSPICIOUS_TLDS = [
+    'pw', 'cc', 'nu', 'ms', 'vg', 'cm', 'biz', 'cn', 'kr', 'br', 'ws', 'me'
+]
 
 
 class ProcessHostnames(InlineAnalytics):
@@ -30,9 +31,11 @@ class ProcessHostnames(InlineAnalytics):
         if parts.subdomain != '':
             hostname.update(domain=False)
 
-            domain = Hostname.get_or_create(value=parts.registered_domain, domain=True)
+            domain = Hostname.get_or_create(
+                value=parts.registered_domain, domain=True)
             domain.add_source("analytics")
-            hostname.active_link_to(domain, "domain", "ProcessHostnames", clean_old=False)
+            hostname.active_link_to(
+                domain, "domain", "ProcessHostnames", clean_old=False)
 
             if domain.has_tag('dyndns'):
                 hostname.tag('dyndns')

@@ -16,7 +16,11 @@ from core.indicators import *
 from core.exports import ExportTemplate
 from core.web.frontend.users import UsersView, UserAdminView
 
-frontend = Blueprint("frontend", __name__, template_folder="templates", static_folder="staticfiles")
+frontend = Blueprint(
+    "frontend",
+    __name__,
+    template_folder="templates",
+    static_folder="staticfiles")
 
 
 @frontend.before_request
@@ -53,9 +57,11 @@ ActionsView.register(frontend)
 
 # Admin views
 
+
 @frontend.route("/dataflows")
 def dataflows():
-    return render_template("dataflows.html", export_templates=ExportTemplate.objects.all())
+    return render_template(
+        "dataflows.html", export_templates=ExportTemplate.objects.all())
 
 
 @frontend.route("/analytics")
@@ -66,6 +72,7 @@ def analytics():
 @frontend.route("/tags")
 def tags():
     return render_template("tags.html")
+
 
 # @frontend.route("/system")
 # def system():

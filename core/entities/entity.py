@@ -15,23 +15,35 @@ class Entity(Node):
     }
 
     VERB_DICT = {
-        "Malware": {"Actor": "Used by", "TTP": "Leverages"},
-        "Actor": {"Malware": "Uses", "TTP": "Leverages"},
+        "Malware": {
+            "Actor": "Used by",
+            "TTP": "Leverages"
+        },
+        "Actor": {
+            "Malware": "Uses",
+            "TTP": "Leverages"
+        },
         "Company": {},
-        "TTP": {"Actor": "Leveraged by", "Malware": "Observed in"},
+        "TTP": {
+            "Actor": "Leveraged by",
+            "Malware": "Observed in"
+        },
     }
 
     DISPLAY_FIELDS = [("name", "Name"), ("tags", "Tags")]
 
-    name = StringField(verbose_name="Name", required=True, unique_with="_cls", sparse=True, max_length=1024)
+    name = StringField(
+        verbose_name="Name",
+        required=True,
+        unique_with="_cls",
+        sparse=True,
+        max_length=1024)
     description = StringField(verbose_name="Description")
     tags = ListField(StringField(), verbose_name="Relevant tags")
 
     meta = {
         "allow_inheritance": True,
-        "indexes": [
-            "tags"
-        ],
+        "indexes": ["tags"],
         "ordering": ["name"],
     }
 
@@ -60,14 +72,20 @@ class Entity(Node):
             if self.__class__.name == target.__class__.__name__:
                 verb = "Related {}".format(self.__class__.__name__)
             else:
-                verb = Entity.VERB_DICT.get(self.__class__.__name__, {}).get(target.__class__.__name__, "Relates to")
+                verb = Entity.VERB_DICT.get(self.__class__.__name__, {}).get(
+                    target.__class__.__name__, "Relates to")
         self.active_link_to(target, verb, source)
 
     def generate_tags(self):
         return []
 
     def info(self):
-        i = {"name": self.name, "description": self.description, "tags": self.tags}
+        i = {
+            "name": self.name,
+            "description": self.description,
+            "tags": self.tags
+        }
         i['url'] = url_for("api.Entity:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for("frontend.EntityView:get", id=str(self.id), _external=True)
+        i['human_url'] = url_for(
+            "frontend.EntityView:get", id=str(self.id), _external=True)
         return i

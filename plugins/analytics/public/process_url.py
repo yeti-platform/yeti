@@ -37,4 +37,6 @@ class ProcessUrl(InlineAnalytics):
             url.active_link_to(h, "hostname", "ProcessUrl", clean_old=False)
             return h
         except ObservableValidationError:
-            logging.error("An error occurred when trying to add {} to the database".format(host))
+            logging.error(
+                "An error occurred when trying to add {} to the database".
+                format(host))

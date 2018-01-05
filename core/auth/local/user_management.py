@@ -9,24 +9,81 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from core.user import User
 from mongoengine import DoesNotExist
 
-
 DEFAULT_PERMISSIONS = {
-    "feed": {"read": True, "write": True, "toggle": True, "refresh": True},
-    "observable": {"read": True, "write": True, "tag": True},
-    "indicator": {"read": True, "write": True},
-    "exporttemplate": {"read": True, "write": True},
-    "entity": {"read": True, "write": True},
-    "scheduledanalytics": {"read": True, "write": True, "toggle": True, "refresh": True},
-    "oneshotanalytics": {"read": True, "write": True, "toggle": True, "run": True},
-    "inlineanalytics": {"read": True, "write": True, "toggle": True},
-    "tag": {"read": True, "write": True},
-    "export": {"read": True, "write": True, "toggle": True, "refresh": True},
-    "attachedfiles": {"read": True, "write": True},
-    "file": {"read": True, "write": True},
-    "link": {"read": True, "write": True},
-    "neighbors": {"read": True, "write": True},
-    "investigation": {"read": True, "write": True},
-    "user": {"read": True, "write": True},
+    "feed": {
+        "read": True,
+        "write": True,
+        "toggle": True,
+        "refresh": True
+    },
+    "observable": {
+        "read": True,
+        "write": True,
+        "tag": True
+    },
+    "indicator": {
+        "read": True,
+        "write": True
+    },
+    "exporttemplate": {
+        "read": True,
+        "write": True
+    },
+    "entity": {
+        "read": True,
+        "write": True
+    },
+    "scheduledanalytics": {
+        "read": True,
+        "write": True,
+        "toggle": True,
+        "refresh": True
+    },
+    "oneshotanalytics": {
+        "read": True,
+        "write": True,
+        "toggle": True,
+        "run": True
+    },
+    "inlineanalytics": {
+        "read": True,
+        "write": True,
+        "toggle": True
+    },
+    "tag": {
+        "read": True,
+        "write": True
+    },
+    "export": {
+        "read": True,
+        "write": True,
+        "toggle": True,
+        "refresh": True
+    },
+    "attachedfiles": {
+        "read": True,
+        "write": True
+    },
+    "file": {
+        "read": True,
+        "write": True
+    },
+    "link": {
+        "read": True,
+        "write": True
+    },
+    "neighbors": {
+        "read": True,
+        "write": True
+    },
+    "investigation": {
+        "read": True,
+        "write": True
+    },
+    "user": {
+        "read": True,
+        "write": True
+    },
     "admin": True,
 }
 
@@ -60,11 +117,14 @@ def authenticate(username, password):
 
 def generate_session_token(user):
     key = current_app.config['SECRET_KEY']
-    return hmac.new(key, (user.username + user.password + os.urandom(12).encode('hex')), sha512).hexdigest()
+    return hmac.new(
+        key, (user.username + user.password + os.urandom(12).encode('hex')),
+        sha512).hexdigest()
 
 
 def set_password(user, password):
-    user.password = generate_password_hash(password, method='pbkdf2:sha256:20000')
+    user.password = generate_password_hash(
+        password, method='pbkdf2:sha256:20000')
     user.api_key = User.generate_api_key()
     user.session_token = generate_session_token(user)
     return user

@@ -38,8 +38,10 @@ class AsproxTracker(Feed):
         context['port'] = Port
         context['cc'] = CC
         context['status'] = Status
-        context['date_added'] = datetime.strptime(First_Seen, "%Y-%m-%d %H:%M:%S")
-        context['last_seen'] = datetime.strptime(Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else datetime.utcnow()
+        context['date_added'] = datetime.strptime(
+            First_Seen, "%Y-%m-%d %H:%M:%S")
+        context['last_seen'] = datetime.strptime(
+            Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else datetime.utcnow()
         context['sbl'] = SBL
         context['abuse_contact'] = Abuse_Contact
         context['description'] = Details if Details else "N/A"
