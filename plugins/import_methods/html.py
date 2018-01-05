@@ -14,7 +14,10 @@ def import_html(results, content):
     body = content.summary()
     text = BeautifulSoup(body).get_text(" ")
 
-    results.investigation.update(name=content.short_title(), import_md=converter.handle(body), import_text=text)
+    results.investigation.update(
+        name=content.short_title(),
+        import_md=converter.handle(body),
+        import_text=text)
 
 
 class ImportHTML(ImportMethod):

@@ -12,6 +12,7 @@ from core.web.helpers import requires_permissions, get_object_or_404, get_querys
 
 
 class ActionsView(FlaskView):
+
     def _get_selected_observables(self, data):
         if isinstance(data, MultiDict):
             ids = data.getlist('ids')
@@ -54,7 +55,8 @@ class ActionsView(FlaskView):
     @requires_permissions("read", "observable")
     @route("/export", methods=['POST'])
     def export(self):
-        template = get_object_or_404(ExportTemplate, id=request.form['template'])
+        template = get_object_or_404(
+            ExportTemplate, id=request.form['template'])
 
         filepath = path.join(gettempdir(), 'yeti_{}.txt'.format(uuid4()))
         template.render(self._get_selected_observables(request.form), filepath)

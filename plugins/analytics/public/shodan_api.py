@@ -25,8 +25,9 @@ class ShodanApi(object):
 class ShodanQuery(OneShotAnalytics, ShodanApi):
     default_values = {
         "name": "Shodan",
-        "description": "Perform a Shodan query on the IP address and tries to"
-                       " extract relevant information."
+        "description":
+            "Perform a Shodan query on the IP address and tries to"
+            " extract relevant information."
     }
 
     ACTS_ON = "Ip"

@@ -5,14 +5,19 @@ from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
+
 class OpenPhish(Feed):
 
     # set default values for feed
     default_values = {
-        'frequency': timedelta(hours=4),
-        'name': 'OpenPhish',
-        'source': 'https://openphish.com/feed.txt',
-        'description': 'OpenPhish community feed. Contains a list of possible Phishing URLs.'
+        'frequency':
+            timedelta(hours=4),
+        'name':
+            'OpenPhish',
+        'source':
+            'https://openphish.com/feed.txt',
+        'description':
+            'OpenPhish community feed. Contains a list of possible Phishing URLs.'
     }
 
     # should tell yeti how to get and chunk the feed
@@ -22,14 +27,11 @@ class OpenPhish(Feed):
         for url in self.update_lines():
             self.analyze(url)
 
-
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
     def analyze(self, url):
-        context = {
-            'source': self.name
-        }
-        
+        context = {'source': self.name}
+
         try:
             if len(url) > 1023:
                 logging.info('URL is too long for mongo db. url=%s' % str(url))

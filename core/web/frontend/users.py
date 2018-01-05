@@ -34,9 +34,15 @@ class UsersView(GenericView):
             user.save()
 
         if current_user.has_role('admin') and user.id != current_user.id:
-            return render_template("user/profile_admin.html", available_settings=User.get_available_settings(), user=user)
+            return render_template(
+                "user/profile_admin.html",
+                available_settings=User.get_available_settings(),
+                user=user)
         else:
-            return render_template("user/profile.html", available_settings=User.get_available_settings(), user=user)
+            return render_template(
+                "user/profile.html",
+                available_settings=User.get_available_settings(),
+                user=user)
 
     @route('/reset-api', methods=["POST"])
     def reset_api(self):
@@ -66,12 +72,15 @@ class UserAdminView(GenericView):
         if request.method == "POST":
             for object_name, permissions in user.permissions.items():
                 if not isinstance(permissions, dict):
-                    permdict[object_name] = bool(request.form.get("{}".format(object_name), False))
+                    permdict[object_name] = bool(
+                        request.form.get("{}".format(object_name), False))
                 else:
                     if object_name not in permdict:
                         permdict[object_name] = {}
                     for p in permissions:
-                        permdict[object_name][p] = bool(request.form.get("{}_{}".format(object_name, p), False))
+                        permdict[object_name][p] = bool(
+                            request.form.get(
+                                "{}_{}".format(object_name, p), False))
             user.permissions = permdict
             user.save()
             flash("Permissions changed successfully", "success")

@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from flask_mongoengine.wtf import model_form
 from mongoengine import *
 
-
 from core.observables import Observable
 from core.database import StringListField
 

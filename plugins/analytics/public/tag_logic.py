@@ -8,6 +8,7 @@ from core.analytics import ScheduledAnalytics
 from core.observables import Tag
 from mongoengine import Q
 
+
 class TagLogic(ScheduledAnalytics):
 
     default_values = {
@@ -22,7 +23,10 @@ class TagLogic(ScheduledAnalytics):
     def __init__(self, *args, **kwargs):
         super(TagLogic, self).__init__(*args, **kwargs)
 
-        existing_tags = {t.name: (t.replaces, t.produces) for t in Tag.objects.all()}
+        existing_tags = {
+            t.name: (t.replaces, t.produces)
+            for t in Tag.objects.all()
+        }
         all_replacements = {}
         all_produces = {}
         for tag, (replaces, produces) in existing_tags.items():
@@ -52,6 +56,8 @@ class TagLogic(ScheduledAnalytics):
             try:
                 db_tag = Tag.objects.get(name=tag)
                 produced_tags = db_tag.produces
-                obj.tag([t.name for t in produced_tags if t.name not in all_tags])
+                obj.tag(
+                    [t.name for t in produced_tags if t.name not in all_tags])
             except DoesNotExist:
-                logging.error("Nonexisting tag: {} (found in {})".format(tag, obj.value))
+                logging.error(
+                    "Nonexisting tag: {} (found in {})".format(tag, obj.value))

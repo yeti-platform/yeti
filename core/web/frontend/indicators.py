@@ -13,6 +13,8 @@ class IndicatorView(GenericView):
     }
 
     def post_save(self, e, request):
-        links = list(Entity.objects(name__in=set(request.form.get('links', '').split(','))))
+        links = list(
+            Entity.objects(
+                name__in=set(request.form.get('links', '').split(','))))
         for l in links:
             e.action(l, "web interface")

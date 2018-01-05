@@ -17,7 +17,8 @@ class Hostname(Observable):
     domain = BooleanField()
     idna = StringField()
 
-    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("domain", "Domain?"), ("idna", "IDNA")]
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("domain", "Domain?"),
+                                                  ("idna", "IDNA")]
 
     @classmethod
     def is_valid(cls, match):

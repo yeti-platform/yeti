@@ -5,6 +5,7 @@ from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
+
 class VXVaultUrl(Feed):
 
     # set default values for feed
@@ -22,7 +23,6 @@ class VXVaultUrl(Feed):
         for line in self.update_lines():
             self.analyze(line)
 
-
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
     def analyze(self, data):
@@ -32,9 +32,7 @@ class VXVaultUrl(Feed):
             else:
                 tags = ['malware']
 
-                context = {
-                    'source': self.name
-                }
+                context = {'source': self.name}
 
                 try:
                     url = Url.get_or_create(value=data.rstrip())

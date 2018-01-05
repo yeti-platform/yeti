@@ -26,13 +26,13 @@ class DNSDBApi(object):
             new = Observable.add_text(record['rrname'])
             new.add_source('analytics')
 
-            links.update(new.link_to(
-                observable,
-                source='DNSDB Passive DNS',
-                description='{} record'.format(record['rrtype']),
-                first_seen=record['first_seen'],
-                last_seen=record['last_seen']
-            ))
+            links.update(
+                new.link_to(
+                    observable,
+                    source='DNSDB Passive DNS',
+                    description='{} record'.format(record['rrtype']),
+                    first_seen=record['first_seen'],
+                    last_seen=record['last_seen']))
 
         return list(links)
 
@@ -45,29 +45,27 @@ class DNSDBApi(object):
                 observable = Observable.add_text(observable)
                 observable.add_source('analytics')
 
-                links.update(hostname.link_to(
-                    observable,
-                    source='DNSDB Passive DNS',
-                    description='{} record'.format(record['rrtype']),
-                    first_seen=record['first_seen'],
-                    last_seen=record['last_seen']
-                ))
+                links.update(
+                    hostname.link_to(
+                        observable,
+                        source='DNSDB Passive DNS',
+                        description='{} record'.format(record['rrtype']),
+                        first_seen=record['first_seen'],
+                        last_seen=record['last_seen']))
 
         return list(links)
 
     @staticmethod
     def lookup(type, observable, api_key):
-        headers = {
-            'accept': 'application/json',
-            'X-Api-Key': api_key
-        }
+        headers = {'accept': 'application/json', 'X-Api-Key': api_key}
 
         if isinstance(observable, Hostname):
             obs_type = 'name'
         else:
             obs_type = 'ip'
 
-        url = "{}/{}/{}/{}".format(DNSDBApi.API_URL, type, obs_type, observable.value)
+        url = "{}/{}/{}/{}".format(
+            DNSDBApi.API_URL, type, obs_type, observable.value)
 
         r = requests.get(url, headers=headers, proxies=yeti_config.proxy)
 
@@ -77,11 +75,15 @@ class DNSDBApi(object):
                 record = json.loads(record)
                 if record['rrtype'] in DNSDBApi.RECORD_TYPES:
                     if 'time_first' in record:
-                        record['first_seen'] = datetime.utcfromtimestamp(record['time_first'])
-                        record['last_seen'] = datetime.utcfromtimestamp(record['time_last'])
+                        record['first_seen'] = datetime.utcfromtimestamp(
+                            record['time_first'])
+                        record['last_seen'] = datetime.utcfromtimestamp(
+                            record['time_last'])
                     else:
-                        record['first_seen'] = datetime.utcfromtimestamp(record['zone_time_first'])
-                        record['last_seen'] = datetime.utcfromtimestamp(record['zone_time_last'])
+                        record['first_seen'] = datetime.utcfromtimestamp(
+                            record['zone_time_first'])
+                        record['last_seen'] = datetime.utcfromtimestamp(
+                            record['zone_time_last'])
 
                     records.append(record)
 
@@ -95,16 +97,20 @@ class DNSDBApi(object):
 class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
 
     default_values = {
-        "group": "DNSDB",
-        "name": "Reverse Passive DNS",
-        "description": "Perform passive DNS reverse lookups on domain names or IP addresses."
+        "group":
+            "DNSDB",
+        "name":
+            "Reverse Passive DNS",
+        "description":
+            "Perform passive DNS reverse lookups on domain names or IP addresses."
     }
 
     ACTS_ON = ["Hostname", "Ip"]
 
     @staticmethod
     def analyze(observable, results):
-        return DNSDBApi.rdata_lookup(observable, results.settings['dnsdb_api_key'])
+        return DNSDBApi.rdata_lookup(
+            observable, results.settings['dnsdb_api_key'])
 
 
 class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
@@ -119,4 +125,5 @@ class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
 
     @staticmethod
     def analyze(hostname, results):
-        return DNSDBApi.rrset_lookup(hostname, results.settings['dnsdb_api_key'])
+        return DNSDBApi.rrset_lookup(
+            hostname, results.settings['dnsdb_api_key'])

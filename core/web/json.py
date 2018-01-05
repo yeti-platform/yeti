@@ -10,6 +10,7 @@ from mongoengine import QuerySet, Document, EmbeddedDocument
 from core.helpers import iterify
 from core.database import Node, Link, YetiDocument
 
+
 def recursive_encoder(objects, template=None, ctx=None):
 
     if isinstance(objects, dict):
@@ -23,7 +24,8 @@ def recursive_encoder(objects, template=None, ctx=None):
     elif isinstance(objects, tuple):
         return tuple(recursive_encoder(o) for o in objects)
 
-    elif isinstance(objects, (Node, Link, YetiDocument, Document, EmbeddedDocument)):
+    elif isinstance(objects,
+                    (Node, Link, YetiDocument, Document, EmbeddedDocument)):
         if hasattr(objects, "info"):
             data = objects.info()
         else:
@@ -50,6 +52,7 @@ def to_json(obj):
 class JSONDecoder(simplejson.JSONDecoder):
 
     def decode(self, s):
+
         def object_hook(obj):
             return bson_hook(obj)
 

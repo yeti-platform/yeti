@@ -24,13 +24,15 @@ rule_template = """rule yeti_rule
 
 class Yara(Indicator):
 
-    pattern = StringField(required=True, verbose_name="Pattern", default=rule_template)
+    pattern = StringField(
+        required=True, verbose_name="Pattern", default=rule_template)
 
     def clean(self):
         try:
             yara.compile(source=self.pattern)
         except (yara.SyntaxError, yara.Error) as e:
-            raise IndicatorValidationError("Yara compilation error: {}".format(e))
+            raise IndicatorValidationError(
+                "Yara compilation error: {}".format(e))
 
     def __init__(self, *args, **kwargs):
         super(Yara, self).__init__(*args, **kwargs)

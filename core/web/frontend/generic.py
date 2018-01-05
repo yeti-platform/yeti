@@ -5,7 +5,7 @@ from flask import render_template, request, redirect, url_for, abort
 from mongoengine import NotUniqueError
 
 from core.entities import Malware, Company, TTP, Actor
-from core.errors import  GenericValidationError
+from core.errors import GenericValidationError
 from core.indicators import Regex
 from core.database import AttachedFile
 from core.web.helpers import get_object_or_404
@@ -26,12 +26,14 @@ class GenericView(FlaskView):
 
     @requires_permissions("read")
     def index(self):
-        return render_template("{}/list.html".format(self.klass.__name__.lower()))
+        return render_template(
+            "{}/list.html".format(self.klass.__name__.lower()))
 
     @requires_permissions("read")
     def get(self, id):
-        obj = get_object_or_404(self.klass, id=id)
-        return render_template("{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+        obj = self.klass.objects.get(id=id)
+        return render_template(
+            "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
 
     @requires_permissions("write")
     @route('/new/<string:subclass>', methods=["GET", "POST"])
@@ -47,7 +49,8 @@ class GenericView(FlaskView):
         if request.method == "POST":
             return self.handle_form(klass=klass)
 
-        if 'bind' in request.args and request.args.get("type") in binding_object_classes:
+        if 'bind' in request.args and request.args.get(
+                "type") in binding_object_classes:
             objtype = binding_object_classes[request.args.get("type")]
             binding_obj = objtype.objects.get(id=request.args.get('bind'))
             form = klass.get_form()(links=[binding_obj.name])
@@ -55,7 +58,11 @@ class GenericView(FlaskView):
             form = klass.get_form()()
 
         obj = None
-        return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
+        return render_template(
+            "{}/edit.html".format(self.klass.__name__.lower()),
+            form=form,
+            obj_type=klass.__name__,
+            obj=obj)
 
     @requires_permissions("write")
     @route('/edit/<string:id>', methods=["GET", "POST"])
@@ -65,14 +72,19 @@ class GenericView(FlaskView):
         obj = self.klass.objects.get(id=id)
         form_class = obj.__class__.get_form()
         form = form_class(obj=obj)
-        return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=self.klass.__name__, obj=obj)
+        return render_template(
+            "{}/edit.html".format(self.klass.__name__.lower()),
+            form=form,
+            obj_type=self.klass.__name__,
+            obj=obj)
 
     @requires_permissions("write")
     @route('/delete/<string:id>', methods=["GET"])
     def delete(self, id):
         obj = self.klass.objects.get(id=id)
         obj.delete()
-        return redirect(url_for('frontend.{}:index'.format(self.__class__.__name__)))
+        return redirect(
+            url_for('frontend.{}:index'.format(self.__class__.__name__)))
 
     def pre_validate(self, obj, request):
         pass
@@ -98,15 +110,32 @@ class GenericView(FlaskView):
             except GenericValidationError as e:
                 # failure - redirect to edit page
                 form.errors['General Error'] = [e]
-                return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
+                return render_template(
+                    "{}/edit.html".format(self.klass.__name__.lower()),
+                    form=form,
+                    obj_type=klass.__name__,
+                    obj=None)
             except NotUniqueError as e:
-                form.errors['Duplicate'] = ['Entity "{}" is already in the database'.format(obj)]
-                return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=None)
+                form.errors['Duplicate'] = [
+                    'Entity "{}" is already in the database'.format(obj)
+                ]
+                return render_template(
+                    "{}/edit.html".format(self.klass.__name__.lower()),
+                    form=form,
+                    obj_type=klass.__name__,
+                    obj=None)
 
             # success - redirect to view page
-            return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=obj.id))
+            return redirect(
+                url_for(
+                    'frontend.{}:get'.format(self.__class__.__name__),
+                    id=obj.id))
         else:
-            return render_template("{}/edit.html".format(self.klass.__name__.lower()), form=form, obj_type=klass.__name__, obj=obj)
+            return render_template(
+                "{}/edit.html".format(self.klass.__name__.lower()),
+                form=form,
+                obj_type=klass.__name__,
+                obj=obj)
 
     @requires_permissions("write")
     @route('/<string:id>/attach-file', methods=["POST"])
@@ -118,7 +147,8 @@ class GenericView(FlaskView):
         f = AttachedFile.from_upload(request.files['file'])
         if f:
             f.attach(e)
-        return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=e.id))
+        return redirect(
+            url_for('frontend.{}:get'.format(self.__class__.__name__), id=e.id))
 
     @requires_permissions("write")
     @route('/<string:id>/detach-file/<string:fileid>', methods=["GET"])
@@ -126,4 +156,5 @@ class GenericView(FlaskView):
         f = get_object_or_404(AttachedFile, id=fileid)
         e = get_object_or_404(self.klass, id=id)
         f.detach(e)
-        return redirect(url_for('frontend.{}:get'.format(self.__class__.__name__), id=id))
+        return redirect(
+            url_for('frontend.{}:get'.format(self.__class__.__name__), id=id))

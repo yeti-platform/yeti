@@ -6,11 +6,17 @@ import collections
 from mongoengine import Document
 from datetime import timedelta
 
-timedelta_regex = re.compile(r"(((?P<hours>[0-9]{1,2}):)?((?P<minutes>[0-9]{1,2}):))?(?P<seconds>[0-9]{1,2})$")
+timedelta_regex = re.compile(
+    r"(((?P<hours>[0-9]{1,2}):)?((?P<minutes>[0-9]{1,2}):))?(?P<seconds>[0-9]{1,2})$"
+)
 
 
 def string_to_timedelta(string):
-    d = {k: int(v) for k, v in timedelta_regex.search(string).groupdict().items() if v}
+    d = {
+        k: int(v)
+        for k, v in timedelta_regex.search(string).groupdict().items()
+        if v
+    }
     return timedelta(**d)
 
 
@@ -20,7 +26,8 @@ def refang(url):
         return "http{}".format(match.group('real'))
 
     substitutes = ('me[o0]w', 'h..p')
-    schema_re = re.compile("^(?P<fake>{})(?P<real>s?://)".format("|".join(substitutes)))
+    schema_re = re.compile(
+        "^(?P<fake>{})(?P<real>s?://)".format("|".join(substitutes)))
     domain_re = re.compile(r"(\[\.\]|,)")
     url = schema_re.sub(http, url)
     url = domain_re.sub(".", url)
@@ -37,7 +44,8 @@ def del_from_set(s, value):
 def iterify(element):
     if element is None:
         return ()
-    elif isinstance(element, collections.Iterable) and not isinstance(element, basestring) and not isinstance(element, Document):
+    elif isinstance(element, collections.Iterable) and not isinstance(
+            element, basestring) and not isinstance(element, Document):
         return element
     else:
         return (element,)

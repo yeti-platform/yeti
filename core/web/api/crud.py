@@ -25,7 +25,9 @@ class CrudSearchApi(FlaskView):
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
 
-        return list(get_queryset(self.objectmanager, fltr, regex, ignorecase)[page * rng:(page + 1) * rng])
+        return list(
+            get_queryset(self.objectmanager, fltr, regex,
+                         ignorecase)[page * rng:(page + 1) * rng])
 
     @requires_permissions('read')
     def post(self):
@@ -96,7 +98,9 @@ class CrudApi(FlaskView):
         ids = iterify(data['ids'])
         new_data = data['new']
         self.objectmanager.objects(id__in=ids).update(new_data)
-        return render({"updated": list(self.objectmanager.objects(ids__in=ids))})
+        return render({
+            "updated": list(self.objectmanager.objects(ids__in=ids))
+        })
 
     @requires_permissions('read')
     def index(self):
@@ -157,7 +161,8 @@ class CrudApi(FlaskView):
         entity = get_object_or_404(self.objectmanager, id=id)
         for f in entity.attached_files:
             i = f.info()
-            i['content_uri'] = url_for("api.Entity:file_content", sha256=f.sha256)
+            i['content_uri'] = url_for(
+                "api.Entity:file_content", sha256=f.sha256)
             l.append(i)
         return render(l)
 
@@ -170,4 +175,6 @@ class CrudApi(FlaskView):
         :response object files: Content of files, served as an attachment
         """
         f = get_object_or_404(AttachedFile, sha256=sha256)
-        return make_response(send_file(f.filepath, as_attachment=True, attachment_filename=f.filename))
+        return make_response(
+            send_file(
+                f.filepath, as_attachment=True, attachment_filename=f.filename))
