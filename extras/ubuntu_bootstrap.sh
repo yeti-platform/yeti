@@ -22,6 +22,7 @@ cp extras/systemd/*.service /etc/systemd/system/
 systemctl enable yeti_uwsgi.service
 systemctl enable yeti_oneshot.service
 systemctl enable yeti_feeds.service
+systemctl enable yeti_inline.service
 systemctl enable yeti_exports.service
 systemctl enable yeti_analytics.service
 systemctl enable yeti_beat.service
@@ -40,6 +41,7 @@ echo "[+] Starting services..."
 sudo systemctl start yeti_oneshot.service
 sleep 5
 sudo systemctl start yeti_feeds.service
+sudo systemctl start yeti_inline.service
 sudo systemctl start yeti_exports.service
 sudo systemctl start yeti_analytics.service
 sudo systemctl start yeti_beat.service

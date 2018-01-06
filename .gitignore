@@ -58,3 +58,7 @@ yeti.conf
 
 # Frontend Dependencies
 node_modules
+
+# Vagrant
+.vagrant/
+vagrant
