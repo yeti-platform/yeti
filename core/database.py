@@ -368,28 +368,90 @@ class Node(YetiDocument):
             info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
 
-    def neighbors_advanced(self, klass, filter, regex, ignorecase, page, rng):
-        from core.web.helpers import get_queryset
+    def _neighbors_aggregation(self, way, klass, result_filters, skip, limit):
+        if way == "in":
+            e1, e2 = "dst", "src"
+        if way == "out":
+            e1, e2 = "src", "dst"
+        collection_name = klass._get_collection().name
 
-        out = [(l, l.dst) for l in Link.objects(
-            __raw__={
-                "src.$id": self.id,
-                "dst.cls": re.compile(klass._class_name)
-            }).no_dereference()]
-        inc = [(l, l.src) for l in Link.objects(
-            __raw__={
-                "dst.$id": self.id,
-                "src.cls": re.compile(klass._class_name)
-            }).no_dereference()]
+        match = {"$match": result_filters}
 
-        all_links = {ref.id: link for link, ref in inc + out}
-        filter['id__in'] = all_links.keys()
+        pipeline = [
+            {
+                "$match": {
+                    "{}.$id".format(e1): self.id,
+                    "{}.$ref".format(e2): collection_name
+                }
+            },
+            {
+                "$project": {
+                    "_id": True,
+                    "src": True,
+                    "dst": True,
+                    "history": True,
+                    "oid": {
+                        "$arrayElemAt": [{
+                            "$objectToArray": "${}".format(e2)
+                        }, 1]
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "_id": True,
+                    "src": True,
+                    "dst": True,
+                    "history": True,
+                    "oid": "$oid.v"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": collection_name,
+                    "localField": "oid",
+                    "foreignField": "_id",
+                    "as": "related",
+                }
+            },
+            {
+                "$unwind": "$related"
+            },
+        ]
+        pipeline.extend([match, {"$skip": skip * limit}, {"$limit": limit}])
+        results = list(Link.objects.aggregate(*pipeline))
+        return results
 
-        objs = list(
-            get_queryset(klass, filter, regex, ignorecase).limit(rng).skip(
-                page * rng))
+    def neighbors_advanced(self, klass, filters, regex, ignorecase, page, rng):
+        result_filters = dict()
 
-        final_list = [(all_links[obj.id], obj) for obj in objs]
+        search_replace = {
+            'tags': 'tags.name',
+        }
+
+        for key, value in filters.items():
+            if key in search_replace:
+                key = search_replace[key]
+
+            if regex and isinstance(value, basestring):
+                value = {"$regex": value}
+                if ignorecase:
+                    value["$options"] = "i"
+            if isinstance(value, list) and not key.endswith("__in"):
+                value = {"$in": value}
+            result_filters["related." + key] = value
+
+        outnodes = self._neighbors_aggregation(
+            "out", klass, result_filters, page, rng)
+        innodes = self._neighbors_aggregation(
+            "in", klass, result_filters, page, rng)
+        final_list = []
+        for node in outnodes + innodes:
+            n = node.pop('related')
+            node.pop('oid')
+            node['id'] = node.pop('_id')
+            l = Link(**node)  # necessary for first_seen and last_seen functions
+            final_list.append((l, n))
 
         return final_list
 
