@@ -82,7 +82,6 @@ Vagrant.configure("2") do |config|
     systemctl enable yeti_uwsgi.service
     systemctl enable yeti_oneshot.service
     systemctl enable yeti_feeds.service
-    systemctl enable yeti_inline.service
     systemctl enable yeti_exports.service
     systemctl enable yeti_analytics.service
     systemctl enable yeti_beat.service
@@ -103,7 +102,6 @@ Vagrant.configure("2") do |config|
     sudo systemctl restart yeti_oneshot.service
     sleep 5
     sudo systemctl restart yeti_feeds.service
-    sudo systemctl restart yeti_inline.service
     sudo systemctl restart yeti_exports.service
     sudo systemctl restart yeti_analytics.service
     sudo systemctl restart yeti_beat.service
@@ -113,7 +111,6 @@ Vagrant.configure("2") do |config|
 
     sudo systemctl status yeti_oneshot.service
     sudo systemctl status yeti_feeds.service
-    sudo systemctl status yeti_inline.service
     sudo systemctl status yeti_exports.service
     sudo systemctl status yeti_analytics.service
     sudo systemctl status yeti_beat.service
