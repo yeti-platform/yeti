@@ -46,7 +46,7 @@ Please refer to the [full documentation](http://yeti-platform.readthedocs.io/en/
 
 If you're really in a hurry, use everyone's favorite command:
 
-    $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/bootstrap.sh | sudo /bin/bash
+    $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/ubuntu_bootstrap.sh | sudo /bin/bash
 
 **Otherwise**, install dependencies:
 
