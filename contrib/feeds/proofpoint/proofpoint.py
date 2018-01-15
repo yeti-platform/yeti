@@ -314,8 +314,8 @@ class ThreatInsight(Feed):
         threat_nodes = []
         if 'url' in threats:
            #Proofpoint sometimes supplies a hostname marked as a Url.
-           #validation rejected such hostnames
-           #this trys a Url or a Hostname and appends it as the proper class/type
+           #validation rejected such hostnames in Url.is_valid due to lack of scheme or path.
+           #this trys a Url, then a Hostname and appends it as the proper class/type
            try:
                appnd=Url.get_or_create(
                      value=threats['url']['threat'], context=[context])
