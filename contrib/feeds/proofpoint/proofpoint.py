@@ -328,7 +328,7 @@ class ThreatInsight(Feed):
                    log.error(pprint.pformat(threat))
                    log.error("URL specified by ProofPoint is neither a URL or a HostName")
 
-           threat_nodes.append(appnd)A
+           threat_nodes.append(appnd)
 #           original lines:
 #            threat_nodes.append(
 #                Url.get_or_create(
