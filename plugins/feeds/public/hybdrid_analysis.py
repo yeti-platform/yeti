@@ -80,6 +80,36 @@ class Hybrid_Analysis(Feed):
                     sha1.active_link_to(new_host, 'C2', self.name)
                     md5.active_link_to(new_host, 'C2', self.name)
 
-                    new_host.add_context({'source':self.name, 'contacted by': sha256})
+                    new_host.add_context({'source': self.name, 'contacted by': sha256})
                 except ObservableValidationError as e:
                     logging.error(e)
+
+        if 'extracted_files' in item:
+            for extracted_file in item['extracted_files']:
+                context_file_dropped = {'source': self.name}
+
+                if not 'sha256' in extracted_file:
+                    logging.error(extracted_file)
+                    continue
+
+                new_file = Hash.get_or_create(value=extracted_file['sha256'])
+                context_file_dropped['virustotal_score'] = 0
+                context_file_dropped['size'] = extracted_file['file_size']
+
+                if 'av_matched' in extracted_file:
+                    context_file_dropped['virustotal_score'] = extracted_file['av_matched']
+
+                if 'threatlevel_readable' in extracted_file:
+                    context_file_dropped['threatlevel'] = extracted_file['threatlevel_readable']
+
+                if 'av_label' in extracted_file:
+                    new_file.tag(extracted_file['av_label'])
+
+                if 'type_tags' in extracted_file:
+                    new_file.tag(extracted_file['type_tags'])
+
+                new_file.add_context(context_file_dropped)
+
+                new_file.active_link_to(sha256, 'drop', self.name)
+                new_file.active_link_to(md5, 'drop', self.name)
+                new_file.active_link_to(sha1, 'drop', self.name)
