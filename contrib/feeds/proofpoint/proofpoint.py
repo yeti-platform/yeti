@@ -15,7 +15,7 @@ from core.entities import Actor, TTP, Campaign
 from core.entities.malware import Malware
 from core.errors import ObservableValidationError
 from core.feed import Feed
-from core.observables import Url, File, Hash, Ip, Email, Text, Hostname, Tag
+from core.observables import Url, File, Hash, Ip, Email, Text, Hostname, Tag, Observable
 
 log = logging.getLogger('pp2yeti')
 
@@ -252,8 +252,7 @@ class ThreatInsight(Feed):
     def _get_messages_for_threat(messages, threat):
         # get all messages associated to a threat
         events = [
-            _ for _ in messages
-            if len([
+            _ for _ in messages if len([
                 t for t in _['threatsInfoMap']
                 if t['threatID'] == threat['threatID']
             ])
@@ -313,26 +312,11 @@ class ThreatInsight(Feed):
         # if they do, do not parse the threat a second time ?
         threat_nodes = []
         if 'url' in threats:
-           #Proofpoint sometimes supplies a hostname marked as a Url.
-           #validation rejected such hostnames in Url.is_valid due to lack of scheme or path.
-           #this trys a Url, then a Hostname and appends it as the proper class/type
-           try:
-               appnd=Url.get_or_create(
-                     value=threats['url']['threat'], context=[context])
-           except ObservableValidationError:
-               try:
-                   appnd=Hostname.get_or_create(
-                         value=threats['url']['threat'], context=[context])
-               except ObservableValidationError as e:
-                   log.error(e)
-                   log.error(pprint.pformat(threat))
-                   log.error("URL specified by ProofPoint is neither a URL or a HostName")
-
-           threat_nodes.append(appnd)
-#           original lines:
-#            threat_nodes.append(
-#                Url.get_or_create(
-#                    value=threats['url']['threat'], context=[context]))
+            #Proofpoint sometimes supplies a hostname marked as a Url.
+            #this relies on Yeti to determine the type/class and add act appropriately
+            threat_nodes.append(
+                Observable.guess_type(threats['url']['threat']).get_or_create(
+                    value=threats['url']['threat'], context=[context]))
 
         if 'attachment' in threats:
             threat_nodes.append(
