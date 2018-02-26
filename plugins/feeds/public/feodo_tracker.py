@@ -85,21 +85,26 @@ class FeodoTracker(Feed):
             url_fedeo = context['guid']
             r = requests.get(url_fedeo)
             if r.status_code == 200:
-                s = r.text
 
-                soup = BeautifulSoup(s, 'html.parser')
-                res = soup.find_all('table')
-                res = res[1].find_all('td')
+                html_source = r.text
 
-                results = [{
-                    'timestamp': res[i].text,
-                    'md5_hash': res[i + 1].text,
-                    'filesize': res[i + 2].text,
-                    'VT': res[i + 3].text,
-                    'Host': res[i + 4].text,
-                    'Port': res[i + 5].text,
-                    'SSL Certif or method': res[i + 6].text
-                } for i in range(0, len(res), 7)]
+                soup = BeautifulSoup(html_source, 'html.parser')
+                tab = soup.find('table', attrs='sortable')
+
+                all_tr = tab.find_all('tr')
+                results = []
+                for tr in all_tr:
+                    all_td = tr.find_all('td')
+                    if all_td and len(all_td) == 7:
+                        results.append({
+                            'timestamp': all_td[0].text,
+                            'md5_hash': all_td[1].text,
+                            'filesize': all_td[2].text,
+                            'VT': all_td[3].text,
+                            'Host': all_td[4].text,
+                            'Port': all_td[5].text,
+                            'SSL Certif or method': all_td[6].text
+                        })
 
                 for r in results:
                     new_hash = Hash.get_or_create(value=r['md5_hash'])
