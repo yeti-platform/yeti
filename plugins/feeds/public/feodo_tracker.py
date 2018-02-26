@@ -91,8 +91,9 @@ class FeodoTracker(Feed):
                 soup = BeautifulSoup(html_source, 'html.parser')
                 tab = soup.find('table', attrs='sortable')
                 results = []
+
                 if tab:
-                    all_tr = tab[0].find_all('tr')
+                    all_tr = tab.find_all('tr')
 
                     for tr in all_tr:
                         all_td = tr.find_all('td')
