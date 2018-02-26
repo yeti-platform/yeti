@@ -90,21 +90,22 @@ class FeodoTracker(Feed):
 
                 soup = BeautifulSoup(html_source, 'html.parser')
                 tab = soup.find('table', attrs='sortable')
-
-                all_tr = tab.find_all('tr')
                 results = []
-                for tr in all_tr:
-                    all_td = tr.find_all('td')
-                    if all_td and len(all_td) == 7:
-                        results.append({
-                            'timestamp': all_td[0].text,
-                            'md5_hash': all_td[1].text,
-                            'filesize': all_td[2].text,
-                            'VT': all_td[3].text,
-                            'Host': all_td[4].text,
-                            'Port': all_td[5].text,
-                            'SSL Certif or method': all_td[6].text
-                        })
+                if tab:
+                    all_tr = tab[0].find_all('tr')
+
+                    for tr in all_tr:
+                        all_td = tr.find_all('td')
+                        if all_td and len(all_td) == 7:
+                            results.append({
+                                'timestamp': all_td[0].text,
+                                'md5_hash': all_td[1].text,
+                                'filesize': all_td[2].text,
+                                'VT': all_td[3].text,
+                                'Host': all_td[4].text,
+                                'Port': all_td[5].text,
+                                'SSL Certif or method': all_td[6].text
+                            })
 
                 for r in results:
                     new_hash = Hash.get_or_create(value=r['md5_hash'])
