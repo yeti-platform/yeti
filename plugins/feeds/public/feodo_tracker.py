@@ -103,7 +103,7 @@ class FeodoTracker(Feed):
                             'VT': all_td[3].text,
                             'Host': all_td[4].text,
                             'Port': all_td[5].text,
-                            'SSL Certif or method': all_td[6]
+                            'SSL Certif or method': all_td[6].text
                         })
 
                 for r in results:
