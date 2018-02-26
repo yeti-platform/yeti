@@ -85,44 +85,44 @@ class FeodoTracker(Feed):
             url_fedeo = context['guid']
             r = requests.get(url_fedeo)
             if r.status_code == 200:
-                if r.status_code == 200:
-                    html_source = r.text
 
-                    soup = BeautifulSoup(html_source, 'html.parser')
-                    tab = soup.find('table', attrs='sortable')
+                html_source = r.text
 
-                    all_tr = tab.find_all('tr')
-                    results = []
-                    for tr in all_tr:
-                        all_td = tr.find_all('td')
-                        if all_td and len(all_td) == 7:
-                            results.append({
-                                'timestamp': all_td[0].text,
-                                'md5_hash': all_td[1].text,
-                                'filesize': all_td[2].text,
-                                'VT': all_td[3].text,
-                                'Host': all_td[4].text,
-                                'Port': all_td[5].text,
-                                'SSL Certif or method': all_td[6]
-                            })
+                soup = BeautifulSoup(html_source, 'html.parser')
+                tab = soup.find('table', attrs='sortable')
 
-                        for r in results:
-                            new_hash = Hash.get_or_create(value=r['md5_hash'])
-                            new_hash.add_context(context)
-                            new_hash.add_source('feed')
-                            new_hash.tag([
-                                variant_tag, 'malware', 'crimeware', 'banker', 'payload'
-                            ])
-                            new_hash.active_link_to(
-                                new, 'c2', self.name, clean_old=False)
-                            host = Url.get_or_create(
-                                value='https://%s:%s' % (g['host'], r['Port']))
-                            host.add_source('feed')
-                            host.add_context(context)
-                            host.tag(
-                                [variant_tag, 'malware', 'crimeware', 'banker', 'c2'])
-                            new_hash.active_link_to(
-                                host, 'c2', self.name, clean_old=False)
+                all_tr = tab.find_all('tr')
+                results = []
+                for tr in all_tr:
+                    all_td = tr.find_all('td')
+                    if all_td and len(all_td) == 7:
+                        results.append({
+                            'timestamp': all_td[0].text,
+                            'md5_hash': all_td[1].text,
+                            'filesize': all_td[2].text,
+                            'VT': all_td[3].text,
+                            'Host': all_td[4].text,
+                            'Port': all_td[5].text,
+                            'SSL Certif or method': all_td[6]
+                        })
+
+                for r in results:
+                    new_hash = Hash.get_or_create(value=r['md5_hash'])
+                    new_hash.add_context(context)
+                    new_hash.add_source('feed')
+                    new_hash.tag([
+                        variant_tag, 'malware', 'crimeware', 'banker', 'payload'
+                    ])
+                    new_hash.active_link_to(
+                        new, 'c2', self.name, clean_old=False)
+                    host = Url.get_or_create(
+                        value='https://%s:%s' % (g['host'], r['Port']))
+                    host.add_source('feed')
+                    host.add_context(context)
+                    host.tag(
+                        [variant_tag, 'malware', 'crimeware', 'banker', 'c2'])
+                    new_hash.active_link_to(
+                        host, 'c2', self.name, clean_old=False)
 
         except ObservableValidationError as e:
             logging.error(e)
