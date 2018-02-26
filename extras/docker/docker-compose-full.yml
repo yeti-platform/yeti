@@ -1,0 +1,85 @@
+---
+
+version: '3'
+services:
+  yeti:
+    build:
+      context: ../../
+      dockerfile: ./extras/docker/Dockerfile
+    image: yeti-platform
+    ports:
+      - "8080:8080"
+    links:
+      - redis
+      - mongodb
+    command: ['docker-entrypoint.sh', 'uwsgi-http']
+    restart: always
+    depends_on:
+      - redis
+      - mongodb
+  yeti-feeds:
+    image: yeti-platform
+    links:
+      - redis
+      - mongodb
+    command: ['docker-entrypoint.sh', 'feeds']
+    restart: always
+    depends_on:
+      - redis
+      - mongodb
+      - yeti
+    environment:
+      - TLDEXTRACT_CACHE=/tmp/tldextract.cache
+  yeti-analytics:
+    image: yeti-platform
+    links:
+      - redis
+      - mongodb
+    command: ['docker-entrypoint.sh', 'analytics']
+    restart: always
+    depends_on:
+      - redis
+      - mongodb
+      - yeti
+    environment:
+      - TLDEXTRACT_CACHE=/tmp/tldextract.cache
+  yeti-beat:
+    image: yeti-platform
+    links:
+      - redis
+      - mongodb
+    command: ['docker-entrypoint.sh', 'beat']
+    restart: always
+    depends_on:
+      - redis
+      - mongodb
+      - yeti
+  yeti-exports:
+    image: yeti-platform
+    links:
+      - redis
+      - mongodb
+    command: ['docker-entrypoint.sh', 'exports']
+    restart: always
+    depends_on:
+      - redis
+      - mongodb
+      - yeti
+  yeti-oneshot:
+    image: yeti-platform
+    links:
+      - redis
+      - mongodb
+    command: ['docker-entrypoint.sh', 'oneshot']
+    restart: always
+    depends_on:
+      - redis
+      - mongodb
+      - yeti
+  redis:
+    image: redis:latest
+  mongodb:
+    image: mongo:latest
+    environment:
+      - MONGO_LOG_DIR=/dev/null
+    command: mongod
