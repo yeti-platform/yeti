@@ -22,7 +22,6 @@ class Hybrid_Analysis(Feed):
     def update(self):
         for item in self.update_json(headers={'User-agent': 'VxApi Connector'})['data']:
             self.analyze(item)
-        pass
 
     def analyze(self, item):
         sha256 = Hash.get_or_create(value=item['sha256'])
