@@ -55,7 +55,7 @@ class VirusTotalHunting(Feed):
         tags.append(item['type'])
 
         context['raw'] = json_string
-
+        context['size'] = item['size']
         context['score vt'] = '%s/%s' % (item['positives'], item['total'])
 
         f_vt.tag(tags)
