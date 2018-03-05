@@ -2,7 +2,7 @@ import json
 from datetime import timedelta
 
 from core import Feed
-from core.observables import Hash
+from core.observables import Hash, File
 from core.config.config import yeti_config
 import logging
 
@@ -39,14 +39,17 @@ class VirusTotalHunting(Feed):
         json_string = json.dumps(item)
         context = {'source': self.name}
 
+        f_vt = File.get_or_create(value='FILE: {}'.format(item['sha256']))
+
         sha256 = Hash.get_or_create(value=item['sha256'])
 
         md5 = Hash.get_or_create(value=item['md5'])
 
         sha1 = Hash.get_or_create(value=item['sha1'])
 
-        sha256.active_link_to(md5, 'md5', self.name)
-        sha256.active_link_to(sha1, 'sha1', self.name)
+        f_vt.active_link_to(md5, 'md5', self.name)
+        f_vt.active_link_to(sha1, 'sha1', self.name)
+        f_vt.active_link_to(sha256, 'sha256', self.name)
 
         tags.append(item['ruleset_name'])
         tags.append(item['type'])
@@ -55,11 +58,5 @@ class VirusTotalHunting(Feed):
 
         context['score vt'] = '%s/%s' % (item['positives'], item['total'])
 
-        sha256.add_context(context)
-        sha256.tag(tags)
-
-        sha1.add_context(context)
-        sha1.tag(tags)
-
-        md5.add_context(context)
-        md5.tag(tags)
+        f_vt.tag(tags)
+        f_vt.add_context(context)
