@@ -55,7 +55,7 @@ class Hybrid_Analysis(Feed):
             context['et_alerts_total'] = item['et_alerts_total']
 
         if 'process_list' in item:
-            context['count process spawn'] = len(item['process_list'])
+            context['count_process_spawn'] = len(item['process_list'])
 
         context['url'] = 'https://www.hybrid-analysis.com' + item['reporturl']
 
