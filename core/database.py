@@ -374,6 +374,7 @@ class Node(YetiDocument):
         if way == "out":
             e1, e2 = "src", "dst"
         collection_name = klass._get_collection().name
+        compiled_filter = re.compile(klass._class_name)
 
         match = {"$match": result_filters}
 
@@ -417,6 +418,11 @@ class Node(YetiDocument):
             {
                 "$unwind": "$related"
             },
+            {
+                "$match": {
+                    "related._cls": compiled_filter
+                }
+            }
         ]
         pipeline.extend([match, {"$skip": skip * limit}, {"$limit": limit}])
         results = list(Link.objects.aggregate(*pipeline))

@@ -5,14 +5,14 @@
         <table class="table table-condensed yeti-table table-hover">
           <tr>{% if links %}{% if link_write %}<th class="icon-cell"></th>{%endif%}<th>Timeframe</th><th>Link</th>{%endif%}<th></th><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th><th>Source</th></tr>
     {% endif %}
-      <tr class="node-line" data-id="{{observable['id']}}" {%if links%} data-element-id="{{links[loop.index0].id}}" {%endif%}>
+      <tr class="node-line" data-id="{{observable['_id']}}" {%if links%} data-element-id="{{links[loop.index0].id}}" {%endif%}>
         {% if links %}
           {% if link_write %}<td><a class="crud-table-delete" data-url="{{ url_for('api.Link:delete', id=links[loop.index0].id) }}" href="#"><i class="fa fa-chain-broken" aria-hidden="true"></i></a></td>{% endif %}
           <td style="width:150px;">{{macros.display_date(links[loop.index0].first_seen)}} - {{macros.display_date(links[loop.index0].last_seen)}}</td>
           <td class="link-description">{{links[loop.index0]['description']}}</td>
         {%endif%}
-        <td class="icon-cell"><a href="{{ url_for('frontend.InvestigationView:graph_node', id=observable['id'], klass='observable')}}"><i class="flaticon-network38"></i></a></td>
-        <td><a href="{{ url_for('frontend.ObservableView:get', id=observable['id'])}}">{{observable['value']}}</a></td>
+        <td class="icon-cell"><a href="{{ url_for('frontend.InvestigationView:graph_node', id=observable['_id'], klass='observable')}}"><i class="flaticon-network38"></i></a></td>
+        <td><a href="{{ url_for('frontend.ObservableView:get', id=observable['_id'])}}">{{observable['value']}}</a></td>
         <td>{{macros.display_tags(observable['tags'])}}</td>
         <td>{{ observable['context']|join(', ', attribute='source')}}</td>
         <td>{{macros.display_datetime(observable['created'])}}</td>

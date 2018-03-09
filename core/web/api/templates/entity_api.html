@@ -17,9 +17,9 @@
         <td class="link-description">{{ links[loop.index0]['description']}}</td>
       {% endif %}
       <td class="icon-cell">
-          <a href="{{ url_for('frontend.InvestigationView:graph_node', id=obj['id'], klass="entity")}}"><i class="flaticon-network38"></i></a>
+          <a href="{{ url_for('frontend.InvestigationView:graph_node', id=obj['_id'], klass="entity")}}"><i class="flaticon-network38"></i></a>
       </td>
-      <td><a href="{{ url_for("frontend.EntityView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
+      <td><a href="{{ url_for("frontend.EntityView:get", id=obj['_id'])}}">{{obj['name']}}</a></td>
       {% for key, label in obj.DISPLAY_FIELDS if key != "name" %}<td>{{macros.display_yeti(obj, key)}}</td>{% endfor %}
     </tr>
 

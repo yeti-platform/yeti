@@ -7,7 +7,7 @@ from core.web.api.api import render_json, render
 from core.web.api.crud import CrudApi
 from core.entities import Entity, Malware, TTP, Actor, ExploitKit, Exploit, Campaign
 from core.observables import Observable
-from core.indicators import Indicator
+from core.indicators import Indicator, Yara, Regex
 from core.web.helpers import requires_permissions
 
 NODES_CLASSES = {
@@ -20,6 +20,8 @@ NODES_CLASSES = {
     'campaign': Campaign,
     'exploit': Exploit,
     'exploitkit': ExploitKit,
+    'regex': Regex,
+    'yara': Yara,
 }
 
 
@@ -63,7 +65,7 @@ class Neighbors(CrudApi):
         rng = int(params.pop("range", 50))
 
         print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
-
+        print filter_class, fltr, regex, ignorecase, page, rng
         neighbors = node.neighbors_advanced(
             filter_class, fltr, regex, ignorecase, page, rng)
 
