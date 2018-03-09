@@ -132,7 +132,13 @@ class CrudApi(FlaskView):
         :<json object params: JSON object containing fields to set
         """
         params = self._parse_request(request.json)
-        obj = self.objectmanager(**params).save()
+        objectmanager = getattr(self, 'objectmanager', None)
+        if 'type' in params and objectmanager is None:
+            objectmanager = getattr(self, 'subobjects', {}).get(params['type'])
+        if objectmanager is None:
+            abort(400)
+        params.pop('type', None)
+        obj = objectmanager(**params).save()
         return render(obj)
 
     @requires_permissions('write')
