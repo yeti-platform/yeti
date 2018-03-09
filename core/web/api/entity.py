@@ -25,6 +25,7 @@ class EntitySearch(CrudSearchApi):
 
 class Entity(CrudApi):
     template = 'entity_api.html'
+    objectmanager = entities.Entity
     subobjects = {
         'Actor': entities.Actor,
         'Campaign': entities.Campaign,
