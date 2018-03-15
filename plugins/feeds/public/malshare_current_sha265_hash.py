@@ -24,13 +24,13 @@ class MalshareCurrentSHA256(Feed):
 
         try:
             parts = line.split()
-            hash = str(parts[0])
+            malhash = str(parts[0])
             context = {
                 'source': self.name
             }
 
             try:
-                hash = Hash.get_or_create(value=hash)
+                hash = Hash.get_or_create(value=malhash)
                 hash.add_context(context)
                 hash.add_source('feed')
                 hash.tag(['malware'])
