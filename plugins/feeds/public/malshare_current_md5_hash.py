@@ -30,10 +30,10 @@ class MalshareCurrentMD5(Feed):
             }
 
             try:
-                hash = Hash.get_or_create(value=malhash)
-                hash.add_context(context)
-                hash.add_source('feed')
-                hash.tag(['malware'])
+                malhash = Hash.get_or_create(value=malhash)
+                malhash.add_context(context)
+                malhash.add_source('feed')
+                malhash.tag(['malware'])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:
