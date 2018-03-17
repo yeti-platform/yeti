@@ -456,6 +456,7 @@ class Node(YetiDocument):
             n = node.pop('related')
             node.pop('oid')
             node['id'] = node.pop('_id')
+            n['id'] = n.pop('_id')
             l = Link(**node)  # necessary for first_seen and last_seen functions
             final_list.append((l, n))
 
