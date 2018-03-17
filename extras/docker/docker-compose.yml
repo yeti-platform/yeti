@@ -1,15 +1,17 @@
+---
+
 version: '3'
 services:
   yeti:
     build:
       context: ../../
       dockerfile: ./extras/docker/Dockerfile
+    image: yeti-platform
     ports:
       - "5000:5000"
     links:
       - redis
       - mongodb
-    command: ./yeti.py webserver
     restart: always
   redis:
     image: redis:latest
