@@ -43,9 +43,7 @@ class Observable(Node):
     value = StringField(
         verbose_name="Value",
         required=True,
-        unique=True,
-        sparse=True,
-        max_length=1024)
+        sparse=True)
     sources = ListField(StringField(), verbose_name="Sources")
     description = StringField(verbose_name="Description")
     context = ListField(DictField(), verbose_name="Context")
@@ -66,7 +64,7 @@ class Observable(Node):
         "indexes": [
             "tags", "last_analyses", "created", {
                 "fields": ["#value"],
-                "cls": False
+                "cls": False,
             }
         ],
         "index_background":

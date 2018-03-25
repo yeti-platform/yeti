@@ -49,14 +49,10 @@ class PhishTank(Feed):
         }
 
         if url is not None and url != '':
-            try:
-                if len(url) > 1023:
-                    logging.info(
-                        'URL is too long for mongo db. url=%s' % str(url))
-                else:
-                    url = Url.get_or_create(value=url)
-                    url.add_context(context)
-                    url.add_source('feed')
-                    url.tag(tags)
+            try:    
+                url = Url.get_or_create(value=url)
+                url.add_context(context)
+                url.add_source('feed')
+                url.tag(tags)
             except ObservableValidationError as e:
                 logging.error(e)

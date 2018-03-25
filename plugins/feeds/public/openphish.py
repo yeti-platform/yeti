@@ -33,12 +33,9 @@ class OpenPhish(Feed):
         context = {'source': self.name}
 
         try:
-            if len(url) > 1023:
-                logging.info('URL is too long for mongo db. url=%s' % str(url))
-            else:
-                url = Url.get_or_create(value=url)
-                url.add_context(context)
-                url.add_source('feed')
-                url.tag(['phishing'])
+            url = Url.get_or_create(value=url)
+            url.add_context(context)
+            url.add_source('feed')
+            url.tag(['phishing'])
         except ObservableValidationError as e:
             logging.error(e)

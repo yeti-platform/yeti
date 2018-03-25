@@ -27,17 +27,12 @@ class VXVaultUrl(Feed):
     # and tag it with 'phish'
     def analyze(self, data):
         if data.startswith('http'):
-            if len(data) > 1023:
-                logging.info('URL is too long for mongo db. url=%s' % str(data))
-            else:
-                tags = ['malware']
-
-                context = {'source': self.name}
-
-                try:
-                    url = Url.get_or_create(value=data.rstrip())
-                    url.add_context(context)
-                    url.add_source('feed')
-                    url.tag(tags)
-                except ObservableValidationError as e:
-                    logging.error(e)
+            tags = ['malware']
+            context = {'source': self.name}
+            try:
+                url = Url.get_or_create(value=data.rstrip())
+                url.add_context(context)
+                url.add_source('feed')
+                url.tag(tags)
+            except ObservableValidationError as e:
+                logging.error(e)

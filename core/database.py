@@ -77,14 +77,15 @@ class YetiDocument(Document):
     def get_or_create(cls, **kwargs):
         """Attempts to fetch a node in the database, and creates it if nonexistent"""
         obj = cls(**kwargs)
-        try:
-            return obj.save()
-        except NotUniqueError:
-            if hasattr(obj, 'name'):
-                return cls.objects.get(name=obj.name)
-            if hasattr(obj, 'value'):
-                return cls.objects.get(value=obj.value)
-
+        obj.clean()
+        if hasattr(obj, 'value'):
+            update_dict = {'value': obj.value}
+        if hasattr(obj, 'name'):
+            update_dict = {'name': obj.name}
+        r = cls.objects(**update_dict).modify(upsert=True, **update_dict)
+        if r is None:
+            return cls.objects.get(**update_dict).save()
+        return r
 
 class LinkHistory(EmbeddedDocument):
 
