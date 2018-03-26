@@ -80,8 +80,11 @@ class YetiDocument(Document):
         obj.clean()
         if hasattr(obj, 'value'):
             select_dict = {'value': obj.value}
+            kwargs.pop('value')
         if hasattr(obj, 'name'):
             select_dict = {'name': obj.name}
+            kwargs.pop('name')
+        select_dict.update(kwargs)
         update_dict = {"set__"+k: v for k, v in select_dict.items()}
         r = cls.objects(**select_dict).modify(upsert=True, **update_dict)
         if r is None:
