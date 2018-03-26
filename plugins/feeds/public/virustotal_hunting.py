@@ -39,7 +39,7 @@ class VirusTotalHunting(Feed):
         json_string = json.dumps(item)
         context = {'source': self.name}
 
-        f_vt = File.get_or_create(value='FILE: {}'.format(item['sha256']))
+        f_vt = File.get_or_create(value='FILE:{}'.format(item['sha256']))
 
         sha256 = Hash.get_or_create(value=item['sha256'])
 
