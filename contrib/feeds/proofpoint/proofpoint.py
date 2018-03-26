@@ -15,7 +15,7 @@ from core.entities import Actor, TTP, Campaign
 from core.entities.malware import Malware
 from core.errors import ObservableValidationError
 from core.feed import Feed
-from core.observables import Url, File, Hash, Ip, Email, Text, Hostname, Tag
+from core.observables import Url, File, Hash, Ip, Email, Text, Hostname, Tag, Observable
 
 log = logging.getLogger('pp2yeti')
 
@@ -252,8 +252,7 @@ class ThreatInsight(Feed):
     def _get_messages_for_threat(messages, threat):
         # get all messages associated to a threat
         events = [
-            _ for _ in messages
-            if len([
+            _ for _ in messages if len([
                 t for t in _['threatsInfoMap']
                 if t['threatID'] == threat['threatID']
             ])
@@ -313,9 +312,12 @@ class ThreatInsight(Feed):
         # if they do, do not parse the threat a second time ?
         threat_nodes = []
         if 'url' in threats:
+            #Proofpoint sometimes supplies a hostname marked as a Url.
+            #this relies on Yeti to determine the type/class and add act appropriately
             threat_nodes.append(
-                Url.get_or_create(
+                Observable.guess_type(threats['url']['threat']).get_or_create(
                     value=threats['url']['threat'], context=[context]))
+
         if 'attachment' in threats:
             threat_nodes.append(
                 Hash.get_or_create(
