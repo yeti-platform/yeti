@@ -79,13 +79,18 @@ class YetiDocument(Document):
         obj = cls(**kwargs)
         obj.clean()
         if hasattr(obj, 'value'):
-            update_dict = {'value': obj.value}
+            select_dict = {'value': obj.value}
         if hasattr(obj, 'name'):
-            update_dict = {'name': obj.name}
-        r = cls.objects(**update_dict).modify(upsert=True, **update_dict)
+            select_dict = {'name': obj.name}
+        update_dict = {"set__"+k: v for k, v in select_dict.items()}
+        r = cls.objects(**select_dict).modify(upsert=True, **update_dict)
         if r is None:
-            return cls.objects.get(**update_dict).save()
-        return r
+            obj.id = cls.objects.get(**select_dict).id
+            obj.new = True
+            return obj.save()
+        obj = cls.objects.get(**select_dict)
+        obj.new = False
+        return obj
 
 class LinkHistory(EmbeddedDocument):
 
@@ -261,6 +266,7 @@ class AttachedFile(YetiDocument):
             if filename:
                 f = AttachedFile(
                     filename=filename, content_type=content_type, sha256=sha256)
+                f.new = True
                 f.save()
                 return f
             else:

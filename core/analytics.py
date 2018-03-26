@@ -57,10 +57,11 @@ class InlineAnalytics(YetiDocument):
     @classmethod
     def post_save(cls, sender, document, created):
         if issubclass(sender, Observable):
-            if created:
+            if document.new:
                 for analytics in cls.analytics.itervalues():
                     if analytics.enabled and sender.__name__ in iterify(
                             analytics.ACTS_ON):
+                        document.new = False
                         analytics.each(document)
 
 
