@@ -12,7 +12,7 @@ class Hybrid_Analysis(Feed):
         "frequency":
             timedelta(minutes=5),
         "name":
-            "Hybdrid-Analysis",
+            "Hybrid-Analysis",
         "source":
             "https://www.hybrid-analysis.com/feed?json",
         "description":
