@@ -26,7 +26,7 @@ class AnalyticsResults(Document):
 class InlineAnalytics(YetiDocument):
     name = StringField(required=True, unique=True)
     enabled = BooleanField(default=True)
-    description = StringField(required=True)
+    description = StringField()
 
     ACTS_ON = []
     default_values = None

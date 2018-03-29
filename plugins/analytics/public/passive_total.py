@@ -95,7 +95,7 @@ class PassiveTotalPassiveDNS(OneShotAnalytics, PassiveTotalApi):
         "group":
             "PassiveTotal",
         "name":
-            "Passive DNS",
+            "PassiveTotal Passive DNS",
         "description":
             "Perform passive DNS (reverse) lookups on domain names or IP addresses."
     }
@@ -195,7 +195,7 @@ class PassiveTotalSubdomains(OneShotAnalytics, PassiveTotalApi):
 class PassiveTotalWhois(OneShotAnalytics, PassiveTotalApi):
     default_values = {
         "group": "PassiveTotal",
-        "name": "Whois",
+        "name": "PassiveTotal Whois",
         "description": "Get Whois information for a specific domain name."
     }
 
@@ -219,7 +219,7 @@ class PassiveTotalReverseWhois(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
         "group": "PassiveTotal",
-        "name": "Reverse Whois",
+        "name": "PassiveTotal Reverse Whois",
         "description": "Find all known domain names for a specific whois field."
     }
 
@@ -251,7 +251,7 @@ class PassiveTotalReverseNS(OneShotAnalytics, PassiveTotalApi):
 
     default_values = {
         "group": "PassiveTotal",
-        "name": "Reverse NS",
+        "name": "PassiveTotal Reverse NS",
         "description": "Find all known domain names for a specific NS server."
     }
 
