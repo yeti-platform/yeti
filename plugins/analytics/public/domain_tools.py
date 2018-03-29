@@ -120,7 +120,7 @@ class DTReverseNS(OneShotAnalytics, DomainToolsApi):
 
     default_values = {
         "group": "DomainTools",
-        "name": "Reverse NS",
+        "name": "DomanTools Reverse NS",
         "description": "Reverse Name Server lookup."
     }
 
@@ -200,7 +200,7 @@ class DTReverseWhois(OneShotAnalytics, DomainToolsApi):
 
     default_values = {
         "group": "DomainTools",
-        "name": "Reverse Whois",
+        "name": "DomainTools Reverse Whois",
         "description": "Reverse Whois lookup."
     }
 
@@ -225,7 +225,7 @@ class DTWhois(OneShotAnalytics, DomainToolsApi):
 
     default_values = {
         "group": "DomainTools",
-        "name": "Whois",
+        "name": "DomainTools Whois",
         "description": "Whois lookup with parsed results."
     }
 

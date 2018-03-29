@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 import os
 from importlib import import_module
 from bson.json_util import dumps
+from mongoengine import connect
 
 from flask import Flask, url_for, request
 from flask_login import LoginManager, current_user
 
+from core.config.config import yeti_config
 from core.user import User
 from core.web.json import JSONDecoder
 from core.web.api import api
@@ -27,6 +29,14 @@ login_manager.login_view = '/login'
 
 auth_module = import_module('core.auth.local')
 webapp.register_blueprint(auth_module.auth)
+
+connect(
+    yeti_config.mongodb.database,
+    host=yeti_config.mongodb.host,
+    port=yeti_config.mongodb.port,
+    username=yeti_config.mongodb.username,
+    password=yeti_config.mongodb.password,
+    connect=False)
 
 
 # Handle authentication

@@ -117,7 +117,7 @@ class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
 
     default_values = {
         "group": "DNSDB",
-        "name": "Passive DNS",
+        "name": "DNSDB Passive DNS",
         "description": "Perform passive DNS lookups on domain names."
     }
 

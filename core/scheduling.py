@@ -17,8 +17,8 @@ class ScheduleEntry(YetiDocument):
 
     name = StringField(required=True, unique=True)
     enabled = BooleanField(default=True)
-    description = StringField(required=True)
-    frequency = TimeDeltaField(required=True)
+    description = StringField()
+    frequency = TimeDeltaField()
     status = StringField()
     last_run = DateTimeField()
     lock = BooleanField(default=False)
@@ -41,9 +41,9 @@ class ScheduleEntry(YetiDocument):
 
 
 class OneShotEntry(YetiDocument):
-    name = StringField(required=True)
+    name = StringField(required=True, unique=True)
     enabled = BooleanField(default=True)
-    description = StringField(required=True)
+    description = StringField()
 
     # This should be defined in subclasses, to set the field values
     default_values = None

@@ -248,7 +248,7 @@ class Link(Document):
 
 class AttachedFile(YetiDocument):
     filename = StringField(required=True)
-    sha256 = StringField(required=True)
+    sha256 = StringField(required=True, unique=True)
     content_type = StringField(required=True)
     references = IntField(default=0)
 

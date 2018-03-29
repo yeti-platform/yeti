@@ -98,7 +98,7 @@ class ImportResults(Document):
 
 
 class ImportMethod(OneShotEntry):
-    acts_on = StringField(required=True)
+    acts_on = StringField()
 
     def run(self, target):
         results = ImportResults(import_method=self, status='pending')
