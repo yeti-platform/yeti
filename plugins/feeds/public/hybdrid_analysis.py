@@ -24,7 +24,7 @@ class Hybrid_Analysis(Feed):
             self.analyze(item)
 
     def analyze(self, item):
-        f_hyb = File.get_or_create(value='FILE: {}'.format(item['sha256']))
+        f_hyb = File.get_or_create(value='FILE:{}'.format(item['sha256']))
 
         sha256 = Hash.get_or_create(value=item['sha256'])
         tags = []
@@ -89,7 +89,7 @@ class Hybrid_Analysis(Feed):
                     logging.error(extracted_file)
                     continue
 
-                new_file = File.get_or_create(value='FILE: {}'.format(extracted_file['sha256']))
+                new_file = File.get_or_create(value='FILE:{}'.format(extracted_file['sha256']))
                 sha256_new_file = Hash.get_or_create(value=extracted_file['sha256'])
                 new_file.active_link_to(sha256_new_file, 'sha256', self.name)
 
