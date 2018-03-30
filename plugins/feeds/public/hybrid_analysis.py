@@ -27,6 +27,7 @@ class Hybrid_Analysis(Feed):
         f_hyb = File.get_or_create(value='FILE:{}'.format(item['sha256']))
 
         sha256 = Hash.get_or_create(value=item['sha256'])
+        f_hyb.active_link_to(sha256, 'sha256', self.name)
         tags = []
         context = {'source': self.name}
 
@@ -63,11 +64,9 @@ class Hybrid_Analysis(Feed):
         f_hyb.tag(tags)
 
         md5 = Hash.get_or_create(value=item['md5'])
-
         f_hyb.active_link_to(md5, 'md5', self.name)
 
         sha1 = Hash.get_or_create(value=item['sha1'])
-
         f_hyb.active_link_to(sha1, 'sha1', self.name)
 
         if 'domains' in item:
