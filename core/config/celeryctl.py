@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
 from celery import Celery
-from celery.signals import celeryd_init
+from mongoengine import connect
+from celery.signals import celeryd_init, worker_process_init
 
 from core.config.config import yeti_config
 
@@ -16,7 +17,7 @@ class CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json']
     CELERY_IMPORTS = (
         'core.config.celeryimports', 'core.analytics_tasks',
-        'core.exports.export', 'core.feed')
+        'core.exports.export', 'core.feed', 'plugins')
     CELERY_TIMEZONE = 'UTC'
     CELERYD_POOL_RESTARTS = True
     CELERY_ROUTES = {
@@ -42,6 +43,20 @@ class CeleryConfig:
 
 
 celery_app.config_from_object(CeleryConfig)
+
+@worker_process_init.connect
+def connect_mongo(**kwargs):
+    """Connect to mongo and load modules in each worker process."""
+    from core.config import celeryimports
+    from core.yeti_plugins import get_plugins
+    connect(
+        yeti_config.mongodb.database,
+        host=yeti_config.mongodb.host,
+        port=yeti_config.mongodb.port,
+        username=yeti_config.mongodb.username,
+        password=yeti_config.mongodb.password,
+        connect=False)
+    celeryimports.loaded_modules = get_plugins()
 
 
 @celeryd_init.connect

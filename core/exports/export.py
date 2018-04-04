@@ -95,7 +95,7 @@ class Export(ScheduleEntry):
     exclude_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     ignore_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     output_dir = StringField(default='exports')
-    acts_on = StringField(verbose_name="Acts on", required=True)
+    acts_on = StringField(verbose_name="Acts on")
     template = ReferenceField(ExportTemplate)
     hash_md5 = StringField(max_length=32)
 

@@ -63,13 +63,13 @@ class Feed(ScheduleEntry):
 
     Attributes:
         frequency:
-            Required. A ``timedelta`` variable defining the frequency at which a feed is to be ran. Example: ``timedelta(hours=1)``
+            A ``timedelta`` variable defining the frequency at which a feed is to be ran. Example: ``timedelta(hours=1)``
         name:
             Required. The feed's name. Must be the same as the class name. Example: ``"ZeusTrackerConfigs"``
         source:
-            Required if working with helpers. This designates URL on which to fetch the data. Example: ``"https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"``
+            f working with helpers. This designates URL on which to fetch the data. Example: ``"https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"``
         description:
-            Required. Bref feed description. Example: ``"This feed shows the latest 50 ZeuS config URLs."``
+            Bref feed description. Example: ``"This feed shows the latest 50 ZeuS config URLs."``
 
     .. note::
         These attributes must be defined in every class inheriting from ``Feed`` as the key - value items of a ``default_values`` attribute. See :ref:`creating-feed` for more details
@@ -78,7 +78,7 @@ class Feed(ScheduleEntry):
 
     SCHEDULED_TASK = "core.feed.update_feed"
 
-    source = StringField(required=True)
+    source = StringField()
 
     def update(self):
         """Function responsible for retreiving the data for a feed and calling

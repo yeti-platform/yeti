@@ -2,11 +2,12 @@ from __future__ import unicode_literals
 
 import logging
 
-from mongoengine import StringField, BooleanField, DateTimeField
+from mongoengine import StringField, BooleanField, DateTimeField, connect
 from celery.beat import Scheduler as BaseScheduler
 from celery.beat import ScheduleEntry as BaseScheduleEntry
 
 from core.config.celeryctl import celery_app
+from core.config.config import yeti_config
 from core.config.mongoengine_extras import TimeDeltaField
 from core.database import YetiDocument
 
@@ -17,8 +18,8 @@ class ScheduleEntry(YetiDocument):
 
     name = StringField(required=True, unique=True)
     enabled = BooleanField(default=True)
-    description = StringField(required=True)
-    frequency = TimeDeltaField(required=True)
+    description = StringField()
+    frequency = TimeDeltaField()
     status = StringField()
     last_run = DateTimeField()
     lock = BooleanField(default=False)
@@ -41,9 +42,9 @@ class ScheduleEntry(YetiDocument):
 
 
 class OneShotEntry(YetiDocument):
-    name = StringField(required=True)
+    name = StringField(required=True, unique=True)
     enabled = BooleanField(default=True)
-    description = StringField(required=True)
+    description = StringField()
 
     # This should be defined in subclasses, to set the field values
     default_values = None
@@ -67,6 +68,13 @@ class Scheduler(BaseScheduler):
         return self._schedule
 
     def load_entries(self):
+        connect(
+            yeti_config.mongodb.database,
+            host=yeti_config.mongodb.host,
+            port=yeti_config.mongodb.port,
+            username=yeti_config.mongodb.username,
+            password=yeti_config.mongodb.password,
+            connect=False)
         from core.yeti_plugins import get_plugins
         self.loaded_entries = get_plugins()
 
