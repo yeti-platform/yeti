@@ -1,6 +1,9 @@
+import logging
 from datetime import timedelta
 
 from core import Feed
+from core.errors import ObservableValidationError
+from core.observables import Url
 
 
 class UrlHaus(Feed):
@@ -19,7 +22,25 @@ class UrlHaus(Feed):
         for line in self.update_csv(delimiter=',',quotechar='"'):
             self.analyze(line)
 
-    def analyze(self, line):
+    def analyze(self, item):
 
-        if not line or line[0].startswith("#"):
+        if not item or item[0].startswith("#"):
             return
+
+        id_feed, dateadded, url, url_status, threat, tags, urlhaus_link = tuple(item)
+
+        context = {
+            "first_seen": dateadded,
+            "status": url_status,
+            "source": self.name,
+            "report": urlhaus_link,
+            "threat": threat
+        }
+
+        if url:
+            try:
+                url_obs = Url.get_or_create(value=url)
+                url_obs.tag(tags.split(','))
+                url_obs.add_context(context)
+            except ObservableValidationError as e:
+                logging.error('Observable is not valid %s' % url)
