@@ -27,7 +27,7 @@ class UrlHaus(Feed):
         if not item or item[0].startswith("#"):
             return
 
-        id_feed, dateadded, url, url_status, threat, tags, urlhaus_link = tuple(item)
+        id_feed, dateadded, url, url_status, threat, tags, urlhaus_link = item
 
         context = {
             "id_urlhaus": id_feed,
