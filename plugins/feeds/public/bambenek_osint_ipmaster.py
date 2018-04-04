@@ -81,4 +81,4 @@ class BambenekOsintIpmaster(Feed):
                     ip_ns_obs.tag(tags)
                     ip_ns_obs.add_context(context)
         else:
-            logging.error('Error of length %s' % line)
+            logging.error('Parsing error in line: %s' % line)
