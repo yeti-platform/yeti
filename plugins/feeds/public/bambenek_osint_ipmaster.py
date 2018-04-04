@@ -59,11 +59,12 @@ class BambenekOsintIpmaster(Feed):
                 c2 = Hostname.get_or_create(value=c2_domain)
                 c2.add_context(context)
                 c2.tag(tags)
-
+                c2.add_source('feed')
                 for ip in ips_c2:
                     if ip:
                         ip_obs = Ip.get_or_create(value=ip)
                         ip_obs.tag(tags)
+                        ip_obs.add_source('feed')
                         if c2:
                             c2.active_link_to(ip_obs, "IP", self.source)
 
@@ -73,12 +74,13 @@ class BambenekOsintIpmaster(Feed):
                     c2.active_link_to(ns_obs, 'NS', self.source)
                     ns_obs.tag(tags)
                     ns_obs.add_context(context)
-
+                    ns_obs.add_source('feed')
             for ip_ns in ip_names_servers:
                 if ip_ns:
                     ip_ns_obs = Ip.get_or_create(value=ip_ns)
                     c2.active_link_to(ip_ns_obs, 'IP NS', self.source)
                     ip_ns_obs.tag(tags)
                     ip_ns_obs.add_context(context)
+                    ip_ns_obs.add_source('feed')
         else:
             logging.error('Parsing error in line: %s' % line)
