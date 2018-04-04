@@ -16,7 +16,7 @@ class Bambenek_osint_ipmaster(Feed):
         "source":
             "http://osint.bambenekconsulting.com/feeds/c2-masterlist.txt",
         "description":
-            "",
+            "Feed Provided By: John Bambenek of Bambenek Consulting, jcb@bambenekconsulting.com // http://bambenekconsulting.com",
     }
     pattern = 'Master Indicator Feed for (\w+) non-sinkholed domains'
     reg = re.compile(pattern)
