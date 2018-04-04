@@ -7,16 +7,16 @@ import logging
 from core.observables import Hostname, Ip
 
 
-class Bambenek_osint_ipmaster(Feed):
+class BambenekOsintIpmaster(Feed):
     default_values = {
         "frequency":
             timedelta(minutes=60),
         "name":
-            "Bambenek_osint_ipmaster",
+            "BambenekOsintIpmaster",
         "source":
             "http://osint.bambenekconsulting.com/feeds/c2-masterlist.txt",
         "description":
-            "Feed Provided By: John Bambenek of Bambenek Consulting, jcb@bambenekconsulting.com // http://bambenekconsulting.com",
+            "Master Feed of known, active and non-sinkholed C&Cs indicators (Bambenek)",
     }
     pattern = 'Master Indicator Feed for (\w+) non-sinkholed domains'
     reg = re.compile(pattern)
@@ -43,12 +43,7 @@ class Bambenek_osint_ipmaster(Feed):
             ip_names_servers = tokens[3].split('|')
             context_feed = tokens[4]
 
-            logging.debug(context_feed)
-            logging.debug(c2_domain)
-            logging.debug(ips_c2)
-            logging.debug(names_servers)
-
-            m = Bambenek_osint_ipmaster.reg.match(context_feed)
+            m = BambenekOsintIpmaster.reg.match(context_feed)
             malware_family = ''
             if m:
                 malware_family = m.group(1)
@@ -86,5 +81,4 @@ class Bambenek_osint_ipmaster(Feed):
                     ip_ns_obs.tag(tags)
                     ip_ns_obs.add_context(context)
         else:
-
             logging.error('Error of length %s' % line)
