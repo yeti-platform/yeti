@@ -30,6 +30,7 @@ class UrlHaus(Feed):
         id_feed, dateadded, url, url_status, threat, tags, urlhaus_link = tuple(item)
 
         context = {
+            "id_urlhaus": id_feed,
             "first_seen": dateadded,
             "status": url_status,
             "source": self.name,
@@ -43,4 +44,4 @@ class UrlHaus(Feed):
                 url_obs.tag(tags.split(','))
                 url_obs.add_context(context)
             except ObservableValidationError as e:
-                logging.error('Observable is not valid %s' % url)
+                logging.error(e)
