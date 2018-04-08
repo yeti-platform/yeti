@@ -6,13 +6,13 @@ from core.feed import Feed
 from core.observables import Hash, Hostname, File
 
 
-class Hybrid_Analysis(Feed):
+class HybridAnalysis(Feed):
 
     default_values = {
         "frequency":
             timedelta(minutes=5),
         "name":
-            "Hybrid-Analysis",
+            "HybridAnalysis",
         "source":
             "https://www.hybrid-analysis.com/feed?json",
         "description":
