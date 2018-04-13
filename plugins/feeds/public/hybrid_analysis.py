@@ -62,21 +62,30 @@ class HybridAnalysis(Feed):
 
         f_hyb.add_context(context)
         f_hyb.tag(tags)
+        f_hyb.add_source('feed')
 
+        sha256.add_context(context)
         md5 = Hash.get_or_create(value=item['md5'])
+        md5.add_source('feed')
+        md5.add_context(context)
         f_hyb.active_link_to(md5, 'md5', self.name)
 
         sha1 = Hash.get_or_create(value=item['sha1'])
+        sha1.add_source('feed')
+        sha1.add_context(context)
+
         f_hyb.active_link_to(sha1, 'sha1', self.name)
 
         if 'domains' in item:
             for domain in item['domains']:
                 try:
                     new_host = Hostname.get_or_create(value=domain)
+
                     f_hyb.active_link_to(new_host, 'C2', self.name)
                     logging.debug(domain)
 
                     new_host.add_context({'source': self.name, 'contacted by': f_hyb})
+                    new_host.add_source('feed')
                 except ObservableValidationError as e:
                     logging.error(e)
 
@@ -90,6 +99,8 @@ class HybridAnalysis(Feed):
 
                 new_file = File.get_or_create(value='FILE:{}'.format(extracted_file['sha256']))
                 sha256_new_file = Hash.get_or_create(value=extracted_file['sha256'])
+                sha256_new_file.add_source('feed')
+
                 new_file.active_link_to(sha256_new_file, 'sha256', self.name)
 
                 context_file_dropped['virustotal_score'] = 0
@@ -108,5 +119,6 @@ class HybridAnalysis(Feed):
                     new_file.tag(extracted_file['type_tags'])
 
                 new_file.add_context(context_file_dropped)
-
+                sha256_new_file.add_context(context_file_dropped)
+                new_file.add_source('feed')
                 f_hyb.active_link_to(new_file, 'drop', self.name)
