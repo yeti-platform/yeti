@@ -32,7 +32,7 @@ class HybridAnalysis(Feed):
         context = {'source': self.name}
 
         if 'vxfamily' in item:
-            tags.append(' '.join(item['vxfamily'].split('.')))
+            context['vxfamily'] = item['vxfamily']
 
         if 'tags' in item:
             tags.extend(item['tags'])
@@ -84,7 +84,8 @@ class HybridAnalysis(Feed):
                     f_hyb.active_link_to(new_host, 'C2', self.name)
                     logging.debug(domain)
 
-                    new_host.add_context({'source': self.name, 'contacted by': f_hyb})
+                    new_host.add_context({'source': self.name,
+                                          'contacted_by': f_hyb})
                     new_host.add_source('feed')
                 except ObservableValidationError as e:
                     logging.error(e)
@@ -97,7 +98,8 @@ class HybridAnalysis(Feed):
                     logging.error(extracted_file)
                     continue
 
-                new_file = File.get_or_create(value='FILE:{}'.format(extracted_file['sha256']))
+                new_file = File.get_or_create(value='FILE:{}'.format(
+                    extracted_file['sha256']))
                 sha256_new_file = Hash.get_or_create(value=extracted_file['sha256'])
                 sha256_new_file.add_source('feed')
 
@@ -107,13 +109,15 @@ class HybridAnalysis(Feed):
                 context_file_dropped['size'] = extracted_file['file_size']
 
                 if 'av_matched' in extracted_file:
-                    context_file_dropped['virustotal_score'] = extracted_file['av_matched']
+                    context_file_dropped['virustotal_score'] = \
+                        extracted_file['av_matched']
 
                 if 'threatlevel_readable' in extracted_file:
-                    context_file_dropped['threatlevel'] = extracted_file['threatlevel_readable']
+                    context_file_dropped['threatlevel'] = \
+                        extracted_file['threatlevel_readable']
 
                 if 'av_label' in extracted_file:
-                    new_file.tag(extracted_file['av_label'])
+                    context_file_dropped['av_label'] = extracted_file['av_label']
 
                 if 'type_tags' in extracted_file:
                     new_file.tag(extracted_file['type_tags'])
