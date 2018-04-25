@@ -32,7 +32,7 @@ class HybridAnalysis(Feed):
         context = {'source': self.name}
 
         if 'vxfamily' in item:
-            context['vxfamily'] = ' '.join(item['vxfamily'].split('.'))
+            context['vxfamily'] = item['vxfamily']
 
         if 'tags' in item:
             tags.extend(item['tags'])
@@ -85,7 +85,7 @@ class HybridAnalysis(Feed):
                     logging.debug(domain)
 
                     new_host.add_context({'source': self.name,
-                                          'contacted by': f_hyb})
+                                          'contacted_by': f_hyb})
                     new_host.add_source('feed')
                 except ObservableValidationError as e:
                     logging.error(e)
@@ -100,8 +100,7 @@ class HybridAnalysis(Feed):
 
                 new_file = File.get_or_create(value='FILE:{}'.format(
                     extracted_file['sha256']))
-                sha256_new_file = Hash.get_or_create(value=
-                                                     extracted_file['sha256'])
+                sha256_new_file = Hash.get_or_create(value=extracted_file['sha256'])
                 sha256_new_file.add_source('feed')
 
                 new_file.active_link_to(sha256_new_file, 'sha256', self.name)
