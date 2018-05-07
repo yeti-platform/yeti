@@ -17,7 +17,7 @@ class CeleryConfig:
     CELERY_ACCEPT_CONTENT = ['json']
     CELERY_IMPORTS = (
         'core.config.celeryimports', 'core.analytics_tasks',
-        'core.exports.export', 'core.feed', 'plugins')
+        'core.exports.export', 'core.feed', 'core.investigation', 'plugins')
     CELERY_TIMEZONE = 'UTC'
     CELERYD_POOL_RESTARTS = True
     CELERY_ROUTES = {
