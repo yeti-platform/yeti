@@ -1,14 +1,11 @@
 # Yeti - Your everyday threat intelligence
 
-**Useful links**
+* [What is Yeti?](#what-is-yeti)
+* [Installation](#installation)
+* [Docker images](#docker-images)
+* [Useful links](#useful-links)
 
-* [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
-* [Yeti users mailing list](https://groups.google.com/forum/#!forum/yeti-users)
-* [Project website & blog](https://yeti-platform.github.io)
-* [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
-* [Getting started](http://yeti-platform.readthedocs.io/en/latest/getting-started.html)
-
-## What is this?
+## What is Yeti?
 
 Yeti is a platform meant to organize observables, indicators of compromise,
 TTPs, and knowledge on threats in a single, unified repository. Yeti will also
@@ -40,30 +37,28 @@ This is done by:
 * Export the data in user-defined formats so that they can be ingested by
   third-party applications (think blocklists, SIEM).
 
-## Quick & dirty install
+## Installation
 
-Please refer to the [full documentation](http://yeti-platform.readthedocs.io/en/latest/installation.html) for more detailed steps.
+There's are a few handy bootstrap scripts in [/extras](https://github.com/yeti-platform/yeti/tree/master/extras) that you can use to install a production instance of Yeti.
 
-If you're really in a hurry, use everyone's favorite command:
+If you're really in a hurry, you can `curl | bash` them.
 
     $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/ubuntu_bootstrap.sh | sudo /bin/bash
 
-**Otherwise**, install dependencies:
+Please refer to the [full documentation](http://yeti-platform.readthedocs.io/en/latest/installation.html) for more detailed steps.
 
-    $ sudo apt-get install build-essential git python-dev python-pip redis-server mongodb libxml2-dev libxslt-dev zlib1g-dev python-virtualenv
+## Docker images
 
-Activate virtualenv, then install requirements:
+Yeti has a `docker-compose` script to get up and running even faster; this is useful for testing or even running production instances of Yeti should your infrastructure support it. Full instructions [here](https://github.com/yeti-platform/yeti/tree/master/extras/docker), but in a nutshell:
 
-    $ pip install -r requirements.txt
+    $ git clone https://github.com/yeti-platform
+    $ cd yeti/extras/docker
+    $ docker-compose up
 
-Start the web UI (will spawn a HTTP server on ``http://localhost:5000``):
+## Useful links
 
-    $ ./yeti.py webserver
-
-This will only enable the web interface - if you want to use Feeds and Analytics, you'll be better off starting the workers as well:
-
-    $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q exports -n exports -Ofair -c 2 --purge
-    $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q feeds -n feeds -Ofair -c 2 --purge
-    $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q analytics -n analytics -Ofair -c 2 --purge
-    $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q oneshot -n oneshot -c 2 --purge
-    $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
+  * [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
+  * [Yeti users mailing list](https://groups.google.com/forum/#!forum/yeti-users)
+  * [Project website & blog](https://yeti-platform.github.io)
+  * [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
+  * [Getting started](http://yeti-platform.readthedocs.io/en/latest/getting-started.html)
