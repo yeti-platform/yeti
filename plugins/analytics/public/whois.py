@@ -23,8 +23,9 @@ class Whois(OneShotAnalytics):
 
     default_values = {
         "name": "Whois",
-        "description": "Perform a Whois request on the domain name and tries to"
-                       " extract relevant information."
+        "description":
+            "Perform a Whois request on the domain name and tries to"
+            " extract relevant information."
     }
 
     ACTS_ON = "Hostname"
@@ -60,7 +61,10 @@ class Whois(OneShotAnalytics):
                 ]
 
                 for field, klass, description in fields_to_extract:
-                    links.update(link_from_contact_info(hostname, parsed['contacts']['registrant'], field, klass, description))
+                    links.update(
+                        link_from_contact_info(
+                            hostname, parsed['contacts']['registrant'], field,
+                            klass, description))
 
             if should_add_context:
                 hostname.add_context(context)

@@ -20,9 +20,10 @@ class AsproxTracker(Feed):
 
     def update(self):
         resp = requests.get(self.source, proxies=yeti_config.proxy)
-        reader = csv.reader(resp.text, delimiter=',', quotechar="'")
-        for line in reader:
-            self.analyze(line)
+        if resp.ok:
+            reader = csv.reader(resp.content.splitlines(), quotechar="'")
+            for line in reader:
+                self.analyze(line)
 
     def analyze(self, line):
         if line[0] == 'Number':
@@ -37,8 +38,10 @@ class AsproxTracker(Feed):
         context['port'] = Port
         context['cc'] = CC
         context['status'] = Status
-        context['date_added'] = datetime.strptime(First_Seen, "%Y-%m-%d %H:%M:%S")
-        context['last_seen'] = datetime.strptime(Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else datetime.utcnow()
+        context['date_added'] = datetime.strptime(
+            First_Seen, "%Y-%m-%d %H:%M:%S")
+        context['last_seen'] = datetime.strptime(
+            Last_Seen, "%Y-%m-%d %H:%M:%S") if Last_Seen else datetime.utcnow()
         context['sbl'] = SBL
         context['abuse_contact'] = Abuse_Contact
         context['description'] = Details if Details else "N/A"

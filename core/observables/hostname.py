@@ -11,13 +11,14 @@ from core.helpers import refang
 
 class Hostname(Observable):
 
-    main_regex = r'[-.\w[\]]+\[?\.\]?[\w]+'
+    main_regex = r'[-.\w[\]]+\[?\.\]?[\w-]+'
     regex = r'(?P<pre>\W?)(?P<search>' + main_regex + ')(?P<post>\W?)'
 
     domain = BooleanField()
     idna = StringField()
 
-    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("domain", "Domain?"), ("idna", "IDNA")]
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("domain", "Domain?"),
+                                                  ("idna", "IDNA")]
 
     @classmethod
     def is_valid(cls, match):

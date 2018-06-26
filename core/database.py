@@ -57,7 +57,13 @@ class YetiDocument(Document):
         return self
 
     def _set_update(self, method, field, value):
-        result = self.__class__._get_collection().update_one({'_id': self.pk}, {method: {field: value}})
+        result = self.__class__._get_collection().update_one({
+            '_id': self.pk
+        }, {
+            method: {
+                field: value
+            }
+        })
 
         return result.modified_count == 1
 
@@ -71,14 +77,23 @@ class YetiDocument(Document):
     def get_or_create(cls, **kwargs):
         """Attempts to fetch a node in the database, and creates it if nonexistent"""
         obj = cls(**kwargs)
-        try:
+        obj.clean()
+        if hasattr(obj, 'value'):
+            select_dict = {'value': obj.value}
+            kwargs.pop('value')
+        if hasattr(obj, 'name'):
+            select_dict = {'name': obj.name}
+            kwargs.pop('name')
+        select_dict.update(kwargs)
+        update_dict = {"set__"+k: v for k, v in select_dict.items()}
+        r = cls.objects(**select_dict).modify(upsert=True, **update_dict)
+        if r is None:
+            obj.id = cls.objects.get(**select_dict).id
+            obj.new = True
             return obj.save()
-        except NotUniqueError:
-            if hasattr(obj, 'name'):
-                return cls.objects.get(name=obj.name)
-            if hasattr(obj, 'value'):
-                return cls.objects.get(value=obj.value)
-
+        obj = cls.objects.get(**select_dict)
+        obj.new = False
+        return obj
 
 class LinkHistory(EmbeddedDocument):
 
@@ -95,12 +110,7 @@ class Link(Document):
     dst = ReferenceField("Node", required=True, dbref=True, unique_with='src')
     history = ListField(EmbeddedDocumentField(LinkHistory))
 
-    meta = {
-        "indexes": [
-            "src",
-            "dst"
-        ]
-    }
+    meta = {"indexes": ["src", "dst"]}
 
     def __unicode__(self):
         return u"{} -> {} ({})".format(self.src, self.dst, self.description)
@@ -149,7 +159,12 @@ class Link(Document):
         return l
 
     def info(self):
-        return {"description": self.description, "id": str(self.id), "src": unicode(self.src), "dst": unicode(self.dst)}
+        return {
+            "description": self.description,
+            "id": str(self.id),
+            "src": unicode(self.src),
+            "dst": unicode(self.dst)
+        }
 
     def to_dict(self):
         result = self.to_mongo()
@@ -160,7 +175,13 @@ class Link(Document):
 
         return result
 
-    def add_history(self, source, description=None, first_seen=None, last_seen=None, active=False):
+    def add_history(
+            self,
+            source,
+            description=None,
+            first_seen=None,
+            last_seen=None,
+            active=False):
         last_seen = last_seen or datetime.utcnow()
         first_seen = first_seen or datetime.utcnow()
 
@@ -173,13 +194,16 @@ class Link(Document):
                 return self
         # Do we have to extend an inactive record ?
         else:
-            index, overlapping_history = self._get_overlapping(description, first_seen, last_seen)
+            _, overlapping_history = self._get_overlapping(
+                description, first_seen, last_seen)
             if overlapping_history:
                 if source not in overlapping_history.sources:
                     overlapping_history.sources.append(source)
 
-                overlapping_history.first_seen = min(overlapping_history.first_seen, first_seen)
-                overlapping_history.last_seen = max(overlapping_history.last_seen, last_seen)
+                overlapping_history.first_seen = min(
+                    overlapping_history.first_seen, first_seen)
+                overlapping_history.last_seen = max(
+                    overlapping_history.last_seen, last_seen)
                 self.save(validate=False)
                 return self
 
@@ -204,7 +228,8 @@ class Link(Document):
             if (description == item.description and
                 ((item.first_seen <= first_seen <= item.last_seen) or
                  (item.first_seen <= last_seen <= item.last_seen) or
-                 (first_seen <= item.first_seen <= item.last_seen <= last_seen))):
+                 (first_seen <= item.first_seen <= item.last_seen <=
+                  last_seen))):
                 return index, item
 
         return None, None
@@ -223,7 +248,7 @@ class Link(Document):
 
 class AttachedFile(YetiDocument):
     filename = StringField(required=True)
-    sha256 = StringField(required=True)
+    sha256 = StringField(required=True, unique=True)
     content_type = StringField(required=True)
     references = IntField(default=0)
 
@@ -242,7 +267,9 @@ class AttachedFile(YetiDocument):
             fd.write(content.read())
             fd.close()
             if filename:
-                f = AttachedFile(filename=filename, content_type=content_type, sha256=sha256)
+                f = AttachedFile(
+                    filename=filename, content_type=content_type, sha256=sha256)
+                f.new = True
                 f.save()
                 return f
             else:
@@ -252,7 +279,8 @@ class AttachedFile(YetiDocument):
     def from_content(content, filename, content_type):
         sha256 = stream_sha256(content)
 
-        return AttachedFile.get_or_create(sha256, content, filename, content_type)
+        return AttachedFile.get_or_create(
+            sha256, content, filename, content_type)
 
     @staticmethod
     def from_upload(file, force_mime=False):
@@ -261,7 +289,8 @@ class AttachedFile(YetiDocument):
 
         sha256 = stream_sha256(stream)
 
-        return AttachedFile.get_or_create(sha256, stream, filename, force_mime or file.content_type)
+        return AttachedFile.get_or_create(
+            sha256, stream, filename, force_mime or file.content_type)
 
     @property
     def filepath(self):
@@ -278,14 +307,18 @@ class AttachedFile(YetiDocument):
         """
         fd = self.contents
         while True:
-            data = fd.read(1024*1024)
+            data = fd.read(1024 * 1024)
             if not data:
                 return
             else:
                 yield data
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["filename", "sha256", "content_type"]}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in ["filename", "sha256", "content_type"]
+        }
         return i
 
     def attach(self, obj):
@@ -304,7 +337,8 @@ class AttachedFile(YetiDocument):
 class Node(YetiDocument):
 
     exclude_fields = ['attached_files']
-    attached_files = ListField(ReferenceField(AttachedFile, reverse_delete_rule=PULL))
+    attached_files = ListField(
+        ReferenceField(AttachedFile, reverse_delete_rule=PULL))
 
     meta = {
         "abstract": True,
@@ -333,27 +367,108 @@ class Node(YetiDocument):
 
     def neighbors(self, neighbor_type=""):
         links = []
-        for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(neighbor_type)}):
+        for l in Link.objects(__raw__={"dst.$id": self.id,
+                                       "src.cls": re.compile(neighbor_type)}):
             links.append((l, l.src))
-        for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(neighbor_type)}):
+        for l in Link.objects(__raw__={"src.$id": self.id,
+                                       "dst.cls": re.compile(neighbor_type)}):
             links.append((l, l.dst))
         info = {}
         for link, node in links:
             info[node.full_type] = info.get(node.full_type, []) + [(link, node)]
         return info
 
-    def neighbors_advanced(self, klass, filter, regex, ignorecase, page, rng):
-        from core.web.helpers import get_queryset
+    def _neighbors_aggregation(self, way, klass, result_filters, skip, limit):
+        if way == "in":
+            e1, e2 = "dst", "src"
+        if way == "out":
+            e1, e2 = "src", "dst"
+        collection_name = klass._get_collection().name
+        compiled_filter = re.compile(klass._class_name)
 
-        out = [(l, l.dst) for l in Link.objects(__raw__={"src.$id": self.id, "dst.cls": re.compile(klass._class_name)}).no_dereference()]
-        inc = [(l, l.src) for l in Link.objects(__raw__={"dst.$id": self.id, "src.cls": re.compile(klass._class_name)}).no_dereference()]
+        match = {"$match": result_filters}
 
-        all_links = {ref.id: link for link, ref in inc + out}
-        filter['id__in'] = all_links.keys()
+        pipeline = [
+            {
+                "$match": {
+                    "{}.$id".format(e1): self.id,
+                    "{}.$ref".format(e2): collection_name
+                }
+            },
+            {
+                "$project": {
+                    "_id": True,
+                    "src": True,
+                    "dst": True,
+                    "history": True,
+                    "oid": {
+                        "$arrayElemAt": [{
+                            "$objectToArray": "${}".format(e2)
+                        }, 1]
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "_id": True,
+                    "src": True,
+                    "dst": True,
+                    "history": True,
+                    "oid": "$oid.v"
+                }
+            },
+            {
+                "$lookup": {
+                    "from": collection_name,
+                    "localField": "oid",
+                    "foreignField": "_id",
+                    "as": "related",
+                }
+            },
+            {
+                "$unwind": "$related"
+            },
+            {
+                "$match": {
+                    "related._cls": compiled_filter
+                }
+            }
+        ]
+        pipeline.extend([match, {"$skip": skip * limit}, {"$limit": limit}])
+        results = list(Link.objects.aggregate(*pipeline))
+        return results
 
-        objs = list(get_queryset(klass, filter, regex, ignorecase).limit(rng).skip(page * rng))
+    def neighbors_advanced(self, klass, filters, regex, ignorecase, page, rng):
+        result_filters = dict()
 
-        final_list = [(all_links[obj.id], obj) for obj in objs]
+        search_replace = {
+            'tags': 'tags.name',
+        }
+
+        for key, value in filters.items():
+            if key in search_replace:
+                key = search_replace[key]
+
+            if regex and isinstance(value, basestring):
+                value = {"$regex": value}
+                if ignorecase:
+                    value["$options"] = "i"
+            if isinstance(value, list) and not key.endswith("__in"):
+                value = {"$in": value}
+            result_filters["related." + key] = value
+
+        outnodes = self._neighbors_aggregation(
+            "out", klass, result_filters, page, rng)
+        innodes = self._neighbors_aggregation(
+            "in", klass, result_filters, page, rng)
+        final_list = []
+        for node in outnodes + innodes:
+            n = node.pop('related')
+            node.pop('oid')
+            node['id'] = node.pop('_id')
+            n['id'] = n.pop('_id')
+            l = Link(**node)  # necessary for first_seen and last_seen functions
+            final_list.append((l, n))
 
         return final_list
 
@@ -365,7 +480,8 @@ class Node(YetiDocument):
         return self._fields
 
     # This will only create unactive outgoing links
-    def link_to(self, nodes, description, source, first_seen=None, last_seen=None):
+    def link_to(
+            self, nodes, description, source, first_seen=None, last_seen=None):
         links = set()
         nodes = iterify(nodes)
 

@@ -76,10 +76,11 @@ class Observable(CrudApi):
                 obs = self.objectmanager.add_text(refang(value), tags)
             else:
                 obs = self.objectmanager.add_text(value, tags)
-            self._modify_observable(obs, {
-                'source': item.get('source'),
-                'context': item.get('context'),
-            })
+            self._modify_observable(
+                obs, {
+                    'source': item.get('source'),
+                    'context': item.get('context'),
+                })
             added.append(obs)
         return render(added)
 

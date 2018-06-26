@@ -25,7 +25,9 @@ class InvestigationView(GenericView):
     @requires_permissions("read", "investigation")
     def graph(self, id):
         investigation = get_object_or_404(Investigation, id=id)
-        return render_template("{}/graph.html".format(self.klass.__name__.lower()), investigation=bson_renderer(investigation.info()))
+        return render_template(
+            "{}/graph.html".format(self.klass.__name__.lower()),
+            investigation=bson_renderer(investigation.info()))
 
     @route("/graph/<klass>/<id>")
     @requires_permissions("read", "investigation")
@@ -40,20 +42,25 @@ class InvestigationView(GenericView):
         investigation = Investigation().save()
         investigation.add([], [node])
 
-        return render_template("{}/graph.html".format(self.klass.__name__.lower()), investigation=bson_renderer(investigation.info()))
+        return render_template(
+            "{}/graph.html".format(self.klass.__name__.lower()),
+            investigation=bson_renderer(investigation.info()))
 
     @route("/import/<id>", methods=['GET'])
     @requires_permissions("write", "investigation")
     def import_wait(self, id):
         results = get_object_or_404(ImportResults, id=id)
 
-        return render_template("{}/import_wait.html".format(self.klass.__name__.lower()), import_results=results)
+        return render_template(
+            "{}/import_wait.html".format(self.klass.__name__.lower()),
+            import_results=results)
 
     @route("/import", methods=['GET', 'POST'])
     @requires_permissions("write", "investigation")
     def inv_import(self):
         if request.method == "GET":
-            return render_template("{}/import.html".format(self.klass.__name__.lower()))
+            return render_template(
+                "{}/import.html".format(self.klass.__name__.lower()))
         else:
             text = request.form.get('text')
             url = request.form.get('url')
@@ -61,7 +68,10 @@ class InvestigationView(GenericView):
             if text:
                 investigation = Investigation(import_text=text)
                 investigation.save()
-                return redirect(url_for('frontend.InvestigationView:import_from', id=investigation.id))
+                return redirect(
+                    url_for(
+                        'frontend.InvestigationView:import_from',
+                        id=investigation.id))
             else:
                 try:
                     if url:
@@ -69,13 +79,18 @@ class InvestigationView(GenericView):
                         results = import_method.run(url)
                     else:
                         target = AttachedFile.from_upload(request.files['file'])
-                        import_method = ImportMethod.objects.get(acts_on=target.content_type)
+                        import_method = ImportMethod.objects.get(
+                            acts_on=target.content_type)
                         results = import_method.run(target)
 
-                    return redirect(url_for('frontend.InvestigationView:import_wait', id=results.id))
+                    return redirect(
+                        url_for(
+                            'frontend.InvestigationView:import_wait',
+                            id=results.id))
                 except DoesNotExist:
                     flash("This file type is not supported.", "danger")
-                    return render_template("{}/import.html".format(self.klass.__name__.lower()))
+                    return render_template(
+                        "{}/import.html".format(self.klass.__name__.lower()))
 
     @route("/<id>/import", methods=['GET'])
     @requires_permissions("write", "investigation")
@@ -83,7 +98,10 @@ class InvestigationView(GenericView):
         investigation = get_object_or_404(Investigation, id=id)
         observables = Observable.from_string(investigation.import_text)
 
-        return render_template("{}/import_from.html".format(self.klass.__name__.lower()), investigation=investigation, observables=bson_renderer(observables))
+        return render_template(
+            "{}/import_from.html".format(self.klass.__name__.lower()),
+            investigation=investigation,
+            observables=bson_renderer(observables))
 
     def handle_form(self, *args, **kwargs):
         kwargs['skip_validation'] = True

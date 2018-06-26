@@ -20,7 +20,8 @@ class InvestigationLink(EmbeddedDocument):
 
     @staticmethod
     def build(data):
-        link = InvestigationLink(id=data['id'], fromnode=data['from'], tonode=data['to'])
+        link = InvestigationLink(
+            id=data['id'], fromnode=data['from'], tonode=data['to'])
         if 'label' in data:
             link.label = data['label']
 
@@ -97,7 +98,7 @@ class ImportResults(Document):
 
 
 class ImportMethod(OneShotEntry):
-    acts_on = StringField(required=True)
+    acts_on = StringField()
 
     def run(self, target):
         results = ImportResults(import_method=self, status='pending')
@@ -111,7 +112,8 @@ class ImportMethod(OneShotEntry):
 
         results.investigation.save()
         results.save()
-        celery_app.send_task("core.investigation.import_task", [str(results.id), target])
+        celery_app.send_task(
+            "core.investigation.import_task", [str(results.id), target])
 
         return results
 
@@ -120,7 +122,9 @@ class ImportMethod(OneShotEntry):
 def import_task(results_id, target):
     results = ImportResults.objects.get(id=results_id)
     import_method = results.import_method
-    logging.warning("Running one-shot import {} on {}".format(import_method.__class__.__name__, target))
+    logging.warning(
+        "Running one-shot import {} on {}".format(
+            import_method.__class__.__name__, target))
     results.update(status="running")
 
     try:

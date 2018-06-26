@@ -3,14 +3,14 @@ from __future__ import unicode_literals
 import json
 
 from core.analytics import OneShotAnalytics
-from core.observables import Hostname, Ip, Url
+from core.observables import Hostname, Ip, Url, Hash
 from core.entities import Company
+from core.config.config import yeti_config
 import requests
 
 
 class VirustotalApi(object):
-    """
-    Base class for querying the VirusTotal API.
+    """Base class for querying the VirusTotal API.
     This is the public API, so there is a limit for up to 3
     requests per minute.
 
@@ -35,12 +35,23 @@ class VirustotalApi(object):
             response = None
             if isinstance(observable, Hostname):
                 params = {'resource': observable.value, 'apikey': api_key}
-                response = requests.get('https://www.virustotal.com/vtapi/v2/url/report', params)
+                response = requests.get(
+                    'https://www.virustotal.com/vtapi/v2/url/report',
+                    params,
+                    proxies=yeti_config.proxy)
 
             elif isinstance(observable, Ip):
                 params = {'ip': observable.value, 'apikey': api_key}
-                response = requests.get('https://www.virustotal.com/vtapi/v2/ip-address/report', params)
-
+                response = requests.get(
+                    'https://www.virustotal.com/vtapi/v2/ip-address/report',
+                    params,
+                    proxies=yeti_config.proxy)
+            elif isinstance(observable, Hash):
+                params = {'resource': observable.value, 'apikey': api_key}
+                response = requests.get(
+                    'https://www.virustotal.com/vtapi/v2/file/report',
+                    params,
+                    proxies=yeti_config.proxy)
             if response.ok:
                 return response.json()
             else:
@@ -56,13 +67,15 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
         'description': 'Perform a Virustotal query.',
     }
 
-    ACTS_ON = ['Ip', 'Hostname']
+    ACTS_ON = ['Ip', 'Hostname', 'Hash']
 
     @staticmethod
     def analyze(observable, results):
         links = set()
-        json_result = VirustotalApi.fetch(observable, results.settings['virutotal_api_key'])
-        json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
+        json_result = VirustotalApi.fetch(
+            observable, results.settings['virutotal_api_key'])
+        json_string = json.dumps(
+            json_result, sort_keys=True, indent=4, separators=(',', ': '))
         results.update(raw=json_string)
         result = {'raw': json_string}
 
@@ -71,13 +84,17 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
             if json_result.get('as_owner'):
                 result['Owner'] = json_result['as_owner']
                 o_isp = Company.get_or_create(name=json_result['as_owner'])
-                links.update(observable.active_link_to(o_isp, 'hosting', 'virustotal_query'))
+                links.update(
+                    observable.active_link_to(
+                        o_isp, 'hosting', 'virustotal_query'))
 
             if json_result.get('detected_urls'):
                 result['detected_urls'] = json_result['detected_urls']
                 for detected_url in json_result['detected_urls']:
                     o_url = Url.get_or_create(value=detected_url['url'])
-                    links.update(o_url.active_link_to(o_url, 'hostname', 'virustotal_query'))
+                    links.update(
+                        o_url.active_link_to(
+                            o_url, 'hostname', 'virustotal_query'))
 
         elif isinstance(observable, Hostname):
             if json_result.get('permalink'):
@@ -87,6 +104,31 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
             if json_result.get('total'):
                 result['total'] = json_result['total']
+
+        elif isinstance(observable, Hash):
+
+            result['positives'] = json_result['positives']
+
+            if 'permalink' in json_result:
+                result['permalink'] = json_result['permalink']
+
+            if 'total' in json_result:
+                result['total'] = json_result['total']
+
+            hashes = {
+                'md5': json_result['md5'],
+                'sha1': json_result['sha1'],
+                'sha256': json_result['sha256']
+            }
+            create_hashes = [
+                (k, v) for k, v in hashes.items() if v != observable.value
+            ]
+
+            for k, v in create_hashes:
+                new_hash = Hash.get_or_create(value=v)
+                new_hash.tag(observable.get_tags())
+                links.update(
+                    new_hash.active_link_to(observable, k, 'virustotal_query'))
 
         result['source'] = 'virustotal_query'
         observable.add_context(result)

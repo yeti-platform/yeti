@@ -20,10 +20,13 @@ class TorExitNodes(Feed):
     def update(self):
         feed = requests.get(self.source, proxies=yeti_config.proxy).text
 
-        start = feed.find('<!-- __BEGIN_TOR_NODE_LIST__ //-->') + len('<!-- __BEGIN_TOR_NODE_LIST__ //-->')
+        start = feed.find('<!-- __BEGIN_TOR_NODE_LIST__ //-->') + len(
+            '<!-- __BEGIN_TOR_NODE_LIST__ //-->')
         end = feed.find('<!-- __END_TOR_NODE_LIST__ //-->')
 
-        feed = feed[start:end].replace('\n', '').replace('<br />', '\n').replace('&gt;', '>').replace('&lt;', '<').split('\n')
+        feed = feed[start:end].replace(
+            '\n', '').replace('<br />', '\n').replace('&gt;', '>').replace(
+                '&lt;', '<').split('\n')
 
         if len(feed) > 10:
             self.status = "OK"
@@ -48,7 +51,8 @@ class TorExitNodes(Feed):
         context['version'] = fields[6]
         context['contactinfo'] = fields[7]
 
-        context['description'] = "Tor exit node: %s (%s)" % (context['name'], ip)
+        context['description'] = "Tor exit node: %s (%s)" % (
+            context['name'], ip)
         context['source'] = self.name
         try:
             ip = Ip.get_or_create(value=fields[0])

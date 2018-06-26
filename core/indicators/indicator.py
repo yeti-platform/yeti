@@ -8,16 +8,20 @@ from core.database import Node
 from core.indicators import DIAMOND_EDGES
 from core.database import Node, EntityListField
 
+
 class Indicator(Node):
 
     SEARCH_ALIASES = {}
 
-    DISPLAY_FIELDS = [("name", "Name"), ("pattern", "Pattern"), ("location", "Location"), ("diamond", "Diamond")]
+    DISPLAY_FIELDS = [("name", "Name"), ("pattern", "Pattern"),
+                      ("location", "Location"), ("diamond", "Diamond")]
 
     name = StringField(required=True, max_length=1024, verbose_name="Name")
     pattern = StringField(required=True, verbose_name="Pattern")
-    location = StringField(required=True, max_length=255, verbose_name="Location")
-    diamond = StringField(choices=DIAMOND_EDGES, required=True, verbose_name="Diamond Edge")
+    location = StringField(
+        required=True, max_length=255, verbose_name="Location")
+    diamond = StringField(
+        choices=DIAMOND_EDGES, required=True, verbose_name="Diamond Edge")
     description = StringField(verbose_name="Description")
 
     meta = {
@@ -43,7 +47,8 @@ class Indicator(Node):
                     yield o, i
 
     def match(self, value):
-        raise NotImplementedError("match() method must be implemented in Indicator subclasses")
+        raise NotImplementedError(
+            "match() method must be implemented in Indicator subclasses")
 
     def action(self, target, source, verb="Indicates"):
         self.active_link_to(target, verb, source)
@@ -52,9 +57,15 @@ class Indicator(Node):
         return [self.diamond.lower(), self.name.lower()]
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ['name', 'pattern', 'diamond', 'description', 'location']}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in ['name', 'pattern', 'diamond', 'description', 'location']
+        }
         i['id'] = str(self.id)
-        i['url'] = url_for("api.Indicator:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for("frontend.IndicatorView:get", id=str(self.id), _external=True)
+        i['url'] = url_for(
+            "api.Indicator:post", id=str(self.id), _external=True)
+        i['human_url'] = url_for(
+            "frontend.IndicatorView:get", id=str(self.id), _external=True)
         i['type'] = self.type
         return i

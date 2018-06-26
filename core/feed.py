@@ -19,14 +19,20 @@ from core.scheduling import ScheduleEntry
 def update_feed(feed_id):
 
     try:
-        f = Feed.objects.get(id=feed_id, lock=None)  # check if we have implemented locking mechanisms
+        f = Feed.objects.get(
+            id=feed_id,
+            lock=None)  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
-            Feed.objects.get(id=feed_id, lock=False).modify(lock=True)  # get object and change lock
+            Feed.objects.get(
+                id=feed_id, lock=False).modify(
+                    lock=True)  # get object and change lock
             f = Feed.objects.get(id=feed_id)
         except DoesNotExist:
             # no unlocked Feed was found, notify and return...
-            logging.debug("Feed {} is already running...".format(Feed.objects.get(id=feed_id).name))
+            logging.debug(
+                "Feed {} is already running...".format(
+                    Feed.objects.get(id=feed_id).name))
             return False
 
     try:
@@ -57,13 +63,13 @@ class Feed(ScheduleEntry):
 
     Attributes:
         frequency:
-            Required. A ``timedelta`` variable defining the frequency at which a feed is to be ran. Example: ``timedelta(hours=1)``
+            A ``timedelta`` variable defining the frequency at which a feed is to be ran. Example: ``timedelta(hours=1)``
         name:
             Required. The feed's name. Must be the same as the class name. Example: ``"ZeusTrackerConfigs"``
         source:
-            Required if working with helpers. This designates URL on which to fetch the data. Example: ``"https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"``
+            f working with helpers. This designates URL on which to fetch the data. Example: ``"https://zeustracker.abuse.ch/monitor.php?urlfeed=configs"``
         description:
-            Required. Bref feed description. Example: ``"This feed shows the latest 50 ZeuS config URLs."``
+            Bref feed description. Example: ``"This feed shows the latest 50 ZeuS config URLs."``
 
     .. note::
         These attributes must be defined in every class inheriting from ``Feed`` as the key - value items of a ``default_values`` attribute. See :ref:`creating-feed` for more details
@@ -72,7 +78,7 @@ class Feed(ScheduleEntry):
 
     SCHEDULED_TASK = "core.feed.update_feed"
 
-    source = StringField(required=True)
+    source = StringField()
 
     def update(self):
         """Function responsible for retreiving the data for a feed and calling
@@ -87,8 +93,8 @@ class Feed(ScheduleEntry):
         raise NotImplementedError(
             "update: This method must be implemented in your feed class")
 
-    def analyze(self, line):
-        """Function responsible for processing the line / data unit passed on by
+    def analyze(self, item):
+        """Function responsible for processing the item passed on by
         the ``update`` function.
 
         Raises:
@@ -125,9 +131,14 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         return self.parse_xml(r.content, main_node, children)
 
@@ -160,9 +171,14 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         feed = r.text.split('\n')
 
@@ -189,12 +205,18 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         feed = r.text.split('\n')
-        reader = csv.reader(self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
+        reader = csv.reader(
+            self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
 
         for line in reader:
             yield line
@@ -211,14 +233,24 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
         if auth:
-            r = requests.get(self.source, headers=headers, auth=auth, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy)
         else:
-            r = requests.get(self.source, headers=headers, proxies=yeti_config.proxy)
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
 
         return r.json()
 
     def info(self):
-        i = {k: v for k, v in self._data.items() if k in ["name", "enabled", "description", "source", "status", "last_run"]}
+        i = {
+            k: v
+            for k, v in self._data.items()
+            if k in
+            ["name", "enabled", "description", "source", "status", "last_run"]
+        }
         i['frequency'] = str(self.frequency)
         i['id'] = str(self.id)
         return i

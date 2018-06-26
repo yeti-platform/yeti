@@ -9,12 +9,14 @@ from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from web.views.helpers import prevent_csrf
 from web.auth.saml.user_management import authenticate
 
-
 auth = Blueprint('auth', __name__, template_folder='templates')
 
 
 def init_saml_auth(req):
-    saml_auth = OneLogin_Saml2_Auth(req, custom_base_path=os.path.join(os.path.dirname(os.path.dirname(__file__)), 'saml/config'))
+    saml_auth = OneLogin_Saml2_Auth(
+        req,
+        custom_base_path=os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), 'saml/config'))
     return saml_auth
 
 
@@ -70,4 +72,7 @@ def logout():
     req = prepare_auth_request(request)
     saml_auth = init_saml_auth(req)
     logout_user()
-    return redirect(saml_auth.logout(name_id=session['samlNameId'], session_index=session['samlSessionIndex']))
+    return redirect(
+        saml_auth.logout(
+            name_id=session['samlNameId'],
+            session_index=session['samlSessionIndex']))

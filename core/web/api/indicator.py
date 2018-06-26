@@ -12,3 +12,7 @@ class IndicatorSearch(CrudSearchApi):
 class Indicator(CrudApi):
     template = 'indicator_api.html'
     objectmanager = indicators.Indicator
+    subobjects = {
+        'Regex': indicators.Regex,
+        'Yara': indicators.Yara,
+    }

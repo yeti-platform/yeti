@@ -31,3 +31,4 @@ html2text
 readability-lxml
 beautifulsoup4
 requests[socks]
+python-dateutil

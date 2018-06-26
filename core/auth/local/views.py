@@ -6,7 +6,6 @@ from core.auth.local.user_management import authenticate, create_user, set_passw
 from core.user import User
 from core.web.helpers import get_object_or_404
 
-
 auth = Blueprint('auth', __name__, template_folder='templates')
 
 
@@ -18,7 +17,8 @@ def login():
         return render_template('login.html')
 
     else:
-        u = authenticate(request.form.get('login'), request.form.get('password'))
+        u = authenticate(
+            request.form.get('login'), request.form.get('password'))
         if u:
             login_user(u)
             print "User logged in (web):", u
