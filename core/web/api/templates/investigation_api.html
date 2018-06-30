@@ -18,16 +18,12 @@
     </td>
     <td>
       <a href="{{ url_for("frontend.InvestigationView:get", id=obj['id'])}}">
-        {% if obj['name'] %}
-          {{obj['name']}}
-        {% else %}
-          Unnamed
-        {% endif %}
+        {{obj['name'] or 'Unnamed'}}
       </a>
     </td>
     <td>{{macros.display_datetime(obj.created)}}</td>
     <td>{{macros.display_datetime(obj.updated)}}</td>
-    <td>{% if obj.created_by %}{{obj.created_by}}{% endif %}</td>
+    <td>{{obj.created_by or ''}}</td>
     <td>{{obj.nodes|length}}</td>
   </tr>
   {% endfor %}

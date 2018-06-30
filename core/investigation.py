@@ -37,12 +37,6 @@ class InvestigationEvent(EmbeddedDocument):
     nodes = ListField(ReferenceField('Node'))
     datetime = DateTimeField(default=datetime.utcnow)
 
-def default_user():
-    try:
-        return current_user.username
-    except:
-        return None
-
 
 class Investigation(YetiDocument):
     name = StringField(verbose_name="Name")
@@ -75,7 +69,7 @@ class Investigation(YetiDocument):
             'Name', filters=[lambda name: name or None])
 
         form.created_by = WTFHiddenField(
-            'created_by', default=default_user)
+            'created_by', default=current_user.username)
 
         return form
 
@@ -129,7 +123,7 @@ class ImportMethod(OneShotEntry):
 
     def run(self, target):
         results = ImportResults(import_method=self, status='pending')
-        results.investigation = Investigation(created_by=default_user())
+        results.investigation = Investigation(created_by=current_user.username)
 
         if isinstance(target, AttachedFile):
             results.investigation.import_document = target
