@@ -49,7 +49,9 @@ class Investigation(YetiDocument):
     import_url = StringField()
     import_text = StringField()
 
-    exclude_fields = ['links', 'nodes', 'events', 'created', 'updated']
+    exclude_fields = [
+        'links', 'nodes', 'events', 'created', 'updated',
+        'import_document', 'import_md', 'import_url', 'import_text']
 
     @classmethod
     def get_form(klass):
