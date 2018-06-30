@@ -30,7 +30,11 @@
     <form action="{{request.path}}" method="POST" class="yeti-form yeti-add-node">
     <div class="row">
       <div class="col-md-10 col-md-offset-1">
-        <h1>Editing {{obj.name or "Unnamed investigation"}}</h1>
+				{% if not obj %}
+					<h1>New Investigation</h1>
+				{% else %}
+        	<h1>Editing {{obj.name or "Unnamed investigation"}}</h1>
+				{% endif %}
       </div>
       <div class="form-content">
           <div class="row">

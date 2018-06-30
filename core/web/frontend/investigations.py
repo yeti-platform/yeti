@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from flask_classy import route
+from flask_login import current_user
 from flask import render_template, request, flash, redirect, url_for
 from mongoengine import DoesNotExist
 
@@ -39,7 +40,7 @@ class InvestigationView(GenericView):
         else:
             node = get_object_or_404(Observable, id=id)
 
-        investigation = Investigation().save()
+        investigation = Investigation(created_by=current_user.username).save()
         investigation.add([], [node])
 
         return render_template(
@@ -66,7 +67,8 @@ class InvestigationView(GenericView):
             url = request.form.get('url')
 
             if text:
-                investigation = Investigation(import_text=text)
+                investigation = Investigation(
+                    created_by=current_user.username, import_text=text)
                 investigation.save()
                 return redirect(
                     url_for(
