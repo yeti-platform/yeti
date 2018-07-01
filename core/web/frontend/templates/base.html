@@ -108,19 +108,38 @@
             </li>
             {% endif %}
 
+            {% if current_user.has_permission("investigation", "read") %}
+            <li class="{% if url_for("frontend.InvestigationView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Investigations <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ url_for('frontend.InvestigationView:index') }}">List</span></a></li>
+                {% if current_user.has_permission("investigation", "read") %}
+                  <li role="separator" class="divider"></li>
+                  <li><a href="{{ url_for('frontend.InvestigationView:inv_import') }}">Import</a></li>
+                {% endif %}
+              </ul>
+            </li>
+            {% endif %}
+
             <li class="separator"></li>
 
-            {% if current_user.has_permission("entity", "write") or current_user.has_permission("indicator", "write") %}
+            {% if current_user.has_permission("entity", "write") or current_user.has_permission("indicator", "write") or current_user.has_permission("investigation", "write") %}
             <li class="{% if "/new/" in request.path %}active{%endif%} dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">New <span class="caret"></span></a>
               <ul class="dropdown-menu">
+                {% if current_user.has_permission("investigation", "write") %}
+                  <li><a href="{{ url_for('frontend.InvestigationView:new')}}">Investigation</a></li>
+                {% endif %}
+                {% if current_user.has_permission("investigation", "write") and current_user.has_permission("entity", "write") %}
+                  <li role="separator" class="divider"></li>
+                {% endif %}
                 {% if current_user.has_permission("entity", "write") %}
                   <li class="dropdown-header">New entity</li>
                   {% for name, label in [("malware", "Malware"), ("ttp", "TTP"), ("actor", "Actor"), ("campaign", "Campaign"), ("exploit", "Exploit"), ("exploitkit", "Exploit kit"), ("company", "Company")] %}
                   <li><a href="{{ url_for('frontend.EntityView:new_subclass', subclass=name) }}">{{label}}</a></li>
                   {% endfor %}
                 {% endif %}
-                {% if current_user.has_permission("entity", "write") and current_user.has_permission("indicator", "write") %}
+                {% if (current_user.has_permission("entity", "write") or current_user.has_permission("investigation", "write")) and current_user.has_permission("indicator", "write") %}
                 <li role="separator" class="divider"></li>
                 {% endif %}
                 {% if current_user.has_permission("indicator", "write") %}
@@ -132,20 +151,6 @@
               </ul>
             </li>
             {% endif %}
-
-            {% if current_user.has_permission("investigation", "read") %}
-            <li class="separator"></li>
-
-            <li class="{% if url_for("frontend.InvestigationView:index") in request.path and "/new/" not in request.path %}active{%endif%} dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Investigations <span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="{{ url_for('frontend.InvestigationView:index') }}">List</span></a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="{{ url_for('frontend.InvestigationView:inv_import') }}">Import</a></li>
-              </ul>
-              {% endif %}
-
-            </li>
           </ul>
 
           <ul class="nav navbar-nav navbar-right">

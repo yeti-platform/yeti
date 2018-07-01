@@ -8,7 +8,7 @@
 {% import "macros/observables.html" as observables %}
 
 {% block title %}
-{{obj.name}}
+{{obj.name or 'Unnamed Investigation'}}
 {% endblock %}
 
 {% block main %}
@@ -23,7 +23,7 @@
         <div class="panel panel-default">
           <div class="panel-heading">
             <h3 class="panel-title">
-                {{investigation.name}}
+                {{investigation.name or 'Unnamed Investigation'}}
                 <a href="{{url_for('frontend.InvestigationView:edit', id=investigation.id)}}" class="btn btn-default btn-xs pull-right"><span class="glyphicon glyphicon-pencil" aria-hidden="true"></span> Edit</a>
                 <a href="{{url_for('frontend.InvestigationView:delete', id=investigation.id)}}" class="btn btn-danger btn-xs pull-right object-delete" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Delete</a>
                 <a href="{{url_for('frontend.InvestigationView:graph', id=investigation.id)}}" class="btn btn-default btn-xs pull-right"><i class="flaticon-network38"></i> Go To Graph</a>

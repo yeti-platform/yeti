@@ -8,6 +8,7 @@
     <th>Name</th>
     <th>Created</th>
     <th>Updated</th>
+    <th>Created By</th>
     <th>Nodes</th>
   </tr>
   {% for obj in data %}
@@ -15,9 +16,14 @@
     <td class="icon-cell">
         <a href="{{ url_for('frontend.InvestigationView:graph', id=obj['id']) }}"><i class="flaticon-network38"></i></a>
     </td>
-    <td><a href="{{ url_for("frontend.InvestigationView:get", id=obj['id'])}}">{{obj['name']}}</a></td>
+    <td>
+      <a href="{{ url_for("frontend.InvestigationView:get", id=obj['id'])}}">
+        {{obj['name'] or 'Unnamed'}}
+      </a>
+    </td>
     <td>{{macros.display_datetime(obj.created)}}</td>
     <td>{{macros.display_datetime(obj.updated)}}</td>
+    <td>{{obj.created_by or ''}}</td>
     <td>{{obj.nodes|length}}</td>
   </tr>
   {% endfor %}

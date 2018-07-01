@@ -5,7 +5,10 @@ import traceback
 from bson.dbref import DBRef
 from datetime import datetime
 from mongoengine import *
+from flask_login import current_user
 from flask_mongoengine.wtf import model_form
+from wtforms.fields import StringField as WTFStringField
+from wtforms.fields import HiddenField as WTFHiddenField
 
 from core.database import YetiDocument, AttachedFile
 from core.scheduling import OneShotEntry
@@ -38,10 +41,10 @@ class InvestigationEvent(EmbeddedDocument):
 class Investigation(YetiDocument):
     name = StringField(verbose_name="Name")
     description = StringField(verbose_name="Description")
-    origin = StringField(verbose_name="Origin")
     links = ListField(EmbeddedDocumentField(InvestigationLink))
     nodes = ListField(ReferenceField('Node', dbref=True))
     events = ListField(EmbeddedDocumentField(InvestigationEvent))
+    created_by = StringField(verbose_name="Created By")
     created = DateTimeField(default=datetime.utcnow)
     updated = DateTimeField(default=datetime.utcnow)
     import_document = ReferenceField('AttachedFile')
@@ -50,13 +53,24 @@ class Investigation(YetiDocument):
     import_text = StringField()
 
     exclude_fields = [
-        'links', 'nodes', 'events', 'created', 'updated',
+        'links', 'nodes', 'events', 'created', 'updated', 'created_by',
         'import_document', 'import_md', 'import_url', 'import_text']
+
+    # Ignore extra fields
+    meta = {'strict': False}
 
     @classmethod
     def get_form(klass):
         """Gets the appropriate form for a given investigation"""
         form = model_form(klass, exclude=klass.exclude_fields)
+
+        # An empty name is the same as no name
+        form.name = WTFStringField(
+            'Name', filters=[lambda name: name or None])
+
+        form.created_by = WTFHiddenField(
+            'created_by', default=current_user.username)
+
         return form
 
     SEARCH_ALIASES = {}
@@ -91,6 +105,11 @@ class Investigation(YetiDocument):
     def remove(self, links, nodes):
         self._node_changes('remove', self.remove_from_set, links, nodes)
 
+    def save(self, *args, **kwargs):
+        self.updated = datetime.utcnow()
+
+        return super(Investigation, self).save(*args, **kwargs)
+
 
 class ImportResults(Document):
     import_method = ReferenceField('ImportMethod', required=True)
@@ -104,7 +123,7 @@ class ImportMethod(OneShotEntry):
 
     def run(self, target):
         results = ImportResults(import_method=self, status='pending')
-        results.investigation = Investigation()
+        results.investigation = Investigation(created_by=current_user.username)
 
         if isinstance(target, AttachedFile):
             results.investigation.import_document = target
