@@ -19,9 +19,9 @@ apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DC
 # https://wiki.ubuntu.com/Releases
 OS_CODENAME=`lsb_release -c --short`
 
-if [ $OS_CODENAME == "bionic" || $OS_CODENAME == "artful" || $OS_CODENAME == "zesty" || $OS_CODENAME == "yakkety" || $OS_CODENAME == "xenial" ]; then
+if [ $OS_CODENAME == "bionic" ] || [ $OS_CODENAME == "artful" ] || [ $OS_CODENAME == "zesty" ] || [ $OS_CODENAME == "yakkety" ] || [ $OS_CODENAME == "xenial" ]; then
   echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
-elif [ $OS_CODENAME == "wily" || $OS_CODENAME == "vivid" || $OS_CODENAME == "utopic" || $OS_CODENAME == "trusty" ]; then
+elif [ $OS_CODENAME == "wily" ] || [ $OS_CODENAME == "vivid" ] || [ $OS_CODENAME == "utopic" ] || [ $OS_CODENAME == "trusty" ]; then
   echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
 else
   echo "[!] Installing on an unsupported or outdated version of Ubuntu, trying Trusty package for Mongo"
