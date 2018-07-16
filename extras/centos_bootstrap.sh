@@ -2,13 +2,13 @@
 
 ### Create the MongoDB Yum repository
 
-cat << EOF > /etc/yum.repos.d/mongodb-org-3.4.repo
-[mongodb-org-3.4]
+cat << EOF > /etc/yum.repos.d/mongodb-org-4.0.repo
+[mongodb-org-4.0]
 name=MongoDB Repository
-baseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/3.4/x86_64/
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.0/x86_64/
 gpgcheck=1
 enabled=1
-gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc
+gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
 EOF
 
 ### Prepare the field for Yarn

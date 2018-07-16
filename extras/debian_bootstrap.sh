@@ -8,7 +8,7 @@ else
 fi
 
 $APT update -y
-$APT install dirmngr
+$APT install apt-transport-https dirmngr
 
 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
@@ -16,16 +16,16 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.lis
 # https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 9DA31620334BD75D9DCB49F368818C72E52529D4
 
-# https://wiki.ubuntu.com/Releases
+# https://www.debian.org/releases/
 OS_CODENAME=`lsb_release -c --short`
 
-if [ $OS_CODENAME == "bionic" || $OS_CODENAME == "artful" || $OS_CODENAME == "zesty" || $OS_CODENAME == "yakkety" || $OS_CODENAME == "xenial" ]; then
-  echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu xenial/mongodb-org/4.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
-elif [ $OS_CODENAME == "wily" || $OS_CODENAME == "vivid" || $OS_CODENAME == "utopic" || $OS_CODENAME == "trusty" ]; then
-  echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+if [ $OS_CODENAME == "stretch" ]; then
+  echo "deb http://repo.mongodb.org/apt/debian stretch/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+elif [ $OS_CODENAME == "jessie" ]; then
+  echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
 else
-  echo "[!] Installing on an unsupported or outdated version of Ubuntu, trying Trusty package for Mongo"
-  echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/4.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.0.list
+  echo "[!] Installing on an unsupported or outdated version of Debian, trying Jessie package for Mongo"
+  echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/4.0 main" | tee /etc/apt/sources.list.d/mongodb-org-4.0.list
 fi
 
 $APT update -y
