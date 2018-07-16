@@ -65,13 +65,13 @@ service nginx restart
 # Start services
 echo "[+] Starting services..."
 systemctl start mongod.service
-sudo systemctl start yeti_oneshot.service
+systemctl start yeti_oneshot.service
 sleep 5
-sudo systemctl start yeti_feeds.service
-sudo systemctl start yeti_inline.service
-sudo systemctl start yeti_exports.service
-sudo systemctl start yeti_analytics.service
-sudo systemctl start yeti_beat.service
-sudo systemctl start yeti_uwsgi.service
+systemctl start yeti_feeds.service
+systemctl start yeti_inline.service
+systemctl start yeti_exports.service
+systemctl start yeti_analytics.service
+systemctl start yeti_beat.service
+systemctl start yeti_uwsgi.service
 
 echo "[+] Yeti succesfully installed. Webserver listening on tcp/80"
