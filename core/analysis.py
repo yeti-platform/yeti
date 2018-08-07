@@ -92,7 +92,8 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
                     "value": o_info['value'],
                     "tags": [t['name'] for t in o_info['tags']],
                     "human_url": o_info['human_url'],
-                    "url": o_info['url']
+                    "url": o_info['url'],
+                    "context": o_info['context']
                 }
                 if info not in ent['matches']['observables']:
                     ent['matches']['observables'].append(info)
