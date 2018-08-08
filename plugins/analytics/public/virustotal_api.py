@@ -131,5 +131,6 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
                     new_hash.active_link_to(observable, k, 'virustotal_query'))
 
         result['source'] = 'virustotal_query'
+        result['scan_date'] =  json_result['scan_date']
         observable.add_context(result)
         return list(links)
