@@ -4,6 +4,7 @@ from datetime import timedelta
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Hash, Hostname, File
+from datetime import datetime
 
 
 class HybridAnalysis(Feed):
@@ -29,7 +30,7 @@ class HybridAnalysis(Feed):
         sha256 = Hash.get_or_create(value=item['sha256'])
         f_hyb.active_link_to(sha256, 'sha256', self.name)
         tags = []
-        context = {'source': self.name}
+        context = {'source': self.name, 'date': item['analysis_start_time']}
 
         if 'vxfamily' in item:
             context['vxfamily'] = item['vxfamily']
