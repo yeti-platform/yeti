@@ -4,7 +4,7 @@ from datetime import timedelta
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Hash, Hostname, File
-from datetime import datetime
+
 
 
 class HybridAnalysis(Feed):
