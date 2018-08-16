@@ -1,12 +1,14 @@
 from __future__ import unicode_literals
 
 import json
+from datetime import datetime
+
+import requests
 
 from core.analytics import OneShotAnalytics
-from core.observables import Hostname, Ip, Url, Hash
-from core.entities import Company
 from core.config.config import yeti_config
-import requests
+from core.entities import Company
+from core.observables import Hostname, Ip, Url, Hash
 
 
 class VirustotalApi(object):
@@ -80,57 +82,66 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
         result = {'raw': json_string}
 
         if isinstance(observable, Ip):
-            # Parse results for ip
-            if json_result.get('as_owner'):
-                result['Owner'] = json_result['as_owner']
-                o_isp = Company.get_or_create(name=json_result['as_owner'])
-                links.update(
-                    observable.active_link_to(
-                        o_isp, 'hosting', 'virustotal_query'))
-
-            if json_result.get('detected_urls'):
-                result['detected_urls'] = json_result['detected_urls']
-                for detected_url in json_result['detected_urls']:
-                    o_url = Url.get_or_create(value=detected_url['url'])
+            if json_result['response_code'] == 1:
+                # Parse results for ip
+                if json_result.get('as_owner'):
+                    result['Owner'] = json_result['as_owner']
+                    o_isp = Company.get_or_create(name=json_result['as_owner'])
                     links.update(
-                        o_url.active_link_to(
-                            o_url, 'hostname', 'virustotal_query'))
+                        observable.active_link_to(
+                            o_isp, 'hosting', 'virustotal_query'))
+
+                if json_result.get('detected_urls'):
+                    result['detected_urls'] = json_result['detected_urls']
+                    for detected_url in json_result['detected_urls']:
+                        o_url = Url.get_or_create(value=detected_url['url'])
+                        links.update(
+                            o_url.active_link_to(
+                                o_url, 'hostname', 'virustotal_query'))
 
         elif isinstance(observable, Hostname):
-            if json_result.get('permalink'):
-                result['permalink'] = json_result['permalink']
+            if json_result['response_code'] == 1:
+                if json_result.get('permalink'):
+                    result['permalink'] = json_result['permalink']
 
-            result['positives'] = json_result.get('positives', 0)
+                result['positives'] = json_result.get('positives', 0)
 
-            if json_result.get('total'):
-                result['total'] = json_result['total']
+                if json_result.get('total'):
+                    result['total'] = json_result['total']
 
         elif isinstance(observable, Hash):
 
-            result['positives'] = json_result['positives']
+            if json_result['response_code'] == 1:
 
-            if 'permalink' in json_result:
-                result['permalink'] = json_result['permalink']
+                result['positives'] = json_result.get['positives']
 
-            if 'total' in json_result:
-                result['total'] = json_result['total']
+                if 'permalink' in json_result:
+                    result['permalink'] = json_result['permalink']
 
-            hashes = {
-                'md5': json_result['md5'],
-                'sha1': json_result['sha1'],
-                'sha256': json_result['sha256']
-            }
-            create_hashes = [
-                (k, v) for k, v in hashes.items() if v != observable.value
-            ]
+                if 'total' in json_result:
+                    result['total'] = json_result['total']
 
-            for k, v in create_hashes:
-                new_hash = Hash.get_or_create(value=v)
-                new_hash.tag(observable.get_tags())
-                links.update(
-                    new_hash.active_link_to(observable, k, 'virustotal_query'))
+                hashes = {
+                    'md5': json_result['md5'],
+                    'sha1': json_result['sha1'],
+                    'sha256': json_result['sha256']
+                }
+                create_hashes = [
+                    (k, v) for k, v in hashes.items() if v != observable.value
+                ]
 
+                for k, v in create_hashes:
+                    new_hash = Hash.get_or_create(value=v)
+                    new_hash.tag(observable.get_tags())
+                    links.update(
+                        new_hash.active_link_to(observable, k,
+                                                'virustotal_query'))
+                result['scan_date'] = json_result['scan_date']
+            else:
+                result['scan_date'] = datetime.utcnow().strftime(
+                    '%Y-%m-%d %H:%M:%S')
+                result['0 VT'] = True
         result['source'] = 'virustotal_query'
-        result['scan_date'] =  json_result['scan_date']
+
         observable.add_context(result)
         return list(links)
