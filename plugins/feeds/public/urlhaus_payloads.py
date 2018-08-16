@@ -29,14 +29,13 @@ class UrlhausPayloads(Feed):
 
         first_seen, url, filetype, md5, sha256, signature = item
 
-        context = {
-            'first_seen': first_seen,
-            'source': self.name
-        }
-
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
+                context = {
+                    'first_seen': first_seen,
+                    'source': self.name
+                }
                 if signature != 'None':
                     url_obs.tag(signature)
                 url_obs.add_context(context)
@@ -46,9 +45,10 @@ class UrlhausPayloads(Feed):
                     'source': self.name
                 }
 
-                malware = File.get_or_create(value='FILE:{}'.format(sha256))
+                malware_file = File.get_or_create(
+                    value='FILE:{}'.format(sha256))
 
-                malware.add_context(context_malware)
+                malware_file.add_context(context_malware)
 
                 sha256 = Hash.get_or_create(value=sha256)
                 sha256.tag(filetype)
@@ -63,14 +63,14 @@ class UrlhausPayloads(Feed):
                 if signature != 'None':
                     md5.tag(signature)
 
-                malware.active_link_to(md5, 'md5', self.name)
+                malware_file.active_link_to(md5, 'md5', self.name)
 
-                malware.active_link_to(sha256, 'sha256', self.name)
+                malware_file.active_link_to(sha256, 'sha256', self.name)
                 if signature != 'None':
-                    malware.tag(signature)
-                malware.tag(filetype)
+                    malware_file.tag(signature)
+                malware_file.tag(filetype)
 
-                url_obs.active_link_to(malware, 'drops', self.name)
+                url_obs.active_link_to(malware_file, 'drops', self.name)
 
             except ObservableValidationError as e:
                 logging.error(e)
