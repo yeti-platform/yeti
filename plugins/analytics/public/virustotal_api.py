@@ -2,11 +2,12 @@ from __future__ import unicode_literals
 
 import json
 
-from core.analytics import OneShotAnalytics
-from core.observables import Hostname, Ip, Url, Hash
-from core.entities import Company
-from core.config.config import yeti_config
 import requests
+
+from core.analytics import OneShotAnalytics
+from core.config.config import yeti_config
+from core.entities import Company
+from core.observables import Hostname, Ip, Url, Hash
 
 
 class VirustotalApi(object):
@@ -77,12 +78,24 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
         json_string = json.dumps(
             json_result, sort_keys=True, indent=4, separators=(',', ': '))
         results.update(raw=json_string)
-        result = {'raw': json_string}
+
+        result = dict([('raw', json_string), ('source', 'virustotal_query')])
+
+        if json_result['response_code'] != 1:
+
+            result['scan_date'] = None
+            result['positives'] = 0
+            result['total'] = 0
+            result['permalink'] = None
+
+            observable.add_context(result)
+            return
 
         if isinstance(observable, Ip):
+
             # Parse results for ip
             if json_result.get('as_owner'):
-                result['Owner'] = json_result['as_owner']
+                result['owner'] = json_result['as_owner']
                 o_isp = Company.get_or_create(name=json_result['as_owner'])
                 links.update(
                     observable.active_link_to(
@@ -96,7 +109,11 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
                         o_url.active_link_to(
                             o_url, 'hostname', 'virustotal_query'))
 
+            if json_result.get('permalink'):
+                result['permalink'] = json_result['permalink']
+
         elif isinstance(observable, Hostname):
+
             if json_result.get('permalink'):
                 result['permalink'] = json_result['permalink']
 
@@ -107,7 +124,7 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
         elif isinstance(observable, Hash):
 
-            result['positives'] = json_result['positives']
+            result['positives'] = json_result.get('positives', 0)
 
             if 'permalink' in json_result:
                 result['permalink'] = json_result['permalink']
@@ -128,9 +145,10 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
                 new_hash = Hash.get_or_create(value=v)
                 new_hash.tag(observable.get_tags())
                 links.update(
-                    new_hash.active_link_to(observable, k, 'virustotal_query'))
+                    new_hash.active_link_to(observable, k,
+                                            'virustotal_query'))
 
-        result['source'] = 'virustotal_query'
-        result['scan_date'] =  json_result['scan_date']
+            result['scan_date'] = json_result['scan_date']
+
         observable.add_context(result)
         return list(links)
