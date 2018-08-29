@@ -1,14 +1,14 @@
 from __future__ import unicode_literals
 
 import csv
-import requests
-from datetime import datetime
 import logging
 from StringIO import StringIO
+from datetime import datetime
 
+import requests
 from lxml import etree
-from mongoengine import StringField
 from mongoengine import DoesNotExist
+from mongoengine import StringField
 
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
@@ -221,7 +221,7 @@ class Feed(ScheduleEntry):
         for line in reader:
             yield line
 
-    def update_json(self, headers={}, auth=None):
+    def update_json(self, headers={}, auth=None, params={}):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
@@ -232,15 +232,19 @@ class Feed(ScheduleEntry):
         Returns:
             Python ``dict`` object representing the response JSON.
         """
+        print('source %s' % self.source)
+        # print(params)
+
         if auth:
             r = requests.get(
                 self.source,
                 headers=headers,
                 auth=auth,
-                proxies=yeti_config.proxy)
+                proxies=yeti_config.proxy, params=params)
         else:
             r = requests.get(
-                self.source, headers=headers, proxies=yeti_config.proxy)
+                self.source, headers=headers, proxies=yeti_config.proxy,
+                params=params)
 
         return r.json()
 
