@@ -79,11 +79,7 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
             json_result, sort_keys=True, indent=4, separators=(',', ': '))
         results.update(raw=json_string)
 
-        result = dict()
-
-        result['raw'] = json_string
-
-        result['source'] = 'virustotal_query'
+        result = dict([('raw', json_string), ('source', 'virustotal_query')])
 
         if json_result['response_code'] != 1:
 
