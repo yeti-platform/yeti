@@ -9,7 +9,7 @@ from core.observables import Ip
 class AlienVaultIPReputation(Feed):
     default_values = {
         "frequency":
-            timedelta(hours=8),
+            timedelta(hours=4),
         "name":
             "AlienVaultIPReputation",
         "source":
@@ -32,19 +32,21 @@ class AlienVaultIPReputation(Feed):
             ip_str = item[0]
             category = item[3]
             country = item[4]
+            try:
+                ip = Ip.get_or_create(value=ip_str)
 
-            ip = Ip.get_or_create(value=ip_str)
+                ip.add_source('feed')
 
-            ip.add_source('feed')
+                context['country'] = country
+                context['threat'] = category
 
-            context['country'] = country
-            context['threat'] = category
+                ip.tag(category)
+                ip.add_context(context)
 
-            ip.tag(category)
-            ip.add_context(context)
-
-        except ObservableValidationError as e:
-            logging.error(e)
-
+            except ObservableValidationError as e:
+                logging.error(e)
+                return False
         except Exception as e:
             logging.error('Error to process the item %s %s' % (item, e))
+            return False
+        return True
