@@ -78,7 +78,12 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
         json_string = json.dumps(
             json_result, sort_keys=True, indent=4, separators=(',', ': '))
         results.update(raw=json_string)
-        result = {'raw': json_string}
+
+        result = dict()
+
+        result['raw'] = json_string
+
+        result['source'] = 'virustotal_query'
 
         if json_result['response_code'] != 1:
 
@@ -94,7 +99,7 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
             # Parse results for ip
             if json_result.get('as_owner'):
-                result['Owner'] = json_result['as_owner']
+                result['owner'] = json_result['as_owner']
                 o_isp = Company.get_or_create(name=json_result['as_owner'])
                 links.update(
                     observable.active_link_to(
@@ -149,7 +154,6 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
             result['scan_date'] = json_result['scan_date']
 
-        result['source'] = 'virustotal_query'
 
         observable.add_context(result)
         return list(links)
