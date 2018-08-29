@@ -27,11 +27,14 @@ class IPSpamList(Feed):
         if not item or item[0].startswith('first_seen'):
             return
         try:
-            context = dict([('source', self.name)])
-
+            context = dict(source=self.name)
             first_seen, last_seen, ip_address, category, attacks_count = item
 
-            ip = Ip.get_or_create(value=ip_address)
+            try:
+                ip = Ip.get_or_create(value=ip_address)
+            except ObservableValidationError as e:
+                logging.error('Error IP format %s %e' % (ip_address, e))
+                return False
 
             context['threat'] = category
             ip.tag(category)
@@ -46,7 +49,7 @@ class IPSpamList(Feed):
 
             ip.add_context(context)
 
-        except ObservableValidationError as e:
-            logging.error('Error IP format %s' % ip)
-        except:
-            logging.error('Error to process the line %s' % item)
+        except Exception as e:
+            logging.error('Error to process the line %s %s' % (item, e))
+            return False
+        return True
