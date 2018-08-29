@@ -27,7 +27,7 @@ class AlienVaultIPReputation(Feed):
         if not item:
             return
         try:
-            context = dict([('source', self.name)])
+            context = dict(source=self.name)
 
             ip_str = item[0]
             category = item[3]
