@@ -81,10 +81,13 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
         result = {'raw': json_string}
 
         if json_result['response_code'] != 1:
+
             result['scan_date'] = None
             result['positives'] = 0
             result['total'] = 0
             result['permalink'] = None
+
+            observable.add_context(result)
             return
 
         if isinstance(observable, Ip):
