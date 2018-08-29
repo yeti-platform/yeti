@@ -154,6 +154,5 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
 
             result['scan_date'] = json_result['scan_date']
 
-
         observable.add_context(result)
         return list(links)
