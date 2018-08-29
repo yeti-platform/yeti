@@ -33,7 +33,7 @@ class IPSpamList(Feed):
             try:
                 ip = Ip.get_or_create(value=ip_address)
             except ObservableValidationError as e:
-                logging.error('Error IP format %s %e' % (ip_address, e))
+                logging.error('Error IP format %s %s' % (ip_address, e))
                 return False
 
             context['threat'] = category
