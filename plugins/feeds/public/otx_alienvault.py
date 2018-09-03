@@ -22,57 +22,57 @@ class OTXAlienvault(Feed):
         headers = {'X-OTX-API-KEY': otx_key}
 
         for i in range(1, 6):
-            item = self.update_json(headers=headers, params={'page': i})
-            self.analyze(item)
+            items = self.update_json(headers=headers, params={'page': i})
+            for item in items['results']:
+                self.analyze(item)
 
     def analyze(self, item):
 
+        observables = {}
+
         context = dict(source=self.name)
 
-        md5_indic = OTXAlienvault.__choose_type_indic(item['indicators'],
-                                                           'FileHash-MD5')
+        OTXAlienvault.__create_list_observables(Hostname,
+                                                'hostname',
+                                                item[
+                                                    'indicators']
+                                                , observables
+                                                , 'hostnames')
 
-        sha256_indic = OTXAlienvault.__choose_type_indic(item['indicators'],
-                                                         'FileHash-SHA256')
+        OTXAlienvault.__create_list_observables(Url, 'URL', item['indicators'],
+                                                observables, 'urls')
 
-        sha1_indic = OTXAlienvault.__choose_type_indic(item['indicators'],
-                                                       'FileHash-SHA1')
+        OTXAlienvault.__create_list_observables(Hostname, 'domain',
+                                                item['indicators']
+                                                , observables,
+                                                'domains')
 
-        sha256_indic = OTXAlienvault.__choose_type_indic(item['indicators'],
-                                                         'FileHash-SHA256')
+        OTXAlienvault.__create_list_observables(Exploit, 'CVE',
+                                                item['indicators'], observables,
+                                                'exploits')
 
-        urls = OTXAlienvault.__choose_type_indic(item['indicators'], 'URL')
+        OTXAlienvault.__create_list_observables(Hash,
+                                                'FileHash-SHA256',
+                                                item['indicators'],
+                                                observables, 'sha256')
 
-        domains = OTXAlienvault.__choose_type_indic(item['indicators'],
-                                                    'domain')
+        OTXAlienvault.__create_list_observables(Hash, 'FileHash-MD5',
+                                                item['indicators'], observables,
+                                                'md5')
 
-        hostnames = OTXAlienvault.__choose_type_indic(item['indicators'],
-                                                      'domains')
-
-        exploits = OTXAlienvault.__choose_type_indic(item['indicatore'], 'CVE')
-
-        hostnames_obs = {
-        h['indicator']: Hostname.get_or_create(value=h['indicator']) for h in
-        hostnames}
-        urls_obs = {url['indicator']: Url.get_or_create(value=url['indicator'])
-                    for url in urls}
-        domains_obs = {
-        domain['indicator']: Hostname.get_or_create(value=domain['indicator'])
-        for domain in domains}
-
-        cve_obs = [Exploit.get_or_create(value=ex['indicator']) for ex in
-                   exploits]
+        OTXAlienvault.__create_list_observables(Hash, 'FileHash-SHA1'
+                                                , item['indicators'],
+                                                observables, 'sha1')
 
         tags = item['tags']
 
         context['links'] = item['references']
 
-        sh256_obs = [Hash.get_or_create(value=sha256_f['indicator']) for
-                     sha256_f in sha256_indic]
-        md5_obs = [Hash.get_or_create(value=md5_f['indicator']) for md5_f in
-                   md5_indic]
-        sha1 = [Hash.get_or_create(value=sha1_f['indicator']) for sha1_f in
-                sha1_indic]
+        OTXAlienvault.__add_contex(context, observables)
+        OTXAlienvault.__add_source(observables)
+        if tags:
+            OTXAlienvault.__add_tags(tags, observables)
+
 
     def __create_links_url_domains_hostnames(self, domains_obs, hostnames_obs,
                                              urls_obs):
@@ -89,22 +89,41 @@ class OTXAlienvault(Feed):
         else:
             for domain, obs in hostnames.items():
                 if domain in url:
-                    obs.activelink(ind, 'domains', self.name)
+                    obs.activelink(ind, 'domain ', self.name)
 
     @staticmethod
-    def __add_contex(context, obsevables):
-        for o in obsevables:
-            o.add_context(context)
+    def __create_list_observables(obj, type_indic, indicators, observables,
+                                  type_obs):
+        list_value = list(filter(lambda x: x['type'] == type_indic, indicators))
+
+        if obj == Exploit:
+            observables[type_obs] = {ind['indicator']: obj.get_or_create(name=
+                                                                         ind[
+                                                                             'indicator'])
+                                     for ind in list_value}
+        else:
+            observables[type_obs] = {ind['indicator']: obj.get_or_create(value=
+                                                                         ind[
+                                                                             'indicator'])
+                                     for ind in list_value}
+
+    @staticmethod
+    def __add_contex(context, observables):
+        for obs in observables.values():
+            for o in obs.values():
+                if not isinstance(o, Exploit):
+                    o.add_context(context)
 
     @staticmethod
     def __add_source(observables):
-        for o in observables:
-            o.add_source('feed')
+        for obs in observables.values():
+            for o in obs.values():
+                if not isinstance(o, Exploit):
+                    o.add_source('feed')
 
     @staticmethod
     def __add_tags(tags, observables):
-        for o in observables:
-            o.tag(tags)
-    @staticmethod
-    def __choose_type_indic(indicators, type_indic):
-        return list(filter(lambda x: x['type'] == type_indic, indicators))
+        for obs in observables.values():
+            for o in obs.values():
+                if not isinstance(o, Exploit):
+                    o.tag(tags)
