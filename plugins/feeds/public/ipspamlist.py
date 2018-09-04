@@ -33,7 +33,7 @@ class IPSpamList(Feed):
             try:
                 ip = Ip.get_or_create(value=ip_address)
             except ObservableValidationError as e:
-                logging.error('Error IP format %s %s' % (ip_address, e))
+                logging.error('Error in IP format %s %s' % (ip_address, e))
                 return False
 
             context['threat'] = category
@@ -50,6 +50,6 @@ class IPSpamList(Feed):
             ip.add_context(context)
 
         except Exception as e:
-            logging.error('Error to process the line %s %s' % (item, e))
+            logging.error('Error processing the line %s %s' % (item, e))
             return False
         return True
