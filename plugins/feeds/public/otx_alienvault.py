@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 from urlparse import urlparse
 
@@ -9,7 +10,7 @@ from core.observables import Hash, Hostname, Url
 
 class OTXAlienvault(Feed):
     default_values = {
-        "frequency": timedelta(minutes=5),
+        "frequency": timedelta(days=1),
         "name": "OTXAlienvault",
         "source": "https://otx.alienvault.com/api/v1/pulses/subscribed",
         "description": "Feed of OTX by Alienvault"
@@ -19,9 +20,13 @@ class OTXAlienvault(Feed):
     def update(self):
         otx_key = yeti_config.get('otx', 'key')
 
+        number_page = yeti_config.get('otx', 'pages')
+
+        assert otx_key and number_page
+
         headers = {'X-OTX-API-KEY': otx_key}
 
-        for i in range(1, 6):
+        for i in range(1, int(number_page)):
             items = self.update_json(headers=headers, params={'page': i})
             for item in items['results']:
                 self.analyze(item)
@@ -66,13 +71,40 @@ class OTXAlienvault(Feed):
 
         tags = item['tags']
 
-        context['links'] = item['references']
+        context['references'] = '\r\n'.join(item['references'])
+        context['description'] = item['description']
+        context['link'] = 'https://otx.alienvault.com/pulse/%s' % item['id']
 
         OTXAlienvault.__add_contex(context, observables)
         OTXAlienvault.__add_source(observables)
         if tags:
             OTXAlienvault.__add_tags(tags, observables)
 
+        if 'sha256' in observables and observables['sha256']:
+            self.__create_link_hashes_and_network_indic(observables['sha256'],
+                                                        observables['urls'])
+            self.__create_link_hashes_and_network_indic(observables['sha256'],
+                                                        observables['domains'])
+            self.__create_link_hashes_and_network_indic(observables['sha256'],
+                                                        observables[
+                                                            'hostnames'])
+
+        if 'sha1' in observables and observables['sha1']:
+            self.__create_link_hashes_and_network_indic(observables['sha1'],
+                                                        observables['urls'])
+            self.__create_link_hashes_and_network_indic(observables['sha1'],
+                                                        observables['domains'])
+            self.__create_link_hashes_and_network_indic(observables['sha1'],
+                                                        observables[
+                                                            'hostnames'])
+        if 'md5' in observables and observables['md5']:
+            self.__create_link_hashes_and_network_indic(observables['md5'],
+                                                        observables['urls'])
+            self.__create_link_hashes_and_network_indic(observables['md5'],
+                                                        observables['domains'])
+            self.__create_link_hashes_and_network_indic(observables['md5'],
+                                                        observables[
+                                                            'hostnames'])
 
     def __create_links_url_domains_hostnames(self, domains_obs, hostnames_obs,
                                              urls_obs):
@@ -91,6 +123,15 @@ class OTXAlienvault(Feed):
                 if domain in url:
                     obs.activelink(ind, 'domain ', self.name)
 
+    def __create_link_hashes_and_network_indic(self, hashes, network_indic):
+
+        for h in hashes.values():
+            for n in network_indic.values():
+                if isinstance(n, Url):
+                    h.active_link_to(n, 'url', self.source)
+                if isinstance(n, Hostname):
+                    h.active_link_to(n, 'C2', self.source)
+                logging.info('join %s %s' % (n.value, h.value))
     @staticmethod
     def __create_list_observables(obj, type_indic, indicators, observables,
                                   type_obs):
