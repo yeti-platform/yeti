@@ -32,20 +32,21 @@ class AlienVaultIPReputation(Feed):
             ip_str = item[0]
             category = item[3]
             country = item[4]
+            ip = None
             try:
                 ip = Ip.get_or_create(value=ip_str)
-
-                ip.add_source('feed')
-
-                context['country'] = country
-                context['threat'] = category
-
-                ip.tag(category)
-                ip.add_context(context)
-
             except ObservableValidationError as e:
                 logging.error(e)
                 return False
+
+            ip.add_source('feed')
+
+            context['country'] = country
+            context['threat'] = category
+
+            ip.tag(category)
+            ip.add_context(context)
+
         except Exception as e:
             logging.error('Error to process the item %s %s' % (item, e))
             return False
