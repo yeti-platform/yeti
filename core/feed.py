@@ -228,6 +228,7 @@ class Feed(ScheduleEntry):
         Args:
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
+            params:     Optional param to be added to the HTTP request.
 
         Returns:
             Python ``dict`` object representing the response JSON.
