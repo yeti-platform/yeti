@@ -232,7 +232,6 @@ class Feed(ScheduleEntry):
         Returns:
             Python ``dict`` object representing the response JSON.
         """
-        print('source %s' % self.source)
         # print(params)
 
         if auth:
