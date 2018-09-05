@@ -232,7 +232,6 @@ class Feed(ScheduleEntry):
         Returns:
             Python ``dict`` object representing the response JSON.
         """
-        # print(params)
 
         if auth:
             r = requests.get(
