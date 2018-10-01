@@ -170,8 +170,7 @@ class MispFeed(Feed):
 
                 'source':
                     self.instances[instance]['name'],
-                'description':
-                    attribute['event_info'],
+
                 'comment':
                     attribute['comment']
             }
