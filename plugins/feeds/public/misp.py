@@ -1,5 +1,4 @@
 import logging
-from csv import DictReader
 from datetime import date, timedelta
 from urlparse import urljoin
 
@@ -78,7 +77,7 @@ class MispFeed(Feed):
 
     def week_events(self, instance):
         one_week = timedelta(days=7)
-        url = urljoin(self.instances[instance]['url'], '/events/csv/download')
+        url = urljoin(self.instances[instance]['url'], '/events/restSearch')
         headers = {'Authorization': self.instances[instance]['key']}
         to = date.today()
         fromdate = to - timedelta(days=6)
@@ -95,15 +94,11 @@ class MispFeed(Feed):
                 json=time_filter,
                 proxies=yeti_config.proxy)
 
-            try:
-                msg = r.json()
-                raise AttributeError(msg['message'])
-            except ValueError:
-                lines = [l for l in r.content.splitlines() if '\0' not in l]
-                csvreader = DictReader(lines)
+            if r.status_code == 200:
+                results = r.json()
 
-                for row in csvreader:
-                    self.analyze(row, instance)
+                for event in results['response']:
+                    self.analyze(event, instance)
                     imported += 1
 
                 yield fromdate, to, imported
@@ -158,22 +153,26 @@ class MispFeed(Feed):
                         date.today().isoformat()
                 })
 
-    def analyze(self, attribute, instance):
-        if 'type' in attribute and attribute['type'] in self.TYPES_TO_IMPORT:
-            context = {
-                'id':
-                    attribute['event_id'],
-                'link':
-                    urljoin(
-                        self.instances[instance]['url'], '/events/{}'.format(
-                            attribute['event_id'])),
+    def analyze(self, event, instance):
+        tags = [tag['name'] for tag in event['Tag']]
+        for attribute in event['Attribute']:
+            if 'type' in attribute and attribute[
+                'type'] in self.TYPES_TO_IMPORT:
+                context = {
+                    'id':
+                        attribute['event_id'],
+                    'link':
+                        urljoin(
+                            self.instances[instance]['url'],
+                            '/events/{}'.format(
+                                attribute['event_id'])),
 
-                'source':
-                    self.instances[instance]['name'],
+                    'source':
+                        self.instances[instance]['name'],
 
-                'comment':
-                    attribute['comment']
-            }
+                    'comment':
+                        attribute['comment']
+                }
 
             try:
                 klass = self.TYPES_TO_IMPORT[attribute['type']]
@@ -181,6 +180,7 @@ class MispFeed(Feed):
 
                 if attribute['category']:
                     obs.tag(attribute['category'].replace(' ', '_'))
+                    obs.tag(tags)
 
                 obs.add_context(context)
             except:
