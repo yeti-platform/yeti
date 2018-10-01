@@ -1,13 +1,14 @@
 import logging
-import requests
 from csv import DictReader
-from urlparse import urljoin
-from mongoengine import DictField
 from datetime import date, timedelta
+from urlparse import urljoin
 
+import requests
+from mongoengine import DictField
+
+from core.config.config import yeti_config
 from core.feed import Feed
 from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin
-from core.config.config import yeti_config
 
 
 class MispFeed(Feed):
@@ -160,20 +161,16 @@ class MispFeed(Feed):
     def analyze(self, attribute, instance):
         if 'type' in attribute and attribute['type'] in self.TYPES_TO_IMPORT:
             context = {
-                'org':
-                    attribute['event_source_org'],
                 'id':
                     attribute['event_id'],
                 'link':
                     urljoin(
                         self.instances[instance]['url'], '/events/{}'.format(
                             attribute['event_id'])),
-                'date':
-                    attribute['event_date'],
+
                 'source':
                     self.instances[instance]['name'],
-                'description':
-                    attribute['event_info'],
+
                 'comment':
                     attribute['comment']
             }
