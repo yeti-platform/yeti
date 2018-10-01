@@ -105,6 +105,11 @@ class OTXAlienvault(Feed):
             self.__create_link_hashes_and_network_indic(observables['md5'],
                                                         observables[
                                                             'hostnames'])
+        if ('hostnames' in observables and observables['hostnames']) or (
+                'domains' in observables and observables['domains']):
+            self.__create_links_url_domains_hostnames(observables['domains'],
+                                                      observables['hostanmes'],
+                                                      observables['urls'])
 
     def __create_links_url_domains_hostnames(self, domains_obs, hostnames_obs,
                                              urls_obs):
