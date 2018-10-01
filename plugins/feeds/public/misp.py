@@ -98,7 +98,7 @@ class MispFeed(Feed):
                 results = r.json()
 
                 for event in results['response']:
-                    self.analyze(event, instance)
+                    self.analyze(event['Event'], instance)
                     imported += 1
 
                 yield fromdate, to, imported
@@ -174,16 +174,16 @@ class MispFeed(Feed):
                         attribute['comment']
                 }
 
-                try:
-                    klass = self.TYPES_TO_IMPORT[attribute['type']]
-                    obs = klass.get_or_create(value=attribute['value'])
+            try:
+                klass = self.TYPES_TO_IMPORT[attribute['type']]
+                obs = klass.get_or_create(value=attribute['value'])
 
-                    if attribute['category']:
-                        obs.tag(attribute['category'].replace(' ', '_'))
-                        obs.tag(tags)
+                if attribute['category']:
+                    obs.tag(attribute['category'].replace(' ', '_'))
+                    obs.tag(tags)
 
-                    obs.add_context(context)
-                except:
-                    logging.error(
-                        "{}: error adding {}".format(
-                            'MispFeed', attribute['value']))
+                obs.add_context(context)
+            except:
+                logging.error(
+                    "{}: error adding {}".format(
+                        'MispFeed', attribute['value']))
