@@ -160,8 +160,6 @@ class MispFeed(Feed):
     def analyze(self, attribute, instance):
         if 'type' in attribute and attribute['type'] in self.TYPES_TO_IMPORT:
             context = {
-                'org':
-                    attribute['event_source_org'],
                 'id':
                     attribute['event_id'],
                 'link':
