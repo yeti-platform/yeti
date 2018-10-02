@@ -156,9 +156,7 @@ class MispFeed(Feed):
 
     def analyze(self, event, instance):
         tags = []
-
-
-
+        galaxies_to_context = []
         for attribute in event['Attribute']:
             if 'type' in attribute and attribute[
                 'type'] in self.TYPES_TO_IMPORT:
@@ -171,6 +169,8 @@ class MispFeed(Feed):
 
                     for tag in event['Tag']:
                         found = False
+                        if 'misp-galaxy' in tag['name']:
+                            galaxies
                         for g in galaxies:
                             if g in tag['name']:
                                 found = True
@@ -191,7 +191,10 @@ class MispFeed(Feed):
 
                     'comment':
                         attribute['comment']
+
                 }
+                if galaxies_to_context:
+                    context['galaxies'] = galaxies_to_context
 
                 try:
                     klass = self.TYPES_TO_IMPORT[attribute['type']]
