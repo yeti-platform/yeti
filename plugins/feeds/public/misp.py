@@ -47,7 +47,7 @@ class MispFeed(Feed):
                 'url': yeti_config.get(instance, 'url'),
                 'key': yeti_config.get(instance, 'key'),
                 'name': yeti_config.get(instance, 'name') or instance,
-                'galaxy_filter': yeti_config.get(instance, 'galaxy_filter')
+                'galaxy_filter': yeti_config.get(instance, 'galaxy_filter'),
                 'organisations': {}
             }
 
