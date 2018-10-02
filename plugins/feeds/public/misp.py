@@ -154,7 +154,18 @@ class MispFeed(Feed):
                 })
 
     def analyze(self, event, instance):
-        tags = [tag['name'] for tag in event['Tag']]
+        tags = []
+
+        galaxies = self.instances[instance]['galaxy_filter'].split(',')
+        found = False
+        for tag in event['Tag']:
+            for g in galaxies:
+                if g in tag['name']:
+                    found = True
+            if not found:
+                tags.append(tag['name'])
+                found = False
+
         for attribute in event['Attribute']:
             if 'type' in attribute and attribute[
                 'type'] in self.TYPES_TO_IMPORT:
