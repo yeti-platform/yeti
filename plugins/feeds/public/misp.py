@@ -162,6 +162,7 @@ class MispFeed(Feed):
             for g in galaxies:
                 if g in tag['name']:
                     found = True
+                    break
             if not found:
                 tags.append(tag['name'])
                 found = False
