@@ -200,6 +200,10 @@ class MispFeed(Feed):
 
                 obs.add_context(context)
             except:
-                logging.error(
-                    "{}: error adding {}".format(
-                        'MispFeed', attribute['value']))
+                try:
+                    logging.error(
+                        "{}: error adding {}".format(
+                            'MispFeed', attribute['value']))
+                except:
+                    logging.error("{}: error adding {}".format(
+                        'MispFeed', attribute['id']))
