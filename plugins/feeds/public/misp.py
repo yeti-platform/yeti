@@ -47,6 +47,7 @@ class MispFeed(Feed):
                 'url': yeti_config.get(instance, 'url'),
                 'key': yeti_config.get(instance, 'key'),
                 'name': yeti_config.get(instance, 'name') or instance,
+                'galaxy_filter': yeti_config.get(instance, 'galaxy_filter')
                 'organisations': {}
             }
 
@@ -155,17 +156,19 @@ class MispFeed(Feed):
 
     def analyze(self, event, instance):
         tags = []
+        if not 'galaxy_filter' in self.instances[instance]:
+            tags = [tag['name'] for tag in event['Tag']]
+        else:
+            galaxies = self.instances[instance]['galaxy_filter'].split(',')
 
-        galaxies = self.instances[instance]['galaxy_filter'].split(',')
-
-        for tag in event['Tag']:
-            found = False
-            for g in galaxies:
-                if g in tag['name']:
-                    found = True
-                    break
-            if not found:
-                tags.append(tag['name'])
+            for tag in event['Tag']:
+                found = False
+                for g in galaxies:
+                    if g in tag['name']:
+                        found = True
+                        break
+                if not found:
+                    tags.append(tag['name'])
 
         for attribute in event['Attribute']:
             if 'type' in attribute and attribute[
