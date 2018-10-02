@@ -156,6 +156,7 @@ class MispFeed(Feed):
 
     def analyze(self, event, instance):
         tags = []
+        print(self.instances[instance])
         if not 'galaxy_filter' in self.instances[instance]:
             tags = [tag['name'] for tag in event['Tag']]
         else:
