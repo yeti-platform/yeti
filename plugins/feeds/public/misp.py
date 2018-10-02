@@ -156,24 +156,27 @@ class MispFeed(Feed):
 
     def analyze(self, event, instance):
         tags = []
-        print(self.instances[instance])
-        if not 'galaxy_filter' in self.instances[instance]:
-            tags = [tag['name'] for tag in event['Tag']]
-        else:
-            galaxies = self.instances[instance]['galaxy_filter'].split(',')
 
-            for tag in event['Tag']:
-                found = False
-                for g in galaxies:
-                    if g in tag['name']:
-                        found = True
-                        break
-                if not found:
-                    tags.append(tag['name'])
+
 
         for attribute in event['Attribute']:
             if 'type' in attribute and attribute[
                 'type'] in self.TYPES_TO_IMPORT:
+
+                if not 'galaxy_filter' in self.instances[instance]:
+                    tags = [tag['name'] for tag in event['Tag']]
+                else:
+                    galaxies = self.instances[instance]['galaxy_filter'].split(
+                        ',')
+
+                    for tag in event['Tag']:
+                        found = False
+                        for g in galaxies:
+                            if g in tag['name']:
+                                found = True
+                                break
+                        if not found:
+                            tags.append(tag['name'])
                 context = {
                     'id':
                         attribute['event_id'],
@@ -190,20 +193,20 @@ class MispFeed(Feed):
                         attribute['comment']
                 }
 
-            try:
-                klass = self.TYPES_TO_IMPORT[attribute['type']]
-                obs = klass.get_or_create(value=attribute['value'])
-
-                if attribute['category']:
-                    obs.tag(attribute['category'].replace(' ', '_'))
-                    obs.tag(tags)
-
-                obs.add_context(context)
-            except:
                 try:
-                    logging.error(
-                        "{}: error adding {}".format(
-                            'MispFeed', attribute['value']))
+                    klass = self.TYPES_TO_IMPORT[attribute['type']]
+                    obs = klass.get_or_create(value=attribute['value'])
+
+                    if attribute['category']:
+                        obs.tag(attribute['category'].replace(' ', '_'))
+                        obs.tag(tags)
+
+                    obs.add_context(context)
                 except:
-                    logging.error("{}: error adding {}".format(
-                        'MispFeed', attribute['id']))
+                    try:
+                        logging.error(
+                            "{}: error adding {}".format(
+                                'MispFeed', attribute['value']))
+                    except:
+                        logging.error("{}: error adding {}".format(
+                            'MispFeed', attribute['id']))
