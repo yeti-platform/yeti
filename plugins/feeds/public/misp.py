@@ -170,7 +170,7 @@ class MispFeed(Feed):
                     for tag in event['Tag']:
                         found = False
                         if 'misp-galaxy' in tag['name']:
-                            galaxies
+                            galaxies_to_context.append(tag['name'])
                         for g in galaxies:
                             if g in tag['name']:
                                 found = True
