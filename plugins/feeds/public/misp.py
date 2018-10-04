@@ -195,7 +195,7 @@ class MispFeed(Feed):
                 }
                 if galaxies_to_context:
                     context['galaxies'] = galaxies_to_context
-
+                    print(galaxies_to_context)
                 try:
                     klass = self.TYPES_TO_IMPORT[attribute['type']]
                     obs = klass.get_or_create(value=attribute['value'])
