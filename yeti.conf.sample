@@ -1,3 +1,11 @@
+[auth]
+
+##
+## Use these settings to configure Yeti authentication.
+##
+
+# module = local
+
 [mongodb]
 
 ##

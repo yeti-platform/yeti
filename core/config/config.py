@@ -50,6 +50,7 @@ class Config:
 
 
 yeti_config = Config()
+yeti_config.set_default_value('auth', 'module', 'local')
 yeti_config.set_default_value('mongodb', 'host', '127.0.0.1')
 yeti_config.set_default_value('mongodb', 'port', 27017)
 yeti_config.set_default_value('mongodb', 'database', 'yeti')

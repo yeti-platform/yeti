@@ -27,7 +27,7 @@ login_manager = LoginManager()
 login_manager.init_app(webapp)
 login_manager.login_view = '/login'
 
-auth_module = import_module('core.auth.local')
+auth_module = import_module('core.auth.%s' % yeti_config.auth.module)
 webapp.register_blueprint(auth_module.auth)
 
 connect(
