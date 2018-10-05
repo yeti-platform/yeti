@@ -11,3 +11,4 @@ from core.observables.email import Email
 from core.observables.text import Text
 from core.observables.bitcoin import Bitcoin
 from core.observables.path import Path
+from core.observables.mac_address import MacAddress

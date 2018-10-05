@@ -98,9 +98,9 @@ class Observable(Node):
         Raises:
             ObservableValidationError if no type could be guessed.
         """
-        from core.observables import Url, Ip, Email, Path, Hostname, Hash, Bitcoin
+        from core.observables import Url, Ip, Email, Path, Hostname, Hash, Bitcoin, MacAddress
         if string and string.strip() != '':
-            for t in [Url, Ip, Email, Path, Hostname, Hash, Bitcoin]:
+            for t in [Url, Ip, Email, Path, Hostname, Hash, Bitcoin, MacAddress]:
                 if t.check_type(string):
                     return t
 
@@ -109,10 +109,10 @@ class Observable(Node):
 
     @staticmethod
     def from_string(string):
-        from core.observables import Url, Ip, Hostname, Email, Hash
+        from core.observables import Url, Ip, Hostname, Email, Hash, MacAddress
 
         results = dict()
-        for t in [Url, Ip, Email, Hostname, Hash]:
+        for t in [Url, Ip, Email, Hostname, Hash, MacAddress]:
             results[t.__name__] = t.extract(string)
 
         return results
