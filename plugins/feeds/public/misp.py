@@ -47,6 +47,7 @@ class MispFeed(Feed):
                 'key': yeti_config.get(instance, 'key'),
                 'name': yeti_config.get(instance, 'name') or instance,
                 'galaxy_filter': yeti_config.get(instance, 'galaxy_filter'),
+                'days': yeti_config.get(instance, 'days'),
                 'organisations': {}
             }
 
@@ -89,6 +90,7 @@ class MispFeed(Feed):
             time_filter['request']['to'] = to.isoformat()
             time_filter['request']['from'] = fromdate.isoformat()
             time_filter['request']['published'] = True
+            time_filter['enforceWarninglist'] = True
             r = requests.post(
                 url,
                 headers=headers,
@@ -179,6 +181,9 @@ class MispFeed(Feed):
                     tags.append(tag['name'])
 
         for attribute in event['Attribute']:
+            if 'external' in attribute['category']:
+                return
+
             if 'type' in attribute and attribute[
                 'type'] in self.TYPES_TO_IMPORT:
 
