@@ -11,7 +11,6 @@ from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin
 
 
 class MispFeed(Feed):
-
     last_runs = DictField()
 
     default_values = {
@@ -157,45 +156,39 @@ class MispFeed(Feed):
     def analyze(self, event, instance):
         tags = []
         galaxies_to_context = []
+
+        context = {}
+
+        context['source'] = self.instances[instance]['name']
+
+        if 'galaxy_filter' not in self.instances[instance]:
+            tags = [tag['name'] for tag in event['Tag']]
+        else:
+            galaxies = self.instances[instance]['galaxy_filter'].split(',')
+
+            for tag in event['Tag']:
+                found = False
+                if 'misp-galaxy' in tag['name']:
+                    galaxies_to_context.append(tag['name'])
+                for g in galaxies:
+                    if g in tag['name']:
+                        found = True
+                        break
+                if not found:
+                    tags.append(tag['name'])
+
         for attribute in event['Attribute']:
             if 'type' in attribute and attribute[
                 'type'] in self.TYPES_TO_IMPORT:
 
-                if not 'galaxy_filter' in self.instances[instance]:
-                    tags = [tag['name'] for tag in event['Tag']]
-                else:
-                    galaxies = self.instances[instance]['galaxy_filter'].split(
-                        ',')
+                context['id'] = attribute['event_id']
+                context['link'] = urljoin(
+                    self.instances[instance]['url'],
+                    '/events/{}'.format(
+                        attribute['event_id']))
 
-                    for tag in event['Tag']:
-                        found = False
-                        if 'misp-galaxy' in tag['name']:
-                            galaxies_to_context.append(tag['name'])
-                        for g in galaxies:
-                            if g in tag['name']:
-                                found = True
-                                break
-                        if not found:
-                            tags.append(tag['name'])
-                context = {
-                    'id':
-                        attribute['event_id'],
-                    'link':
-                        urljoin(
-                            self.instances[instance]['url'],
-                            '/events/{}'.format(
-                                attribute['event_id'])),
+                context['comment'] = attribute['comment']
 
-                    'source':
-                        self.instances[instance]['name'],
-
-                    'comment':
-                        attribute['comment']
-
-                }
-                if galaxies_to_context:
-                    context['galaxies'] = galaxies_to_context
-                    print(galaxies_to_context)
                 try:
                     klass = self.TYPES_TO_IMPORT[attribute['type']]
                     obs = klass.get_or_create(value=attribute['value'])
