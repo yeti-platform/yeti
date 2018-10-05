@@ -190,7 +190,7 @@ class MispFeed(Feed):
         for attribute in event['Attribute']:
             if attribute['category'] == 'External analysis':
                 return
-
+            print(attribute['value'])
             if 'type' in attribute and attribute[
                 'type'] in self.TYPES_TO_IMPORT:
 
