@@ -88,6 +88,7 @@ class MispFeed(Feed):
 
             time_filter['request']['to'] = to.isoformat()
             time_filter['request']['from'] = fromdate.isoformat()
+            time_filter['request']['published'] = True
             r = requests.post(
                 url,
                 headers=headers,
