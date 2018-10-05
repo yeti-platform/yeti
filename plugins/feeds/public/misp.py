@@ -190,6 +190,7 @@ class MispFeed(Feed):
                 context['comment'] = attribute['comment']
 
                 try:
+
                     klass = self.TYPES_TO_IMPORT[attribute['type']]
                     obs = klass.get_or_create(value=attribute['value'])
 
@@ -197,7 +198,12 @@ class MispFeed(Feed):
                         obs.tag(attribute['category'].replace(' ', '_'))
                         obs.tag(tags)
 
+                    if galaxies_to_context:
+                        context['galaxies'] = '\n'.join(galaxies_to_context)
                     obs.add_context(context)
+
+
+
                 except:
                     try:
                         logging.error(
