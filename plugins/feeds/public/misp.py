@@ -163,6 +163,12 @@ class MispFeed(Feed):
         context = {}
 
         context['source'] = self.instances[instance]['name']
+        external_analysis = [attr['value'] for attr in
+                             event['Event']['Attribute'] if
+                             attr['category'] == 'External analysis']
+
+        if external_analysis:
+            context['external sources'] = '\n'.join(external_analysis)
 
         if 'galaxy_filter' not in self.instances[instance]:
             tags = [tag['name'] for tag in event['Tag']]
