@@ -165,10 +165,11 @@ class MispFeed(Feed):
         context['source'] = self.instances[instance]['name']
         external_analysis = [attr['value'] for attr in
                              event['Attribute'] if
-                             attr['category'] == 'External analysis']
+                             attr['category'] == 'External analysis' and attr[
+                                 'type'] == 'Url']
 
         if external_analysis:
-            context['external sources'] = '\n'.join(external_analysis)
+            context['external sources'] = '\r\n'.join(external_analysis)
 
         if 'galaxy_filter' not in self.instances[instance]:
             tags = [tag['name'] for tag in event['Tag']]
@@ -187,7 +188,7 @@ class MispFeed(Feed):
                     tags.append(tag['name'])
 
         for attribute in event['Attribute']:
-            if 'external' in attribute['category']:
+            if attribute['category'] == 'External analysis':
                 return
 
             if 'type' in attribute and attribute[
