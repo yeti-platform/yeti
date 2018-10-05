@@ -191,7 +191,7 @@ class MispFeed(Feed):
             print(attribute['category'])
             print(attribute['value'])
             if attribute['category'] == 'External analysis':
-                return
+                continue
             print(attribute['value'])
             if 'type' in attribute and attribute[
                 'type'] in self.TYPES_TO_IMPORT:
