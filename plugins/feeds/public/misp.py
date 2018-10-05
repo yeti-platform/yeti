@@ -188,6 +188,7 @@ class MispFeed(Feed):
                     tags.append(tag['name'])
 
         for attribute in event['Attribute']:
+            print(attribute['category'])
             if attribute['category'] == 'External analysis':
                 return
             print(attribute['value'])
