@@ -166,7 +166,7 @@ class MispFeed(Feed):
         external_analysis = [attr['value'] for attr in
                              event['Attribute'] if
                              attr['category'] == 'External analysis' and attr[
-                                 'type'] == 'Url']
+                                 'type'] == 'url']
 
         if external_analysis:
             context['external sources'] = '\r\n'.join(external_analysis)
@@ -188,8 +188,6 @@ class MispFeed(Feed):
                     tags.append(tag['name'])
 
         for attribute in event['Attribute']:
-            print(attribute['category'])
-            print(attribute['value'])
             if attribute['category'] == 'External analysis':
                 continue
             print(attribute['value'])
