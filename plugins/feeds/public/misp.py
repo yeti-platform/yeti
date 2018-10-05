@@ -164,7 +164,7 @@ class MispFeed(Feed):
 
         context['source'] = self.instances[instance]['name']
         external_analysis = [attr['value'] for attr in
-                             event['Event']['Attribute'] if
+                             event['Attribute'] if
                              attr['category'] == 'External analysis']
 
         if external_analysis:
