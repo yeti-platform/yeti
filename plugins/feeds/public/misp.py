@@ -190,9 +190,8 @@ class MispFeed(Feed):
         for attribute in event['Attribute']:
             if attribute['category'] == 'External analysis':
                 continue
-            print(attribute['value'])
-            if 'type' in attribute and attribute[
-                'type'] in self.TYPES_TO_IMPORT:
+
+            if attribute.get('type') in self.TYPES_TO_IMPORT:
 
                 context['id'] = attribute['event_id']
                 context['link'] = urljoin(
@@ -212,16 +211,15 @@ class MispFeed(Feed):
                         obs.tag(tags)
 
                     if galaxies_to_context:
-                        context['galaxies'] = '\n'.join(galaxies_to_context)
+                        context['galaxies'] = '\r\n'.join(galaxies_to_context)
                     obs.add_context(context)
 
-
-
                 except:
+
                     try:
                         logging.error(
                             "{}: error adding {}".format(
                                 'MispFeed', attribute['value']))
-                    except:
+                    except UnicodeError:
                         logging.error("{}: error adding {}".format(
                             'MispFeed', attribute['id']))
