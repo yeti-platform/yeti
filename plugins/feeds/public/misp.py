@@ -1,5 +1,4 @@
 import logging
-from csv import DictReader
 from datetime import date, timedelta
 from urlparse import urljoin
 
@@ -12,7 +11,6 @@ from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin
 
 
 class MispFeed(Feed):
-
     last_runs = DictField()
 
     default_values = {
@@ -48,6 +46,8 @@ class MispFeed(Feed):
                 'url': yeti_config.get(instance, 'url'),
                 'key': yeti_config.get(instance, 'key'),
                 'name': yeti_config.get(instance, 'name') or instance,
+                'galaxy_filter': yeti_config.get(instance, 'galaxy_filter'),
+                'days': yeti_config.get(instance, 'days'),
                 'organisations': {}
             }
 
@@ -78,7 +78,7 @@ class MispFeed(Feed):
 
     def week_events(self, instance):
         one_week = timedelta(days=7)
-        url = urljoin(self.instances[instance]['url'], '/events/csv/download')
+        url = urljoin(self.instances[instance]['url'], '/events/restSearch')
         headers = {'Authorization': self.instances[instance]['key']}
         to = date.today()
         fromdate = to - timedelta(days=6)
@@ -89,21 +89,19 @@ class MispFeed(Feed):
 
             time_filter['request']['to'] = to.isoformat()
             time_filter['request']['from'] = fromdate.isoformat()
+            time_filter['request']['published'] = True
+            time_filter['enforceWarninglist'] = True
             r = requests.post(
                 url,
                 headers=headers,
                 json=time_filter,
                 proxies=yeti_config.proxy)
 
-            try:
-                msg = r.json()
-                raise AttributeError(msg['message'])
-            except ValueError:
-                lines = [l for l in r.content.splitlines() if '\0' not in l]
-                csvreader = DictReader(lines)
+            if r.status_code == 200:
+                results = r.json()
 
-                for row in csvreader:
-                    self.analyze(row, instance)
+                for event in results['response']:
+                    self.analyze(event['Event'], instance)
                     imported += 1
 
                 yield fromdate, to, imported
@@ -158,32 +156,70 @@ class MispFeed(Feed):
                         date.today().isoformat()
                 })
 
-    def analyze(self, attribute, instance):
-        if 'type' in attribute and attribute['type'] in self.TYPES_TO_IMPORT:
-            context = {
-                'id':
-                    attribute['event_id'],
-                'link':
-                    urljoin(
-                        self.instances[instance]['url'], '/events/{}'.format(
-                            attribute['event_id'])),
+    def analyze(self, event, instance):
+        tags = []
+        galaxies_to_context = []
 
-                'source':
-                    self.instances[instance]['name'],
+        context = {}
 
-                'comment':
-                    attribute['comment']
-            }
+        context['source'] = self.instances[instance]['name']
+        external_analysis = [attr['value'] for attr in
+                             event['Attribute'] if
+                             attr['category'] == 'External analysis' and attr[
+                                 'type'] == 'url']
 
-            try:
-                klass = self.TYPES_TO_IMPORT[attribute['type']]
-                obs = klass.get_or_create(value=attribute['value'])
+        if external_analysis:
+            context['external sources'] = '\r\n'.join(external_analysis)
 
-                if attribute['category']:
-                    obs.tag(attribute['category'].replace(' ', '_'))
+        if 'galaxy_filter' not in self.instances[instance]:
+            tags = [tag['name'] for tag in event['Tag']]
+        else:
+            galaxies = self.instances[instance]['galaxy_filter'].split(',')
 
-                obs.add_context(context)
-            except:
-                logging.error(
-                    "{}: error adding {}".format(
-                        'MispFeed', attribute['value']))
+            for tag in event['Tag']:
+                found = False
+                if 'misp-galaxy' in tag['name']:
+                    galaxies_to_context.append(tag['name'])
+                for g in galaxies:
+                    if g in tag['name']:
+                        found = True
+                        break
+                if not found:
+                    tags.append(tag['name'])
+
+        for attribute in event['Attribute']:
+            if attribute['category'] == 'External analysis':
+                continue
+
+            if attribute.get('type') in self.TYPES_TO_IMPORT:
+
+                context['id'] = attribute['event_id']
+                context['link'] = urljoin(
+                    self.instances[instance]['url'],
+                    '/events/{}'.format(
+                        attribute['event_id']))
+
+                context['comment'] = attribute['comment']
+
+                try:
+
+                    klass = self.TYPES_TO_IMPORT[attribute['type']]
+                    obs = klass.get_or_create(value=attribute['value'])
+
+                    if attribute['category']:
+                        obs.tag(attribute['category'].replace(' ', '_'))
+                        obs.tag(tags)
+
+                    if galaxies_to_context:
+                        context['galaxies'] = '\r\n'.join(galaxies_to_context)
+                    obs.add_context(context)
+
+                except:
+
+                    try:
+                        logging.error(
+                            "{}: error adding {}".format(
+                                'MispFeed', attribute['value']))
+                    except UnicodeError:
+                        logging.error("{}: error adding {}".format(
+                            'MispFeed', attribute['id']))
