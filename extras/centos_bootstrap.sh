@@ -23,7 +23,7 @@ yum groupinstall "Development Tools" -y
 yum install epel-release
 yum install python-pip git mongodb-org python-devel libxml2-devel libxslt-devel zlib-devel redis firewalld yarn vim curl wget net-tools nginx uwsgi -y 
 pip install --upgrade pip
-pip install django libtaxii pyOpenSSL uwsgi cabby django-solo taxii_services python-dateutil
+pip install uwsgi
 
 ### Install YETI
 cd /opt
@@ -35,7 +35,7 @@ yarn install
 PWD1=`pwd`
 
 sudo chmod +x $PWD1/extras/systemd/*
-sed -i s'/\/usr\/local\/bin\/uwsgi/\/usr\/bin\/uwsgu\ --plugin\ python/g' $PWD1/extras/systemd/yeti_uwsgi.service
+sed -i s'/\/usr\/local\/bin\/uwsgi/\/usr\/bin\/uwsgi\ --plugin\ python/g' $PWD1/extras/systemd/yeti_uwsgi.service
 sed -i s'/\/usr\/local\/bin/\/usr\/bin/g' $PWD1/extras/systemd/yeti_uwsgi.service
 sed -i s'/\/usr\/local\/bin/\/bin/g' $PWD1/extras/systemd/*
 sudo ln -s $PWD1/extras/systemd/* /lib/systemd/system/
