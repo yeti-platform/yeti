@@ -1,0 +1,26 @@
+> Malicious IOCs:
+> Detected Timestamp: 2018-10-11 16:43:40.0 File Path: D:\ANDERSON 
+> (4GB).lnk
+> Signature: Trojan-FGBA!lnk
+> Event Description: Malware deleted
+> Detection Method: OAS
+> Affected Hosts:
+> Hostname: CO40B0340DFD13L
+> Infected by USB drive
+> Scan Log
+10/31/2018	11:38:18 AM	Scan Started	AM\7000013972	Full Scan
+10/31/2018	11:52:15 AM	Not scanned (The file is encrypted) 	c:\Users\7000013972\Documents\pnal\LFD Mac Book\backup macbook\Downloads\descarga.gz	
+10/31/2018	11:56:17 AM	Deleted 	7000013972	ODS[10860](Full Scan)	c:\Users\7000013972\Documents\pnal\LFD Mac Book\backup macbook\Downloads\GD 2.0 (iNachoSG).zip\steam_api.dll	RDN/Generic PUP.z (Potentially Unwanted Program)	df4bdfbf08f4a95a675e2eb6f8fc1343 (MD5)
+10/31/2018	11:56:32 AM	Deleted (Clean failed) 	7000013972	ODS[10860](Full Scan)	c:\Users\7000013972\Documents\pnal\LFD Mac Book\backup macbook\escritorio\backup 2\download\Mr.Bocho.INC.zip\Geometry.Dash.v1.0.zip\steam_api.dll	RDN/Generic PUP.z (Potentially Unwanted Program)	a9f077eecdac5084cbe66bd684e4a14f (MD5)
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Scan Summary
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Processes scanned    : 94
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Processes detected   : 0
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Processes cleaned    : 0
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Boot sectors scanned : 0
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Boot sectors detected: 0
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Boot sectors cleaned : 0
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Files scanned        : 180021
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Files with detections: 2
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	File detections      : 2
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Files cleaned        : 0
+10/31/2018	12:58:25 PM	Scan Summary	AM\7000013972	Files deleted        : 
