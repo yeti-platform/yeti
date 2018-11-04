@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import logging
+from logger import userLogger
 
 from flask import request, render_template, flash
 from flask_login import current_user
@@ -96,7 +97,7 @@ class ObservableView(GenericView):
                                     'force-type']].get_or_create(value=txt)
                             else:
                                 o = Observable.add_text(txt)
-                            o.tag(tags)
+                            o.tag(tags) 
                             obs[o.value] = o
                     except (ObservableValidationError, ValueError) as e:
                         logging.error("Error validating {}: {}".format(txt, e))
@@ -108,6 +109,7 @@ class ObservableView(GenericView):
 
             if len(obs) > 0:
                 data = match_observables(obs.keys())
+                userLogger.info("User %s add observable : value=%s",current_user.username, data)
                 return render_template(
                     "observable/search_results.html", data=data)
             else:
