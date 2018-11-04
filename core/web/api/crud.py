@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
 import logging
+from logger import userLogger
 
 from bson.json_util import loads
 from flask import request, url_for, abort, send_file, make_response
+from flask_login import current_user
 from flask_classy import FlaskView, route
 from mongoengine.errors import InvalidQueryError
 
@@ -24,7 +26,7 @@ class CrudSearchApi(FlaskView):
         ignorecase = params.pop('ignorecase', False)
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
-
+        userLogger.info("User %s search : filter=%s params=%s regex=%s",current_user.username,fltr,params,regex)
         return list(
             get_queryset(self.objectmanager, fltr, regex,
                          ignorecase)[page * rng:(page + 1) * rng])
