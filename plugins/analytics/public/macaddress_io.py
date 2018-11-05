@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 from datetime import datetime
 
-from maclookup import ApiClient, exceptions
+from maclookup import ApiClient, exceptions as maclookup_exceptions
 
 from core.analytics import OneShotAnalytics
 from core.entities import Company
@@ -27,28 +27,28 @@ class MacAddressIoApi(object):
             response = api_client.get_raw_data(mac_address, 'json')
             return json.loads(response)
 
-        except exceptions.EmptyResponseException:
+        except maclookup_exceptions.EmptyResponseException:
             raise LookupError('Empty response')
 
-        except exceptions.UnparsableResponseException:
+        except maclookup_exceptions.UnparsableResponseException:
             raise LookupError('Unparsable response')
 
-        except exceptions.ServerErrorException:
+        except maclookup_exceptions.ServerErrorException:
             raise LookupError('Internal server error')
 
-        except exceptions.UnknownOutputFormatException:
+        except maclookup_exceptions.UnknownOutputFormatException:
             raise LookupError('Unknown output')
 
-        except exceptions.AuthorizationRequiredException:
+        except maclookup_exceptions.AuthorizationRequiredException:
             raise LookupError('Authorization required')
 
-        except exceptions.AccessDeniedException:
+        except maclookup_exceptions.AccessDeniedException:
             raise LookupError('Access denied')
 
-        except exceptions.InvalidMacOrOuiException:
+        except maclookup_exceptions.InvalidMacOrOuiException:
             raise LookupError('Invalid MAC or OUI')
 
-        except exceptions.NotEnoughCreditsException:
+        except maclookup_exceptions.NotEnoughCreditsException:
             raise LookupError('Not enough credits')
 
         except Exception:

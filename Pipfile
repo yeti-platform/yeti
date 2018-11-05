@@ -1,0 +1,46 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+mongoengine = "*"
+iptools = "*"
+ipaddress = "*"
+urlnorm = "*"
+celery = "*"
+idna = "*"
+requests = {extras = ["socks"]}
+lxml = "*"
+dnspython = "*"
+Flask-Classy = "*"
+Flask-Negotiation = "*"
+flask-mongoengine = "*"
+Flask-Login = "*"
+tldextract = "*"
+pythonwhois = {git = "https://github.com/joepie91/python-whois"}
+ipwhois = "*"
+blinker = "*"
+simplejson = "*"
+yara-python = "*"
+redis = "*"
+Sphinx = "*"
+sphinx_rtd_theme = "*"
+sphinxcontrib-httpdomain = "*"
+"geoip2" = "*"
+psutil = "*"
+shodan = "*"
+python-magic = "*"
+pdfkit = "*"
+pdfminer = "*"
+"html2text" = "*"
+readability-lxml = "*"
+"beautifulsoup4" = "*"
+python-dateutil = "*"
+libmagic = "*"
+maclookup = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "2.7"
