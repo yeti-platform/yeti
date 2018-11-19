@@ -6,6 +6,14 @@
 
 # module = local
 
+##
+## If you specify module = apache, you can set the environment
+## variable from which the username can be retrieved (defaults to
+## REMOTE_USER).
+##
+
+# apache_variable = REMOTE_USER
+
 [mongodb]
 
 ##
