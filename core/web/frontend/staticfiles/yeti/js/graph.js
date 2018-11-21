@@ -14,6 +14,7 @@ var tagsTemplate = Handlebars.compile($('#graph-sidebar-tags').html());
 var noSelectionTemplate = Handlebars.compile($('#graph-sidebar-no-selection').html());
 var analyticsGroupTemplate = Handlebars.compile($('#graph-sidebar-analytics-group-template').html());
 var analyticsPanelTemplate = Handlebars.compile($('#graph-sidebar-analytics-panel').html());
+var relatedGraphTemplate = Handlebars.compile($('#graph-sidebar-related-investigation-template').html())
 
 Handlebars.registerPartial("links", linksTemplate);
 Handlebars.registerPartial("tags", tagsTemplate);
@@ -662,11 +663,50 @@ class Investigation {
     self.retrieveAnalyticsResults(unfetched);
   }
 
+  fetchRelatedInv(id, ref) {
+      const url = '/api/investigation/search_existence';
+      const headers = new Headers();
+      headers.append('Accept', 'application/json');
+      headers.append('Content-Type', 'application/json');
+
+      const body = JSON.stringify({
+        id,
+        ref,
+      });
+      const init = {
+        method: 'POST',
+        headers,
+        body,
+      };
+      return fetch(url, init);
+    }
+
+  updateRelatedGraph(nodeId) {
+      const [ref, id] = nodeId.split('-');
+      const fetchRelatedInv = this.fetchRelatedInv(id, ref);
+      fetchRelatedInv
+        .then((res) => {
+          return res.json();
+        })
+        .then((results) => {
+          const params = {
+            investigations: results,
+          };
+          $('#graph-sidebar-related-investigation').html(relatedGraphTemplate(params));
+        })
+        .catch((err) => {
+          if (err) console.error(err);
+        });
+    }
+
   selectNode(nodeId) {
     var node = this.nodes.get(nodeId);
 
     // Update sidebar with content related to this node
     $('#graph-sidebar-dynamic').html(nodeTemplate(node));
+
+    // Fetch related investigations
+    this.updateRelatedGraph(nodeId);
 
     // Enable HighlightJS
     hljs.initHighlighting.called = false;
