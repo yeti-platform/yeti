@@ -171,7 +171,8 @@ class MispFeed(Feed):
         if external_analysis:
             context['external sources'] = '\r\n'.join(external_analysis)
 
-        if 'galaxy_filter' not in self.instances[instance]:
+        if 'galaxy_filter' not in self.instances[instance] \
+                or not self.instances[instance]['galaxy_filter']:
             tags = [tag['name'] for tag in event['Tag']]
         else:
             galaxies = self.instances[instance]['galaxy_filter'].split(',')
