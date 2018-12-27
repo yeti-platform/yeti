@@ -170,22 +170,22 @@ class MispFeed(Feed):
 
         if external_analysis:
             context['external sources'] = '\r\n'.join(external_analysis)
+        if 'Tag' in event:
+            if not self.instances[instance].get('galaxy_filter'):
+                tags = [tag['name'] for tag in event['Tag']]
+            else:
+                galaxies = self.instances[instance]['galaxy_filter'].split(',')
 
-        if not self.instances[instance].get('galaxy_filter'):
-            tags = [tag['name'] for tag in event['Tag']]
-        else:
-            galaxies = self.instances[instance]['galaxy_filter'].split(',')
-
-            for tag in event['Tag']:
-                found = False
-                if 'misp-galaxy' in tag['name']:
-                    galaxies_to_context.append(tag['name'])
-                for g in galaxies:
-                    if g in tag['name']:
-                        found = True
-                        break
-                if not found:
-                    tags.append(tag['name'])
+                for tag in event['Tag']:
+                    found = False
+                    if 'misp-galaxy' in tag['name']:
+                        galaxies_to_context.append(tag['name'])
+                    for g in galaxies:
+                        if g in tag['name']:
+                            found = True
+                            break
+                    if not found:
+                        tags.append(tag['name'])
 
         for attribute in event['Attribute']:
             if attribute['category'] == 'External analysis':
@@ -208,6 +208,8 @@ class MispFeed(Feed):
 
                     if attribute['category']:
                         obs.tag(attribute['category'].replace(' ', '_'))
+
+                    if tags:
                         obs.tag(tags)
 
                     if galaxies_to_context:
