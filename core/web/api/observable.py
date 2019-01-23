@@ -49,9 +49,9 @@ class Observable(CrudApi):
             obs = self.objectmanager.objects.get(id=params.pop("id"))
         else:
             if params.pop('refang', None):
-                obs = self.objectmanager.add_text(refang(params.pop('value')))
+                obs = self.objectmanager.add_text(refang(params.pop('value')), type=params.pop('type', None))
             else:
-                obs = self.objectmanager.add_text(params.pop('value'))
+                obs = self.objectmanager.add_text(params.pop('value'), type=params.pop('type', None))
         return render(self._modify_observable(obs, params))
 
     @route("/bulk", methods=["POST"])
