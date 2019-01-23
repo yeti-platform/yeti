@@ -6,7 +6,7 @@ from bson.json_util import loads
 from flask import request
 
 from core.web.api.crud import CrudSearchApi, CrudApi
-from core import database
+from core import database, observables
 from core.web.api.api import render
 from core.helpers import iterify
 from core.investigation import Investigation
@@ -66,3 +66,27 @@ class Link(CrudApi):
             updated.append(link.id)
 
         return render({"updated": updated})
+
+    @route("/", methods=['POST'])
+    @requires_permissions('write')
+    def new(self):
+        """Create a new link
+
+        Create a new link from the JSON object passed in the ``POST`` data.
+
+        :<json object params: JSON object containing object ids to link
+        """
+
+        params = request.json
+
+        if params.pop('type_src') == 'observable':
+            db_objects = observables.Observable
+
+            src = db_objects.objects.get(id=params.pop("link_src"))
+            dst = db_objects.objects.get(id=params.pop("link_dst"))
+            link = src.link_to(dst, params.pop("description"), params.pop("source"))
+
+        else:
+            link = None
+
+        return render({"link": link})
