@@ -14,12 +14,25 @@ from core.investigation import ImportResults
 from core.entities import Entity
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
-from core.web.helpers import requires_permissions
+from core.web.helpers import requires_permissions, get_queryset
 
 
 class InvestigationSearch(CrudSearchApi):
     template = 'investigation_api.html'
     objectmanager = investigation.Investigation
+
+    def search(self, query):
+        fltr = query.get('filter', {})
+        params = query.get('params', {})
+        regex = params.pop('regex', False)
+        ignorecase = params.pop('ignorecase', False)
+        page = params.pop('page', 1) - 1
+        rng = params.pop('range', 50)
+
+        return list(
+            get_queryset(
+                self.objectmanager, fltr, regex, ignorecase,
+                replace=False)[page * rng:(page + 1) * rng])
 
 
 class Investigation(CrudApi):

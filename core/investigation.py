@@ -10,7 +10,7 @@ from flask_mongoengine.wtf import model_form
 from wtforms.fields import StringField as WTFStringField
 from wtforms.fields import HiddenField as WTFHiddenField
 
-from core.database import YetiDocument, AttachedFile
+from core.database import Node, AttachedFile, TagListField
 from core.scheduling import OneShotEntry
 from core.config.celeryctl import celery_app
 
@@ -38,7 +38,7 @@ class InvestigationEvent(EmbeddedDocument):
     datetime = DateTimeField(default=datetime.utcnow)
 
 
-class Investigation(YetiDocument):
+class Investigation(Node):
     name = StringField(verbose_name="Name")
     description = StringField(verbose_name="Description")
     links = ListField(EmbeddedDocumentField(InvestigationLink))
@@ -51,13 +51,19 @@ class Investigation(YetiDocument):
     import_md = StringField()
     import_url = StringField()
     import_text = StringField()
+    tags = ListField(StringField(), verbose_name="Relevant tags")
 
     exclude_fields = [
         'links', 'nodes', 'events', 'created', 'updated', 'created_by',
-        'import_document', 'import_md', 'import_url', 'import_text']
+        'import_document', 'import_md', 'import_url', 'import_text',
+        'attached_files'
+    ]
 
     # Ignore extra fields
-    meta = {'strict': False}
+    meta = {
+        'strict': False,
+        "indexes": ["tags"],
+    }
 
     @classmethod
     def get_form(klass):
@@ -70,6 +76,8 @@ class Investigation(YetiDocument):
 
         form.created_by = WTFHiddenField(
             'created_by', default=current_user.username)
+
+        form.tags = TagListField("Tags")
 
         return form
 

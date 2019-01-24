@@ -323,7 +323,7 @@ class AttachedFile(YetiDocument):
 
     def attach(self, obj):
         obj.attached_files.append(self)
-        obj.save()
+        obj.save(validate=False)
         self.update(inc__references=1)
 
     def detach(self, obj):
