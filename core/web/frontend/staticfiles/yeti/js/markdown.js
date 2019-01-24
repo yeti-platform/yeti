@@ -26,7 +26,9 @@ $(function () {
     var elt = $(this);
 
     md = elt.text();
-    elt.html(marked(md));
+    elt.html(marked(md, {
+      sanitize: true
+    }));
     elt.removeClass('hide');
   });
 });
