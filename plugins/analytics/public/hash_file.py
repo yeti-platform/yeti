@@ -18,7 +18,7 @@ class HashFile(InlineAnalytics):
         "description": "Extracts MD5, SHA1, SHA256, SHA512 hashes from file",
     }
 
-    ACTS_ON = 'File'
+    ACTS_ON = ['File', 'Certificate']
 
     @staticmethod
     def each(f):
