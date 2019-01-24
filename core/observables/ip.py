@@ -42,3 +42,23 @@ class Ip(Observable):
         elif iptools.ipv6.validate_ip(self.value):
             self.value = iptools.ipv6.long2ip(iptools.ipv6.ip2long(self.value))
             self.version = 6
+
+
+class AutonomousSystem(Observable):
+
+    """Autonomous System observable"""
+
+    as_num = IntField(verbose_name="Autonomous System number")
+
+    DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [
+        ("as_num", "Autonomous System number"),
+    ]
+
+    def info(self):
+        info = super(AutonomousSystem, self).info()
+        info['as_num'] = self.as_num,
+        return info
+
+    @staticmethod
+    def check_type(txt):
+        return True
