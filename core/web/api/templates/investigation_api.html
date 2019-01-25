@@ -6,7 +6,7 @@
   <tr>
     <th><!-- graph icon column --></th>
     <th>Name</th>
-    <th>Created</th>
+    <th>Tags</th>
     <th>Updated</th>
     <th>Created By</th>
     <th>Nodes</th>
@@ -21,7 +21,7 @@
         {{obj['name'] or 'Unnamed'}}
       </a>
     </td>
-    <td>{{macros.display_datetime(obj.created)}}</td>
+    <td>{{macros.display_tags(obj.tags)}}</td>
     <td>{{macros.display_datetime(obj.updated)}}</td>
     <td>{{obj.created_by or ''}}</td>
     <td>{{obj.nodes|length}}</td>

@@ -144,6 +144,7 @@ input.dropzone {
   margin: 0 1px 0 1px;
   font-size: 85%;
   cursor: default;
+  border: 1px solid grey;
 }
 
 .yeti-edit-elt:hover .yeti-tag,
@@ -176,6 +177,26 @@ input.dropzone {
 .tag-blocklist {
   color: white;
 	background-color: #e33;
+}
+
+.tag-tlp_red {
+    background-color: #e33;
+    color: white;
+}
+
+.tag-tlp_amber {
+    background-color: gold;
+    color: black;
+}
+
+.tag-tlp_green {
+    background-color: MediumSpringGreen;
+    color: black;
+}
+
+.tag-tlp_white {
+    background-color: white;
+    color: black;
 }
 
 .yeti-interact .yeti-tag  {
