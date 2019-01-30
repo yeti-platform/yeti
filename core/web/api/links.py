@@ -96,12 +96,11 @@ class Link(CrudApi):
         elif type_dst == 'indicator':
             db_objects_dst = indicators.Indicator
 
-        if (db_objects_src is not None) and (db_objects_dst is not None):
+        if db_objects_src and db_objects_dst:
             src = db_objects_src.objects.get(id=params.pop("link_src"))
             dst = db_objects_dst.objects.get(id=params.pop("link_dst"))
 
-            if (params.pop("first_seen", None) is not None) and \
-               (params.pop("last_seen", None) is not None):
+            if params.pop("first_seen", None) and params.pop("last_seen", None):
                 link = src.link_to(dst,
                                    params.pop("description"),
                                    params.pop("source"),
