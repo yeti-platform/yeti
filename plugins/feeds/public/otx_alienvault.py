@@ -37,47 +37,54 @@ class OTXAlienvault(Feed):
 
         context = dict(source=self.name)
 
-        OTXAlienvault.__create_list_observables(Hostname,
-                                                'hostname',
-                                                item['indicators'],
-                                                observables,
-                                                'hostnames')
+        OTXAlienvault.__create_list_observables(
+            Hostname,
+            'hostname',
+            item['indicators'],
+            observables,
+            'hostnames')
 
-        OTXAlienvault.__create_list_observables(Url,
-                                                'URL',
-                                                item['indicators'],
-                                                observables,
-                                                'urls')
+        OTXAlienvault.__create_list_observables(
+            Url,
+            'URL',
+            item['indicators'],
+            observables,
+            'urls')
 
-        OTXAlienvault.__create_list_observables(Hostname,
-                                                'domain',
-                                                item['indicators'],
-                                                observables,
-                                                'domains')
+        OTXAlienvault.__create_list_observables(
+            Hostname,
+            'domain',
+            item['indicators'],
+            observables,
+            'domains')
 
-        OTXAlienvault.__create_list_Exploit(Exploit,
-                                            'CVE',
-                                            item['indicators'],
-                                            observables,
-                                                'exploits')
+        OTXAlienvault.__create_list_exploit(
+            Exploit,
+            'CVE',
+            item['indicators'],
+            observables,
+            'exploits')
 
-        OTXAlienvault.__create_list_observables(Hash,
-                                                'FileHash-SHA256',
-                                                item['indicators'],
-                                                observables,
-                                                'sha256')
+        OTXAlienvault.__create_list_observables(
+            Hash,
+            'FileHash-SHA256',
+            item['indicators'],
+            observables,
+            'sha256')
 
-        OTXAlienvault.__create_list_observables(Hash,
-                                                'FileHash-MD5',
-                                                item['indicators'],
-                                                observables,
-                                                'md5')
+        OTXAlienvault.__create_list_observables(
+            Hash,
+            'FileHash-MD5',
+            item['indicators'],
+            observables,
+            'md5')
 
-        OTXAlienvault.__create_list_observables(Hash,
-                                                'FileHash-SHA1',
-                                                item['indicators'],
-                                                observables,
-                                                'sha1')
+        OTXAlienvault.__create_list_observables(
+            Hash,
+            'FileHash-SHA1',
+            item['indicators'],
+            observables,
+            'sha1')
 
         tags = item['tags']
 
@@ -91,35 +98,48 @@ class OTXAlienvault(Feed):
             OTXAlienvault.__add_tags(tags, observables)
 
         if 'sha256' in observables and observables['sha256']:
-            self.__create_link_hashes_and_network_indic(observables['sha256'],
-                                                        observables['urls'])
-            self.__create_link_hashes_and_network_indic(observables['sha256'],
-                                                        observables['domains'])
-            self.__create_link_hashes_and_network_indic(observables['sha256'],
-                                                        observables[
-                                                            'hostnames'])
+            self.__create_link_hashes_and_network_indic(
+                observables['sha256'],
+                observables['urls'])
+            self.__create_link_hashes_and_network_indic(
+                observables['sha256'],
+                observables['domains'])
+            self.__create_link_hashes_and_network_indic(
+                observables['sha256'],
+                observables['hostnames'])
 
         if 'sha1' in observables and observables['sha1']:
-            self.__create_link_hashes_and_network_indic(observables['sha1'],
-                                                        observables['urls'])
-            self.__create_link_hashes_and_network_indic(observables['sha1'],
-                                                        observables['domains'])
-            self.__create_link_hashes_and_network_indic(observables['sha1'],
-                                                        observables[
-                                                            'hostnames'])
+            self.__create_link_hashes_and_network_indic(
+                observables['sha1'],
+                observables['urls'])
+
+            self.__create_link_hashes_and_network_indic(
+                observables['sha1'],
+                observables['domains'])
+
+            self.__create_link_hashes_and_network_indic(
+                observables['sha1'],
+                observables['hostnames'])
+
         if 'md5' in observables and observables['md5']:
-            self.__create_link_hashes_and_network_indic(observables['md5'],
-                                                        observables['urls'])
-            self.__create_link_hashes_and_network_indic(observables['md5'],
-                                                        observables['domains'])
-            self.__create_link_hashes_and_network_indic(observables['md5'],
-                                                        observables[
-                                                            'hostnames'])
+            self.__create_link_hashes_and_network_indic(
+                observables['md5'],
+                observables['urls'])
+
+            self.__create_link_hashes_and_network_indic(
+                observables['md5'],
+                observables['domains'])
+
+            self.__create_link_hashes_and_network_indic(
+                observables['md5'],
+                observables['hostnames'])
+
         if ('hostnames' in observables and observables['hostnames']) or (
                 'domains' in observables and observables['domains']):
-            self.__create_links_url_domains_hostnames(observables['domains'],
-                                                      observables['hostanmes'],
-                                                      observables['urls'])
+            self.__create_links_url_domains_hostnames(
+                observables['domains'],
+                observables['hostanmes'],
+                observables['urls'])
 
     def __create_links_url_domains_hostnames(self, domains_obs, hostnames_obs,
                                              urls_obs):
