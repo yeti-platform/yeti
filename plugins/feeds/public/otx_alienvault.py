@@ -134,8 +134,7 @@ class OTXAlienvault(Feed):
                 observables['md5'],
                 observables['hostnames'])
 
-        if ('hostnames' in observables and observables['hostnames']) or (
-                'domains' in observables and observables['domains']):
+        if observables.get('hostnames') and observables.get('domains'):
             self.__create_links_url_domains_hostnames(
                 observables['domains'],
                 observables['hostanmes'],
