@@ -39,35 +39,45 @@ class OTXAlienvault(Feed):
 
         OTXAlienvault.__create_list_observables(Hostname,
                                                 'hostname',
-                                                item[
-                                                    'indicators']
-                                                , observables
-                                                , 'hostnames')
+                                                item['indicators'],
+                                                observables,
+                                                'hostnames')
 
-        OTXAlienvault.__create_list_observables(Url, 'URL', item['indicators'],
-                                                observables, 'urls')
+        OTXAlienvault.__create_list_observables(Url,
+                                                'URL',
+                                                item['indicators'],
+                                                observables,
+                                                'urls')
 
-        OTXAlienvault.__create_list_observables(Hostname, 'domain',
-                                                item['indicators']
-                                                , observables,
+        OTXAlienvault.__create_list_observables(Hostname,
+                                                'domain',
+                                                item['indicators'],
+                                                observables,
                                                 'domains')
 
-        OTXAlienvault.__create_list_observables(Exploit, 'CVE',
-                                                item['indicators'], observables,
+        OTXAlienvault.__create_list_Exploit(Exploit,
+                                            'CVE',
+                                            item['indicators'],
+                                            observables,
                                                 'exploits')
 
         OTXAlienvault.__create_list_observables(Hash,
                                                 'FileHash-SHA256',
                                                 item['indicators'],
-                                                observables, 'sha256')
+                                                observables,
+                                                'sha256')
 
-        OTXAlienvault.__create_list_observables(Hash, 'FileHash-MD5',
-                                                item['indicators'], observables,
+        OTXAlienvault.__create_list_observables(Hash,
+                                                'FileHash-MD5',
+                                                item['indicators'],
+                                                observables,
                                                 'md5')
 
-        OTXAlienvault.__create_list_observables(Hash, 'FileHash-SHA1'
-                                                , item['indicators'],
-                                                observables, 'sha1')
+        OTXAlienvault.__create_list_observables(Hash,
+                                                'FileHash-SHA1',
+                                                item['indicators'],
+                                                observables,
+                                                'sha1')
 
         tags = item['tags']
 
@@ -137,22 +147,28 @@ class OTXAlienvault(Feed):
                 if isinstance(n, Hostname):
                     h.active_link_to(n, 'C2', self.source)
                 logging.info('join %s %s' % (n.value, h.value))
+
+    @staticmethod
+    def __create_list_exploit(obj, type_indic, indicators, observables,
+                              type_obs):
+
+        OTXAlienvault.__filtering_by_entities(obj, type_indic, indicators,
+                                              observables, type_obs)
     @staticmethod
     def __create_list_observables(obj, type_indic, indicators, observables,
                                   type_obs):
+        OTXAlienvault.__filtering_by_entities(obj, type_indic, indicators,
+                                              observables, type_obs)
+
+    @staticmethod
+    def __filtering_by_entities(self, obj, type_indic, indicators, observables,
+                                type_obs):
         list_value = list(filter(lambda x: x['type'] == type_indic, indicators))
 
-        if obj == Exploit:
-            observables[type_obs] = {ind['indicator']: obj.get_or_create(name=
-                                                                         ind[
-                                                                             'indicator'])
-                                     for ind in list_value}
-        else:
-            observables[type_obs] = {ind['indicator']: obj.get_or_create(value=
-                                                                         ind[
-                                                                             'indicator'])
-                                     for ind in list_value}
-
+        observables[type_obs] = {ind['indicator']: obj.get_or_create(value=
+                                                                     ind[
+                                                                         'indicator'])
+                                 for ind in list_value}
     @staticmethod
     def __add_contex(context, observables):
         for obs in observables.values():
