@@ -97,7 +97,7 @@ class OTXAlienvault(Feed):
         if tags:
             OTXAlienvault.__add_tags(tags, observables)
 
-        if 'sha256' in observables and observables['sha256']:
+        if observables.get('sha256'):
             self.__create_link_hashes_and_network_indic(
                 observables['sha256'],
                 observables['urls'])
@@ -108,7 +108,7 @@ class OTXAlienvault(Feed):
                 observables['sha256'],
                 observables['hostnames'])
 
-        if 'sha1' in observables and observables['sha1']:
+        if observables.get('sha1'):
             self.__create_link_hashes_and_network_indic(
                 observables['sha1'],
                 observables['urls'])
@@ -121,7 +121,7 @@ class OTXAlienvault(Feed):
                 observables['sha1'],
                 observables['hostnames'])
 
-        if 'md5' in observables and observables['md5']:
+        if observables.get('md5'):
             self.__create_link_hashes_and_network_indic(
                 observables['md5'],
                 observables['urls'])
@@ -134,19 +134,23 @@ class OTXAlienvault(Feed):
                 observables['md5'],
                 observables['hostnames'])
 
-        if observables.get('hostnames') and observables.get('domains'):
+        if observables.get('hostnames') or observables.get('domains'):
             self.__create_links_url_domains_hostnames(
                 observables['domains'],
-                observables['hostanmes'],
+                observables['hostnames'],
                 observables['urls'])
 
     def __create_links_url_domains_hostnames(self, domains_obs, hostnames_obs,
                                              urls_obs):
         for url, ind in urls_obs.items():
-            self.__search_link_between_url_and_hostames(url, ind,
-                                                        domains_obs)
-            self.__search_link_between_url_and_hostames(url, ind,
-                                                        hostnames_obs)
+            if domains_obs:
+                self.__search_link_between_url_and_hostames(url,
+                                                            ind,
+                                                            domains_obs)
+            if hostnames_obs:
+                self.__search_link_between_url_and_hostames(url,
+                                                            ind,
+                                                            hostnames_obs)
 
     def __search_link_between_url_and_hostames(self, url, ind, hostnames):
         r = urlparse(url)
@@ -180,7 +184,7 @@ class OTXAlienvault(Feed):
                                               observables, type_obs)
 
     @staticmethod
-    def __filtering_by_entities(self, obj, type_indic, indicators, observables,
+    def __filtering_by_entities(obj, type_indic, indicators, observables,
                                 type_obs):
         list_value = list(filter(lambda x: x['type'] == type_indic, indicators))
 
