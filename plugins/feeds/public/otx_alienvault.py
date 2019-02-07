@@ -28,8 +28,9 @@ class OTXAlienvault(Feed):
 
         for i in range(1, int(number_page)):
             items = self.update_json(headers=headers, params={'page': i})
-            for item in items['results']:
-                self.analyze(item)
+            if 'results' in item:
+                for item in items['results']:
+                    self.analyze(item)
 
     def analyze(self, item):
 
