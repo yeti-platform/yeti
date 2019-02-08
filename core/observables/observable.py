@@ -8,7 +8,7 @@ from mongoengine import *
 from flask_mongoengine.wtf import model_form
 from flask import url_for
 
-from core.helpers import iterify, instantiate_subclass
+from core.helpers import iterify, get_subclass
 from core.database import Node, TagListField
 from core.observables import ObservableTag, Tag
 from core.entities import Entity
@@ -118,7 +118,7 @@ class Observable(Node):
         return results
 
     @classmethod
-    def add_text(cls, text, tags=[], type=None):
+    def add_text(cls, text, tags=[], force_type=None):
         """Adds and returns an observable for a given string.
 
         Args:
@@ -128,15 +128,18 @@ class Observable(Node):
             A saved Observable instance.
 
         """
-        if type is None:
-            guessed_type = Observable.guess_type(text)
+        if force_type:
+            observable_type = get_subclass(Observable, force_type)
         else:
-            guessed_type = instantiate_subclass(Observable, type)
+            observable_type = Observable.guess_type(text)
 
-        o = guessed_type.get_or_create(value=text)
-        if tags:
-            o.tag(tags)
-        return o
+        if observable_type:
+            o = observable_type.get_or_create(value=text)
+            if tags:
+                o.tag(tags)
+            return o
+        else:
+            return None
 
     @classmethod
     def check_type(cls, txt):

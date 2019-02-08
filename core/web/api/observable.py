@@ -46,13 +46,16 @@ class Observable(CrudApi):
         params = request.json
 
         if 'id' in params:
-            obs = self.objectmanager.objects.get(id=params.pop("id"))
+            obs = get_object_or_404(self.objectmanager, id=params.pop("id", None))
         else:
             if params.pop('refang', None):
-                obs = self.objectmanager.add_text(refang(params.pop('value')), type=params.pop('type', None))
+                obs = self.objectmanager.add_text(refang(params.pop('value')), force_type=params.pop('force_type', None))
             else:
-                obs = self.objectmanager.add_text(params.pop('value'), type=params.pop('type', None))
-        return render(self._modify_observable(obs, params))
+                obs = self.objectmanager.add_text(params.pop('value'), force_type=params.pop('force_type', None))
+        if obs:
+            return render(self._modify_observable(obs, params))
+        else:
+            return abort(400)
 
     @route("/bulk", methods=["POST"])
     @requires_permissions('write')

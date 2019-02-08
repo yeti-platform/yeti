@@ -3,8 +3,8 @@ import time
 
 from flask_classy import route
 from bson.json_util import loads
-from flask import request
-
+from flask import request, abort
+from core.web.helpers import get_object_or_404
 from core.web.api.crud import CrudSearchApi, CrudApi
 from core import database, observables, entities, indicators
 from core.web.api.api import render
@@ -76,41 +76,41 @@ class Link(CrudApi):
 
         :<json object params: JSON object containing object ids to link
         """
+
+        type_map = {
+            'observable': observables.Observable,
+            'entity': entities.Entity,
+            'indicator': indicators.Indicator
+        }
+
+        mandatory_params = ['type_src', 'type_dst', 'link_src', 'link_dst']
         params = request.json
-        type_src = params.pop('type_src', None)
-        type_dst = params.pop('type_dst', None)
-        db_objects_src = None
-        db_objects_dst = None
 
-        if type_src == 'observable':
-            db_objects_src = observables.Observable
-        elif type_src == 'entity':
-            db_objects_src = entities.Entity
-        elif type_src == 'indicator':
-            db_objects_src = indicators.Indicator
+        if all(key in params for key in mandatory_params):
 
-        if type_dst == 'observable':
-            db_objects_dst = observables.Observable
-        elif type_dst == 'entity':
-            db_objects_dst = entities.Entity
-        elif type_dst == 'indicator':
-            db_objects_dst = indicators.Indicator
+            type_src = params.get('type_src')
+            type_dst = params.get('type_dst')
+            src_object_class = type_map.get(type_src, None)
+            dst_object_class = type_map.get(type_dst, None)
 
-        if db_objects_src and db_objects_dst:
-            src = db_objects_src.objects.get(id=params.pop("link_src"))
-            dst = db_objects_dst.objects.get(id=params.pop("link_dst"))
+            if src_object_class and dst_object_class:
+                src = get_object_or_404(src_object_class, id=params.get("link_src"))
+                dst = get_object_or_404(dst_object_class, id=params.get("link_dst"))
 
-            if params.pop("first_seen", None) and params.pop("last_seen", None):
-                link = src.link_to(dst,
-                                   params.pop("description"),
-                                   params.pop("source"),
-                                   params.pop("first_seen", None),
-                                   params.pop("last_seen", None))
+                if params.get("first_seen", None) and params.get("last_seen", None):
+                    link = src.link_to(dst,
+                                       params.get("description",None),
+                                       params.get("source", None),
+                                       params.get("first_seen"),
+                                       params.get("last_seen"))
+                else:
+                    link = src.active_link_to(dst,
+                                              params.get("description", None),
+                                              params.get("source", None))
+
             else:
-                link = src.active_link_to(dst, params.pop("description"),
-                                          params.pop("source"))
+                abort(404)
 
+            return render({"link": link})
         else:
-            link = None
-
-        return render({"link": link})
+            return abort(400)
