@@ -25,6 +25,11 @@ Activate virtualenv if you want to, then install requirements::
   $ [sudo] pip install -r requirements.txt
   $ yarn install
 
+Create the logging directory:
+
+  $ [sudo] mkdir /var/log/yeti
+  $ [sudo] chown <user> /var/log/yeti
+
 Quick & dirty
 -------------
 
