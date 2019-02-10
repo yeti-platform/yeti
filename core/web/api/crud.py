@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 import logging
-from logger import userLogger
+from core.logger import userLogger
 
 from bson.json_util import loads
 from flask import request, url_for, abort, send_file, make_response

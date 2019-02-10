@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 import logging
-from logger import userLogger
+from core.logger import userLogger
 
 from flask import request, render_template, flash
 from flask_login import current_user

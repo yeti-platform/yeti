@@ -1,6 +1,6 @@
 import os
 import hmac
-from logger import userLogger
+from core.logger import userLogger
 from hashlib import sha512
 
 from flask import current_app
