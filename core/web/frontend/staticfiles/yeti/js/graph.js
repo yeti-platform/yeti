@@ -25,7 +25,10 @@ var analyticsResultsTemplate = Handlebars.compile($('#graph-sidebar-analytics-re
 // Define default icons
 var icons = {
   'Observable.Ip': flaticon('\ue005'),
+  'Observable.AutonomousSystem': flaticon('\ue00b'),
   'Observable.MacAddress': flaticon('\ue005'),
+  'Observable.Certificate': flaticon('\ue024'),
+  'Observable.CertificateSubject': flaticon('\ue024'),
   'Observable.Hostname': flaticon('\ue01E'),
   'Observable.Url': flaticon('\ue013'),
   'Observable.Email': flaticon('\ue01A'),
@@ -44,7 +47,10 @@ var icons = {
 
 var cssicons = {
   'Observable.Ip': 'flaticon-computer189',
+  'Observable.AutonomousSystem': 'flaticon-earth213',
   'Observable.MacAddress': 'flaticon-computer189',
+  'Observable.Certificate': 'flaticon-website17',
+  'Observable.CertificateSubject': 'flaticon-website17',
   'Observable.Hostname': 'flaticon-server20',
   'Observable.Url': 'flaticon-links11',
   'Observable.Email': 'flaticon-message99',
