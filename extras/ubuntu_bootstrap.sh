@@ -43,6 +43,8 @@ yarn install
 
 # Configure services
 useradd yeti
+sudo mkdir /var/log/yeti
+sudo chown yeti /var/log/yeti
 cp extras/systemd/*.service /etc/systemd/system/
 systemctl enable mongod.service
 systemctl enable yeti_uwsgi.service

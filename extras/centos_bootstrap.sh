@@ -21,11 +21,13 @@ yum update -y && yum upgrade -y
 ### Install the YETI Dependencies
 yum groupinstall "Development Tools" -y
 yum install epel-release
-yum install python-pip git mongodb-org python-devel libxml2-devel libxslt-devel zlib-devel redis firewalld yarn vim curl wget net-tools nginx uwsgi -y 
+yum install python-pip git mongodb-org python-devel libxml2-devel libxslt-devel zlib-devel redis firewalld yarn vim curl wget net-tools nginx uwsgi -y
 pip install --upgrade pip
 pip install uwsgi
 
 ### Install YETI
+sudo mkdir /var/log/yeti
+sudo chown yeti /var/log/yeti
 cd /opt
 git clone https://github.com/yeti-platform/yeti.git
 sudo chown -R yeti:yeti /opt/yeti

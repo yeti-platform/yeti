@@ -1,3 +1,5 @@
+sudo: required
+
 language: python
 python:
   - "2.7"
@@ -15,6 +17,10 @@ addons:
       - libxslt-dev
       - zlib1g-dev
 
+before_install:
+  - sudo mkdir /var/log/yeti
+  - sudo chown $USER /var/log/yeti
+
 install:
   - pip install -r requirements.txt
   - git clone https://github.com/yeti-platform/pyeti.git
@@ -26,4 +32,3 @@ script:
   - curl -I -L http://127.0.0.1:5000
   - cd pyeti
   - nosetests
-
