@@ -40,6 +40,7 @@ cd /opt/yeti
 pip install -r requirements.txt
 pip install uwsgi
 yarn install
+mkdir /var/log/yeti
 
 # Configure services
 useradd yeti
