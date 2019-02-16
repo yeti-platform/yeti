@@ -18,7 +18,7 @@ addons:
       - zlib1g-dev
 
 before_install:
-  - mkdir /var/log/yeti
+  - sudo mkdir /var/log/yeti
 
 install:
   - pip install -r requirements.txt
