@@ -26,7 +26,8 @@ pip install --upgrade pip
 pip install uwsgi
 
 ### Install YETI
-mkdir /var/log/yeti
+sudo mkdir /var/log/yeti
+sudo chown yeti /var/log/yeti
 cd /opt
 git clone https://github.com/yeti-platform/yeti.git
 sudo chown -R yeti:yeti /opt/yeti
