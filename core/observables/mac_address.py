@@ -6,7 +6,7 @@ from core.observables import Observable
 
 
 class MacAddress(Observable):
-    regex = r'(?P<search>(([0-9A-Fa-f]{1,2}[.:-]?){5,7}([0-9A-Fa-f]{1,2})))'
+    regex = r'(?P<search>(([0-9A-Fa-f]{1,2}[.:-]){5,7}([0-9A-Fa-f]{1,2})))'
 
     exclude_fields = Observable.exclude_fields
 
@@ -18,7 +18,7 @@ class MacAddress(Observable):
         return len(value) > 0
 
     def normalize(self):
-        self.value = re.sub(r'[.:\-]', '', self.value)
-        self.value = self.value.upper()
-        self.value = \
-            ':'.join([self.value[i:i + 2] for i in range(0, len(self.value), 2)])
+        value = re.sub(r'[.:\-]', '', self.value).upper()
+        self.value = ':'.join(
+            value[i:i + 2] for i in xrange(0, len(value), 2)
+        )
