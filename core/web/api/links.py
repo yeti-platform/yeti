@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 import time
 
+import logging
+
 from flask_classy import route
 from bson.json_util import loads
 from flask import request, abort
@@ -86,31 +88,32 @@ class Link(CrudApi):
         mandatory_params = ['type_src', 'type_dst', 'link_src', 'link_dst']
         params = request.json
 
-        if all(key in params for key in mandatory_params):
+        if not all(key in params for key in mandatory_params):
+            abort(400)
 
-            type_src = params.get('type_src')
-            type_dst = params.get('type_dst')
-            src_object_class = type_map.get(type_src, None)
-            dst_object_class = type_map.get(type_dst, None)
+        type_src = params['type_src']
+        type_dst = params['type_dst']
+        src_object_class = type_map.get(type_src)
+        dst_object_class = type_map.get(type_dst)
 
-            if src_object_class and dst_object_class:
-                src = get_object_or_404(src_object_class, id=params.get("link_src"))
-                dst = get_object_or_404(dst_object_class, id=params.get("link_dst"))
+        if not src_object_class or not dst_object_class:
+            abort(404)
 
-                if params.get("first_seen", None) and params.get("last_seen", None):
-                    link = src.link_to(dst,
-                                       params.get("description",None),
-                                       params.get("source", None),
-                                       params.get("first_seen"),
-                                       params.get("last_seen"))
-                else:
-                    link = src.active_link_to(dst,
-                                              params.get("description", None),
-                                              params.get("source", None))
-
+        src = get_object_or_404(src_object_class, id=params["link_src"])
+        dst = get_object_or_404(dst_object_class, id=params["link_dst"])
+        try:
+            if params.get("first_seen") and params.get("last_seen"):
+                link = src.link_to(dst,
+                                   params.get("description"),
+                                   params.get("source"),
+                                   params["first_seen"],
+                                   params["last_seen"])
             else:
-                abort(404)
+                link = src.active_link_to(dst,
+                                          params.get("description"),
+                                          params.get("source"))
+        except Exception as e:
+            logging.error(e)
+            abort(400)
 
-            return render({"link": link})
-        else:
-            return abort(400)
+        return render({"link": link})

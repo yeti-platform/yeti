@@ -11,11 +11,6 @@ timedelta_regex = re.compile(
 )
 
 
-def get_subclass(base_class, subclass_name):
-    subclasses = {cls.__name__: cls for cls in base_class.__subclasses__()}
-    return subclasses.get(subclass_name, None)
-
-
 def string_to_timedelta(string):
     d = {
         k: int(v)
