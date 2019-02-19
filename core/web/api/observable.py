@@ -49,7 +49,7 @@ class Observable(CrudApi):
         params = request.json
 
         if 'id' in params:
-            obs = get_object_or_404(self.objectmanager, id=params.pop("id", None))
+            obs = self.objectmanager.objects.get(id=params.pop("id"))
         else:
             forced_type = params.pop('force_type', None)
             try:
