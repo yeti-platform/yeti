@@ -133,13 +133,11 @@ class Observable(Node):
         else:
             observable_type = Observable.guess_type(text)
 
-        if observable_type:
-            o = observable_type.get_or_create(value=text)
-            if tags:
-                o.tag(tags)
-            return o
-        else:
-            return None
+        o = observable_type.get_or_create(value=text)
+        if tags:
+            o.tag(tags)
+        return o
+
 
     @classmethod
     def check_type(cls, txt):

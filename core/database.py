@@ -515,17 +515,9 @@ class Node(YetiDocument):
 
     @classmethod
     def subclass_from_name(cls, subclass_name):
-        """Return an observable class based on the type given by the string
-            `subclass_name`. This will raise `NodeLowLevelError` exception if no observable type matching the
-            given name can be found:
-
-
-            # EAFP (Easier to ask for forgiveness than permission)
-            try:
-                obs = Observable.subclass_from_name("xxx")()
-            except TypeError:
-                # handle this
-                raise Exception()
+        """Return an inherited class based on his Parent and the type given by the string
+            `subclass_name`. This will raise `GenericYetiError` exception if no type matching the
+            given name can be found
         """
         for subcls in cls.__subclasses__():
             if subcls.__name__ == subclass_name:
