@@ -61,7 +61,7 @@ class Observable(CrudApi):
                 logging.error(e)
                 abort(400)
 
-            return render(self._modify_observable(obs, params))
+        return render(self._modify_observable(obs, params))
 
     @route("/bulk", methods=["POST"])
     @requires_permissions('write')
