@@ -56,11 +56,12 @@ class OTXAlienvault(Feed):
 
         tags = item['tags']
 
-
         for indicator in item['indicators']:
+
             type_ind = self.refs.get(indicator['type'])
             if not type_ind:
                 continue
+
             context['title'] = indicator['title']
             context['infos'] = indicator['description']
             context['created'] = datetime.strptime(indicator['created'],
