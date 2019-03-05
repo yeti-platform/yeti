@@ -84,8 +84,7 @@ class OTXAlienvault(Feed):
             elif issubclass(type_ind, Indicator):
                 if type_ind == Yara:
                     ent = type_ind.get_or_create(name='YARA_%s' %
-                                                      indicator[
-                                                          'indicator'])
+                                                      indicator['indicator'])
                     ent.pattern(indicator['content'])
 
             else:
