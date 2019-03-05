@@ -1,6 +1,5 @@
 import logging
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from core import Feed
 from core.config.config import yeti_config
@@ -21,14 +20,14 @@ class OTXAlienvault(Feed):
 
     def __init__(self, *args, **kwargs):
         self.refs = {
-            'hostname': (Hostname, Observable),
-            'domain': (Hostname, Observable),
-            'FileHash-MD5': (Hash, Observable),
-            'FileHash-SHA256': (Hash, Observable),
-            'FileHash-SHA1': (Hash, Observable),
-            'URL': (Url, Observable),
-            'YARA': (Yara, Indicator),
-            'CVE': (Exploit, Entity),
+            'hostname': Hostname,
+            'domain': Hostname,
+            'FileHash-MD5': Hash,
+            'FileHash-SHA256': Hash,
+            'FileHash-SHA1': Hash,
+            'URL': Url,
+            'YARA': Yara,
+            'CVE': Exploit
 
         }
         super(OTXAlienvault, self).__init__(*args, **kwargs)
@@ -50,43 +49,44 @@ class OTXAlienvault(Feed):
 
     def analyze(self, item):
 
-        observables = {}
-
         context = dict(source=self.name)
         context['references'] = '\r\n'.join(item['references'])
         context['description'] = item['description']
         context['link'] = 'https://otx.alienvault.com/pulse/%s' % item['id']
 
         tags = item['tags']
-        entities = []
+
 
         for indicator in item['indicators']:
             type_ind = self.refs.get(indicator['type'])
-            if type_ind:
-                context['title'] = indicator['title']
-                context['infos'] = indicator['description']
-                context['created'] = datetime.strptime(indicator['created'],
-                                                       '%Y-%m-%dT%H:%M:%S')
-                if type_ind[1] == Observable:
-                    try:
-                        obs = type_ind[0].get_or_create(
-                            value=indicator['indicator'])
-                        obs.tag(tags)
-                        obs.add_context(context)
-                        obs.add_source('feed')
+            if not type_ind:
+                continue
+            context['title'] = indicator['title']
+            context['infos'] = indicator['description']
+            context['created'] = datetime.strptime(indicator['created'],
+                                                   '%Y-%m-%dT%H:%M:%S')
+            if issubclass(type_ind, Observable):
+                try:
+                    obs = type_ind.get_or_create(
+                        value=indicator['indicator'])
+                    obs.tag(tags)
+                    obs.add_context(context)
+                    obs.add_source('feed')
 
-                    except ObservableValidationError as e:
-                        logging.error(e)
-                elif type_ind[1] == Entity:
-                    ent = type_ind[0].get_or_create(name=indicator['indicator'])
-                    entities.append(ent)
-                elif type_ind[1] == Indicator:
-                    if type_ind == Yara:
-                        ent = type_ind[0].get_or_create(name='YARA_%s' %
-                                                             indicator[
-                                                                 'indicator'])
-                        ent.pattern(indicator['content'])
+                except ObservableValidationError as e:
+                    logging.error(e)
 
-                else:
-                    logging.error('type of indicators is unknown %s',
-                                  indicator['type'])
+            elif issubclass(type_ind, Entity):
+
+                type_ind.get_or_create(name=indicator['indicator'])
+
+            elif issubclass(type_ind, Indicator):
+                if type_ind == Yara:
+                    ent = type_ind.get_or_create(name='YARA_%s' %
+                                                      indicator[
+                                                          'indicator'])
+                    ent.pattern(indicator['content'])
+
+            else:
+                logging.error('type of indicators is unknown %s',
+                              indicator['type'])
