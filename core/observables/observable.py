@@ -118,7 +118,7 @@ class Observable(Node):
         return results
 
     @classmethod
-    def add_text(cls, text, tags=[]):
+    def add_text(cls, text, tags=[], force_type=None):
         """Adds and returns an observable for a given string.
 
         Args:
@@ -128,10 +128,16 @@ class Observable(Node):
             A saved Observable instance.
 
         """
-        o = Observable.guess_type(text).get_or_create(value=text)
+        if force_type:
+            observable_type = Observable.subclass_from_name(force_type)
+        else:
+            observable_type = Observable.guess_type(text)
+
+        o = observable_type.get_or_create(value=text)
         if tags:
             o.tag(tags)
         return o
+
 
     @classmethod
     def check_type(cls, txt):

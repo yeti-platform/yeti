@@ -11,6 +11,7 @@ from flask_mongoengine.wtf import model_form
 
 from core.constants import STORAGE_ROOT
 from core.helpers import iterify, stream_sha256
+from core.errors import GenericYetiError
 
 
 class StringListField(Field):
@@ -511,3 +512,16 @@ class Node(YetiDocument):
                             link.save(validate=False)
 
         return list(links)
+
+    @classmethod
+    def subclass_from_name(cls, subclass_name):
+        """Return an inherited class based on his Parent and the type given by the string
+            `subclass_name`. This will raise `GenericYetiError` exception if no type matching the
+            given name can be found
+        """
+        for subcls in cls.__subclasses__():
+            if subcls.__name__ == subclass_name:
+                return subcls
+
+        raise GenericYetiError(
+            "{} is not a subclass of {}".format(subclass_name, cls.__name__))
