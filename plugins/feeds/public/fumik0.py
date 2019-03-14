@@ -52,10 +52,11 @@ class Fumik0Tracker(Feed):
         context["sha1"] = block["hash"]["sha1"]
         context["sha256"] = block["hash"]["sha256"]
 
+        url_data = False
         try:
-            url = Url.get_or_create(value=url)
-            url.add_context(context)
-            url.add_source("feed")
+            url_data = Url.get_or_create(value=url)
+            url_data.add_context(context)
+            url_data.add_source("feed")
         except ObservableValidationError as e:
             logging.error(e)
 
@@ -64,6 +65,8 @@ class Fumik0Tracker(Feed):
                 ip = Ip.get_or_create(value=block["server"]["ip"])
                 ip.add_context(context)
                 ip.add_source("feed")
+                if url_data:
+                    url_data.active_link_to(ip, 'ip', self.name, clean_old=False)
             except ObservableValidationError as e:
                 logging.error(e)
 
@@ -74,5 +77,7 @@ class Fumik0Tracker(Feed):
                     hash_data = Hash.get_or_create(value=block["hash"][hash_type])
                     hash_data.add_context(context)
                     hash_data.add_source("feed")
+                    if url_data:
+                        url_data.active_link_to(hash_data, 'hash', self.name, clean_old=False)
                 except ObservableValidationError as e:
                     logging.error(e)
