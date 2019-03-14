@@ -53,10 +53,10 @@ How to check if all **services** running correctly
 Logging
 ------------------------------------------------
 
-* All the logging by default can be find in **/var/log/syslog**::
+All the logging by default can be find in **/var/log/syslog**::
 
   tail -f /var/log/syslog
   
-* You can modify some of the systemd services to change **Celery** logging to file, if you need that::
+You can modify some of the systemd services to change **Celery** logging to file, if you need that::
   
   -f PATH_TO_LOGFILE
