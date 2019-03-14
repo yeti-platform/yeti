@@ -53,7 +53,7 @@ How to check if all **services** running correctly
 Logging
 ------------------------------------------------
 
-All the logging by default can be find in **/var/log/syslog**::
+All the logging by default can be found in **/var/log/syslog**::
 
   tail -f /var/log/syslog
   
