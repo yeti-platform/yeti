@@ -53,7 +53,7 @@ class Fumik0Tracker(Feed):
         context["sha1"] = block["hash"]["sha1"]
         context["sha256"] = block["hash"]["sha256"]
 
-        url_data = False
+        url_data = None
         try:
             url_data = Url.get_or_create(value=url)
             url_data.add_context(context)
