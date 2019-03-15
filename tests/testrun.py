@@ -1,6 +1,10 @@
+import sys
+from os import path
 from datetime import timedelta
-
 from mongoengine import connect
+
+YETI_ROOT = path.normpath(path.dirname(path.dirname(path.abspath(__file__))))
+sys.path.append(YETI_ROOT)
 
 from core.entities.malware import MalwareFamily, Malware
 from core.indicators import Regex, Indicator
