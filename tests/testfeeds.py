@@ -1,5 +1,9 @@
 import sys
 import logging
+from os import path
+
+YETI_ROOT = path.normpath(path.dirname(path.dirname(path.abspath(__file__))))
+sys.path.append(YETI_ROOT)
 
 from core.feed import Feed, update_feed
 from core.scheduling import Scheduler

@@ -84,7 +84,7 @@ Context, tags, and sources can also be added to Observables. To do so, use the  
 Testing feeds
 ^^^^^^^^^^^^^
 
-Before pushing a feed into production, it is recommended to test them with the simple script ``testfeeds.py``::
+Before pushing a feed into production, it is recommended to test them with the simple script ``tests/testfeeds.py``::
 
     $ python testfeeds.py ZeusTrackerConfigs
     Running ZeusTrackerConfigs...
