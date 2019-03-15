@@ -40,7 +40,7 @@ class Fumik0Tracker(Feed):
                          u"url": u"byhlavash.chimkent.su/vdvdv.exe"}}
                 """
         url = block["server"]["url"]
-        if "http" not in block["server"]["url"]):
+        if "http" not in block["server"]["url"]:
             url = "http://" + block["server"]["url"]
         context = {}
         context["date_added"] = datetime.strptime(
