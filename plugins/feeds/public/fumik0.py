@@ -39,7 +39,8 @@ class Fumik0Tracker(Feed):
                          u"ip": u"37.140.192.146",
                          u"url": u"byhlavash.chimkent.su/vdvdv.exe"}}
                 """
-        if "http" not in block.get("server", {}).get("url"):
+        url = block["server"]["url"]
+        if "http" not in block["server"]["url"]):
             url = "http://" + block["server"]["url"]
         context = {}
         context["date_added"] = datetime.strptime(
