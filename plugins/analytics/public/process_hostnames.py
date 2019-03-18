@@ -1,4 +1,4 @@
-from tldextract import extract
+from core.common.utils import tldextract_parser
 from core.analytics import InlineAnalytics
 from core.observables import Hostname
 
@@ -18,12 +18,12 @@ class ProcessHostnames(InlineAnalytics):
 
     @staticmethod
     def analyze_string(hostname_string):
-        parts = extract(hostname_string)
+        parts = tldextract_parser(hostname_string)
         return [parts.registered_domain]
 
     @staticmethod
     def each(hostname):
-        parts = extract(hostname.value)
+        parts = tldextract_parser(hostname.value)
 
         if parts.suffix in SUSPICIOUS_TLDS:
             hostname.tag('suspicious_tld')

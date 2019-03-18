@@ -6,7 +6,7 @@ import requests
 from pythonwhois.parse import parse_raw_whois
 from mongoengine import FieldDoesNotExist
 from datetime import datetime
-from tldextract import extract
+from core.common.utils import tldextract_parser
 
 from core.helpers import iterify, get_value_at
 from core.analytics import OneShotAnalytics
@@ -156,7 +156,7 @@ class DTWhoisHistory(OneShotAnalytics, DomainToolsApi):
     @staticmethod
     def analyze(observable, results):
         links = set()
-        parts = extract(observable.value)
+        parts = tldextract_parser(observable.value)
 
         if parts.subdomain == '':
             data = DomainToolsApi.get(
@@ -259,7 +259,7 @@ class DTWhois(OneShotAnalytics, DomainToolsApi):
     @staticmethod
     def analyze(observable, results):
         links = []
-        parts = extract(observable.value)
+        parts = tldextract_parser(observable.value)
 
         if parts.subdomain == '':
             should_add_context = False
