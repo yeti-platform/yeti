@@ -82,19 +82,20 @@ class MispFeed(Feed):
         headers = {'Authorization': self.instances[instance]['key']}
         to = date.today()
         fromdate = to - timedelta(days=6)
-        time_filter = {'request': {'ignore': True, 'includeContext': True}}
+        body = {}
 
         while True:
             imported = 0
 
-            time_filter['request']['to'] = to.isoformat()
-            time_filter['request']['from'] = fromdate.isoformat()
-            time_filter['request']['published'] = True
-            time_filter['enforceWarninglist'] = True
+            body['to'] = to.isoformat()
+            body['from'] = fromdate.isoformat()
+            body['returnFormat'] = "json"
+            body['published'] = True
+            body['enforceWarninglist'] = True
             r = requests.post(
                 url,
                 headers=headers,
-                json=time_filter,
+                json=body,
                 proxies=yeti_config.proxy)
 
             if r.status_code == 200:
@@ -107,6 +108,8 @@ class MispFeed(Feed):
                 yield fromdate, to, imported
                 to = to - one_week
                 fromdate = fromdate - one_week
+            else:
+                logging.debug(r.content)
 
     def get_last_events(self, instance):
         logging.debug("Getting last events for {}".format(instance))
