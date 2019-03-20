@@ -83,9 +83,14 @@ class OTXAlienvault(Feed):
 
             elif issubclass(type_ind, Indicator):
                 if type_ind == Yara:
-                    ent = type_ind.get_or_create(name='YARA_%s' %
-                                                      indicator['indicator'])
-                    ent.pattern(indicator['content'])
+                    try:
+                        type_ind.get_or_create(name='YARA_%s' %
+                                                indicator['indicator'],
+                                                diamond='capability',
+                                                location='feeds',
+                                                pattern=indicator['content'])
+                    except Exception as e:
+                        logging.error('Error to create indicator %s' % indicator)
 
             else:
                 logging.error('type of indicators is unknown %s',
