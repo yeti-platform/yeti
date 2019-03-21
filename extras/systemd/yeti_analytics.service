@@ -6,7 +6,7 @@ After=mongodb.service redis.service
 Type=simple
 User=yeti
 WorkingDirectory=/opt/yeti
-ExecStart=/usr/local/bin/celery -A core.config.celeryctl.celery_app worker -Ofair -c 10 --purge -Q analytics -n analytics
+ExecStart=/usr/local/bin/celery -A core.config.celeryctl.celery_app worker -O fair -c 10 --purge -Q analytics -n analytics
 
 [Install]
 WantedBy=multi-user.target
