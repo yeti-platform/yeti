@@ -129,13 +129,16 @@ class CirclPassiveSSLSearchSha1(OneShotAnalytics, CirclPassiveSSLApi):
             json_result = CirclPassiveSSLApi.search_cert_sha1(observable, results.settings)
             result = {}
             result['source'] = 'circl_passive_ssl_query'
+            
             if json_result:
-  	            results.update(raw= json.dumps( { "hits" : str(json_result.get("hits", "0")) }) )
+                results.update( raw = json.dumps( { 'hits' : json_result.get('hits', '0') } ) )
+                
                 for ip in json_result.get("seen", []):
                     o_ip = Ip.get_or_create(value=ip)
                     links.update(observable.active_link_to(
                         o_ip, 'cert_linked_to_ip', 'circl_passive_ssl_query'))
             observable.add_context(result)
+            
         return list(links)
 
 
@@ -155,11 +158,13 @@ class CirclPassiveSSLFetchCertFile(OneShotAnalytics, CirclPassiveSSLApi):
             json_result = CirclPassiveSSLApi.fetch_cert(observable, results.settings)
             json_string = json.dumps(
                 json_result.get("info", {}), sort_keys=True, indent=4, separators=(',', ': '))
+
             results.update(raw=json_string)
             result = {}
             result['source'] = 'circl_passive_ssl_query'
             result['raw'] = json_string
             observable.add_context(result)
+            
         return list(links)
 
 
