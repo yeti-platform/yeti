@@ -84,5 +84,5 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
                         last_seen = datetime.fromtimestamp(record['time_last'])
                 ))
 
-    observable.add_context(result)
-    return list(links)
+        observable.add_context(result)
+        return list(links)
