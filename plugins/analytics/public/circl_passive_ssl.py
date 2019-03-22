@@ -1,23 +1,27 @@
 import json
 import logging
 import requests
-from datetime import datetime
-from core.analytics import OneShotAnalytics
-from core.observables import Observable, Ip, Hash, Text
-from core.config.config import yeti_config
 
+from OpenSSL.crypto import load_certificate, FILETYPE_PEM
+
+from core.analytics import OneShotAnalytics
+from core.observables import Observable,  Ip, Certificate, CertificateSubject
+from core.config.config import yeti_config
 
 class CirclPassiveSSLApi(object):
     settings = {
         "circl_username": {
             "name": "Circl.lu username",
-            "description": "Username for Circl.lu API."
+            "description": "Username for Circl.lu Passive SSL API."
         },
         "circl_password": {
             "name": "Circl.lu password",
-            "description": "Password for Circl.lu API."
+            "description": "Password for Circl.lu Passive SSL API."
         }
     }
+
+    API = "https://www.circl.lu/v2pssl/"
+    HEADERS = {'User-Agent' : 'Yeti Analytics Worker', 'accept': 'application/json'}
 
     @staticmethod
     def search_ip(observable, settings):
@@ -26,55 +30,38 @@ class CirclPassiveSSLApi(object):
             settings["circl_password"]
         )
 
-        API_URL = "https://www.circl.lu/v2pssl/"
-        headers = {'accept': 'application/json'}
-
         if isinstance(observable, Ip):
-   	        r = requests.get(API_URL + "query/" + observable.value, auth=auth , headers=headers, proxies=yeti_config.proxy)
-            	if r.ok:
-                	return r.json()
+            r = requests.get(CirclPassiveSSLApi.API + "query/" + observable.value, auth=auth,
+                headers={'User-Agent' : 'Yeti Analytics Worker', 'accept': 'application/json'},
+                proxies=yeti_config.proxy)
 
-        return False
+            if r.ok:
+                return r.json()
+
+        return None
+
 
     @staticmethod
-    def search_cert_sha1(observable, settings):
+    def fetch_cert(cert_sha1, settings):
         auth = (
             settings["circl_username"],
             settings["circl_password"]
         )
 
-        API_URL = "https://www.circl.lu/v2pssl/"
-        headers = {'accept': 'application/json'}
+        r = requests.get(CirclPassiveSSLApi.API + "cfetch/" + cert_sha1, auth=auth,
+            headers={'User-Agent' : 'Yeti Analytics Worker', 'accept': 'application/json'},
+            proxies=yeti_config.proxy)
 
-        if isinstance(observable, Hash): 
-       	    r = requests.get(API_URL + "cquery/" + observable.value, auth=auth , headers=headers, proxies=yeti_config.proxy)
-            if r.ok:
-                return r.json()
+        if r.ok:
+            return r.json()
 
-        return False
-
-    @staticmethod
-    def fetch_cert(observable, settings):
-        auth = (
-            settings["circl_username"],
-            settings["circl_password"]
-        )
-
-        API_URL = "https://www.circl.lu/v2pssl/"
-        headers = {'accept': 'application/json'}
-        
-        if isinstance(observable, Hash): 
-       	    r = requests.get(API_URL + "cfetch/" + observable.value, auth=auth , headers=headers, proxies=yeti_config.proxy)
-            if r.ok:
-                return r.json()
-
-        return False
+        return None
 
 class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
     default_values = {
-        "name": "Circl.lu search IP for ssl certificate",
+        "name": "Circl.lu IP to ssl certificate lookup.",
         "group": "SSL Tools",
-        "description": "Perform passive ssl lookups on ssl hash or ip address."
+        "description": "Perform a lookup on ssl certificates related to an ip address."
     }
 
     ACTS_ON = ["Ip"]
@@ -82,94 +69,35 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
     @staticmethod
     def analyze(observable, results):
         links = set()
+        result = {}
+        result['source'] = 'circl_passive_ssl_query'
 
         if isinstance(observable, Ip):
-            json_result = CirclPassiveSSLApi.search_ip(observable, results.settings)
+            ip_search  = CirclPassiveSSLApi.search_ip(observable, results.settings)
+            if ip_search:
+                json_string = json.dumps(
+                    ip_search, sort_keys=True, indent=4, separators=(',', ': '))
+                results.update(raw=json_string)
 
-            json_string = json.dumps(
-                json_result, sort_keys=True, indent=4, separators=(',', ': '))
-            results.update(raw=json_string)
+                for ip_addr, ip_details in ip_search.items():
+                    for cert_sha1 in ip_details.get("certificates", []):
+                        try:
+                            cert_result = CirclPassiveSSLApi.fetch_cert(cert_sha1, results.settings)
+                            if cert_result:
+                                _info = cert_result.get("info", {})
+                                x509 = load_certificate(FILETYPE_PEM, cert_result.get("pem"))
+                                hash_sha256 = "".join(x509.digest("sha256").decode().lower().split(":"))
 
-            result = {}
-            result['source'] = 'circl_passive_ssl_query'
-            result['raw'] = json_string
+                                cert_ob = Certificate.from_data(data=None, hash_sha256 = hash_sha256)
+                                subject = CertificateSubject.get_or_create(value=_info.get("subject", ""))
+                                issuer = CertificateSubject.get_or_create(value=_info.get("issuer", ""))
 
-            if json_result:
-                for k,v in json_result.items():
-                    if k == observable.value:
-                        for cert_hash, cert_details in v.get("subjects", {}).items():
-                            sha1 = Hash.get_or_create(value=cert_hash)
-                            links.update(observable.active_link_to(
-                                sha1, 'ip_linked_to_ssl_fingerprint', 'circl_passive_ssl_query')
-                            )
+                                links.update(observable.active_link_to(cert_ob, 'cert_details', 'circl_passive_ssl_query'))
+                                links.update(cert_ob.active_link_to(subject, 'subject', 'circl_passive_ssl_query'))
+                                links.update(cert_ob.active_link_to(issuer, 'issuer', 'circl_passive_ssl_query'))
 
-                            for value in cert_details.get("values", []):
-                                new_text_node = Text.get_or_create(value=value)
-                                links.update(
-                                    observable.active_link_to(new_text_node, "SSL Cert Details", "circl_passive_ssl_query")
-                                )
+                        except Exception as e:
+                            logging.error("Hit an error when trying to fetch the certificate from circl.lu {}".format(e))
 
             observable.add_context(result)
         return list(links)
-
-
-class CirclPassiveSSLSearchSha1(OneShotAnalytics, CirclPassiveSSLApi):
-    default_values = {
-        "name": "Circl.lu search Sha1 hash of a certificate for related IP addresses",
-        "group" : "SSL Tools",
-        "description": "Perform passive ssl lookups on ssl hash or ip address."
-    }
-
-    ACTS_ON = ["Hash"]
-
-    @staticmethod
-    def analyze(observable, results):
-        links = set()
-        if isinstance(observable, Hash):
-            json_result = CirclPassiveSSLApi.search_cert_sha1(observable, results.settings)
-            result = {}
-            result['source'] = 'circl_passive_ssl_query'
-            
-            if json_result:
-                results.update( raw = json.dumps( { 'hits' : json_result.get('hits', '0') } ) )
-                
-                for ip in json_result.get("seen", []):
-                    o_ip = Ip.get_or_create(value=ip)
-                    links.update(observable.active_link_to(
-                        o_ip, 'cert_linked_to_ip', 'circl_passive_ssl_query'))
-            observable.add_context(result)
-            
-        return list(links)
-
-
-class CirclPassiveSSLFetchCertFile(OneShotAnalytics, CirclPassiveSSLApi):
-    default_values = {
-        "name": "Circl.lu fetch certificate file",
-        "group" : "SSL Tools",
-        "description": "Fetch SSL certificate file based on a sha1 hash"
-    }
-
-    ACTS_ON = ["Hash"]
-
-    @staticmethod
-    def analyze(observable, results):
-        if isinstance(observable, Hash):
-            links = set()
-            json_result = CirclPassiveSSLApi.fetch_cert(observable, results.settings)
-            json_string = json.dumps(
-                json_result.get("info", {}), sort_keys=True, indent=4, separators=(',', ': '))
-
-            results.update(raw=json_string)
-            result = {}
-            result['source'] = 'circl_passive_ssl_query'
-            result['raw'] = json_string
-            observable.add_context(result)
-            
-        return list(links)
-
-
-
-
-
-
-
