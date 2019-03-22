@@ -43,6 +43,7 @@ packaging==18.0
 pdfkit==0.6.1
 pdfminer==20140328
 psutil==5.4.8
+pyOpenSSL==19.0.0
 pygments==2.2.0
 pymongo==3.7.2
 pyparsing==2.3.0
