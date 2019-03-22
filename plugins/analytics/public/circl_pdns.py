@@ -76,7 +76,7 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
 	elif isinstance(observable, Hostname):
 		for record in json_result:
 	        	new = Observable.add_text(record["rdata"])
-        	      	observable.add_source('analytics')
+        	      	new.add_source('analytics')
 	              	links.update(
         	        	observable.link_to(
                         	new,
