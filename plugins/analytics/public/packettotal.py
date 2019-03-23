@@ -82,13 +82,14 @@ class PacketTotalQuery(PacketTotalAPI, OneShotAnalytics):
         links = set()
         pcap_hits = PacketTotalAPI.search(
             observable, results.settings['packettotal_api_key'])
+
         result = {}
 
         if pcap_hits:
-            for result in pcap_hits.get('results', []):
-                pcap_id = result.get('id', '')
+            for hit in pcap_hits.get('results', []):
+                pcap_id = hit.get('id', '')
                 pcap_analysis = PacketTotalAPI.fetch_analysis(
-                    pcap_id,  results.settings['packettotal_api_key']
+                    pcap_id, results.settings['packettotal_api_key']
                 )
 
                 if pcap_analysis:
@@ -103,9 +104,8 @@ class PacketTotalQuery(PacketTotalAPI, OneShotAnalytics):
                     )
 
                     analysis = pcap_analysis.get('analysis_summary', {})
-                    pcap_analysis.get('analysis_summary', {})
-                    ids_signatures = analysis.get("signatures", [])
-                    for signature in ids_signatures:
+
+                    for signature in analysis.get('signatures', []):
                         o_sig = Text.get_or_create(value=signature)
                         links.update(
                             analysis_url.active_link_to(
@@ -133,7 +133,7 @@ class PacketTotalQuery(PacketTotalAPI, OneShotAnalytics):
                                 'Error attempting to create IP {}'
                                 .format(e.message))
 
-                    dns_queries = analysis.get('analysis_summary', {}).get(
+                    dns_queries = analysis.get(
                         'dns_statistics', {}).get('queries', {})
 
                     for dns_query, percentage in dns_queries.items():
