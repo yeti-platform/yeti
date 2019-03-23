@@ -64,7 +64,6 @@ class BitCoinAbuseQuery(BitCoinAbuseAPI, OneShotAnalytics):
             observable,
             results.settings['bitcoinabuse_apikey']
         )
-
         if json_result:
             json_string = json.dumps(
                 json_result,
@@ -72,14 +71,11 @@ class BitCoinAbuseQuery(BitCoinAbuseAPI, OneShotAnalytics):
                 indent=4,
                 separators=(',', ': ')
             )
-
             results.update(raw=json_string)
             result = {}
             result['source'] = 'bitcoinabuse_query'
             result['raw'] = json_string
-
             if json_result.get('count', 0) > 0:
                 observable.tag(['listed_for_abuse'])
-
             observable.add_context(result)
-    return list(links)
+        return list(links)
