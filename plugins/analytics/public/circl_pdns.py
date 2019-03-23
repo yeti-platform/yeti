@@ -1,21 +1,23 @@
-import requests
 import json
 from datetime import datetime
 
+import requests
+
 from core.analytics import OneShotAnalytics
-from core.observables import Observable, Hostname, Ip
 from core.config.config import yeti_config
+from core.observables import Hostname, Ip, Observable
+
 
 class CirclPDNSApi(object):
     settings = {
         "circl_username": {
             "name": "Circl.lu username",
             "description": "Username for Circl.lu API."
-            },
+        },
         "circl_password": {
             "name": "Circl.lu password",
             "description": "Password for Circl.lu API."
-            }
+        }
     }
 
     @staticmethod
@@ -27,7 +29,8 @@ class CirclPDNSApi(object):
         API_URL = "https://www.circl.lu/pdns/query/"
         headers = {'accept': 'application/json'}
         results = []
-        r = requests.get(API_URL + observable.value, auth=auth , headers=headers, proxies=yeti_config.proxy)
+        r = requests.get(API_URL + observable.value, auth=auth,
+                         headers=headers, proxies=yeti_config.proxy)
         if r.ok:
             for l in r.text.split('\n'):
                 if len(l) == 0:
@@ -37,11 +40,13 @@ class CirclPDNSApi(object):
                     results.append(obj)
         return results
 
+
 class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
     default_values = {
         "name": "Circl.lu PDNS",
-        "group" : "PDNS",
-        "description": "Perform passive DNS lookups on domain names or ip address."
+        "group": "PDNS",
+        "description": "Perform passive DNS \
+        lookups on domain names or ip address."
     }
 
     ACTS_ON = ["Hostname", "Ip"]
@@ -67,9 +72,10 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
                         new,
                         source='DNSDB Passive DNS',
                         description='{} record'.format(record['rrtype']),
-                        first_seen=datetime.fromtimestamp(record['time_first']),
+                        first_seen=datetime.fromtimestamp(
+                            record['time_first']),
                         last_seen=datetime.fromtimestamp(record['time_last'])
-                ))
+                    ))
 
         elif isinstance(observable, Hostname):
             for record in json_result:
@@ -80,9 +86,10 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
                         new,
                         source='DNSDB Passive DNS',
                         description='{} record'.format(record['rrtype']),
-                        first_seen=datetime.fromtimestamp(record['time_first']),
+                        first_seen=datetime.fromtimestamp(
+                            record['time_first']),
                         last_seen=datetime.fromtimestamp(record['time_last'])
-                ))
+                    ))
 
         observable.add_context(result)
         return list(links)
