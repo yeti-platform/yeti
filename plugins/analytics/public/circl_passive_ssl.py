@@ -38,9 +38,6 @@ class CirclPassiveSSLApi(object):
             if r.ok:
                 return r.json()
 
-        return None
-
-
     @staticmethod
     def fetch_cert(cert_sha1, settings):
         auth = (
@@ -54,8 +51,6 @@ class CirclPassiveSSLApi(object):
 
         if r.ok:
             return r.json()
-
-        return None
 
 class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
     default_values = {
