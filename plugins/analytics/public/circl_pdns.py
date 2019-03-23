@@ -67,8 +67,8 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
                         new,
                         source='DNSDB Passive DNS',
                         description='{} record'.format(record['rrtype']),
-                        first_seen= datetime.fromtimestamp(record['time_first']),
-                        last_seen= datetime.fromtimestamp(record['time_last'])
+                        first_seen=datetime.fromtimestamp(record['time_first']),
+                        last_seen=datetime.fromtimestamp(record['time_last'])
                 ))
 
         elif isinstance(observable, Hostname):
@@ -79,9 +79,9 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
                     observable.link_to(
                         new,
                         source='DNSDB Passive DNS',
-                        description ='{} record'.format(record['rrtype']),
-                        first_seen = datetime.fromtimestamp(record['time_first']),
-                        last_seen = datetime.fromtimestamp(record['time_last'])
+                        description='{} record'.format(record['rrtype']),
+                        first_seen=datetime.fromtimestamp(record['time_first']),
+                        last_seen=datetime.fromtimestamp(record['time_last'])
                 ))
 
         observable.add_context(result)
