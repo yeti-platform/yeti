@@ -30,23 +30,18 @@ class PacketTotalAPI(object):
         params = {'query': observable.value}
 
         try:
-            res = requests.get(
+            res=requests.get(
                 '{}search'.format(PacketTotalAPI.API),
                 headers={'x-api-key': api_key},
                 params=params,
-                verify=False,
                 proxies=yeti_config.proxy
             )
 
             if res.ok:
                 return res.json()
-            else:
-                return None
-
+            
         except Exception as e:
             logging.error('Exception while getting packettotal report {}'.format(e.message))
-            return None
-
 
     @staticmethod
     def fetch_analysis(pcap_id, api_key):
@@ -66,13 +61,9 @@ class PacketTotalAPI(object):
 
             if res.ok:
                 return res.json()
-            else:
-                return None
 
         except Exception as e:
             logging.error('Exception while getting packettotal report {}'.format(e.message))
-            return None
-
 
 class PacketTotalQuery(PacketTotalAPI, OneShotAnalytics):
     default_values = {
@@ -94,16 +85,17 @@ class PacketTotalQuery(PacketTotalAPI, OneShotAnalytics):
                 pcap_analysis = PacketTotalAPI.fetch_analysis(pcap_id,  results.settings['packettotal_api_key'])
                 if pcap_analysis:
                     analysis_url = Text.get_or_create(
-                        value = 'https://packettotal.com/app/analysis?id={pcap_id}'.format(pcap_id=pcap_id)
+                        value='https://packettotal.com/app/analysis?id={pcap_id}'.format(pcap_id=pcap_id)
                     )
                     links.update(
                         observable.active_link_to(analysis_url, 'analysis_link', 'packettotal_query')
                     )
 
-                    analysis = pcap_analysis.get('analysis_summary', {})
+                    analysis 
+                    pcap_analysis.get('analysis_summary', {})
                     ids_signatures = analysis.get("signatures", [])
                     for signature in ids_signatures:
-                        o_sig = Text.get_or_create(value = signature)
+                        o_sig = Text.get_or_create(value=signature)
                         links.update(
                             analysis_url.active_link_to(
                                 o_sig,
@@ -116,7 +108,7 @@ class PacketTotalQuery(PacketTotalAPI, OneShotAnalytics):
                     destination_addresses = analysis.get('top_talkers', {}).get('destination_ips', {})
                     for dst_addr, percentage in destination_addresses.items():
                         try:
-                            o_ip = Ip.get_or_create(value = dst_addr)
+                            o_ip = Ip.get_or_create(value=dst_addr)
                             links.update(
                                 analysis_url.active_link_to(
                                     o_ip,
@@ -130,7 +122,7 @@ class PacketTotalQuery(PacketTotalAPI, OneShotAnalytics):
                     dns_queries = analysis.get('analysis_summary', {}).get('dns_statistics', {}).get('queries', {})
                     for dns_query, percentage in dns_queries.items():
                         try:
-                            o_hostname = Hostname.get_or_create(value = dns_query)
+                            o_hostname = Hostname.get_or_create(value=dns_query)
                             links.update(
                                 analysis_url.active_link_to(
                                     o_hostname, 
