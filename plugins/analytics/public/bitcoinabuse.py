@@ -22,7 +22,7 @@ class BitCoinAbuseAPI(object):
     @staticmethod
     def get_abuse_type(abuse_type_id):
         # This is for future use once they update their api.
-    # Currently they only return counts for reports.
+        # Currently they only return counts for reports.
         # If they start returning the abuse types we can get the mapping here.
 
         r = requests.get(
