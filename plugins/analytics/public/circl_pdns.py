@@ -35,9 +35,9 @@ class CirclPDNSApi(object):
             for l in r.text.split('\n'):
                 if not len:
                     return results
-                else:
-                    obj = json.loads(l)
-                    results.append(obj)
+
+                obj = json.loads(l)
+                results.append(obj)
         return results
 
 
@@ -70,7 +70,7 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
                 links.update(
                     observable.link_to(
                         new,
-                        source='DNSDB Passive DNS',
+                        source='Circl.lu Passive DNS',
                         description='{} record'.format(record['rrtype']),
                         first_seen=datetime.fromtimestamp(
                             record['time_first']),
@@ -84,7 +84,7 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
                 links.update(
                     observable.link_to(
                         new,
-                        source='DNSDB Passive DNS',
+                        source='Circl.lu Passive DNS',
                         description='{} record'.format(record['rrtype']),
                         first_seen=datetime.fromtimestamp(
                             record['time_first']),
