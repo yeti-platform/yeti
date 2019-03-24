@@ -33,7 +33,7 @@ class CirclPDNSApi(object):
                          headers=headers, proxies=yeti_config.proxy)
         if r.ok:
             for l in r.text.split('\n'):
-                if len(l) == 0:
+                if not len:
                     return results
                 else:
                     obj = json.loads(l)
