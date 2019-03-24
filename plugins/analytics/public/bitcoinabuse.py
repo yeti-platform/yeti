@@ -23,7 +23,7 @@ class BitCoinAbuseAPI(object):
     def get_abuse_type(abuse_type_id):
         # This is for future use once they update their api.
     # Currently they only return counts for reports.
-    # If they start returning the abuse types we can get the mapping here.
+        # If they start returning the abuse types we can get the mapping here.
 
         r = requests.get('{api_url}abuse-types'.format(api_url=BitCoinAbuseAPI.API) , proxies=yeti_config.proxy)
         if r.ok:
