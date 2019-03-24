@@ -2,12 +2,11 @@ from __future__ import unicode_literals
 
 import idna
 from mongoengine import BooleanField, StringField
-from tldextract import extract
+from core.common.utils import tldextract_parser
 
 from core.errors import ObservableValidationError
 from core.observables import Observable
 from core.helpers import refang
-
 
 class Hostname(Observable):
 
@@ -29,7 +28,7 @@ class Hostname(Observable):
             value = refang(match.group('search'))
 
             if len(value) <= 255:
-                parts = extract(value)
+                parts = tldextract_parser(value)
                 if parts.suffix and parts.domain:
                     return True
 
