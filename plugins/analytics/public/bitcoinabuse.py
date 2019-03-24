@@ -36,20 +36,21 @@ class BitCoinAbuseAPI(object):
 
     @staticmethod
     def check(observable, api_key):
-        if isinstance(observable, Bitcoin):
-            url = '{api_url}reports/check?address={btc_address}&api_token={api_key}'.format(
-                    api_url=BitCoinAbuseAPI.API,
-                    btc_address=observable.value,
-                    api_key=api_key
-            )
+        if not isinstance(observable, Bitcoin):
+            return
+        url = '{api_url}reports/check?address={btc_address}&api_token={api_key}'.format(
+            api_url=BitCoinAbuseAPI.API,
+            btc_address=observable.value,
+            api_key=api_key
+        )
 
-            try:
-                res = requests.get(url)
-                if res.ok:
-                    return res.json()
-            except Exception as e:
-                logging.error('Exception checking report {}'
-                    .format(e.message))
+        try:
+            res = requests.get(url)
+            if res.ok:
+                return res.json()
+        except Exception as e:
+            logging.error('Exception checking report {}'
+                .format(e.message))
 
 class BitCoinAbuseQuery(BitCoinAbuseAPI, OneShotAnalytics):
     default_values = {
@@ -77,7 +78,7 @@ class BitCoinAbuseQuery(BitCoinAbuseAPI, OneShotAnalytics):
             result = {}
             result['source'] = 'bitcoinabuse_query'
             result['raw'] = json_string
-            if json_result.get('count', 0) > 0:
+            if json_result.get('count'):
                 observable.tag(['listed_for_abuse'])
             observable.add_context(result)
         return list(links)
