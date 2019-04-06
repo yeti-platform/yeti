@@ -1,128 +1,59 @@
+/*
+  Flaticon icon font: Flaticon
+  Creation date: 06/04/2019 08:00
+  */
+
 @font-face {
-	font-family: "Flaticon";
-	src: url("flaticon.eot");
-	src: url("flaticon.eot#iefix") format("embedded-opentype"),
-	url("flaticon.woff") format("woff"),
-	url("flaticon.ttf") format("truetype"),
-	url("flaticon.svg") format("svg");
-	font-weight: normal;
-	font-style: normal;
+font-family: "Flaticon";
+src: url("./Flaticon.eot");
+src: url("./Flaticon.eot?#iefix") format("embedded-opentype"),
+     url("./Flaticon.woff2") format("woff2"),
+     url("./Flaticon.woff") format("woff"),
+     url("./Flaticon.ttf") format("truetype"),
+     url("./Flaticon.svg#Flaticon") format("svg");
+font-weight: normal;
+font-style: normal;
 }
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+@font-face {
+  font-family: "Flaticon";
+  src: url("./Flaticon.svg#Flaticon") format("svg");
+}
+}
+
 [class^="flaticon-"]:before, [class*=" flaticon-"]:before,
 [class^="flaticon-"]:after, [class*=" flaticon-"]:after {
-	font-family: Flaticon;
-    font-style: normal;
-}.flaticon-binary5:before {
-	content: "\e000";
+font-family: Flaticon;
+      font-size: 20px;
+font-style: normal;
+margin-left: 20px;
 }
-.flaticon-bug24:before {
-	content: "\e001";
-}
-.flaticon-building259:before {
-	content: "\e002";
-}
-.flaticon-businessman116:before {
-	content: "\e003";
-}
-.flaticon-cloud297:before {
-	content: "\e004";
-}
-.flaticon-computer189:before {
-	content: "\e005";
-}
-.flaticon-computer192:before {
-	content: "\e006";
-}
-.flaticon-computer309:before {
-	content: "\e007";
-}
-.flaticon-computing10:before {
-	content: "\e008";
-}
-.flaticon-document22:before {
-	content: "\e009";
-}
-.flaticon-document238:before {
-	content: "\e00a";
-}
-.flaticon-earth213:before {
-	content: "\e00b";
-}
-.flaticon-email106:before {
-	content: "\e00c";
-}
-.flaticon-email168:before {
-	content: "\e00d";
-}
-.flaticon-finger14:before {
-	content: "\e00e";
-}
-.flaticon-gear74:before {
-	content: "\e00f";
-}
-.flaticon-gears3:before {
-	content: "\e010";
-}
-.flaticon-internet54:before {
-	content: "\e011";
-}
-.flaticon-job5:before {
-	content: "\e012";
-}
-.flaticon-links11:before {
-	content: "\e013";
-}
-.flaticon-loupe12:before {
-	content: "\e014";
-}
-.flaticon-magnifying-glass40:before {
-	content: "\e015";
-}
-.flaticon-magnifyingglass115:before {
-	content: "\e016";
-}
-.flaticon-malware:before {
-	content: "\e017";
-}
-.flaticon-mask1:before {
-	content: "\e018";
-}
-.flaticon-maths5:before {
-	content: "\e019";
-}
-.flaticon-message99:before {
-	content: "\e01a";
-}
-.flaticon-network38:before {
-	content: "\e01b";
-}
-.flaticon-pci1:before {
-	content: "\e01c";
-}
-.flaticon-pirate9:before {
-	content: "\e01d";
-}
-.flaticon-server20:before {
-	content: "\e01e";
-}
-.flaticon-shopping159:before {
-	content: "\e01f";
-}
-.flaticon-supermarket20:before {
-	content: "\e020";
-}
-.flaticon-text70:before {
-	content: "\e021";
-}
-.flaticon-typography2:before {
-	content: "\e022";
-}
-.flaticon-virus13:before {
-	content: "\e023";
-}
-.flaticon-website17:before {
-	content: "\e024";
-}
-.flaticon-workstation:before {
-	content: "\e025";
-}
+
+.flaticon-bitcoin:before { content: "\f100"; }
+.flaticon-lan:before { content: "\f101"; }
+.flaticon-internet:before { content: "\f102"; }
+.flaticon-fingerprint-search-symbol-of-secret-service-investigation:before { content: "\f103"; }
+.flaticon-fingerprint:before { content: "\f104"; }
+.flaticon-mail:before { content: "\f105"; }
+.flaticon-file:before { content: "\f106"; }
+.flaticon-text-height-adjustment:before { content: "\f107"; }
+.flaticon-laptop:before { content: "\f108"; }
+.flaticon-world-grid:before { content: "\f109"; }
+.flaticon-bug:before { content: "\f10a"; }
+.flaticon-bug-1:before { content: "\f10b"; }
+.flaticon-test:before { content: "\f10c"; }
+.flaticon-spyware:before { content: "\f10d"; }
+.flaticon-hacker:before { content: "\f10e"; }
+.flaticon-robot:before { content: "\f10f"; }
+.flaticon-school:before { content: "\f110"; }
+.flaticon-ttp-file:before { content: "\f111"; }
+.flaticon-unlink:before { content: "\f112"; }
+.flaticon-file-1:before { content: "\f113"; }
+.flaticon-home:before { content: "\f114"; }
+.flaticon-sketch:before { content: "\f115"; }
+.flaticon-share:before { content: "\f116"; }
+.flaticon-files-and-folders:before { content: "\f117"; }
+.flaticon-document:before { content: "\f118"; }
+.flaticon-enterprise:before { content: "\f119"; }
+.flaticon-advertising:before { content: "\f11a"; }
