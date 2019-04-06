@@ -366,11 +366,13 @@ input.dropzone {
     border-bottom: 1px dashed #888888;
 }
 
+.graph-sidebar-related-investigation-list,
 .graph-sidebar-links {
     padding: 0;
     list-style-type: none;
 }
 
+.graph-sidebar-related-investigation-list li,
 .graph-sidebar-links li {
     padding-bottom: 5px;
     margin-bottom: 5px;
@@ -385,6 +387,11 @@ li.graph-sidebar-link-description {
 
 li.graph-sidebar-border-bottom {
     border-bottom: 1px dashed #888888;
+}
+
+#graph-sidebar-related-investigation-title {
+    border-bottom: 1px solid #888888;
+    padding-bottom: 5px;
 }
 
 .graph-sidebar-history {
@@ -405,6 +412,7 @@ li.graph-sidebar-border-bottom {
     max-width: 500px;
 }
 
+.graph-sidebar-related-investigation-label,
 .graph-sidebar-link-label {
     color: #BBBBBB;
     font-style: italic;
@@ -435,6 +443,7 @@ li.graph-sidebar-border-bottom {
     border-bottom: 1px solid #00CCFF;
 }
 
+.graph-sidebar-related-investigation-actions,
 .graph-sidebar-analytics-actions,
 .graph-sidebar-link-actions {
     color: #00CCFF;
@@ -445,11 +454,13 @@ li.graph-sidebar-border-bottom {
     margin: 0;
 }
 
+.graph-sidebar-related-investigation-list a,
 .graph-sidebar-links a,
 a.graph-analytics-results-links {
     color: #00CCFF;
 }
 
+.graph-sidebar-related-investigation-list a:hover,
 #graph-sidebar-value-actions a:hover,
 .graph-sidebar-links a:hover,
 a.graph-analytics-results-links:hover {
