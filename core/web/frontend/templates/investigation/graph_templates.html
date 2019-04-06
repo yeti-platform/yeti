@@ -293,20 +293,33 @@
 </script>
 
 <script id="graph-sidebar-related-investigation-template" type="text/x-handlebars-template">
-    <h1 id="graph-sidebar-related-investigation-title" >Related Investigations</h1>
-    <style>
-    #graph-sidebar-related-investigation-title {
-        border-bottom: 1px solid #888888;
-        font-size: 1.2em;
-        color: white;
-        padding-bottom: 5px;
-    }
-    .related-investigation-bottom {
-        margin-top:5px;
-        border-bottom: 1px dashed #888888;
-    }
-    </style>
-    {{#listinv investigations }}
-    {{/listinv }}
+    {{#isNotEmpty investigations}}
+    <h1 id="graph-sidebar-related-investigation-title">Related Investigations</h1>
+
+    <ul class="graph-sidebar-related-investigation-list">
+        {{#each investigations}}
+                <li class="{{#unless @last}}graph-sidebar-border-bottom{{/unless}}">
+                    <div class="graph-sidebar-related_investigation-name">{{name}}</div>
+                    <div class="graph-sidebar-tags">
+                        {{#each tags}}
+                            <span class="yeti-tag label label-default label-primary ">{{this}}</span>
+                        {{/each}}
+                    </div>
+                    <div class="graph-sidebar-related-investigation-label">
+                        {{#if created_by}}
+                            {{created_by}} /
+                        {{/if}}
+                        {{date updated}}
+                        <div class="graph-sidebar-related-investigation-actions">
+                            <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Open Investigation" href="/investigation/{{_id}}" target="_blank"><i class="glyphicon glyphicon-list"></i></a>
+                            <a data-toggle="tooltip" data-placement="bottom" data-delay='{"show":500, "hide":0}' title="Open Investigation Graph" href="/investigation/graph/{{_id}}" target="_blank"><i class="flaticon-network38"></i></a>
+                        </div>
+                    </div>
+                    <div class="clear"></div>
+                </li>
+        {{/each}}
+    </ul>
+    {{/isNotEmpty}}
+
 </script>
 {% endraw %}

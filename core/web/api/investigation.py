@@ -128,21 +128,21 @@ class Investigation(CrudApi):
         data = loads(request.data)
 
         if 'id' not in data or 'ref' not in data:
-            response = { 
+            response = {
                 'status': 'error',
-                'message': 'missing argument.' 
+                'message': 'missing argument.'
             }
-        
+
         elif not ObjectId.is_valid(data['id']):
-            response = { 
+            response = {
                 'status': 'error',
                 'message': 'given id is not valid.'
             }
-        
+
         elif data['ref'] not in REF_CLASS:
-            response = { 
+            response = {
                 'status': 'error',
-                'message': 'reference class is not valid.' 
+                'message': 'reference class is not valid.'
             }
 
         else:
@@ -152,11 +152,11 @@ class Investigation(CrudApi):
                         '$id': ObjectId(data['id']),
                         '$ref': data['ref']
                     }
-                }
+                },
             }
-            response = self.objectmanager.objects(__raw__=query)
+            response = self.objectmanager.objects(__raw__=query).order_by('-updated')
             for inv in response:
                 if not inv.name:
-                    inv['name'] = 'unnamed investigation'
-                    
+                    inv['name'] = 'Unnamed Investigation'
+
         return render(response)

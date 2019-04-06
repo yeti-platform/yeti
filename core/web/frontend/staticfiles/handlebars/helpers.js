@@ -73,21 +73,3 @@ Handlebars.registerHelper('join', function(val, delimiter) {
     delimiter = ( typeof delimiter == "string" ? delimiter : ',' );
     return arry.join(delimiter);
 });
-
-Handlebars.registerHelper("listinv", function (investigations) {
-  const [currentId] = window.location.href.split('/').splice(-1, 1);
-  const filteredInvestigations = investigations.filter((inv) => (inv._id != currentId));
-  if (filteredInvestigations.length === 0) {
-    return "No results.";
-  }
-  let htmlContent = '';
-  filteredInvestigations.forEach((inv) => {
-    let template = `<h4>${inv.name}</h4>
-      <a class="btn btn-primary" href="${'/investigation/' + inv._id}" target="_blank">link</a>
-      <a class="btn btn-default" href="${'/investigation/graph/' + inv._id}" target="_blank">graph</a>
-      <div class="related-investigation-bottom"></div>
-    `;
-    htmlContent += template;
-  });
-  return htmlContent;
-});

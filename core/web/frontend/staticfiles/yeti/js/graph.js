@@ -688,6 +688,8 @@ class Investigation {
     }
 
   updateRelatedGraph(nodeId) {
+      var self = this;
+
       const [ref, id] = nodeId.split('-');
       const fetchRelatedInv = this.fetchRelatedInv(id, ref);
       fetchRelatedInv
@@ -696,7 +698,7 @@ class Investigation {
         })
         .then((results) => {
           const params = {
-            investigations: results,
+            investigations: results.filter(investigation => investigation._id != self.id),
           };
           $('#graph-sidebar-related-investigation').html(relatedGraphTemplate(params));
         })
