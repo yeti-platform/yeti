@@ -232,8 +232,9 @@
                     No context to display.
                 {{/each}}
             </div>
+            <div id="graph-sidebar-related-investigation" data-id="{{id}}">
+            </div>
         </div>
-
         <div id="graph-sidebar-links" class="tab-pane active">
             <div id="graph-sidebar-links-to-{{id}}">Links loading ...</div>
             <div id="graph-sidebar-links-from-{{id}}"></div>
@@ -289,5 +290,23 @@
             {{> analyticsPanel}}
         </div>
     </div>
+</script>
+
+<script id="graph-sidebar-related-investigation-template" type="text/x-handlebars-template">
+    <h1 id="graph-sidebar-related-investigation-title" >Related Investigations</h1>
+    <style>
+    #graph-sidebar-related-investigation-title {
+        border-bottom: 1px solid #888888;
+        font-size: 1.2em;
+        color: white;
+        padding-bottom: 5px;
+    }
+    .related-investigation-bottom {
+        margin-top:5px;
+        border-bottom: 1px dashed #888888;
+    }
+    </style>
+    {{#listinv investigations }}
+    {{/listinv }}
 </script>
 {% endraw %}
