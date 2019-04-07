@@ -7,6 +7,7 @@ from core.analytics import OneShotAnalytics
 from core.config.config import yeti_config
 from core.observables import Certificate, CertificateSubject, Ip
 from OpenSSL.crypto import FILETYPE_PEM, load_certificate
+from OpenSSL.crypto import FILETYPE_ASN1, dump_certificate
 
 
 class CirclPassiveSSLApi(object):
@@ -76,8 +77,6 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
     @staticmethod
     def analyze(observable, results):
         links = set()
-        result = {}
-        result['source'] = 'circl_passive_ssl_query'
 
         if isinstance(observable, Ip):
             ip_search = CirclPassiveSSLApi.search_ip(
@@ -98,13 +97,15 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
                                 _info = cert_result.get('info', {})
                                 x509 = load_certificate(
                                     FILETYPE_PEM, cert_result.get('pem'))
-                                hash_sha256 = ''.join(x509.digest(
-                                    'sha256').decode().lower().split(':'))
+
+                                DER = dump_certificate(FILETYPE_ASN1, x509)
 
                                 cert_ob = Certificate.from_data(
-                                    data=None, hash_sha256=hash_sha256)
+                                    data=DER)
+
                                 subject = CertificateSubject.get_or_create(
                                     value=_info.get('subject', ''))
+
                                 issuer = CertificateSubject.get_or_create(
                                     value=_info.get('issuer', ''))
 
@@ -128,5 +129,4 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
                                 'Error attempting to fetch cert file {}'.
                                 format(e))
 
-            observable.add_context(result)
         return list(links)
