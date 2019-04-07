@@ -19,6 +19,17 @@ quality and relevance:
   is quite clear and we don't want it to become too specialized. If it makes
   sense for nearly the whole userbase to have your changes pulled in, they will.
 
+### Adding Icons
+
+If your core contribution needs new icons, please add them with your PR. In order
+to easily add fonts, we recommend the following procedure:
+
+* Go to [fontello.com](http://fontello.com/)
+* Upload the `config.json` file located in `core/web/frontend/staticfiles/yeti/font`
+* Add icons to the set
+* Download the resulting and replace them in the repository (don't forget `config.json`)
+* Reference your new icons in your code
+
 ## Contributing plugins
 
 The most things people contribute to Yeti are feeds, analytics, etc. Since we

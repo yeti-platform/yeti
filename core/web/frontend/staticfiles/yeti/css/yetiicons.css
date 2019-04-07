@@ -1,0 +1,96 @@
+@font-face {
+  font-family: 'yetiicons';
+  src: url('../font/yetiicons.eot?6178616');
+  src: url('../font/yetiicons.eot?6178616#iefix') format('embedded-opentype'),
+       url('../font/yetiicons.woff2?6178616') format('woff2'),
+       url('../font/yetiicons.woff?6178616') format('woff'),
+       url('../font/yetiicons.ttf?6178616') format('truetype'),
+       url('../font/yetiicons.svg?6178616#yetiicons') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+/* Chrome hack: SVG is rendered more smooth in Windozze. 100% magic, uncomment if you need it. */
+/* Note, that will break hinting! In other OS-es font will be not as sharp as it could be */
+/*
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  @font-face {
+    font-family: 'yetiicons';
+    src: url('../font/yetiicons.svg?6178616#yetiicons') format('svg');
+  }
+}
+*/
+ 
+ [class^="flaticon-"]:before, [class*=" flaticon-"]:before {
+  font-family: "yetiicons";
+  font-style: normal;
+  font-weight: normal;
+  speak: none;
+ 
+  display: inline-block;
+  text-decoration: inherit;
+  width: 1em;
+  margin-right: .2em;
+  text-align: center;
+  /* opacity: .8; */
+ 
+  /* For safety - reset parent styles, that can break glyph codes*/
+  font-variant: normal;
+  text-transform: none;
+ 
+  /* fix buttons height, for twitter bootstrap */
+  line-height: 1em;
+ 
+  /* Animation center compensation - margins should be symmetric */
+  /* remove if not needed */
+  margin-left: .2em;
+ 
+  /* you can be more comfortable with increased icons size */
+  /* font-size: 120%; */
+ 
+  /* Font smoothing. That was taken from TWBS */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+ 
+  /* Uncomment for 3D effect */
+  /* text-shadow: 1px 1px 1px rgba(127, 127, 127, 0.3); */
+}
+ 
+.flaticon-binary5:before { content: '\e000'; } /* '' */
+.flaticon-bug24:before { content: '\e001'; } /* '' */
+.flaticon-building259:before { content: '\e002'; } /* '' */
+.flaticon-businessman116:before { content: '\e003'; } /* '' */
+.flaticon-cloud297:before { content: '\e004'; } /* '' */
+.flaticon-computer189:before { content: '\e005'; } /* '' */
+.flaticon-computer192:before { content: '\e006'; } /* '' */
+.flaticon-computer309:before { content: '\e007'; } /* '' */
+.flaticon-computing10:before { content: '\e008'; } /* '' */
+.flaticon-document22:before { content: '\e009'; } /* '' */
+.flaticon-document238:before { content: '\e00a'; } /* '' */
+.flaticon-earth213:before { content: '\e00b'; } /* '' */
+.flaticon-email106:before { content: '\e00c'; } /* '' */
+.flaticon-email168:before { content: '\e00d'; } /* '' */
+.flaticon-finger14:before { content: '\e00e'; } /* '' */
+.flaticon-gear74:before { content: '\e00f'; } /* '' */
+.flaticon-gears3:before { content: '\e010'; } /* '' */
+.flaticon-internet54:before { content: '\e011'; } /* '' */
+.flaticon-job5:before { content: '\e012'; } /* '' */
+.flaticon-links11:before { content: '\e013'; } /* '' */
+.flaticon-loupe12:before { content: '\e014'; } /* '' */
+.flaticon-magnifying-glass40:before { content: '\e015'; } /* '' */
+.flaticon-magnifyingglass115:before { content: '\e016'; } /* '' */
+.flaticon-malware:before { content: '\e017'; } /* '' */
+.flaticon-mask1:before { content: '\e018'; } /* '' */
+.flaticon-maths5:before { content: '\e019'; } /* '' */
+.flaticon-message99:before { content: '\e01a'; } /* '' */
+.flaticon-network38:before { content: '\e01b'; } /* '' */
+.flaticon-pci1:before { content: '\e01c'; } /* '' */
+.flaticon-pirate9:before { content: '\e01d'; } /* '' */
+.flaticon-server20:before { content: '\e01e'; } /* '' */
+.flaticon-shopping159:before { content: '\e01f'; } /* '' */
+.flaticon-supermarket20:before { content: '\e020'; } /* '' */
+.flaticon-text70:before { content: '\e021'; } /* '' */
+.flaticon-typography2:before { content: '\e022'; } /* '' */
+.flaticon-virus13:before { content: '\e023'; } /* '' */
+.flaticon-website17:before { content: '\e024'; } /* '' */
+.flaticon-workstation:before { content: '\e025'; } /* '' */
+.flaticon-bitcoin:before { content: '\e026'; } /* '' */

@@ -37,6 +37,7 @@ var icons = {
   'Observable.File': flaticon('\ue021'),
   'Observable.Hash': flaticon('\ue00e'),
   'Observable.Path': flaticon('\ue00a'),
+  'Observable.Bitcoin': flaticon('\ue026'),
 
   'Entity.Malware': flaticon('\ue001'),
   'Entity.TTP': flaticon('\ue019'),
@@ -59,6 +60,7 @@ var cssicons = {
   'Observable.File': 'flaticon-text70',
   'Observable.Hash': 'flaticon-finger14',
   'Observable.Path': 'flaticon-document238',
+  'Observable.Bitcoin': 'flaticon-bitcoin',
   'Entity.Malware': 'flaticon-bug24',
   'Entity.TTP': 'flaticon-maths5',
   'Entity.Company': 'flaticon-building259',
@@ -73,7 +75,7 @@ var cssicons = {
 
 function flaticon(code) {
   return {
-    face: 'Flaticon',
+    face: 'yetiicons',
     code: code,
     size: 40,
     color: '#495B6C',
