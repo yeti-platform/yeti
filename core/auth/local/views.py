@@ -40,8 +40,9 @@ def logout():
 def new_user():
     username = request.form.get("username")
     password = request.form.get("password")
+    admin = request.form.get("admin") is not None
     if current_user.has_role('admin') and current_user.is_active:
-        create_user(username, password)
+        create_user(username, password, admin)
     return redirect(request.referrer)
 
 
