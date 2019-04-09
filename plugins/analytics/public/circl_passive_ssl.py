@@ -101,7 +101,7 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
                                 der = dump_certificate(FILETYPE_ASN1, x509)
 
                                 cert_ob = Certificate.from_data(
-                                    data=DER)
+                                    data=der)
 
                                 subject = CertificateSubject.get_or_create(
                                     value=_info.get('subject', ''))
