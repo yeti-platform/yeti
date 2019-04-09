@@ -121,7 +121,7 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
 
                                 links.update(cert_ob.active_link_to(
                                     issuer,
-                                    'issuer',
+                                    'cert-issuer',
                                     'circl_passive_ssl_query'))
 
                         except Exception as e:
