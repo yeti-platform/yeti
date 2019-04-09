@@ -111,7 +111,7 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
 
                                 links.update(observable.active_link_to(
                                     cert_ob,
-                                    'cert_details',
+                                    'ssl-cert',
                                     'circl_passive_ssl_query'))
 
                                 links.update(cert_ob.active_link_to(
