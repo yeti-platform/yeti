@@ -98,7 +98,7 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
                                 x509 = load_certificate(
                                     FILETYPE_PEM, cert_result.get('pem'))
 
-                                DER = dump_certificate(FILETYPE_ASN1, x509)
+                                der = dump_certificate(FILETYPE_ASN1, x509)
 
                                 cert_ob = Certificate.from_data(
                                     data=DER)
