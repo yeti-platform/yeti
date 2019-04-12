@@ -64,6 +64,10 @@ def unlock_scheduled_entries(**kwargs):
     from core.analytics import ScheduledAnalytics
     from core.feed import Feed
     from core.exports.export import Export
+    from core.yeti_plugins import get_plugin_classes
+
+    # Make sure plugin classes are loaded
+    get_plugin_classes()
 
     locked_entries = {
         'analytics': ScheduledAnalytics,
