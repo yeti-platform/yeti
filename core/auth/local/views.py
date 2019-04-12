@@ -42,7 +42,7 @@ def new_user():
     password = request.form.get("password")
     admin = request.form.get("admin") is not None
     if current_user.has_role('admin') and current_user.is_active:
-        create_user(username, password, admin)
+        create_user(username, password, admin=admin)
     return redirect(request.referrer)
 
 
