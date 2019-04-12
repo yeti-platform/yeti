@@ -40,7 +40,7 @@ def logout():
 def new_user():
     username = request.form.get("username")
     password = request.form.get("password")
-    if hasattr(current_user, 'has_role') and current_user.has_role('admin') and current_user.is_active:
+    if type(current_user) != AnonymousUserMixin and current_user.has_role('admin') and current_user.is_active:
         create_user(username, password)
     return redirect(request.referrer)
 
