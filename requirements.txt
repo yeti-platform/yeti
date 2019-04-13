@@ -31,7 +31,7 @@ ipaddress==1.0.22
 iptools==0.6.1
 ipwhois==1.0.0
 itsdangerous==1.1.0
-jinja2==2.10
+jinja2==2.10.1
 kombu==4.2.1
 libmagic==1.0
 lxml==4.2.5
