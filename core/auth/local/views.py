@@ -36,11 +36,12 @@ def logout():
     return redirect('/login')
 
 
+@login_required
 @auth.route('/createuser', methods=["POST"])
 def new_user():
     username = request.form.get("username")
     password = request.form.get("password")
-    if not isinstance(current_user, AnonymousUserMixin) and current_user.has_role('admin') and current_user.is_active:
+    if current_user.has_role('admin') and current_user.is_active:
         create_user(username, password)
     return redirect(request.referrer)
 
