@@ -28,13 +28,13 @@ def requires_permissions(permissions, object_name=None):
                     args[0], 'klass',
                     getattr(args[0], 'objectmanager',
                             args[0].__class__)).__name__.lower()
-            # a user must have all permissions in order to be granted access
-            for p in iterify(permissions):
-                if not current_user.has_permission(oname, p):
-                    # improve this and make it redirect to login
-                    abort(401)
-            else:
-                return f(*args, **kwargs)
+            if not current_user.has_role('admin'):
+                # a user must have all permissions in order to be granted access
+                for p in iterify(permissions):
+                    if not current_user.has_permission(oname, p):
+                        # improve this and make it redirect to login
+                        abort(401)
+            return f(*args, **kwargs)
 
         return inner
 

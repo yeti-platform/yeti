@@ -16,7 +16,7 @@ from core.indicators import Indicator
 from core.observables import Observable
 
 from core.web.api.api import bson_renderer
-
+from core.group import Group
 
 class InvestigationView(GenericView):
 
@@ -59,17 +59,25 @@ class InvestigationView(GenericView):
     @route("/import", methods=['GET', 'POST'])
     @requires_permissions("write", "investigation")
     def inv_import(self):
+        if current_user.has_role('admin'):
+            groups =  Group.objects()
+        else:
+            groups = Group.objects(members__in=[current_user.id])
         if request.method == "GET":
             return render_template(
-                "{}/import.html".format(self.klass.__name__.lower()))
+                "{}/import.html".format(self.klass.__name__.lower()),
+                groups=groups)
         else:
             text = request.form.get('text')
             url = request.form.get('url')
+            sharing = request.form.get('sharing')
 
             if text:
                 investigation = Investigation(
                     created_by=current_user.username, import_text=text)
+                # set sharing permissions
                 investigation.save()
+                investigation.sharing_permissions(sharing)
                 return redirect(
                     url_for(
                         'frontend.InvestigationView:import_from',
@@ -79,12 +87,14 @@ class InvestigationView(GenericView):
                     if url:
                         import_method = ImportMethod.objects.get(acts_on="url")
                         results = import_method.run(url)
+                    elif "file" in request.files:
+                            target = AttachedFile.from_upload(request.files['file'])
+                            import_method = ImportMethod.objects.get(
+                                acts_on=target.content_type)
+                            results = import_method.run(target)
                     else:
-                        target = AttachedFile.from_upload(request.files['file'])
-                        import_method = ImportMethod.objects.get(
-                            acts_on=target.content_type)
-                        results = import_method.run(target)
-
+                        flash("You need to provide an input", "danger")
+                        return redirect(request.referrer)
                     return redirect(
                         url_for(
                             'frontend.InvestigationView:import_wait',

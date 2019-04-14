@@ -34,10 +34,31 @@
 							</form>
 						</td>
 					</tr>
+					{% if groups %}
+						<!--groups show all to admin, and specific to user-->
+						<tr><th width="20%">Group(s) member</th><td>
+							{% for group in groups %}
+								<a href="{{ url_for('frontend.GroupView:profile', id=group['id'] )}}">{{group.groupname}}</a>{{ "," if not loop.last }}
+							{% endfor %}
+						</tr>
+					{% endif %}
+					{% if all_groups %}
+						<tr>
+							<th width="100px">Add user to group</th><td>
+							<form action={{ url_for("frontend.GroupAdminView:usertogroup") }} method="post">
+							  	<select name="gid" style="width:150px;">
+								{% for group in all_groups %}
+							    	<option value={{group["id"]}}>{{group["groupname"]}}</option>
+						    	{% endfor %}
+								</select>
+								<input type="hidden" id="uid" name="uid" value={{user.id}}>
+								<button type="submit" class="btn btn-default btn-sm">Add</button>
+							</form>
+						</td></tr>
+					{% endif %}
 				</table>
 			</div>
 		</div>
-
 		<div class="col-md-6">
 			<div class="panel panel-warning profile-panel">
 				<div class="panel-heading">
@@ -46,11 +67,7 @@
 				{% include 'auth_info.html' ignore missing %}
 			</div>
 		</div>
-
-
 	</div>
-
-
 
 	{% include 'auth_profile.html' ignore missing %}
 

@@ -13,7 +13,7 @@ from wtforms.fields import HiddenField as WTFHiddenField
 from core.database import Node, AttachedFile, TagListField
 from core.scheduling import OneShotEntry
 from core.config.celeryctl import celery_app
-
+from core.group import Group
 
 class InvestigationLink(EmbeddedDocument):
     id = StringField(required=True)
@@ -52,6 +52,7 @@ class Investigation(Node):
     import_url = StringField()
     import_text = StringField()
     tags = ListField(StringField(), verbose_name="Relevant tags")
+    sharing = ListField(StringField())
 
     exclude_fields = [
         'links', 'nodes', 'events', 'created', 'updated', 'created_by',
@@ -62,7 +63,7 @@ class Investigation(Node):
     # Ignore extra fields
     meta = {
         'strict': False,
-        "indexes": ["tags"],
+        "indexes": ["tags", "sharing"],
     }
 
     @classmethod
@@ -86,7 +87,9 @@ class Investigation(Node):
     def info(self):
         result = self.to_mongo()
         result['nodes'] = [node.to_mongo() for node in self.nodes]
-
+        result["shared"] = [Group(id=shared_with_id).reload() for shared_with_id in self.sharing if shared_with_id != current_user.id]
+        #ToDo add remove share with all to change to private/group
+        #ToDo add remove private
         return result
 
     def _node_changes(self, kind, method, links, nodes):
@@ -118,6 +121,20 @@ class Investigation(Node):
 
         return super(Investigation, self).save(*args, **kwargs)
 
+    def sharing_permissions(self, sharing_with):
+        #share with all, as till today
+        if sharing_with == "all":
+            pass
+        elif sharing_with == "private":
+            self.update(add_to_set__sharing=[current_user.id])
+        elif sharing_with == "allg":
+            groups = Group.objects(members__in=[current_user.id])
+            if groups:
+                self.update(add_to_set__sharing=[group.id for group in groups])
+        else:
+            groups = Group.objects(id=sharing_with)
+            if groups:
+                self.update(add_to_set__sharing=[group.id for group in groups])
 
 class ImportResults(Document):
     import_method = ReferenceField('ImportMethod', required=True)

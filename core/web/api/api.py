@@ -39,6 +39,8 @@ from core.web.api.links import Link
 from core.web.api.attached_files import AttachedFiles
 from core.web.api.file import File
 from core.web.api.useradmin import UserAdminSearch
+from core.web.api.groupadmin import GroupAdminSearch
+
 
 Analysis.register(api)
 
@@ -72,3 +74,4 @@ AttachedFiles.register(api)
 File.register(api)
 
 UserAdminSearch.register(api)
+GroupAdminSearch.register(api)

@@ -2,12 +2,11 @@ from __future__ import unicode_literals
 
 import os
 
-from mongoengine import StringField, DictField, BooleanField
+from mongoengine import StringField, DictField, BooleanField, ListField, ReferenceField, CASCADE, NotUniqueError
 from flask_mongoengine.wtf import model_form
 from flask import url_for
 
 from core.database import YetiDocument
-
 
 class User(YetiDocument):
     available_settings = dict()
@@ -91,3 +90,30 @@ class User(YetiDocument):
         i['human_url'] = url_for(
             "frontend.UsersView:profile", id=str(self.id), _external=True)
         return i
+
+class Group(YetiDocument):
+    groupname = StringField(required=True, unique=True)
+    members = ListField(ReferenceField(User, reverse_delete_rule=CASCADE))
+
+    @staticmethod
+    def get_user_groups(username):
+        return Group.objects(members__in=[username])
+
+    def create_group(groupname):
+        try:
+            return Group(groupname=groupname).save()
+        except NotUniqueError:
+            return False
+
+    def delete_groups(groupname):
+        return Group.objects(type=groupname).delete()
+
+    def get_groups():
+        return Group.objects()
+
+    def add_user_to_group(groupname, user_id):
+        return Group.objects(groupname=groupname).update_one(push__members=user_id)
+
+    def del_user_from_group(groupname, username):
+        return Group.objects(groupname=groupname).update_one(pull__members=username)
+

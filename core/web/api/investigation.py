@@ -4,8 +4,8 @@ import re
 from datetime import datetime
 from flask import request
 from flask_classy import route
+from flask_login import current_user
 from bson.json_util import loads
-from bson.objectid import ObjectId
 
 from core.helpers import iterify
 from core import investigation
@@ -13,10 +13,10 @@ from core.web.api.crud import CrudApi, CrudSearchApi
 from core.observables import *
 from core.investigation import ImportResults
 from core.entities import Entity
-from core.web.api.api import render, render_json
+from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions, get_queryset
-
+from core.group import Group
 
 class InvestigationSearch(CrudSearchApi):
     template = 'investigation_api.html'
@@ -29,11 +29,34 @@ class InvestigationSearch(CrudSearchApi):
         ignorecase = params.pop('ignorecase', False)
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
+        investigations = list()
+        if not current_user.has_role('admin'):
+            shared_ids = [current_user.id]
+            groups = Group.objects(members__in=[current_user.id])
+            if groups:
+                shared_ids += [group.id for group in groups]
+            """
+            fltr['sharing__size'] = 0
+            investigations = list(get_queryset(self.objectmanager, fltr, regex, ignorecase,replace=False))
+            fltr = query.get('filter', {})
+            fltr['sharing__in'] = shared_ids
+            #fltr = Q(sharing__size=0) | Q(sharing__in=shared_ids)
+            investigations += list(get_queryset(self.objectmanager, fltr, regex, ignorecase,replace=False))
+            return list(investigations[page * rng:(page + 1) * rng])
+            """
+            #ToDo imrpove
+            #original
+            #get_queryset(self.objectmanager, fltr, regex, ignorecase,replace=False)[page * rng:(page + 1) * rng]
 
-        return list(
-            get_queryset(
-                self.objectmanager, fltr, regex, ignorecase,
-                replace=False)[page * rng:(page + 1) * rng])
+
+        if not current_user.has_role('admin'):
+            shared_ids = [current_user.id]
+            shared_ids += [group.id for group in Group.objects(members__in=[current_user.id])]
+            self.objectmanager.objects(Q(sharing__size=0) | Q(sharing__in=shared_ids))
+
+        #import code; code.interact(local=dict(globals(), **locals()))
+        investigations = get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)
+        return list(investigations)[page * rng:(page + 1) * rng]
 
 
 class Investigation(CrudApi):

@@ -6,6 +6,7 @@ from flask_classy import route
 
 from core.web.frontend.generic import GenericView
 from core.user import User
+from core.group import Group
 from core.web.helpers import requires_role, get_object_or_404
 
 
@@ -33,16 +34,24 @@ class UsersView(GenericView):
 
             user.save()
 
+        groups = Group.objects(members__in=[user.id])
+        all_groups = Group.objects()
         if current_user.has_role('admin') and user.id != current_user.id:
             return render_template(
                 "user/profile_admin.html",
                 available_settings=User.get_available_settings(),
-                user=user)
+                user=user,
+                groups=groups,
+                all_groups=all_groups,
+            )
         else:
             return render_template(
                 "user/profile.html",
                 available_settings=User.get_available_settings(),
-                user=user)
+                user=user,
+                groups=groups,
+                all_groups=all_groups
+            )
 
     @route('/reset-api', methods=["POST"])
     def reset_api(self):

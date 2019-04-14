@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, flash, abort
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
 
 from core.auth.local.user_management import authenticate, create_user, set_password
+from core.auth.local.group_management import create_group
 from core.user import User
 from core.web.helpers import get_object_or_404
+from flask_login.mixins import AnonymousUserMixin
 
 auth = Blueprint('auth', __name__, template_folder='templates')
 
@@ -37,12 +39,23 @@ def logout():
 
 
 @auth.route('/createuser', methods=["POST"])
+@login_required
 def new_user():
     username = request.form.get("username")
     password = request.form.get("password")
     admin = request.form.get("admin") is not None
     if current_user.has_role('admin') and current_user.is_active:
         create_user(username, password, admin=admin)
+    return redirect(request.referrer)
+
+    logout_user()
+
+@auth.route('/creategroup', methods=["POST"])
+@login_required
+def new_group():
+    groupname = request.form.get("groupname")
+    if current_user.has_role('admin') and current_user.is_active:
+        create_group(groupname)
     return redirect(request.referrer)
 
 

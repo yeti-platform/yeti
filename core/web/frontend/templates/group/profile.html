@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "macros/generic.html" as macros %}
+
+{% if user != current_user %}
+{% set admin = current_user.has_role('admin') %}
+{% endif %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+	<li>YETI</li>
+    <li>Group</li>
+    <li class="active">Settings for group {{group.groupname}}</li>
+</ol>
+
+{% endblock %}
+
+
+{% block main %}
+<div class="cold-md-12">
+
+	<div class="row" id="groups">
+		<div class="col-md-6">
+			<div class="panel panel-primary profile-panel">
+				<div class="panel-heading">
+					<h3 class="panel-title">Group profile information</h3>
+				</div>
+				<table class='table profile'>
+					<tr><th>Group members</th><th>Add to group admins</th><th>Delete from group</th></tr>
+					{% for member in group.members %}
+					<tr>
+						<th><a href="{{ url_for('frontend.UsersView:profile', id=member['id'] )}}">{{member.username}}</a></th>
+						<th><span data-url="{{ url_for('frontend.GroupAdminView:usertoadmin', uid=member['id'], gid=group['id'])}}" class="group-toadmin glyphicon glyphicon-ok"></span><th>
+						<th><span data-url="{{ url_for('frontend.GroupAdminView:delfromgroup', uid=member['id'], gid=group['id'])}}" class="group-remove glyphicon glyphicon-trash"></span><th>
+					</tr>
+					{% endfor %}
+				</table>
+			</div>
+		</div>
+
+		<div class="col-md-6">
+			<div class="panel panel-primary profile-panel">
+				<div class="panel-heading">
+					<h3 class="panel-title">Group admins</h3>
+				</div>
+				<table class='table profile'>
+					<tr><th>Group admin(s)</th><th>Delete from admins</th></tr>
+					{% for member in group.admins %}
+					<tr>
+						<th><a href="{{ url_for('frontend.UsersView:profile', id=member['id'] )}}">{{member.username}}</a></th>
+						<th><span data-url="{{ url_for('frontend.GroupAdminView:deladmin', uid=member['id'], gid=group['id'])}}" class="group-fromadmin glyphicon glyphicon-trash"></span><th>
+					</tr>
+					{% endfor %}
+				</table>
+			</div>
+		</div>
+	</div>
+
+	{% include 'auth_profile.html' ignore missing %}
+
+</div>
+
+{% endblock %}
