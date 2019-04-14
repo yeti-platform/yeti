@@ -88,13 +88,14 @@ class InvestigationView(GenericView):
                         import_method = ImportMethod.objects.get(acts_on="url")
                         results = import_method.run(url)
                     elif "file" in request.files:
-                            target = AttachedFile.from_upload(request.files['file'])
-                            import_method = ImportMethod.objects.get(
-                                acts_on=target.content_type)
-                            results = import_method.run(target)
+                        target = AttachedFile.from_upload(request.files['file'])
+                        import_method = ImportMethod.objects.get(
+                            acts_on=target.content_type)
+                        results = import_method.run(target)
                     else:
                         flash("You need to provide an input", "danger")
                         return redirect(request.referrer)
+
                     return redirect(
                         url_for(
                             'frontend.InvestigationView:import_wait',
