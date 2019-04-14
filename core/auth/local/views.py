@@ -36,8 +36,8 @@ def logout():
     return redirect('/login')
 
 
-@login_required
 @auth.route('/createuser', methods=["POST"])
+@login_required
 def new_user():
     username = request.form.get("username")
     password = request.form.get("password")
