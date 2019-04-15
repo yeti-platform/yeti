@@ -122,19 +122,20 @@ class Investigation(Node):
         return super(Investigation, self).save(*args, **kwargs)
 
     def sharing_permissions(self, sharing_with):
-        #share with all, as till today
+
+        groups = False
+
         if sharing_with == "all":
             pass
         elif sharing_with == "private":
             self.update(add_to_set__sharing=[current_user.id])
         elif sharing_with == "allg":
             groups = Group.objects(members__in=[current_user.id])
-            if groups:
-                self.update(add_to_set__sharing=[group.id for group in groups])
         else:
             groups = Group.objects(id=sharing_with)
-            if groups:
-                self.update(add_to_set__sharing=[group.id for group in groups])
+
+        if groups:
+            self.update(add_to_set__sharing=[group.id for group in groups])
 
 class ImportResults(Document):
     import_method = ReferenceField('ImportMethod', required=True)

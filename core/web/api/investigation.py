@@ -32,30 +32,11 @@ class InvestigationSearch(CrudSearchApi):
         investigations = list()
         if not current_user.has_role('admin'):
             shared_ids = [current_user.id]
-            groups = Group.objects(members__in=[current_user.id])
-            if groups:
-                shared_ids += [group.id for group in groups]
-            """
-            fltr['sharing__size'] = 0
-            investigations = list(get_queryset(self.objectmanager, fltr, regex, ignorecase,replace=False))
-            fltr = query.get('filter', {})
-            fltr['sharing__in'] = shared_ids
-            #fltr = Q(sharing__size=0) | Q(sharing__in=shared_ids)
-            investigations += list(get_queryset(self.objectmanager, fltr, regex, ignorecase,replace=False))
-            return list(investigations[page * rng:(page + 1) * rng])
-            """
-            #ToDo imrpove
-            #original
-            #get_queryset(self.objectmanager, fltr, regex, ignorecase,replace=False)[page * rng:(page + 1) * rng]
-
-
-        if not current_user.has_role('admin'):
-            shared_ids = [current_user.id]
             shared_ids += [group.id for group in Group.objects(members__in=[current_user.id])]
-            self.objectmanager.objects(Q(sharing__size=0) | Q(sharing__in=shared_ids))
+            investigations = self.objectmanager.objects(Q(sharing__size=0) | Q(sharing__in=shared_ids) & Q(name__exists=fltr["name__exists"]))
 
-        #import code; code.interact(local=dict(globals(), **locals()))
-        investigations = get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)
+        else:
+            investigations = get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)
         return list(investigations)[page * rng:(page + 1) * rng]
 
 
@@ -146,6 +127,7 @@ class Investigation(CrudApi):
             Query[id]: the id of the given node.
 
         """
+        #ToDo sharing permissions
         REF_CLASS = ('observable', 'entity')
 
         data = loads(request.data)
