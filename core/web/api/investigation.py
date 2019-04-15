@@ -33,7 +33,7 @@ class InvestigationSearch(CrudSearchApi):
         if not current_user.has_role('admin'):
             shared_ids = [current_user.id]
             shared_ids += [group.id for group in Group.objects(members__in=[current_user.id])]
-            investigations = self.objectmanager.objects(Q(sharing__size=0) | Q(sharing__in=shared_ids) & Q(name__exists=fltr["name__exists"]))
+            investigations = self.objectmanager.objects((Q(sharing__size=0) | Q(sharing__in=shared_ids)) & Q(name__exists=fltr["name__exists"]))
 
         else:
             investigations = get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)

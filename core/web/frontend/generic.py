@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from flask_classy import FlaskView, route
+from flask_login import current_user
 from flask import render_template, request, redirect, url_for, abort
 from mongoengine import NotUniqueError
 
@@ -9,7 +10,7 @@ from core.errors import GenericValidationError
 from core.indicators import Regex
 from core.database import AttachedFile
 from core.web.helpers import get_object_or_404
-from core.web.helpers import requires_permissions
+from core.web.helpers import requires_permissions, group_user_permission
 
 binding_object_classes = {
     "malware": Malware,
@@ -32,8 +33,15 @@ class GenericView(FlaskView):
     @requires_permissions("read")
     def get(self, id):
         obj = self.klass.objects.get(id=id)
-        return render_template(
-            "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+        if hasattr(obj, "sharing"):
+            if group_user_permission():
+                return render_template(
+                    "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+            else:
+                return(request.referrer)
+        else:
+            return render_template(
+                "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
 
     @requires_permissions("write")
     @route('/new/<string:subclass>', methods=["GET", "POST"])

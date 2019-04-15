@@ -3,12 +3,12 @@ from __future__ import unicode_literals
 from flask_classy import route
 from flask_login import current_user
 from flask import render_template, request, flash, redirect, url_for
-from mongoengine import DoesNotExist
+from mongoengine import DoesNotExist, Q
 
 from core.web.frontend.generic import GenericView
 from core.investigation import Investigation, ImportMethod, ImportResults
-from core.web.helpers import get_object_or_404
-from core.web.helpers import requires_permissions
+from core.web.helpers import get_object_or_404, get_user_groups
+from core.web.helpers import requires_permissions, group_user_permission
 
 from core.database import AttachedFile
 from core.entities import Entity
@@ -26,9 +26,12 @@ class InvestigationView(GenericView):
     @requires_permissions("read", "investigation")
     def graph(self, id):
         investigation = get_object_or_404(Investigation, id=id)
-        return render_template(
-            "{}/graph.html".format(self.klass.__name__.lower()),
-            investigation=bson_renderer(investigation.info()))
+        if group_user_permission(investigation):
+            return render_template(
+                "{}/graph.html".format(self.klass.__name__.lower()),
+                investigation=bson_renderer(investigation.info()))
+        else:
+            return redirect(request.referrer)
 
     @route("/graph/<klass>/<id>")
     @requires_permissions("read", "investigation")
@@ -59,14 +62,10 @@ class InvestigationView(GenericView):
     @route("/import", methods=['GET', 'POST'])
     @requires_permissions("write", "investigation")
     def inv_import(self):
-        if current_user.has_role('admin'):
-            groups =  Group.objects()
-        else:
-            groups = Group.objects(members__in=[current_user.id])
         if request.method == "GET":
             return render_template(
                 "{}/import.html".format(self.klass.__name__.lower()),
-                groups=groups)
+                groups=get_user_groups())
         else:
             text = request.form.get('text')
             url = request.form.get('url')
@@ -88,14 +87,13 @@ class InvestigationView(GenericView):
                         import_method = ImportMethod.objects.get(acts_on="url")
                         results = import_method.run(url)
                     elif "file" in request.files:
-                        target = AttachedFile.from_upload(request.files['file'])
-                        import_method = ImportMethod.objects.get(
-                            acts_on=target.content_type)
-                        results = import_method.run(target)
+                            target = AttachedFile.from_upload(request.files['file'])
+                            import_method = ImportMethod.objects.get(
+                                acts_on=target.content_type)
+                            results = import_method.run(target)
                     else:
                         flash("You need to provide an input", "danger")
                         return redirect(request.referrer)
-
                     return redirect(
                         url_for(
                             'frontend.InvestigationView:import_wait',

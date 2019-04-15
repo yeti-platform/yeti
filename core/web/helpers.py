@@ -11,6 +11,8 @@ from flask import abort, request
 from flask_login import current_user
 from mongoengine import Q
 
+from core.group import Group
+
 SEARCH_REPLACE = {
     'tags': 'tags__name',
 }
@@ -138,3 +140,25 @@ def prevent_csrf(func):
         return func(*args, **kwargs)
 
     return inner
+
+
+def get_user_groups():
+    if current_user.has_role('admin'):
+        groups =  Group.objects()
+    else:
+        groups = Group.objects(members__in=[current_user.id])
+
+    return groups
+
+def group_user_permission(investigation=False):
+    """
+        This aux func aimed to simplify check if user is admin or in group with perms
+    """
+    if current_user.has_role('admin'):
+        return True
+
+    elif investigation and hasattr(investigation, "sharing"):
+        groups = Group.objects(members__in=[current_user.id])
+        return any([group.id in investigation.sharing for group in groups+current_user.id])
+    else:
+        return False
