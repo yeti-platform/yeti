@@ -1,22 +1,21 @@
 $(function() {
-
-  $("#groups").on('click', '.group-toggle', function() {
+  $("#admin").on('click', '.admin-toggle', function() {
     toggle($(this));
   });
-
-  $("#groups").on('click', '.group-remove', function() {
+  $("#admin").on('click', '.admin-remove', function() {
     remove($(this));
   });
-  $("#groups").on('click', '.group-toadmin', function() {
+  $("#admin").on('click', '.admin-toadmin', function() {
     admins($(this));
   });
-  $("#groups").on('click', '.group-fromadmin', function() {
+  $("#admin").on('click', '.admin-fromadmin', function() {
     admins($(this));
   });
 });
 
 
 function toggle(button) {
+  console.log("TOGGLE")
   $.ajax({
     method: "POST",
     headers: {"Accept": "application/json"},

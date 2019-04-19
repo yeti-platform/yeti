@@ -158,7 +158,7 @@ def group_user_permission(investigation=False):
         return True
 
     elif investigation and hasattr(investigation, "sharing"):
-        groups = Group.objects(members__in=[current_user.id])
+        groups = get_user_groups()
         return any([group.id in investigation.sharing for group in groups+current_user.id])
     else:
         return False

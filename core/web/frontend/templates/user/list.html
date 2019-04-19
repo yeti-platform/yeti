@@ -7,22 +7,21 @@ Users
 
 {% block breadcrumb %}
 <ol class="breadcrumb">
-	<li>YETI</li>
+  <li>YETI</li>
   <li>Admin</li>
-	<li class="active">User administration</li>
+  <li class="active">User administration</li>
 </ol>
 {% endblock %}
 
 {% block main %}
 <div class="col-md-9">
-	<div role="tabpanel" class="tab-pane active" id="users" data-url="{{ url_for('api.UserAdminSearch:post')}}"></div>
+  <div role="tabpanel" class="tab-pane active" id="admin" data-url="{{ url_for('api.UserAdminSearch:post')}}"></div>
 </div>
 {% endblock %}
 
 {% block custom_head %}
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/tagfields.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/forms.js") }}" charset="utf-8"></script>
-<script type="text/javascript" src="{{ url_for('frontend.static', filename='yeti/js/useradmin.js') }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/crud.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("static", filename="bootstrap-tokenfield/dist/bootstrap-tokenfield.min.js") }}" charset="utf-8"></script>
 <script type="text/javascript" src="{{ url_for("frontend.static", filename="yeti/js/selection.js") }}" charset="utf-8"></script>
@@ -32,9 +31,9 @@ Users
 
 {% block sidebar %}
 <div class="col-md-3">
-<form data-target="users" data-url="{{ url_for("api.UserAdminSearch:post")}}" class="yeti-crud">
-	<input class="extra-param" type="hidden" name="regex" value="true">
-	<input class="extra-param" type="hidden" name="ignorecase" value="true">
+<form data-target="admin" data-url="{{ url_for("api.UserAdminSearch:post")}}" class="yeti-crud">
+  <input class="extra-param" type="hidden" name="regex" value="true">
+  <input class="extra-param" type="hidden" name="ignorecase" value="true">
   <div class="input-group">
       <input class="form-control input-sm crud-filter" data-default-value="username" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
     <span class="input-group-btn">
@@ -50,7 +49,7 @@ Users
 
   <div class="tip">
     <p>You can reset any user's API key by clicking on the <code>reset</code> button.</p>
-		<p>To temporarily prevent a user from logging in, you can disable their account by clicking on the checkbox</p>
+    <p>To temporarily prevent a user from logging in, you can disable their account by clicking on the checkbox</p>
     <p><strong>Warning:</strong> Removing users cannot be undone</p>
   </div>
 
