@@ -6,7 +6,7 @@ from core.observables import Hash
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
-class CertPaIt(Feed):
+class CertPaIT(Feed):
 
     default_values = {
         'frequency': timedelta(minutes=30),
@@ -15,7 +15,14 @@ class CertPaIt(Feed):
         'description': 'This feed contains data from infosec.cert-pa.it',
     }
 
-    regex = '<p>Filename: <b>(?P<filename>.*)\\</b\\><br>Filetype: (?P<filetype>.*)</p>\n\t+<ul>\n\t+<li>IsDLL: (?P<isdll>[\\w]+)</li>\n\t\t\t\t\t\t\t\t\t<li>Packers: (?P<packers>[\\w]+)</li>\n\t\t\t\t\t\t\t\t\t<li>AntiDBG: (?P<antidbg>[\\w]+)</li>\n\t\t\t\t\t\t\t\t\t<li>AntiVM: (?P<antivm>[\\w]+)</li>\n\t\t\t\t\t\t\t\t\t<li>Signed: (?P<signed>[\\w]+)</li>\n\t\t\t\t\t\t\t\t\t<li>XOR: (?P<xored>[\\w]+)</li>\n\t\t\t\t\t\t\t\t</ul>'
+    regexes = (
+        r"IsDLL: (?P<isdll>\w+)",
+        r"Packers: (?P<packers>\w+)",
+        r"AntiDBG: (?P<antidbg>\w+)",
+        r"AntiVM: (?P<antivm>\w+)",
+        r"Signed: (?P<signed>\w+)",
+        r"XOR: (?P<xor>\w+)",
+    )
 
     def update(self):
         for item in self.update_xml('item', ['title', 'link', 'pubDate', 'description']):
@@ -27,9 +34,16 @@ class CertPaIt(Feed):
         context['date_added'] = parser.parse(item['pubDate'])
         context['source'] = self.name
         context['url'] = item['link']
-        matched = re.match(self.regex, item['description'])
+
+        matched = re.match('<p>Filename: <b>(?P<filename>.*)\\</b\\><br>Filetype: (?P<filetype>.*)</p>', item['description'])
         if matched:
             context.update(matched.groupdict())
+
+        for regex in self.regexes:
+            regex_compiled = re.compile(regex)
+            matched = regex_compiled.search(item['description'])
+            if matched:
+                context.update(matched.groupdict())
 
         try:
             if md5:
