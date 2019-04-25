@@ -10,7 +10,7 @@ class Obtemoslab(Feed):
 
     default_values = {
         "frequency": timedelta(hours=24),
-        "name": "0btemoslab",
+        "name": "Obtemoslab",
         "source" : "http://tracker.0btemoslab.com/tracker/Malware.txt",
         "description": "List of payload locations",
     }
