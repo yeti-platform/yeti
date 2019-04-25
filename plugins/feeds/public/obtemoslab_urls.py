@@ -32,6 +32,6 @@ class Obtemoslab(Feed):
             url_data = Url.get_or_create(value=url)
             url_data.normalize()
             url_data.add_context(context)
-            url_data.add_source("feed")
+            url_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
