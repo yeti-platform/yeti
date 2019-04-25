@@ -50,10 +50,10 @@ class YetiFeedSender(object):
         :param elastic_instance: Elasticsearch connection instance.
         :param elastic_hostname: Elasticsearch hostname.
         :param elastic_port: Elasticsearch indexing port.
-        :param elastic_user: Elasticsearch indexing port.
-        :param elastic_pass: Elasticsearch indexing port.
-        :param elastic_use_ssl: Elasticsearch indexing port.
-        :param elastic_verify_certs: Elasticsearch indexing port.
+        :param elastic_user: Elasticsearch user.
+        :param elastic_pass: Elasticsearch password.
+        :param elastic_use_ssl: Boolean. Use SSL flag.
+        :param elastic_verify_certs: Boolean. Verify certificate flag.
         """
 
         self.elastic_index = elastic_index
