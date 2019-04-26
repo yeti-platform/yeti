@@ -87,9 +87,10 @@ class Investigation(Node):
     def info(self):
         result = self.to_mongo()
         result['nodes'] = [node.to_mongo() for node in self.nodes]
-        result["shared"] = [Group(id=shared_with_id).reload() for shared_with_id in self.sharing if shared_with_id != current_user.id]
-        #ToDo add remove share with all to change to private/group
-        #ToDo add remove private
+        try:
+            result["shared"] = [Group(id=shared_with_id).reload() for shared_with_id in Investigation.objects.get(id=self.id).sharing]
+        except Exception as e:
+            logging.info(e)
         return result
 
     def _node_changes(self, kind, method, links, nodes):
@@ -121,21 +122,22 @@ class Investigation(Node):
 
         return super(Investigation, self).save(*args, **kwargs)
 
-    def sharing_permissions(self, sharing_with):
-
+    def sharing_permissions(self, sharing_with, investigation=False):
         groups = False
-
         if sharing_with == "all":
-            pass
+            #ToDo wipe members, this can be update
+            shared_with_ids = Investigation.objects.get(id=self.id).sharing
+            if shared_with_ids:
+                Investigation.objects.get(id=self.id).update(pull_all__sharing=[shared_with_ids])
         elif sharing_with == "private":
-            self.update(add_to_set__sharing=[current_user.id])
+            Investigation.objects.get(id=self.id).update(add_to_set__sharing=[current_user.id])
         elif sharing_with == "allg":
             groups = Group.objects(members__in=[current_user.id])
         else:
             groups = Group.objects(id=sharing_with)
 
         if groups:
-            self.update(add_to_set__sharing=[group.id for group in groups])
+            Investigation.objects.get(id=self.id).update(add_to_set__sharing=[group.id for group in groups])
 
 class ImportResults(Document):
     import_method = ReferenceField('ImportMethod', required=True)
