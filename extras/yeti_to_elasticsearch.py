@@ -18,14 +18,15 @@ from ssl import SSLWantReadError
 # Logging config
 def set_logging():
     global logger
-
-    logging.basicConfig(format='%(asctime)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s',
+    logging_format = '%(asctime)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s'
+    
+    logging.basicConfig(format=logging_format,
                         level=logging.INFO)
     DEFAULT_JSON_OPTIONS.datetime_representation = 2
 
     logger = logging.getLogger("yeti_to_elastic")
 
-    formatter = logging.Formatter('%(asctime)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(logging_format)
 
     # You may change here the path for the log file
     handler = RotatingFileHandler('yeti_to_elastic.log', maxBytes=20000, backupCount=5)
