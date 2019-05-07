@@ -141,7 +141,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code != 200:
-            return list()
+            return iter(())
 
         return self.parse_xml(r.content, main_node, children)
 
@@ -184,7 +184,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code != 200:
-            return list()
+            return iter(())
         
         feed = r.text.split('\n')
 
@@ -221,7 +221,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code != 200:
-            return list()
+            return iter(())
         
         feed = r.text.split('\n')
         reader = csv.reader(
@@ -254,7 +254,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy,
                 params=params)
         if r.status_code != 200:
-            return list()
+            return iter(())
 
         return r.json()
 
