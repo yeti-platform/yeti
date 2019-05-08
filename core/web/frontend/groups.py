@@ -23,6 +23,7 @@ class GroupView(GenericView):
                 return render_template(
                     "group/profile.html",
                     group=group,
+                    users=User.objects.all(),
                 )
 
         flash("Group not specified", "dangeros")

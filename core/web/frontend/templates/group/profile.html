@@ -18,7 +18,7 @@
 {% block main %}
 <div class="cold-md-12">
 
-	<div class="row" id="groups">
+	<div class="row" id="admin">
 		<div class="col-md-6">
 			<div class="panel panel-primary profile-panel">
 				<div class="panel-heading">
@@ -29,8 +29,8 @@
 					{% for member in group.members %}
 					<tr>
 						<th><a href="{{ url_for('frontend.UsersView:profile', id=member['id'] )}}">{{member.username}}</a></th>
-						<th><span data-url="{{ url_for('frontend.GroupAdminView:usertoadmin', uid=member['id'], gid=group['id'])}}" class="group-toadmin glyphicon glyphicon-ok"></span><th>
-						<th><span data-url="{{ url_for('frontend.GroupAdminView:delfromgroup', uid=member['id'], gid=group['id'])}}" class="group-remove glyphicon glyphicon-trash"></span><th>
+						<th><span data-url="{{ url_for('frontend.GroupAdminView:usertoadmin', uid=member['id'], gid=group['id'])}}" class="admin-toadmin glyphicon glyphicon-ok"></span><th>
+						<th><span data-url="{{ url_for('frontend.GroupAdminView:delfromgroup', uid=member['id'], gid=group['id'])}}" class="admin-remove glyphicon glyphicon-trash"></span><th>
 					</tr>
 					{% endfor %}
 				</table>
@@ -53,6 +53,29 @@
 				</table>
 			</div>
 		</div>
+
+		<div class="col-md-6">
+			<div class="panel panel-primary profile-panel">
+				<div class="panel-heading">
+					<h3 class="panel-title">Add user to group</h3>
+				</div>
+				<table class='table profile'>
+					<tr>
+					<th width="100px"></th><td>
+					<form action={{ url_for("frontend.GroupAdminView:usertogroup") }} method="post">
+						<select name="uid" style="width:150px;">
+						{% for user in users %}
+							   <option value={{user["id"]}}>{{user["username"]}}</option>
+						{% endfor %}
+						</select>
+						<input type="hidden" id="gid" name="gid" value={{group.id}}>
+						<button type="submit" class="btn btn-default btn-sm">Add</button>
+					</form>
+				</td></tr>
+				</table>
+			</div>
+		</div>
+
 	</div>
 
 	{% include 'auth_profile.html' ignore missing %}
