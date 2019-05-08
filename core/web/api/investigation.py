@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import re
+import logging
 from datetime import datetime
 from flask import request
 from flask_classy import route
@@ -99,14 +100,18 @@ class Investigation(CrudApi):
 
         try:
             for node in data['nodes']:
-                if node['type'] in globals() and issubclass(
-                        globals()[node['type']], Observable):
-                    _type = globals()[node['type']]
+                try:
+                    if node['type'] in globals() and issubclass(
+                            globals()[node['type']], Observable):
+                        _type = globals()[node['type']]
 
-                n = _type.get_or_create(value=node['value'])
-                if node['new_tags']:
-                    n.tag(node['new_tags'].split(', '))
-                nodes.append(n)
+                    n = _type.get_or_create(value=node['value'])
+                    if node['new_tags']:
+                        n.tag(node['new_tags'].split(', '))
+                    nodes.append(n)
+                except Exception as e:
+                    logging.error((node, e))
+
 
             i.add([], nodes)
         except Exception, e:
