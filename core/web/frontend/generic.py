@@ -106,7 +106,8 @@ class GenericView(FlaskView):
             try:
                 tags = obj.tags
                 obj.tags = []
-                obj = klass.get_or_create(value=form.formdata["value"])
+                if "value" in form.formdata:
+                    obj = klass.get_or_create(value=form.formdata["value"])
                 if obj.tags:
                     obj.tag(tags, strict=True)
                 obj = obj.save(validate=not skip_validation)
