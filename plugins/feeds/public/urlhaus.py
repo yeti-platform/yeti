@@ -41,8 +41,9 @@ class UrlHaus(Feed):
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
-                url_obs.tag(tags.split(','))
-                url_obs.add_context(context)
-                url_obs.add_source('feed')
+                if url_obs.new or self.name not in url_obs.sources:
+                    url_obs.tag(tags.split(','))
+                    url_obs.add_context(context)
+                    url_obs.add_source(self.name)
             except ObservableValidationError as e:
                 logging.error(e)
