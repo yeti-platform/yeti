@@ -94,8 +94,8 @@ class GenericView(FlaskView):
 
     def handle_form(self, id=None, klass=None, skip_validation=False):
         if klass:  # create
+            obj = klass()
             form = klass.get_form()(request.form)
-            obj = klass.get_or_create(value=form.formdata["value"])
         else:  # update
             obj = self.klass.objects.get(id=id)
             klass = obj.__class__
@@ -104,7 +104,11 @@ class GenericView(FlaskView):
         if form.validate():
             form.populate_obj(obj)
             try:
-                self.pre_validate(obj, request)
+                tags = obj.tags
+                obj.tags = []
+                obj = klass.get_or_create(value=form.formdata["value"])
+                if obj.tags:
+                    obj.tag(tags, strict=True)
                 obj = obj.save(validate=not skip_validation)
                 self.post_save(obj, request)
             except GenericValidationError as e:
