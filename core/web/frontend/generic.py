@@ -94,8 +94,8 @@ class GenericView(FlaskView):
 
     def handle_form(self, id=None, klass=None, skip_validation=False):
         if klass:  # create
-            obj = klass()
             form = klass.get_form()(request.form)
+            obj = klass.get_or_create(value=form.formdata["value"])
         else:  # update
             obj = self.klass.objects.get(id=id)
             klass = obj.__class__
