@@ -92,7 +92,7 @@ class YetiDocument(Document):
             obj.id = cls.objects.get(**select_dict).id
             obj.new = True
             return obj.save()
-        obj = cls.objects.get(**select_dict)
+        obj = cls.objects.get(**select_dict).first()
         obj.new = False
         return obj
 
