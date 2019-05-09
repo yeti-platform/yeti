@@ -77,7 +77,7 @@ class GenericView(FlaskView):
     def edit(self, id):
         obj = self.klass.objects.get(id=id)
         #ToDo Group admins support
-        if current_user.username != obj.created_by or not current_user.has_role('admin'):
+        if hasattr(obj, "created_by") and current_user.username != obj.created_by or not current_user.has_role('admin'):
             return redirect(request.referrer)
 
         if request.method == "POST":
