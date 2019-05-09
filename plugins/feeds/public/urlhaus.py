@@ -27,7 +27,7 @@ class UrlHaus(Feed):
         if not item or item[0].startswith("#"):
             return
 
-        id_feed, dateadded, url, url_status, threat, tags, urlhaus_link = item
+        id_feed, dateadded, url, url_status, threat, tags, urlhaus_link, source = item
 
         context = {
             "id_urlhaus": id_feed,
@@ -35,7 +35,8 @@ class UrlHaus(Feed):
             "status": url_status,
             "source": self.name,
             "report": urlhaus_link,
-            "threat": threat
+            "threat": threat,
+            "source": source,
         }
 
         if url:
