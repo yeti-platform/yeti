@@ -85,7 +85,7 @@ class Investigation(Node):
 
     def info(self):
         result = self.to_mongo()
-        result['nodes'] = [node.to_mongo() for node in self.nodes]
+        result['nodes'] = [node.to_mongo() for node in self.nodes if hasattr(node, "to_mongo")]
 
         return result
 
