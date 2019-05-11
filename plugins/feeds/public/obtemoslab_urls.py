@@ -24,14 +24,10 @@ class Obtemoslab(Feed):
 
     def analyze(self, url):
 
-        context = {}
-        context['date_added'] = datetime.now()
-        context['source'] = self.name
-
         try:
             url_data = Url.get_or_create(value=url)
             url_data.normalize()
-            url_data.add_context(context)
+            url_data.tags(["payload_delivery"])
             url_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
