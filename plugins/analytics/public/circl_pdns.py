@@ -32,12 +32,10 @@ class CirclPDNSApi(object):
         r = requests.get(API_URL + observable.value, auth=auth,
                          headers=headers, proxies=yeti_config.proxy)
         if r.ok:
-            for l in r.text.split('\n'):
-                if not len:
-                    return results
-
+            for l in filter(None, r.text.split('\n')):
                 obj = json.loads(l)
                 results.append(obj)
+
         return results
 
 
@@ -66,7 +64,7 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
         if isinstance(observable, Ip):
             for record in json_result:
                 new = Observable.add_text(record['rrname'])
-                new.add_source('analytics')
+                new.add_source('circl_pdns')
                 links.update(
                     observable.link_to(
                         new,
@@ -80,7 +78,7 @@ class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
         elif isinstance(observable, Hostname):
             for record in json_result:
                 new = Observable.add_text(record["rdata"])
-                new.add_source('analytics')
+                new.add_source('circl_pdns')
                 links.update(
                     observable.link_to(
                         new,
