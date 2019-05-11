@@ -1,8 +1,8 @@
 # Building `doc`
-
+```
    cd doc
    make html
-
+```
 `make` in turn calls `sphinx-build`.
 
 ## Build Failures
