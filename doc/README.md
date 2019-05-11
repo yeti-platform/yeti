@@ -19,4 +19,4 @@
 
 ### `sphinxcontrib.autohttp.flask`
 
-If `sphinx-build` fails looking for this module you need to install `sphinxcontrib.httpdomain`.
+If `sphinx-build` fails looking for this module you need to install `sphinxcontrib-httpdomain`.
