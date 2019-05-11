@@ -35,7 +35,7 @@ class MalshareAPI(object):
                 'api_key': api_key,
                 'action': 'details'
             }
-            response = requests.get('https://malshare.com/api.php', params, verify=False)
+            response = requests.get('https://malshare.com/api.php', params=params)
             if response.ok:
                 return response.json()
             else:
