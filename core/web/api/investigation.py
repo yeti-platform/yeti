@@ -17,7 +17,7 @@ from core.entities import Entity
 from core.web.api.api import render, render_json
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions, get_queryset
-
+from core.errors import ObservableValidationError
 
 class InvestigationSearch(CrudSearchApi):
     template = 'investigation_api.html'
@@ -109,7 +109,7 @@ class Investigation(CrudApi):
                     if node['new_tags']:
                         n.tag(node['new_tags'].split(', '))
                     nodes.append(n)
-                except Exception as e:
+                except ObservableValidationError as e:
                     logging.error((node, e))
 
 
