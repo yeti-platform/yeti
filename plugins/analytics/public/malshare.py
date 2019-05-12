@@ -60,38 +60,40 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
         json_result = MalshareAPI.fetch(
             observable, results.settings['malshare_api_key'])
 
-        if json_result is not None:
-            json_string = json.dumps(
-                json_result, sort_keys=True, indent=4, separators=(',', ': '))
-            results.update(raw=json_string)
-            result = {'raw': json_string}
+        if json_result is None:
+            return list(links)
 
-            if 'SOURCES' in json_result:
-                for source in json_result['SOURCES']:
-                    new_url = None
-                    try:
-                        new_url = Url.get_or_create(value=source.strip())
-                        links.update(
-                            observable.active_link_to(
-                                new_url, 'c2', 'malshare_query'))
-                    except ObservableValidationError:
-                        logging.error(
-                            "An error occurred when trying to add {} to the database".
-                            format(source.strip()))
-                result['nb C2'] = len(json_result['SOURCES'])
-            try:
-                new_hash = Hash.get_or_create(value=json_result['MD5'])
-                links.update(
-                    new_hash.active_link_to(observable, 'md5', 'malshare_query'))
-                new_hash = Hash.get_or_create(value=json_result['SHA1'])
-                links.update(
-                    new_hash.active_link_to(observable, 'sha1', 'malshare_query'))
-                new_hash = Hash.get_or_create(value=json_result['SHA256'])
-                links.update(
-                    new_hash.active_link_to(observable, 'sha256', 'malshare_query'))
-            except ObservableValidationError:
-                logging.error(
-                    "An error occurred when trying to add hashes {} to the database".
-                    format(json_string))
+        json_string = json.dumps(
+            json_result, sort_keys=True, indent=4, separators=(',', ': '))
+        results.update(raw=json_string)
+        result = {'raw': json_string}
+
+        if 'SOURCES' in json_result:
+            for source in json_result['SOURCES']:
+                new_url = None
+                try:
+                    new_url = Url.get_or_create(value=source.strip())
+                    links.update(
+                        observable.active_link_to(
+                            new_url, 'c2', 'malshare_query'))
+                except ObservableValidationError:
+                    logging.error(
+                        "An error occurred when trying to add {} to the database".
+                        format(source.strip()))
+            result['nb C2'] = len(json_result['SOURCES'])
+        try:
+            new_hash = Hash.get_or_create(value=json_result['MD5'])
+            links.update(
+                new_hash.active_link_to(observable, 'md5', 'malshare_query'))
+            new_hash = Hash.get_or_create(value=json_result['SHA1'])
+            links.update(
+                new_hash.active_link_to(observable, 'sha1', 'malshare_query'))
+            new_hash = Hash.get_or_create(value=json_result['SHA256'])
+            links.update(
+                new_hash.active_link_to(observable, 'sha256', 'malshare_query'))
+        except ObservableValidationError:
+            logging.error(
+                "An error occurred when trying to add hashes {} to the database".
+                format(json_string))
 
         return list(links)
