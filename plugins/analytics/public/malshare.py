@@ -39,10 +39,10 @@ class MalshareAPI(object):
             if response.ok:
                 return response.json()
             else:
-                return None
+                raise requests.ConnectionError(response.status_code, response.text)
         except Exception as e:
             # TODO(sebdraven): Catch a better exception
-            print 'Exception while getting ip report {}'.format(e.message)
+            raise requests.ConnectionError(response.status_code, response.text)
         return None
 
 
