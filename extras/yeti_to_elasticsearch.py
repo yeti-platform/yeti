@@ -3,11 +3,13 @@
 # Elastic Stack Version: 6.7
 
 import logging
+import sys
+import textwrap
 import time
 
 from logging.handlers import RotatingFileHandler
 from bson.json_util import DEFAULT_JSON_OPTIONS
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from bson import json_util
 from datetime import datetime
 from elasticsearch import Elasticsearch
@@ -18,15 +20,14 @@ from ssl import SSLWantReadError
 # Logging config
 def set_logging():
     global logger
-    logging_format = '%(asctime)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s'
-    
-    logging.basicConfig(format=logging_format,
+
+    logging.basicConfig(format='%(asctime)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s',
                         level=logging.INFO)
     DEFAULT_JSON_OPTIONS.datetime_representation = 2
 
     logger = logging.getLogger("yeti_to_elastic")
 
-    formatter = logging.Formatter(logging_format)
+    formatter = logging.Formatter('%(asctime)s - %(lineno)d - %(funcName)s - %(levelname)s - %(message)s')
 
     # You may change here the path for the log file
     handler = RotatingFileHandler('yeti_to_elastic.log', maxBytes=20000, backupCount=5)
@@ -37,24 +38,23 @@ def set_logging():
 
 
 class YetiFeedSender(object):
-
     def __init__(self, elastic_index, excluded_feeds=set(), mongo_client=None, mongo_hostname="localhost",
                  elastic_instance=None, elastic_hostname=None, elastic_port=9200, elastic_user=None, elastic_pass=None,
                  elastic_use_ssl=None, elastic_verify_certs=None):
         """
             This class connects to YETI's MongoDB and to Elasticsearch.
             It parses the observable collection in YETI's MongoDB and sends to Elasticsearch.
-        :param elastic_index: Elasticsearch index name.
+        :param elastic_index: Elastic Stack index name.
         :param excluded_feeds: Set that includes feeds to exclude from indexing.
         :param mongo_client: Mongodb client.
         :param mongo_hostname: Mongodb hostname.
-        :param elastic_instance: Elasticsearch connection instance.
-        :param elastic_hostname: Elasticsearch hostname.
-        :param elastic_port: Elasticsearch indexing port.
-        :param elastic_user: Elasticsearch user.
-        :param elastic_pass: Elasticsearch password.
-        :param elastic_use_ssl: Boolean. Use SSL flag.
-        :param elastic_verify_certs: Boolean. Verify certificate flag.
+        :param elastic_instance: Elastic Stack connection instance.
+        :param elastic_hostname: Elastic Stack hostname.
+        :param elastic_port: Elastic Stack indexing port.
+        :param elastic_user: Elastic Stack user.
+        :param elastic_pass: Elastic Stack password.
+        :param elastic_use_ssl: Boolean. Flag to determine if the connection to Elastic Stack should use SSL.
+        :param elastic_verify_certs: Boolean. Flag to determine if the connection to Elastic Stack should verify the certificate.
         """
 
         self.elastic_index = elastic_index
@@ -82,12 +82,19 @@ class YetiFeedSender(object):
 
     def create_mongo_connection(self, hostname="localhost"):
         """
-            Creates a connection to YETI's mongo DB.
+            Creates a connection to YETI's MongoDB.
         :param hostname: Hostname to connect to. Default is "localhost"
         :return: None
         """
 
-        self.mongo_client = MongoClient('mongodb://{}:27017/'.format(hostname))
+        try:
+            # Try connecting to MongoDB for 10ms
+            self.mongo_client = MongoClient('mongodb://{}:27017/'.format(hostname), serverSelectionTimeoutMS=10)
+            self.mongo_client.server_info()
+        except errors.ServerSelectionTimeoutError as mongo_conn_err:
+            logger.exception(("MongoDB connection issue occurred. "
+                              "Error message: " + str(mongo_conn_err)))
+            sys.exit(1)
 
     def create_elastic_connection(self, hostname, port, use_ssl=True, verify_certs=False, username=None, password=None):
         """
@@ -118,6 +125,11 @@ class YetiFeedSender(object):
                                                       verify_certs=verify_certs)
             else:
                 self.elastic_instance = Elasticsearch(hosts=[{'host': hostname, 'port': port}])
+
+        # Check if there is a connection to elastic
+        if not self.elastic_instance.ping():
+            logger.error("Elastic Stack connection issue occurred.")
+            raise ConnectionError
 
     @staticmethod
     def format_observable(observable, excluded_feeds=()):
@@ -246,14 +258,56 @@ class YetiFeedSender(object):
                 logger.error("Unknown Error: {}".format(str(e)))
 
 
-if __name__ == '__main__':
-    sender = YetiFeedSender("yeti-feeds", elastic_hostname="<elastic_hostname>")
+def main():
+    import argparse
+    set_logging()
+
+    parser = argparse.ArgumentParser(
+        prog='YetiToElastic',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent('''\
+          Example:
+                        sender = YetiFeedSender("yeti-feeds",
+                            elastic_hostname="<elastic_hostname>"
+                            excluded_feeds=("AsproxTracker", "UrlHaus"),
+                            elastic_user="ChenErlich",
+                            elastic_pass="YETI",
+                            elastic_use_ssl=True)
+                        sender.extract_and_send()
+
+             '''))
+    parser.add_argument('--elastic_index', type=str, default="yeti-feeds", help='Elastic Stack index name')
+    parser.add_argument('--excluded_feeds', type=set, default=set(), help='Set of feeds to exclude from indexing')
+    parser.add_argument('--mongo_hostname', type=str, help='Mongodb hostname')
+    parser.add_argument('elastic_hostname', type=str, help='Elastic Stack hostname/ip')
+    parser.add_argument('--elastic_port', type=int, default=9200, help='Elastic Stack index name')
+    parser.add_argument('--elastic_user', type=str, help='Elastic Stack user')
+    parser.add_argument('--elastic_pass', type=str, help='Elastic Stack password')
+    parser.add_argument('--elastic_use_ssl', type=bool,
+                        help='Flag to determine if the connection to Elastic Stack should use SSL')
+    parser.add_argument('--elastic_verify_certs', type=bool,
+                        help='Flag to determine if the connection to Elastic Stack should verify the certificate')
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        parser.print_help()
+        exit()
+
+    # Note: There are elastic_instance and mongo_client arguments that can be delivered which are not
+    # present. They are relevant if the YetiFeedSender will be called from a 3rd party and not directly from main.
+
+    sender = YetiFeedSender(args.elastic_index,
+                            excluded_feeds=args.excluded_feeds,
+                            mongo_hostname=args.mongo_hostname,
+                            elastic_hostname=args.elastic_hostname,
+                            elastic_port=args.elastic_port,
+                            elastic_user=args.elastic_user,
+                            elastic_pass=args.elastic_pass,
+                            elastic_use_ssl=args.elastic_use_ssl,
+                            elastic_verify_certs=args.elastic_verify_certs)
+
     sender.extract_and_send()
 
-    """
-    Example:
-        sender = YetiFeedSender("yeti-feeds", elastic_hostname="<elastic_hostname>"
-                                excluded_feeds=("AsproxTracker"),
-                                elastic_port=<elasticsearch_port_to_index>)
-        sender.extract_and_send()
-    """
+
+if __name__ == '__main__':
+    main()
