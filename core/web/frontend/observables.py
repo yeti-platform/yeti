@@ -33,6 +33,11 @@ class ObservableView(GenericView):
             "{}/browse.html".format(self.klass.__name__.lower()),
             export_templates=ExportTemplate.objects.all())
 
+    def create_obj(self, obj, skip_validation):
+        obj = obj.get_or_create(value=obj.value)
+        [obj.tag(tag) for tag in obj.tags]
+        return obj
+
     # override to guess observable type
     @requires_permissions("write", "observable")
     @route('/new', methods=["GET", "POST"])
@@ -97,7 +102,7 @@ class ObservableView(GenericView):
                                     'force-type']].get_or_create(value=txt)
                             else:
                                 o = Observable.add_text(txt)
-                            o.tag(tags) 
+                            o.tag(tags)
                             obs[o.value] = o
                     except (ObservableValidationError, ValueError) as e:
                         logging.error("Error validating {}: {}".format(txt, e))
