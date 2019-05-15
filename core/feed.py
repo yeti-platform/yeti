@@ -106,6 +106,35 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
+    def _make_request(self, headers={}, auth=None, params={}):
+
+        """Helper function. Performs an HTTP request on ``source`` and returns request object.
+
+        Args:
+            headers:    Optional headers to be added to the HTTP request.
+            auth:       Username / password tuple to be sent along with the HTTP request.
+            params:     Optional param to be added to the HTTP request.
+
+        Returns:
+            requests object.
+        """
+
+        if auth:
+            r = requests.get(
+                self.source, 
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.proxy,
+                params=params)
+        else:
+            r = requests.get(
+                self.source, headers=headers, proxies=yeti_config.proxy)
+
+        if r.status_code != 200:
+            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
+
+        return r
+
     def update_xml(self, main_node, children, headers={}, auth=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an XML object, yielding a ``dict`` for each parsed
@@ -131,19 +160,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        if auth:
-            r = requests.get(
-                self.source,
-                headers=headers,
-                auth=auth,
-                proxies=yeti_config.proxy)
-        else:
-            r = requests.get(
-                self.source, headers=headers, proxies=yeti_config.proxy)
-
-        if r.status_code != 200:
-            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
-
+        r = self._make_request(headers, auth)
         return self.parse_xml(r.content, main_node, children)
 
     def parse_xml(self, data, main_node, children):
@@ -174,19 +191,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        if auth:
-            r = requests.get(
-                self.source,
-                headers=headers,
-                auth=auth,
-                proxies=yeti_config.proxy)
-        else:
-            r = requests.get(
-                self.source, headers=headers, proxies=yeti_config.proxy)
-
-        if r.status_code != 200:
-            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
-        
+        r = self._make_request(headers, auth)
         feed = r.text.split('\n')
 
         for line in feed:
@@ -211,19 +216,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        if auth:
-            r = requests.get(
-                self.source,
-                headers=headers,
-                auth=auth,
-                proxies=yeti_config.proxy)
-        else:
-            r = requests.get(
-                self.source, headers=headers, proxies=yeti_config.proxy)
-
-        if r.status_code != 200:
-            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
-        
+        r = self._make_request(headers, auth)
         feed = r.text.split('\n')
         reader = csv.reader(
             self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
@@ -244,19 +237,7 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
 
-        if auth:
-            r = requests.get(
-                self.source,
-                headers=headers,
-                auth=auth,
-                proxies=yeti_config.proxy, params=params)
-        else:
-            r = requests.get(
-                self.source, headers=headers, proxies=yeti_config.proxy,
-                params=params)
-        if r.status_code != 200:
-            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
-
+        r = self._make_request(headers, auth, params)
         return r.json()
 
     def info(self):
