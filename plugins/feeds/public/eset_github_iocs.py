@@ -8,7 +8,6 @@ from core.errors import GenericYetiError
 from core.observables import Observable
 from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email, Certificate
 from core.errors import ObservableValidationError
-from base64 import b64decode
 from core.config.config import yeti_config
 
 utc=pytz.UTC
@@ -18,8 +17,7 @@ class EsetGithubIocs(Feed):
     '''
         How github data works
         1. Retrieve data about latest commits
-        2. Get urls for changed files
-        3. Load changed content
+        2. Load commit defails and process
     '''
 
     if yeti_config.github.token:
@@ -45,15 +43,13 @@ class EsetGithubIocs(Feed):
         'Email': Email,
     }
 
-    #Root path files
     blacklist = ('Makefile', 'LICENSE', 'README.adoc')
     blacklist_domains = ('technet.microsoft.com', 'cloudblogs.microsoft.com', 'capec.mitre.org',  'attack.mitre.org', 'securelist.com', 'blog.avast.com')
 
-    def process_content(self, content, block):
+    def process_content(self, content, filename, commit_date):
         context = dict(source=self.name)
-        context['description'] = 'File: {}'.format(block['path'])
-        context['date_added'] = parser.parse(self.commit_info['commit']['author']['date'])
-
+        context['description'] = 'File: {}'.format(filename)
+        context['date_added'] = parser.parse(commit_date)
 
         if content.startswith('Certificate:') and content.endswith('-----END CERTIFICATE-----\n'):
             #ToDo cert support
@@ -85,14 +81,11 @@ class EsetGithubIocs(Feed):
                                 logging.error(e)
 
     def update(self):
-
         since_last_run = utc.localize(datetime.now() - self.frequency)
         for item in self.update_json(headers = self.headers):
-            self.commit_info = item
             if parser.parse(item['commit']['author']['date']) < since_last_run:
                 break
-            commit_details = self.retrieve_tree_data(item['commit']['tree']['url'])
-            self.analyze(commit_details)
+            self.analyze(item)
 
     def retrieve_tree_data(self, url):
         try:
@@ -104,19 +97,16 @@ class EsetGithubIocs(Feed):
 
         return False
 
-    def analyze(self, commit_info):
-        if commit_info:
-            for block in commit_info.get('tree', []):
-                if block['path'] in self.blacklist:
+    def analyze(self, item):
+        commit_info = self.retrieve_tree_data(item['url'])
+        if commit_info and commit_info.get('files', []):
+            for block in commit_info['files']:
+                if block['filename'] in self.blacklist:
                     continue
-                data = self.retrieve_tree_data(block['url'])
 
-                if data:
-                    if 'tree' in data:
-                        self.analyze(data)
-                    if data.get('encoding', '') == 'base64':
-                        content = b64decode(data['content'])
-                        self.process_content(content, block)
-                    else:
-                        logging.error('Add support for encoding: {} - {}'.format(data.get('encoding', 'Encoding missed'), block['url']))
+                if 'patch' in block:
+                    # load only additions
+                    content = '\n'.join([line[1:] for line in block['patch'].split('\n') if line.startswith('+')])
+                    print(content)
+                    self.process_content(content, block['filename'], item['commit']['author']['date'])
 
