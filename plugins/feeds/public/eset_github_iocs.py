@@ -64,6 +64,5 @@ class EsetGithubIocs(Feed):
 
     def update(self):
         for content, filename in self.update_github():
-            print(content)
             if content:
                 self.process_content(content, filename)
