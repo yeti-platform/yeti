@@ -17,7 +17,7 @@ class EsetGithubIocs(Feed):
     '''
         How github data works
         1. Retrieve data about latest commits
-        2. Load commit defails and process
+        2. Load commit details and process
     '''
 
     if hasattr(yeti_config, 'github') and yeti_config.github.token:
