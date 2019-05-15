@@ -40,7 +40,7 @@ class MalshareAPI(object):
             if response.ok:
                 return response.json()
             else:
-                raise requests.ConnectionError(response.status_code, response.text)
+                raise GenericYetiError('Could not retrieve feed, HTTP response: {}'.format(response.status_code))
         except Exception as e:
             # TODO(sebdraven): Catch a better exception
             raise GenericYetiError('Could not retrieve feed, HTTP response: {}'.format(response.status_code))
