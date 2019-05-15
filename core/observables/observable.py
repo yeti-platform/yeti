@@ -156,20 +156,23 @@ class Observable(Node):
             search_regex = re.compile(cls.regex, re.UNICODE)
 
         for match in re.finditer(search_regex, txt):
-            if cls.is_valid(match):
-                try:
-                    observable = cls(value=match.group('search'))
-                    observable.normalize()
-                    if observable.value not in cls.ignore:
-                        # Replace with existing observable if there is one
-                        try:
-                            observable = cls.objects.get(value=observable.value)
-                        except cls.DoesNotExist:
-                            pass
+            try:
+                if cls.is_valid(match):
+                    try:
+                        observable = cls(value=match.group('search'))
+                        observable.normalize()
+                        if observable.value not in cls.ignore:
+                            # Replace with existing observable if there is one
+                            try:
+                                observable = cls.objects.get(value=observable.value)
+                            except cls.DoesNotExist:
+                                pass
 
-                        results[match.group('search')] = observable
-                except ObservableValidationError:
-                    pass
+                            results[match.group('search')] = observable
+                    except ObservableValidationError:
+                        pass
+            except UnicodeDecodeError:
+                pass
 
         return results
 
