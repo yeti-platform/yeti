@@ -27,7 +27,7 @@ class FeodoTrackerIPBlockList(Feed):
         if not line or line[0].startswith("#"):
             return
 
-        first_seen, c2_ip, c2_port, family = tuple(line)
+        first_seen, c2_ip, c2_port, last_online, family = tuple(line)
 
         tags = []
         tags.append(family.lower())
@@ -36,14 +36,15 @@ class FeodoTrackerIPBlockList(Feed):
 
         context = {
             "first_seen": first_seen,
-            "source": self.name
+            "source": self.name,
+            "last_online": last_online,
         }
 
         try:
             new_url = Url.get_or_create(value="http://{}:{}/".format(
                 c2_ip, c2_port)
             )
-            new_url.add_context(context)
+            new_url.add_context(context, dedup_list=["last_online"])
             new_url.tag(tags)
 
         except ObservableValidationError as e:

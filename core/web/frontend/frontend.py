@@ -74,6 +74,6 @@ def tags():
     return render_template("tags.html")
 
 
-# @frontend.route("/system")
-# def system():
-#     return render_template("system.html")
+@frontend.route("/system")
+def system():
+    return render_template("system.html")
