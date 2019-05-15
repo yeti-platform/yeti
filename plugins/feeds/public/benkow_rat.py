@@ -31,7 +31,7 @@ class BenkowTrackerRat(Feed):
         if line[0] == 'id':
             return
 
-        ID, Family, Url, IP, First_Seen , blank = line
+        _id, family, url, ip, first_seen, _ = line
         if not Url.startswith(('http://', 'https://')):
             Url = "http://"+Url
 
