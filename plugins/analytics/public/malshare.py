@@ -3,6 +3,7 @@ import json
 import requests
 import logging
 
+from core.errors import GenericYetiError
 from core.analytics import OneShotAnalytics
 from core.errors import ObservableValidationError
 from core.observables import Url, Hash
@@ -42,7 +43,7 @@ class MalshareAPI(object):
                 raise requests.ConnectionError(response.status_code, response.text)
         except Exception as e:
             # TODO(sebdraven): Catch a better exception
-            raise requests.ConnectionError(response.status_code, response.text)
+            raise GenericYetiError('Could not retrieve feed, HTTP response: {}'.format(response.status_code))
         return None
 
 
@@ -61,7 +62,7 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
             observable, results.settings['malshare_api_key'])
 
         if json_result is None:
-            return list(links)
+            return []
 
         json_string = json.dumps(
             json_result, sort_keys=True, indent=4, separators=(',', ': '))
