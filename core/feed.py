@@ -290,12 +290,13 @@ class Feed(ScheduleEntry):
 
         since_last_run = utc.localize(datetime.now() - self.frequency)
         for item in self.update_json(headers = headers):
-            if parser.parse(item['commit']['author']['date']) < since_last_run:
+            if parser.parse(item['commit']['author']['date']) > since_last_run:
                 break
             try:
                 return self.parse_commit(item, headers)
             except GenericYetiError as e:
                 logging.error(e)
+        return "", ""
 
     def info(self):
         i = {
