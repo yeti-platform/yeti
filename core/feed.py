@@ -10,6 +10,7 @@ from lxml import etree
 from mongoengine import DoesNotExist
 from mongoengine import StringField
 
+from core.errors import GenericYetiError
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
 from core.scheduling import ScheduleEntry
@@ -141,8 +142,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code != 200:
-            yield ""
-            return 
+            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
 
         return self.parse_xml(r.content, main_node, children)
 
@@ -185,8 +185,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code != 200:
-            yield ""
-            return 
+            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
         
         feed = r.text.split('\n')
 
@@ -223,8 +222,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code != 200:
-            yield ""
-            return 
+            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
         
         feed = r.text.split('\n')
         reader = csv.reader(
@@ -257,8 +255,7 @@ class Feed(ScheduleEntry):
                 self.source, headers=headers, proxies=yeti_config.proxy,
                 params=params)
         if r.status_code != 200:
-            yield ""
-            return 
+            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
 
         return r.json()
 
