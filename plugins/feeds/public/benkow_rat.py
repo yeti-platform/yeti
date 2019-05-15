@@ -31,8 +31,8 @@ class BenkowTrackerRat(Feed):
         if line[0] == 'id':
             return
 
-        _id, family, url, ip, first_seen, _ = line
-        if not Url.startswith(('http://', 'https://')):
+        id, family, url, ip, first_seen, _ = line
+        if not url.startswith(('http://', 'https://')):
             Url = "http://"+Url
 
         context = {}
@@ -44,8 +44,8 @@ class BenkowTrackerRat(Feed):
         tags.append("rat")
 
         try:
-            if  _Url:
-                url = Url.get_or_create(value=Url)
+            if  url:
+                url = Url.get_or_create(value=url)
                 url.add_context(context)
                 url.add_source(self.name)
                 url.tag(tags)
@@ -54,8 +54,8 @@ class BenkowTrackerRat(Feed):
             logging.error(e)
 
         try:
-            if _IP:
-                ip = Ip.get_or_create(value=IP)
+            if ip:
+                ip = Ip.get_or_create(value=ip)
                 ip.add_context(context)
                 ip.add_source(self.name)
                 ip.tag(tags)
