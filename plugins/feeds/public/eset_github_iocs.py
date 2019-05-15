@@ -52,15 +52,16 @@ class EsetGithubIocs(Feed):
             if observables:
                 for key in observables:
                     for ioc in filter(None, observables[key]):
-                        if key == 'Url' and not any([domain in ioc for domain in self.blacklist_domains]):
-                            try:
-                                ioc_data = self.refs[key].get_or_create(value = ioc)
-                                ioc_data.add_context(context)
-                                ioc_data.add_source(self.name)
-                            except ObservableValidationError as e:
-                                logging.error(e)
-                            except UnicodeDecodeError as e:
-                                logging.error(e)
+                        if key == 'Url' and any([domain in ioc for domain in self.blacklist_domains]):
+                            continue
+                        try:
+                            ioc_data = self.refs[key].get_or_create(value = ioc)
+                            ioc_data.add_context(context)
+                            ioc_data.add_source(self.name)
+                        except ObservableValidationError as e:
+                            logging.error(e)
+                        except UnicodeDecodeError as e:
+                            logging.error(e)
 
     def update(self):
         for content, filename in self.update_github():
