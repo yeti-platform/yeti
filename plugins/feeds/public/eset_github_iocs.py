@@ -20,7 +20,7 @@ class EsetGithubIocs(Feed):
         2. Load commit defails and process
     '''
 
-    if yeti_config.github.token:
+    if hasattr(yeti_config, 'github') and yeti_config.github.token:
         token = yeti_config.github.token
         headers = {'Authorization': 'token {}'.format(token)}
     else:
@@ -107,6 +107,5 @@ class EsetGithubIocs(Feed):
                 if 'patch' in block:
                     # load only additions
                     content = '\n'.join([line[1:] for line in block['patch'].split('\n') if line.startswith('+')])
-                    print(content)
                     self.process_content(content, block['filename'], item['commit']['author']['date'])
 
