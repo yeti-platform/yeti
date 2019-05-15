@@ -30,30 +30,26 @@ class ViruSign(Feed):
     def analyze(self, line):
         ssdeep, imphash, sha256, sha1, md5 = line
         context = {}
-        context['date_added'] = datetime.now()
         context['source'] = self.name
 
         try:
             md5_data = Hash.get_or_create(value=md5)
-            if md5_data.new is True or self.name not in md5_data.sources:
-                md5_data.add_context(context)
-                md5_data.add_source(self.name)
+            md5_data.add_context(context)
+            md5_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
 
         try:
             sha1_data = Hash.get_or_create(value=sha1)
-            if sha1_data.new is True or self.name not in sha1_data.sources:
-                sha1_data.add_context(context)
-                sha1_data.add_source(self.name)
+            sha1_data.add_context(context)
+            sha1_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
 
         try:
             sha256_data = Hash.get_or_create(value=sha256)
-            if sha256_data.new is True or self.name not in sha256_data.sources:
-                sha256_data.add_context(context)
-                sha256_data.add_source(self.name)
+            sha256_data.add_context(context)
+            sha256_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
 
