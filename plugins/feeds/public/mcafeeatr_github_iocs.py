@@ -66,7 +66,7 @@ class McAfeeATRGithubIocs(Feed):
                         ioc_data.add_context(context)
                         ioc_data.add_source(self.name)
                     except ObservableValidationError as e:
-                            logging.error(e)
+                        logging.error(e)
                     except UnicodeDecodeError as e:
                         logging.error(e)
 
