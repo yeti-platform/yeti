@@ -122,15 +122,15 @@ class Investigation(Node):
 
         return super(Investigation, self).save(*args, **kwargs)
 
-    def sharing_permissions(self, sharing_with, investigation=False):
+    def sharing_permissions(self, sharing_with, investigation=False, invest_id=False):
         groups = False
         if sharing_with == "all":
             #ToDo wipe members, this can be update
             shared_with_ids = Investigation.objects.get(id=self.id).sharing
             if shared_with_ids:
-                Investigation.objects.get(id=self.id).update(pull_all__sharing=[shared_with_ids])
+                Investigation.objects.get(id=invest_id or self.id).update(pull_all__sharing=[shared_with_ids])
         elif sharing_with == "private":
-            Investigation.objects.get(id=self.id).update(add_to_set__sharing=[current_user.id])
+            Investigation.objects.get(id=invest_id or self.id).update(add_to_set__sharing=[current_user.id])
         elif sharing_with == "allg":
             groups = Group.objects(members__in=[current_user.id])
         else:

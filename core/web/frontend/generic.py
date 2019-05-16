@@ -120,12 +120,12 @@ class GenericView(FlaskView):
         #import code; code.interact(local=dict(globals(), **locals()))
         if form.validate():
             form.populate_obj(obj)
-            if form.formdata.get("sharing") and hasattr(klass, "sharing_permissions"):
-                obj.sharing_permissions(form.formdata["sharing"], obj.sharing)
             try:
                 self.pre_validate(obj, request)
                 obj = obj.save(validate=not skip_validation)
                 self.post_save(obj, request)
+                if form.formdata.get("sharing") and hasattr(klass, "sharing_permissions"):
+                    obj.sharing_permissions(form.formdata["sharing"], obj.sharing)
             except GenericValidationError as e:
                 # failure - redirect to edit page
                 form.errors['General Error'] = [e]
