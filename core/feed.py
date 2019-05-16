@@ -268,7 +268,7 @@ class Feed(ScheduleEntry):
                         if data.get('name', ''):
                             block['filename'] = data['name']
 
-            yield content, block['filename']
+                yield content, block['filename']
 
     def update_github(self, headers={}, auth=None, params={}):
         """Helper function. Grabs data about latest commits iterates them.
@@ -296,7 +296,7 @@ class Feed(ScheduleEntry):
                 return self.parse_commit(item, headers)
             except GenericYetiError as e:
                 logging.error(e)
-        return "", ""
+        return ""
 
     def info(self):
         i = {
