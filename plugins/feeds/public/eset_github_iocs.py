@@ -64,6 +64,7 @@ class EsetGithubIocs(Feed):
                             logging.error(e)
 
     def update(self):
-        for content, filename in self.update_github():
+        for content in self.update_github():
             if content:
+                content, filename = content
                 self.process_content(content, filename)
