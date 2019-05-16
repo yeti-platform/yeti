@@ -9,8 +9,8 @@ from core.errors import ObservableValidationError
 from hashlib import sha1
 
 def aux_checker(json_result):
-    if not json_result:
-        return [], []
+    if not json_result or not json_result.get("results"):
+        raise GenericYetiError("Results missed")
 
     json_string = json.dumps(
         json_result,
@@ -24,11 +24,7 @@ def aux_checker(json_result):
         "source", "threatminer_query",
     }
 
-    #result.update(raw=json_string)
     _results = json_result.get("results")
-
-    if not _results:
-        return [], []
 
     return _results, result
 
@@ -74,8 +70,6 @@ class MetaData(OneShotAnalytics, ThreatMinerApi):
         json_result = ThreatMinerApi.fetch(observable, params, "sample.php")
 
         _results, result = aux_checker(json_result)
-        if not _results:
-            return []
 
         for r in _results:
             hashes = {
@@ -121,8 +115,6 @@ class HttpTraffic(OneShotAnalytics, ThreatMinerApi):
         json_result = ThreatMinerApi.fetch(observable, params, "sample.php")
 
         _results, result = aux_checker(json_result)
-        if not _results:
-            return []
 
         for r in _results:
             _http_requests = r.get("http_traffic")
@@ -178,27 +170,19 @@ class RelatedHosts(OneShotAnalytics, ThreatMinerApi):
         params = {"q": observable.value, "rt": 3}
         json_result = ThreatMinerApi.fetch(observable, params, "sample.php")
         _results, result = aux_checker(json_result)
-        if not _results:
-            return []
 
         for r in _results:
-            _hosts = r.get("hosts")
-            if _hosts:
-                for ip in _hosts:
-                    try:
-                        o_ip = Ip.get_or_create(value=ip)
-                        o_ip.tag(observable.get_tags())
-                        links.update(o_ip.active_link_to(observable,
-                            "seen connecting to", "ThreatMiner")
-                        )
-                    except ObservableValidationError as e:
-                        logging.error("Caught an exception: {}".format(e))
+            for ip in r.get("hosts"):
+                try:
+                    o_ip = Ip.get_or_create(value=ip)
+                    o_ip.tag(observable.get_tags())
+                    links.update(o_ip.active_link_to(observable,
+                        "seen connecting to", "ThreatMiner")
+                    )
+                except ObservableValidationError as e:
+                    logging.error("Caught an exception: {}".format(e))
 
-            _domains = r.get("domains")
-            if not _domains:
-                continue
-
-            for domain in _domains:
+            for domain in r.get("domains"):
                 try:
                     if domain.get("domain"):
                         o_host = Hostname.get_or_create(
@@ -242,8 +226,6 @@ class LookupSubdomains(OneShotAnalytics, ThreatMinerApi):
         json_result = ThreatMinerApi.fetch(observable, params, "domain.php")
 
         _results, result = aux_checker(json_result)
-        if not _results:
-            return []
 
         for r in _results:
             try:
@@ -282,8 +264,6 @@ class ThreatMinerPDNS(OneShotAnalytics, ThreatMinerApi):
             params = {"q": observable.value, "rt": 2}
             json_result = ThreatMinerApi.fetch(observable, params, "host.php")
             _results, result = aux_checker(json_result)
-            if not _results:
-                return []
 
             for r in _results:
                 o_hostname = Hostname.get_or_create(value=r.get("domain"))
@@ -299,8 +279,6 @@ class ThreatMinerPDNS(OneShotAnalytics, ThreatMinerApi):
             json_result = ThreatMinerApi.fetch(observable, params, "domain.php")
 
             _results, result = aux_checker(json_result)
-            if not _results:
-                return []
 
             for r in _results:
                 o_ip = Ip.get_or_create(value=r.get("ip"))
@@ -338,8 +316,6 @@ class SearchUri(OneShotAnalytics, ThreatMinerApi):
             json_result = ThreatMinerApi.fetch(observable, params, "domain.php")
 
             _results, result = aux_checker(json_result)
-            if not _results:
-                return []
 
             for r in _results:
                 try:
@@ -359,8 +335,6 @@ class SearchUri(OneShotAnalytics, ThreatMinerApi):
             json_result = ThreatMinerApi.fetch(observable, params, "host.php")
 
             _results, result = aux_checker(json_result)
-            if not _results:
-                return []
 
             for r in _results:
                 try:
@@ -399,8 +373,6 @@ class RelatedSamples(OneShotAnalytics, ThreatMinerApi):
             json_result = ThreatMinerApi.fetch(observable, params, "domain.php")
 
             _results, result = aux_checker(json_result)
-            if not _results:
-                return []
 
             for r in _results:
                 hashes = {
@@ -425,8 +397,6 @@ class RelatedSamples(OneShotAnalytics, ThreatMinerApi):
             params = {"q": observable.value, "rt": 4}
             json_result = ThreatMinerApi.fetch(observable, params, "host.php")
             _results, result = aux_checker(json_result)
-            if not _results:
-                return []
 
             for r in _results:
                 hashes = {
@@ -472,8 +442,6 @@ class ThreatMinerReverseWHOIS(OneShotAnalytics, ThreatMinerApi):
         json_result = ThreatMinerApi.fetch(observable, params, "email.php")
 
         _results, result = aux_checker(json_result)
-        if not _results:
-            return []
 
         for r in _results:
             try:
