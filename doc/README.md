@@ -1,4 +1,4 @@
-# Building `doc`
+# Building `doc/`
 
 The "standard documentation" is an HTML tree which is under this directory as `_build/html/`.
 
