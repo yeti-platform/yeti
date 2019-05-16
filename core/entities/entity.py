@@ -80,12 +80,22 @@ class Entity(Node):
         return []
 
     def info(self):
+        """Object info.
+        
+        When there is no Flask context, url and human_url are not returned and the
+        object id is returned instead.
+        """
         i = {
             "name": self.name,
             "description": self.description,
             "tags": self.tags
         }
-        i['url'] = url_for("api.Entity:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for(
-            "frontend.EntityView:get", id=str(self.id), _external=True)
+        try:
+            i['url'] = url_for("api.Entity:post", id=str(self.id), _external=True)
+            i['human_url'] = url_for(
+                "frontend.EntityView:get", id=str(self.id), _external=True)
+        except RuntimeError:
+            i['id'] = str(self.id)
+
+
         return i
