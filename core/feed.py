@@ -248,6 +248,13 @@ class Feed(ScheduleEntry):
         """
             Helper function used to parse github commit and extract content.
             See :func:`core.feed.Feed.update_github` for details
+            
+        Args:
+            item:    All details about an github commit
+            headers: Used for correct github auth or empty
+
+        Returns:
+            Yields all new content for the commit and filename of the original file
         """
 
         commit_info = self._make_request(url = item['url'], headers=headers).json()
@@ -263,7 +270,7 @@ class Feed(ScheduleEntry):
 
                 elif 'contents_url' in block:
                     data = self._make_request(url = block['contents_url'], headers = headers).json()
-                    if data.get('encoding', '') and data.get('content', ''):
+                    if data.get('encoding') and data.get('content'):
                         content = b64decode(data['content'])
                         if data.get('name', ''):
                             block['filename'] = data['name']
@@ -280,6 +287,8 @@ class Feed(ScheduleEntry):
 
         Returns:
             Python ``dict`` object representing the response JSON.
+            Example:
+                https://api.github.com/repos/eset/malware-ioc/commits/2602f02a1b0ff6d4cfcefecf93f3b4320d8b4207
         """
 
         if hasattr(yeti_config, 'github') and yeti_config.github.token:
@@ -296,7 +305,7 @@ class Feed(ScheduleEntry):
                 return self.parse_commit(item, headers)
             except GenericYetiError as e:
                 logging.error(e)
-        return ""
+        return []
 
     def info(self):
         i = {
