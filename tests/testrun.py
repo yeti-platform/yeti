@@ -17,7 +17,7 @@ from core.observables import Tag
 from core.exports import Export, ExportTemplate
 
 ## Clean slate
-db = connect('yeti',host=yeti_config.mongodb.host)
+db = connect('yeti', host=yeti_config.mongodb.host)
 db.drop_database('yeti')
 
 ## Populate database with initial values
