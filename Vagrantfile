@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -7,48 +9,44 @@
 # you're doing.
 
 Vagrant.configure("2") do |config|
-
-# boxes at https://atlas.hashicorp.com/search.
+  # boxes at https://atlas.hashicorp.com/search.
   config.vm.box = "ubuntu/xenial64"
 
-# Automatic Vagrant Box Update check (don't turn this off)
+  # Automatic Vagrant Box Update check (don't turn this off)
   config.vm.box_check_update = true
 
-# Create a forwarded port mapping which allows access to a specific port
-# within the machine from a port on the host machine. In the example below,
-# accessing "localhost:8080" will access port 80 on the guest machine.
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
   config.vm.network "forwarded_port", guest: 80, host: 8080
 
-# Create a private network, which allows host-only access to the machine
-# using a specific IP.
-# config.vm.network "private_network", ip: "192.168.33.10"
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
 
-# Create a public network, which generally matched to bridged network.
-# Bridged networks make the machine appear as another physical device on
-# your network.
-# config.vm.network "public_network"
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
 
-# Provider-specific configuration so you can fine-tune various
-# backing providers for Vagrant. These expose provider-specific options.
-# Example for VirtualBox:
-#
-   config.vm.provider "virtualbox" do |vb|
-     # Display the VirtualBox GUI when booting the machine
-     vb.gui = true
-
-     # Customize the amount of memory on the VM:
-     vb.memory = "4024"
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  config.vm.provider "virtualbox" do |vb|
+    # Customize the amount of memory on the VM:
+    vb.memory = "4024"
   end
 
-# Configure auto-mounting local directory (location of the Yeti Git Repo, cloned locally) into the Vagrant Box.
+  # Configure auto-mounting local directory (location of the Yeti Git Repo, cloned locally) into the Vagrant Box.
 
-  config.vm.synced_folder "./", "/opt/yeti", mount_options: ["uid=1001", "gid=1001"]
+  config.vm.synced_folder "./", "/opt/yeti", mount_options: ["uid=2001", "gid=2001"]
 
-# Provision the Vagrant Box with the necessary configurations.
+  # Provision the Vagrant Box with the necessary configurations.
 
   config.vm.provision "shell", inline: <<-SHELL
 
-    sudo useradd -u 1001 -G sudo yeti
+    sudo useradd -u 2001 -G sudo yeti
 
     # Mount the referenced sync'd folder from above.  There is a gotcha here as Vagrant auto-names the mountpoint,
     # so any adjustment to the path will adjust the naming convention below (opt_yet).
@@ -59,21 +57,24 @@ Vagrant.configure("2") do |config|
     # These defaults can be changed, but systemd files must be altered to match.
 
     mkdir -p /opt/yeti
+    mkdir -p /var/log/yeti
     chown yeti:yeti /opt/yeti
+    chown yeti:yeti /var/log/yeti
     cd /opt/yeti
 
     # Install the Yarn Repo (required by Yeti)
     export LC_ALL="en_US.UTF-8"
     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+    curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 
     # Install Yeti package dependencies.
 
     sudo apt-get update -y
     sudo apt-get install build-essential git python-dev mongodb redis-server libxml2-dev libxslt-dev zlib1g-dev python-virtualenv python-pip nginx yarn -y
-    pip install --upgrade pip
+    sudo pip install --upgrade pip
     pip install -r requirements.txt
-    pip install uwsgi
+    sudo pip install uwsgi
     yarn install
 
     # Enable Yeti services via systemd. (*NOTE* The user yeti and default path of /opt/yet are hard coded)
@@ -116,6 +117,6 @@ Vagrant.configure("2") do |config|
     sudo systemctl status yeti_beat.service
     sudo systemctl status yeti_uwsgi.service
 
-SHELL
-# End statement of provisioning script.
+  SHELL
+  # End statement of provisioning script.
 end # End of Vagrant Config File.
