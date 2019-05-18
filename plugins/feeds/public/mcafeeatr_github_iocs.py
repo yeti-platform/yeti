@@ -42,10 +42,8 @@ class McAfeeATRGithubIocs(Feed):
         context['description'] = 'File: {}'.format(filename)
 
         if content.startswith('Certificate:') and content.endswith('-----END CERTIFICATE-----\n'):
-            #ToDo cert support
-            return
             try:
-                cert_data = Certificate.get_or_create(value=content)
+                cert_data = Certificate.from_data(content)
                 cert_data.add_context(context)
                 cert_data.add_source(self.name)
             except ObservableValidationError as e:
