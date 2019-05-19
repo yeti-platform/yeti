@@ -131,6 +131,7 @@ function refresh_table(form) {
   $.ajax({
     method: "POST",
     data: JSON.stringify(query),
+    headers: {"Accept": "text/html"},
     contentType: "application/json",
     url: form.data("url"),
     success: function(data) {

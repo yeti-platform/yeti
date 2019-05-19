@@ -912,6 +912,7 @@ class Investigation {
       data: JSON.stringify(data),
       success: callback,
       dataType: 'json',
+      headers: {"Accept": "text/html"},
       contentType: 'application/json',
     });
   }
@@ -1182,6 +1183,7 @@ class Investigation {
           url: '/api/investigation/rename/' + self.id,
           data: JSON.stringify({name: newName}),
           dataType: 'json',
+          headers: {"Accept": "text/html"},
           contentType: 'application/json',
         }).fail(function (d) {
           notify('Could not save new name.', 'danger');
