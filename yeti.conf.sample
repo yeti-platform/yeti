@@ -73,3 +73,15 @@
 # comma separated list of tlds, WITHOUT dots, example: bit,tor2web,pw
 # extra_suffixes =
 # suffix_list_urls =
+
+[api]
+
+## Media Type resolution order in the API, for e.g. 'Accept: */*': prefer JSON or HTML?
+## If you think the UI is not working properly you might try HTML first. If that fixes
+## your problem, please open an issue on GitHub. On the other hand, the API may kick 500
+## errors if HTML is first. In either case, requests to the API which aren't explicitly
+## application/json or text/html will log at WARN.
+# json_first = True
+
+## Logging level, one of ERROR, WARN, INFO
+# logging_level = ERROR
