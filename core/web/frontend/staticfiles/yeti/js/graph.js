@@ -1156,7 +1156,6 @@ class Investigation {
     }
 
     function validateNameChange(e) {
-      console.log(e)
       e.preventDefault();
       var nameElement = $('#graph-sidebar-investigation-name span');
       var input = $('#graph-sidebar-investigation-name input');
