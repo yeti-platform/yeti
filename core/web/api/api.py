@@ -1,13 +1,29 @@
 from __future__ import unicode_literals
 
-from flask import Blueprint
+import logging
+
+from functools import wraps
+
+from flask import Blueprint, request
 from flask_negotiation import Render
 from flask_negotiation.renderers import renderer, template_renderer
 from json import dumps
 
 from core.web.json import to_json, recursive_encoder
+from core.config.config import yeti_config
 
 api = Blueprint("api", __name__, template_folder="templates")
+
+def check_accept_header():
+    """Added as a before_request() handler to log 'Accept: */*'"""
+    if request.headers.get('Accept','').lower() in ('application/json','text/html'):
+        return
+    logging.warn('Request for {} with Accept: other than application/json or text/html: {}'.format(
+                    request.base_url, request.headers.get('Accept','Not provided')
+                ))
+    return
+
+api.before_request(check_accept_header)
 
 # If you're querying Yeti's API from another app,
 # these lines might be useful:
@@ -15,14 +31,18 @@ api = Blueprint("api", __name__, template_folder="templates")
 # from flask_cors import CORS, cross_origin
 # CORS(api, resources={r"*": {"origins": "*"}})
 
-
 @renderer('application/json')
 def bson_renderer(objects, template=None, ctx=None):
     data = recursive_encoder(objects)
     return dumps(data, default=to_json)
 
-
-render = Render(renderers=[template_renderer, bson_renderer])
+# This is waaaaay complicated internally, but in the case where the same requested
+# media type matches for multiple renderers (which is the case when the (only) media
+# type is 'Accept: */*') then the earliest one in the list takes precedence.
+if yeti_config.api.json_first:
+    render = Render(renderers=[bson_renderer, template_renderer])       # JSON first
+else:
+    render = Render(renderers=[template_renderer, bson_renderer])       # HTML first
 render_json = Render(renderers=[bson_renderer])
 
 from core.web.api.observable import ObservableSearch, Observable
