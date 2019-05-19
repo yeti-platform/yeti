@@ -3,6 +3,7 @@ import json
 import requests
 import logging
 
+from core.errors import GenericYetiError
 from core.analytics import OneShotAnalytics
 from core.errors import ObservableValidationError
 from core.observables import Url, Hash
@@ -35,14 +36,14 @@ class MalshareAPI(object):
                 'api_key': api_key,
                 'action': 'details'
             }
-            response = requests.get('https://malshare.com/api.php', params)
+            response = requests.get('https://malshare.com/api.php', params=params)
             if response.ok:
                 return response.json()
             else:
-                return None
+                raise GenericYetiError('Could not retrieve feed, HTTP response: {}'.format(response.status_code))
         except Exception as e:
             # TODO(sebdraven): Catch a better exception
-            print 'Exception while getting ip report {}'.format(e.message)
+            raise GenericYetiError('Could not retrieve feed, HTTP response: {}'.format(response.status_code))
         return None
 
 
@@ -59,6 +60,10 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
         links = set()
         json_result = MalshareAPI.fetch(
             observable, results.settings['malshare_api_key'])
+
+        if json_result is None:
+            return []
+
         json_string = json.dumps(
             json_result, sort_keys=True, indent=4, separators=(',', ': '))
         results.update(raw=json_string)
