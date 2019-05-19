@@ -1155,6 +1155,32 @@ class Investigation {
       $('#graph-sidebar-investigation-name span').text(self.name);
     }
 
+    function validateNameChange(e) {
+      console.log(e)
+      e.preventDefault();
+      var nameElement = $('#graph-sidebar-investigation-name span');
+      var input = $('#graph-sidebar-investigation-name input');
+
+      var newName = input.val();
+
+      $.ajax({
+        type: 'POST',
+        url: '/api/investigation/rename/' + self.id,
+        data: JSON.stringify({name: newName}),
+        dataType: 'json',
+        contentType: 'application/json',
+      }).fail(function (d) {
+        notify('Could not save new name.', 'danger');
+      });
+
+      input.addClass('hidden');
+      nameElement.text(newName);
+      nameElement.removeClass('hidden unsaved');
+    }
+
+    $('#graph-sidebar-investigation-name form').submit(validateNameChange);
+    $('#graph-sidebar-investigation-name input').focusout(validateNameChange);
+
     $('#graph-sidebar-investigation-name a').on('click', function(e) {
       e.preventDefault();
 
@@ -1171,29 +1197,6 @@ class Investigation {
       nameElement.addClass('hidden');
       input.removeClass('hidden');
       input.focus();
-
-      function validateNameChange(e) {
-        e.preventDefault();
-
-        var newName = input.val();
-
-        $.ajax({
-          type: 'POST',
-          url: '/api/investigation/rename/' + self.id,
-          data: JSON.stringify({name: newName}),
-          dataType: 'json',
-          contentType: 'application/json',
-        }).fail(function (d) {
-          notify('Could not save new name.', 'danger');
-        });
-
-        input.addClass('hidden');
-        nameElement.text(newName);
-        nameElement.removeClass('hidden unsaved');
-      }
-
-      form.on('submit', validateNameChange);
-      input.focusout(validateNameChange);
     });
 
     // Quick Add
