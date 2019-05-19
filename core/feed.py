@@ -302,7 +302,6 @@ class Feed(ScheduleEntry):
             headers = {'Authorization': 'token ' + yeti_config.github.token}
         else:
             headers = {}
-            #raise GenericYetiError('You need to set a github token in yeti.conf')
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
         for item in self.update_json(headers=headers):
