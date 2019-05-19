@@ -5,9 +5,11 @@ import logging
 import argparse
 
 from core.web import webapp
+from core.config.config import yeti_config
 
+LOGGING_LEVELS = dict(ERROR=logging.ERROR, WARN=logging.WARN, INFO=logging.INFO)
 logging.basicConfig(
-    format='%(levelname)s:%(module)s:%(message)s', level=logging.ERROR)
+    format='%(levelname)s:%(module)s:%(message)s', level=LOGGING_LEVELS[yeti_config.api.logging_level])
 
 
 def webserver(args):
