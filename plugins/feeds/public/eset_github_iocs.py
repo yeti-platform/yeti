@@ -8,6 +8,7 @@ from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email, Certifi
 from core.errors import ObservableValidationError
 from core.config.config import yeti_config
 
+
 class EsetGithubIocs(Feed):
 
     default_values = {
@@ -27,13 +28,16 @@ class EsetGithubIocs(Feed):
     }
 
     blacklist = ('Makefile', 'LICENSE', 'README.adoc')
-    blacklist_domains = ('technet.microsoft.com', 'cloudblogs.microsoft.com', 'capec.mitre.org',  'attack.mitre.org', 'securelist.com', 'blog.avast.com')
+    blacklist_domains = (
+        'technet.microsoft.com', 'cloudblogs.microsoft.com', 'capec.mitre.org',
+        'attack.mitre.org', 'securelist.com', 'blog.avast.com')
 
     def process_content(self, content, filename):
         context = dict(source=self.name)
         context['description'] = 'File: {}'.format(filename)
 
-        if content.startswith('Certificate:') and content.endswith('-----END CERTIFICATE-----\n'):
+        if content.startswith('Certificate:') and content.endswith(
+                '-----END CERTIFICATE-----\n'):
 
             try:
                 cert_data = Certificate.from_data(content)
@@ -51,10 +55,11 @@ class EsetGithubIocs(Feed):
 
             for key in observables:
                 for ioc in filter(None, observables[key]):
-                    if key == 'Url' and any([domain in ioc for domain in self.blacklist_domains]):
+                    if key == 'Url' and any(
+                        [domain in ioc for domain in self.blacklist_domains]):
                         continue
                     try:
-                        ioc_data = self.refs[key].get_or_create(value = ioc)
+                        ioc_data = self.refs[key].get_or_create(value=ioc)
                         ioc_data.add_context(context)
                         ioc_data.add_source(self.name)
                     except ObservableValidationError as e:

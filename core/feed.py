@@ -18,7 +18,8 @@ from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
 from core.scheduling import ScheduleEntry
 
-utc=pytz.UTC
+utc = pytz.UTC
+
 
 @celery_app.task
 def update_feed(feed_id):
@@ -30,8 +31,8 @@ def update_feed(feed_id):
     except DoesNotExist:
         try:
             Feed.objects.get(
-                id=feed_id, lock=False).modify(
-                    lock=True)  # get object and change lock
+                id=feed_id,
+                lock=False).modify(lock=True)  # get object and change lock
             f = Feed.objects.get(id=feed_id)
         except DoesNotExist:
             # no unlocked Feed was found, notify and return...
@@ -111,7 +112,6 @@ class Feed(ScheduleEntry):
     # Helper functions
 
     def _make_request(self, headers={}, auth=None, params={}, url=False):
-
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
         Args:
@@ -135,7 +135,8 @@ class Feed(ScheduleEntry):
                 url or self.source, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code != 200:
-            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
+            raise GenericYetiError(
+                "{} returns code: {}".format(self.source, r.status_code))
 
         return r
 
@@ -248,7 +249,7 @@ class Feed(ScheduleEntry):
         """
             Helper function used to parse github commit and extract content.
             See :func:`core.feed.Feed.update_github` for details
-            
+
         Args:
             item:    All details about an github commit
             headers: Used for correct github auth or empty
@@ -257,7 +258,8 @@ class Feed(ScheduleEntry):
             Yields all new content for the commit and filename of the original file
         """
 
-        commit_info = self._make_request(url = item['url'], headers=headers).json()
+        commit_info = self._make_request(
+            url=item['url'], headers=headers).json()
         if commit_info and commit_info.get('files', []):
             for block in commit_info['files']:
                 if block['filename'] in self.blacklist:
@@ -266,10 +268,15 @@ class Feed(ScheduleEntry):
                 content = False
                 if 'patch' in block:
                     # load only additions
-                    content = '\n'.join([line[1:] for line in block['patch'].split('\n') if line.startswith('+')])
+                    content = '\n'.join([
+                        line[1:]
+                        for line in block['patch'].split('\n')
+                        if line.startswith('+')
+                    ])
 
                 elif 'contents_url' in block:
-                    data = self._make_request(url = block['contents_url'], headers = headers).json()
+                    data = self._make_request(
+                        url=block['contents_url'], headers=headers).json()
                     if data.get('encoding') and data.get('content'):
                         content = b64decode(data['content'])
                         if data.get('name', ''):
@@ -298,7 +305,7 @@ class Feed(ScheduleEntry):
             #raise GenericYetiError('You need to set a github token in yeti.conf')
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
-        for item in self.update_json(headers = headers):
+        for item in self.update_json(headers=headers):
             if parser.parse(item['commit']['author']['date']) > since_last_run:
                 break
             try:
@@ -309,12 +316,9 @@ class Feed(ScheduleEntry):
 
     def info(self):
         i = {
-            k: v
-            for k, v in self._data.items()
-            if k in
+            k: v for k, v in self._data.items() if k in
             ["name", "enabled", "description", "source", "status", "last_run"]
         }
         i['frequency'] = str(self.frequency)
         i['id'] = str(self.id)
         return i
-
