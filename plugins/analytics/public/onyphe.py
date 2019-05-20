@@ -1,8 +1,17 @@
-import sys
+"""
+onyphe.client
+~~~~~~~~~~~~~
+
+This module implements the Onyphe API.
+
+:copyright: (c) 2017- by Sebastien Larinier
+"""
+
 import json
 import logging
 import requests
 from requests.utils import quote
+from six.moves.urllib.parse import urljoin
 
 from core.analytics import OneShotAnalytics
 from core.errors import ObservableValidationError
@@ -13,21 +22,6 @@ default_types = {
     "Ip": Ip,
 }
 
-if sys.version_info.major == 2:
-    from urlparse import urljoin
-elif sys.version_info.major == 3:
-    from urllib.parse import urljoin
-
-
-"""
-onyphe.client
-~~~~~~~~~~~~~
-
-This module implements the Onyphe API.
-
-:copyright: (c) 2017- by Sebastien Larinier
-"""
-
 class APIError(Exception):
     """This exception gets raised whenever a non-200 status code was returned by the Onyphe API."""
     def __init__(self, value):
@@ -37,9 +31,9 @@ class APIError(Exception):
         return self.value
 
 class Onyphe:
-    """Wrapper around the Onyphe REST
-
-        :param key: The Onyphe API key that can be obtained from your account page (https://www.onyphe.io)
+    """Wrapper around the Onyphe REST API.
+        The Onyphe API key that can be obtained from your account page (https://www.onyphe.io)
+        :param key: str
         :type key: str
     """
 
@@ -103,14 +97,14 @@ class Onyphe:
         if data:
             return data
 
-    def __search(self,query, endpoint, **kwargs):
+    def _search(self,query, endpoint, **kwargs):
         return self._prepare_request(quote('/'.join([self.version, 'search',
                                                endpoint, query])), **kwargs)
 
     def synscan(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/synscan/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of the search about synscans.
         """
@@ -119,7 +113,7 @@ class Onyphe:
     def pastries(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/pastries/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of the search in pasties recorded by the service.
         """
@@ -142,7 +136,7 @@ class Onyphe:
     def geoloc(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/geoloc/<IP>
 
-                :param ip: IPv4 or IPv6 address
+                :param ip: str IPv4 or IPv6 address
                 :type ip: str
                 :returns: dict -- a dictionary containing the results of geolocation of IP
         """
@@ -151,7 +145,7 @@ class Onyphe:
     def inetnum(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/inetnum/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of inetnum of IP
         """
@@ -160,7 +154,7 @@ class Onyphe:
     def threatlist(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/threatlist/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of the IP in threatlists
         """
@@ -169,7 +163,7 @@ class Onyphe:
     def forward(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/forward/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of forward of IP
         """
@@ -178,7 +172,7 @@ class Onyphe:
     def reverse(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/reverse/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the domains of reverse DNS of IP
         """
@@ -187,7 +181,7 @@ class Onyphe:
     def ip(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/ip/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing all informations of IP
         """
@@ -223,7 +217,7 @@ class Onyphe:
     def sniffer(self, ip):
         """Call API Onyphe https://www.onyphe.io/api/v1/sniffer/<IP>
 
-            :param ip: IPv4 or IPv6 address
+            :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing all informations of IP
         """
@@ -245,7 +239,7 @@ class Onyphe:
         :return: dict -- a dictionary with result
         """
 
-        return self.__search(query, 'datascan', **kwargs)
+        return self._search(query, 'datascan', **kwargs)
 
     def search_synscan(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/syscan/<query>
@@ -253,7 +247,7 @@ class Onyphe:
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self.__search(query, 'synscan', **kwargs)
+        return self._search(query, 'synscan', **kwargs)
 
     def search_inetnum(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/inetnum/<query>
@@ -261,7 +255,7 @@ class Onyphe:
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self.__search(query, 'inetnum', **kwargs)
+        return self._search(query, 'inetnum', **kwargs)
 
     def search_threatlist(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/threatlist/<query>
@@ -269,7 +263,7 @@ class Onyphe:
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self.__search(query, 'threatlist', **kwargs)
+        return self._search(query, 'threatlist', **kwargs)
 
     def search_pastries(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/pastries/<query>
@@ -277,7 +271,7 @@ class Onyphe:
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self.__search(query, 'pastries', **kwargs)
+        return self._search(query, 'pastries', **kwargs)
 
     def search_resolver(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/resolver/<query>
@@ -285,7 +279,7 @@ class Onyphe:
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self.__search(query, 'resolver', **kwargs)
+        return self._search(query, 'resolver', **kwargs)
 
     def search_sniffer(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/sniffer/<query>
@@ -293,7 +287,7 @@ class Onyphe:
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self.__search(query, 'sniffer', **kwargs)
+        return self._search(query, 'sniffer', **kwargs)
 
     def search_ctl(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/ctl/<query>
@@ -301,7 +295,7 @@ class Onyphe:
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self.__search(query, 'ctl', **kwargs)
+        return self._search(query, 'ctl', **kwargs)
 
     def search_onionscan(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/onionscan/<query>
@@ -309,7 +303,7 @@ class Onyphe:
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self.__search(query, 'onionscan', **kwargs)
+        return self._search(query, 'onionscan', **kwargs)
 
 
 
@@ -360,10 +354,5 @@ class OnypheQuery(OnypheAPI, OneShotAnalytics):
             result['source'] = 'onyphe_query'
             result['raw'] = json_string
             observable.add_context(result)
-
-            #extra = default_types[observable.type].get_or_create(value = observable.value)
-            #links.update(
-            #    extra.active_link_to(observable, "onyphe_analysis", 'Onyphe')
-            #)
 
         return list(links)
