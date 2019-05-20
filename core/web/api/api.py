@@ -14,9 +14,12 @@ from core.config.config import yeti_config
 
 api = Blueprint("api", __name__, template_folder="templates")
 
+ACCEPTABLE_ACCEPT_TYPES = set(('application/json','text/html'))
+
 def check_accept_header():
     """Added as a before_request() handler to log 'Accept: */*'"""
-    if request.headers.get('Accept','').lower() in ('application/json','text/html'):
+    accept_types = set((t.split(';')[0].strip() for t in request.headers.get('Accept','').lower().split(',')))
+    if accept_types & ACCEPTABLE_ACCEPT_TYPES:  # Is one of the acceptable types present?
         return
     logging.warn('Request for {} with Accept: other than application/json or text/html: {}'.format(
                     request.base_url, request.headers.get('Accept','Not provided')
