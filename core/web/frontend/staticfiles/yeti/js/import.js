@@ -239,7 +239,6 @@ class Import {
       data: JSON.stringify({nodes: nodes}),
       success: callback,
       dataType: 'json',
-      headers: {"Accept": "text/html"},
       contentType: 'application/json',
     });
   }
