@@ -105,9 +105,10 @@ class VirusTotalQuery(OneShotAnalytics, VirustotalApi):
                 result['detected_urls'] = json_result['detected_urls']
                 for detected_url in json_result['detected_urls']:
                     o_url = Url.get_or_create(value=detected_url['url'])
+                    scan_date = detected_url.get("scan_date")
                     links.update(
-                        o_url.active_link_to(
-                            o_url, 'hostname', 'virustotal_query'))
+                        observable.link_to(
+                            o_url, 'url', 'virustotal_query', scan_date, scan_date))
 
             if json_result.get('permalink'):
                 result['permalink'] = json_result['permalink']
