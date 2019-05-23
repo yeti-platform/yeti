@@ -123,9 +123,10 @@ class OneShotAnalytics(CrudApi):
         """
         analytics = get_object_or_404(self.objectmanager, id=id)
         observable = get_object_or_404(Observable, id=request.form.get('id'))
-
-        return render(
-            analytics.run(observable, current_user.settings).to_mongo())
+        
+        results = analytics.run(observable, current_user.settings).to_mongo()
+        del result['settings']
+        return render(results)
 
     def _analytics_results(self, results):
         """Query an analytics status
