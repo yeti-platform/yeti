@@ -8,7 +8,7 @@ from core.observables import Observable
 from core.web.api.crud import CrudApi
 from core import analytics
 from core.analytics_tasks import schedule
-from core.web.api.api import render
+from core.web.api.api import render, render_json
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions
 
@@ -45,6 +45,19 @@ class ScheduledAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
+    @route('/list', methods=["GET"])
+    @requires_permissions("read")
+    def list_ids(self):
+        """
+            Lists all plugins by name:id
+        """
+        data = dict()
+
+        for obj in self.objectmanager.objects.all():
+            data.setdefault(obj.name, obj.id)
+
+        return render_json(data)
+
 
 class InlineAnalytics(CrudApi):
     template = 'inline_analytics_api.html'
@@ -69,6 +82,19 @@ class InlineAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
+    @route('/list', methods=["GET"])
+    @requires_permissions("read")
+    def list_ids(self):
+        """
+            Lists all plugins by name:id
+        """
+        data = dict()
+
+        for obj in self.objectmanager.objects.all():
+            data.setdefault(obj.name, obj.id)
+
+        return render_json(data)
+
 
 class OneShotAnalytics(CrudApi):
     template = "oneshot_analytics_api.html"
@@ -90,6 +116,19 @@ class OneShotAnalytics(CrudApi):
             data.append(info)
 
         return render(data, template=self.template)
+
+    @route('/list', methods=["GET"])
+    @requires_permissions("read")
+    def list_ids(self):
+        """
+            Lists all plugins by name:id
+        """
+        data = dict()
+
+        for obj in self.objectmanager.objects.all():
+            data.setdefault(obj.name, obj.id)
+
+        return render_json(data)
 
     @route("/<id>/toggle", methods=["POST"])
     @requires_permissions("toggle")
@@ -123,10 +162,10 @@ class OneShotAnalytics(CrudApi):
         """
         analytics = get_object_or_404(self.objectmanager, id=id)
         observable = get_object_or_404(Observable, id=request.form.get('id'))
-        
-        results = analytics.run(observable, current_user.settings).to_mongo()
+
+        result = analytics.run(observable, current_user.settings).to_mongo()
         del result['settings']
-        return render(results)
+        return render_json(result)
 
     def _analytics_results(self, results):
         """Query an analytics status
@@ -165,7 +204,7 @@ class OneShotAnalytics(CrudApi):
     @requires_permissions("read")
     def status(self, id):
         results = get_object_or_404(analytics.AnalyticsResults, id=id)
-
+        del results['settings']
         return render(self._analytics_results(results))
 
     @route('/<id>/last/<observable_id>')
@@ -175,6 +214,9 @@ class OneShotAnalytics(CrudApi):
             results = analytics.AnalyticsResults.objects(
                 analytics=id, observable=observable_id,
                 status="finished").order_by('-datetime').limit(1)
-            return render(self._analytics_results(results[0]))
+            results = self._analytics_results(results[0])
+            del results['settings']
+            return render(results)
         except:
             return render(None)
+
