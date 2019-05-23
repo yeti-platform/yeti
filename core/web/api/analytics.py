@@ -45,19 +45,6 @@ class ScheduledAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
-    @route('/list', methods=["GET"])
-    @requires_permissions("read")
-    def list_ids(self):
-        """
-            Lists all plugins by name:id
-        """
-        data = dict()
-
-        for obj in self.objectmanager.objects.all():
-            data.setdefault(obj.name, obj.id)
-
-        return render_json(data)
-
 
 class InlineAnalytics(CrudApi):
     template = 'inline_analytics_api.html'
@@ -82,19 +69,6 @@ class InlineAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
-    @route('/list', methods=["GET"])
-    @requires_permissions("read")
-    def list_ids(self):
-        """
-            Lists all plugins by name:id
-        """
-        data = dict()
-
-        for obj in self.objectmanager.objects.all():
-            data.setdefault(obj.name, obj.id)
-
-        return render_json(data)
-
 
 class OneShotAnalytics(CrudApi):
     template = "oneshot_analytics_api.html"
@@ -117,18 +91,6 @@ class OneShotAnalytics(CrudApi):
 
         return render(data, template=self.template)
 
-    @route('/list', methods=["GET"])
-    @requires_permissions("read")
-    def list_ids(self):
-        """
-            Lists all plugins by name:id
-        """
-        data = dict()
-
-        for obj in self.objectmanager.objects.all():
-            data.setdefault(obj.name, obj.id)
-
-        return render_json(data)
 
     @route("/<id>/toggle", methods=["POST"])
     @requires_permissions("toggle")
