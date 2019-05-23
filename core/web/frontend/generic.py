@@ -102,7 +102,7 @@ class GenericView(FlaskView):
             obj = klass()
             form = klass.get_form()(request.form)
         else:  # update
-            obj = klass.objects.get(id=id)
+            obj = self.klass.objects.get(id=id)
             klass = obj.__class__
             form = klass.get_form()(request.form, initial=obj._data)
 
