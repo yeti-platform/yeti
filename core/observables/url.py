@@ -41,6 +41,7 @@ class Url(Observable):
             if re.match(r"[^:]+://", self.value) is None:
                 # if no schema is specified, assume http://
                 self.value = u"http://{}".format(self.value)
+            self.value = self.value.replace("[.]", "").replace("[.", "").replace(".]", "")
             self.value = urlnorm.norm(self.value).replace(' ', '%20')
             self.parse()
         except urlnorm.InvalidUrl:
