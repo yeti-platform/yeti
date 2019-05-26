@@ -33,10 +33,10 @@ class BenkowTrackerRat(Feed):
 
         id, family, url, ip, first_seen, _ = line
         if not url.startswith(('http://', 'https://')):
-            Url = "http://"+Url
+            url = "http://"+url
 
         context = {}
-        context['date_added'] = First_Seen
+        context['date_added'] = first_seen
         context['source'] = self.name
 
         tags = []
