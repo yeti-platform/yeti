@@ -100,18 +100,18 @@ class Investigation(CrudApi):
 
         try:
             for node in data['nodes']:
-                try:
-                    if node['type'] in globals() and issubclass(
-                            globals()[node['type']], Observable):
-                        _type = globals()[node['type']]
+                if node['type'] in globals() and issubclass(
+                        globals()[node['type']], Observable):
+                    _type = globals()[node['type']]
+                    try:
+                        n = _type.get_or_create(value=node['value'])
+                    except ObservableValidationError as e:
+                        logging.error((node, e))
+                        continue
 
-                    n = _type.get_or_create(value=node['value'])
                     if node['new_tags']:
                         n.tag(node['new_tags'].split(', '))
                     nodes.append(n)
-                except ObservableValidationError as e:
-                    logging.error((node, e))
-
 
             i.add([], nodes)
         except Exception, e:
