@@ -74,6 +74,13 @@
 # extra_suffixes =
 # suffix_list_urls =
 
+[github]
+# Generate token: https://github.com/settings/tokens
+# Select repo only
+# no token - limit 60 r/h
+# w/ token - limit 5k r/h
+# token =
+
 [shared_keys]
 # allows to set apikeys/creds under yeti user
 # all users can use it without expose to them, or overwrite with their own keys

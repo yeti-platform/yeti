@@ -1,4 +1,3 @@
-import re
 import logging
 from dateutil import parser
 from datetime import datetime, timedelta
@@ -6,6 +5,8 @@ from core.observables import Hash
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
+from dateutil.tz import gettz
+tzinfos = {"CEST": gettz("Europe/France"), "CST": gettz("Europe/France")}
 
 class CybercrimeAtmTracker(Feed):
 
@@ -25,7 +26,7 @@ class CybercrimeAtmTracker(Feed):
         observable_sample = item['title']
         context_sample = {}
         context_sample['description'] = 'ATM sample'
-        context_sample['date_added'] = parser.parse(item['pubDate'])
+        context_sample['date_added'] = parser.parse(item['pubDate'], tzinfos=tzinfos)
         context_sample['source'] = self.name
         family = False
         if ' - ' in observable_sample:
