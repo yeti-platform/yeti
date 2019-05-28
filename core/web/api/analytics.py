@@ -1,16 +1,23 @@
 from __future__ import unicode_literals
 
+import logging
 from flask_login import current_user
 from flask_classy import route
 from flask import request
 
+from core.user import User
 from core.observables import Observable
 from core.web.api.crud import CrudApi
 from core import analytics
+from core.config.config import yeti_config
 from core.analytics_tasks import schedule
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions
+
+shared_keys = False
+if hasattr(yeti_config, "shared_keys"):
+    shared_keys = yeti_config.shared_keys.enabled
 
 
 class ScheduledAnalytics(CrudApi):
@@ -45,7 +52,6 @@ class ScheduledAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
-
 class InlineAnalytics(CrudApi):
     template = 'inline_analytics_api.html'
     objectmanager = analytics.InlineAnalytics
@@ -69,7 +75,6 @@ class InlineAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
-
 class OneShotAnalytics(CrudApi):
     template = "oneshot_analytics_api.html"
     objectmanager = analytics.OneShotAnalytics
@@ -78,13 +83,19 @@ class OneShotAnalytics(CrudApi):
     def index(self):
         data = []
 
+        yeti_user = False
+        if current_user.username != "yeti":
+            try:
+                yeti_user = User.objects.get(username="yeti")
+            except Exception as e:
+                logging.info(e)
+
         for obj in self.objectmanager.objects.all():
             info = obj.info()
 
             info['available'] = True
-            if hasattr(
-                    obj,
-                    'settings') and not current_user.has_settings(obj.settings):
+            if hasattr(obj, 'settings') and (not current_user.has_settings(obj.settings) and \
+                (shared_keys and yeti_user and not yeti_user.has_settings(obj.settings))):
                 info['available'] = False
 
             data.append(info)
@@ -123,9 +134,21 @@ class OneShotAnalytics(CrudApi):
         """
         analytics = get_object_or_404(self.objectmanager, id=id)
         observable = get_object_or_404(Observable, id=request.form.get('id'))
+        settings = current_user.settings
 
-        return render(
-            analytics.run(observable, current_user.settings).to_mongo())
+        if shared_keys and current_user.username != 'yeti' and \
+                not current_user.has_settings(analytics.settings):
+            yeti_user = False
+            try:
+                yeti_user = User.objects.get(username="yeti")
+            except Exception as e:
+                logging.info(e)
+
+            if yeti_user:
+                for key in analytics.settings:
+                    settings[key] = yeti_user.settings.get(key)
+
+        return render(self._analytics_results(results[0]))
 
     def _analytics_results(self, results):
         """Query an analytics status
@@ -177,3 +200,4 @@ class OneShotAnalytics(CrudApi):
             return render(self._analytics_results(results[0]))
         except:
             return render(None)
+

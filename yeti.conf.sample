@@ -73,3 +73,8 @@
 # comma separated list of tlds, WITHOUT dots, example: bit,tor2web,pw
 # extra_suffixes =
 # suffix_list_urls =
+
+[shared_keys]
+# allows to set apikeys/creds under yeti user
+# all users can use it without expose to them, or overwrite with their own keys
+enabled = False
