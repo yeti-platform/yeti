@@ -27,14 +27,15 @@ class UrlHaus(Feed):
         if not item or item[0].startswith("#"):
             return
 
-        id_feed, dateadded, url, url_status, threat, tags, urlhaus_link = item
+        id_feed, dateadded, url, url_status, threat, tags, urlhaus_link, reporter = item
 
         context = {
             "id_urlhaus": id_feed,
             "first_seen": dateadded,
             "status": url_status,
             "source": self.name,
-            "report": urlhaus_link,
+            "urlhaus_link": urlhaus_link,
+            "reporter": reporter,
             "threat": threat
         }
 
