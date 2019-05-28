@@ -150,7 +150,7 @@ class OneShotAnalytics(CrudApi):
                 for key in analytics.settings:
                     settings[key] = yeti_user.settings.get(key)
 
-        return render(self._analytics_results(results[0]))
+        return render(analytics.run(observable, settings).to_mongo())
 
     def _analytics_results(self, results):
         """Query an analytics status
