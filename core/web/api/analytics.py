@@ -52,6 +52,7 @@ class ScheduledAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
+
 class InlineAnalytics(CrudApi):
     template = 'inline_analytics_api.html'
     objectmanager = analytics.InlineAnalytics
@@ -75,6 +76,7 @@ class InlineAnalytics(CrudApi):
 
         return render({"id": id, "status": a.enabled})
 
+
 class OneShotAnalytics(CrudApi):
     template = "oneshot_analytics_api.html"
     objectmanager = analytics.OneShotAnalytics
@@ -84,9 +86,9 @@ class OneShotAnalytics(CrudApi):
         data = []
 
         yeti_user = False
-        if current_user.username != "yeti":
+        if current_user.username != 'yeti':
             try:
-                yeti_user = User.objects.get(username="yeti")
+                yeti_user = User.objects.get(username='yeti')
             except Exception as e:
                 logging.info(e)
 
@@ -140,7 +142,7 @@ class OneShotAnalytics(CrudApi):
                 not current_user.has_settings(analytics.settings):
             yeti_user = False
             try:
-                yeti_user = User.objects.get(username="yeti")
+                yeti_user = User.objects.get(username='yeti')
             except Exception as e:
                 logging.info(e)
 
