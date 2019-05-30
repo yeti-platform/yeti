@@ -1,5 +1,6 @@
 import logging
-from datetime import timedelta
+from dateutil import parser
+from datetime import timedelta, datetime
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -8,48 +9,46 @@ from core.observables import Ip
 
 class IPSpamList(Feed):
     default_values = {
-        "frequency":
-            timedelta(days=1),
-        "name":
-            "IPSpamList",
-        "source":
-            "http://www.ipspamlist.com/public_feeds.csv",
+        "frequency": timedelta(days=1),
+        "name": "IPSpamList",
+        "source": "http://www.ipspamlist.com/public_feeds.csv",
         "description":
             "Service provided by NoVirusThanks that keeps track of malicious "
             "IP addresses engaged in hacking attempts, spam comments"
     }
 
     def update(self):
+
+        since_last_run = datetime.utcnow() - self.frequency
+
         for line in self.update_csv(delimiter=',', quotechar=None):
-            self.analyze(line)
+            if not line or line[0].startswith('first_seen'):
+                continue
 
-    def analyze(self, item):
-        if not item or item[0].startswith('first_seen'):
-            return
-        try:
+            first_seen, last_seen, ip_address, category, attacks_count = line
+            first_seen = parser.parse(first_seen)
+
+            if self.last_run is not None:
+                if since_last_run > first_seen:
+                    return
+
+            last_seen = parser.parse(last_seen)
+
             context = dict(source=self.name)
-            first_seen, last_seen, ip_address, category, attacks_count = item
-
-            try:
-                ip = Ip.get_or_create(value=ip_address)
-            except ObservableValidationError as e:
-                logging.error('Error in IP format %s %s' % (ip_address, e))
-                return False
-
             context['threat'] = category
-            ip.tag(category)
-
             context['first_seen'] = first_seen
-
             context['last_seen'] = last_seen
-
             context['attack_count'] = attacks_count
 
-            ip.add_source('feed')
+            self.analyze(ip_address, category, context)
 
-            ip.add_context(context)
+    def analyze(self, ip_address, category, context):
 
-        except Exception as e:
-            logging.error('Error processing the line %s %s' % (item, e))
+        try:
+            ip_obs = Ip.get_or_create(value=ip_address)
+            ip_obs.tag(category)
+            ip_obs.add_source(self.name)
+            ip_obs.add_context(context)
+        except ObservableValidationError as e:
+            logging.error('Error in IP format %s %s' % (ip_address, e))
             return False
-        return True

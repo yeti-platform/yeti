@@ -16,25 +16,22 @@ class HostsFileEMD(Feed):
 
     def update(self):
         for line in self.update_lines():
+            if line.startswith('#'):
+                continue
+
             self.analyze(line)
 
     def analyze(self, line):
-        if line.startswith('#'):
-            return
+        line = line.strip()
+        parts = line.split()
+
+        hostname = str(parts[1]).strip()
+        context = {'source': self.name}
 
         try:
-            line = line.strip()
-            parts = line.split()
-
-            hostname = str(parts[1]).strip()
-            context = {'source': self.name}
-
-            try:
-                host = Hostname.get_or_create(value=hostname)
-                host.add_context(context)
-                host.add_source('feed')
-                host.tag(['malware', 'blocklist'])
-            except ObservableValidationError as e:
-                logging.error(e)
-        except Exception as e:
-            logging.debug(e)
+            host = Hostname.get_or_create(value=hostname)
+            host.add_context(context)
+            host.add_source(self.name)
+            host.tag(['malware', 'blocklist'])
+        except ObservableValidationError as e:
+            logging.error(e)

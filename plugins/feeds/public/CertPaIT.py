@@ -25,19 +25,27 @@ class CertPaIT(Feed):
     )
 
     re_generic_details = re.compile('<p>Filename: <b>(?P<filename>.*)\\</b\\><br>Filetype: (?P<filetype>.*)</p>')
-    
-    def update(self):
-        for item in self.update_xml('item', ['title', 'link', 'pubDate', 'description']):
-            self.analyze(item)
 
-    def analyze(self, item):
+    def update(self):
+
+        since_last_run = datetime.utcnow() - self.frequency
+
+        for item in self.update_xml('item', ['title', 'link', 'pubDate', 'description']):
+            pubDate = parser.parse(item['pubDate'])
+            if self.last_run is not None:
+                if since_last_run > pubDate:
+                    return
+
+            self.analyze(item, pubDate)
+
+    def analyze(self, item, pubDate):
         md5 = item['title'].replace('MD5: ', '')
         context = {}
-        context['date_added'] = parser.parse(item['pubDate'])
+        context['date_added'] = pubDate
         context['source'] = self.name
         context['url'] = item['link']
 
-        matched = re_generic_details.match(item['description'])
+        matched = self.re_generic_details.match(item['description'])
         if matched:
             context.update(matched.groupdict())
 

@@ -32,7 +32,7 @@ class VXVaultUrl(Feed):
             try:
                 url = Url.get_or_create(value=data.rstrip())
                 url.add_context(context)
-                url.add_source('feed')
+                url.add_source(self.name)
                 url.tag(tags)
             except ObservableValidationError as e:
                 logging.error(e)

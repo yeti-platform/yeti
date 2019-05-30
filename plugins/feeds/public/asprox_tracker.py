@@ -1,7 +1,7 @@
-import requests
-from datetime import datetime, timedelta
 import csv
 import logging
+from dateutil import parser
+from datetime import datetime, timedelta
 
 from core.observables import Url
 from core.feed import Feed
@@ -19,15 +19,24 @@ class AsproxTracker(Feed):
     }
 
     def update(self):
-        resp = requests.get(self.source, proxies=yeti_config.proxy)
+
+        since_last_run = datetime.now() - self.frequency
+
+        resp = self._make_request(proxies=yeti_config.proxy)
         if resp.ok:
             reader = csv.reader(resp.content.splitlines(), quotechar="'")
             for line in reader:
+                if line[0] == 'Number':
+                    continue
+
+                first_seen = parser.parse(line[8])
+                if self.last_run is not None:
+                    if since_last_run > first_seen:
+                        return
+
                 self.analyze(line)
 
     def analyze(self, line):
-        if line[0] == 'Number':
-            return
 
         # split the entry into observables
         Number, Status, CC, Host, Port, Protocol, ASN, Last_Updated, First_Seen, Last_Seen, First_Active, Last_Active, SBL, Abuse_Contact, Details = line

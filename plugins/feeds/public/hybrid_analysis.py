@@ -1,5 +1,6 @@
 import logging
-from datetime import timedelta
+from dateutil import parser
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -10,27 +11,33 @@ from core.observables import Hash, Hostname, File
 class HybridAnalysis(Feed):
 
     default_values = {
-        "frequency":
-            timedelta(minutes=5),
-        "name":
-            "HybridAnalysis",
-        "source":
-            "https://www.hybrid-analysis.com/feed?json",
-        "description":
-            "Hybrid Analysis Public Feeds",
+        "frequency": timedelta(minutes=5),
+        "name": "HybridAnalysis",
+        "source": "https://www.hybrid-analysis.com/feed?json",
+        "description": "Hybrid Analysis Public Feeds",
     }
 
     def update(self):
-        for item in self.update_json(headers={'User-agent': 'VxApi Connector'})['data']:
-            self.analyze(item)
 
-    def analyze(self, item):
+        since_last_run = datetime.now() - self.frequency
+
+        for item in self.update_json(headers={'User-agent': 'VxApi Connector'})['data']:
+
+            first_seen = parser.parse(item['analysis_start_time'])
+            if self.last_run is not None:
+                since_last_run = datetime.now() - self.frequency
+                if since_last_run > first_seen:
+                    return
+
+            self.analyze(item, first_seen)
+
+    def analyze(self, item, first_seen):
         f_hyb = File.get_or_create(value='FILE:{}'.format(item['sha256']))
 
         sha256 = Hash.get_or_create(value=item['sha256'])
         f_hyb.active_link_to(sha256, 'sha256', self.name)
         tags = []
-        context = {'source': self.name, 'date': item['analysis_start_time']}
+        context = {'source': self.name, 'date': first_seen}
 
         if 'vxfamily' in item:
             context['vxfamily'] = item['vxfamily']
@@ -125,5 +132,5 @@ class HybridAnalysis(Feed):
 
                 new_file.add_context(context_file_dropped)
                 sha256_new_file.add_context(context_file_dropped)
-                new_file.add_source('feed')
+                new_file.add_source(self.name)
                 f_hyb.active_link_to(new_file, 'drop', self.name)

@@ -19,11 +19,20 @@ class CybercrimeTracker(Feed):
     }
 
     def update(self):
+
+        since_last_run = datetime.utcnow() - self.frequency
+
         for item in self.update_xml(
                 'item', ["title", "link", "pubDate", "description"]):
+
+            pub_date = parser.parse(item['pubDate'])
+            if self.last_run is not None:
+                if since_last_run > pub_date:
+                    return
+
             self.analyze(item)
 
-    def analyze(self, item):
+    def analyze(self, item, pub_date):
         s_re = '\[([^\]]*)] Type: (\w+) - IP: (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})'
         r = re.compile(s_re)
         m = r.match(item['description'])
@@ -38,7 +47,7 @@ class CybercrimeTracker(Feed):
 
         context = {}
         context['description'] = "{} C2 server".format(c2_IP)
-        context['date_added'] = parser.parse(item['pubDate'])
+        context['date_added'] = pub_date
         context['source'] = self.name
 
         c2 = None
@@ -48,11 +57,7 @@ class CybercrimeTracker(Feed):
             e = Observable.add_text(observable)
             if c2_IP:
                 c2 = Ip.get_or_create(value=c2_IP)
-                e.active_link_to(
-                    c2,
-                    "IP",
-                    self.name,
-                    clean_old=False)
+                e.active_link_to(c2, "IP", self.name, clean_old=False)
 
         except ObservableValidationError as e:
             logging.error(e)
@@ -65,15 +70,15 @@ class CybercrimeTracker(Feed):
             tags.extend(['stealer', 'dropper'])
         elif malware_family == 'athena':
             tags.extend(['stealer', 'ddos'])
-        elif malware_family in ['zeus', 'citadel','lokibot']:
+        elif malware_family in ['zeus', 'citadel', 'lokibot']:
             tags.extend(['banker'])
 
         if e:
             e.add_context(context)
-            e.add_source("feed")
+            e.add_source(self.name)
             e.tag(tags)
 
         if c2:
             c2.add_context(context)
-            c2.add_source("feed")
+            c2.add_source(self.name)
             c2.tag(tags)

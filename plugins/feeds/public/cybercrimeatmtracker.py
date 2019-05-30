@@ -18,15 +18,24 @@ class CybercrimeAtmTracker(Feed):
     }
 
     def update(self):
+
+        since_last_run = datetime.utcnow() - self.frequency
+
         for item in self.update_xml(
                 'item', ['title', 'link', 'pubDate', 'description']):
-            self.analyze(item)
 
-    def analyze(self, item):
+            pub_date = parser.parse(item['pubDate'], tzinfos=tzinfos)
+            if self.last_run is not None:
+                if since_last_run > pub_date:
+                    return
+
+            self.analyze(item, pub_date)
+
+    def analyze(self, item, pub_date):
         observable_sample = item['title']
         context_sample = {}
         context_sample['description'] = 'ATM sample'
-        context_sample['date_added'] = parser.parse(item['pubDate'], tzinfos=tzinfos)
+        context_sample['date_added'] = pub_date
         context_sample['source'] = self.name
         family = False
         if ' - ' in observable_sample:
@@ -35,7 +44,7 @@ class CybercrimeAtmTracker(Feed):
         try:
             sample = Hash.get_or_create(value=observable_sample)
             sample.add_context(context_sample)
-            sample.add_source('feed')
+            sample.add_source(self.name)
             sample_tags = ['atm']
             if family:
                 sample_tags.append(family)

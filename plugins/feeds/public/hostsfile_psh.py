@@ -1,5 +1,5 @@
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 
 from core.observables import Hostname
 from core.feed import Feed
@@ -16,11 +16,12 @@ class HostsFilePSH(Feed):
 
     def update(self):
         for line in self.update_lines():
+            if line.startswith('#'):
+                continue
+
             self.analyze(line)
 
     def analyze(self, line):
-        if line.startswith('#'):
-            return
 
         try:
             line = line.strip()
@@ -32,7 +33,7 @@ class HostsFilePSH(Feed):
             try:
                 host = Hostname.get_or_create(value=hostname)
                 host.add_context(context)
-                host.add_source('feed')
+                host.add_source(self.name)
                 host.tag(['phishing', 'blocklist'])
             except ObservableValidationError as e:
                 logging.error(e)

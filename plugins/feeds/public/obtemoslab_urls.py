@@ -1,6 +1,6 @@
-import requests
 import logging
 from datetime import datetime, timedelta
+
 from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
@@ -11,16 +11,15 @@ class Obtemoslab(Feed):
     default_values = {
         "frequency": timedelta(hours=24),
         "name": "Obtemoslab",
-        "source" : "http://tracker.0btemoslab.com/tracker/Malware.txt",
+        "source": "http://tracker.0btemoslab.com/tracker/Malware.txt",
         "description": "List of payload locations",
     }
 
     def update(self):
-        resp = requests.get(self.source, proxies=yeti_config.proxy)
-        if resp.ok and resp.content:
-            lines = resp.content.split("\r\n")[4:-1]
-            for url in lines:
-                self.analyze(url)
+        resp = self._make_request(proxies=yeti_config.proxy)
+        lines = resp.content.split("\r\n")[4:-1]
+        for url in lines:
+            self.analyze(url)
 
     def analyze(self, url):
 
