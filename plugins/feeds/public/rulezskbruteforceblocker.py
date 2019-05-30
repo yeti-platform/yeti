@@ -17,16 +17,13 @@ class RulezSKBruteforceBlocker(Feed):
 
     def update(self):
         since_last_run = datetime.now() - self.frequency
-        try:
-            r = self._make_request(headers={"User-Agent": "yeti-project"})
-            lines = r.content.splitlines()[1:-1]
-            for line in lines:
-                ip, date, count, id = filter(None, line.split("\t"))
-                ip_date = parser.parse(date.replace("# ", ""))
-                if ip_date > since_last_run:
-                    self.analyze(ip, ip_date, line)
-        except Exception as e:
-            logging.error(e)
+        r = self._make_request(headers={"User-Agent": "yeti-project"})
+        lines = r.content.splitlines()[1:-1]
+        for line in lines:
+            ip, date, count, id = filter(None, line.split("\t"))
+            ip_date = parser.parse(date.replace("# ", ""))
+            if ip_date > since_last_run:
+                self.analyze(ip, ip_date, line)
 
     def analyze(self, ip, date, raw):
         context = {}
