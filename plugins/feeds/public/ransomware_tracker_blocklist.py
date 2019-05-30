@@ -23,7 +23,8 @@ class RansomwareTracker(Feed):
     }
 
     def update(self):
-        for line in self.update_csv(delimiter=',', quotechar='"'):
+        for index, line in enumerate(self.update_csv(delimiter=',', quotechar='"')):
+            print(index, line)
             self.analyze(line)
 
     def analyze(self, line):
@@ -47,30 +48,36 @@ class RansomwareTracker(Feed):
             "source": self.name
         }
 
+        url_obs = False
+        hostname_obs = False
         try:
-            url = Url.get_or_create(value=url.rstrip())
-            url.add_context(context)
-            url.tag(tags)
-
-            hostname = Observable.add_text(hostname)
-            hostname.tag(tags + ['blocklist'])
-
-            for ip in ips.split("|"):
-                if ip != hostname and ip is not None and ip != '':
-                    try:
-                        ip_obs = Ip.get_or_create(value=ip)
-                        ip_obs.active_link_to(
-                            hostname, "ip", self.name, clean_old=False)
-                    except ObservableValidationError as e:
-                        logging.error("Invalid Observable: {}".format(e))
-
-                    for asn in asns.split("|"):
-                        try:
-                            asn_obs = AutonomousSystem.get_or_create(value=asn)
-                            asn_obs.active_link_to(
-                                (hostname, ip_obs), "asn", self.name, clean_old=False)
-                        except ObservableValidationError as e:
-                            logging.error("Invalid Observable: {}".format(e))
-
-        except ObservableValidationError as e:
+            url_obs = Url.get_or_create(value=url.rstrip())
+            url_obs.add_context(context)
+            url_obs.tag(tags)
+        except (ObservableValidationError, UnicodeEncodeError) as e:
             logging.error("Invalid line: {}\nLine: {}".format(e, line))
+
+        try:
+            hostname_obs = Observable.add_text(hostname)
+            hostname_obs.tag(tags + ['blocklist'])
+        except (ObservableValidationError, UnicodeEncodeError) as e:
+            logging.error("Invalid line: {}\nLine: {}".format(e, line))
+
+        for ip in ips.split("|"):
+            if ip != hostname and ip is not None and ip != '':
+                try:
+                    ip_obs = Ip.get_or_create(value=ip)
+                    if hostname_obs and url_obs:
+                        ip_obs.active_link_to(
+                            (url_obs, hostname_obs), "ip", self.name, clean_old=False)
+                except (ObservableValidationError, UnicodeEncodeError) as e:
+                    logging.error("Invalid Observable: {}".format(e))
+
+                for asn in asns.split("|"):
+                    try:
+                        asn_obs = AutonomousSystem.get_or_create(value=asn)
+                        if hostname_obs and url_obs:
+                            asn_obs.active_link_to(
+                                (hostname_obs, ip_obs), "asn", self.name, clean_old=False)
+                    except (ObservableValidationError, UnicodeEncodeError) as e:
+                        logging.error("Invalid Observable: {}".format(e))
