@@ -2,7 +2,7 @@ import json
 import requests
 from core.observables import Observable
 from core.analytics import OneShotAnalytics
-from core.observables import Ip, Certificate, Text, Hostname, Hash
+from core.observables import Ip, Certificate, Text, Hostname, Hash, AutonomousSystem
 from core.config.config import yeti_config
 from core.errors import GenericYetiError, ObservableValidationError
 
@@ -31,7 +31,7 @@ class CensysApi(object):
         if isinstance(observable, Ip):
             if json_result.get('autonomous_system'):
                 if json_result['autonomous_system'].get('asn'):
-                    asn = Text.get_or_create(value=str(json_result['autonomous_system']['asn']))
+                    asn = AutonomousSystem.get_or_create(value=str(json_result['autonomous_system']['asn']))
                     links.update(asn.active_link_to(observable, 'asn#', 'Censys Query'))
 
                 if json_result['autonomous_system'].get('name'):
@@ -40,8 +40,8 @@ class CensysApi(object):
                         'asn_name', 'Censys Query'))
 
                 if json_result['autonomous_system'].get('routed_prefix'):
-                    asnname = Text.get_or_create(value=json_result['autonomous_system']['routed_prefix'])
-                    links.update(asnname.active_link_to(observable,
+                    routed_prefix = Text.get_or_create(value=json_result['autonomous_system']['routed_prefix'])
+                    links.update(routed_prefix.active_link_to(observable,
                         'routed_prefix', 'Censys Query'))
 
             json_result = json_result.get("443", {}).get('https', {}).get('tls', {}).get("certificate", {})
