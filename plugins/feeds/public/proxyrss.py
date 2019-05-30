@@ -29,7 +29,7 @@ class ProxyRSS(Feed):
             details_dict = {}
             context["link"] = item.findtext("link", namespaces=root.nsmap)
             for details in item.findall("prx:proxy", root.nsmap):
-                for field in ["prx:ip", "prx:port", "prx:type", "prx:country", "prx:check_timestamp"]:
+                for field in ["prx:ip", "prx:port", "prx:type", "prx:country"]:
                     details_dict.setdefault(
                         field.replace("prx:", ""),
                         details.findtext(field, namespaces=root.nsmap))
