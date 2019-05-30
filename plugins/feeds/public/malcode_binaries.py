@@ -10,7 +10,7 @@ from core.errors import ObservableValidationError
 type_map = {
     "ip": Ip,
     "url": Url,
-    "md5": Hash
+    "md5": Hash,
     "asn": AutonomousSystem,
 }
 
