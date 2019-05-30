@@ -2,7 +2,7 @@ from datetime import timedelta
 import logging
 
 from core.feed import Feed
-from core.observables import Url, Ip, Observable
+from core.observables import Url, Ip, Observable, AutonomousSystem
 from core.errors import ObservableValidationError
 
 TYPE_DICT = {
@@ -15,12 +15,9 @@ TYPE_DICT = {
 class RansomwareTracker(Feed):
 
     default_values = {
-        "frequency":
-            timedelta(minutes=20),
-        "name":
-            "RansomwareTracker",
-        "source":
-            "http://ransomwaretracker.abuse.ch/feeds/csv/",
+        "frequency": timedelta(minutes=20),
+        "name": "RansomwareTracker",
+        "source": "http://ransomwaretracker.abuse.ch/feeds/csv/",
         "description":
             "Ransomware Tracker offers various types of blocklists that allows you to block Ransomware botnet C&C traffic.",
     }
@@ -61,14 +58,25 @@ class RansomwareTracker(Feed):
             for ip in ips.split("|"):
                 if ip != hostname and ip is not None and ip != '':
                     try:
-                        i = Ip.get_or_create(value=ip)
-                        i.active_link_to(
+                        ip_obs = Ip.get_or_create(value=ip)
+                        ip_obs.active_link_to(
                             hostname,
-                            "First seen IP",
+                            "IP",
                             self.name,
                             clean_old=False)
                     except ObservableValidationError as e:
                         logging.error("Invalid Observable: {}".format(e))
+
+                    for asn in asns.split("|"):
+                        try:
+                            asn_obs = AutonomousSystem.get_or_create(value=asn)
+                            asn_obs.active_link_to(
+                                (hostname, ip_obs),
+                                "ASN",
+                                self.name,
+                                clean_old=False)
+                        except ObservableValidationError as e:
+                            logging.error("Invalid Observable: {}".format(e))
 
         except ObservableValidationError as e:
             logging.error("Invalid line: {}\nLine: {}".format(e, line))
