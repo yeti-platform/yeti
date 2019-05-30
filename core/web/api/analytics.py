@@ -15,9 +15,7 @@ from core.web.api.api import render, render_json
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions
 
-shared_keys = False
-if hasattr(yeti_config, "shared_keys"):
-    shared_keys = yeti_config.shared_keys.enabled
+shared_keys = yeti_config.get("shared_keys", "enabled", False)
 
 
 class ScheduledAnalytics(CrudApi):
