@@ -94,9 +94,13 @@ class OneShotAnalytics(CrudApi):
             info = obj.info()
 
             info['available'] = True
-            if hasattr(obj, 'settings') and (not current_user.has_settings(obj.settings) and \
-                (shared_keys and yeti_user and not yeti_user.has_settings(obj.settings))):
-                info['available'] = False
+
+            if hasattr(obj, 'settings'):
+                yeti_shared_keys = shared_keys and yeti_user and \
+                    not yeti_user.has_settings(obj.settings)
+                if not current_user.has_settings(obj.settings) and \
+                        yeti_shared_keys:
+                    info['available'] = False
 
             data.append(info)
 
