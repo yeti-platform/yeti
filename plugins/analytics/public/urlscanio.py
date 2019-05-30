@@ -13,6 +13,25 @@ class UrlScanIoApi(object):
     API_URL = "https://urlscan.io/api/v1/search/"
 
     @staticmethod
+    def _process_asn_data(page, observable):
+        links = set()
+        if page['page'].get('asn'):
+            asn = AutonomousSystem.get_or_create(value=page['page']['asn'])
+            links.update(asn.active_link_to(observable, 'asn#', 'UrlScanIo Query'))
+
+        if page['page'].get('asnname'):
+            asnname = Text.get_or_create(value=page['page']['asnname'])
+            links.update(asnname.active_link_to(observable,
+                'asn_name', 'UrlScanIoQuerycanIo Query'))
+
+        if page['page'].get('server'):
+            server = Text.get_or_create(value=page['page']['server'])
+            links.update(server.active_link_to(observable,
+                'server', 'UrlScanIo Query'))
+
+        return list(links)
+
+    @staticmethod
     def _process_data(json_result, observable):
         links = set()
 
@@ -20,6 +39,7 @@ class UrlScanIoApi(object):
             if not page.get("page"):
                 continue
 
+            # IP iocs has more data than the rest
             if not isinstance(observable, Ip) and page['page'].get('ip'):
                 new_ip = Ip.get_or_create(value=page['page']['ip'])
                 links.update(
@@ -41,23 +61,7 @@ class UrlScanIoApi(object):
                         'url', 'UrlScanIo Query')
                 )
 
-            if page['page'].get('asn'):
-                asn = AutonomousSystem.get_or_create(value=page['page']['asn'])
-                links.update(asn.active_link_to(observable, 'asn#', 'UrlScanIo Query'))
-
-            if page['page'].get('asnname'):
-                asnname = Text.get_or_create(value=page['page']['asnname'])
-                links.update(asnname.active_link_to(observable,
-                    'asn_name', 'UrlScanIoQuerycanIo Query')
-                )
-
-            if page['page'].get('server'):
-                server = Text.get_or_create(value=page['page']['server'])
-                links.update(server.active_link_to(observable,
-                    'server', 'UrlScanIo Query')
-                )
-
-        return list(links)
+            links.update(UrlScanIoApi._process_asn_data(page, observable))
 
     @staticmethod
     def fetch(observable):
