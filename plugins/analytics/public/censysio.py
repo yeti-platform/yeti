@@ -52,7 +52,7 @@ class CensysApi(object):
         parsed = json_result['parsed']
 
         for name in parsed.get('names', []):
-            #Ignore duplicated host
+            # Ignore duplicated host
             if isinstance(observable, Ip) and name == observable.value:
                 continue
 
