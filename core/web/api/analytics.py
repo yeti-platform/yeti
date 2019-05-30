@@ -8,7 +8,7 @@ from core.observables import Observable
 from core.web.api.crud import CrudApi
 from core import analytics
 from core.analytics_tasks import schedule
-from core.web.api.api import render
+from core.web.api.api import render, render_json
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions
 
@@ -91,6 +91,7 @@ class OneShotAnalytics(CrudApi):
 
         return render(data, template=self.template)
 
+
     @route("/<id>/toggle", methods=["POST"])
     @requires_permissions("toggle")
     def toggle(self, id):
@@ -124,8 +125,9 @@ class OneShotAnalytics(CrudApi):
         analytics = get_object_or_404(self.objectmanager, id=id)
         observable = get_object_or_404(Observable, id=request.form.get('id'))
 
-        return render(
-            analytics.run(observable, current_user.settings).to_mongo())
+        result = analytics.run(observable, current_user.settings).to_mongo()
+        del result['settings']
+        return render_json(result)
 
     def _analytics_results(self, results):
         """Query an analytics status
@@ -164,7 +166,7 @@ class OneShotAnalytics(CrudApi):
     @requires_permissions("read")
     def status(self, id):
         results = get_object_or_404(analytics.AnalyticsResults, id=id)
-
+        del results['settings']
         return render(self._analytics_results(results))
 
     @route('/<id>/last/<observable_id>')
@@ -174,6 +176,9 @@ class OneShotAnalytics(CrudApi):
             results = analytics.AnalyticsResults.objects(
                 analytics=id, observable=observable_id,
                 status="finished").order_by('-datetime').limit(1)
-            return render(self._analytics_results(results[0]))
+            results = self._analytics_results(results[0])
+            del results['settings']
+            return render(results)
         except:
             return render(None)
+
