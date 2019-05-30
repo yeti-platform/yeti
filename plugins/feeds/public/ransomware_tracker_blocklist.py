@@ -60,10 +60,7 @@ class RansomwareTracker(Feed):
                     try:
                         ip_obs = Ip.get_or_create(value=ip)
                         ip_obs.active_link_to(
-                            hostname,
-                            "IP",
-                            self.name,
-                            clean_old=False)
+                            hostname, "ip", self.name, clean_old=False)
                     except ObservableValidationError as e:
                         logging.error("Invalid Observable: {}".format(e))
 
@@ -71,10 +68,7 @@ class RansomwareTracker(Feed):
                         try:
                             asn_obs = AutonomousSystem.get_or_create(value=asn)
                             asn_obs.active_link_to(
-                                (hostname, ip_obs),
-                                "ASN",
-                                self.name,
-                                clean_old=False)
+                                (hostname, ip_obs), "asn", self.name, clean_old=False)
                         except ObservableValidationError as e:
                             logging.error("Invalid Observable: {}".format(e))
 

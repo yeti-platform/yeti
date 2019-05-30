@@ -62,9 +62,6 @@ class MalcodeBinaries(Feed):
                     ioc_obs.add_source(self.name)
                     ioc_obs.tag(['malware', 'delivery'])
                     ioc_obs.active_link_to(
-                        url,
-                        ioc,
-                        self.name,
-                        clean_old=False)
+                        url, ioc, self.name, clean_old=False)
                 except ObservableValidationError as e:
                     logging.error(e)
