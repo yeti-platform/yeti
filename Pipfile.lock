@@ -230,11 +230,11 @@
         },
         "ipwhois": {
             "hashes": [
-                "sha256:86b3de1cc9229992e702fb487addffb93169ae265bce2248ab255dbc99caed98",
-                "sha256:d495f10df2e563ea7cdb00551c5a4bd370539afd887ddf2ac430930cef094088"
+                "sha256:1f01f7cf4b4d667df6859e9f52d0971aac830d1e602946b4c02f477a393cb585",
+                "sha256:904efbd8d5fbb3319fc7e3aa33923fdd272bb81fd5a04bd56fd9125be6437a71"
             ],
             "index": "pypi",
-            "version": "==1.0.0"
+            "version": "==1.1.0"
         },
         "itsdangerous": {
             "hashes": [
