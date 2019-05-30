@@ -1,7 +1,7 @@
 import json
 import requests
 from core.analytics import OneShotAnalytics
-from core.observables import Hash, Ip, Hostname, Url, Text
+from core.observables import Hash, Ip, Hostname, Url, Text, AutonomousSystem
 from core.config.config import yeti_config
 from core.errors import GenericYetiError, ObservableValidationError
 
@@ -42,7 +42,7 @@ class UrlScanIoApi(object):
                 )
 
             if page['page'].get('asn'):
-                asn = Text.get_or_create(value=page['page']['asn'])
+                asn = AutonomousSystem.get_or_create(value=page['page']['asn'])
                 links.update(asn.active_link_to(observable, 'asn#', 'UrlScanIo Query'))
 
             if page['page'].get('asnname'):
