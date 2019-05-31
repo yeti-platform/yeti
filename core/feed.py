@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
+import os
 import pytz
 import csv
 import logging
+import tempfile
 from StringIO import StringIO
 from datetime import datetime
 from base64 import b64decode
@@ -27,7 +29,7 @@ def update_feed(feed_id):
     try:
         f = Feed.objects.get(
             id=feed_id,
-            lock=None)  # check if we have implemented locking mechanisms
+            lock=None) # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
             Feed.objects.get(
@@ -86,6 +88,54 @@ class Feed(ScheduleEntry):
 
     source = StringField()
 
+    def _temp_save_feed_data(self, content):
+        """
+            This function will save data for the feed which doesn't provide date
+            to be able compare between latest fetched data and just fetched data
+            to not process the same data over and over
+
+            content: the fetched data to be stored
+        """
+
+        tmp_folder = tempfile.gettempdir()
+        feed_file = os.path.join(tmp_folder, self.name)
+        with open(feed_file, "w") as f:
+            f.write(content)
+
+    def _temp_load_feed_data(self):
+        """
+            This function will load stored data from previous fetch
+        """
+
+        content = set()
+        tmp_folder = tempfile.gettempdir()
+        feed_file = os.path.join(tmp_folder, self.name)
+
+        if os.path.exists(feed_file):
+            with open(feed_file, "r") as f:
+                # requires to remove newline for correct comparison
+                content = set([line.strip() for line in f.readlines()])
+
+        return content
+
+    def _temp_feed_data_compare(self, content):
+
+        """
+            First load data from last fetch to compare them with current data
+            This is useful for feeds without Last-modified header
+            and where no date to check
+        """
+
+        old_data_set = self._temp_load_feed_data()
+        new_data_set = set(content.splitlines())
+
+        new_data_set = new_data_set - old_data_set
+
+        self._temp_save_feed_data(content)
+
+        print(new_data_set)
+        return new_data_set
+
     def update(self):
         """Function responsible for retreiving the data for a feed and calling
         the ``analyze`` function on its data, typically one line at a time.
@@ -111,13 +161,16 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
-    def _make_request(self, headers={}, auth=None, params={}, url=False):
+    def _make_request(self, headers={}, auth=None, params={}, url=False, verify=True):
+
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
         Args:
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
             params:     Optional param to be added to the HTTP request.
+            url:        Optional url to be fetched instead of self.source
+            verify:     optional verify to verify domain certificate
 
         Returns:
             requests object.
@@ -129,18 +182,30 @@ class Feed(ScheduleEntry):
                 headers=headers,
                 auth=auth,
                 proxies=yeti_config.proxy,
-                params=params)
+                params=params,
+                verify=verify)
         else:
             r = requests.get(
-                url or self.source, headers=headers, proxies=yeti_config.proxy)
+                url or self.source,
+                headers=headers,
+                proxies=yeti_config.proxy,
+                params=params,
+                verify=verify)
 
         if r.status_code != 200:
             raise GenericYetiError(
                 "{} returns code: {}".format(self.source, r.status_code))
 
+        if self.last_run is not None and r.headers.get('Last-Modified'):
+            since_last_run = datetime.utcnow() - self.frequency
+            last_mod = parser.parse(r.headers['Last-Modified'])
+            if since_last_run > last_mod.replace(tzinfo=None):
+                raise GenericYetiError(
+                "Last modified date: {} returns code: {}".format(last_mod, r.status_code))
+
         return r
 
-    def update_xml(self, main_node, children, headers={}, auth=None):
+    def update_xml(self, main_node, children, headers={}, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an XML object, yielding a ``dict`` for each parsed
         element.
@@ -165,7 +230,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth)
+        r = self._make_request(headers, auth, verify=verify)
         return self.parse_xml(r.content, main_node, children)
 
     def parse_xml(self, data, main_node, children):
@@ -182,7 +247,7 @@ class Feed(ScheduleEntry):
 
             yield context
 
-    def update_lines(self, headers={}, auth=None):
+    def update_lines(self, headers={}, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats each
         line of the response separately.
 
@@ -196,8 +261,8 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth)
-        feed = r.text.split('\n')
+        r = self._make_request(headers, auth, verify=verify)
+        feed = self._temp_feed_data_compare(r.content)
 
         for line in feed:
             yield line
@@ -206,7 +271,7 @@ class Feed(ScheduleEntry):
         for line in unicode_csv_data:
             yield line.encode('utf-8')
 
-    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None):
+    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -221,15 +286,16 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth)
-        feed = r.text.split('\n')
+        r = self._make_request(headers, auth, verify=verify)
+        feed = self._temp_feed_data_compare(r.content)
+
         reader = csv.reader(
             self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
 
         for line in reader:
             yield line
 
-    def update_json(self, headers={}, auth=None, params={}):
+    def update_json(self, headers={}, auth=None, params={}, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
@@ -242,10 +308,10 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
 
-        r = self._make_request(headers, auth, params)
+        r = self._make_request(headers, auth, params, verify=verify)
         return r.json()
 
-    def parse_commit(self, item, headers):
+    def parse_commit(self, item, headers, verify=True):
         """
             Helper function used to parse github commit and extract content.
             See :func:`core.feed.Feed.update_github` for details
@@ -253,13 +319,12 @@ class Feed(ScheduleEntry):
         Args:
             item:    All details about an github commit
             headers: Used for correct github auth or empty
-
         Returns:
             Yields all new content for the commit and filename of the original file
         """
 
         commit_info = self._make_request(
-            url=item['url'], headers=headers).json()
+            url=item['url'], headers=headers, verify=verify).json()
         if commit_info and commit_info.get('files', []):
             for block in commit_info['files']:
                 if block['filename'] in self.blacklist:
@@ -276,7 +341,8 @@ class Feed(ScheduleEntry):
 
                 elif 'contents_url' in block:
                     data = self._make_request(
-                        url=block['contents_url'], headers=headers).json()
+                        url=block['contents_url'], headers=headers,
+                        verify=verify).json()
                     if data.get('encoding') and data.get('content'):
                         content = b64decode(data['content'])
                         if data.get('name', ''):
@@ -284,7 +350,7 @@ class Feed(ScheduleEntry):
 
                 yield content, block['filename']
 
-    def update_github(self, headers={}, auth=None, params={}):
+    def update_github(self, headers={}, auth=None, params={}, verify=True):
         """Helper function. Grabs data about latest commits iterates them.
 
         Args:
@@ -304,7 +370,7 @@ class Feed(ScheduleEntry):
             headers = {}
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
-        for item in self.update_json(headers=headers):
+        for item in self.update_json(headers=headers, verify=verify):
             if parser.parse(item['commit']['author']['date']) > since_last_run:
                 break
             try:

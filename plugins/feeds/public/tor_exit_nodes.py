@@ -1,11 +1,9 @@
-import requests
-from datetime import timedelta
 import logging
+from datetime import timedelta
 
 from core.feed import Feed
 from core.observables import Ip
 from core.errors import ObservableValidationError
-from core.config.config import yeti_config
 
 
 class TorExitNodes(Feed):
@@ -18,18 +16,21 @@ class TorExitNodes(Feed):
     }
 
     def update(self):
-        feed = requests.get(self.source, proxies=yeti_config.proxy).text
+        feed = self._make_requests().text
 
         start = feed.find('<!-- __BEGIN_TOR_NODE_LIST__ //-->') + len(
             '<!-- __BEGIN_TOR_NODE_LIST__ //-->')
         end = feed.find('<!-- __END_TOR_NODE_LIST__ //-->')
 
-        feed = feed[start:end].replace(
+        feed_raw = feed[start:end].replace(
             '\n', '').replace('<br />', '\n').replace('&gt;', '>').replace(
-                '&lt;', '<').split('\n')
+                '&lt;', '<')
 
+        feed = feed_raw.split('\n')
         if len(feed) > 10:
             self.status = "OK"
+
+        feed = self._temp_feed_data_compare(feed_raw)
 
         for line in feed:
             self.analyze(line)
@@ -57,7 +58,7 @@ class TorExitNodes(Feed):
         try:
             ip = Ip.get_or_create(value=fields[0])
             ip.add_context(context)
-            ip.add_source("feed")
+            ip.add_source(self.name)
             ip.tag(['tor'])
         except ObservableValidationError as e:
             logging.error(e)
