@@ -129,12 +129,11 @@ class Feed(ScheduleEntry):
         old_data_set = self._temp_load_feed_data()
         new_data_set = set(content.splitlines())
 
-        new_data_set = new_data_set - old_data_set
+        new_data_set = new_data_set.difference(old_data_set)
 
         self._temp_save_feed_data(content)
 
-        print(new_data_set)
-        return new_data_set
+        return list(new_data_set)
 
     def update(self):
         """Function responsible for retreiving the data for a feed and calling
