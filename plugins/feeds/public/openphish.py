@@ -10,7 +10,7 @@ class OpenPhish(Feed):
 
     # set default values for feed
     default_values = {
-        'frequency': timedelta(hours=4),
+        'frequency': timedelta(hours=1),
         'name': 'OpenPhish',
         'source': 'https://openphish.com/feed.txt',
         'description':

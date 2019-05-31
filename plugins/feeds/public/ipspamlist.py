@@ -22,7 +22,7 @@ class IPSpamList(Feed):
         since_last_run = datetime.utcnow() - self.frequency
 
         for line in self.update_csv(delimiter=',', quotechar=None):
-            if not line or line[0].startswith('first_seen'):
+            if not line or line[0].startswith(('first_seen', '#')):
                 continue
 
             first_seen, last_seen, ip_address, category, attacks_count = line

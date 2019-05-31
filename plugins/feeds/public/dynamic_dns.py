@@ -15,7 +15,7 @@ class DynamicDomains(Feed):
 
     def update(self):
         for line in self.update_lines():
-            if line[0] == '#':
+            if line[0].startswith('#'):
                 continue
 
             self.analyze(line)

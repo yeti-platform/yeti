@@ -31,7 +31,7 @@ class PhishTank(Feed):
 
             first_seen = parser.parse(line[3])
             if self.last_run is not None:
-                if since_last_run > first_seen:
+                if since_last_run > first_seen.replace(tzinfo=None):
                     return
 
             self.analyze(line, first_seen)
