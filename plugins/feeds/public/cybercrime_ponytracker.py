@@ -25,7 +25,7 @@ class CybercrimePonyTracker(Feed):
 
             pub_date = parser.parse(item['pubDate'])
             if self.last_run is not None:
-                if since_last_run > pub_date:
+                if since_last_run > pub_date.utcnow():
                     return
 
             self.analyze(item, pub_date)

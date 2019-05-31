@@ -33,7 +33,7 @@ class CertPaIT(Feed):
         for item in self.update_xml('item', ['title', 'link', 'pubDate', 'description']):
             pubDate = parser.parse(item['pubDate'])
             if self.last_run is not None:
-                if since_last_run > pubDate:
+                if since_last_run > pubDate.utcnow():
                     return
 
             self.analyze(item, pubDate)
