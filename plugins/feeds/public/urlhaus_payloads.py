@@ -29,7 +29,7 @@ class UrlHausPayloads(Feed):
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(line)
+            self.analyze(first_seen, url, filetype, md5, sha256, signature)
 
     def analyze(self, first_seen, url, filetype, md5, sha256, signature):
 
