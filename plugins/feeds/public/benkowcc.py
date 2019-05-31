@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 
 from core.observables import Url, Ip
 from core.feed import Feed
-from core.config.config import yeti_config
 from core.errors import ObservableValidationError
+
 
 class BenkowTracker(Feed):
 
@@ -21,7 +21,7 @@ class BenkowTracker(Feed):
 
         since_last_run = datetime.utcnow() - self.frequency
 
-        resp = self._make_request(proxies=yeti_config.proxy)
+        resp = self._make_request()
         reader = csv.reader(
             resp.content.strip().splitlines(), delimiter=';', quotechar='"')
 

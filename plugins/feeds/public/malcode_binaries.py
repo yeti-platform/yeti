@@ -40,6 +40,8 @@ class MalcodeBinaries(Feed):
             context['link'] = item['link']
             context['source'] = self.name
 
+            url = False
+
             try:
                 url_string = context.pop('url')
                 context['description'] = item['description'].encode('UTF-8')
@@ -61,7 +63,8 @@ class MalcodeBinaries(Feed):
                     ioc_obs.add_context(context)
                     ioc_obs.add_source(self.name)
                     ioc_obs.tag(['malware', 'delivery'])
-                    ioc_obs.active_link_to(
-                        url, ioc, self.name, clean_old=False)
+                    if url:
+                        ioc_obs.active_link_to(
+                            url, ioc, self.name, clean_old=False)
                 except ObservableValidationError as e:
                     logging.error(e)

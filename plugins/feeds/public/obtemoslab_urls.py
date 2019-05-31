@@ -1,10 +1,9 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
-from core.config.config import yeti_config
 
 class Obtemoslab(Feed):
 
@@ -16,7 +15,7 @@ class Obtemoslab(Feed):
     }
 
     def update(self):
-        resp = self._make_request(proxies=yeti_config.proxy)
+        resp = self._make_request()
         lines = resp.content.split("\r\n")[4:-1]
         for url in lines:
             self.analyze(url)
