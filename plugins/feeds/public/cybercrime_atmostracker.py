@@ -25,7 +25,7 @@ class CybercrimeAtmosTracker(Feed):
 
             pub_date = parser.parse(item['pubDate'])
             if self.last_run is not None:
-                    if since_last_run > pub_date.utcnow():
+                    if since_last_run > pub_date.replace(tzinfo=None):
                         return
 
             self.analyze(item, pub_date)
