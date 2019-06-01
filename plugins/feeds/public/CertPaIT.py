@@ -1,9 +1,11 @@
 import re
 import logging
-from datetime import datetime, timedelta
-from dateutil import parser
-from core.observables import Hash
+from pytz import timezone
+from datetime import timedelta, datetime
+
 from core.feed import Feed
+from core.observables import Hash
+from core.common.utils import parse_date_to_utc
 from core.errors import ObservableValidationError
 
 class CertPaIT(Feed):
@@ -28,12 +30,12 @@ class CertPaIT(Feed):
 
     def update(self):
 
-        since_last_run = datetime.utcnow() - self.frequency
+        since_last_run = datetime.now(timezone('UTC')) - self.frequency
 
         for item in self.update_xml('item', ['title', 'link', 'pubDate', 'description']):
-            pubDate = parser.parse(item['pubDate'])
+            pubDate = parse_date_to_utc(item['pubDate'])
             if self.last_run is not None:
-                if since_last_run > pubDate.replace(tzinfo=None):
+                if since_last_run > pubDate:
                     return
 
             self.analyze(item, pubDate)

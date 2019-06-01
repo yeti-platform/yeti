@@ -1,6 +1,13 @@
 import logging
-from core.config.config import yeti_config
+from dateutil import parser
+from dateutil.tz import gettz, UTC
 from tldextract import TLDExtract
+from core.config.config import yeti_config
+
+tzinfos = {
+    "CEST": gettz("Europe/Amsterdam"),
+    "CST": gettz("Europe/Amsterdam")
+}
 
 
 tld_extract_dict = {
@@ -23,3 +30,10 @@ def tldextract_parser(url):
         logging.error(e)
 
     return parts
+
+def parse_date_to_utc(date):
+    """
+        parse date and convert it to UTC timezone
+    """
+
+    return parser.parse(date, tzinfos=tzinfos).astimezone(UTC)

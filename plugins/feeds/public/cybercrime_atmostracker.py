@@ -1,7 +1,8 @@
 import re
 import logging
-from dateutil import parser
+from pytz import timezone
 from datetime import timedelta, datetime
+from core.common.utils import parse_date_to_utc
 from core.observables import Hash, Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
@@ -18,14 +19,14 @@ class CybercrimeAtmosTracker(Feed):
 
     def update(self):
 
-        since_last_run = datetime.utcnow() - self.frequency
+        since_last_run = datetime.now(timezone('UTC')) - self.frequency
 
         for item in self.update_xml(
                 'item', ["title", "link", "pubDate", "description"]):
 
-            pub_date = parser.parse(item['pubDate'])
+            pub_date = parse_date_to_utc(item['pubDate'])
             if self.last_run is not None:
-                    if since_last_run > pub_date.replace(tzinfo=None):
+                    if since_last_run > pub_date:
                         return
 
             self.analyze(item, pub_date)

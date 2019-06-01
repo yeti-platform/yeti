@@ -1,6 +1,7 @@
 import logging
-from dateutil import parser
+from pytz import timezone
 from datetime import timedelta, datetime
+from core.common.utils import parse_date_to_utc
 
 from core.observables import Url
 from core.feed import Feed
@@ -23,15 +24,15 @@ class PhishTank(Feed):
         # Using update_lines because the pull should result in
         # a list of URLs, 1 per line. Split on newline
 
-        since_last_run = datetime.now() - self.frequency
+        since_last_run = datetime.now(timezone('UTC')) - self.frequency
 
         for line in self.update_csv(delimiter=',', quotechar='"'):
             if not line or line[0].startswith('phish_id'):
                 continue
 
-            first_seen = parser.parse(line[3])
+            first_seen =parse_date_to_utc(line[3])
             if self.last_run is not None:
-                if since_last_run > first_seen.replace(tzinfo=None):
+                if since_last_run > first_seen:
                     return
 
             self.analyze(line, first_seen)

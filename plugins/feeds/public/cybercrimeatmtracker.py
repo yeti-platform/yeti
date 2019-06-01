@@ -1,30 +1,28 @@
 import logging
-from dateutil import parser
-from datetime import datetime, timedelta
-from core.observables import Hash
+from pytz import timezone
+from datetime import timedelta, datetime
+from core.common.utils import parse_date_to_utc
 from core.feed import Feed
+from core.observables import Hash
 from core.errors import ObservableValidationError
-
-from dateutil.tz import gettz
-tzinfos = {"CEST": gettz("Europe/France"), "CST": gettz("Europe/France")}
 
 class CybercrimeAtmTracker(Feed):
 
     default_values = {
         'frequency': timedelta(hours=1),
         'name': 'CybercrimeAtmTracker',
-        'source': 'http://atm.cybercrime-tracker.net/rss.php',
+        'source': 'http://atm.cybercrime-tracker.net/rss2.php',
         'description': 'CyberCrime ATM Tracker - Latest 40 CnC URLS',
     }
 
     def update(self):
 
-        since_last_run = datetime.utcnow() - self.frequency
+        since_last_run = datetime.now(timezone('UTC')) - self.frequency
 
         for item in self.update_xml(
                 'item', ['title', 'link', 'pubDate', 'description']):
 
-            pub_date = parser.parse(item['pubDate'], tzinfos=tzinfos)
+            pub_date = parse_date_to_utc(item['pubDate'])
             if self.last_run is not None:
                 if since_last_run > pub_date:
                     return
