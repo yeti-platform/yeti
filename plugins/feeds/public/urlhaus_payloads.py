@@ -21,7 +21,7 @@ class UrlHausPayloads(Feed):
 
         for line in self.update_csv(delimiter=',', quotechar='"'):
             if not line or line[0].startswith("#"):
-                return
+                continue
 
             first_seen, url, filetype, md5, sha256, signature = line
             first_seen = parser.parse(first_seen)
