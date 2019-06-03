@@ -142,6 +142,7 @@ class OneShotAnalytics(CrudApi):
         settings = current_user.settings
 
         if shared_keys and current_user.username != 'yeti' and \
+                hasattr(analytics, "settings") and \
                 not current_user.has_settings(analytics.settings):
             yeti_user = False
             try:
