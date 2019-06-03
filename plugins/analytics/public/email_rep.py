@@ -35,12 +35,12 @@ class EmailRep(EmailRepAPI, OneShotAnalytics):
     def analyze(observable, results):
         links = set()
         json_result = EmailRepAPI.fetch(observable)
-        results = {}
+        result = {}
 
         json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
-        results.update(raw=json_string)
-        results['source'] = "EmailRep"
-        results['raw'] = json_string
-        observable.add_context(results)
+        result.update(raw=json_string)
+        result['source'] = "EmailRep"
+        result['raw'] = json_string
+        observable.add_context(result)
 
         return list(links)
