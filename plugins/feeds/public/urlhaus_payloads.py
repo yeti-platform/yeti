@@ -39,7 +39,6 @@ class UrlHausPayloads(Feed):
         malware_file = False
 
         context = {
-            'first_seen': first_seen,
             'source': self.name
         }
 
@@ -53,21 +52,17 @@ class UrlHausPayloads(Feed):
             except ObservableValidationError as e:
                 logging.error(e)
 
-        context_malware = {
-            'source': self.name
-        }
-
         if sha256:
             try:
                 malware_file = File.get_or_create(
                     value='FILE:{}'.format(sha256))
 
-                malware_file.add_context(context_malware)
+                malware_file.add_context(context)
                 malware_file.tag(filetype)
 
                 sha256_obs = Hash.get_or_create(value=sha256)
                 sha256_obs.tag(filetype)
-                sha256_obs.add_context(context_malware)
+                sha256_obs.add_context(context)
                 if signature != 'None':
                     sha256_obs.tag(signature)
             except ObservableValidationError as e:
@@ -76,7 +71,7 @@ class UrlHausPayloads(Feed):
         if md5:
             try:
                 md5_obs = Hash.get_or_create(value=md5)
-                md5_obs.add_context(context_malware)
+                md5_obs.add_context(context)
                 md5_obs.tag(filetype)
 
                 if signature != 'None':
