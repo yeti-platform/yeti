@@ -48,7 +48,7 @@ class ShodanQuery(OneShotAnalytics, ShodanApi):
             ip.tag(result['tags'])
 
         if 'asn' in result and result['asn'] is not None:
-            o_asn = AutonomousSystem.get_or_create(value=result['asn'])
+            o_asn = AutonomousSystem.get_or_create(value=result['asn'].replace("AS", ""))
             links.update(ip.active_link_to(o_asn, 'asn#', 'Shodan Query'))
 
         if 'hostnames' in result and result['hostnames'] is not None:
