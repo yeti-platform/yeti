@@ -10,16 +10,6 @@ class CensysApi(object):
     """
         https://censys.io/api
     """
-    settings = {
-        "urlscanio_secret": {
-            "name": "censys_secret",
-            "description": "Secret provided by Censys.io."
-        },
-        "urlscanio_api_key": {
-            "name": "censys_apikey",
-            "description": "API Key provided by Censys.io."
-        }
-    }
 
     API_URL = "https://censys.io/api/v1/view"
 
@@ -52,7 +42,7 @@ class CensysApi(object):
         parsed = json_result['parsed']
 
         for name in parsed.get('names', []):
-            # Ignore duplicated host
+            #Ignore duplicated host
             if isinstance(observable, Ip) and name == observable.value:
                 continue
 
@@ -85,7 +75,6 @@ class CensysApi(object):
 
     @staticmethod
     def fetch(observable, settings):
-
         types = {
             'Ip': 'ipv4',
             'Hash': 'certificates',
@@ -97,13 +86,12 @@ class CensysApi(object):
             raise GenericYetiError("Only supports sha256 hash")
 
         try:
-            url = CensysApi.API_URL+'/'+types[observable.type]+'/'+ observable.value
+            url = "{}/{}/{}".format(CensysApi.API_URL, types[observable.type], observable.value)
             response = requests.get(url, proxies=yeti_config.proxy, auth=(
                 settings['censys_apikey'], settings['censys_secret']
             ))
-
             if not response.ok:
-                raise GenericYetiError("Status code: ".format(response.status_code))
+                raise GenericYetiError("Status code: {}".format(response.status_code))
 
             return response.json()
 
@@ -116,6 +104,17 @@ class CensysApiQuery(OneShotAnalytics, CensysApi):
     default_values = {
         'name': 'Censys Lookup',
         'description': 'Perform a CensysApi query.',
+    }
+
+    settings = {
+        "censys_secret": {
+            "name": "Censys Secret",
+            "description": "Secret provided by Censys.io."
+        },
+        "censys_apikey": {
+            "name": "Censys Apikey",
+            "description": "API Key provided by Censys.io."
+        }
     }
 
     ACTS_ON = ['Ip', 'Cert', 'Hash']
