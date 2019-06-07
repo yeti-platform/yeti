@@ -16,7 +16,7 @@ class UrlScanIoApi(object):
     def _process_asn_data(page, observable):
         links = set()
         if page['page'].get('asn'):
-            asn = AutonomousSystem.get_or_create(value=page['page']['asn'])
+            asn = AutonomousSystem.get_or_create(value=page['page']['asn'].replace("AS", ""))
             links.update(asn.active_link_to(observable, 'asn#', 'UrlScanIo Query'))
 
         if page['page'].get('asnname'):
