@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from core.observables import Ip
 from core.feed import Feed
+
 from core.errors import ObservableValidationError
 
 class RulezSKBruteforceBlocker(Feed):
