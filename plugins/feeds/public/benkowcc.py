@@ -29,21 +29,20 @@ class BenkowTracker(Feed):
             if line[0] == 'id':
                 return
 
-            id, family, url, ip, first_seen, _ = line
-
-            first_seen = parser.parse(first_seen)
+            first_seen = parser.parse(line[4])
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
 
-            context = {}
-            context['date_added'] = first_seen
-            context['source'] = self.name
+            self.analyze(line, first_seen)
 
-            self.analyze(url, ip, context, family)
+    def analyze(self, line, first_seen):
 
-    def analyze(self, url, ip, context, family):
+        id, family, url, ip, first_seen, _ = line
+        context = {}
+        context['date_added'] = first_seen
+        context['source'] = self.name
 
         tags = []
         tags.append(family.lower())
