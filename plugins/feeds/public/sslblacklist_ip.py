@@ -32,9 +32,8 @@ class SSLBlackListIP(Feed):
 
     def analyze(self, line, first_seen):
 
-        obs_ip = False
-        date, dst_ip, port = line
-
+        date, dst_ip, port = tuple(line)
+        ip_obs = False
         tags = []
         tags.append("potentially_malicious_infrastructure")
         tags.append("c2")
@@ -43,22 +42,22 @@ class SSLBlackListIP(Feed):
         context["first_seen"] = first_seen
 
         try:
-            ip = Ip.get_or_create(value=dst_ip)
-            ip.add_source(self.name)
-            ip.tag(tags)
-            ip.add_context(context)
+            ip_obs = Ip.get_or_create(value=dst_ip)
+            ip_obs.add_source(self.name)
+            ip_obs.tag(tags)
+            ip_obs.add_context(context)
         except ObservableValidationError as e:
             logging.error(e)
             return False
 
         try:
-            _url="https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
-            url_obs = Url.get_or_create(value=_url)
-            url_obs.add_source(self.name)
-            url_obs.tag(tags)
-            url_obs.add_context(context)
-            if obs_ip:
-                url_obs.active_link_to(obs_ip, 'ip', self.name, clean_old=False)
+            _url = "https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
+            url = Url.get_or_create(value=_url)
+            url.add_source(self.name)
+            url.tag(tags)
+            url.add_context(context)
+            if ip_obs:
+                url.active_link_to(ip_obs, 'ip', self.name)
         except ObservableValidationError as e:
             logging.error(e)
             return False
