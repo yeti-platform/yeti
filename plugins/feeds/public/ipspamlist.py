@@ -25,24 +25,25 @@ class IPSpamList(Feed):
             if not line or line[0].startswith(('first_seen', '#')):
                 continue
 
-            first_seen, last_seen, ip_address, category, attacks_count = line
-            first_seen = parser.parse(first_seen)
+            first_seen = parser.parse(line[0])
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
 
-            last_seen = parser.parse(last_seen)
+            self.analyze(line, first_seen)
 
-            context = dict(source=self.name)
-            context['threat'] = category
-            context['first_seen'] = first_seen
-            context['last_seen'] = last_seen
-            context['attack_count'] = attacks_count
+    def analyze(self, line, first_seen):
 
-            self.analyze(ip_address, category, context)
+        first_seen, last_seen, ip_address, category, attacks_count = line
 
-    def analyze(self, ip_address, category, context):
+        context = {
+            'source': self.name,
+            'threat': category,
+            'first_seen': first_seen,
+            'last_seen': parser.parse(last_seen),
+            'attack_count': attacks_count,
+        }
 
         try:
             ip_obs = Ip.get_or_create(value=ip_address)
