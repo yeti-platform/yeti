@@ -19,7 +19,7 @@ class EmailRepAPI(object):
             else:
                 raise GenericYetiError("{} - {}".format(r.status_code, r.content))
         except Exception as e:
-            logging.erro(e)
+            logging.error(e)
             raise GenericYetiError("{} - {}".format(r.status_code, r.content))
 
 
@@ -33,7 +33,6 @@ class EmailRep(EmailRepAPI, OneShotAnalytics):
 
     @staticmethod
     def analyze(observable, results):
-        links = set()
         json_result = EmailRepAPI.fetch(observable)
         result = {}
 
@@ -43,4 +42,4 @@ class EmailRep(EmailRepAPI, OneShotAnalytics):
         result['raw'] = json_string
         observable.add_context(result)
 
-        return list(links)
+        return list()
