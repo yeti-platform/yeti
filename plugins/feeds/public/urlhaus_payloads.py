@@ -23,15 +23,14 @@ class UrlHausPayloads(Feed):
             if not line or line[0].startswith("#"):
                 continue
 
-            first_seen, url, filetype, md5, sha256, signature = line
-            first_seen = parser.parse(first_seen)
+            first_seen = parser.parse(line[0])
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(first_seen, url, filetype, md5, sha256, signature)
+            self.analyze(line)
 
-    def analyze(self, first_seen, url, filetype, md5, sha256, signature):
+    def analyze(self, line):
 
         md5_obs = False
         sha256_obs = False
@@ -41,6 +40,8 @@ class UrlHausPayloads(Feed):
         context = {
             'source': self.name
         }
+
+        first_seen, url, filetype, md5, sha256, signature = line
 
         if url:
             try:

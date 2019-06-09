@@ -4,7 +4,7 @@ from dateutil import parser
 from datetime import timedelta, datetime
 
 from core.feed import Feed
-from core.observables import Ip, Hash
+from core.observables import Hash
 from core.errors import ObservableValidationError
 
 TYPE_DICT = {
