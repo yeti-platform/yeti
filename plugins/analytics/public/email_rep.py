@@ -18,7 +18,7 @@ class EmailRepAPI(object):
                 return r.json()
             else:
                 raise GenericYetiError("{} - {}".format(r.status_code, r.content))
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             logging.error(e)
             raise GenericYetiError("{} - {}".format(r.status_code, r.content))
 
