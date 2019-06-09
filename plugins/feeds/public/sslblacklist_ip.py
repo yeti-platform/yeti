@@ -32,7 +32,7 @@ class SSLBlackListIP(Feed):
 
     def analyze(self, line, first_seen):
 
-        date, dst_ip, port = line
+        _, dst_ip, port = line
         ip_obs = False
         tags = []
         tags.append("potentially_malicious_infrastructure")
