@@ -1,10 +1,9 @@
 import csv
 import logging
-import requests
 from dateutil import parser
 from datetime import timedelta, datetime
 from core.feed import Feed
-from core.observables import Url, Observable, Hash, AutonomousSystem
+from core.observables import Url, Hash, AutonomousSystem
 from core.errors import ObservableValidationError
 from core.config.config import yeti_config
 
@@ -28,16 +27,17 @@ class FutexTracker(Feed):
             if not line or line[0].startswith("#"):
                 continue
 
-            _id, first_seen, url, _status, _hash, country, asn = tuple(line)
-            first_seen = parser.parse(first_seen)
+            first_seen = parser.parse(line[1])
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(line, url, _hash, asn)
+            self.analyze(line)
 
-    def analyze(self, line, url, _hash, asn):
+    def analyze(self, line):
+
+        _id, _, url, _status, _hash, country, asn = tuple(line)
 
         tags = ["collected_by_honeypot"]
         context = {

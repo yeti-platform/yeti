@@ -32,16 +32,17 @@ class SSLBlackListCerts(Feed):
             if not line or line[0].startswith("#"):
                 continue
 
-            date, sha1, reason = tuple(line)
-            first_seen = parser.parse(date)
+            first_seen = parser.parse(line[0])
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(line, first_seen, sha1, reason)
+            self.analyze(line, first_seen)
 
-    def analyze(self, line, first_seen, sha1, reason):
+    def analyze(self, line, first_seen):
+
+        _, sha1, reason = line
 
         tags = []
         tag = reason.split(" ")

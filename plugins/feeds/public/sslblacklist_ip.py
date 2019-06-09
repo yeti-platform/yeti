@@ -23,16 +23,17 @@ class SSLBlackListIP(Feed):
             if not line or line[0].startswith("#"):
                 continue
 
-            #Firstseen,DstIP,DstPort
-            date, dst_ip, port = tuple(line)
-            first_seen = parser.parse(date)
+            first_seen = parser.parse(line[0])
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(line, first_seen, dst_ip, port)
+            self.analyze(line, first_seen)
 
-    def analyze(self, line, first_seen, dst_ip, port):
+    def analyze(self, line, first_seen):
+
+        obs_ip = False
+        date, dst_ip, port = line
 
         tags = []
         tags.append("potentially_malicious_infrastructure")
@@ -51,11 +52,13 @@ class SSLBlackListIP(Feed):
             return False
 
         try:
-            _url = "https://{dst_ip}:{port}/".format(dst_ip = dst_ip, port=port)
-            url = Url.get_or_create(value=_url)
-            url.add_source(self.name)
-            url.tag(tags)
-            url.add_context(context)
+            _url="https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
+            url_obs = Url.get_or_create(value=_url)
+            url_obs.add_source(self.name)
+            url_obs.tag(tags)
+            url_obs.add_context(context)
+            if obs_ip:
+                url_obs.active_link_to(obs_ip, 'ip', self.name, clean_old=False)
         except ObservableValidationError as e:
             logging.error(e)
             return False
