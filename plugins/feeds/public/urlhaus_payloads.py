@@ -84,15 +84,12 @@ class UrlHausPayloads(Feed):
             if signature != 'None':
                 malware_file.tag(signature)
 
-            try:
-                if md5_obs:
-                    malware_file.active_link_to(
-                        md5_obs, 'md5', self.name)
-                if sha256_obs:
-                    malware_file.active_link_to(
-                        sha256_obs, 'sha256', self.name)
-            except Exception as e:
-                logging.error(e)
+            if md5_obs:
+                malware_file.active_link_to(
+                    md5_obs, 'md5', self.name)
+            if sha256_obs:
+                malware_file.active_link_to(
+                    sha256_obs, 'sha256', self.name)
 
             if url_obs:
                 url_obs.active_link_to(malware_file, 'drops', self.name)

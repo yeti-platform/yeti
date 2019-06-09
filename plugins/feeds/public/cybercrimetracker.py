@@ -30,7 +30,7 @@ class CybercrimeTracker(Feed):
                 if since_last_run > pub_date:
                     return
 
-            self.analyze(item)
+            self.analyze(item, pub_date)
 
     def analyze(self, item, pub_date):
         s_re = '\[([^\]]*)] Type: (\w+) - IP: (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})'

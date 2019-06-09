@@ -39,8 +39,7 @@ class RansomwareTracker(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-        first_seen, _type, family, hostname, url, status, registrar, ips, asns, countries = tuple(
-            line)
+        first_seen, _type, family, hostname, url, status, registrar, ips, asns, countries = line
 
         tags = []
         tags += TYPE_DICT[_type]

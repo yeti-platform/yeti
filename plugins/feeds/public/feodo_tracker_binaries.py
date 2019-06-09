@@ -24,16 +24,17 @@ class FeodoTrackerBinaries(Feed):
             if not line or line[0].startswith("#"):
                 continue
 
-            first_seen, md5_hash, family = tuple(line)
-            first_seen = parser.parse(first_seen)
+            first_seen = parser.parse(line[0])
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(line, family, md5_hash)
+            self.analyze(line, first_seen)
 
-    def analyze(self, line, family, md5_hash, first_seen):
+    def analyze(self, line, first_seen):
+
+        _, md5_hash, family = line
 
         tags = []
         tags.append(family.lower())

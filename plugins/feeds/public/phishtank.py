@@ -30,7 +30,7 @@ class PhishTank(Feed):
             if not line or line[0].startswith('phish_id'):
                 continue
 
-            first_seen =parse_date_to_utc(line[3])
+            first_seen = parse_date_to_utc(line[3])
             if self.last_run is not None:
                 if since_last_run > first_seen:
                     return
@@ -41,8 +41,7 @@ class PhishTank(Feed):
     # and tag it with 'phish'
     def analyze(self, data, first_seen):
 
-        _, url, phish_detail_url, _, verified, verification_time, online, target = tuple(
-            data)
+        _, url, phish_detail_url, _, verified, verification_time, online, target = data
 
         tags = ['phishing']
 
