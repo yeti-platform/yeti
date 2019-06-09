@@ -34,6 +34,7 @@ class TorExitNodes(Feed):
 
         for line in feed:
             self.analyze(line)
+
         return True
 
     def analyze(self, line):
@@ -43,18 +44,18 @@ class TorExitNodes(Feed):
         if len(fields) < 8:
             return
 
-        context = {}
-        ip = fields[0]
-        context['name'] = fields[1]
-        context['router-port'] = fields[2]
-        context['directory-port'] = fields[3]
-        context['flags'] = fields[4]
-        context['version'] = fields[6]
-        context['contactinfo'] = fields[7]
+        context = {
+            'name': fields[1],
+            'router-port': fields[2],
+            'directory-port': fields[3],
+            'flags': fields[4],
+            'version': fields[6],
+            'contactinfo': fields[7],
+            'source': self.name,
+            'description': "Tor exit node: %s (%s)" % (
+                fields[1], fields[0]),
+        }
 
-        context['description'] = "Tor exit node: %s (%s)" % (
-            context['name'], ip)
-        context['source'] = self.name
         try:
             ip = Ip.get_or_create(value=fields[0])
             ip.add_context(context)
