@@ -1,11 +1,9 @@
-import requests
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 
 from core.observables import Url, Ip, Hash
 from core.feed import Feed
 from core.errors import ObservableValidationError
-from core.config.config import yeti_config
 
 
 class Fumik0Tracker(Feed):
