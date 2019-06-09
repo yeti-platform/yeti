@@ -126,8 +126,7 @@ class OneShotAnalytics(CrudApi):
         observable = get_object_or_404(Observable, id=request.form.get('id'))
 
         result = analytics.run(observable, current_user.settings).to_mongo()
-        if 'settings' in result:
-            del result['settings']
+        result.pop('settings')
         return render_json(result)
 
     def _analytics_results(self, results):
