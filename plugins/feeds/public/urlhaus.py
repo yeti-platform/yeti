@@ -23,16 +23,17 @@ class UrlHaus(Feed):
             if not line or line[0].startswith("#"):
                 return
 
-            id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source = line
-            first_seen = parser.parse(first_seen)
+            first_seen = parser.parse(line[1])
             if self.last_run is not None:
                 since_last_run = datetime.now() - self.frequency
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source)
+            self.analyze(line, first_seen)
 
-    def analyze(self, id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source):
+    def analyze(self, first_seen, line):
+
+        id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source = line
 
         context = {
             "id_urlhaus": id_feed,
