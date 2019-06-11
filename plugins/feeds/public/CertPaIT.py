@@ -37,7 +37,7 @@ class CertPaIT(Feed):
         context['source'] = self.name
         context['url'] = item['link']
 
-        matched = re_generic_details.match(item['description'])
+        matched = self.re_generic_details.match(item['description'])
         if matched:
             context.update(matched.groupdict())
 

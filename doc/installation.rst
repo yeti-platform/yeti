@@ -3,7 +3,7 @@
 Installation
 ============
 
-Installing Yeti is pretty straightforward. This procedure was tested on Ubuntu 16.04, but YMMV.
+Installing Yeti is pretty straightforward. This procedure was tested on Ubuntu 18.04, but YMMV.
 
 Install dependencies::
 

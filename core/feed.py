@@ -1,9 +1,12 @@
 from __future__ import unicode_literals
 
+import pytz
 import csv
 import logging
 from StringIO import StringIO
 from datetime import datetime
+from base64 import b64decode
+from dateutil import parser
 
 import requests
 from lxml import etree
@@ -15,6 +18,8 @@ from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
 from core.scheduling import ScheduleEntry
 
+utc = pytz.UTC
+
 
 @celery_app.task
 def update_feed(feed_id):
@@ -22,12 +27,12 @@ def update_feed(feed_id):
     try:
         f = Feed.objects.get(
             id=feed_id,
-            lock=None)  # check if we have implemented locking mechanisms
+            lock=None) # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
             Feed.objects.get(
-                id=feed_id, lock=False).modify(
-                    lock=True)  # get object and change lock
+                id=feed_id,
+                lock=False).modify(lock=True)  # get object and change lock
             f = Feed.objects.get(id=feed_id)
         except DoesNotExist:
             # no unlocked Feed was found, notify and return...
@@ -106,7 +111,7 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
-    def _make_request(self, headers={}, auth=None, params={}):
+    def _make_request(self, headers={}, auth=None, params={}, url=False, verify=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
@@ -114,6 +119,8 @@ class Feed(ScheduleEntry):
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
             params:     Optional param to be added to the HTTP request.
+            url:        Optional url to be fetched instead of self.source
+            verify:     optional verify to verify domain certificate
 
         Returns:
             requests object.
@@ -121,21 +128,27 @@ class Feed(ScheduleEntry):
 
         if auth:
             r = requests.get(
-                self.source, 
+                url or self.source,
                 headers=headers,
                 auth=auth,
                 proxies=yeti_config.proxy,
-                params=params)
+                params=params,
+                verify=verify)
         else:
             r = requests.get(
-                self.source, headers=headers, proxies=yeti_config.proxy)
+                url or self.source,
+                headers=headers,
+                proxies=yeti_config.proxy,
+                params=params,
+                verify=verify)
 
         if r.status_code != 200:
-            raise GenericYetiError("{} returns code: {}".format(self.source, r.status_code))
+            raise GenericYetiError(
+                "{} returns code: {}".format(self.source, r.status_code))
 
         return r
 
-    def update_xml(self, main_node, children, headers={}, auth=None):
+    def update_xml(self, main_node, children, headers={}, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an XML object, yielding a ``dict`` for each parsed
         element.
@@ -160,7 +173,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth)
+        r = self._make_request(headers, auth, verify=verify)
         return self.parse_xml(r.content, main_node, children)
 
     def parse_xml(self, data, main_node, children):
@@ -177,7 +190,7 @@ class Feed(ScheduleEntry):
 
             yield context
 
-    def update_lines(self, headers={}, auth=None):
+    def update_lines(self, headers={}, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats each
         line of the response separately.
 
@@ -191,7 +204,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth)
+        r = self._make_request(headers, auth, verify=verify)
         feed = r.text.split('\n')
 
         for line in feed:
@@ -201,7 +214,7 @@ class Feed(ScheduleEntry):
         for line in unicode_csv_data:
             yield line.encode('utf-8')
 
-    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None):
+    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -216,7 +229,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth)
+        r = self._make_request(headers, auth, verify=verify)
         feed = r.text.split('\n')
         reader = csv.reader(
             self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
@@ -224,7 +237,7 @@ class Feed(ScheduleEntry):
         for line in reader:
             yield line
 
-    def update_json(self, headers={}, auth=None, params={}):
+    def update_json(self, headers={}, auth=None, params={}, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
@@ -237,14 +250,80 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
 
-        r = self._make_request(headers, auth, params)
+        r = self._make_request(headers, auth, params, verify=verify)
         return r.json()
+
+    def parse_commit(self, item, headers, verify=True):
+        """
+            Helper function used to parse github commit and extract content.
+            See :func:`core.feed.Feed.update_github` for details
+
+        Args:
+            item:    All details about an github commit
+            headers: Used for correct github auth or empty
+        Returns:
+            Yields all new content for the commit and filename of the original file
+        """
+
+        commit_info = self._make_request(
+            url=item['url'], headers=headers, verify=verify).json()
+        if commit_info and commit_info.get('files', []):
+            for block in commit_info['files']:
+                if block['filename'] in self.blacklist:
+                    continue
+
+                content = False
+                if 'patch' in block:
+                    # load only additions
+                    content = '\n'.join([
+                        line[1:]
+                        for line in block['patch'].split('\n')
+                        if line.startswith('+')
+                    ])
+
+                elif 'contents_url' in block:
+                    data = self._make_request(
+                        url=block['contents_url'], headers=headers,
+                        verify=verify).json()
+                    if data.get('encoding') and data.get('content'):
+                        content = b64decode(data['content'])
+                        if data.get('name', ''):
+                            block['filename'] = data['name']
+
+                yield content, block['filename']
+
+    def update_github(self, headers={}, auth=None, params={}, verify=True):
+        """Helper function. Grabs data about latest commits iterates them.
+
+        Args:
+            headers:    Optional headers to be added to the HTTP request.
+            auth:       Username / password tuple to be sent along with the HTTP request.
+            params:     Optional param to be added to the HTTP request.
+
+        Returns:
+            Python ``dict`` object representing the response JSON.
+            Example:
+                https://api.github.com/repos/eset/malware-ioc/commits/2602f02a1b0ff6d4cfcefecf93f3b4320d8b4207
+        """
+
+        if hasattr(yeti_config, 'github') and yeti_config.github.token:
+            headers = {'Authorization': 'token ' + yeti_config.github.token}
+        else:
+            headers = {}
+
+        since_last_run = utc.localize(datetime.utcnow() - self.frequency)
+        for item in self.update_json(headers=headers, verify=verify):
+            if parser.parse(item['commit']['author']['date']) > since_last_run:
+                break
+            try:
+                return self.parse_commit(item, headers)
+            except GenericYetiError as e:
+                logging.error(e)
+        return []
 
     def info(self):
         i = {
-            k: v
-            for k, v in self._data.items()
-            if k in
+            k: v for k, v in self._data.items() if k in
             ["name", "enabled", "description", "source", "status", "last_run"]
         }
         i['frequency'] = str(self.frequency)

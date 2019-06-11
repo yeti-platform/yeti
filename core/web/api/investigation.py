@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import re
+import logging
 from datetime import datetime
 from flask import request
 from flask_classy import route
@@ -18,6 +19,7 @@ from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions, get_queryset, get_user_groups
 from core.group import Group
+from core.errors import ObservableValidationError
 
 class InvestigationSearch(CrudSearchApi):
     template = 'investigation_api.html'
@@ -103,11 +105,15 @@ class Investigation(CrudApi):
                 if node['type'] in globals() and issubclass(
                         globals()[node['type']], Observable):
                     _type = globals()[node['type']]
+                    try:
+                        n = _type.get_or_create(value=node['value'])
+                    except ObservableValidationError as e:
+                        logging.error((node, e))
+                        continue
 
-                n = _type.get_or_create(value=node['value'])
-                if node['new_tags']:
-                    n.tag(node['new_tags'].split(', '))
-                nodes.append(n)
+                    if node['new_tags']:
+                        n.tag(node['new_tags'].split(', '))
+                    nodes.append(n)
 
             i.add([], nodes)
         except Exception, e:
