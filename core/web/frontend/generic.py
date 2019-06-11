@@ -77,7 +77,7 @@ class GenericView(FlaskView):
     def edit(self, id):
         obj = self.klass.objects.get(id=id)
         #ToDo Group admins support
-        if hasattr(obj, "created_by") and current_user.username != obj.created_by or not current_user.has_role('admin'):
+        if hasattr(obj, "create_by") and current_user.username != obj.created_by or not current_user.has_role('admin'):
             return redirect(request.referrer)
 
         if request.method == "POST":
@@ -97,7 +97,7 @@ class GenericView(FlaskView):
     def delete(self, id):
         obj = self.klass.objects.get(id=id)
         #ToDo Group admins support
-        if current_user.username != obj.created_by or not current_user.has_role('admin'):
+        if hasattr(obj, "create_by") and current_user.username != obj.created_by or not current_user.has_role('admin'):
             return redirect(request.referrer)
         obj.delete()
         return redirect(
@@ -127,7 +127,7 @@ class GenericView(FlaskView):
             try:
                 obj = self.create_obj(obj, skip_validation)
                 if form.formdata.get("sharing") and hasattr(klass, "sharing_permissions"):
-                    obj.sharing_permissions(form.formdata["sharing"], obj.id)
+                    obj.sharing_permissions(form.formdata["sharing"], invest_id=obj.id)
             except GenericValidationError as e:
                 # failure - redirect to edit page
                 form.errors['General Error'] = [e]
