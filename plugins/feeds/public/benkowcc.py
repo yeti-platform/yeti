@@ -41,7 +41,7 @@ class BenkowTracker(Feed):
 
         url_obs = False
 
-        id, family, url, ip, first_seen, _ = line
+        _, family, url, ip, first_seen, _ = line
         context = {}
         context['date_added'] = first_seen
         context['source'] = self.name
