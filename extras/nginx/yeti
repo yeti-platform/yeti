@@ -1,9 +1,10 @@
 server {
     listen 80;
     server_name yeti;
-
+    client_body_timeout 300s;
+    client_max_body_size 100M;
     location / {
         include uwsgi_params;
-        uwsgi_pass 127.0.0.1:8000;
+        uwsgi_pass 127.0.0.1:8000; 
     }
 }

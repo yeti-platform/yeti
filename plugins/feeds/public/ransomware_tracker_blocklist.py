@@ -54,6 +54,8 @@ class RansomwareTracker(Feed):
             "source": self.name
         }
 
+        url_obs = False
+        hostname_obs = False
         try:
             url_obs = Url.get_or_create(value=url.rstrip())
             url_obs.add_context(context)
@@ -81,5 +83,6 @@ class RansomwareTracker(Feed):
                         asn_obs = AutonomousSystem.get_or_create(value=asn)
                         asn_obs.active_link_to(
                             (hostname, ip_obs), "asn", self.name, clean_old=False)
+
                     except (ObservableValidationError, UnicodeEncodeError) as e:
                         logging.error("Invalid Observable: {}".format(e))

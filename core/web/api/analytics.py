@@ -126,7 +126,7 @@ class OneShotAnalytics(CrudApi):
         observable = get_object_or_404(Observable, id=request.form.get('id'))
 
         result = analytics.run(observable, current_user.settings).to_mongo()
-        del result['settings']
+        result.pop('settings')
         return render_json(result)
 
     def _analytics_results(self, results):
@@ -166,7 +166,7 @@ class OneShotAnalytics(CrudApi):
     @requires_permissions("read")
     def status(self, id):
         results = get_object_or_404(analytics.AnalyticsResults, id=id)
-        del results['settings']
+        results.pop('settings')
         return render(self._analytics_results(results))
 
     @route('/<id>/last/<observable_id>')
@@ -177,8 +177,7 @@ class OneShotAnalytics(CrudApi):
                 analytics=id, observable=observable_id,
                 status="finished").order_by('-datetime').limit(1)
             results = self._analytics_results(results[0])
-            del results['settings']
+            results.pop('settings')
             return render(results)
         except:
             return render(None)
-
