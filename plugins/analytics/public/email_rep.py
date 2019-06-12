@@ -13,11 +13,10 @@ class EmailRepAPI(object):
     def fetch(observable):
 
         try:
-            r = requests.get("https://emailrep.io/{}".format(observable.value))
+            r =  requests.get("https://emailrep.io/{}".format(observable.value))
             if r.ok:
                 return r.json()
-            else:
-                raise GenericYetiError("{} - {}".format(r.status_code, r.content))
+            raise GenericYetiError("{} - {}".format(r.status_code, r.content))
         except requests.exceptions.RequestException as e:
             logging.error(e)
             raise GenericYetiError("{} - {}".format(r.status_code, r.content))
@@ -37,9 +36,10 @@ class EmailRep(EmailRepAPI, OneShotAnalytics):
         result = {}
 
         json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
-        result.update(raw=json_string)
-        result['source'] = "EmailRep"
-        result['raw'] = json_string
+        result = {
+            'raw': json_string,
+            'source': 'EmailRep',
+        }
         observable.add_context(result)
 
         return list()
