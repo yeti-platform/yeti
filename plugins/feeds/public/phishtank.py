@@ -1,11 +1,12 @@
 import logging
-from pytz import timezone
-from datetime import timedelta, datetime
-from core.common.utils import parse_date_to_utc
+from datetime import datetime, timedelta
 
-from core.observables import Url
-from core.feed import Feed
+from pytz import timezone
+
+from core.common.utils import parse_date_to_utc
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Url
 
 
 class PhishTank(Feed):
