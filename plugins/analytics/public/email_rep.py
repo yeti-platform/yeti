@@ -13,7 +13,7 @@ class EmailRepAPI(object):
     def fetch(observable):
 
         try:
-            r =  requests.get("https://emailrep.io/{}".format(observable.value))
+            r = requests.get("https://emailrep.io/{}".format(observable.value))
             if r.ok:
                 return r.json()
             raise GenericYetiError("{} - {}".format(r.status_code, r.content))
