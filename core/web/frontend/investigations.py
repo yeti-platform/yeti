@@ -26,8 +26,7 @@ class InvestigationView(GenericView):
     @requires_permissions("read", "investigation")
     def graph(self, id):
         investigation = get_object_or_404(Investigation, id=id)
-        # empty list means public
-        if investigation.sharing == [] or group_user_permission(investigation):
+        if group_user_permission(investigation):
             return render_template(
                 "{}/graph.html".format(self.klass.__name__.lower()),
                 investigation=bson_renderer(investigation.info()))

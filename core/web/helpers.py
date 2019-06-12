@@ -158,6 +158,11 @@ def group_user_permission(investigation=False):
         return True
 
     elif investigation and hasattr(investigation, "sharing"):
+
+        # means its public
+        if investigation.sharing == []:
+            return True
+
         groups = get_user_groups()
         return any([group.id in investigation.sharing for group in groups]) or current_user.id in investigation.sharing
 

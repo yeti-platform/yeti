@@ -34,8 +34,7 @@ class GenericView(FlaskView):
     def get(self, id):
         obj = self.klass.objects.get(id=id)
         if hasattr(obj, "sharing"):
-            # empty list means public
-            if obj.sharing == [] or group_user_permission(obj):
+            if group_user_permission(obj):
                 return render_template(
                     "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
         else:
