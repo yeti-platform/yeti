@@ -1,12 +1,14 @@
-import re
 import logging
-from pytz import timezone
-from datetime import timedelta, datetime
+import re
+from datetime import datetime, timedelta
 
-from core.feed import Feed
-from core.observables import Hash
+from pytz import timezone
+
 from core.common.utils import parse_date_to_utc
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Hash
+
 
 class CertPaIT(Feed):
 
