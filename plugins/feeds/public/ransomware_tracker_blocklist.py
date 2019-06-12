@@ -82,7 +82,10 @@ class RansomwareTracker(Feed):
                     try:
                         asn_obs = AutonomousSystem.get_or_create(value=asn)
                         asn_obs.active_link_to(
-                            (hostname, ip_obs), "asn", self.name, clean_old=False)
+                            (hostname, ip_obs),
+                            "asn",
+                            self.name,
+                            clean_old=False)
 
                     except (ObservableValidationError, UnicodeEncodeError) as e:
                         logging.error("Invalid Observable: {}".format(e))
