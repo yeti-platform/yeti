@@ -1,12 +1,13 @@
-import sys
 import logging
+import sys
 from os import path
+
+from core.feed import Feed
+from core.scheduling import Scheduler
 
 YETI_ROOT = path.normpath(path.dirname(path.dirname(path.abspath(__file__))))
 sys.path.append(YETI_ROOT)
 
-from core.feed import Feed
-from core.scheduling import Scheduler
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
