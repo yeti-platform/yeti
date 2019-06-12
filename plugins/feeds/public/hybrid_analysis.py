@@ -31,6 +31,7 @@ class HybridAnalysis(Feed):
 
             self.analyze(item, first_seen)
 
+    # pylint: disable=arguments-differ
     def analyze(self, item, first_seen):
         f_hyb = File.get_or_create(value='FILE:{}'.format(item['sha256']))
 
