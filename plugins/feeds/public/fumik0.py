@@ -20,7 +20,8 @@ class Fumik0Tracker(Feed):
         since_last_run = datetime.utcnow() - self.frequency
 
         for block in self.update_json():
-            first_seen = datetime.strptime(block["first_seen"], "%Y-%m-%d %H:%M:%S")
+            first_seen = datetime.strptime(block["first_seen"],
+                                           "%Y-%m-%d %H:%M:%S")
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
