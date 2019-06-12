@@ -44,6 +44,7 @@ class AlienVaultIPReputation(Feed):
             ip.tag(category)
             ip.add_context(context)
 
+        #TODO(doomedraven) check what we're catching here, I think we can remove this exception
         except Exception as e:
             logging.error('Error to process the item %s %s' % (item, e))
             return False
