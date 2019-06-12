@@ -18,7 +18,6 @@ from core.entities import Entity
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions, get_queryset, get_user_groups
-from core.group import Group
 from core.errors import ObservableValidationError
 
 class InvestigationSearch(CrudSearchApi):
@@ -35,7 +34,9 @@ class InvestigationSearch(CrudSearchApi):
         investigations = get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)
         if not current_user.has_role('admin'):
             shared_ids = [current_user.id] + [group.id for group in get_user_groups()]
-            investigations = investigations.filter(Q(sharing__size=0) | Q(sharing__in=shared_ids) | Q(sharing__exists=False))
+            investigations = investigations.filter(
+                Q(sharing__size=0) | Q(sharing__in=shared_ids) | Q(sharing__exists=False)
+            )
         return list(investigations)[page * rng:(page + 1) * rng]
 
 

@@ -144,7 +144,7 @@ def prevent_csrf(func):
 
 def get_user_groups():
     if current_user.has_role('admin'):
-        groups =  Group.objects()
+        groups = Group.objects()
     else:
         groups = Group.objects(members__in=[current_user.id])
 
@@ -160,5 +160,5 @@ def group_user_permission(investigation=False):
     elif investigation and hasattr(investigation, "sharing"):
         groups = get_user_groups()
         return any([group.id in investigation.sharing for group in groups]) or current_user.id in investigation.sharing
-    else:
-        return False
+
+    return False

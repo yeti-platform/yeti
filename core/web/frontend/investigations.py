@@ -16,7 +16,7 @@ from core.indicators import Indicator
 from core.observables import Observable
 
 from core.web.api.api import bson_renderer
-from core.group import Group
+
 
 class InvestigationView(GenericView):
 
@@ -26,12 +26,13 @@ class InvestigationView(GenericView):
     @requires_permissions("read", "investigation")
     def graph(self, id):
         investigation = get_object_or_404(Investigation, id=id)
-        if group_user_permission(investigation):
+        # empty list means public
+        if investigation.sharing == [] or group_user_permission(investigation):
             return render_template(
                 "{}/graph.html".format(self.klass.__name__.lower()),
                 investigation=bson_renderer(investigation.info()))
-        else:
-            return redirect(request.referrer)
+
+        return redirect(request.referrer)
 
     @route("/graph/<klass>/<id>")
     @requires_permissions("read", "investigation")
@@ -87,10 +88,10 @@ class InvestigationView(GenericView):
                         import_method = ImportMethod.objects.get(acts_on="url")
                         results = import_method.run(url)
                     elif "file" in request.files:
-                            target = AttachedFile.from_upload(request.files['file'])
-                            import_method = ImportMethod.objects.get(
-                                acts_on=target.content_type)
-                            results = import_method.run(target)
+                        target = AttachedFile.from_upload(request.files['file'])
+                        import_method = ImportMethod.objects.get(
+                            acts_on=target.content_type)
+                        results = import_method.run(target)
                     else:
                         flash("You need to provide an input", "danger")
                         return redirect(request.referrer)

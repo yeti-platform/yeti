@@ -19,7 +19,8 @@ class GroupView(GenericView):
         if request.args.get("id"):
             gid = request.args.get("id")
             group = get_object_or_404(Group, id=gid)
-            if current_user.has_role("admin") or Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
+            if current_user.has_role("admin") or \
+                    Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
                 return render_template(
                     "group/profile.html",
                     group=group,
@@ -38,7 +39,8 @@ class GroupAdminView(GenericView):
         uid = request.form.get("uid")
         user = get_object_or_404(User, id=uid)
         group = get_object_or_404(Group, id=gid)
-        if user and current_user.has_role("admin") or Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
+        if user and current_user.has_role("admin") or \
+                Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
             group.update(add_to_set__members=user.id)
             flash("Added user: {} to group: {}".format(user.username, group.groupname), "success")
         return redirect(request.referrer)
@@ -50,7 +52,8 @@ class GroupAdminView(GenericView):
         user = get_object_or_404(User, id=uid)
         group = get_object_or_404(Group, id=gid)
         #ToDo reload page
-        if group and current_user.has_role("admin") or Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
+        if group and current_user.has_role("admin") or \
+                Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
             group.update(pull__members=user.id)
             flash("User: {} deleted from group: {}".format(user.username, group.groupname), "success")
         return redirect(request.referrer)
@@ -61,7 +64,8 @@ class GroupAdminView(GenericView):
         gid = request.args.get("gid")
         uid = request.args.get("uid")
         user = get_object_or_404(User, id=uid)
-        if user and current_user.has_role("admin") or Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
+        if user and current_user.has_role("admin") or \
+                Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
             #ToDo reload page
             group = get_object_or_404(Group, id=gid)
             group.update(add_to_set__admins=user.id)
@@ -74,7 +78,8 @@ class GroupAdminView(GenericView):
         uid = request.args.get("uid")
         user = get_object_or_404(User, id=uid)
         group = get_object_or_404(Group, id=gid)
-        if group and current_user.has_role("admin") or Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
+        if group and current_user.has_role("admin") or \
+                Group.objects(admins__in=[current_user.id], id=gid, enabled=True):
             #ToDo reload page
             group.update(pull__admins=user.id)
             flash("User: {} deleted from admins: {}".format(user.username, group.groupname), "success")

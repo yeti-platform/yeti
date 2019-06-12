@@ -9,17 +9,17 @@ class GroupAdminSearch(CrudSearchApi):
     template = 'group_api.html'
     objectmanager = Group
 
-    @route('/toggle/<id>', methods=["POST"])
+    @route('/toggle/<gid>', methods=["POST"])
     @requires_role('admin')
     def toggle(self, id):
-        group = get_object_or_404(Group, id=id)
+        group = get_object_or_404(Group, id=gid)
         group.enabled = not group.enabled
         group.save()
-        return render({"enabled": group.enabled, "id": id})
+        return render({"enabled": group.enabled, "id": gid})
 
-    @route('/remove/<id>', methods=["POST"])
+    @route('/remove/<gid>', methods=["POST"])
     @requires_role('admin')
     def remove(self, id):
-        group = get_object_or_404(Group, id=id)
+        group = get_object_or_404(Group, id=gid)
         group.delete()
-        return render({"id": id})
+        return render({"id": gid})

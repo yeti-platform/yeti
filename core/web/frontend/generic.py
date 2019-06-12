@@ -34,14 +34,15 @@ class GenericView(FlaskView):
     def get(self, id):
         obj = self.klass.objects.get(id=id)
         if hasattr(obj, "sharing"):
-            if group_user_permission(obj):
+            # empty list means public
+            if obj.sharing == [] or group_user_permission(obj):
                 return render_template(
                     "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
-            else:
-                return(request.referrer)
         else:
             return render_template(
                 "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+
+        return(request.referrer)
 
     @requires_permissions("write")
     @route('/new/<string:subclass>', methods=["GET", "POST"])
@@ -77,7 +78,8 @@ class GenericView(FlaskView):
     def edit(self, id):
         obj = self.klass.objects.get(id=id)
         #ToDo Group admins support
-        if hasattr(obj, "create_by") and current_user.username != obj.created_by or not current_user.has_role('admin'):
+        if hasattr(obj, "create_by") and current_user.username != obj.created_by or \
+                not current_user.has_role('admin'):
             return redirect(request.referrer)
 
         if request.method == "POST":
@@ -97,7 +99,8 @@ class GenericView(FlaskView):
     def delete(self, id):
         obj = self.klass.objects.get(id=id)
         #ToDo Group admins support
-        if hasattr(obj, "create_by") and current_user.username != obj.created_by or not current_user.has_role('admin'):
+        if hasattr(obj, "create_by") and current_user.username != obj.created_by or \
+                not current_user.has_role('admin'):
             return redirect(request.referrer)
         obj.delete()
         return redirect(
