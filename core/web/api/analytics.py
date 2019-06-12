@@ -166,8 +166,7 @@ class OneShotAnalytics(CrudApi):
     @requires_permissions("read")
     def status(self, id):
         results = get_object_or_404(analytics.AnalyticsResults, id=id)
-        if 'settings' in results:
-            del results['settings']
+        results.pop('settings')
         return render(self._analytics_results(results))
 
     @route('/<id>/last/<observable_id>')
@@ -178,9 +177,7 @@ class OneShotAnalytics(CrudApi):
                 analytics=id, observable=observable_id,
                 status="finished").order_by('-datetime').limit(1)
             results = self._analytics_results(results[0])
-            if 'settings' in results:
-                del results['settings']
+            results.pop('settings')
             return render(results)
         except:
             return render(None)
-
