@@ -40,10 +40,10 @@ class UrlHaus(Feed):
             "id_urlhaus": id_feed,
             "first_seen": first_seen,
             "status": url_status,
-            "source": self.name, # TODO(doomedraven): Source is defined twice, which one should we keep?
+            "source": self.name,
             "report": urlhaus_link,
             "threat": threat,
-            "source": source,
+            "reporter": source,
         }
 
         if url:
