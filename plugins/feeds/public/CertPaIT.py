@@ -1,10 +1,14 @@
-import re
 import logging
+import re
 from datetime import datetime, timedelta
-from dateutil import parser
-from core.observables import Hash
-from core.feed import Feed
+
+from pytz import timezone
+
+from core.common.utils import parse_date_to_utc
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Hash
+
 
 class CertPaIT(Feed):
 
@@ -25,15 +29,23 @@ class CertPaIT(Feed):
     )
 
     re_generic_details = re.compile('<p>Filename: <b>(?P<filename>.*)\\</b\\><br>Filetype: (?P<filetype>.*)</p>')
-    
-    def update(self):
-        for item in self.update_xml('item', ['title', 'link', 'pubDate', 'description']):
-            self.analyze(item)
 
-    def analyze(self, item):
+    def update(self):
+
+        since_last_run = datetime.now(timezone('UTC')) - self.frequency
+
+        for item in self.update_xml('item', ['title', 'link', 'pubDate', 'description']):
+            pub_date = parse_date_to_utc(item['pubDate'])
+            if self.last_run is not None:
+                if since_last_run > pub_date:
+                    return
+
+            self.analyze(item, pub_date)
+
+    def analyze(self, item, pub_date):
         md5 = item['title'].replace('MD5: ', '')
         context = {}
-        context['date_added'] = parser.parse(item['pubDate'])
+        context['date_added'] = pub_date
         context['source'] = self.name
         context['url'] = item['link']
 
@@ -51,6 +63,5 @@ class CertPaIT(Feed):
                 hash_data = Hash.get_or_create(value=md5)
                 hash_data.add_context(context)
                 hash_data.add_source(self.name)
-
         except ObservableValidationError as e:
             logging.error(e)

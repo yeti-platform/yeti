@@ -1,21 +1,19 @@
-
 import csv
 import logging
+from dateutil import parser
 from datetime import datetime, timedelta
 
-from dateutil import parser
-
-from core.errors import ObservableValidationError
+from core.observables import Url, Ip
 from core.feed import Feed
-from core.observables import Ip, Url
+from core.errors import ObservableValidationError
 
 
-class BenkowTrackerRat(Feed):
+class BenkowTracker(Feed):
 
     default_values = {
-        "frequency": timedelta(hours=12),
-        "name": "BenkowTrackerRat",
-        "source": "http://benkow.cc/export_rat.php",
+        "frequency": timedelta(hours=1),
+        "name": "BenkowTracker",
+        "source": "http://benkow.cc/export.php",
         "description": "This feed contains known Malware C2 servers",
     }
 
@@ -24,7 +22,9 @@ class BenkowTrackerRat(Feed):
         since_last_run = datetime.utcnow() - self.frequency
 
         resp = self._make_request()
-        reader = csv.reader(resp.content.strip().splitlines(), delimiter=';', quotechar='"')
+        reader = csv.reader(
+            resp.content.strip().splitlines(), delimiter=';', quotechar='"')
+
         for line in reader:
             if line[0] == 'id':
                 return
@@ -39,35 +39,34 @@ class BenkowTrackerRat(Feed):
 
     def analyze(self, line, first_seen):
 
+        url_obs = False
+
+        _, family, url, ip, first_seen, _ = line
         context = {}
         context['date_added'] = first_seen
         context['source'] = self.name
 
-        _, family, url, ip, first_seen, _ = line
-
-        if not url.startswith(('http://', 'https://')):
-            url = "http://" + url
-
         tags = []
         tags.append(family.lower())
-        tags.append("rat")
 
         try:
             if url:
-                url = Url.get_or_create(value=url)
-                url.add_context(context)
-                url.add_source(self.name)
-                url.tag(tags)
+                url_obs = Url.get_or_create(value=url)
+                url_obs.add_context(context)
+                url_obs.add_source(self.name)
+                url_obs.tag(tags)
 
         except ObservableValidationError as e:
             logging.error(e)
 
         try:
             if ip:
-                ip = Ip.get_or_create(value=ip)
-                ip.add_context(context)
-                ip.add_source(self.name)
-                ip.tag(tags)
-
+                ip_obs = Ip.get_or_create(value=ip)
+                ip_obs.add_context(context)
+                ip_obs.add_source(self.name)
+                ip_obs.tag(tags)
+                if url_obs:
+                    ip_obs.active_link_to(
+                        url_obs, "url", self.name, clean_old=False)
         except ObservableValidationError as e:
             logging.error(e)

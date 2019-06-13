@@ -57,7 +57,7 @@ class TorExitNodes(Feed):
         try:
             ip = Ip.get_or_create(value=fields[0])
             ip.add_context(context)
-            ip.add_source("feed")
+            ip.add_source(self.name)
             ip.tag(['tor'])
         except ObservableValidationError as e:
             logging.error(e)

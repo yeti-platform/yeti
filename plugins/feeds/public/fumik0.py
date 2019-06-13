@@ -1,11 +1,9 @@
-import requests
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
 
 from core.observables import Url, Ip, Hash
 from core.feed import Feed
 from core.errors import ObservableValidationError
-from core.config.config import yeti_config
 
 
 class Fumik0Tracker(Feed):
@@ -18,12 +16,20 @@ class Fumik0Tracker(Feed):
     }
 
     def update(self):
-        resp = requests.get(self.source, proxies=yeti_config.proxy)
-        if resp.ok:
-            for block in resp.json():
-                self.analyze(block)
 
-    def analyze(self, block):
+        since_last_run = datetime.utcnow() - self.frequency
+
+        for block in self.update_json():
+            first_seen = datetime.strptime(block["first_seen"],
+                                           "%Y-%m-%d %H:%M:%S")
+
+            if self.last_run is not None:
+                if since_last_run > first_seen:
+                    return
+
+            self.analyze(block, first_seen)
+
+    def analyze(self, block, first_seen):  # pylint: disable=arguments-differ
 
         """
         block example
@@ -43,8 +49,7 @@ class Fumik0Tracker(Feed):
         if "http" not in url:
             url = "http://" + url
         context = {}
-        context["date_added"] = datetime.strptime(
-            block["first_seen"], "%Y-%m-%d %H:%M:%S")
+        context["date_added"] = first_seen
         context["as"] = block["server"]["AS"]
         context["country"] = block["server"]["country"]
         context["ip"] = block["server"]["ip"]
@@ -57,7 +62,7 @@ class Fumik0Tracker(Feed):
         try:
             url_data = Url.get_or_create(value=url)
             url_data.add_context(context)
-            url_data.add_source("feed")
+            url_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
 
@@ -65,7 +70,7 @@ class Fumik0Tracker(Feed):
             try:
                 ip = Ip.get_or_create(value=block["server"]["ip"])
                 ip.add_context(context)
-                ip.add_source("feed")
+                ip.add_source(self.name)
                 if url_data:
                     url_data.active_link_to(ip, 'ip', self.name, clean_old=False)
             except ObservableValidationError as e:
@@ -77,7 +82,7 @@ class Fumik0Tracker(Feed):
                 try:
                     hash_data = Hash.get_or_create(value=block["hash"][hash_type])
                     hash_data.add_context(context)
-                    hash_data.add_source("feed")
+                    hash_data.add_source(self.name)
                     if url_data:
                         url_data.active_link_to(hash_data, 'hash', self.name, clean_old=False)
                 except ObservableValidationError as e:

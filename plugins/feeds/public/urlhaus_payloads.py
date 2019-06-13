@@ -1,76 +1,96 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
+
+from dateutil import parser
 
 from core import Feed
 from core.errors import ObservableValidationError
-from core.observables import Url, File, Hash
+from core.observables import File, Hash, Url
 
 
 class UrlHausPayloads(Feed):
     default_values = {
-        "frequency":
-            timedelta(hours=1),
-        "name":
-            "UrlHausPayloads",
-        "source":
-            "https://urlhaus.abuse.ch/downloads/payloads/",
+        "frequency": timedelta(hours=1),
+        "name": "UrlHausPayloads",
+        "source": "https://urlhaus.abuse.ch/downloads/payloads/",
         "description":
             "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.",
     }
 
     def update(self):
+        since_last_run = datetime.utcnow() - self.frequency
+
         for line in self.update_csv(delimiter=',', quotechar='"'):
+            if not line or line[0].startswith("#"):
+                continue
+
+            first_seen = parser.parse(line[0])
+            if self.last_run is not None:
+                if since_last_run > first_seen:
+                    return
+
             self.analyze(line)
 
-    def analyze(self, item):
+    def analyze(self, line):
 
-        if not item or item[0].startswith("#"):
-            return
+        md5_obs = False
+        sha256_obs = False
+        url_obs = False
+        malware_file = False
 
-        first_seen, url, filetype, md5, sha256, signature = item
+        context = {
+            'source': self.name
+        }
+
+        first_seen, url, filetype, md5, sha256, signature = line
 
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
-                context = {
-                    'first_seen': first_seen,
-                    'source': self.name
-                }
                 if signature != 'None':
                     url_obs.tag(signature)
                 url_obs.add_context(context)
-                url_obs.add_source('feed')
+                url_obs.add_source(self.name)
+            except ObservableValidationError as e:
+                logging.error(e)
 
-                context_malware = {
-                    'source': self.name
-                }
-
+        if sha256:
+            try:
                 malware_file = File.get_or_create(
                     value='FILE:{}'.format(sha256))
 
-                malware_file.add_context(context_malware)
-
-                sha256 = Hash.get_or_create(value=sha256)
-                sha256.tag(filetype)
-                sha256.add_context(context_malware)
-                if signature != 'None':
-                    sha256.tag(signature)
-
-                md5 = Hash.get_or_create(value=md5)
-                md5.add_context(context_malware)
-                md5.tag(filetype)
-
-                if signature != 'None':
-                    md5.tag(signature)
-
-                malware_file.active_link_to(md5, 'md5', self.name)
-
-                malware_file.active_link_to(sha256, 'sha256', self.name)
-                if signature != 'None':
-                    malware_file.tag(signature)
+                malware_file.add_context(context)
                 malware_file.tag(filetype)
 
-                url_obs.active_link_to(malware_file, 'drops', self.name)
-
+                sha256_obs = Hash.get_or_create(value=sha256)
+                sha256_obs.tag(filetype)
+                sha256_obs.add_context(context)
+                if signature != 'None':
+                    sha256_obs.tag(signature)
             except ObservableValidationError as e:
                 logging.error(e)
+
+        if md5:
+            try:
+                md5_obs = Hash.get_or_create(value=md5)
+                md5_obs.add_context(context)
+                md5_obs.tag(filetype)
+
+                if signature != 'None':
+                    md5_obs.tag(signature)
+            except ObservableValidationError as e:
+                logging.error(e)
+
+        if malware_file:
+            if signature != 'None':
+                malware_file.tag(signature)
+
+            if md5_obs:
+                malware_file.active_link_to(
+                    md5_obs, 'md5', self.name)
+            if sha256_obs:
+                malware_file.active_link_to(
+                    sha256_obs, 'sha256', self.name)
+
+            if url_obs:
+                url_obs.active_link_to(malware_file, 'drops', self.name)

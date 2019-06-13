@@ -1,8 +1,8 @@
 from datetime import timedelta
 
-from core.observables import Hostname
 from core.feed import Feed
-
+from core.observables import Hostname
+from core.errors import ObservableValidationError
 
 class DynamicDomains(Feed):
 
@@ -15,23 +15,25 @@ class DynamicDomains(Feed):
 
     def update(self):
         for line in self.update_lines():
+            if line[0].startswith('#'):
+                continue
+
             self.analyze(line)
 
     def analyze(self, line):
         line = line.strip()
         sline = line.split()
 
+        hostname = sline[0]
+
+        context = {}
+        context['source'] = self.name
+        context['provider'] = sline[0]
+
         try:
-            if line[0] != '#':
-                hostname = sline[0]
-
-                context = {}
-                context['source'] = self.name
-                context['provider'] = sline[0]
-
-                hostname = Hostname.get_or_create(value=hostname)
-                hostname.add_context(context)
-                hostname.add_source("feed")
-                hostname.tag('dyndns')
-        except Exception:
+            hostname = Hostname.get_or_create(value=hostname)
+            hostname.add_context(context)
+            hostname.add_source(self.name)
+            hostname.tag('dyndns')
+        except ObservableValidationError:
             pass

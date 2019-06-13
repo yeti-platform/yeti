@@ -1,9 +1,10 @@
 import logging
 from dateutil import parser
 from datetime import datetime, timedelta
+
 from core.observables import Ip
 from core.feed import Feed
-from core.config.config import yeti_config
+
 from core.errors import ObservableValidationError
 
 class RulezSKBruteforceBlocker(Feed):
@@ -21,13 +22,16 @@ class RulezSKBruteforceBlocker(Feed):
         lines = r.content.splitlines()[1:-1]
         for line in lines:
             ip, date, count, id = filter(None, line.split("\t"))
-            ip_date = parser.parse(date.replace("# ", ""))
-            if ip_date > since_last_run:
-                self.analyze(ip, ip_date, line)
+            first_seen = parser.parse(date.replace("# ", ""))
+            if self.last_run is not None:
+                if since_last_run > first_seen:
+                    return
 
-    def analyze(self, ip, date, raw):
+            self.analyze(ip, first_seen, line)
+
+    def analyze(self, ip, first_seen, raw):  # pylint: disable=arguments-differ
         context = {}
-        context['date_added'] = date
+        context['first_seen'] = first_seen
         context['source'] = self.name
         context['raw'] = raw
 

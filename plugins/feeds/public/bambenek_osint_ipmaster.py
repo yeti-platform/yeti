@@ -9,12 +9,9 @@ from core.observables import Hostname, Ip
 
 class BambenekOsintIpmaster(Feed):
     default_values = {
-        "frequency":
-            timedelta(minutes=60),
-        "name":
-            "BambenekOsintIpmaster",
-        "source":
-            "http://osint.bambenekconsulting.com/feeds/c2-masterlist.txt",
+        "frequency": timedelta(minutes=60),
+        "name": "BambenekOsintIpmaster",
+        "source": "http://osint.bambenekconsulting.com/feeds/c2-masterlist.txt",
         "description":
             "Master Feed of known, active and non-sinkholed C&Cs indicators (Bambenek)",
     }
@@ -23,12 +20,12 @@ class BambenekOsintIpmaster(Feed):
 
     def update(self):
         for line in self.update_lines():
-            print(line)
+            if not line or line[0].startswith("#"):
+                continue
+
             self.analyze(line)
 
     def analyze(self, line):
-        if not line or line[0].startswith("#"):
-            return
 
         tokens = line.split(',')
         c2_domain = []
@@ -64,7 +61,7 @@ class BambenekOsintIpmaster(Feed):
                     if ip:
                         ip_obs = Ip.get_or_create(value=ip)
                         ip_obs.tag(tags)
-                        ip_obs.add_source('feed')
+                        ip_obs.add_source(self.name)
                         if c2:
                             c2.active_link_to(ip_obs, "IP", self.source)
 
@@ -74,13 +71,13 @@ class BambenekOsintIpmaster(Feed):
                     c2.active_link_to(ns_obs, 'NS', self.source)
                     ns_obs.tag(tags)
                     ns_obs.add_context(context)
-                    ns_obs.add_source('feed')
+                    ns_obs.add_source(self.name)
             for ip_ns in ip_names_servers:
                 if ip_ns:
                     ip_ns_obs = Ip.get_or_create(value=ip_ns)
                     c2.active_link_to(ip_ns_obs, 'IP NS', self.source)
                     ip_ns_obs.tag(tags)
                     ip_ns_obs.add_context(context)
-                    ip_ns_obs.add_source('feed')
+                    ip_ns_obs.add_source(self.name)
         else:
             logging.error('Parsing error in line: %s' % line)

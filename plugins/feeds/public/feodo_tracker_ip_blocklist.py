@@ -1,33 +1,42 @@
-from datetime import timedelta
 import logging
+from datetime import datetime, timedelta
 
-from core.observables import Url
-from core.feed import Feed
+from dateutil import parser
+
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Url
 
 
 class FeodoTrackerIPBlockList(Feed):
 
     default_values = {
-        "frequency":
-            timedelta(hours=24),
-        "name":
-            "FeodoTrackerIPBlocklist",
-        "source":
-            "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
+        "frequency": timedelta(hours=24),
+        "name": "FeodoTrackerIPBlocklist",
+        "source": "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
         "description":
             "Feodo Tracker IP Feed. This feed shows a full list C2s.",
     }
 
     def update(self):
+
+        since_last_run = datetime.utcnow() - self.frequency
+
         for line in self.update_csv(delimiter=',', quotechar='"'):
-            self.analyze(line)
+            if not line or line[0].startswith("#"):
+                continue
 
-    def analyze(self, line):
-        if not line or line[0].startswith("#"):
-            return
+            first_seen, c2_ip, c2_port, last_online, family = tuple(line)
+            first_seen = parser.parse(first_seen)
 
-        first_seen, c2_ip, c2_port, last_online, family = tuple(line)
+            if self.last_run is not None:
+                if since_last_run > first_seen:
+                    return
+
+            self.analyze(line, first_seen, c2_ip, c2_port, last_online, family)
+
+    # pylint: disable=arguments-differ
+    def analyze(self, line, first_seen, c2_ip, c2_port, last_online, family):
 
         tags = []
         tags.append(family.lower())
