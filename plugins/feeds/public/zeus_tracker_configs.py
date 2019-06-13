@@ -34,7 +34,7 @@ class ZeusTrackerConfigs(Feed):
             date_string = datetime.strptime(date_string, "%Y-%m-%d")
 
             if self.last_run is not None:
-                if since_last_run > 'date_added':
+                if since_last_run > date_string:
                     return
 
             self.analyze(item, date_string)

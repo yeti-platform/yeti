@@ -41,8 +41,7 @@ class BenkowTracker(Feed):
 
         url_obs = False
 
-        #TODO(doomedraven) id seems not to be used elsewhere, please replace with _ if that's indended
-        id, family, url, ip, first_seen, _ = line
+        _, family, url, ip, first_seen, _ = line
         context = {}
         context['date_added'] = first_seen
         context['source'] = self.name
