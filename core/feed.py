@@ -1,23 +1,22 @@
 from __future__ import unicode_literals
 
-import os
-import pytz
 import csv
 import logging
+import os
 import tempfile
-from StringIO import StringIO
-from datetime import datetime
 from base64 import b64decode
-from dateutil import parser
+from datetime import datetime
+from StringIO import StringIO
 
+import pytz
 import requests
+from dateutil import parser
 from lxml import etree
-from mongoengine import DoesNotExist
-from mongoengine import StringField
+from mongoengine import DoesNotExist, StringField
 
-from core.errors import GenericYetiError
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
+from core.errors import GenericYetiError
 from core.scheduling import ScheduleEntry
 
 utc = pytz.UTC
@@ -200,7 +199,8 @@ class Feed(ScheduleEntry):
             last_mod = parser.parse(r.headers['Last-Modified'])
             if since_last_run > last_mod.replace(tzinfo=None):
                 raise GenericYetiError(
-                "Last modified date: {} returns code: {}".format(last_mod, r.status_code))
+                "Last modified date: {} returns code: {}".format(
+                    last_mod, r.status_code))
 
         return r
 
