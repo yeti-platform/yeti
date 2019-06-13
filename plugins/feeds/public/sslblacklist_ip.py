@@ -1,10 +1,12 @@
 import logging
-from dateutil import parser
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 
-from core.feed import Feed
-from core.observables import Url, Ip
+from dateutil import parser
+
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Ip, Url
+
 
 class SSLBlackListIP(Feed):
 

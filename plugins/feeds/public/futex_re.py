@@ -1,11 +1,14 @@
 import csv
 import logging
+from datetime import datetime, timedelta
+
 from dateutil import parser
-from datetime import timedelta, datetime
-from core.feed import Feed
-from core.observables import Url, Hash, AutonomousSystem
-from core.errors import ObservableValidationError
+
 from core.config.config import yeti_config
+from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import AutonomousSystem, Hash, Url
+
 
 class FutexTracker(Feed):
 

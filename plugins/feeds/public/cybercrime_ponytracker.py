@@ -1,11 +1,13 @@
-import re
 import logging
+import re
+from datetime import datetime, timedelta
+
 from pytz import timezone
-from datetime import timedelta, datetime
+
 from core.common.utils import parse_date_to_utc
-from core.observables import Hash, Url
-from core.feed import Feed
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Hash, Url
 
 
 class CybercrimePonyTracker(Feed):
@@ -31,7 +33,7 @@ class CybercrimePonyTracker(Feed):
 
             self.analyze(item, pub_date)
 
-    def analyze(self, item, pub_date):
+    def analyze(self, item, pub_date):  # pylint: disable=arguments-differ
         observable_sample = item['title']
         context_sample = {}
         context_sample['description'] = "Pony sample"

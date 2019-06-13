@@ -1,11 +1,11 @@
 import logging
+from datetime import datetime, timedelta
+
 from dateutil import parser
-from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
-from core.observables import Hash, Hostname, File
-
+from core.observables import File, Hash, Hostname
 
 
 class HybridAnalysis(Feed):

@@ -1,9 +1,11 @@
 import logging
+from datetime import datetime, timedelta
+
 from dateutil import parser
-from datetime import timedelta, datetime
-from core.observables import Hash
-from core.feed import Feed
+
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Hash
 
 
 class FeodoTrackerBinaries(Feed):

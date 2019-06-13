@@ -1,9 +1,11 @@
 import logging
+from datetime import datetime, timedelta
+
 from dateutil import parser
-from datetime import timedelta, datetime
-from core.observables import Url
-from core.feed import Feed
+
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Url
 
 
 class FeodoTrackerIPBlockList(Feed):
@@ -33,6 +35,7 @@ class FeodoTrackerIPBlockList(Feed):
 
             self.analyze(line, first_seen, c2_ip, c2_port, last_online, family)
 
+    # pylint: disable=arguments-differ
     def analyze(self, line, first_seen, c2_ip, c2_port, last_online, family):
 
         tags = []

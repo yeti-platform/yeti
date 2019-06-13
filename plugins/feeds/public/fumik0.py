@@ -29,7 +29,7 @@ class Fumik0Tracker(Feed):
 
             self.analyze(block, first_seen)
 
-    def analyze(self, block, first_seen):
+    def analyze(self, block, first_seen):  # pylint: disable=arguments-differ
 
         """
         block example

@@ -101,9 +101,9 @@ disable=C0103,
         too-many-boolean-expressions,
         too-many-nested-blocks,
         ungrouped-imports,
+        missing-docstring,
         line-too-long,
         arguments-differ,
-
 
 [REPORTS]
 

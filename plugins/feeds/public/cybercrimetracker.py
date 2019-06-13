@@ -1,12 +1,12 @@
+import logging
 import re
 from datetime import datetime, timedelta
-import logging
 
 from dateutil import parser
 
-from core.observables import Observable, Ip
-from core.feed import Feed
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Ip, Observable
 
 
 class CybercrimeTracker(Feed):
@@ -32,7 +32,7 @@ class CybercrimeTracker(Feed):
 
             self.analyze(item, pub_date)
 
-    def analyze(self, item, pub_date):
+    def analyze(self, item, pub_date):  # pylint: disable=arguments-differ
         s_re = '\[([^\]]*)] Type: (\w+) - IP: (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})'
         r = re.compile(s_re)
         m = r.match(item['description'])

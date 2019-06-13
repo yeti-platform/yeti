@@ -1,6 +1,7 @@
 import logging
+from datetime import datetime, timedelta
+
 from dateutil import parser
-from datetime import timedelta, datetime
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -33,13 +34,13 @@ class UrlHaus(Feed):
 
     def analyze(self, first_seen, line):
 
-        id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source = line
+        id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source = line # pylint: disable=line-too-long
 
         context = {
             "id_urlhaus": id_feed,
             "first_seen": first_seen,
             "status": url_status,
-            "source": self.name,
+            "source": self.name, # TODO(doomedraven): Source is defined twice, which one should we keep?
             "report": urlhaus_link,
             "threat": threat,
             "source": source,

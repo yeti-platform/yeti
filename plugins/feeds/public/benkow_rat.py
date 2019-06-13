@@ -1,11 +1,12 @@
 import csv
 import logging
-from dateutil import parser
 from datetime import datetime, timedelta
 
-from core.observables import Url, Ip
-from core.feed import Feed
+from dateutil import parser
+
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Ip, Url
 
 
 class BenkowTrackerRat(Feed):
