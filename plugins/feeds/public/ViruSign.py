@@ -1,11 +1,12 @@
 import csv
 import logging
-import requests
 from datetime import datetime, timedelta
-from core.observables import Hash
+
+import requests
+from core.observables import Hash, File
 from core.feed import Feed
-from core.config.config import yeti_config
 from core.errors import ObservableValidationError
+
 
 class ViruSign(Feed):
 
@@ -19,7 +20,10 @@ class ViruSign(Feed):
     def update(self):
         today = datetime.now().strftime("%Y-%m-%d")
         try:
-            r = requests.get(self.source.format(date=today), headers={"User-Agent": "yeti-project"})
+            r = requests.get(
+                self.source.format(date=today),
+                headers={"User-Agent": "yeti-project"}
+            )
             if r.ok:
                 reader = csv.reader(r.content.splitlines(), quotechar='"')
                 for line in reader:
@@ -31,6 +35,15 @@ class ViruSign(Feed):
         ssdeep, imphash, sha256, sha1, md5 = line
         context = {}
         context['source'] = self.name
+
+        file_obs = False
+
+        try:
+            file_obs = File.get_or_create(value='FILE:{}'.format(sha256))
+            file_obs.add_context(context)
+            file_obs.add_source(self.name)
+        except ObservableValidationError as e:
+            logging.error(e)
 
         try:
             md5_data = Hash.get_or_create(value=md5)
@@ -54,7 +67,8 @@ class ViruSign(Feed):
             logging.error(e)
 
         try:
-            md5_data.active_link_to(sha1_data, 'sha1', self.name)
-            md5_data.active_link_to(sha256_data, 'sha256', self.name)
+            file_obs.active_link_to(sha1_data, 'md5', self.name)
+            file_obs.active_link_to(sha1_data, 'sha1', self.name)
+            file_obs.active_link_to(sha256_data, 'sha256', self.name)
         except Exception as e:
             logging.error(e)
