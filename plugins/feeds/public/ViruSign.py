@@ -49,6 +49,7 @@ class ViruSign(Feed):
             md5_data = Hash.get_or_create(value=md5)
             md5_data.add_context(context)
             md5_data.add_source(self.name)
+            file_obs.active_link_to(md5_data, 'md5', self.name)
         except ObservableValidationError as e:
             logging.error(e)
 
@@ -56,6 +57,7 @@ class ViruSign(Feed):
             sha1_data = Hash.get_or_create(value=sha1)
             sha1_data.add_context(context)
             sha1_data.add_source(self.name)
+            file_obs.active_link_to(sha1_data, 'sha1', self.name)
         except ObservableValidationError as e:
             logging.error(e)
 
@@ -63,12 +65,6 @@ class ViruSign(Feed):
             sha256_data = Hash.get_or_create(value=sha256)
             sha256_data.add_context(context)
             sha256_data.add_source(self.name)
-        except ObservableValidationError as e:
-            logging.error(e)
-
-        try:
-            file_obs.active_link_to(sha1_data, 'md5', self.name)
-            file_obs.active_link_to(sha1_data, 'sha1', self.name)
             file_obs.active_link_to(sha256_data, 'sha256', self.name)
-        except Exception as e:
+        except ObservableValidationError as e:
             logging.error(e)
