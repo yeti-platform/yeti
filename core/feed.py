@@ -1,21 +1,22 @@
 from __future__ import unicode_literals
 
-import pytz
 import csv
 import logging
-from StringIO import StringIO
-from datetime import datetime
+import os
+import tempfile
 from base64 import b64decode
-from dateutil import parser
+from datetime import datetime
+from StringIO import StringIO
 
+import pytz
 import requests
+from dateutil import parser
 from lxml import etree
-from mongoengine import DoesNotExist
-from mongoengine import StringField
+from mongoengine import DoesNotExist, StringField
 
-from core.errors import GenericYetiError
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
+from core.errors import GenericYetiError
 from core.scheduling import ScheduleEntry
 
 utc = pytz.UTC
@@ -86,6 +87,53 @@ class Feed(ScheduleEntry):
 
     source = StringField()
 
+    def _temp_save_feed_data(self, content):
+        """
+            This function will save data for the feed which doesn't provide date
+            to be able compare between latest fetched data and just fetched data
+            to not process the same data over and over
+
+            content: the fetched data to be stored
+        """
+
+        tmp_folder = tempfile.gettempdir()
+        feed_file = os.path.join(tmp_folder, self.name)
+        with open(feed_file, "w") as f:
+            f.write(content)
+
+    def _temp_load_feed_data(self):
+        """
+            This function will load stored data from previous fetch
+        """
+
+        content = set()
+        tmp_folder = tempfile.gettempdir()
+        feed_file = os.path.join(tmp_folder, self.name)
+
+        if os.path.exists(feed_file):
+            with open(feed_file, "r") as f:
+                # requires to remove newline for correct comparison
+                content = set([line.strip() for line in f.readlines()])
+
+        return content
+
+    def _temp_feed_data_compare(self, content):
+
+        """
+            First load data from last fetch to compare them with current data
+            This is useful for feeds without Last-modified header
+            and where no date to check
+        """
+
+        old_data_set = self._temp_load_feed_data()
+        new_data_set = set(content.splitlines())
+
+        new_data_set = new_data_set.difference(old_data_set)
+
+        self._temp_save_feed_data(content)
+
+        return list(new_data_set)
+
     def update(self):
         """Function responsible for retreiving the data for a feed and calling
         the ``analyze`` function on its data, typically one line at a time.
@@ -146,6 +194,14 @@ class Feed(ScheduleEntry):
             raise GenericYetiError(
                 "{} returns code: {}".format(self.source, r.status_code))
 
+        if self.last_run is not None and r.headers.get('Last-Modified'):
+            since_last_run = datetime.utcnow() - self.frequency
+            last_mod = parser.parse(r.headers['Last-Modified'])
+            if since_last_run > last_mod.replace(tzinfo=None):
+                raise GenericYetiError(
+                "Last modified date: {} returns code: {}".format(
+                    last_mod, r.status_code))
+
         return r
 
     def update_xml(self, main_node, children, headers={}, auth=None, verify=True):
@@ -205,7 +261,7 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        feed = r.text.split('\n')
+        feed = self._temp_feed_data_compare(r.content)
 
         for line in feed:
             yield line
@@ -230,7 +286,8 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        feed = r.text.split('\n')
+        feed = self._temp_feed_data_compare(r.content)
+
         reader = csv.reader(
             self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
 
