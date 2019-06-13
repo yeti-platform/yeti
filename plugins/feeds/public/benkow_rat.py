@@ -1,3 +1,4 @@
+
 import csv
 import logging
 from datetime import datetime, timedelta
@@ -42,7 +43,7 @@ class BenkowTrackerRat(Feed):
         context['date_added'] = first_seen
         context['source'] = self.name
 
-        id, family, url, ip, first_seen, _ = line
+        _, family, url, ip, first_seen, _ = line
 
         if not url.startswith(('http://', 'https://')):
             url = "http://" + url
