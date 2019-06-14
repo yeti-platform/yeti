@@ -3,7 +3,7 @@ from datetime import timedelta
 from core.feed import Feed
 from core.observables import Observable
 from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
-from core.observables import reg_certificate, reg_observables
+from core.observables.utils import reg_certificate, reg_observables
 
 
 class DrWebGithubIocs(Feed):
