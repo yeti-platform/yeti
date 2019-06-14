@@ -5,7 +5,6 @@ from core.observables import Observable
 from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
 from core.observables.utils import reg_certificate, reg_observables
 
-
 BLACKLIST_DOMAINS = [
     'technet.microsoft.com',
     'cloudblogs.microsoft.com',
@@ -15,13 +14,14 @@ BLACKLIST_DOMAINS = [
     'blog.avast.com',
 ]
 
-class McAfeeATRGithubIocs(Feed):
+
+class PanUnit42GithubIocs(Feed):
 
     default_values = {
         'frequency': timedelta(hours=24),
-        'name': 'McAfeeATRGithubIocs',
-        'source': 'https://api.github.com/repos/advanced-threat-research/IOCs/commits',
-        'description': 'Get Iocs from McAfee ATR GitHub Iocs repo',
+        'name': 'PanUnit42GithubIocs',
+        'source': 'https://api.github.com/repos/pan-unit42/iocs/commits',
+        'description': 'Get Iocs from Pan-Unit42 GitHub Iocs repo',
     }
     refs = {
         'MacAddress': MacAddress,
@@ -37,11 +37,9 @@ class McAfeeATRGithubIocs(Feed):
 
     def update(self):
         for content in self.update_github():
-            if not content:
-                continue
-
-            content, filename = content
-            self.process_content(content, filename)
+            if content:
+                content, filename = content
+                self.process_content(content, filename)
 
     def process_content(self, content, filename):
         context = dict(source=self.name)

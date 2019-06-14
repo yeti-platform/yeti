@@ -6,22 +6,13 @@ from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
 from core.observables.utils import reg_certificate, reg_observables
 
 
-BLACKLIST_DOMAINS = [
-    'technet.microsoft.com',
-    'cloudblogs.microsoft.com',
-    'capec.mitre.org',
-    'attack.mitre.org',
-    'securelist.com',
-    'blog.avast.com',
-]
-
-class McAfeeATRGithubIocs(Feed):
+class VitaliKremezGitHub(Feed):
 
     default_values = {
         'frequency': timedelta(hours=24),
-        'name': 'McAfeeATRGithubIocs',
-        'source': 'https://api.github.com/repos/advanced-threat-research/IOCs/commits',
-        'description': 'Get Iocs from McAfee ATR GitHub Iocs repo',
+        'name': 'VitaliKremezGitHub',
+        'source': 'https://api.github.com/repos/k-vitali/Malware-Misc-RE/commits',
+        'description': 'Get Iocs from Vitaly Kremez GitHub repo',
     }
     refs = {
         'MacAddress': MacAddress,
@@ -34,6 +25,12 @@ class McAfeeATRGithubIocs(Feed):
     }
 
     blacklist = ('Makefile', 'LICENSE', 'README.adoc')
+    blacklist_domains = (
+        'technet.microsoft.com',
+        'cloudblogs.microsoft.com',
+        'capec.mitre.org',
+        'attack.mitre.org',
+    )
 
     def update(self):
         for content in self.update_github():
