@@ -6,13 +6,13 @@ from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
 from core.observables.utils import register_certificate, register_observables
 
 
-class EsetGithubIocs(Feed):
+class FireHolGitHub(Feed):
 
     default_values = {
         'frequency': timedelta(hours=24),
-        'name': 'EsetGithubIocs',
-        'source': 'https://api.github.com/repos/eset/malware-ioc/commits',
-        'description': 'Get Iocs from Eset GitHub Iocs repo',
+        'name': 'FireHolGitHub',
+        'source': 'https://api.github.com/repos/firehol/blocklist-ipsets/commits',
+        'description': 'Get Iocs from FireHol repo',
     }
     refs = {
         'MacAddress': MacAddress,
@@ -24,10 +24,12 @@ class EsetGithubIocs(Feed):
         'Email': Email,
     }
 
-    blacklist = ('Makefile', 'LICENSE', 'README.adoc')
+    blacklist = ('.gitignore', 'LICENSE', 'README.adoc', 'README-EDIT.md', 'README.md')
     blacklist_domains = (
         'technet.microsoft.com', 'cloudblogs.microsoft.com', 'capec.mitre.org',
-        'attack.mitre.org', 'securelist.com', 'blog.avast.com')
+        'attack.mitre.org', 'securelist.com', 'blog.avast.com', 'firehol.org',
+        'gist.githubusercontent.com', 'www.binarydefense.com', 'www.badips.com')
+
 
     def update(self):
         for content in self.update_github():

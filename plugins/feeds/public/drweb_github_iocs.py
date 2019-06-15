@@ -3,16 +3,16 @@ from datetime import timedelta
 from core.feed import Feed
 from core.observables import Observable
 from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
-from core.observables.utils import register_certificate, register_observables
+from core.observables.helpers import register_certificate, register_observables
 
 
-class EsetGithubIocs(Feed):
+class DrWebGithubIocs(Feed):
 
     default_values = {
         'frequency': timedelta(hours=24),
-        'name': 'EsetGithubIocs',
-        'source': 'https://api.github.com/repos/eset/malware-ioc/commits',
-        'description': 'Get Iocs from Eset GitHub Iocs repo',
+        'name': 'DrWebGithubIocs',
+        'source': 'https://api.github.com/repos/DoctorWebLtd/malware-iocs/commits',
+        'description': 'Get Iocs from DrWeb GitHub Iocs repo',
     }
     refs = {
         'MacAddress': MacAddress,
@@ -26,8 +26,13 @@ class EsetGithubIocs(Feed):
 
     blacklist = ('Makefile', 'LICENSE', 'README.adoc')
     blacklist_domains = (
-        'technet.microsoft.com', 'cloudblogs.microsoft.com', 'capec.mitre.org',
-        'attack.mitre.org', 'securelist.com', 'blog.avast.com')
+        'technet.microsoft.com',
+        'cloudblogs.microsoft.com',
+        'capec.mitre.org',
+        'attack.mitre.org',
+        'securelist.com',
+        'drweb.com',
+    )
 
     def update(self):
         for content in self.update_github():

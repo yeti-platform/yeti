@@ -5,14 +5,23 @@ from core.observables import Observable
 from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
 from core.observables.utils import register_certificate, register_observables
 
+BLACKLIST_DOMAINS = [
+    'technet.microsoft.com',
+    'cloudblogs.microsoft.com',
+    'capec.mitre.org',
+    'attack.mitre.org',
+    'securelist.com',
+    'blog.avast.com',
+]
 
-class EsetGithubIocs(Feed):
+
+class PanUnit42GithubIocs(Feed):
 
     default_values = {
         'frequency': timedelta(hours=24),
-        'name': 'EsetGithubIocs',
-        'source': 'https://api.github.com/repos/eset/malware-ioc/commits',
-        'description': 'Get Iocs from Eset GitHub Iocs repo',
+        'name': 'PanUnit42GithubIocs',
+        'source': 'https://api.github.com/repos/pan-unit42/iocs/commits',
+        'description': 'Get Iocs from Pan-Unit42 GitHub Iocs repo',
     }
     refs = {
         'MacAddress': MacAddress,
@@ -25,17 +34,12 @@ class EsetGithubIocs(Feed):
     }
 
     blacklist = ('Makefile', 'LICENSE', 'README.adoc')
-    blacklist_domains = (
-        'technet.microsoft.com', 'cloudblogs.microsoft.com', 'capec.mitre.org',
-        'attack.mitre.org', 'securelist.com', 'blog.avast.com')
 
     def update(self):
         for content in self.update_github():
-            if not content:
-                continue
-
-            content, filename = content
-            self.process_content(content, filename)
+            if content:
+                content, filename = content
+                self.process_content(content, filename)
 
     def process_content(self, content, filename):
         context = dict(source=self.name)

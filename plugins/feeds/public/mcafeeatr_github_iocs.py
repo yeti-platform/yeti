@@ -1,12 +1,10 @@
 import logging
-from dateutil import parser
-from datetime import datetime, timedelta
+from datetime import timedelta
 from core.feed import Feed
-from core.errors import GenericYetiError
 from core.observables import Observable
-from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email, Certificate
-from core.errors import ObservableValidationError
-from core.config.config import yeti_config
+from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
+from core.observables.utils import register_certificate, register_observables
+
 
 BLACKLIST_DOMAINS = [
     'technet.microsoft.com',
@@ -37,39 +35,27 @@ class McAfeeATRGithubIocs(Feed):
 
     blacklist = ('Makefile', 'LICENSE', 'README.adoc')
 
+    def update(self):
+        for content in self.update_github():
+            if not content:
+                continue
+
+            content, filename = content
+            self.process_content(content, filename)
+
     def process_content(self, content, filename):
         context = dict(source=self.name)
         context['description'] = 'File: {}'.format(filename)
 
-        if content.startswith('Certificate:') and content.endswith('-----END CERTIFICATE-----\n'):
-            try:
-                cert_data = Certificate.from_data(content)
-                cert_data.add_context(context)
-                cert_data.add_source(self.name)
-            except ObservableValidationError as e:
-                logging.error(e)
+        if content.startswith('Certificate:') and content.endswith(
+                '-----END CERTIFICATE-----\n'):
+            reg_certificate(content, context, self.name)
+
         else:
             try:
                 observables = Observable.from_string(content)
+                reg_observables(
+                    observables, self.blacklist_domains, context, self.source)
             except Exception as e:
                 logging.error(e)
                 return
-
-            for key in observables:
-                for ioc in filter(None, observables[key]):
-                    if key == 'Url' and  any([domain in ioc for domain in BLACKLIST_DOMAINS]):
-                        continue
-                    try:
-                        ioc_data = self.refs[key].get_or_create(value=ioc)
-                        ioc_data.add_context(context)
-                        ioc_data.add_source(self.name)
-                    except ObservableValidationError as e:
-                        logging.error(e)
-                    except UnicodeDecodeError as e:
-                        logging.error(e)
-
-    def update(self):
-        for content in self.update_github():
-            if content:
-                content, filename = content
-                self.process_content(content, filename)
