@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import os
+import pytz
 import csv
 import logging
 import os
@@ -14,9 +16,9 @@ from dateutil import parser
 from lxml import etree
 from mongoengine import DoesNotExist, StringField
 
+from core.errors import GenericYetiError
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
-from core.errors import GenericYetiError
 from core.scheduling import ScheduleEntry
 
 utc = pytz.UTC
@@ -159,6 +161,15 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
+    def _check_last_modified(self, r):
+        if self.last_run is not None and r.headers.get('Last-Modified'):
+            since_last_run = datetime.utcnow() - self.frequency
+            last_mod = parser.parse(r.headers['Last-Modified'])
+            return since_last_run > last_mod.replace(tzinfo=None)
+
+        return False
+
+
     def _make_request(self, headers={}, auth=None, params={}, url=False, verify=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
@@ -194,14 +205,6 @@ class Feed(ScheduleEntry):
             raise GenericYetiError(
                 "{} returns code: {}".format(self.source, r.status_code))
 
-        if self.last_run is not None and r.headers.get('Last-Modified'):
-            since_last_run = datetime.utcnow() - self.frequency
-            last_mod = parser.parse(r.headers['Last-Modified'])
-            if since_last_run > last_mod.replace(tzinfo=None):
-                raise GenericYetiError(
-                "Last modified date: {} returns code: {}".format(
-                    last_mod, r.status_code))
-
         return r
 
     def update_xml(self, main_node, children, headers={}, auth=None, verify=True):
@@ -230,6 +233,8 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
+        if not self._check_last_modified(r):
+            return
         return self.parse_xml(r.content, main_node, children)
 
     def parse_xml(self, data, main_node, children):
@@ -261,6 +266,8 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
+        if not self._check_last_modified(r):
+            return
         feed = self._temp_feed_data_compare(r.content)
 
         for line in feed:
@@ -286,6 +293,8 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
+        if not self._check_last_modified(r):
+            return
         feed = self._temp_feed_data_compare(r.content)
 
         reader = csv.reader(
@@ -308,6 +317,8 @@ class Feed(ScheduleEntry):
         """
 
         r = self._make_request(headers, auth, params, verify=verify)
+        if not self._check_last_modified(r):
+            return
         return r.json()
 
     def parse_commit(self, item, headers, verify=True):
@@ -324,6 +335,9 @@ class Feed(ScheduleEntry):
 
         commit_info = self._make_request(
             url=item['url'], headers=headers, verify=verify).json()
+        if not self._check_last_modified(commit_info):
+            return
+
         if commit_info and commit_info.get('files', []):
             for block in commit_info['files']:
                 if block['filename'] in self.blacklist:

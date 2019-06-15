@@ -16,7 +16,12 @@ class TorExitNodes(Feed):
     }
 
     def update(self):
-        feed = self._make_request().text
+        r = self._make_request()
+
+        if not self._check_last_modified(r):
+            return
+
+        feed = r.text
 
         start = feed.find('<!-- __BEGIN_TOR_NODE_LIST__ //-->') + len(
             '<!-- __BEGIN_TOR_NODE_LIST__ //-->')

@@ -22,6 +22,8 @@ class ProxyRSS(Feed):
 
     def update(self):
         r = self._make_request()
+        if not self._check_last_modified(r):
+            return
         tree = etree.parse(StringIO(r.content))
         root = tree.getroot()
         for item in tree.findall("//item", root.nsmap):

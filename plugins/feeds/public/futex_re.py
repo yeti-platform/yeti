@@ -9,7 +9,6 @@ from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import AutonomousSystem, Hash, Url
 
-
 class FutexTracker(Feed):
 
     default_values = {
@@ -24,7 +23,9 @@ class FutexTracker(Feed):
 
         since_last_run = datetime.utcnow() - self.frequency
 
-        resp = self._make_request(proxies=yeti_config.proxy)
+        resp = self._make_request()
+        if not self._check_last_modified(resp):
+            return
         reader = csv.reader(resp.content.strip().splitlines(), delimiter=';', quotechar='"')
         for line in reader:
             if not line or line[0].startswith("#"):

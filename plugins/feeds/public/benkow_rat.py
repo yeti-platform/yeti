@@ -1,4 +1,3 @@
-
 import csv
 import logging
 from datetime import datetime, timedelta
@@ -24,6 +23,8 @@ class BenkowTrackerRat(Feed):
         since_last_run = datetime.utcnow() - self.frequency
 
         resp = self._make_request()
+        if not self._check_last_modified(resp):
+            return
         reader = csv.reader(resp.content.strip().splitlines(), delimiter=';', quotechar='"')
         for line in reader:
             if line[0] == 'id':

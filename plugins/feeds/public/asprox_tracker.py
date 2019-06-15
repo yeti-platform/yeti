@@ -1,7 +1,7 @@
 import csv
 import logging
-from datetime import datetime, timedelta
 
+from datetime import datetime, timedelta
 from dateutil import parser
 
 from core.errors import ObservableValidationError
@@ -23,6 +23,8 @@ class AsproxTracker(Feed):
         since_last_run = datetime.now() - self.frequency
 
         resp = self._make_request()
+        if not self._check_last_modified(resp):
+            return
         if resp.ok:
             reader = csv.reader(resp.content.splitlines(), quotechar="'")
             for line in reader:
