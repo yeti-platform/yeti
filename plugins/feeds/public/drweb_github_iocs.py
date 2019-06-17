@@ -48,12 +48,12 @@ class DrWebGithubIocs(Feed):
 
         if content.startswith('Certificate:') and content.endswith(
                 '-----END CERTIFICATE-----\n'):
-            reg_certificate(content, context, self.name)
+            register_certificate(content, context, self.name)
 
         else:
             try:
                 observables = Observable.from_string(content)
-                reg_observables(
+                register_observables(
                     observables, self.blacklist_domains, context, self.source)
             except Exception as e:
                 logging.error(e)

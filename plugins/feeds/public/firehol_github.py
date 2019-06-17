@@ -3,7 +3,7 @@ from datetime import timedelta
 from core.feed import Feed
 from core.observables import Observable
 from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
-from core.observables.utils import register_certificate, register_observables
+from core.observables.helpers import register_certificate, register_observables
 
 
 class FireHolGitHub(Feed):
@@ -24,12 +24,14 @@ class FireHolGitHub(Feed):
         'Email': Email,
     }
 
-    blacklist = ('.gitignore', 'LICENSE', 'README.adoc', 'README-EDIT.md', 'README.md')
+    blacklist = (
+        '.gitignore', 'LICENSE', 'README.adoc', 'README-EDIT.md', 'README.md'
+    )
     blacklist_domains = (
         'technet.microsoft.com', 'cloudblogs.microsoft.com', 'capec.mitre.org',
         'attack.mitre.org', 'securelist.com', 'blog.avast.com', 'firehol.org',
-        'gist.githubusercontent.com', 'www.binarydefense.com', 'www.badips.com')
-
+        'gist.githubusercontent.com', 'www.binarydefense.com', 'www.badips.com'
+    )
 
     def update(self):
         for content in self.update_github():
@@ -45,12 +47,12 @@ class FireHolGitHub(Feed):
 
         if content.startswith('Certificate:') and content.endswith(
                 '-----END CERTIFICATE-----\n'):
-            reg_certificate(content, context, self.name)
+            register_certificate(content, context, self.name)
 
         else:
             try:
                 observables = Observable.from_string(content)
-                reg_observables(
+                register_observables(
                     observables, self.blacklist_domains, context, self.source)
             except Exception as e:
                 logging.error(e)
