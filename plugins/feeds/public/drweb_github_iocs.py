@@ -11,7 +11,7 @@ class DrWebGithubIocs(Feed):
     default_values = {
         'frequency': timedelta(hours=24),
         'name': 'DrWebGithubIocs',
-        'source': 'https://api.github.com/repos/DoctorWebLtd/malware-iocs/commits',
+        'source': 'https://api.github.com/repos/DoctorWebLtd/malware-iocs/commits', # pylint: disable=line-too-long
         'description': 'Get Iocs from DrWeb GitHub Iocs repo',
     }
     refs = {
@@ -42,6 +42,7 @@ class DrWebGithubIocs(Feed):
             content, filename = content
             self.process_content(content, filename)
 
+    # pylint: disable=arguments-differ
     def process_content(self, content, filename):
         context = dict(source=self.name)
         context['description'] = 'File: {}'.format(filename)
@@ -54,7 +55,12 @@ class DrWebGithubIocs(Feed):
             try:
                 observables = Observable.from_string(content)
                 register_observables(
-                    observables, self.blacklist_domains, context, self.source)
+                    self.refs,
+                    observables,
+                    self.blacklist_domains,
+                    context,
+                    self.source,
+                )
             except Exception as e:
                 logging.error(e)
                 return

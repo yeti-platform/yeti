@@ -20,7 +20,7 @@ class McAfeeATRGithubIocs(Feed):
     default_values = {
         'frequency': timedelta(hours=24),
         'name': 'McAfeeATRGithubIocs',
-        'source': 'https://api.github.com/repos/advanced-threat-research/IOCs/commits',
+        'source': 'https://api.github.com/repos/advanced-threat-research/IOCs/commits', # pylint: disable=line-too-long
         'description': 'Get Iocs from McAfee ATR GitHub Iocs repo',
     }
     refs = {
@@ -43,6 +43,7 @@ class McAfeeATRGithubIocs(Feed):
             content, filename = content
             self.process_content(content, filename)
 
+    # pylint: disable=arguments-differ
     def process_content(self, content, filename):
         context = dict(source=self.name)
         context['description'] = 'File: {}'.format(filename)
@@ -54,8 +55,14 @@ class McAfeeATRGithubIocs(Feed):
         else:
             try:
                 observables = Observable.from_string(content)
+                observables = Observable.from_string(content)
                 register_observables(
-                    observables, self.blacklist_domains, context, self.source)
+                    self.refs,
+                    observables,
+                    self.blacklist_domains,
+                    context,
+                    self.source,
+                )
             except Exception as e:
                 logging.error(e)
                 return

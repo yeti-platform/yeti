@@ -11,7 +11,7 @@ class VitaliKremezGitHub(Feed):
     default_values = {
         'frequency': timedelta(hours=24),
         'name': 'VitaliKremezGitHub',
-        'source': 'https://api.github.com/repos/k-vitali/Malware-Misc-RE/commits',
+        'source': 'https://api.github.com/repos/k-vitali/Malware-Misc-RE/commits', # pylint: disable=line-too-long
         'description': 'Get Iocs from Vitaly Kremez GitHub repo',
     }
     refs = {
@@ -40,6 +40,7 @@ class VitaliKremezGitHub(Feed):
             content, filename = content
             self.process_content(content, filename)
 
+    # pylint: disable=arguments-differ
     def process_content(self, content, filename):
         context = dict(source=self.name)
         context['description'] = 'File: {}'.format(filename)
@@ -52,7 +53,12 @@ class VitaliKremezGitHub(Feed):
             try:
                 observables = Observable.from_string(content)
                 register_observables(
-                    observables, self.blacklist_domains, context, self.source)
+                    self.refs,
+                    observables,
+                    self.blacklist_domains,
+                    context,
+                    self.source,
+                )
             except Exception as e:
                 logging.error(e)
                 return

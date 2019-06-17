@@ -41,6 +41,7 @@ class PanUnit42GithubIocs(Feed):
                 content, filename = content
                 self.process_content(content, filename)
 
+    # pylint: disable=arguments-differ
     def process_content(self, content, filename):
         context = dict(source=self.name)
         context['description'] = 'File: {}'.format(filename)
@@ -52,8 +53,14 @@ class PanUnit42GithubIocs(Feed):
         else:
             try:
                 observables = Observable.from_string(content)
+                observables = Observable.from_string(content)
                 register_observables(
-                    observables, self.blacklist_domains, context, self.source)
+                    self.refs,
+                    observables,
+                    self.blacklist_domains,
+                    context,
+                    self.source,
+                )
             except Exception as e:
                 logging.error(e)
                 return
