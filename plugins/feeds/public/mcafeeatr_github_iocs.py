@@ -3,7 +3,7 @@ from datetime import timedelta
 from core.feed import Feed
 from core.observables import Observable
 from core.observables import Hash, Url, Hostname, Ip, MacAddress, Email
-from core.observables.utils import register_certificate, register_observables
+from core.observables.helpers import register_certificate, register_observables
 
 
 BLACKLIST_DOMAINS = [
