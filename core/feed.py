@@ -4,7 +4,6 @@ import os
 import pytz
 import csv
 import logging
-import os
 import tempfile
 from base64 import b64decode
 from datetime import datetime
