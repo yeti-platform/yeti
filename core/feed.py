@@ -334,10 +334,11 @@ class Feed(ScheduleEntry):
         """
 
         commit_info = self._make_request(
-            url=item['url'], headers=headers, verify=verify).json()
+            url=item['url'], headers=headers, verify=verify)
         if not self._check_last_modified(commit_info):
             return
 
+        commit_info = commit_info.json()
         if commit_info and commit_info.get('files', []):
             for block in commit_info['files']:
                 if block['filename'] in self.blacklist:
