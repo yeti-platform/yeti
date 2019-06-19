@@ -11,6 +11,7 @@ mapped_types = {
     "Email": "email_report",
 }
 
+
 class DomainIQApi(object):
     """Base class for querying the DomainIQ API."""
 
@@ -49,10 +50,10 @@ class DomainIQ(DomainIQApi, OneShotAnalytics):
     }
 
     settings = {
-            "domainiq_apikey": {
-                "name": "DomainIQ apikey",
-                "description": "apikey for domainiq."
-            }
+        "domainiq_apikey": {
+            "name": "DomainIQ apikey",
+            "description": "apikey for domainiq."
+        }
     }
 
     ACTS_ON = ['Hostname', 'Ip', 'Email']
@@ -62,12 +63,15 @@ class DomainIQ(DomainIQApi, OneShotAnalytics):
         links = set()
 
         if isinstance(observable, Ip):
+            # pylint: disable=line-too-long
             resolve_host = json_result.get("data", {}).get("ip_whois", {}).get("resolve_host")
             if resolve_host is not None:
                 try:
                     node = Hostname.get_or_create(value=resolve_host)
                     links.update(
-                        node.active_link_to(observable, 'Domain', 'DomainIQ'))
+                        node.active_link_to(
+                            observable, 'Hostname', 'DomainIQ')
+                    )
                 except ObservableValidationError as e:
                     logging.error((e, resolve_host))
         elif isinstance(observable, Hostname):
@@ -75,7 +79,8 @@ class DomainIQ(DomainIQApi, OneShotAnalytics):
                 try:
                     node = Hostname.get_or_create(value=domain)
                     links.update(
-                        node.active_link_to(observable, 'Domain on IP', 'DomainIQ'))
+                        node.active_link_to(observable, 'Hostname', 'DomainIQ')
+                    )
                 except ObservableValidationError as e:
                     logging.error((e, domain))
 
@@ -88,23 +93,30 @@ class DomainIQ(DomainIQApi, OneShotAnalytics):
                     logging.error((e, ip))
 
             if json_result.get("data", {}).get("registrar_normalized"):
-                node = Text.get_or_create(value=json_result["data"]["registrar_normalized"])
+                node = Text.get_or_create(
+                    value=json_result["data"]["registrar_normalized"]
+                )
                 links.update(
                     node.active_link_to(observable, 'Registrant', 'DomainIQ'))
 
         elif isinstance(observable, Email):
+            # pylint: disable=line-too-long
             for domain_block in json_result.get("data", {}).get("related_domains", []):
                 try:
                     node = Hostname.get_or_create(value=domain_block["domain"])
                     links.update(
-                        node.active_link_to(observable, 'Domain', 'DomainIQ'))
+                        node.active_link_to(
+                            observable, 'Hostname', 'DomainIQ')
+                    )
                 except ObservableValidationError as e:
                     logging.error((e, domain_block["domain"]))
 
                 try:
                     node = Text.get_or_create(value=domain_block["registrant"])
                     links.update(
-                        node.active_link_to(observable, 'Registrant', 'DomainIQ'))
+                        node.active_link_to(
+                            observable, 'Registrant', 'DomainIQ')
+                    )
                 except ObservableValidationError as e:
                     logging.error((e, domain_block["registrant"]))
 
@@ -113,11 +125,15 @@ class DomainIQ(DomainIQApi, OneShotAnalytics):
     @staticmethod
     def analyze(observable, results):
         links = set()
-        json_result = DomainIQApi.fetch(observable, results.settings['domainiq_apikey'])
+        json_result = DomainIQApi.fetch(
+            observable, results.settings['domainiq_apikey']
+        )
         links = DomainIQ.process_response(observable, json_result)
         result = {}
 
-        json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
+        json_string = json.dumps(
+            json_result, sort_keys=True, indent=4, separators=(',', ': ')
+        )
         result.update(raw=json_string)
         result['source'] = "DomainIQ"
         result['raw'] = json_string
