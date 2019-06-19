@@ -4,7 +4,7 @@ from core.observables import Observable
 from core.analytics import OneShotAnalytics
 from core.observables import Ip, Certificate, Text, Hostname, Hash, AutonomousSystem
 from core.config.config import yeti_config
-from core.errors import GenericYetiError, ObservableValidationError
+from core.errors import GenericYetiError
 
 class CensysApi(object):
     """
@@ -21,19 +21,28 @@ class CensysApi(object):
         if isinstance(observable, Ip):
             if json_result.get('autonomous_system'):
                 if json_result['autonomous_system'].get('asn'):
-                    asn = AutonomousSystem.get_or_create(value=str(json_result['autonomous_system']['asn']))
-                    links.update(asn.active_link_to(observable, 'asn#', 'Censys Query'))
+                    asn = AutonomousSystem.get_or_create(
+                        value=str(json_result['autonomous_system']['asn'])
+                    )
+                    links.update(asn.active_link_to(
+                        observable, 'ASN', 'Censys Query')
+                    )
 
                 if json_result['autonomous_system'].get('name'):
-                    asnname = Text.get_or_create(value=json_result['autonomous_system']['name'])
-                    links.update(asnname.active_link_to(observable,
-                        'asn_name', 'Censys Query'))
+                    asnname = Text.get_or_create(
+                        value=json_result['autonomous_system']['name']
+                    )
+                    links.update(asnname.active_link_to(
+                        observable, 'asn_name', 'Censys Query'))
 
                 if json_result['autonomous_system'].get('routed_prefix'):
-                    routed_prefix = Text.get_or_create(value=json_result['autonomous_system']['routed_prefix'])
-                    links.update(routed_prefix.active_link_to(observable,
-                        'routed_prefix', 'Censys Query'))
+                    routed_prefix = Text.get_or_create(
+                        value=json_result['autonomous_system']['routed_prefix']
+                    )
+                    links.update(routed_prefix.active_link_to(
+                        observable, 'routed_prefix', 'Censys Query'))
 
+            # pylint: disable=line-too-long
             json_result = json_result.get("443", {}).get('https', {}).get('tls', {}).get("certificate", {})
 
         if not json_result.get('parsed', {}):
@@ -49,10 +58,11 @@ class CensysApi(object):
             o_type = Observable.guess_type(name)
             new_host = o_type.get_or_create(value=name)
             links.update(
-                new_host.active_link_to(observable,
-                'host', 'Censys Query')
+                new_host.active_link_to(
+                    observable, 'Hostname', 'Censys Query')
             )
 
+        # pylint: disable=line-too-long
         for field in ('fingerprint_md5', 'fingerprint_sha1', 'fingerprint_sha256'):
             #Ignore duplicated sha256
             if field == 'fingerprint_sha256' and isinstance(observable, Hash):
@@ -61,15 +71,16 @@ class CensysApi(object):
             if parsed.get(field):
                 new_hash = Hash.get_or_create(value=parsed[field])
                 links.update(
-                    new_hash.active_link_to(observable,
-                    field, 'Censys Query')
+                    new_hash.active_link_to(
+                        observable, field.split("_")[1].upper(), 'Censys Query'
+                    )
                 )
 
-            elif 'subject_dn' in parsed:
-                text = Text.get_or_create(value=parsed['subject_dn'])
-                links.update(text.active_link_to(observable,
-                    field, 'Censys Query')
-                )
+        if 'subject_dn' in parsed:
+            text = Text.get_or_create(value=parsed['subject_dn'])
+            links.update(text.active_link_to(
+                observable, field, 'Censys Query')
+            )
 
         return list(links)
 
@@ -86,12 +97,15 @@ class CensysApi(object):
             raise GenericYetiError("Only supports sha256 hash")
 
         try:
-            url = "{}/{}/{}".format(CensysApi.API_URL, types[observable.type], observable.value)
+            url = "{}/{}/{}".format(
+                CensysApi.API_URL, types[observable.type], observable.value
+            )
             response = requests.get(url, proxies=yeti_config.proxy, auth=(
                 settings['censys_apikey'], settings['censys_secret']
             ))
             if not response.ok:
-                raise GenericYetiError("Status code: {}".format(response.status_code))
+                raise GenericYetiError(
+                    "Status code: {}".format(response.status_code))
 
             return response.json()
 
@@ -99,6 +113,7 @@ class CensysApi(object):
             raise GenericYetiError("Hit an error checking {},{}".format(
                 observable.value, e
             ))
+
 
 class CensysApiQuery(OneShotAnalytics, CensysApi):
     default_values = {
