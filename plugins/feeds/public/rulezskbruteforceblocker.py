@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from core.observables import Ip
 from core.feed import Feed
+
 from core.errors import ObservableValidationError
 
 class RulezSKBruteforceBlocker(Feed):
@@ -18,8 +19,6 @@ class RulezSKBruteforceBlocker(Feed):
     def update(self):
         since_last_run = datetime.now() - self.frequency
         r = self._make_request(headers={"User-Agent": "yeti-project"})
-        if not self._check_last_modified(r):
-            return
         lines = r.content.splitlines()[1:-1]
         for line in lines:
             ip, date, count, id = filter(None, line.split("\t"))
