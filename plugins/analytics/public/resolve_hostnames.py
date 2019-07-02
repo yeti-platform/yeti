@@ -125,4 +125,4 @@ class ParallelDnsResolver(object):
                 logging.error("\nERROR: {}".format(hostname, rtype, e))
                 logging.error(traceback.print_exc())
 
-                continue
+            continue
