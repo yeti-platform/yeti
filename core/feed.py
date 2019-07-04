@@ -55,7 +55,7 @@ def update_feed(feed_id):
         logging.info(msg)
         f.update_status(msg)
         f.modify(lock=False)
-        return False
+        return True
 
     except Exception as e:
         import traceback
@@ -106,7 +106,10 @@ class Feed(ScheduleEntry):
         tmp_folder = tempfile.gettempdir()
         feed_file = os.path.join(tmp_folder, self.name)
         with open(feed_file, "w") as f:
-            f.write(content)
+            try:
+                f.write(content)
+            except UnicodeEncodeError as e:
+                logging.error(e)
 
     def _temp_load_feed_data(self):
         """
