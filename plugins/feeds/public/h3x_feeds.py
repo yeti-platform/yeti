@@ -1,8 +1,8 @@
 import csv
 import logging
-from dateutil import parser
 from datetime import datetime, timedelta
 
+from dateutil import parser
 from core.feed import Feed
 from core.observables import Url
 from core.errors import ObservableValidationError
@@ -40,7 +40,7 @@ class MalwareCorpusTracker(Feed):
 
         # split the entry into observables
         # pylint: disable=line-too-long
-        family, type_, url, status, _, first_active, last_cctive, last_seen = line
+        family, type_, url, status, _, _, _, last_seen = line
 
         context = {}
         context['status'] = status
