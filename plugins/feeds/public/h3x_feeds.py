@@ -40,10 +40,9 @@ class MalwareCorpusTracker(Feed):
 
         # split the entry into observables
         # pylint: disable=line-too-long
-        family, type_, url, status, _, _, _, last_seen = line
+        family, type_, url, _, _, _, _, last_seen = line
 
         context = {}
-        context['status'] = status
         context['date_added'] = first_seen
         context['last_seen'] = last_seen
         context['source'] = self.name
