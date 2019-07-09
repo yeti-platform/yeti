@@ -51,7 +51,7 @@ Please refer to the [full documentation](http://yeti-platform.readthedocs.io/en/
 
 Yeti has a `docker-compose` script to get up and running even faster; this is useful for testing or even running production instances of Yeti should your infrastructure support it. Full instructions [here](https://github.com/yeti-platform/yeti/tree/master/extras/docker), but in a nutshell:
 
-    $ git clone https://github.com/yeti-platform/yeti
+    $ git clone https://github.com/yeti-platform/yeti.git
     $ cd yeti/extras/docker
     $ docker-compose up
 
