@@ -80,11 +80,12 @@ class Observable(CrudApi):
         for item in bulk:
             value = item['value']
             tags = item.get('tags', [])
+            forced_type = item.get('force_type', None)
 
             if _refang:
-                obs = self.objectmanager.add_text(refang(value), tags)
+                obs = self.objectmanager.add_text(refang(value), tags=tags, force_type=forced_type)
             else:
-                obs = self.objectmanager.add_text(value, tags)
+                obs = self.objectmanager.add_text(value, tags=tags, force_type=forced_type)
             self._modify_observable(
                 obs, {
                     'source': item.get('source'),
