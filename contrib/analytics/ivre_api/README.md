@@ -3,6 +3,9 @@
 This analytics uses IVRE's data. [IVRE](https://ivre.rocks/) is an
 open-source network recon framework.
 
+IVRE's code is available on [GitHub](https://github.com/cea-sec/ivre/)
+and its documentation on [Read the docs](https://doc.ivre.rocks/).
+
 ## Description ##
 
 Currently, this analytics provides:
