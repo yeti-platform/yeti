@@ -27,7 +27,7 @@ class BenkowTracker(Feed):
 
         for line in reader:
             if line[0] == 'id':
-                return
+                continue
 
             first_seen = parser.parse(line[4])
 

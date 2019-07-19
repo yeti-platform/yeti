@@ -27,7 +27,7 @@ class BenkowTrackerRat(Feed):
         reader = csv.reader(resp.content.strip().splitlines(), delimiter=';', quotechar='"')
         for line in reader:
             if line[0] == 'id':
-                return
+                continue
 
             first_seen = parser.parse(line[4])
 
