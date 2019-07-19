@@ -1,11 +1,11 @@
-import re
-from datetime import timedelta
-from datetime import datetime
 import logging
+import re
+from datetime import datetime
+from datetime import timedelta
 
+from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Url, Hash
-from core.errors import ObservableValidationError
 
 
 class ZeusTrackerConfigs(Feed):
@@ -35,7 +35,7 @@ class ZeusTrackerConfigs(Feed):
 
             if self.last_run is not None:
                 if since_last_run > date_string:
-                    return
+                    continue
 
             self.analyze(item, date_string)
 

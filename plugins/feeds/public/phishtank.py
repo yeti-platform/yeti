@@ -34,7 +34,7 @@ class PhishTank(Feed):
             first_seen = parse_date_to_utc(line[3])
             if self.last_run is not None:
                 if since_last_run > first_seen:
-                    return
+                    continue
 
             self.analyze(line, first_seen)
 

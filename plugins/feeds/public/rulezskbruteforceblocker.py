@@ -1,11 +1,12 @@
 import logging
-from dateutil import parser
 from datetime import datetime, timedelta
 
-from core.observables import Ip
-from core.feed import Feed
+from dateutil import parser
 
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Ip
+
 
 class RulezSKBruteforceBlocker(Feed):
 
@@ -25,7 +26,7 @@ class RulezSKBruteforceBlocker(Feed):
             first_seen = parser.parse(date.replace("# ", ""))
             if self.last_run is not None:
                 if since_last_run > first_seen:
-                    return
+                    continue
 
             self.analyze(ip, first_seen, line)
 

@@ -27,7 +27,7 @@ class HybridAnalysis(Feed):
             if self.last_run is not None:
                 since_last_run = datetime.now() - self.frequency
                 if since_last_run > first_seen:
-                    return
+                    continue
 
             self.analyze(item, first_seen)
 

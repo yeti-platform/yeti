@@ -1,10 +1,10 @@
-import re
 import logging
+import re
 from datetime import timedelta, datetime
 
+from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Url, Hash
-from core.errors import ObservableValidationError
 
 
 class ZeusTrackerDropzones(Feed):
@@ -33,7 +33,7 @@ class ZeusTrackerDropzones(Feed):
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
-                    return
+                    continue
 
             self.analyze(item, first_seen)
 
