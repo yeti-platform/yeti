@@ -31,7 +31,7 @@ class InvestigationView(GenericView):
                 "{}/graph.html".format(self.klass.__name__.lower()),
                 investigation=bson_renderer(investigation.info()))
 
-        return redirect(request.referrer)
+        abort(403)
 
     @route("/graph/<klass>/<id>")
     @requires_permissions("read", "investigation")

@@ -87,10 +87,6 @@ class Investigation(Node):
     def info(self):
         result = self.to_mongo()
         result['nodes'] = [node.to_mongo() for node in self.nodes]
-        try:
-            result["shared"] = [Group(id=shared_with_id).reload() for shared_with_id in Investigation.objects.get(id=self.id).sharing]
-        except Exception as e:
-            logging.info(e)
         return result
 
     def _node_changes(self, kind, method, links, nodes):
@@ -125,10 +121,7 @@ class Investigation(Node):
     def sharing_permissions(self, sharing_with, investigation=False, invest_id=False):
         groups = False
         if sharing_with == "all":
-            #ToDo wipe members, this can be update
-            shared_with_ids = Investigation.objects.get(id=self.id).sharing
-            if shared_with_ids:
-                Investigation.objects.get(id=invest_id or self.id).update(pull_all__sharing=[shared_with_ids])
+            Investigation.objects.get(id=invest_id or self.id).update(set__sharing=[])
         elif sharing_with == "private":
             Investigation.objects.get(id=invest_id or self.id).update(add_to_set__sharing=[current_user.id])
         elif sharing_with == "allg":

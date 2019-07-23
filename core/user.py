@@ -2,11 +2,12 @@ from __future__ import unicode_literals
 
 import os
 
-from mongoengine import StringField, DictField, BooleanField, ListField, ReferenceField, CASCADE, NotUniqueError
+from mongoengine import StringField, DictField, BooleanField
 from flask_mongoengine.wtf import model_form
 from flask import url_for
 
 from core.database import YetiDocument
+
 
 class User(YetiDocument):
     available_settings = dict()

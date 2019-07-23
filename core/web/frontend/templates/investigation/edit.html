@@ -42,9 +42,20 @@
                   {{ macros.render_generic_errors(form)}}
               </div>
               <div class="col-md-3 col-md-offset-1">
-                {% for field in form if field.name not in ['description', 'import_document', 'import_md', 'import_url', 'import_text']%}
+                {% for field in form if field.name not in ['sharing', 'description', 'import_document', 'import_md', 'import_url', 'import_text']%}
                   {{ macros.render_field(field) }}
                 {% endfor %}
+                <div class="form-group">
+                <label for='sharing'>Share with:</label>
+                <select name="sharing" style="width:100px;">
+                  <option value="private" selected="selected">Only me</option>
+                  <option value="all">All</option>
+                  <option value="allg">All my groups</option>
+                  {% for group in groups %}
+                      <option value={{group["id"]}}>Group: {{group["groupname"]}}</option>
+                  {% endfor %}
+                  </select>
+                </div>
               </div>
               <div class="col-md-7">
                 {{ macros.render_field(form.description, rows=12, class="form-control markdown") }}
