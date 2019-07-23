@@ -69,6 +69,7 @@
       </div>
       <div class="panel-body">
         <table class="table table-condensed main-table">
+
           {% for key, value in investigation.info().items() %}
             {% if key not in ["_id", "links", "nodes", "events", "name", "import_document", "import_text", "import_md", "attached_files", "sharing", "shared"] %}
               {% if value %}
@@ -80,7 +81,9 @@
                   {% for shared in value %}
                     {% if "groupname" in shared %}
                       Group: {{shared.groupname}}
-                    {% endif %}
+                    {% else %}
+                      User: {{ shared.username }}
+                    {%endif%}
                   {% endfor %}
                 {% else %}
                   Public

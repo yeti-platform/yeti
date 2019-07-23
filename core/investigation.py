@@ -14,6 +14,7 @@ from core.database import Node, AttachedFile, TagListField
 from core.scheduling import OneShotEntry
 from core.config.celeryctl import celery_app
 from core.group import Group
+from core.user import User
 
 class InvestigationLink(EmbeddedDocument):
     id = StringField(required=True)
@@ -87,6 +88,18 @@ class Investigation(Node):
     def info(self):
         result = self.to_mongo()
         result['nodes'] = [node.to_mongo() for node in self.nodes]
+        shared = []
+        for sharing_id in Investigation.objects.get(id=self.id).sharing:
+            try:
+                shared.append(Group.objects.get(id=sharing_id))
+            except:
+                try:
+                    shared.append(User.objects.get(id=sharing_id))
+                except:
+                    pass
+        if shared:
+            result['shared'] = shared
+        print result
         return result
 
     def _node_changes(self, kind, method, links, nodes):
