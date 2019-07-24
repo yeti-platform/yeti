@@ -19,8 +19,6 @@ class MalwareCorpusTracker(Feed):
 
     def update(self):
 
-        since_last_run = datetime.utcnow() - self.frequency
-
         resp = self._make_request()
         reader = csv.reader(resp.content.splitlines(), quotechar='"')
         for line in reader:
@@ -30,8 +28,8 @@ class MalwareCorpusTracker(Feed):
             first_seen = parser.parse(line[4])
 
             if self.last_run is not None:
-                if since_last_run > first_seen.replace(tzinfo=None):
-                    return
+                if self.last_run > first_seen.replace(tzinfo=None):
+                    continue
 
             self.analyze(line, first_seen)
 
