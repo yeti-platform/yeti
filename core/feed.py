@@ -205,9 +205,8 @@ class Feed(ScheduleEntry):
                 "{} returns code: {}".format(self.source, r.status_code))
 
         if self.last_run is not None and r.headers.get('Last-Modified'):
-            since_last_run = datetime.utcnow() - self.frequency
             last_mod = parser.parse(r.headers['Last-Modified'])
-            if since_last_run > last_mod.replace(tzinfo=None):
+            if self.last_run and self.last_run >  last_mod.replace(tzinfo=None):
                 raise GenericYetiInfo(
                     "Last modified date: {} returns code: {}".format(
                     last_mod, r.status_code))
