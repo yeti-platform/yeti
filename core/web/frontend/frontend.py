@@ -1,3 +1,4 @@
+
 from __future__ import unicode_literals
 
 from flask import Blueprint, render_template, redirect, url_for
@@ -15,6 +16,7 @@ from core.entities import *
 from core.indicators import *
 from core.exports import ExportTemplate
 from core.web.frontend.users import UsersView, UserAdminView
+from core.web.frontend.groups import GroupView, GroupAdminView
 
 frontend = Blueprint(
     "frontend",
@@ -48,6 +50,8 @@ def index():
 
 UsersView.register(frontend)
 UserAdminView.register(frontend)
+GroupView.register(frontend)
+GroupAdminView.register(frontend)
 EntityView.register(frontend)
 IndicatorView.register(frontend)
 ObservableView.register(frontend)

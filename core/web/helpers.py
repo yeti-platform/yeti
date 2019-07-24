@@ -11,6 +11,8 @@ from flask import abort, request
 from flask_login import current_user
 from mongoengine import Q
 
+from core.group import Group
+
 SEARCH_REPLACE = {
     'tags': 'tags__name',
 }
@@ -28,13 +30,13 @@ def requires_permissions(permissions, object_name=None):
                     args[0], 'klass',
                     getattr(args[0], 'objectmanager',
                             args[0].__class__)).__name__.lower()
-            # a user must have all permissions in order to be granted access
-            for p in iterify(permissions):
-                if not current_user.has_permission(oname, p):
-                    # improve this and make it redirect to login
-                    abort(401)
-            else:
-                return f(*args, **kwargs)
+            if not current_user.has_role('admin'):
+                # a user must have all permissions in order to be granted access
+                for p in iterify(permissions):
+                    if not current_user.has_permission(oname, p):
+                        # improve this and make it redirect to login
+                        abort(401)
+            return f(*args, **kwargs)
 
         return inner
 
@@ -138,3 +140,30 @@ def prevent_csrf(func):
         return func(*args, **kwargs)
 
     return inner
+
+
+def get_user_groups():
+    if current_user.has_role('admin'):
+        groups = Group.objects()
+    else:
+        groups = Group.objects(members__in=[current_user.id])
+
+    return groups
+
+def group_user_permission(investigation=False):
+    """
+        This aux func aimed to simplify check if user is admin or in group with perms
+    """
+    if current_user.has_role('admin'):
+        return True
+
+    elif investigation and hasattr(investigation, "sharing"):
+
+        # means its public
+        if investigation.sharing == []:
+            return True
+
+        groups = get_user_groups()
+        return any([group.id in investigation.sharing for group in groups]) or current_user.id in investigation.sharing
+
+    return False

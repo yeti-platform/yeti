@@ -15,7 +15,7 @@
     <!-- Bootstrap core CSS -->
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='bootstrap/dist/css/bootstrap.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/yeti.css') }}">
-    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/yetiicons.css') }}">
+    <link rel=stylesheet type=text/css href="{{ url_for('frontend.static', filename='yeti/css/flaticon.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='font-awesome/css/font-awesome.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='animate.css/animate.min.css') }}">
     <link rel=stylesheet type=text/css href="{{ url_for('static', filename='simplemde/dist/simplemde.min.css') }}">
@@ -31,6 +31,7 @@
     <script src="{{url_for('static', filename='inline-attachment/src/codemirror-4.inline-attachment.js')}}"></script>
     <script src="{{url_for('frontend.static', filename='yeti/js/markdown.js')}}"></script>
     <script src="{{url_for('frontend.static', filename='yeti/js/filedrag.js')}}"></script>
+    <script src="{{url_for('frontend.static', filename='yeti/js/yetiadmin.js')}}"></script>
     {% block custom_head %}
     {% endblock %}
   </head>
@@ -167,6 +168,7 @@
                   {% if current_user.has_role('admin') %}
                     <li role="separator" class="divider"></li>
                     <li><a href="{{ url_for('frontend.UserAdminView:index') }}">User administration</a></li>
+                    <li><a href="{{ url_for('frontend.GroupAdminView:index') }}">Group administration</a></li>
                     <li><a href="{{ url_for('frontend.SystemView:index') }}">System</a></li>
                   {%endif %}
                 </ul>

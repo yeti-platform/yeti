@@ -742,7 +742,7 @@ td input.inline {
   text-align: right;
 }
 
-.user-toggle, .user-remove {
+.admin-toggle, .admin-remove {
   cursor:pointer;
 }
 

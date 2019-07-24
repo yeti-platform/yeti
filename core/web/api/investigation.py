@@ -5,18 +5,19 @@ import logging
 from datetime import datetime
 from flask import request
 from flask_classy import route
+from flask_login import current_user
 from bson.json_util import loads
-from bson.objectid import ObjectId
 
+from mongoengine import Q
 from core.helpers import iterify
 from core import investigation
 from core.web.api.crud import CrudApi, CrudSearchApi
 from core.observables import *
 from core.investigation import ImportResults
 from core.entities import Entity
-from core.web.api.api import render, render_json
+from core.web.api.api import render
 from core.web.helpers import get_object_or_404
-from core.web.helpers import requires_permissions, get_queryset
+from core.web.helpers import requires_permissions, get_queryset, get_user_groups
 from core.errors import ObservableValidationError
 
 class InvestigationSearch(CrudSearchApi):
@@ -30,11 +31,13 @@ class InvestigationSearch(CrudSearchApi):
         ignorecase = params.pop('ignorecase', False)
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)
-
-        return list(
-            get_queryset(
-                self.objectmanager, fltr, regex, ignorecase,
-                replace=False)[page * rng:(page + 1) * rng])
+        investigations = get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)
+        if not current_user.has_role('admin'):
+            shared_ids = [current_user.id] + [group.id for group in get_user_groups()]
+            investigations = investigations.filter(
+                Q(sharing__size=0) | Q(sharing__in=shared_ids) | Q(sharing__exists=False)
+            )
+        return list(investigations)[page * rng:(page + 1) * rng]
 
 
 class Investigation(CrudApi):
@@ -128,6 +131,7 @@ class Investigation(CrudApi):
             Query[id]: the id of the given node.
 
         """
+        #ToDo sharing permissions
         REF_CLASS = ('observable', 'entity')
 
         data = loads(request.data)
