@@ -35,7 +35,6 @@ class TTP(Entity):
     def info(self):
         i = Entity.info(self)
         i['killchain'] = self.KILL_CHAIN_STEPS[self.killchain]
-        i['id'] = str(self.id)
         i['type'] = 'TTP'
         return i
 
