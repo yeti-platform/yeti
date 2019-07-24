@@ -17,8 +17,6 @@ class ViriBackTracker(Feed):
     }
 
     def update(self):
-        since_last_run = datetime.utcnow() - self.frequency
-
         for line in self.update_csv(delimiter=',', quotechar='"'):
             if not line or line[0].startswith(("Family", "#")):
                 continue
@@ -26,8 +24,8 @@ class ViriBackTracker(Feed):
             family, url, ip, first_seen = line
             first_seen = parser.parse(first_seen)
             if self.last_run is not None:
-                if since_last_run > first_seen:
-                    return
+                if self.last_run > first_seen:
+                    continue
 
             self.analyze(family, url, ip, first_seen)
 
