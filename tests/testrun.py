@@ -6,6 +6,8 @@ from mongoengine import connect
 YETI_ROOT = path.normpath(path.dirname(path.dirname(path.abspath(__file__))))
 sys.path.append(YETI_ROOT)
 
+from core.config.config import yeti_config
+
 from core.entities.malware import MalwareFamily, Malware
 from core.indicators import Regex, Indicator
 from core.database import Link
@@ -15,7 +17,7 @@ from core.observables import Tag
 from core.exports import Export, ExportTemplate
 
 ## Clean slate
-db = connect('yeti')
+db = connect('yeti', host=yeti_config.mongodb.host)
 db.drop_database('yeti')
 
 ## Populate database with initial values
