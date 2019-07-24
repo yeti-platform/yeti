@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 
+import os
 import csv
 import logging
-import os
 import tempfile
 from base64 import b64decode
 from datetime import datetime
@@ -14,9 +14,9 @@ from dateutil import parser
 from lxml import etree
 from mongoengine import DoesNotExist, StringField
 
+from core.errors import GenericYetiError, GenericYetiInfo
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
-from core.errors import GenericYetiError
 from core.scheduling import ScheduleEntry
 
 utc = pytz.UTC
@@ -50,6 +50,13 @@ def update_feed(feed_id):
             f.update_status("OK")
         else:
             logging.debug("Feed {} has been disabled".format(f.name))
+    except GenericYetiInfo as e:
+        msg = "INFO updating feed: {}".format(e)
+        logging.info(msg)
+        f.update_status(msg)
+        f.modify(lock=False)
+        return True
+
     except Exception as e:
         import traceback
         logging.error(traceback.format_exc())
@@ -99,7 +106,10 @@ class Feed(ScheduleEntry):
         tmp_folder = tempfile.gettempdir()
         feed_file = os.path.join(tmp_folder, self.name)
         with open(feed_file, "w") as f:
-            f.write(content)
+            try:
+                f.write(content)
+            except UnicodeEncodeError as e:
+                logging.error(e)
 
     def _temp_load_feed_data(self):
         """
@@ -195,12 +205,12 @@ class Feed(ScheduleEntry):
                 "{} returns code: {}".format(self.source, r.status_code))
 
         if self.last_run is not None and r.headers.get('Last-Modified'):
-            since_last_run = datetime.utcnow() - self.frequency
             last_mod = parser.parse(r.headers['Last-Modified'])
-            if since_last_run > last_mod.replace(tzinfo=None):
-                raise GenericYetiError(
-                "Last modified date: {} returns code: {}".format(
+            if self.last_run and self.last_run > last_mod.replace(tzinfo=None):
+                raise GenericYetiInfo(
+                    "Last modified date: {} returns code: {}".format(
                     last_mod, r.status_code))
+
 
         return r
 
@@ -323,7 +333,9 @@ class Feed(ScheduleEntry):
         """
 
         commit_info = self._make_request(
-            url=item['url'], headers=headers, verify=verify).json()
+            url=item['url'], headers=headers, verify=verify)
+
+        commit_info = commit_info.json()
         if commit_info and commit_info.get('files', []):
             for block in commit_info['files']:
                 if block['filename'] in self.blacklist:
