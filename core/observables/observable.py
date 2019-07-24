@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from datetime import datetime
 import re
 import operator
-
+import logging
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
 from flask import url_for
@@ -167,6 +167,11 @@ class Observable(Node):
                 observable = cls(value=match.group('search'))
                 observable.normalize()
             except ObservableValidationError:
+                continue
+
+
+            except ValueError as e:
+                logging.error('Value error: {} - on: {}'.format(e, observable.value))
                 continue
 
             if observable.value not in cls.ignore:
