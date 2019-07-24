@@ -86,12 +86,11 @@ class Observable(CrudApi):
                 obs = self.objectmanager.add_text(refang(value), tags=tags, force_type=forced_type)
             else:
                 obs = self.objectmanager.add_text(value, tags=tags, force_type=forced_type)
-            self._modify_observable(
+            added.append(self._modify_observable(
                 obs, {
                     'source': item.get('source'),
                     'context': item.get('context'),
-                })
-            added.append(obs)
+                }))
         return render(added)
 
     @route("/<id>/context", methods=["POST"])
