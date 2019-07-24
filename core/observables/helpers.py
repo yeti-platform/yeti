@@ -7,9 +7,9 @@ def register_certificate(content, context, source):
     """Helper function to register certificate
 
     Args:
-        content (str): is content
-        context (dict): observable context
-        source (str): origin of observable
+        content (str): The certificate content.
+        context (dict): The observable context.
+        source (str): origin of the observable
     """
 
     try:
@@ -20,15 +20,15 @@ def register_certificate(content, context, source):
         logging.error(e)
 
 def register_observables(mapper, observables, blacklist_domains, context, source):
-    """Helper function to register data obteined by from_text
+    """Helper function to register data obtained by from_text
 
     Args:
         mapped (dict): observable mapping dictionary
             e.g. {'MacAddress': MacAddress}
-        observables (dict): obteined by func from_text
-        blacklist_domains (list): list of domains to ignore in urls
+        observables (dict): obtained by from_text()
+        blacklist_domains (list): list of domains to ignore in URLs
         context (dict): observable context
-        source (str): origin of observable
+        source (str): origin of the observable
     """
 
     for key in observables:
@@ -40,7 +40,5 @@ def register_observables(mapper, observables, blacklist_domains, context, source
                 ioc_data = mapper[key].get_or_create(value=ioc)
                 ioc_data.add_context(context)
                 ioc_data.add_source(source)
-            except ObservableValidationError as e:
-                logging.error(e)
-            except UnicodeDecodeError as e:
+            except (ObservableValidationError, UnicodeDecodeError) as e:
                 logging.error(e)
