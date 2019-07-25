@@ -59,13 +59,12 @@ class DomainIQ(DomainIQApi, OneShotAnalytics):
     ACTS_ON = ['Hostname', 'Ip', 'Email']
 
     @staticmethod
-    def process_response(observable, json_result):
+    def process_ip_response(observable, json_result):
         links = set()
-
-        if isinstance(observable, Ip):
-            # pylint: disable=line-too-long
-            resolve_host = json_result.get("data", {}).get("ip_whois", {}).get("resolve_host")
-            if resolve_host is not None:
+        # pylint: disable=line-too-long
+        resolve_host = json_result.get("data", {}).get(
+            "ip_whois", {}).get("resolve_host")
+        if resolve_host is not None:
                 try:
                     node = Hostname.get_or_create(value=resolve_host)
                     links.update(
@@ -74,61 +73,76 @@ class DomainIQ(DomainIQApi, OneShotAnalytics):
                     )
                 except ObservableValidationError as e:
                     logging.error((e, resolve_host))
-        elif isinstance(observable, Hostname):
-            for domain in json_result.get("data", {}).get("domains_on_ip", []):
-                try:
-                    node = Hostname.get_or_create(value=domain)
-                    links.update(
-                        node.active_link_to(observable, 'Hostname', 'DomainIQ')
-                    )
-                except ObservableValidationError as e:
-                    logging.error((e, domain))
 
-            for ip in json_result.get("data", {}).get("ips", []):
-                try:
-                    node = Ip.get_or_create(value=ip)
-                    links.update(
-                        node.active_link_to(observable, 'IP', 'DomainIQ'))
-                except ObservableValidationError as e:
-                    logging.error((e, ip))
+        return links
 
-            if json_result.get("data", {}).get("registrar_normalized"):
-                node = Text.get_or_create(
-                    value=json_result["data"]["registrar_normalized"]
-                )
+    @staticmethod
+    def process_hostname_response(observable, json_result):
+        links = set()
+
+        # pylint: disable=line-too-long
+        for domain in json_result.get("data", {}).get("domains_on_ip", []):
+            try:
+                node = Hostname.get_or_create(value=domain)
                 links.update(
-                    node.active_link_to(observable, 'Registrant', 'DomainIQ'))
+                    node.active_link_to(observable, 'Hostname', 'DomainIQ')
+                )
+            except ObservableValidationError as e:
+                logging.error((e, domain))
+        for ip in json_result.get("data", {}).get("ips", []):
+            try:
+                node = Ip.get_or_create(value=ip)
+                links.update(
+                    node.active_link_to(observable, 'IP', 'DomainIQ'))
+            except ObservableValidationError as e:
+                logging.error((e, ip))
+        if json_result.get("data", {}).get("registrar_normalized"):
+            node = Text.get_or_create(
+                value=json_result["data"]["registrar_normalized"]
+            )
+            links.update(
+                node.active_link_to(observable, 'Registrant', 'DomainIQ'))
 
-        elif isinstance(observable, Email):
-            # pylint: disable=line-too-long
-            for domain_block in json_result.get("data", {}).get("related_domains", []):
-                try:
-                    node = Hostname.get_or_create(value=domain_block["domain"])
-                    links.update(
-                        node.active_link_to(
-                            observable, 'Hostname', 'DomainIQ')
-                    )
-                except ObservableValidationError as e:
-                    logging.error((e, domain_block["domain"]))
+        return links
 
-                try:
-                    node = Text.get_or_create(value=domain_block["registrant"])
-                    links.update(
-                        node.active_link_to(
-                            observable, 'Registrant', 'DomainIQ')
-                    )
-                except ObservableValidationError as e:
-                    logging.error((e, domain_block["registrant"]))
+    @staticmethod
+    def process_email_response(observable, json_result):
+        links = set()
+
+        # pylint: disable=line-too-long
+        for domain_block in json_result.get("data", {}).get("related_domains", []):
+            try:
+                node = Hostname.get_or_create(value=domain_block["domain"])
+                links.update(
+                    node.active_link_to(
+                        observable, 'Hostname', 'DomainIQ')
+                )
+            except ObservableValidationError as e:
+                logging.error((e, domain_block["domain"]))
+            try:
+                node = Text.get_or_create(value=domain_block["registrant"])
+                links.update(
+                    node.active_link_to(
+                        observable, 'Registrant', 'DomainIQ')
+                )
+            except ObservableValidationError as e:
+                 logging.error((e, domain_block["registrant"]))
 
         return links
 
     @staticmethod
     def analyze(observable, results):
-        links = set()
         json_result = DomainIQApi.fetch(
             observable, results.settings['domainiq_apikey']
         )
-        links = DomainIQ.process_response(observable, json_result)
+
+        if isinstance(observable, Ip):
+            links = DomainIQ.process_ip_response(observable, json_result)
+        elif isinstance(observable, Hostname):
+            links = DomainIQ.process_hostname_response(observable, json_result)
+        elif isinstance(observable, Email):
+            links = DomainIQ.process_email_response(observable, json_result)
+
         result = {}
 
         json_string = json.dumps(
