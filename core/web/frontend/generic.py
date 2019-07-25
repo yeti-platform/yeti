@@ -78,7 +78,7 @@ class GenericView(FlaskView):
     def edit(self, id):
         obj = self.klass.objects.get(id=id)
         #ToDo Group admins support
-        if current_user.username != getattr(obj, 'created_by') and not current_user.has_role('admin'):
+        if current_user.username != getattr(obj, 'created_by', None) and not current_user.has_role('admin'):
             abort(403)
 
         if request.method == "POST":
@@ -98,7 +98,7 @@ class GenericView(FlaskView):
     def delete(self, id):
         obj = self.klass.objects.get(id=id)
         #ToDo Group admins support
-        if current_user.username != getattr(obj, "created_by") and not current_user.has_role('admin'):
+        if current_user.username != getattr(obj, 'created_by', None) and not current_user.has_role('admin'):
             abort(403)
         obj.delete()
         return redirect(
