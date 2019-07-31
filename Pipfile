@@ -39,6 +39,7 @@ readability-lxml = "*"
 python-dateutil = "*"
 libmagic = "*"
 maclookup = "*"
+pyopenssl = "*"
 
 [dev-packages]
 
