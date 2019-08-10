@@ -159,6 +159,7 @@ class OneShotAnalytics(CrudApi):
 
         results = results.to_mongo()
         results['results'] = {'nodes': nodes, 'links': links}
+        results.pop('settings')
 
         return results
 
@@ -166,7 +167,6 @@ class OneShotAnalytics(CrudApi):
     @requires_permissions("read")
     def status(self, id):
         results = get_object_or_404(analytics.AnalyticsResults, id=id)
-        results.pop('settings')
         return render(self._analytics_results(results))
 
     @route('/<id>/last/<observable_id>')
