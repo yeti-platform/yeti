@@ -35,7 +35,7 @@ class InvestigationLink(EmbeddedDocument):
 class InvestigationEvent(EmbeddedDocument):
     kind = StringField(required=True)
     links = ListField(EmbeddedDocumentField(InvestigationLink))
-    nodes = ListField(ReferenceField('Node'))
+    nodes = ListField(ReferenceField('Node', dbref=True))
     datetime = DateTimeField(default=datetime.utcnow)
 
 
