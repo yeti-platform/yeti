@@ -16,7 +16,7 @@ services:
   redis:
     image: redis:latest
   mongodb:
-    image: mongo:latest
+    image: mongo:4.0.12
     environment:
       - MONGO_LOG_DIR=/dev/null
     command: mongod
