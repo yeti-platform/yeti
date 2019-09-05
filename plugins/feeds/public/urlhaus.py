@@ -38,7 +38,6 @@ class UrlHaus(Feed):
 
         context = {
             "id_urlhaus": id_feed,
-            #"first_seen": first_seen,
             "status": url_status,
             "source": self.name,
             "report": urlhaus_link,
