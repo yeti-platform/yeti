@@ -30,9 +30,9 @@ class UrlHaus(Feed):
                 if since_last_run > first_seen:
                     return
 
-            self.analyze(line, first_seen)
+            self.analyze(line)
 
-    def analyze(self, line, first_seen):
+    def analyze(self, line):
 
         id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source = line # pylint: disable=line-too-long
 
