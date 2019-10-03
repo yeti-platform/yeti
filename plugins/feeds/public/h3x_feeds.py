@@ -13,7 +13,7 @@ class MalwareCorpusTracker(Feed):
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "MalwareCorpusTracker",
-        "source": "http://tracker.h3x.eu/api/sites_1day.php",
+        "source": "http://tracker.h3x.eu/api/sites_1hour.php",
         "description": "This feed contains known Malware C2 servers",
     }
 
@@ -45,9 +45,7 @@ class MalwareCorpusTracker(Feed):
         context['last_seen'] = last_seen
         context['source'] = self.name
 
-        tags = []
-        tags.append(family.lower())
-        tags.append(type_.lower())
+        tags = [family.lower(), type_.lower()]
 
         try:
             url = Url.get_or_create(value=url)
