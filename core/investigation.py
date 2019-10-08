@@ -13,7 +13,8 @@ from wtforms.fields import HiddenField as WTFHiddenField
 from core.database import Node, AttachedFile, TagListField
 from core.scheduling import OneShotEntry
 from core.config.celeryctl import celery_app
-
+from core.group import Group
+from core.user import User
 
 class InvestigationLink(EmbeddedDocument):
     id = StringField(required=True)
@@ -34,7 +35,7 @@ class InvestigationLink(EmbeddedDocument):
 class InvestigationEvent(EmbeddedDocument):
     kind = StringField(required=True)
     links = ListField(EmbeddedDocumentField(InvestigationLink))
-    nodes = ListField(ReferenceField('Node'))
+    nodes = ListField(ReferenceField('Node', dbref=True))
     datetime = DateTimeField(default=datetime.utcnow)
 
 
@@ -52,6 +53,7 @@ class Investigation(Node):
     import_url = StringField()
     import_text = StringField()
     tags = ListField(StringField(), verbose_name="Relevant tags")
+    sharing = ListField(StringField())
 
     exclude_fields = [
         'links', 'nodes', 'events', 'created', 'updated', 'created_by',
@@ -62,7 +64,7 @@ class Investigation(Node):
     # Ignore extra fields
     meta = {
         'strict': False,
-        "indexes": ["tags"],
+        "indexes": ["tags", "sharing"],
     }
 
     @classmethod
@@ -86,7 +88,18 @@ class Investigation(Node):
     def info(self):
         result = self.to_mongo()
         result['nodes'] = [node.to_mongo() for node in self.nodes]
-
+        shared = []
+        for sharing_id in Investigation.objects.get(id=self.id).sharing:
+            try:
+                shared.append(Group.objects.get(id=sharing_id))
+            except:
+                try:
+                    shared.append(User.objects.get(id=sharing_id))
+                except:
+                    pass
+        if shared:
+            result['shared'] = shared
+        print result
         return result
 
     def _node_changes(self, kind, method, links, nodes):
@@ -118,6 +131,19 @@ class Investigation(Node):
 
         return super(Investigation, self).save(*args, **kwargs)
 
+    def sharing_permissions(self, sharing_with, investigation=False, invest_id=False):
+        groups = False
+        if sharing_with == "all":
+            Investigation.objects.get(id=invest_id or self.id).update(set__sharing=[])
+        elif sharing_with == "private":
+            Investigation.objects.get(id=invest_id or self.id).update(add_to_set__sharing=[current_user.id])
+        elif sharing_with == "allg":
+            groups = Group.objects(members__in=[current_user.id])
+        else:
+            groups = Group.objects(id=sharing_with)
+
+        if groups:
+            Investigation.objects.get(id=self.id).update(add_to_set__sharing=[group.id for group in groups])
 
 class ImportResults(Document):
     import_method = ReferenceField('ImportMethod', required=True)

@@ -2,20 +2,20 @@
 {% import "macros/filterlist.html" as filterlist %}
 
 {% block title %}
-Users
+Groups
 {% endblock %}
 
 {% block breadcrumb %}
 <ol class="breadcrumb">
   <li>YETI</li>
   <li>Admin</li>
-  <li class="active">User administration</li>
+  <li class="active">Group administration</li>
 </ol>
 {% endblock %}
 
 {% block main %}
 <div class="col-md-9">
-  <div role="tabpanel" class="tab-pane active" id="admin" data-url="{{ url_for('api.UserAdminSearch:post')}}"></div>
+  <div role="tabpanel" class="tab-pane active" id="admin" data-url="{{ url_for('api.GroupAdminSearch:post')}}"></div>
 </div>
 {% endblock %}
 
@@ -31,11 +31,11 @@ Users
 
 {% block sidebar %}
 <div class="col-md-3">
-<form data-target="admin" data-url="{{ url_for("api.UserAdminSearch:post")}}" class="yeti-crud">
+<form data-target="admin" data-url="{{ url_for("api.GroupAdminSearch:post")}}" class="yeti-crud">
   <input class="extra-param" type="hidden" name="regex" value="true">
   <input class="extra-param" type="hidden" name="ignorecase" value="true">
   <div class="input-group">
-      <input class="form-control input-sm crud-filter" data-default-value="username" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
+      <input class="form-control input-sm crud-filter" data-default-value="groupname" placeholder="Search query + &#9166;" value="{{request.args.get("query", "")}}">
     <span class="input-group-btn">
       <button class="btn btn-primary btn-sm crud-search" type="button"><i style="display:none;" class="fa fa-refresh fa-spin" id="spinner"></i><span id="go">Go</span></button>
     </span>
@@ -47,14 +47,9 @@ Users
     <li><a class="crud-paginator" data-direction="1" aria-label="Next">Next</a></li>
   </ul>
 
-  <div class="tip">
-    <p>You can reset any user's API key by clicking on the <code>reset</code> button.</p>
-    <p>To temporarily prevent a user from logging in, you can disable their account by clicking on the checkbox</p>
-    <p><strong>Warning:</strong> Removing users cannot be undone</p>
-  </div>
-
 </form>
 
-{% include 'newuser.html' ignore missing %}
+{% include 'newgroup.html' ignore missing %}
+
 </div>
 {% endblock %}

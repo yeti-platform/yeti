@@ -1,0 +1,21 @@
+{% import "macros/generic.html" as macros %}
+
+{% for group in data %}
+    {% if loop.first %}
+        <table class="table table-condensed yeti-table table-hover">
+          <tr><th>Group name</th><th>Enabled</th><th>Remove</th></tr>
+    {% endif %}
+      <tr class="node-line {{"disabled" if not group['enabled']}}" data-id="{{group['id']}}">
+        <td><a href="{{ url_for('frontend.GroupView:profile', id=group['id'] )}}">{{group['groupname']}}</a></td>
+        <td><span data-url="{{ url_for('api.GroupAdminSearch:toggle', id=group["id"]) }}" class="admin-toggle glyphicon glyphicon-ok"></span></td>
+        <td><span data-url="{{ url_for('api.GroupAdminSearch:remove', id=group["id"]) }}" class="admin-remove glyphicon glyphicon-trash"></span></td>
+      </tr>
+
+    {% if loop.last %}
+        </table>
+    {% endif %}
+{% else %}
+<div class='no-results'>
+No results found
+</div>
+{% endfor %}

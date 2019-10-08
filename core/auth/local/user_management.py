@@ -97,10 +97,11 @@ def get_default_user():
             return User.objects.get(username="yeti")
         return AnonymousUserMixin()
     except DoesNotExist:
-        return create_user("yeti", "yeti")
+        return create_user("yeti", "yeti", admin=True)
 
 
-def create_user(username, password, permissions=DEFAULT_PERMISSIONS):
+def create_user(username, password, admin=False, permissions=DEFAULT_PERMISSIONS):
+    permissions["admin"] = admin
     u = User(username=username, permissions=permissions)
     u = set_password(u, password)
     return u.save()

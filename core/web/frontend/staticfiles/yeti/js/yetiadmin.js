@@ -1,13 +1,16 @@
 $(function() {
-
-  $("#users").on('click', '.user-toggle', function() {
+  $("#admin").on('click', '.admin-toggle', function() {
     toggle($(this));
   });
-
-  $("#users").on('click', '.user-remove', function() {
+  $("#admin").on('click', '.admin-remove', function() {
     remove($(this));
   });
-
+  $("#admin").on('click', '.admin-toadmin', function() {
+    admins($(this));
+  });
+  $("#admin").on('click', '.admin-fromadmin', function() {
+    admins($(this));
+  });
 });
 
 
@@ -36,6 +39,17 @@ function remove(button) {
       }
     });
   }
+}
 
-
+function admins(button) {
+  if (confirm("Are you sure?")) {
+    $.ajax({
+      method: "POST",
+      headers: {"Accept": "application/json"},
+      url: button.data("url"),
+      success: function(data) {
+        $(".crud-search").click()
+      }
+    });
+  }
 }

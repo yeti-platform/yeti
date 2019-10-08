@@ -148,13 +148,13 @@ ipdata --download`.
         return list(links)
 
 
-def _handle_cert(rec, links):
+def _handle_cert(dbase, rec, links):
     """Internal function to handle a record corresponding to an X509
 certificate.
 
     """
 
-    raw_data = db.nmap.from_binary(rec['value'])
+    raw_data = dbase.from_binary(rec['value'])
     cert = Certificate.from_data(raw_data, hash_sha256=rec['infos']['sha256'])
     rec['value'] = encode_b64(raw_data).decode()
     links.update(
@@ -330,7 +330,7 @@ Please refer to IVRE's documentation on how to collect passive data.
                     continue
             elif rec["recontype"] == "SSL_SERVER":
                 if rec["source"] == "cert":
-                    cert = _handle_cert(rec, links)
+                    cert = _handle_cert(db.passive, rec, links)
                     result.setdefault('ssl-cert', set()).add(cert.value)
                     links.update(
                         ip.link_to(
@@ -403,7 +403,7 @@ Please refer to IVRE's documentation on how to collect passive data.
                 db.passive.get(db.passive.searchcertissuer(subject.value)),
         ):
             LOG.debug('%s.analyze_certsubj: record %r', cls.__name__, rec)
-            cert = _handle_cert(rec, links)
+            cert = _handle_cert(db.passive, rec, links)
             links.update(
                 Ip.get_or_create(value=rec['addr']).link_to(
                     cert,

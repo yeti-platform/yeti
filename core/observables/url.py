@@ -6,6 +6,7 @@ from urlparse import urlparse
 import urlnorm
 from mongoengine import DictField
 
+from core.common.utils import tldextract_parser
 from core.observables import Observable
 from core.observables.hostname import Hostname
 from core.observables.ip import Ip
@@ -42,6 +43,8 @@ class Url(Observable):
                 # if no schema is specified, assume http://
                 self.value = u"http://{}".format(self.value)
             self.value = urlnorm.norm(self.value).replace(' ', '%20')
+            p = tldextract_parser(self.value)
+            self.value = self.value.replace(p.fqdn, p.fqdn.encode("idna").decode(), 1)
             self.parse()
         except urlnorm.InvalidUrl:
             raise ObservableValidationError(

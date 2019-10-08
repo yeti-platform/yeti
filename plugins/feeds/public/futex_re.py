@@ -17,7 +17,7 @@ class FutexTracker(Feed):
         "name": "FutexTracker",
         "source": "https://futex.re/tracker/TinyTracker.csv",
         "description":
-            "Provides url, hash and hosting information on various malware samples.",
+            "Provides url, hash and hosting information on various malware samples.", # pylint: disable=line-too-long
     }
 
     def update(self):
@@ -38,6 +38,7 @@ class FutexTracker(Feed):
 
             self.analyze(line)
 
+    # pylint: disable=arguments-differ
     def analyze(self, line):
 
         _id, _, url, _status, _hash, country, asn = tuple(line)
@@ -63,7 +64,7 @@ class FutexTracker(Feed):
                 hash_obs.tag(tags)
                 hash_obs.add_source(self.name)
                 hash_obs.active_link_to(
-                    url_obs, "hash", self.name, clean_old=False)
+                    url_obs, "MD5", self.name, clean_old=False)
             except ObservableValidationError as e:
                 logging.error(e)
 
@@ -75,6 +76,6 @@ class FutexTracker(Feed):
                 asn_obs.tag(tags)
                 asn_obs.add_source(self.name)
                 asn_obs.active_link_to(
-                    url_obs, "asn", self.name, clean_old=False)
+                    url_obs, "ASN", self.name, clean_old=False)
             except ObservableValidationError as e:
                 logging.error(e)

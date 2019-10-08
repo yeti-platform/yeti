@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from flask_classy import FlaskView, route
+from flask_login import current_user
 from flask import render_template, request, redirect, url_for, abort
 from mongoengine import NotUniqueError
 
@@ -9,7 +10,7 @@ from core.errors import GenericValidationError
 from core.indicators import Regex
 from core.database import AttachedFile
 from core.web.helpers import get_object_or_404
-from core.web.helpers import requires_permissions
+from core.web.helpers import requires_permissions, group_user_permission, get_user_groups
 
 binding_object_classes = {
     "malware": Malware,
@@ -32,8 +33,16 @@ class GenericView(FlaskView):
     @requires_permissions("read")
     def get(self, id):
         obj = self.klass.objects.get(id=id)
-        return render_template(
-            "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+        if hasattr(obj, "sharing"):
+            if group_user_permission(obj):
+                return render_template(
+                    "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+            abort(403)
+        else:
+            return render_template(
+                "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+
+        return(request.referrer)
 
     @requires_permissions("write")
     @route('/new/<string:subclass>', methods=["GET", "POST"])
@@ -67,21 +76,33 @@ class GenericView(FlaskView):
     @requires_permissions("write")
     @route('/edit/<string:id>', methods=["GET", "POST"])
     def edit(self, id):
+        obj = self.klass.objects.get(id=id)
+        #ToDo Group admins support
+        if hasattr(obj, 'created_by'):
+            if current_user.username != obj.created_by and not current_user.has_role('admin'):
+                abort(403)
+
         if request.method == "POST":
             return self.handle_form(id=id)
-        obj = self.klass.objects.get(id=id)
+
         form_class = obj.__class__.get_form()
         form = form_class(obj=obj)
         return render_template(
             "{}/edit.html".format(self.klass.__name__.lower()),
             form=form,
             obj_type=self.klass.__name__,
-            obj=obj)
+            obj=obj,
+            groups=get_user_groups())
 
     @requires_permissions("write")
     @route('/delete/<string:id>', methods=["GET"])
     def delete(self, id):
         obj = self.klass.objects.get(id=id)
+        #ToDo Group admins support
+        if hasattr(obj, 'created_by'):
+            if current_user.username != obj.created_by and not current_user.has_role('admin'):
+                abort(403)
+
         obj.delete()
         return redirect(
             url_for('frontend.{}:index'.format(self.__class__.__name__)))
@@ -105,11 +126,12 @@ class GenericView(FlaskView):
             obj = self.klass.objects.get(id=id)
             klass = obj.__class__
             form = klass.get_form()(request.form, initial=obj._data)
-
         if form.validate():
             form.populate_obj(obj)
             try:
                 obj = self.create_obj(obj, skip_validation)
+                if form.formdata.get("sharing") and hasattr(klass, "sharing_permissions"):
+                    obj.sharing_permissions(form.formdata["sharing"], invest_id=obj.id)
             except GenericValidationError as e:
                 # failure - redirect to edit page
                 form.errors['General Error'] = [e]
@@ -117,7 +139,8 @@ class GenericView(FlaskView):
                     "{}/edit.html".format(self.klass.__name__.lower()),
                     form=form,
                     obj_type=klass.__name__,
-                    obj=None)
+                    obj=None,
+                    groups=get_user_groups())
             except NotUniqueError as e:
                 form.errors['Duplicate'] = [
                     'Entity "{}" is already in the database'.format(obj)
@@ -126,7 +149,8 @@ class GenericView(FlaskView):
                     "{}/edit.html".format(self.klass.__name__.lower()),
                     form=form,
                     obj_type=klass.__name__,
-                    obj=None)
+                    obj=None,
+                    groups=get_user_groups())
 
             # success - redirect to view page
             return redirect(

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from datetime import datetime
 import re
 import operator
-
+import logging
 from mongoengine import *
 from flask_mongoengine.wtf import model_form
 from flask import url_for
@@ -167,6 +167,11 @@ class Observable(Node):
                 observable = cls(value=match.group('search'))
                 observable.normalize()
             except ObservableValidationError:
+                continue
+
+
+            except ValueError as e:
+                logging.error('Value error: {} - on: {}'.format(e, observable.value))
                 continue
 
             if observable.value not in cls.ignore:
@@ -440,8 +445,11 @@ class Observable(Node):
         if self.id:
             i['id'] = str(self.id)
         i['type'] = self.__class__.__name__
-        i['url'] = url_for(
-            "api.Observable:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for(
-            "frontend.ObservableView:get", id=str(self.id), _external=True)
+        try:
+            i['url'] = url_for(
+                "api.Observable:post", id=str(self.id), _external=True)
+            i['human_url'] = url_for(
+                "frontend.ObservableView:get", id=str(self.id), _external=True)
+        except RuntimeError:
+            pass
         return i

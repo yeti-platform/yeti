@@ -13,3 +13,4 @@ from core.observables.text import Text
 from core.observables.bitcoin import Bitcoin
 from core.observables.path import Path
 from core.observables.mac_address import MacAddress
+from core.observables.helpers import register_certificate, register_observables
