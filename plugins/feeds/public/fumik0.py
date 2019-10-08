@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime, timedelta
 
-from core.observables import Url, Ip, Hash
-from core.feed import Feed
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Url, Ip, Hash
 
 
 class Fumik0Tracker(Feed):
@@ -25,7 +25,7 @@ class Fumik0Tracker(Feed):
 
             if self.last_run is not None:
                 if since_last_run > first_seen:
-                    return
+                    continue
 
             self.analyze(block, first_seen)
 

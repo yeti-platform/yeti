@@ -35,7 +35,7 @@ class RansomwareTracker(Feed):
             first_seen = parser.parse(line[0])
             if self.last_run is not None:
                 if since_last_run > first_seen:
-                    return
+                    continue
 
             self.analyze(line)
 

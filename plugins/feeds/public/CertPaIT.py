@@ -38,7 +38,7 @@ class CertPaIT(Feed):
             pub_date = parse_date_to_utc(item['pubDate'])
             if self.last_run is not None:
                 if since_last_run > pub_date:
-                    return
+                    continue
 
             self.analyze(item, pub_date)
 
