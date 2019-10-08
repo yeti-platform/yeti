@@ -24,7 +24,7 @@ class VXVaultUrl(Feed):
             self.analyze(line)
 
     # don't need to do much here; want to add the information
-    # and tag it with 'phish'
+    # and tag it with 'malware'
     def analyze(self, data):
         if data.startswith('http'):
             tags = ['malware']
@@ -35,4 +35,4 @@ class VXVaultUrl(Feed):
                 url.add_source(self.name)
                 url.tag(tags)
             except ObservableValidationError as e:
-                logging.error(e)
+                logging.error('While processing the following line we hit an error {}, {}'.format(data, e))
