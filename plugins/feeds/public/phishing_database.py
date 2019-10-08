@@ -5,10 +5,8 @@ from core.observables import Url
 from core.feed import Feed
 from core.errors import ObservableValidationError
 
-"""
-    This class will pull the PhishingDatabase feed from github on a 12 hour interval."
-"""
 class PhishingDatabase(Feed):
+    """ This class will pull the PhishingDatabase feed from github on a 12 hour interval. """
 
     default_values = {
         'frequency': timedelta(hours=12),
