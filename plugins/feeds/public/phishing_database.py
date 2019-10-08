@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+"""This class will incorporate the PhishingDatabase feed into yeti."""
+
 from datetime import timedelta
 import logging
 
@@ -6,7 +9,7 @@ from core.feed import Feed
 from core.errors import ObservableValidationError
 
 class PhishingDatabase(Feed):
-    """ This class will pull the PhishingDatabase feed from github on a 12 hour interval. """
+    """This class will pull the PhishingDatabase feed from github on a 12 hour interval."""
 
     default_values = {
         'frequency': timedelta(hours=12),
