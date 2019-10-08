@@ -12,7 +12,7 @@ class UrlHaus(Feed):
     default_values = {
         "frequency": timedelta(minutes=20),
         "name": "UrlHaus",
-        "source": "https://urlhaus.abuse.ch/downloads/csv/",
+        "source": "https://urlhaus.abuse.ch/downloads/csv_recent/",
         "description":
             "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.",
     }
