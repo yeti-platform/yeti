@@ -169,8 +169,7 @@ class MispFeed(Feed):
         external_analysis = [attr['value'] for attr in
                              event['Attribute'] if
                              attr['category'] == 'External analysis' and attr[
-                                 'type'] == 'url']
-
+                                 'type'] == 'url' and attr["to_ids"]]
         if external_analysis:
             context['external sources'] = '\r\n'.join(external_analysis)
         if 'Tag' in event:
