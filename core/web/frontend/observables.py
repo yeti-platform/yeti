@@ -1,19 +1,19 @@
 from __future__ import unicode_literals
 
 import logging
-from core.logger import userLogger
 
 from flask import request, render_template, flash
-from flask_login import current_user
 from flask_classy import route
+from flask_login import current_user
 
+from core.analysis import match_observables
+from core.errors import ObservableValidationError
+from core.exports import ExportTemplate
+from core.logger import userLogger
+from core.observables import *
+from core.web.api.file import save_uploaded_files
 from core.web.frontend.generic import GenericView
 from core.web.helpers import requires_permissions
-from core.observables import *
-from core.exports import ExportTemplate
-from core.errors import ObservableValidationError
-from core.analysis import match_observables
-from core.web.api.file import save_uploaded_files
 
 
 class ObservableView(GenericView):
@@ -53,7 +53,7 @@ class ObservableView(GenericView):
             else:
                 try:
                     guessed_type = Observable.guess_type(request.form['value'])
-                except ObservableValidationError, e:
+                except ObservableValidationError as e:
                     form = klass.get_form()(request.form)
                     form.errors['generic'] = [str(e)]
                     return render_template(
@@ -97,7 +97,7 @@ class ObservableView(GenericView):
                                     issubclass(
                                         globals()[request.form['force-type']],
                                         Observable)):
-                                print globals()[request.form['force-type']]
+                                print(globals()[request.form['force-type']])
                                 o = globals()[request.form[
                                     'force-type']].get_or_create(value=txt)
                             else:
