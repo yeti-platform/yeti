@@ -1,24 +1,25 @@
 from __future__ import unicode_literals
 
-import re
 import logging
+import re
 from datetime import datetime
+
+from bson.json_util import loads
 from flask import request
 from flask_classy import route
 from flask_login import current_user
-from bson.json_util import loads
 
-from mongoengine import Q
-from core.helpers import iterify
 from core import investigation
-from core.web.api.crud import CrudApi, CrudSearchApi
-from core.observables import *
-from core.investigation import ImportResults
 from core.entities import Entity
+from core.errors import ObservableValidationError
+from core.helpers import iterify
+from core.investigation import ImportResults
+from core.observables import *
 from core.web.api.api import render
+from core.web.api.crud import CrudApi, CrudSearchApi
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions, get_queryset, get_user_groups
-from core.errors import ObservableValidationError
+
 
 class InvestigationSearch(CrudSearchApi):
     template = 'investigation_api.html'
@@ -117,7 +118,7 @@ class Investigation(CrudApi):
                     nodes.append(n)
 
             i.add([], nodes)
-        except Exception, e:
+        except Exception as e:
             response = {'status': 'error', 'message': str(e)}
 
         return render(response)
