@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 
 import re
-from urlparse import urlparse
+from urllib.parse import urlparse
 
-import urlnorm
+from url_normalize import url_normalize
 from mongoengine import DictField
 
 from core.common.utils import tldextract_parser
@@ -38,17 +38,21 @@ class Url(Observable):
     def normalize(self):
         self.value = refang(self.value)
 
+
+        if re.match(r"[^:]+://", self.value) is None:
+            # if no schema is specified, assume http://
+            self.value = u"http://{}".format(self.value)
         try:
-            if re.match(r"[^:]+://", self.value) is None:
-                # if no schema is specified, assume http://
-                self.value = u"http://{}".format(self.value)
-            self.value = urlnorm.norm(self.value).replace(' ', '%20')
-            p = tldextract_parser(self.value)
-            self.value = self.value.replace(p.fqdn, p.fqdn.encode("idna").decode(), 1)
-            self.parse()
-        except urlnorm.InvalidUrl:
+            self.value = url_normalize(self.value).replace(' ', '%20')
+        except Exception as e:
             raise ObservableValidationError(
                 "Invalid URL: {}".format(self.value))
+
+        try:
+            p = tldextract_parser(self.value)
+            self.value = self.value.replace(p.fqdn,
+                                            p.fqdn.encode("idna").decode(), 1)
+            self.parse()
         except UnicodeDecodeError:
             raise ObservableValidationError(
                 "Invalid URL (UTF-8 decode error): {}".format(self.value))

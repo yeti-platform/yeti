@@ -18,8 +18,8 @@ def webserver(args):
         webapp.config['TEMPLATES_AUTO_RELOAD'] = True
 
     syncdb()
-    print "[+] Yeti started. Point browser to http://localhost:5000/{}".format(
-        " (debug)" if args.debug else "")
+    print("[+] Yeti started. Point browser to http://localhost:5000/{}".format(
+        " (debug)" if args.debug else ""))
     webapp.run(host="0.0.0.0")
 
 

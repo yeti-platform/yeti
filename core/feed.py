@@ -6,12 +6,12 @@ import logging
 import tempfile
 from base64 import b64decode
 from datetime import datetime
-from StringIO import StringIO
+
 
 import pytz
 import requests
 from dateutil import parser
-from lxml import etree
+import xml.etree.ElementTree as ET
 from mongoengine import DoesNotExist, StringField
 
 from core.errors import GenericYetiError, GenericYetiInfo
@@ -245,7 +245,7 @@ class Feed(ScheduleEntry):
     def parse_xml(self, data, main_node, children):
         """Helper function used to parse XML. See :func:`core.feed.Feed.update_xml` for details"""
 
-        tree = etree.parse(StringIO(data))
+        tree = ET.parse(data)
 
         for item in tree.findall("//{}".format(main_node)):
             context = {}

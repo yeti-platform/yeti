@@ -38,7 +38,7 @@ class ScheduleEntry(YetiDocument):
 
     @classmethod
     def unlock_all(klass):
-        print klass.objects(lock=True).modify(lock=False)
+        print(klass.objects(lock=True).modify(lock=False))
 
 
 class OneShotEntry(YetiDocument):
