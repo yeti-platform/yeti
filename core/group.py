@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
-from mongoengine import BooleanField, StringField, ListField, ReferenceField, CASCADE, EmbeddedDocument
-from flask_mongoengine.wtf import model_form
-from flask import url_for
-from user import User
+from mongoengine import BooleanField, StringField, ListField, ReferenceField, \
+    CASCADE
+
 from core.database import YetiDocument
+from core.user import User
+
 
 class Group(YetiDocument):
     enabled = BooleanField(required=True, default=True)
