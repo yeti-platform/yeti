@@ -1,17 +1,16 @@
 from __future__ import unicode_literals
 
 import re
-from inspect import ismethod
 from functools import wraps
-import urlparse
-from werkzeug.exceptions import Forbidden
-from core.helpers import iterify
+from inspect import ismethod
 
 from flask import abort, request
 from flask_login import current_user
 from mongoengine import Q
+from werkzeug.exceptions import Forbidden
 
 from core.group import Group
+from core.helpers import iterify
 
 SEARCH_REPLACE = {
     'tags': 'tags__name',
@@ -110,7 +109,7 @@ def get_queryset(collection, filters, regex, ignorecase, replace=True):
             })
             result_filters.pop(alias)
 
-    print "Filter: {}".format(result_filters), q.to_query(collection)
+    print("Filter: {}".format(result_filters), q.to_query(collection))
 
     return queryset.filter(**result_filters).filter(q)
 
@@ -126,7 +125,7 @@ def different_origin(referer, target):
 def csrf_protect():
     if request.method not in ('GET', 'HEAD', 'OPTIONS', 'TRACE'):
         referer = request.headers.get('Referer')
-        print referer
+        print(referer)
 
         if referer is None or different_origin(referer, request.url_root):
             raise Forbidden(description="Referer check failed.")
