@@ -1,18 +1,17 @@
 from __future__ import unicode_literals
 
-from flask_login import current_user
-from flask_classy import route
 from flask import request
+from flask_classy import route
+from flask_login import current_user
 
-from core.observables import Observable
-from core.web.api.crud import CrudApi
 from core import analytics
 from core.analytics_tasks import schedule
+from core.observables import Observable
 from core.web.api.api import render
+from core.web.api.crud import CrudApi
 from core.web.helpers import get_object_or_404
 from core.web.helpers import requires_permissions
-from flask.ext.api.decorators import set_renderers
-from flask.ext.api.renderers import HTMLRenderer, JSONRenderer
+
 
 class ScheduledAnalytics(CrudApi):
     template = 'scheduled_analytics_api.html'
@@ -20,7 +19,7 @@ class ScheduledAnalytics(CrudApi):
 
     @route("/<id>/refresh", methods=["POST"])
     @requires_permissions("refresh")
-    @set_renderers(JSONRenderer)
+
     def refresh(self, id):
         """Runs a Scheduled Analytics
 
@@ -32,7 +31,6 @@ class ScheduledAnalytics(CrudApi):
 
     @route("/<id>/toggle", methods=["POST"])
     @requires_permissions("toggle")
-    @set_renderers(JSONRenderer)
     def toggle(self, id):
         """Toggles a Scheduled Analytics
 
@@ -55,7 +53,6 @@ class InlineAnalytics(CrudApi):
 
     @route("/<id>/toggle", methods=["POST"])
     @requires_permissions("toggle")
-    @set_renderers(JSONRenderer)
     def toggle(self, id):
         """Toggles a Inline Analytics
 
@@ -79,7 +76,6 @@ class OneShotAnalytics(CrudApi):
     objectmanager = analytics.OneShotAnalytics
 
     @requires_permissions("read")
-    @set_renderers(JSONRenderer, HTMLRenderer)
     def index(self):
         data = []
 
@@ -99,7 +95,6 @@ class OneShotAnalytics(CrudApi):
 
     @route("/<id>/toggle", methods=["POST"])
     @requires_permissions("toggle")
-    @set_renderers(JSONRenderer)
     def toggle(self, id):
         """Toggles a One-shot Analytics
 
