@@ -1,14 +1,14 @@
 from __future__ import unicode_literals
 
-from datetime import datetime
 import logging
 import traceback
-
-from core.config.celeryctl import celery_app
-from core.observables import Observable
-from core.analytics import ScheduledAnalytics, AnalyticsResults
+from datetime import datetime
 
 from mongoengine import DoesNotExist
+
+from core.analytics import ScheduledAnalytics, AnalyticsResults
+from core.config.celeryctl import celery_app
+from core.observables import Observable
 
 
 @celery_app.task
@@ -69,7 +69,7 @@ def single(results_id):
     try:
         links = analytics.analyze(results.observable, results)
         results.update(status="finished", results=links)
-    except Exception, e:
+    except Exception as e:
         results.update(status="error", error=str(e))
         traceback.print_exc()
 
