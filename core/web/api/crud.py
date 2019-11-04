@@ -1,19 +1,19 @@
 from __future__ import unicode_literals
 
 import logging
-from core.logger import userLogger
 
 from bson.json_util import loads
 from flask import request, url_for, abort, send_file, make_response
-from flask_login import current_user
 from flask_classy import FlaskView, route
+from flask_login import current_user
 from mongoengine.errors import InvalidQueryError
 
-from core.web.api.api import render
-from core.web.helpers import get_queryset
-from core.helpers import iterify
 from core.database import AttachedFile
+from core.helpers import iterify
+from core.logger import userLogger
+from core.web.api.api import render
 from core.web.helpers import get_object_or_404
+from core.web.helpers import get_queryset
 from core.web.helpers import requires_permissions
 
 
@@ -55,7 +55,7 @@ class CrudSearchApi(FlaskView):
             logging.error(e)
             abort(400)
 
-        return render(data, self.template)
+        return render(data)
 
 
 class CrudApi(FlaskView):
@@ -109,7 +109,7 @@ class CrudApi(FlaskView):
         """List all corresponding entries in the database. **Do not use on large datasets!**
         """
         objects = [o.info() for o in self.objectmanager.objects.all()]
-        return render(objects, template=self.template)
+        return render(objects)
 
     # This method can be overridden if needed
     def _parse_request(self, json):

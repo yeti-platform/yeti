@@ -79,7 +79,7 @@ class User(YetiDocument):
 
     @staticmethod
     def generate_api_key():
-        return hexlify(os.urandom(40))
+        return hexlify(os.urandom(40)).decode()
 
     def info(self):
         i = {
