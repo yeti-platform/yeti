@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
-import re
-import hashlib
 import collections
-from mongoengine import Document
+import hashlib
+import re
 from datetime import timedelta
+
+from mongoengine import Document
 
 timedelta_regex = re.compile(
     r"(((?P<hours>[0-9]{1,2}):)?((?P<minutes>[0-9]{1,2}):))?(?P<seconds>[0-9]{1,2})$"
@@ -45,7 +46,7 @@ def iterify(element):
     if element is None:
         return ()
     elif isinstance(element, collections.Iterable) and not isinstance(
-            element, basestring) and not isinstance(element, Document):
+            element, str) and not isinstance(element, Document):
         return element
     else:
         return (element,)

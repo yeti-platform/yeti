@@ -40,7 +40,7 @@ class User(YetiDocument):
         return False
 
     def get_id(self):
-        return unicode(self.session_token)
+        return self.session_token
 
     def has_settings(self, settings):
         for setting in settings:
