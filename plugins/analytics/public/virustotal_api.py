@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
-from dateutil import parser
+
 import json
 
 import requests
+from dateutil import parser
 
 from core.analytics import OneShotAnalytics
 from core.config.config import yeti_config
@@ -58,7 +59,7 @@ class VirustotalApi(object):
             else:
                 return None
         except Exception as e:
-            print 'Exception while getting ip report {}'.format(e.message)
+            print('Exception while getting ip report {}'.format(e.message))
             return None
 
 

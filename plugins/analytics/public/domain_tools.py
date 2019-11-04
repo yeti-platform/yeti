@@ -1,21 +1,21 @@
-import ssl
+import hashlib
 import hmac
 import json
-import hashlib
-import requests
-from pythonwhois.parse import parse_raw_whois
-from mongoengine import FieldDoesNotExist
+import ssl
 from datetime import datetime
-from core.common.utils import tldextract_parser
 
-from core.helpers import iterify, get_value_at
-from core.analytics import OneShotAnalytics
-from core.entities import Company
-from core.observables import Hostname, Email, Text
-from core.config.config import yeti_config
-
+import requests
+# from pythonwhois.parse import parse_raw_whois
+from mongoengine import FieldDoesNotExist
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.poolmanager import PoolManager
+
+from core.analytics import OneShotAnalytics
+from core.common.utils import tldextract_parser
+from core.config.config import yeti_config
+from core.entities import Company
+from core.helpers import iterify, get_value_at
+from core.observables import Hostname, Email, Text
 
 
 def link_from_data(observable, data, path, klass, description):
@@ -285,6 +285,6 @@ class DTWhois(OneShotAnalytics, DomainToolsApi):
             else:
                 observable.save()
 
-            print links
+            print(links)
 
         return links

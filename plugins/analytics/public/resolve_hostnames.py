@@ -1,18 +1,18 @@
 from __future__ import unicode_literals
 
-from datetime import timedelta, datetime
-import threading
 import logging
-from Queue import Queue, Empty
+import threading
+from datetime import timedelta, datetime
+from queue import Queue, Empty
 
 import dns
-from dns.resolver import NoAnswer, NXDOMAIN, Timeout, NoNameservers
 from dns.rdtypes.ANY.NS import NS as NS_class
 from dns.rdtypes.IN.A import A as A_class
+from dns.resolver import NoAnswer, NXDOMAIN, Timeout, NoNameservers
 
 from core.analytics import ScheduledAnalytics
-from core.observables import Hostname, Observable
 from core.errors import ObservableValidationError
+from core.observables import Hostname, Observable
 
 
 class ResolveHostnames(ScheduledAnalytics):
