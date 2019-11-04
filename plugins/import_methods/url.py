@@ -1,15 +1,16 @@
-import magic
-import pdfkit
-import requests
+from io import StringIO
 from os import path
 from shutil import rmtree
 from tempfile import mkdtemp
-from StringIO import StringIO
 
-from plugins.import_methods.html import import_html
+import magic
+import pdfkit
+import requests
+
+from core.config.config import yeti_config
 from core.database import AttachedFile
 from core.investigation import ImportMethod
-from core.config.config import yeti_config
+from plugins.import_methods.html import import_html
 
 
 class ImportURL(ImportMethod):
@@ -33,8 +34,8 @@ class ImportURL(ImportMethod):
                     pdf, 'import.pdf', 'application/pdf')
 
             results.investigation.update(import_document=pdf_import)
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
         rmtree(tmpdir)
 
