@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
 
-from flask import Blueprint
-from flask_api.renderers import JSONRenderer, HTMLRenderer
-from flask_api.decorators import set_renderers
 from json import dumps
+
+from flask import Blueprint
+from flask_api.decorators import set_renderers
+from flask_api.renderers import JSONRenderer, HTMLRenderer
 
 from core.web.json import to_json, recursive_encoder
 
@@ -23,6 +24,7 @@ def bson_renderer(objects, template=None, ctx=None):
 
 @set_renderers(JSONRenderer,HTMLRenderer)
 def render(obj):
+    print(obj)
     return obj
 
 from core.web.api.observable import ObservableSearch, Observable

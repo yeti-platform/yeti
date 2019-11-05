@@ -88,7 +88,7 @@ def get_queryset(collection, filters, regex, ignorecase, replace=True):
             if key in SEARCH_REPLACE:
                 key = SEARCH_REPLACE[key]
 
-        if regex and isinstance(value, basestring):
+        if regex and isinstance(value, str):
             flags = 0
             if ignorecase:
                 flags |= re.I

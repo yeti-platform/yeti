@@ -109,7 +109,7 @@ class CrudApi(FlaskView):
         """List all corresponding entries in the database. **Do not use on large datasets!**
         """
         objects = [o.info() for o in self.objectmanager.objects.all()]
-        return render(objects)
+        return render({'objs':objects})
 
     # This method can be overridden if needed
     def _parse_request(self, json):
