@@ -1,22 +1,22 @@
 from __future__ import unicode_literals
 
-import os
-import csv
 import logging
+import os
 import tempfile
+from StringIO import StringIO
 from base64 import b64decode
 from datetime import datetime
-from StringIO import StringIO
 
+import pandas as pd
 import pytz
 import requests
 from dateutil import parser
 from lxml import etree
 from mongoengine import DoesNotExist, StringField
 
-from core.errors import GenericYetiError, GenericYetiInfo
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
+from core.errors import GenericYetiError, GenericYetiInfo
 from core.scheduling import ScheduleEntry
 
 utc = pytz.UTC
@@ -142,7 +142,7 @@ class Feed(ScheduleEntry):
 
         self._temp_save_feed_data(content)
 
-        return list(new_data_set)
+        return '\n'.join(list(new_data_set))
 
     def update(self):
         """Function responsible for retreiving the data for a feed and calling
@@ -280,7 +280,8 @@ class Feed(ScheduleEntry):
         for line in unicode_csv_data:
             yield line.encode('utf-8')
 
-    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None, verify=True):
+    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None,
+                   verify=True , comment="#", filter_row=None, header =0):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -298,11 +299,20 @@ class Feed(ScheduleEntry):
         r = self._make_request(headers, auth, verify=verify)
         feed = self._temp_feed_data_compare(r.content)
 
-        reader = csv.reader(
-            self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
+        if filter_row:
+            df = pd.read_csv(StringIO(feed), header=header, delimiter=delimiter,
+                           comment=comment, date_parser=parser.parse,
+                             parse_dates=[filter_row],
+                             keep_default_na=False)
+            df.sort_values(by=filter_row, inplace=True)
+        else:
+            df = pd.read_csv(StringIO(feed), comment=comment)
 
-        for line in reader:
-            yield line
+        df.drop_duplicates(inplace=True)
+        if self.last_run and filter_row:
+            df = df[df[filter_row] > self.last_run]
+
+        return df.iterrows()
 
     def update_json(self, headers={}, auth=None, params={}, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and parses
