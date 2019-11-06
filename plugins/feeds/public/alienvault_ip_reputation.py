@@ -16,13 +16,11 @@ class AlienVaultIPReputation(Feed):
     }
 
     def update(self):
-        for line in self.update_csv(delimiter='#', quotechar=None):
+        for index,line in self.update_csv(delimiter='#', comment=None, header=-1):
             self.analyze(line)
 
     def analyze(self, item):
 
-        if not item:
-            return
         try:
             context = dict(source=self.name)
 

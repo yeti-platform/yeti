@@ -306,7 +306,8 @@ class Feed(ScheduleEntry):
                              keep_default_na=False)
             df.sort_values(by=filter_row, inplace=True)
         else:
-            df = pd.read_csv(StringIO(feed), comment=comment)
+            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                             comment=comment, keep_default_na=False)
 
         df.drop_duplicates(inplace=True)
         if self.last_run and filter_row:
