@@ -25,7 +25,7 @@ class CybercrimeTracker(Feed):
         for item in self.update_xml(
                 'item', ["title", "link", "pubDate", "description"]):
 
-            pub_date = parser.parse(item['pubDate'])
+            pub_date = parser.parse(item['pubDate']).timestamp()
             if self.last_run is not None:
                 if since_last_run > pub_date.replace(tzinfo=None):
                     continue
