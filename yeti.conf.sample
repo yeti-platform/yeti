@@ -82,5 +82,5 @@
 # token =
 
 [otx]
-#otx_key = YourOTXKey
-#number_page = 1
+# otx_key = YourOTXKey
+# number_page = 1
