@@ -84,3 +84,6 @@
 [otx]
 # otx_key = YourOTXKey
 # number_page = 1
+
+[abuseIPDB]
+# key = YourKey
