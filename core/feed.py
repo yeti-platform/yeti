@@ -281,8 +281,8 @@ class Feed(ScheduleEntry):
             yield line.encode('utf-8')
 
     def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None,
-                   verify=True , comment="#", filter_row=None, names=[],
-                   header=None):
+                   verify=True , comment="#", filter_row=None, names=None,
+                   header=None, compare=False):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -298,13 +298,16 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        feed = self._temp_feed_data_compare(r.content)
+        feed = r.content
+
+        if compare:
+            feed = self._temp_feed_data_compare(r.content)
 
         if filter_row:
             df =pd.read_csv(StringIO(feed), delimiter=delimiter,
                            comment=comment,
                              parse_dates=[filter_row],
-                            names=names,header=header)
+                            names=names, header=header)
 
             df.sort_values(by=filter_row, inplace=True)
         else:

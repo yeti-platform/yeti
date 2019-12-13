@@ -22,33 +22,23 @@ class IPSpamList(Feed):
 
         since_last_run = datetime.utcnow() - self.frequency
 
-        for line in self.update_csv(delimiter=',', quotechar=None):
-            if not line or line[0].startswith(('first_seen', '#')):
-                continue
+        for index,line in self.update_csv(delimiter=',',header=0,filter_row='first_seen'):
 
-            first_seen = parser.parse(line[0])
+            self.analyze(line)
 
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
-
-            self.analyze(line, first_seen)
-
-    def analyze(self, line, first_seen):
-
-        first_seen, last_seen, ip_address, category, attacks_count = line
+    def analyze(self, line):
 
         context = {
             'source': self.name,
-            'threat': category,
-            'first_seen': first_seen,
-            'last_seen': parser.parse(last_seen),
-            'attack_count': attacks_count,
+            'threat': line['category'],
+            'first_seen': line['first_seen'],
+            'last_seen': parser.parse(line['last_seen']),
+            'attack_count': line['attacks_count']
         }
-
+        ip_address = line['ip_address']
         try:
             ip_obs = Ip.get_or_create(value=ip_address)
-            ip_obs.tag(category)
+            ip_obs.tag(context['threat'])
             ip_obs.add_source(self.name)
             ip_obs.add_context(context)
         except ObservableValidationError as e:
