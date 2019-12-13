@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 
-from dateutil import parser
-
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Url
@@ -22,36 +20,30 @@ class FeodoTrackerIPBlockList(Feed):
 
         since_last_run = datetime.utcnow() - self.frequency
 
-        for line in self.update_csv(delimiter=',', quotechar='"'):
-            if not line or line[0].startswith("#"):
-                continue
+        for index, line in self.update_csv(delimiter=',', filter_row='Firstseen',
+                                    names=['Firstseen'
+            ,'DstIP', 'DstPort','LastOnline','Malware']):
 
-            first_seen, c2_ip, c2_port, last_online, family = tuple(line)
-            first_seen = parser.parse(first_seen)
 
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
-
-            self.analyze(line, first_seen, c2_ip, c2_port, last_online, family)
+            self.analyze(line)
 
     # pylint: disable=arguments-differ
-    def analyze(self, line, first_seen, c2_ip, c2_port, last_online, family):
+    def analyze(self, line):
 
         tags = []
-        tags.append(family.lower())
+        tags.append(line['Malware'].lower())
         tags.append("c2")
         tags.append("blocklist")
 
         context = {
-            "first_seen": first_seen,
+            "first_seen": line['Firstseen'],
             "source": self.name,
-            "last_online": last_online,
+            "last_online": line['LastOnline']
         }
 
         try:
             new_url = Url.get_or_create(value="http://{}:{}/".format(
-                c2_ip, c2_port)
+                line['DstIP'], line['DstPort'])
             )
             new_url.add_context(context, dedup_list=["last_online"])
             new_url.tag(tags)

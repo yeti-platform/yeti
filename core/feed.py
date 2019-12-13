@@ -281,7 +281,8 @@ class Feed(ScheduleEntry):
             yield line.encode('utf-8')
 
     def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None,
-                   verify=True , comment="#", filter_row=None, header =0):
+                   verify=True , comment="#", filter_row=None, names=[],
+                   header=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -300,14 +301,15 @@ class Feed(ScheduleEntry):
         feed = self._temp_feed_data_compare(r.content)
 
         if filter_row:
-            df = pd.read_csv(StringIO(feed), header=header, delimiter=delimiter,
-                           comment=comment, date_parser=parser.parse,
+            df =pd.read_csv(StringIO(feed), delimiter=delimiter,
+                           comment=comment,
                              parse_dates=[filter_row],
-                             keep_default_na=False)
+                            names=names,header=header)
+
             df.sort_values(by=filter_row, inplace=True)
         else:
             df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             comment=comment, keep_default_na=False)
+                             comment=comment, keep_default_na=False,names=names)
 
         df.drop_duplicates(inplace=True)
         if self.last_run and filter_row:

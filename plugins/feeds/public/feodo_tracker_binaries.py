@@ -20,8 +20,9 @@ class FeodoTrackerBinaries(Feed):
 
         since_last_run = datetime.utcnow() - self.frequency
 
-        for index,line in self.update_csv(delimiter=',', quotechar='"', header=-1,
-                                    filter_row=0):
+        for index, line in self.update_csv(delimiter=',',
+                                           filter_row='Firstseen',
+                                           names=['Firstseen','MD5hash','Malware'],):
 
             self.analyze(line)
 
