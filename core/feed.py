@@ -312,6 +312,7 @@ class Feed(ScheduleEntry):
                              comment=comment, keep_default_na=False,names=names)
 
         df.drop_duplicates(inplace=True)
+        df.fillna('', inplace=True)
         if self.last_run and filter_row:
             df = df[df[filter_row] > self.last_run]
 
