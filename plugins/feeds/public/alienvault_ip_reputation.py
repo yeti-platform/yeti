@@ -16,7 +16,9 @@ class AlienVaultIPReputation(Feed):
     }
 
     def update(self):
-        for index,line in self.update_csv(delimiter='#', comment=None, header=-1):
+        for index,line in self.update_csv(delimiter='#', comment=None,
+                                          header=-1,
+                                          names=['IP','number_1','number_2', 'Tag','Country','City','Coord','number_3']):
             self.analyze(line)
 
     def analyze(self, item):
@@ -24,9 +26,9 @@ class AlienVaultIPReputation(Feed):
         try:
             context = dict(source=self.name)
 
-            ip_str = item[0]
-            category = item[3]
-            country = item[4]
+            ip_str = item['IP']
+            category = item['Tag']
+            country = item['Country']
             ip = None
             try:
                 ip = Ip.get_or_create(value=ip_str)
