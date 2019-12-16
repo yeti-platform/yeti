@@ -2,8 +2,6 @@
 import logging
 from datetime import datetime, timedelta
 
-from dateutil import parser
-
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Hash
@@ -29,24 +27,20 @@ class SSLBlackListCerts(Feed):
 
         since_last_run = datetime.now() - self.frequency
 
-        for line in self.update_csv(delimiter=',', quotechar='"'):
-            if not line or line[0].startswith("#"):
-                continue
+        for index,line in self.update_csv(delimiter=',',
+                                          names=['Listingdate','SHA1','Listingreason'],
+                                          filter_row='Listingdate'):
 
-            first_seen = parser.parse(line[0])
+            self.analyze(line)
 
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
+    def analyze(self, line):
 
-            self.analyze(line, first_seen)
-
-    def analyze(self, line, first_seen):
-
-        _, sha1, reason = line
+        first_seen = line['Listingdate']
+        _sha1 = line['SHA1']
+        reason = line['Listingreason']
 
         tags = []
-        tag = reason.split(" ")
+        tag = reason.split(' ')
         if len(tag) >= 2:
             family = tag[0]
             tags.append(family.lower())
@@ -63,7 +57,7 @@ class SSLBlackListCerts(Feed):
         }
 
         try:
-            sha1 = Hash.get_or_create(value=sha1)
+            sha1 = Hash.get_or_create(value=_sha1)
             sha1.tag(tags)
             sha1.add_context(context_hash)
         except ObservableValidationError as e:
