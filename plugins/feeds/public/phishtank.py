@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime, timedelta
 
+import pandas as pd
 from pytz import timezone
 
-from core.common.utils import parse_date_to_utc
+from core.config.config import yeti_config
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Url
@@ -12,10 +13,11 @@ from core.observables import Url
 class PhishTank(Feed):
 
     # set default values for feed
+    key = otx_key = yeti_config.get('phishtank', 'key')
     default_values = {
         'frequency': timedelta(hours=4),
         'name': 'PhishTank',
-        'source': 'http://data.phishtank.com/data/online-valid.csv',
+        'source': 'http://data.phishtank.com/data/%s/online-valid.csv' % key,
         'description':
             'PhishTank community feed. Contains a list of possible Phishing URLs.'
     }
@@ -27,33 +29,27 @@ class PhishTank(Feed):
 
         since_last_run = datetime.now(timezone('UTC')) - self.frequency
 
-        for line in self.update_csv(delimiter=',', quotechar='"'):
-            if not line or line[0].startswith('phish_id'):
-                continue
-
-            first_seen = parse_date_to_utc(line[3])
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
-
-            self.analyze(line, first_seen)
+        for index,line in self.update_csv(delimiter=',',
+                                    filter_row='submission_time', header=0,
+                                    date_parser=lambda x: pd.to_datetime(x.rsplit('+', 1)[0])):
+            self.analyze(line)
 
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
-    def analyze(self, data, first_seen):
-
-        _, url, phish_detail_url, _, verified, verification_time, online, target = data
+    def analyze(self, line):
 
         tags = ['phishing']
 
+        url = line['url']
+
         context = {
             'source': self.name,
-            'phish_detail_url': phish_detail_url,
-            'submission_time': first_seen,
-            'verified': verified,
-            'verification_time': verification_time,
-            'online': online,
-            'target': target
+            'phish_detail_url': line['phish_detail_url'],
+            'submission_time': line['submission_time'],
+            'verified': line['verified'],
+            'verification_time': line['verification_time'],
+            'online': line['online'],
+            'target': line['target']
         }
 
         if url is not None and url != '':

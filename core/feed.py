@@ -183,7 +183,7 @@ class Feed(ScheduleEntry):
         Returns:
             requests object.
         """
-
+        print(self.source)
         if auth:
             r = requests.get(
                 url or self.source,
@@ -282,7 +282,7 @@ class Feed(ScheduleEntry):
 
     def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None,
                    verify=True , comment="#", filter_row=None, names=None,
-                   header=None, compare=False):
+                   header=None, compare=False,date_parser=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -305,9 +305,9 @@ class Feed(ScheduleEntry):
 
         if filter_row:
             df =pd.read_csv(StringIO(feed), delimiter=delimiter,
-                           comment=comment,
-                             parse_dates=[filter_row],
-                            names=names, header=header)
+                            comment=comment,
+                            parse_dates=[filter_row],
+                            names=names, header=header, date_parser=date_parser)
 
             df.sort_values(by=filter_row, inplace=True)
         else:
