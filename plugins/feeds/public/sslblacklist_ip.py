@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 
-from dateutil import parser
-
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip, Url
@@ -21,23 +19,19 @@ class SSLBlackListIP(Feed):
 
         since_last_run = datetime.now() - self.frequency
 
-        for line in self.update_csv(delimiter=',', quotechar='"'):
-            if not line or line[0].startswith("#"):
-                continue
+        for index,line in self.update_csv(delimiter=',',
+                                          names=['Firstseen', 'DstIP', 'DstPort'],
+                                          filter_row='Firstseen'):
 
-            first_seen = parser.parse(line[0])
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
+            self.analyze(line)
 
-            self.analyze(line, first_seen)
+    def analyze(self, line):
 
-    def analyze(self, line, first_seen):
-
-        _, dst_ip, port = line
+        first_seen = line['Firstseen']
+        dst_ip = line['DstIP']
         ip_obs = False
         tags = ["potentially_malicious_infrastructure", "c2"]
-
+        port = line['DstPort']
         context = dict(source=self.name)
         context["first_seen"] = first_seen
 
