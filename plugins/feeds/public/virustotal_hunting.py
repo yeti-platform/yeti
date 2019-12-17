@@ -1,10 +1,9 @@
-import json
+import logging
 from datetime import timedelta
 
 from core import Feed
-from core.observables import Hash, File
 from core.config.config import yeti_config
-import logging
+from core.observables import Hash, File
 
 
 class VirusTotalHunting(Feed):
@@ -29,14 +28,15 @@ class VirusTotalHunting(Feed):
 
         if api_key:
             self.source = 'https://www.virustotal.com/intelligence/hunting/notifications-feed/?key=%s' % api_key
-            for item in self.update_json()['notifications']:
+            for index,item in self.update_json(key='notifications'):
                 self.analyze(item)
         else:
             logging.error("Your VT API key is not set in the confile file")
 
     def analyze(self, item):
         tags = []
-        json_string = json.dumps(item)
+
+        json_string = item.to_json()
         context = {'source': self.name}
 
         f_vt = File.get_or_create(value='FILE:{}'.format(item['sha256']))
