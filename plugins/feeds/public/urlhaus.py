@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 
-from dateutil import parser
-
 from core import Feed
 from core.errors import ObservableValidationError
 from core.observables import Url
@@ -20,21 +18,22 @@ class UrlHaus(Feed):
     def update(self):
         since_last_run = datetime.utcnow() - self.frequency
 
-        for line in self.update_csv(delimiter=',', quotechar='"'):
-            if not line or line[0].startswith("#"):
-                return
-
-            first_seen = parser.parse(line[1])
-            if self.last_run is not None:
-                since_last_run = datetime.now() - self.frequency
-                if since_last_run > first_seen:
-                    continue
+        for index, line in self.update_csv(delimiter=',',
+                                           names=['id','dateadded','url','url_status','threat','tags','urlhaus_link','reporter'],
+                                           filter_row = 'dateadded'):
 
             self.analyze(line)
 
     def analyze(self, line):
 
-        id_feed, first_seen, url, url_status, threat, tags, urlhaus_link, source = line # pylint: disable=line-too-long
+        id_feed = line['id']
+        first_seen = line['dateadded']
+        url = line['url']
+        url_status = line['url_status']
+        threat = line['threat']
+        tags = line['tags']
+        urlhaus_link = line['urlhaus_link']
+        source = line['reporter'] # pylint: disable=line-too-long
 
         context = {
             "id_urlhaus": id_feed,
