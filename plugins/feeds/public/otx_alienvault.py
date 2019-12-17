@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timedelta
 
 from core import Feed
@@ -42,10 +43,11 @@ class OTXAlienvault(Feed):
         headers = {'X-OTX-API-KEY': otx_key}
 
         for i in range(1, int(number_page)):
-            items = self.update_json(headers=headers, params={'page': i})
-            if 'results' in items:
-                for item in items['results']:
-                    self.analyze(item)
+            items = self.update_json(headers=headers, params={'page': i},
+                                     key='results', filter_row='created')
+            for index,item in items:
+                self.analyze(item)
+            time.sleep(2)
 
     def analyze(self, item):
 
