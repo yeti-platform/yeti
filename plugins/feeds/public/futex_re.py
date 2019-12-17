@@ -7,30 +7,31 @@ from core.observables import AutonomousSystem, Hash, Url
 
 
 class FutexTracker(Feed):
-
     default_values = {
         "frequency": timedelta(minutes=60),
         "name": "FutexTracker",
         "source": "https://futex.re/tracker/TinyTracker.csv",
         "description":
-            "Provides url, hash and hosting information on various malware samples.", # pylint: disable=line-too-long
+            "Provides url, hash and hosting information on various malware samples.",
+        # pylint: disable=line-too-long
     }
 
     def update(self):
 
-        for index,line in self.update_csv(delimiter=';',
-                                    filter_row='firstseen',
-                                    names=['id', 'firstseen', 'url',
-                                           'status','hash','country','as'],
-                                          header=-1):
+        for index, line in self.update_csv(delimiter=';',
+                                           filter_row='firstseen',
+                                           names=['id', 'firstseen', 'url',
+                                                  'status', 'hash', 'country',
+                                                  'as'],
+                                           header=-1):
             self.analyze(line)
 
     # pylint: disable=arguments-differ
     def analyze(self, line):
 
         _id = line['id']
-        _= line['firstseen']
-        url =line['url']
+        _ = line['firstseen']
+        url = line['url']
         _status = line['status']
 
         _hash = line['hash']

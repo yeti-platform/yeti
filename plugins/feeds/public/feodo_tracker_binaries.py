@@ -7,7 +7,6 @@ from core.observables import Hash
 
 
 class FeodoTrackerBinaries(Feed):
-
     default_values = {
         "frequency": timedelta(hours=24),
         "name": "FeodoTrackerBinaries",
@@ -22,8 +21,8 @@ class FeodoTrackerBinaries(Feed):
 
         for index, line in self.update_csv(delimiter=',',
                                            filter_row='Firstseen',
-                                           names=['Firstseen','MD5hash','Malware'],):
-
+                                           names=['Firstseen', 'MD5hash',
+                                                  'Malware'], ):
             self.analyze(line)
 
     def analyze(self, line):

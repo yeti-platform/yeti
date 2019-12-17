@@ -18,10 +18,11 @@ class UrlHausPayloads(Feed):
     def update(self):
         since_last_run = datetime.utcnow() - self.frequency
 
-        for index ,line in self.update_csv(delimiter=',',
-                                    names=['firstseen', 'url', 'filetype', 'md5', 'sha256', 'signature']
-                                    , filter_row='firstseen'):
-
+        for index, line in self.update_csv(delimiter=',',
+                                           names=['firstseen', 'url',
+                                                  'filetype', 'md5', 'sha256',
+                                                  'signature']
+                , filter_row='firstseen'):
             self.analyze(line)
 
     def analyze(self, line):

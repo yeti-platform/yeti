@@ -22,8 +22,8 @@ class IPSpamList(Feed):
 
         since_last_run = datetime.utcnow() - self.frequency
 
-        for index,line in self.update_csv(delimiter=',',header=0,filter_row='first_seen'):
-
+        for index, line in self.update_csv(delimiter=',', header=0,
+                                           filter_row='first_seen'):
             self.analyze(line)
 
     def analyze(self, line):

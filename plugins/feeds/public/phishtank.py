@@ -11,7 +11,6 @@ from core.observables import Url
 
 
 class PhishTank(Feed):
-
     # set default values for feed
     key = otx_key = yeti_config.get('phishtank', 'key')
     default_values = {
@@ -29,9 +28,11 @@ class PhishTank(Feed):
 
         since_last_run = datetime.now(timezone('UTC')) - self.frequency
 
-        for index,line in self.update_csv(delimiter=',',
-                                    filter_row='submission_time', header=0,
-                                    date_parser=lambda x: pd.to_datetime(x.rsplit('+', 1)[0])):
+        for index, line in self.update_csv(delimiter=',',
+                                           filter_row='submission_time',
+                                           header=0,
+                                           date_parser=lambda x: pd.to_datetime(
+                                               x.rsplit('+', 1)[0])):
             self.analyze(line)
 
     # don't need to do much here; want to add the information

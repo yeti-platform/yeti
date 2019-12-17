@@ -7,7 +7,6 @@ from core.observables import Url
 
 
 class FeodoTrackerIPBlockList(Feed):
-
     default_values = {
         "frequency": timedelta(hours=24),
         "name": "FeodoTrackerIPBlocklist",
@@ -20,11 +19,11 @@ class FeodoTrackerIPBlockList(Feed):
 
         since_last_run = datetime.utcnow() - self.frequency
 
-        for index, line in self.update_csv(delimiter=',', filter_row='Firstseen',
-                                    names=['Firstseen'
-            ,'DstIP', 'DstPort','LastOnline','Malware']):
-
-
+        for index, line in self.update_csv(delimiter=',',
+                                           filter_row='Firstseen',
+                                           names=['Firstseen'
+                                               , 'DstIP', 'DstPort',
+                                                  'LastOnline', 'Malware']):
             self.analyze(line)
 
     # pylint: disable=arguments-differ

@@ -7,7 +7,6 @@ from core.observables import Ip, Url
 
 
 class SSLBlackListIP(Feed):
-
     default_values = {
         "frequency": timedelta(minutes=1440),
         "name": "SSLBlackListIPs",
@@ -19,10 +18,10 @@ class SSLBlackListIP(Feed):
 
         since_last_run = datetime.now() - self.frequency
 
-        for index,line in self.update_csv(delimiter=',',
-                                          names=['Firstseen', 'DstIP', 'DstPort'],
-                                          filter_row='Firstseen'):
-
+        for index, line in self.update_csv(delimiter=',',
+                                           names=['Firstseen', 'DstIP',
+                                                  'DstPort'],
+                                           filter_row='Firstseen'):
             self.analyze(line)
 
     def analyze(self, line):

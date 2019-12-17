@@ -1,4 +1,3 @@
-
 import logging
 from datetime import datetime, timedelta
 
@@ -13,8 +12,8 @@ TYPE_DICT = {
     "sinkhole": ["sinkhole"],
 }
 
-class SSLBlackListCerts(Feed):
 
+class SSLBlackListCerts(Feed):
     default_values = {
         "frequency": timedelta(hours=24),
         "name": "SSLBlackListCerts",
@@ -27,10 +26,10 @@ class SSLBlackListCerts(Feed):
 
         since_last_run = datetime.now() - self.frequency
 
-        for index,line in self.update_csv(delimiter=',',
-                                          names=['Listingdate','SHA1','Listingreason'],
-                                          filter_row='Listingdate'):
-
+        for index, line in self.update_csv(delimiter=',',
+                                           names=['Listingdate', 'SHA1',
+                                                  'Listingreason'],
+                                           filter_row='Listingdate'):
             self.analyze(line)
 
     def analyze(self, line):

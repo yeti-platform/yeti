@@ -16,9 +16,11 @@ class AlienVaultIPReputation(Feed):
     }
 
     def update(self):
-        for index,line in self.update_csv(delimiter='#', comment=None,
-                                          header=-1,
-                                          names=['IP','number_1','number_2', 'Tag','Country','City','Coord','number_3']):
+        for index, line in self.update_csv(delimiter='#', comment=None,
+                                           header=-1,
+                                           names=['IP', 'number_1', 'number_2',
+                                                  'Tag', 'Country', 'City',
+                                                  'Coord', 'number_3']):
             self.analyze(line)
 
     def analyze(self, item):
@@ -44,7 +46,7 @@ class AlienVaultIPReputation(Feed):
             ip.tag(category)
             ip.add_context(context)
 
-        #TODO(doomedraven) check what we're catching here, I think we can remove this exception
+
         except Exception as e:
             logging.error('Error to process the item %s %s' % (item, e))
             return False

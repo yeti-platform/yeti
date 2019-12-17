@@ -19,9 +19,11 @@ class UrlHaus(Feed):
         since_last_run = datetime.utcnow() - self.frequency
 
         for index, line in self.update_csv(delimiter=',',
-                                           names=['id','dateadded','url','url_status','threat','tags','urlhaus_link','reporter'],
-                                           filter_row = 'dateadded'):
-
+                                           names=['id', 'dateadded', 'url',
+                                                  'url_status', 'threat',
+                                                  'tags', 'urlhaus_link',
+                                                  'reporter'],
+                                           filter_row='dateadded'):
             self.analyze(line)
 
     def analyze(self, line):
@@ -33,7 +35,7 @@ class UrlHaus(Feed):
         threat = line['threat']
         tags = line['tags']
         urlhaus_link = line['urlhaus_link']
-        source = line['reporter'] # pylint: disable=line-too-long
+        source = line['reporter']  # pylint: disable=line-too-long
 
         context = {
             "id_urlhaus": id_feed,
