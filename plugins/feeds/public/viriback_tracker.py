@@ -1,6 +1,5 @@
 import logging
-from dateutil import parser
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -17,23 +16,19 @@ class ViriBackTracker(Feed):
     }
 
     def update(self):
-        for line in self.update_csv(delimiter=',', quotechar='"'):
-            if not line or line[0].startswith(("Family", "#")):
-                continue
+        for index, line in self.update_csv(delimiter=',', filter_row='FirstSeen',
+                                    header=0):
 
-            family, url, ip, first_seen = line
-            first_seen = parser.parse(first_seen)
-            if self.last_run is not None:
-                if self.last_run > first_seen:
-                    continue
+            self.analyze(line)
 
-            self.analyze(family, url, ip, first_seen)
-
-    def analyze(self, family, url, ip, first_seen):
+    def analyze(self,line):
 
         url_obs = False
         ip_obs = False
-
+        family = line['Family']
+        url = line['URL']
+        ip = line['IP']
+        first_seen = line['FirstSeen']
         family = family.lower()
         context = {
             'first_seen': first_seen,

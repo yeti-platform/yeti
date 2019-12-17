@@ -309,10 +309,10 @@ class Feed(ScheduleEntry):
                             parse_dates=[filter_row],
                             names=names, header=header, date_parser=date_parser)
 
-            df.sort_values(by=filter_row, inplace=True)
+            df.sort_values(by=filter_row, inplace=True, ascending=False)
         else:
             df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             comment=comment, keep_default_na=False,names=names)
+                             comment=comment, keep_default_na=False, names=names)
 
         df.drop_duplicates(inplace=True)
         df.fillna('', inplace=True)
