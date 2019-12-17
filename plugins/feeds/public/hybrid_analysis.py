@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime, timedelta
 
-from dateutil import parser
-
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import File, Hash, Hostname
@@ -21,18 +19,16 @@ class HybridAnalysis(Feed):
 
         since_last_run = datetime.now() - self.frequency
 
-        for item in self.update_json(headers={'User-agent': 'VxApi Connector'})['data']:
+        for index,item in self.update_json(headers={'User-agent': 'VxApi Connector'}, key='data',
+                                     filter_row='analysis_start_time'):
 
-            first_seen = parser.parse(item['analysis_start_time'])
-            if self.last_run is not None:
-                since_last_run = datetime.now() - self.frequency
-                if since_last_run > first_seen:
-                    continue
-
-            self.analyze(item, first_seen)
+            self.analyze(item)
 
     # pylint: disable=arguments-differ
-    def analyze(self, item, first_seen):
+    def analyze(self, item):
+
+        first_seen = item['analysis_start_time']
+
         f_hyb = File.get_or_create(value='FILE:{}'.format(item['sha256']))
 
         sha256 = Hash.get_or_create(value=item['sha256'])

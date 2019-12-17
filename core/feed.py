@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 import logging
 import os
 import tempfile
@@ -321,7 +322,8 @@ class Feed(ScheduleEntry):
 
         return df.iterrows()
 
-    def update_json(self, headers={}, auth=None, params={}, verify=True):
+    def update_json(self, headers={}, auth=None, params={}, verify=True,
+                    filter_row = '', key=None):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
@@ -335,7 +337,24 @@ class Feed(ScheduleEntry):
         """
 
         r = self._make_request(headers, auth, params, verify=verify)
-        return r.json()
+
+        if key:
+            content = r.json()[key]
+        else:
+            content = r.json()
+        if filter_row:
+            df = pd.read_json(StringIO(json.dumps(content)), orient='values',
+                              convert_dates=[filter_row])
+        else:
+            df = pd.read_json(StringIO(json.dumps(content)), orient='values')
+
+        df.fillna('', inplace=True)
+
+        if filter_row and self.last_run:
+            df.sort_values(by=filter_row, inplace=True, ascending=False)
+            df = df[df[filter_row] > self.last_run]
+
+        return df.iterrows()
 
     def parse_commit(self, item, headers, verify=True):
         """
@@ -398,13 +417,15 @@ class Feed(ScheduleEntry):
             headers = {}
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
-        for item in self.update_json(headers=headers, verify=verify):
-            if parser.parse(item['commit']['author']['date']) > since_last_run:
-                break
-            try:
-                return self.parse_commit(item, headers)
-            except GenericYetiError as e:
-                logging.error(e)
+        r = self._make_request(headers,auth, verify=verify)
+        if r.status_code == 200:
+            for item in r.json():
+                if parser.parse(item['commit']['author']['date']) > since_last_run:
+                    break
+                try:
+                    return self.parse_commit(item, headers)
+                except GenericYetiError as e:
+                    logging.error(e)
         return []
 
     def info(self):
