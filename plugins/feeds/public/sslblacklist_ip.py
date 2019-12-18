@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -15,8 +15,6 @@ class SSLBlackListIP(Feed):
     }
 
     def update(self):
-
-        since_last_run = datetime.now() - self.frequency
 
         for index, line in self.update_csv(delimiter=',',
                                            names=['Firstseen', 'DstIP',

@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -16,8 +16,6 @@ class FeodoTrackerIPBlockList(Feed):
     }
 
     def update(self):
-
-        since_last_run = datetime.utcnow() - self.frequency
 
         for index, line in self.update_csv(delimiter=',',
                                            filter_row='Firstseen',

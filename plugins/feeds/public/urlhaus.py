@@ -44,6 +44,7 @@ class UrlHaus(Feed):
             "report": urlhaus_link,
             "threat": threat,
             "reporter": source,
+            'first_seen': first_seen
         }
 
         if url:

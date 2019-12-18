@@ -44,6 +44,8 @@ class FutexTracker(Feed):
             "source": self.name
         }
 
+        url_obs = None
+
         if url:
             try:
                 url_obs = Url.get_or_create(value=url.rstrip())
@@ -52,15 +54,16 @@ class FutexTracker(Feed):
                 url_obs.add_source(self.name)
             except ObservableValidationError as e:
                 logging.error(e)
-        print(_hash)
+
         if _hash and len(_hash) > 16:
             try:
                 hash_obs = Hash.get_or_create(value=_hash)
                 hash_obs.add_context(context)
                 hash_obs.tag(tags)
                 hash_obs.add_source(self.name)
-                hash_obs.active_link_to(
-                    url_obs, "MD5", self.name, clean_old=False)
+                if url_obs:
+                    hash_obs.active_link_to(
+                        url_obs, "MD5", self.name, clean_old=False)
             except ObservableValidationError as e:
                 print(_hash)
                 logging.error(e)

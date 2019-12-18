@@ -1,8 +1,7 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pandas as pd
-from pytz import timezone
 
 from core.config.config import yeti_config
 from core.errors import ObservableValidationError
@@ -25,8 +24,6 @@ class PhishTank(Feed):
     def update(self):
         # Using update_lines because the pull should result in
         # a list of URLs, 1 per line. Split on newline
-
-        since_last_run = datetime.now(timezone('UTC')) - self.frequency
 
         for index, line in self.update_csv(delimiter=',',
                                            filter_row='submission_time',

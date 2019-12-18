@@ -7,7 +7,6 @@ from core.observables import Hash, File
 
 
 class VirusTotalHunting(Feed):
-
     default_values = {
         "frequency": timedelta(minutes=5),
         "name": "VirusTotalHunting",
@@ -28,7 +27,7 @@ class VirusTotalHunting(Feed):
 
         if api_key:
             self.source = 'https://www.virustotal.com/intelligence/hunting/notifications-feed/?key=%s' % api_key
-            for index,item in self.update_json(key='notifications'):
+            for index, item in self.update_json(key='notifications'):
                 self.analyze(item)
         else:
             logging.error("Your VT API key is not set in the confile file")

@@ -16,12 +16,12 @@ class ViriBackTracker(Feed):
     }
 
     def update(self):
-        for index, line in self.update_csv(delimiter=',', filter_row='FirstSeen',
-                                    header=0):
-
+        for index, line in self.update_csv(delimiter=',',
+                                           filter_row='FirstSeen',
+                                           header=0):
             self.analyze(line)
 
-    def analyze(self,line):
+    def analyze(self, line):
 
         url_obs = False
         ip_obs = False

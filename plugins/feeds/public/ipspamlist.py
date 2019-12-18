@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from dateutil import parser
 
@@ -19,8 +19,6 @@ class IPSpamList(Feed):
     }
 
     def update(self):
-
-        since_last_run = datetime.utcnow() - self.frequency
 
         for index, line in self.update_csv(delimiter=',', header=0,
                                            filter_row='first_seen'):

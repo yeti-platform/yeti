@@ -184,7 +184,6 @@ class Feed(ScheduleEntry):
         Returns:
             requests object.
         """
-        print(self.source)
         if auth:
             r = requests.get(
                 url or self.source,
@@ -281,7 +280,7 @@ class Feed(ScheduleEntry):
         for line in unicode_csv_data:
             yield line.encode('utf-8')
 
-    def update_csv(self, delimiter=';', headers={}, auth=None,
+    def update_csv(self, delimiter=';', headers=None, auth=None,
                    verify=True, comment="#", filter_row=None, names=None,
                    header=None, compare=False, date_parser=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
@@ -289,7 +288,6 @@ class Feed(ScheduleEntry):
 
         Args:
             delimiter:  A string delimiting fields in the CSV. Default is ``;``.
-            quotechar:  A string used to know when to ignore delimiters / carriage returns. Default is ``'``.
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
             verify: Force ssl verification.
@@ -330,7 +328,7 @@ class Feed(ScheduleEntry):
 
         return df.iterrows()
 
-    def update_json(self, headers={}, auth=None, params={}, verify=True,
+    def update_json(self, headers=None, auth=None, params=None, verify=True,
                     filter_row='', key=None):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
@@ -407,7 +405,7 @@ class Feed(ScheduleEntry):
 
                 yield content, block['filename']
 
-    def update_github(self, headers={}, auth=None, params={}, verify=True):
+    def update_github(self, headers=None, auth=None, params=None, verify=True):
         """Helper function. Grabs data about latest commits iterates them.
 
         Args:

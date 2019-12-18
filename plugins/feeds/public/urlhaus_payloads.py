@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -16,7 +16,6 @@ class UrlHausPayloads(Feed):
     }
 
     def update(self):
-        since_last_run = datetime.utcnow() - self.frequency
 
         for index, line in self.update_csv(delimiter=',',
                                            names=['firstseen', 'url',

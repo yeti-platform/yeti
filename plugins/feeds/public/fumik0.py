@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -16,8 +16,6 @@ class Fumik0Tracker(Feed):
     }
 
     def update(self):
-
-        since_last_run = datetime.utcnow() - self.frequency
 
         for index, block in self.update_json(filter_row='first_seen'):
             self.analyze(block)
