@@ -41,7 +41,8 @@ class FutexTracker(Feed):
 
         tags = ["collected_by_honeypot"]
         context = {
-            "source": self.name
+            "source": self.name,
+            "country": country
         }
 
         url_obs = None
@@ -65,7 +66,6 @@ class FutexTracker(Feed):
                     hash_obs.active_link_to(
                         url_obs, "MD5", self.name, clean_old=False)
             except ObservableValidationError as e:
-                print(_hash)
                 logging.error(e)
 
         if asn:

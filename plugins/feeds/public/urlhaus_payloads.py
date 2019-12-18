@@ -20,8 +20,8 @@ class UrlHausPayloads(Feed):
         for index, line in self.update_csv(delimiter=',',
                                            names=['firstseen', 'url',
                                                   'filetype', 'md5', 'sha256',
-                                                  'signature']
-                , filter_row='firstseen'):
+                                                  'signature'],
+                                           filter_row='firstseen'):
             self.analyze(line)
 
     def analyze(self, line):
@@ -31,16 +31,17 @@ class UrlHausPayloads(Feed):
         url_obs = False
         malware_file = False
 
-        context = {
-            'source': self.name,
-        }
-
         first_seen = line['firstseen']
         url = line['url']
         filetype = line['filetype']
         md5_hash = line['md5']
         sha256_hash = line['sha256']
         signature = line['signature']
+
+        context = {
+            'source': self.name,
+            'first_seen': first_seen
+        }
 
         if url:
             try:

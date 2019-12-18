@@ -213,7 +213,7 @@ class Feed(ScheduleEntry):
 
         return r
 
-    def update_xml(self, main_node, children, headers={}, auth=None,
+    def update_xml(self, main_node, children, headers=None, auth=None,
                    verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an XML object, yielding a ``dict`` for each parsed
@@ -233,6 +233,7 @@ class Feed(ScheduleEntry):
                         These will be the keys of the ``dict``.
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
+            verify: Force ssl verification.
 
         Returns:
             Yields Python ``dictionary`` objects. The dicitonary keys are the strings specified in the ``children`` array.
@@ -256,7 +257,7 @@ class Feed(ScheduleEntry):
 
             yield context
 
-    def update_lines(self, headers={}, auth=None, verify=True):
+    def update_lines(self, headers=None, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats each
         line of the response separately.
 
@@ -264,6 +265,7 @@ class Feed(ScheduleEntry):
         Args:
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
+            verify: Force ssl verification.
 
         Returns:
             Yields string lines from the HTTP response.
