@@ -81,5 +81,13 @@
 # w/ token - limit 5k r/h
 # token =
 
+[otx]
+# otx_key = YourOTXKey
+# number_page = 1
+
+[abuseIPDB]
+# key = YourKey
+
+
 [phishtank]
-key=
+# key=
