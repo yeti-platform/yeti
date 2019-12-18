@@ -281,7 +281,7 @@ class Feed(ScheduleEntry):
         for line in unicode_csv_data:
             yield line.encode('utf-8')
 
-    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None,
+    def update_csv(self, delimiter=';', headers={}, auth=None,
                    verify=True , comment="#", filter_row=None, names=None,
                    header=None, compare=False,date_parser=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
@@ -292,9 +292,15 @@ class Feed(ScheduleEntry):
             quotechar:  A string used to know when to ignore delimiters / carriage returns. Default is ``'``.
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
-
+            verify: Force ssl verification.
+            comment: Comment char in csv data for panda.
+            filter_row: name of columns to filter rows
+            names: names of columns of the dataframe
+            header: number of the if the name of columns is specified in csv data.
+            compare: if the filtering must be made by the last run
+            date_parser: function to parse the date
         Returns:
-            Yields arrays of UTF-8 strings that correspond to each comma separated field
+            return a dataframe pandas filtered by date of the last run
         """
         assert self.source is not None
 
@@ -323,7 +329,7 @@ class Feed(ScheduleEntry):
         return df.iterrows()
 
     def update_json(self, headers={}, auth=None, params={}, verify=True,
-                    filter_row = '', key=None):
+                    filter_row='', key=None):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
@@ -331,7 +337,9 @@ class Feed(ScheduleEntry):
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
             params:     Optional param to be added to the HTTP request.
-
+            verify: Force ssl verification.
+            filter_row: name of columns to filter rows.
+            key: key in json response to return data.
         Returns:
             Python ``dict`` object representing the response JSON.
         """
