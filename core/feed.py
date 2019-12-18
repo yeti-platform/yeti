@@ -25,11 +25,10 @@ utc = pytz.UTC
 
 @celery_app.task
 def update_feed(feed_id):
-
     try:
         f = Feed.objects.get(
             id=feed_id,
-            lock=None) # check if we have implemented locking mechanisms
+            lock=None)  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
             Feed.objects.get(
@@ -170,7 +169,8 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
-    def _make_request(self, headers={}, auth=None, params={}, url=False, verify=True):
+    def _make_request(self, headers={}, auth=None, params={}, url=False,
+                      verify=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
@@ -210,12 +210,12 @@ class Feed(ScheduleEntry):
             if self.last_run and self.last_run > last_mod.replace(tzinfo=None):
                 raise GenericYetiInfo(
                     "Last modified date: {} returns code: {}".format(
-                    last_mod, r.status_code))
-
+                        last_mod, r.status_code))
 
         return r
 
-    def update_xml(self, main_node, children, headers={}, auth=None, verify=True):
+    def update_xml(self, main_node, children, headers={}, auth=None,
+                   verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an XML object, yielding a ``dict`` for each parsed
         element.
@@ -282,8 +282,8 @@ class Feed(ScheduleEntry):
             yield line.encode('utf-8')
 
     def update_csv(self, delimiter=';', headers={}, auth=None,
-                   verify=True , comment="#", filter_row=None, names=None,
-                   header=None, compare=False,date_parser=None):
+                   verify=True, comment="#", filter_row=None, names=None,
+                   header=None, compare=False, date_parser=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -311,15 +311,17 @@ class Feed(ScheduleEntry):
             feed = self._temp_feed_data_compare(r.content)
 
         if filter_row:
-            df =pd.read_csv(StringIO(feed), delimiter=delimiter,
-                            comment=comment,
-                            parse_dates=[filter_row],
-                            names=names, header=header, date_parser=date_parser)
+            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                             comment=comment,
+                             parse_dates=[filter_row],
+                             names=names, header=header,
+                             date_parser=date_parser)
 
             df.sort_values(by=filter_row, inplace=True, ascending=False)
         else:
             df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             comment=comment, keep_default_na=False, names=names)
+                             comment=comment, keep_default_na=False,
+                             names=names)
 
         df.drop_duplicates(inplace=True)
         df.fillna('', inplace=True)
@@ -425,10 +427,11 @@ class Feed(ScheduleEntry):
             headers = {}
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
-        r = self._make_request(headers,auth, verify=verify)
+        r = self._make_request(headers, auth, verify=verify)
         if r.status_code == 200:
             for item in r.json():
-                if parser.parse(item['commit']['author']['date']) > since_last_run:
+                if parser.parse(
+                        item['commit']['author']['date']) > since_last_run:
                     break
                 try:
                     return self.parse_commit(item, headers)
@@ -439,7 +442,9 @@ class Feed(ScheduleEntry):
     def info(self):
         i = {
             k: v for k, v in self._data.items() if k in
-            ["name", "enabled", "description", "source", "status", "last_run"]
+                                                   ["name", "enabled",
+                                                    "description", "source",
+                                                    "status", "last_run"]
         }
         i['frequency'] = str(self.frequency)
         i['id'] = str(self.id)
