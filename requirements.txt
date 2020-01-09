@@ -50,6 +50,7 @@ maxminddb==1.4.1
 mongoengine==0.18.2
 more-itertools==5.0.0
 packaging==19.1
+pandas==0.24.2
 pathlib2==2.3.4 ; python_version == '3.4.*' or python_version < '3'
 pdfkit==0.6.1
 pdfminer==20140328

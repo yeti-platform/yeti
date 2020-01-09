@@ -1,7 +1,5 @@
 import logging
-from datetime import datetime, timedelta
-
-from dateutil import parser
+from datetime import timedelta
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -9,7 +7,6 @@ from core.observables import File, Hash, Hostname
 
 
 class HybridAnalysis(Feed):
-
     default_values = {
         "frequency": timedelta(minutes=5),
         "name": "HybridAnalysis",
@@ -19,20 +16,16 @@ class HybridAnalysis(Feed):
 
     def update(self):
 
-        since_last_run = datetime.now() - self.frequency
-
-        for item in self.update_json(headers={'User-agent': 'VxApi Connector'})['data']:
-
-            first_seen = parser.parse(item['analysis_start_time'])
-            if self.last_run is not None:
-                since_last_run = datetime.now() - self.frequency
-                if since_last_run > first_seen:
-                    continue
-
-            self.analyze(item, first_seen)
+        for index, item in self.update_json(
+                headers={'User-agent': 'VxApi Connector'}, key='data',
+                filter_row='analysis_start_time'):
+            self.analyze(item)
 
     # pylint: disable=arguments-differ
-    def analyze(self, item, first_seen):
+    def analyze(self, item):
+
+        first_seen = item['analysis_start_time']
+
         f_hyb = File.get_or_create(value='FILE:{}'.format(item['sha256']))
 
         sha256 = Hash.get_or_create(value=item['sha256'])
@@ -109,7 +102,8 @@ class HybridAnalysis(Feed):
 
                 new_file = File.get_or_create(value='FILE:{}'.format(
                     extracted_file['sha256']))
-                sha256_new_file = Hash.get_or_create(value=extracted_file['sha256'])
+                sha256_new_file = Hash.get_or_create(
+                    value=extracted_file['sha256'])
                 sha256_new_file.add_source('feed')
 
                 new_file.active_link_to(sha256_new_file, 'sha256', self.name)
@@ -126,7 +120,8 @@ class HybridAnalysis(Feed):
                         extracted_file['threatlevel_readable']
 
                 if 'av_label' in extracted_file:
-                    context_file_dropped['av_label'] = extracted_file['av_label']
+                    context_file_dropped['av_label'] = extracted_file[
+                        'av_label']
 
                 if 'type_tags' in extracted_file:
                     new_file.tag(extracted_file['type_tags'])
