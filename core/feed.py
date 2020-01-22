@@ -142,7 +142,7 @@ class Feed(ScheduleEntry):
 
         self._temp_save_feed_data(content)
 
-        return '\n'.join(list(new_data_set))
+        return list(new_data_set)
 
     def update(self):
         """Function responsible for retreiving the data for a feed and calling
