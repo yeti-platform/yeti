@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import tempfile
-from StringIO import StringIO
+from io import StringIO
 from base64 import b64decode
 from datetime import datetime
 

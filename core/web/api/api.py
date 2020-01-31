@@ -24,7 +24,7 @@ def bson_renderer(objects, template=None, ctx=None):
 
 @set_renderers(JSONRenderer,HTMLRenderer)
 def render(obj):
-    print(obj)
+    print(type(obj))
     return obj
 
 from core.web.api.observable import ObservableSearch, Observable

@@ -26,9 +26,9 @@ class CrudSearchApi(FlaskView):
         ignorecase = params.pop('ignorecase', False)
         page = params.pop('page', 1) - 1
         rng = params.pop('range', 50)        
-        userLogger.info("User %s search : filter=%s params=%s regex=%s",current_user.username,fltr,params,regex)
-        return list(
-            get_queryset(self.objectmanager, fltr, regex,
+        userLogger.info("User %s search : filter=%s params=%s regex=%s",
+                        current_user.username,fltr,params,regex)
+        return list(get_queryset(self.objectmanager, fltr, regex,
                          ignorecase)[page * rng:(page + 1) * rng])
 
     @requires_permissions('read')
