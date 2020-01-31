@@ -68,16 +68,29 @@ class MispFeed(Feed):
             'Accept': 'application/json'
         }
 
-        orgs = requests.get(
-            url, headers=headers, proxies=yeti_config.proxy).json()
+        r = requests.get(
+            url, headers=headers, proxies=yeti_config.proxy)
 
-        for org in orgs:
-            org_id = org['Organisation']['id']
-            org_name = org['Organisation']['name']
-            self.instances[instance]['organisations'][org_id] = org_name
+        if r.status_code == 200:
+
+            orgs = r.json()
+
+            for org in orgs:
+                org_id = org['Organisation']['id']
+                org_name = org['Organisation']['name']
+                self.instances[instance]['organisations'][org_id] = org_name
+        else:
+            logging.error('error http %s to get instances' % r.status_code)
 
     def week_events(self, instance):
         one_week = timedelta(days=7)
+        if not self.instances:
+            logging.error('not instances in MISP')
+            return
+        elif instance not in self.instances:
+            logging.error('error in instances of Misp')
+            return
+
         url = urljoin(self.instances[instance]['url'], '/events/restSearch')
         headers = {'Authorization': self.instances[instance]['key']}
         to = date.today()

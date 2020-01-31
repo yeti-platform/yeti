@@ -1,22 +1,23 @@
 from __future__ import unicode_literals
 
-import os
-import csv
+import json
 import logging
+import os
 import tempfile
+from StringIO import StringIO
 from base64 import b64decode
 from datetime import datetime
 
-
+import pandas as pd
 import pytz
 import requests
 from dateutil import parser
 import xml.etree.ElementTree as ET
 from mongoengine import DoesNotExist, StringField
 
-from core.errors import GenericYetiError, GenericYetiInfo
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
+from core.errors import GenericYetiError, GenericYetiInfo
 from core.scheduling import ScheduleEntry
 
 utc = pytz.UTC
@@ -24,11 +25,10 @@ utc = pytz.UTC
 
 @celery_app.task
 def update_feed(feed_id):
-
     try:
         f = Feed.objects.get(
             id=feed_id,
-            lock=None) # check if we have implemented locking mechanisms
+            lock=None)  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
             Feed.objects.get(
@@ -169,7 +169,8 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
-    def _make_request(self, headers={}, auth=None, params={}, url=False, verify=True):
+    def _make_request(self, headers={}, auth=None, params={}, url=False,
+                      verify=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
@@ -183,7 +184,6 @@ class Feed(ScheduleEntry):
         Returns:
             requests object.
         """
-
         if auth:
             r = requests.get(
                 url or self.source,
@@ -209,12 +209,12 @@ class Feed(ScheduleEntry):
             if self.last_run and self.last_run > last_mod.replace(tzinfo=None):
                 raise GenericYetiInfo(
                     "Last modified date: {} returns code: {}".format(
-                    last_mod, r.status_code))
-
+                        last_mod, r.status_code))
 
         return r
 
-    def update_xml(self, main_node, children, headers={}, auth=None, verify=True):
+    def update_xml(self, main_node, children, headers=None, auth=None,
+                   verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an XML object, yielding a ``dict`` for each parsed
         element.
@@ -233,6 +233,7 @@ class Feed(ScheduleEntry):
                         These will be the keys of the ``dict``.
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
+            verify: Force ssl verification.
 
         Returns:
             Yields Python ``dictionary`` objects. The dicitonary keys are the strings specified in the ``children`` array.
@@ -256,7 +257,7 @@ class Feed(ScheduleEntry):
 
             yield context
 
-    def update_lines(self, headers={}, auth=None, verify=True):
+    def update_lines(self, headers=None, auth=None, verify=True):
         """Helper function. Performs an HTTP request on ``source`` and treats each
         line of the response separately.
 
@@ -264,6 +265,7 @@ class Feed(ScheduleEntry):
         Args:
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
+            verify: Force ssl verification.
 
         Returns:
             Yields string lines from the HTTP response.
@@ -280,31 +282,56 @@ class Feed(ScheduleEntry):
         for line in unicode_csv_data:
             yield line.encode('utf-8')
 
-    def update_csv(self, delimiter=';', quotechar="'", headers={}, auth=None, verify=True):
+    def update_csv(self, delimiter=';', headers=None, auth=None,
+                   verify=True, comment="#", filter_row=None, names=None,
+                   header=None, compare=False, date_parser=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
         Args:
             delimiter:  A string delimiting fields in the CSV. Default is ``;``.
-            quotechar:  A string used to know when to ignore delimiters / carriage returns. Default is ``'``.
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
-
+            verify: Force ssl verification.
+            comment: Comment char in csv data for panda.
+            filter_row: name of columns to filter rows
+            names: names of columns of the dataframe
+            header: number of the if the name of columns is specified in csv data.
+            compare: if the filtering must be made by the last run
+            date_parser: function to parse the date
         Returns:
-            Yields arrays of UTF-8 strings that correspond to each comma separated field
+            return a dataframe pandas filtered by date of the last run
         """
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        feed = self._temp_feed_data_compare(r.content)
+        feed = r.content
 
-        reader = csv.reader(
-            self.utf_8_encoder(feed), delimiter=delimiter, quotechar=quotechar)
+        if compare:
+            feed = self._temp_feed_data_compare(r.content)
 
-        for line in reader:
-            yield line
+        if filter_row:
+            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                             comment=comment,
+                             parse_dates=[filter_row],
+                             names=names, header=header,
+                             date_parser=date_parser)
 
-    def update_json(self, headers={}, auth=None, params={}, verify=True):
+            df.sort_values(by=filter_row, inplace=True, ascending=False)
+        else:
+            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                             comment=comment, keep_default_na=False,
+                             names=names)
+
+        df.drop_duplicates(inplace=True)
+        df.fillna('', inplace=True)
+        if self.last_run and filter_row:
+            df = df[df[filter_row] > self.last_run]
+
+        return df.iterrows()
+
+    def update_json(self, headers=None, auth=None, params=None, verify=True,
+                    filter_row='', key=None):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
@@ -312,13 +339,32 @@ class Feed(ScheduleEntry):
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
             params:     Optional param to be added to the HTTP request.
-
+            verify: Force ssl verification.
+            filter_row: name of columns to filter rows.
+            key: key in json response to return data.
         Returns:
             Python ``dict`` object representing the response JSON.
         """
 
         r = self._make_request(headers, auth, params, verify=verify)
-        return r.json()
+
+        if key:
+            content = r.json()[key]
+        else:
+            content = r.json()
+        if filter_row:
+            df = pd.read_json(StringIO(json.dumps(content)), orient='values',
+                              convert_dates=[filter_row])
+        else:
+            df = pd.read_json(StringIO(json.dumps(content)), orient='values')
+
+        df.fillna('', inplace=True)
+
+        if filter_row and self.last_run:
+            df.sort_values(by=filter_row, inplace=True, ascending=False)
+            df = df[df[filter_row] > self.last_run]
+
+        return df.iterrows()
 
     def parse_commit(self, item, headers, verify=True):
         """
@@ -361,7 +407,7 @@ class Feed(ScheduleEntry):
 
                 yield content, block['filename']
 
-    def update_github(self, headers={}, auth=None, params={}, verify=True):
+    def update_github(self, headers=None, auth=None, params=None, verify=True):
         """Helper function. Grabs data about latest commits iterates them.
 
         Args:
@@ -381,19 +427,24 @@ class Feed(ScheduleEntry):
             headers = {}
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
-        for item in self.update_json(headers=headers, verify=verify):
-            if parser.parse(item['commit']['author']['date']) > since_last_run:
-                break
-            try:
-                return self.parse_commit(item, headers)
-            except GenericYetiError as e:
-                logging.error(e)
+        r = self._make_request(headers, auth, verify=verify)
+        if r.status_code == 200:
+            for item in r.json():
+                if parser.parse(
+                        item['commit']['author']['date']) > since_last_run:
+                    break
+                try:
+                    return self.parse_commit(item, headers)
+                except GenericYetiError as e:
+                    logging.error(e)
         return []
 
     def info(self):
         i = {
             k: v for k, v in self._data.items() if k in
-            ["name", "enabled", "description", "source", "status", "last_run"]
+                                                   ["name", "enabled",
+                                                    "description", "source",
+                                                    "status", "last_run"]
         }
         i['frequency'] = str(self.frequency)
         i['id'] = str(self.id)

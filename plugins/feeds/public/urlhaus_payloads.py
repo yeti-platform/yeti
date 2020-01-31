@@ -1,7 +1,5 @@
 import logging
-from datetime import datetime, timedelta
-
-from dateutil import parser
+from datetime import timedelta
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -18,17 +16,12 @@ class UrlHausPayloads(Feed):
     }
 
     def update(self):
-        since_last_run = datetime.utcnow() - self.frequency
 
-        for line in self.update_csv(delimiter=',', quotechar='"'):
-            if not line or line[0].startswith("#"):
-                continue
-
-            first_seen = parser.parse(line[0])
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
-
+        for index, line in self.update_csv(delimiter=',',
+                                           names=['firstseen', 'url',
+                                                  'filetype', 'md5', 'sha256',
+                                                  'signature'],
+                                           filter_row='firstseen'):
             self.analyze(line)
 
     def analyze(self, line):
@@ -38,11 +31,17 @@ class UrlHausPayloads(Feed):
         url_obs = False
         malware_file = False
 
-        context = {
-            'source': self.name
-        }
+        first_seen = line['firstseen']
+        url = line['url']
+        filetype = line['filetype']
+        md5_hash = line['md5']
+        sha256_hash = line['sha256']
+        signature = line['signature']
 
-        first_seen, url, filetype, md5, sha256, signature = line
+        context = {
+            'source': self.name,
+            'first_seen': first_seen
+        }
 
         if url:
             try:
@@ -54,15 +53,15 @@ class UrlHausPayloads(Feed):
             except ObservableValidationError as e:
                 logging.error(e)
 
-        if sha256:
+        if sha256_hash:
             try:
                 malware_file = File.get_or_create(
-                    value='FILE:{}'.format(sha256))
+                    value='FILE:{}'.format(sha256_hash))
 
                 malware_file.add_context(context)
                 malware_file.tag(filetype)
 
-                sha256_obs = Hash.get_or_create(value=sha256)
+                sha256_obs = Hash.get_or_create(value=sha256_hash)
                 sha256_obs.tag(filetype)
                 sha256_obs.add_context(context)
                 if signature != 'None':
@@ -70,9 +69,9 @@ class UrlHausPayloads(Feed):
             except ObservableValidationError as e:
                 logging.error(e)
 
-        if md5:
+        if md5_hash:
             try:
-                md5_obs = Hash.get_or_create(value=md5)
+                md5_obs = Hash.get_or_create(value=md5_hash)
                 md5_obs.add_context(context)
                 md5_obs.tag(filetype)
 

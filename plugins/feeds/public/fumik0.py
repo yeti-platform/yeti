@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -17,19 +17,10 @@ class Fumik0Tracker(Feed):
 
     def update(self):
 
-        since_last_run = datetime.utcnow() - self.frequency
+        for index, block in self.update_json(filter_row='first_seen'):
+            self.analyze(block)
 
-        for block in self.update_json():
-            first_seen = datetime.strptime(block["first_seen"],
-                                           "%Y-%m-%d %H:%M:%S")
-
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
-
-            self.analyze(block, first_seen)
-
-    def analyze(self, block, first_seen):  # pylint: disable=arguments-differ
+    def analyze(self, block):  # pylint: disable=arguments-differ
 
         """
         block example
@@ -49,7 +40,7 @@ class Fumik0Tracker(Feed):
         if "http" not in url:
             url = "http://" + url
         context = {}
-        context["date_added"] = first_seen
+        context["date_added"] = block['first_seen']
         context["as"] = block["server"]["AS"]
         context["country"] = block["server"]["country"]
         context["ip"] = block["server"]["ip"]
