@@ -2,9 +2,9 @@ from __future__ import unicode_literals
 
 from json import dumps
 
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from flask_api.decorators import set_renderers
-from flask_api.renderers import JSONRenderer, HTMLRenderer
+from flask_api.renderers import JSONRenderer
 
 from core.web.json import to_json, recursive_encoder
 
@@ -17,15 +17,14 @@ api = Blueprint("api", __name__, template_folder="templates")
 # CORS(api, resources={r"*": {"origins": "*"}})
 
 
-@set_renderers(JSONRenderer)
 def bson_renderer(objects, template=None, ctx=None):
     data = recursive_encoder(objects)
     return dumps(data, default=to_json)
 
-@set_renderers(JSONRenderer,HTMLRenderer)
+
+@set_renderers(JSONRenderer)
 def render(obj):
-    print(type(obj))
-    return obj
+    return jsonify(bson_renderer(obj))
 
 from core.web.api.observable import ObservableSearch, Observable
 from core.web.api.entity import Entity, EntitySearch

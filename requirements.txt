@@ -88,5 +88,6 @@ wtforms==2.2.1
 xlsxwriter==1.2.0
 yara-python==3.10.0
 zipp==0.6.0
+pandas
 -i https://pypi.python.org/simple
 
