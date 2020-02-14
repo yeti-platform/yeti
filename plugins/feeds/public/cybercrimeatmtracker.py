@@ -14,7 +14,7 @@ class CybercrimeAtmTracker(Feed):
     default_values = {
         'frequency': timedelta(hours=1),
         'name': 'CybercrimeAtmTracker',
-        'source': 'http://atm.cybercrime-tracker.net/rss2.php',
+        'source': 'http://atm.cybercrime-tracker.net/rss.php',
         'description': 'CyberCrime ATM Tracker - Latest 40 CnC URLS',
     }
 
