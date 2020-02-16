@@ -151,5 +151,5 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
 
         data["matches"].append(match)
 
-    data['entities'] = data['entities'].values()
+    data['entities'] = list(data['entities'].values())
     return data
