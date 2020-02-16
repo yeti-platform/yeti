@@ -44,7 +44,7 @@ class HashFile(InlineAnalytics):
             chunk = body_contents.read(512 * 16)
             if not chunk:
                 break
-            for h in hashers.itervalues():
+            for h in hashers.values():
                 h.update(chunk)
 
         return hashers.items()
