@@ -18,7 +18,7 @@ def recursive_encoder(objects, template=None, ctx=None):
             objects[key] = recursive_encoder(value)
         return objects
 
-    elif isinstance(objects, (list, QuerySet)):
+    elif isinstance(objects, (list, QuerySet, set)):
         return [recursive_encoder(o) for o in objects]
 
     elif isinstance(objects, tuple):
