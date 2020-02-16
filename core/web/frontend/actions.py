@@ -3,7 +3,7 @@ from os import path
 from uuid import uuid4
 from tempfile import gettempdir
 from flask import request, send_file
-from werkzeug import MultiDict
+from werkzeug.datastructures import MultiDict
 from flask_classy import FlaskView, route
 
 from core.exports import ExportTemplate

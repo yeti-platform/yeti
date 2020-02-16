@@ -25,7 +25,7 @@ class CrudSearchApi(FlaskView):
         regex = params.pop('regex', False)
         ignorecase = params.pop('ignorecase', False)
         page = params.pop('page', 1) - 1
-        rng = params.pop('range', 50)        
+        rng = params.pop('range', 50)
         userLogger.info("User %s search : filter=%s params=%s regex=%s",
                         current_user.username,fltr,params,regex)
         return list(get_queryset(self.objectmanager, fltr, regex,
@@ -55,7 +55,7 @@ class CrudSearchApi(FlaskView):
             logging.error(e)
             abort(400)
 
-        return render(data)
+        return render(data, self.template)
 
 
 class CrudApi(FlaskView):

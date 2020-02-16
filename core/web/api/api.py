@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from json import dumps
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, render_template, request
 from flask_api.decorators import set_renderers
 from flask_api.renderers import JSONRenderer
 
@@ -16,15 +16,17 @@ api = Blueprint("api", __name__, template_folder="templates")
 # from flask_cors import CORS, cross_origin
 # CORS(api, resources={r"*": {"origins": "*"}})
 
-
 def bson_renderer(objects, template=None, ctx=None):
     data = recursive_encoder(objects)
     return dumps(data, default=to_json)
 
-
 @set_renderers(JSONRenderer)
-def render(obj):
-    return jsonify(bson_renderer(obj))
+def render(obj, template=None):
+    mimetypes = request.accept_mimetypes
+    best = mimetypes.best_match(['text/html', 'application/json'], 'application/json')
+    if best == 'application/json':
+        return jsonify(recursive_encoder(obj))
+    return render_template(template, data=obj)
 
 from core.web.api.observable import ObservableSearch, Observable
 from core.web.api.entity import Entity, EntitySearch
