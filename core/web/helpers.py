@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import re
 from functools import wraps
 from inspect import ismethod
+from urllib.parse import urlparse
 
 from flask import abort, request
 from flask_login import current_user
@@ -115,7 +116,7 @@ def get_queryset(collection, filters, regex, ignorecase, replace=True):
 
 
 def different_origin(referer, target):
-    p1, p2 = urlparse.urlparse(referer), urlparse.urlparse(target)
+    p1, p2 = urlparse(referer), urlparse(target)
     origin1 = p1.scheme, p1.hostname, p1.port
     origin2 = p2.scheme, p2.hostname, p2.port
 
