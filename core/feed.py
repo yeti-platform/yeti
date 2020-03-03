@@ -4,15 +4,15 @@ import json
 import logging
 import os
 import tempfile
-from io import StringIO
+import xml.etree.ElementTree as ET
 from base64 import b64decode
 from datetime import datetime
+from io import StringIO
 
 import pandas as pd
 import pytz
 import requests
 from dateutil import parser
-import xml.etree.ElementTree as ET
 from mongoengine import DoesNotExist, StringField
 
 from core.config.celeryctl import celery_app
@@ -273,7 +273,7 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        feed = self._temp_feed_data_compare(r.content)
+        feed = self._temp_feed_data_compare(r.content.decode())
 
         for line in feed:
             yield line
@@ -305,7 +305,7 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        feed = r.content
+        feed = r.content.decode()
 
         if compare:
             feed = self._temp_feed_data_compare(r.content)
@@ -313,7 +313,6 @@ class Feed(ScheduleEntry):
         if filter_row:
             df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                              comment=comment,
-                             parse_dates=[filter_row],
                              names=names, header=header,
                              date_parser=date_parser)
 
