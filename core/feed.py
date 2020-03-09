@@ -241,14 +241,14 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        return self.parse_xml(r.content, main_node, children)
+        return self.parse_xml(r.content.decode(), main_node, children)
 
     def parse_xml(self, data, main_node, children):
         """Helper function used to parse XML. See :func:`core.feed.Feed.update_xml` for details"""
 
-        tree = ET.parse(data)
+        tree = ET.fromstring(data)
 
-        for item in tree.findall("//{}".format(main_node)):
+        for item in tree.findall(".//{}".format(main_node)):
             context = {}
             for field in children:
                 context[field] = item.findtext(field)
@@ -314,7 +314,7 @@ class Feed(ScheduleEntry):
             df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                              comment=comment,
                              names=names, header=header,
-                             date_parser=date_parser)
+                             parse_dates=[filter_row])
 
             df.sort_values(by=filter_row, inplace=True, ascending=False)
         else:
