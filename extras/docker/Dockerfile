@@ -59,6 +59,9 @@ RUN groupadd yeti && \
         chown -R yeti.yeti /opt/yeti
 RUN mkdir /var/log/yeti; chown yeti /var/log/yeti
 
+# Update tld domain list
+RUN tldextract --update
+
 USER yeti
 
 ENTRYPOINT ["docker-entrypoint.sh"]
