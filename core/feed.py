@@ -169,15 +169,17 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
-    def _make_request(self, headers={}, auth=None, params={}, url=False,
-                      verify=True):
+    def _make_request(self, method="get", headers={}, auth=None, params={}, data=data,
+        url=False, verify=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
         Args:
+            method:     Optional HTTP method to use GET/POST/etc lowercase
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
-            params:     Optional param to be added to the HTTP request.
+            params:     Optional param to be added to the HTTP GET request.
+            data:       Optional param to be added to the HTTP POST request.
             url:        Optional url to be fetched instead of self.source
             verify:     optional verify to verify domain certificate
 
@@ -185,19 +187,21 @@ class Feed(ScheduleEntry):
             requests object.
         """
         if auth:
-            r = requests.get(
+            r = getattr(requests, method)(
                 url or self.source,
                 headers=headers,
                 auth=auth,
                 proxies=yeti_config.proxy,
                 params=params,
+                data=data,
                 verify=verify)
         else:
-            r = requests.get(
+            r = getattr(requests, method)(
                 url or self.source,
                 headers=headers,
                 proxies=yeti_config.proxy,
                 params=params,
+                data=data,
                 verify=verify)
 
         if r.status_code != 200:
@@ -330,12 +334,13 @@ class Feed(ScheduleEntry):
 
         return df.iterrows()
 
-    def update_json(self, headers=None, auth=None, params=None, verify=True,
+    def update_json(self, method="get", headers=None, auth=None, params=None, verify=True,
                     filter_row='', key=None):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
         Args:
+            method:     Optional HTTP method to use GET/POST/etc lowercase
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
             params:     Optional param to be added to the HTTP request.
@@ -346,7 +351,7 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
 
-        r = self._make_request(headers, auth, params, verify=verify)
+        r = self._make_request(method=method, headers=headers, auth=auth, params=params, data=data verify=verify)
 
         if key:
             content = r.json()[key]
