@@ -169,7 +169,7 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
-    def _make_request(self, method="get", headers={}, auth=None, params={}, data=data,
+    def _make_request(self, method="get", headers={}, auth=None, params={}, data={},
         url=False, verify=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
