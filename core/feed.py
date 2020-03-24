@@ -351,7 +351,7 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
 
-        r = self._make_request(method=method, headers=headers, auth=auth, params=params, data=data verify=verify)
+        r = self._make_request(method=method, headers=headers, auth=auth, params=params, data=data, verify=verify)
 
         if key:
             content = r.json()[key]
