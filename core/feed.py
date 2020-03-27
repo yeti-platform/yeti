@@ -354,9 +354,12 @@ class Feed(ScheduleEntry):
         r = self._make_request(method=method, headers=headers, auth=auth, params=params, data=data, verify=verify)
 
         if key:
-            content = r.json()[key]
+            content = r.json().get(key)
         else:
             content = r.json()
+        if not content:
+            return []
+
         if filter_row:
             df = pd.read_json(StringIO(json.dumps(content)), orient='values',
                               convert_dates=[filter_row])
