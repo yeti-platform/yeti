@@ -6,6 +6,7 @@ from core.errors import ObservableValidationError
 from core.observables import File, Hash, Url
 
 
+# Deprecated
 class UrlHausPayloads(Feed):
     default_values = {
         "frequency": timedelta(hours=1),
