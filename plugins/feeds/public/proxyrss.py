@@ -11,6 +11,7 @@ from core.observables import Ip
 tzinfos = {"EDT": gettz("America/New_York")}
 
 
+# Deprecated
 class ProxyRSS(Feed):
 
     default_values = {
