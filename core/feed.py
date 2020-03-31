@@ -273,7 +273,9 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers, auth, verify=verify)
-        feed = self._temp_feed_data_compare(r.content.decode())
+        feed = self._temp_feed_data_compare(r.content.decode('utf-8',
+                                                             'backslashreplace')
+                                            )
 
         for line in feed:
             yield line
