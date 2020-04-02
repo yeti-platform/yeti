@@ -169,7 +169,8 @@ class Feed(ScheduleEntry):
 
     # Helper functions
 
-    def _make_request(self, headers={}, auth=None, params={}, url=False,
+    def _make_request(self, sort=True, headers={}, auth=None, params={},
+                      url=False,
                       verify=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
@@ -191,25 +192,26 @@ class Feed(ScheduleEntry):
                 auth=auth,
                 proxies=yeti_config.proxy,
                 params=params,
-                verify=verify)
+                verify=verify, stream=True)
         else:
             r = requests.get(
                 url or self.source,
                 headers=headers,
                 proxies=yeti_config.proxy,
                 params=params,
-                verify=verify)
+                verify=verify, stream=True)
 
         if r.status_code != 200:
             raise GenericYetiError(
                 "{} returns code: {}".format(self.source, r.status_code))
-
-        if self.last_run is not None and r.headers.get('Last-Modified'):
-            last_mod = parser.parse(r.headers['Last-Modified'])
-            if self.last_run and self.last_run > last_mod.replace(tzinfo=None):
-                raise GenericYetiInfo(
-                    "Last modified date: {} returns code: {}".format(
-                        last_mod, r.status_code))
+        if sort:
+            if self.last_run is not None and r.headers.get('Last-Modified'):
+                last_mod = parser.parse(r.headers['Last-Modified'])
+                if self.last_run and self.last_run > last_mod.replace(
+                        tzinfo=None):
+                    raise GenericYetiInfo(
+                        "Last modified date: {} returns code: {}".format(
+                            last_mod, r.status_code))
 
         return r
 
@@ -276,7 +278,6 @@ class Feed(ScheduleEntry):
         feed = self._temp_feed_data_compare(r.content.decode('utf-8',
                                                              'backslashreplace')
                                             )
-
         for line in feed:
             yield line
 
@@ -286,7 +287,7 @@ class Feed(ScheduleEntry):
 
     def update_csv(self, delimiter=';', headers=None, auth=None,
                    verify=True, comment="#", filter_row=None, names=None,
-                   header=None, compare=False, date_parser=None):
+                   header=0, compare=False, date_parser=None):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -306,26 +307,37 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth, verify=verify)
+        r = self._make_request(sort=False, headers=headers, auth=auth,
+                               verify=verify)
         feed = r.content.decode()
-
-        if compare:
-            feed = self._temp_feed_data_compare(r.content)
-
+        if not filter_row:
+            feed = self._temp_feed_data_compare(feed)
+            if feed:
+                feed = '\n'.join(feed)
+                logging.debug(feed)
         if filter_row:
-            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             comment=comment,
-                             names=names, header=header,
-                             parse_dates=[filter_row])
+            if comment and names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment, names=names,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser)
+
+            else:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser)
 
             df.sort_values(by=filter_row, inplace=True, ascending=False)
         else:
             df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             comment=comment, keep_default_na=False,
-                             names=names)
+                             header=header, comment=comment,
+                             keep_default_na=False,
+                             )
 
         df.drop_duplicates(inplace=True)
         df.fillna('', inplace=True)
+
         if self.last_run and filter_row:
             df = df[df[filter_row] > self.last_run]
 
@@ -347,7 +359,8 @@ class Feed(ScheduleEntry):
             Python ``dict`` object representing the response JSON.
         """
 
-        r = self._make_request(headers, auth, params, verify=verify)
+        r = self._make_request(headers=headers, auth=auth, params=params,
+                               verify=verify)
 
         if key:
             content = r.json()[key]
