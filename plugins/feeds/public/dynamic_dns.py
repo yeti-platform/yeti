@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from core.errors import ObservableValidationError
@@ -23,6 +24,7 @@ class DynamicDomains(Feed):
 
     def analyze(self, line):
         line = line.strip()
+        logging.debug(line)
         sline = line.split()
 
         hostname = sline[0]
