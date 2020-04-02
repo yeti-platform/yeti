@@ -16,7 +16,7 @@ class BenkowTracker(Feed):
 
     def update(self):
         for index, line in self.update_csv(filter_row='date', delimiter=';',
-                                           date_parser=['date'], header=0):
+                                           header=0):
             self.analyze(line)
 
     def analyze(self, line):
