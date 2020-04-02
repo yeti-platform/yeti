@@ -168,6 +168,44 @@ class Feed(ScheduleEntry):
             "analyze: This method must be implemented in your feed class")
 
     # Helper functions
+    def _choose(self, feed, delimiter=';', comment="#", filter_row=None,
+                names=None, header=0, compare=False, date_parser=None):
+        df = None
+        if filter_row:
+            if comment and names:
+                logging.debug('case 1')
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment, names=names,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser)
+
+            elif header and not comment and not names:
+                logging.debug('case 2')
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser)
+            elif header and comment and not names:
+                logging.debug('case 3')
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header,
+                                 comment=comment,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser)
+
+            elif not header and comment and not names:
+                logging.debug('case 4')
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser)
+            elif not header and not comment and not names:
+                logging.debug('case 5')
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser)
+
+        return df
 
     def _make_request(self, sort=True, headers={}, auth=None, params={},
                       url=False,
@@ -310,26 +348,22 @@ class Feed(ScheduleEntry):
         r = self._make_request(sort=False, headers=headers, auth=auth,
                                verify=verify)
         feed = r.content.decode()
-        if not filter_row:
-            feed = self._temp_feed_data_compare(feed)
-            if feed:
-                feed = '\n'.join(feed)
-                logging.debug(feed)
-        if filter_row:
-            if comment and names:
-                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                                 comment=comment, names=names,
-                                 parse_dates=[filter_row],
-                                 date_parser=date_parser)
 
-            else:
-                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                                 header=header,
-                                 parse_dates=[filter_row],
-                                 date_parser=date_parser)
+        if filter_row:
+            df = self._choose(feed, delimiter=delimiter,
+                              comment=comment,
+                              filter_row=filter_row,
+                              names=names,
+                              header=header,
+                              date_parser=date_parser)
 
             df.sort_values(by=filter_row, inplace=True, ascending=False)
         else:
+            feed = self._temp_feed_data_compare(feed)
+
+            if feed:
+                feed = '\n'.join(feed)
+
             df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                              header=header, comment=comment,
                              keep_default_na=False,
