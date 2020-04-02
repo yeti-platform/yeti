@@ -27,7 +27,6 @@ class PhishTank(Feed):
 
         for index, line in self.update_csv(delimiter=',',
                                            filter_row='submission_time',
-                                           header=0,
                                            date_parser=lambda x: pd.to_datetime(
                                                x.rsplit('+', 1)[0])):
             self.analyze(line)
