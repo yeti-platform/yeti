@@ -7,7 +7,8 @@ import tempfile
 import xml.etree.ElementTree as ET
 from base64 import b64decode
 from datetime import datetime
-from io import StringIO
+from io import StringIO, BytesIO
+from zipfile import ZipFile
 
 import pandas as pd
 import pytz
@@ -173,20 +174,17 @@ class Feed(ScheduleEntry):
         df = None
         if filter_row:
             if comment and names:
-                logging.debug('case 1')
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  comment=comment, names=names,
                                  parse_dates=[filter_row],
                                  date_parser=date_parser)
 
             elif header and not comment and not names:
-                logging.debug('case 2')
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  header=header,
                                  parse_dates=[filter_row],
                                  date_parser=date_parser)
             elif header and comment and not names:
-                logging.debug('case 3')
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  header=header,
                                  comment=comment,
@@ -194,18 +192,22 @@ class Feed(ScheduleEntry):
                                  date_parser=date_parser)
 
             elif not header and comment and not names:
-                logging.debug('case 4')
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  comment=comment,
                                  parse_dates=[filter_row],
                                  date_parser=date_parser)
             elif not header and not comment and not names:
-                logging.debug('case 5')
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  parse_dates=[filter_row],
                                  date_parser=date_parser)
 
         return df
+
+    def _unzip_content(self, data):
+        f = ZipFile(BytesIO(data))
+        name = f.namelist()[0]
+        unzip_data = f.read(name)
+        return unzip_data
 
     def _make_request(self, sort=True, headers={}, auth=None, params={},
                       url=False,
@@ -325,7 +327,8 @@ class Feed(ScheduleEntry):
 
     def update_csv(self, delimiter=';', headers=None, auth=None,
                    verify=True, comment="#", filter_row=None, names=None,
-                   header=0, compare=False, date_parser=None):
+                   header=0, compare=False, date_parser=None,
+                   content_zip=False):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -347,7 +350,12 @@ class Feed(ScheduleEntry):
 
         r = self._make_request(sort=False, headers=headers, auth=auth,
                                verify=verify)
-        feed = r.content.decode()
+        content = r.content
+
+        if content_zip:
+            content = self._unzip_content(content)
+
+        feed = content.decode()
 
         if filter_row:
             df = self._choose(feed, delimiter=delimiter,

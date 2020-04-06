@@ -22,7 +22,8 @@ class UrlHausPayloads(Feed):
                                            names=['firstseen', 'url',
                                                   'filetype', 'md5', 'sha256',
                                                   'signature'],
-                                           filter_row='firstseen'):
+                                           filter_row='firstseen',
+                                           content_zip=True):
             self.analyze(line)
 
     def analyze(self, line):
