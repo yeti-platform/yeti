@@ -25,7 +25,7 @@ class Obtemoslab(Feed):
         try:
             url_data = Url.get_or_create(value=url)
             url_data.normalize()
-            url_data.tags(["payload_delivery"])
+            url_data.tags.append(["payload_delivery"])
             url_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
