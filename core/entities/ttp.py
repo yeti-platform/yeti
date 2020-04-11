@@ -19,7 +19,7 @@ class TTP(Entity):
 
     killchain = StringField(
         verbose_name="Kill Chain Stage",
-        choices=KILL_CHAIN_STEPS.items(),
+        choices=list(KILL_CHAIN_STEPS.items()),
         required=True)
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("killchain", "Kill Chain")]
