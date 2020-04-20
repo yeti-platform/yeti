@@ -84,8 +84,8 @@ class Neighbors(CrudApi):
         # We override this behavior for these templates to include links
         # using the ctx argument
         if issubclass(filter_class, Entity):
-            return render(data, template='entity_api.html', ctx=data)
+            return render(data, template='entity_api.html')
         if issubclass(filter_class, Indicator):
-            return render(data, template='indicator_api.html', ctx=data)
+            return render(data, template='indicator_api.html')
         if issubclass(filter_class, Observable):
-            return render(data, template='observable_api.html', ctx=data)
+            return render(data, template='observable_api.html')
