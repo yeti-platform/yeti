@@ -79,10 +79,7 @@ class Neighbors(CrudApi):
             objs.append(obj)
             _all.append((link, obj))
 
-        data = {"data": objs, "links": links}
-        # First argument of render is the "data" variable in the template.
-        # We override this behavior for these templates to include links
-        # using the ctx argument
+        data = {"objs": objs, "links": links}
         if issubclass(filter_class, Entity):
             return render(data, template='entity_api.html')
         if issubclass(filter_class, Indicator):
