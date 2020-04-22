@@ -31,6 +31,13 @@ class CrudSearchApi(FlaskView):
         return list(get_queryset(self.objectmanager, fltr, regex,
                          ignorecase)[page * rng:(page + 1) * rng])
 
+    def count(self, query):
+        fltr = query.get('filter', {})
+        params = query.get('params', {})
+        regex = params.pop('regex', False)
+        ignorecase = params.pop('ignorecase', False)
+        return get_queryset(self.objectmanager, fltr, regex, ignorecase).count()
+
     @requires_permissions('read')
     def post(self):
         """Launches a simple search against the database
@@ -56,6 +63,20 @@ class CrudSearchApi(FlaskView):
             abort(400)
 
         return render(data, self.template)
+
+    @route("/total", methods=['POST'])
+    @requires_permissions('read')
+    def total(self):
+        """Counts total items"""
+        query = request.get_json(silent=True) or {}
+
+        try:
+            count = self.count(query)
+        except InvalidQueryError as e:
+            logging.error(e)
+            abort(400)
+
+        return render({'total': count })
 
 
 class CrudApi(FlaskView):
