@@ -13,8 +13,8 @@ api = Blueprint("api", __name__, template_folder="templates")
 # If you're querying Yeti's API from another app,
 # these lines might be useful:
 #
-from flask_cors import CORS, cross_origin
-CORS(api, resources={r"*": {"origins": "*"}}, expose_headers=['content-disposition'])
+# from flask_cors import CORS, cross_origin
+# CORS(api, resources={r"*": {"origins": "*"}}, expose_headers=['content-disposition'])
 
 def bson_renderer(objects, template=None, ctx=None):
     data = recursive_encoder(objects)
