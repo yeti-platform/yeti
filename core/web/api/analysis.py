@@ -6,6 +6,8 @@ from flask_login import current_user
 
 from core.web.api.crud import CrudApi
 from core.observables import Observable
+from core.errors import ObservableValidationError
+
 from core.web.api.api import render
 from core.analysis import match_observables
 from core.web.helpers import requires_permissions
@@ -37,15 +39,21 @@ class Analysis(CrudApi):
         observables = params.pop('observables', [])
         fetch_neighbors = params.pop('fetch_neighbors', True)
         add_unknown = bool(params.pop('add_unknown', False))
+        unknown = set()
 
         if add_unknown and current_user.has_permission('observable', 'write'):
             for o in observables:
-                Observable.add_text(o)
+                try:
+                    Observable.add_text(o)
+                except ObservableValidationError:
+                    unknown.add(o)
 
         data = match_observables(
             observables,
             save_matches=add_unknown and
             current_user.has_permission('observable', 'write'),
             fetch_neighbors=fetch_neighbors)
+
+        data['unknown'] = list(set(data['unknown']) | unknown)
 
         return render(data)
