@@ -102,13 +102,18 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
     # add to "matches"
     for o, i in Indicator.search(extended_query):
         if save_matches:
-            o = Observable.add_text(o)
-        else:
-            o = Observable.guess_type(o)(value=o)
             try:
+                o = Observable.add_text(o)
+            except ObservableValidationError:
+                data['unknown'].add(o)
+                continue
+        else:
+            try:
+                o = Observable.guess_type(o)(value=o)
                 o.validate()
             except ObservableValidationError:
-                pass
+                data['unknown'].add(o)
+                continue
             try:
                 o = Observable.objects.get(value=o.value)
             except Exception:
