@@ -66,4 +66,4 @@ USER yeti
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-CMD ["docker-entrypoint.sh", "webserver"]
+CMD ["webserver"]
