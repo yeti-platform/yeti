@@ -186,6 +186,7 @@ class Feed(ScheduleEntry):
         Returns:
             requests object.
         """
+        print(method, headers, auth, params, data, url, verify)
         if auth:
             r = getattr(requests, method)(
                 url or self.source,
@@ -244,7 +245,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth, verify=verify)
+        r = self._make_request(headers=headers, auth=auth, verify=verify)
         return self.parse_xml(r.content, main_node, children)
 
     def parse_xml(self, data, main_node, children):
@@ -276,7 +277,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth, verify=verify)
+        r = self._make_request(headers=headers, auth=auth, verify=verify)
         feed = self._temp_feed_data_compare(r.content)
 
         for line in feed:
@@ -308,7 +309,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth, verify=verify)
+        r = self._make_request(headers=headers, auth=auth, verify=verify)
         feed = r.content
 
         if compare:
@@ -334,7 +335,7 @@ class Feed(ScheduleEntry):
 
         return df.iterrows()
 
-    def update_json(self, method="get", headers=None, auth=None, params=None, verify=True,
+    def update_json(self, method="get", data=None, headers=None, auth=None, params=None, verify=True,
                     filter_row='', key=None):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
@@ -342,11 +343,12 @@ class Feed(ScheduleEntry):
         Args:
             method:     Optional HTTP method to use GET/POST/etc lowercase
             headers:    Optional headers to be added to the HTTP request.
+            data:       Dictionary containing POST data to send.
             auth:       Username / password tuple to be sent along with the HTTP request.
             params:     Optional param to be added to the HTTP request.
-            verify: Force ssl verification.
-            filter_row: name of columns to filter rows.
-            key: key in json response to return data.
+            verify:     Force SSL verification.
+            filter_row: Name of columns to filter rows.
+            key:        Key in JSON response to return data.
         Returns:
             Python ``dict`` object representing the response JSON.
         """
@@ -435,7 +437,7 @@ class Feed(ScheduleEntry):
             headers = {}
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
-        r = self._make_request(headers, auth, verify=verify)
+        r = self._make_request(headers=headers, auth=auth, verify=verify)
         if r.status_code == 200:
             for item in r.json():
                 if parser.parse(
