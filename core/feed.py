@@ -209,16 +209,17 @@ class Feed(ScheduleEntry):
         unzip_data = f.read(name)
         return unzip_data
 
-    def _make_request(self, sort=True, headers={}, auth=None, params={},
-                      url=False,
-                      verify=True):
+    def _make_request(self, method="get", headers={}, auth=None, params={}, data={},
+        url=False, verify=True, sort=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
         Args:
+            method:     Optional HTTP method to use GET/POST/etc lowercase
             headers:    Optional headers to be added to the HTTP request.
             auth:       Username / password tuple to be sent along with the HTTP request.
-            params:     Optional param to be added to the HTTP request.
+            params:     Optional param to be added to the HTTP GET request.
+            data:       Optional param to be added to the HTTP POST request.
             url:        Optional url to be fetched instead of self.source
             verify:     optional verify to verify domain certificate
 
@@ -226,20 +227,24 @@ class Feed(ScheduleEntry):
             requests object.
         """
         if auth:
-            r = requests.get(
+            r = getattr(requests, method)(
                 url or self.source,
                 headers=headers,
                 auth=auth,
                 proxies=yeti_config.proxy,
                 params=params,
-                verify=verify, stream=True)
+                data=data,
+                verify=verify,
+                stream=True)
         else:
-            r = requests.get(
+            r = getattr(requests, method)(
                 url or self.source,
                 headers=headers,
                 proxies=yeti_config.proxy,
                 params=params,
-                verify=verify, stream=True)
+                data=data,
+                verify=verify,
+                stream=True)
 
         if r.status_code != 200:
             raise GenericYetiError(
@@ -282,7 +287,7 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth, verify=verify)
+        r = self._make_request(headers=headers, auth=auth, verify=verify)
         return self.parse_xml(r.content.decode(), main_node, children)
 
     def parse_xml(self, data, main_node, children):
@@ -314,10 +319,9 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers, auth, verify=verify)
-        feed = self._temp_feed_data_compare(r.content.decode('utf-8',
-                                                             'backslashreplace')
-                                            )
+        r = self._make_request(headers=headers, auth=auth, verify=verify)
+        feed = self._temp_feed_data_compare(
+            r.content.decode('utf-8', 'backslashreplace'))
         for line in feed:
             yield line
 
@@ -348,9 +352,9 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(sort=False, headers=headers, auth=auth,
-                               verify=verify)
-        content = r.content
+        r = self._make_request(
+            sort=False, headers=headers, auth=auth, verify=verify)
+        feed = r.content
 
         if content_zip:
             content = self._unzip_content(content)
@@ -385,29 +389,33 @@ class Feed(ScheduleEntry):
 
         return df.iterrows()
 
-    def update_json(self, headers=None, auth=None, params=None, verify=True,
+    def update_json(self, method="get", data=None, headers=None, auth=None, params=None, verify=True,
                     filter_row='', key=None):
         """Helper function. Performs an HTTP request on ``source`` and parses
         the response JSON, returning a Python ``dict`` object.
 
         Args:
+            method:     Optional HTTP method to use GET/POST/etc lowercase
             headers:    Optional headers to be added to the HTTP request.
+            data:       Dictionary containing POST data to send.
             auth:       Username / password tuple to be sent along with the HTTP request.
             params:     Optional param to be added to the HTTP request.
-            verify: Force ssl verification.
-            filter_row: name of columns to filter rows.
-            key: key in json response to return data.
+            verify:     Force SSL verification.
+            filter_row: Name of columns to filter rows.
+            key:        Key in JSON response to return data.
         Returns:
             Python ``dict`` object representing the response JSON.
         """
 
-        r = self._make_request(headers=headers, auth=auth, params=params,
-                               verify=verify)
+        r = self._make_request(method=method, headers=headers, auth=auth, params=params, data=data, verify=verify)
 
         if key:
-            content = r.json()[key]
+            content = r.json().get(key)
         else:
             content = r.json()
+        if not content:
+            return []
+
         if filter_row:
             df = pd.read_json(StringIO(json.dumps(content)), orient='values',
                               convert_dates=[filter_row])
@@ -483,7 +491,7 @@ class Feed(ScheduleEntry):
             headers = {}
 
         since_last_run = utc.localize(datetime.utcnow() - self.frequency)
-        r = self._make_request(headers, auth, verify=verify)
+        r = self._make_request(headers=headers, auth=auth, verify=verify)
         if r.status_code == 200:
             for item in r.json():
                 if parser.parse(
