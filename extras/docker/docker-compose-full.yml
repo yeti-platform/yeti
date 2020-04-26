@@ -11,6 +11,8 @@ services:
     depends_on:
       - redis
       - mongodb
+    volumes:
+      - /tmp/docker-yeti-exports:/opt/yeti/exports
 
   feeds:
     build:
@@ -58,6 +60,8 @@ services:
       - redis
       - mongodb
       - yeti
+    volumes:
+      - /tmp/docker-yeti-exports:/opt/yeti/exports
 
   oneshot:
     build:
