@@ -24,6 +24,9 @@ def recursive_encoder(objects, template=None, ctx=None):
     elif isinstance(objects, tuple):
         return tuple(recursive_encoder(o) for o in objects)
 
+    elif isinstance(objects, ObjectId):
+        return to_json(obects)
+
     elif isinstance(objects,
                     (Node, Link, YetiDocument, Document, EmbeddedDocument)):
         if hasattr(objects, "info"):
