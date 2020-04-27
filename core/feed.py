@@ -375,7 +375,7 @@ class Feed(ScheduleEntry):
 
         r = self._make_request(
             sort=False, headers=headers, auth=auth, verify=verify)
-        feed = r.content
+        content = r.content
 
         if content_zip:
             content = self._unzip_content(content)
