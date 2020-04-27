@@ -17,7 +17,7 @@ class AlienVaultIPReputation(Feed):
 
     def update(self):
         for index, line in self.update_csv(delimiter='#', comment=None,
-                                           header=-1,
+                                           header=None,
                                            names=['IP', 'number_1', 'number_2',
                                                   'Tag', 'Country', 'City',
                                                   'Coord', 'number_3']):

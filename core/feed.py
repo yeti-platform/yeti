@@ -200,6 +200,27 @@ class Feed(ScheduleEntry):
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  parse_dates=[filter_row],
                                  date_parser=date_parser)
+        else:
+
+            if comment and names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment, names=names)
+            elif not comment and names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment, names=names)
+            elif header and not comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header)
+            elif header and comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header,
+                                 comment=comment)
+
+            elif not header and comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment)
+            elif not header and not comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter)
 
         return df
 
@@ -357,25 +378,12 @@ class Feed(ScheduleEntry):
 
         feed = content.decode()
 
-        if filter_row:
-            df = self._choose(feed, delimiter=delimiter,
-                              comment=comment,
-                              filter_row=filter_row,
-                              names=names,
-                              header=header,
-                              date_parser=date_parser)
-
-            df.sort_values(by=filter_row, inplace=True, ascending=False)
-        else:
-            feed = self._temp_feed_data_compare(feed)
-
-            if feed:
-                feed = '\n'.join(feed)
-
-            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             header=header, comment=comment,
-                             keep_default_na=False,
-                             )
+        df = self._choose(feed, delimiter=delimiter,
+                          comment=comment,
+                          filter_row=filter_row,
+                          names=names,
+                          header=header,
+                          date_parser=date_parser)
 
         df.drop_duplicates(inplace=True)
         df.fillna('', inplace=True)
