@@ -66,7 +66,7 @@ class ParallelDnsResolver(object):
 
     def mass_resolve(self, domains, num_threads=100):
         threads = []
-        for _ in xrange(num_threads):
+        for _ in range(0, num_threads):
             logging.debug("Starting thread {}".format(_))
             t = threading.Thread(target=self.consumer)
             t.start()
