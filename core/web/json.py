@@ -32,7 +32,7 @@ def recursive_encoder(objects, template=None, ctx=None):
             data = objects.info()
         else:
             data = objects.to_mongo()
-        return data
+        return recursive_encoder(data)
 
     else:
         return objects

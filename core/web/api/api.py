@@ -25,7 +25,8 @@ def render(obj, template=None):
     mimetypes = request.accept_mimetypes
     best = mimetypes.best_match(['text/html', 'application/json'], 'application/json')
     if best == 'application/json':
-        return jsonify(recursive_encoder(obj))
+        json_obj = recursive_encoder(obj)
+        return jsonify(json_obj)
     return render_template(template, data=obj)
 
 from core.web.api.observable import ObservableSearch, Observable
