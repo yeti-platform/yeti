@@ -13,11 +13,11 @@ if [ "$1" = 'webserver' ]; then
     _wait_for_mongodb
     _wait_for_redis
     exec ./yeti.py webserver
-  elif  [ "$1" = 'uwsgi' ]; then
+elif  [ "$1" = 'uwsgi' ]; then
       _wait_for_mongodb
       _wait_for_redis
     exec /usr/local/bin/uwsgi --socket 0.0.0.0:8080 -w yeti --callable webapp --processes 4 --stats 0.0.0.0:9191 --max-requests 100 --lazy-apps
-  elif  [ "$1" = 'uwsgi-http' ]; then
+elif  [ "$1" = 'uwsgi-http' ]; then
       _wait_for_mongodb
       _wait_for_redis
     exec /usr/local/bin/uwsgi --http 0.0.0.0:8080 -w yeti --callable webapp --processes 4 --stats 0.0.0.0:9191 --stats-http --max-requests 100 --lazy-apps
