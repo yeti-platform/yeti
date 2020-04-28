@@ -177,50 +177,79 @@ class Feed(ScheduleEntry):
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  comment=comment, names=names,
                                  parse_dates=[filter_row],
-                                 date_parser=date_parser)
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
 
             elif header and not comment and not names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  header=header,
                                  parse_dates=[filter_row],
-                                 date_parser=date_parser)
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
             elif header and comment and not names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  header=header,
                                  comment=comment,
                                  parse_dates=[filter_row],
-                                 date_parser=date_parser)
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
 
             elif not header and comment and not names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  comment=comment,
                                  parse_dates=[filter_row],
-                                 date_parser=date_parser)
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
             elif not header and not comment and not names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  parse_dates=[filter_row],
-                                 date_parser=date_parser)
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
         else:
 
             if comment and names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                                 comment=comment, names=names)
+                                 comment=comment, names=names, quotechar='"',
+                                 quoting=True, skipinitialspace=True)
             elif not comment and names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                                 comment=comment, names=names)
+                                 comment=comment, names=names,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
             elif header and not comment and not names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                                 header=header)
+                                 header=header, quotechar='"', quoting=True,
+                                 skipinitialspace=True)
             elif header and comment and not names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
                                  header=header,
-                                 comment=comment)
+                                 comment=comment,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
 
             elif not header and comment and not names:
                 df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                                 comment=comment)
+                                 comment=comment,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
             elif not header and not comment and not names:
-                df = pd.read_csv(StringIO(feed), delimiter=delimiter)
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
 
         return df
 

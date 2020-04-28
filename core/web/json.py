@@ -1,18 +1,17 @@
 from __future__ import unicode_literals
 
 import datetime
-from bson.json_util import default, object_hook as bson_hook
+
 import simplejson
-from bson.objectid import ObjectId
 from bson.dbref import DBRef
+from bson.json_util import default, object_hook as bson_hook
+from bson.objectid import ObjectId
 from mongoengine import QuerySet, Document, EmbeddedDocument
 
-from core.helpers import iterify
 from core.database import Node, Link, YetiDocument
 
 
 def recursive_encoder(objects, template=None, ctx=None):
-
     if isinstance(objects, dict):
         for (key, value) in objects.items():
             objects[key] = recursive_encoder(value)
@@ -25,7 +24,7 @@ def recursive_encoder(objects, template=None, ctx=None):
         return tuple(recursive_encoder(o) for o in objects)
 
     elif isinstance(objects, ObjectId):
-        return to_json(obects)
+        return to_json(objects)
 
     elif isinstance(objects,
                     (Node, Link, YetiDocument, Document, EmbeddedDocument)):
