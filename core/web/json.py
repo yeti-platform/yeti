@@ -23,7 +23,7 @@ def recursive_encoder(objects, template=None, ctx=None):
     elif isinstance(objects, tuple):
         return tuple(recursive_encoder(o) for o in objects)
 
-    elif isinstance(objects, ObjectId):
+    elif isinstance(objects, (ObjectId, DBRef, datetime.datetime)):
         return to_json(objects)
 
     elif isinstance(objects,
