@@ -3,11 +3,12 @@ services:
 
   yeti:
     build:
-      context: ../../
-      dockerfile: ./extras/docker/Dockerfile
+      context: ../../../
+      dockerfile: ./extras/docker/dev/Dockerfile
+    image: yeti1-master
     ports:
-      - "8080:8080"
-    command: ['uwsgi-http']
+      - "5000:5000"
+    command: ['webserver']
     depends_on:
       - redis
       - mongodb
@@ -15,9 +16,7 @@ services:
       - /tmp/docker-yeti-exports:/opt/yeti/exports
 
   feeds:
-    build:
-      context: ../../
-      dockerfile: ./extras/docker/Dockerfile
+    image: yeti1-master
     command: ['feeds']
     depends_on:
       - redis
@@ -27,9 +26,7 @@ services:
       - TLDEXTRACT_CACHE=/tmp/tldextract.cache
 
   analytics:
-    build:
-      context: ../../
-      dockerfile: ./extras/docker/Dockerfile
+    image: yeti1-master
     command: ['analytics']
     depends_on:
       - redis
@@ -39,9 +36,7 @@ services:
       - TLDEXTRACT_CACHE=/tmp/tldextract.cache
 
   beat:
-    build:
-      context: ../../
-      dockerfile: ./extras/docker/Dockerfile
+    image: yeti1-master
     command: ['beat']
     depends_on:
       - redis
@@ -52,9 +47,7 @@ services:
       - exports
 
   exports:
-    build:
-      context: ../../
-      dockerfile: ./extras/docker/Dockerfile
+    image: yeti1-master
     command: ['exports']
     depends_on:
       - redis
@@ -64,9 +57,7 @@ services:
       - /tmp/docker-yeti-exports:/opt/yeti/exports
 
   oneshot:
-    build:
-      context: ../../
-      dockerfile: ./extras/docker/Dockerfile
+    image: yeti1-master
     command: ['oneshot']
     depends_on:
       - redis
