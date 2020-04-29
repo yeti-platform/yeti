@@ -2,7 +2,7 @@
   "name": "yeti",
   "dependencies": {
     "animate.css": "^3.5.2",
-    "bootstrap": "^3.3.7",
+    "bootstrap": "^3.4.1",
     "bootstrap-notify": "^3.1.3",
     "bootstrap-tokenfield": "^0.12.0",
     "font-awesome": "^4.7.0",
