@@ -1,11 +1,11 @@
-import pkgutil
 import importlib
+import pkgutil
 
 from mongoengine import IntField, StringField
 
-from core.database import YetiDocument
 from core.constants import DB_VERSION
 from core.constants import MIGRATIONS_DIRECTORY
+from core.database import YetiDocument
 
 
 class Internals(YetiDocument):
@@ -17,11 +17,11 @@ class Internals(YetiDocument):
     def syncdb(klass):
         current_version = klass.get_internals().db_version
         if DB_VERSION > current_version:
-            print "[+] Database version outdated: {} vs. {}".format(
-                current_version, DB_VERSION)
+            print("[+] Database version outdated: {} vs. {}".format(
+                current_version, DB_VERSION))
             klass.apply_migrations(current_version, DB_VERSION)
         else:
-            print "[+] Database version is synced with code."
+            print("[+] Database version is synced with code.")
 
     @classmethod
     def get_internals(klass):
@@ -31,9 +31,9 @@ class Internals(YetiDocument):
 
     @classmethod
     def apply_migrations(klass, current_version, target_version):
-        print "    Applying migrations..."
-        print "    Current version: {}".format(current_version)
-        print "    Syncing to version: {}".format(target_version)
+        print("    Applying migrations...")
+        print("    Current version: {}".format(current_version))
+        print("    Syncing to version: {}".format(target_version))
         internal_version = current_version
 
         migrations = pkgutil.walk_packages([MIGRATIONS_DIRECTORY], prefix=".")
@@ -45,8 +45,8 @@ class Internals(YetiDocument):
                 migration = importlib.import_module(
                     name, package='core.internals.migrations')
                 description = migration.__description__
-                print "        * Applying change ({} -> {}): {}".format(
-                    internal_version, migration_version, description)
+                print("        * Applying change ({} -> {}): {}".format(
+                    internal_version, migration_version, description))
                 migration.migrate()
                 klass.__internal.db_version = migration_version
                 klass.__internal.save()

@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
 
-from flask import Blueprint
-from flask_negotiation import Render
-from flask_negotiation.renderers import renderer, template_renderer
 from json import dumps
+
+from flask import Blueprint, jsonify, render_template, request
+from flask_api.decorators import set_renderers
+from flask_api.renderers import JSONRenderer
 
 from core.web.json import to_json, recursive_encoder
 
@@ -13,17 +14,20 @@ api = Blueprint("api", __name__, template_folder="templates")
 # these lines might be useful:
 #
 # from flask_cors import CORS, cross_origin
-# CORS(api, resources={r"*": {"origins": "*"}})
+# CORS(api, resources={r"*": {"origins": "*"}}, expose_headers=['content-disposition'])
 
-
-@renderer('application/json')
 def bson_renderer(objects, template=None, ctx=None):
     data = recursive_encoder(objects)
     return dumps(data, default=to_json)
 
-
-render = Render(renderers=[template_renderer, bson_renderer])
-render_json = Render(renderers=[bson_renderer])
+@set_renderers(JSONRenderer)
+def render(obj, template=None):
+    mimetypes = request.accept_mimetypes
+    best = mimetypes.best_match(['text/html', 'application/json'], 'application/json')
+    if best == 'application/json':
+        json_obj = recursive_encoder(obj)
+        return jsonify(json_obj)
+    return render_template(template, data=obj)
 
 from core.web.api.observable import ObservableSearch, Observable
 from core.web.api.entity import Entity, EntitySearch

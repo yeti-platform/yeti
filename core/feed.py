@@ -4,15 +4,16 @@ import json
 import logging
 import os
 import tempfile
-from StringIO import StringIO
+import xml.etree.ElementTree as ET
 from base64 import b64decode
 from datetime import datetime
+from io import StringIO, BytesIO
+from zipfile import ZipFile
 
 import pandas as pd
 import pytz
 import requests
 from dateutil import parser
-from lxml import etree
 from mongoengine import DoesNotExist, StringField
 
 from core.config.celeryctl import celery_app
@@ -168,9 +169,98 @@ class Feed(ScheduleEntry):
             "analyze: This method must be implemented in your feed class")
 
     # Helper functions
+    def _choose(self, feed, delimiter=';', comment="#", filter_row=None,
+                names=None, header=0, compare=False, date_parser=None):
+        df = None
+        if filter_row:
+            if comment and names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment, names=names,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+
+            elif header and not comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+            elif header and comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header,
+                                 comment=comment,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+
+            elif not header and comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+            elif not header and not comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 parse_dates=[filter_row],
+                                 date_parser=date_parser,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+        else:
+
+            if comment and names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment, names=names, quotechar='"',
+                                 quoting=True, skipinitialspace=True)
+            elif not comment and names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment, names=names,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+            elif header and not comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header, quotechar='"', quoting=True,
+                                 skipinitialspace=True)
+            elif header and comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 header=header,
+                                 comment=comment,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+
+            elif not header and comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 comment=comment,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+            elif not header and not comment and not names:
+                df = pd.read_csv(StringIO(feed), delimiter=delimiter,
+                                 quotechar='"', quoting=True,
+                                 skipinitialspace=True
+                                 )
+
+        return df
+
+    def _unzip_content(self, data):
+        f = ZipFile(BytesIO(data))
+        name = f.namelist()[0]
+        unzip_data = f.read(name)
+        return unzip_data
 
     def _make_request(self, method="get", headers={}, auth=None, params={}, data={},
-        url=False, verify=True):
+        url=False, verify=True, sort=True):
 
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
@@ -186,7 +276,6 @@ class Feed(ScheduleEntry):
         Returns:
             requests object.
         """
-        print(method, headers, auth, params, data, url, verify)
         if auth:
             r = getattr(requests, method)(
                 url or self.source,
@@ -195,7 +284,8 @@ class Feed(ScheduleEntry):
                 proxies=yeti_config.proxy,
                 params=params,
                 data=data,
-                verify=verify)
+                verify=verify,
+                stream=True)
         else:
             r = getattr(requests, method)(
                 url or self.source,
@@ -203,18 +293,20 @@ class Feed(ScheduleEntry):
                 proxies=yeti_config.proxy,
                 params=params,
                 data=data,
-                verify=verify)
+                verify=verify,
+                stream=True)
 
         if r.status_code != 200:
             raise GenericYetiError(
                 "{} returns code: {}".format(self.source, r.status_code))
-
-        if self.last_run is not None and r.headers.get('Last-Modified'):
-            last_mod = parser.parse(r.headers['Last-Modified'])
-            if self.last_run and self.last_run > last_mod.replace(tzinfo=None):
-                raise GenericYetiInfo(
-                    "Last modified date: {} returns code: {}".format(
-                        last_mod, r.status_code))
+        if sort:
+            if self.last_run is not None and r.headers.get('Last-Modified'):
+                last_mod = parser.parse(r.headers['Last-Modified'])
+                if self.last_run and self.last_run > last_mod.replace(
+                        tzinfo=None):
+                    raise GenericYetiInfo(
+                        "Last modified date: {} returns code: {}".format(
+                            last_mod, r.status_code))
 
         return r
 
@@ -246,14 +338,14 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers=headers, auth=auth, verify=verify)
-        return self.parse_xml(r.content, main_node, children)
+        return self.parse_xml(r.content.decode(), main_node, children)
 
     def parse_xml(self, data, main_node, children):
         """Helper function used to parse XML. See :func:`core.feed.Feed.update_xml` for details"""
 
-        tree = etree.parse(StringIO(data))
+        tree = ET.fromstring(data)
 
-        for item in tree.findall("//{}".format(main_node)):
+        for item in tree.findall(".//{}".format(main_node)):
             context = {}
             for field in children:
                 context[field] = item.findtext(field)
@@ -278,8 +370,8 @@ class Feed(ScheduleEntry):
         assert self.source is not None
 
         r = self._make_request(headers=headers, auth=auth, verify=verify)
-        feed = self._temp_feed_data_compare(r.content)
-
+        feed = self._temp_feed_data_compare(
+            r.content.decode('utf-8', 'backslashreplace'))
         for line in feed:
             yield line
 
@@ -289,7 +381,8 @@ class Feed(ScheduleEntry):
 
     def update_csv(self, delimiter=';', headers=None, auth=None,
                    verify=True, comment="#", filter_row=None, names=None,
-                   header=None, compare=False, date_parser=None):
+                   header=0, compare=False, date_parser=None,
+                   content_zip=False):
         """Helper function. Performs an HTTP request on ``source`` and treats
         the response as an CSV file, yielding a ``dict`` for each parsed line.
 
@@ -309,27 +402,25 @@ class Feed(ScheduleEntry):
         """
         assert self.source is not None
 
-        r = self._make_request(headers=headers, auth=auth, verify=verify)
-        feed = r.content
+        r = self._make_request(
+            sort=False, headers=headers, auth=auth, verify=verify)
+        content = r.content
 
-        if compare:
-            feed = self._temp_feed_data_compare(r.content)
+        if content_zip:
+            content = self._unzip_content(content)
 
-        if filter_row:
-            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             comment=comment,
-                             parse_dates=[filter_row],
-                             names=names, header=header,
-                             date_parser=date_parser)
+        feed = content.decode()
 
-            df.sort_values(by=filter_row, inplace=True, ascending=False)
-        else:
-            df = pd.read_csv(StringIO(feed), delimiter=delimiter,
-                             comment=comment, keep_default_na=False,
-                             names=names)
+        df = self._choose(feed, delimiter=delimiter,
+                          comment=comment,
+                          filter_row=filter_row,
+                          names=names,
+                          header=header,
+                          date_parser=date_parser)
 
         df.drop_duplicates(inplace=True)
         df.fillna('', inplace=True)
+
         if self.last_run and filter_row:
             df = df[df[filter_row] > self.last_run]
 

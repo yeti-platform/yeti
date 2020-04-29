@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 
-from mongoengine import StringField
 import yara
+from mongoengine import StringField
 
-from core.indicators import Indicator
 from core.errors import IndicatorValidationError
+from core.indicators import Indicator
 
 rule_template = """rule yeti_rule
 {
@@ -46,7 +46,6 @@ class Yara(Indicator):
 
     def match(self, value):
         if not self.error:
-            if isinstance(value, unicode):
-                value = value.encode('utf-8')
+            value = value.encode('utf-8')
             matches = self.compiled_yara.match(data=value)
             return True if matches else False

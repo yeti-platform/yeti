@@ -1,19 +1,19 @@
 from __future__ import unicode_literals
 
 import logging
-from core.logger import userLogger
 
 from bson.json_util import loads
 from flask import request, url_for, abort, send_file, make_response
-from flask_login import current_user
 from flask_classy import FlaskView, route
+from flask_login import current_user
 from mongoengine.errors import InvalidQueryError
 
-from core.web.api.api import render
-from core.web.helpers import get_queryset
-from core.helpers import iterify
 from core.database import AttachedFile
+from core.helpers import iterify
+from core.logger import userLogger
+from core.web.api.api import render
 from core.web.helpers import get_object_or_404
+from core.web.helpers import get_queryset
 from core.web.helpers import requires_permissions
 
 
@@ -25,10 +25,10 @@ class CrudSearchApi(FlaskView):
         regex = params.pop('regex', False)
         ignorecase = params.pop('ignorecase', False)
         page = params.pop('page', 1) - 1
-        rng = params.pop('range', 50)        
-        userLogger.info("User %s search : filter=%s params=%s regex=%s",current_user.username,fltr,params,regex)
-        return list(
-            get_queryset(self.objectmanager, fltr, regex,
+        rng = params.pop('range', 50)
+        userLogger.info("User %s search : filter=%s params=%s regex=%s",
+                        current_user.username,fltr,params,regex)
+        return list(get_queryset(self.objectmanager, fltr, regex,
                          ignorecase)[page * rng:(page + 1) * rng])
 
     @requires_permissions('read')
@@ -109,6 +109,7 @@ class CrudApi(FlaskView):
         """List all corresponding entries in the database. **Do not use on large datasets!**
         """
         objects = [o.info() for o in self.objectmanager.objects.all()]
+
         return render(objects, template=self.template)
 
     # This method can be overridden if needed

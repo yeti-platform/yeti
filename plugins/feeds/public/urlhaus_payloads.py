@@ -6,6 +6,7 @@ from core.errors import ObservableValidationError
 from core.observables import File, Hash, Url
 
 
+# Deprecated
 class UrlHausPayloads(Feed):
     default_values = {
         "frequency": timedelta(hours=1),
@@ -21,7 +22,8 @@ class UrlHausPayloads(Feed):
                                            names=['firstseen', 'url',
                                                   'filetype', 'md5', 'sha256',
                                                   'signature'],
-                                           filter_row='firstseen'):
+                                           filter_row='firstseen',
+                                           content_zip=True):
             self.analyze(line)
 
     def analyze(self, line):

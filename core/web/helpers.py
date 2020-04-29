@@ -1,17 +1,17 @@
 from __future__ import unicode_literals
 
 import re
-from inspect import ismethod
 from functools import wraps
-import urlparse
-from werkzeug.exceptions import Forbidden
-from core.helpers import iterify
+from inspect import ismethod
+from urllib.parse import urlparse
 
 from flask import abort, request
 from flask_login import current_user
 from mongoengine import Q
+from werkzeug.exceptions import Forbidden
 
 from core.group import Group
+from core.helpers import iterify
 
 SEARCH_REPLACE = {
     'tags': 'tags__name',
@@ -89,7 +89,7 @@ def get_queryset(collection, filters, regex, ignorecase, replace=True):
             if key in SEARCH_REPLACE:
                 key = SEARCH_REPLACE[key]
 
-        if regex and isinstance(value, basestring):
+        if regex and isinstance(value, str):
             flags = 0
             if ignorecase:
                 flags |= re.I
@@ -110,13 +110,13 @@ def get_queryset(collection, filters, regex, ignorecase, replace=True):
             })
             result_filters.pop(alias)
 
-    print "Filter: {}".format(result_filters), q.to_query(collection)
+    print("Filter: {}".format(result_filters), q.to_query(collection))
 
     return queryset.filter(**result_filters).filter(q)
 
 
 def different_origin(referer, target):
-    p1, p2 = urlparse.urlparse(referer), urlparse.urlparse(target)
+    p1, p2 = urlparse(referer), urlparse(target)
     origin1 = p1.scheme, p1.hostname, p1.port
     origin2 = p2.scheme, p2.hostname, p2.port
 
@@ -126,7 +126,7 @@ def different_origin(referer, target):
 def csrf_protect():
     if request.method not in ('GET', 'HEAD', 'OPTIONS', 'TRACE'):
         referer = request.headers.get('Referer')
-        print referer
+        print(referer)
 
         if referer is None or different_origin(referer, request.url_root):
             raise Forbidden(description="Referer check failed.")

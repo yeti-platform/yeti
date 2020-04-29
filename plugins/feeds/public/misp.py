@@ -1,6 +1,6 @@
 import logging
 from datetime import date, timedelta
-from urlparse import urljoin
+from urllib.parse import urljoin
 
 import requests
 from mongoengine import DictField

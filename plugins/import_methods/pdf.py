@@ -1,8 +1,9 @@
-from cStringIO import StringIO
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from io import StringIO
+
 from pdfminer.converter import TextConverter
-from pdfminer.pdfpage import PDFPage
 from pdfminer.layout import LAParams
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
 
 from core.investigation import ImportMethod
 

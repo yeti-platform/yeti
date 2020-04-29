@@ -20,7 +20,7 @@ class RulezSKBruteforceBlocker(Feed):
     def update(self):
         since_last_run = datetime.now() - self.frequency
         r = self._make_request(headers={"User-Agent": "yeti-project"})
-        lines = r.content.splitlines()[1:-1]
+        lines = r.content.decode().splitlines()[1:-1]
         for line in lines:
             ip, date, count, id = filter(None, line.split("\t"))
             first_seen = parser.parse(date.replace("# ", ""))

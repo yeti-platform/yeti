@@ -1,12 +1,12 @@
-from flask import Blueprint, render_template, request, redirect, flash, abort
+from flask import Blueprint, render_template, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
 
-from core.auth.local.user_management import authenticate, create_user, set_password
 from core.auth.local.group_management import create_group
+from core.auth.local.user_management import authenticate, create_user, \
+    set_password
 from core.user import User
 from core.web.helpers import get_object_or_404
-from flask_login.mixins import AnonymousUserMixin
 
 auth = Blueprint('auth', __name__, template_folder='templates')
 
@@ -23,7 +23,7 @@ def login():
             request.form.get('login'), request.form.get('password'))
         if u:
             login_user(u)
-            print "User logged in (web):", u
+            print("User logged in (web):")
             redir = request.args.get('next', '/')
             return redirect(redir)
         else:

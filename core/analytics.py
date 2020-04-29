@@ -2,14 +2,15 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 
-from core.config.celeryctl import celery_app
-from core.database import YetiDocument
-from core.scheduling import ScheduleEntry, OneShotEntry
-from core.observables import Observable
-from core.user import User
-from core.helpers import iterify
 from mongoengine import *
 from mongoengine import signals
+
+from core.config.celeryctl import celery_app
+from core.database import YetiDocument
+from core.helpers import iterify
+from core.observables import Observable
+from core.scheduling import ScheduleEntry, OneShotEntry
+from core.user import User
 
 
 class AnalyticsResults(Document):
@@ -58,7 +59,7 @@ class InlineAnalytics(YetiDocument):
     def post_save(cls, sender, document, created):
         if issubclass(sender, Observable):
             if getattr(document, 'new', False):
-                for analytics in cls.analytics.itervalues():
+                for analytics in cls.analytics.values():
                     if analytics.enabled and sender.__name__ in iterify(
                             analytics.ACTS_ON):
                         document.new = False
@@ -123,7 +124,7 @@ class OneShotAnalytics(OneShotEntry):
         super(OneShotAnalytics, self).__init__(*args, **kwargs)
 
         if hasattr(self, 'settings'):
-            for setting_id, setting in self.settings.iteritems():
+            for setting_id, setting in self.settings.items():
                 User.register_setting(
                     setting_id, setting['name'], setting['description'])
 

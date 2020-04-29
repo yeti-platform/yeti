@@ -1,9 +1,10 @@
-import requests
 from datetime import datetime
 
+import requests
+
 from core.analytics import OneShotAnalytics
-from core.observables import Observable, Hostname, Hash, Email, Text
 from core.config.config import yeti_config
+from core.observables import Observable, Hostname, Hash, Email, Text
 
 
 def whois_links(observable, whois):
@@ -50,8 +51,8 @@ def whois_links(observable, whois):
             if ns not in ["No nameserver", "not.defined"]:
                 try:
                     nameservers.append(Hostname.get_or_create(value=ns))
-                except Exception, e:
-                    print e
+                except Exception as e:
+                    print(e.with_traceback())
 
         if nameservers:
             links.update(

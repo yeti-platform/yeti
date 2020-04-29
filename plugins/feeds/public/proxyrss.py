@@ -1,16 +1,17 @@
 import logging
-from lxml import etree
+import xml.etree.ElementTree as ET
 from datetime import timedelta
-from StringIO import StringIO
-
-from core.observables import Ip
-from core.feed import Feed
-from core.errors import ObservableValidationError
 
 from dateutil.tz import gettz
+
+from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Ip
+
 tzinfos = {"EDT": gettz("America/New_York")}
 
 
+# Deprecated
 class ProxyRSS(Feed):
 
     default_values = {
@@ -22,7 +23,7 @@ class ProxyRSS(Feed):
 
     def update(self):
         r = self._make_request()
-        tree = etree.parse(StringIO(r.content))
+        tree = ET.parse(r.content)
         root = tree.getroot()
         for item in tree.findall("//item", root.nsmap):
             context = {}

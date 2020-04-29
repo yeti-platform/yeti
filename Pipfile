@@ -7,7 +7,6 @@ name = "pypi"
 mongoengine = "*"
 iptools = "*"
 ipaddress = "*"
-urlnorm = "*"
 celery = "*"
 idna = "*"
 requests = {extras = ["socks"]}
@@ -40,8 +39,12 @@ python-dateutil = "*"
 libmagic = "*"
 maclookup = "*"
 pyopenssl = "*"
+pandas= "*"
+flask-api = "*"
+url-normalize = "*"
 
 [dev-packages]
+pylint = "<2.0.0"
 
 [requires]
-python_version = "2.7"
+python_version = "3.7"

@@ -1,19 +1,18 @@
 from __future__ import unicode_literals
 
-from StringIO import StringIO
 import zipfile
 
-from flask_classy import route
-from flask import request, Response, abort
 import magic
+from flask import request, Response, abort
+from flask_classy import route
 from mongoengine import DoesNotExist
 
-from core.web.api.crud import CrudApi
 from core import observables
-from core.web.helpers import requires_permissions
-from core.web.api.api import render_json
-from core.helpers import stream_sha256
 from core.database import AttachedFile
+from core.helpers import stream_sha256
+from core.web.api.api import render
+from core.web.api.crud import CrudApi
+from core.web.helpers import requires_permissions
 
 
 def save_file(uploaded_file, filename=None):
@@ -42,7 +41,7 @@ def save_uploaded_files():
                 for info in zf.infolist():
                     name = info.filename
                     size = info.file_size
-                    data = StringIO(zf.read(name))
+                    data = zf.read(name)
                     if size > 0:
                         files.append(
                             save_file(data, filename=name.split("/")[-1]))
@@ -99,4 +98,4 @@ class File(CrudApi):
         """
         files = save_uploaded_files()
 
-        return render_json(files)
+        return render(files)

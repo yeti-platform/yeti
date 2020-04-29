@@ -1,14 +1,15 @@
-import os
 import hmac
-from core.logger import userLogger
+import os
+from binascii import hexlify
 from hashlib import sha512
 
 from flask import current_app
 from flask_login.mixins import AnonymousUserMixin
+from mongoengine import DoesNotExist
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from core.logger import userLogger
 from core.user import User
-from mongoengine import DoesNotExist
 
 DEFAULT_PERMISSIONS = {
     "feed": {
@@ -123,7 +124,7 @@ def authenticate(username, password):
 def generate_session_token(user):
     key = current_app.config['SECRET_KEY']
     return hmac.new(
-        key, (user.username + user.password + os.urandom(12).encode('hex')),
+        key, (user.username.encode() + user.password.encode() + hexlify(os.urandom(12))),
         sha512).hexdigest()
 
 

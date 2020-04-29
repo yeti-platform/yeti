@@ -1,8 +1,10 @@
+import logging
 from datetime import timedelta
 
+from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Hostname
-from core.errors import ObservableValidationError
+
 
 class DynamicDomains(Feed):
 
@@ -15,13 +17,14 @@ class DynamicDomains(Feed):
 
     def update(self):
         for line in self.update_lines():
-            if line[0].startswith('#'):
+            if line.startswith('#'):
                 continue
 
             self.analyze(line)
 
     def analyze(self, line):
         line = line.strip()
+        logging.debug(line)
         sline = line.split()
 
         hostname = sline[0]

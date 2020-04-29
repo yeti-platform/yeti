@@ -1,8 +1,7 @@
-from pythonwhois.net import get_whois_raw
-from pythonwhois.parse import parse_raw_whois
-from core.common.utils import tldextract_parser
-
+#from pythonwhois.net import get_whois_raw
+#from pythonwhois.parse import parse_raw_whois
 from core.analytics import OneShotAnalytics
+from core.common.utils import tldextract_parser
 from core.observables import Email, Text
 
 

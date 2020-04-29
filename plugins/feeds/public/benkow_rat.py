@@ -1,9 +1,5 @@
-
-import csv
 import logging
-from datetime import datetime, timedelta
-
-from dateutil import parser
+from datetime import timedelta
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -20,30 +16,19 @@ class BenkowTrackerRat(Feed):
     }
 
     def update(self):
+        for index, line in self.update_csv(filter_row='date', delimiter=';',
+                                           header=0):
+            self.analyze(line)
 
-        since_last_run = datetime.utcnow() - self.frequency
-
-        resp = self._make_request()
-        reader = csv.reader(resp.content.strip().splitlines(), delimiter=';', quotechar='"')
-        for line in reader:
-            if line[0] == 'id':
-                continue
-
-            first_seen = parser.parse(line[4])
-
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    return
-
-            self.analyze(line, first_seen)
-
-    def analyze(self, line, first_seen):
+    def analyze(self, line):
 
         context = {}
-        context['date_added'] = first_seen
+        context['date_added'] = line['date']
         context['source'] = self.name
 
-        _, family, url, ip, first_seen, _ = line
+        family = line['type']
+        url = line['url']
+        ip = line['ip']
 
         if not url.startswith(('http://', 'https://')):
             url = "http://" + url

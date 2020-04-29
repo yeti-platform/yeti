@@ -1,7 +1,7 @@
+import datetime
 import json
 import logging
 
-import datetime
 import requests
 
 from core.analytics import OneShotAnalytics
@@ -25,8 +25,8 @@ class ThreatCrowdAPI(object):
                 if res.ok:
                     return res.json()
             except Exception as e:
-                print 'Exception while getting domain report {}'.format(
-                    e.message)
+                print('Exception while getting domain report {}'.format(
+                    e.message))
                 return None
 
         elif isinstance(observable, Email):
@@ -38,22 +38,22 @@ class ThreatCrowdAPI(object):
                 if res.ok:
                     return res.json()
             except Exception as e:
-                print 'Exception while getting email report {}'.format(
-                    e.message)
+                print('Exception while getting email report {}'.format(
+                    e.message))
                 return None
         elif isinstance(observable, Ip):
             url = base_url_api + '/ip/report/'
             print(url)
             params = {'ip': observable.value}
-            print params
+            print(params)
             try:
                 res = requests.get(url, params)
 
                 if res.ok:
                     return res.json()
             except Exception as e:
-                print 'Exception while getting email report {}'.format(
-                    e.message)
+                print('Exception while getting email report {}'.format(
+                    e.message))
                 return None
         elif isinstance(observable, Hash):
             url = base_url_api + '/file/report/'
@@ -64,8 +64,8 @@ class ThreatCrowdAPI(object):
                 if res.ok:
                     return res.json()
             except Exception as e:
-                print 'Exception while getting email report {}'.format(
-                    e.message)
+                print('Exception while getting email report {}'.format(
+                    e.message))
                 return None
 
 

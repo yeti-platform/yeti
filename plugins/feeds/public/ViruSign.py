@@ -3,13 +3,13 @@ import logging
 from datetime import datetime, timedelta
 
 import requests
-from core.observables import Hash, File
-from core.feed import Feed
+
 from core.errors import ObservableValidationError
+from core.feed import Feed
+from core.observables import Hash, File
 
 
 class ViruSign(Feed):
-
     default_values = {
         "frequency": timedelta(hours=24),
         "name": "ViruSign",
@@ -25,7 +25,8 @@ class ViruSign(Feed):
                 headers={"User-Agent": "yeti-project"}
             )
             if r.ok:
-                reader = csv.reader(r.content.splitlines(), quotechar='"')
+                reader = csv.reader(r.content.decode().splitlines(),
+                                    quotechar='"')
                 for line in reader:
                     self.analyze(line)
         except Exception as e:

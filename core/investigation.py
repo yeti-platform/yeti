@@ -2,19 +2,21 @@ from __future__ import unicode_literals
 
 import logging
 import traceback
-from bson.dbref import DBRef
 from datetime import datetime
-from mongoengine import *
+
+from bson.dbref import DBRef
 from flask_login import current_user
 from flask_mongoengine.wtf import model_form
-from wtforms.fields import StringField as WTFStringField
+from mongoengine import *
 from wtforms.fields import HiddenField as WTFHiddenField
+from wtforms.fields import StringField as WTFStringField
 
-from core.database import Node, AttachedFile, TagListField
-from core.scheduling import OneShotEntry
 from core.config.celeryctl import celery_app
+from core.database import Node, AttachedFile, TagListField
 from core.group import Group
+from core.scheduling import OneShotEntry
 from core.user import User
+
 
 class InvestigationLink(EmbeddedDocument):
     id = StringField(required=True)
@@ -99,7 +101,7 @@ class Investigation(Node):
                     pass
         if shared:
             result['shared'] = shared
-        print result
+
         return result
 
     def _node_changes(self, kind, method, links, nodes):
@@ -185,6 +187,6 @@ def import_task(results_id, target):
     try:
         import_method.do_import(results, target)
         results.update(status="finished")
-    except Exception, e:
+    except Exception as e:
         results.update(status="error", error=str(e))
         traceback.print_exc()

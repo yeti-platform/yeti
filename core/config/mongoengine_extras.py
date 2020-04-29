@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
-from mongoengine.base import BaseField
 from datetime import timedelta
+
+from mongoengine.base import BaseField
 
 
 class TimeDeltaField(BaseField):
@@ -22,7 +23,7 @@ class TimeDeltaField(BaseField):
             return None
         if isinstance(value, timedelta):
             return value
-        if isinstance(value, (int, float, str, unicode)):
+        if isinstance(value, (int, float, str, bytes)):
             return timedelta(seconds=int(value))
 
     def prepare_query_value(self, op, value):
@@ -30,7 +31,7 @@ class TimeDeltaField(BaseField):
             return value
         if isinstance(value, timedelta):
             return self.total_seconds(value)
-        if isinstance(value, (int, float, str, unicode)):
+        if isinstance(value, (int, float, str, bytes)):
             return int(value)
 
     @staticmethod

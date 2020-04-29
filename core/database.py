@@ -1,17 +1,16 @@
 from __future__ import unicode_literals
 
-import re
 import os
+import re
 from datetime import datetime
 
-from werkzeug.utils import secure_filename
-from wtforms import widgets, Field, StringField
-from mongoengine import *
 from flask_mongoengine.wtf import model_form
+from mongoengine import *
+from wtforms import widgets, Field
 
 from core.constants import STORAGE_ROOT
-from core.helpers import iterify, stream_sha256
 from core.errors import GenericYetiError
+from core.helpers import iterify, stream_sha256
 
 
 class StringListField(Field):
@@ -19,9 +18,9 @@ class StringListField(Field):
 
     def _value(self):
         if self.data:
-            return u','.join([unicode(d) for d in self.data])
+            return ','.join([d for d in self.data])
         else:
-            return u''
+            return ''
 
     def process_formdata(self, valuelist):
         if valuelist:
@@ -44,13 +43,13 @@ class YetiDocument(Document):
     }
 
     def clean_update(self, **kwargs):
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             setattr(self, key, value)
 
         self.validate()
 
         update_dict = {}
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             update_dict[key] = getattr(self, key, value)
 
         self.update(**update_dict)
@@ -163,8 +162,8 @@ class Link(Document):
         return {
             "description": self.description,
             "id": str(self.id),
-            "src": unicode(self.src),
-            "dst": unicode(self.dst)
+            "src": self.src,
+            "dst": self.dst
         }
 
     def to_dict(self):
@@ -450,7 +449,7 @@ class Node(YetiDocument):
             if key in search_replace:
                 key = search_replace[key]
 
-            if regex and isinstance(value, basestring):
+            if regex and isinstance(value, str):
                 value = {"$regex": value}
                 if ignorecase:
                     value["$options"] = "i"
@@ -468,6 +467,7 @@ class Node(YetiDocument):
             node.pop('oid')
             node['id'] = node.pop('_id')
             n['id'] = n.pop('_id')
+            n = klass(**n)
             l = Link(**node)  # necessary for first_seen and last_seen functions
             final_list.append((l, n))
 

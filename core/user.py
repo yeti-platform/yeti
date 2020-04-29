@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
 import os
+from binascii import hexlify
 
-from mongoengine import StringField, DictField, BooleanField
-from flask_mongoengine.wtf import model_form
 from flask import url_for
+from flask_mongoengine.wtf import model_form
+from mongoengine import StringField, DictField, BooleanField
 
 from core.database import YetiDocument
 
@@ -39,7 +40,7 @@ class User(YetiDocument):
         return False
 
     def get_id(self):
-        return unicode(self.session_token)
+        return self.session_token
 
     def has_settings(self, settings):
         for setting in settings:
@@ -78,7 +79,7 @@ class User(YetiDocument):
 
     @staticmethod
     def generate_api_key():
-        return os.urandom(40).encode('hex')
+        return hexlify(os.urandom(40)).decode()
 
     def info(self):
         i = {

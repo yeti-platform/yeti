@@ -3,11 +3,12 @@ from __future__ import unicode_literals
 from flask import request
 from flask_classy import route
 
-from core.web.api.api import render_json, render
-from core.web.api.crud import CrudApi
-from core.entities import Entity, Malware, TTP, Actor, ExploitKit, Exploit, Campaign
-from core.observables import Observable
+from core.entities import Entity, Malware, TTP, Actor, ExploitKit, Exploit, \
+    Campaign
 from core.indicators import Indicator, Yara, Regex
+from core.observables import Observable
+from core.web.api.api import render
+from core.web.api.crud import CrudApi
 from core.web.helpers import requires_permissions
 
 NODES_CLASSES = {
@@ -46,7 +47,7 @@ class Neighbors(CrudApi):
 
             result['links'].append(link.to_dict())
 
-        return render_json(result)
+        return render(result)
 
     @route("/tuples/<klass>/<node_id>/<type_filter>", methods=["POST"])
     @requires_permissions('read')
@@ -64,8 +65,8 @@ class Neighbors(CrudApi):
         page = int(params.pop("page", 1)) - 1
         rng = int(params.pop("range", 50))
 
-        print "[{}] Filter: {}".format(self.__class__.__name__, fltr)
-        print filter_class, fltr, regex, ignorecase, page, rng
+        print("[{}] Filter: {}".format(self.__class__.__name__, fltr))
+        print(filter_class, fltr, regex, ignorecase, page, rng)
         neighbors = node.neighbors_advanced(
             filter_class, fltr, regex, ignorecase, page, rng)
 
@@ -78,13 +79,10 @@ class Neighbors(CrudApi):
             objs.append(obj)
             _all.append((link, obj))
 
-        data = {"data": objs, "links": links}
-        # First argument of render is the "data" variable in the template.
-        # We override this behavior for these templates to include links
-        # using the ctx argument
+        data = {"objs": objs, "links": links}
         if issubclass(filter_class, Entity):
-            return render(data, template='entity_api.html', ctx=data)
+            return render(data, template='entity_api.html')
         if issubclass(filter_class, Indicator):
-            return render(data, template='indicator_api.html', ctx=data)
+            return render(data, template='indicator_api.html')
         if issubclass(filter_class, Observable):
-            return render(data, template='observable_api.html', ctx=data)
+            return render(data, template='observable_api.html')

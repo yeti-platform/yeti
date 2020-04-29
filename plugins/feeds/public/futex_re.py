@@ -23,7 +23,7 @@ class FutexTracker(Feed):
                                            names=['id', 'firstseen', 'url',
                                                   'status', 'hash', 'country',
                                                   'as'],
-                                           header=-1):
+                                           header=None):
             self.analyze(line)
 
     # pylint: disable=arguments-differ

@@ -1,5 +1,5 @@
 import os
-import ConfigParser
+from configparser import ConfigParser
 
 from core.constants import YETI_ROOT
 
@@ -16,7 +16,7 @@ class Dictionary(dict):
 class Config:
 
     def __init__(self):
-        config = ConfigParser.SafeConfigParser(allow_no_value=True)
+        config = ConfigParser(allow_no_value=True)
         config.read(os.path.join(YETI_ROOT, "yeti.conf"))
 
         for section in config.sections():

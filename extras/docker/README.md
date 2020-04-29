@@ -2,54 +2,47 @@
 
 This is probably the quickest way to get started with Yeti.
 
-## Install docker
+## Install `docker` and `docker-compose`
 
 Follow the [official instructions](https://www.docker.com/community-edition).
 
 ## Clone the repo
 
-    $ git clone https://github.com/yeti-platform/yeti
-    $ cd yeti
+    git clone https://github.com/yeti-platform/yeti
+    cd yeti
 
 ## Start Yeti
+
 The following command will build a Docker image named `yeti-platform` and launch it :
 
-    $ docker-compose -f extras/docker/docker-compose.yml up
+    docker-compose -p yeti -f extras/docker/dev/docker-compose.yml up -d
 
 You can also invoke docker-compose from the `docker` directory
 
-    $ cd extras/docker
-    $ docker-compose up
+    cd extras/docker/dev
+    docker-compose up
 
-The `docker-compose up` command should start a working Yeti container listening
-for connections on `http://localhost:5000/`. No other services will be available  (e.g. feeds), just the web interface.
+The `docker-compose` command should build the master Yeti Docker image and start
+6 docker containers, one for each service:
 
-Alternatively you can launch a fully featured Yeti instance by executing:
+* `yeti` (the main webserver / API)
+* `feeds` (for running feeds Celery tasks)
+* `analytics` (for running the analytics Celery tasks)
+* `beat` (for scheduling the Celery tasks)
+* `exports` (for running the exports Celery tasks)
+* `oneshot` (for running the oneshot Celery tasks)
 
-    $ docker-compose -f docker-compose-full.yml up
+And two more:
 
-The above will launch Yeti with uWSGI over an HTTP socket along with all of its services. Yeti will be available under `http://localhost:8080`.
+* `redis` (the redis server)
+* `mongodb` (the mongodb server)
 
-## Notes
+This will start a Yeti service running on <http://localhost:5000/>
 
-1. A custom configuration file can be mounted under Yeti's image by editing the
-compose file and using the `volumes` option. For example:
-```
-version: '3'
-services:
-  yeti:
-    build:
-      context: ../../
-      dockerfile: ./extras/docker/Dockerfile
-    ports:
-      - "5000:5000"
-    links:
-      - redis
-      - mongodb
-    volumes:
-      - /my/custom/yeti/config:/opt/yeti/yeti.conf:ro
-    restart: always
-```
-2. Keep in mind, database data do __not__ persist after container destruction. If you require
-persistence for your data, you can use the `volumes` option on the `mongodb` service  and mount an appropriate volume for your data.  For more information you can check the relevant [official documentation](https://docs.docker.com/storage/volumes/).
-3. If you want to launch the image in native uWSGI socket mode for use `uwsgi`, instead of `uwsgi-http`, as an argument for the `docker-entrypoint.sh` script.
+### Prod setup
+
+To start a more performant container for web requests, run:
+
+    docker-compose -p yeti -f extras/docker/dev/docker-compose.yml run -p 8080:8080 yeti /docker-entrypoint.sh uwsgi-http
+
+Then point your browser to <http://localhost:8080.>

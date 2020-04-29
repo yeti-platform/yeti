@@ -40,8 +40,8 @@ class Hostname(Observable):
         if self.value.endswith("."):
             self.value = self.value[:-1]
         try:
-            self.idna = unicode(idna.encode(self.value))
+            self.idna = self.value
         except idna.core.InvalidCodepoint:
             pass
-        except Exception, e:
-            raise ObservableValidationError(e.message)
+        except Exception as e:
+            raise ObservableValidationError(e.with_traceback())
