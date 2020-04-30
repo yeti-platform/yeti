@@ -10,7 +10,7 @@
     "handlebars": "^4.3.0",
     "highlight.js": "^9.11.0",
     "inline-attachment": "^2.0.3",
-    "jquery": "^3.4.0",
+    "jquery": "^3.5.0",
     "jquery-ui-dist": "^1.12.1",
     "marked": "^0.3.18",
     "pdfjs-dist-viewer-min": "^1.8.188",
