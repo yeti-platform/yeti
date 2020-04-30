@@ -2,9 +2,9 @@ from __future__ import unicode_literals
 
 import logging
 
-from mongoengine import StringField, BooleanField, DateTimeField, connect
-from celery.beat import Scheduler as BaseScheduler
 from celery.beat import ScheduleEntry as BaseScheduleEntry
+from celery.beat import Scheduler as BaseScheduler
+from mongoengine import StringField, BooleanField, DateTimeField, connect
 
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
@@ -80,7 +80,7 @@ class Scheduler(BaseScheduler):
 
     def setup_schedule(self):
         logging.debug("Setting up scheduler")
-        for entry_name, entry in self.loaded_entries.iteritems():
+        for entry_name, entry in self.loaded_entries.items():
             if isinstance(entry, ScheduleEntry):
                 self._schedule[entry_name] = BaseScheduleEntry(
                     name=entry_name,
