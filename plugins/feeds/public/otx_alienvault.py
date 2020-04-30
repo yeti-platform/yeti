@@ -91,7 +91,7 @@ class OTXAlienvault(Feed):
                                                diamond='capability',
                                                location='feeds',
                                                pattern=indicator['content'])
-                    except Exception as e:
+                    except Exception:
                         logging.error(
                             'Error to create indicator %s' % indicator)
 

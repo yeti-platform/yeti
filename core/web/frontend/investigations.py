@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from flask_classy import route
 from flask_login import current_user
 from flask import render_template, request, flash, redirect, url_for
-from mongoengine import DoesNotExist, Q
+from mongoengine import DoesNotExist
 
 from core.web.frontend.generic import GenericView
 from core.investigation import Investigation, ImportMethod, ImportResults

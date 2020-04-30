@@ -43,7 +43,7 @@ class ResolveHostnames(ScheduledAnalytics):
                 e = Observable.add_text(rdata)
                 e.add_source("analytics")
                 generated.append(e)
-            except ObservableValidationError as e:
+            except ObservableValidationError:
                 logging.error("{} is not a valid datatype".format(rdata))
 
         h.active_link_to(

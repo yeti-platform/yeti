@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
 
 from mongoengine import *
-from flask_mongoengine.wtf import model_form
 
 from core.entities import Entity
-from core.database import TagListField, StringListField
+from core.database import StringListField
 
 
 class Actor(Entity):
