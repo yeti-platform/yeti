@@ -1,6 +1,6 @@
 import csv
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from dateutil import parser
 from core.feed import Feed

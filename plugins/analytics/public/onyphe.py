@@ -14,7 +14,6 @@ from requests.utils import quote
 from six.moves.urllib.parse import urljoin
 
 from core.analytics import OneShotAnalytics
-from core.errors import ObservableValidationError
 from core.observables import Hostname, Ip
 
 default_types = {
@@ -70,7 +69,7 @@ class Onyphe:
         elif response.status_code != requests.codes.OK:
             try:
                 error = response.json()['message']
-            except Exception as e:
+            except Exception:
                 error = 'Invalid API key'
 
             raise APIError(error)

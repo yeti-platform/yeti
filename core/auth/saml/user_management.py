@@ -2,7 +2,6 @@ from flask_login import login_user
 from mongoengine.errors import DoesNotExist
 
 from core.user import User
-from .config import ROLE_MAPPING, ROLE_KEY
 
 
 def authenticate(session):

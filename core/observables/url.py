@@ -44,7 +44,7 @@ class Url(Observable):
             self.value = u"http://{}".format(self.value)
         try:
             self.value = url_normalize(self.value).replace(' ', '%20')
-        except Exception as e:
+        except Exception:
             raise ObservableValidationError(
                 "Invalid URL: {}".format(self.value))
 

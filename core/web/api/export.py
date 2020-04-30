@@ -11,7 +11,7 @@ from core import exports
 from core.web.api.api import render
 from core.helpers import string_to_timedelta
 from core.observables import Tag
-from core.web.helpers import requires_role, requires_permissions
+from core.web.helpers import requires_permissions
 
 
 class ExportTemplate(CrudApi):

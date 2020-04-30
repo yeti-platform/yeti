@@ -141,7 +141,7 @@ class GenericView(FlaskView):
                     obj_type=klass.__name__,
                     obj=None,
                     groups=get_user_groups())
-            except NotUniqueError as e:
+            except NotUniqueError:
                 form.errors['Duplicate'] = [
                     'Entity "{}" is already in the database'.format(obj)
                 ]

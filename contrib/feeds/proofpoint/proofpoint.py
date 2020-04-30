@@ -543,7 +543,6 @@ class ThreatInsight(Feed):
             threat_forensics.append(
                 Text.get_or_create(
                     value=evidence['what']['ids'], context=[context]))
-            pass
         elif evidence['type'] == 'mutex':
             threat_forensics.append(
                 Text.get_or_create(
@@ -691,7 +690,6 @@ class ProofPointAPI(hammock.Hammock):
     def __init__(self, *args, **kwargs):
         self.__endpoint = 'https://tap-api-v2.proofpoint.com/v2'
         hammock.Hammock.__init__(self, self.__endpoint, *args, **kwargs)
-        pass
 
 
 class CampaignAPI:
