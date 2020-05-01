@@ -26,9 +26,7 @@ Users
 	<table class='table table-compact'>
 		<tr><th>Running workers</th><th>Active tasks</th></tr>
 		{% for key, value in active.items() %}
-			{% if value[key] %}
 			<tr><td>{{key}}</td><td>{{ generic.display_tags(value['running']) }}</td><td></td></tr>
-			{% endif %}
 		{%endfor%}
 	</table>
 </div>
