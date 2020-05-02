@@ -348,7 +348,7 @@ Please refer to IVRE's documentation on how to collect passive data.
         if result:
             results.update(
                 raw=pformat(
-                    {key: list(value) for key, value in result.iteritems()}))
+                    {key: list(value) for key, value in result.items()}))
             if all(context['source'] != 'ivre_passive'
                    for context in ip.context):
                 ip.add_context({'source': 'ivre_passive', 'results': result})

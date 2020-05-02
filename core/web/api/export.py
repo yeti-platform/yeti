@@ -15,7 +15,7 @@ from core.web.helpers import requires_permissions
 
 
 class ExportTemplate(CrudApi):
-    template = "export_template_api"
+    template = "export_template_api.html"
     objectmanager = exports.ExportTemplate
 
 

@@ -149,6 +149,6 @@ class MacAddressIo(OneShotAnalytics, MacAddressIoApi):
             context['Date when the range was last updated'] = datetime.strptime(
                 lookup_results["blockDetails"]["dateUpdated"], '%Y-%m-%d').strftime('%d %B %Y')
 
-        context = {k: v for k, v in context.iteritems() if v}
+        context = {k: v for k, v in context.items() if v}
 
         observable.add_context(context, replace_source=True)
