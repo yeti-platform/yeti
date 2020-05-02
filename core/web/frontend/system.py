@@ -113,13 +113,11 @@ class SystemView(FlaskView):
         active = {}
         if results['active']:
             for key in results['active']:
-                active[key] = {
-                    "running": [
-                        ScheduleEntry.objects.get(
-                            id=re.sub(r"[^0-9a-f]", "", i['args']))
-                        for i in results["active"][key]
-                    ],
-                }
+                entries = []
+                for item in results["active"][key]:
+                    args = item.get("args", [])
+                    entries.extend([ScheduleEntry.objects.get(id=id_) for id_ in args])
+                active[key] = { "running": entries }
 
         return render_template(
             "system/system.html",
