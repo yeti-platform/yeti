@@ -13,9 +13,10 @@ from core.database import Node, Link, YetiDocument
 
 def recursive_encoder(objects, template=None, ctx=None):
     if isinstance(objects, dict):
+        newdict = {}
         for (key, value) in objects.items():
-            objects[key] = recursive_encoder(value)
-        return objects
+            newdict[key] = recursive_encoder(value)
+        return newdict
 
     elif isinstance(objects, (list, QuerySet, set)):
         return [recursive_encoder(o) for o in objects]
