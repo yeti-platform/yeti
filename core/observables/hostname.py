@@ -34,6 +34,12 @@ class Hostname(Observable):
 
         return False
 
+    def info(self):
+        info = super(Hostname, self).info()
+        info['idna'] = self.idna
+        info['domain'] = self.domain
+        return info
+
     def normalize(self):
         self.value = refang(self.value.lower())
         # Remove trailing dot if existing
