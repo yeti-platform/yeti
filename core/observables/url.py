@@ -57,6 +57,11 @@ class Url(Observable):
             raise ObservableValidationError(
                 "Invalid URL (UTF-8 decode error): {}".format(self.value))
 
+    def info(self):
+        info = super(Url, self).info()
+        info['parsed_url'] = self.parsed_url
+        return info
+
     def parse(self):
         parsed = urlparse(self.value)
 
