@@ -36,7 +36,7 @@ class Onyphe:
         :type key: str
     """
 
-    def __init__(self, api_key, version='v1'):
+    def __init__(self, api_key, version='v2'):
         self.api_key = api_key
         self.base_url = 'https://www.onyphe.io/api/'
         self.version = version
@@ -50,12 +50,12 @@ class Onyphe:
     def _choose_url(self, uri):
         self.url = urljoin(self.base_url, uri)
 
-    def _request(self, method, payload):
+    def _request(self, method, payload, headers = {}):
 
         data = None
 
         try:
-            response = self.methods[method](self.url, params=payload)
+            response = self.methods[method](self.url, params=payload, headers = headers)
         except:
             raise APIError('Unable to connect to Onyphe')
 
@@ -83,153 +83,146 @@ class Onyphe:
         return data
 
     def _prepare_request(self, uri, **kwargs):
-        payload = {
-            'apikey': self.api_key
+        headers = {
+            "Authorization": f"apikey {self.api_key}"
         }
+        payload = {}
 
         if 'page' in kwargs:
             payload['page'] = kwargs['page']
 
         self._choose_url(uri)
 
-        data = self._request('get', payload)
+        data = self._request('get', payload, headers = headers)
         if data:
             return data
 
-    def _search(self,query, endpoint, **kwargs):
-        return self._prepare_request(quote('/'.join([self.version, 'search',
-                                               endpoint, query])), **kwargs)
+    def _search(self, query, **kwargs):
+        return self._prepare_request(quote('/'.join([self.version, 'search', query])), **kwargs)
 
     def synscan(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/synscan/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/synscan/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of the search about synscans.
         """
-        return self._prepare_request('/'.join([self.version, 'synscan', ip]))
+        return self._prepare_request('/'.join([self.version, "simple", 'synscan', ip]))
 
     def pastries(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/pastries/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/pastries/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of the search in pasties recorded by the service.
         """
-        return self._prepare_request('/'.join([self.version, 'pastries', ip]))
-
-    def myip(self):
-        """Call API Onyphe https://www.onyphe.io/api/v1/myip
-
-                :returns: dict -- a dictionary containing the results of myip
-        """
-        return self._prepare_request('/'.join([self.version, 'myip']))
+        return self._prepare_request('/'.join([self.version, "simple", 'pastries', ip]))
 
     def user(self):
-        """Call API Onyphe https://www.onyphe.io/api/v1/user
+        """Call API Onyphe https://www.onyphe.io/api/v2/user
 
                 :returns: dict -- a dictionary containing the results of user
         """
         return self._prepare_request('/'.join([self.version, 'user']))
 
     def geoloc(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/geoloc/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/geoloc/{IP}
 
                 :param ip: str IPv4 or IPv6 address
                 :type ip: str
                 :returns: dict -- a dictionary containing the results of geolocation of IP
         """
-        return self._prepare_request('/'.join([self.version, 'geoloc', ip]))
+        return self._prepare_request('/'.join([self.version, "simple", 'geoloc', ip]))
 
     def inetnum(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/inetnum/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/inetnum/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of inetnum of IP
         """
-        return self._prepare_request('/'.join([self.version, 'inetnum', ip]))
+        return self._prepare_request('/'.join([self.version, "simple", 'inetnum', ip]))
 
     def threatlist(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/threatlist/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/threatlist/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of the IP in threatlists
         """
-        return self._prepare_request('/'.join([self.version, 'threatlist', ip]))
+        return self._prepare_request('/'.join([self.version, "simple", 'threatlist', ip]))
 
     def forward(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/forward/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/resolver/forward/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the results of forward of IP
         """
-        return self._prepare_request('/'.join([self.version, 'forward', ip]))
+        return self._prepare_request('/'.join([self.version, "simple", "resolver", 'forward', ip]))
 
     def reverse(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/reverse/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/resolver/reverse/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing the domains of reverse DNS of IP
         """
-        return self._prepare_request('/'.join([self.version, 'reverse', ip]))
+        return self._prepare_request('/'.join([self.version, "simple", "resolver", 'reverse', ip]))
 
     def ip(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/ip/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/summary/ip/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing all informations of IP
         """
-        return self._prepare_request('/'.join([self.version, 'ip', ip]))
+        return self._prepare_request('/'.join([self.version, "summary", 'ip', ip]))
 
     def datascan(self, data):
-        """Call API Onyphe https://www.onyphe.io/api/v1/datascan/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/datascan/{IP,STRING}
 
             :param data: IPv4/IPv6 address
             :type data: str
             :returns: dict -- a dictionary containing Information scan on IP or string
         """
-        return self._prepare_request('/'.join([self.version, 'datascan', data]))
+        return self._prepare_request('/'.join([self.version, "simple", 'datascan', data]))
 
     def onionscan(self, onion):
-        """Call API Onyphe https://www.onyphe.io/api/v1/onionscan/<ONION>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/onionscan/{DOMAIN,HOSTNAME}
 
             :param onion: onion address
             :type onion: str
             :returns: dict -- a dictionary containing all information of onion site
         """
-        return self._prepare_request('/'.join([self.version, 'onionscan', onion]))
+        return self._prepare_request('/'.join([self.version, "simple", 'onionscan', onion]))
 
     def ctl(self, domain):
-        """Call API Onyphe https://www.onyphe.io/api/v1/ctl/<DOMAIN>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/ctl/{DOMAIN,HOSTNAME}
 
             :param domain: domain name
             :type domain: str
             :returns: dict -- a dictionary containing all informations of domain name certificates
         """
-        return self._prepare_request('/'.join([self.version, 'ctl', domain]))
+        return self._prepare_request('/'.join([self.version, "simple", 'ctl', domain]))
 
     def sniffer(self, ip):
-        """Call API Onyphe https://www.onyphe.io/api/v1/sniffer/<IP>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/sniffer/{IP}
 
             :param ip: str IPv4 or IPv6 address
             :type ip: str
             :returns: dict -- a dictionary containing all informations of IP
         """
-        return self._prepare_request('/'.join([self.version, 'sniffer', ip]))
+        return self._prepare_request('/'.join([self.version, "simple", 'sniffer', ip]))
 
     def md5(self, md5):
-        """Call API Onyphe https://www.onyphe.io/api/v1/md5/<MD5>
+        """Call API Onyphe https://www.onyphe.io/api/v2/simple/datascan/datamd5/{MD5}
 
             :param md5: md5 hash
             :type md5: str
             :returns: dict -- a dictionary containing all informations of md5 hash
         """
-        return self._prepare_request('/'.join([self.version, 'md5', md5]))
+        return self._prepare_request('/'.join([self.version, "simple", "datascan", "datamd5", 'md5', md5]))
 
     def search_datascan(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/datascan/<query>
@@ -237,8 +230,8 @@ class Onyphe:
         :type: str
         :return: dict -- a dictionary with result
         """
-
-        return self._search(query, 'datascan', **kwargs)
+        query = f"category:datascan {query}"
+        return self._search(query, **kwargs)
 
     def search_synscan(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/syscan/<query>
@@ -246,7 +239,8 @@ class Onyphe:
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self._search(query, 'synscan', **kwargs)
+        query = f"category:synscan {query}"
+        return self._search(query, **kwargs)
 
     def search_inetnum(self, query, **kwargs):
         """Call API Onyphe https://www.onyphe.io/api/v1/search/inetnum/<query>
@@ -254,55 +248,62 @@ class Onyphe:
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self._search(query, 'inetnum', **kwargs)
+        query = f"category:inetnum {query}"
+        return self._search(query, **kwargs)
 
     def search_threatlist(self, query, **kwargs):
-        """Call API Onyphe https://www.onyphe.io/api/v1/search/threatlist/<query>
+        """Call API Onyphe https://www.onyphe.io/api/v2/search/<query>
         :param query: example: country:RU or ip:94.253.102.185
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self._search(query, 'threatlist', **kwargs)
+        query = f"category:threatlist {query}"
+        return self._search(query, **kwargs)
 
     def search_pastries(self, query, **kwargs):
-        """Call API Onyphe https://www.onyphe.io/api/v1/search/pastries/<query>
+        """Call API Onyphe https://www.onyphe.io/api/v2/search/<query>
         :param query: example: domain:amazonaws.com or ip:94.253.102.185
         :type: str
         :return: dict -- a dictionary with result
         """
-        return self._search(query, 'pastries', **kwargs)
+        query = f"category:pastries {query}"
+        return self._search(query, **kwargs)
 
     def search_resolver(self, query, **kwargs):
-        """Call API Onyphe https://www.onyphe.io/api/v1/search/resolver/<query>
+        """Call API Onyphe https://www.onyphe.io/api/v2/search/<query>
                 :param query: example: domain:amazonaws.com
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self._search(query, 'resolver', **kwargs)
+        query = f"category:resolver {query}"
+        return self._search(query, **kwargs)
 
     def search_sniffer(self, query, **kwargs):
-        """Call API Onyphe https://www.onyphe.io/api/v1/search/sniffer/<query>
+        """Call API Onyphe https://www.onyphe.io/api/v2/search/<query>
                 :param query: example: ip:14.164.0.0/14
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self._search(query, 'sniffer', **kwargs)
+        query = f"category:sniffer {query}"
+        return self._search(query, **kwargs)
 
     def search_ctl(self, query, **kwargs):
-        """Call API Onyphe https://www.onyphe.io/api/v1/search/ctl/<query>
+        """Call API Onyphe https://www.onyphe.io/api/v2/search/<query>
                 :param query: example: host:vpn
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self._search(query, 'ctl', **kwargs)
+        query = f"category:ctl {query}"
+        return self._search(query, **kwargs)
 
     def search_onionscan(self, query, **kwargs):
-        """Call API Onyphe https://www.onyphe.io/api/v1/search/onionscan/<query>
+        """Call API Onyphe https://www.onyphe.io/api/v2/search//<query>
                 :param query: example: data:market
                 :type: str
                 :return: dict -- a dictionary with result
                 """
-        return self._search(query, 'onionscan', **kwargs)
+        query = f"category:onionscan {query}"
+        return self._search(query, **kwargs)
 
 
 
