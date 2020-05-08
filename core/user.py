@@ -87,6 +87,7 @@ class User(YetiDocument):
             for k, v in self._data.items()
             if k in ["username", "enabled", "permissions", "api_key"]
         }
+        i['id'] = str(self.id)
         i['url'] = url_for(
             "api.UserAdminSearch:post", id=str(self.id), _external=True)
         i['human_url'] = url_for(
