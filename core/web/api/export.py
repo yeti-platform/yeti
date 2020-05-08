@@ -12,8 +12,8 @@ from core.web.api.crud import CrudApi
 from core import exports
 from core.web.api.api import render
 from core.helpers import string_to_timedelta
-from core.observables import Tag
-from core.web.helpers import requires_permissions
+from core.observables import Tag, Observable
+from core.web.helpers import requires_permissions, get_object_or_404
 
 
 class ExportTemplate(CrudApi):
