@@ -7,6 +7,7 @@ from core.auth.local.user_management import authenticate, create_user, \
     set_password
 from core.user import User
 from core.web.helpers import get_object_or_404
+from core.web.api.api import render
 
 auth = Blueprint('auth', __name__, template_folder='templates')
 
@@ -38,17 +39,20 @@ def logout():
     return redirect('/login')
 
 
-@auth.route('/createuser', methods=["POST"])
+@auth.route('/api/createuser', methods=["POST"])
 @login_required
-def new_user():
-    username = request.form.get("username")
-    password = request.form.get("password")
-    admin = request.form.get("admin") is not None
+def api_new_user():
+    params = request.get_json()
+    username = params['username'].encode()
+    password = params['password'].encode()
+    admin = params['admin']
     if current_user.has_role('admin') and current_user.is_active:
-        create_user(username, password, admin=admin)
-    return redirect(request.referrer)
-
-    logout_user()
+        try:
+            user = create_user(username, password, admin=admin)
+        except RuntimeError as error:
+            return render({'error': str(error)}), 400
+        return render(user)
+    abort(401)
 
 @auth.route('/creategroup', methods=["POST"])
 @login_required
