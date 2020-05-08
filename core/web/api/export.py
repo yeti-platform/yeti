@@ -114,17 +114,17 @@ class Export(CrudApi):
             params.get('frequency', '1:00:00'))
         params['ignore_tags'] = [
             Tag.objects.get(name=name.strip())
-            for name in params['ignore_tags'].split(',')
+            for name in params['ignore_tags']
             if name.strip()
         ]
         params['include_tags'] = [
             Tag.objects.get(name=name.strip())
-            for name in params['include_tags'].split(',')
+            for name in params['include_tags']
             if name.strip()
         ]
         params['exclude_tags'] = [
             Tag.objects.get(name=name.strip())
-            for name in params['exclude_tags'].split(',')
+            for name in params['exclude_tags']
             if name.strip()
         ]
         params['template'] = exports.ExportTemplate.objects.get(
