@@ -10,8 +10,6 @@ class UserAdminSearch(CrudSearchApi):
     template = 'user_api.html'
     objectmanager = User
 
-
-
     @route('/remove/<id>', methods=["POST"])
     @requires_role('admin')
     def remove(self, id):
