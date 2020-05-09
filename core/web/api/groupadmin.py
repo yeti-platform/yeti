@@ -2,7 +2,7 @@ from flask import request, abort
 from flask_classy import route, FlaskView
 from flask_login import current_user
 
-from core.web.api.crud import CrudApi, CrudSearchApi
+from core.web.api.crud import CrudSearchApi
 from core.group import Group
 from core.web.api.api import render
 from core.web.helpers import requires_role, get_object_or_404, requires_permissions
@@ -23,7 +23,7 @@ class GroupAdmin(FlaskView):
         group = get_object_or_404(Group, id=id)
         is_admin = current_user.has_role('admin')
         is_group_admin = Group.objects(
-            admins__in=[current_user.id], id=gid, enabled=True)
+            admins__in=[current_user.id], id=id, enabled=True)
         if is_admin or is_group_admin:
             return render(group)
 
