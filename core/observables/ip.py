@@ -43,6 +43,12 @@ class Ip(Observable):
             self.value = iptools.ipv6.long2ip(iptools.ipv6.ip2long(self.value))
             self.version = 6
 
+    def info(self):
+        info = super(Ip, self).info()
+        info['version'] = self.version
+        info['geoip'] = self.geoip
+        return info
+
 
 class AutonomousSystem(Observable):
 
