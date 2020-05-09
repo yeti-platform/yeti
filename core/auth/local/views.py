@@ -38,6 +38,20 @@ def logout():
     flash("Logged out", "info")
     return redirect('/login')
 
+# TODO: newfrontend-deprecation
+# Remove this function when the new frontend is the default
+@auth.route('/createuser', methods=["POST"])
+@login_required
+def new_user():
+    username = request.form.get("username")
+    password = request.form.get("password")
+    admin = request.form.get("admin") is not None
+    if current_user.has_role('admin') and current_user.is_active:
+        create_user(username, password, admin=admin)
+    return redirect(request.referrer)
+
+    logout_user()
+
 
 @auth.route('/api/createuser', methods=["POST"])
 @login_required
