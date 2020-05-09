@@ -71,4 +71,4 @@ class GroupAdminSearch(CrudSearchApi):
         except InvalidQueryError as e:
             logging.error(e)
             abort(400)
-        return render(data)
+        return render(data, template=self.template)
