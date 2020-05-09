@@ -14,3 +14,8 @@ class Group(YetiDocument):
     admins = ListField(ReferenceField(User, reverse_delete_rule=CASCADE))
 
     SEARCH_ALIASES = {}
+
+    def info(self):
+        info = self.to_mongo()
+        info['id'] = info.pop('_id')
+        return info
