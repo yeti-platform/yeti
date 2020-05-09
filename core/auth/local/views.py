@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, flash
+from flask import Blueprint, render_template, request, redirect, flash, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
 
@@ -76,6 +76,17 @@ def new_group():
         create_group(groupname)
     return redirect(request.referrer)
 
+@auth.route('/api/creategroup', methods=["POST"])
+@login_required
+def api_new_group():
+    params = request.get_json()
+    groupname = params.get("groupname")
+    if not current_user.has_role('admin') and current_user.is_active:
+        abort(401)
+    group = create_group(groupname)
+    if not group:
+        return render({'error': f'Group {groupname} already exists.'}), 400
+    return render(group)
 
 @auth.route("/change-password", methods=['POST'])
 def change_password():
