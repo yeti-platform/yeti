@@ -71,4 +71,6 @@ class GroupAdminSearch(CrudSearchApi):
         except InvalidQueryError as e:
             logging.error(e)
             abort(400)
+        #TODO: frontend-deprecation
+        # Remove template rendering here
         return render(data, template=self.template)
