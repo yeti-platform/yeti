@@ -7,8 +7,8 @@
     {% endif %}
       <tr class="node-line {{"disabled" if not group['enabled']}}" data-id="{{group['id']}}">
         <td><a href="{{ url_for('frontend.GroupView:profile', id=group['id'] )}}">{{group['groupname']}}</a></td>
-        <td><span data-url="{{ url_for('api.GroupAdminSearch:toggle', id=group["id"]) }}" class="admin-toggle glyphicon glyphicon-ok"></span></td>
-        <td><span data-url="{{ url_for('api.GroupAdminSearch:remove', id=group["id"]) }}" class="admin-remove glyphicon glyphicon-trash"></span></td>
+        <td><span data-url="{{ url_for('api.GroupAdmin:toggle', id=group["id"]) }}" class="admin-toggle glyphicon glyphicon-ok"></span></td>
+        <td><span data-url="{{ url_for('api.GroupAdmin:remove', id=group["id"]) }}" class="admin-remove glyphicon glyphicon-trash"></span></td>
       </tr>
 
     {% if loop.last %}
