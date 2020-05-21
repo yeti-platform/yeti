@@ -6,7 +6,10 @@ from core.web.api.crud import CrudSearchApi
 from core.group import Group
 from core.web.api.api import render
 from core.web.helpers import requires_role, get_object_or_404, requires_permissions
+from core.user import User
+
 from mongoengine.errors import InvalidQueryError
+
 
 class GroupAdmin(FlaskView):
 
@@ -19,13 +22,14 @@ class GroupAdmin(FlaskView):
         return render(groups)
 
     @route('/<id>', methods=['GET'])
-    def get(self):
+    def get(self, id):
         group = get_object_or_404(Group, id=id)
         is_admin = current_user.has_role('admin')
         is_group_admin = Group.objects(
             admins__in=[current_user.id], id=id, enabled=True)
         if is_admin or is_group_admin:
             return render(group)
+        return (403)
 
     @route('/toggle/<id>', methods=["POST"])
     @requires_role('admin')
@@ -40,6 +44,51 @@ class GroupAdmin(FlaskView):
         group = get_object_or_404(Group, id=id)
         group.delete()
         return render({"id": id})
+
+    @route('/add-member', methods=["POST"])
+    def add_member(self):
+        params = request.get_json(silent=True) or {}
+        gid = params.get("gid")
+        uid = params.get("uid")
+        user = get_object_or_404(User, id=uid)
+        group = get_object_or_404(Group, id=gid)
+        is_admin = current_user.has_role('admin')
+        is_group_admin = current_user in group.admins and group.enabled
+        if is_admin or is_group_admin:
+            group.update(add_to_set__members=user.id)
+            return render(group.reload())
+        abort(403)
+
+    @route('/remove-member', methods=["POST"])
+    def remove_member(self):
+        params = request.get_json(silent=True) or {}
+        gid = params.get("gid")
+        uid = params.get("uid")
+        user = get_object_or_404(User, id=uid)
+        group = get_object_or_404(Group, id=gid)
+        is_admin = current_user.has_role('admin')
+        is_group_admin = current_user in group.admins and group.enabled
+        if is_admin or is_group_admin:
+            group.update(pull__members=user.id)
+            return render(group.reload())
+        abort(403)
+
+    @route('/toggle-admin', methods=["POST"])
+    def toggle_admin(self):
+        params = request.get_json(silent=True) or {}
+        gid = params.get("gid")
+        uid = params.get("uid")
+        user = get_object_or_404(User, id=uid)
+        group = get_object_or_404(Group, id=gid)
+        is_admin = current_user.has_role('admin')
+        is_group_admin = current_user in group.admins and group.enabled
+        if is_admin or is_group_admin:
+            if user in group.admins:
+                group.update(pull__admins=user.id)
+            else:
+                group.update(add_to_set__admins=user.id)
+            return render(group)
+        abort(403)
 
 
 class GroupAdminSearch(CrudSearchApi):

@@ -18,4 +18,6 @@ class Group(YetiDocument):
     def info(self):
         info = self.to_mongo()
         info['id'] = info.pop('_id')
+        info['members'] = self.members
+        info['admins'] = self.admins
         return info
