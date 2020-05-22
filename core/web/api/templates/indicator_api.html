@@ -1,6 +1,10 @@
 {% import "macros/generic.html" as macros %}
 {% import "macros/filterlist.html" as filterlist %}
 {% set link_write = current_user.has_permission('link', 'write')%}
+{% if data.objs or data.objs == [] %}
+  {% set links = data.links %}
+  {% set data = data.objs %}
+{% endif %}
 {% for obj in data %}
     {% if loop.first %}
     <table class="table table-condensed yeti-table table-hover">
