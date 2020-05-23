@@ -73,10 +73,10 @@ class Tag(CrudApi):
         params = json
         params['produces'] = [
             self.objectmanager.get_or_create(name=t.strip())
-            for t in json['produces'].split(',')
+            for t in json['produces']
             if t.strip()
         ]
-        params['replaces'] = json['replaces'].split(',')
+        params['replaces'] = json['replaces']
         return params
 
     @requires_permissions('write')
