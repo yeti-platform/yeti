@@ -34,8 +34,9 @@ class ObservableView(GenericView):
             export_templates=ExportTemplate.objects.all())
 
     def create_obj(self, obj, skip_validation):
+        tags = obj.tags
         obj = obj.get_or_create(value=obj.value)
-        [obj.tag(tag) for tag in obj.tags]
+        [obj.tag(str(tag)) for tag in tags]
         return obj
 
     # override to guess observable type

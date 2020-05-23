@@ -18,7 +18,7 @@ class StringListField(Field):
 
     def _value(self):
         if self.data:
-            return ','.join([d for d in self.data])
+            return ','.join([str(d) for d in self.data])
         else:
             return ''
 
