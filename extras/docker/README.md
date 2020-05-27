@@ -15,7 +15,7 @@ Follow the [official instructions](https://www.docker.com/community-edition).
 
 The following command will build a Docker image named `yeti-platform` and launch it :
 
-    docker-compose -p yeti -f extras/docker/dev/docker-compose.yml up -d
+    docker-compose -p yeti -f extras/docker/dev/docker-compose.yaml up -d
 
 You can also invoke docker-compose from the `docker` directory
 
