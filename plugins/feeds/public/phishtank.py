@@ -15,7 +15,7 @@ class PhishTank(Feed):
     default_values = {
         'frequency': timedelta(hours=4),
         'name': 'PhishTank',
-        'source': 'http://data.phishtank.com/data/%s/online-valid.csv' % key,
+        'source': 'http://data.phishtank.com/data/online-valid.csv',
         'description':
             'PhishTank community feed. Contains a list of possible Phishing URLs.'
     }
