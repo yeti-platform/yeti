@@ -88,30 +88,29 @@ def api_new_group():
         return render({'error': f'Group {groupname} already exists.'}), 400
     return render(group)
 
-@auth.route("/change-password", methods=['POST'])
+@auth.route("/api/change-password", methods=['POST'])
 def change_password():
-    if current_user.has_role('admin') and request.args.get('id'):
-        u = get_object_or_404(User, id=request.args.get('id'))
+    params = request.get_json()
+    if current_user.has_role('admin') and params.get('id'):
+        u = get_object_or_404(User, id=params.get('id'))
     else:
         u = current_user
 
-    current = request.form.get("current", "")
-    new = request.form.get("new", "")
-    bis = request.form.get("bis", "")
+    current = params.get("current")
+    new = params.get("new")
+
+    if not (current and new):
+        return render({
+            'error': 'You must specify both current and new password'
+            }), 400
 
     if not current_user.has_role('admin'):
         if not check_password_hash(u.password, current):
-            flash('Current password is invalid', 'danger')
-            return redirect(request.referrer)
-
-    if new != bis:
-        flash('Password confirmation differs from new password.', 'danger')
+            return render({'error': 'Invalid password'}), 400
     else:
         u = set_password(u, new)
         u.save()
         # re-execute the login if the changes were made on current_user
         if u.id == current_user.id:
             login_user(u)
-        flash('Password was successfully changed.', 'success')
-
-    return redirect(request.referrer)
+        return {}
