@@ -42,6 +42,7 @@ from core.web.api.indicator import Indicator, IndicatorSearch
 from core.web.api.links import Link
 from core.web.api.attached_files import AttachedFiles
 from core.web.api.file import File
+from core.web.api.users import Users
 from core.web.api.useradmin import UserAdminSearch, UserAdmin
 from core.web.api.groupadmin import GroupAdminSearch, GroupAdmin
 
@@ -77,6 +78,7 @@ Link.register(api)
 AttachedFiles.register(api)
 File.register(api)
 
+Users.register(api)
 UserAdminSearch.register(api)
 UserAdmin.register(api)
 GroupAdminSearch.register(api)
