@@ -16,7 +16,6 @@ class Users(FlaskView):
 
     # @route('/profile', methods=["GET", "POST"])
     def get(self):
-        params = request.get_json()
         user = get_object_or_404(User, id=current_user.id)
         return render(user.info())
 
