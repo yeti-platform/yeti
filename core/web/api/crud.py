@@ -76,7 +76,7 @@ class CrudSearchApi(FlaskView):
             logging.error(e)
             abort(400)
 
-        return render({'total': count })
+        return render({'total': count})
 
 
 class CrudApi(FlaskView):
