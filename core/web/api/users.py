@@ -16,7 +16,10 @@ class Users(FlaskView):
 
     def get(self):
         user = get_object_or_404(User, id=current_user.id)
-        return render(user.info())
+        user_info = user.info()
+        user_info['groups'] = Group.objects(members__in=[user.id]).only(
+            'groupname')
+        return render(user_info)
 
     @route('/reset-api', methods=["POST"])
     def reset_api(self):
