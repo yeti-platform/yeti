@@ -15,9 +15,8 @@ from core.web.api.api import render
 class Users(FlaskView):
 
     def get(self):
-        user = get_object_or_404(User, id=current_user.id)
-        user_info = user.info()
-        user_info['groups'] = Group.objects(members__in=[user.id]).only(
+        user_info = current_user.info()
+        user_info['groups'] = Group.objects(members__in=[current_user.id]).only(
             'groupname')
         return render(user_info)
 
@@ -25,3 +24,11 @@ class Users(FlaskView):
     def reset_api(self):
         current_user.api_key = User.generate_api_key()
         return render(current_user.save())
+
+    @route('/settings', methods=["POST"])
+    def settings(self):
+        settings = request.get_json()
+        for setting in settings:
+            current_user.settings[setting] = settings.get(setting)
+        return render(current_user.save())
+
