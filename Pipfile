@@ -42,6 +42,7 @@ pyopenssl = "*"
 pandas= "*"
 flask-api = "*"
 url-normalize = "*"
+oauthlib = "*"
 
 [dev-packages]
 pylint = "<2.0.0"
