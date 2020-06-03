@@ -18,7 +18,7 @@ client = WebApplicationClient(yeti_config.oidc.client_id)
 @prevent_csrf
 def login():
     if current_user.is_authenticated:
-        return redirect("/observable/")
+        return redirect("/")
     provider_cfg = get_google_provider_cfg()
     authorization_endpoint = provider_cfg['authorization_endpoint']
 
