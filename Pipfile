@@ -42,7 +42,7 @@ pyopenssl = "*"
 pandas= "*"
 flask-api = "*"
 url-normalize = "*"
-oauthlib = "*"
+oauthlib = {extras = ["signedtoken"], version = "*"}
 
 [dev-packages]
 pylint = "<2.0.0"
