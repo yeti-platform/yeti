@@ -45,7 +45,7 @@ url-normalize = "*"
 oauthlib = {extras = ["signedtoken"], version = "*"}
 
 [dev-packages]
-pylint = "<2.0.0"
+pylint = "*"
 
 [requires]
 python_version = "3.7"
