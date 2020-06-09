@@ -1,13 +1,15 @@
 import json
 
 import requests
-from flask import Blueprint, redirect, request
-from flask_login import current_user, logout_user
+from flask import Blueprint, abort, redirect, request
+from flask_login import current_user, login_required, logout_user
 from oauthlib.oauth2 import WebApplicationClient
 
+from core.auth.oidc.group_management import create_group
 from core.auth.oidc.user_management import authenticate
 from core.config.config import yeti_config
 from core.web.helpers import prevent_csrf
+from core.web.api.api import render
 
 auth = Blueprint('auth', __name__, template_folder='templates')
 
@@ -71,6 +73,18 @@ def login_callback():
 def logout():
     logout_user()
     return redirect('/')
+
+@auth.route('/api/creategroup', methods=["POST"])
+@login_required
+def api_new_group():
+    params = request.get_json()
+    groupname = params.get("groupname")
+    if not current_user.has_role('admin') and current_user.is_active:
+        abort(401)
+    group = create_group(groupname)
+    if not group:
+        return render({'error': f'Group {groupname} already exists.'}), 400
+    return render(group)
 
 def get_google_provider_cfg():
     discovery_url = yeti_config.oidc.google_discovery_url
