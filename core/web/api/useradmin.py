@@ -76,25 +76,21 @@ class UserAdmin(FlaskView):
         user.api_key = User.generate_api_key()
         return render(user.save())
 
-    @route("/permissions/<id>", methods=['GET', 'POST'])
+    @route("/permissions", methods=['POST'])
+    @route("/permissions/<id>", methods=['POST'])
     @requires_role('admin')
-    def permissions(self, id):
-        user = get_object_or_404(User, id=id)
-        permdict = {}
-        if request.method == "POST":
-            for object_name, permissions in user.permissions.items():
-                if not isinstance(permissions, dict):
-                    permdict[object_name] = bool(
-                        request.form.get("{}".format(object_name), False))
-                else:
-                    if object_name not in permdict:
-                        permdict[object_name] = {}
-                    for p in permissions:
-                        permdict[object_name][p] = bool(
-                            request.form.get(
-                                "{}_{}".format(object_name, p), False))
-            user.permissions = permdict
-            user.save()
-            flash("Permissions changed successfully", "success")
-        return redirect(request.referrer)
-        return render_template("user/permissions.html", user=user)
+    def permissions(self, id=None):
+        if not id:
+            user = current_user
+        else:
+            user = get_object_or_404(User, id=id)
+        if not user:
+            abort(400)
+        permissions = request.get_json()
+        sanitized = {}
+        for key, values in permissions.items():
+            if key == 'admin':
+                continue
+            sanitized[key] = {k: bool(v) for k, v in values.items()}
+        user.permissions.update(sanitized)
+        return render(user.save())
