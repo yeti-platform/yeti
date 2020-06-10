@@ -45,6 +45,7 @@ from core.web.api.file import File
 from core.web.api.users import Users
 from core.web.api.useradmin import UserAdminSearch, UserAdmin
 from core.web.api.groupadmin import GroupAdminSearch, GroupAdmin
+from core.web.api.system import System
 
 
 Analysis.register(api)
@@ -83,3 +84,4 @@ UserAdminSearch.register(api)
 UserAdmin.register(api)
 GroupAdminSearch.register(api)
 GroupAdmin.register(api)
+System.register(api)
