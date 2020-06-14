@@ -5,7 +5,7 @@ from importlib import import_module
 from bson.json_util import dumps
 from mongoengine import connect
 
-from flask import Flask, url_for, request
+from flask import Flask, url_for, request, current_app, session
 from flask_login import LoginManager, current_user
 
 from core.config.config import yeti_config
@@ -53,7 +53,10 @@ def api_auth(request):
     try:
         return User.objects.get(api_key=request.headers.get('X-Api-Key'))
     except DoesNotExist:
-        return None
+        try:
+            return User.objects.get(session_token=session.get('token'))
+        except DoesNotExist:
+            return None
 
 
 login_manager.anonymous_user = auth_module.get_default_user
@@ -69,7 +72,7 @@ def frontend_login_required():
 @api.before_request
 def api_login_required():
     if not current_user.is_active and not request.method == "OPTIONS":
-        return dumps({"error": "X-Api-Key header missing or invalid"}), 401
+        return dumps({"error": "unauthorized"}), 401
 
 
 webapp.register_blueprint(frontend)

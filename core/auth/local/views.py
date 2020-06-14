@@ -1,57 +1,45 @@
-from flask import Blueprint, render_template, request, redirect, flash, abort
+from flask import Blueprint, render_template, request, redirect, flash, abort, session, current_app
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
+from datetime import datetime, timedelta
 
+import jwt
 from core.auth.local.group_management import create_group
 from core.auth.local.user_management import authenticate, create_user, \
     set_password
 from core.user import User
 from core.web.helpers import get_object_or_404
 from core.web.api.api import render
+from core.config.config import yeti_config
 
-auth = Blueprint('auth', __name__, template_folder='templates')
+auth = Blueprint('auth', __name__)
 
 
-@auth.route('/login', methods=['GET', 'POST'])
+@auth.route('/api/auth/login', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated:
-        return redirect("/observable/")
-    if request.method == 'GET':
-        return render_template('login.html')
+    params = request.get_json()
+    user = authenticate(params['user'], params['password'])
+    if not user:
+        return {'error': f'Invalid credentials for {params["user"]}.'}, 401
 
-    else:
-        u = authenticate(
-            request.form.get('login'), request.form.get('password'))
-        if u:
-            login_user(u)
-            print("User logged in (web):")
-            redir = request.args.get('next', '/')
-            return redirect(redir)
-        else:
-            flash("Invalid credentials", "danger")
-            return render_template('login.html')
+    token = jwt.encode({
+        'sub': user.username,
+        'iat': datetime.utcnow(),
+        'exp': datetime.utcnow() + timedelta(days=30),
+    }, current_app.config['SECRET_KEY'])
 
+    session.clear()
+    session['token'] = token.decode('utf-8')
+    user.session_token = token.decode('utf-8')
+    user.save()
 
-@auth.route('/logout')
+    return {'authenticated': True, 'user': user.username}
+
+@auth.route('/api/auth/logout')
 def logout():
-    logout_user()
-    flash("Logged out", "info")
-    return redirect('/login')
-
-# TODO: newfrontend-deprecation
-# Remove this function when the new frontend is the default
-@auth.route('/createuser', methods=["POST"])
-@login_required
-def new_user():
-    username = request.form.get("username")
-    password = request.form.get("password")
-    admin = request.form.get("admin") is not None
-    if current_user.has_role('admin') and current_user.is_active:
-        create_user(username, password, admin=admin)
-    return redirect(request.referrer)
-
-    logout_user()
-
+    """Logout user."""
+    session.clear()
+    return {'authenticated': False}
 
 @auth.route('/api/createuser', methods=["POST"])
 @login_required
@@ -67,14 +55,6 @@ def api_new_user():
             return render({'error': str(error)}), 400
         return render(user)
     abort(401)
-
-@auth.route('/creategroup', methods=["POST"])
-@login_required
-def new_group():
-    groupname = request.form.get("groupname")
-    if current_user.has_role('admin') and current_user.is_active:
-        create_group(groupname)
-    return redirect(request.referrer)
 
 @auth.route('/api/creategroup', methods=["POST"])
 @login_required
