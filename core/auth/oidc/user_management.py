@@ -14,13 +14,6 @@ from core.user import User
 def get_default_user():
     return AnonymousUserMixin()
 
-def authenticate(user_email):
-    u = get_or_create_user(user_email)
-    # u.session_token = generate_session_token(u)
-    u.save()
-    login_user(u)
-
-    return u
 
 def get_or_create_user(email):
     try:
