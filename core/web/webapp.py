@@ -12,7 +12,6 @@ from core.config.config import yeti_config
 from core.user import User
 from core.web.json import JSONDecoder
 from core.web.api import api
-from core.web.frontend import frontend
 from mongoengine.errors import DoesNotExist
 from core.yeti_plugins import get_plugins
 
@@ -57,21 +56,12 @@ def api_auth(request):
 
 login_manager.anonymous_user = auth_module.get_default_user
 
-
-@frontend.before_request
-def frontend_login_required():
-    if not current_user.is_active and (request.endpoint and
-                                       request.endpoint != 'frontend.static'):
-        return login_manager.unauthorized()
-
-
 @api.before_request
 def api_login_required():
     if not current_user.is_active and not request.method == "OPTIONS":
         return dumps({"error": "unauthorized"}), 401
 
 
-webapp.register_blueprint(frontend)
 webapp.register_blueprint(api, url_prefix='/api')
 
 
