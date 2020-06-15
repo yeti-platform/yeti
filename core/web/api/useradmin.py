@@ -1,7 +1,7 @@
 from flask_classy import route
 
 from core.web.api.crud import CrudSearchApi, CrudApi
-from flask import request, url_for, abort, send_file, make_response
+from flask import request, abort, send_file, make_response
 from flask_classy import FlaskView, route
 from flask_login import current_user
 from core.user import User

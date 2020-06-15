@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 from mongoengine import StringField, ListField
 from flask_mongoengine.wtf import model_form
-from flask import url_for
 
 from core.database import Node, TagListField, EntityListField
 from core.observables import Tag
@@ -91,13 +90,4 @@ class Entity(Node):
             "tags": self.tags,
             "id": str(self.id)
         }
-
-        try:
-            i['url'] = url_for("api.Entity:post", id=str(self.id), _external=True)
-            i['human_url'] = url_for(
-                "frontend.EntityView:get", id=str(self.id), _external=True)
-        except RuntimeError:
-            # No flask context, so we can't generate links
-            pass
-
         return i

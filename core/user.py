@@ -90,8 +90,4 @@ class User(YetiDocument):
         i['available_settings'] = self.available_settings
         i['settings'] = self.settings
         i['id'] = str(self.id)
-        i['url'] = url_for(
-            "api.UserAdminSearch:post", id=str(self.id), _external=True)
-        i['human_url'] = url_for(
-            "frontend.UsersView:profile", id=str(self.id), _external=True)
         return i
