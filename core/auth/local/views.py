@@ -3,8 +3,8 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import check_password_hash
 from datetime import datetime, timedelta
 
-import jwt
 from core.auth.local.group_management import create_group
+from core.auth import common
 from core.auth.local.user_management import authenticate, create_user, \
     set_password
 from core.user import User
@@ -22,16 +22,8 @@ def login():
     if not user:
         return {'error': f'Invalid credentials for {params["user"]}.'}, 401
 
-    token = jwt.encode({
-        'sub': user.username,
-        'iat': datetime.utcnow(),
-        'exp': datetime.utcnow() + timedelta(days=30),
-    }, current_app.config['SECRET_KEY'])
-
-    session.clear()
-    session['token'] = token.decode('utf-8')
-    user.session_token = token.decode('utf-8')
-    user.save()
+    common.generate_session_token(user)
+    login_user(user)
 
     return {'authenticated': True, 'user': user.username}
 

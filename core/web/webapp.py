@@ -43,21 +43,17 @@ connect(
 @login_manager.user_loader
 def load_user(session_token):
     try:
+        # Requires to use login_user() in the auth methods
         return User.objects.get(session_token=session_token)
     except DoesNotExist:
         return None
-
 
 @login_manager.request_loader
 def api_auth(request):
     try:
         return User.objects.get(api_key=request.headers.get('X-Api-Key'))
     except DoesNotExist:
-        try:
-            return User.objects.get(session_token=session.get('token'))
-        except DoesNotExist:
-            return None
-
+        return None
 
 login_manager.anonymous_user = auth_module.get_default_user
 
