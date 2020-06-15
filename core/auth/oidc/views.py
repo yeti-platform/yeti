@@ -1,26 +1,25 @@
 import json
 
 import requests
-from flask import Blueprint, abort, redirect, request
-from flask_login import current_user, login_required, logout_user
+from flask import Blueprint, abort, redirect, request, session
+from flask_login import current_user, login_required, logout_user, login_user
 from oauthlib.oauth2 import WebApplicationClient
 
 from core.auth.oidc.group_management import create_group
-from core.auth.oidc.user_management import authenticate
+from core.auth.oidc.user_management import get_or_create_user
+from core.auth import common
 from core.config.config import yeti_config
 from core.web.helpers import prevent_csrf
 from core.web.api.api import render
 
-auth = Blueprint('auth', __name__, template_folder='templates')
+auth = Blueprint('auth', __name__)
 
 client = WebApplicationClient(yeti_config.oidc.client_id)
 
 
-@auth.route('/login', methods=['GET', 'POST'])
+@auth.route('/auth/login', methods=['GET', 'POST'])
 @prevent_csrf
 def login():
-    if current_user.is_authenticated:
-        return redirect("/")
     provider_cfg = get_google_provider_cfg()
     authorization_endpoint = provider_cfg['authorization_endpoint']
 
@@ -31,7 +30,7 @@ def login():
     )
     return redirect(request_uri)
 
-@auth.route('/login/callback', methods=['GET', 'POST'])
+@auth.route('/auth/login/callback', methods=['GET', 'POST'])
 def login_callback():
     code = request.args.get('code')
 
@@ -66,12 +65,15 @@ def login_callback():
     # picture = userinfo_response.json()["picture"]
     # users_name = userinfo_response.json()["given_name"]
 
-    authenticate(user_email)
+    user = get_or_create_user(user_email)
+    common.generate_session_token(user)
+    login_user(user)
     return redirect('/')
 
-@auth.route('/logout')
+@auth.route('/auth/logout')
 def logout():
     logout_user()
+    session.clear()
     return redirect('/')
 
 @auth.route('/api/creategroup', methods=["POST"])

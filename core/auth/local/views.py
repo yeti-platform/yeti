@@ -1,18 +1,22 @@
-from flask import Blueprint, render_template, request, redirect, flash, abort, session, current_app
-from flask_login import login_user, logout_user, current_user, login_required
+from flask import Blueprint, abort, redirect, request, session
+from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash
-from datetime import datetime, timedelta
 
-from core.auth.local.group_management import create_group
 from core.auth import common
-from core.auth.local.user_management import authenticate, create_user, \
-    set_password
+from core.auth.local.group_management import create_group
+from core.auth.local.user_management import (authenticate, create_user,
+                                             set_password)
 from core.user import User
-from core.web.helpers import get_object_or_404
 from core.web.api.api import render
-from core.config.config import yeti_config
+from core.web.helpers import get_object_or_404
 
 auth = Blueprint('auth', __name__)
+
+
+@auth.route('/auth/login', methods=['GET', 'POST'])
+def login_redirect():
+    # The browser will request /auth/login, redirect to the VueJS login page.
+    return redirect('/login')
 
 
 @auth.route('/api/auth/login', methods=['GET', 'POST'])
@@ -30,6 +34,7 @@ def login():
 @auth.route('/api/auth/logout')
 def logout():
     """Logout user."""
+    logout_user()
     session.clear()
     return {'authenticated': False}
 
