@@ -1,14 +1,13 @@
-from flask_classy import route
-
-from core.web.api.crud import CrudSearchApi, CrudApi
-from flask import request, abort, send_file, make_response
+from flask import abort, request
 from flask_classy import FlaskView, route
 from flask_login import current_user
+from mongoengine.errors import InvalidQueryError
+
+from core.group import Group
 from core.user import User
 from core.web.api.api import render
-from core.web.helpers import requires_role, get_object_or_404
-from core.web.helpers import requires_permissions
-from mongoengine.errors import InvalidQueryError
+from core.web.api.crud import CrudSearchApi
+from core.web.helpers import get_object_or_404, requires_role
 
 
 class UserAdminSearch(CrudSearchApi):
@@ -47,6 +46,15 @@ class UserAdmin(FlaskView):
 
     objectmanager = User
 
+    @route('/<id>')
+    @requires_role('admin')
+    def get(self, id):
+        user = get_object_or_404(User, id=id)
+        user_info = user.info()
+        user_info['groups'] = Group.objects(members__in=[user.id]).only(
+            'groupname')
+        return render(user_info)
+
     @route('/remove/<id>', methods=["POST"])
     @requires_role('admin')
     def remove(self, id):
@@ -74,6 +82,14 @@ class UserAdmin(FlaskView):
     def reset_api(self, id):
         user = get_object_or_404(User, id=id)
         user.api_key = User.generate_api_key()
+        return render(user.save())
+
+    @route('/settings/<id>', methods=["POST"])
+    def settings(self, id):
+        user = get_object_or_404(User, id=id)
+        settings = request.get_json()
+        for setting in settings:
+            user.settings[setting] = settings.get(setting)
         return render(user.save())
 
     @route("/permissions", methods=['POST'])
