@@ -1,16 +1,11 @@
-from flask import request, abort
-from flask_classy import route
-
+from flask import request
 from flask_classy import FlaskView, route
-from core import observables
-from core.web.api.api import render
-from core.errors import TagValidationError
-from core.web.helpers import requires_permissions
-from core.web.helpers import get_object_or_404
 from flask_login import current_user
-from core.user import User
+
 from core.group import Group
+from core.user import User
 from core.web.api.api import render
+
 
 class Users(FlaskView):
 
@@ -31,4 +26,3 @@ class Users(FlaskView):
         for setting in settings:
             current_user.settings[setting] = settings.get(setting)
         return render(current_user.save())
-
