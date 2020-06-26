@@ -444,3 +444,4 @@ class Observable(Node):
         if self.id:
             i['id'] = str(self.id)
         i['type'] = self.__class__.__name__
+        return i

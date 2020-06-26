@@ -63,3 +63,4 @@ class Indicator(Node):
         }
         i['id'] = str(self.id)
         i['type'] = self.type
+        return i
