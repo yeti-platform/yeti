@@ -23,9 +23,6 @@ blinker = "*"
 simplejson = "*"
 yara-python = "*"
 redis = "*"
-Sphinx = "*"
-sphinx_rtd_theme = "*"
-sphinxcontrib-httpdomain = "*"
 "geoip2" = "*"
 psutil = "*"
 shodan = "*"
@@ -43,9 +40,13 @@ pandas= "*"
 flask-api = "*"
 url-normalize = "*"
 oauthlib = {extras = ["signedtoken"], version = "*"}
+jwt = "*"
 
 [dev-packages]
 pylint = "*"
+Sphinx = "*"
+sphinx_rtd_theme = "*"
+sphinxcontrib-httpdomain = "*"
 
 [requires]
 python_version = "3.7"
