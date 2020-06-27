@@ -65,7 +65,7 @@ def api_new_group():
         return render({'error': f'Group {groupname} already exists.'}), 400
     return render(group)
 
-@auth.route("/api/change-password", methods=['POST'])
+@auth.route("/api/users/change-password", methods=['POST'])
 def change_password():
     params = request.get_json()
     if current_user.has_role('admin') and params.get('id'):
