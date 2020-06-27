@@ -40,7 +40,7 @@ pandas= "*"
 flask-api = "*"
 url-normalize = "*"
 oauthlib = {extras = ["signedtoken"], version = "*"}
-jwt = "*"
+pyjwt = "*"
 
 [dev-packages]
 pylint = "*"
