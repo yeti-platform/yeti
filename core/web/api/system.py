@@ -1,6 +1,7 @@
 import threading
 
 from flask_classy import FlaskView, route
+from flask_login import current_user
 
 from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
@@ -91,15 +92,19 @@ class System(FlaskView):
             'active': active
         })
 
-    @requires_role('admin')
     def config(self):
-        config = {
-            'auth': dict(yeti_config.auth),
-            'mongodb': dict(yeti_config.mongodb),
-            'redis': dict(yeti_config.redis),
-            'proxy': dict(yeti_config.proxy),
-            'logging': dict(yeti_config.logging),
-        }
-        del config['mongodb']['username']
-        del config['mongodb']['password']
+        if current_user.has_role('admin'):
+            config = {
+                'auth': dict(yeti_config.auth),
+                'mongodb': dict(yeti_config.mongodb),
+                'redis': dict(yeti_config.redis),
+                'proxy': dict(yeti_config.proxy),
+                'logging': dict(yeti_config.logging),
+            }
+            del config['mongodb']['username']
+            del config['mongodb']['password']
+        else:
+            config = {
+                'auth': dict(yeti_config.auth)
+            }
         return render(config)
