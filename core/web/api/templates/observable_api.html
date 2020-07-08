@@ -19,7 +19,7 @@
         <td class="icon-cell"><a href="{{ url_for('frontend.InvestigationView:graph_node', id=observable['id'], klass='observable')}}"><i class="flaticon-network38"></i></a></td>
         <td><a href="{{ url_for('frontend.ObservableView:get', id=observable['id'])}}">{{observable['value']}}</a></td>
         <td>{{macros.display_tags(observable['tags'])}}</td>
-        <td>{{ observable['context']|join(', ', attribute='source')}}</td>
+        <td>{{ observable['context']|unique(attribute='source')|join(', ', attribute='source')}}</td>
         <td>{{macros.display_datetime(observable['created'])}}</td>
         <td>{{ observable['sources']|join(', ')}}</td>
       </tr>
