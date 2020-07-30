@@ -88,6 +88,8 @@
 [abuseIPDB]
 # key = YourKey
 
-
 [phishtank]
+# key=
+
+[vt]
 # key=
