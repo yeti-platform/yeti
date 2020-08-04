@@ -361,7 +361,7 @@ class VTDomainResolution(OneShotAnalytics, VirustotalApi):
     default_values = {
         'group': 'Virustotal',
         'name': 'VT Domain Resolution',
-        'description': 'Perform a Virustotal query to have subdomains.',
+        'description': 'Perform a Virustotal query to have PDNS results.',
     }
 
     ACTS_ON = ['Hostname']
@@ -437,7 +437,7 @@ class VTDomainComFile(OneShotAnalytics, VirustotalApi):
     default_values = {
         'group': 'Virustotal',
         'name': 'VT Com files domain',
-        'description': 'Perform a Virustotal query to have subdomains.',
+        'description': 'Perform a Virustotal query to have files reffered.',
     }
 
     ACTS_ON = ['Hostname']
@@ -462,7 +462,7 @@ class VTDomainReferrerFile(OneShotAnalytics, VirustotalApi):
     default_values = {
         'group': 'Virustotal',
         'name': 'VT Referrer files domain',
-        'description': 'Perform a Virustotal query to have subdomains.',
+        'description': 'Perform a query to have files refferer on the domain',
     }
 
     ACTS_ON = ['Hostname']
@@ -487,7 +487,7 @@ class VTIPResolution(OneShotAnalytics, VirustotalApi):
     default_values = {
         'group': 'Virustotal',
         'name': 'VT IP Resolution',
-        'description': 'Perform a Virustotal query to have subdomains.',
+        'description': 'Perform a query to have domains with PDNS.',
     }
 
     ACTS_ON = ['Ip']
@@ -530,7 +530,7 @@ class VTIPComFile(OneShotAnalytics, VirustotalApi):
     default_values = {
         'group': 'Virustotal',
         'name': 'VT IP Com files',
-        'description': 'Perform a Virustotal query to have subdomains.',
+        'description': 'Perform a query to have files communicating on the IP ',
     }
 
     ACTS_ON = ['Ip']
@@ -556,7 +556,7 @@ class VTIPReferrerFile(OneShotAnalytics, VirustotalApi):
     default_values = {
         'group': 'Virustotal',
         'name': 'VT IP Referrer files',
-        'description': 'Perform a Virustotal query to have subdomains.',
+        'description': 'Perform a Virustotal query to have refferer files.',
     }
 
     ACTS_ON = ['Ip']
