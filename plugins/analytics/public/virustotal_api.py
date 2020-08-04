@@ -234,36 +234,37 @@ class VTFileUrlContacted(OneShotAnalytics, VirustotalApi):
         result = VirustotalApi.fetch(api_key, endpoint)
         if result:
             for data in result['data']:
-                attributes = data['attributes']
+                if 'attributes' in data:
+                    attributes = data['attributes']
 
-                timestamp_first_submit = attributes['first_submission_date']
-                context['first_seen'] = datetime.fromtimestamp(
-                    timestamp_first_submit).isoformat()
+                    timestamp_first_submit = attributes['first_submission_date']
+                    context['first_seen'] = datetime.fromtimestamp(
+                        timestamp_first_submit).isoformat()
 
-                url = Url.get_or_create(value=attributes['url'])
-                links.update(url.active_link_to(observable, 'contact by',
-                                                context['source']))
-                context['last_http_response_code'] = str(
-                    attributes['last_http_response_code'])
-                context['last_http_response_content_length'] = str(
-                    attributes['last_http_response_content_length'])
+                    url = Url.get_or_create(value=attributes['url'])
+                    links.update(url.active_link_to(observable, 'contact by',
+                                                    context['source']))
+                    context['last_http_response_code'] = str(
+                        attributes['last_http_response_code'])
+                    context['last_http_response_content_length'] = str(
+                        attributes['last_http_response_content_length'])
 
-                timestamp_last_modif = attributes['last_modification_date']
-                context['last_modification_date'] = datetime.fromtimestamp(
-                    timestamp_last_modif).isoformat()
+                    timestamp_last_modif = attributes['last_modification_date']
+                    context['last_modification_date'] = datetime.fromtimestamp(
+                        timestamp_last_modif).isoformat()
 
-                timestamp_last_analysis = attributes['last_analysis_date']
-                context['last_analysis_date'] = datetime.fromtimestamp(
-                    timestamp_last_analysis).isoformat()
+                    timestamp_last_analysis = attributes['last_analysis_date']
+                    context['last_analysis_date'] = datetime.fromtimestamp(
+                        timestamp_last_analysis).isoformat()
 
-                stat_files = data['attributes']['last_analysis_stats']
-                for k, v in stat_files.items():
-                    context[k] = v
-                tags = attributes['tags']
-                if tags:
-                    url.tag(tags)
+                    stat_files = data['attributes']['last_analysis_stats']
+                    for k, v in stat_files.items():
+                        context[k] = v
+                    tags = attributes['tags']
+                    if tags:
+                        url.tag(tags)
 
-                url.add_context(context)
+                    url.add_context(context)
 
 
 class VTDomainContacted(OneShotAnalytics, VirustotalApi):
