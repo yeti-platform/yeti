@@ -244,10 +244,12 @@ class VTFileUrlContacted(OneShotAnalytics, VirustotalApi):
                     url = Url.get_or_create(value=attributes['url'])
                     links.update(url.active_link_to(observable, 'contact by',
                                                     context['source']))
-                    context['last_http_response_code'] = str(
-                        attributes['last_http_response_code'])
-                    context['last_http_response_content_length'] = str(
-                        attributes['last_http_response_content_length'])
+                    if 'last_http_response_code' in attributes:
+                        context['last_http_response_code'] = str(
+                            attributes['last_http_response_code'])
+                    if 'last_http_response_content_length' in attributes:
+                        context['last_http_response_content_length'] = str(
+                            attributes['last_http_response_content_length'])
 
                     timestamp_last_modif = attributes['last_modification_date']
                     context['last_modification_date'] = datetime.fromtimestamp(
@@ -265,6 +267,7 @@ class VTFileUrlContacted(OneShotAnalytics, VirustotalApi):
                         url.tag(tags)
 
                     url.add_context(context)
+            return list(links)
 
 
 class VTDomainContacted(OneShotAnalytics, VirustotalApi):
