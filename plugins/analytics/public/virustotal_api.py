@@ -295,11 +295,6 @@ class VTDomainContacted(OneShotAnalytics, VirustotalApi):
                 context['whois'] = data['attributes']['whois']
                 for k, v in stat_files.items():
                     context[k] = v
-                last_dns_records = data['attributes']['last_dns_records']
-
-                for rr in last_dns_records:
-                    ip = Ip.get_or_create(value=rr['value'])
-                    ip.active_link_to(hostname, rr['type'], 'VT PDNS')
                 links.update(hostname.active_link_to(observable, 'contacted by',
                                                      context['source']))
                 hostname.add_context(context)
