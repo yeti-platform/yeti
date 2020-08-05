@@ -511,15 +511,13 @@ class VTIPResolution(OneShotAnalytics, VirustotalApi):
                     timestamp_date = attributes['date']
                     date_last_resolv = datetime.fromtimestamp(
                         timestamp_date).isoformat()
-                    context['date_last_resolution'] = 'domain: %s date: %s' % (
-                        hostname.value,
-                        date_last_resolv
-                    )
+                    context[hostname.value] = date_last_resolv
+
                     hostname.add_context(
                         {'source': context['source'],
-                         'date_last_resolution': 'ip: %s date: %s' % (
-                             observable.value,
-                             date_last_resolv)})
+                         observable.value: date_last_resolv
+                         }
+                    )
                 links.update(hostname.active_link_to(observable, 'resolved',
                                                      context['source']))
 
