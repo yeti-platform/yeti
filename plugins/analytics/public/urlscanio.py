@@ -1,9 +1,13 @@
 import json
+import logging
+
 import requests
+
 from core.analytics import OneShotAnalytics
-from core.observables import AutonomousSystem, Hostname, Ip, Text, Url
 from core.config.config import yeti_config
-from core.errors import GenericYetiError
+from core.errors import GenericYetiError, ObservableValidationError
+from core.observables import AutonomousSystem, Hostname, Ip, Text, Url
+
 
 class UrlScanIoApi(object):
     """
@@ -41,25 +45,47 @@ class UrlScanIoApi(object):
 
             # IP iocs has more data than the rest
             if not isinstance(observable, Ip) and page['page'].get('ip'):
-                new_ip = Ip.get_or_create(value=page['page']['ip'])
-                links.update(
-                    new_ip.active_link_to(observable,
-                        'ip', 'UrlScanIo Query')
-                )
+                try:
+                    ip = page['page']['ip']
+                    new_ip = Ip.get_or_create(value=ip)
+                    new_ip.add_context({
+                        'source': 'UrlScanIo'
+                    })
+                    links.update(
+                        new_ip.active_link_to(observable,
+                                              'ip', 'UrlScanIo Query')
+                    )
+                except ObservableValidationError:
+                    logging.error('This ip address is not valid %s' % ip)
 
-            if not isinstance(observable, Hostname) and page['page'].get('domain'):
-                new_host = Hostname.get_or_create(value=page['page']['domain'])
-                links.update(
-                    new_host.active_link_to(observable,
-                        'hostname', 'UrlScanIo Query')
-                )
+            if not isinstance(observable, Hostname) and page['page'].get(
+                    'domain'):
+                try:
+                    hostname = page['page']['domain']
+                    new_host = Hostname.get_or_create(value=hostname)
+                    new_host.add_context({
+                        'source': 'UrlScanIo'
+                    })
+                    links.update(
+                        new_host.active_link_to(observable,
+                                                'hostname', 'UrlScanIo Query')
+                    )
+                except ObservableValidationError:
+                    logging.error('This hostname not valid: %s' % hostname)
 
             if not isinstance(observable, Url) and page['page'].get('url'):
-                new_url = Url.get_or_create(value=page['page']['url'])
-                links.update(
-                    new_url.active_link_to(observable,
-                        'url', 'UrlScanIo Query')
-                )
+                try:
+                    url = page['page']['url']
+                    new_url = Url.get_or_create(value=url)
+                    new_url.add_context({
+                        'source': 'UrlScanIo'
+                    })
+                    links.update(
+                        new_url.active_link_to(observable,
+                                               'url', 'UrlScanIo Query')
+                    )
+                except ObservableValidationError:
+                    logging.error('This url is not valid %s' % url)
 
             links.update(UrlScanIoApi._process_asn_data(page, observable))
 
