@@ -387,19 +387,15 @@ class VTDomainResolution(OneShotAnalytics, VirustotalApi):
                 timestamp_resolv = attribute['date']
                 date_last_resolv = datetime.fromtimestamp(
                     timestamp_resolv).isoformat()
-                context['date_last_resolution'] = 'ip: %s date: %s' % (
-                    ip_address,
-                    date_last_resolv)
+                context[ip_address] = date_last_resolv
 
                 ip.add_context(
                     {'source': context['source'],
-                     'date_last_resolution': 'domain: %s date: %s' % (
-                         observable.value, date_last_resolv
-                     )
+                     observable.value: date_last_resolv
                      }
                 )
-            if 'date_last_resolution' in context:
-                observable.add_context(context)
+
+            observable.add_context(context)
         return list(links)
 
 
