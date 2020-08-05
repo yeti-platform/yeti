@@ -199,8 +199,9 @@ class VTFileIPContacted(OneShotAnalytics, VirustotalApi):
                 ip.active_link_to(asn, 'AS', 'Virustotal.com')
 
                 context['as_owner'] = attributes['as_owner']
-                context['last_https_certificate'] = json.dumps(attributes[
-                                                                   'last_https_certificate'])
+                if 'last_https_certificate' in attributes:
+                    context['last_https_certificate'] = json.dumps(
+                        attributes['last_https_certificate'])
 
                 stat_files = attributes['last_analysis_stats']
 
