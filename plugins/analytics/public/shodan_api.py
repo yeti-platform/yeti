@@ -1,6 +1,8 @@
-import logging
-import shodan
 import json
+import logging
+
+import shodan
+
 from core.analytics import OneShotAnalytics
 from core.entities import Company
 from core.observables import Hostname, AutonomousSystem
@@ -49,7 +51,7 @@ class ShodanQuery(OneShotAnalytics, ShodanApi):
 
         if 'asn' in result and result['asn'] is not None:
             o_asn = AutonomousSystem.get_or_create(value=result['asn'].replace("AS", ""))
-            links.update(ip.active_link_to(o_asn, 'asn#', 'Shodan Query'))
+            links.update(o_asn.active_link_to(ip, 'asn#', 'Shodan Query'))
 
         if 'hostnames' in result and result['hostnames'] is not None:
             for hostname in result['hostnames']:
@@ -58,7 +60,7 @@ class ShodanQuery(OneShotAnalytics, ShodanApi):
 
         if 'isp' in result and result['isp'] is not None:
             o_isp = Company.get_or_create(name=result['isp'])
-            links.update(ip.active_link_to(o_isp, 'hosting', 'Shodan Query'))
+            links.update(o_isp.active_link_to(ip, 'hosting', 'Shodan Query'))
 
         for context in ip.context:
             if context['source'] == 'shodan_query':
