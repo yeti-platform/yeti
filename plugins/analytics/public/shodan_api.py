@@ -60,7 +60,7 @@ class ShodanQuery(OneShotAnalytics, ShodanApi):
 
         if 'isp' in result and result['isp'] is not None:
             o_isp = Company.get_or_create(name=result['isp'])
-            links.update(o_isp.active_link_to(ip, 'hosting', 'Shodan Query'))
+            links.update(ip.active_link_to(o_isp, 'hosting', 'Shodan Query'))
 
         for context in ip.context:
             if context['source'] == 'shodan_query':
