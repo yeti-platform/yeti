@@ -4,7 +4,7 @@ from flask import request
 from flask_classy import route
 
 from core.entities import Entity, Malware, TTP, Actor, ExploitKit, Exploit, \
-    Campaign
+    Campaign, Company
 from core.indicators import Indicator, Yara, Regex
 from core.observables import Observable
 from core.web.api.api import render
@@ -23,6 +23,7 @@ NODES_CLASSES = {
     'exploitkit': ExploitKit,
     'regex': Regex,
     'yara': Yara,
+    'company': Company
 }
 
 
