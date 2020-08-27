@@ -1,12 +1,15 @@
-import logging
-import requests
 import json
-from core.errors import GenericYetiError
-from core.analytics import OneShotAnalytics
-from core.observables import Hash, Ip, Hostname, Url
-from core.config.config import yeti_config
-from core.errors import ObservableValidationError
+import logging
 from hashlib import sha1
+
+import requests
+
+from core.analytics import OneShotAnalytics
+from core.config.config import yeti_config
+from core.errors import GenericYetiError
+from core.errors import ObservableValidationError
+from core.observables import Hash, Ip, Hostname, Url
+
 
 def aux_checker(json_result):
     if not json_result or not json_result.get("results"):
@@ -20,13 +23,14 @@ def aux_checker(json_result):
     )
 
     result = {
-        "raw", json_string,
-        "source", "threatminer_query",
+        "raw": json_string,
+        "source": "threatminer_query",
     }
 
     _results = json_result.get("results")
 
     return _results, result
+
 
 class ThreatMinerApi(object):
 
