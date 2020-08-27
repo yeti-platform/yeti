@@ -3,6 +3,7 @@ import logging
 from hashlib import sha1
 
 import requests
+from dateutil import parser
 
 from core.analytics import OneShotAnalytics
 from core.config.config import yeti_config
@@ -72,8 +73,11 @@ class MetaData(OneShotAnalytics, ThreatMinerApi):
         links = set()
         params = {"q": observable.value, "rt": 1}
         json_result = ThreatMinerApi.fetch(observable, params, "sample.php")
-
-        _results, result = aux_checker(json_result)
+        try:
+            _results, result = aux_checker(json_result)
+        except GenericYetiError as e:
+            logging.error(e.value)
+            return links
 
         for r in _results:
             hashes = {
@@ -270,11 +274,18 @@ class ThreatMinerPDNS(OneShotAnalytics, ThreatMinerApi):
             _results, result = aux_checker(json_result)
 
             for r in _results:
-                o_hostname = Hostname.get_or_create(value=r.get("domain"))
-                links.update(observable.link_to(o_hostname,
-                    description="a record", source="ThreatMiner",
-                    first_seen=r["first_seen"], last_seen=r["last_seen"])
-                )
+                try:
+                    o_hostname = Hostname.get_or_create(value=r.get("domain"))
+                    links.update(observable.link_to(o_hostname,
+                                                    description="a record",
+                                                    source="ThreatMiner",
+                                                    first_seen=parser.parse(
+                                                        r["first_seen"]),
+                                                    last_seen=parser.parse(
+                                                        r["last_seen"])
+                                                    ))
+                except ObservableValidationError as e:
+                    logging.error('Caught an exception: {}'.format(e))
 
             observable.add_context(result)
 
@@ -285,14 +296,17 @@ class ThreatMinerPDNS(OneShotAnalytics, ThreatMinerApi):
             _results, result = aux_checker(json_result)
 
             for r in _results:
-                o_ip = Ip.get_or_create(value=r.get("ip"))
-                links.update(observable.link_to(
-                            o_ip,
-                            description="a record",
-                            source="ThreatMiner",
-                            first_seen=r["first_seen"],
-                            last_seen=r["last_seen"]
-                ))
+                try:
+                    o_ip = Ip.get_or_create(value=r.get("ip"))
+                    links.update(observable.link_to(
+                        o_ip,
+                        description="a record",
+                        source="ThreatMiner",
+                        first_seen=r["first_seen"],
+                        last_seen=r["last_seen"]
+                    ))
+                except ObservableValidationError as e:
+                    logging.error("Caught an exception: {}".format(e))
 
             observable.add_context(result)
         return list(links)
