@@ -15,13 +15,13 @@ if __name__ == '__main__':
     Scheduler()
 
     if len(sys.argv) == 1:
-        print "Re-run using a analytic name as argument"
+        print("Re-run using a analytic name as argument")
         for f in OneShotAnalytics.objects():
-            print "  {}".format(f.name)
+            print("  {}".format(f.name))
 
     if len(sys.argv) > 1:
         name = sys.argv[1]
         f = OneShotAnalytics.objects.get(name=name)
-        print "Running {}...".format(f.name)
+        print("Running {}...".format(f.name))
         observable = Observable.guess_type(sys.argv[2]).get_or_create(value=sys.argv[2])
         f.analyze(observable, {})
