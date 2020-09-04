@@ -31,7 +31,8 @@ def login():
 
     return {'authenticated': True, 'user': user.username}
 
-@auth.route('/api/auth/logout')
+@auth.route('/api/auth/logout', methods=['POST'])
+@login_required
 def logout():
     """Logout user."""
     logout_user()
