@@ -15,8 +15,7 @@ from core.web.api import api
 from mongoengine.errors import DoesNotExist
 from core.yeti_plugins import get_plugins
 
-webapp = Flask(
-    __name__, static_folder='../../node_modules', static_url_path='/static')
+webapp = Flask(__name__, static_folder='frontend')
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
@@ -64,6 +63,12 @@ def api_login_required():
 
 webapp.register_blueprint(api, url_prefix='/api')
 
+@webapp.route('/', defaults={'path': ''})
+@webapp.route('/<path:path>')
+def index(path):
+    if path.startswith('css/') or path.startswith('js/'):
+        return current_app.send_static_file(path)
+    return current_app.send_static_file("index.html")
 
 @webapp.route('/list_routes')
 def list_routes():
