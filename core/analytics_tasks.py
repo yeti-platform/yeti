@@ -74,3 +74,4 @@ def single(results_id):
         traceback.print_exc()
 
     results.observable.analysis_done(analytics.__class__.__name__)
+    return True
