@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import requests
+from dateutil import parser
 
 from core.analytics import OneShotAnalytics
 from core.config.config import yeti_config
@@ -152,8 +153,7 @@ class PassiveTotalMalware(OneShotAnalytics, PassiveTotalApi):
             '/enrichment/malware', results.settings, params)
 
         for record in data['results']:
-            collection_date = datetime.strptime(
-                record['collectionDate'], "%Y-%m-%d %H:%M:%S")
+            collection_date = parser.parse(record['collectionDate'])
 
             malware = Hash.get_or_create(value=record['sample'])
             links.update(
