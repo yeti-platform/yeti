@@ -9,16 +9,16 @@ Remove celery.pid in your work environment.
 
 It might have another error, you can follow the below steps:
 
-systemctl stop yeti_feed.service
+- systemctl stop yeti_feed.service
 
-mongo
+- mongo
 
-use yeti
+- use yeti
 
-db.schedule_entry.drop()
+- db.schedule_entry.drop()
 
-systemctl restart yeti_web.service
+- systemctl restart yeti_web.service
 
-systemctl restart yeti_feed.service
+- systemctl restart yeti_feed.service
 
-Relaunch feeders in /Dataflow page.
+- Relaunch feeders in /Dataflow page.
