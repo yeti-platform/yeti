@@ -41,16 +41,12 @@ class VirusTotalPriv(Feed):
     def analyze(self, item):
         tags = []
 
-        # Convert data to json
-        json_string = item.to_json()
-        json_string = json.loads(json_string)
-
         context = {'source': self.name}
 
         # Parse value of interest
-        subject = json_string["attributes"]["rule_name"]
-        date = json_string["attributes"]["date"]
-        tags2 = json_string["attributes"]["tags"]
+        subject = item["attributes"]["rule_name"]
+        date = item["attributes"]["date"]
+        tags2 = item["attributes"]["tags"]
         sha2 = re.search(regex, str(tags2)).group()
         date_string = datetime.utcfromtimestamp(date).strftime('%d/%m/%Y %H:%M:%S')
         tags2.remove(sha2)
@@ -62,10 +58,10 @@ class VirusTotalPriv(Feed):
         tags.append(tags2)
 
         context['date_added'] = date_string
-        context['snippet'] = json_string["attributes"]['snippet']
-        # context['source_country'] = json_string["attributes"]['source_country']
+        context['snippet'] = item["attributes"]['snippet']
+        # context['source_country'] = item["attributes"]['source_country']
 
-        context['raw'] = json_string
+        context['raw'] = item
 
         f_vt3.tag(str(tags))
         f_vt3.add_context(context)
