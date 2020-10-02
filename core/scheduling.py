@@ -14,7 +14,7 @@ from core.database import YetiDocument
 
 class ScheduleEntry(YetiDocument):
     """Base class for Scheduling Entries. Everything that should be scheduled
-       must inherit from this"""
+    must inherit from this"""
 
     name = StringField(required=True, unique=True)
     enabled = BooleanField(default=True)
@@ -53,7 +53,6 @@ class OneShotEntry(YetiDocument):
 
 
 class Scheduler(BaseScheduler):
-
     def __init__(self, *args, **kwargs):
         self._schedule = {}
         logging.debug("Scheduler started")
@@ -74,8 +73,10 @@ class Scheduler(BaseScheduler):
             port=yeti_config.mongodb.port,
             username=yeti_config.mongodb.username,
             password=yeti_config.mongodb.password,
-            connect=False)
+            connect=False,
+        )
         from core.yeti_plugins import get_plugins
+
         self.loaded_entries = get_plugins()
 
     def setup_schedule(self):
@@ -87,4 +88,5 @@ class Scheduler(BaseScheduler):
                     app=self.app,
                     task=entry.SCHEDULED_TASK,
                     schedule=entry.frequency,
-                    args=(str(entry.id),))
+                    args=(str(entry.id),),
+                )

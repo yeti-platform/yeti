@@ -15,19 +15,18 @@ class BenkowTracker(Feed):
     }
 
     def update(self):
-        for index, line in self.update_csv(filter_row='date', delimiter=';',
-                                           header=0):
+        for index, line in self.update_csv(filter_row="date", delimiter=";", header=0):
             self.analyze(line)
 
     def analyze(self, line):
 
         url_obs = False
-        url = line['url']
-        ip = line['ip']
-        family = line['type']
+        url = line["url"]
+        ip = line["ip"]
+        family = line["type"]
         context = {}
-        context['date_added'] = line['date']
-        context['source'] = self.name
+        context["date_added"] = line["date"]
+        context["source"] = self.name
         tags = []
         tags.append(family.lower())
 
@@ -48,7 +47,6 @@ class BenkowTracker(Feed):
                 ip_obs.add_source(self.name)
                 ip_obs.tag(tags)
                 if url_obs:
-                    ip_obs.active_link_to(
-                        url_obs, "url", self.name, clean_old=False)
+                    ip_obs.active_link_to(url_obs, "url", self.name, clean_old=False)
         except ObservableValidationError as e:
             logging.error(e)

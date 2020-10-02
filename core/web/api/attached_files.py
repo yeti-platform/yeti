@@ -9,18 +9,17 @@ from core.web.api.api import render
 
 
 class AttachedFiles(FlaskView):
-
     def post(self):
-        if 'file' in request.files:
-            f = AttachedFile.from_upload(request.files['file'])
+        if "file" in request.files:
+            f = AttachedFile.from_upload(request.files["file"])
         else:
             data = loads(request.data)
-            if 'file' in data:
-                f = AttachedFile.from_upload(data['file'])
+            if "file" in data:
+                f = AttachedFile.from_upload(data["file"])
             else:
                 abort(400)
 
-        return render({'filename': url_for('api.AttachedFiles:get', id=f.id)})
+        return render({"filename": url_for("api.AttachedFiles:get", id=f.id)})
 
     def get(self, id):
         f = get_object_or_404(AttachedFile, id=id)

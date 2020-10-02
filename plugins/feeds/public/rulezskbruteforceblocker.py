@@ -32,9 +32,9 @@ class RulezSKBruteforceBlocker(Feed):
 
     def analyze(self, ip, first_seen, raw):  # pylint: disable=arguments-differ
         context = {}
-        context['first_seen'] = first_seen
-        context['source'] = self.name
-        context['raw'] = raw
+        context["first_seen"] = first_seen
+        context["source"] = self.name
+        context["raw"] = raw
 
         try:
             ip = Ip.get_or_create(value=ip)

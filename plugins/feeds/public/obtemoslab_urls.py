@@ -16,7 +16,7 @@ class Obtemoslab(Feed):
 
     def update(self):
         resp = self._make_request(sort=False)
-        lines = resp.content.decode('utf-8').split("\r\n")[4:-1]
+        lines = resp.content.decode("utf-8").split("\r\n")[4:-1]
         for url in lines:
             self.analyze(url.strip())
 

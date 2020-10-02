@@ -14,7 +14,7 @@ class PropagateBlocklist(ScheduledAnalytics):
         "description": "Propagates blocklist from URLs to hostnames",
     }
 
-    ACTS_ON = 'Url'  # act on Urls only
+    ACTS_ON = "Url"  # act on Urls only
 
     CUSTOM_FILTER = Q(tags__name="blocklist")  # filter only tagged elements
 
@@ -25,8 +25,8 @@ class PropagateBlocklist(ScheduledAnalytics):
         n = obj.neighbors(neighbor_type="Hostname").values()
         if n:
             for link in n[0]:
-                link[1].tag('blocklist')
+                link[1].tag("blocklist")
         else:
             h = ProcessUrl.each(obj)
             if h is not None:
-                h.tag('blocklist')
+                h.tag("blocklist")

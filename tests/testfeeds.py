@@ -8,7 +8,7 @@ sys.path.append(YETI_ROOT)
 from core.feed import Feed, update_feed
 from core.scheduling import Scheduler
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     Scheduler()

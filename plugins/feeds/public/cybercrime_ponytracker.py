@@ -21,12 +21,13 @@ class CybercrimePonyTracker(Feed):
 
     def update(self):
 
-        since_last_run = datetime.now(timezone('UTC')) - self.frequency
+        since_last_run = datetime.now(timezone("UTC")) - self.frequency
 
         for item in self.update_xml(
-                'item', ["title", "link", "pubDate", "description"]):
+            "item", ["title", "link", "pubDate", "description"]
+        ):
 
-            pub_date = parse_date_to_utc(item['pubDate'])
+            pub_date = parse_date_to_utc(item["pubDate"])
             if self.last_run is not None:
                 if since_last_run > pub_date:
                     continue
@@ -34,25 +35,24 @@ class CybercrimePonyTracker(Feed):
             self.analyze(item, pub_date)
 
     def analyze(self, item, pub_date):  # pylint: disable=arguments-differ
-        observable_sample = item['title']
+        observable_sample = item["title"]
         context_sample = {}
-        context_sample['description'] = "Pony sample"
-        context_sample['date_added'] = pub_date
-        context_sample['source'] = self.name
+        context_sample["description"] = "Pony sample"
+        context_sample["date_added"] = pub_date
+        context_sample["source"] = self.name
 
-        link_c2 = re.search("https?://[^ ]*",
-                            item['description'].lower()).group()
+        link_c2 = re.search("https?://[^ ]*", item["description"].lower()).group()
         observable_c2 = link_c2
         context_c2 = {}
-        context_c2['description'] = "Pony c2"
-        context_c2['date_added'] = pub_date
-        context_c2['source'] = self.name
+        context_c2["description"] = "Pony c2"
+        context_c2["date_added"] = pub_date
+        context_c2["source"] = self.name
 
         try:
             sample = Hash.get_or_create(value=observable_sample)
             sample.add_context(context_sample)
             sample.add_source(self.name)
-            sample_tags = ['pony', 'objectives']
+            sample_tags = ["pony", "objectives"]
             sample.tag(sample_tags)
         except ObservableValidationError as e:
             logging.error(e)
@@ -62,9 +62,9 @@ class CybercrimePonyTracker(Feed):
             c2 = Url.get_or_create(value=observable_c2)
             c2.add_context(context_c2)
             c2.add_source(self.name)
-            c2_tags = ['c2', 'pony']
+            c2_tags = ["c2", "pony"]
             c2.tag(c2_tags)
-            sample.active_link_to(c2, 'c2', self.name, clean_old=False)
+            sample.active_link_to(c2, "c2", self.name, clean_old=False)
         except ObservableValidationError as e:
             logging.error(e)
             return

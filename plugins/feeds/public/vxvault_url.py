@@ -10,10 +10,10 @@ class VXVaultUrl(Feed):
 
     # set default values for feed
     default_values = {
-        'frequency': timedelta(hours=1),
-        'name': 'VXVaultUrl',
-        'source': 'http://vxvault.net/URL_List.php',
-        'description': 'VXVault Community URL list.'
+        "frequency": timedelta(hours=1),
+        "name": "VXVaultUrl",
+        "source": "http://vxvault.net/URL_List.php",
+        "description": "VXVault Community URL list.",
     }
 
     # should tell yeti how to get and chunk the feed
@@ -26,13 +26,17 @@ class VXVaultUrl(Feed):
     # don't need to do much here; want to add the information
     # and tag it with 'malware'
     def analyze(self, data):
-        if data.startswith('http'):
-            tags = ['malware']
-            context = {'source': self.name}
+        if data.startswith("http"):
+            tags = ["malware"]
+            context = {"source": self.name}
             try:
                 url = Url.get_or_create(value=data.rstrip())
                 url.add_context(context)
                 url.add_source(self.name)
                 url.tag(tags)
             except ObservableValidationError as e:
-                logging.error('While processing the following line we hit an error {}, {}'.format(data, e))
+                logging.error(
+                    "While processing the following line we hit an error {}, {}".format(
+                        data, e
+                    )
+                )
