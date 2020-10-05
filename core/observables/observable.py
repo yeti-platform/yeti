@@ -61,7 +61,19 @@ class Observable(Node):
         "allow_inheritance":
             True,
         "indexes": [
-            "tags", "last_analyses", "created", {
+            {
+                "fields": ["tags.name"],
+                "cls": False,
+            },
+            {
+                "fields": ["last_analyses"],
+                "cls": False,
+            },
+            {
+                "fields": ["created"],
+                "cls": False,
+            },
+            {
                 "fields": ["#value"],
                 "cls": False,
             }
