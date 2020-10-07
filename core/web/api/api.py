@@ -31,7 +31,7 @@ def render(obj, template=None):
 
 from core.web.api.observable import ObservableSearch, Observable
 from core.web.api.entity import Entity, EntitySearch
-from core.web.api.tag import Tag
+from core.web.api.tag import Tag, TagSearch
 from core.web.api.analytics import ScheduledAnalytics, OneShotAnalytics, InlineAnalytics
 from core.web.api.analysis import Analysis
 from core.web.api.feeds import Feed
@@ -64,6 +64,7 @@ EntitySearch.register(api)
 Entity.register(api)
 
 Tag.register(api)
+TagSearch.register(api)
 
 Feed.register(api)
 Export.register(api)

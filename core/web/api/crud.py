@@ -62,7 +62,7 @@ class CrudSearchApi(FlaskView):
             logging.error(e)
             abort(400)
 
-        return render(data, self.template)
+        return render(data)
 
     @route("/total", methods=['POST'])
     @requires_permissions('read')

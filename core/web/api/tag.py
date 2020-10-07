@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from flask import request, abort
 from flask_classy import route
 
-from core.web.api.crud import CrudApi
+from core.web.api.crud import CrudApi, CrudSearchApi
 from core import observables
 from core.web.api.api import render
 from core.errors import TagValidationError
@@ -11,8 +11,6 @@ from core.web.helpers import requires_permissions
 
 
 class Tag(CrudApi):
-    template = "tag_api.html"
-    template_single = "tag_api_single.html"
     objectmanager = observables.Tag
 
     @route("/merge", methods=['POST'])
@@ -106,3 +104,6 @@ class Tag(CrudApi):
             import traceback
             traceback.print_exc()
             abort(400)
+
+class TagSearch(CrudSearchApi):
+    objectmanager = observables.Tag
