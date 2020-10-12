@@ -9,7 +9,7 @@ from bson.objectid import ObjectId
 from mongoengine import QuerySet, Document, EmbeddedDocument
 
 from core.database import Node, Link, YetiDocument
-
+from core.user import User
 
 def recursive_encoder(objects, template=None, ctx=None):
     if isinstance(objects, dict):
@@ -47,6 +47,8 @@ def to_json(obj):
         return obj.isoformat()
     elif isinstance(obj, set):
         return list(obj)
+    elif isinstance(obj, User):
+        return obj.username
     else:
         return default(obj)
 
