@@ -16,21 +16,20 @@ class BenkowTrackerRat(Feed):
     }
 
     def update(self):
-        for index, line in self.update_csv(filter_row='date', delimiter=';',
-                                           header=0):
+        for index, line in self.update_csv(filter_row="date", delimiter=";", header=0):
             self.analyze(line)
 
     def analyze(self, line):
 
         context = {}
-        context['date_added'] = line['date']
-        context['source'] = self.name
+        context["date_added"] = line["date"]
+        context["source"] = self.name
 
-        family = line['type']
-        url = line['url']
-        ip = line['ip']
+        family = line["type"]
+        url = line["url"]
+        ip = line["ip"]
 
-        if not url.startswith(('http://', 'https://')):
+        if not url.startswith(("http://", "https://")):
             url = "http://" + url
 
         tags = []

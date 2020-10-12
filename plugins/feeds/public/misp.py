@@ -17,21 +17,21 @@ class MispFeed(Feed):
         "frequency": timedelta(hours=1),
         "name": "MispFeed",
         "description": "Parses events from a given MISP instance",
-        "source": "MISP"
+        "source": "MISP",
     }
 
     TYPES_TO_IMPORT = {
-        'domain': Hostname,
-        'ip-dst': Ip,
-        'ip-src': Ip,
-        'url': Url,
-        'hostname': Hostname,
-        'md5': Hash,
-        'sha1': Hash,
-        'sha256': Hash,
-        'btc': Bitcoin,
-        'email-src': Email,
-        'email-dst': Email
+        "domain": Hostname,
+        "ip-dst": Ip,
+        "ip-src": Ip,
+        "url": Url,
+        "hostname": Hostname,
+        "md5": Hash,
+        "sha1": Hash,
+        "sha256": Hash,
+        "btc": Bitcoin,
+        "email-src": Email,
+        "email-dst": Email,
     }
 
     def __init__(self, *args, **kwargs):
@@ -41,58 +41,56 @@ class MispFeed(Feed):
     def get_instances(self):
         self.instances = {}
 
-        for instance in yeti_config.get('misp', 'instances', '').split(','):
+        for instance in yeti_config.get("misp", "instances", "").split(","):
             config = {
-                'url': yeti_config.get(instance, 'url'),
-                'key': yeti_config.get(instance, 'key'),
-                'name': yeti_config.get(instance, 'name') or instance,
-                'galaxy_filter': yeti_config.get(instance, 'galaxy_filter'),
-                'days': yeti_config.get(instance, 'days'),
-                'organisations': {}
+                "url": yeti_config.get(instance, "url"),
+                "key": yeti_config.get(instance, "key"),
+                "name": yeti_config.get(instance, "name") or instance,
+                "galaxy_filter": yeti_config.get(instance, "galaxy_filter"),
+                "days": yeti_config.get(instance, "days"),
+                "organisations": {},
             }
 
-            if config['url'] and config['key']:
+            if config["url"] and config["key"]:
                 self.instances[instance] = config
 
     def last_run_for(self, instance):
-        last_run = [int(part) for part in self.last_runs[instance].split('-')]
+        last_run = [int(part) for part in self.last_runs[instance].split("-")]
 
         return date(*last_run)
 
     def get_organisations(self, instance):
-        url = urljoin(
-            self.instances[instance]['url'], '/organisations/index/scope:all')
+        url = urljoin(self.instances[instance]["url"], "/organisations/index/scope:all")
         headers = {
-            'Authorization': self.instances[instance]['key'],
-            'Content-type': 'application/json',
-            'Accept': 'application/json'
+            "Authorization": self.instances[instance]["key"],
+            "Content-type": "application/json",
+            "Accept": "application/json",
         }
 
-        r = requests.get(
-            url, headers=headers, proxies=yeti_config.proxy)
+        r = requests.get(url, headers=headers, proxies=yeti_config.proxy)
 
         if r.status_code == 200:
 
             orgs = r.json()
 
             for org in orgs:
-                org_id = org['Organisation']['id']
-                org_name = org['Organisation']['name']
-                self.instances[instance]['organisations'][org_id] = org_name
+                org_id = org["Organisation"]["id"]
+                org_name = org["Organisation"]["name"]
+                self.instances[instance]["organisations"][org_id] = org_name
         else:
-            logging.error('error http %s to get instances' % r.status_code)
+            logging.error("error http %s to get instances" % r.status_code)
 
     def week_events(self, instance):
         one_week = timedelta(days=7)
         if not self.instances:
-            logging.error('not instances in MISP')
+            logging.error("not instances in MISP")
             return
         elif instance not in self.instances:
-            logging.error('error in instances of Misp')
+            logging.error("error in instances of Misp")
             return
 
-        url = urljoin(self.instances[instance]['url'], '/events/restSearch')
-        headers = {'Authorization': self.instances[instance]['key']}
+        url = urljoin(self.instances[instance]["url"], "/events/restSearch")
+        headers = {"Authorization": self.instances[instance]["key"]}
         to = date.today()
         fromdate = to - timedelta(days=6)
         body = {}
@@ -100,22 +98,20 @@ class MispFeed(Feed):
         while True:
             imported = 0
 
-            body['to'] = to.isoformat()
-            body['from'] = fromdate.isoformat()
-            body['returnFormat'] = "json"
-            body['published'] = True
-            body['enforceWarninglist'] = True
+            body["to"] = to.isoformat()
+            body["from"] = fromdate.isoformat()
+            body["returnFormat"] = "json"
+            body["published"] = True
+            body["enforceWarninglist"] = True
             r = requests.post(
-                url,
-                headers=headers,
-                json=body,
-                proxies=yeti_config.proxy)
+                url, headers=headers, json=body, proxies=yeti_config.proxy
+            )
 
             if r.status_code == 200:
                 results = r.json()
 
-                for event in results['response']:
-                    self.analyze(event['Event'], instance)
+                for event in results["response"]:
+                    self.analyze(event["Event"], instance)
                     imported += 1
 
                 yield fromdate, to, imported
@@ -132,7 +128,9 @@ class MispFeed(Feed):
         for date_from, date_to, imported in self.week_events(instance):
             logging.debug(
                 "Imported {} attributes from {} to {}".format(
-                    imported, date_from, date_to))
+                    imported, date_from, date_to
+                )
+            )
 
             if seen_last_run:
                 break
@@ -147,7 +145,9 @@ class MispFeed(Feed):
         for date_from, date_to, imported in self.week_events(instance):
             logging.debug(
                 "Imported {} attributes from {} to {}".format(
-                    imported, date_from, date_to))
+                    imported, date_from, date_to
+                )
+            )
 
             if imported == 0:
                 if had_results:
@@ -167,10 +167,8 @@ class MispFeed(Feed):
                 self.get_all_events(instance)
 
             self.modify(
-                **{
-                    "set__last_runs__{}".format(instance):
-                        date.today().isoformat()
-                })
+                **{"set__last_runs__{}".format(instance): date.today().isoformat()}
+            )
 
     def analyze(self, event, instance):
         tags = []
@@ -178,65 +176,69 @@ class MispFeed(Feed):
 
         context = {}
 
-        context['source'] = self.instances[instance]['name']
-        external_analysis = [attr['value'] for attr in
-                             event['Attribute'] if
-                             attr['category'] == 'External analysis' and attr[
-                                 'type'] == 'url' and attr["to_ids"]]
+        context["source"] = self.instances[instance]["name"]
+        external_analysis = [
+            attr["value"]
+            for attr in event["Attribute"]
+            if attr["category"] == "External analysis"
+            and attr["type"] == "url"
+            and attr["to_ids"]
+        ]
         if external_analysis:
-            context['external sources'] = '\r\n'.join(external_analysis)
-        if 'Tag' in event:
-            if not self.instances[instance].get('galaxy_filter'):
-                tags = [tag['name'] for tag in event['Tag']]
+            context["external sources"] = "\r\n".join(external_analysis)
+        if "Tag" in event:
+            if not self.instances[instance].get("galaxy_filter"):
+                tags = [tag["name"] for tag in event["Tag"]]
             else:
-                galaxies = self.instances[instance]['galaxy_filter'].split(',')
+                galaxies = self.instances[instance]["galaxy_filter"].split(",")
 
-                for tag in event['Tag']:
+                for tag in event["Tag"]:
                     found = False
-                    if 'misp-galaxy' in tag['name']:
-                        galaxies_to_context.append(tag['name'])
+                    if "misp-galaxy" in tag["name"]:
+                        galaxies_to_context.append(tag["name"])
                     for g in galaxies:
-                        if g in tag['name']:
+                        if g in tag["name"]:
                             found = True
                             break
                     if not found:
-                        tags.append(tag['name'])
+                        tags.append(tag["name"])
 
-        for attribute in event['Attribute']:
-            if attribute['category'] == 'External analysis':
+        for attribute in event["Attribute"]:
+            if attribute["category"] == "External analysis":
                 continue
 
-            if attribute.get('type') in self.TYPES_TO_IMPORT:
+            if attribute.get("type") in self.TYPES_TO_IMPORT:
 
-                context['id'] = attribute['event_id']
-                context['link'] = urljoin(
-                    self.instances[instance]['url'],
-                    '/events/{}'.format(
-                        attribute['event_id']))
+                context["id"] = attribute["event_id"]
+                context["link"] = urljoin(
+                    self.instances[instance]["url"],
+                    "/events/{}".format(attribute["event_id"]),
+                )
 
-                context['comment'] = attribute['comment']
+                context["comment"] = attribute["comment"]
 
                 try:
 
-                    klass = self.TYPES_TO_IMPORT[attribute['type']]
-                    obs = klass.get_or_create(value=attribute['value'])
+                    klass = self.TYPES_TO_IMPORT[attribute["type"]]
+                    obs = klass.get_or_create(value=attribute["value"])
 
-                    if attribute['category']:
-                        obs.tag(attribute['category'].replace(' ', '_'))
+                    if attribute["category"]:
+                        obs.tag(attribute["category"].replace(" ", "_"))
 
                     if tags:
                         obs.tag(tags)
 
                     if galaxies_to_context:
-                        context['galaxies'] = '\r\n'.join(galaxies_to_context)
+                        context["galaxies"] = "\r\n".join(galaxies_to_context)
                     obs.add_context(context)
 
                 except:
 
                     try:
                         logging.error(
-                            "{}: error adding {}".format(
-                                'MispFeed', attribute['value']))
+                            "{}: error adding {}".format("MispFeed", attribute["value"])
+                        )
                     except UnicodeError:
-                        logging.error("{}: error adding {}".format(
-                            'MispFeed', attribute['id']))
+                        logging.error(
+                            "{}: error adding {}".format("MispFeed", attribute["id"])
+                        )

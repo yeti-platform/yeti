@@ -36,14 +36,15 @@ class Observable(Node):
 
     SEARCH_ALIASES = {}
 
-    DISPLAY_FIELDS = [("value", "Value"), ("context", "Context"),
-                      ("tags", "Tags"), ("sources",
-                                         "Sources"), ("created", "Created")]
+    DISPLAY_FIELDS = [
+        ("value", "Value"),
+        ("context", "Context"),
+        ("tags", "Tags"),
+        ("sources", "Sources"),
+        ("created", "Created"),
+    ]
 
-    value = StringField(
-        verbose_name="Value",
-        required=True,
-        sparse=True)
+    value = StringField(verbose_name="Value", required=True, sparse=True)
     sources = ListField(StringField(), verbose_name="Sources")
     description = StringField(verbose_name="Description")
     context = ListField(DictField(), verbose_name="Context")
@@ -54,13 +55,16 @@ class Observable(Node):
     last_tagged = DateTimeField(default=None)
 
     exclude_fields = [
-        'sources', 'context', 'last_analyses', 'created', 'attached_files',
-        'last_tagged'
+        "sources",
+        "context",
+        "last_analyses",
+        "created",
+        "attached_files",
+        "last_tagged",
     ]
 
     meta = {
-        "allow_inheritance":
-            True,
+        "allow_inheritance": True,
         "indexes": [
             {
                 "fields": ["tags.name"],
@@ -77,10 +81,9 @@ class Observable(Node):
             {
                 "fields": ["#value"],
                 "cls": False,
-            }
+            },
         ],
-        "index_background":
-            True,
+        "index_background": True,
         "ordering": ["-created"],
     }
 
@@ -95,7 +98,7 @@ class Observable(Node):
         return form
 
     def __unicode__(self):
-        return u"{} ({} context)".format(self.value, len(self.context))
+        return "{} ({} context)".format(self.value, len(self.context))
 
     @staticmethod
     def guess_type(string):
@@ -110,14 +113,25 @@ class Observable(Node):
         Raises:
             ObservableValidationError if no type could be guessed.
         """
-        from core.observables import Url, Ip, Email, Path, Hostname, Hash, Bitcoin, MacAddress
-        if string and string.strip() != '':
+        from core.observables import (
+            Url,
+            Ip,
+            Email,
+            Path,
+            Hostname,
+            Hash,
+            Bitcoin,
+            MacAddress,
+        )
+
+        if string and string.strip() != "":
             for t in [Url, Ip, Email, Path, Hostname, Hash, Bitcoin, MacAddress]:
                 if t.check_type(string):
                     return t
 
         raise ObservableValidationError(
-            "{} was not recognized as a viable datatype".format(string))
+            "{} was not recognized as a viable datatype".format(string)
+        )
 
     @staticmethod
     def from_string(string):
@@ -150,10 +164,9 @@ class Observable(Node):
             o.tag(tags)
         return o
 
-
     @classmethod
     def check_type(cls, txt):
-        match = re.match('^{}$'.format(cls.regex), txt, re.UNICODE)
+        match = re.match("^{}$".format(cls.regex), txt, re.UNICODE)
         if match:
             return cls.is_valid(match)
 
@@ -176,14 +189,13 @@ class Observable(Node):
                 continue
 
             try:
-                observable = cls(value=match.group('search'))
+                observable = cls(value=match.group("search"))
                 observable.normalize()
             except ObservableValidationError:
                 continue
 
-
             except ValueError as e:
-                logging.error('Value error: {} - on: {}'.format(e, observable.value))
+                logging.error("Value error: {} - on: {}".format(e, observable.value))
                 continue
 
             if observable.value not in cls.ignore:
@@ -193,7 +205,7 @@ class Observable(Node):
                 except cls.DoesNotExist:
                     pass
 
-                results[match.group('search')] = observable
+                results[match.group("search")] = observable
 
         return results
 
@@ -209,8 +221,8 @@ class Observable(Node):
             self.normalize()
         else:
             raise ObservableValidationError(
-                "'{}' is not a valid '{}'".format(
-                    self.value, self.__class__.__name__))
+                "'{}' is not a valid '{}'".format(self.value, self.__class__.__name__)
+            )
 
     @staticmethod
     def change_all_tags(old_tags, new_tag):
@@ -247,11 +259,8 @@ class Observable(Node):
             A fresh instance of the Observable as it exists in the database.
 
         """
-        assert 'source' in context
-        context = {
-            k: v
-            for k, v in sorted(context.items(), key=operator.itemgetter(0))
-        }
+        assert "source" in context
+        context = {k: v for k, v in sorted(context.items(), key=operator.itemgetter(0))}
         if replace_source:
             # This does not work : cannot traverse and set context atomically
             # self.modify({"context__source": c}, set__context__S=context)
@@ -262,7 +271,7 @@ class Observable(Node):
                 for key in c:
                     if key in dedup_list:
                         continue
-                    if c[key] != context.get(key, ''):
+                    if c[key] != context.get(key, ""):
                         remove = False
                         break
                 if remove:
@@ -281,10 +290,7 @@ class Observable(Node):
             A fresh instance of the Observable as it exists in the database.
 
         """
-        context = {
-            k: v
-            for k, v in sorted(context.items(), key=operator.itemgetter(0))
-        }
+        context = {k: v for k, v in sorted(context.items(), key=operator.itemgetter(0))}
         self.modify(pull__context=context)
         return self.reload()
 
@@ -332,13 +338,14 @@ class Observable(Node):
             return False
 
     def change_tag(self, old_tag, new_tag):
-        if not self.modify({"tags__name": old_tag, "tags__name__ne": new_tag},
-                           set__tags__S__name=new_tag):
+        if not self.modify(
+            {"tags__name": old_tag, "tags__name__ne": new_tag},
+            set__tags__S__name=new_tag,
+        ):
             self.modify({"tags__name": old_tag}, pull__tags__name=old_tag)
-            self.modify({
-                "tags__name": new_tag
-            },
-                        set__tags__S__last_seen=datetime.utcnow())
+            self.modify(
+                {"tags__name": new_tag}, set__tags__S__last_seen=datetime.utcnow()
+            )
         return self.reload()
 
     def untag(self, tags):
@@ -372,7 +379,7 @@ class Observable(Node):
 
         tagged = False
         for new_tag in new_tags:
-            if new_tag.strip() != '':
+            if new_tag.strip() != "":
                 tagged = True
 
                 new_tag = Tag(name=new_tag)
@@ -390,15 +397,19 @@ class Observable(Node):
 
                 # search for related entities and link them
                 for e in Entity.objects(tags__in=[tag.name]):
-                    self.active_link_to(e, 'Tagged', 'tags', clean_old=False)
+                    self.active_link_to(e, "Tagged", "tags", clean_old=False)
 
                 for tag in extra_tags:
                     if not self.modify(
-                        {"tags__name": tag.name}, set__tags__S__fresh=True,
-                            set__tags__S__last_seen=datetime.utcnow()):
+                        {"tags__name": tag.name},
+                        set__tags__S__fresh=True,
+                        set__tags__S__last_seen=datetime.utcnow(),
+                    ):
                         self.modify(
                             push__tags=ObservableTag(
-                                name=tag.name, expiration=expiration))
+                                name=tag.name, expiration=expiration
+                            )
+                        )
                         tag.modify(inc__count=1)
 
         if tagged:
@@ -427,12 +438,12 @@ class Observable(Node):
     def expire_tags(self):
         for tag in self.tags:
             if tag.expiration:
-                if (tag.last_seen +
-                        tag.expiration) < datetime.utcnow() and tag.fresh:
+                if (tag.last_seen + tag.expiration) < datetime.utcnow() and tag.fresh:
                     tag.fresh = False
                     self.save()
-                elif (tag.last_seen +
-                      tag.expiration) > datetime.utcnow() and not tag.fresh:
+                elif (
+                    tag.last_seen + tag.expiration
+                ) > datetime.utcnow() and not tag.fresh:
                     tag.fresh = True
                     self.save()
         return self
@@ -448,20 +459,25 @@ class Observable(Node):
         i = {
             k: v
             for k, v in self._data.items()
-            if k in [
-                "value", "context", "last_analyses", "created", "sources",
-                "description"
+            if k
+            in [
+                "value",
+                "context",
+                "last_analyses",
+                "created",
+                "sources",
+                "description",
             ]
         }
-        i['tags'] = [t.info() for t in self.tags]
+        i["tags"] = [t.info() for t in self.tags]
         if self.id:
-            i['id'] = str(self.id)
-        i['type'] = self.__class__.__name__
+            i["id"] = str(self.id)
+        i["type"] = self.__class__.__name__
         try:
-            i['url'] = url_for(
-                "api.Observable:post", id=str(self.id), _external=True)
-            i['human_url'] = url_for(
-                "frontend.ObservableView:get", id=str(self.id), _external=True)
+            i["url"] = url_for("api.Observable:post", id=str(self.id), _external=True)
+            i["human_url"] = url_for(
+                "frontend.ObservableView:get", id=str(self.id), _external=True
+            )
         except RuntimeError:
             pass
         return i

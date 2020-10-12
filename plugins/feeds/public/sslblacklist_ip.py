@@ -16,19 +16,20 @@ class SSLBlackListIP(Feed):
 
     def update(self):
 
-        for index, line in self.update_csv(delimiter=',',
-                                           names=['Firstseen', 'DstIP',
-                                                  'DstPort'],
-                                           filter_row='Firstseen'):
+        for index, line in self.update_csv(
+            delimiter=",",
+            names=["Firstseen", "DstIP", "DstPort"],
+            filter_row="Firstseen",
+        ):
             self.analyze(line)
 
     def analyze(self, line):
 
-        first_seen = line['Firstseen']
-        dst_ip = line['DstIP']
+        first_seen = line["Firstseen"]
+        dst_ip = line["DstIP"]
         ip_obs = False
         tags = ["potentially_malicious_infrastructure", "c2"]
-        port = line['DstPort']
+        port = line["DstPort"]
         context = dict(source=self.name)
         context["first_seen"] = first_seen
 
@@ -48,7 +49,7 @@ class SSLBlackListIP(Feed):
             url.tag(tags)
             url.add_context(context)
             if ip_obs:
-                url.active_link_to(ip_obs, 'ip', self.name)
+                url.active_link_to(ip_obs, "ip", self.name)
         except ObservableValidationError as e:
             logging.error(e)
             return False

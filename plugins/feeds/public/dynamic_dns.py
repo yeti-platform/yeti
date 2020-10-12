@@ -17,7 +17,7 @@ class DynamicDomains(Feed):
 
     def update(self):
         for line in self.update_lines():
-            if line.startswith('#'):
+            if line.startswith("#"):
                 continue
 
             self.analyze(line)
@@ -30,13 +30,13 @@ class DynamicDomains(Feed):
         hostname = sline[0]
 
         context = {}
-        context['source'] = self.name
-        context['provider'] = sline[0]
+        context["source"] = self.name
+        context["provider"] = sline[0]
 
         try:
             hostname = Hostname.get_or_create(value=hostname)
             hostname.add_context(context)
             hostname.add_source(self.name)
-            hostname.tag('dyndns')
+            hostname.tag("dyndns")
         except ObservableValidationError:
             pass

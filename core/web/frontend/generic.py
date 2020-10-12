@@ -10,7 +10,11 @@ from core.errors import GenericValidationError
 from core.indicators import Regex
 from core.database import AttachedFile
 from core.web.helpers import get_object_or_404
-from core.web.helpers import requires_permissions, group_user_permission, get_user_groups
+from core.web.helpers import (
+    requires_permissions,
+    group_user_permission,
+    get_user_groups,
+)
 
 binding_object_classes = {
     "malware": Malware,
@@ -27,8 +31,7 @@ class GenericView(FlaskView):
 
     @requires_permissions("read")
     def index(self):
-        return render_template(
-            "{}/list.html".format(self.klass.__name__.lower()))
+        return render_template("{}/list.html".format(self.klass.__name__.lower()))
 
     @requires_permissions("read")
     def get(self, id):
@@ -36,32 +39,36 @@ class GenericView(FlaskView):
         if hasattr(obj, "sharing"):
             if group_user_permission(obj):
                 return render_template(
-                    "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+                    "{}/single.html".format(self.klass.__name__.lower()), obj=obj
+                )
             abort(403)
         else:
             return render_template(
-                "{}/single.html".format(self.klass.__name__.lower()), obj=obj)
+                "{}/single.html".format(self.klass.__name__.lower()), obj=obj
+            )
 
-        return(request.referrer)
+        return request.referrer
 
     @requires_permissions("write")
-    @route('/new/<string:subclass>', methods=["GET", "POST"])
+    @route("/new/<string:subclass>", methods=["GET", "POST"])
     def new_subclass(self, subclass):
         klass = self.subclass_map.get(subclass, self.klass)
         return self.new(klass)
 
     @requires_permissions("write")
-    @route('/new', methods=["GET", "POST"])
+    @route("/new", methods=["GET", "POST"])
     def new(self, klass=None):
         if not klass:
             klass = self.klass
         if request.method == "POST":
             return self.handle_form(klass=klass)
 
-        if 'bind' in request.args and request.args.get(
-                "type") in binding_object_classes:
+        if (
+            "bind" in request.args
+            and request.args.get("type") in binding_object_classes
+        ):
             objtype = binding_object_classes[request.args.get("type")]
-            binding_obj = objtype.objects.get(id=request.args.get('bind'))
+            binding_obj = objtype.objects.get(id=request.args.get("bind"))
             form = klass.get_form()(links=[binding_obj.name])
         else:
             form = klass.get_form()()
@@ -71,15 +78,18 @@ class GenericView(FlaskView):
             "{}/edit.html".format(self.klass.__name__.lower()),
             form=form,
             obj_type=klass.__name__,
-            obj=obj)
+            obj=obj,
+        )
 
     @requires_permissions("write")
-    @route('/edit/<string:id>', methods=["GET", "POST"])
+    @route("/edit/<string:id>", methods=["GET", "POST"])
     def edit(self, id):
         obj = self.klass.objects.get(id=id)
-        #ToDo Group admins support
-        if hasattr(obj, 'created_by'):
-            if current_user.username != obj.created_by and not current_user.has_role('admin'):
+        # ToDo Group admins support
+        if hasattr(obj, "created_by"):
+            if current_user.username != obj.created_by and not current_user.has_role(
+                "admin"
+            ):
                 abort(403)
 
         if request.method == "POST":
@@ -92,20 +102,22 @@ class GenericView(FlaskView):
             form=form,
             obj_type=self.klass.__name__,
             obj=obj,
-            groups=get_user_groups())
+            groups=get_user_groups(),
+        )
 
     @requires_permissions("write")
-    @route('/delete/<string:id>', methods=["GET"])
+    @route("/delete/<string:id>", methods=["GET"])
     def delete(self, id):
         obj = self.klass.objects.get(id=id)
-        #ToDo Group admins support
-        if hasattr(obj, 'created_by'):
-            if current_user.username != obj.created_by and not current_user.has_role('admin'):
+        # ToDo Group admins support
+        if hasattr(obj, "created_by"):
+            if current_user.username != obj.created_by and not current_user.has_role(
+                "admin"
+            ):
                 abort(403)
 
         obj.delete()
-        return redirect(
-            url_for('frontend.{}:index'.format(self.__class__.__name__)))
+        return redirect(url_for("frontend.{}:index".format(self.__class__.__name__)))
 
     def pre_validate(self, obj, request):
         pass
@@ -130,19 +142,22 @@ class GenericView(FlaskView):
             form.populate_obj(obj)
             try:
                 obj = self.create_obj(obj, skip_validation)
-                if form.formdata.get("sharing") and hasattr(klass, "sharing_permissions"):
+                if form.formdata.get("sharing") and hasattr(
+                    klass, "sharing_permissions"
+                ):
                     obj.sharing_permissions(form.formdata["sharing"], invest_id=obj.id)
             except GenericValidationError as e:
                 # failure - redirect to edit page
-                form.errors['General Error'] = [e]
+                form.errors["General Error"] = [e]
                 return render_template(
                     "{}/edit.html".format(self.klass.__name__.lower()),
                     form=form,
                     obj_type=klass.__name__,
                     obj=None,
-                    groups=get_user_groups())
+                    groups=get_user_groups(),
+                )
             except NotUniqueError:
-                form.errors['Duplicate'] = [
+                form.errors["Duplicate"] = [
                     'Entity "{}" is already in the database'.format(obj)
                 ]
                 return render_template(
@@ -150,38 +165,41 @@ class GenericView(FlaskView):
                     form=form,
                     obj_type=klass.__name__,
                     obj=None,
-                    groups=get_user_groups())
+                    groups=get_user_groups(),
+                )
 
             # success - redirect to view page
             return redirect(
-                url_for(
-                    'frontend.{}:get'.format(self.__class__.__name__),
-                    id=obj.id))
+                url_for("frontend.{}:get".format(self.__class__.__name__), id=obj.id)
+            )
         else:
             return render_template(
                 "{}/edit.html".format(self.klass.__name__.lower()),
                 form=form,
                 obj_type=klass.__name__,
-                obj=obj)
+                obj=obj,
+            )
 
     @requires_permissions("write")
-    @route('/<string:id>/attach-file', methods=["POST"])
+    @route("/<string:id>/attach-file", methods=["POST"])
     def attach_file(self, id):
-        if 'file' not in request.files:
+        if "file" not in request.files:
             abort(400)
 
         e = get_object_or_404(self.klass, id=id)
-        f = AttachedFile.from_upload(request.files['file'])
+        f = AttachedFile.from_upload(request.files["file"])
         if f:
             f.attach(e)
         return redirect(
-            url_for('frontend.{}:get'.format(self.__class__.__name__), id=e.id))
+            url_for("frontend.{}:get".format(self.__class__.__name__), id=e.id)
+        )
 
     @requires_permissions("write")
-    @route('/<string:id>/detach-file/<string:fileid>', methods=["GET"])
+    @route("/<string:id>/detach-file/<string:fileid>", methods=["GET"])
     def detach_file(self, id, fileid):
         f = get_object_or_404(AttachedFile, id=fileid)
         e = get_object_or_404(self.klass, id=id)
         f.detach(e)
         return redirect(
-            url_for('frontend.{}:get'.format(self.__class__.__name__), id=id))
+            url_for("frontend.{}:get".format(self.__class__.__name__), id=id)
+        )

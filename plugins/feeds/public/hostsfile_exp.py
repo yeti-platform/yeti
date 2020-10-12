@@ -8,16 +8,15 @@ from core.errors import ObservableValidationError
 
 class HostsFileEXP(Feed):
     default_values = {
-        'frequency': timedelta(hours=4),
-        'source': 'https://hosts-file.net/exp.txt',
-        'name': 'HostsFileEXP',
-        'description':
-            'Sites engaged in the housing, development or distribution of exploits, including but not limited to exploitation of browser, software (inclusive of website software such as CMS), operating system exploits aswell as those engaged in exploits via social engineering.'
+        "frequency": timedelta(hours=4),
+        "source": "https://hosts-file.net/exp.txt",
+        "name": "HostsFileEXP",
+        "description": "Sites engaged in the housing, development or distribution of exploits, including but not limited to exploitation of browser, software (inclusive of website software such as CMS), operating system exploits aswell as those engaged in exploits via social engineering.",
     }
 
     def update(self):
         for line in self.update_lines():
-            if line.startswith('#'):
+            if line.startswith("#"):
                 continue
 
             self.analyze(line)
@@ -29,13 +28,13 @@ class HostsFileEXP(Feed):
             parts = line.split()
 
             hostname = str(parts[1]).strip()
-            context = {'source': self.name}
+            context = {"source": self.name}
 
             try:
                 host = Hostname.get_or_create(value=hostname)
                 host.add_context(context)
                 host.add_source(self.name)
-                host.tag(['exploit', 'blocklist'])
+                host.tag(["exploit", "blocklist"])
             except ObservableValidationError as e:
                 logging.error(e)
         except Exception as e:

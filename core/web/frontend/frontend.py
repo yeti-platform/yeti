@@ -1,4 +1,3 @@
-
 from __future__ import unicode_literals
 
 from flask import Blueprint, render_template, redirect, url_for
@@ -19,10 +18,8 @@ from core.web.frontend.users import UsersView, UserAdminView
 from core.web.frontend.groups import GroupView, GroupAdminView
 
 frontend = Blueprint(
-    "frontend",
-    __name__,
-    template_folder="templates",
-    static_folder="staticfiles")
+    "frontend", __name__, template_folder="templates", static_folder="staticfiles"
+)
 
 
 @frontend.before_request
@@ -45,7 +42,7 @@ def before_request():
 # Landing page - redirect to observable
 @frontend.route("/")
 def index():
-    return redirect(url_for('frontend.ObservableView:index'))
+    return redirect(url_for("frontend.ObservableView:index"))
 
 
 UsersView.register(frontend)
@@ -65,7 +62,8 @@ ActionsView.register(frontend)
 @frontend.route("/dataflows")
 def dataflows():
     return render_template(
-        "dataflows.html", export_templates=ExportTemplate.objects.all())
+        "dataflows.html", export_templates=ExportTemplate.objects.all()
+    )
 
 
 @frontend.route("/analytics")

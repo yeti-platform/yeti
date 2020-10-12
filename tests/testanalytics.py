@@ -9,7 +9,7 @@ from core.analytics import OneShotAnalytics
 from core.scheduling import Scheduler
 from core.observables import Observable
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
 
     Scheduler()

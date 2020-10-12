@@ -5,8 +5,8 @@ from core.user import User
 
 
 def authenticate(session):
-    saml_user_data = session['samlUserdata']
-    saml_name_id = session['samlNameId']
+    saml_user_data = session["samlUserdata"]
+    saml_name_id = session["samlNameId"]
     user = get_or_create_user(saml_name_id, saml_user_data)
     login_user(user)
     return user

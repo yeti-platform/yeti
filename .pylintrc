@@ -71,7 +71,9 @@ load-plugins=
 # too-many-nested-blocks (N/5)
 # ungrouped-imports
 
-disable=C0103,
+disable=C0330,
+        C0326,
+        C0103,
         C0302,
         I0010,
         I0011,
@@ -179,7 +181,7 @@ ignore-docstrings=yes
 [FORMAT]
 
 # Maximum number of characters on a single line.
-max-line-length=80
+max-line-length=88
 
 # Maximum number of lines in a module
 max-module-lines=1000

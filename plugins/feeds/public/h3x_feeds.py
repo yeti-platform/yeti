@@ -22,7 +22,7 @@ class MalwareCorpusTracker(Feed):
         resp = self._make_request()
         reader = csv.reader(resp.content.splitlines(), quotechar='"')
         for line in reader:
-            if line[0].startswith('#'):
+            if line[0].startswith("#"):
                 continue
 
             first_seen = parser.parse(line[4])
@@ -41,9 +41,9 @@ class MalwareCorpusTracker(Feed):
         family, type_, url, _, _, _, _, last_seen = line
 
         context = {}
-        context['date_added'] = first_seen
-        context['last_seen'] = last_seen
-        context['source'] = self.name
+        context["date_added"] = first_seen
+        context["last_seen"] = last_seen
+        context["source"] = self.name
 
         tags = [family.lower(), type_.lower()]
 

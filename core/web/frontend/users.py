@@ -14,10 +14,10 @@ class UsersView(GenericView):
 
     klass = User
 
-    @route('/profile', methods=["GET", "POST"])
+    @route("/profile", methods=["GET", "POST"])
     def profile(self):
-        if request.args.get('id') and current_user.has_role('admin'):
-            user = get_object_or_404(User, id=request.args.get('id'))
+        if request.args.get("id") and current_user.has_role("admin"):
+            user = get_object_or_404(User, id=request.args.get("id"))
         else:
             user = current_user
 
@@ -36,7 +36,7 @@ class UsersView(GenericView):
 
         groups = Group.objects(members__in=[user.id])
         all_groups = Group.objects()
-        if current_user.has_role('admin') and user.id != current_user.id:
+        if current_user.has_role("admin") and user.id != current_user.id:
             return render_template(
                 "user/profile_admin.html",
                 available_settings=User.get_available_settings(),
@@ -50,10 +50,10 @@ class UsersView(GenericView):
                 available_settings=User.get_available_settings(),
                 user=user,
                 groups=groups,
-                all_groups=all_groups
+                all_groups=all_groups,
             )
 
-    @route('/reset-api', methods=["POST"])
+    @route("/reset-api", methods=["POST"])
     def reset_api(self):
         current_user.api_key = User.generate_api_key()
         current_user.save()
@@ -64,8 +64,8 @@ class UsersView(GenericView):
 class UserAdminView(GenericView):
     klass = User
 
-    @route('/reset-api/<id>', methods=["GET", "POST"])
-    @requires_role('admin')
+    @route("/reset-api/<id>", methods=["GET", "POST"])
+    @requires_role("admin")
     def reset_api(self, id):
         user = get_object_or_404(User, id=id)
         user.api_key = User.generate_api_key()
@@ -73,8 +73,8 @@ class UserAdminView(GenericView):
         flash("API key reset", "success")
         return redirect(request.referrer)
 
-    @route("/permissions/<id>", methods=['GET', 'POST'])
-    @requires_role('admin')
+    @route("/permissions/<id>", methods=["GET", "POST"])
+    @requires_role("admin")
     def permissions(self, id):
         user = get_object_or_404(User, id=id)
         permdict = {}
@@ -82,14 +82,15 @@ class UserAdminView(GenericView):
             for object_name, permissions in user.permissions.items():
                 if not isinstance(permissions, dict):
                     permdict[object_name] = bool(
-                        request.form.get("{}".format(object_name), False))
+                        request.form.get("{}".format(object_name), False)
+                    )
                 else:
                     if object_name not in permdict:
                         permdict[object_name] = {}
                     for p in permissions:
                         permdict[object_name][p] = bool(
-                            request.form.get(
-                                "{}_{}".format(object_name, p), False))
+                            request.form.get("{}_{}".format(object_name, p), False)
+                        )
             user.permissions = permdict
             user.save()
             flash("Permissions changed successfully", "success")
