@@ -66,7 +66,7 @@ class Url(Observable):
 
     def info(self):
         info = super(Url, self).info()
-        info['parsed_url'] = self.parsed_url
+        info["parsed_url"] = self.parsed_url
         return info
 
     def parse(self):

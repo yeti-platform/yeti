@@ -55,8 +55,7 @@ def create_user(username, password, admin=False, permissions=DEFAULT_PERMISSIONS
     try:
         return u.save()
     except NotUniqueError:
-        raise RuntimeError('User {0:s} already exists.'.format(username.decode()))
-
+        raise RuntimeError("User {0:s} already exists.".format(username.decode()))
 
 
 def authenticate(username, password):

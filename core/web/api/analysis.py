@@ -36,9 +36,9 @@ class Analysis(CrudApi):
         """
 
         params = request.json
-        observables = params.pop('observables', [])
-        fetch_neighbors = params.pop('fetch_neighbors', True)
-        add_unknown = bool(params.pop('add_unknown', False))
+        observables = params.pop("observables", [])
+        fetch_neighbors = params.pop("fetch_neighbors", True)
+        add_unknown = bool(params.pop("add_unknown", False))
         unknown = set()
 
         if add_unknown and current_user.has_permission("observable", "write"):
@@ -55,6 +55,6 @@ class Analysis(CrudApi):
             fetch_neighbors=fetch_neighbors,
         )
 
-        data['unknown'] = list(set(data['unknown']) | unknown)
+        data["unknown"] = list(set(data["unknown"]) | unknown)
 
         return render(data)

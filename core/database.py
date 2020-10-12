@@ -470,7 +470,7 @@ class Node(YetiDocument):
         result_filters = dict()
 
         search_replace = {
-            'tags': 'tags.name',
+            "tags": "tags.name",
         }
 
         for key, value in filters.items():
@@ -485,13 +485,10 @@ class Node(YetiDocument):
                 value = {"$in": value}
             result_filters["related." + key] = value
 
-        outnodes = self._neighbors_aggregation(
-            "out", klass, result_filters, 0, 0)
-        innodes = self._neighbors_aggregation(
-            "in", klass, result_filters, 0, 0)
+        outnodes = self._neighbors_aggregation("out", klass, result_filters, 0, 0)
+        innodes = self._neighbors_aggregation("in", klass, result_filters, 0, 0)
 
         return len(outnodes) + len(innodes)
-
 
     def delete(self):
         Link.objects(Q(src=self) | Q(dst=self)).delete()

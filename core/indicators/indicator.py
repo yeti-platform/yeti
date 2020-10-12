@@ -66,6 +66,6 @@ class Indicator(Node):
             for k, v in self._data.items()
             if k in ["name", "pattern", "diamond", "description", "location"]
         }
-        i['id'] = str(self.id)
-        i['type'] = self.type
+        i["id"] = str(self.id)
+        i["type"] = self.type
         return i

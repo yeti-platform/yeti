@@ -89,11 +89,11 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
 
                 info = node.info()
                 o_info = o.info()
-                info['matched_observable'] = {
-                    "value": o_info['value'],
-                    "tags": [t['name'] for t in o_info['tags']],
-                    "url": o_info['url'],
-                    "context": o_info['context']
+                info["matched_observable"] = {
+                    "value": o_info["value"],
+                    "tags": [t["name"] for t in o_info["tags"]],
+                    "url": o_info["url"],
+                    "context": o_info["context"],
                 }
                 if info not in ent["matches"]["observables"]:
                     ent["matches"]["observables"].append(info)
@@ -105,14 +105,14 @@ def match_observables(observables, save_matches=False, fetch_neighbors=True):
             try:
                 o = Observable.add_text(o)
             except ObservableValidationError:
-                data['unknown'].add(o)
+                data["unknown"].add(o)
                 continue
         else:
             try:
                 o = Observable.guess_type(o)(value=o)
                 o.validate()
             except ObservableValidationError:
-                data['unknown'].add(o)
+                data["unknown"].add(o)
                 continue
             try:
                 o = Observable.objects.get(value=o.value)

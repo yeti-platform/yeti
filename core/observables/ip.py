@@ -53,8 +53,8 @@ class Ip(Observable):
 
     def info(self):
         info = super(Ip, self).info()
-        info['version'] = self.version
-        info['geoip'] = self.geoip
+        info["version"] = self.version
+        info["geoip"] = self.geoip
         return info
 
 

@@ -12,27 +12,28 @@ from core.config.config import yeti_config
 from core.web.helpers import prevent_csrf
 from core.web.api.api import render
 
-auth = Blueprint('auth', __name__)
+auth = Blueprint("auth", __name__)
 
 client = WebApplicationClient(yeti_config.oidc.client_id)
 
 
-@auth.route('/auth/login', methods=['GET', 'POST'])
+@auth.route("/auth/login", methods=["GET", "POST"])
 @prevent_csrf
 def login():
     provider_cfg = get_google_provider_cfg()
-    authorization_endpoint = provider_cfg['authorization_endpoint']
+    authorization_endpoint = provider_cfg["authorization_endpoint"]
 
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
         redirect_uri=request.base_url + "/callback",
-        scope=['openid', 'email', 'profile']
+        scope=["openid", "email", "profile"],
     )
     return redirect(request_uri)
 
-@auth.route('/auth/login/callback', methods=['GET', 'POST'])
+
+@auth.route("/auth/login/callback", methods=["GET", "POST"])
 def login_callback():
-    code = request.args.get('code')
+    code = request.args.get("code")
 
     google_provider_cfg = get_google_provider_cfg()
     token_endpoint = google_provider_cfg["token_endpoint"]
@@ -42,7 +43,7 @@ def login_callback():
         token_endpoint,
         authorization_response=request.url,
         redirect_url=request.base_url,
-        code=code
+        code=code,
     )
 
     token_response = requests.post(
@@ -68,25 +69,28 @@ def login_callback():
     user = get_or_create_user(user_email)
     common.generate_session_token(user)
     login_user(user)
-    return redirect('/')
+    return redirect("/")
 
-@auth.route('/auth/logout')
+
+@auth.route("/auth/logout")
 def logout():
     logout_user()
     session.clear()
-    return redirect('/')
+    return redirect("/")
 
-@auth.route('/api/creategroup', methods=["POST"])
+
+@auth.route("/api/creategroup", methods=["POST"])
 @login_required
 def api_new_group():
     params = request.get_json()
     groupname = params.get("groupname")
-    if not current_user.has_role('admin') and current_user.is_active:
+    if not current_user.has_role("admin") and current_user.is_active:
         abort(401)
     group = create_group(groupname)
     if not group:
-        return render({'error': f'Group {groupname} already exists.'}), 400
+        return render({"error": f"Group {groupname} already exists."}), 400
     return render(group)
+
 
 def get_google_provider_cfg():
     discovery_url = yeti_config.oidc.google_discovery_url

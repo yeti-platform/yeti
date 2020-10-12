@@ -94,22 +94,22 @@ class Neighbors(CrudApi):
         if issubclass(filter_class, Indicator):
             return render(data, template="indicator_api.html")
         if issubclass(filter_class, Observable):
-            return render(data, template='observable_api.html')
+            return render(data, template="observable_api.html")
 
     @route("/tuples/<klass>/<node_id>/<type_filter>/total", methods=["GET"])
-    @requires_permissions('read')
+    @requires_permissions("read")
     def total(self, klass, node_id, type_filter):
         query = request.get_json(silent=True) or {}
         fltr = query.get("filter", {})
         params = query.get("params", {})
 
-        klass = NODES_CLASSES[klass.lower().split('.')[0]]
-        filter_class = NODES_CLASSES[type_filter.lower().split('.')[0]]
+        klass = NODES_CLASSES[klass.lower().split(".")[0]]
+        filter_class = NODES_CLASSES[type_filter.lower().split(".")[0]]
         node = klass.objects.get(id=node_id)
 
-        regex = bool(params.pop('regex', False))
-        ignorecase = bool(params.pop('ignorecase', False))
+        regex = bool(params.pop("regex", False))
+        ignorecase = bool(params.pop("ignorecase", False))
 
-        return render({
-            'total': node.neighbors_total(filter_class, fltr, regex, ignorecase)
-        })
+        return render(
+            {"total": node.neighbors_total(filter_class, fltr, regex, ignorecase)}
+        )

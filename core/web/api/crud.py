@@ -19,25 +19,33 @@ from core.web.helpers import requires_permissions
 
 class CrudSearchApi(FlaskView):
     def search(self, query):
-        fltr = query.get('filter', {})
-        params = query.get('params', {})
-        regex = params.pop('regex', False)
-        ignorecase = params.pop('ignorecase', False)
-        page = params.pop('page', 1) - 1
-        rng = params.pop('range', 50)
-        userLogger.info("User %s search : filter=%s params=%s regex=%s",
-                        current_user.username,fltr,params,regex)
-        return list(get_queryset(self.objectmanager, fltr, regex,
-                         ignorecase)[page * rng:(page + 1) * rng])
+        fltr = query.get("filter", {})
+        params = query.get("params", {})
+        regex = params.pop("regex", False)
+        ignorecase = params.pop("ignorecase", False)
+        page = params.pop("page", 1) - 1
+        rng = params.pop("range", 50)
+        userLogger.info(
+            "User %s search : filter=%s params=%s regex=%s",
+            current_user.username,
+            fltr,
+            params,
+            regex,
+        )
+        return list(
+            get_queryset(self.objectmanager, fltr, regex, ignorecase)[
+                page * rng : (page + 1) * rng
+            ]
+        )
 
     def count(self, query):
-        fltr = query.get('filter', {})
-        params = query.get('params', {})
-        regex = params.pop('regex', False)
-        ignorecase = params.pop('ignorecase', False)
+        fltr = query.get("filter", {})
+        params = query.get("params", {})
+        regex = params.pop("regex", False)
+        ignorecase = params.pop("ignorecase", False)
         return get_queryset(self.objectmanager, fltr, regex, ignorecase).count()
 
-    @requires_permissions('read')
+    @requires_permissions("read")
     def post(self):
         """Launches a simple search against the database
 
@@ -63,8 +71,8 @@ class CrudSearchApi(FlaskView):
 
         return render(data)
 
-    @route("/total", methods=['POST'])
-    @requires_permissions('read')
+    @route("/total", methods=["POST"])
+    @requires_permissions("read")
     def total(self):
         """Counts total items"""
         query = request.get_json(silent=True) or {}
@@ -75,7 +83,7 @@ class CrudSearchApi(FlaskView):
             logging.error(e)
             abort(400)
 
-        return render({'total': count})
+        return render({"total": count})
 
 
 class CrudApi(FlaskView):

@@ -12,24 +12,24 @@ from mongoengine.errors import InvalidQueryError
 
 
 class GroupAdmin(FlaskView):
-
-    @route('/', methods=['GET'])
+    @route("/", methods=["GET"])
     def index(self):
-        if current_user.has_role('admin'):
+        if current_user.has_role("admin"):
             groups = Group.objects.all()
         else:
             groups = Group.objects(admins__in=[current_user.id])
         return render(groups)
 
-    @route('/<id>', methods=['GET'])
+    @route("/<id>", methods=["GET"])
     def get(self, id):
         group = get_object_or_404(Group, id=id)
-        is_admin = current_user.has_role('admin')
+        is_admin = current_user.has_role("admin")
         is_group_admin = Group.objects(
-            admins__in=[current_user.id], id=id, enabled=True)
+            admins__in=[current_user.id], id=id, enabled=True
+        )
         if is_admin or is_group_admin:
             return render(group)
-        return (403)
+        return 403
 
     @route("/toggle/<id>", methods=["POST"])
     @requires_role("admin")
@@ -39,48 +39,48 @@ class GroupAdmin(FlaskView):
         group.save()
         return render({"enabled": group.enabled, "id": id})
 
-    @route('/<id>', methods=["DELETE"])
+    @route("/<id>", methods=["DELETE"])
     def remove(self, id):
         group = get_object_or_404(Group, id=id)
         group.delete()
         return render({"id": id})
 
-    @route('/add-member', methods=["POST"])
+    @route("/add-member", methods=["POST"])
     def add_member(self):
         params = request.get_json(silent=True) or {}
         gid = params.get("gid")
         uid = params.get("uid")
         user = get_object_or_404(User, id=uid)
         group = get_object_or_404(Group, id=gid)
-        is_admin = current_user.has_role('admin')
+        is_admin = current_user.has_role("admin")
         is_group_admin = current_user in group.admins and group.enabled
         if is_admin or is_group_admin:
             group.update(add_to_set__members=user.id)
             return render(group.reload())
         abort(403)
 
-    @route('/remove-member', methods=["POST"])
+    @route("/remove-member", methods=["POST"])
     def remove_member(self):
         params = request.get_json(silent=True) or {}
         gid = params.get("gid")
         uid = params.get("uid")
         user = get_object_or_404(User, id=uid)
         group = get_object_or_404(Group, id=gid)
-        is_admin = current_user.has_role('admin')
+        is_admin = current_user.has_role("admin")
         is_group_admin = current_user in group.admins and group.enabled
         if is_admin or is_group_admin:
             group.update(pull__members=user.id)
             return render(group.reload())
         abort(403)
 
-    @route('/toggle-admin', methods=["POST"])
+    @route("/toggle-admin", methods=["POST"])
     def toggle_admin(self):
         params = request.get_json(silent=True) or {}
         gid = params.get("gid")
         uid = params.get("uid")
         user = get_object_or_404(User, id=uid)
         group = get_object_or_404(Group, id=gid)
-        is_admin = current_user.has_role('admin')
+        is_admin = current_user.has_role("admin")
         is_group_admin = current_user in group.admins and group.enabled
         if is_admin or is_group_admin:
             if user in group.admins:
@@ -92,10 +92,10 @@ class GroupAdmin(FlaskView):
 
 
 class GroupAdminSearch(CrudSearchApi):
-    template = 'group_api.html'
+    template = "group_api.html"
     objectmanager = Group
 
-    @requires_permissions('read')
+    @requires_permissions("read")
     def post(self):
         """Launches a simple search against the database
 
@@ -111,15 +111,15 @@ class GroupAdminSearch(CrudSearchApi):
         :reqheader Content-Type: must be set to ``application/json``
         """
         query = request.get_json(silent=True) or {}
-        if not current_user.has_role('admin'):
-            query.setdefault('filter', {})['admins__in'] = [current_user.id]
-            query['filter']['enabled'] = True
+        if not current_user.has_role("admin"):
+            query.setdefault("filter", {})["admins__in"] = [current_user.id]
+            query["filter"]["enabled"] = True
 
         try:
             data = self.search(query)
         except InvalidQueryError as e:
             logging.error(e)
             abort(400)
-        #TODO: frontend-deprecation
+        # TODO: frontend-deprecation
         # Remove template rendering here
         return render(data, template=self.template)

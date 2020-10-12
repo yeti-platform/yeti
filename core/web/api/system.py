@@ -41,18 +41,12 @@ class System(FlaskView):
                 if "ok" not in r[name]:
                     nok.append(name)
         if nok:
-            nok_list = ', '.join(nok)
-            message = 'Some workers failed to restart: {0:s}'.format(nok_list)
-            return render({
-                'status': 'error',
-                'message': message
-            })
+            nok_list = ", ".join(nok)
+            message = "Some workers failed to restart: {0:s}".format(nok_list)
+            return render({"status": "error", "message": message})
 
         message = "Succesfully restarted {0:d} workers".format(len(response))
-        return render({
-            'status': 'success',
-            'message': message
-        })
+        return render({"status": "success", "message": message})
 
     @requires_role("admin")
     def index(self):
@@ -84,26 +78,21 @@ class System(FlaskView):
                 for item in results["active"][key]:
                     args = item.get("args", [])
                     entries.extend([ScheduleEntry.objects.get(id=id_) for id_ in args])
-                active[key] = { "running": [entry.name for entry in entries] }
+                active[key] = {"running": [entry.name for entry in entries]}
 
-        return render({
-            'registered': registered,
-            'active': active
-        })
+        return render({"registered": registered, "active": active})
 
     def config(self):
-        if current_user.has_role('admin'):
+        if current_user.has_role("admin"):
             config = {
-                'auth': dict(yeti_config.auth),
-                'mongodb': dict(yeti_config.mongodb),
-                'redis': dict(yeti_config.redis),
-                'proxy': dict(yeti_config.proxy),
-                'logging': dict(yeti_config.logging),
+                "auth": dict(yeti_config.auth),
+                "mongodb": dict(yeti_config.mongodb),
+                "redis": dict(yeti_config.redis),
+                "proxy": dict(yeti_config.proxy),
+                "logging": dict(yeti_config.logging),
             }
-            del config['mongodb']['username']
-            del config['mongodb']['password']
+            del config["mongodb"]["username"]
+            del config["mongodb"]["password"]
         else:
-            config = {
-                'auth': dict(yeti_config.auth)
-            }
+            config = {"auth": dict(yeti_config.auth)}
         return render(config)

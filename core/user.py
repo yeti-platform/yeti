@@ -85,7 +85,7 @@ class User(YetiDocument):
             for k, v in self._data.items()
             if k in ["username", "enabled", "permissions", "api_key"]
         }
-        i['available_settings'] = self.available_settings
-        i['settings'] = self.settings
-        i['id'] = str(self.id)
+        i["available_settings"] = self.available_settings
+        i["settings"] = self.settings
+        i["id"] = str(self.id)
         return i

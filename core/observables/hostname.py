@@ -39,8 +39,8 @@ class Hostname(Observable):
 
     def info(self):
         info = super(Hostname, self).info()
-        info['idna'] = self.idna
-        info['domain'] = self.domain
+        info["idna"] = self.idna
+        info["domain"] = self.domain
         return info
 
     def normalize(self):

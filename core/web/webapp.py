@@ -15,7 +15,7 @@ from core.web.api import api
 from mongoengine.errors import DoesNotExist
 from core.yeti_plugins import get_plugins
 
-webapp = Flask(__name__, static_folder='frontend')
+webapp = Flask(__name__, static_folder="frontend")
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
@@ -47,6 +47,7 @@ def load_user(session_token):
     except DoesNotExist:
         return None
 
+
 @login_manager.request_loader
 def api_auth(request):
     try:
@@ -54,7 +55,9 @@ def api_auth(request):
     except DoesNotExist:
         return None
 
+
 login_manager.anonymous_user = auth_module.get_default_user
+
 
 @api.before_request
 def api_login_required():
@@ -62,14 +65,16 @@ def api_login_required():
         return dumps({"error": "unauthorized"}), 401
 
 
-webapp.register_blueprint(api, url_prefix='/api')
+webapp.register_blueprint(api, url_prefix="/api")
 
-@webapp.route('/', defaults={'path': ''})
-@webapp.route('/<path:path>')
+
+@webapp.route("/", defaults={"path": ""})
+@webapp.route("/<path:path>")
 def index(path):
-    if path.startswith('css/') or path.startswith('js/'):
+    if path.startswith("css/") or path.startswith("js/"):
         return current_app.send_static_file(path)
     return current_app.send_static_file("index.html")
+
 
 @webapp.route("/list_routes")
 def list_routes():

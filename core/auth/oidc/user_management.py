@@ -11,6 +11,7 @@ from mongoengine.errors import DoesNotExist
 from core.auth.local.user_management import DEFAULT_PERMISSIONS
 from core.user import User
 
+
 def get_default_user():
     return AnonymousUserMixin()
 
@@ -24,6 +25,7 @@ def get_or_create_user(email):
         u = create_user(email)
     return u
 
+
 def create_user(email):
     u = User(username=email, permissions=DEFAULT_PERMISSIONS)
     u.api_key = User.generate_api_key()
@@ -32,9 +34,10 @@ def create_user(email):
     u.save()
     return u
 
+
 def generate_session_token(user):
     # Also in local auth
-    key = current_app.config['SECRET_KEY']
+    key = current_app.config["SECRET_KEY"]
     return hmac.new(
-        key, (user.username.encode() + hexlify(os.urandom(12))),
-        sha512).hexdigest()
+        key, (user.username.encode() + hexlify(os.urandom(12))), sha512
+    ).hexdigest()

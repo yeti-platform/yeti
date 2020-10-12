@@ -106,7 +106,7 @@ class Observable(CrudApi):
         return render(added)
 
     @route("/bulk-tag", methods=["POST"])
-    @requires_permissions('read')
+    @requires_permissions("read")
     def tag(self):
         """Adds tags to an observable.
 
@@ -114,13 +114,13 @@ class Observable(CrudApi):
         :<json array ids: Array of observables IDs to tag.
         """
         params = request.json
-        for id in params['ids']:
+        for id in params["ids"]:
             observable = get_object_or_404(self.objectmanager, id=id)
-            observable.tag(params['tags'])
-        return ('', 200)
+            observable.tag(params["tags"])
+        return ("", 200)
 
     @route("/bulk-untag", methods=["POST"])
-    @requires_permissions('read')
+    @requires_permissions("read")
     def untag(self):
         """Removes tags from an observable.
 
@@ -128,10 +128,10 @@ class Observable(CrudApi):
         :<json array ids: Array of observables IDs to tag.
         """
         params = request.json
-        for id in params['ids']:
+        for id in params["ids"]:
             observable = get_object_or_404(self.objectmanager, id=id)
-            observable.untag(params['tags'])
-        return ('', 200)
+            observable.untag(params["tags"])
+        return ("", 200)
 
     @route("/<id>/context", methods=["POST"])
     @requires_permissions("read")
@@ -147,7 +147,6 @@ class Observable(CrudApi):
         old_source = request.json.pop("old_source", None)
         observable.add_context(context, replace_source=old_source)
         return render(context)
-
 
     @route("/<id>/context", methods=["DELETE"])
     @requires_permissions("write")

@@ -14,7 +14,7 @@ class UserAdminSearch(CrudSearchApi):
     template = "user_api.html"
     objectmanager = User
 
-    @requires_role('admin')
+    @requires_role("admin")
     def post(self):
         """Launches a simple search against the database
 
@@ -42,49 +42,49 @@ class UserAdminSearch(CrudSearchApi):
 
         return render(data, self.template)
 
+
 class UserAdmin(FlaskView):
 
     objectmanager = User
 
-    @route('/<id>')
-    @requires_role('admin')
+    @route("/<id>")
+    @requires_role("admin")
     def get(self, id):
         user = get_object_or_404(User, id=id)
         user_info = user.info()
-        user_info['groups'] = Group.objects(members__in=[user.id]).only(
-            'groupname')
+        user_info["groups"] = Group.objects(members__in=[user.id]).only("groupname")
         return render(user_info)
 
-    @route('/remove/<id>', methods=["POST"])
-    @requires_role('admin')
+    @route("/remove/<id>", methods=["POST"])
+    @requires_role("admin")
     def remove(self, id):
         user = get_object_or_404(User, id=id)
         user.delete()
         return render({"id": id})
 
-    @route('/toggle/<id>', methods=["POST"])
-    @requires_role('admin')
+    @route("/toggle/<id>", methods=["POST"])
+    @requires_role("admin")
     def toggle(self, id):
         user = get_object_or_404(User, id=id)
         user.enabled = not user.enabled
         user.save()
         return render({"enabled": user.enabled, "id": id})
 
-    @route('/toggle-admin/<id>', methods=["POST"])
-    @requires_role('admin')
+    @route("/toggle-admin/<id>", methods=["POST"])
+    @requires_role("admin")
     def toggle_admin(self, id):
         user = get_object_or_404(User, id=id)
-        user.permissions['admin'] = not user.permissions['admin']
+        user.permissions["admin"] = not user.permissions["admin"]
         return render(user.save())
 
-    @route('/reset-api/<id>', methods=["POST"])
-    @requires_role('admin')
+    @route("/reset-api/<id>", methods=["POST"])
+    @requires_role("admin")
     def reset_api(self, id):
         user = get_object_or_404(User, id=id)
         user.api_key = User.generate_api_key()
         return render(user.save())
 
-    @route('/settings/<id>', methods=["POST"])
+    @route("/settings/<id>", methods=["POST"])
     def settings(self, id):
         user = get_object_or_404(User, id=id)
         settings = request.get_json()
@@ -92,9 +92,9 @@ class UserAdmin(FlaskView):
             user.settings[setting] = settings.get(setting)
         return render(user.save())
 
-    @route("/permissions", methods=['POST'])
-    @route("/permissions/<id>", methods=['POST'])
-    @requires_role('admin')
+    @route("/permissions", methods=["POST"])
+    @route("/permissions/<id>", methods=["POST"])
+    @requires_role("admin")
     def permissions(self, id=None):
         if not id:
             user = current_user
@@ -105,7 +105,7 @@ class UserAdmin(FlaskView):
         permissions = request.get_json()
         sanitized = {}
         for key, values in permissions.items():
-            if key == 'admin':
+            if key == "admin":
                 continue
             sanitized[key] = {k: bool(v) for k, v in values.items()}
         user.permissions.update(sanitized)

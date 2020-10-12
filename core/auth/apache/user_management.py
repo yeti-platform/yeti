@@ -28,6 +28,7 @@ def authenticate():
     except DoesNotExist:
         return create_user(username)
 
+
 def get_default_user():
     user = authenticate()
     if not user:

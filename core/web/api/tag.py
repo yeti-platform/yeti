@@ -72,10 +72,10 @@ class Tag(CrudApi):
         params = json
         params["produces"] = [
             self.objectmanager.get_or_create(name=t.strip())
-            for t in json['produces']
+            for t in json["produces"]
             if t.strip()
         ]
-        params['replaces'] = json['replaces']
+        params["replaces"] = json["replaces"]
         return params
 
     @requires_permissions("write")
@@ -106,6 +106,7 @@ class Tag(CrudApi):
 
             traceback.print_exc()
             abort(400)
+
 
 class TagSearch(CrudSearchApi):
     objectmanager = observables.Tag
