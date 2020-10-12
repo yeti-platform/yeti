@@ -2,21 +2,22 @@ from __future__ import unicode_literals
 
 import os
 from importlib import import_module
-from bson.json_util import dumps
-from mongoengine import connect
 
+from bson.json_util import dumps
 from flask import Flask, url_for, request
 from flask_login import LoginManager, current_user
+from mongoengine import connect
+from mongoengine.errors import DoesNotExist
 
 from core.config.config import yeti_config
 from core.user import User
-from core.web.json import JSONDecoder
 from core.web.api import api
 from core.web.frontend import frontend
-from mongoengine.errors import DoesNotExist
+from core.web.json import JSONDecoder
 from core.yeti_plugins import get_plugins
 
-webapp = Flask(__name__, static_folder="../../node_modules", static_url_path="/static")
+webapp = Flask(__name__, static_folder="../../node_modules",
+               static_url_path="/static")
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
@@ -91,7 +92,9 @@ def list_routes():
         methods = ",".join(rule.methods)
         url = url_for(rule.endpoint, **options)
 
-        line = urllib.parse.unquote("{:50s} {:20s} {}".format(rule.endpoint, methods, url))
+        line = urllib.parse.unquote(
+            "{:50s} {:20s} {}".format(rule.endpoint, methods, url)
+        )
 
         output.append(line)
 
