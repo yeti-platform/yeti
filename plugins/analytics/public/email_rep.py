@@ -24,21 +24,23 @@ class EmailRepAPI(object):
 
 class EmailRep(EmailRepAPI, OneShotAnalytics):
     default_values = {
-        'name': 'EmailRep',
-        'description': 'Perform a EmailRep query.',
+        "name": "EmailRep",
+        "description": "Perform a EmailRep query.",
     }
 
-    ACTS_ON = ['Email']
+    ACTS_ON = ["Email"]
 
     @staticmethod
     def analyze(observable, results):
         json_result = EmailRepAPI.fetch(observable)
         result = {}
 
-        json_string = json.dumps(json_result, sort_keys=True, indent=4, separators=(',', ': '))
+        json_string = json.dumps(
+            json_result, sort_keys=True, indent=4, separators=(",", ": ")
+        )
         result = {
-            'raw': json_string,
-            'source': 'EmailRep',
+            "raw": json_string,
+            "source": "EmailRep",
         }
         observable.add_context(result)
 

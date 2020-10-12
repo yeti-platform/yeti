@@ -14,7 +14,7 @@ class ProcessUrl(InlineAnalytics):
         "description": "Extracts domains from URLs",
     }
 
-    ACTS_ON = 'Url'
+    ACTS_ON = "Url"
 
     @staticmethod
     def analyze_string(url_string):
@@ -24,7 +24,7 @@ class ProcessUrl(InlineAnalytics):
     def extract_hostname(url_string):
         host = re.search("://(?P<host>[^/:]+)[/:]?", url_string)
         if host:
-            host = host.group('host')
+            host = host.group("host")
             logging.debug("Extracted {} from {}".format(host, url_string))
         return host
 
@@ -38,5 +38,5 @@ class ProcessUrl(InlineAnalytics):
             return h
         except ObservableValidationError:
             logging.error(
-                "An error occurred when trying to add {} to the database".
-                format(host))
+                "An error occurred when trying to add {} to the database".format(host)
+            )

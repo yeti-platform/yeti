@@ -23,15 +23,14 @@ class ExportTemplate(YetiDocument):
     template = StringField(required=True, default="")
 
     def render(self, elements, output_filename):
-        env = Environment(
-            loader=FileSystemLoader('core/web/frontend/templates'))
+        env = Environment(loader=FileSystemLoader("core/web/frontend/templates"))
         template = env.from_string(self.template)
         temp_filename = "{}.temp".format(output_filename)
         m = hashlib.md5()
-        with codecs.open(temp_filename, 'w+', encoding='utf-8') as tmp:
+        with codecs.open(temp_filename, "w+", encoding="utf-8") as tmp:
             for chunk in template.stream(elements=elements):
                 tmp.write(chunk)
-                m.update(chunk.encode('utf-8'))
+                m.update(chunk.encode("utf-8"))
 
         try:
             os.remove(output_filename)
@@ -50,19 +49,21 @@ def execute_export(export_id):
 
     try:
         export = Export.objects.get(
-            id=export_id,
-            lock=None)  # check if we have implemented locking mechanisms
+            id=export_id, lock=None
+        )  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
-            Export.objects.get(
-                id=export_id, lock=False).modify(
-                    lock=True)  # get object and change lock
+            Export.objects.get(id=export_id, lock=False).modify(
+                lock=True
+            )  # get object and change lock
             export = Export.objects.get(id=export_id)
         except DoesNotExist:
             # no unlocked Export was found, notify and return...
             logging.debug(
                 "Export {} is already running...".format(
-                    Export.objects.get(id=export_id).name))
+                    Export.objects.get(id=export_id).name
+                )
+            )
             return
 
     try:
@@ -88,13 +89,13 @@ def execute_export(export_id):
 
 class Export(ScheduleEntry):
 
-    SCHEDULED_TASK = 'core.exports.export.execute_export'
+    SCHEDULED_TASK = "core.exports.export.execute_export"
     CUSTOM_FILTER = Q()
 
     include_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     exclude_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     ignore_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
-    output_dir = StringField(default='exports')
+    output_dir = StringField(default="exports")
     acts_on = StringField(verbose_name="Acts on")
     template = ReferenceField(ExportTemplate)
     hash_md5 = StringField(max_length=32)
@@ -115,17 +116,18 @@ class Export(ScheduleEntry):
     def execute(self):
         q_include = Q()
         for t in self.include_tags:
-            q_include |= Q(tags__match={'name': t.name, 'fresh': True})
+            q_include |= Q(tags__match={"name": t.name, "fresh": True})
         q_exclude = Q(tags__name__nin=[t.name for t in self.exclude_tags])
-        q = Q(
-            tags__not__size=0, tags__match={
-                'fresh': True
-            }) & q_include & q_exclude & Q(
-                _cls="Observable.{}".format(self.acts_on))
+        q = (
+            Q(tags__not__size=0, tags__match={"fresh": True})
+            & q_include
+            & q_exclude
+            & Q(_cls="Observable.{}".format(self.acts_on))
+        )
 
         return self.template.render(
-            self.filter_ignore_tags(Observable.objects(q).no_cache()),
-            self.output_file)
+            self.filter_ignore_tags(Observable.objects(q).no_cache()), self.output_file
+        )
 
     def filter_ignore_tags(self, elements):
         ignore = set([t.name for t in self.ignore_tags])
@@ -137,17 +139,25 @@ class Export(ScheduleEntry):
         i = {
             k: v
             for k, v in self._data.items()
-            if k in [
-                "name", "output_dir", "enabled", "description", "status",
-                "last_run", "ignore_tags", "include_tags", "exclude_tags"
+            if k
+            in [
+                "name",
+                "output_dir",
+                "enabled",
+                "description",
+                "status",
+                "last_run",
+                "ignore_tags",
+                "include_tags",
+                "exclude_tags",
             ]
         }
-        i['frequency'] = str(self.frequency)
-        i['id'] = str(self.id)
-        i['ignore_tags'] = [tag.name for tag in self.ignore_tags]
-        i['include_tags'] = [tag.name for tag in self.include_tags]
-        i['exclude_tags'] = [tag.name for tag in self.exclude_tags]
-        i['template'] = self.template.name
-        i['acts_on'] = self.acts_on
-        i['content_uri'] = self.content_uri
+        i["frequency"] = str(self.frequency)
+        i["id"] = str(self.id)
+        i["ignore_tags"] = [tag.name for tag in self.ignore_tags]
+        i["include_tags"] = [tag.name for tag in self.include_tags]
+        i["exclude_tags"] = [tag.name for tag in self.exclude_tags]
+        i["template"] = self.template.name
+        i["acts_on"] = self.acts_on
+        i["content_uri"] = self.content_uri
         return i

@@ -14,10 +14,10 @@ from core.user import User
 
 
 class AnalyticsResults(Document):
-    analytics = ReferenceField('OneShotAnalytics', required=True)
-    observable = ReferenceField('Observable', required=True)
+    analytics = ReferenceField("OneShotAnalytics", required=True)
+    observable = ReferenceField("Observable", required=True)
     status = StringField()
-    results = ListField(ReferenceField('Link'))
+    results = ListField(ReferenceField("Link"))
     settings = DictField()
     raw = StringField()
     error = StringField()
@@ -43,7 +43,8 @@ class InlineAnalytics(YetiDocument):
     @staticmethod
     def each(observable):
         raise NotImplementedError(
-            "This method must be overridden in each class it inherits from")
+            "This method must be overridden in each class it inherits from"
+        )
 
     def info(self):
         i = {
@@ -51,17 +52,18 @@ class InlineAnalytics(YetiDocument):
             for k, v in self._data.items()
             if k in ["name", "description", "enabled"]
         }
-        i['acts_on'] = iterify(self.ACTS_ON)
-        i['id'] = str(self.id)
+        i["acts_on"] = iterify(self.ACTS_ON)
+        i["id"] = str(self.id)
         return i
 
     @classmethod
     def post_save(cls, sender, document, created):
         if issubclass(sender, Observable):
-            if getattr(document, 'new', False):
+            if getattr(document, "new", False):
                 for analytics in cls.analytics.values():
                     if analytics.enabled and sender.__name__ in iterify(
-                            analytics.ACTS_ON):
+                        analytics.ACTS_ON
+                    ):
                         document.new = False
                         analytics.each(document)
 
@@ -72,7 +74,7 @@ signals.post_save.connect(InlineAnalytics.post_save)
 class ScheduledAnalytics(ScheduleEntry):
     """Base class for analytics. All analytics must inherit from this"""
 
-    SCHEDULED_TASK = 'core.analytics_tasks.schedule'
+    SCHEDULED_TASK = "core.analytics_tasks.schedule"
     CUSTOM_FILTER = Q()
 
     def analyze_outdated(self):
@@ -85,9 +87,10 @@ class ScheduledAnalytics(ScheduleEntry):
         if self.EXPIRATION:
             fltr |= Q(
                 **{
-                    "last_analyses__{}__lte".format(self.name):
-                        datetime.utcnow() - self.EXPIRATION
-                })
+                    "last_analyses__{}__lte".format(self.name): datetime.utcnow()
+                    - self.EXPIRATION
+                }
+            )
         fltr &= self.CUSTOM_FILTER & class_filter
         self.bulk(Observable.objects(fltr).no_cache())
 
@@ -95,13 +98,14 @@ class ScheduledAnalytics(ScheduleEntry):
         """Bulk analytics. May be overridden in case the module needs to batch-analyze observables"""
         for e in elts:
             celery_app.send_task(
-                "core.analytics_tasks.each",
-                [str(self.name), e.to_json()])
+                "core.analytics_tasks.each", [str(self.name), e.to_json()]
+            )
 
     @classmethod
     def each(cls, observable):
         raise NotImplementedError(
-            "This method must be overridden in each class it inherits from")
+            "This method must be overridden in each class it inherits from"
+        )
 
     def info(self):
         i = {
@@ -109,29 +113,30 @@ class ScheduledAnalytics(ScheduleEntry):
             for k, v in self._data.items()
             if k in ["name", "description", "last_run", "enabled", "status"]
         }
-        i['frequency'] = str(self.frequency)
-        i['expiration'] = str(self.EXPIRATION)
-        i['acts_on'] = iterify(self.ACTS_ON)
-        i['id'] = str(self.id)
+        i["frequency"] = str(self.frequency)
+        i["expiration"] = str(self.EXPIRATION)
+        i["acts_on"] = iterify(self.ACTS_ON)
+        i["id"] = str(self.id)
         return i
 
 
 class OneShotAnalytics(OneShotEntry):
 
-    group = StringField(default='')
+    group = StringField(default="")
 
     def __init__(self, *args, **kwargs):
         super(OneShotAnalytics, self).__init__(*args, **kwargs)
 
-        if hasattr(self, 'settings'):
+        if hasattr(self, "settings"):
             for setting_id, setting in self.settings.items():
                 User.register_setting(
-                    setting_id, setting['name'], setting['description'])
+                    setting_id, setting["name"], setting["description"]
+                )
 
     def run(self, e, settings):
         results = AnalyticsResults(
-            analytics=self, observable=e, status='pending',
-            settings=settings).save()
+            analytics=self, observable=e, status="pending", settings=settings
+        ).save()
         celery_app.send_task("core.analytics_tasks.single", [str(results.id)])
 
         return results
@@ -142,6 +147,6 @@ class OneShotAnalytics(OneShotEntry):
             for k, v in self._data.items()
             if k in ["name", "description", "enabled", "group"]
         }
-        i['acts_on'] = iterify(self.ACTS_ON)
-        i['id'] = str(self.id)
+        i["acts_on"] = iterify(self.ACTS_ON)
+        i["id"] = str(self.id)
         return i

@@ -17,7 +17,7 @@ class Fumik0Tracker(Feed):
 
     def update(self):
 
-        for index, block in self.update_json(filter_row='first_seen'):
+        for index, block in self.update_json(filter_row="first_seen"):
             self.analyze(block)
 
     def analyze(self, block):  # pylint: disable=arguments-differ
@@ -35,12 +35,12 @@ class Fumik0Tracker(Feed):
                          u"country": u"ru",
                          u"ip": u"37.140.192.146",
                          u"url": u"byhlavash.chimkent.su/vdvdv.exe"}}
-                """
+        """
         url = block["server"]["url"]
         if "http" not in url:
             url = "http://" + url
         context = {}
-        context["date_added"] = block['first_seen']
+        context["date_added"] = block["first_seen"]
         context["as"] = block["server"]["AS"]
         context["country"] = block["server"]["country"]
         context["ip"] = block["server"]["ip"]
@@ -63,7 +63,7 @@ class Fumik0Tracker(Feed):
                 ip.add_context(context)
                 ip.add_source(self.name)
                 if url_data:
-                    url_data.active_link_to(ip, 'ip', self.name, clean_old=False)
+                    url_data.active_link_to(ip, "ip", self.name, clean_old=False)
             except ObservableValidationError as e:
                 logging.error(e)
 
@@ -75,6 +75,8 @@ class Fumik0Tracker(Feed):
                     hash_data.add_context(context)
                     hash_data.add_source(self.name)
                     if url_data:
-                        url_data.active_link_to(hash_data, 'hash', self.name, clean_old=False)
+                        url_data.active_link_to(
+                            hash_data, "hash", self.name, clean_old=False
+                        )
                 except ObservableValidationError as e:
                     logging.error(e)

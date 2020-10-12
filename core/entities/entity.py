@@ -10,23 +10,14 @@ from core.observables import Tag
 class Entity(Node):
 
     SEARCH_ALIASES = {
-        'name': 'aliases',
+        "name": "aliases",
     }
 
     VERB_DICT = {
-        "Malware": {
-            "Actor": "Used by",
-            "TTP": "Leverages"
-        },
-        "Actor": {
-            "Malware": "Uses",
-            "TTP": "Leverages"
-        },
+        "Malware": {"Actor": "Used by", "TTP": "Leverages"},
+        "Actor": {"Malware": "Uses", "TTP": "Leverages"},
         "Company": {},
-        "TTP": {
-            "Actor": "Leveraged by",
-            "Malware": "Observed in"
-        },
+        "TTP": {"Actor": "Leveraged by", "Malware": "Observed in"},
     }
 
     DISPLAY_FIELDS = [("name", "Name"), ("tags", "Tags")]
@@ -36,7 +27,8 @@ class Entity(Node):
         required=True,
         unique_with="_cls",
         sparse=True,
-        max_length=1024)
+        max_length=1024,
+    )
     description = StringField(verbose_name="Description")
     tags = ListField(StringField(), verbose_name="Relevant tags")
 
@@ -64,7 +56,7 @@ class Entity(Node):
         return form
 
     def __unicode__(self):
-        return u"{}".format(self.name)
+        return "{}".format(self.name)
 
     def action(self, target, source, verb=None):
         if not verb:
@@ -72,7 +64,8 @@ class Entity(Node):
                 verb = "Related {}".format(self.__class__.__name__)
             else:
                 verb = Entity.VERB_DICT.get(self.__class__.__name__, {}).get(
-                    target.__class__.__name__, "Relates to")
+                    target.__class__.__name__, "Relates to"
+                )
         self.active_link_to(target, verb, source)
 
     def generate_tags(self):
@@ -88,6 +81,6 @@ class Entity(Node):
             "name": self.name,
             "description": self.description,
             "tags": self.tags,
-            "id": str(self.id)
+            "id": str(self.id),
         }
         return i

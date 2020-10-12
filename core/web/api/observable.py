@@ -19,10 +19,10 @@ class Observable(CrudApi):
     objectmanager = observables.Observable
 
     def _modify_observable(self, observable, params={}):
-        source = params.pop('source', None)
-        context = params.pop('context', None)
-        tags = params.pop('tags', None)
-        strict = bool(params.pop('strict', False))
+        source = params.pop("source", None)
+        context = params.pop("context", None)
+        tags = params.pop("tags", None)
+        strict = bool(params.pop("strict", False))
 
         if source:
             observable.add_source(source)
@@ -37,7 +37,7 @@ class Observable(CrudApi):
         return info
 
     @route("/", methods=["POST"])
-    @requires_permissions('write')
+    @requires_permissions("write")
     def new(self):
         """Create a new Observable
 
@@ -48,15 +48,19 @@ class Observable(CrudApi):
         """
         params = request.json
 
-        if 'id' in params:
+        if "id" in params:
             obs = self.objectmanager.objects.get(id=params.pop("id"))
         else:
-            forced_type = params.pop('force_type', None)
+            forced_type = params.pop("force_type", None)
             try:
-                if params.pop('refang', None):
-                    obs = self.objectmanager.add_text(refang(params.pop('value')), force_type=forced_type)
+                if params.pop("refang", None):
+                    obs = self.objectmanager.add_text(
+                        refang(params.pop("value")), force_type=forced_type
+                    )
                 else:
-                    obs = self.objectmanager.add_text(params.pop('value'), force_type=forced_type)
+                    obs = self.objectmanager.add_text(
+                        params.pop("value"), force_type=forced_type
+                    )
             except (GenericYetiError, ObservableValidationError) as e:
                 logging.error(e)
                 abort(400)
@@ -64,7 +68,7 @@ class Observable(CrudApi):
         return render(self._modify_observable(obs, params))
 
     @route("/bulk", methods=["POST"])
-    @requires_permissions('write')
+    @requires_permissions("write")
     def bulk(self):
         """Bulk-add observables
 
@@ -75,22 +79,30 @@ class Observable(CrudApi):
         """
         added = []
         params = request.json
-        bulk = params.pop('observables', [])
-        _refang = params.pop('refang', False)
+        bulk = params.pop("observables", [])
+        _refang = params.pop("refang", False)
         for item in bulk:
-            value = item['value']
-            tags = item.get('tags', [])
-            forced_type = item.get('force_type', None)
+            value = item["value"]
+            tags = item.get("tags", [])
+            forced_type = item.get("force_type", None)
 
             if _refang:
-                obs = self.objectmanager.add_text(refang(value), tags=tags, force_type=forced_type)
+                obs = self.objectmanager.add_text(
+                    refang(value), tags=tags, force_type=forced_type
+                )
             else:
-                obs = self.objectmanager.add_text(value, tags=tags, force_type=forced_type)
-            added.append(self._modify_observable(
-                obs, {
-                    'source': item.get('source'),
-                    'context': item.get('context'),
-                }))
+                obs = self.objectmanager.add_text(
+                    value, tags=tags, force_type=forced_type
+                )
+            added.append(
+                self._modify_observable(
+                    obs,
+                    {
+                        "source": item.get("source"),
+                        "context": item.get("context"),
+                    },
+                )
+            )
         return render(added)
 
     @route("/bulk-tag", methods=["POST"])
@@ -122,7 +134,7 @@ class Observable(CrudApi):
         return ('', 200)
 
     @route("/<id>/context", methods=["POST"])
-    @requires_permissions('read')
+    @requires_permissions("read")
     def context(self, id):
         """Add context to an observable
 
@@ -131,14 +143,14 @@ class Observable(CrudApi):
         :>json object: The context object that was actually added
         """
         observable = get_object_or_404(self.objectmanager, id=id)
-        context = request.json.pop('context', {})
-        old_source = request.json.pop('old_source', None)
+        context = request.json.pop("context", {})
+        old_source = request.json.pop("old_source", None)
         observable.add_context(context, replace_source=old_source)
         return render(context)
 
 
     @route("/<id>/context", methods=["DELETE"])
-    @requires_permissions('write')
+    @requires_permissions("write")
     def remove_context(self, id):
         """Removes context from an observable
 
@@ -146,19 +158,19 @@ class Observable(CrudApi):
         :>json object: The context object that was actually delete
         """
         observable = get_object_or_404(self.objectmanager, id=id)
-        context = request.json.pop('context', {})
+        context = request.json.pop("context", {})
         observable.remove_context(context)
         return render(context)
 
-    @requires_permissions('write')
+    @requires_permissions("write")
     def post(self, id):
         obs = self.objectmanager.objects.get(id=id)
         j = request.json
-        if not current_user.has_permission('observable', 'tag') and 'tags' in j:
+        if not current_user.has_permission("observable", "tag") and "tags" in j:
             abort(401)
         return render(self._modify_observable(obs, request.json))
 
 
 class ObservableSearch(CrudSearchApi):
-    template = 'observable_api.html'
+    template = "observable_api.html"
     objectmanager = observables.Observable

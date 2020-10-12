@@ -29,7 +29,7 @@ class User(YetiDocument):
 
     @property
     def is_admin(self):
-        return self.permissions.get('admin', False)
+        return self.permissions.get("admin", False)
 
     @property
     def is_active(self):
@@ -55,7 +55,7 @@ class User(YetiDocument):
         return self.permissions.get(role, False)
 
     def __unicode__(self):
-        return u"<User: {}>".format(self.username)
+        return "<User: {}>".format(self.username)
 
     @classmethod
     def get_form(klass):
@@ -63,16 +63,14 @@ class User(YetiDocument):
 
     @classmethod
     def register_setting(klass, id, name, description):
-        klass.available_settings[id] = {
-            'name': name,
-            'description': description
-        }
+        klass.available_settings[id] = {"name": name, "description": description}
 
     @classmethod
     def get_available_settings(klass):
         # We have to load all OneShotAnalytics in order to make sure
         # available_settings are up to date
         from core.analytics import OneShotAnalytics
+
         list(OneShotAnalytics.objects)
 
         return klass.available_settings

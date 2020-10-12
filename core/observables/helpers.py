@@ -3,6 +3,7 @@ import logging
 from core.errors import ObservableValidationError
 from core.observables import Certificate
 
+
 def register_certificate(content, context, source):
     """Helper function to register certificate
 
@@ -19,6 +20,7 @@ def register_certificate(content, context, source):
     except ObservableValidationError as e:
         logging.error(e)
 
+
 def register_observables(mapper, observables, blacklist_domains, context, source):
     """Helper function to register data obtained by from_text
 
@@ -33,8 +35,7 @@ def register_observables(mapper, observables, blacklist_domains, context, source
 
     for key in observables:
         for ioc in filter(None, observables[key]):
-            if key == 'Url' and any(
-                    [domain in ioc for domain in blacklist_domains]):
+            if key == "Url" and any([domain in ioc for domain in blacklist_domains]):
                 continue
             try:
                 ioc_data = mapper[key].get_or_create(value=ioc)

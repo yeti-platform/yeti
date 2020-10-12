@@ -14,12 +14,11 @@ from core.web.helpers import requires_permissions
 
 
 class ScheduledAnalytics(CrudApi):
-    template = 'scheduled_analytics_api.html'
+    template = "scheduled_analytics_api.html"
     objectmanager = analytics.ScheduledAnalytics
 
     @route("/<id>/refresh", methods=["POST"])
     @requires_permissions("refresh")
-
     def refresh(self, id):
         """Runs a Scheduled Analytics
 
@@ -48,7 +47,7 @@ class ScheduledAnalytics(CrudApi):
 
 
 class InlineAnalytics(CrudApi):
-    template = 'inline_analytics_api.html'
+    template = "inline_analytics_api.html"
     objectmanager = analytics.InlineAnalytics
 
     @route("/<id>/toggle", methods=["POST"])
@@ -82,16 +81,13 @@ class OneShotAnalytics(CrudApi):
         for obj in self.objectmanager.objects.all():
             info = obj.info()
 
-            info['available'] = True
-            if hasattr(
-                    obj,
-                    'settings') and not current_user.has_settings(obj.settings):
-                info['available'] = False
+            info["available"] = True
+            if hasattr(obj, "settings") and not current_user.has_settings(obj.settings):
+                info["available"] = False
 
             data.append(info)
 
         return render(data, template=self.template)
-
 
     @route("/<id>/toggle", methods=["POST"])
     @requires_permissions("toggle")
@@ -110,7 +106,7 @@ class OneShotAnalytics(CrudApi):
 
         return render({"id": analytics.id, "status": analytics.enabled})
 
-    @route('/<id>/run', methods=["POST"])
+    @route("/<id>/run", methods=["POST"])
     @requires_permissions("run")
     def run(self, id):
         """Runs a One-Shot Analytics
@@ -124,10 +120,10 @@ class OneShotAnalytics(CrudApi):
         :>json object: JSON object representing the ``AnalyticsResults`` instance
         """
         analytics = get_object_or_404(self.objectmanager, id=id)
-        observable = get_object_or_404(Observable, id=request.form.get('id'))
+        observable = get_object_or_404(Observable, id=request.form.get("id"))
 
         result = analytics.run(observable, current_user.settings).to_mongo()
-        result.pop('settings')
+        result.pop("settings")
         return render(result)
 
     def _analytics_results(self, results):
@@ -159,26 +155,30 @@ class OneShotAnalytics(CrudApi):
             links.append(link.to_dict())
 
         results = results.to_mongo()
-        results['results'] = {'nodes': nodes, 'links': links}
-        results.pop('settings')
+        results["results"] = {"nodes": nodes, "links": links}
+        results.pop("settings")
 
         return results
 
-    @route('/<id>/status')
+    @route("/<id>/status")
     @requires_permissions("read")
     def status(self, id):
         results = get_object_or_404(analytics.AnalyticsResults, id=id)
         return render(self._analytics_results(results))
 
-    @route('/<id>/last/<observable_id>')
+    @route("/<id>/last/<observable_id>")
     @requires_permissions("read")
     def last(self, id, observable_id):
         try:
-            results = analytics.AnalyticsResults.objects(
-                analytics=id, observable=observable_id,
-                status="finished").order_by('-datetime').limit(1)
+            results = (
+                analytics.AnalyticsResults.objects(
+                    analytics=id, observable=observable_id, status="finished"
+                )
+                .order_by("-datetime")
+                .limit(1)
+            )
             results = self._analytics_results(results[0])
-            results.pop('settings')
+            results.pop("settings")
             return render(results)
         except:
             return render(None)

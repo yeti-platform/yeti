@@ -23,9 +23,9 @@ webapp.before_first_request(get_plugins)
 
 login_manager = LoginManager()
 login_manager.init_app(webapp)
-login_manager.login_view = '/login'
+login_manager.login_view = "/login"
 
-auth_module = import_module('core.auth.%s' % yeti_config.auth.module)
+auth_module = import_module("core.auth.%s" % yeti_config.auth.module)
 webapp.register_blueprint(auth_module.auth)
 
 connect(
@@ -34,7 +34,8 @@ connect(
     port=yeti_config.mongodb.port,
     username=yeti_config.mongodb.username,
     password=yeti_config.mongodb.password,
-    connect=False)
+    connect=False,
+)
 
 
 # Handle authentication
@@ -49,7 +50,7 @@ def load_user(session_token):
 @login_manager.request_loader
 def api_auth(request):
     try:
-        return User.objects.get(api_key=request.headers.get('X-Api-Key'))
+        return User.objects.get(api_key=request.headers.get("X-Api-Key"))
     except DoesNotExist:
         return None
 
@@ -70,9 +71,10 @@ def index(path):
         return current_app.send_static_file(path)
     return current_app.send_static_file("index.html")
 
-@webapp.route('/list_routes')
+@webapp.route("/list_routes")
 def list_routes():
     import urllib
+
     output = []
     for rule in webapp.url_map.iter_rules():
 
@@ -80,7 +82,7 @@ def list_routes():
         for arg in rule.arguments:
             options[arg] = "[{0}]".format(arg)
 
-        methods = ','.join(rule.methods)
+        methods = ",".join(rule.methods)
         url = url_for(rule.endpoint, **options)
         line = "{:50s} {:20s} {}".format(rule.endpoint, methods, url)
         output.append(line)

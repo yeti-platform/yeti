@@ -4,8 +4,7 @@ from werkzeug.security import check_password_hash
 
 from core.auth import common
 from core.auth.local.group_management import create_group
-from core.auth.local.user_management import (authenticate, create_user,
-                                             set_password)
+from core.auth.local.user_management import authenticate, create_user, set_password
 from core.user import User
 from core.web.api.api import render
 from core.web.helpers import get_object_or_404
@@ -82,7 +81,7 @@ def change_password():
             'error': 'You must specify both current and new password'
             }), 400
 
-    if not current_user.has_role('admin'):
+    if not current_user.has_role("admin"):
         if not check_password_hash(u.password, current):
             return render({'error': 'Invalid password'}), 400
     else:

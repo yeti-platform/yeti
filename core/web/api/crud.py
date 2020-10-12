@@ -18,7 +18,6 @@ from core.web.helpers import requires_permissions
 
 
 class CrudSearchApi(FlaskView):
-
     def search(self, query):
         fltr = query.get('filter', {})
         params = query.get('params', {})
@@ -84,7 +83,7 @@ class CrudApi(FlaskView):
     template = None
     template_single = None
 
-    @requires_permissions('write')
+    @requires_permissions("write")
     def delete(self, id):
         """Deletes the corresponding entry from the database
 
@@ -95,8 +94,8 @@ class CrudApi(FlaskView):
         obj.delete()
         return render({"deleted": id})
 
-    @route("/multidelete", methods=['POST'])
-    @requires_permissions('write')
+    @route("/multidelete", methods=["POST"])
+    @requires_permissions("write")
     def multidelete(self):
         """Deletes multiple entries from the database
 
@@ -104,12 +103,12 @@ class CrudApi(FlaskView):
         :>json [ObjectID] deleted: Array of Element IDs that were successfully deleted
         """
         data = loads(request.data)
-        ids = iterify(data['ids'])
+        ids = iterify(data["ids"])
         self.objectmanager.objects(id__in=ids).delete()
         return render({"deleted": ids})
 
-    @route("/multiupdate", methods=['POST'])
-    @requires_permissions('write')
+    @route("/multiupdate", methods=["POST"])
+    @requires_permissions("write")
     def multiupdate(self):
         """Updates multiple entries from the database
 
@@ -118,17 +117,14 @@ class CrudApi(FlaskView):
         :>json [ObjectID] updated: Array of Element IDs that were successfully updated
         """
         data = loads(request.data)
-        ids = iterify(data['ids'])
-        new_data = data['new']
+        ids = iterify(data["ids"])
+        new_data = data["new"]
         self.objectmanager.objects(id__in=ids).update(new_data)
-        return render({
-            "updated": list(self.objectmanager.objects(ids__in=ids))
-        })
+        return render({"updated": list(self.objectmanager.objects(ids__in=ids))})
 
-    @requires_permissions('read')
+    @requires_permissions("read")
     def index(self):
-        """List all corresponding entries in the database. **Do not use on large datasets!**
-        """
+        """List all corresponding entries in the database. **Do not use on large datasets!**"""
         objects = [o.info() for o in self.objectmanager.objects.all()]
 
         return render(objects, template=self.template)
@@ -137,7 +133,7 @@ class CrudApi(FlaskView):
     def _parse_request(self, json):
         return json
 
-    @requires_permissions('read')
+    @requires_permissions("read")
     def get(self, id):
         """Get details on a specific element
 
@@ -147,7 +143,7 @@ class CrudApi(FlaskView):
         return render(obj, self.template_single)
 
     @route("/", methods=["POST"])
-    @requires_permissions('write')
+    @requires_permissions("write")
     def new(self):
         """Create a new element
 
@@ -157,15 +153,15 @@ class CrudApi(FlaskView):
         """
         params = self._parse_request(request.json)
         objectmanager = self.objectmanager
-        if 'type' in params and hasattr(self, 'subobjects'):
-            objectmanager = self.subobjects.get(params['type'])
+        if "type" in params and hasattr(self, "subobjects"):
+            objectmanager = self.subobjects.get(params["type"])
         if objectmanager is None:
             abort(400)
-        params.pop('type', None)
+        params.pop("type", None)
         obj = objectmanager(**params).save()
         return render(obj)
 
-    @requires_permissions('write')
+    @requires_permissions("write")
     def post(self, id):
         """Modify an element
 
@@ -179,8 +175,8 @@ class CrudApi(FlaskView):
         obj = obj.clean_update(**params)
         return render(obj)
 
-    @route('/<string:id>/files', methods=["GET"])
-    @requires_permissions('read')
+    @route("/<string:id>/files", methods=["GET"])
+    @requires_permissions("read")
     def list_files(self, id):
         """List files attached to an element
 
@@ -191,13 +187,12 @@ class CrudApi(FlaskView):
         entity = get_object_or_404(self.objectmanager, id=id)
         for f in entity.attached_files:
             i = f.info()
-            i['content_uri'] = url_for(
-                "api.Entity:file_content", sha256=f.sha256)
+            i["content_uri"] = url_for("api.Entity:file_content", sha256=f.sha256)
             l.append(i)
         return render(l)
 
-    @route('/files/<string:sha256>', methods=["GET"])
-    @requires_permissions('read')
+    @route("/files/<string:sha256>", methods=["GET"])
+    @requires_permissions("read")
     def file_content(self, sha256):
         """Get a file's contents
 
@@ -206,5 +201,5 @@ class CrudApi(FlaskView):
         """
         f = get_object_or_404(AttachedFile, sha256=sha256)
         return make_response(
-            send_file(
-                f.filepath, as_attachment=True, attachment_filename=f.filename))
+            send_file(f.filepath, as_attachment=True, attachment_filename=f.filename)
+        )

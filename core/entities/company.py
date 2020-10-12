@@ -13,6 +13,6 @@ class Company(Entity):
 
     def info(self):
         i = Entity.info(self)
-        i['rdap'] = self.rdap
-        i['type'] = "Company"
+        i["rdap"] = self.rdap
+        i["type"] = "Company"
         return i

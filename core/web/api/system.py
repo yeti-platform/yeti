@@ -11,7 +11,6 @@ from core.web.helpers import requires_role
 
 
 class Inspector(threading.Thread):
-
     def __init__(self, inspect, method, *args, **kwargs):
         super(Inspector, self).__init__(*args, **kwargs)
         self.inspect = inspect
@@ -24,14 +23,14 @@ class Inspector(threading.Thread):
 
 class System(FlaskView):
 
-    INSPECT_METHODS = ('registered', 'active', 'stats')
+    INSPECT_METHODS = ("registered", "active", "stats")
 
-    @requires_role('admin')
+    @requires_role("admin")
     @route("/restart/worker/<name>")
     def restart_worker(self, name="all"):
         response = celery_app.control.broadcast(
-            'pool_restart',
-            arguments={'reload': True},
+            "pool_restart",
+            arguments={"reload": True},
             destination=[name] if name != "all" else None,
             reply=True,
         )
@@ -39,7 +38,7 @@ class System(FlaskView):
         nok = []
         for r in response:
             for name in r:
-                if 'ok' not in r[name]:
+                if "ok" not in r[name]:
                     nok.append(name)
         if nok:
             nok_list = ', '.join(nok)
@@ -55,7 +54,7 @@ class System(FlaskView):
             'message': message
         })
 
-    @requires_role('admin')
+    @requires_role("admin")
     def index(self):
         results = {}
         inspect = celery_app.control.inspect(timeout=5, destination=None)
@@ -71,16 +70,16 @@ class System(FlaskView):
             results[t.method] = t.result
 
         registered = {}
-        if results['registered']:
-            for key in results['registered']:
+        if results["registered"]:
+            for key in results["registered"]:
                 registered[key] = {
-                    "processes": results['stats'][key]["pool"]["processes"],
-                    "active": len(results['active'][key]) > 0,
+                    "processes": results["stats"][key]["pool"]["processes"],
+                    "active": len(results["active"][key]) > 0,
                 }
 
         active = {}
-        if results['active']:
-            for key in results['active']:
+        if results["active"]:
+            for key in results["active"]:
                 entries = []
                 for item in results["active"][key]:
                     args = item.get("args", [])

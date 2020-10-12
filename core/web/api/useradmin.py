@@ -11,7 +11,7 @@ from core.web.helpers import get_object_or_404, requires_role
 
 
 class UserAdminSearch(CrudSearchApi):
-    template = 'user_api.html'
+    template = "user_api.html"
     objectmanager = User
 
     @requires_role('admin')

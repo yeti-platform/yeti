@@ -41,7 +41,7 @@ class Analysis(CrudApi):
         add_unknown = bool(params.pop('add_unknown', False))
         unknown = set()
 
-        if add_unknown and current_user.has_permission('observable', 'write'):
+        if add_unknown and current_user.has_permission("observable", "write"):
             for o in observables:
                 try:
                     Observable.add_text(o)
@@ -50,9 +50,10 @@ class Analysis(CrudApi):
 
         data = match_observables(
             observables,
-            save_matches=add_unknown and
-            current_user.has_permission('observable', 'write'),
-            fetch_neighbors=fetch_neighbors)
+            save_matches=add_unknown
+            and current_user.has_permission("observable", "write"),
+            fetch_neighbors=fetch_neighbors,
+        )
 
         data['unknown'] = list(set(data['unknown']) | unknown)
 

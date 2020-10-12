@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 
 class GenericYetiError(Exception):
-
     def __init__(self, value):
         self.value = value
 
@@ -11,7 +10,6 @@ class GenericYetiError(Exception):
 
 
 class GenericYetiInfo(Exception):
-
     def __init__(self, value):
         self.value = value
 

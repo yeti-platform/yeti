@@ -31,8 +31,8 @@ class GroupAdmin(FlaskView):
             return render(group)
         return (403)
 
-    @route('/toggle/<id>', methods=["POST"])
-    @requires_role('admin')
+    @route("/toggle/<id>", methods=["POST"])
+    @requires_role("admin")
     def toggle(self, id):
         group = get_object_or_404(Group, id=id)
         group.enabled = not group.enabled

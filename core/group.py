@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
-from mongoengine import BooleanField, StringField, ListField, ReferenceField, \
-    CASCADE
+from mongoengine import BooleanField, StringField, ListField, ReferenceField, CASCADE
 
 from core.database import YetiDocument
 from core.user import User

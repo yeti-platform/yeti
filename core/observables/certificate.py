@@ -7,8 +7,7 @@ S/MIME encrypted or signed e-mails.
 import hashlib
 from io import BytesIO
 
-from mongoengine.fields import DictField, ListField, ReferenceField, \
-    StringField
+from mongoengine.fields import DictField, ListField, ReferenceField, StringField
 
 from core.database import AttachedFile
 from core.observables import Observable
@@ -21,7 +20,7 @@ class Certificate(Observable):
     hashes = ListField(DictField(), verbose_name="Hashes")
     body = ReferenceField("AttachedFile")
 
-    exclude_fields = Observable.exclude_fields + ['body']
+    exclude_fields = Observable.exclude_fields + ["body"]
 
     @staticmethod
     def check_type(txt):
@@ -30,7 +29,7 @@ class Certificate(Observable):
     @classmethod
     def from_data(cls, data, hash_sha256=None):
         """Creates a Certificate observable based on raw certificate data and
-its hash_sha256 value.
+        its hash_sha256 value.
 
         """
         if hash_sha256 is None:
@@ -48,7 +47,7 @@ its hash_sha256 value.
 
 class CertificateSubject(Observable):
     """X509 certificate subject. Can be linked to X509 certificates based
-on their subject and issuer fields.
+    on their subject and issuer fields.
 
     """
 
