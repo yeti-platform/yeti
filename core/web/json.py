@@ -11,6 +11,7 @@ from mongoengine import QuerySet, Document, EmbeddedDocument
 from core.database import Node, Link, YetiDocument
 from core.user import User
 
+
 def recursive_encoder(objects, template=None, ctx=None):
     if isinstance(objects, dict):
         newdict = {}
