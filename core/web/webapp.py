@@ -16,8 +16,7 @@ from core.web.frontend import frontend
 from core.web.json import JSONDecoder
 from core.yeti_plugins import get_plugins
 
-webapp = Flask(__name__, static_folder="../../node_modules",
-               static_url_path="/static")
+webapp = Flask(__name__, static_folder="../../node_modules", static_url_path="/static")
 
 webapp.secret_key = os.urandom(24)
 webapp.json_decoder = JSONDecoder
