@@ -20,8 +20,7 @@ def save_file(uploaded_file, filename=None):
     mime_type = magic.from_buffer(uploaded_file.read(100), mime=True)
     uploaded_file.seek(0)
     body = AttachedFile.from_upload(uploaded_file, force_mime=mime_type)
-    f = observables.File.get_or_create(
-        value=value, body=body, mime_type=mime_type)
+    f = observables.File.get_or_create(value=value, body=body, mime_type=mime_type)
 
     if not filename:
         filename = uploaded_file.filename
@@ -33,18 +32,17 @@ def save_file(uploaded_file, filename=None):
 
 def save_uploaded_files():
     files = []
-    unzip = bool(request.form.get('unzip') in ["true", "on"])
+    unzip = bool(request.form.get("unzip") in ["true", "on"])
 
     for uploaded_file in request.files.getlist("files"):
         if unzip and zipfile.is_zipfile(uploaded_file):
-            with zipfile.ZipFile(uploaded_file, 'r') as zf:
+            with zipfile.ZipFile(uploaded_file, "r") as zf:
                 for info in zf.infolist():
                     name = info.filename
                     size = info.file_size
                     data = zf.read(name)
                     if size > 0:
-                        files.append(
-                            save_file(data, filename=name.split("/")[-1]))
+                        files.append(save_file(data, filename=name.split("/")[-1]))
         else:
             files.append(save_file(uploaded_file))
 
@@ -63,8 +61,7 @@ class File(CrudApi):
         """
         try:
             fileobj = self.objectmanager.objects.get(id=id)
-            return Response(
-                fileobj.body.stream_contents(), mimetype=fileobj.mime_type)
+            return Response(fileobj.body.stream_contents(), mimetype=fileobj.mime_type)
         except DoesNotExist:
             abort(404)
 
@@ -77,13 +74,12 @@ class File(CrudApi):
         """
         try:
             fileobj = self.objectmanager.objects.get(hashes__value=hash)
-            return Response(
-                fileobj.body.stream_contents(), mimetype=fileobj.mime_type)
+            return Response(fileobj.body.stream_contents(), mimetype=fileobj.mime_type)
         except DoesNotExist:
             abort(404)
 
     @route("/addfile", methods=["POST"])
-    @requires_permissions('write')
+    @requires_permissions("write")
     def add_file(self):
         """Adds a new File
 

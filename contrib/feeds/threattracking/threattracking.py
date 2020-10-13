@@ -36,51 +36,15 @@ class ThreatTracking(Feed):
 
     # define a static index table for each sheet
     target_sheet = {
-        'China': {
-            'aliases': 'A3:L75',
-            'campaigns': 'M:P',
-            'tools': 'Q'
-        },
-        'Russia': {
-            'aliases': 'A3:L17',
-            'campaigns': 'M:R',
-            'tools': 'S'
-        },
-        'North Korea': {
-            'aliases': 'A3:J9',
-            'campaigns': 'K:L',
-            'tools': 'M'
-        },
-        'Iran': {
-            'aliases': 'A3:F18',
-            'campaigns': 'G:I',
-            'tools': 'J'
-        },
-        'Israel': {
-            'aliases': 'A3:B4',
-            'campaigns': 'C:D',
-            'tools': 'E'
-        },
-        'Middle East': {
-            'aliases': 'A3:D14',
-            'campaigns': 'E:F',
-            'tools': 'G'
-        },
-        'NATO': {
-            'aliases': 'A3:E4',
-            'campaigns': 'F:H',
-            'tools': 'I'
-        },
-        'Others': {
-            'aliases': 'A3:D19',
-            'campaigns': 'E:G',
-            'tools': 'H'
-        },
-        'Unknown': {
-            'aliases': 'A3:G24',
-            'campaigns': 'H:I',
-            'tools': 'J'
-        },
+        "China": {"aliases": "A3:L75", "campaigns": "M:P", "tools": "Q"},
+        "Russia": {"aliases": "A3:L17", "campaigns": "M:R", "tools": "S"},
+        "North Korea": {"aliases": "A3:J9", "campaigns": "K:L", "tools": "M"},
+        "Iran": {"aliases": "A3:F18", "campaigns": "G:I", "tools": "J"},
+        "Israel": {"aliases": "A3:B4", "campaigns": "C:D", "tools": "E"},
+        "Middle East": {"aliases": "A3:D14", "campaigns": "E:F", "tools": "G"},
+        "NATO": {"aliases": "A3:E4", "campaigns": "F:H", "tools": "I"},
+        "Others": {"aliases": "A3:D19", "campaigns": "E:G", "tools": "H"},
+        "Unknown": {"aliases": "A3:G24", "campaigns": "H:I", "tools": "J"},
     }
 
     def __init__(self, *args, **kwargs):
@@ -88,32 +52,33 @@ class ThreatTracking(Feed):
         return
 
     def update(self):
-        """
-        """
-        params = {'key': yeti_config.get('threattracking', 'google_api_key')}
+        """"""
+        params = {"key": yeti_config.get("threattracking", "google_api_key")}
         # , 'includeGridData': 'True'} - we don't want to do that. 200Mo file.
 
         base = "https://sheets.googleapis.com/v4/spreadsheets/" + yeti_config.get(
-            'threattracking', 'sheet_key')
+            "threattracking", "sheet_key"
+        )
         self.api = hammock.Hammock(base, params=params)
         if False:
             r = self.api.GET()
             if r.status_code != 200:
                 raise requests.ConnectionError(
-                    'Return code for {query} is {code}'.format(
-                        query=r.request.url, code=r.status_code))
-            sheets = r.json()['sheets']
+                    "Return code for {query} is {code}".format(
+                        query=r.request.url, code=r.status_code
+                    )
+                )
+            sheets = r.json()["sheets"]
             json.dump(sheets, open("actor.sheets.json", "w"))
         else:
             sheets = json.load(open("actor.sheets.json", "r"))
         # print(pprint.pformat(sheets))
         for s_p in sheets:
-            s = s_p['properties']
-            title = s['title']
-            if title in ['Home', '_Malware', '_Download', '_Schemes',
-                         '_Sources']:
+            s = s_p["properties"]
+            title = s["title"]
+            if title in ["Home", "_Malware", "_Download", "_Schemes", "_Sources"]:
                 continue
-            size = s['gridProperties']
+            size = s["gridProperties"]
             # print(title, size['columnCount'], size['rowCount'])
             actors_list_info = self.each_sheet_work(s)
             self.create_entities(title, actors_list_info)
@@ -123,7 +88,7 @@ class ThreatTracking(Feed):
         # 1. for each actor, get primary name and aliases
         # 2. get the names of campaign
         # 3. get then name of tools
-        title = sheet['title']
+        title = sheet["title"]
         # 1. for each actor, get primary name and aliases
         range_info = self.target_sheet[title]
         names = self.get_aliases(title, range_info)
@@ -137,26 +102,26 @@ class ThreatTracking(Feed):
         return zip(names, campaigns, tools)
 
     def get_aliases(self, sheet_name, range_info):
-        """ returns the list of list of aliases.
+        """returns the list of list of aliases.
         The first name in the list is the primary name"""
-        actor_primary_name_range = '!'.join([sheet_name, range_info['aliases']])
+        actor_primary_name_range = "!".join([sheet_name, range_info["aliases"]])
         _ = self.api.values.GET(actor_primary_name_range).json()
-        actor_names = _['values']
+        actor_names = _["values"]
         r_names = []
         for i, actor_aliases in enumerate(actor_names):
-            while u'' in actor_aliases:
-                actor_aliases.remove(u'')
-            while '?' in actor_aliases:
-                actor_aliases.remove('?')
-            while '???' in actor_aliases:
-                actor_aliases.remove('???')
+            while u"" in actor_aliases:
+                actor_aliases.remove(u"")
+            while "?" in actor_aliases:
+                actor_aliases.remove("?")
+            while "???" in actor_aliases:
+                actor_aliases.remove("???")
             if len(actor_aliases) == 0:
-                actor_aliases.append(sheet_name + '-ACTOR-%d' % i)
+                actor_aliases.append(sheet_name + "-ACTOR-%d" % i)
             else:
                 l = []
                 for alias in actor_aliases:
-                    if ',' in alias:
-                        l.extend(alias.split(','))
+                    if "," in alias:
+                        l.extend(alias.split(","))
                     else:
                         l.append(alias)
                 actor_aliases = l
@@ -167,45 +132,45 @@ class ThreatTracking(Feed):
 
     @staticmethod
     def _get_numeric_range(range_info, start_col, end_col):
-        range_info_size = range_info['aliases']
-        start, end = range_info_size.split(':')
+        range_info_size = range_info["aliases"]
+        start, end = range_info_size.split(":")
         # get the numeric ranges
         row_start, row_end = start[1:], end[1:]
         # bring it back together
-        return ':'.join([start_col + row_start, end_col + row_end])
+        return ":".join([start_col + row_start, end_col + row_end])
 
     def get_campaign(self, sheet_name, range_info):
         """ returns the list of list of campaigns."""
-        campaign_range = range_info['campaigns'].split(":")
+        campaign_range = range_info["campaigns"].split(":")
         campaign_value_range = self._get_numeric_range(
-            range_info, campaign_range[0], campaign_range[1])
-        campaign_value_range = '!'.join([sheet_name, campaign_value_range])
+            range_info, campaign_range[0], campaign_range[1]
+        )
+        campaign_value_range = "!".join([sheet_name, campaign_value_range])
         _ = self.api.values.GET(campaign_value_range).json()
-        campaign_names = _['values']
+        campaign_names = _["values"]
         r_names = []
         for i, campaigns in enumerate(campaign_names):
-            while u'' in campaigns:
-                campaigns.remove(u'')
+            while u"" in campaigns:
+                campaigns.remove(u"")
             campaigns = list(set(campaigns))
             r_names.append(campaigns)
         return r_names
 
     def get_tools(self, sheet_name, range_info):
         """ returns the list of list of tools."""
-        tool_col = range_info['tools']
-        tool_value_range = self._get_numeric_range(
-            range_info, tool_col, tool_col)
-        tool_value_range = '!'.join([sheet_name, tool_value_range])
+        tool_col = range_info["tools"]
+        tool_value_range = self._get_numeric_range(range_info, tool_col, tool_col)
+        tool_value_range = "!".join([sheet_name, tool_value_range])
         _ = self.api.values.GET(tool_value_range).json()
-        tools_names = _['values']
+        tools_names = _["values"]
         r_names = []
         for i, tools in enumerate(tools_names):
             if len(tools) > 0:
-                tools = tools[0].split(',')
+                tools = tools[0].split(",")
                 tools = [t.strip() for t in tools]
                 tools = list(set(tools))
-                while u'' in tools:
-                    tools.remove(u'')
+                while u"" in tools:
+                    tools.remove(u"")
             r_names.append(tools)
         return r_names
 
@@ -221,7 +186,7 @@ class ThreatTracking(Feed):
                 # logging.info(repr(c))
                 # BUG Issue #120 - is there a bug where two entities cannot have the same name
                 # Naikon the actor conflicts with Naikon the campaign
-                _campaign = ''
+                _campaign = ""
                 try:
                     _campaign = Campaign.get_or_create(name=c)
                 except DoesNotExist:
@@ -229,7 +194,7 @@ class ThreatTracking(Feed):
                 _actor.action(_campaign, self.name)
             # create the tools
             for mal in tools:
-                _mal = ''
+                _mal = ""
                 try:
                     _mal = Malware.get_or_create(name=mal)
                 except DoesNotExist:
@@ -238,9 +203,9 @@ class ThreatTracking(Feed):
         return
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    logging.getLogger('threattracking').setLevel(level=logging.DEBUG)
+    logging.getLogger("threattracking").setLevel(level=logging.DEBUG)
     feed = ThreatTracking()
-    feed.name = ThreatTracking.default_values['name']
+    feed.name = ThreatTracking.default_values["name"]
     feed.update()

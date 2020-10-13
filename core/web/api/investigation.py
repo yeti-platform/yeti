@@ -23,56 +23,60 @@ from core.web.helpers import requires_permissions, get_queryset, get_user_groups
 
 
 class InvestigationSearch(CrudSearchApi):
-    template = 'investigation_api.html'
+    template = "investigation_api.html"
     objectmanager = investigation.Investigation
 
     def search(self, query):
-        fltr = query.get('filter', {})
-        params = query.get('params', {})
-        regex = params.pop('regex', False)
-        ignorecase = params.pop('ignorecase', False)
-        page = params.pop('page', 1) - 1
-        rng = params.pop('range', 50)
-        investigations = get_queryset(self.objectmanager, fltr, regex, ignorecase, replace=False)
-        if not current_user.has_role('admin'):
+        fltr = query.get("filter", {})
+        params = query.get("params", {})
+        regex = params.pop("regex", False)
+        ignorecase = params.pop("ignorecase", False)
+        page = params.pop("page", 1) - 1
+        rng = params.pop("range", 50)
+        investigations = get_queryset(
+            self.objectmanager, fltr, regex, ignorecase, replace=False
+        )
+        if not current_user.has_role("admin"):
             shared_ids = [current_user.id] + [group.id for group in get_user_groups()]
             investigations = investigations.filter(
-                Q(sharing__size=0) | Q(sharing__in=shared_ids) | Q(sharing__exists=False)
+                Q(sharing__size=0)
+                | Q(sharing__in=shared_ids)
+                | Q(sharing__exists=False)
             )
-        return list(investigations)[page * rng:(page + 1) * rng]
+        return list(investigations)[page * rng : (page + 1) * rng]
 
 
 class Investigation(CrudApi):
     objectmanager = investigation.Investigation
 
-    @route("/add/<string:id>", methods=['POST'])
-    @requires_permissions('write')
+    @route("/add/<string:id>", methods=["POST"])
+    @requires_permissions("write")
     def add(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         data = loads(request.data)
-        i.add(iterify(data['links']), iterify(data['nodes']))
+        i.add(iterify(data["links"]), iterify(data["nodes"]))
 
         return render(i.info())
 
-    @route("/remove/<string:id>", methods=['POST'])
-    @requires_permissions('write')
+    @route("/remove/<string:id>", methods=["POST"])
+    @requires_permissions("write")
     def remove(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         data = loads(request.data)
-        i.remove(iterify(data['links']), iterify(data['nodes']))
+        i.remove(iterify(data["links"]), iterify(data["nodes"]))
 
         return render(i.info())
 
-    @route("/rename/<string:id>", methods=['POST'])
-    @requires_permissions('write')
+    @route("/rename/<string:id>", methods=["POST"])
+    @requires_permissions("write")
     def rename(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
-        i.modify(name=request.json['name'], updated=datetime.utcnow())
+        i.modify(name=request.json["name"], updated=datetime.utcnow())
 
         return render("ok")
 
-    @route("/nodesearch/<path:query>", methods=['GET'])
-    @requires_permissions('read')
+    @route("/nodesearch/<path:query>", methods=["GET"])
+    @requires_permissions("read")
     def nodesearch(self, query):
         result = []
 
@@ -87,87 +91,76 @@ class Investigation(CrudApi):
 
         return render(result)
 
-    @route('/import_results/<string:id>')
-    @requires_permissions('read')
+    @route("/import_results/<string:id>")
+    @requires_permissions("read")
     def import_results(self, id):
         results = get_object_or_404(ImportResults, id=id)
 
         return render(results.to_mongo())
 
-    @route('/bulk_add/<string:id>', methods=['POST'])
-    @requires_permissions('write')
+    @route("/bulk_add/<string:id>", methods=["POST"])
+    @requires_permissions("write")
     def bulk_add(self, id):
         i = get_object_or_404(self.objectmanager, id=id)
         data = loads(request.data)
         nodes = []
 
-        response = {'status': 'ok', 'message': ''}
+        response = {"status": "ok", "message": ""}
 
         try:
-            for node in data['nodes']:
-                if node['type'] in globals() and issubclass(
-                        globals()[node['type']], Observable):
-                    _type = globals()[node['type']]
+            for node in data["nodes"]:
+                if node["type"] in globals() and issubclass(
+                    globals()[node["type"]], Observable
+                ):
+                    _type = globals()[node["type"]]
                     try:
-                        n = _type.get_or_create(value=node['value'])
+                        n = _type.get_or_create(value=node["value"])
                     except ObservableValidationError as e:
                         logging.error((node, e))
                         continue
 
-                    if node['new_tags']:
-                        n.tag(node['new_tags'].split(', '))
+                    if node["new_tags"]:
+                        n.tag(node["new_tags"].split(", "))
                     nodes.append(n)
 
             i.add([], nodes)
         except Exception as e:
-            response = {'status': 'error', 'message': str(e)}
+            response = {"status": "error", "message": str(e)}
 
         return render(response)
 
-    @route('/search_existence', methods=["POST"])
-    @requires_permissions('read')
+    @route("/search_existence", methods=["POST"])
+    @requires_permissions("read")
     def search_existence(self):
         """Query investigation based on given observable, incident or entity
 
-            Query[ref]: class of the given node, which should be observable or entity
-            Query[id]: the id of the given node.
+        Query[ref]: class of the given node, which should be observable or entity
+        Query[id]: the id of the given node.
 
         """
-        #ToDo sharing permissions
-        REF_CLASS = ('observable', 'entity')
+        # ToDo sharing permissions
+        REF_CLASS = ("observable", "entity")
 
         data = loads(request.data)
 
-        if 'id' not in data or 'ref' not in data:
-            response = {
-                'status': 'error',
-                'message': 'missing argument.'
-            }
+        if "id" not in data or "ref" not in data:
+            response = {"status": "error", "message": "missing argument."}
 
-        elif not ObjectId.is_valid(data['id']):
-            response = {
-                'status': 'error',
-                'message': 'given id is not valid.'
-            }
+        elif not ObjectId.is_valid(data["id"]):
+            response = {"status": "error", "message": "given id is not valid."}
 
-        elif data['ref'] not in REF_CLASS:
-            response = {
-                'status': 'error',
-                'message': 'reference class is not valid.'
-            }
+        elif data["ref"] not in REF_CLASS:
+            response = {"status": "error", "message": "reference class is not valid."}
 
         else:
             query = {
-                'nodes': {
-                    '$elemMatch': {
-                        '$id': ObjectId(data['id']),
-                        '$ref': data['ref']
-                    }
+                "nodes": {
+                    "$elemMatch": {"$id": ObjectId(data["id"]), "$ref": data["ref"]}
                 },
             }
-            response = self.objectmanager.objects(__raw__=query).order_by('-updated')
+            response = self.objectmanager.objects(__raw__=query).order_by("-updated")
             for inv in response:
                 if not inv.name:
-                    inv['name'] = 'Unnamed Investigation'
+                    inv["name"] = "Unnamed Investigation"
 
         return render(response)

@@ -15,8 +15,8 @@ class Tag(CrudApi):
     template_single = "tag_api_single.html"
     objectmanager = observables.Tag
 
-    @route("/merge", methods=['POST'])
-    @requires_permissions('write')
+    @route("/merge", methods=["POST"])
+    @requires_permissions("write")
     def merge(self):
         """Merge one or more tags
 
@@ -30,10 +30,9 @@ class Tag(CrudApi):
                                     object will be automatically
                                     replaced by the tag specified in ``merge_into``.
         """
-        tags = request.json['merge']
-        merge_into = self.objectmanager.objects.get(
-            name=request.json['merge_into'])
-        make_dict = request.json['make_dict']
+        tags = request.json["merge"]
+        merge_into = self.objectmanager.objects.get(name=request.json["merge_into"])
+        make_dict = request.json["make_dict"]
 
         merged = 0
         observables.Observable.change_all_tags(tags, merge_into.name)
@@ -42,7 +41,8 @@ class Tag(CrudApi):
             oldtag = self.objectmanager.objects.get(name=tag)
             merge_into.count += oldtag.count
             merge_into.produces += [
-                i for i in oldtag.produces
+                i
+                for i in oldtag.produces
                 if i not in merge_into.produces and i != merge_into
             ]
             merge_into.save()
@@ -54,7 +54,7 @@ class Tag(CrudApi):
 
         return render({"merged": merged, "into": merge_into.name})
 
-    @requires_permissions('write')
+    @requires_permissions("write")
     def delete(self, id):
         """Deletes a Tag
 
@@ -66,20 +66,21 @@ class Tag(CrudApi):
         tag = self.objectmanager.objects.get(id=id)
         tag.delete()
         observables.Observable.objects(tags__name=tag.name).update(
-            pull__tags__name=tag.name)
+            pull__tags__name=tag.name
+        )
         return render({"deleted": id})
 
     def _parse_request(self, json):
         params = json
-        params['produces'] = [
+        params["produces"] = [
             self.objectmanager.get_or_create(name=t.strip())
-            for t in json['produces'].split(',')
+            for t in json["produces"].split(",")
             if t.strip()
         ]
-        params['replaces'] = json['replaces'].split(',')
+        params["replaces"] = json["replaces"].split(",")
         return params
 
-    @requires_permissions('write')
+    @requires_permissions("write")
     def post(self, id):
         """Create a new Tag
 
@@ -94,15 +95,16 @@ class Tag(CrudApi):
             data = self._parse_request(request.json)
             t = self.objectmanager.objects.get(id=id)
             oldname = t.name
-            data['default_expiration'] = int(data['default_expiration'])
+            data["default_expiration"] = int(data["default_expiration"])
             t.clean_update(**data)
             # we override this so change_all_tags can be called
-            if data['name'] != oldname:
-                observables.Observable.change_all_tags(oldname, data['name'])
+            if data["name"] != oldname:
+                observables.Observable.change_all_tags(oldname, data["name"])
             return render({"status": "ok"})
         except TagValidationError:
             abort(400)
         except Exception:
             import traceback
+
             traceback.print_exc()
             abort(400)

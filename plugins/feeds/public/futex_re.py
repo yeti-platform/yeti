@@ -11,39 +11,35 @@ class FutexTracker(Feed):
         "frequency": timedelta(minutes=60),
         "name": "FutexTracker",
         "source": "https://futex.re/tracker/TinyTracker.csv",
-        "description":
-            "Provides url, hash and hosting information on various malware samples.",
+        "description": "Provides url, hash and hosting information on various malware samples.",
         # pylint: disable=line-too-long
     }
 
     def update(self):
 
-        for index, line in self.update_csv(delimiter=';',
-                                           filter_row='firstseen',
-                                           names=['id', 'firstseen', 'url',
-                                                  'status', 'hash', 'country',
-                                                  'as'],
-                                           header=None):
+        for index, line in self.update_csv(
+            delimiter=";",
+            filter_row="firstseen",
+            names=["id", "firstseen", "url", "status", "hash", "country", "as"],
+            header=None,
+        ):
             self.analyze(line)
 
     # pylint: disable=arguments-differ
     def analyze(self, line):
 
-        _id = line['id']
-        _ = line['firstseen']
-        url = line['url']
-        _status = line['status']
+        _id = line["id"]
+        _ = line["firstseen"]
+        url = line["url"]
+        _status = line["status"]
 
-        _hash = line['hash']
+        _hash = line["hash"]
 
-        country = line['country']
-        asn = line['as']
+        country = line["country"]
+        asn = line["as"]
 
         tags = ["collected_by_honeypot"]
-        context = {
-            "source": self.name,
-            "country": country
-        }
+        context = {"source": self.name, "country": country}
 
         url_obs = None
 
@@ -63,8 +59,7 @@ class FutexTracker(Feed):
                 hash_obs.tag(tags)
                 hash_obs.add_source(self.name)
                 if url_obs:
-                    hash_obs.active_link_to(
-                        url_obs, "MD5", self.name, clean_old=False)
+                    hash_obs.active_link_to(url_obs, "MD5", self.name, clean_old=False)
             except ObservableValidationError as e:
                 logging.error(e)
 
@@ -75,7 +70,6 @@ class FutexTracker(Feed):
                 asn_obs.add_context(context)
                 asn_obs.tag(tags)
                 asn_obs.add_source(self.name)
-                asn_obs.active_link_to(
-                    url_obs, "ASN", self.name, clean_old=False)
+                asn_obs.active_link_to(url_obs, "ASN", self.name, clean_old=False)
             except ObservableValidationError as e:
                 logging.error(e)

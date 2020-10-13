@@ -14,13 +14,14 @@ class TTP(Entity):
         "4": "Exploitation",
         "5": "Installation",
         "6": "C2",
-        "7": "Objectives"
+        "7": "Objectives",
     }
 
     killchain = StringField(
         verbose_name="Kill Chain Stage",
         choices=list(KILL_CHAIN_STEPS.items()),
-        required=True)
+        required=True,
+    )
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("killchain", "Kill Chain")]
 
@@ -34,8 +35,8 @@ class TTP(Entity):
 
     def info(self):
         i = Entity.info(self)
-        i['killchain'] = self.KILL_CHAIN_STEPS[self.killchain]
-        i['type'] = 'TTP'
+        i["killchain"] = self.KILL_CHAIN_STEPS[self.killchain]
+        i["type"] = "TTP"
         return i
 
     def generate_tags(self):

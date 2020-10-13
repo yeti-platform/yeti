@@ -10,12 +10,11 @@ from core.errors import ObservableValidationError
 
 reader = None
 try:
-    path = yeti_config.get('maxmind', 'path')
+    path = yeti_config.get("maxmind", "path")
     if path:
         reader = geoip2.database.Reader(path)
 except IOError as e:
-    logging.info(
-        "Could not open GeoLite2-City.mmdb. Will proceed without GeoIP data")
+    logging.info("Could not open GeoLite2-City.mmdb. Will proceed without GeoIP data")
     logging.info(e)
     reader = False
 
@@ -27,7 +26,7 @@ class ProcessIp(InlineAnalytics):
         "description": "Extracts information from IP addresses",
     }
 
-    ACTS_ON = 'Ip'
+    ACTS_ON = "Ip"
 
     @staticmethod
     def each(ip):
@@ -36,13 +35,14 @@ class ProcessIp(InlineAnalytics):
                 response = reader.city(ip.value)
                 ip.geoip = {
                     "country": response.country.iso_code,
-                    "city": response.city.name
+                    "city": response.city.name,
                 }
                 ip.save()
         except ObservableValidationError:
             logging.error(
-                "An error occurred when trying to add {} to the database".
-                format(ip.value))
+                "An error occurred when trying to add {} to the database".format(
+                    ip.value
+                )
+            )
         except AddressNotFoundError:
-            logging.error(
-                "{} was not found in the GeoIp database".format(ip.value))
+            logging.error("{} was not found in the GeoIp database".format(ip.value))

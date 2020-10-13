@@ -11,29 +11,25 @@ class ViriBackTracker(Feed):
         "frequency": timedelta(hours=24),
         "name": "ViriBackTracker",
         "source": "http://tracker.viriback.com/dump.php",
-        "description":
-            "Malware C2 Urls and IPs",
+        "description": "Malware C2 Urls and IPs",
     }
 
     def update(self):
-        for index, line in self.update_csv(delimiter=',',
-                                           filter_row='FirstSeen',
-                                           header=0):
+        for index, line in self.update_csv(
+            delimiter=",", filter_row="FirstSeen", header=0
+        ):
             self.analyze(line)
 
     def analyze(self, line):
 
         url_obs = False
         ip_obs = False
-        family = line['Family']
-        url = line['URL']
-        ip = line['IP']
-        first_seen = line['FirstSeen']
+        family = line["Family"]
+        url = line["URL"]
+        ip = line["IP"]
+        first_seen = line["FirstSeen"]
         family = family.lower()
-        context = {
-            'first_seen': first_seen,
-            'source': self.name
-        }
+        context = {"first_seen": first_seen, "source": self.name}
 
         if url:
             try:
@@ -53,4 +49,4 @@ class ViriBackTracker(Feed):
                 logging.error(e)
 
         if url_obs and ip_obs:
-            url_obs.active_link_to(ip_obs, 'ip', self.name)
+            url_obs.active_link_to(ip_obs, "ip", self.name)

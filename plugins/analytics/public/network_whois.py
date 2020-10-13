@@ -9,9 +9,8 @@ class NetworkWhois(OneShotAnalytics):
 
     default_values = {
         "name": "NetworkWhois",
-        "description":
-            "Perform a Network Whois request on the IP address and tries to"
-            " extract relevant information."
+        "description": "Perform a Network Whois request on the IP address and tries to"
+        " extract relevant information.",
     }
 
     ACTS_ON = "Ip"
@@ -29,8 +28,8 @@ class NetworkWhois(OneShotAnalytics):
         n = 0
         smallest_subnet = None
 
-        for network in result['nets']:
-            cidr_bits = int(network['cidr'].split('/')[1].split(',')[0])
+        for network in result["nets"]:
+            cidr_bits = int(network["cidr"].split("/")[1].split(",")[0])
             if cidr_bits > n:
                 n = cidr_bits
                 smallest_subnet = network
@@ -38,14 +37,15 @@ class NetworkWhois(OneShotAnalytics):
         if smallest_subnet:
             # Create the company
             company = Company.get_or_create(
-                name=smallest_subnet['description'].split("\n")[0])
-            links.update(ip.active_link_to(company, 'hosting', 'Network Whois'))
+                name=smallest_subnet["description"].split("\n")[0]
+            )
+            links.update(ip.active_link_to(company, "hosting", "Network Whois"))
 
             # Link it to every email address referenced
-            if smallest_subnet['emails']:
-                for email_address in smallest_subnet['emails']:
+            if smallest_subnet["emails"]:
+                for email_address in smallest_subnet["emails"]:
                     email = Email.get_or_create(value=email_address)
-                    links.update(company.link_to(email, None, 'Network Whois'))
+                    links.update(company.link_to(email, None, "Network Whois"))
 
             # Copy the subnet info into the main dict
             for key in smallest_subnet:
@@ -54,7 +54,7 @@ class NetworkWhois(OneShotAnalytics):
 
         # Add the network whois to the context if not already present
         for context in ip.context:
-            if context['source'] == 'network_whois':
+            if context["source"] == "network_whois":
                 break
         else:
             # Remove the nets info (the main one was copied)
@@ -64,7 +64,7 @@ class NetworkWhois(OneShotAnalytics):
             result.pop("referral", None)
             result.pop("query", None)
 
-            result['source'] = 'network_whois'
+            result["source"] = "network_whois"
             ip.add_context(result)
 
         return list(links)

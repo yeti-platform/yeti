@@ -7,15 +7,14 @@ from logging import FileHandler
 from logging import Formatter
 from core.config.config import yeti_config
 
-LOG_FORMAT = (
-    "%(asctime)s [%(levelname)s]: %(message)s")
+LOG_FORMAT = "%(asctime)s [%(levelname)s]: %(message)s"
 LOG_LEVEL = logging.INFO
 
 # user logger
-USER_LOG_FILE = yeti_config.get('logging', 'filename')
+USER_LOG_FILE = yeti_config.get("logging", "filename")
 # Fall back to tmp if the logging directory does not exist
 if not os.path.isdir(os.path.dirname(USER_LOG_FILE)):
-    USER_LOG_FILE = '/tmp/yeti.log'
+    USER_LOG_FILE = "/tmp/yeti.log"
 
 
 userLogger = logging.getLogger("userLogger.messaging")

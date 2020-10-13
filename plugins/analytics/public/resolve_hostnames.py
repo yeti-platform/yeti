@@ -23,7 +23,7 @@ class ResolveHostnames(ScheduledAnalytics):
         "description": "Resolves hostnames and extracts subdomains",
     }
 
-    ACTS_ON = 'Hostname'
+    ACTS_ON = "Hostname"
     EXPIRATION = timedelta(days=3)  # Analysis will expire after 1 day
 
     def bulk(self, hostnames):
@@ -37,8 +37,7 @@ class ResolveHostnames(ScheduledAnalytics):
         h = Hostname.get_or_create(value=hostname.value)
 
         for rdata in results:
-            logging.debug(
-                "{} resolved to {} ({} record)".format(h.value, rdata, rtype))
+            logging.debug("{} resolved to {} ({} record)".format(h.value, rdata, rtype))
             try:
                 e = Observable.add_text(rdata)
                 e.add_source("analytics")
@@ -46,8 +45,7 @@ class ResolveHostnames(ScheduledAnalytics):
             except ObservableValidationError:
                 logging.error("{} is not a valid datatype".format(rdata))
 
-        h.active_link_to(
-            generated, "{} record".format(rtype), "ResolveHostnames")
+        h.active_link_to(generated, "{} record".format(rtype), "ResolveHostnames")
 
         h.analysis_done(cls.__name__)
         return generated
@@ -74,10 +72,10 @@ class ParallelDnsResolver(object):
 
         for d in domains:
             logging.debug("Putting {} in resolver queue".format(d))
-            self.queue.put((d.value, 'A'), True)
+            self.queue.put((d.value, "A"), True)
             # Avoid ns1.ns1.ns1.domain.com style recursions
-            if d.value.count('.') <= 2:
-                self.queue.put((d.value, 'NS'), True)
+            if d.value.count(".") <= 2:
+                self.queue.put((d.value, "NS"), True)
 
         for t in threads:
             t.join()
@@ -104,8 +102,7 @@ class ParallelDnsResolver(object):
                         elif isinstance(r, A_class):
                             text_results.append(r.to_text())
                         else:
-                            logging.error(
-                                "Unknown record type: {}".format(type(r)))
+                            logging.error("Unknown record type: {}".format(type(r)))
                     hostname = Hostname(value=hostname)
                     ResolveHostnames.each(hostname, rtype, text_results)
             except NoAnswer:
@@ -119,9 +116,12 @@ class ParallelDnsResolver(object):
                 continue
             except Exception as e:
                 import traceback
+
                 logging.error(
                     "Unknown error occurred while working on {} ({})".format(
-                        hostname, rtype))
+                        hostname, rtype
+                    )
+                )
                 logging.error("\nERROR: {}".format(hostname, rtype, e))
                 logging.error(traceback.print_exc())
 

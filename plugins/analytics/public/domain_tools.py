@@ -5,6 +5,7 @@ import ssl
 from datetime import datetime
 
 import requests
+
 # from pythonwhois.parse import parse_raw_whois
 from mongoengine import FieldDoesNotExist
 from requests.adapters import HTTPAdapter
@@ -32,60 +33,60 @@ def link_from_data(observable, data, path, klass, description):
         except FieldDoesNotExist:
             node = klass.get_or_create(name=value)
 
-        links.update(
-            observable.active_link_to(node, description, 'DomainTools'))
+        links.update(observable.active_link_to(node, description, "DomainTools"))
 
     return list(links)
 
 
 class TlsAdapter(HTTPAdapter):
-
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = PoolManager(
             num_pools=connections,
             maxsize=maxsize,
             block=block,
-            ssl_version=ssl.PROTOCOL_TLSv1_2)
+            ssl_version=ssl.PROTOCOL_TLSv1_2,
+        )
 
 
 class DomainToolsApi(object):
     settings = {
         "domaintools_api_username": {
             "name": "DomainTools API Username",
-            "description": "Username provided for API by DomainTools."
+            "description": "Username provided for API by DomainTools.",
         },
         "domaintools_api_key": {
             "name": "DomainTools API Key",
-            "description": "API Key provided by DomainTools."
-        }
+            "description": "API Key provided by DomainTools.",
+        },
     }
 
     API_URL = "https://api.domaintools.com/v1"
 
     @staticmethod
     def get(uri, settings, params={}):
-        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        timestamp = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
         _params = "{}{}/v1{}".format(
-            settings['domaintools_api_username'].encode('ascii'), timestamp,
-            uri)
+            settings["domaintools_api_username"].encode("ascii"), timestamp, uri
+        )
         signature = hmac.new(
-            settings['domaintools_api_key'].encode('ascii'),
+            settings["domaintools_api_key"].encode("ascii"),
             _params,
-            digestmod=hashlib.sha1).hexdigest()
+            digestmod=hashlib.sha1,
+        ).hexdigest()
         _params = {
-            'api_username': settings['domaintools_api_username'],
-            'signature': signature,
-            'timestamp': timestamp
+            "api_username": settings["domaintools_api_username"],
+            "signature": signature,
+            "timestamp": timestamp,
         }
         params.update(_params)
 
         s = requests.Session(proxies=yeti_config.proxy)
-        s.mount('https://', TlsAdapter())
+        s.mount("https://", TlsAdapter())
         r = s.get(DomainToolsApi.API_URL + uri, params=params)
         r = r.json()
 
-        if 'error' in r:
-            raise LookupError(r['error']['message'])
+        if "error" in r:
+            raise LookupError(r["error"]["message"])
 
         return r
 
@@ -95,7 +96,7 @@ class DTReverseIP(OneShotAnalytics, DomainToolsApi):
     default_values = {
         "group": "DomainTools",
         "name": "Reverse IP",
-        "description": "Reverse IP lookup."
+        "description": "Reverse IP lookup.",
     }
 
     ACTS_ON = ["Ip"]
@@ -105,13 +106,13 @@ class DTReverseIP(OneShotAnalytics, DomainToolsApi):
         links = set()
 
         data = DomainToolsApi.get(
-            "/{}/host-domains/".format(observable.value), results.settings)
+            "/{}/host-domains/".format(observable.value), results.settings
+        )
         results.update(raw=json.dumps(data, indent=2))
 
-        for record in data['response']['ip_addresses']['domain_names']:
+        for record in data["response"]["ip_addresses"]["domain_names"]:
             node = Hostname.get_or_create(value=record)
-            links.update(
-                node.active_link_to(observable, 'A record', 'DomainTools'))
+            links.update(node.active_link_to(observable, "A record", "DomainTools"))
 
         return list(links)
 
@@ -121,7 +122,7 @@ class DTReverseNS(OneShotAnalytics, DomainToolsApi):
     default_values = {
         "group": "DomainTools",
         "name": "DomanTools Reverse NS",
-        "description": "Reverse Name Server lookup."
+        "description": "Reverse Name Server lookup.",
     }
 
     ACTS_ON = ["Hostname"]
@@ -131,14 +132,15 @@ class DTReverseNS(OneShotAnalytics, DomainToolsApi):
         links = set()
 
         data = DomainToolsApi.get(
-            "/{}/name-server-domains".format(observable.value),
-            results.settings)
+            "/{}/name-server-domains".format(observable.value), results.settings
+        )
         results.update(raw=json.dumps(data, indent=2))
 
-        for record in data['response']['primary_domains'] + data['response']['secondary_domains']:
+        for record in (
+            data["response"]["primary_domains"] + data["response"]["secondary_domains"]
+        ):
             node = Hostname.get_or_create(value=record)
-            links.update(
-                node.active_link_to(observable, 'NS record', 'DomainTools'))
+            links.update(node.active_link_to(observable, "NS record", "DomainTools"))
 
         return list(links)
 
@@ -148,7 +150,7 @@ class DTWhoisHistory(OneShotAnalytics, DomainToolsApi):
     default_values = {
         "group": "DomainTools",
         "name": "Whois History",
-        "description": "Whois History lookup."
+        "description": "Whois History lookup.",
     }
 
     ACTS_ON = ["Hostname"]
@@ -158,40 +160,45 @@ class DTWhoisHistory(OneShotAnalytics, DomainToolsApi):
         links = set()
         parts = tldextract_parser(observable.value)
 
-        if parts.subdomain == '':
+        if parts.subdomain == "":
             data = DomainToolsApi.get(
-                "/{}/whois/history".format(observable.value), results.settings)
+                "/{}/whois/history".format(observable.value), results.settings
+            )
             results.update(raw=json.dumps(data, indent=2))
 
-            for record in data['response']['history']:
+            for record in data["response"]["history"]:
                 created = datetime.strptime(
-                    record['whois']['registration']['created'], "%Y-%m-%d")
+                    record["whois"]["registration"]["created"], "%Y-%m-%d"
+                )
                 expires = datetime.strptime(
-                    record['whois']['registration']['expires'], "%Y-%m-%d")
+                    record["whois"]["registration"]["expires"], "%Y-%m-%d"
+                )
 
                 registrar = Company.get_or_create(
-                    name=record['whois']['registration']['registrar'])
-                registrant = Text.get_or_create(
-                    value=record['whois']['registrant'])
+                    name=record["whois"]["registration"]["registrar"]
+                )
+                registrant = Text.get_or_create(value=record["whois"]["registrant"])
 
                 links.update(
                     observable.link_to(
-                        registrar, 'Registrar', 'DomainTools', created,
-                        expires))
+                        registrar, "Registrar", "DomainTools", created, expires
+                    )
+                )
                 links.update(
                     observable.link_to(
-                        registrant, 'Registrant', 'DomainTools', created,
-                        expires))
+                        registrant, "Registrant", "DomainTools", created, expires
+                    )
+                )
 
-                parsed = parse_raw_whois([record['whois']['record']],
-                                         normalized=True)
-                email = get_value_at(parsed, 'contacts.registrant.email')
+                parsed = parse_raw_whois([record["whois"]["record"]], normalized=True)
+                email = get_value_at(parsed, "contacts.registrant.email")
                 if email:
                     email = Email.get_or_create(value=email)
                     links.update(
                         observable.link_to(
-                            email, 'Registrant Email', 'DomainTools', created,
-                            expires))
+                            email, "Registrant Email", "DomainTools", created, expires
+                        )
+                    )
 
         return list(links)
 
@@ -201,7 +208,7 @@ class DTReverseWhois(OneShotAnalytics, DomainToolsApi):
     default_values = {
         "group": "DomainTools",
         "name": "DomainTools Reverse Whois",
-        "description": "Reverse Whois lookup."
+        "description": "Reverse Whois lookup.",
     }
 
     ACTS_ON = ["Text", "Email"]
@@ -210,13 +217,14 @@ class DTReverseWhois(OneShotAnalytics, DomainToolsApi):
     def analyze(observable, results):
         links = []
 
-        params = {'terms': observable.value, 'mode': 'purchase'}
+        params = {"terms": observable.value, "mode": "purchase"}
         data = DomainToolsApi.get("/reverse-whois/", results.settings, params)
 
-        for domain in data['response']['domains']:
+        for domain in data["response"]["domains"]:
             node = Hostname.get_or_create(value=domain)
             links += node.active_link_to(
-                observable, 'Registrant Information', 'DomainTools')
+                observable, "Registrant Information", "DomainTools"
+            )
 
         return links
 
@@ -226,23 +234,32 @@ class DTWhois(OneShotAnalytics, DomainToolsApi):
     default_values = {
         "group": "DomainTools",
         "name": "DomainTools Whois",
-        "description": "Whois lookup with parsed results."
+        "description": "Whois lookup with parsed results.",
     }
 
     ACTS_ON = ["Hostname", "Ip"]
 
     @staticmethod
     def analyze_domain(observable, data):
-        fields = [(
-            'response.parsed_whois.contacts.registrant.email', Email,
-            'Registrant Email'), (
-                'response.parsed_whois.contacts.registrant.name', Text,
-                'Registrant Name'), (
-                    'response.parsed_whois.contacts.registrant.org', Text,
-                    'Registrant Organization'), (
-                        'response.parsed_whois.contacts.registrant.phone', Text,
-                        'Registrant Phone Number'),
-                  ('response.parsed_whois.name_servers', Hostname, 'NS record')]
+        fields = [
+            (
+                "response.parsed_whois.contacts.registrant.email",
+                Email,
+                "Registrant Email",
+            ),
+            ("response.parsed_whois.contacts.registrant.name", Text, "Registrant Name"),
+            (
+                "response.parsed_whois.contacts.registrant.org",
+                Text,
+                "Registrant Organization",
+            ),
+            (
+                "response.parsed_whois.contacts.registrant.phone",
+                Text,
+                "Registrant Phone Number",
+            ),
+            ("response.parsed_whois.name_servers", Hostname, "NS record"),
+        ]
 
         links = []
 
@@ -254,26 +271,28 @@ class DTWhois(OneShotAnalytics, DomainToolsApi):
     @staticmethod
     def analyze_ip(observable, data):
         return link_from_data(
-            observable, data, 'response.registrant', Company, 'Hosting')
+            observable, data, "response.registrant", Company, "Hosting"
+        )
 
     @staticmethod
     def analyze(observable, results):
         links = []
         parts = tldextract_parser(observable.value)
 
-        if parts.subdomain == '':
+        if parts.subdomain == "":
             should_add_context = False
             for context in observable.context:
-                if context['source'] == 'whois':
+                if context["source"] == "whois":
                     break
             else:
                 should_add_context = True
-                context = {'source': 'whois'}
+                context = {"source": "whois"}
 
             data = DomainToolsApi.get(
-                "/{}/whois/parsed".format(observable.value), results.settings)
+                "/{}/whois/parsed".format(observable.value), results.settings
+            )
             results.update(raw=json.dumps(data, indent=2))
-            context['raw'] = data['response']['whois']
+            context["raw"] = data["response"]["whois"]
 
             if isinstance(observable, Hostname):
                 links = DTWhois.analyze_domain(observable, data)

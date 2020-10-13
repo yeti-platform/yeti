@@ -11,16 +11,16 @@ class FeodoTrackerBinaries(Feed):
         "frequency": timedelta(hours=24),
         "name": "FeodoTrackerBinaries",
         "source": "https://feodotracker.abuse.ch/downloads/malware_hashes.csv",
-        "description":
-            "Feodo Tracker Binary Feed. This feed shows a full list of known md5s.",
+        "description": "Feodo Tracker Binary Feed. This feed shows a full list of known md5s.",
     }
 
     def update(self):
 
-        for index, line in self.update_csv(delimiter=',',
-                                           filter_row='Firstseen',
-                                           names=['Firstseen', 'MD5hash',
-                                                  'Malware'], ):
+        for index, line in self.update_csv(
+            delimiter=",",
+            filter_row="Firstseen",
+            names=["Firstseen", "MD5hash", "Malware"],
+        ):
             self.analyze(line)
 
     def analyze(self, line):
@@ -33,10 +33,7 @@ class FeodoTrackerBinaries(Feed):
         tags.append(family.lower())
         tags.append("blocklist")
 
-        context = {
-            "first_seen": first_seen,
-            "source": self.name
-        }
+        context = {"first_seen": first_seen, "source": self.name}
 
         try:
             hash = Hash.get_or_create(value=md5_hash.rstrip())

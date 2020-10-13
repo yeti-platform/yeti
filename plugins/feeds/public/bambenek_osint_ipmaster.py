@@ -12,10 +12,9 @@ class BambenekOsintIpmaster(Feed):
         "frequency": timedelta(minutes=60),
         "name": "BambenekOsintIpmaster",
         "source": "http://osint.bambenekconsulting.com/feeds/c2-masterlist.txt",
-        "description":
-            "Master Feed of known, active and non-sinkholed C&Cs indicators (Bambenek)",
+        "description": "Master Feed of known, active and non-sinkholed C&Cs indicators (Bambenek)",
     }
-    pattern = 'Master Indicator Feed for (\w+) non-sinkholed domains'
+    pattern = "Master Indicator Feed for (\w+) non-sinkholed domains"
     reg = re.compile(pattern)
 
     def update(self):
@@ -27,7 +26,7 @@ class BambenekOsintIpmaster(Feed):
 
     def analyze(self, line):
 
-        tokens = line.split(',')
+        tokens = line.split(",")
         c2_domain = []
         ips_c2 = []
         names_servers = []
@@ -35,20 +34,20 @@ class BambenekOsintIpmaster(Feed):
         context_feed = []
         if len(tokens) == 6:
             c2_domain = tokens[0]
-            ips_c2 = tokens[1].split('|')
-            names_servers = tokens[2].split('|')
-            ip_names_servers = tokens[3].split('|')
+            ips_c2 = tokens[1].split("|")
+            names_servers = tokens[2].split("|")
+            ip_names_servers = tokens[3].split("|")
             context_feed = tokens[4]
 
             m = BambenekOsintIpmaster.reg.match(context_feed)
-            malware_family = ''
+            malware_family = ""
             if m:
                 malware_family = m.group(1)
 
             context = {
                 "status": context_feed,
                 "name servers": names_servers,
-                "source": self.name
+                "source": self.name,
             }
             tags = [malware_family]
             c2 = None
@@ -56,7 +55,7 @@ class BambenekOsintIpmaster(Feed):
                 c2 = Hostname.get_or_create(value=c2_domain)
                 c2.add_context(context)
                 c2.tag(tags)
-                c2.add_source('feed')
+                c2.add_source("feed")
                 for ip in ips_c2:
                     if ip:
                         ip_obs = Ip.get_or_create(value=ip)
@@ -68,16 +67,16 @@ class BambenekOsintIpmaster(Feed):
             for name_server in names_servers:
                 if name_server:
                     ns_obs = Hostname.get_or_create(value=name_server)
-                    c2.active_link_to(ns_obs, 'NS', self.source)
+                    c2.active_link_to(ns_obs, "NS", self.source)
                     ns_obs.tag(tags)
                     ns_obs.add_context(context)
                     ns_obs.add_source(self.name)
             for ip_ns in ip_names_servers:
                 if ip_ns:
                     ip_ns_obs = Ip.get_or_create(value=ip_ns)
-                    c2.active_link_to(ip_ns_obs, 'IP NS', self.source)
+                    c2.active_link_to(ip_ns_obs, "IP NS", self.source)
                     ip_ns_obs.tag(tags)
                     ip_ns_obs.add_context(context)
                     ip_ns_obs.add_source(self.name)
         else:
-            logging.error('Parsing error in line: %s' % line)
+            logging.error("Parsing error in line: %s" % line)

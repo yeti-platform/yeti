@@ -22,7 +22,7 @@ class LinkSearch(CrudSearchApi):
 class Link(CrudApi):
     objectmanager = database.Link
 
-    @requires_permissions('write')
+    @requires_permissions("write")
     def delete(self, id):
         """Deletes the corresponding entry from the database
 
@@ -31,32 +31,32 @@ class Link(CrudApi):
         """
         obj = self.objectmanager.objects.get(id=id)
         for i, inv in enumerate(Investigation.objects(links__id=id)):
-            inv.modify({
-                "links__id": id
-            },
-                       set__links__S__id="local-{}-{}".format(time.time(), i))
+            inv.modify(
+                {"links__id": id},
+                set__links__S__id="local-{}-{}".format(time.time(), i),
+            )
         obj.delete()
         return render({"deleted": id})
 
-    @route("/multidelete", methods=['POST'])
-    @requires_permissions('write')
+    @route("/multidelete", methods=["POST"])
+    @requires_permissions("write")
     def multidelete(self):
         data = loads(request.data)
-        ids = iterify(data['ids'])
+        ids = iterify(data["ids"])
         for i, inv in enumerate(Investigation.objects(links__id__in=ids)):
-            inv.modify({
-                "links__id": id
-            },
-                       set__links__S__id="local-{}-{}".format(time.time(), i))
+            inv.modify(
+                {"links__id": id},
+                set__links__S__id="local-{}-{}".format(time.time(), i),
+            )
         self.objectmanager.objects(id__in=ids).delete()
         return render({"deleted": ids})
 
-    @route("/multiupdate", methods=['POST'])
-    @requires_permissions('write')
+    @route("/multiupdate", methods=["POST"])
+    @requires_permissions("write")
     def multiupdate(self):
         data = loads(request.data)
-        ids = data['ids']
-        new_description = data['new']['description']
+        ids = data["ids"]
+        new_description = data["new"]["description"]
         updated = []
         for link in self.objectmanager.objects(id__in=ids):
             # link.select_related() #does not work
@@ -69,8 +69,8 @@ class Link(CrudApi):
 
         return render({"updated": updated})
 
-    @route("/", methods=['POST'])
-    @requires_permissions('write')
+    @route("/", methods=["POST"])
+    @requires_permissions("write")
     def new(self):
         """Create a new link
 
@@ -80,19 +80,19 @@ class Link(CrudApi):
         """
 
         type_map = {
-            'observable': observables.Observable,
-            'entity': entities.Entity,
-            'indicator': indicators.Indicator
+            "observable": observables.Observable,
+            "entity": entities.Entity,
+            "indicator": indicators.Indicator,
         }
 
-        mandatory_params = ['type_src', 'type_dst', 'link_src', 'link_dst']
+        mandatory_params = ["type_src", "type_dst", "link_src", "link_dst"]
         params = request.json
 
         if not all(key in params for key in mandatory_params):
             abort(400)
 
-        type_src = params['type_src']
-        type_dst = params['type_dst']
+        type_src = params["type_src"]
+        type_dst = params["type_dst"]
         src_object_class = type_map.get(type_src)
         dst_object_class = type_map.get(type_dst)
 
@@ -103,15 +103,17 @@ class Link(CrudApi):
         dst = get_object_or_404(dst_object_class, id=params["link_dst"])
         try:
             if params.get("first_seen") and params.get("last_seen"):
-                link = src.link_to(dst,
-                                   params.get("description"),
-                                   params.get("source"),
-                                   params["first_seen"],
-                                   params["last_seen"])
+                link = src.link_to(
+                    dst,
+                    params.get("description"),
+                    params.get("source"),
+                    params["first_seen"],
+                    params["last_seen"],
+                )
             else:
-                link = src.active_link_to(dst,
-                                          params.get("description"),
-                                          params.get("source"))
+                link = src.active_link_to(
+                    dst, params.get("description"), params.get("source")
+                )
         except Exception as e:
             logging.error(e)
             abort(400)

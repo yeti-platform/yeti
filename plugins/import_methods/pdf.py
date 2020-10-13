@@ -13,12 +13,12 @@ class ImportPDF(ImportMethod):
     default_values = {
         "name": "import_pdf",
         "description": "Perform investigation import from a PDF document.",
-        "acts_on": "application/pdf"
+        "acts_on": "application/pdf",
     }
 
     def do_import(self, results, filepath):
         buff = StringIO()
-        fp = open(filepath, 'rb')
+        fp = open(filepath, "rb")
 
         laparams = LAParams()
         laparams.all_texts = True
@@ -29,8 +29,7 @@ class ImportPDF(ImportMethod):
         for page in PDFPage.get_pages(fp, pagenos, check_extractable=True):
             page_num += 1
 
-            device = TextConverter(
-                rsrcmgr, buff, codec='utf-8', laparams=laparams)
+            device = TextConverter(rsrcmgr, buff, codec="utf-8", laparams=laparams)
             interpreter = PDFPageInterpreter(rsrcmgr, device)
             interpreter.process_page(page)
 
