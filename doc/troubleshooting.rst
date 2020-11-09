@@ -9,7 +9,7 @@ Remove celery.pid in your work environment.
 
 It might have another error, you can follow the below steps:
 
-- systemctl stop yeti_feed.service
+- systemctl stop yeti_feeds.service
 
 - mongo
 
@@ -19,6 +19,6 @@ It might have another error, you can follow the below steps:
 
 - systemctl restart yeti_web.service
 
-- systemctl restart yeti_feed.service
+- systemctl restart yeti_feeds.service
 
 - Relaunch feeders in /Dataflow page.
