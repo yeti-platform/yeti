@@ -17,8 +17,8 @@ from core.observables import Tag
 from core.exports import Export, ExportTemplate
 
 ## Clean slate
-db = connect('yeti', host=yeti_config.mongodb.host)
-db.drop_database('yeti')
+db = connect("yeti", host=yeti_config.mongodb.host)
+db.drop_database("yeti")
 
 ## Populate database with initial values
 mailer = MalwareFamily("mailer").save()
@@ -82,8 +82,7 @@ e = Malware(name="Locky").save()
 e.family = ransomware
 e.save()
 
-t1 = Tag.get_or_create(name="zeus").add_produces(
-    ["crimeware", "banker", "malware"])
+t1 = Tag.get_or_create(name="zeus").add_produces(["crimeware", "banker", "malware"])
 t2 = Tag.get_or_create(name="banker").add_produces(["crimeware", "malware"])
 t3 = Tag.get_or_create(name="c2")
 t3.add_replaces(["c&c", "cc"])
@@ -106,7 +105,8 @@ Export(
     description="Test description",
     frequency=timedelta(hours=1),
     include_tags=[t1, t2],
-    template=et).save()
+    template=et,
+).save()
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
 url.tag(["zeus", "banker", "cc", "c2"])
@@ -127,13 +127,13 @@ dridex = Malware.get_or_create(name="Dridex")
 dridex.aliases = ["Cridex", "Drixed"]
 dridex.family = MalwareFamily.objects.get(name="banker")
 dridex.killchain = "7"
-dridex.tags = ['dridex']
+dridex.tags = ["dridex"]
 dridex.save()
 
 zeus = Malware.get_or_create(name="Zeus")
 zeus.family = MalwareFamily.objects.get(name="banker")
 zeus.killchain = "7"
-zeus.tags = ['zeus']
+zeus.tags = ["zeus"]
 zeus.save()
 
 ## Create initial intelligence
@@ -144,27 +144,28 @@ bartalex_callback.description = "Bartalex [stage2] callback (extracted from macr
 bartalex_callback.diamond = "capability"
 bartalex_callback.location = "network"
 bartalex_callback.save()
-bartalex_callback.action(bartalex, 'testrun', verb='indicates')
+bartalex_callback.action(bartalex, "testrun", verb="indicates")
 
 bartalex_callback2 = Regex(
-    name="Bartalex callback", pattern="/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$")
+    name="Bartalex callback", pattern="/[0-9a-z]{7,8}/[0-9a-z]{7,8}.exe$"
+)
 bartalex_callback2.description = "Bartalex [stage2] callback (extracted from macros)"
 bartalex_callback2.diamond = "capability"
 bartalex_callback2.location = "network"
 bartalex_callback2.save()
-bartalex_callback2.action(bartalex, 'testrun', verb="indicates")
+bartalex_callback2.action(bartalex, "testrun", verb="indicates")
 
-bartalex_callback.action(dridex, 'testrun', verb="hosts")
-bartalex_callback2.action(dridex, 'testrun', verb="hosts")
+bartalex_callback.action(dridex, "testrun", verb="hosts")
+bartalex_callback2.action(dridex, "testrun", verb="hosts")
 
-bartalex.action(dridex, 'testrun', verb="drops")
+bartalex.action(dridex, "testrun", verb="drops")
 
 zeus_callback = Regex(name="Zeus C2 check-in", pattern="/gate.php$")
 zeus_callback.description = "ZeuS post-infection callback"
 zeus_callback.diamond = "capability"
 zeus_callback.location = "network"
 zeus_callback.save()
-zeus_callback.action(zeus, 'testrun', verb='indicates')
+zeus_callback.action(zeus, "testrun", verb="indicates")
 
 # TTP
 
@@ -172,20 +173,20 @@ macrodoc = TTP(name="Macro-dropper")
 macrodoc.killchain = "3"
 macrodoc.description = "Macro-enabled MS Office document"
 macrodoc.save()
-bartalex.action(macrodoc, 'testrun', verb="leverages")
-bartalex.action(macrodoc, 'testrun', verb="leverages")
-bartalex.action(macrodoc, 'testrun', verb="leverages")
+bartalex.action(macrodoc, "testrun", verb="leverages")
+bartalex.action(macrodoc, "testrun", verb="leverages")
+bartalex.action(macrodoc, "testrun", verb="leverages")
 
-bartalex_callback.action(macrodoc, 'testrun', verb="seen in")
-bartalex_callback2.action(macrodoc, 'testrun', verb="seen in")
+bartalex_callback.action(macrodoc, "testrun", verb="seen in")
+bartalex_callback2.action(macrodoc, "testrun", verb="seen in")
 
 payload_download = TTP(name="Payload retrieval (HTTP)")
 payload_download.killchain = "3"
 payload_download.description = "Payload is retreived from an external URL"
 payload_download.save()
-macrodoc.action(payload_download, 'testrun', verb="leverages")
-bartalex_callback.action(payload_download, 'testrun', verb="indicates")
-bartalex_callback2.action(payload_download, 'testrun', verb="indicates")
+macrodoc.action(payload_download, "testrun", verb="leverages")
+bartalex_callback.action(payload_download, "testrun", verb="indicates")
+bartalex_callback2.action(payload_download, "testrun", verb="indicates")
 
 # add observables
 o1 = Observable.add_text("85.214.71.240")
@@ -195,12 +196,12 @@ o4 = Observable.add_text("http://www.delianfoods.com/5t546523/lhf3f334f.exe")
 o5 = Observable.add_text("http://sanoko.jp/5t546523/lhf3f334f.exe")
 o6 = Observable.add_text("http://hrakrue-home.de/87yte55/6t45eyv.exe")
 Link.connect(o6, bartalex_callback2)
-Link.connect(o6, bartalex).add_history('testrun', 'Queries')
-Link.connect(o6, dridex).add_history('testrun', 'Drops')
+Link.connect(o6, bartalex).add_history("testrun", "Queries")
+Link.connect(o6, dridex).add_history("testrun", "Drops")
 o7 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe")
 o8 = Observable.add_text("http://kdojinyhb.wz.cz/87yte55/6t45eyv.exe2")
 o9 = Observable.add_text("http://zeuscpanel.com/gate.php")
-o9.tag('zeus')
+o9.tag("zeus")
 
 t1 = Observable.add_text("http://toto.com")
 t2 = Observable.add_text("Http://tata.com")
