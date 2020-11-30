@@ -43,6 +43,6 @@ This will start a Yeti service running on <http://localhost:5000/>
 
 To start a more performant container for web requests, run:
 
-    docker-compose -p yeti -f extras/docker/dev/docker-compose.yml run -p 8080:8080 yeti /docker-entrypoint.sh uwsgi-http
+    docker-compose -p yeti -f extras/docker/dev/docker-compose.yaml run -p 8080:8080 yeti /docker-entrypoint.sh uwsgi-http
 
 Then point your browser to <http://localhost:8080.>
