@@ -5,7 +5,6 @@ from core.constants import YETI_ROOT
 
 
 class Dictionary(dict):
-
     def __getattr__(self, key):
         return self.get(key, None)
 
@@ -14,10 +13,9 @@ class Dictionary(dict):
 
 
 class Config:
-
     def __init__(self):
         config = ConfigParser(allow_no_value=True)
-        config.read(os.path.join(YETI_ROOT, "yeti.conf"), encoding='utf-8')
+        config.read(os.path.join(YETI_ROOT, "yeti.conf"), encoding="utf-8")
 
         for section in config.sections():
             setattr(self, section, Dictionary())
@@ -50,16 +48,16 @@ class Config:
 
 
 yeti_config = Config()
-yeti_config.set_default_value('auth', 'module', 'local')
-yeti_config.set_default_value('auth', 'apache_variable', 'REMOTE_USER')
-yeti_config.set_default_value('mongodb', 'host', '127.0.0.1')
-yeti_config.set_default_value('mongodb', 'port', 27017)
-yeti_config.set_default_value('mongodb', 'database', 'yeti')
-yeti_config.set_default_value('mongodb', 'username', None)
-yeti_config.set_default_value('mongodb', 'password', None)
-yeti_config.set_default_value('redis', 'host', '127.0.0.1')
-yeti_config.set_default_value('redis', 'port', 6379)
-yeti_config.set_default_value('redis', 'database', 0)
-yeti_config.set_default_value('proxy', 'http', None)
-yeti_config.set_default_value('proxy', 'https', None)
-yeti_config.set_default_value('logging', 'filename', '/var/log/yeti/user_activity.log')
+yeti_config.set_default_value("auth", "module", "local")
+yeti_config.set_default_value("auth", "apache_variable", "REMOTE_USER")
+yeti_config.set_default_value("mongodb", "host", "127.0.0.1")
+yeti_config.set_default_value("mongodb", "port", 27017)
+yeti_config.set_default_value("mongodb", "database", "yeti")
+yeti_config.set_default_value("mongodb", "username", None)
+yeti_config.set_default_value("mongodb", "password", None)
+yeti_config.set_default_value("redis", "host", "127.0.0.1")
+yeti_config.set_default_value("redis", "port", 6379)
+yeti_config.set_default_value("redis", "database", 0)
+yeti_config.set_default_value("proxy", "http", None)
+yeti_config.set_default_value("proxy", "https", None)
+yeti_config.set_default_value("logging", "filename", "/var/log/yeti/user_activity.log")
