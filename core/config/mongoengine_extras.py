@@ -13,7 +13,7 @@ class TimeDeltaField(BaseField):
 
     def validate(self, value):
         if not isinstance(value, (timedelta, int, float)):
-            self.error(u'cannot parse timedelta "%r"' % value)
+            self.error('cannot parse timedelta "%r"' % value)
 
     def to_mongo(self, value):
         return self.prepare_query_value(None, value)
@@ -42,6 +42,8 @@ class TimeDeltaField(BaseField):
         try:
             return value.total_seconds()
         except AttributeError:
-            return (value.days * 24 * 3600) + \
-                   (value.seconds) + \
-                   (value.microseconds / 1000000.0)
+            return (
+                (value.days * 24 * 3600)
+                + (value.seconds)
+                + (value.microseconds / 1000000.0)
+            )

@@ -10,7 +10,7 @@ from core.web.helpers import requires_permissions
 
 class Feed(CrudApi):
 
-    template = 'feeds_api.html'
+    template = "feeds_api.html"
     objectmanager = feed.Feed
 
     @route("/<id>/refresh", methods=["POST"])

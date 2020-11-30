@@ -13,15 +13,19 @@ class Indicator(Node):
 
     SEARCH_ALIASES = {}
 
-    DISPLAY_FIELDS = [("name", "Name"), ("pattern", "Pattern"),
-                      ("location", "Location"), ("diamond", "Diamond")]
+    DISPLAY_FIELDS = [
+        ("name", "Name"),
+        ("pattern", "Pattern"),
+        ("location", "Location"),
+        ("diamond", "Diamond"),
+    ]
 
     name = StringField(required=True, max_length=1024, verbose_name="Name")
     pattern = StringField(required=True, verbose_name="Pattern")
-    location = StringField(
-        required=True, max_length=255, verbose_name="Location")
+    location = StringField(required=True, max_length=255, verbose_name="Location")
     diamond = StringField(
-        choices=DIAMOND_EDGES, required=True, verbose_name="Diamond Edge")
+        choices=DIAMOND_EDGES, required=True, verbose_name="Diamond Edge"
+    )
     description = StringField(verbose_name="Description")
 
     meta = {
@@ -36,7 +40,7 @@ class Indicator(Node):
         return form
 
     def __unicode__(self):
-        return u"{} (pattern: '{}')".format(self.name, self.pattern)
+        return "{} (pattern: '{}')".format(self.name, self.pattern)
 
     @classmethod
     def search(cls, observables):
@@ -48,7 +52,8 @@ class Indicator(Node):
 
     def match(self, value):
         raise NotImplementedError(
-            "match() method must be implemented in Indicator subclasses")
+            "match() method must be implemented in Indicator subclasses"
+        )
 
     def action(self, target, source, verb="Indicates"):
         self.active_link_to(target, verb, source)
@@ -60,15 +65,15 @@ class Indicator(Node):
         i = {
             k: v
             for k, v in self._data.items()
-            if k in ['name', 'pattern', 'diamond', 'description', 'location']
+            if k in ["name", "pattern", "diamond", "description", "location"]
         }
-        i['id'] = str(self.id)
-        i['type'] = self.type
+        i["id"] = str(self.id)
+        i["type"] = self.type
         try:
-            i['url'] = url_for(
-                "api.Indicator:post", id=str(self.id), _external=True)
-            i['human_url'] = url_for(
-                "frontend.IndicatorView:get", id=str(self.id), _external=True)
+            i["url"] = url_for("api.Indicator:post", id=str(self.id), _external=True)
+            i["human_url"] = url_for(
+                "frontend.IndicatorView:get", id=str(self.id), _external=True
+            )
         except RuntimeError:
             pass
         return i

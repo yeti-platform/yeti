@@ -33,15 +33,16 @@ class ProxyRSS(Feed):
                 for field in ["prx:ip", "prx:port", "prx:type", "prx:country"]:
                     details_dict.setdefault(
                         field.replace("prx:", ""),
-                        details.findtext(field, namespaces=root.nsmap))
+                        details.findtext(field, namespaces=root.nsmap),
+                    )
 
-            context['source'] = self.name
+            context["source"] = self.name
             self.analyze(context, details_dict)
 
     def analyze(self, context, details_dict):
         tags = [details_dict["type"], "proxy"]
         try:
-            ip = Ip.get_or_create(value=details_dict['ip'])
+            ip = Ip.get_or_create(value=details_dict["ip"])
             ip.add_context(context)
             ip.tag(tags)
             ip.add_source(self.name)

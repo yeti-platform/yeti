@@ -3,7 +3,18 @@ from core.analytics import InlineAnalytics
 from core.observables import Hostname
 
 SUSPICIOUS_TLDS = [
-    'pw', 'cc', 'nu', 'ms', 'vg', 'cm', 'biz', 'cn', 'kr', 'br', 'ws', 'me'
+    "pw",
+    "cc",
+    "nu",
+    "ms",
+    "vg",
+    "cm",
+    "biz",
+    "cn",
+    "kr",
+    "br",
+    "ws",
+    "me",
 ]
 
 
@@ -14,7 +25,7 @@ class ProcessHostnames(InlineAnalytics):
         "description": "Extracts and analyze domains",
     }
 
-    ACTS_ON = 'Hostname'
+    ACTS_ON = "Hostname"
 
     @staticmethod
     def analyze_string(hostname_string):
@@ -26,19 +37,19 @@ class ProcessHostnames(InlineAnalytics):
         parts = tldextract_parser(hostname.value)
 
         if parts.suffix in SUSPICIOUS_TLDS:
-            hostname.tag('suspicious_tld')
+            hostname.tag("suspicious_tld")
 
-        if parts.subdomain != '':
+        if parts.subdomain != "":
             hostname.update(domain=False)
 
-            domain = Hostname.get_or_create(
-                value=parts.registered_domain, domain=True)
+            domain = Hostname.get_or_create(value=parts.registered_domain, domain=True)
             domain.add_source("analytics")
             hostname.active_link_to(
-                domain, "domain", "ProcessHostnames", clean_old=False)
+                domain, "domain", "ProcessHostnames", clean_old=False
+            )
 
-            if domain.has_tag('dyndns'):
-                hostname.tag('dyndns')
+            if domain.has_tag("dyndns"):
+                hostname.tag("dyndns")
 
             return domain
         else:

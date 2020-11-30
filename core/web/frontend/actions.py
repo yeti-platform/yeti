@@ -12,23 +12,22 @@ from core.web.helpers import requires_permissions, get_object_or_404, get_querys
 
 
 class ActionsView(FlaskView):
-
     def _get_selected_observables(self, data):
         if isinstance(data, MultiDict):
-            ids = data.getlist('ids')
-            query = data.get('query')
+            ids = data.getlist("ids")
+            query = data.get("query")
         else:
-            ids = data.get('ids', None)
-            query = data.get('query', None)
+            ids = data.get("ids", None)
+            query = data.get("query", None)
 
         if ids:
             return Observable.objects(id__in=ids)
         elif query:
             query = json.loads(query)
-            fltr = query.get('filter', {})
-            params = query.get('params', {})
-            regex = params.pop('regex', False)
-            ignorecase = params.pop('ignorecase', False)
+            fltr = query.get("filter", {})
+            params = query.get("params", {})
+            regex = params.pop("regex", False)
+            ignorecase = params.pop("ignorecase", False)
 
             return get_queryset(Observable, fltr, regex, ignorecase)
         else:
@@ -38,27 +37,26 @@ class ActionsView(FlaskView):
         data = request.get_json(force=True)
 
         for observable in self._get_selected_observables(data):
-            getattr(observable, method)(data['tags'])
+            getattr(observable, method)(data["tags"])
 
-        return ('', 200)
+        return ("", 200)
 
     @requires_permissions("tag", "observable")
-    @route("/tag", methods=['POST'])
+    @route("/tag", methods=["POST"])
     def tag(self):
-        return self._manage_tags('tag')
+        return self._manage_tags("tag")
 
     @requires_permissions("tag", "observable")
-    @route("/untag", methods=['POST'])
+    @route("/untag", methods=["POST"])
     def untag(self):
-        return self._manage_tags('untag')
+        return self._manage_tags("untag")
 
     @requires_permissions("read", "observable")
-    @route("/export", methods=['POST'])
+    @route("/export", methods=["POST"])
     def export(self):
-        template = get_object_or_404(
-            ExportTemplate, id=request.form['template'])
+        template = get_object_or_404(ExportTemplate, id=request.form["template"])
 
-        filepath = path.join(gettempdir(), 'yeti_{}.txt'.format(uuid4()))
+        filepath = path.join(gettempdir(), "yeti_{}.txt".format(uuid4()))
         template.render(self._get_selected_observables(request.form), filepath)
 
         return send_file(filepath, as_attachment=True)

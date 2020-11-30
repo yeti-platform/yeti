@@ -18,13 +18,13 @@ class StringListField(Field):
 
     def _value(self):
         if self.data:
-            return ','.join([str(d) for d in self.data])
+            return ",".join([str(d) for d in self.data])
         else:
-            return ''
+            return ""
 
     def process_formdata(self, valuelist):
         if valuelist:
-            self.data = [x.strip() for x in valuelist[0].split(',')]
+            self.data = [x.strip() for x in valuelist[0].split(",")]
         else:
             self.data = []
 
@@ -57,35 +57,31 @@ class YetiDocument(Document):
         return self
 
     def _set_update(self, method, field, value):
-        result = self.__class__._get_collection().update_one({
-            '_id': self.pk
-        }, {
-            method: {
-                field: value
-            }
-        })
+        result = self.__class__._get_collection().update_one(
+            {"_id": self.pk}, {method: {field: value}}
+        )
 
         return result.modified_count == 1
 
     def add_to_set(self, field, value):
-        return self._set_update('$addToSet', field, value)
+        return self._set_update("$addToSet", field, value)
 
     def remove_from_set(self, field, value):
-        return self._set_update('$pull', field, value)
+        return self._set_update("$pull", field, value)
 
     @classmethod
     def get_or_create(cls, **kwargs):
         """Attempts to fetch a node in the database, and creates it if nonexistent"""
         obj = cls(**kwargs)
         obj.clean()
-        if hasattr(obj, 'value'):
-            select_dict = {'value': obj.value}
-            kwargs.pop('value')
-        if hasattr(obj, 'name'):
-            select_dict = {'name': obj.name}
-            kwargs.pop('name')
+        if hasattr(obj, "value"):
+            select_dict = {"value": obj.value}
+            kwargs.pop("value")
+        if hasattr(obj, "name"):
+            select_dict = {"name": obj.name}
+            kwargs.pop("name")
         select_dict.update(kwargs)
-        update_dict = {"set__"+k: v for k, v in select_dict.items()}
+        update_dict = {"set__" + k: v for k, v in select_dict.items()}
         r = cls.objects(**select_dict).modify(upsert=True, **update_dict)
         if r is None:
             obj.id = cls.objects.get(**select_dict).id
@@ -94,6 +90,7 @@ class YetiDocument(Document):
         obj = cls.objects.get(**select_dict)
         obj.new = False
         return obj
+
 
 class LinkHistory(EmbeddedDocument):
 
@@ -107,13 +104,13 @@ class LinkHistory(EmbeddedDocument):
 class Link(Document):
 
     src = ReferenceField("Node", required=True, dbref=True)
-    dst = ReferenceField("Node", required=True, dbref=True, unique_with='src')
+    dst = ReferenceField("Node", required=True, dbref=True, unique_with="src")
     history = ListField(EmbeddedDocumentField(LinkHistory))
 
     meta = {"indexes": ["src", "dst"]}
 
     def __unicode__(self):
-        return u"{} -> {} ({})".format(self.src, self.dst, self.description)
+        return "{} -> {} ({})".format(self.src, self.dst, self.description)
 
     @property
     def active(self):
@@ -163,25 +160,21 @@ class Link(Document):
             "description": self.description,
             "id": str(self.id),
             "src": self.src,
-            "dst": self.dst
+            "dst": self.dst,
         }
 
     def to_dict(self):
         result = self.to_mongo()
-        result['description'] = self.description
-        result['first_seen'] = self.first_seen
-        result['last_seen'] = self.last_seen
-        result['active'] = self.active
+        result["description"] = self.description
+        result["first_seen"] = self.first_seen
+        result["last_seen"] = self.last_seen
+        result["active"] = self.active
 
         return result
 
     def add_history(
-            self,
-            source,
-            description=None,
-            first_seen=None,
-            last_seen=None,
-            active=False):
+        self, source, description=None, first_seen=None, last_seen=None, active=False
+    ):
         last_seen = last_seen or datetime.utcnow()
         first_seen = first_seen or datetime.utcnow()
 
@@ -195,15 +188,18 @@ class Link(Document):
         # Do we have to extend an inactive record ?
         else:
             _, overlapping_history = self._get_overlapping(
-                description, first_seen, last_seen)
+                description, first_seen, last_seen
+            )
             if overlapping_history:
                 if source not in overlapping_history.sources:
                     overlapping_history.sources.append(source)
 
                 overlapping_history.first_seen = min(
-                    overlapping_history.first_seen, first_seen)
+                    overlapping_history.first_seen, first_seen
+                )
                 overlapping_history.last_seen = max(
-                    overlapping_history.last_seen, last_seen)
+                    overlapping_history.last_seen, last_seen
+                )
                 self.save(validate=False)
                 return self
 
@@ -214,7 +210,9 @@ class Link(Document):
                 first_seen=first_seen or datetime.utcnow(),
                 last_seen=last_seen or datetime.utcnow(),
                 active=active,
-                sources=[source]))
+                sources=[source],
+            )
+        )
 
     def get_active(self, description):
         for item in self.history:
@@ -225,11 +223,11 @@ class Link(Document):
 
     def _get_overlapping(self, description, first_seen, last_seen):
         for index, item in enumerate(self.history):
-            if (description == item.description and
-                ((item.first_seen <= first_seen <= item.last_seen) or
-                 (item.first_seen <= last_seen <= item.last_seen) or
-                 (first_seen <= item.first_seen <= item.last_seen <=
-                  last_seen))):
+            if description == item.description and (
+                (item.first_seen <= first_seen <= item.last_seen)
+                or (item.first_seen <= last_seen <= item.last_seen)
+                or (first_seen <= item.first_seen <= item.last_seen <= last_seen)
+            ):
                 return index, item
 
         return None, None
@@ -263,12 +261,13 @@ class AttachedFile(YetiDocument):
             except:
                 pass
 
-            fd = open(os.path.join(STORAGE_ROOT, sha256), 'wb')
+            fd = open(os.path.join(STORAGE_ROOT, sha256), "wb")
             fd.write(content.read())
             fd.close()
             if filename:
                 f = AttachedFile(
-                    filename=filename, content_type=content_type, sha256=sha256)
+                    filename=filename, content_type=content_type, sha256=sha256
+                )
                 f.new = True
                 f.save()
                 return f
@@ -279,8 +278,7 @@ class AttachedFile(YetiDocument):
     def from_content(content, filename, content_type):
         sha256 = stream_sha256(content)
 
-        return AttachedFile.get_or_create(
-            sha256, content, filename, content_type)
+        return AttachedFile.get_or_create(sha256, content, filename, content_type)
 
     @staticmethod
     def from_upload(file, force_mime=False):
@@ -290,7 +288,8 @@ class AttachedFile(YetiDocument):
         sha256 = stream_sha256(stream)
 
         return AttachedFile.get_or_create(
-            sha256, stream, filename, force_mime or file.content_type)
+            sha256, stream, filename, force_mime or file.content_type
+        )
 
     @property
     def filepath(self):
@@ -298,7 +297,7 @@ class AttachedFile(YetiDocument):
 
     @property
     def contents(self):
-        return open(self.filepath, 'rb')
+        return open(self.filepath, "rb")
 
     def stream_contents(self):
         """Generator; reads a file in 1MB chunks.
@@ -336,9 +335,8 @@ class AttachedFile(YetiDocument):
 
 class Node(YetiDocument):
 
-    exclude_fields = ['attached_files']
-    attached_files = ListField(
-        ReferenceField(AttachedFile, reverse_delete_rule=PULL))
+    exclude_fields = ["attached_files"]
+    attached_files = ListField(ReferenceField(AttachedFile, reverse_delete_rule=PULL))
 
     meta = {
         "abstract": True,
@@ -367,11 +365,13 @@ class Node(YetiDocument):
 
     def neighbors(self, neighbor_type=""):
         links = []
-        for l in Link.objects(__raw__={"dst.$id": self.id,
-                                       "src.cls": re.compile(neighbor_type)}):
+        for l in Link.objects(
+            __raw__={"dst.$id": self.id, "src.cls": re.compile(neighbor_type)}
+        ):
             links.append((l, l.src))
-        for l in Link.objects(__raw__={"src.$id": self.id,
-                                       "dst.cls": re.compile(neighbor_type)}):
+        for l in Link.objects(
+            __raw__={"src.$id": self.id, "dst.cls": re.compile(neighbor_type)}
+        ):
             links.append((l, l.dst))
         info = {}
         for link, node in links:
@@ -392,7 +392,7 @@ class Node(YetiDocument):
             {
                 "$match": {
                     "{}.$id".format(e1): self.id,
-                    "{}.$ref".format(e2): collection_name
+                    "{}.$ref".format(e2): collection_name,
                 }
             },
             {
@@ -401,11 +401,7 @@ class Node(YetiDocument):
                     "src": True,
                     "dst": True,
                     "history": True,
-                    "oid": {
-                        "$arrayElemAt": [{
-                            "$objectToArray": "${}".format(e2)
-                        }, 1]
-                    }
+                    "oid": {"$arrayElemAt": [{"$objectToArray": "${}".format(e2)}, 1]},
                 }
             },
             {
@@ -414,7 +410,7 @@ class Node(YetiDocument):
                     "src": True,
                     "dst": True,
                     "history": True,
-                    "oid": "$oid.v"
+                    "oid": "$oid.v",
                 }
             },
             {
@@ -425,14 +421,8 @@ class Node(YetiDocument):
                     "as": "related",
                 }
             },
-            {
-                "$unwind": "$related"
-            },
-            {
-                "$match": {
-                    "related._cls": compiled_filter
-                }
-            }
+            {"$unwind": "$related"},
+            {"$match": {"related._cls": compiled_filter}},
         ]
         pipeline.extend([match, {"$skip": skip * limit}, {"$limit": limit}])
         results = list(Link.objects.aggregate(*pipeline))
@@ -442,7 +432,7 @@ class Node(YetiDocument):
         result_filters = dict()
 
         search_replace = {
-            'tags': 'tags.name',
+            "tags": "tags.name",
         }
 
         for key, value in filters.items():
@@ -457,18 +447,16 @@ class Node(YetiDocument):
                 value = {"$in": value}
             result_filters["related." + key] = value
 
-        outnodes = self._neighbors_aggregation(
-            "out", klass, result_filters, page, rng)
-        innodes = self._neighbors_aggregation(
-            "in", klass, result_filters, page, rng)
+        outnodes = self._neighbors_aggregation("out", klass, result_filters, page, rng)
+        innodes = self._neighbors_aggregation("in", klass, result_filters, page, rng)
         final_list = []
         for node in outnodes + innodes:
-            n = node.pop('related')
-            node.pop('oid')
-            node['id'] = node.pop('_id')
-            n['id'] = n.pop('_id')
-            if 'Observable.' in n['_cls'] and klass.__name__ == 'Observable':
-                n = klass.subclass_from_name(n['_cls'].split('.')[1])(**n)
+            n = node.pop("related")
+            node.pop("oid")
+            node["id"] = node.pop("_id")
+            n["id"] = n.pop("_id")
+            if "Observable." in n["_cls"] and klass.__name__ == "Observable":
+                n = klass.subclass_from_name(n["_cls"].split(".")[1])(**n)
             else:
                 n = klass(**n)
             l = Link(**node)  # necessary for first_seen and last_seen functions
@@ -484,8 +472,7 @@ class Node(YetiDocument):
         return self._fields
 
     # This will only create unactive outgoing links
-    def link_to(
-            self, nodes, description, source, first_seen=None, last_seen=None):
+    def link_to(self, nodes, description, source, first_seen=None, last_seen=None):
         links = set()
         nodes = iterify(nodes)
 
@@ -519,12 +506,13 @@ class Node(YetiDocument):
     @classmethod
     def subclass_from_name(cls, subclass_name):
         """Return an inherited class based on his Parent and the type given by the string
-            `subclass_name`. This will raise `GenericYetiError` exception if no type matching the
-            given name can be found
+        `subclass_name`. This will raise `GenericYetiError` exception if no type matching the
+        given name can be found
         """
         for subcls in cls.__subclasses__():
             if subcls.__name__ == subclass_name:
                 return subcls
 
         raise GenericYetiError(
-            "{} is not a subclass of {}".format(subclass_name, cls.__name__))
+            "{} is not a subclass of {}".format(subclass_name, cls.__name__)
+        )

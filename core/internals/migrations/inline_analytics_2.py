@@ -5,5 +5,5 @@ __description__ = "Create permissions for Inline Analytics"
 
 def migrate():
     for u in User.objects.all():
-        u.permissions['inlineanalytics'] = u.permissions['scheduledanalytics']
+        u.permissions["inlineanalytics"] = u.permissions["scheduledanalytics"]
         u.save()

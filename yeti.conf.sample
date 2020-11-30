@@ -82,12 +82,14 @@
 # token =
 
 [otx]
-# otx_key = YourOTXKey
-# number_page = 1
+# key = YourOTXKey
+# pages = 1
 
 [abuseIPDB]
 # key = YourKey
 
-
 [phishtank]
+# key=
+
+[vt]
 # key=

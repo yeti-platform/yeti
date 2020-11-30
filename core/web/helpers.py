@@ -14,23 +14,22 @@ from core.group import Group
 from core.helpers import iterify
 
 SEARCH_REPLACE = {
-    'tags': 'tags__name',
+    "tags": "tags__name",
 }
 
 
 def requires_permissions(permissions, object_name=None):
-
     def wrapper(f):
-
         @wraps(f)
         def inner(*args, **kwargs):
             oname = object_name
             if not oname:
                 oname = getattr(
-                    args[0], 'klass',
-                    getattr(args[0], 'objectmanager',
-                            args[0].__class__)).__name__.lower()
-            if not current_user.has_role('admin'):
+                    args[0],
+                    "klass",
+                    getattr(args[0], "objectmanager", args[0].__class__),
+                ).__name__.lower()
+            if not current_user.has_role("admin"):
                 # a user must have all permissions in order to be granted access
                 for p in iterify(permissions):
                     if not current_user.has_permission(oname, p):
@@ -44,9 +43,7 @@ def requires_permissions(permissions, object_name=None):
 
 
 def requires_role(*roles):
-
     def wrapper(f):
-
         @wraps(f)
         def inner(*args, **kwargs):
             # a user needs at least one of the roles to be granted access
@@ -103,11 +100,9 @@ def get_queryset(collection, filters, regex, ignorecase, replace=True):
     q = Q()
     for alias in collection.SEARCH_ALIASES:
         if alias in filters:
-            q &= Q(**{
-                collection.SEARCH_ALIASES[alias]: result_filters[alias]
-            }) | Q(**{
-                alias: result_filters[alias]
-            })
+            q &= Q(**{collection.SEARCH_ALIASES[alias]: result_filters[alias]}) | Q(
+                **{alias: result_filters[alias]}
+            )
             result_filters.pop(alias)
 
     print("Filter: {}".format(result_filters), q.to_query(collection))
@@ -124,8 +119,8 @@ def different_origin(referer, target):
 
 
 def csrf_protect():
-    if request.method not in ('GET', 'HEAD', 'OPTIONS', 'TRACE'):
-        referer = request.headers.get('Referer')
+    if request.method not in ("GET", "HEAD", "OPTIONS", "TRACE"):
+        referer = request.headers.get("Referer")
         print(referer)
 
         if referer is None or different_origin(referer, request.url_root):
@@ -133,7 +128,6 @@ def csrf_protect():
 
 
 def prevent_csrf(func):
-
     @wraps(func)
     def inner(*args, **kwargs):
         csrf_protect()
@@ -143,18 +137,19 @@ def prevent_csrf(func):
 
 
 def get_user_groups():
-    if current_user.has_role('admin'):
+    if current_user.has_role("admin"):
         groups = Group.objects()
     else:
         groups = Group.objects(members__in=[current_user.id])
 
     return groups
 
+
 def group_user_permission(investigation=False):
     """
-        This aux func aimed to simplify check if user is admin or in group with perms
+    This aux func aimed to simplify check if user is admin or in group with perms
     """
-    if current_user.has_role('admin'):
+    if current_user.has_role("admin"):
         return True
 
     elif investigation and hasattr(investigation, "sharing"):
@@ -164,6 +159,9 @@ def group_user_permission(investigation=False):
             return True
 
         groups = get_user_groups()
-        return any([group.id in investigation.sharing for group in groups]) or current_user.id in investigation.sharing
+        return (
+            any([group.id in investigation.sharing for group in groups])
+            or current_user.id in investigation.sharing
+        )
 
     return False

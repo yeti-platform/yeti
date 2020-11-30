@@ -1,32 +1,34 @@
-import logging
-import requests
 import json
-from core.errors import GenericYetiError
-from core.analytics import OneShotAnalytics
-from core.observables import Hash, Ip, Hostname, Url
-from core.config.config import yeti_config
-from core.errors import ObservableValidationError
+import logging
 from hashlib import sha1
+
+import requests
+from dateutil import parser
+
+from core.analytics import OneShotAnalytics
+from core.config.config import yeti_config
+from core.errors import GenericYetiError
+from core.errors import ObservableValidationError
+from core.observables import Hash, Ip, Hostname, Url
+
 
 def aux_checker(json_result):
     if not json_result or not json_result.get("results"):
         raise GenericYetiError("Results missed")
 
     json_string = json.dumps(
-        json_result,
-        sort_keys=True,
-        indent=4,
-        separators=(",", ": ")
+        json_result, sort_keys=True, indent=4, separators=(",", ": ")
     )
 
     result = {
-        "raw", json_string,
-        "source", "threatminer_query",
+        "raw": json_string,
+        "source": "threatminer_query",
     }
 
     _results = json_result.get("results")
 
     return _results, result
+
 
 class ThreatMinerApi(object):
 
@@ -36,15 +38,14 @@ class ThreatMinerApi(object):
     def fetch(observable, params, uri):
         try:
             url = ThreatMinerApi.API_URL + uri
-            response = requests.get(
-                url, params=params, proxies=yeti_config.proxy)
+            response = requests.get(url, params=params, proxies=yeti_config.proxy)
             if not response.ok:
                 raise GenericYetiError("Status code: ".format(response.status_code))
             return response.json()
         except Exception as e:
-            raise GenericYetiError("Hit an error checking {},{}".format(
-                observable.value, e
-            ))
+            raise GenericYetiError(
+                "Hit an error checking {},{}".format(observable.value, e)
+            )
 
 
 """
@@ -58,7 +59,7 @@ class MetaData(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "Retrieve metadata.",
-        "description": "Checks for any meta data stored in ThreatMiner."
+        "description": "Checks for any meta data stored in ThreatMiner.",
     }
 
     ACTS_ON = ["Hash"]
@@ -68,15 +69,14 @@ class MetaData(OneShotAnalytics, ThreatMinerApi):
         links = set()
         params = {"q": observable.value, "rt": 1}
         json_result = ThreatMinerApi.fetch(observable, params, "sample.php")
-
-        _results, result = aux_checker(json_result)
+        try:
+            _results, result = aux_checker(json_result)
+        except GenericYetiError as e:
+            logging.error(e.value)
+            return links
 
         for r in _results:
-            hashes = {
-                "md5": r["md5"],
-                "sha1": r["sha1"],
-                "sha256": r["sha256"]
-            }
+            hashes = {"md5": r["md5"], "sha1": r["sha1"], "sha256": r["sha256"]}
 
             for family, _hash in hashes.items():
                 if _hash == observable.value:
@@ -84,11 +84,11 @@ class MetaData(OneShotAnalytics, ThreatMinerApi):
                 try:
                     new_hash = Hash.get_or_create(value=_hash)
                     new_hash.tag(observable.get_tags())
-                    links.update(new_hash.active_link_to(
-                        observable, family, "threatminer_query")
+                    links.update(
+                        new_hash.active_link_to(observable, family, "threatminer_query")
                     )
                 except ObservableValidationError as e:
-                        logging.error("Caught an exception: {}".format(e))
+                    logging.error("Caught an exception: {}".format(e))
 
             observable.add_context(result)
         return list(links)
@@ -103,7 +103,7 @@ class HttpTraffic(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "Observed Http Traffic",
-        "description": "Looks up any http traffic related to a sample."
+        "description": "Looks up any http traffic related to a sample.",
     }
 
     ACTS_ON = ["Hash"]
@@ -128,20 +128,22 @@ class HttpTraffic(OneShotAnalytics, ThreatMinerApi):
                             value=http_request.get("domain")
                         )
                         o_host.tag(observable.get_tags())
-                        links.update(o_host.active_link_to(observable,
-                            "seen connecting to", "threatminer_query")
+                        links.update(
+                            o_host.active_link_to(
+                                observable, "seen connecting to", "threatminer_query"
+                            )
                         )
                     except ObservableValidationError as e:
                         logging.error("Caught an exception: {}".format(e))
 
                 if http_request.get("ip"):
                     try:
-                        o_ip = Ip.get_or_create(
-                            value=http_request.get("ip")
-                        )
+                        o_ip = Ip.get_or_create(value=http_request.get("ip"))
                         o_ip.tag(observable.get_tags())
-                        links.update(o_ip.active_link_to(observable,
-                            "seen connecting to", "threatminer_query")
+                        links.update(
+                            o_ip.active_link_to(
+                                observable, "seen connecting to", "threatminer_query"
+                            )
                         )
                     except ObservableValidationError as e:
                         logging.error("Caught an exception: {}".format(e))
@@ -159,7 +161,7 @@ class RelatedHosts(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "Related Hosts",
-        "description": "Lookup related domains."
+        "description": "Lookup related domains.",
     }
 
     ACTS_ON = ["Hash"]
@@ -176,8 +178,10 @@ class RelatedHosts(OneShotAnalytics, ThreatMinerApi):
                 try:
                     o_ip = Ip.get_or_create(value=ip)
                     o_ip.tag(observable.get_tags())
-                    links.update(o_ip.active_link_to(observable,
-                        "seen connecting to", "ThreatMiner")
+                    links.update(
+                        o_ip.active_link_to(
+                            observable, "seen connecting to", "ThreatMiner"
+                        )
                     )
                 except ObservableValidationError as e:
                     logging.error("Caught an exception: {}".format(e))
@@ -185,18 +189,18 @@ class RelatedHosts(OneShotAnalytics, ThreatMinerApi):
             for domain in r.get("domains"):
                 try:
                     if domain.get("domain"):
-                        o_host = Hostname.get_or_create(
-                            value=domain.get("domain")
-                        )
+                        o_host = Hostname.get_or_create(value=domain.get("domain"))
                         o_host.tag(observable.get_tags())
-                        links.update(o_host.active_link_to(observable,
-                            "seen connecting to", "ThreatMiner")
+                        links.update(
+                            o_host.active_link_to(
+                                observable, "seen connecting to", "ThreatMiner"
+                            )
                         )
                     if domain.get("ip"):
                         o_ip = Ip.get_or_create(value=domain.get("ip"))
                         o_ip.tag(o_host.get_tags())
-                        links.update(o_host.active_link_to(o_ip,
-                            "resolved to", "ThreatMiner")
+                        links.update(
+                            o_host.active_link_to(o_ip, "resolved to", "ThreatMiner")
                         )
                 except ObservableValidationError as e:
                     logging.error("Caught an exception: {}".format(e))
@@ -214,7 +218,7 @@ class LookupSubdomains(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "Lookup Subdomains",
-        "description": "Lookup known subdomains."
+        "description": "Lookup known subdomains.",
     }
 
     ACTS_ON = ["Hostname"]
@@ -230,9 +234,12 @@ class LookupSubdomains(OneShotAnalytics, ThreatMinerApi):
         for r in _results:
             try:
                 o_hostname = Hostname.get_or_create(value=r)
-                links.update(observable.link_to(o_hostname,
-                    description="related subdomain",
-                    source="ThreatMiner")
+                links.update(
+                    observable.link_to(
+                        o_hostname,
+                        description="related subdomain",
+                        source="ThreatMiner",
+                    )
                 )
 
             except ObservableValidationError as e:
@@ -251,7 +258,7 @@ class ThreatMinerPDNS(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "ThreatMiner PDNS",
-        "description": "Perform a PDNS lookup."
+        "description": "Perform a PDNS lookup.",
     }
 
     ACTS_ON = ["Hostname", "Ip"]
@@ -266,11 +273,19 @@ class ThreatMinerPDNS(OneShotAnalytics, ThreatMinerApi):
             _results, result = aux_checker(json_result)
 
             for r in _results:
-                o_hostname = Hostname.get_or_create(value=r.get("domain"))
-                links.update(observable.link_to(o_hostname,
-                    description="a record", source="ThreatMiner",
-                    first_seen=r["first_seen"], last_seen=r["last_seen"])
-                )
+                try:
+                    o_hostname = Hostname.get_or_create(value=r.get("domain"))
+                    links.update(
+                        observable.link_to(
+                            o_hostname,
+                            description="a record",
+                            source="ThreatMiner",
+                            first_seen=parser.parse(r["first_seen"]),
+                            last_seen=parser.parse(r["last_seen"]),
+                        )
+                    )
+                except ObservableValidationError as e:
+                    logging.error("Caught an exception: {}".format(e))
 
             observable.add_context(result)
 
@@ -281,14 +296,19 @@ class ThreatMinerPDNS(OneShotAnalytics, ThreatMinerApi):
             _results, result = aux_checker(json_result)
 
             for r in _results:
-                o_ip = Ip.get_or_create(value=r.get("ip"))
-                links.update(observable.link_to(
+                try:
+                    o_ip = Ip.get_or_create(value=r.get("ip"))
+                    links.update(
+                        observable.link_to(
                             o_ip,
                             description="a record",
                             source="ThreatMiner",
                             first_seen=r["first_seen"],
-                            last_seen=r["last_seen"]
-                ))
+                            last_seen=r["last_seen"],
+                        )
+                    )
+                except ObservableValidationError as e:
+                    logging.error("Caught an exception: {}".format(e))
 
             observable.add_context(result)
         return list(links)
@@ -303,7 +323,7 @@ class SearchUri(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "ThreatMiner Uri",
-        "description": "Perform lookup for urls."
+        "description": "Perform lookup for urls.",
     }
 
     ACTS_ON = ["Hostname", "Ip"]
@@ -321,9 +341,13 @@ class SearchUri(OneShotAnalytics, ThreatMinerApi):
                 try:
                     o_url = Url.get_or_create(value=r.get("uri"))
                     o_url.tag(observable.get_tags())
-                    links.update(observable.link_to(
-                        o_url, description="related url",
-                        source="ThreatMiner", last_seen=r["last_seen"])
+                    links.update(
+                        observable.link_to(
+                            o_url,
+                            description="related url",
+                            source="ThreatMiner",
+                            last_seen=r["last_seen"],
+                        )
                     )
                 except ObservableValidationError as e:
                     logging.error("Caught an exception: {}".format(e))
@@ -340,9 +364,13 @@ class SearchUri(OneShotAnalytics, ThreatMinerApi):
                 try:
                     o_url = Url.get_or_create(value=r.get("uri"))
                     o_url.tag(observable.get_tags())
-                    links.update(observable.link_to(
-                        o_url, description="related url",
-                        source="ThreatMiner", last_seen=r["last_seen"])
+                    links.update(
+                        observable.link_to(
+                            o_url,
+                            description="related url",
+                            source="ThreatMiner",
+                            last_seen=r["last_seen"],
+                        )
                     )
                 except ObservableValidationError as e:
                     logging.error("Caught an exception: {}".format(e))
@@ -360,7 +388,7 @@ class RelatedSamples(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "Related Samples",
-        "description": "Lookup samples related to a domain or ip."
+        "description": "Lookup samples related to a domain or ip.",
     }
 
     ACTS_ON = ["Hostname", "Ip"]
@@ -375,9 +403,7 @@ class RelatedSamples(OneShotAnalytics, ThreatMinerApi):
             _results, result = aux_checker(json_result)
 
             for r in _results:
-                hashes = {
-                    "sha256": r
-                }
+                hashes = {"sha256": r}
 
                 for family, _hash in hashes.items():
                     if _hash == observable.value:
@@ -385,8 +411,10 @@ class RelatedSamples(OneShotAnalytics, ThreatMinerApi):
                     try:
                         new_hash = Hash.get_or_create(value=_hash)
                         new_hash.tag(observable.get_tags())
-                        links.update(new_hash.active_link_to(
-                            observable, family, "threatminer_query")
+                        links.update(
+                            new_hash.active_link_to(
+                                observable, family, "threatminer_query"
+                            )
                         )
                     except ObservableValidationError as e:
                         logging.error("Caught an exception: {}".format(e))
@@ -399,9 +427,7 @@ class RelatedSamples(OneShotAnalytics, ThreatMinerApi):
             _results, result = aux_checker(json_result)
 
             for r in _results:
-                hashes = {
-                    "sha256": r
-                }
+                hashes = {"sha256": r}
 
                 for family, _hash in hashes.items():
                     if _hash == observable.value:
@@ -409,8 +435,10 @@ class RelatedSamples(OneShotAnalytics, ThreatMinerApi):
                     try:
                         new_hash = Hash.get_or_create(value=_hash)
                         new_hash.tag(observable.get_tags())
-                        links.update(new_hash.active_link_to(
-                            observable, family, "threatminer_query")
+                        links.update(
+                            new_hash.active_link_to(
+                                observable, family, "threatminer_query"
+                            )
                         )
                     except ObservableValidationError as e:
                         logging.error("Caught an exception: {}".format(e))
@@ -430,7 +458,7 @@ class ThreatMinerReverseWHOIS(OneShotAnalytics, ThreatMinerApi):
     default_values = {
         "group": "ThreatMiner",
         "name": "ThreatMiner Email Reverse WHOIS",
-        "description": "Perform reverse whois lookups on email."
+        "description": "Perform reverse whois lookups on email.",
     }
 
     ACTS_ON = ["Email"]
@@ -446,9 +474,12 @@ class ThreatMinerReverseWHOIS(OneShotAnalytics, ThreatMinerApi):
         for r in _results:
             try:
                 o_hostname = Hostname.get_or_create(value=r)
-                links.update(observable.link_to(o_hostname,
-                    description="collected via reverse whois.",
-                    source="ThreatMiner")
+                links.update(
+                    observable.link_to(
+                        o_hostname,
+                        description="collected via reverse whois.",
+                        source="ThreatMiner",
+                    )
                 )
             except ObservableValidationError as e:
                 logging.error("Caught an exception: {}".format(e))

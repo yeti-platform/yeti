@@ -23,9 +23,10 @@ class CybercrimeTracker(Feed):
         since_last_run = datetime.utcnow() - self.frequency
 
         for item in self.update_xml(
-                'item', ["title", "link", "pubDate", "description"]):
+            "item", ["title", "link", "pubDate", "description"]
+        ):
 
-            pub_date = parser.parse(item['pubDate'])
+            pub_date = parser.parse(item["pubDate"])
             if self.last_run is not None:
                 if since_last_run > pub_date.replace(tzinfo=None):
                     continue
@@ -33,22 +34,22 @@ class CybercrimeTracker(Feed):
             self.analyze(item, pub_date)
 
     def analyze(self, item, pub_date):  # pylint: disable=arguments-differ
-        s_re = '\[([^\]]*)] Type: (\w+) - IP: (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})'
+        s_re = "\[([^\]]*)] Type: (\w+) - IP: (\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"
         r = re.compile(s_re)
-        m = r.match(item['description'])
-        malware_family = ''
-        c2_IP = ''
+        m = r.match(item["description"])
+        malware_family = ""
+        c2_IP = ""
         if m:
             malware_family = m.group(2)
             c2_IP = m.group(3)
 
-        observable = item['title']
-        description = item['description'].lower()
+        observable = item["title"]
+        description = item["description"].lower()
 
         context = {}
-        context['description'] = "{} C2 server".format(c2_IP)
-        context['date_added'] = pub_date
-        context['source'] = self.name
+        context["description"] = "{} C2 server".format(c2_IP)
+        context["date_added"] = pub_date
+        context["source"] = self.name
 
         c2 = None
         e = None
@@ -64,14 +65,14 @@ class CybercrimeTracker(Feed):
             logging.error(description)
             return
 
-        tags = ['malware', 'c2', malware_family.lower(), 'crimeware']
+        tags = ["malware", "c2", malware_family.lower(), "crimeware"]
 
-        if malware_family == 'pony':
-            tags.extend(['stealer', 'dropper'])
-        elif malware_family == 'athena':
-            tags.extend(['stealer', 'ddos'])
-        elif malware_family in ['zeus', 'citadel', 'lokibot']:
-            tags.extend(['banker'])
+        if malware_family == "pony":
+            tags.extend(["stealer", "dropper"])
+        elif malware_family == "athena":
+            tags.extend(["stealer", "ddos"])
+        elif malware_family in ["zeus", "citadel", "lokibot"]:
+            tags.extend(["banker"])
 
         if e:
             e.add_context(context)

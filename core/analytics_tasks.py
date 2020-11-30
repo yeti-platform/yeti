@@ -25,18 +25,21 @@ def schedule(id):
 
     try:
         a = ScheduledAnalytics.objects.get(
-            id=id, lock=None)  # check if we have implemented locking mechanisms
+            id=id, lock=None
+        )  # check if we have implemented locking mechanisms
     except DoesNotExist:
         try:
-            ScheduledAnalytics.objects.get(
-                id=id, lock=False).modify(
-                    lock=True)  # get object and change lock
+            ScheduledAnalytics.objects.get(id=id, lock=False).modify(
+                lock=True
+            )  # get object and change lock
             a = ScheduledAnalytics.objects.get(id=id)
         except DoesNotExist:
             # no unlocked ScheduledAnalytics was found, notify and return...
             logging.debug(
                 "Task {} is already running...".format(
-                    ScheduledAnalytics.objects.get(id=id).name))
+                    ScheduledAnalytics.objects.get(id=id).name
+                )
+            )
             return
 
     if a.enabled:  # check if Analytics is enabled
@@ -64,7 +67,9 @@ def single(results_id):
     analytics = results.analytics
     logging.debug(
         "Running one-shot query {} on {}".format(
-            analytics.__class__.__name__, results.observable))
+            analytics.__class__.__name__, results.observable
+        )
+    )
     results.update(status="running")
     try:
         links = analytics.analyze(results.observable, results)
@@ -74,3 +79,4 @@ def single(results_id):
         traceback.print_exc()
 
     results.observable.analysis_done(analytics.__class__.__name__)
+    return True

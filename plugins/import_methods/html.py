@@ -15,9 +15,8 @@ def import_html(results, content):
     text = BeautifulSoup(body).get_text(" ")
 
     results.investigation.update(
-        name=content.short_title(),
-        import_md=converter.handle(body),
-        import_text=text)
+        name=content.short_title(), import_md=converter.handle(body), import_text=text
+    )
 
 
 class ImportHTML(ImportMethod):
@@ -25,7 +24,7 @@ class ImportHTML(ImportMethod):
     default_values = {
         "name": "import_html",
         "description": "Perform investigation import from a HTML document.",
-        "acts_on": "text/html"
+        "acts_on": "text/html",
     }
 
     def do_import(self, results, filepath):

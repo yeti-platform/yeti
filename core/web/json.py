@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 from mongoengine import QuerySet, Document, EmbeddedDocument
 
 from core.database import Node, Link, YetiDocument
+from core.user import User
 
 
 def recursive_encoder(objects, template=None, ctx=None):
@@ -27,8 +28,7 @@ def recursive_encoder(objects, template=None, ctx=None):
     elif isinstance(objects, (ObjectId, DBRef, datetime.datetime)):
         return to_json(objects)
 
-    elif isinstance(objects,
-                    (Node, Link, YetiDocument, Document, EmbeddedDocument)):
+    elif isinstance(objects, (Node, Link, YetiDocument, Document, EmbeddedDocument)):
         if hasattr(objects, "info"):
             data = objects.info()
         else:
@@ -43,19 +43,19 @@ def to_json(obj):
     if isinstance(obj, ObjectId):
         return str(obj)
     elif isinstance(obj, DBRef):
-        return {'collection': obj.collection, 'id': str(obj.id)}
+        return {"collection": obj.collection, "id": str(obj.id)}
     elif isinstance(obj, datetime.datetime):
         return obj.isoformat()
     elif isinstance(obj, set):
         return list(obj)
+    elif isinstance(obj, User):
+        return obj.username
     else:
         return default(obj)
 
 
 class JSONDecoder(simplejson.JSONDecoder):
-
     def decode(self, s):
-
         def object_hook(obj):
             return bson_hook(obj)
 

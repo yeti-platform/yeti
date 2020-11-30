@@ -16,7 +16,7 @@ class File(Observable):
     filenames = ListField(StringField(), verbose_name="Filenames")
 
     DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("mime_type", "MIME Type")]
-    exclude_fields = Observable.exclude_fields + ['hashes', 'body']
+    exclude_fields = Observable.exclude_fields + ["hashes", "body"]
 
     @classmethod
     def get_form(klass):
@@ -30,7 +30,7 @@ class File(Observable):
 
     def info(self):
         i = Observable.info(self)
-        i['mime_type'] = self.mime_type
-        i['hashes'] = self.hashes
-        i['filenames'] = self.filenames
+        i["mime_type"] = self.mime_type
+        i["hashes"] = self.hashes
+        i["filenames"] = self.filenames
         return i
