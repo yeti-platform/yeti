@@ -32,7 +32,7 @@ Search results
         <table class="table table-condensed">
           <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
           {% for obs in data['known']%}
-          <tr><td><a href="{{url_for("frontend.ObservableView:get", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|join(', ', attribute='source')}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
+          <tr><td><a href="{{url_for("frontend.ObservableView:get", id=obs["id"])}}">{{obs['value']}}</a></td><td>{{macros.display_tags(obs['tags'])}}</td><td>{{obs['context']|unique(attribute='source')|join(', ', attribute='source')}}</td><td>{{macros.display_datetime(obs['created'])}}</td></tr>
           {% endfor %}
         </table>
         {% endif %}
@@ -41,7 +41,7 @@ Search results
 				<table class="table table-condensed">
           <tr><th>Value</th><th>Tags</th><th>Context</th><th>Creation date</th></tr>
           {% for link, obs in data["neighbors"]%}
-          <tr><td><a href="{{url_for("frontend.ObservableView:get", id=obs["id"])}}">{{obs["value"]}}</a> <span class="small">({% if obs["value"] == link["dst"]%}{{link["src"]}}{%else%}{{link["dst"]}}{%endif%}{%if link["description"]%} - {{link["description"]}}{%endif%})</span></td><td>{{macros.display_tags(obs["tags"])}}</td><td>{{obs["context"]|join(", ", attribute="source")}}</td><td>{{macros.display_datetime(obs["created"])}}</td></tr>
+          <tr><td><a href="{{url_for("frontend.ObservableView:get", id=obs["id"])}}">{{obs["value"]}}</a> <span class="small">({% if obs["value"] == link["dst"]%}{{link["src"]}}{%else%}{{link["dst"]}}{%endif%}{%if link["description"]%} - {{link["description"]}}{%endif%})</span></td><td>{{macros.display_tags(obs["tags"])}}</td><td>{{obs["context"]|unique(attribute="source")|join(", ", attribute="source")}}</td><td>{{macros.display_datetime(obs["created"])}}</td></tr>
           {% endfor %}
         </table>
         {% endif %}

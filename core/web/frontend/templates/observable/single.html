@@ -79,7 +79,7 @@
                     <td><a href="{{ url_for("frontend.ObservableView:get", id=node.id) }}">{{node.value}}</a></td>
                     <td>{{link.description}}</td>
                     <td>{{ macros.display_tags(node.tags)}}</td>
-                    <td>{{node.context|join(', ', attribute='source')}}</td>
+                    <td>{{node.context|unique(attribute='source')|join(', ', attribute='source')}}</td>
                   </tr>
                   {% endfor %}
                 {%endfor%}
