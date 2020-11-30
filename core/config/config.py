@@ -15,7 +15,7 @@ class Dictionary(dict):
 class Config:
     def __init__(self):
         config = ConfigParser(allow_no_value=True)
-        config.read(os.path.join(YETI_ROOT, "yeti.conf"), encoding="utf-8")
+        config.read(os.path.join(YETI_ROOT, "yeti.conf"))
 
         for section in config.sections():
             setattr(self, section, Dictionary())

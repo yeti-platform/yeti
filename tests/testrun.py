@@ -110,7 +110,7 @@ Export(
 
 url = Observable.add_text("hxxp://zeuscpanel.com/gate.php")
 url.tag(["zeus", "banker", "cc", "c2"])
-print(url.tags)
+print url.tags
 
 # print url.find_tags()
 
@@ -207,20 +207,20 @@ t1 = Observable.add_text("http://toto.com")
 t2 = Observable.add_text("Http://tata.com")
 t3 = Observable.add_text("hxxp://tomchop[.]me")
 l = Link.connect(t1, t2)
-print("Links", Link.objects(src=t1))
+print "Links", Link.objects(src=t1)
 t2.delete()
-print("Links", Link.objects(src=t1))
+print "Links", Link.objects(src=t1)
 
 test = "http://soccersisters.net/mg.jpg"
 
 for i in Indicator.objects():
     if i.match(test):
         for type, nodes in i.neighbors().items():
-            print(" {}".format(type))
+            print " {}".format(type)
             for l, node in nodes:
-                print({"type": type, "link": l.info(), "node": node.info()})
+                print {"type": type, "link": l.info(), "node": node.info()}
 
-print("Test with the following:")
-print(o3.value)
-print(o7.value)
-print(t1.value)
+print "Test with the following:"
+print o3.value
+print o7.value
+print t1.value
