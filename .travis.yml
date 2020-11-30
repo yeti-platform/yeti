@@ -22,7 +22,7 @@ before_install:
   - sudo chown $USER /var/log/yeti
 
 install:
-  - pip install -r requirements.txt
+  - pipenv install --dev
   - git clone https://github.com/yeti-platform/pyeti.git
   - pip install -r pyeti/requirements.txt
   - ln -s ../../../contrib/analytics/ivre_api/ivre_api.py plugins/analytics/private/

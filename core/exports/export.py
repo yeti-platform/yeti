@@ -41,7 +41,7 @@ class ExportTemplate(YetiDocument):
         return m.hexdigest()
 
     def info(self):
-        return {"name": self.name, "template": self.template, "id": self.id}
+        return {"name": self.name, "template": self.template, "id": str(self.id)}
 
 
 @celery_app.task

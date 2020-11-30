@@ -34,7 +34,7 @@ def render(obj, template=None):
 
 from core.web.api.observable import ObservableSearch, Observable
 from core.web.api.entity import Entity, EntitySearch
-from core.web.api.tag import Tag
+from core.web.api.tag import Tag, TagSearch
 from core.web.api.analytics import ScheduledAnalytics, OneShotAnalytics, InlineAnalytics
 from core.web.api.analysis import Analysis
 from core.web.api.feeds import Feed
@@ -45,8 +45,10 @@ from core.web.api.indicator import Indicator, IndicatorSearch
 from core.web.api.links import Link
 from core.web.api.attached_files import AttachedFiles
 from core.web.api.file import File
-from core.web.api.useradmin import UserAdminSearch
-from core.web.api.groupadmin import GroupAdminSearch
+from core.web.api.users import Users
+from core.web.api.useradmin import UserAdminSearch, UserAdmin
+from core.web.api.groupadmin import GroupAdminSearch, GroupAdmin
+from core.web.api.system import System
 
 
 Analysis.register(api)
@@ -65,6 +67,7 @@ EntitySearch.register(api)
 Entity.register(api)
 
 Tag.register(api)
+TagSearch.register(api)
 
 Feed.register(api)
 Export.register(api)
@@ -80,5 +83,9 @@ Link.register(api)
 AttachedFiles.register(api)
 File.register(api)
 
+Users.register(api)
 UserAdminSearch.register(api)
+UserAdmin.register(api)
 GroupAdminSearch.register(api)
+GroupAdmin.register(api)
+System.register(api)

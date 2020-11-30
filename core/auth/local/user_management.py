@@ -5,7 +5,7 @@ from hashlib import sha512
 
 from flask import current_app
 from flask_login.mixins import AnonymousUserMixin
-from mongoengine import DoesNotExist
+from mongoengine import DoesNotExist, NotUniqueError
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from core.logger import userLogger
@@ -52,7 +52,10 @@ def create_user(username, password, admin=False, permissions=DEFAULT_PERMISSIONS
     permissions["admin"] = admin
     u = User(username=username, permissions=permissions)
     u = set_password(u, password)
-    return u.save()
+    try:
+        return u.save()
+    except NotUniqueError:
+        raise RuntimeError("User {0:s} already exists.".format(username.decode()))
 
 
 def authenticate(username, password):

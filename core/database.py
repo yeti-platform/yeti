@@ -424,7 +424,9 @@ class Node(YetiDocument):
             {"$unwind": "$related"},
             {"$match": {"related._cls": compiled_filter}},
         ]
-        pipeline.extend([match, {"$skip": skip * limit}, {"$limit": limit}])
+        pipeline.append(match)
+        if limit:
+            pipeline.extend([{"$skip": skip * limit}, {"$limit": limit}])
         results = list(Link.objects.aggregate(*pipeline))
         return results
 
@@ -463,6 +465,30 @@ class Node(YetiDocument):
             final_list.append((l, n))
 
         return final_list
+
+    def neighbors_total(self, klass, filters, regex, ignorecase):
+        result_filters = dict()
+
+        search_replace = {
+            "tags": "tags.name",
+        }
+
+        for key, value in filters.items():
+            if key in search_replace:
+                key = search_replace[key]
+
+            if regex and isinstance(value, str):
+                value = {"$regex": value}
+                if ignorecase:
+                    value["$options"] = "i"
+            if isinstance(value, list) and not key.endswith("__in"):
+                value = {"$in": value}
+            result_filters["related." + key] = value
+
+        outnodes = self._neighbors_aggregation("out", klass, result_filters, 0, 0)
+        innodes = self._neighbors_aggregation("in", klass, result_filters, 0, 0)
+
+        return len(outnodes) + len(innodes)
 
     def delete(self):
         Link.objects(Q(src=self) | Q(dst=self)).delete()
