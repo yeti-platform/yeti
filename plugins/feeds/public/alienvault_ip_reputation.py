@@ -51,7 +51,9 @@ class AlienVaultIPReputation(Feed):
 
             context["country"] = country
             context["threat"] = category
-
+            context['reliability'] = item['number_1']
+            context['risk'] = item['number_2']
+            
             ip.tag(category)
             ip.add_context(context)
 
