@@ -5,30 +5,49 @@ Installation
 
 Installing Yeti is pretty straightforward. This procedure was tested on Ubuntu 18.04, but YMMV.
 
-Install dependencies::
+Install the dependencies needed to add new repositories::
 
-  $ sudo apt-get install build-essential git python-dev mongodb redis-server libxml2-dev libxslt-dev zlib1g-dev python-virtualenv wkhtmltopdf
+  $ sudo apt update && sudo apt install dirmngr gnupg wget curl apt-transport-https
 
 Install Yarn::
 
   $ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
   $ echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-  $ sudo apt-get update && sudo apt-get install yarn
+  $ sudo apt update && sudo apt install yarn
 
-Download Yeti:
+Install mongodb-org::
+  
+  $ wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+  $ echo "deb https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list 
+  $ sudo apt update
 
+Install dependencies::
+
+  $ sudo apt install build-essential git python-dev mongodb-org mongodb-org-shell mongodb-org-server mongodb-org-mongos redis-server libcurl4 libxml2-dev libxslt-dev zlib1g-dev python-virtualenv wkhtmltopdf python-pip python3-pip
+
+Return at home and download Yeti:
+  
+  $ cd
   $ git clone https://github.com/yeti-platform/yeti.git
 
 Activate virtualenv if you want to, then install requirements::
 
   $ cd yeti
-  $ [sudo] pip install -r requirements.txt
+  $ sudo -H pip3 install -r requirements.txt
   $ yarn install
 
-Create the logging directory::
+Create user and the logging directory::
+  
+  $ sudo useradd -r -M -d /opt/yeti -s /usr/sbin/nologin yeti
+  $ sudo mkdir /var/log/yeti
+  $ sudo chown yeti /var/log/yeti
 
-  $ [sudo] mkdir /var/log/yeti
-  $ [sudo] chown <user> /var/log/yeti
+Copy yeti on /opt filesystem, and configure::
+
+  $ cd
+  $ sudo mv yeti /opt
+  $ sudo chown -R yeti:yeti /opt/yeti
+  $ sudo chmod +x /opt/yeti/yeti.py
 
 Quick & dirty
 -------------
@@ -45,7 +64,7 @@ This will only enable the web interface - if you want to use Feeds and Analytics
   $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q oneshot -n oneshot -c 2 --purge
   $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 
-Or, to bootstrap a production use instance of Yeti on Ubuntu 16.04 (without the Redis tweaks), everyone's favorite command::
+Or, to bootstrap a production use instance of Yeti on Ubuntu 18.04 (without the Redis tweaks), everyone's favorite command::
 
   $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/ubuntu_bootstrap.sh | sudo /bin/bash
 
@@ -61,7 +80,7 @@ For production use, it may be better to daemonize Yeti and tweak redis for perfo
 
 Install ``nginx`` and ``uwsgi``::
 
-  $ sudo apt-get install nginx uwsgi
+  $ sudo apt install nginx uwsgi uwsgi-plugin-python3
 
 Optimize redis
 ^^^^^^^^^^^^^^
@@ -84,7 +103,7 @@ Add the following lines in ``/etc/rc.local``::
 Install systemd services
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Copy all files in ``extras/systemd/*`` to ``/lib/systemd/system/``. If you'd
+Copy all files in ``extras/systemd/*`` to ``/etc/systemd/system/``. If you'd
 rather have the web content served through nginx (recommended for production),
 copy ``yeti_uwsgi.service``, otherwise you'll be fine with ``yeti_web.service``.
 
@@ -98,20 +117,52 @@ And start with::
 
 systemd protips::
 
-    $ sudo service yeti_web start|stop|restart
+    $ sudo service yeti_uwsgi start|stop|restart
     or
     $ sudo systemctl start|status|stop yeti_web
 
 To enable the systemd scripts once you've installed them::
 
-    sudo systemctl enable yeti_web
+    sudo systemctl enable yeti_uwsgi
+
+For install yeti with development webserver::
+    $ sudo systemctl enable mongod.service
+    $ sudo systemctl enable yeti_web.service
+    $ sudo systemctl enable yeti_oneshot.service
+    $ sudo systemctl enable yeti_feeds.service
+    $ sudo systemctl enable yeti_exports.service
+    $ sudo systemctl enable yeti_analytics.service
+    $ sudo systemctl enable yeti_beat.service
+    $ sudo systemctl start mongod.service
+    $ sudo systemctl start yeti_web.service
+    $ sudo systemctl start yeti_oneshot.service
+    $ sudo systemctl start yeti_feeds.service
+    $ sudo systemctl start yeti_exports.service
+    $ sudo systemctl start yeti_analytics.service
+    $ sudo systemctl start yeti_beat.service
+
+For install yeti with nginx reverse proxy::
+    $ sudo systemctl enable mongod.service
+    $ sudo systemctl enable yeti_uwsgi.service
+    $ sudo systemctl enable yeti_oneshot.service
+    $ sudo systemctl enable yeti_feeds.service
+    $ sudo systemctl enable yeti_exports.service
+    $ sudo systemctl enable yeti_analytics.service
+    $ sudo systemctl enable yeti_beat.service
+    $ sudo systemctl start mongod.service
+    $ sudo systemctl start yeti_uwsgi.service
+    $ sudo systemctl start yeti_oneshot.service
+    $ sudo systemctl start yeti_feeds.service
+    $ sudo systemctl start yeti_exports.service
+    $ sudo systemctl start yeti_analytics.service
+    $ sudo systemctl start yeti_beat.service
 
 If you're running nginx, add the following configuration to one of the nginx
 server directives::
 
   server {
       listen 80;
-      server_name yeti;
+      server_name yeti.domain.lan;
 
       location / {
           include uwsgi_params;
