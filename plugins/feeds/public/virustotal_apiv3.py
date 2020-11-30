@@ -1,6 +1,5 @@
 import logging
 import re
-import json
 from datetime import timedelta, datetime
 
 from core import Feed
@@ -60,7 +59,7 @@ class VirusTotalPriv(Feed):
         sha256 = Hash.get_or_create(value=sha2)
         f_vt3.active_link_to(sha256, "sha256", self.name)
         tags.append(tags2)
-
+        tags.append(subject)
         context["date_added"] = date_string
         context["snippet"] = item["attributes"]["snippet"]
         # context['source_country'] = item["attributes"]['source_country']
