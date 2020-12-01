@@ -148,7 +148,8 @@ class MispFeed(Feed):
                 days_to_sync = self.instances[instance]['days']
             else:
                 days_to_sync = 60
-                if date.today() - date_to > timedelta(days=days_to_sync):
+            if date.today() - date_to > timedelta(days=days_to_sync):
+    
                     break
             logging.debug(
                 "Imported {} attributes from {} to {}".format(
