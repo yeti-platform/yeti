@@ -126,6 +126,7 @@ class MispFeed(Feed):
         seen_last_run = False
 
         for date_from, date_to, imported in self.week_events(instance):
+
             logging.debug(
                 "Imported {} attributes from {} to {}".format(
                     imported, date_from, date_to
@@ -143,6 +144,12 @@ class MispFeed(Feed):
         had_results = True
 
         for date_from, date_to, imported in self.week_events(instance):
+            if 'days' in config:
+                days_to_sync = config['days']
+            else:
+                days_to_sync = 60
+                if date.today() - date_to > timedelta(days=days_to_sync):
+                    break
             logging.debug(
                 "Imported {} attributes from {} to {}".format(
                     imported, date_from, date_to
