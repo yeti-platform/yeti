@@ -59,6 +59,8 @@
 # name = MISP_1
 # url = MISP_URL
 # key = MISP_AUTH_KEY
+# galaxy_filter = filtering_galaxy_to_drop
+# days = days_history_to_change_by_default_60_days
 
 [proxy]
 
