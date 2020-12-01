@@ -144,13 +144,13 @@ class MispFeed(Feed):
         had_results = True
 
         for date_from, date_to, imported in self.week_events(instance):
-            if 'days' in self.instances[instance]:
-                days_to_sync = self.instances[instance]['days']
+            if "days" in self.instances[instance]:
+                days_to_sync = self.instances[instance]["days"]
             else:
                 days_to_sync = 60
             if date.today() - date_to > timedelta(days=days_to_sync):
-    
-                    break
+
+                break
             logging.debug(
                 "Imported {} attributes from {} to {}".format(
                     imported, date_from, date_to
