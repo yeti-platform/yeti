@@ -11,11 +11,11 @@ from core.observables import Url
 
 class PhishTank(Feed):
     # set default values for feed
-    key = yeti_config.get("phishtank", "key")
+ 
     default_values = {
         "frequency": timedelta(hours=4),
         "name": "PhishTank",
-        "source": "http://data.phishtank.com/data/%s/online-valid.csv" % key,
+        "source": "http://data.phishtank.com/data/%s/online-valid.csv" % yeti_config.get("phishtank", "key"),
         "description": "PhishTank community feed. Contains a list of possible Phishing URLs.",
     }
 
