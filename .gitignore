@@ -62,3 +62,11 @@ node_modules
 # Vagrant
 .vagrant/
 vagrant
+
+#IDE
+.idea
+
+#Patch
+*.patch
+#venv
+venv
