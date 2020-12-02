@@ -11,7 +11,7 @@ from core.observables import Url
 
 class PhishTank(Feed):
     # set default values for feed
-    key = otx_key = yeti_config.get("phishtank", "key")
+    key = yeti_config.get("phishtank", "key")
     default_values = {
         "frequency": timedelta(hours=4),
         "name": "PhishTank",
