@@ -60,9 +60,9 @@ handlebars@^4.5.3:
   optionalDependencies:
     uglify-js "^3.1.4"
 
-highlight.js@^10.1.2:
-  version "10.1.2"
-  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-10.1.2.tgz#c20db951ba1c22c055010648dfffd7b2a968e00c"
+highlight.js@^10.4.1:
+  version "10.4.1"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-10.4.1.tgz#d48fbcf4a9971c4361b3f95f302747afe19dbad0"
 
 inline-attachment@^2.0.3:
   version "2.0.3"
