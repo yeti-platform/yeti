@@ -22,3 +22,10 @@ It might have another error, you can follow the below steps:
 - systemctl restart yeti_feeds.service
 
 - Relaunch feeders in /Dataflow page.
+
+Performance issues
+------------------------------------
+
+At somepoint your Yeti instance might become slow. To solve that issue log in to mongo and enter the following commands:
+- db.link.createIndex({"src.$id": 1})
+- db.link.createIndex({"dst.$id": 1})
