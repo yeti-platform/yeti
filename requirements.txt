@@ -93,3 +93,4 @@ mccabe==0.6.1
 pylint==1.9.4
 six==1.14.0
 wrapt==1.11.2
+uwsgi
