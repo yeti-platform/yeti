@@ -49,4 +49,4 @@ sphinx_rtd_theme = "*"
 sphinxcontrib-httpdomain = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.7.3"
