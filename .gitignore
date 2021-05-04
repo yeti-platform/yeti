@@ -70,3 +70,4 @@ vagrant
 *.patch
 #venv
 venv*
+.vscode/settings.json
