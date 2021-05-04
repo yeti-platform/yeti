@@ -69,4 +69,4 @@ vagrant
 #Patch
 *.patch
 #venv
-venv
+venv*
