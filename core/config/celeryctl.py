@@ -5,13 +5,22 @@ from mongoengine import connect
 from celery.signals import celeryd_init, worker_process_init
 
 from core.config.config import yeti_config
+import ast
+import logging
 
 celery_app = Celery("yeti")
 
 
 class CeleryConfig:
-    BROKER_URL = "redis://{}:{}/{}".format(
-        yeti_config.redis.host, yeti_config.redis.port, yeti_config.redis.database
+    redis_scheme = "redis"
+    if ast.literal_eval(yeti_config.redis.tls):
+        logging.info("ssl on redis is enabled")
+        redis_scheme = redis_scheme + "s"
+    BROKER_URL = "{}://{}:{}/{}".format(
+        redis_scheme,
+        yeti_config.redis.host,
+        yeti_config.redis.port,
+        yeti_config.redis.database,
     )
     CELERY_TASK_SERIALIZER = "json"
     CELERY_ACCEPT_CONTENT = ["json"]
@@ -51,6 +60,7 @@ def connect_mongo(**kwargs):
         username=yeti_config.mongodb.username,
         password=yeti_config.mongodb.password,
         connect=False,
+        tls=ast.literal_eval(yeti_config.mongodb.tls),
     )
     celeryimports.loaded_modules = get_plugins()
 

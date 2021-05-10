@@ -10,6 +10,7 @@ from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
 from core.config.mongoengine_extras import TimeDeltaField
 from core.database import YetiDocument
+import ast
 
 
 class ScheduleEntry(YetiDocument):
@@ -73,6 +74,7 @@ class Scheduler(BaseScheduler):
             port=yeti_config.mongodb.port,
             username=yeti_config.mongodb.username,
             password=yeti_config.mongodb.password,
+            tls=ast.literal_eval(yeti_config.mongodb.tls),
             connect=False,
         )
         from core.yeti_plugins import get_plugins

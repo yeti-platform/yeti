@@ -27,6 +27,7 @@
 # database = yeti
 # username = yeti
 # password = STRONG_PASSWORD
+# tls = False
 
 [redis]
 
@@ -38,6 +39,7 @@
 # host = 127.0.0.1
 # port = 6379
 # database = 0
+# tls = "false"
 
 [misp]
 
