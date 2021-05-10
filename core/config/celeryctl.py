@@ -13,9 +13,10 @@ celery_app = Celery("yeti")
 
 class CeleryConfig:
     redis_scheme = "redis"
-    if yeti_config.redis.has_option("tls"):
-        logging.info("ssl on redis is enabled")
+    if yeti_config.redis.tls:
+
         redis_scheme = redis_scheme + "s"
+
     BROKER_URL = "{}://{}:{}/{}".format(
         redis_scheme,
         yeti_config.redis.host,
@@ -53,14 +54,18 @@ def connect_mongo(**kwargs):
     from core.config import celeryimports
     from core.yeti_plugins import get_plugins
 
+    is_tls = False
+    if yeti_config.mongodb.tls:
+        is_tls = True
+
     connect(
         yeti_config.mongodb.database,
         host=yeti_config.mongodb.host,
         port=yeti_config.mongodb.port,
         username=yeti_config.mongodb.username,
         password=yeti_config.mongodb.password,
+        tls=is_tls,
         connect=False,
-        tls=ast.literal_eval(yeti_config.mongodb.tls),
     )
     celeryimports.loaded_modules = get_plugins()
 

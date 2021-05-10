@@ -29,17 +29,20 @@ login_manager.login_view = "/login"
 
 auth_module = import_module("core.auth.%s" % yeti_config.auth.module)
 webapp.register_blueprint(auth_module.auth)
-is_tls = False
-if yeti_config.mongodb.has_option("tls"):
-    is_tls = True
+is_true = False
+print(yeti_config.mongodb)
+if yeti_config.mongodb.tls:
+    is_true = True
+    open("logs.txt", "w").write("ssl ok \n")
+
 connect(
     yeti_config.mongodb.database,
     host=yeti_config.mongodb.host,
     port=yeti_config.mongodb.port,
     username=yeti_config.mongodb.username,
     password=yeti_config.mongodb.password,
-    tls=is_tls,
     connect=False,
+    tls=False,
 )
 
 
