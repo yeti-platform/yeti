@@ -13,7 +13,7 @@ celery_app = Celery("yeti")
 
 class CeleryConfig:
     redis_scheme = "redis"
-    if ast.literal_eval(yeti_config.redis.tls):
+    if yeti_config.redis.has_option("tls"):
         logging.info("ssl on redis is enabled")
         redis_scheme = redis_scheme + "s"
     BROKER_URL = "{}://{}:{}/{}".format(
