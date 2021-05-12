@@ -1,6 +1,9 @@
 import logging
+import pymisp
+import pandas as pd
 from datetime import date, timedelta
 from urllib.parse import urljoin
+from pymisp.api import PyMISP
 
 import requests
 from mongoengine import DictField
@@ -8,8 +11,6 @@ from mongoengine import DictField
 from core.config.config import yeti_config
 from core.feed import Feed
 from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin, Observable
-import pymisp
-import pandas as pd
 
 
 class MispFeed(Feed):
@@ -52,10 +53,8 @@ class MispFeed(Feed):
             }
 
             try:
-                url = yeti_config.get(instance, "url")
-                key = yeti_config.get(instance, "key")
-                misp_client = pymisp.PyMISP(url=url, key=key)
-                config["misp_client"] = misp_client
+                config["url"] = yeti_config.get(instance, "url")
+                config["key"] = yeti_config.get(instance, "key")
                 self.instances[instance] = config
             except Exception as e:
                 logging.error("Error Misp connection %s" % e)
@@ -67,7 +66,9 @@ class MispFeed(Feed):
 
     def get_organisations(self, instance):
         try:
-            misp_client = self.__get_info_instance(instance, "misp_client")
+            misp_client = PyMISP(
+                url=self.instances[instance]["url"], key=self.instances[instance]["key"]
+            )
 
             if not misp_client:
                 logging.error("Issue on misp client")
@@ -82,7 +83,11 @@ class MispFeed(Feed):
             logging.error("error http %s to get instances" % e)
 
     def get_all_events(self, instance):
-        days = self.__get_info_instance(instance, "days")
+        days = None
+
+        if "days" in self.instances[instance]:
+            days = self.instances[instance]["days"]
+
         if not days:
             days = 60
 
@@ -97,14 +102,15 @@ class MispFeed(Feed):
                 self.analyze(event, instance)
 
     def get_last_events(self, instance):
-        misp_client = self.__get_info_instance(instance, "misp_client")
 
         from_date = self.last_run
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
 
     def get_event(self, instance, from_date, to_date=None):
-        misp_client = self.__get_info_instance(instance, "misp_client")
+        misp_client = PyMISP(
+            url=self.instances[instance]["url"], key=self.instances[instance]["key"]
+        )
         results = misp_client.search(fromdate=from_date, todate=to_date)
         for r in results:
             if "Event" in r:
@@ -128,7 +134,7 @@ class MispFeed(Feed):
         galaxies_to_context = []
 
         context = {}
-        context["source"] = self.__get_info_instance(instance, "name")
+        context["source"] = self.instances[instance]["name"]
         external_analysis = [
             attr["value"]
             for attr in event["Attribute"]
@@ -171,7 +177,7 @@ class MispFeed(Feed):
 
             context["id"] = attribute["event_id"]
             context["link"] = urljoin(
-                self.__get_info_instance(instance, "misp_client").root_url,
+                self.instances[instance]["url"],
                 "/events/{}".format(attribute["event_id"]),
             )
 
@@ -186,8 +192,3 @@ class MispFeed(Feed):
                 obs.tag(tags)
 
             obs.add_context(context)
-
-    def __get_info_instance(self, instance, key):
-        if instance in self.instances:
-            if key in self.instances[instance]:
-                return self.instances[instance][key]

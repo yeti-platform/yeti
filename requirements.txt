@@ -83,7 +83,6 @@ vine==1.3.0
 werkzeug==1.0.0
 wtforms==2.2.1
 xlsxwriter==1.2.7
-yara-python==3.11.0
 zipp==2.2.0
 -i https://pypi.python.org/simple
 astroid==1.6.6
@@ -95,3 +94,4 @@ six==1.14.0
 wrapt==1.11.2
 uwsgi
 pymisp
+yara-python

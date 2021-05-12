@@ -1,17 +1,16 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
 # Python
 RUN apt-get update && apt-get install -y \
-    curl \
-    git \
-    python3-pip \
-    python-yara \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-    # ftontend
+        curl \
+        git \
+        python3-pip \
+        && apt-get clean \
+        && rm -rf /var/lib/apt/lists/*
+# ftontend
 
 # Install frontend dependencies
 RUN apt-get update && apt-get install -y --no-install-suggests --no-install-recommends \
