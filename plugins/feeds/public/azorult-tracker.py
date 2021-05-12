@@ -30,7 +30,11 @@ class AzorutTracker(Feed):
             res = r.json()
 
             df = pd.DataFrame(res)
-            df.replace({np.nan:None}, inplace=True)
+            df.replace({np.nan: None}, inplace=True)
+
+            df["first_seen"] = pd.to_datetime(df["first_seen"], unit="s")
+            if self.last_run:
+                df = df[df["first_seen"] > self.last_run]
             return df.iterrows()
 
     def analyze(self, item):
@@ -46,7 +50,7 @@ class AzorutTracker(Feed):
         panel_version = item["panel_version"]
         status = item["status"]
         feeder = item["feeder"]
-        first_seen = date.fromtimestamp(item["first_seen"]).isoformat()
+        first_seen = item["first_seen"]
 
         context["first_seen"] = first_seen
         if feeder:
