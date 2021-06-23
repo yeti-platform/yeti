@@ -5,8 +5,7 @@ from mongoengine import connect
 from celery.signals import celeryd_init, worker_process_init
 
 from core.config.config import yeti_config
-import ast
-import logging
+
 
 celery_app = Celery("yeti")
 

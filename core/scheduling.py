@@ -10,7 +10,6 @@ from core.config.celeryctl import celery_app
 from core.config.config import yeti_config
 from core.config.mongoengine_extras import TimeDeltaField
 from core.database import YetiDocument
-import ast
 
 
 class ScheduleEntry(YetiDocument):

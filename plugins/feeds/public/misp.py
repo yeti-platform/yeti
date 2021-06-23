@@ -1,13 +1,9 @@
 import logging
-import pymisp
-import pandas as pd
 from datetime import date, timedelta
 from urllib.parse import urljoin
+import pandas as pd
 from pymisp.api import PyMISP
-
-import requests
 from mongoengine import DictField
-
 from core.config.config import yeti_config
 from core.feed import Feed
 from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin, Observable

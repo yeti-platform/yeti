@@ -1,9 +1,9 @@
+import logging
 from core import Feed
 from datetime import timedelta
 import pandas as pd
 from core.observables import Ip, Observable
 from core.errors import ObservableValidationError
-import logging
 
 
 class ThreatFox(Feed):
@@ -33,7 +33,7 @@ class ThreatFox(Feed):
             df["last_seen_utc"] = pd.to_datetime(df["last_seen_utc"])
             if self.last_run:
                 df = df[df["first_seen_utc"] > self.last_run]
-
+            df.fillna("-", inplace=True)
             return df.iterrows()
 
     def analyze(self, item):
@@ -71,6 +71,15 @@ class ThreatFox(Feed):
         if malware_printable:
             tags.append(malware_printable)
 
+        if malware_alias:
+            context["malware_alias"] = malware_alias
+
+        if last_seen_utc:
+            context["last_seen_utc"] = last_seen_utc
+
+        if confidence_level:
+            context["confidence_level"] = confidence_level
+
         value = None
         obs = None
         try:
@@ -82,6 +91,7 @@ class ThreatFox(Feed):
 
         except ObservableValidationError as e:
             logging.error(e)
+            return
 
         if obs:
             obs.add_context(context)

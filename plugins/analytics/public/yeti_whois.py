@@ -1,7 +1,5 @@
-from os import link, name
 import whois
 from core.analytics import OneShotAnalytics
-from core.common.utils import tldextract_parser
 from core.observables import Email, Text, Hostname, email
 from core.entities import Company, company
 
@@ -47,12 +45,12 @@ class Whois(OneShotAnalytics):
             if data["dnssec"]:
                 context["dnssec"] = data["dnssec"]
 
-            if type(data["creation_date"]) is list:
+            if isinstance(data["creation_date"], list):
                 context["creation_date"] = sorted(data["creation_date"])[0]
             else:
                 context["creation_date"] = data["creation_date"]
 
-            if type(data["updated_date"]) is list:
+            if isinstance(data["updated_date"], list):
                 context["updated_date"] = sorted(data["updated_date"], reverse=True)[0]
             else:
                 context["updated_date"] = data["updated_date"]
@@ -66,7 +64,7 @@ class Whois(OneShotAnalytics):
 
             name_servers = data["name_servers"]
 
-        if type(name_servers) is list:
+        if isinstance(name_servers, list):
             for ns in name_servers:
                 ns_obs = Hostname.get_or_create(value=ns)
                 links.update(ns_obs.active_link_to(hostname, "NS", context["source"]))
@@ -80,11 +78,16 @@ class Whois(OneShotAnalytics):
                 email_obs.active_link_to(hostname, "email registrar", context["source"])
             )
         if data["org"]:
-            company = Company.get_or_create(name=data["org"])
-            company.active_link_to(hostname, "Org", context["source"])
+            company_org = Company.get_or_create(name=data["org"])
+            links.update(company_org.active_link_to(hostname, "Org", context["source"]))
 
         if data["registrar"]:
-            company = Company.get_or_create(name=data["registrar"])
+            company_registrar = Company.get_or_create(name=data["registrar"])
+            links.update(
+                company_registrar.active_link_to(
+                    hostname, "registrar", context["source"]
+                )
+            )
         if should_add_context:
             hostname.add_context(context)
         else:

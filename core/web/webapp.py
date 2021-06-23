@@ -15,7 +15,6 @@ from core.web.api import api
 from core.web.frontend import frontend
 from core.web.json import JSONDecoder
 from core.yeti_plugins import get_plugins
-import ast
 
 webapp = Flask(__name__, static_folder="../../node_modules", static_url_path="/static")
 
