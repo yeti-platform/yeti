@@ -52,7 +52,7 @@ class ThreatTracking(Feed):
         return
 
     def update(self):
-        """"""
+        """ """
         params = {"key": yeti_config.get("threattracking", "google_api_key")}
         # , 'includeGridData': 'True'} - we don't want to do that. 200Mo file.
 
@@ -105,8 +105,8 @@ class ThreatTracking(Feed):
         """returns the list of list of aliases.
         The first name in the list is the primary name"""
         actor_primary_name_range = "!".join([sheet_name, range_info["aliases"]])
-        _ = self.api.values.GET(actor_primary_name_range).json()
-        actor_names = _["values"]
+        res = self.api.values.GET(actor_primary_name_range).json()
+        actor_names = res["values"]
         r_names = []
         for i, actor_aliases in enumerate(actor_names):
             while u"" in actor_aliases:
@@ -140,7 +140,7 @@ class ThreatTracking(Feed):
         return ":".join([start_col + row_start, end_col + row_end])
 
     def get_campaign(self, sheet_name, range_info):
-        """ returns the list of list of campaigns."""
+        """returns the list of list of campaigns."""
         campaign_range = range_info["campaigns"].split(":")
         campaign_value_range = self._get_numeric_range(
             range_info, campaign_range[0], campaign_range[1]
@@ -157,7 +157,7 @@ class ThreatTracking(Feed):
         return r_names
 
     def get_tools(self, sheet_name, range_info):
-        """ returns the list of list of tools."""
+        """returns the list of list of tools."""
         tool_col = range_info["tools"]
         tool_value_range = self._get_numeric_range(range_info, tool_col, tool_col)
         tool_value_range = "!".join([sheet_name, tool_value_range])
