@@ -1,6 +1,6 @@
 import logging
-from core import Feed
 from datetime import timedelta
+from core import Feed
 import pandas as pd
 from core.observables import Ip, Observable
 from core.errors import ObservableValidationError
@@ -85,6 +85,7 @@ class ThreatFox(Feed):
         try:
             if "ip" in ioc_type:
                 value, port = ioc_value.split(":")
+                context["port"] = port
                 obs = Ip.get_or_create(value=value)
             else:
                 obs = Observable.add_text(ioc_value)

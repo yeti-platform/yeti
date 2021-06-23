@@ -1,7 +1,7 @@
 import whois
 from core.analytics import OneShotAnalytics
-from core.observables import Email, Text, Hostname, email
-from core.entities import Company, company
+from core.observables import Email, Text, Hostname
+from core.entities import Company
 
 
 def link_from_contact_info(hostname, contact, field, klass, description):
@@ -55,7 +55,7 @@ class Whois(OneShotAnalytics):
             else:
                 context["updated_date"] = data["updated_date"]
 
-            if type(data["expiration_date"]) is list:
+            if isinstance(data["expiration_date"], list):
                 context["expiration_date"] = sorted(
                     data["expiration_date"], reverse=True
                 )[0]
