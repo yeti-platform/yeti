@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
-from core.observables import Url
+from core.observables import Ip
 
 
 class FeodoTrackerIPBlockList(Feed):
@@ -15,34 +15,43 @@ class FeodoTrackerIPBlockList(Feed):
     }
 
     def update(self):
-
+        firs_line = 0
         for index, line in self.update_csv(
             delimiter=",",
-            filter_row="Firstseen",
-            names=["Firstseen", "DstIP", "DstPort", "LastOnline", "Malware"],
+            filter_row="first_seen_utc",
+            names=[
+                "first_seen_utc",
+                "dst_ip",
+                "dst_port",
+                "c2_status",
+                "last_online",
+                "malware",
+            ],
         ):
-            self.analyze(line)
+            if firs_line != 0:
+                self.analyze(line)
+            firs_line += 1
 
     # pylint: disable=arguments-differ
     def analyze(self, line):
 
         tags = []
-        tags.append(line["Malware"].lower())
+        tags.append(line["malware"].lower())
         tags.append("c2")
         tags.append("blocklist")
 
         context = {
-            "first_seen": line["Firstseen"],
+            "first_seen": line["first_seen_utc"],
             "source": self.name,
-            "last_online": line["LastOnline"],
+            "last_online": line["last_online"],
+            "c2_status": line["c2_status"],
+            "port": line["dst_port"],
         }
 
         try:
-            new_url = Url.get_or_create(
-                value="http://{}:{}/".format(line["DstIP"], line["DstPort"])
-            )
-            new_url.add_context(context, dedup_list=["last_online"])
-            new_url.tag(tags)
+            ip_obs = Ip.get_or_create(value=line["dst_ip"])
+            ip_obs.add_context(context, dedup_list=["last_online"])
+            ip_obs.tag(tags)
 
         except ObservableValidationError as e:
             logging.error("Invalid line: {}\nLine: {}".format(e, line))
