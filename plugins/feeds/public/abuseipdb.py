@@ -1,3 +1,4 @@
+from configparser import Error
 import logging
 from datetime import timedelta
 
@@ -18,16 +19,16 @@ class AbuseIPDB(Feed):
     def update(self):
         api_key = yeti_config.get("abuseIPDB", "key")
 
-        if api_key:
-            self.source = (
-                "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
-                % (api_key)
-            )
-            # change the limit rate if you subscribe to a paid plan
-            for line in self.update_lines():
-                self.analyze(line)
-        else:
-            logging.error("Your abuseIPDB API key is not set in the yeti.conf file")
+        if not api_key:
+            raise Exception("Your abuseIPDB API key is not set in the yeti.conf file")
+
+        self.source = (
+            "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
+            % (api_key)
+        )
+        # change the limit rate if you subscribe to a paid plan
+        for line in self.update_lines():
+            self.analyze(line)
 
     def analyze(self, line):
         line = line.strip()
