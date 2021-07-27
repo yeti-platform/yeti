@@ -23,7 +23,7 @@ class VirusTotalHunting(Feed):
 
     def update(self):
         api_key = yeti_config.get("vt", "key")
-        
+
         if not api_key:
             raise Exception("Your VT API key is not set in the yeti.conf file")
 
@@ -33,7 +33,6 @@ class VirusTotalHunting(Feed):
         )
         for index, item in self.update_json(key="notifications"):
             self.analyze(item)
-
 
     def analyze(self, item):
         tags = []
