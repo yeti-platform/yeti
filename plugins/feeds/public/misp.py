@@ -107,7 +107,7 @@ class MispFeed(Feed):
         misp_client = PyMISP(
             url=self.instances[instance]["url"], key=self.instances[instance]["key"]
         )
-        results = misp_client.search(fromdate=from_date, todate=to_date)
+        results = misp_client.search(date_from=from_date, date_to=to_date)
         for r in results:
             if "Event" in r:
                 yield r["Event"]
