@@ -9,10 +9,10 @@ from core.observables import File, Hash, Url
 # Deprecated
 class UrlHausPayloads(Feed):
     default_values = {
-        "frequency": timedelta(hours=1),
+        "frequency": timedelta(days=1),
         "name": "UrlHausPayloads",
         "source": "https://urlhaus.abuse.ch/downloads/payloads/",
-        "description": "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.",
+        "description": "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution. (Warning RAM consumer)",
     }
 
     def update(self):
