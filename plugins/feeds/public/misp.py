@@ -1,13 +1,12 @@
 import logging
 from datetime import date, timedelta
 from urllib.parse import urljoin
-
-import requests
+import pandas as pd
+from pymisp.api import PyMISP
 from mongoengine import DictField
-
 from core.config.config import yeti_config
 from core.feed import Feed
-from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin
+from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin, Observable
 
 
 class MispFeed(Feed):
@@ -43,16 +42,18 @@ class MispFeed(Feed):
 
         for instance in yeti_config.get("misp", "instances", "").split(","):
             config = {
-                "url": yeti_config.get(instance, "url"),
-                "key": yeti_config.get(instance, "key"),
                 "name": yeti_config.get(instance, "name") or instance,
                 "galaxy_filter": yeti_config.get(instance, "galaxy_filter"),
                 "days": yeti_config.get(instance, "days"),
                 "organisations": {},
             }
 
-            if config["url"] and config["key"]:
+            try:
+                config["url"] = yeti_config.get(instance, "url")
+                config["key"] = yeti_config.get(instance, "key")
                 self.instances[instance] = config
+            except Exception as e:
+                logging.error("Error Misp connection %s" % e)
 
     def last_run_for(self, instance):
         last_run = [int(part) for part in self.last_runs[instance].split("-")]
@@ -60,110 +61,56 @@ class MispFeed(Feed):
         return date(*last_run)
 
     def get_organisations(self, instance):
-        url = urljoin(self.instances[instance]["url"], "/organisations/index/scope:all")
-        headers = {
-            "Authorization": self.instances[instance]["key"],
-            "Content-type": "application/json",
-            "Accept": "application/json",
-        }
+        try:
+            misp_client = PyMISP(
+                url=self.instances[instance]["url"], key=self.instances[instance]["key"]
+            )
 
-        r = requests.get(url, headers=headers, proxies=yeti_config.proxy)
+            if not misp_client:
+                logging.error("Issue on misp client")
+                return
 
-        if r.status_code == 200:
-
-            orgs = r.json()
-
+            orgs = misp_client.organisations(scope="all")
             for org in orgs:
                 org_id = org["Organisation"]["id"]
                 org_name = org["Organisation"]["name"]
                 self.instances[instance]["organisations"][org_id] = org_name
-        else:
-            logging.error("error http %s to get instances" % r.status_code)
-
-    def week_events(self, instance):
-        one_week = timedelta(days=7)
-        if not self.instances:
-            logging.error("not instances in MISP")
-            return
-        elif instance not in self.instances:
-            logging.error("error in instances of Misp")
-            return
-
-        url = urljoin(self.instances[instance]["url"], "/events/restSearch")
-        headers = {"Authorization": self.instances[instance]["key"]}
-        to = date.today()
-        fromdate = to - timedelta(days=6)
-        body = {}
-
-        while True:
-            imported = 0
-
-            body["to"] = to.isoformat()
-            body["from"] = fromdate.isoformat()
-            body["returnFormat"] = "json"
-            body["published"] = True
-            body["enforceWarninglist"] = True
-            r = requests.post(
-                url, headers=headers, json=body, proxies=yeti_config.proxy
-            )
-
-            if r.status_code == 200:
-                results = r.json()
-
-                for event in results["response"]:
-                    self.analyze(event["Event"], instance)
-                    imported += 1
-
-                yield fromdate, to, imported
-                to = to - one_week
-                fromdate = fromdate - one_week
-            else:
-                logging.debug(r.content)
-
-    def get_last_events(self, instance):
-        logging.debug("Getting last events for {}".format(instance))
-        last_run = self.last_run_for(instance)
-        seen_last_run = False
-
-        for date_from, date_to, imported in self.week_events(instance):
-
-            logging.debug(
-                "Imported {} attributes from {} to {}".format(
-                    imported, date_from, date_to
-                )
-            )
-
-            if seen_last_run:
-                break
-
-            if date_from <= last_run <= date_to:
-                seen_last_run = True
+        except Exception as e:
+            logging.error("error http %s to get instances" % e)
 
     def get_all_events(self, instance):
-        logging.debug("Getting all events for {}".format(instance))
-        had_results = True
+        days = None
 
-        for date_from, date_to, imported in self.week_events(instance):
-            if "days" in self.instances[instance]:
-                days_to_sync = self.instances[instance]["days"]
-            else:
-                days_to_sync = 60
-            if date.today() - date_to > timedelta(days=days_to_sync):
+        if "days" in self.instances[instance]:
+            days = self.instances[instance]["days"]
 
-                break
-            logging.debug(
-                "Imported {} attributes from {} to {}".format(
-                    imported, date_from, date_to
-                )
-            )
+        if not days:
+            days = 60
 
-            if imported == 0:
-                if had_results:
-                    had_results = False
-                else:
-                    break
-            else:
-                had_results = True
+        today = date.today()
+        start_date = today - timedelta(days=days)
+
+        range_time = [str(r) for r in pd.date_range(start_date, today, periods=7)]
+        for i in range(0, len(range_time) - 1, 2):
+            from_date = range_time[i]
+            to_date = range_time[i + 1]
+            for event in self.get_event(instance, from_date, to_date):
+                self.analyze(event, instance)
+
+    def get_last_events(self, instance):
+
+        from_date = self.last_run
+        for event in self.get_event(instance, from_date):
+            self.analyze(event, instance)
+
+    def get_event(self, instance, from_date, to_date=None):
+        misp_client = PyMISP(
+            url=self.instances[instance]["url"], key=self.instances[instance]["key"]
+        )
+        results = misp_client.search(date_from=from_date, date_to=to_date)
+        for r in results:
+            if "Event" in r:
+                yield r["Event"]
 
     def update(self):
         for instance in self.instances:
@@ -183,7 +130,6 @@ class MispFeed(Feed):
         galaxies_to_context = []
 
         context = {}
-
         context["source"] = self.instances[instance]["name"]
         external_analysis = [
             attr["value"]
@@ -212,41 +158,33 @@ class MispFeed(Feed):
                         tags.append(tag["name"])
 
         for attribute in event["Attribute"]:
-            if attribute["category"] == "External analysis":
-                continue
+            self.__add_attribute(instance, attribute, context, tags)
 
-            if attribute.get("type") in self.TYPES_TO_IMPORT:
+        for obj in event["Object"]:
+            for attribute in obj["Attribute"]:
+                self.__add_attribute(instance, attribute, context, tags)
 
-                context["id"] = attribute["event_id"]
-                context["link"] = urljoin(
-                    self.instances[instance]["url"],
-                    "/events/{}".format(attribute["event_id"]),
-                )
+    def __add_attribute(self, instance, attribute, context, tags):
 
-                context["comment"] = attribute["comment"]
+        if attribute["category"] == "External analysis":
+            return
 
-                try:
+        if attribute.get("type") in self.TYPES_TO_IMPORT:
 
-                    klass = self.TYPES_TO_IMPORT[attribute["type"]]
-                    obs = klass.get_or_create(value=attribute["value"])
+            context["id"] = attribute["event_id"]
+            context["link"] = urljoin(
+                self.instances[instance]["url"],
+                "/events/{}".format(attribute["event_id"]),
+            )
 
-                    if attribute["category"]:
-                        obs.tag(attribute["category"].replace(" ", "_"))
+            context["comment"] = attribute["comment"]
 
-                    if tags:
-                        obs.tag(tags)
+            obs = Observable.add_text(attribute["value"])
 
-                    if galaxies_to_context:
-                        context["galaxies"] = "\r\n".join(galaxies_to_context)
-                    obs.add_context(context)
+            if attribute["category"]:
+                obs.tag(attribute["category"].replace(" ", "_"))
 
-                except:
+            if tags:
+                obs.tag(tags)
 
-                    try:
-                        logging.error(
-                            "{}: error adding {}".format("MispFeed", attribute["value"])
-                        )
-                    except UnicodeError:
-                        logging.error(
-                            "{}: error adding {}".format("MispFeed", attribute["id"])
-                        )
+            obs.add_context(context)

@@ -67,6 +67,9 @@ class Scheduler(BaseScheduler):
         return self._schedule
 
     def load_entries(self):
+        is_tls = False
+        if yeti_config.mongodb.tls:
+            is_tls = True
         connect(
             yeti_config.mongodb.database,
             host=yeti_config.mongodb.host,
@@ -74,6 +77,7 @@ class Scheduler(BaseScheduler):
             username=yeti_config.mongodb.username,
             password=yeti_config.mongodb.password,
             connect=False,
+            tls=is_tls,
         )
         from core.yeti_plugins import get_plugins
 

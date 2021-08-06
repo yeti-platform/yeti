@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 
 from dateutil import parser
-
+import pandas as pd
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip
@@ -18,24 +18,29 @@ class RulezSKBruteforceBlocker(Feed):
     }
 
     def update(self):
-        since_last_run = datetime.now() - self.frequency
+
         r = self._make_request(headers={"User-Agent": "yeti-project"})
-        lines = r.content.decode().splitlines()[1:-1]
-        for line in lines:
-            ip, date, count, id = filter(None, line.split("\t"))
-            first_seen = parser.parse(date.replace("# ", ""))
-            if self.last_run is not None:
-                if since_last_run > first_seen:
-                    continue
+        if r.status_code == 200:
+            content = [
+                l.split("\t") for l in r.text.split("\n") if not l.startswith("#") and l
+            ]
+            df = pd.DataFrame(content)
+            df.drop([1, 3], axis=1, inplace=True)
+            df.columns = ["ip", "last_report", "count", "id"]
+            df["last_report"] = df["last_report"].str.replace("# ", "")
+            df["last_report"] = df["last_report"].apply(lambda x: parser.parse(x))
+            if self.last_run:
+                df = df[df["last_report"] > self.last_run]
+            for ix, row in df.iterrows():
+                self.analyze(row)
 
-            self.analyze(ip, first_seen, line)
-
-    def analyze(self, ip, first_seen, raw):  # pylint: disable=arguments-differ
+    def analyze(self, row):
         context = {}
-        context["first_seen"] = first_seen
+        context["first_seen"] = row["last_report"]
         context["source"] = self.name
-        context["raw"] = raw
-
+        context["count"] = row["count"]
+        context["id"] = row["id"]
+        ip = row["ip"]
         try:
             ip = Ip.get_or_create(value=ip)
             ip.add_context(context)

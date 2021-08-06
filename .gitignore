@@ -69,4 +69,5 @@ vagrant
 #Patch
 *.patch
 #venv
-venv
+venv*
+.vscode/settings.json

@@ -36,7 +36,7 @@ class OTXAlienvault(Feed):
 
         number_page = yeti_config.get("otx", "pages")
 
-        assert otx_key and number_page
+        assert otx_key and number_page, "OTX key and pages not configured in yeti.conf"
 
         headers = {"X-OTX-API-KEY": otx_key}
 
