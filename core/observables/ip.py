@@ -50,5 +50,3 @@ class Ip(Observable):
         elif iptools.ipv6.validate_ip(self.value):
             self.value = iptools.ipv6.long2ip(iptools.ipv6.ip2long(self.value))
             self.version = 6
-
-
