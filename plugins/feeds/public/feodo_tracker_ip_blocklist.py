@@ -19,14 +19,6 @@ class FeodoTrackerIPBlockList(Feed):
         for index, line in self.update_csv(
             delimiter=",",
             filter_row="first_seen_utc",
-            names=[
-                "first_seen_utc",
-                "dst_ip",
-                "dst_port",
-                "c2_status",
-                "last_online",
-                "malware",
-            ],
         ):
             if firs_line != 0:
                 self.analyze(line)
