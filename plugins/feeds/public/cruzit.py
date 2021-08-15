@@ -31,6 +31,6 @@ class Cruzit(Feed):
             obs = Ip.get_or_create(value=ip)
             obs.add_context(context)
             obs.add_source(self.name)
-            obs.tag("blocklistde")
+            obs.tag("cruzit")
         except ObservableValidationError as e:
             raise logging.error(e)
