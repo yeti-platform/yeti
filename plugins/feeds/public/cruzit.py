@@ -5,7 +5,7 @@ from core.feed import Feed
 from core.observables import Ip
 
 
-class BlocklistdeAll(Feed):
+class Cruzit(Feed):
 
     default_values = {
         "frequency": timedelta(hours=13),
