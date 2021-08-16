@@ -19,9 +19,7 @@ class BlocklistdeSSH(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-        line = line.strip()
-
-        ip = line
+        ip = line.strip()
 
         context = {"source": self.name}
 
