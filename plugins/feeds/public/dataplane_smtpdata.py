@@ -1,8 +1,9 @@
 import logging
+import pandas as pd
 from datetime import timedelta
 from core.errors import ObservableValidationError
 from core.feed import Feed
-from core.observables import Ip
+from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneSMTPData(Feed):
@@ -17,22 +18,36 @@ class DataplaneSMTPData(Feed):
     def update(self):
         resp = self._make_request(sort=False)
         lines = resp.content.decode("utf-8").split("\n")[68:-5]
-        for url in lines:
-            self.analyze(url.strip())
+        columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
+        df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
 
-    def analyze(self, line):
-        val = line.split("|")[2].strip()
+        for c in columns:
+            df[c] = df[c].str.strip()
+        df = df.dropna()
+        df["lastseen"] = pd.to_datetime(df["lastseen"])
+        if self.last_run:
+            df = df[df["lastseen"] > self.last_run]
+        for count, row in df.iterrows():
+            self.analyze(row)
 
-        context = {
-            "source": self.name,
-        }
+    def analyze(self, row):
+
+        context_ip = {"source": self.name, "lastseen": row["lastseen"]}
 
         try:
-            obs = Ip.get_or_create(value=val)
-            obs.add_context(context)
-            obs.add_source(self.name)
-            obs.tag("dataplane")
-            obs.tag("smtp")
-            obs.tag("scanning")
+            ip = Ip.get_or_create(value=row["ipaddr"])
+            ip.add_context(context_ip)
+            ip.add_source(self.name)
+            ip.tag("dataplane")
+            ip.tag("smtp")
+            ip.tag("scanning")
+            ip.tag(row["category"])
+
+            asn = AutonomousSystem.get_or_create(value=row["ASN"])
+            context_ans = {"source": self.name, "name": row["ASname"]}
+            asn.add_context(context_ans)
+            asn.add_source(self.name)
+            asn.tag("dataplane")
+            asn.active_link_to(ip, "AS", self.name)
         except ObservableValidationError as e:
             raise logging.error(e)
