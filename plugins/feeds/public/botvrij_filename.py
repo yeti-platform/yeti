@@ -17,6 +17,7 @@ class BotvrijFilename(Feed):
     def update(self):
         resp = self._make_request(sort=False)
         lines = resp.content.decode("utf-8").split("\n")[6:-1]
+
         for line in lines:
             self.analyze(line.strip())
 
