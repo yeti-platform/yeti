@@ -17,8 +17,8 @@ class BotvrijHostname(Feed):
     def update(self):
         resp = self._make_request(sort=False)
         lines = resp.content.decode("utf-8").split("\n")[6:-1]
-        for url in lines:
-            self.analyze(url.strip())
+        for line in lines:
+            self.analyze(line.strip())
 
     def analyze(self, line):
         hostn, descr = line.split(" # hostname - ")
