@@ -1,4 +1,5 @@
 import logging
+import pandas as pd
 from datetime import timedelta
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -17,6 +18,7 @@ class DataplaneTelenetLogin(Feed):
     def update(self):
         resp = self._make_request(sort=False)
         columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
+        lines = resp.content.decode("utf-8").split("\n")[64:-5]
         df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
 
         for c in columns:

@@ -18,7 +18,7 @@ class DataplaneProto41(Feed):
     def update(self):
         resp = self._make_request(sort=False)
         lines = resp.content.decode("utf-8").split("\n")[64:-5]
-        columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
+        columns = ["ASN", "ASname", "ipaddr", "firstseen", "lastseen", "category"]
         df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
 
         for c in columns:
@@ -31,7 +31,11 @@ class DataplaneProto41(Feed):
             self.analyze(row)
 
     def analyze(self, row):
-        context_ip = {"source": self.name, "lastseen": row["lastseen"]}
+        context_ip = {
+            "source": self.name,
+            "firstseen": row["firstseen"],
+            "lastseen": row["lastseen"],
+        }
         try:
             ip = Ip.get_or_create(value=row["ipaddr"])
             ip.add_context(context_ip)
