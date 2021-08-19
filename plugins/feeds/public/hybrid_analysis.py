@@ -33,7 +33,11 @@ class HybridAnalysis(Feed):
         sha256 = Hash.get_or_create(value=item["sha256"])
         f_hyb.active_link_to(sha256, "sha256", self.name)
         tags = []
-        context = {"source": self.name, "date": first_seen, "date_added": datetime.utcnow()}
+        context = {
+            "source": self.name,
+            "date": first_seen,
+            "date_added": datetime.utcnow(),
+        }
 
         if "vxfamily" in item:
             context["vxfamily"] = item["vxfamily"]

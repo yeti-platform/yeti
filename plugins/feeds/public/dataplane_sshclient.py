@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-from datetime import timedelta,datetime
+from datetime import timedelta, datetime
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip, AutonomousSystem
@@ -32,7 +32,11 @@ class DataplaneSSHClient(Feed):
 
     def analyze(self, row):
 
-        context_ip = {"source": self.name, "last_seen": row["lastseen"], "date_added": datetime.utcnow()}
+        context_ip = {
+            "source": self.name,
+            "last_seen": row["lastseen"],
+            "date_added": datetime.utcnow(),
+        }
 
         try:
             ip = Ip.get_or_create(value=row["ipaddr"])

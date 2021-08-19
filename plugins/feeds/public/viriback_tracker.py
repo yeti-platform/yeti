@@ -29,7 +29,11 @@ class ViriBackTracker(Feed):
         ip = line["IP"]
         first_seen = line["FirstSeen"]
         family = family.lower()
-        context = {"first_seen": first_seen, "source": self.name, "date_added": datetime.utcnow()}
+        context = {
+            "first_seen": first_seen,
+            "source": self.name,
+            "date_added": datetime.utcnow(),
+        }
 
         if url:
             try:

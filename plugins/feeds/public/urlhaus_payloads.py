@@ -39,7 +39,11 @@ class UrlHausPayloads(Feed):
         sha256_hash = line["sha256"]
         signature = line["signature"]
 
-        context = {"source": self.name, "first_seen": first_seen, "date_added": datetime.utcnow()}
+        context = {
+            "source": self.name,
+            "first_seen": first_seen,
+            "date_added": datetime.utcnow(),
+        }
 
         if url:
             try:

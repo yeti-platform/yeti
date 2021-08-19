@@ -43,7 +43,7 @@ class FeodoTrackerIPBlockList(Feed):
 
         try:
             ip_obs = Ip.get_or_create(value=line["dst_ip"])
-            ip_obs.add_context(context, dedup_list=["last_online","date_added"])
+            ip_obs.add_context(context, dedup_list=["last_online", "date_added"])
             ip_obs.tag(tags)
 
         except ObservableValidationError as e:

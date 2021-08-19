@@ -39,7 +39,11 @@ class FutexTracker(Feed):
         asn = line["as"]
 
         tags = ["collected_by_honeypot"]
-        context = {"source": self.name, "country": country, "date_added": datetime.utcnow()}
+        context = {
+            "source": self.name,
+            "country": country,
+            "date_added": datetime.utcnow(),
+        }
 
         url_obs = None
 

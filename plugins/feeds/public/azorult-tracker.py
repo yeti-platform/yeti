@@ -1,5 +1,5 @@
 """Azorult Tracker feeds"""
-from datetime import timedelta,datetime
+from datetime import timedelta, datetime
 import logging
 import pandas as pd
 import numpy as np

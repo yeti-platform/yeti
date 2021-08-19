@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta,datetime
+from datetime import timedelta, datetime
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import File
@@ -24,7 +24,11 @@ class BotvrijFilename(Feed):
     def analyze(self, line):
         hostn, descr = line.split(" # filename - ")
 
-        context = {"source": self.name, "description": descr , "date_added": datetime.utcnow()}
+        context = {
+            "source": self.name,
+            "description": descr,
+            "date_added": datetime.utcnow(),
+        }
 
         try:
             obs = File.get_or_create(value=hostn)
