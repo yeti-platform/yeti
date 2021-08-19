@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -40,7 +40,7 @@ class Fumik0Tracker(Feed):
         if "http" not in url:
             url = "http://" + url
         context = {}
-        context["date_added"] = block["first_seen"]
+        context["first_seen"] = block["first_seen"]
         context["as"] = block["server"]["AS"]
         context["country"] = block["server"]["country"]
         context["ip"] = block["server"]["ip"]
@@ -48,11 +48,12 @@ class Fumik0Tracker(Feed):
         context["md5"] = block["hash"]["md5"]
         context["sha1"] = block["hash"]["sha1"]
         context["sha256"] = block["hash"]["sha256"]
+        context["date_added"] = datetime.utcnow()
 
         url_data = None
         try:
             url_data = Url.get_or_create(value=url)
-            url_data.add_context(context)
+            url_data.add_context(context, dedup_list=["date_added"])
             url_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)
@@ -60,7 +61,7 @@ class Fumik0Tracker(Feed):
         if block.get("server", {}).get("ip", ""):
             try:
                 ip = Ip.get_or_create(value=block["server"]["ip"])
-                ip.add_context(context)
+                ip.add_context(context, dedup_list=["date_added"])
                 ip.add_source(self.name)
                 if url_data:
                     url_data.active_link_to(ip, "ip", self.name, clean_old=False)
@@ -72,7 +73,7 @@ class Fumik0Tracker(Feed):
             for hash_type in block["hash"]:
                 try:
                     hash_data = Hash.get_or_create(value=block["hash"][hash_type])
-                    hash_data.add_context(context)
+                    hash_data.add_context(context, dedup_list=["date_added"])
                     hash_data.add_source(self.name)
                     if url_data:
                         url_data.active_link_to(

@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core import Feed
 from core.config.config import yeti_config
@@ -38,7 +38,7 @@ class VirusTotalHunting(Feed):
         tags = []
 
         json_string = item.to_json()
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
 
         f_vt = File.get_or_create(value="FILE:{}".format(item["sha256"]))
 
@@ -58,6 +58,7 @@ class VirusTotalHunting(Feed):
         context["raw"] = json_string
         context["size"] = item["size"]
         context["score vt"] = "%s/%s" % (item["positives"], item["total"])
+        context["date_added"] = datetime.utcnow()
 
         f_vt.tag(tags)
-        f_vt.add_context(context)
+        f_vt.add_context(context, dedup_list=["date_added"])

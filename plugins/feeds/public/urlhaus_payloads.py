@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -39,14 +39,14 @@ class UrlHausPayloads(Feed):
         sha256_hash = line["sha256"]
         signature = line["signature"]
 
-        context = {"source": self.name, "first_seen": first_seen}
+        context = {"source": self.name, "first_seen": first_seen, "date_added": datetime.utcnow()}
 
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
                 if signature != "None":
                     url_obs.tag(signature)
-                url_obs.add_context(context)
+                url_obs.add_context(context, dedup_list=["date_added"])
                 url_obs.add_source(self.name)
             except ObservableValidationError as e:
                 logging.error(e)
@@ -55,12 +55,12 @@ class UrlHausPayloads(Feed):
             try:
                 malware_file = File.get_or_create(value="FILE:{}".format(sha256_hash))
 
-                malware_file.add_context(context)
+                malware_file.add_context(context, dedup_list=["date_added"])
                 malware_file.tag(filetype)
 
                 sha256_obs = Hash.get_or_create(value=sha256_hash)
                 sha256_obs.tag(filetype)
-                sha256_obs.add_context(context)
+                sha256_obs.add_context(context, dedup_list=["date_added"])
                 if signature != "None":
                     sha256_obs.tag(signature)
             except ObservableValidationError as e:
@@ -69,7 +69,7 @@ class UrlHausPayloads(Feed):
         if md5_hash:
             try:
                 md5_obs = Hash.get_or_create(value=md5_hash)
-                md5_obs.add_context(context)
+                md5_obs.add_context(context, dedup_list=["date_added"])
                 md5_obs.tag(filetype)
 
                 if signature != "None":

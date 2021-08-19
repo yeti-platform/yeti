@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -32,10 +32,11 @@ class DynamicDomains(Feed):
         context = {}
         context["source"] = self.name
         context["provider"] = sline[0]
+        context["date_added"] = datetime.utcnow()
 
         try:
             hostname = Hostname.get_or_create(value=hostname)
-            hostname.add_context(context)
+            hostname.add_context(context, dedup_list=["date_added"])
             hostname.add_source(self.name)
             hostname.tag("dyndns")
         except ObservableValidationError:

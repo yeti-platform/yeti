@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from dateutil import parser
 
@@ -30,12 +30,13 @@ class IPSpamList(Feed):
             "first_seen": line["first_seen"],
             "last_seen": parser.parse(line["last_seen"]),
             "attack_count": line["attacks_count"],
+            "date_added": datetime.utcnow(),
         }
         ip_address = line["ip_address"]
         try:
             ip_obs = Ip.get_or_create(value=ip_address)
             ip_obs.tag(context["threat"])
             ip_obs.add_source(self.name)
-            ip_obs.add_context(context)
+            ip_obs.add_context(context, dedup_list=["date_added"])
         except ObservableValidationError as e:
             logging.error("Error in IP format %s %s" % (ip_address, e))

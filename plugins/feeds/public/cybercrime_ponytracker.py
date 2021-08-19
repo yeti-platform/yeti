@@ -38,19 +38,21 @@ class CybercrimePonyTracker(Feed):
         observable_sample = item["title"]
         context_sample = {}
         context_sample["description"] = "Pony sample"
-        context_sample["date_added"] = pub_date
+        context_sample["first_seen"] = pub_date
         context_sample["source"] = self.name
+        context_sample["date_added"] = datetime.utcnow()
 
         link_c2 = re.search("https?://[^ ]*", item["description"].lower()).group()
         observable_c2 = link_c2
         context_c2 = {}
         context_c2["description"] = "Pony c2"
-        context_c2["date_added"] = pub_date
+        context_c2["first_seen"] = pub_date
         context_c2["source"] = self.name
+        context_c2["date_added"] = datetime.utcnow()
 
         try:
             sample = Hash.get_or_create(value=observable_sample)
-            sample.add_context(context_sample)
+            sample.add_context(context_sample, dedup_list=["date_added"])
             sample.add_source(self.name)
             sample_tags = ["pony", "objectives"]
             sample.tag(sample_tags)

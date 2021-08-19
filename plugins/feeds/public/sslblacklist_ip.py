@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -32,12 +32,13 @@ class SSLBlackListIP(Feed):
         port = line["DstPort"]
         context = dict(source=self.name)
         context["first_seen"] = first_seen
+        context["date_added"] = datetime.utcnow()
 
         try:
             ip_obs = Ip.get_or_create(value=dst_ip)
             ip_obs.add_source(self.name)
             ip_obs.tag(tags)
-            ip_obs.add_context(context)
+            ip_obs.add_context(context, dedup_list=["date_added"])
         except ObservableValidationError as e:
             logging.error(e)
             return False
@@ -47,7 +48,7 @@ class SSLBlackListIP(Feed):
             url = Url.get_or_create(value=_url)
             url.add_source(self.name)
             url.tag(tags)
-            url.add_context(context)
+            url.add_context(context, dedup_list=["date_added"])
             if ip_obs:
                 url.active_link_to(ip_obs, "ip", self.name)
         except ObservableValidationError as e:

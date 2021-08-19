@@ -40,10 +40,11 @@ class RulezSKBruteforceBlocker(Feed):
         context["source"] = self.name
         context["count"] = row["count"]
         context["id"] = row["id"]
+        context["date_added"] = datetime.utcnow()
         ip = row["ip"]
         try:
             ip = Ip.get_or_create(value=ip)
-            ip.add_context(context)
+            ip.add_context(context, dedup_list=["date_added"])
             ip.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)

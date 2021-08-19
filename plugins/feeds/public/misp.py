@@ -1,5 +1,5 @@
 import logging
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from urllib.parse import urljoin
 import pandas as pd
 from pymisp.api import PyMISP
@@ -130,6 +130,7 @@ class MispFeed(Feed):
         galaxies_to_context = []
 
         context = {}
+        context["date_added"] = datetime.utcnow()
         context["source"] = self.instances[instance]["name"]
         external_analysis = [
             attr["value"]
@@ -187,4 +188,4 @@ class MispFeed(Feed):
             if tags:
                 obs.tag(tags)
 
-            obs.add_context(context)
+            obs.add_context(context, dedup_list=["date_added"])

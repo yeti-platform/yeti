@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -51,13 +51,14 @@ class UrlHaus(Feed):
             "threat": threat,
             "reporter": source,
             "first_seen": first_seen,
+            "date_added": datetime.utcnow(),
         }
 
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
                 url_obs.tag(tags.split(","))
-                url_obs.add_context(context)
+                url_obs.add_context(context, dedup_list=["date_added"])
                 url_obs.add_source(self.name)
             except ObservableValidationError as e:
                 logging.error(e)

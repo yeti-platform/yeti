@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -29,12 +29,12 @@ class ViriBackTracker(Feed):
         ip = line["IP"]
         first_seen = line["FirstSeen"]
         family = family.lower()
-        context = {"first_seen": first_seen, "source": self.name}
+        context = {"first_seen": first_seen, "source": self.name, "date_added": datetime.utcnow()}
 
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
-                url_obs.add_context(context)
+                url_obs.add_context(context, dedup_list=["date_added"])
                 url_obs.add_source(self.name)
                 url_obs.tag(["c2", family])
             except ObservableValidationError as e:
@@ -43,7 +43,7 @@ class ViriBackTracker(Feed):
         if ip:
             try:
                 ip_obs = Ip.get_or_create(value=ip)
-                ip_obs.add_context(context)
+                ip_obs.add_context(context, dedup_list=["date_added"])
                 ip_obs.tag(family.lower())
             except ObservableValidationError as e:
                 logging.error(e)
