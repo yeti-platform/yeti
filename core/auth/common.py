@@ -15,7 +15,7 @@ def generate_session_token(user):
     )
 
     session.clear()
-    session["token"] = token.decode("utf-8")
-    user.session_token = token.decode("utf-8")
+    session["token"] = token
+    user.session_token = token
 
     return user.save()
