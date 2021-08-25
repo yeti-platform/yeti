@@ -342,6 +342,8 @@ class Node(YetiDocument):
         "abstract": True,
     }
 
+    SEARCH_ALIASES = {}
+
     @classmethod
     def get_form(klass):
         form = model_form(klass, exclude=klass.exclude_fields)
