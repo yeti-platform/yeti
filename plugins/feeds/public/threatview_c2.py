@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip, Hostname
@@ -24,7 +24,7 @@ class ThreatviewC2(Feed):
     def analyze(self, line):
         line = line.strip()
 
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
 
         try:
             if re.match(r'^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$', line):
