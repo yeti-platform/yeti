@@ -18,11 +18,11 @@
 
 ##
 ## Use these settings to configure Yeti tags.
-## If you specify expiration = 7776000, then the tag will expire for 90 days.
+## If you specify default_tag_expiration = 7776000, then the tag will expire for 90 days.
 ## Value must be in seconds (7776000 seconds is 90 days).
 ##
 
-# expiration = 7776000
+# default_tag_expiration = 7776000
 
 [mongodb]
 
