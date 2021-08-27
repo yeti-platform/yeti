@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -22,8 +22,9 @@ class BenkowTrackerRat(Feed):
     def analyze(self, line):
 
         context = {}
-        context["date_added"] = line["date"]
+        context["first_seen"] = line["date"]
         context["source"] = self.name
+        context["date_added"] = datetime.utcnow()
 
         family = line["type"]
         url = line["url"]
@@ -39,7 +40,7 @@ class BenkowTrackerRat(Feed):
         try:
             if url:
                 url = Url.get_or_create(value=url)
-                url.add_context(context)
+                url.add_context(context, dedup_list=["date_added"])
                 url.add_source(self.name)
                 url.tag(tags)
 
@@ -49,7 +50,7 @@ class BenkowTrackerRat(Feed):
         try:
             if ip:
                 ip = Ip.get_or_create(value=ip)
-                ip.add_context(context)
+                ip.add_context(context, dedup_list=["date_added"])
                 ip.add_source(self.name)
                 ip.tag(tags)
 

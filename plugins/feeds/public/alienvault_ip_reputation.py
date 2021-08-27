@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -53,9 +53,10 @@ class AlienVaultIPReputation(Feed):
             context["threat"] = category
             context["reliability"] = item["number_1"]
             context["risk"] = item["number_2"]
+            context["date_added"] = datetime.utcnow()
 
             ip.tag(category)
-            ip.add_context(context)
+            ip.add_context(context, dedup_list=["date_added"])
 
         except Exception as e:
             logging.error("Error to process the item %s %s" % (item, e))

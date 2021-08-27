@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip
@@ -25,12 +25,12 @@ class Cruzit(Feed):
 
         ip = line
 
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
 
         try:
             obs = Ip.get_or_create(value=ip)
-            obs.add_context(context)
+            obs.add_context(context, dedup_list=["date_added"])
             obs.add_source(self.name)
             obs.tag("cruzit")
         except ObservableValidationError as e:
-            raise logging.error(e)
+            logging.error(e)

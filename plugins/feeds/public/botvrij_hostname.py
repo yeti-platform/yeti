@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Hostname
@@ -24,12 +24,16 @@ class BotvrijHostname(Feed):
     def analyze(self, line):
         hostn, descr = line.split(" # hostname - ")
 
-        context = {"source": self.name, "description": descr}
+        context = {
+            "source": self.name,
+            "description": descr,
+            "date_added": datetime.utcnow(),
+        }
 
         try:
             obs = Hostname.get_or_create(value=hostn)
-            obs.add_context(context)
+            obs.add_context(context, dedup_list=["date_added"])
             obs.add_source(self.name)
             obs.tag("botvrij")
         except ObservableValidationError as e:
-            raise logging.error(e)
+            logging.error(e)

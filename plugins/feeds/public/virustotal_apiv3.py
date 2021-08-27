@@ -44,7 +44,7 @@ class VirusTotalPriv(Feed):
     def analyze(self, item):
         tags = []
 
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
 
         # Parse value of interest
         subject = item["attributes"]["rule_name"]
@@ -65,6 +65,7 @@ class VirusTotalPriv(Feed):
         # context['source_country'] = item["attributes"]['source_country']
 
         context["raw"] = item
+        context["date_added"] = datetime.utcnow()
 
         f_vt3.tag(str(tags))
-        f_vt3.add_context(context)
+        f_vt3.add_context(context, dedup_list=["date_added"])

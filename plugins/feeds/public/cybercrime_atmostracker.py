@@ -39,8 +39,9 @@ class CybercrimeAtmosTracker(Feed):
         context_sample = {}
 
         context_sample["description"] = "Atmos sample"
-        context_sample["date_added"] = pub_date
+        context_sample["first_seen"] = pub_date
         context_sample["source"] = self.name
+        context_sample["date_added"] = datetime.utcnow()
 
         link_c2 = re.search(
             "<a href[^>]+>(?P<url>[^<]+)", item["description"].lower()
@@ -48,12 +49,13 @@ class CybercrimeAtmosTracker(Feed):
         observable_c2 = link_c2
         context_c2 = {}
         context_c2["description"] = "Atmos c2"
-        context_c2["date_added"] = pub_date
+        context_c2["first_seen"] = pub_date
         context_c2["source"] = self.name
+        context_c2["date_added"] = datetime.utcnow()
 
         try:
             sample = Hash.get_or_create(value=observable_sample)
-            sample.add_context(context_sample)
+            sample.add_context(context_sample, dedup_list=["date_added"])
             sample.add_source(self.name)
             sample_tags = ["atmos", "objectives"]
             sample.tag(sample_tags)
@@ -63,7 +65,7 @@ class CybercrimeAtmosTracker(Feed):
 
         try:
             c2 = Url.get_or_create(value=observable_c2)
-            c2.add_context(context_c2)
+            c2.add_context(context_c2, dedup_list=["date_added"])
             c2.add_source(self.name)
             c2_tags = ["c2", "atmos"]
             c2.tag(c2_tags)

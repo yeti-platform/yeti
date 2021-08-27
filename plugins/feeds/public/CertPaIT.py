@@ -49,9 +49,10 @@ class CertPaIT(Feed):
     def analyze(self, item, pub_date):
         md5 = item["title"].replace("MD5: ", "")
         context = {}
-        context["date_added"] = pub_date
+        context["first_seen"] = pub_date
         context["source"] = self.name
         context["url"] = item["link"]
+        context["date_added"] = datetime.utcnow()
 
         matched = self.re_generic_details.match(item["description"])
         if matched:
@@ -65,7 +66,7 @@ class CertPaIT(Feed):
         try:
             if md5:
                 hash_data = Hash.get_or_create(value=md5)
-                hash_data.add_context(context)
+                hash_data.add_context(context, dedup_list=["date_added"])
                 hash_data.add_source(self.name)
         except ObservableValidationError as e:
             logging.error(e)

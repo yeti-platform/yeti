@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-from datetime import timedelta
+from datetime import timedelta, datetime
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip, AutonomousSystem
@@ -32,11 +32,15 @@ class DataplaneVNC(Feed):
 
     def analyze(self, row):
 
-        context_ip = {"source": self.name, "lastseen": row["lastseen"]}
+        context_ip = {
+            "source": self.name,
+            "last_seen": row["lastseen"],
+            "date_added": datetime.utcnow(),
+        }
 
         try:
             ip = Ip.get_or_create(value=row["ipaddr"])
-            ip.add_context(context_ip)
+            ip.add_context(context_ip, dedup_list=["date_added"])
             ip.add_source(self.name)
             ip.tag("dataplane")
             ip.tag("vnc")
@@ -44,9 +48,9 @@ class DataplaneVNC(Feed):
 
             asn = AutonomousSystem.get_or_create(value=row["ASN"])
             context_ans = {"source": self.name, "name": row["ASname"]}
-            asn.add_context(context_ans)
+            asn.add_context(context_ans, dedup_list=["date_added"])
             asn.add_source(self.name)
             asn.tag("dataplane")
             asn.active_link_to(ip, "AS", self.name)
         except ObservableValidationError as e:
-            raise logging.error(e)
+            logging.error(e)

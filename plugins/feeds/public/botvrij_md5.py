@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Hash
@@ -24,12 +24,16 @@ class BotvrijMD5(Feed):
     def analyze(self, line):
         val, descr = line.split(" # md5 - ")
 
-        context = {"source": self.name, "description": descr}
+        context = {
+            "source": self.name,
+            "description": descr,
+            "date_added": datetime.utcnow(),
+        }
 
         try:
             obs = Hash.get_or_create(value=val)
-            obs.add_context(context)
+            obs.add_context(context, dedup_list=["date_added"])
             obs.add_source(self.name)
             obs.tag("botvrij")
         except ObservableValidationError as e:
-            raise logging.error(e)
+            logging.error(e)
