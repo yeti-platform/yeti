@@ -16,7 +16,7 @@ class Tag(Node):
     produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
     replaces = ListField(StringField())
     default_expiration = TimeDeltaField(
-        default=timedelta(seconds=yeti_config.get("tag", "expiration"))
+        default=timedelta(seconds=yeti_config.get("tag", "default_tag_expiration"))
     )
 
     meta = {"ordering": ["name"], "indexes": ["name", "replaces"]}
