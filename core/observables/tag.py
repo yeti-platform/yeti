@@ -62,7 +62,7 @@ class ObservableTag(EmbeddedDocument):
     first_seen = DateTimeField(default=datetime.utcnow)
     last_seen = DateTimeField(default=datetime.utcnow)
     expiration = TimeDeltaField(
-        default=timedelta(seconds=yeti_config.get("tag", "expiration"))
+        default=timedelta(seconds=yeti_config.get("tag", "default_tag_expiration"))
     )
     fresh = BooleanField(default=True)
 
