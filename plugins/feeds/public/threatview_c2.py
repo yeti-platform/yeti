@@ -27,9 +27,9 @@ class ThreatviewC2(Feed):
         context = {"source": self.name, "date_added": datetime.utcnow()}
 
         try:
-            if re.match(r'^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$', line):
+            if re.match(r"^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", line):
                 obs = Ip.get_or_create(value=line)
-            elif re.match(r'^\w{1,}\.\w{2,}$', line):
+            elif re.match(r"^\w{1,}\.\w{2,}$", line):
                 obs = Hostname.get_or_create(value=line)
             else:
                 return
