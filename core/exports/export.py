@@ -7,7 +7,7 @@ from datetime import datetime
 import traceback
 import hashlib
 
-from mongoengine import ListField, StringField, Q, ReferenceField, PULL
+from mongoengine import ListField, StringField, Q, ReferenceField, PULL, BooleanField
 from jinja2 import Environment, FileSystemLoader
 from flask import url_for
 from mongoengine import DoesNotExist
@@ -95,6 +95,7 @@ class Export(ScheduleEntry):
     include_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     exclude_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
     ignore_tags = ListField(ReferenceField(Tag, reverse_delete_rule=PULL))
+    fresh_tags = BooleanField(default=True)
     output_dir = StringField(default="exports")
     acts_on = StringField(verbose_name="Acts on")
     template = ReferenceField(ExportTemplate)
@@ -115,15 +116,31 @@ class Export(ScheduleEntry):
 
     def execute(self):
         q_include = Q()
-        for t in self.include_tags:
-            q_include |= Q(tags__match={"name": t.name, "fresh": True})
-        q_exclude = Q(tags__name__nin=[t.name for t in self.exclude_tags])
-        q = (
-            Q(tags__not__size=0, tags__match={"fresh": True})
-            & q_include
-            & q_exclude
-            & Q(_cls="Observable.{}".format(self.acts_on))
-        )
+        q_exclude = Q()
+        if self.fresh_tags:  # including
+            for t in self.include_tags:
+                q_include |= Q(tags__match={"name": t.name, "fresh": True})
+        else:
+            q_include |= Q(tags__name__in=[t.name for t in self.include_tags])
+        if self.fresh_tags:  # excluding
+            for t in self.exclude_tags:
+                q_exclude |= Q(tags__match__ne={"name": t.name, "fresh": True})
+        else:
+            q_exclude |= Q(tags__name__nin=[t.name for t in self.exclude_tags])
+        if self.fresh_tags:
+            q = (
+                Q(tags__not__size=0, tags__match={"fresh": True})
+                & q_include
+                & q_exclude
+                & Q(_cls="Observable.{}".format(self.acts_on))
+            )
+        else:
+            q = (
+                Q(tags__not__size=0)
+                & q_include
+                & q_exclude
+                & Q(_cls="Observable.{}".format(self.acts_on))
+            )
 
         return self.template.render(
             self.filter_ignore_tags(Observable.objects(q).no_cache()), self.output_file
