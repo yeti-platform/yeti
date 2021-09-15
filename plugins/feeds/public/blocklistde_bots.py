@@ -10,7 +10,7 @@ class BlocklistdeBots(Feed):
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeBots",
-        "source": "https://lists.blocklist.de/lists/sip.txt",
+        "source": "https://lists.blocklist.de/lists/bots.txt",
         "description": "All IP addresses which have been reported within the last 48 hours as having run attacks attacks on the RFI-Attacks, REG-Bots, IRC-Bots or BadBots (BadBots = he has posted a Spam-Comment on a open Forum or Wiki).",
     }
 
