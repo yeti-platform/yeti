@@ -12,7 +12,7 @@ class DataplaneSIPRegistr(Feed):
         "frequency": timedelta(hours=2),
         "name": "DataplaneSIPRegistr",
         "source": "https://dataplane.org/sipregistration.txt",
-        "description": "Entries below are records of source IP addresses that have been identified as sending SIP INVITE operations.",
+        "description": "Entries below consist of fields with identifying characteristics of a source IP address that has been seen initiating a SIP REGISTER operation to a remote host.",
     }
 
     def update(self):
