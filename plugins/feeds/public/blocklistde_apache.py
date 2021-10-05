@@ -10,7 +10,7 @@ class BlocklistdeApache(Feed):
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeApache",
-        "source": " https://lists.blocklist.de/lists/apache.txt",
+        "source": "https://lists.blocklist.de/lists/apache.txt",
         "description": "All IP addresses which have been reported within the last 48 hours as having run attacks on the service Apache, Apache-DDOS, RFI-Attacks.",
     }
 
