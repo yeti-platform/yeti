@@ -107,3 +107,8 @@
 
 [vt]
 # key=
+
+[passivedns]
+login=
+password=
+url=
