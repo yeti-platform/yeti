@@ -94,4 +94,4 @@ uwsgi
 pymisp
 yara-python
 python-whois
--e  git+https://github.com/PassiveDNS/pypdns@008810678286774eb3dab95c258b3e587ac8b33b#egg=pypdns
+python3-pydns
