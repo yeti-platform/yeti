@@ -23,7 +23,7 @@ class PassiveDNS(Feed):
         url = yeti_config.get("passivedns", "url")
         pdns = api.Api_PDNS(url)
         pdns.connect(login, password)
-        
+
         r = pdns.get_alerts(limit=100)
 
         df = pd.DataFrame(r["data"])
@@ -40,11 +40,17 @@ class PassiveDNS(Feed):
         ip = Ip.get_or_create(value=item["Current IP address"])
         infos_ip = pdns.get_reverse(item["Current IP address"])
         infos_domain = pdns.get_records(item["Domain name"])
-        
-        infos = list(filter(lambda x:x['domain_name'] == item["Domain name"] ,
-        infos_ip['resolution_list']))[0]
-        
-        company = Company.get_or_create(name=infos_domain["ip"]["location"]["organization"])
+
+        infos = list(
+            filter(
+                lambda x: x["domain_name"] == item["Domain name"],
+                infos_ip["resolution_list"],
+            )
+        )[0]
+
+        company = Company.get_or_create(
+            name=infos_domain["ip"]["location"]["organization"]
+        )
         context_ip["ISP"] = infos_domain["ip"]["location"]["ISP"]
         context_ip["country"] = infos_domain["ip"]["location"]["country"]
         context_ip["last_updated"] = infos["last_updated_at"]
