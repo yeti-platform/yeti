@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -19,14 +19,6 @@ class FeodoTrackerIPBlockList(Feed):
         for index, line in self.update_csv(
             delimiter=",",
             filter_row="first_seen_utc",
-            names=[
-                "first_seen_utc",
-                "dst_ip",
-                "dst_port",
-                "c2_status",
-                "last_online",
-                "malware",
-            ],
         ):
             if firs_line != 0:
                 self.analyze(line)
@@ -46,11 +38,12 @@ class FeodoTrackerIPBlockList(Feed):
             "last_online": line["last_online"],
             "c2_status": line["c2_status"],
             "port": line["dst_port"],
+            "date_added": datetime.utcnow(),
         }
 
         try:
             ip_obs = Ip.get_or_create(value=line["dst_ip"])
-            ip_obs.add_context(context, dedup_list=["last_online"])
+            ip_obs.add_context(context, dedup_list=["last_online", "date_added"])
             ip_obs.tag(tags)
 
         except ObservableValidationError as e:

@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 import pandas as pd
 
@@ -37,7 +37,7 @@ class PhishTank(Feed):
     # and tag it with 'phish'
     def analyze(self, line):
 
-        tags = ["phishing"]
+        tags = ["phishing", "phishtank"]
 
         url = line["url"]
 
@@ -49,12 +49,13 @@ class PhishTank(Feed):
             "verification_time": line["verification_time"],
             "online": line["online"],
             "target": line["target"],
+            "date_added": datetime.utcnow(),
         }
 
         if url is not None and url != "":
             try:
                 url = Url.get_or_create(value=url)
-                url.add_context(context)
+                url.add_context(context, dedup_list=["date_added"])
                 url.add_source(self.name)
                 url.tag(tags)
             except ObservableValidationError as e:

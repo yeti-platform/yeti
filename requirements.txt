@@ -94,3 +94,4 @@ uwsgi
 pymisp
 yara-python
 python-whois
+python3-pdns

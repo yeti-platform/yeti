@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.feed import Feed
 from core.observables import Ip
@@ -58,11 +58,12 @@ class TorExitNodes(Feed):
             "contactinfo": fields[7],
             "source": self.name,
             "description": "Tor exit node: %s (%s)" % (fields[1], fields[0]),
+            "date_added": datetime.utcnow(),
         }
 
         try:
             ip = Ip.get_or_create(value=fields[0])
-            ip.add_context(context)
+            ip.add_context(context, dedup_list=["date_added"])
             ip.add_source(self.name)
             ip.tag(["tor"])
         except ObservableValidationError as e:

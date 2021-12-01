@@ -1,10 +1,8 @@
 from __future__ import unicode_literals
-
+from core.config.config import yeti_config
 import re
 from datetime import datetime, timedelta
-
 from mongoengine import *
-
 from core.config.mongoengine_extras import TimeDeltaField
 from core.database import Node
 from core.errors import TagValidationError
@@ -17,7 +15,9 @@ class Tag(Node):
     created = DateTimeField(default=datetime.utcnow)
     produces = ListField(ReferenceField("Tag", reverse_delete_rule=PULL))
     replaces = ListField(StringField())
-    default_expiration = TimeDeltaField(default=timedelta(days=90))
+    default_expiration = TimeDeltaField(
+        default=timedelta(seconds=yeti_config.get("tag", "default_tag_expiration"))
+    )
 
     meta = {"ordering": ["name"], "indexes": ["name", "replaces"]}
 
@@ -61,7 +61,9 @@ class ObservableTag(EmbeddedDocument):
     name = StringField(required=True)
     first_seen = DateTimeField(default=datetime.utcnow)
     last_seen = DateTimeField(default=datetime.utcnow)
-    expiration = TimeDeltaField(default=timedelta(days=90))
+    expiration = TimeDeltaField(
+        default=timedelta(seconds=yeti_config.get("tag", "default_tag_expiration"))
+    )
     fresh = BooleanField(default=True)
 
     def __unicode__(self):

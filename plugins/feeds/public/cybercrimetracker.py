@@ -48,8 +48,9 @@ class CybercrimeTracker(Feed):
 
         context = {}
         context["description"] = "{} C2 server".format(c2_IP)
-        context["date_added"] = pub_date
+        context["first_seen"] = pub_date
         context["source"] = self.name
+        context["date_added"] = datetime.utcnow()
 
         c2 = None
         e = None
@@ -75,11 +76,11 @@ class CybercrimeTracker(Feed):
             tags.extend(["banker"])
 
         if e:
-            e.add_context(context)
+            e.add_context(context, dedup_list=["date_added"])
             e.add_source(self.name)
             e.tag(tags)
 
         if c2:
-            c2.add_context(context)
+            c2.add_context(context, dedup_list=["date_added"])
             c2.add_source(self.name)
             c2.tag(tags)

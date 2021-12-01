@@ -211,6 +211,7 @@ class Feed(ScheduleEntry):
                     quoting=True,
                     skipinitialspace=True,
                 )
+
             elif header and comment and not names:
                 df = pd.read_csv(
                     StringIO(feed),
@@ -235,6 +236,7 @@ class Feed(ScheduleEntry):
                     quoting=True,
                     skipinitialspace=True,
                 )
+
             elif not header and not comment and not names:
                 df = pd.read_csv(
                     StringIO(feed),

@@ -88,6 +88,9 @@
                 {% endfor %}
               </select>
             </div>
+            <div class="form-group">
+              <input type="checkbox" name="fresh_tags" checked> <label for="fresh_tags">Only consider <code>fresh</code> tags in include and exclude</label>
+            </div>
             <button type="button" id="yeti-new-button" data-url="{{ url_for('api.Export:index') }}" class="btn btn-default btn-sm yeti-new" name="save">New</button>
             <button type="button" id="yeti-save-button" data-url="{{ url_for('api.Export:index') }}" class="btn btn-primary btn-sm yeti-save" data-clear="true" name="save">Save</button>
             <button type="button" id="yeti-delete-button" data-url="{{ url_for('api.Export:index') }}" class="btn btn-danger btn-sm yeti-delete" name="delete" disabled="disabled">Delete</button>

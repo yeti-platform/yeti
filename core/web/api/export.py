@@ -89,6 +89,10 @@ class Export(CrudApi):
 
     def _parse_request(self, json):
         params = json
+        if "fresh_tags" in params:
+            params["fresh_tags"] = True
+        else:
+            params["fresh_tags"] = False
         params["frequency"] = string_to_timedelta(params.get("frequency", "1:00:00"))
         params["ignore_tags"] = [
             Tag.objects.get(name=name.strip())

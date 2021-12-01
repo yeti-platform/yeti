@@ -1,7 +1,7 @@
 import re
 import sys
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from core.observables import Url, Ip, Hash, AutonomousSystem
 from core.feed import Feed
 from core.errors import ObservableValidationError
@@ -43,6 +43,7 @@ class MalcodeBinaries(Feed):
             context = g.groupdict()
             context["link"] = item["link"]
             context["source"] = self.name
+            context["date_added"] = datetime.utcnow()
 
             url = False
 
@@ -50,7 +51,7 @@ class MalcodeBinaries(Feed):
                 url_string = context.pop("url")
                 context["description"] = item["description"].encode("UTF-8")
                 url = Url.get_or_create(value=url_string)
-                url.add_context(context)
+                url.add_context(context, dedup_list=["date_added"])
                 url.add_source(self.name)
                 url.tag(["malware", "delivery"])
             except UnicodeError:
@@ -64,7 +65,7 @@ class MalcodeBinaries(Feed):
                 try:
                     ioc_string = context.pop(ioc)
                     ioc_obs = type_map[ioc].get_or_create(value=ioc_string)
-                    ioc_obs.add_context(context)
+                    ioc_obs.add_context(context, dedup_list=["date_added"])
                     ioc_obs.add_source(self.name)
                     ioc_obs.tag(["malware", "delivery"])
                     if url:
