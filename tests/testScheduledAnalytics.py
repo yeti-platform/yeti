@@ -16,10 +16,10 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         print("Re-run using a analytic name as argument")
         for f in ScheduledAnalytics.objects():
-            f"   {f.name}"
+            print(f"   {f.name}")
 
     if len(sys.argv) > 1:
         name = sys.argv[1]
         f = ScheduledAnalytics.objects.get(name=name)
-        f"Running {f.name}..."
+        print(f"Running {f.name}...")
         f.analyze_outdated()
