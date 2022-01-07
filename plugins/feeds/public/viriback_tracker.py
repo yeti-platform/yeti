@@ -16,7 +16,8 @@ class ViriBackTracker(Feed):
 
     def update(self):
         for index, line in self.update_csv(
-            delimiter=",", filter_row="FirstSeen", header=0
+            delimiter=",", filter_row="FirstSeen", header=0,
+            comment=None
         ):
             self.analyze(line)
 
