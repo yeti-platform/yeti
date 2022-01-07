@@ -198,6 +198,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
 
             elif header and not comment and not names:
@@ -210,6 +211,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
 
             elif header and comment and not names:
@@ -223,6 +225,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
 
             elif not header and comment and not names:
@@ -235,6 +238,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
 
             elif not header and not comment and not names:
@@ -246,6 +250,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
         else:
 
@@ -258,6 +263,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
             elif not comment and names:
                 df = pd.read_csv(
@@ -268,6 +274,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
             elif header and not comment and not names:
                 df = pd.read_csv(
@@ -277,6 +284,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
             elif header and comment and not names:
                 df = pd.read_csv(
@@ -287,6 +295,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
 
             elif not header and comment and not names:
@@ -297,6 +306,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
             elif not header and not comment and not names:
                 df = pd.read_csv(
@@ -305,6 +315,7 @@ class Feed(ScheduleEntry):
                     quotechar='"',
                     quoting=True,
                     skipinitialspace=True,
+                    index_col=False
                 )
 
         return df
