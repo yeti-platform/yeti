@@ -23,6 +23,7 @@ class UrlHaus(Feed):
                 "dateadded",
                 "url",
                 "url_status",
+                "last_online",
                 "threat",
                 "tags",
                 "urlhaus_link",
@@ -38,6 +39,7 @@ class UrlHaus(Feed):
         first_seen = line["dateadded"]
         url = line["url"]
         url_status = line["url_status"]
+        last_online = line["last_online"]
         threat = line["threat"]
         tags = line["tags"]
         urlhaus_link = line["urlhaus_link"]
@@ -51,7 +53,7 @@ class UrlHaus(Feed):
             "threat": threat,
             "reporter": source,
             "first_seen": first_seen,
-            "date_added": datetime.utcnow(),
+            "last_online": last_online,
         }
 
         if url:
