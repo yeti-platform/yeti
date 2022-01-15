@@ -41,12 +41,15 @@ flask-api = "*"
 url-normalize = "*"
 oauthlib = {extras = ["signedtoken"], version = "*"}
 pyjwt = {extras = ["crypto"], version = "*"}
+python-whois = "*"
+pymisp = "*"
 
 [dev-packages]
 pylint = "*"
 Sphinx = "*"
 sphinx_rtd_theme = "*"
 sphinxcontrib-httpdomain = "*"
+pytest = "*"
 
 [requires]
-python_version = "3.7.3"
+python_version = "3.8"
