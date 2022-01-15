@@ -22,7 +22,7 @@ class Tag(Node):
     meta = {"ordering": ["name"], "indexes": ["name", "replaces"]}
 
     def __unicode__(self):
-        return unicode(self.name)
+        return self.name
 
     def info(self):
         i = {
