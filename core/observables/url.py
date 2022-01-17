@@ -20,12 +20,12 @@ class Url(Observable):
     regex = (
         r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>"
         + Hostname.main_regex
-        + ")(\:[\d]{1,5})?(?P<path>(\/[\S]*)?(\?[\S]*)?(\#[\S]*)?))"
+        + ")(\:[\d]{1,5})?(?P<path>(\/[^\?]*?)?(\?[^#]*?)?(\#.*?)?))"
     )
     search_regex = (
         r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>"
         + Hostname.main_regex
-        + ")(\:[\d]{1,5})?(?P<path>((\/[\S]*)?(\?[\S]*)?(\#[\S]*)?)[\w/])?)"
+        + ")(\:[\d]{1,5})?(?P<path>((\/[^\?]*?)?(\?[^#]*?)?(\#.*?)?)[\w/])?)"
     )
 
     DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [
