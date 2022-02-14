@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 
 from celery import Celery
+from mongoengine import connect
 from celery.signals import celeryd_init, worker_process_init
+
 from core.config.config import yeti_config
-from mongoengine.connection import (DEFAULT_CONNECTION_NAME, connect,
-                                    disconnect, register_connection)
+
 
 celery_app = Celery("yeti")
 
@@ -46,40 +47,34 @@ class CeleryConfig:
 celery_app.config_from_object(CeleryConfig)
 
 
-is_tls = False
-if yeti_config.mongodb.tls:
-    is_tls = True
-
-register_connection(DEFAULT_CONNECTION_NAME,
-    db=yeti_config.mongodb.database,
-    host=yeti_config.mongodb.host,
-    port=yeti_config.mongodb.port,
-    username=yeti_config.mongodb.username,
-    password=yeti_config.mongodb.password,
-    tls=is_tls,
-    connect=False,
-)
-
-
 @worker_process_init.connect
 def connect_mongo(**kwargs):
     """Connect to mongo and load modules in each worker process."""
     from core.config import celeryimports
     from core.yeti_plugins import get_plugins
 
-    connect(db=yeti_config.mongodb.database)
+    is_tls = False
+    if yeti_config.mongodb.tls:
+        is_tls = True
 
+    connect(
+        yeti_config.mongodb.database,
+        host=yeti_config.mongodb.host,
+        port=yeti_config.mongodb.port,
+        username=yeti_config.mongodb.username,
+        password=yeti_config.mongodb.password,
+        tls=is_tls,
+        connect=False,
+    )
     celeryimports.loaded_modules = get_plugins()
 
 
 @celeryd_init.connect
 def unlock_scheduled_entries(**kwargs):
     from core.analytics import ScheduledAnalytics
-    from core.exports.export import Export
     from core.feed import Feed
+    from core.exports.export import Export
     from core.yeti_plugins import get_plugin_classes
-
-    connect(db=yeti_config.mongodb.database)
 
     # Make sure plugin classes are loaded
     get_plugin_classes()
@@ -97,5 +92,3 @@ def unlock_scheduled_entries(**kwargs):
             locked_entries[queue].objects(lock=True).update(
                 lock=False, status="Unlocked"
             )
-
-    disconnect()
