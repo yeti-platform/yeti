@@ -1,9 +1,10 @@
 import logging
-from datetime import timedelta, datetime
+import re
+from datetime import datetime, timedelta
+
 from core.errors import ObservableValidationError
 from core.feed import Feed
-from core.observables import Ip, Hostname
-import re
+from core.observables import Hostname, Ip
 
 
 class ThreatviewC2(Feed):
