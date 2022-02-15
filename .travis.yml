@@ -23,8 +23,6 @@ before_install:
 
 install:
   - pip install -r requirements.txt
-  - git clone https://github.com/yeti-platform/pyeti.git
-  - pip install -r pyeti/requirements.txt
   - ln -s ../../../contrib/analytics/ivre_api/ivre_api.py plugins/analytics/private/
   - pip install -r contrib/analytics/ivre_api/requirements.txt
 
