@@ -10,11 +10,11 @@ if __name__ == "__main__":
 
     if len(sys.argv) == 1:
         all_feeds = Feed.objects()
-        print all_feeds
+        print(all_feeds)
         exit()
     elif len(sys.argv) >= 2:
         all_feeds = [Feed.objects.get(name=sys.argv[1])]
 
     for n in all_feeds:
-        print "Testing: {}".format(n)
+        print("Testing: {}".format(n))
         n.update()

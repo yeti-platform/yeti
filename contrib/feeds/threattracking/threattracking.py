@@ -109,8 +109,8 @@ class ThreatTracking(Feed):
         actor_names = res["values"]
         r_names = []
         for i, actor_aliases in enumerate(actor_names):
-            while u"" in actor_aliases:
-                actor_aliases.remove(u"")
+            while "" in actor_aliases:
+                actor_aliases.remove("")
             while "?" in actor_aliases:
                 actor_aliases.remove("?")
             while "???" in actor_aliases:
@@ -150,8 +150,8 @@ class ThreatTracking(Feed):
         campaign_names = _["values"]
         r_names = []
         for i, campaigns in enumerate(campaign_names):
-            while u"" in campaigns:
-                campaigns.remove(u"")
+            while "" in campaigns:
+                campaigns.remove("")
             campaigns = list(set(campaigns))
             r_names.append(campaigns)
         return r_names
@@ -169,8 +169,8 @@ class ThreatTracking(Feed):
                 tools = tools[0].split(",")
                 tools = [t.strip() for t in tools]
                 tools = list(set(tools))
-                while u"" in tools:
-                    tools.remove(u"")
+                while "" in tools:
+                    tools.remove("")
             r_names.append(tools)
         return r_names
 

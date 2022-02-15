@@ -2,7 +2,8 @@ __description__ = "Warning about 'wkhtmltopdf'"
 
 
 def migrate():
-    print """
+    print(
+        """
 
     # Note
 
@@ -22,3 +23,4 @@ def migrate():
         $ brew install wkhtmltopdf
 
     """
+    )

@@ -2,7 +2,7 @@ sudo: required
 
 language: python
 python:
-  - "3.7"
+  - "3.9"
 
 services:
   - redis
@@ -30,5 +30,3 @@ script:
   - ./yeti.py webserver &
   - sleep 5
   - curl -I -L http://127.0.0.1:5000
-  - cd pyeti
-  - nosetests

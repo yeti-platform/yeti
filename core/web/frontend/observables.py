@@ -84,10 +84,16 @@ class ObservableView(GenericView):
         if request.method == "POST":
             lines = []
             obs = {}
+
             if request.files.get("bulk-file"):  # request files
-                lines = request.files.get("bulk-file").readlines()
+                lines = request.files.get("bulk-file").read()
             else:
-                lines = request.form["bulk-text"].split("\n")
+                lines = request.form["bulk-text"]
+
+            if type(lines) is bytes:
+                lines = lines.decode()
+
+            lines = lines.split("\n")
 
             invalid_observables = 0
             if bool(request.form.get("add", False)) and current_user.has_permission(

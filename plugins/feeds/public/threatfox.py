@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 from core import Feed
 import pandas as pd
 from core.observables import Ip, Observable
@@ -49,7 +49,7 @@ class ThreatFox(Feed):
         reporter = item["reporter"]
         tags = []
 
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
         context["first_seen"] = first_seen
 
         if reference:
@@ -95,7 +95,7 @@ class ThreatFox(Feed):
             return
 
         if obs:
-            obs.add_context(context)
+            obs.add_context(context, dedup_list=["date_added"])
             obs.add_source(self.name)
             if tags:
                 obs.tag(tags)

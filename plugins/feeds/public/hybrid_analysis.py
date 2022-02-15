@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -33,7 +33,11 @@ class HybridAnalysis(Feed):
         sha256 = Hash.get_or_create(value=item["sha256"])
         f_hyb.active_link_to(sha256, "sha256", self.name)
         tags = []
-        context = {"source": self.name, "date": first_seen}
+        context = {
+            "source": self.name,
+            "date": first_seen,
+            "date_added": datetime.utcnow(),
+        }
 
         if "vxfamily" in item:
             context["vxfamily"] = item["vxfamily"]
@@ -64,19 +68,19 @@ class HybridAnalysis(Feed):
 
         context["url"] = "https://www.hybrid-analysis.com" + item["reporturl"]
 
-        f_hyb.add_context(context)
+        f_hyb.add_context(context, dedup_list=["date_added"])
         f_hyb.tag(tags)
         f_hyb.add_source("feed")
 
-        sha256.add_context(context)
+        sha256.add_context(context, dedup_list=["date_added"])
         md5 = Hash.get_or_create(value=item["md5"])
         md5.add_source("feed")
-        md5.add_context(context)
+        md5.add_context(context, dedup_list=["date_added"])
         f_hyb.active_link_to(md5, "md5", self.name)
 
         sha1 = Hash.get_or_create(value=item["sha1"])
         sha1.add_source("feed")
-        sha1.add_context(context)
+        sha1.add_context(context, dedup_list=["date_added"])
 
         f_hyb.active_link_to(sha1, "sha1", self.name)
 

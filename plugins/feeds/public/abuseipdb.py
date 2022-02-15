@@ -1,6 +1,6 @@
 from configparser import Error
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core import Feed
 from core.errors import ObservableValidationError
@@ -35,12 +35,12 @@ class AbuseIPDB(Feed):
 
         ip = line
 
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
 
         try:
             ip = Ip.get_or_create(value=ip)
-            ip.add_context(context)
+            ip.add_context(context, dedup_list=["date_added"])
             ip.add_source(self.name)
             ip.tag("abuseIPDB")
         except ObservableValidationError as e:
-            raise logging.error(e)
+            logging.error(e)

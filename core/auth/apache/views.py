@@ -14,7 +14,7 @@ def login():
     user = authenticate()
     if user:
         login_user(user)
-        print "User logged in (web):", user
+        print("User logged in (web):".format(user))
         return redirect(request.args.get("next", "/"))
     flash("Invalid credentials", "danger")
     abort(401)

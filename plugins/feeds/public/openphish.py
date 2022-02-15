@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 import logging
 
 from core.observables import Url
@@ -26,11 +26,11 @@ class OpenPhish(Feed):
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
     def analyze(self, url):
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
 
         try:
             url = Url.get_or_create(value=url)
-            url.add_context(context)
+            url.add_context(context, dedup_list=["date_added"])
             url.add_source(self.name)
             url.tag(["phishing"])
         except ObservableValidationError as e:

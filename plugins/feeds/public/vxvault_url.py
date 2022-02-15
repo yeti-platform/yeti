@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 import logging
 
 from core.observables import Url
@@ -28,10 +28,10 @@ class VXVaultUrl(Feed):
     def analyze(self, data):
         if data.startswith("http"):
             tags = ["malware"]
-            context = {"source": self.name}
+            context = {"source": self.name, "date_added": datetime.utcnow()}
             try:
                 url = Url.get_or_create(value=data.rstrip())
-                url.add_context(context)
+                url.add_context(context, dedup_list=["date_added"])
                 url.add_source(self.name)
                 url.tag(tags)
             except ObservableValidationError as e:

@@ -54,6 +54,7 @@ class OTXAlienvault(Feed):
         context["references"] = "\r\n".join(item["references"])
         context["description"] = item["description"]
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]
+        context["date_added"] = datetime.utcnow()
 
         tags = item["tags"]
 
@@ -72,7 +73,7 @@ class OTXAlienvault(Feed):
                 try:
                     obs = type_ind.get_or_create(value=indicator["indicator"])
                     obs.tag(tags)
-                    obs.add_context(context)
+                    obs.add_context(context, dedup_list=["date_added"])
                     obs.add_source("feed")
 
                 except ObservableValidationError as e:

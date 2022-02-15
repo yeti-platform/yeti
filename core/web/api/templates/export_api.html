@@ -16,6 +16,7 @@
     <td>{{ macros.display_tags(export["ignore_tags"]) }}</td>
     <td>{{ macros.display_tags(export["include_tags"]) }}</td>
     <td>{{ macros.display_tags(export["exclude_tags"]) }}</td>
+    <td>{{ export["fresh_tags"] }}</td>
     <td>{{ export["template"]["name"] }}</td>
     <td class="status">{{ export["status"] or "N/A"}}</td>
     {% if toggle %}

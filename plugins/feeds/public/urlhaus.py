@@ -23,6 +23,7 @@ class UrlHaus(Feed):
                 "dateadded",
                 "url",
                 "url_status",
+                "last_online",
                 "threat",
                 "tags",
                 "urlhaus_link",
@@ -38,6 +39,7 @@ class UrlHaus(Feed):
         first_seen = line["dateadded"]
         url = line["url"]
         url_status = line["url_status"]
+        last_online = line["last_online"]
         threat = line["threat"]
         tags = line["tags"]
         urlhaus_link = line["urlhaus_link"]
@@ -51,13 +53,14 @@ class UrlHaus(Feed):
             "threat": threat,
             "reporter": source,
             "first_seen": first_seen,
+            "last_online": last_online,
         }
 
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
                 url_obs.tag(tags.split(","))
-                url_obs.add_context(context)
+                url_obs.add_context(context, dedup_list=["date_added"])
                 url_obs.add_source(self.name)
             except ObservableValidationError as e:
                 logging.error(e)

@@ -37,15 +37,16 @@ class CybercrimeAtmTracker(Feed):
         observable_sample = item["title"]
         context_sample = {}
         context_sample["description"] = "ATM sample"
-        context_sample["date_added"] = pub_date
+        context_sample["first_seen"] = pub_date
         context_sample["source"] = self.name
+        context_sample["date_added"] = datetime.utcnow()
         family = False
         if " - " in observable_sample:
             family, observable_sample = observable_sample.split(" - ")
 
         try:
             sample = Hash.get_or_create(value=observable_sample)
-            sample.add_context(context_sample)
+            sample.add_context(context_sample, dedup_list=["date_added"])
             sample.add_source(self.name)
             sample_tags = ["atm"]
             if family:

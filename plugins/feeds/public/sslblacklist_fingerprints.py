@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -49,7 +49,11 @@ class SSLBlackListCerts(Feed):
 
         tags.append("ssl_fingerprint")
 
-        context_hash = {"source": self.name, "first_seen": first_seen}
+        context_hash = {
+            "source": self.name,
+            "first_seen": first_seen,
+            "date_added": datetime.utcnow(),
+        }
 
         try:
             sha1 = Hash.get_or_create(value=_sha1)

@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -19,39 +19,32 @@ class FeodoTrackerIPBlockList(Feed):
         for index, line in self.update_csv(
             delimiter=",",
             filter_row="first_seen_utc",
-            names=[
-                "first_seen_utc",
-                "dst_ip",
-                "dst_port",
-                "c2_status",
-                "last_online",
-                "malware",
-            ],
         ):
             if firs_line != 0:
                 self.analyze(line)
             firs_line += 1
 
     # pylint: disable=arguments-differ
-    def analyze(self, line):
+    def analyze(self, item):
 
         tags = []
-        tags.append(line["malware"].lower())
+        tags.append(item["malware"].lower())
         tags.append("c2")
         tags.append("blocklist")
 
         context = {
-            "first_seen": line["first_seen_utc"],
+            "first_seen": item["first_seen_utc"],
             "source": self.name,
-            "last_online": line["last_online"],
-            "c2_status": line["c2_status"],
-            "port": line["dst_port"],
+            "last_online": item["last_online"],
+            "c2_status": item["c2_status"],
+            "port": item["dst_port"],
+            "date_added": datetime.utcnow(),
         }
 
         try:
-            ip_obs = Ip.get_or_create(value=line["dst_ip"])
-            ip_obs.add_context(context, dedup_list=["last_online"])
+            ip_obs = Ip.get_or_create(value=item["dst_ip"])
+            ip_obs.add_context(context, dedup_list=["last_online", "date_added"])
             ip_obs.tag(tags)
 
         except ObservableValidationError as e:
-            logging.error("Invalid line: {}\nLine: {}".format(e, line))
+            logging.error("Invalid line: {}\nLine: {}".format(e, item))
