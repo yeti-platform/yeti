@@ -1,11 +1,12 @@
-from numpy import iinfo
-from core.feed import Feed
 from datetime import timedelta
-from core.config.config import yeti_config
-from core.observables import Hostname, Ip
-from core.entities import Company, company
-from pypdns import api
+
 import pandas as pd
+from core.config.config import yeti_config
+from core.entities import Company, company
+from core.feed import Feed
+from core.observables import Hostname, Ip
+from numpy import iinfo
+from pypdns import api
 
 
 class PassiveDNS(Feed):
@@ -60,7 +61,7 @@ class PassiveDNS(Feed):
 
         domain_name.active_link_to(ip, "ip", self.name, clean_old=False)
 
-        context_domain["last updated"] = "%s : %s" % (
+        context_domain["last updated"] = "{} : {}".format(
             ip.value,
             infos["last_updated_at"],
         )
