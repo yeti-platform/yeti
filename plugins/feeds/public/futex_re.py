@@ -26,17 +26,17 @@ class FutexTracker(Feed):
             self.analyze(line)
 
     # pylint: disable=arguments-differ
-    def analyze(self, line):
+    def analyze(self, item):
 
-        _id = line["id"]
-        _ = line["firstseen"]
-        url = line["url"]
-        _status = line["status"]
+        _id = item["id"]
+        _ = item["firstseen"]
+        url = item["url"]
+        _status = item["status"]
 
-        _hash = line["hash"]
+        _hash = item["hash"]
 
-        country = line["country"]
-        asn = line["as"]
+        country = item["country"]
+        asn = item["as"]
 
         tags = ["collected_by_honeypot"]
         context = {

@@ -22,10 +22,10 @@ class DynamicDomains(Feed):
 
             self.analyze(line)
 
-    def analyze(self, line):
-        line = line.strip()
-        logging.debug(line)
-        sline = line.split()
+    def analyze(self, item):
+        item = item.strip()
+        logging.debug(item)
+        sline = item.split()
 
         hostname = sline[0]
 

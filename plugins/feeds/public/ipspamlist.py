@@ -22,17 +22,17 @@ class IPSpamList(Feed):
         for index, line in self.update_csv(delimiter=",", filter_row="first_seen"):
             self.analyze(line)
 
-    def analyze(self, line):
+    def analyze(self, item):
 
         context = {
             "source": self.name,
-            "threat": line["category"],
-            "first_seen": line["first_seen"],
-            "last_seen": parser.parse(line["last_seen"]),
-            "attack_count": line["attacks_count"],
+            "threat": item["category"],
+            "first_seen": item["first_seen"],
+            "last_seen": parser.parse(item["last_seen"]),
+            "attack_count": item["attacks_count"],
             "date_added": datetime.utcnow(),
         }
-        ip_address = line["ip_address"]
+        ip_address = item["ip_address"]
         try:
             ip_obs = Ip.get_or_create(value=ip_address)
             ip_obs.tag(context["threat"])
