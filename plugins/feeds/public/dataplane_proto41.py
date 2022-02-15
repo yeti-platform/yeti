@@ -1,6 +1,6 @@
 import logging
 import pandas as pd
-from datetime import timedelta, datetime
+from datetime import timedelta
 from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip, AutonomousSystem

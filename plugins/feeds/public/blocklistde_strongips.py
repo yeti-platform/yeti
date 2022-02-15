@@ -18,8 +18,8 @@ class BlocklistdeStrongIPs(Feed):
         for line in self.update_lines():
             self.analyze(line)
 
-    def analyze(self, line):
-        ip = line.strip()
+    def analyze(self, item):
+        ip = item.strip()
 
         context = {"source": self.name, "date_added": datetime.utcnow()}
 
