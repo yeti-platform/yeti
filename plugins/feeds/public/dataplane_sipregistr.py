@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneSIPRegistr(Feed):
-
+    '''
+       Feed of SIP registr with IPs and ASNs
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneSIPRegistr",

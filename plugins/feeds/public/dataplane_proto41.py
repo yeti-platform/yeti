@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneProto41(Feed):
-
+    '''
+       Feed DataplaneProto41: IPs from DataplaneProto41
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneProto41",

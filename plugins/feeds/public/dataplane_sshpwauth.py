@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneSSHPwAuth(Feed):
-
+    '''
+       Feed of Dataplane SSH bruteforce IPs and ASNs
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneSSHPwAuth",

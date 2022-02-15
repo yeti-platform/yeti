@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneSIPQuery(Feed):
-
+    '''
+       Feed of SIPs from Dataplane with IPs and ASNs
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneSIPQuery",

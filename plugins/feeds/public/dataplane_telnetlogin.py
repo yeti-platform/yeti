@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneTelenetLogin(Feed):
-
+    '''
+       Feed of telnet login attempt of dataplane IPs and ASNs
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneTelenetLogin",

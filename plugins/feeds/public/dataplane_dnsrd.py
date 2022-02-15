@@ -5,8 +5,10 @@ from core.errors import ObservableValidationError
 from core.feed import Feed
 from core.observables import Ip, AutonomousSystem
 
-
 class DataplaneDNSRecursive(Feed):
+    '''
+        Feed of Dataplane DNS Recursive IPs with ASN
+    '''
 
     default_values = {
         "frequency": timedelta(hours=2),

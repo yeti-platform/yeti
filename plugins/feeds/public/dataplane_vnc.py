@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneVNC(Feed):
-
+    '''
+        Feed of VNC dataplane IPs.
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneVNC",

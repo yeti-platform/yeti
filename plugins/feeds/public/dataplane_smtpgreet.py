@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneSMTPGreet(Feed):
-
+    '''
+       Feed of SMTP greetings from dataplane with IPs and ASN
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneSMTPGreet",

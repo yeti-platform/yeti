@@ -7,7 +7,9 @@ from core.observables import Ip, AutonomousSystem
 
 
 class DataplaneDNSVersion(Feed):
-
+    '''
+       Feed DNS Version IPs with ASN
+    '''
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneDNSVersion",
