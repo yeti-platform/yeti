@@ -2,10 +2,9 @@ from datetime import timedelta
 
 import pandas as pd
 from core.config.config import yeti_config
-from core.entities import Company, company
+from core.entities import Company
 from core.feed import Feed
 from core.observables import Hostname, Ip
-from numpy import iinfo
 from pypdns import api
 
 

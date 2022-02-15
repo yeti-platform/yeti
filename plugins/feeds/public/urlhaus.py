@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from core import Feed
 from core.errors import ObservableValidationError

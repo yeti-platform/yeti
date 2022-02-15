@@ -1,12 +1,14 @@
 from __future__ import unicode_literals
-from core.config.config import yeti_config
+
 import re
 from datetime import datetime, timedelta
-from mongoengine import *
+
+from core.config.config import yeti_config
 from core.config.mongoengine_extras import TimeDeltaField
 from core.database import Node
 from core.errors import TagValidationError
 from core.helpers import iterify
+from mongoengine import *
 
 
 class Tag(Node):

@@ -12,7 +12,7 @@ from core.observables import AutonomousSystem, Ip
 
 class DataplaneSSHClient(Feed):
     '''
-       Feed of ssh client bruteforce of Dataplane with IPs and ASNs 
+       Feed of ssh client bruteforce of Dataplane with IPs and ASNs.
     '''
     default_values = {
         "frequency": timedelta(hours=2),
