@@ -33,25 +33,25 @@ class DataplaneSMTPGreet(Feed):
         for count, row in df.iterrows():
             self.analyze(row)
 
-    def analyze(self, row):
+    def analyze(self, item):
 
         context_ip = {
             "source": self.name,
-            "last_seen": row["lastseen"],
+            "last_seen": item["lastseen"],
             "date_added": datetime.utcnow(),
         }
 
         try:
-            ip = Ip.get_or_create(value=row["ipaddr"])
+            ip = Ip.get_or_create(value=item["ipaddr"])
             ip.add_context(context_ip, dedup_list=["date_added"])
             ip.add_source(self.name)
             ip.tag("dataplane")
             ip.tag("smtp")
             ip.tag("scanning")
-            ip.tag(row["category"])
+            ip.tag(item["category"])
 
-            asn = AutonomousSystem.get_or_create(value=row["ASN"])
-            context_ans = {"source": self.name, "name": row["ASname"]}
+            asn = AutonomousSystem.get_or_create(value=item["ASN"])
+            context_ans = {"source": self.name, "name": item["ASname"]}
             asn.add_context(context_ans, dedup_list=["date_added"])
             asn.add_source(self.name)
             asn.tag("dataplane")

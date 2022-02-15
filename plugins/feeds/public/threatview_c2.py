@@ -21,16 +21,16 @@ class ThreatviewC2(Feed):
         for line in lines:
             self.analyze(line)
 
-    def analyze(self, line):
-        line = line.strip()
+    def analyze(self, item):
+        item = item.strip()
 
         context = {"source": self.name, "date_added": datetime.utcnow()}
 
         try:
-            if re.match(r"^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", line):
-                obs = Ip.get_or_create(value=line)
-            elif re.match(r"^\w{1,}\.\w{2,}$", line):
-                obs = Hostname.get_or_create(value=line)
+            if re.match(r"^\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}$", item):
+                obs = Ip.get_or_create(value=item)
+            elif re.match(r"^\w{1,}\.\w{2,}$", item):
+                obs = Hostname.get_or_create(value=item)
             else:
                 return
             obs.add_context(context)
