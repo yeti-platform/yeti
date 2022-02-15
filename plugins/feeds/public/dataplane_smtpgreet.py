@@ -1,3 +1,6 @@
+'''
+    Feed of SMTP greetings from dataplane with IPs and ASN
+'''
 import logging
 from datetime import datetime, timedelta
 
