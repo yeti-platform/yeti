@@ -1,6 +1,6 @@
-'''
+"""
        Feed DataplaneProto41: IPs from DataplaneProto41
-'''
+"""
 import logging
 from datetime import timedelta
 
@@ -11,9 +11,10 @@ from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneProto41(Feed):
-    '''
-       Feed DataplaneProto41: IPs from DataplaneProto41
-    '''
+    """
+    Feed DataplaneProto41: IPs from DataplaneProto41
+    """
+
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneProto41",

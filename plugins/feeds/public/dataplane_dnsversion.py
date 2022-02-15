@@ -1,6 +1,6 @@
-'''
+"""
     Feed DNS Version IPs with ASN
-'''
+"""
 import logging
 from datetime import datetime, timedelta
 
@@ -11,9 +11,10 @@ from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneDNSVersion(Feed):
-    '''
-       Feed DNS Version IPs with ASN
-    '''
+    """
+    Feed DNS Version IPs with ASN
+    """
+
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneDNSVersion",

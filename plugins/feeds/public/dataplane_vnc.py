@@ -1,6 +1,6 @@
-'''
+"""
     Feed of Dataplane SSH bruteforce IPs and ASNs
-'''
+"""
 import logging
 from datetime import datetime, timedelta
 
@@ -11,9 +11,10 @@ from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneVNC(Feed):
-    '''
-        Feed of VNC dataplane IPs.
-    '''
+    """
+    Feed of VNC dataplane IPs.
+    """
+
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneVNC",

@@ -1,6 +1,6 @@
-'''
+"""
        Feed of SIP registr with IPs and ASNs
-'''
+"""
 import logging
 from datetime import datetime, timedelta
 
@@ -11,9 +11,10 @@ from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneSIPRegistr(Feed):
-    '''
-       Feed of SIP registr with IPs and ASNs
-    '''
+    """
+    Feed of SIP registr with IPs and ASNs
+    """
+
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneSIPRegistr",

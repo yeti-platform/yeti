@@ -8,9 +8,9 @@ from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneDNSRecursive(Feed):
-    '''
-        Feed of Dataplane DNS Recursive IPs with ASN
-    '''
+    """
+    Feed of Dataplane DNS Recursive IPs with ASN
+    """
 
     default_values = {
         "frequency": timedelta(hours=2),

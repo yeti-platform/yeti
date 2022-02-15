@@ -1,6 +1,6 @@
-'''
+"""
        Feed of SIP INVITE attacks from Dataplane IPs and their Autonomous Systems
-'''
+"""
 import logging
 from datetime import datetime, timedelta
 
@@ -11,9 +11,9 @@ from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneSIPInvite(Feed):
-    '''
-       Feed of SIP INVITE attacks from Dataplane IPs and their Autonomous Systems
-    '''
+    """
+    Feed of SIP INVITE attacks from Dataplane IPs and their Autonomous Systems
+    """
 
     default_values = {
         "frequency": timedelta(hours=2),

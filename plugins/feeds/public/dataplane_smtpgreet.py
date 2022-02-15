@@ -1,6 +1,6 @@
-'''
+"""
     Feed of SMTP greetings from dataplane with IPs and ASN
-'''
+"""
 import logging
 from datetime import datetime, timedelta
 
@@ -11,9 +11,10 @@ from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneSMTPGreet(Feed):
-    '''
-       Feed of SMTP greetings from dataplane with IPs and ASN
-    '''
+    """
+    Feed of SMTP greetings from dataplane with IPs and ASN
+    """
+
     default_values = {
         "frequency": timedelta(hours=2),
         "name": "DataplaneSMTPGreet",
