@@ -95,7 +95,6 @@ class ObservableView(GenericView):
 
             lines = lines.split("\n")
 
-
             invalid_observables = 0
             if bool(request.form.get("add", False)) and current_user.has_permission(
                 "observable", "write"
