@@ -1,9 +1,10 @@
 import logging
-import pandas as pd
 from datetime import timedelta
+
+import pandas as pd
 from core.errors import ObservableValidationError
 from core.feed import Feed
-from core.observables import Ip, AutonomousSystem
+from core.observables import AutonomousSystem, Ip
 
 
 class DataplaneProto41(Feed):
