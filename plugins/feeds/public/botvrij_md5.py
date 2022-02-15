@@ -21,8 +21,8 @@ class BotvrijMD5(Feed):
         for line in lines:
             self.analyze(line.strip())
 
-    def analyze(self, line):
-        val, descr = line.split(" # md5 - ")
+    def analyze(self, item):
+        val, descr = item.split(" # md5 - ")
 
         context = {
             "source": self.name,

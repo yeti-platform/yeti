@@ -21,8 +21,8 @@ class BotvrijUrl(Feed):
         for line in lines:
             self.analyze(line.strip())
 
-    def analyze(self, line):
-        url, descr = line.split(" # url - ")
+    def analyze(self, item):
+        url, descr = item.split(" # url - ")
 
         context = {
             "source": self.name,

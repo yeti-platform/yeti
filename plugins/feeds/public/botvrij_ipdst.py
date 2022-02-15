@@ -21,8 +21,8 @@ class BotvrijIPDst(Feed):
         for line in lines:
             self.analyze(line.strip())
 
-    def analyze(self, line):
-        ip, descr = line.split(" # ip-dst - ")
+    def analyze(self, item):
+        ip, descr = item.split(" # ip-dst - ")
 
         context = {
             "source": self.name,

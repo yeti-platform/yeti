@@ -21,8 +21,8 @@ class BotvrijHostname(Feed):
         for line in lines:
             self.analyze(line.strip())
 
-    def analyze(self, line):
-        hostn, descr = line.split(" # hostname - ")
+    def analyze(self, item):
+        hostn, descr = item.split(" # hostname - ")
 
         context = {
             "source": self.name,

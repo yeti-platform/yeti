@@ -21,8 +21,8 @@ class BotvrijSHA1(Feed):
         for line in lines:
             self.analyze(line.strip())
 
-    def analyze(self, line):
-        val, descr = line.split(" # sha1 - ")
+    def analyze(self, item):
+        val, descr = item.split(" # sha1 - ")
 
         context = {
             "source": self.name,

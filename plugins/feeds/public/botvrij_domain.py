@@ -20,8 +20,8 @@ class BotvrijDomain(Feed):
         for line in lines:
             self.analyze(line)
 
-    def analyze(self, line):
-        hostn, descr = line.split(" # domain - ")
+    def analyze(self, item):
+        hostn, descr = item.split(" # domain - ")
 
         context = {
             "source": self.name,
