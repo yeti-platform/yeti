@@ -33,7 +33,6 @@ class ThreatFox(Feed):
             df["last_seen_utc"] = pd.to_datetime(df["last_seen_utc"])
             if self.last_run:
                 df = df[df["first_seen_utc"] > self.last_run]
-            df.fillna("-", inplace=True)
             return df.iterrows()
 
     def analyze(self, item):
@@ -99,5 +98,3 @@ class ThreatFox(Feed):
             obs.add_source(self.name)
             if tags:
                 obs.tag(tags)
-            if malware_printable:
-                obs.tags
