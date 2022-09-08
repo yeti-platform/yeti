@@ -59,7 +59,8 @@ class UrlHaus(Feed):
         if url:
             try:
                 url_obs = Url.get_or_create(value=url)
-                url_obs.tag(tags.split(","))
+                if tags != "None":
+                    url_obs.tag(tags.split(","))
                 url_obs.add_context(context, dedup_list=["date_added"])
                 url_obs.add_source(self.name)
             except ObservableValidationError as e:
