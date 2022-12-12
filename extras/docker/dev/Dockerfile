@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install --upgrade pip && pip3 install poetry
 
 # Install & Configure YETI
-ADD . /opt/yeti
-WORKDIR /opt/yeti
+ADD . /app
+WORKDIR /app
 RUN poetry install && \
         mv yeti.conf.sample yeti.conf && \
         sed -i '35s/# host = 127.0.0.1/host = mongodb/' yeti.conf && \
