@@ -1,5 +1,5 @@
 """Azorult Tracker feeds"""
-from datetime import timedelta
+from datetime import timedelta, datetime
 import logging
 import pandas as pd
 import numpy as np
@@ -38,7 +38,7 @@ class AzorutTracker(Feed):
             return df.iterrows()
 
     def analyze(self, item):
-        context = {"source": self.name}
+        context = {"source": self.name, "date_added": datetime.utcnow()}
 
         _id = item["_id"]
         domain = item["domain"]
@@ -64,6 +64,7 @@ class AzorutTracker(Feed):
         context["_id"] = _id
         context["panel_version"] = panel_version
         context["panel_path"] = panel_path
+        context["date_added"] = datetime.utcnow()
 
         try:
             hostname = None
@@ -73,20 +74,20 @@ class AzorutTracker(Feed):
 
             if domain:
                 hostname = Hostname.get_or_create(value=domain)
-                hostname.add_context(context)
+                hostname.add_context(context, dedup_list=["date_added"])
                 hostname.tag("azorult")
             if ip:
                 ip_obs = Ip.get_or_create(value=ip)
-                ip_obs.add_context(context)
+                ip_obs.add_context(context, dedup_list=["date_added"])
                 ip_obs.tag("azorult")
             if panel_url:
                 url = Url.get_or_create(value=panel_url)
-                url.add_context(context)
+                url.add_context(context, dedup_list=["date_added"])
                 url.tag("azorult")
 
             if asn:
                 asn_obs = AutonomousSystem.get_or_create(value=asn)
-                asn_obs.add_context(context)
+                asn_obs.add_context(context, dedup_list=["date_added"])
                 asn_obs.tag("azorult")
 
             if hostname and ip_obs:

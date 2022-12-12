@@ -20,8 +20,8 @@ ADD . /opt/yeti
 WORKDIR /opt/yeti
 RUN pipenv install --system && \
         mv yeti.conf.sample yeti.conf && \
-        sed -i '25s/# host = 127.0.0.1/host = mongodb/' yeti.conf && \
-        sed -i '39s/# host = 127.0.0.1/host = redis/' yeti.conf
+        sed -i '35s/# host = 127.0.0.1/host = mongodb/' yeti.conf && \
+        sed -i '49s/# host = 127.0.0.1/host = redis/' yeti.conf
 
 RUN mkdir /var/log/yeti
 

@@ -16,15 +16,15 @@ class CeleryConfig:
 
         redis_scheme = redis_scheme + "s"
 
-    BROKER_URL = "{}://{}:{}/{}".format(
+    broker_url = "{}://{}:{}/{}".format(
         redis_scheme,
         yeti_config.redis.host,
         yeti_config.redis.port,
         yeti_config.redis.database,
     )
-    CELERY_TASK_SERIALIZER = "json"
-    CELERY_ACCEPT_CONTENT = ["json"]
-    CELERY_IMPORTS = (
+    task_serializer = "json"
+    accept_content = ["json"]
+    imports = (
         "core.config.celeryimports",
         "core.analytics_tasks",
         "core.exports.export",
@@ -32,9 +32,9 @@ class CeleryConfig:
         "core.investigation",
         "plugins",
     )
-    CELERY_TIMEZONE = "UTC"
-    CELERYD_POOL_RESTARTS = True
-    CELERY_ROUTES = {
+    timezone = "UTC"
+    worker_pool_restarts = True
+    task_routes = {
         "core.analytics_tasks.single": {"queue": "oneshot"},
         "core.feed.update_feed": {"queue": "feeds"},
         "core.exports.export.execute_export": {"queue": "exports"},

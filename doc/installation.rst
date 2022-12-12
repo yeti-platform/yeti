@@ -25,7 +25,7 @@ Install dependencies::
 
   $ sudo apt install build-essential git python-dev mongodb-org mongodb-org-shell mongodb-org-server mongodb-org-mongos redis-server libcurl4 libxml2-dev libxslt-dev zlib1g-dev python-virtualenv wkhtmltopdf python-pip python3-pip
 
-Return at home and download Yeti:
+Return at home and download Yeti::
   
   $ cd
   $ git clone https://github.com/yeti-platform/yeti.git
@@ -64,7 +64,7 @@ This will only enable the web interface - if you want to use Feeds and Analytics
   $ celery -A core.config.celeryctl.celery_app worker --loglevel=ERROR -Q oneshot -n oneshot -c 2 --purge
   $ celery -A core.config.celeryctl beat -S core.scheduling.Scheduler --loglevel=ERROR
 
-Or, to bootstrap a production use instance of Yeti on Ubuntu 18.04 (without the Redis tweaks), everyone's favorite command::
+Or, to bootstrap a production use instance of Yeti on Ubuntu 20.04 (without the Redis tweaks), everyone's favorite command::
 
   $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/ubuntu_bootstrap.sh | sudo /bin/bash
 
@@ -123,9 +123,10 @@ systemd protips::
 
 To enable the systemd scripts once you've installed them::
 
-    sudo systemctl enable yeti_uwsgi
+    $ sudo systemctl enable yeti_uwsgi
 
 For install yeti with development webserver::
+
     $ sudo systemctl enable mongod.service
     $ sudo systemctl enable yeti_web.service
     $ sudo systemctl enable yeti_oneshot.service
@@ -142,6 +143,7 @@ For install yeti with development webserver::
     $ sudo systemctl start yeti_beat.service
 
 For install yeti with nginx reverse proxy::
+
     $ sudo systemctl enable mongod.service
     $ sudo systemctl enable yeti_uwsgi.service
     $ sudo systemctl enable yeti_oneshot.service

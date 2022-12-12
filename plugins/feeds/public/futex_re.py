@@ -1,5 +1,5 @@
 import logging
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from core.errors import ObservableValidationError
 from core.feed import Feed
@@ -26,27 +26,31 @@ class FutexTracker(Feed):
             self.analyze(line)
 
     # pylint: disable=arguments-differ
-    def analyze(self, line):
+    def analyze(self, item):
 
-        _id = line["id"]
-        _ = line["firstseen"]
-        url = line["url"]
-        _status = line["status"]
+        _id = item["id"]
+        _ = item["firstseen"]
+        url = item["url"]
+        _status = item["status"]
 
-        _hash = line["hash"]
+        _hash = item["hash"]
 
-        country = line["country"]
-        asn = line["as"]
+        country = item["country"]
+        asn = item["as"]
 
         tags = ["collected_by_honeypot"]
-        context = {"source": self.name, "country": country}
+        context = {
+            "source": self.name,
+            "country": country,
+            "date_added": datetime.utcnow(),
+        }
 
         url_obs = None
 
         if url:
             try:
                 url_obs = Url.get_or_create(value=url.rstrip())
-                url_obs.add_context(context)
+                url_obs.add_context(context, dedup_list=["date_added"])
                 url_obs.tag(tags)
                 url_obs.add_source(self.name)
             except ObservableValidationError as e:
@@ -55,7 +59,7 @@ class FutexTracker(Feed):
         if _hash and len(_hash) > 16:
             try:
                 hash_obs = Hash.get_or_create(value=_hash)
-                hash_obs.add_context(context)
+                hash_obs.add_context(context, dedup_list=["date_added"])
                 hash_obs.tag(tags)
                 hash_obs.add_source(self.name)
                 if url_obs:
@@ -67,7 +71,7 @@ class FutexTracker(Feed):
             try:
                 asn = asn.split(" ")[0].replace("AS", "")
                 asn_obs = AutonomousSystem.get_or_create(value=asn)
-                asn_obs.add_context(context)
+                asn_obs.add_context(context, dedup_list=["date_added"])
                 asn_obs.tag(tags)
                 asn_obs.add_source(self.name)
                 asn_obs.active_link_to(url_obs, "ASN", self.name, clean_old=False)
