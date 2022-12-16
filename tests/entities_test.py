@@ -4,6 +4,7 @@ from os import path
 from datetime import timedelta
 from mongoengine import connect
 from pyeti import YetiApi
+import os
 
 YETI_ROOT = path.normpath(path.dirname(path.dirname(path.abspath(__file__))))
 sys.path.append(YETI_ROOT)
@@ -62,6 +63,13 @@ class EntityTest(unittest.TestCase):
         ttp = TTP(name="test", killchain="1").save()
         ttp_added = self.yeti_client.entity_get(ttp.id)
         self.assertEqual(ttp_added["name"], ttp.name)
+
+    def test_all(self):
+        folder_entities = os.path.join(YETI_ROOT, "core", "entities")
+        for file in os.listdir(folder_entities):
+            if file.endswith(".py") and file != "__init__.py" and file != "entity.py":
+                name_entity = file.split(".")[0]
+                self.assertTrue(hasattr(self, f"test_{name_entity}"))
 
     def tearDown(self) -> None:
         self.db.drop_database("yeti")
