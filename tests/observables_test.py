@@ -22,7 +22,7 @@ from core.observables.mac_address import MacAddress
 from core.observables.hash import Hash
 from core.observables.url import Url
 from core.observables.text import Text
-from core.observables.tag import Tag
+from core.observables.path import Path
 
 from core.user import User
 
@@ -96,6 +96,27 @@ class EntityTest(unittest.TestCase):
         text = Text(value="test").save()
         text_added = self.yeti_client.observable_search(value=text.value)
         self.assertEqual(text_added[0]["value"], text.value)
+
+    def test_path(self):
+        path = Path(value="/dev/null").save()
+        path_added = self.yeti_client.observable_search(value=path.value)
+        self.assertEqual(path_added[0]["value"], path.value)
+
+    def test_all(self):
+        folder_entities = os.path.join(YETI_ROOT, "core", "observables")
+        for file in os.listdir(folder_entities):
+            if (
+                file.endswith(".py")
+                and file != "__init__.py"
+                and file != "tag.py"
+                and file != "observable.py"
+                and file != "helpers.py"
+            ):
+                name_entity = file.split(".")[0]
+                self.assertTrue(
+                    hasattr(self, f"test_{name_entity}"),
+                    msg=f"test_{name_entity} not found",
+                )
 
     def tearDown(self) -> None:
         self.db.drop_database("yeti")
