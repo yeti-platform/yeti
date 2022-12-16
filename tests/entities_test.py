@@ -9,21 +9,23 @@ YETI_ROOT = path.normpath(path.dirname(path.dirname(path.abspath(__file__))))
 sys.path.append(YETI_ROOT)
 
 from core.config.config import yeti_config
+from core.entities.malware import Malware
+from core.entities import Exploit, ExploitKit, Actor, Campaign, Company, TTP
 
-from core.entities.malware import MalwareFamily, Malware
-from core.indicators import Regex, Indicator
-from core.database import Link
-from core.entities import TTP, Exploit, ExploitKit, Actor, Campaign, Company
-from core.observables import Observable
-from core.observables import Tag
-from core.exports import Export, ExportTemplate
+from core.user import User
 
 
 class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
-        db = connect("yeti", host=yeti_config.mongodb.host)
-        db.drop_database("yeti")
-        self.yeti_client = YetiApi(yeti_config.pyeti.url, api_key=yeti_config.pyeti.key)
+        self.db = connect("yeti", host=yeti_config.mongodb.host)
+
+        DEFAULT_PERMISSIONS = {}
+        DEFAULT_PERMISSIONS["admin"] = True
+        user_default = User(username="test", permissions=DEFAULT_PERMISSIONS)
+
+        self.yeti_client = YetiApi(
+            api_key=user_default.api_key, url=yeti_config.pyeti.url
+        )
         return super().setUp()
 
     def test_malware(self):
@@ -41,11 +43,6 @@ class EntityTest(unittest.TestCase):
         campaign_added = self.yeti_client.entity_get(campaign.id)
         self.assertEqual(campaign_added["name"], campaign.name)
 
-    def test_exploit(self):
-        exploit = Exploit(name="test").save()
-        exploit_added = self.yeti_client.entity_get(exploit.id)
-        self.assertEqual(exploit_added["name"], exploit.name)
-
     def test_company(self):
         compagny = Company(name="test").save()
         compagny_added = self.yeti_client.entity_get(compagny.id)
@@ -55,6 +52,20 @@ class EntityTest(unittest.TestCase):
         exploit_kit = ExploitKit(name="test").save()
         exploit_kit_added = self.yeti_client.entity_get(exploit_kit.id)
         self.assertEqual(exploit_kit_added["name"], exploit_kit.name)
+
+    def test_exploit(self):
+        exploit = Exploit(name="test").save()
+        exploit_added = self.yeti_client.entity_get(exploit.id)
+        self.assertEqual(exploit_added["name"], exploit.name)
+
+    def test_ttp(self):
+        ttp = TTP(name="test", killchain="1").save()
+        ttp_added = self.yeti_client.entity_get(ttp.id)
+        self.assertEqual(ttp_added["name"], ttp.name)
+
+    def tearDown(self) -> None:
+        self.db.drop_database("yeti")
+        return super().tearDown()
 
 
 if __name__ == "__main__":
