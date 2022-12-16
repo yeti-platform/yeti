@@ -25,7 +25,7 @@ class EntityTest(unittest.TestCase):
         db.drop_database("yeti")
         self.yeti_client = YetiApi(yeti_config.pyeti.url, api_key=yeti_config.pyeti.key)
         return super().setUp()
-    
+
     def test_malware(self):
         malware = Malware(name="test").save()
         malware_added = self.yeti_client.entity_get(malware.id)
