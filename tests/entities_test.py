@@ -20,18 +20,12 @@ from core.exports import Export, ExportTemplate
 
 
 class EntityTest(unittest.TestCase):
-    def __init__(self, methodName: str = ...) -> None:
-        self.__set_client()
-        self.__set_db()
-        super().__init__(methodName)
-
-    def __set_client(self):
-        self.yeti_client = YetiApi(yeti_config.pyeti.url, api_key=yeti_config.pyeti.key)
-
-    def __set_db(self):
+    def setUp(self) -> None:
         db = connect("yeti", host=yeti_config.mongodb.host)
         db.drop_database("yeti")
-
+        self.yeti_client = YetiApi(yeti_config.pyeti.url, api_key=yeti_config.pyeti.key)
+        return super().setUp()
+    
     def test_malware(self):
         malware = Malware(name="test").save()
         malware_added = self.yeti_client.entity_get(malware.id)
