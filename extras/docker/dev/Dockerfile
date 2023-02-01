@@ -26,6 +26,8 @@ RUN poetry run tldextract --update
 
 COPY ./extras/docker/scripts/docker-entrypoint.sh /docker-entrypoint.sh
 
+ENV PYTHONPATH /app
+
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 CMD ["webserver"]
