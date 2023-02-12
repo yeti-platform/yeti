@@ -456,6 +456,8 @@ class Node(YetiDocument):
             n["id"] = n.pop("_id")
             if "Observable." in n["_cls"] and klass.__name__ == "Observable":
                 n = klass.subclass_from_name(n["_cls"].split(".")[1])(**n)
+            elif "Entity." in n["_cls"] and klass.__name__ == "Entity":
+                n = klass.subclass_from_name(n["_cls"].split(".")[1])(**n)
             else:
                 n = klass(**n)
             l = Link(**node)  # necessary for first_seen and last_seen functions
