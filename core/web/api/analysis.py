@@ -37,6 +37,7 @@ class Analysis(CrudApi):
 
         params = request.json
         observables = params.pop("observables", [])
+        tags = params.pop("add_tags", [])
         fetch_neighbors = params.pop("fetch_neighbors", True)
         add_unknown = bool(params.pop("add_unknown", False))
         unknown = set()
@@ -44,7 +45,7 @@ class Analysis(CrudApi):
         if add_unknown and current_user.has_permission("observable", "write"):
             for o in observables:
                 try:
-                    Observable.add_text(o)
+                    Observable.add_text(o, tags=tags)
                 except ObservableValidationError:
                     unknown.add(o)
 
