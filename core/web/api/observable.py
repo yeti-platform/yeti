@@ -171,5 +171,4 @@ class Observable(CrudApi):
 
 
 class ObservableSearch(CrudSearchApi):
-    template = "observable_api.html"
     objectmanager = observables.Observable

@@ -344,11 +344,6 @@ class Node(YetiDocument):
 
     SEARCH_ALIASES = {}
 
-    @classmethod
-    def get_form(klass):
-        form = model_form(klass, exclude=klass.exclude_fields)
-        return form
-
     @property
     def type(self):
         return self._cls.split(".")[-1]

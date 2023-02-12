@@ -45,18 +45,8 @@ class Entity(Node):
                 tags.append(Tag.get_or_create(name=t.lower().strip()))
         self.tags = [t.name for t in tags]
 
-    @classmethod
-    def get_form(klass, override=None):
-        if override:
-            klass = override
-        form = model_form(klass, exclude=klass.exclude_fields)
-        form.tags = TagListField("Tags that will link to this entity")
-        form.links = EntityListField("Bind to entities")
-
-        return form
-
     def __unicode__(self):
-        return "{}".format(self.name)
+        return self.name
 
     def action(self, target, source, verb=None):
         if not verb:
