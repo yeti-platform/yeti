@@ -24,5 +24,5 @@ class Actor(Entity):
     def info(self):
         i = Entity.info(self)
         i["aliases"] = self.aliases
-        i["type"] = "Actor"
+        i["type"] = "actor"
         return i
