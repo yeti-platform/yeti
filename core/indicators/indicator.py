@@ -16,27 +16,17 @@ class Indicator(Node):
         ("name", "Name"),
         ("pattern", "Pattern"),
         ("location", "Location"),
-        ("diamond", "Diamond"),
     ]
 
     name = StringField(required=True, max_length=1024, verbose_name="Name")
     pattern = StringField(required=True, verbose_name="Pattern")
     location = StringField(required=True, max_length=255, verbose_name="Location")
-    diamond = StringField(
-        choices=DIAMOND_EDGES, required=True, verbose_name="Diamond Edge"
-    )
     description = StringField(verbose_name="Description")
 
     meta = {
         "allow_inheritance": True,
         "ordering": ["name"],
     }
-
-    @classmethod
-    def get_form(klass):
-        form = model_form(klass, exclude=klass.exclude_fields)
-        form.links = EntityListField("Link with entities")
-        return form
 
     def __unicode__(self):
         return "{} (pattern: '{}')".format(self.name, self.pattern)
@@ -64,8 +54,8 @@ class Indicator(Node):
         i = {
             k: v
             for k, v in self._data.items()
-            if k in ["name", "pattern", "diamond", "description", "location"]
+            if k in ["name", "pattern", "description", "location"]
         }
         i["id"] = str(self.id)
-        i["type"] = self.type
+        i["type"] = self.type.lower()
         return i
