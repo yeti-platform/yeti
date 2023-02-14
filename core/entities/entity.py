@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
-from mongoengine import StringField, ListField
+from datetime import datetime
+
+from mongoengine import StringField, ListField, DateTimeField
 from flask_mongoengine.wtf import model_form
 
 from core.database import Node, TagListField, EntityListField
@@ -20,7 +22,7 @@ class Entity(Node):
         "TTP": {"Actor": "Leveraged by", "Malware": "Observed in"},
     }
 
-    DISPLAY_FIELDS = [("name", "Name"), ("tags", "Tags")]
+    DISPLAY_FIELDS = [("name", "Name"), ("tags", "Tags"), ("created", "Created")]
 
     name = StringField(
         verbose_name="Name",
@@ -31,6 +33,7 @@ class Entity(Node):
     )
     description = StringField(verbose_name="Description")
     tags = ListField(StringField(), verbose_name="Relevant tags")
+    created = DateTimeField(default=datetime.utcnow)
 
     meta = {
         "allow_inheritance": True,
@@ -69,6 +72,7 @@ class Entity(Node):
         """
         i = {
             "name": self.name,
+            "created": self.created,
             "description": self.description,
             "tags": self.tags,
             "id": str(self.id),
