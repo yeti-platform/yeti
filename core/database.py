@@ -346,7 +346,7 @@ class Node(YetiDocument):
 
     @property
     def type(self):
-        return self._cls.split(".")[-1]
+        return self._cls.split(".")[-1].lower()
 
     @property
     def full_type(self):
