@@ -29,14 +29,14 @@ from core.user import User
 
 class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.db = connect("yeti", host=yeti_config.mongodb.host)
-
+        self.db = connect("yeti", host=yeti_config.mongodb.host) # type: ignore
+ # type: ignore
         DEFAULT_PERMISSIONS = {}
         DEFAULT_PERMISSIONS["admin"] = True
         user_default = User(username="test", permissions=DEFAULT_PERMISSIONS)
 
         self.yeti_client = YetiApi(
-            api_key=user_default.api_key, url=yeti_config.pyeti.url
+            api_key=user_default.api_key, url=yeti_config.pyeti.url # type: ignore
         )
         return super().setUp()
 
