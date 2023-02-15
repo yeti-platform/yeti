@@ -41,7 +41,7 @@ RUN mkdir /var/log/yeti
 # Update tld domain list
 RUN tldextract --update
 
-COPY ./extras/docker/scripts/docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./docker/scripts/docker-entrypoint.sh /docker-entrypoint.sh
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 

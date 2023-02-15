@@ -4,7 +4,7 @@ services:
   yeti:
     build:
       context: ../../../
-      dockerfile: ./extras/docker/dev/Dockerfile
+      dockerfile: ./yeti/docker/dev/Dockerfile
     image: yeti1-master
     ports:
       - "5000:5000"
