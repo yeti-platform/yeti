@@ -14,7 +14,20 @@ from core.entities import (
     Company,
 )
 from core.indicators import Indicator, Yara, Regex
-from core.observables import Observable
+from core.observables import (
+    Observable,
+    Hostname,
+    Bitcoin,
+    Certificate,
+    Email,
+    File,
+    Hash,
+    Ip,
+    MacAddress,
+    AutonomousSystem,
+    Path,
+    Text,
+    Url)
 from core.web.api.api import render
 from core.web.api.crud import CrudApi
 from core.web.helpers import requires_permissions
@@ -32,6 +45,18 @@ NODES_CLASSES = {
     "regex": Regex,
     "yara": Yara,
     "company": Company,
+    "hostname": Hostname,
+    "bitcoin" : Bitcoin,
+    "certificate" : Certificate,
+    "email" : Email,
+    "file" : File,
+    "hash" : Hash,
+    "ip" : Ip,
+    "macaddress" : MacAddress,
+    "autonomoussystem" : AutonomousSystem,
+    "path" : Path,
+    "text" : Text,
+    "url" : Url,
 }
 
 
