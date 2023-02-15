@@ -7,7 +7,6 @@ from core.feed import Feed
 import core.config.celeryimports
 
 if __name__ == "__main__":
-
     if len(sys.argv) == 1:
         all_feeds = Feed.objects()
         print(all_feeds)

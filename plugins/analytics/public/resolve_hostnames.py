@@ -16,7 +16,6 @@ from core.observables import Hostname, Observable
 
 
 class ResolveHostnames(ScheduledAnalytics):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "ResolveHostnames",

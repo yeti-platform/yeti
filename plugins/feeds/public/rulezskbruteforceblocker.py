@@ -9,7 +9,6 @@ from core.observables import Ip
 
 
 class RulezSKBruteforceBlocker(Feed):
-
     default_values = {
         "frequency": timedelta(hours=24),
         "name": "RulezSKBruteforceBlocker",
@@ -18,7 +17,6 @@ class RulezSKBruteforceBlocker(Feed):
     }
 
     def update(self):
-
         r = self._make_request(headers={"User-Agent": "yeti-project"})
         if r.status_code == 200:
             content = [

@@ -10,7 +10,6 @@ from core.observables import Tag
 
 
 class Entity(Node):
-
     SEARCH_ALIASES = {
         "name": "aliases",
     }

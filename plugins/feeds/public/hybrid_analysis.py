@@ -15,7 +15,6 @@ class HybridAnalysis(Feed):
     }
 
     def update(self):
-
         for index, item in self.update_json(
             headers={"User-agent": "VxApi Connector"},
             key="data",
@@ -25,7 +24,6 @@ class HybridAnalysis(Feed):
 
     # pylint: disable=arguments-differ
     def analyze(self, item):
-
         first_seen = item["analysis_start_time"]
 
         f_hyb = File.get_or_create(value="FILE:{}".format(item["sha256"]))

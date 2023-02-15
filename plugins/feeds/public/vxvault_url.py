@@ -7,7 +7,6 @@ from core.errors import ObservableValidationError
 
 
 class VXVaultUrl(Feed):
-
     # set default values for feed
     default_values = {
         "frequency": timedelta(hours=1),

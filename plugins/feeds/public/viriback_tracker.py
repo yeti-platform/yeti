@@ -21,7 +21,6 @@ class ViriBackTracker(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-
         url_obs = False
         ip_obs = False
         family = line["Family"]

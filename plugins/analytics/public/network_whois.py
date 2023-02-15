@@ -6,7 +6,6 @@ from core.observables import Email
 
 
 class NetworkWhois(OneShotAnalytics):
-
     default_values = {
         "name": "NetworkWhois",
         "description": "Perform a Network Whois request on the IP address and tries to"

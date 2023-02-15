@@ -7,7 +7,6 @@ from core.observables import Hostname
 
 
 class DynamicDomains(Feed):
-
     default_values = {
         "frequency": timedelta(hours=24),
         "name": "DynamicDomains",

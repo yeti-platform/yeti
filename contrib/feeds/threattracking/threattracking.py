@@ -26,7 +26,6 @@ from core.feed import Feed
 
 
 class ThreatTracking(Feed):
-
     default_values = {
         "frequency": timedelta(days=30),
         "name": "ThreatTracking",

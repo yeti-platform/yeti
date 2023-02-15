@@ -6,7 +6,6 @@ from core.observables import Observable
 
 
 class Hash(Observable):
-
     family = StringField()
 
     HASH_LENGTHS = {

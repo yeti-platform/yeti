@@ -23,7 +23,6 @@ rule_template = """rule yeti_rule
 
 
 class Yara(Indicator):
-
     pattern = StringField(required=True, verbose_name="Pattern", default=rule_template)
 
     def clean(self):

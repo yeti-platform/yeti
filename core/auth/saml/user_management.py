@@ -21,7 +21,6 @@ def get_or_create_user(saml_name_id, saml_user_data):
 
 
 def create_user(saml_name_id, saml_user_data):
-
     u = User(username=saml_name_id)
     u.save()
     u = adjust_permissions(u, saml_user_data)

@@ -16,7 +16,6 @@ class ThreatCrowdAPI(object):
     def fetch(observable):
         base_url_api = "https://www.threatcrowd.org/searchApi/v2"
         if isinstance(observable, Hostname):
-
             url = base_url_api + "/domain/report/"
             params = {"domain": observable.value}
             try:
@@ -83,9 +82,7 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
         results.update(raw=json_string)
         result = {}
         if isinstance(observable, Hostname):
-
             if "resolutions" in json_result:
-
                 result["ip on this domains"] = 0
 
                 for ip in json_result["resolutions"]:
@@ -112,7 +109,6 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                                 )
 
             if "emails" in json_result:
-
                 result["nb emails"] = 0
 
                 for email in json_result["emails"]:
@@ -132,7 +128,6 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                         )
 
             if "subdomains" in json_result:
-
                 result["nb subdomains"] = 0
 
                 for subdomain in json_result["subdomains"]:
@@ -152,9 +147,7 @@ class ThreatCrowdQuery(ThreatCrowdAPI, OneShotAnalytics):
                         )
 
         if isinstance(observable, Ip):
-
             if "resolutions" in json_result:
-
                 result["domains resolved"] = 0
 
                 for domain in json_result["resolutions"]:

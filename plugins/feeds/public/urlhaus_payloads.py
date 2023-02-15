@@ -16,7 +16,6 @@ class UrlHausPayloads(Feed):
     }
 
     def update(self):
-
         for index, line in self.update_csv(
             delimiter=",",
             names=["firstseen", "url", "filetype", "md5", "sha256", "signature"],
@@ -26,7 +25,6 @@ class UrlHausPayloads(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-
         md5_obs = False
         sha256_obs = False
         url_obs = False

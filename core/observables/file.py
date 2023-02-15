@@ -8,7 +8,6 @@ from core.database import StringListField
 
 
 class File(Observable):
-
     value = StringField(verbose_name="Value")
     mime_type = StringField(verbose_name="MIME type")
     hashes = ListField(DictField(), verbose_name="Hashes")

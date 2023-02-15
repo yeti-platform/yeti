@@ -9,7 +9,6 @@ from core.errors import ObservableValidationError
 
 
 class Bitcoin(Observable):
-
     format = StringField()
 
     DISPLAY_FIELDS = Observable.DISPLAY_FIELDS + [("format", "Format")]

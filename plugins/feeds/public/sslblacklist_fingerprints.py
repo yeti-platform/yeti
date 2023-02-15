@@ -22,7 +22,6 @@ class SSLBlackListCerts(Feed):
     }
 
     def update(self):
-
         for index, line in self.update_csv(
             delimiter=",",
             names=["Listingdate", "SHA1", "Listingreason"],
@@ -32,7 +31,6 @@ class SSLBlackListCerts(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-
         first_seen = line["Listingdate"]
         _sha1 = line["SHA1"]
         reason = line["Listingreason"]

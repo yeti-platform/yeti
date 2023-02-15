@@ -19,4 +19,4 @@ class MacAddress(Observable):
 
     def normalize(self):
         value = re.sub(r"[.:\-]", "", self.value).upper()
-        self.value = ":".join(value[i : i + 2] for i in xrange(0, len(value), 2))
+        self.value = ":".join(value[i : i + 2] for i in range(0, len(value), 2))

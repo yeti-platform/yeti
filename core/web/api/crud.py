@@ -87,7 +87,6 @@ class CrudSearchApi(FlaskView):
 
 
 class CrudApi(FlaskView):
-
     template = None
     template_single = None
 

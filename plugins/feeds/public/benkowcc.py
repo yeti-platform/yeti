@@ -19,7 +19,6 @@ class BenkowTracker(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-
         url_obs = False
         url = line["url"]
         ip = line["ip"]

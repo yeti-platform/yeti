@@ -6,7 +6,6 @@ from core.observables import Observable
 
 
 class Text(Observable):
-
     record_type = StringField()
 
     @staticmethod

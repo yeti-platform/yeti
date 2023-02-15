@@ -6,7 +6,6 @@ from core.observables import Hostname
 
 
 class BotvrijHostname(Feed):
-
     default_values = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijHostname",

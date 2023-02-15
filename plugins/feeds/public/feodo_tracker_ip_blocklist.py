@@ -26,7 +26,6 @@ class FeodoTrackerIPBlockList(Feed):
 
     # pylint: disable=arguments-differ
     def analyze(self, item):
-
         tags = []
         tags.append(item["malware"].lower())
         tags.append("c2")

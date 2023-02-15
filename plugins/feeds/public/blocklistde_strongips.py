@@ -6,7 +6,6 @@ from core.observables import Ip
 
 
 class BlocklistdeStrongIPs(Feed):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeStrongIPs",

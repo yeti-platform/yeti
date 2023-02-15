@@ -19,7 +19,6 @@ SUSPICIOUS_TLDS = [
 
 
 class ProcessHostnames(InlineAnalytics):
-
     default_values = {
         "name": "ProcessHostnames",
         "description": "Extracts and analyze domains",

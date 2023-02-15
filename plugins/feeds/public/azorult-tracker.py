@@ -23,7 +23,6 @@ class AzorutTracker(Feed):
             self.analyze(item)
 
     def update_json(self):
-
         r = self._make_request()
 
         if r.status_code == 200:

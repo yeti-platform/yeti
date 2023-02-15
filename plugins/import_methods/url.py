@@ -14,7 +14,6 @@ from plugins.import_methods.html import import_html
 
 
 class ImportURL(ImportMethod):
-
     default_values = {
         "name": "import_url",
         "description": "Perform investigation import from an URL.",

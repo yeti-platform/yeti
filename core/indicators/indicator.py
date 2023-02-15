@@ -9,7 +9,6 @@ from core.database import Node, EntityListField
 
 
 class Indicator(Node):
-
     SEARCH_ALIASES = {}
 
     DISPLAY_FIELDS = [

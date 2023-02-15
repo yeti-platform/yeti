@@ -6,7 +6,6 @@ from core.observables import Ip
 
 
 class Cruzit(Feed):
-
     default_values = {
         "frequency": timedelta(hours=13),
         "name": "Cruzit",

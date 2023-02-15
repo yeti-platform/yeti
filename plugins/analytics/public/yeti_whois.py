@@ -18,7 +18,6 @@ def link_from_contact_info(hostname, contact, field, klass, description):
 
 
 class Whois(OneShotAnalytics):
-
     default_values = {
         "name": "Whois",
         "description": "Perform a Whois request on the domain name and tries to"

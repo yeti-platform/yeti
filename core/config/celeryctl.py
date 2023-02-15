@@ -13,7 +13,6 @@ celery_app = Celery("yeti")
 class CeleryConfig:
     redis_scheme = "redis"
     if yeti_config.redis.tls:
-
         redis_scheme = redis_scheme + "s"
 
     broker_url = "{}://{}:{}/{}".format(

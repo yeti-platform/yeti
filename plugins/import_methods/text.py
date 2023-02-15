@@ -10,7 +10,6 @@ class ImportText(ImportMethod):
 
 
 class ImportTextPlain(ImportText):
-
     default_values = {
         "name": "import_text",
         "description": "Perform investigation import from a text document.",
@@ -19,7 +18,6 @@ class ImportTextPlain(ImportText):
 
 
 class ImportXML(ImportText):
-
     default_values = {
         "name": "import_xml",
         "description": "Perform investigation import from an XML document.",

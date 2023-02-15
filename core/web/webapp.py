@@ -87,7 +87,6 @@ def list_routes():
 
     output = []
     for rule in webapp.url_map.iter_rules():
-
         options = {}
         for arg in rule.arguments:
             options[arg] = "[{0}]".format(arg)

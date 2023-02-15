@@ -38,7 +38,6 @@ class DataplaneSMTPGreet(Feed):
             self.analyze(row)
 
     def analyze(self, item):
-
         context_ip = {
             "source": self.name,
             "last_seen": item["lastseen"],
