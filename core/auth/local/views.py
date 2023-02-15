@@ -44,8 +44,8 @@ def logout():
 @login_required
 def api_new_user():
     params = request.get_json()
-    username = params["username"].encode()
-    password = params["password"].encode()
+    username = params["username"]
+    password = params["password"]
     admin = params["admin"]
     if current_user.has_role("admin") and current_user.is_active:
         try:
