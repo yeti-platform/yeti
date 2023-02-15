@@ -7,7 +7,6 @@ from core.database import StringListField
 
 
 class Actor(Entity):
-
     aliases = ListField(StringField(), verbose_name="Aliases")
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("aliases", "Aliases")]

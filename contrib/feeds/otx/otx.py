@@ -31,7 +31,6 @@ OBSERVABLE_TYPES = {
 
 
 class OtxFeed(Feed):
-
     last_runs = DictField()
 
     default_values = {

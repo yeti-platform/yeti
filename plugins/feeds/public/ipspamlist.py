@@ -18,12 +18,10 @@ class IPSpamList(Feed):
     }
 
     def update(self):
-
         for index, line in self.update_csv(delimiter=",", filter_row="first_seen"):
             self.analyze(line)
 
     def analyze(self, item):
-
         context = {
             "source": self.name,
             "threat": item["category"],

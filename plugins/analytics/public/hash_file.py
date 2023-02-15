@@ -12,7 +12,6 @@ HASH_TYPES_DICT = {
 
 
 class HashFile(InlineAnalytics):
-
     default_values = {
         "name": "HashFile",
         "description": "Extracts MD5, SHA1, SHA256, SHA512 hashes from file",

@@ -15,7 +15,6 @@ from core.helpers import refang
 
 
 class Url(Observable):
-
     parsed_url = DictField()
     regex = (
         r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>"

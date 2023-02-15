@@ -98,7 +98,6 @@ class PassiveTotalApi(object):
 
 
 class PassiveTotalPassiveDNS(OneShotAnalytics, PassiveTotalApi):
-
     default_values = {
         "group": "PassiveTotal",
         "name": "PassiveTotal Passive DNS",
@@ -145,7 +144,6 @@ class PassiveTotalPassiveDNS(OneShotAnalytics, PassiveTotalApi):
 
 
 class PassiveTotalMalware(OneShotAnalytics, PassiveTotalApi):
-
     default_values = {
         "group": "PassiveTotal",
         "name": "Get Malware",
@@ -176,7 +174,6 @@ class PassiveTotalMalware(OneShotAnalytics, PassiveTotalApi):
 
 
 class PassiveTotalSubdomains(OneShotAnalytics, PassiveTotalApi):
-
     default_values = {
         "group": "PassiveTotal",
         "name": "Get Subdomains",
@@ -228,7 +225,6 @@ class PassiveTotalWhois(OneShotAnalytics, PassiveTotalApi):
 
 
 class PassiveTotalReverseWhois(OneShotAnalytics, PassiveTotalApi):
-
     default_values = {
         "group": "PassiveTotal",
         "name": "PassiveTotal Reverse Whois",
@@ -260,7 +256,6 @@ class PassiveTotalReverseWhois(OneShotAnalytics, PassiveTotalApi):
 
 
 class PassiveTotalReverseNS(OneShotAnalytics, PassiveTotalApi):
-
     default_values = {
         "group": "PassiveTotal",
         "name": "PassiveTotal Reverse NS",

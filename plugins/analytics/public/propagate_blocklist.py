@@ -7,7 +7,6 @@ from mongoengine import Q
 
 
 class PropagateBlocklist(ScheduledAnalytics):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "PropagateBlocklist",

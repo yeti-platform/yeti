@@ -161,7 +161,7 @@ class ObservableView(GenericView):
         for observable in files:
             neighbors = observable.neighbors()
             for otype in neighbors:
-                for (link, node) in neighbors[otype]:
+                for link, node in neighbors[otype]:
                     if isinstance(node, Observable):
                         if node.tags:
                             data["neighbors"].append((link.info(), node.info()))

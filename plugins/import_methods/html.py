@@ -20,7 +20,6 @@ def import_html(results, content):
 
 
 class ImportHTML(ImportMethod):
-
     default_values = {
         "name": "import_html",
         "description": "Perform investigation import from a HTML document.",

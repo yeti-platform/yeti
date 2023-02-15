@@ -10,7 +10,6 @@ from mongoengine import Q
 
 
 class TagLogic(ScheduledAnalytics):
-
     default_values = {
         "frequency": timedelta(minutes=30),
         "name": "TagLogic",
@@ -45,7 +44,6 @@ class TagLogic(ScheduledAnalytics):
 
     @staticmethod
     def each(obj):
-
         all_tags = set([t.name for t in obj.tags])
 
         # tag absent produced tags

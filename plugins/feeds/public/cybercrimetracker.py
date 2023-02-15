@@ -10,7 +10,6 @@ from core.observables import Ip, Observable
 
 
 class CybercrimeTracker(Feed):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "CybercrimeTracker",
@@ -19,13 +18,11 @@ class CybercrimeTracker(Feed):
     }
 
     def update(self):
-
         since_last_run = datetime.utcnow() - self.frequency
 
         for item in self.update_xml(
             "item", ["title", "link", "pubDate", "description"]
         ):
-
             pub_date = parser.parse(item["pubDate"])
             if self.last_run is not None:
                 if since_last_run > pub_date.replace(tzinfo=None):

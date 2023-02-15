@@ -33,7 +33,6 @@ class AlienVaultIPReputation(Feed):
             self.analyze(line)
 
     def analyze(self, item):
-
         try:
             context = dict(source=self.name)
 

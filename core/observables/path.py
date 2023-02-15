@@ -8,7 +8,6 @@ from core.observables import Observable
 
 
 class Path(Observable):
-
     fs = StringField(verbose_name="Filesystem")
 
     # TODO: Use a smarter regex

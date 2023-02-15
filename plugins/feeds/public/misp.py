@@ -98,7 +98,6 @@ class MispFeed(Feed):
                 self.analyze(event, instance)
 
     def get_last_events(self, instance):
-
         from_date = self.last_run
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
@@ -166,12 +165,10 @@ class MispFeed(Feed):
                 self.__add_attribute(instance, attribute, context, tags)
 
     def __add_attribute(self, instance, attribute, context, tags):
-
         if attribute["category"] == "External analysis":
             return
 
         if attribute.get("type") in self.TYPES_TO_IMPORT:
-
             context["id"] = attribute["event_id"]
             context["link"] = urljoin(
                 self.instances[instance]["url"],

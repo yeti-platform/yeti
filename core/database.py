@@ -93,7 +93,6 @@ class YetiDocument(Document):
 
 
 class LinkHistory(EmbeddedDocument):
-
     description = StringField()
     first_seen = DateTimeField(default=datetime.utcnow)
     last_seen = DateTimeField(default=datetime.utcnow)
@@ -102,7 +101,6 @@ class LinkHistory(EmbeddedDocument):
 
 
 class Link(Document):
-
     src = ReferenceField("Node", required=True, dbref=True)
     dst = ReferenceField("Node", required=True, dbref=True, unique_with="src")
     history = ListField(EmbeddedDocumentField(LinkHistory))
@@ -334,7 +332,6 @@ class AttachedFile(YetiDocument):
 
 
 class Node(YetiDocument):
-
     exclude_fields = ["attached_files"]
     attached_files = ListField(ReferenceField(AttachedFile, reverse_delete_rule=PULL))
 

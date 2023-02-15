@@ -6,7 +6,6 @@ from core.entities import Entity
 
 
 class TTP(Entity):
-
     KILL_CHAIN_STEPS = {
         "1": "Reconnaissance",
         "2": "Weaponisation",

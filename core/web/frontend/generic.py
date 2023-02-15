@@ -26,7 +26,6 @@ binding_object_classes = {
 
 
 class GenericView(FlaskView):
-
     subclass_map = {}
 
     @requires_permissions("read")

@@ -6,7 +6,6 @@ from mongoengine import Q
 
 
 class ExpireTags(ScheduledAnalytics):
-
     default_values = {
         "frequency": timedelta(hours=12),
         "name": "ExpireTags",

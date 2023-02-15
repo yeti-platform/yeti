@@ -19,7 +19,6 @@ from core.web.api.api import bson_renderer
 
 
 class InvestigationView(GenericView):
-
     klass = Investigation
 
     @route("/graph/<id>")

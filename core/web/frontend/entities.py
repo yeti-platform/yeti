@@ -14,7 +14,6 @@ from core.entities import (
 
 
 class EntityView(GenericView):
-
     klass = Entity
     subclass_map = {
         "ttp": TTP,

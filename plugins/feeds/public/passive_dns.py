@@ -9,7 +9,6 @@ from pypdns import api
 
 
 class PassiveDNS(Feed):
-
     default_values = {
         "frequency": timedelta(days=1),
         "name": "PassiveDNS",

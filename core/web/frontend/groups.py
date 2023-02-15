@@ -11,7 +11,6 @@ from core.web.helpers import get_object_or_404  # requires_role
 
 
 class GroupView(GenericView):
-
     klass = Group
 
     @route("/profile", methods=["GET", "POST"])

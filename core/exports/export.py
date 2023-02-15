@@ -46,7 +46,6 @@ class ExportTemplate(YetiDocument):
 
 @celery_app.task
 def execute_export(export_id):
-
     try:
         export = Export.objects.get(
             id=export_id, lock=None
@@ -88,7 +87,6 @@ def execute_export(export_id):
 
 
 class Export(ScheduleEntry):
-
     SCHEDULED_TASK = "core.exports.export.execute_export"
     CUSTOM_FILTER = Q()
 

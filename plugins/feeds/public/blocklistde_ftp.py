@@ -6,7 +6,6 @@ from core.observables import Ip
 
 
 class BlocklistdeFTP(Feed):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeFTP",

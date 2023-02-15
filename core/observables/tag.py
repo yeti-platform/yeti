@@ -59,7 +59,6 @@ class Tag(Node):
 
 
 class ObservableTag(EmbeddedDocument):
-
     name = StringField(required=True)
     first_seen = DateTimeField(default=datetime.utcnow)
     last_seen = DateTimeField(default=datetime.utcnow)

@@ -102,7 +102,6 @@ class DNSDBApi(object):
 
 
 class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
-
     default_values = {
         "group": "DNSDB",
         "name": "Reverse Passive DNS",
@@ -117,7 +116,6 @@ class DNSDBReversePassiveDns(OneShotAnalytics, DNSDBApi):
 
 
 class DNSDBPassiveDns(OneShotAnalytics, DNSDBApi):
-
     default_values = {
         "group": "DNSDB",
         "name": "DNSDB Passive DNS",

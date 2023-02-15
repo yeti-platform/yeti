@@ -8,7 +8,6 @@ from core.errors import ObservableValidationError
 
 
 class ProcessUrl(InlineAnalytics):
-
     default_values = {
         "name": "ProcessUrl",
         "description": "Extracts domains from URLs",

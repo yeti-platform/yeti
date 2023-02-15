@@ -11,7 +11,6 @@ from core.web.helpers import requires_role, get_object_or_404
 
 
 class UsersView(GenericView):
-
     klass = User
 
     @route("/profile", methods=["GET", "POST"])

@@ -7,7 +7,6 @@ from core.errors import ObservableValidationError
 
 
 class TorExitNodes(Feed):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "TorExitNodes",
@@ -43,7 +42,6 @@ class TorExitNodes(Feed):
         return True
 
     def analyze(self, line):
-
         fields = line.split("|")
 
         if len(fields) < 8:
