@@ -27,7 +27,7 @@ from core.observables.path import Path
 from core.user import User
 
 
-class EntityTest(unittest.TestCase):
+class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         self.db = connect("yeti", host=yeti_config.mongodb.host)
 
