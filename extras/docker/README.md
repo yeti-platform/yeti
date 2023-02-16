@@ -15,14 +15,14 @@ Follow the [official instructions](https://www.docker.com/community-edition).
 
 The following command will build a Docker image named `yeti-platform` and launch it :
 
-    docker-compose -p yeti -f extras/docker/dev/docker-compose.yaml up -d
+    docker compose -p yeti -f extras/docker/dev/docker-compose.yaml up -d
 
 You can also invoke docker-compose from the `docker` directory
 
     cd extras/docker/dev
-    docker-compose up
+    docker compose up
 
-The `docker-compose` command should build the master Yeti Docker image and start
+The `docker compose` command should build the master Yeti Docker image and start
 6 docker containers, one for each service:
 
 * `yeti` (the main webserver / API)
@@ -37,7 +37,7 @@ And two more:
 * `redis` (the redis server)
 * `mongodb` (the mongodb server)
 
-This will start a Yeti service running on <http://localhost:5000/>
+This will start a Yeti development server running on <http://localhost:5000/>
 
 ### Prod setup
 

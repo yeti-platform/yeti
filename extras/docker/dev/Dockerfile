@@ -24,7 +24,7 @@ RUN mkdir /var/log/yeti
 # Update tld domain list
 RUN poetry run tldextract --update
 
-COPY ./docker/scripts/docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./extras/docker/scripts/docker-entrypoint.sh /docker-entrypoint.sh
 
 ENV PYTHONPATH /app
 
