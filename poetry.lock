@@ -2611,14 +2611,14 @@ multidict = ">=4.0"
 
 [[package]]
 name = "yeti-python"
-version = "1.0"
+version = "1.1"
 description = "Client python for YETI Platform"
 category = "main"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "yeti_python-1.0-py3-none-any.whl", hash = "sha256:066c69a3edd4a38589a40f857f9788fedd4460c337952561f3d4ac27a31d8d15"},
-    {file = "yeti_python-1.0.tar.gz", hash = "sha256:40c9572af754735afad501bda981d9dd180d43d53d5dd150fe69e6845cc28d9c"},
+    {file = "yeti_python-1.1-py3-none-any.whl", hash = "sha256:d86fe99b8879a181d2757c0001fb31e732c43526933edf0a5d95ce38507c9fae"},
+    {file = "yeti_python-1.1.tar.gz", hash = "sha256:7baa5f243fb65f9d48d923081b21e27dda87b83580b8e0ab9bafdf755ba6a93f"},
 ]
 
 [package.dependencies]
