@@ -47,6 +47,7 @@ python-whois = "^0.8.0"
 python3-pdns = "^1.0"
 PyJWT = "^2.6.0"
 ipwhois = "^1.2.0"
+yeti-python = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
