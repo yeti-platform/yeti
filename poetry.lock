@@ -2611,14 +2611,14 @@ multidict = ">=4.0"
 
 [[package]]
 name = "yeti-python"
-version = "1.1"
+version = "1.2"
 description = "Client python for YETI Platform"
 category = "main"
 optional = false
 python-versions = ">=3.9,<4.0"
 files = [
-    {file = "yeti_python-1.1-py3-none-any.whl", hash = "sha256:d86fe99b8879a181d2757c0001fb31e732c43526933edf0a5d95ce38507c9fae"},
-    {file = "yeti_python-1.1.tar.gz", hash = "sha256:7baa5f243fb65f9d48d923081b21e27dda87b83580b8e0ab9bafdf755ba6a93f"},
+    {file = "yeti_python-1.2-py3-none-any.whl", hash = "sha256:5ebd2fe82b73aa611cb3e96f9a5c59d2951199fad44f1eb4dd62332e4f591449"},
+    {file = "yeti_python-1.2.tar.gz", hash = "sha256:249d592cdbfdec179faafd9ad8d802f6516c8577d2afc442c1e87f324cca7254"},
 ]
 
 [package.dependencies]
@@ -2643,4 +2643,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "6fd6954c8a2daa48089731b415dd9b92117405f8692c46891e9630279189d644"
+content-hash = "5404e068ff9ed5e5c9de681ec1769ace02c33c1768c6e92e217572bac89cd978"

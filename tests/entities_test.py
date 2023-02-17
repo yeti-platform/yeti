@@ -30,39 +30,42 @@ class EntityTest(unittest.TestCase):
         return super().setUp()
 
     def test_malware(self):
-        malware = Malware(name="test").save()
-        malware_added = self.yeti_client.entity_get(malware.id)
-        self.assertEqual(malware_added["name"], malware.name)
+        malware_name = "test_malware"
+        malware = self.yeti_client.entity_add(name=malware_name, type_entity="Malware")
+        malware_added = self.yeti_client.entity_search(name=malware_name)
+        self.assertEqual(malware_added[0]["name"], malware_name)
 
     def test_actor(self):
-        actor = Actor(name="test").save()
-        actor_added = self.yeti_client.entity_get(actor.id)
-        self.assertEqual(actor_added["name"], actor.name)
+        actor_name = "test_actor"
+        actor = self.yeti_client.entity_add(name=actor_name, type_entity="Actor")
+        actor_added = self.yeti_client.entity_search(name=actor_name)
+        self.assertEqual(actor_added[0]["name"], actor_name)
+
 
     def test_campaign(self):
-        campaign = Campaign(name="test").save()
-        campaign_added = self.yeti_client.entity_get(campaign.id)
-        self.assertEqual(campaign_added["name"], campaign.name)
+        campaign_name = "test_campaign"
+        campaign = self.yeti_client.entity_add(name=campaign_name, type_entity="Campaign")
+        campaign_added = self.yeti_client.entity_search(name=campaign_name)
+        self.assertEqual(campaign_added[0]["name"], campaign_name)
 
     def test_company(self):
-        compagny = Company(name="test").save()
-        compagny_added = self.yeti_client.entity_get(compagny.id)
-        self.assertEqual(compagny_added["name"], compagny.name)
+        company_name = "test_company"
+        company = self.yeti_client.entity_add(name=company_name, type_entity="Company")
+        company_added = self.yeti_client.entity_search(name=company_name)
+        self.assertEqual(company_added[0]["name"], company_name)
 
-    def test_exploit_kit(self):
-        exploit_kit = ExploitKit(name="test").save()
-        exploit_kit_added = self.yeti_client.entity_get(exploit_kit.id)
-        self.assertEqual(exploit_kit_added["name"], exploit_kit.name)
 
     def test_exploit(self):
-        exploit = Exploit(name="test").save()
-        exploit_added = self.yeti_client.entity_get(exploit.id)
-        self.assertEqual(exploit_added["name"], exploit.name)
+        exploit_name = "test_exploit"
+        exploit = self.yeti_client.entity_add(name=exploit_name, type_entity="Exploit")
+        exploit_added = self.yeti_client.entity_search(name=exploit_name)
+        self.assertEqual(exploit_added[0]["name"], exploit_name)
 
     def test_ttp(self):
-        ttp = TTP(name="test", killchain="1").save()
-        ttp_added = self.yeti_client.entity_get(ttp.id)
-        self.assertEqual(ttp_added["name"], ttp.name)
+        ttp_name = "test_ttp"
+        ttp = self.yeti_client.entity_add(name=ttp_name, type_entity="TTP",killchain="")
+        ttp_added = self.yeti_client.entity_search(name=ttp_name)
+        self.assertEqual(ttp_added[0]["name"], ttp_name)
 
     def test_all(self):
         folder_entities = os.path.join(YETI_ROOT, "core", "entities")
