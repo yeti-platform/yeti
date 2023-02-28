@@ -1,11 +1,22 @@
-from __future__ import unicode_literals
-
-import collections
 import hashlib
 import re
 from datetime import timedelta
 
-from mongoengine import Document
+REGEXES = [
+    ('ip', re.compile(r"(?P<pre>\W?)(?P<search>(?:\d{1,3}\.){3}\d{1,3})(?P<post>\W?)")),
+    ('hostname', re.compile(r"(?P<pre>\W?)(?P<search>[-.\w[\]]+\[?\.\]?[\w-]+)(?P<post>\W?)")),
+    ('url', re.compile(
+        r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>"
+        + r"[-.\w[\]]+\[?\.\]?[\w-]+"
+        + r")(\:[\d]{1,5})?(?P<path>((\/[^\?]*?)?(\?[^#]*?)?(\#.*?)?)[\w/])?)"
+    )),
+    ('email', re.compile(r"(?P<pre>\W?)(?P<search>[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[\w-]+)(?P<post>\W?)")),
+    ('md5', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{32})(?P<post>\W?)")),
+    ('sha1', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{40})(?P<post>\W?)")),
+    ('sha256', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{64})(?P<post>\W?)")),
+    ('sha512', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{128})(?P<post>\W?)")),
+    ('cve', re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)")),
+]
 
 timedelta_regex = re.compile(
     r"(((?P<hours>[0-9]{1,2}):)?((?P<minutes>[0-9]{1,2}):))?(?P<seconds>[0-9]{1,2})$"
@@ -29,36 +40,9 @@ def refang(url):
     return url
 
 
-def del_from_set(s, value):
-    try:
-        s.remove(value)
-    except KeyError:
-        pass
 
 
-def iterify(element):
-    if element is None:
-        return ()
-    elif (
-        isinstance(element, collections.abc.Iterable)
-        and not isinstance(element, str)
-        and not isinstance(element, Document)
-    ):
-        return element
-    else:
-        return (element,)
 
-
-def get_value_at(data, path):
-    path = path.split(".")
-
-    for path_elt in path:
-        if data is None or path_elt not in data:
-            return None
-        else:
-            data = data[path_elt]
-
-    return data
 
 
 def stream_sha256(stream):
