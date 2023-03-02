@@ -43,9 +43,7 @@ async def observable_update(observable_id, request: ObservableUpdateRequest) -> 
         observable.context.update(request.context)
 
     if request.tags:
-        if request.replace:
-            observable.tags = []
-        observable.tags.extend(request.tags)
+        observable.tag(request.tags, strict=request.replace)
 
     observable = observable.save()
     return observable

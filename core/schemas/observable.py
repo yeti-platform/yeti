@@ -74,6 +74,8 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     def tag(self, tags: list[str], strict: bool = False, expiration_days: int | None = None) -> "Observable":
         """Adds tags to an observable."""
         expiration_days = expiration_days or DEFAULT_TAG_EXPIRATION_DAYS
+        if strict:
+            self.tags = {}
         for tag_name in tags:
             tag = self.tags.get(tag_name)
             if tag:

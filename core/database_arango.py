@@ -160,7 +160,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         document = json.loads(document_json)
         document['_key'] = document.pop('id')
         newdoc = self._get_collection().update(
-            document, return_new=True)['new']
+            document, merge=False, return_new=True)['new']
         newdoc['id'] = newdoc.pop('_key')
         return newdoc
 
@@ -381,7 +381,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 vertices[vertex['stix_id']] = vertex
 
     @classmethod
-    def filter(cls,
+    def filter(cls: Type[TYetiObject],
                args: dict[str, Any],
                offset: int,
                count: int) -> List[TYetiObject]:
