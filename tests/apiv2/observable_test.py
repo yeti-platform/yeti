@@ -24,9 +24,31 @@ class ObservableTest(unittest.TestCase):
         response = client.get("/api/v2/observables/")
         self.assertEqual(response.status_code, 200)
 
-    def test_get_observable_key_value(self):
-        response = client.get("/api/v2/observables/")
+    def test_observable_search(self):
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname"})
         self.assertEqual(response.status_code, 200)
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto2.com", "type": "hostname"})
+        self.assertEqual(response.status_code, 200)
+
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"value": "toto.com", "page": 0, "count": 10})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['value'], 'toto.com')
+
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"value": "toto", "page": 0, "count": 10})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 2)
+
 
     def test_create_observable(self):
         response = client.post(

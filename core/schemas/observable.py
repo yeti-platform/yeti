@@ -44,9 +44,9 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         for observable_type, regex in REGEXES:
             if not regex.match(refanged):
                 continue
-            observable = Observable.filter({"value": refanged})
-            if observable:
-                return observable[0]
+            results: list[Observable] = Observable.filter({"value": refanged}, offset=0, count=1)
+            if results:
+                return results[0]
 
             observable = Observable(
                 value=refanged,
@@ -76,3 +76,11 @@ class ObservableUpdateRequest(BaseModel):
 class AddTextRequest(BaseModel):
     text: str
     tags: list[str] = []
+
+class ObservableSearchRequest(BaseModel):
+    value: str | None = None
+    name: str | None = None
+    type: ObservableType | None = None
+    tags: list[str] | None = None
+    count: int = 100
+    page: int = 0

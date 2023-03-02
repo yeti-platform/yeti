@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from typing import Iterable
-from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest
+from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest, ObservableSearchRequest
 import datetime
 
 # API endpoints
@@ -57,3 +57,12 @@ async def add_text(request: AddTextRequest) -> Observable:
         return Observable.add_text(request.text, request.tags)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@observables_router.post('/search')
+async def search_observables(request: ObservableSearchRequest) -> list[Observable]:
+    """Searches for observables."""
+    request_args = request.dict(exclude_unset=True)
+    count = request_args.pop('count')
+    page = request_args.pop('page')
+    observables = Observable.filter(request_args, offset=page*count, count=count)
+    return observables

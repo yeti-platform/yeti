@@ -2,7 +2,7 @@
 import json
 import sys
 import time
-from typing import TypeVar, Iterable, Type
+from typing import TypeVar, Iterable, Type, Any, List
 
 import requests
 from arango import ArangoClient
@@ -381,7 +381,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 vertices[vertex['stix_id']] = vertex
 
     @classmethod
-    def filter(cls, args, offset=None, count=None):
+    def filter(cls,
+               args: dict[str, Any],
+               offset: int,
+               count: int) -> List[TYetiObject]:
         """Search in an ArangoDb collection.
 
         Search the collection for all objects whose 'value' attribute matches
@@ -424,11 +427,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for key in list(args.keys()):
             args[key.replace('.', '_')] = args.pop(key)
         documents = cls._db.aql.execute(aql_string, bind_vars=args)
-        yeti_objects = []
+        results = []
         for doc in documents:
             doc['id'] = doc.pop('_key')
-            yeti_objects.append(cls.load(doc))
-        return yeti_objects
+            results.append(cls.load(doc))
+        return results
 
     @classmethod
     def fulltext_filter(cls, keywords):
