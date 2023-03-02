@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from typing import Iterable
-from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest, ObservableSearchRequest
+from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest, ObservableSearchRequest, ObservableTagRequest
 import datetime
 
 # API endpoints
@@ -66,3 +66,24 @@ async def search_observables(request: ObservableSearchRequest) -> list[Observabl
     page = request_args.pop('page')
     observables = Observable.filter(request_args, offset=page*count, count=count)
     return observables
+
+
+@observables_router.post('/tag')
+async def tag_observable(request: ObservableTagRequest) -> dict:
+    observables = []
+    for observable_id in request.ids:
+        observable = Observable.get(observable_id)
+        if not observable:
+            raise HTTPException(status_code=400, detail="Tagging request contained an unknown observable: ID:{observable_id}")
+        observables.append(observable)
+
+    for observable in observables:
+        observable.tag(request.tags, strict=request.strict)
+
+    return {'tagged': len(observables)}
+
+
+
+#TODO: Add context /context (POST, DELETE)
+#TODO: Bulk add observables /bulk (POST)
+#TODO: Bulk tag observables /bulk-tag (POST)
