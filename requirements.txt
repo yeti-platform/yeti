@@ -39,3 +39,4 @@ yara-python
 python-whois
 python3-pdns
 black
+werkzeug==2.1.2
