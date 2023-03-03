@@ -4,37 +4,35 @@ import os
 import re
 from datetime import datetime
 
-from flask_mongoengine.wtf import model_form
 from mongoengine import *
-from wtforms import widgets, Field
 
 from core.constants import STORAGE_ROOT
 from core.errors import GenericYetiError
 from core.helpers import iterify, stream_sha256
 
 
-class StringListField(Field):
-    widget = widgets.TextInput()
+# class StringListField(Field):
+#     widget = widgets.TextInput()
 
-    def _value(self):
-        if self.data:
-            return ",".join([str(d) for d in self.data])
-        else:
-            return ""
+#     def _value(self):
+#         if self.data:
+#             return ",".join([str(d) for d in self.data])
+#         else:
+#             return ""
 
-    def process_formdata(self, valuelist):
-        if valuelist:
-            self.data = [x.strip() for x in valuelist[0].split(",")]
-        else:
-            self.data = []
-
-
-class TagListField(StringListField):
-    endpoint = "api.Tag:index"
+#     def process_formdata(self, valuelist):
+#         if valuelist:
+#             self.data = [x.strip() for x in valuelist[0].split(",")]
+#         else:
+#             self.data = []
 
 
-class EntityListField(StringListField):
-    endpoint = "api.Entity:index"
+# class TagListField(StringListField):
+#     endpoint = "api.Tag:index"
+
+
+# class EntityListField(StringListField):
+#     endpoint = "api.Entity:index"
 
 
 class YetiDocument(Document):
