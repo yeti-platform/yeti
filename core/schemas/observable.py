@@ -53,9 +53,8 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         for observable_type, regex in REGEXES:
             if not regex.match(refanged):
                 continue
-            results = Observable.filter({"value": refanged}, offset=0, count=1)
-            if results:
-                observable = results[0]
+            observable = Observable.get_by_key_value(value=refanged)
+            if observable:
                 return observable.tag(tags)
             else:
                 observable = Observable(

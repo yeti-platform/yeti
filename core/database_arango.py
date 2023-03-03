@@ -243,7 +243,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return cls.load(document)
 
     @classmethod
-    def get_by_key_value(cls: Type[TYetiObject], key: str, value: str | int) -> TYetiObject | None:
+    def get_by_key_value(cls: Type[TYetiObject], **kwargs) -> TYetiObject | None:
         """Fetches a single object by value.
 
         Args:
@@ -252,7 +252,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           A Yeti object.
         """
-        documents = list(cls._get_collection().find({key: value}))
+        documents = list(cls._get_collection().find(kwargs))
         if not documents:
             return None
         document = documents[0]
