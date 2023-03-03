@@ -2,7 +2,7 @@ import datetime
 from enum import Enum
 
 from core.helpers import refang, REGEXES
-from core.schemas.tag import DEFAULT_EXPIRATION_DAYS
+from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 from pydantic import BaseModel
 from core import database_arango
@@ -67,27 +67,31 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
         raise ValueError(f"Invalid observable '{text}'")
 
-        # o = observable_type.get_or_create(value=text)
-        # if tags:
-        #     o.tag(tags)
-        # return o
-
     def tag(self, tags: list[str], strict: bool = False, expiration_days: int | None = None) -> "Observable":
         """Adds tags to an observable."""
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
         if strict:
             self.tags = {}
         for tag_name in tags:
-            tag = self.tags.get(tag_name)
-            if tag:
-                tag.last_seen = datetime.datetime.now(datetime.timezone.utc)
-                tag.fresh = True
+            tag = Tag.get_by_key_value(name=tag_name)
+            if not tag:
+                tag = Tag(
+                    name=tag_name,
+                    created=datetime.datetime.now(datetime.timezone.utc),
+                    default_expiration=datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS)
+                )
+            tag.count += 1
+            tag.save()
+            observable_tag = self.tags.get(tag_name)
+            if observable_tag:
+                observable_tag.last_seen = datetime.datetime.now(datetime.timezone.utc)
+                observable_tag.fresh = True
             else:
                 self.tags[tag_name] = ObservableTag(
                     name=tag_name,
                     first_seen=datetime.datetime.now(datetime.timezone.utc),
                     last_seen=datetime.datetime.now(datetime.timezone.utc),
-                    expiration=datetime.timedelta(days=expiration_days)
+                    expiration=tag.default_expiration
                 )
         return self.save()
 

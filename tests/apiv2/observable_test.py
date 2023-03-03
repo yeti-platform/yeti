@@ -174,3 +174,9 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(data['tags'][0]['id'])
         self.assertEqual(data['tags'][1]['name'], 'tag2')
         self.assertIsNotNone(data['tags'][1]['id'])
+
+        response = client.post(
+            f"/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)
