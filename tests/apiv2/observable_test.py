@@ -49,7 +49,6 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(len(data), 2)
 
-
     def test_create_observable(self):
         response = client.post(
             "/api/v2/observables/",
@@ -153,8 +152,8 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertIn('tag1', data['tags'])
         self.assertIn('tag2', data['tags'])
-        self.assertEquals(data['tags']['tag1']['fresh'], True)
-        self.assertEquals(data['tags']['tag2']['fresh'], True)
+        self.assertEqual(data['tags']['tag1']['fresh'], True)
+        self.assertEqual(data['tags']['tag2']['fresh'], True)
 
     def test_tag_observable(self):
         response = client.post(

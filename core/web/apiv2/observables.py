@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 
 from typing import Iterable
 from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest, ObservableSearchRequest, ObservableTagRequest
+from core.schemas.tag import Tag, DEFAULT_EXPIRATION_DAYS
 import datetime
 
 # API endpoints
@@ -53,8 +54,8 @@ async def add_text(request: AddTextRequest) -> Observable:
     """Adds and returns an observable for a given string, attempting to guess its type."""
     try:
         return Observable.add_text(request.text, request.tags)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
 
 @observables_router.post('/search')
 async def search_observables(request: ObservableSearchRequest) -> list[Observable]:
@@ -78,7 +79,20 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
     for observable in observables:
         observable.tag(request.tags, strict=request.strict)
 
-    return {'tagged': len(observables)}
+    tagging_results = []
+    for tag in request.tags:
+        db_tag = Tag.get_by_key_value(name=tag)
+        if db_tag:
+            db_tag.count += 1
+        else:
+            db_tag = Tag(
+            name=tag,
+            created=datetime.datetime.now(datetime.timezone.utc),
+            default_expiration=datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS))
+        db_tag.save()
+        tagging_results.append(db_tag)
+
+    return {'tagged': len(observables), 'tags': tagging_results}
 
 
 

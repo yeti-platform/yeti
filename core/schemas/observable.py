@@ -2,6 +2,7 @@ import datetime
 from enum import Enum
 
 from core.helpers import refang, REGEXES
+from core.schemas.tag import DEFAULT_EXPIRATION_DAYS
 
 from pydantic import BaseModel
 from core import database_arango
@@ -12,8 +13,6 @@ class ObservableType(str, Enum):
     hostname = 'hostname'
     url = 'url'
     observable = 'observable'
-
-DEFAULT_TAG_EXPIRATION_DAYS = 30  # Completely arbitrary
 
 class ObservableTag(BaseModel):
     name: str
@@ -75,7 +74,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
     def tag(self, tags: list[str], strict: bool = False, expiration_days: int | None = None) -> "Observable":
         """Adds tags to an observable."""
-        expiration_days = expiration_days or DEFAULT_TAG_EXPIRATION_DAYS
+        expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
         if strict:
             self.tags = {}
         for tag_name in tags:
