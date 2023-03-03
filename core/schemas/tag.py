@@ -38,5 +38,5 @@ class TagSearchRequest(BaseModel):
     name: str | None = None
     produces: list[str] = []
     replaces: list[str] = []
-    count: int = 100
-    page: int = 0
+    count: int
+    page: int

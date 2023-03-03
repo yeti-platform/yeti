@@ -115,8 +115,8 @@ class ObservableSearchRequest(BaseModel):
     name: str | None = None
     type: ObservableType | None = None
     tags: list[str] | None = None
-    count: int = 100
-    page: int = 0
+    count: int
+    page: int
 
 class ObservableTagRequest(BaseModel):
     ids: list[str]
