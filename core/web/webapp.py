@@ -32,6 +32,6 @@ async def api_root():
 async def root():
     return {"message": "Hello World"}
 
-api_router.include_router(observables.observables_router, prefix="/observables", tags=["observables"])
+api_router.include_router(observables.router, prefix="/observables", tags=["observables"])
 
 app.include_router(api_router, prefix="/api/v2")

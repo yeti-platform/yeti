@@ -6,13 +6,13 @@ from core.schemas.tag import Tag, DEFAULT_EXPIRATION_DAYS
 import datetime
 
 # API endpoints
-observables_router = APIRouter()
+router = APIRouter()
 
-@observables_router.get('/')
+@router.get('/')
 async def observables_root() -> Iterable[Observable]:
     return Observable.list()
 
-@observables_router.post('/')
+@router.post('/')
 async def new(request: NewObservableRequest) -> Observable:
     """Creates a new observable in the database."""
     observable = Observable(
@@ -23,7 +23,7 @@ async def new(request: NewObservableRequest) -> Observable:
     new = observable.save()
     return new
 
-@observables_router.get('/{observable_id}')
+@router.get('/{observable_id}')
 async def details(observable_id) -> Observable:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
@@ -31,7 +31,7 @@ async def details(observable_id) -> Observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     return observable
 
-@observables_router.put('/{observable_id}')
+@router.put('/{observable_id}')
 async def update(observable_id, request: ObservableUpdateRequest) -> Observable:
     """Updates an observable."""
     observable = Observable.get(observable_id)
@@ -49,7 +49,7 @@ async def update(observable_id, request: ObservableUpdateRequest) -> Observable:
     observable = observable.save()
     return observable
 
-@observables_router.post('/search')
+@router.post('/search')
 async def search(request: ObservableSearchRequest) -> list[Observable]:
     """Searches for observables."""
     request_args = request.dict(exclude_unset=True)
@@ -58,7 +58,7 @@ async def search(request: ObservableSearchRequest) -> list[Observable]:
     observables = Observable.filter(request_args, offset=page*count, count=count)
     return observables
 
-@observables_router.post('/add_text')
+@router.post('/add_text')
 async def add_text(request: AddTextRequest) -> Observable:
     """Adds and returns an observable for a given string, attempting to guess its type."""
     try:
@@ -66,7 +66,7 @@ async def add_text(request: AddTextRequest) -> Observable:
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
-@observables_router.post('/tag')
+@router.post('/tag')
 async def tag_observable(request: ObservableTagRequest) -> dict:
     observables = []
     for observable_id in request.ids:
