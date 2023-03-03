@@ -4,6 +4,8 @@ from fastapi import APIRouter
 from mongoengine import connect
 
 from core.web.apiv2 import observables
+from core.web.apiv2 import tag
+
 from core.config.config import yeti_config
 
 
@@ -33,5 +35,6 @@ async def root():
     return {"message": "Hello World"}
 
 api_router.include_router(observables.router, prefix="/observables", tags=["observables"])
+api_router.include_router(tag.router, prefix="/tags", tags=["tags"])
 
 app.include_router(api_router, prefix="/api/v2")

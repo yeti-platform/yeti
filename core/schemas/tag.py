@@ -24,3 +24,19 @@ class Tag(BaseModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Tag":
         return cls(**object)
+
+class NewRequest(BaseModel):
+    name: str
+    default_expiration_days: int = DEFAULT_EXPIRATION_DAYS
+    produces: list[str] = []
+    replaces: list[str] = []
+
+class UpdateRequest(NewRequest):
+    pass
+
+class TagSearchRequest(BaseModel):
+    name: str | None = None
+    produces: list[str] = []
+    replaces: list[str] = []
+    count: int = 100
+    page: int = 0
