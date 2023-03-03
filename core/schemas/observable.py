@@ -53,15 +53,18 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         for observable_type, regex in REGEXES:
             if not regex.match(refanged):
                 continue
-            results: list[Observable] = Observable.filter({"value": refanged}, offset=0, count=1)
+            results = Observable.filter({"value": refanged}, offset=0, count=1)
             if results:
-                return results[0]
-
-            observable = Observable(
-                value=refanged,
-                type=observable_type,
-                created=datetime.datetime.now(datetime.timezone.utc)
-                ).save()
+                observable = results[0]
+                return observable.tag(tags)
+            else:
+                observable = Observable(
+                    value=refanged,
+                    type=observable_type,
+                    created=datetime.datetime.now(datetime.timezone.utc)
+                    ).save()
+            if tags:
+                observable = observable.tag(tags)
             return observable
 
         raise ValueError(f"Invalid observable '{text}'")

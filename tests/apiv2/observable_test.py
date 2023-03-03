@@ -145,6 +145,17 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data['detail'], "Invalid observable '--toto'")
 
+    def test_add_text_tags(self):
+        response = client.post(
+            "/api/v2/observables/add_text",
+            json={"text": "toto.com", "tags": ["tag1", "tag2"]})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('tag1', data['tags'])
+        self.assertIn('tag2', data['tags'])
+        self.assertEquals(data['tags']['tag1']['fresh'], True)
+        self.assertEquals(data['tags']['tag2']['fresh'], True)
+
     def test_tag_observable(self):
         response = client.post(
             "/api/v2/observables/",
