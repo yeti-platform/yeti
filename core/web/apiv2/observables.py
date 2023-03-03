@@ -79,7 +79,7 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
     for observable in observables:
         observable.tag(request.tags, strict=request.strict)
 
-    tagging_results = []
+    db_tags = []
     for tag in request.tags:
         db_tag = Tag.get_by_key_value(name=tag)
         if db_tag:
@@ -89,10 +89,12 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
             name=tag,
             created=datetime.datetime.now(datetime.timezone.utc),
             default_expiration=datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS))
-        db_tag.save()
-        tagging_results.append(db_tag)
-
-    return {'tagged': len(observables), 'tags': tagging_results}
+        db_tag = db_tag.save()
+        db_tags.append(db_tag)
+    return {
+        'tagged': len(observables),
+        'tags': db_tags
+    }
 
 
 

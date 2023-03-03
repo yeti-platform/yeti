@@ -169,3 +169,8 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['tagged'], 1)
+        self.assertEqual(len(data['tags']), 2)
+        self.assertEqual(data['tags'][0]['name'], 'tag1')
+        self.assertIsNotNone(data['tags'][0]['id'])
+        self.assertEqual(data['tags'][1]['name'], 'tag2')
+        self.assertIsNotNone(data['tags'][1]['id'])
