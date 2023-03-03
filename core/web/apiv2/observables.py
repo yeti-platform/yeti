@@ -13,18 +13,18 @@ async def observables_root() -> Iterable[Observable]:
     return Observable.list()
 
 @observables_router.post('/')
-async def new_observable(request: NewObservableRequest) -> Observable:
+async def new(request: NewObservableRequest) -> Observable:
     """Creates a new observable in the database."""
     observable = Observable(
         value=request.value,
         type=request.type,
         created=datetime.datetime.now(datetime.timezone.utc)
     )
-    new_observable = observable.save()
-    return new_observable
+    new = observable.save()
+    return new
 
 @observables_router.get('/{observable_id}')
-async def observable_details(observable_id) -> Observable:
+async def details(observable_id) -> Observable:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
     if not observable:
@@ -32,7 +32,7 @@ async def observable_details(observable_id) -> Observable:
     return observable
 
 @observables_router.put('/{observable_id}')
-async def observable_update(observable_id, request: ObservableUpdateRequest) -> Observable:
+async def update(observable_id, request: ObservableUpdateRequest) -> Observable:
     """Updates an observable."""
     observable = Observable.get(observable_id)
     if not observable:
@@ -49,16 +49,8 @@ async def observable_update(observable_id, request: ObservableUpdateRequest) -> 
     observable = observable.save()
     return observable
 
-@observables_router.post('/add_text')
-async def add_text(request: AddTextRequest) -> Observable:
-    """Adds and returns an observable for a given string, attempting to guess its type."""
-    try:
-        return Observable.add_text(request.text, request.tags)
-    except ValueError as error:
-        raise HTTPException(status_code=400, detail=str(error))
-
 @observables_router.post('/search')
-async def search_observables(request: ObservableSearchRequest) -> list[Observable]:
+async def search(request: ObservableSearchRequest) -> list[Observable]:
     """Searches for observables."""
     request_args = request.dict(exclude_unset=True)
     count = request_args.pop('count')
@@ -66,6 +58,13 @@ async def search_observables(request: ObservableSearchRequest) -> list[Observabl
     observables = Observable.filter(request_args, offset=page*count, count=count)
     return observables
 
+@observables_router.post('/add_text')
+async def add_text(request: AddTextRequest) -> Observable:
+    """Adds and returns an observable for a given string, attempting to guess its type."""
+    try:
+        return Observable.add_text(request.text, request.tags)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
 
 @observables_router.post('/tag')
 async def tag_observable(request: ObservableTagRequest) -> dict:
@@ -95,8 +94,6 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
         'tagged': len(observables),
         'tags': db_tags
     }
-
-
 
 #TODO: Add context /context (POST, DELETE)
 #TODO: Bulk add observables /bulk (POST)
