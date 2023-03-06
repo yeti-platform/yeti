@@ -110,8 +110,11 @@ class ArangoDatabase:
             self.connect()
 
         if graph.has_edge_definition(definition['edge_collection']):
-            return graph.edge_collection(definition['edge_collection'])
-        return graph.create_edge_definition(**definition)
+            collection = graph.edge_collection(definition['edge_collection'])
+        else:
+            collection = graph.create_edge_definition(**definition)
+        self.collections[definition['edge_collection']] = collection
+        return collection
 
     def __getattr__(self, key):
         if self.db is None and not key.startswith('__'):
@@ -250,26 +253,23 @@ class ArangoYetiConnector(AbstractYetiConnector):
         except IntegrityError:
             return cls.find(**kwargs)
 
-    def link_to(self, target, relationship_type=None, stix_rel=None):
+    def link_to(self, target, relationship_type=None):
         """Creates a link between two YetiObjects.
 
         Args:
           target: The YetiObject to link to.
           relationship_type: The type of link. (e.g. targets, uses, mitigates)
-          stix_rel: STIX Relationship object
         """
-        from yeti.core.relationships import Relationship
-        if stix_rel is None:
-            stix_rel = StixRelationship(relationship_type=relationship_type,
-                                        source_ref=self.id,
-                                        target_ref=target.id)
-            stix_rel = json.loads(stix_rel.serialize())
-
-        existing = list(Relationship.filter({'attributes.id': stix_rel['id']}))
-        if existing:
-            return existing[0]
-        # pylint: disable=protected-access
-        return Relationship(self._arango_id, target._arango_id, stix_rel).save()
+        # from yeti.core.relationships import Relationship
+        graph = self._db.graph('observables')
+        source = f'{self._collection_name}/{self.id}'
+        destination = f'{target._collection_name}/{target.id}'
+        graph.edge_collection('links').link(source, destination)
+        # existing = list(Relationship.filter({'attributes.id': stix_rel['id']}))
+        # if existing:
+        #     return existing[0]
+        # # pylint: disable=protected-access
+        # return Relationship(self._arango_id, target._arango_id, stix_rel).save()
 
     # pylint: disable=too-many-arguments
     def neighbors(self, link_type=None, direction='any', include_original=False,
