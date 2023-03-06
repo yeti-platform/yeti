@@ -80,7 +80,7 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
 
     db_tags = []
     for tag in request.tags:
-        db_tag = Tag.get_by_key_value(name=tag)
+        db_tag = Tag.find(name=tag)
         if db_tag:
             db_tag.count += 1
         else:

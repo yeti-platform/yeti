@@ -52,7 +52,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         for observable_type, regex in REGEXES:
             if not regex.match(refanged):
                 continue
-            observable = Observable.get_by_key_value(value=refanged)
+            observable = Observable.find(value=refanged)
             if observable:
                 return observable.tag(tags)
             else:
@@ -73,7 +73,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         if strict:
             self.tags = {}
         for tag_name in tags:
-            tag = Tag.get_by_key_value(name=tag_name)
+            tag = Tag.find(name=tag_name)
             if not tag:
                 tag = Tag(
                     name=tag_name,

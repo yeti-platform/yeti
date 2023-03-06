@@ -128,20 +128,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def __init__(self):
         self._arango_id = None
 
-    def dump(self, destination='db'):
-        """Dumps a Yeti object into a JSON representation.
-
-        Args:
-          destination: The destination the serialized data is going to. One of
-              {web,db}. Unused here since this logic is dealt with elsewhere.
-
-        Returns:
-          A JSON representation of the Yeti object.
-        """
-        data = self.schema().dump(self).data
-        data['id'] = data.pop('_key')
-        return data
-
     def _insert(self, document_json):
         try:
             newdoc = self._get_collection().insert(
@@ -175,20 +161,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             result = self._insert(self.json())
         return self.__class__(**result)
-
-
-        if not document_json['id']:
-            del document_json['id']
-            result = self._insert(document_json)
-        else:
-            try:
-                result = self._update(document_json)
-            except DocumentUpdateError:
-                result = self._insert(document_json)
-        arangodoc = result['new']
-        self.update_links(result['_id'])
-        self._arango_id = result['_id']
-        return self.load(arangodoc, strict=True)
 
     def update_links(self, new_id):
         if not self._arango_id:
@@ -243,7 +215,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return cls.load(document)
 
     @classmethod
-    def get_by_key_value(cls: Type[TYetiObject], **kwargs) -> TYetiObject | None:
+    def find(cls: Type[TYetiObject], **kwargs) -> TYetiObject | None:
         """Fetches a single object by value.
 
         Args:
@@ -258,21 +230,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         document = documents[0]
         document['id'] = document.pop('_key')
         return cls.load(document)
-
-    @classmethod
-    def find(cls, **kwargs):
-        """Finds a single object by kwargs.
-
-        Args:
-          **kwargs: Dictionary used to run the query.
-
-        Returns:
-          A Yeti object.
-        """
-        document = list(cls._get_collection().find(kwargs))
-        if not document:
-            return None
-        return cls.load(document[0], strict=True)
 
     @classmethod
     def get_or_create(cls, **kwargs):
