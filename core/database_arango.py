@@ -1,8 +1,11 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
+import datetime
 import json
 import sys
 import time
-from typing import TypeVar, Iterable, Type, Any, List
+from typing import TypeVar, Iterable, Type, Any, List, TYPE_CHECKING
+if TYPE_CHECKING:
+    from core.schemas.relationship import Relationship
 
 import requests
 from arango import ArangoClient
@@ -131,6 +134,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def __init__(self):
         self._arango_id = None
 
+    @property
+    def extended_id(self):
+        return self._collection_name + '/' + self.id
+
+
     def _insert(self, document_json):
         try:
             newdoc = self._get_collection().insert(
@@ -253,18 +261,44 @@ class ArangoYetiConnector(AbstractYetiConnector):
         except IntegrityError:
             return cls.find(**kwargs)
 
-    def link_to(self, target, relationship_type=None):
+    def link_to(self, target: TYetiObject, relationship_type, description: str) -> "Relationship":
         """Creates a link between two YetiObjects.
 
         Args:
           target: The YetiObject to link to.
           relationship_type: The type of link. (e.g. targets, uses, mitigates)
         """
-        # from yeti.core.relationships import Relationship
+        # Avoid circular dependency
+        from core.schemas.relationship import Relationship
         graph = self._db.graph('observables')
-        source = f'{self._collection_name}/{self.id}'
-        destination = f'{target._collection_name}/{target.id}'
-        graph.edge_collection('links').link(source, destination)
+
+        # Check if a relationship with the same link_type already exists
+        aql = f'''
+        FOR v, e, p IN 1..1 OUTBOUND "{self.extended_id}"
+        links FILTER e.type == "{relationship_type}"
+        RETURN e'''
+        neighbors = list(self._db.aql.execute(aql))
+        if neighbors:
+            relationship = Relationship.load(**neighbors[0])
+            relationship.modified = datetime.datetime.now(datetime.timezone.utc)
+            relationship.description = description
+            edge = json.loads(relationship.json())
+            edge['_id'] = neighbors[0]['_id']
+            graph.update_edge(edge)
+            return relationship
+
+        relationship = Relationship(
+            type=relationship_type,
+            description=description,
+            created=datetime.datetime.now(datetime.timezone.utc),
+            modified=datetime.datetime.now(datetime.timezone.utc),
+        )
+        result = graph.edge_collection('links').link(
+            self.extended_id,
+            target.extended_id,
+            data=json.loads(relationship.json()),
+            return_new=True)['new']
+        return Relationship.load(**result)
         # existing = list(Relationship.filter({'attributes.id': stix_rel['id']}))
         # if existing:
         #     return existing[0]

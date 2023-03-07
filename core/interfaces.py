@@ -6,6 +6,11 @@ successfully carry out all interactions with the database.
 
 from abc import abstractmethod, ABC
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+  from core.schemas.relationship import Relationship
+
+
 class AbstractYetiConnector(ABC):
 
     @classmethod
@@ -69,7 +74,7 @@ class AbstractYetiConnector(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def link_to(self, target, relationship_type=None, stix_rel=None):
+    def link_to(self, target, relationship_type=None) -> "Relationship":
         """Creates a link from an existing object to a target object.
 
         Args:
