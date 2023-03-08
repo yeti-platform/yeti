@@ -81,9 +81,18 @@ class ArangoDatabase:
             'to_vertex_collections': ['observables'],
         })
 
-    def clear(self):
-        for name in self.collections:
-            self.collections[name].truncate()
+    def clear(self, truncate=True):
+        if not self.db:
+            return
+        for collection_data in self.db.collections():
+            if collection_data['system']:
+                continue
+            if truncate:
+                collection = self.db.collection(collection_data['name'])
+                collection.truncate()
+            else:
+                self.db.delete_collection(collection_data['name'])
+        self.collections = {}
 
     def collection(self, name):
         if self.db is None:
@@ -112,10 +121,11 @@ class ArangoDatabase:
         if self.db is None:
             self.connect()
 
-        if graph.has_edge_definition(definition['edge_collection']):
-            collection = graph.edge_collection(definition['edge_collection'])
-        else:
+        if not self.db.has_collection(definition['edge_collection']):
             collection = graph.create_edge_definition(**definition)
+        else:
+            collection = graph.edge_collection(definition['edge_collection'])
+
         self.collections[definition['edge_collection']] = collection
         return collection
 
@@ -125,7 +135,6 @@ class ArangoDatabase:
         return getattr(self.db, key)
 
 db = ArangoDatabase()
-
 
 class ArangoYetiConnector(AbstractYetiConnector):
     """Yeti connector for an ArangoDB backend."""
@@ -279,7 +288,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         RETURN e'''
         neighbors = list(self._db.aql.execute(aql))
         if neighbors:
-            relationship = Relationship.load(**neighbors[0])
+            relationship = Relationship.load(neighbors[0])
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
             relationship.description = description
             edge = json.loads(relationship.json())
@@ -298,7 +307,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             target.extended_id,
             data=json.loads(relationship.json()),
             return_new=True)['new']
-        return Relationship.load(**result)
+        return Relationship.load(result)
         # existing = list(Relationship.filter({'attributes.id': stix_rel['id']}))
         # if existing:
         #     return existing[0]

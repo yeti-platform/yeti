@@ -8,8 +8,8 @@ from core import database_arango
 
 
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = 'relationships'
-    _type_filter: None
+    _collection_name: str = 'links'
+    _type_filter: None = None
 
     type: str
     description: str
@@ -17,5 +17,5 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     modified: datetime.datetime
 
     @classmethod
-    def load(cls, **kwargs):
-        return cls(**kwargs)
+    def load(cls, object: dict):
+        return cls(**object)
