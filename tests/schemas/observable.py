@@ -2,6 +2,7 @@ import datetime
 
 from core import database_arango
 from core.schemas.observable import Observable
+from core.schemas.relationship import Relationship
 
 import unittest
 
@@ -57,6 +58,9 @@ class ObservableTest(unittest.TestCase):
         relationship = observable1.link_to(observable2, "test_reltype", "desc1")
         self.assertEqual(relationship.type, "test_reltype")
         self.assertEqual(relationship.description, "desc1")
+        all_relationships = list(Relationship.list())
+        self.assertEqual(len(all_relationships), 1)
+
 
     def test_observable_update_link(self) -> None:
         observable1 = Observable(
@@ -72,3 +76,6 @@ class ObservableTest(unittest.TestCase):
         relationship = observable1.link_to(observable2, "test_reltype", "desc2")
         self.assertEqual(relationship.type, "test_reltype")
         self.assertEqual(relationship.description, "desc2")
+        all_relationships = list(Relationship.list())
+        self.assertEqual(len(all_relationships), 1)
+        self.assertEqual(all_relationships[0].description, "desc2")
