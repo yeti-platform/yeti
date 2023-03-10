@@ -74,7 +74,7 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
             json_result, sort_keys=True, indent=4, separators=(",", ": ")
         )
         results.update(raw=json_string)
-        result = {"raw": json_string}
+        context = {"raw": json_string, "source": "malshare.com"}
 
         if "SOURCES" in json_result:
             for source in json_result["SOURCES"]:
@@ -90,16 +90,25 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
                             source.strip()
                         )
                     )
-            result["nb C2"] = len(json_result["SOURCES"])
-        try:
-            new_hash = Hash.get_or_create(value=json_result["MD5"])
-            links.update(new_hash.active_link_to(observable, "md5", "malshare_query"))
-            new_hash = Hash.get_or_create(value=json_result["SHA1"])
-            links.update(new_hash.active_link_to(observable, "sha1", "malshare_query"))
-            new_hash = Hash.get_or_create(value=json_result["SHA256"])
-            links.update(
-                new_hash.active_link_to(observable, "sha256", "malshare_query")
-            )
+            context["nb C2"] = len(json_result["SOURCES"])
+        if "FILENAMES" in json_result:
+            context["filenames"] = ' '.join(json_result["FILENAMES"])
+        observable.add_context(context)
+        try: 
+            if observable.value != json_result["MD5"]:
+                new_hash = Hash.get_or_create(value=json_result["MD5"])
+                new_hash.add_context(context)
+                links.update(new_hash.active_link_to(observable, "md5", "malshare_query"))
+            if observable.value != json_result["SHA1"]:
+                new_hash = Hash.get_or_create(value=json_result["SHA1"])
+                new_hash.add_context(context)
+                links.update(new_hash.active_link_to(observable, "sha1", "malshare_query"))
+            if observable.value != json_result["SHA256"]:
+                new_hash = Hash.get_or_create(value=json_result["SHA256"])
+                new_hash.add_context(context)
+                links.update(
+                    new_hash.active_link_to(observable, "sha256", "malshare_query")
+                )
         except ObservableValidationError:
             logging.error(
                 "An error occurred when trying to add hashes {} to the database".format(
