@@ -88,10 +88,9 @@ class UrlScanIoApi(object):
     @staticmethod
     def fetch(observable):
         types = {
-            "Ip": 'ip:"{}"',
-            "Hostname": 'domain:"{}"',
-            "Url": 'url:"{}"',
-            "Hash": 'hash:"{}"',
+            "ip": 'ip:"{}"',
+            "hostname": 'domain:"{}"',
+            "hash": 'hash:"{}"',
         }
 
         params = {"q": types[observable.type].format(observable.value)}
