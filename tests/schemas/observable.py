@@ -95,7 +95,6 @@ class ObservableTest(unittest.TestCase):
 
         observable1_neighbors = observable1.neighbors()
 
-        breakpoint()
         self.assertEqual(len(observable1_neighbors['edges']), 1)
         self.assertEqual(len(observable1_neighbors['vertices']), 1)
 
