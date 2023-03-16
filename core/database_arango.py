@@ -298,13 +298,15 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         relationship = Relationship(
             type=relationship_type,
+            source=self.extended_id,
+            target=target.extended_id,
             description=description,
             created=datetime.datetime.now(datetime.timezone.utc),
             modified=datetime.datetime.now(datetime.timezone.utc),
         )
         result = graph.edge_collection('links').link(
-            self.extended_id,
-            target.extended_id,
+            relationship.source,
+            relationship.target,
             data=json.loads(relationship.json()),
             return_new=True)['new']
         return Relationship.load(result)

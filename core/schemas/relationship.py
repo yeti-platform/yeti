@@ -11,6 +11,9 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'links'
     _type_filter: None = None
 
+    id: str | None
+    source: str
+    target: str
     type: str
     description: str
     created: datetime.datetime
