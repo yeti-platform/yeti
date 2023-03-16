@@ -75,7 +75,7 @@ class ArangoDatabase:
             'from_vertex_collections': ['observables'],
             'to_vertex_collections': ['tags'],
         })
-        self.create_edge_definition(self.graph('observables'), {
+        self.create_edge_definition(self.graph('threat_graph'), {
             'edge_collection': 'links',
             'from_vertex_collections': ['observables'],
             'to_vertex_collections': ['observables'],
@@ -279,7 +279,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         # Avoid circular dependency
         from core.schemas.relationship import Relationship
-        graph = self._db.graph('observables')
+        graph = self._db.graph('threat_graph')
 
         # Check if a relationship with the same link_type already exists
         aql = f'''
@@ -332,10 +332,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         query_filter = ''
         if link_type:
-            query_filter = f'FILTER e.attributes.relationship_type == "{link_type}"'
+            query_filter = f'FILTER e.type == "{link_type}"'
         aql = f"""
-        FOR v, e, p IN 1..{hops} {direction} '{self._arango_id}'
-          GRAPH 'stix'
+        FOR v, e, p IN 1..{hops} {direction} '{self.extended_id}'
+          links
           {query_filter}
           RETURN p
         """
@@ -346,11 +346,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edges.extend(self._build_edges(path['edges']))
             self._build_vertices(vertices, path['vertices'])
         if not include_original:
-            vertices.pop(self.id, None)
+            vertices.pop(self.extended_id)
         edges = self._dedup_edges(edges)
-
-        if not raw:
-            vertices = {n.id: n for n in self.load(list(vertices.values()))}
+        values = list(vertices.values())
 
         return {'edges': edges, 'vertices': vertices}
 
@@ -365,22 +363,41 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         seen = {}
         for edge in edges:
-            edge_id = edge['id']
-            if edge_id in seen:
-                seen_modified = parser.parse(seen[edge_id]['modified'])
-                current_modified = parser.parse(edge['modified'])
+            if edge.id in seen:
+                seen_modified = parser.parse(seen[edge.id].modified)
+                current_modified = parser.parse(edge.modified)
                 if seen_modified > current_modified:
                     continue
-            seen[edge_id] = edge
+            seen[edge.id] = edge
         return list(seen.values())
 
-    def _build_edges(self, arango_edges):
-        return [edge['attributes'] for edge in arango_edges]
+    def _build_edges(self, arango_edges) -> List["Relationship"]:
+        # Avoid circular dependency
+        from core.schemas.relationship import Relationship
+        relationships = []
+        for edge in arango_edges:
+            edge['id'] = edge.pop('_key')
+            edge['source'] = edge.pop('_from')
+            edge['target'] = edge.pop('_to')
+            relationships.append(Relationship.load(edge))
+        return relationships
 
     def _build_vertices(self, vertices, arango_vertices):
+        # import neighbor classes
+        from core.schemas.observable import Observable
+        type_mapping = {
+            'hostname': Observable,
+            'ip': Observable,
+            'url': Observable,
+            'observable': Observable,
+        }
         for vertex in arango_vertices:
-            if vertex['stix_id'] not in vertices:
-                vertices[vertex['stix_id']] = vertex
+            if vertex['_key'] in vertices:
+                continue
+            neighbor_schema = type_mapping[vertex['type']]
+            vertex['id'] = vertex.pop('_key')
+            # We want the "extended ID" here, e.g. observables/12345
+            vertices[vertex['_id']] = neighbor_schema.load(vertex)
 
     @classmethod
     def filter(cls: Type[TYetiObject],
