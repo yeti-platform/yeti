@@ -8,7 +8,7 @@ from abc import abstractmethod, ABC
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-  from core.schemas.relationship import Relationship
+  from core.schemas.graph import Relationship
 
 
 class AbstractYetiConnector(ABC):

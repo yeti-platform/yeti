@@ -5,7 +5,7 @@ import sys
 import time
 from typing import TypeVar, Iterable, Type, Any, List, TYPE_CHECKING
 if TYPE_CHECKING:
-    from core.schemas.relationship import Relationship
+    from core.schemas.graph import Relationship
 
 import requests
 from arango import ArangoClient
@@ -278,7 +278,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
           relationship_type: The type of link. (e.g. targets, uses, mitigates)
         """
         # Avoid circular dependency
-        from core.schemas.relationship import Relationship
+        from core.schemas.graph import Relationship
         graph = self._db.graph('threat_graph')
 
         # Check if a relationship with the same link_type already exists
@@ -373,7 +373,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def _build_edges(self, arango_edges) -> List["Relationship"]:
         # Avoid circular dependency
-        from core.schemas.relationship import Relationship
+        from core.schemas.graph import Relationship
         relationships = []
         for edge in arango_edges:
             edge['id'] = edge.pop('_key')

@@ -2,7 +2,7 @@ import datetime
 
 from core import database_arango
 from core.schemas.observable import Observable
-from core.schemas.relationship import Relationship
+from core.schemas.graph import Relationship
 
 import unittest
 
