@@ -22,3 +22,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict):
         return cls(**object)
+
+class GraphSearchResponse(BaseModel):
+    vertices: dict[str, database_arango.ArangoYetiConnector]
+    edges: list[Relationship]
