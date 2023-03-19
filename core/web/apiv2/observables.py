@@ -1,9 +1,13 @@
+import datetime
+from typing import Iterable
+
 from fastapi import APIRouter, HTTPException
 
-from typing import Iterable
-from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest, ObservableSearchRequest, ObservableTagRequest, AddContextRequest
-from core.schemas.tag import Tag, DEFAULT_EXPIRATION_DAYS
-import datetime
+from core.schemas.observable import (AddContextRequest, AddTextRequest,
+                                     NewObservableRequest, Observable,
+                                     ObservableSearchRequest,
+                                     ObservableTagRequest)
+from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 # API endpoints
 router = APIRouter()
@@ -30,7 +34,6 @@ async def details(observable_id) -> Observable:
     if not observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     return observable
-
 
 @router.post('/{observable_id}/context')
 async def add_context(observable_id, request: AddContextRequest) -> Observable:

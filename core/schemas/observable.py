@@ -120,8 +120,10 @@ class NewObservableRequest(BaseModel):
     value: str
     type: ObservableType
 
+# DEPRECATED
+# Consider removing this. Do we want to individually update observables
+# through the API?
 class ObservableUpdateRequest(BaseModel):
-    context: dict | None = None
     tags: list[str] | None = None
     replace: bool
 

@@ -62,62 +62,6 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['value'], "toto.com")
 
-    def test_update_observable(self):
-        response = client.post(
-            "/api/v2/observables/",
-            json={"value": "toto.com", "type": "hostname"})
-        data1 = response.json()
-        self.assertIsNotNone(data1['id'])
-        self.assertEqual(response.status_code, 200)
-
-        response = client.put(
-            f"/api/v2/observables/{data1['id']}",
-            json={"context": {"context1": "asd"}, "replace": True})
-        self.assertEqual(response.status_code, 200)
-        data2 = response.json()
-        self.assertEqual(data2['context'], {"context1": "asd"})
-        self.assertEqual(data1['created'], data2['created'])
-        self.assertEqual(data1['id'], data2['id'])
-
-    def test_update_observable_with_tags(self):
-        response = client.post(
-            "/api/v2/observables/",
-            json={"value": "toto.com", "type": "hostname"})
-        data1 = response.json()
-        self.assertIsNotNone(data1['id'])
-        self.assertEqual(response.status_code, 200)
-
-        response = client.put(
-            f"/api/v2/observables/{data1['id']}",
-            json={"tags": ["tag1"], "replace": True})
-        self.assertEqual(response.status_code, 200)
-        data2 = response.json()
-        self.assertEqual(len(data2['tags']), 1)
-        self.assertEqual(data2['tags']['tag1']['name'], 'tag1')
-        self.assertEqual(data2['tags']['tag1']['fresh'], True)
-
-    def test_update_observable_with_tags_strict(self):
-        response = client.post(
-            "/api/v2/observables/",
-            json={"value": "toto.com", "type": "hostname"})
-        data1 = response.json()
-        self.assertIsNotNone(data1['id'])
-        self.assertEqual(response.status_code, 200)
-
-        response = client.put(
-            f"/api/v2/observables/{data1['id']}",
-            json={"tags": ["tag1", "tag3"], "replace": False})
-        self.assertEqual(response.status_code, 200)
-
-        response = client.put(
-            f"/api/v2/observables/{data1['id']}",
-            json={"tags": ["blah"], "replace": True})
-        self.assertEqual(response.status_code, 200)
-
-        data2 = response.json()
-        self.assertEqual(len(data2['tags']), 1)
-        self.assertEqual(data2['tags']['blah']['name'], 'blah')
-
     def test_add_text(self):
         TEST_CASES = [
             ("toto.com", "toto.com", "hostname"),
