@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import unittest
 from core.schemas.observable import Observable
+from core.schemas.graph import Relationship
 import datetime
 from core.web import webapp
 
@@ -68,3 +69,17 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data['target'], self.observable2.extended_id)
         self.assertEqual(data['type'], 'resolves')
         self.assertEqual(data['description'], 'DNS resolution')
+
+    def test_delete_link(self):
+        """Tests that a relationship can be deleted."""
+        self.relationship = self.observable1.link_to(
+            self.observable2, "resolves", "DNS resolution")
+        all_relationships = list(Relationship.list())
+        self.assertEqual(len(all_relationships), 1)
+
+        response = client.delete(
+            f"/api/v2/graph/{self.relationship.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        all_relationships = list(Relationship.list())
+        self.assertEqual(len(all_relationships), 0)

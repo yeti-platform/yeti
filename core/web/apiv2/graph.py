@@ -62,4 +62,12 @@ async def add(request: GraphAddRequest) -> Relationship:
         target_object, request.link_type, request.description)
     return relationship
 
-#TODO: Route to delete link
+@router.delete('/{relationship_id}')
+async def delete(relationship_id: str) -> None:
+    """Deletes a link from the graph."""
+    relationship = Relationship.get(relationship_id)
+    if relationship is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f'Relationship {relationship_id} not found')
+    relationship.delete()

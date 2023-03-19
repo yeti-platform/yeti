@@ -476,14 +476,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def delete(self, all_versions=True):
         """Deletes an object from the database."""
-        if self._db.graph('stix').has_vertex_collection(self._collection_name):
-            col = self._db.graph('stix').vertex_collection(self._collection_name)
+        if self._db.graph('threat_graph').has_vertex_collection(self._collection_name):
+            col = self._db.graph('threat_graph').vertex_collection(self._collection_name)
         else:
             col = self._db.collection(self._collection_name)
-        col.delete(self._arango_id)
-        if all_versions:
-            for version in self.all_versions():
-                version.delete(all_versions=False)
+        col.delete(self.id)
 
     @classmethod
     def _get_collection(cls):
