@@ -38,6 +38,12 @@ class GraphSearchRequest(BaseModel):
     direction: GraphDirection
     include_original: bool
 
+class GraphAddRequest(BaseModel):
+    source: str
+    target: str
+    link_type: str
+    description: str
+
 class GraphSearchResponse(BaseModel):
     vertices: dict[str, Observable]
     edges: list[Relationship]

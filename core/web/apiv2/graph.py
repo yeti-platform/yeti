@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from core.schemas.observable import Observable
-from core.schemas.graph import GraphSearchRequest, GraphSearchResponse
+from core.schemas.graph import GraphSearchRequest, GraphSearchResponse, GraphAddRequest, Relationship
 
 # API endpoints
 router = APIRouter()
@@ -31,3 +31,35 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         hops=request.hops,
     )
     return neighbors
+
+@router.post('/add')
+async def add(request: GraphAddRequest) -> Relationship:
+    """Adds a link to the graph."""
+    source_type, source_id = request.source.split('/')
+    target_type, target_id = request.target.split('/')
+
+    if source_type not in MAPPINGS:
+        raise HTTPException(
+            status_code=400,
+            detail=f'Invalid source object type: {source_type}')
+    if target_type not in MAPPINGS:
+        raise HTTPException(
+            status_code=400,
+            detail=f'Invalid target object type: {target_type}')
+
+    source_object = MAPPINGS[source_type].get(source_id)
+    target_object = MAPPINGS[target_type].get(target_id)
+    if source_object is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f'Source object {request.source} not found')
+    if target_object is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f'Target object {request.target} not found')
+
+    relationship = source_object.link_to(
+        target_object, request.link_type, request.description)
+    return relationship
+
+#TODO: Route to delete link

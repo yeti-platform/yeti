@@ -22,13 +22,12 @@ class ObservableTest(unittest.TestCase):
             type="hostname",
             created=datetime.datetime.now(datetime.timezone.utc)).save()
 
-        self.relationship = self.observable1.link_to(
-            self.observable2, "resolves", "DNS resolution")
-
     def tearDown(self) -> None:
         database_arango.db.clear()
 
     def test_get_neighbors(self):
+        self.relationship = self.observable1.link_to(
+            self.observable2, "resolves", "DNS resolution")
         response = client.post(
             "/api/v2/graph/search",
             json={
@@ -51,3 +50,21 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(edges[0]['source'], self.observable1.extended_id)
         self.assertEqual(edges[0]['target'], self.observable2.extended_id)
         self.assertEqual(edges[0]['type'], 'resolves')
+
+    def test_add_link(self):
+        response = client.post(
+            "/api/v2/graph/add",
+            json={
+                "source": self.observable1.extended_id,
+                "target": self.observable2.extended_id,
+                "link_type": "resolves",
+                "description": "DNS resolution"
+                }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIsNotNone(data['id'])
+        self.assertEqual(data['source'], self.observable1.extended_id)
+        self.assertEqual(data['target'], self.observable2.extended_id)
+        self.assertEqual(data['type'], 'resolves')
+        self.assertEqual(data['description'], 'DNS resolution')

@@ -310,6 +310,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             relationship.target,
             data=json.loads(relationship.json()),
             return_new=True)['new']
+        result['id'] = result.pop('_key')
         return Relationship.load(result)
         # existing = list(Relationship.filter({'attributes.id': stix_rel['id']}))
         # if existing:
