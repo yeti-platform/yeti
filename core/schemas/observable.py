@@ -115,6 +115,20 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
             self.context.append(context)
         return self.save()
 
+    def delete_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
+        """Deletes context from an observable."""
+        compare_fields = set(context.keys()) - skip_compare - {'source'}
+        for idx, db_context in enumerate(list(self.context)):
+            if db_context['source'] != source:
+                continue
+            for field in compare_fields:
+                if db_context.get(field) != context.get(field):
+                    break
+            else:
+                del self.context[idx]
+                break
+        return self.save()
+
 # Request Schemas
 class NewObservableRequest(BaseModel):
     value: str
@@ -135,6 +149,9 @@ class AddContextRequest(BaseModel):
     source: str
     context: dict
     skip_compare: set = set()
+
+class DeleteContextRequest(AddContextRequest):
+    pass
 
 class ObservableSearchRequest(BaseModel):
     value: str | None = None

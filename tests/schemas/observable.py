@@ -156,3 +156,44 @@ class ObservableTest(unittest.TestCase):
             "test_source", {"abc": 123, "def": 666}, skip_compare={"def"})
         self.assertEqual(len(observable.context), 1)
         self.assertEqual(observable.context[0]['def'], 666)
+
+    def test_delete_context(self) -> None:
+        """Tests that a context is deleted if contents fully match."""
+        observable = Observable(
+            value="tomchop.me",
+            type="hostname",
+            created=datetime.datetime.now(datetime.timezone.utc)).save()
+        observable = observable.add_context(
+            "test_source", {"abc": 123, "def": 456})
+        observable = observable.delete_context(
+            "test_source", {"def": 456, "abc": 123})
+        observable = Observable.get(observable.id)  # type: ignore
+
+        self.assertEqual(len(observable.context), 0)
+
+    def test_delete_context_diff(self) -> None:
+        """Tests that a context is not deleted if contents don't match."""
+        observable = Observable(
+            value="tomchop.me",
+            type="hostname",
+            created=datetime.datetime.now(datetime.timezone.utc)).save()
+        observable = observable.add_context(
+            "test_source", {"abc": 123, "def": 456})
+        observable = observable.delete_context(
+            "test_source", {"def": 456, "abc": 000})
+        observable = Observable.get(observable.id)  # type: ignore
+        self.assertEqual(len(observable.context), 1)
+
+    def tests_delete_context_skip_compare(self) -> None:
+        """Tests that a context is deleted if the difference is not being
+        compared."""
+        observable = Observable(
+            value="tomchop.me",
+            type="hostname",
+            created=datetime.datetime.now(datetime.timezone.utc)).save()
+        observable = observable.add_context(
+            "test_source", {"abc": 123, "def": 456})
+        observable = observable.delete_context(
+            "test_source", {"abc": 000, "def": 456}, skip_compare={"abc"})
+        observable = Observable.get(observable.id)  # type: ignore
+        self.assertEqual(len(observable.context), 0)
