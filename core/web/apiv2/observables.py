@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from core.schemas.observable import (AddContextRequest, AddTextRequest,
                                      NewObservableRequest, Observable,
                                      ObservableSearchRequest,
-                                     ObservableTagRequest)
+                                     ObservableTagRequest, DeleteContextRequest)
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 # API endpoints
@@ -40,9 +40,22 @@ async def add_context(observable_id, request: AddContextRequest) -> Observable:
     """Adds context to an observable."""
     observable = Observable.get(observable_id)
     if not observable:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(
+            status_code=404, detail=f"Observable {observable_id} not found")
 
     observable = observable.add_context(
+        request.source, request.context, skip_compare=request.skip_compare)
+    return observable
+
+@router.post('/{observable_id}/context/delete')
+async def delete_context(observable_id, request: DeleteContextRequest) -> Observable:
+    """Adds context to an observable."""
+    observable = Observable.get(observable_id)
+    if not observable:
+        raise HTTPException(
+            status_code=404, detail=f"Observable {observable_id} not found")
+
+    observable = observable.delete_context(
         request.source, request.context, skip_compare=request.skip_compare)
     return observable
 
@@ -57,7 +70,8 @@ async def search(request: ObservableSearchRequest) -> list[Observable]:
 
 @router.post('/add_text')
 async def add_text(request: AddTextRequest) -> Observable:
-    """Adds and returns an observable for a given string, attempting to guess its type."""
+    """Adds and returns an observable for a given string, attempting to guess
+    its type."""
     try:
         return Observable.add_text(request.text, request.tags)
     except ValueError as error:

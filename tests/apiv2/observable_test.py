@@ -1,9 +1,10 @@
 from core import database_arango
+import datetime
 
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import unittest
 
+from core.schemas.observable import Observable
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -124,3 +125,37 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 1)
+
+
+class ObservableContextTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        database_arango.db.clear()
+        self.observable = Observable(
+            value="tomchop.me",
+            type="hostname",
+            created=datetime.datetime.now(datetime.timezone.utc)).save()
+
+    def tearDown(self) -> None:
+        database_arango.db.clear()
+
+    def test_add_context(self) -> None:
+        response = client.post(
+            f"/api/v2/observables/{self.observable.id}/context",
+            json={"context": {"key": "value"}, "source": "test_source"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(
+            data['context'], [{"key": "value", "source": "test_source"}])
+
+    def test_delete_context(self) -> None:
+        response = client.post(
+            f"/api/v2/observables/{self.observable.id}/context",
+            json={"context": {"key": "value"}, "source": "test_source"})
+        self.assertEqual(response.status_code, 200)
+        response = client.post(
+            f"/api/v2/observables/{self.observable.id}/context/delete",
+            json={"context": {"key": "value"}, "source": "test_source"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['context'], [])
