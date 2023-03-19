@@ -1,5 +1,6 @@
 import datetime
 from enum import Enum
+from typing import Optional
 
 from core.helpers import refang, REGEXES
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
@@ -29,7 +30,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     value: str
     type: ObservableType
     created: datetime.datetime
-    context: dict = {}
+    context: list[dict] = []
     tags: dict[str, ObservableTag] = {}
     last_analysis: list[dict] = []
 
@@ -95,6 +96,24 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
                 )
         return self.save()
 
+    def add_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
+        """Adds context to an observable."""
+        compare_fields = set(context.keys()) - skip_compare - {'source'}
+        for idx, db_context in enumerate(list(self.context)):
+            if db_context['source'] != source:
+                continue
+            for field in compare_fields:
+                if db_context.get(field) != context.get(field):
+                    context['source'] = source
+                    self.context[idx] = context
+                    break
+            else:
+                db_context.update(context)
+                break
+        else:
+            context['source'] = source
+            self.context.append(context)
+        return self.save()
 
 # Request Schemas
 class NewObservableRequest(BaseModel):
@@ -109,6 +128,11 @@ class ObservableUpdateRequest(BaseModel):
 class AddTextRequest(BaseModel):
     text: str
     tags: list[str] = []
+
+class AddContextRequest(BaseModel):
+    source: str
+    context: dict
+    skip_compare: set = set()
 
 class ObservableSearchRequest(BaseModel):
     value: str | None = None

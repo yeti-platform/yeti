@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from typing import Iterable
-from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest, ObservableSearchRequest, ObservableTagRequest
+from core.schemas.observable import Observable, NewObservableRequest, ObservableUpdateRequest, AddTextRequest, ObservableSearchRequest, ObservableTagRequest, AddContextRequest
 from core.schemas.tag import Tag, DEFAULT_EXPIRATION_DAYS
 import datetime
 
@@ -31,22 +31,16 @@ async def details(observable_id) -> Observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     return observable
 
-@router.put('/{observable_id}')
-async def update(observable_id, request: ObservableUpdateRequest) -> Observable:
-    """Updates an observable."""
+
+@router.post('/{observable_id}/context')
+async def add_context(observable_id, request: AddContextRequest) -> Observable:
+    """Adds context to an observable."""
     observable = Observable.get(observable_id)
     if not observable:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    if request.context:
-        if request.replace:
-            observable.context = {}
-        observable.context.update(request.context)
-
-    if request.tags:
-        observable.tag(request.tags, strict=request.replace)
-
-    observable = observable.save()
+    observable = observable.add_context(
+        request.source, request.context, skip_compare=request.skip_compare)
     return observable
 
 @router.post('/search')
@@ -95,6 +89,6 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
         'tags': db_tags
     }
 
-#TODO: Add context /context (POST, DELETE)
+#TODO: Add context /context (DELETE)
 #TODO: Bulk add observables /bulk (POST)
 #TODO: Bulk tag observables /bulk-tag (POST)
