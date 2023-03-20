@@ -1,3 +1,5 @@
+#TODO Observable value normalization
+
 import datetime
 from enum import Enum
 from typing import Optional
@@ -76,7 +78,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
     def tag(self, tags: list[str], strict: bool = False, expiration_days: int | None = None) -> "Observable":
         """Adds tags to an observable."""
-        #TODO: Tags replaces / extends
+        #TODO: Tag replacement / propagation
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
         if strict:
             self.tags = {}
@@ -147,6 +149,7 @@ TYPE_MAPPING = {
 }
 
 # Request Schemas
+#TODO: Move these to the API modules.
 class NewObservableRequest(BaseModel):
     value: str
     tags: list[str] = []

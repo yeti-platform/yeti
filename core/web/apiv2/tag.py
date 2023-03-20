@@ -52,6 +52,3 @@ async def search(request: TagSearchRequest) -> list[Tag]:
     page = request_args.pop('page')
     tag = Tag.filter(request_args, offset=page*count, count=count)
     return tag
-
-
-#TODO: Kick off specific actions when tags are replaced.
