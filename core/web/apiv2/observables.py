@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from core.schemas.observable import (AddContextRequest, AddTextRequest,
                                      NewObservableRequest, Observable,
                                      ObservableSearchRequest,
-                                     ObservableTagRequest, ObservableType, NewBulkObservableRequest, DeleteContextRequest)
+                                     ObservableTagRequest, ObservableType, NewBulkObservableAddRequest, DeleteContextRequest)
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 # API endpoints
@@ -30,7 +30,7 @@ async def new(request: NewObservableRequest) -> Observable:
     return new
 
 @router.post('/bulk/add')
-async def bulk_add(request: NewBulkObservableRequest) -> list[Observable]:
+async def bulk_add(request: NewBulkObservableAddRequest) -> list[Observable]:
     """Bulk-creates new observables in the database."""
     added = []
     for new_observable in request.observables:
