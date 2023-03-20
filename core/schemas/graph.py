@@ -5,7 +5,7 @@ from core.helpers import refang, REGEXES
 
 from pydantic import BaseModel
 from core import database_arango
-from core.schemas.observable import Observable
+from core.schemas.observable import Observable, Entity
 
 # Database model
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
@@ -45,5 +45,5 @@ class GraphAddRequest(BaseModel):
     description: str
 
 class GraphSearchResponse(BaseModel):
-    vertices: dict[str, Observable]
+    vertices: dict[str, Observable | Entity]
     edges: list[Relationship]

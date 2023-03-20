@@ -78,8 +78,8 @@ class ArangoDatabase:
         })
         self.create_edge_definition(self.graph('threat_graph'), {
             'edge_collection': 'links',
-            'from_vertex_collections': ['observables'],
-            'to_vertex_collections': ['observables'],
+            'from_vertex_collections': ['observables', 'entities'],
+            'to_vertex_collections': ['observables', 'entities'],
         })
 
     def clear(self, truncate=True):
@@ -245,7 +245,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           A Yeti object.
         """
-        documents = list(cls._get_collection().find(kwargs))
+        documents = list(cls._get_collection().find(kwargs, limit=1))
         if not documents:
             return None
         document = documents[0]
@@ -388,11 +388,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def _build_vertices(self, vertices, arango_vertices):
         # import neighbor classes
         from core.schemas.observable import Observable
+        from core.schemas.entity import Actor
         type_mapping = {
             'hostname': Observable,
             'ip': Observable,
             'url': Observable,
             'observable': Observable,
+            'actor': Actor,
         }
         for vertex in arango_vertices:
             if vertex['_key'] in vertices:
@@ -405,8 +407,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
     @classmethod
     def filter(cls: Type[TYetiObject],
                args: dict[str, Any],
-               offset: int,
-               count: int) -> List[TYetiObject]:
+               offset: int = 0,
+               count: int = 0) -> List[TYetiObject]:
         """Search in an ArangoDb collection.
 
         Search the collection for all objects whose 'value' attribute matches
@@ -429,13 +431,15 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if key in ['value', 'name', 'type', 'stix_id', 'attributes.id', 'email']:
                 conditions.append('o.{0:s} =~ @{1:s}'.format(key, key.replace('.', '_')))
                 sorts.append('o.{0:s}'.format(key))
-            if key in ['labels']:
+            if key in ['labels', 'relevant_tags']:
                 conditions.append('@{1:s} ALL IN o.{0:s}'.format(key, key.replace('.', '_')))
                 sorts.append('o.{0:s}'.format(key))
 
         limit = ''
-        if offset and count:
-            limit = f'LIMIT {offset}, {count}'
+        if offset:
+            limit += f'LIMIT {offset}'
+            if count:
+                limit += f', {count}'
 
         aql_string = f"""
             FOR o IN @@collection
@@ -444,7 +448,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 {limit}
                 RETURN o
             """
-
         args['@collection'] = colname
         for key in list(args.keys()):
             args[key.replace('.', '_')] = args.pop(key)
