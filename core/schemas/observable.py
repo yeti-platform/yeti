@@ -2,11 +2,16 @@ import datetime
 from enum import Enum
 from typing import Optional
 
-from core.helpers import refang, REGEXES
+from pydantic import BaseModel, Field
+
+from core import database_arango
+from core.helpers import REGEXES, refang
+from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
-from pydantic import BaseModel
-from core import database_arango
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc)
 
 # Data Schema
 class ObservableType(str, Enum):
@@ -30,7 +35,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     id: str | None = None
     value: str
     type: ObservableType
-    created: datetime.datetime
+    created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
     tags: dict[str, ObservableTag] = {}
     last_analysis: list[dict] = []
@@ -71,6 +76,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
     def tag(self, tags: list[str], strict: bool = False, expiration_days: int | None = None) -> "Observable":
         """Adds tags to an observable."""
+        #TODO: Tags replaces / extends
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
         if strict:
             self.tags = {}
@@ -95,6 +101,9 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
                     last_seen=datetime.datetime.now(datetime.timezone.utc),
                     expiration=tag.default_expiration
                 )
+            relevant_entities = Entity.filter(args={'relevant_tags': [tag_name]})
+            for entity in relevant_entities:
+                self.link_to(entity, 'tags', 'Tagged')
         return self.save()
 
     def add_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
