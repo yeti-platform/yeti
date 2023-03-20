@@ -348,7 +348,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edges.extend(self._build_edges(path['edges']))
             self._build_vertices(vertices, path['vertices'])
         if not include_original:
-            vertices.pop(self.extended_id)
+            vertices.pop(self.extended_id, None)
         edges = self._dedup_edges(edges)
         # Avoid circular dependency
         from core.schemas.graph import GraphSearchResponse

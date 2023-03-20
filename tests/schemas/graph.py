@@ -35,3 +35,8 @@ class ObservableTest(unittest.TestCase):
         self.observable1.delete()
         all_relationships = list(Relationship.list())
         self.assertEqual(len(all_relationships), 0)
+
+    def test_no_neighbors(self):
+        """Tests that a node with no neighbors returns an empty list."""
+        neighbors = self.observable1.neighbors()
+        self.assertEqual(len(neighbors.vertices), 0)
