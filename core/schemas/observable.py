@@ -14,6 +14,7 @@ class ObservableType(str, Enum):
     hostname = 'hostname'
     url = 'url'
     observable = 'observable'
+    guess = 'guess'
 
 class ObservableTag(BaseModel):
     name: str
@@ -132,14 +133,11 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 # Request Schemas
 class NewObservableRequest(BaseModel):
     value: str
+    tags: list[str] = []
     type: ObservableType
 
-# DEPRECATED
-# Consider removing this. Do we want to individually update observables
-# through the API?
-class ObservableUpdateRequest(BaseModel):
-    tags: list[str] | None = None
-    replace: bool
+class NewBulkObservableAddRequest(BaseModel):
+    observables: list[NewObservableRequest]
 
 class AddTextRequest(BaseModel):
     text: str

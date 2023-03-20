@@ -53,15 +53,41 @@ class ObservableTest(unittest.TestCase):
     def test_create_observable(self):
         response = client.post(
             "/api/v2/observables/",
-            json={"value": "toto.com", "type": "hostname"})
+            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "tag2"]})
         data = response.json()
-        self.assertIsNotNone(data['id'])
         self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(data['id'])
+        self.assertEqual(data['value'], "toto.com")
+        self.assertEqual(data['type'], "hostname")
+        self.assertEqual(data['tags']['tag1']['name'], 'tag1')
+        self.assertEqual(data['tags']['tag1']['fresh'], True)
+        self.assertEqual(data['tags']['tag2']['name'], 'tag2')
+        self.assertEqual(data['tags']['tag2']['fresh'], True)
 
         client.get(f"/api/v2/observables/{data['id']}")
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['value'], "toto.com")
+
+    def test_bulk_add(self):
+        request = {
+            "observables": [
+                {"value": "toto.com", "type": "hostname"},
+                {"value": "toto2.com", "type": "hostname", "tags": ["tag1"]},
+                {"value": "toto3.com", "type": "guess", "tags": ["tag1", "tag2"]},
+            ]
+        }
+        response = client.post("/api/v2/observables/bulk", json=request)
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(data), 3)
+        self.assertEqual(data[0]['value'], 'toto.com')
+        self.assertEqual(len(data[0]['tags']), 0)
+        self.assertEqual(data[1]['value'], 'toto2.com')
+        self.assertEqual(len(data[1]['tags']), 1)
+        self.assertEqual(data[2]['value'], 'toto3.com')
+        self.assertEqual(data[2]['type'], 'hostname')
+        self.assertEqual(len(data[2]['tags']), 2)
 
     def test_add_text(self):
         TEST_CASES = [

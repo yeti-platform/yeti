@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from core.schemas.observable import (AddContextRequest, AddTextRequest,
                                      NewObservableRequest, Observable,
                                      ObservableSearchRequest,
-                                     ObservableTagRequest, DeleteContextRequest)
+                                     ObservableTagRequest, ObservableType, NewBulkObservableRequest, DeleteContextRequest)
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 # API endpoints
@@ -25,7 +25,28 @@ async def new(request: NewObservableRequest) -> Observable:
         created=datetime.datetime.now(datetime.timezone.utc)
     )
     new = observable.save()
+    if request.tags:
+        new = new.tag(request.tags)
     return new
+
+@router.post('/bulk/add')
+async def bulk_add(request: NewBulkObservableRequest) -> list[Observable]:
+    """Bulk-creates new observables in the database."""
+    added = []
+    for new_observable in request.observables:
+        if new_observable.type == ObservableType.guess:
+            observable = Observable.add_text(
+                new_observable.value, tags=new_observable.tags)
+        else:
+            observable = Observable(
+                value=new_observable.value,
+                type=new_observable.type,
+                created=datetime.datetime.now(datetime.timezone.utc)
+            ).save()
+            if new_observable.tags:
+                observable = observable.tag(new_observable.tags)
+        added.append(observable)
+    return added
 
 @router.get('/{observable_id}')
 async def details(observable_id) -> Observable:
@@ -49,7 +70,7 @@ async def add_context(observable_id, request: AddContextRequest) -> Observable:
 
 @router.post('/{observable_id}/context/delete')
 async def delete_context(observable_id, request: DeleteContextRequest) -> Observable:
-    """Adds context to an observable."""
+    """Removes context to an observable."""
     observable = Observable.get(observable_id)
     if not observable:
         raise HTTPException(
@@ -79,6 +100,7 @@ async def add_text(request: AddTextRequest) -> Observable:
 
 @router.post('/tag')
 async def tag_observable(request: ObservableTagRequest) -> dict:
+    """Tags a set of observables, individually or in bulk."""
     observables = []
     for observable_id in request.ids:
         observable = Observable.get(observable_id)
@@ -105,7 +127,3 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
         'tagged': len(observables),
         'tags': db_tags
     }
-
-#TODO: Add context /context (DELETE)
-#TODO: Bulk add observables /bulk (POST)
-#TODO: Bulk tag observables /bulk-tag (POST)
