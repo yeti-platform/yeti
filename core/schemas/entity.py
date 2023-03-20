@@ -12,11 +12,11 @@ def now():
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'entities'
+    _type_filter: str = ''
 
     id: str | None = None
     name: str
     description: str = ''
-    # created: datetime.datetime
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
     relevant_tags: list[str] = []
@@ -28,11 +28,46 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 
-class Actor(Entity):
-    _type_filter: str = 'actor'
-    type: str = Field('actor', const=True)
+class ThreatActor(Entity):
+    _type_filter: str = 'threat-actor'
+
+    type: str = Field('threat-actor', const=True)
     aliases: list[str] = []
 
+class IntrusionSet(Entity):
+    _type_filter: str = 'intrusion-set'
+    type: str = Field('intrusion-set', const=True)
+
+    aliases: list[str] = []
+    first_seen: datetime.datetime = Field(default_factory=now)
+    last_seen: datetime.datetime = Field(default_factory=now)
+
+
+class Tool(Entity):
+    _type_filter: str = 'tool'
+    type: str = Field('tool', const=True)
+
+    kill_chain_phases: list[str] = []
+    tool_version: str = ''
+
+class Malware(Entity):
+    _type_filter: str = 'malware'
+    type: str = Field('malware', const=True)
+
+    kill_chain_phases: list[str] = []
+
+class Campaign(Entity):
+    _type_filter: str = 'campaign'
+    type: str = Field('campaign', const=True)
+
+    aliases: list[str] = []
+    first_seen: datetime.datetime = Field(default_factory=now)
+    last_seen: datetime.datetime = Field(default_factory=now)
+
 TYPE_MAPPING = {
-    'actor': Actor,
+    'threat-actor': ThreatActor,
+    'intrusion-set': IntrusionSet,
+    'tool': Tool,
+    'malware': Malware,
+    'campaign': Campaign,
 }

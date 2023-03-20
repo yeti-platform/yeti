@@ -139,6 +139,13 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
                 break
         return self.save()
 
+TYPE_MAPPING = {
+    'ip': Observable,
+    'hostname': Observable,
+    'url': Observable,
+    'observable': Observable,
+}
+
 # Request Schemas
 class NewObservableRequest(BaseModel):
     value: str

@@ -210,7 +210,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if type_filter:
             objects = cls._db.aql.execute(
                 'FOR o IN @@collection FILTER o.type IN @type RETURN o',
-                bind_vars={'type': type_filter, '@collection': coll})
+                bind_vars={'type': [type_filter], '@collection': coll})
         else:
             objects = cls._db.aql.execute(
                 'FOR o IN @@collection RETURN o',
@@ -386,16 +386,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return relationships
 
     def _build_vertices(self, vertices, arango_vertices):
-        # import neighbor classes
-        from core.schemas.observable import Observable
-        from core.schemas.entity import Actor
-        type_mapping = {
-            'hostname': Observable,
-            'ip': Observable,
-            'url': Observable,
-            'observable': Observable,
-            'actor': Actor,
-        }
+        # Import happens here to avoid circular dependency
+        from core.schemas import observable
+        from core.schemas import entity
+
+        type_mapping = {}
+        type_mapping.update(observable.TYPE_MAPPING)
+        type_mapping.update(entity.TYPE_MAPPING)
+
         for vertex in arango_vertices:
             if vertex['_key'] in vertices:
                 continue
@@ -428,7 +426,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         conditions = []
         sorts = []
         for key in args:
-            if key in ['value', 'name', 'type', 'stix_id', 'attributes.id', 'email']:
+            if key in ['value', 'name', 'type', 'attributes.id', 'email']:
                 conditions.append('o.{0:s} =~ @{1:s}'.format(key, key.replace('.', '_')))
                 sorts.append('o.{0:s}'.format(key))
             if key in ['labels', 'relevant_tags']:
