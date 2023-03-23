@@ -2,12 +2,46 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
-from core.schemas.observable import (AddContextRequest, AddTextRequest,
-                                     NewObservableRequest, Observable,
-                                     ObservableSearchRequest,
-                                     ObservableTagRequest, ObservableType, NewBulkObservableAddRequest, DeleteContextRequest)
+from core.schemas.observable import Observable, ObservableType
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
+
+
+# Request schemas
+class NewObservableRequest(BaseModel):
+    value: str
+    tags: list[str] = []
+    type: ObservableType
+
+class NewBulkObservableAddRequest(BaseModel):
+    observables: list[NewObservableRequest]
+
+class AddTextRequest(BaseModel):
+    text: str
+    tags: list[str] = []
+
+class AddContextRequest(BaseModel):
+    source: str
+    context: dict
+    skip_compare: set = set()
+
+class DeleteContextRequest(AddContextRequest):
+    pass
+
+class ObservableSearchRequest(BaseModel):
+    value: str | None = None
+    name: str | None = None
+    type: ObservableType | None = None
+    tags: list[str] | None = None
+    count: int
+    page: int
+
+class ObservableTagRequest(BaseModel):
+    ids: list[str]
+    tags: list[str]
+    strict: bool = False
+
 
 # API endpoints
 router = APIRouter()

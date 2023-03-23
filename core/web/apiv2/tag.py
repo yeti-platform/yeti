@@ -4,7 +4,26 @@ from typing import Iterable
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag, NewRequest, UpdateRequest, TagSearchRequest
+from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
+
+
+# Request schemas
+class NewRequest(BaseModel):
+    name: str
+    default_expiration_days: int = DEFAULT_EXPIRATION_DAYS
+    produces: list[str] = []
+    replaces: list[str] = []
+
+class UpdateRequest(NewRequest):
+    pass
+
+class TagSearchRequest(BaseModel):
+    name: str | None = None
+    produces: list[str] = []
+    replaces: list[str] = []
+    count: int
+    page: int
+
 
 # API endpoints
 router = APIRouter()
