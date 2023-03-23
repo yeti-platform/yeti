@@ -70,4 +70,5 @@ TYPE_MAPPING = {
     'tool': Tool,
     'malware': Malware,
     'campaign': Campaign,
+    'entities': Entity,
 }

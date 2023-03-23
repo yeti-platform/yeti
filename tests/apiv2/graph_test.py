@@ -1,16 +1,19 @@
-from core import database_arango
+import datetime
+import unittest
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-import unittest
-from core.schemas.observable import Observable
+
+from core import database_arango
+from core.schemas.entity import ThreatActor
 from core.schemas.graph import Relationship
-import datetime
+from core.schemas.indicator import Regex
+from core.schemas.observable import Observable
 from core.web import webapp
 
 client = TestClient(webapp.app)
 
-class ObservableTest(unittest.TestCase):
+class SimpleGraphTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
@@ -20,8 +23,9 @@ class ObservableTest(unittest.TestCase):
             created=datetime.datetime.now(datetime.timezone.utc)).save()
         self.observable2 = Observable(
             value="127.0.0.1",
-            type="hostname",
+            type="ip",
             created=datetime.datetime.now(datetime.timezone.utc)).save()
+        self.entity1 = ThreatActor(name="actor0").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -69,6 +73,24 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data['target'], self.observable2.extended_id)
         self.assertEqual(data['type'], 'resolves')
         self.assertEqual(data['description'], 'DNS resolution')
+
+    def test_add_link_entity(self):
+        response = client.post(
+            "/api/v2/graph/add",
+            json={
+                "source": self.observable1.extended_id,
+                "target": self.entity1.extended_id,
+                "link_type": "uses",
+                "description": "c2 infrastructure"
+                }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIsNotNone(data['id'])
+        self.assertEqual(data['source'], self.observable1.extended_id)
+        self.assertEqual(data['target'], self.entity1.extended_id)
+        self.assertEqual(data['type'], 'uses')
+        self.assertEqual(data['description'], 'c2 infrastructure')
 
     def test_delete_link(self):
         """Tests that a relationship can be deleted."""

@@ -145,5 +145,5 @@ TYPE_MAPPING = {
     'ip': Observable,
     'hostname': Observable,
     'url': Observable,
-    'observable': Observable,
+    'observables': Observable,
 }

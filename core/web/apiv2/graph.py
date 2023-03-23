@@ -1,11 +1,17 @@
 from enum import Enum
+from typing import Type
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from core.schemas.entity import Entity
+from core.schemas import entity, observable
 from core.schemas.graph import Relationship
-from core.schemas.observable import TYPE_MAPPING, Observable
+from core.schemas.indicator import Indicator
+
+GRAPH_TYPE_MAPPINGS = {} # type: dict[str, Type[entity.Entity] | Type[observable.Observable]]
+GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
+GRAPH_TYPE_MAPPINGS.update(entity.TYPE_MAPPING)
+
 
 # Requequest schemas
 
@@ -28,7 +34,7 @@ class GraphAddRequest(BaseModel):
     description: str
 
 class GraphSearchResponse(BaseModel):
-    vertices: dict[str, Observable | Entity]
+    vertices: dict[str, observable.Observable | entity.Entity]
     edges: list[Relationship]
 
 
@@ -39,9 +45,9 @@ router = APIRouter()
 async def search(request: GraphSearchRequest) -> GraphSearchResponse:
     """Fetches neighbros for a given Yeti Object."""
     object_type, object_id = request.source.split('/')
-    if object_type not in TYPE_MAPPING:
+    if object_type not in GRAPH_TYPE_MAPPINGS:
         raise HTTPException(status_code=400, detail='Invalid object type')
-    yeti_object = TYPE_MAPPING[object_type].get(object_id)
+    yeti_object = GRAPH_TYPE_MAPPINGS[object_type].get(object_id)
     if not yeti_object:
         raise HTTPException(
             status_code=404, detail=f'Source object {request.source} not found')
@@ -59,17 +65,17 @@ async def add(request: GraphAddRequest) -> Relationship:
     source_type, source_id = request.source.split('/')
     target_type, target_id = request.target.split('/')
 
-    if source_type not in TYPE_MAPPING:
+    if source_type not in GRAPH_TYPE_MAPPINGS:
         raise HTTPException(
             status_code=400,
             detail=f'Invalid source object type: {source_type}')
-    if target_type not in TYPE_MAPPING:
+    if target_type not in GRAPH_TYPE_MAPPINGS:
         raise HTTPException(
             status_code=400,
             detail=f'Invalid target object type: {target_type}')
 
-    source_object = TYPE_MAPPING[source_type].get(source_id)
-    target_object = TYPE_MAPPING[target_type].get(target_id)
+    source_object = GRAPH_TYPE_MAPPINGS[source_type].get(source_id)
+    target_object = GRAPH_TYPE_MAPPINGS[target_type].get(target_id)
     if source_object is None:
         raise HTTPException(
             status_code=404,

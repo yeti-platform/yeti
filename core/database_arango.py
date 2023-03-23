@@ -319,7 +319,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     # pylint: disable=too-many-arguments
     def neighbors(self, link_type=None, direction='any', include_original=False,
-                  hops=1, raw=False) -> tuple[dict, List]:
+                  hops=1, raw=False) -> tuple[dict[str, "ArangoYetiConnector"], List["Relationship"]]:
         """Fetches neighbors of the YetiObject.
 
         Args:
@@ -341,7 +341,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
           RETURN p
         """
         neighbors = list(self._db.aql.execute(aql))
-        edges = []
+        edges = []  # type: list[ArangoYetiConnector]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
         for path in neighbors:
             edges.extend(self._build_edges(path['edges']))
