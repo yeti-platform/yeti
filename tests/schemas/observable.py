@@ -31,7 +31,8 @@ class ObservableTest(unittest.TestCase):
             created=datetime.datetime.now(datetime.timezone.utc)).save()
         observable = Observable.find(value="toto.com")
         self.assertIsNotNone(observable)
-        self.assertEqual(observable.value, "toto.com")  # type: ignore
+        assert observable is not None
+        self.assertEqual(observable.value, "toto.com")  #
 
         observable = Observable.find(value="tata.com")
         self.assertIsNone(observable)
@@ -41,9 +42,11 @@ class ObservableTest(unittest.TestCase):
             value="toto.com",
             type="hostname",
             created=datetime.datetime.now(datetime.timezone.utc)).save()
-        observable = Observable.get(result.id)  # type: ignore
+        assert result.id is not None
+        observable = Observable.get(result.id)
+        assert observable is not None
         self.assertIsNotNone(observable)
-        self.assertEqual(observable.value, "toto.com")  # type: ignore
+        self.assertEqual(observable.value, "toto.com")
 
     def test_observable_link_to(self) -> None:
         observable1 = Observable(
@@ -117,7 +120,8 @@ class ObservableTest(unittest.TestCase):
         observable.add_context("test_source", {"abc": 123, "def": 456})
         observable.add_context("test_source2", {"abc": 123, "def": 456})
 
-        observable = Observable.get(observable.id)  # type: ignore
+        assert observable.id is not None
+        observable = Observable.get(observable.id)
         self.assertEqual(len(observable.context), 2)
         self.assertEqual(observable.context[0]["abc"], 123)
         self.assertEqual(observable.context[0]["source"], 'test_source')
@@ -167,6 +171,7 @@ class ObservableTest(unittest.TestCase):
             "test_source", {"abc": 123, "def": 456})
         observable = observable.delete_context(
             "test_source", {"def": 456, "abc": 123})
+        assert observable.id is not None
         observable = Observable.get(observable.id)  # type: ignore
 
         self.assertEqual(len(observable.context), 0)
