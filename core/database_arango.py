@@ -3,7 +3,7 @@ import datetime
 import json
 import sys
 import time
-from typing import TypeVar, Iterable, Type, Any, List, TYPE_CHECKING
+from typing import TypeVar, Iterable, Type, Any, List, TYPE_CHECKING, Tuple
 if TYPE_CHECKING:
     from core.schemas.graph import Relationship
     from core.schemas.graph import GraphSearchResponse
@@ -426,6 +426,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         conditions = []
         sorts = []
         for key in args:
+            if key.endswith('__in'):
+                conditions.append(f'o.{key[:-4]} IN @{key}')
+                sorts.append(f'o.{key[:-4]}')
             if key in ['value', 'name', 'type', 'attributes.id', 'email']:
                 conditions.append('o.{0:s} =~ @{1:s}'.format(key, key.replace('.', '_')))
                 sorts.append('o.{0:s}'.format(key))

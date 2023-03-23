@@ -48,6 +48,29 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable)
         self.assertEqual(observable.value, "toto.com")
 
+    def test_observable_filter(self):
+        obs1 = Observable(value="test1.com", type="hostname").save()
+        obs2 = Observable(value="test2.com", type="hostname").save()
+
+        result = Observable.filter(args={"value": "test"})
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].id, obs1.id)
+        self.assertEqual(result[0].value, "test1.com")
+        self.assertEqual(result[1].id, obs2.id)
+        self.assertEqual(result[1].value, "test2.com")
+
+    def test_observable_filter_in(self):
+        obs1 = Observable(value="test1.com", type="hostname").save()
+        obs2 = Observable(value="test2.com", type="hostname").save()
+        obs3 = Observable(value="test3.com", type="hostname").save()
+
+        result = Observable.filter(args={"value__in": ["test1.com", "test3.com"]})
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0].id, obs1.id)
+        self.assertEqual(result[0].value, "test1.com")
+        self.assertEqual(result[1].id, obs3.id)
+        self.assertEqual(result[1].value, "test3.com")
+
     def test_observable_link_to(self) -> None:
         observable1 = Observable(
             value="toto.com",
