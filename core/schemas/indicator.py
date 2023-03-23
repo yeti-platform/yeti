@@ -67,3 +67,5 @@ class Regex(Indicator):
 TYPE_MAPPING = {
     'regex': Regex,
 }
+
+#TODO: Indicator tyeps: yara, sigma
