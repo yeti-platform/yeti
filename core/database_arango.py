@@ -6,7 +6,6 @@ import time
 from typing import TypeVar, Iterable, Type, Any, List, TYPE_CHECKING, Tuple
 if TYPE_CHECKING:
     from core.schemas.graph import Relationship
-    from core.schemas.graph import GraphSearchResponse
 
 import requests
 from arango import ArangoClient
@@ -320,7 +319,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     # pylint: disable=too-many-arguments
     def neighbors(self, link_type=None, direction='any', include_original=False,
-                  hops=1, raw=False) -> "GraphSearchResponse":
+                  hops=1, raw=False) -> tuple[dict, List]:
         """Fetches neighbors of the YetiObject.
 
         Args:
@@ -350,10 +349,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if not include_original:
             vertices.pop(self.extended_id, None)
         edges = self._dedup_edges(edges)
-        # Avoid circular dependency
-        from core.schemas.graph import GraphSearchResponse
-        response = GraphSearchResponse(vertices=vertices, edges=edges)
-        return response
+
+        return vertices, edges
 
     def _dedup_edges(self, edges):
         """Deduplicates edges with same STIX ID, keeping the most recent one.

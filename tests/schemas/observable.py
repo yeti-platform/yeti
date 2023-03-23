@@ -119,19 +119,19 @@ class ObservableTest(unittest.TestCase):
             observable2, "resolves", "DNS resolution")
         self.assertEqual(relationship.type, "resolves")
 
-        observable1_neighbors = observable1.neighbors()
+        vertices, edges = observable1.neighbors()
 
-        self.assertEqual(len(observable1_neighbors.edges), 1)
-        self.assertEqual(len(observable1_neighbors.vertices), 1)
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(len(vertices), 1)
 
-        relationships = observable1_neighbors.edges
+        relationships = edges
         self.assertEqual(relationships[0].source, observable1.extended_id)
         self.assertEqual(relationships[0].target, observable2.extended_id)
         self.assertEqual(relationships[0].description, "DNS resolution")
         self.assertEqual(relationships[0].type, "resolves")
 
-        self.assertIn(observable2.extended_id, observable1_neighbors.vertices)
-        neighbor = observable1_neighbors.vertices[observable2.extended_id]
+        self.assertIn(observable2.extended_id, vertices)
+        neighbor = vertices[observable2.extended_id]
         self.assertEqual(neighbor.id, observable2.id)
 
     def test_add_context(self) -> None:

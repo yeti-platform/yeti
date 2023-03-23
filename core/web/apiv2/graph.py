@@ -45,13 +45,13 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
     if not yeti_object:
         raise HTTPException(
             status_code=404, detail=f'Source object {request.source} not found')
-    neighbors = yeti_object.neighbors(
+    vertices, edges = yeti_object.neighbors(
         link_type=request.link_type,
         direction=request.direction,
         include_original=request.include_original,
         hops=request.hops,
     )
-    return neighbors
+    return GraphSearchResponse(vertices=vertices, edges=edges)
 
 @router.post('/add')
 async def add(request: GraphAddRequest) -> Relationship:
