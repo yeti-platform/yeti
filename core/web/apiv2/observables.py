@@ -63,7 +63,7 @@ async def new(request: NewObservableRequest) -> Observable:
         new = new.tag(request.tags)
     return new
 
-@router.post('/bulk/add')
+@router.post('/bulk')
 async def bulk_add(request: NewBulkObservableAddRequest) -> list[Observable]:
     """Bulk-creates new observables in the database."""
     added = []
