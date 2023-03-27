@@ -41,10 +41,10 @@ class ObservableTest(unittest.TestCase):
         return super().setUp()
 
     def test_asn(self):
-        asn = self.yeti_client.observable_add(value="1234",type_obs="AutonomousSystem")
+        asn = self.yeti_client.observable_add(value="1234", type_obs="AutonomousSystem")
         if not asn:
             self.assertIsNotNone(asn)
-        
+
         asn_added = self.yeti_client.observable_search(value="1234")
         if not asn_added:
             self.assertIsNotNone(asn_added)
@@ -55,8 +55,12 @@ class ObservableTest(unittest.TestCase):
         bitcoin = self.yeti_client.observable_add("115p7UMMngoj1pMvkpHijcRdfJNXj6LrLn")
         if not bitcoin:
             self.assertIsNotNone(bitcoin)
-        bitcoin_added = self.yeti_client.observable_search(value="115p7UMMngoj1pMvkpHijcRdfJNXj6LrLn")
-        self.assertEqual(bitcoin_added[0]["value"], "115p7UMMngoj1pMvkpHijcRdfJNXj6LrLn")
+        bitcoin_added = self.yeti_client.observable_search(
+            value="115p7UMMngoj1pMvkpHijcRdfJNXj6LrLn"
+        )
+        self.assertEqual(
+            bitcoin_added[0]["value"], "115p7UMMngoj1pMvkpHijcRdfJNXj6LrLn"
+        )
 
     def test_certificate(self):
         certificate = Certificate(value="test").save()
@@ -69,16 +73,14 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(file_added[0]["value"], file.value)
 
     def test_hostname(self):
-        hostname = self.yeti_client.observable_add(
-            value="www.test.com"
-        )
+        hostname = self.yeti_client.observable_add(value="www.test.com")
         if not hostname:
             self.assertIsNotNone(hostname)
-        
+
         hostname_added = self.yeti_client.observable_search(value="www.test123.com")
         if not hostname_added:
             self.assertIsNotNone(hostname_added)
-            
+
         self.assertEqual(hostname_added[0]["value"], "www.test123.com")
 
     def test_ip(self):
@@ -92,7 +94,7 @@ class ObservableTest(unittest.TestCase):
         email = self.yeti_client.observable_add(value="test@test.com")
         if not email:
             self.assertIsNotNone(email)
-        
+
         email_added = self.yeti_client.observable_search(value="test@test.com")
         self.assertEqual(email_added[0]["value"], "test@test.com")
 
@@ -101,20 +103,29 @@ class ObservableTest(unittest.TestCase):
         if not mac_address:
             self.assertIsNotNone(mac_address)
 
-        mac_address_added = self.yeti_client.observable_search(value="00:00:00:00:00:00")
+        mac_address_added = self.yeti_client.observable_search(
+            value="00:00:00:00:00:00"
+        )
         if not mac_address_added:
             self.assertIsNotNone(mac_address_added)
         self.assertEqual(mac_address_added[0]["value"], "00:00:00:00:00:00")
 
     def test_hash(self):
-        hash = self.yeti_client.observable_add("08be2c7239acb9557454088bba877a245c8ef9b0e9eb389c65a98e1c752c5709")
+        hash = self.yeti_client.observable_add(
+            "08be2c7239acb9557454088bba877a245c8ef9b0e9eb389c65a98e1c752c5709"
+        )
         if not hash:
             self.assertIsNotNone(hash)
-           
-        hash_added = self.yeti_client.observable_search(value="08be2c7239acb9557454088bba877a245c8ef9b0e9eb389c65a98e1c752c5709")
+
+        hash_added = self.yeti_client.observable_search(
+            value="08be2c7239acb9557454088bba877a245c8ef9b0e9eb389c65a98e1c752c5709"
+        )
         if not hash_added:
             self.assertIsNotNone(hash_added)
-        self.assertEqual(hash_added[0]["value"],"08be2c7239acb9557454088bba877a245c8ef9b0e9eb389c65a98e1c752c5709")
+        self.assertEqual(
+            hash_added[0]["value"],
+            "08be2c7239acb9557454088bba877a245c8ef9b0e9eb389c65a98e1c752c5709",
+        )
 
     def test_url(self):
         url = self.yeti_client.observable_add(value="http://www.test.com")
@@ -132,13 +143,13 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(text_added[0]["value"], "test12345")
 
     def test_path(self):
-        path = self.yeti_client.observable_add("/test/test",type_obs="Path")
+        path = self.yeti_client.observable_add("/test/test", type_obs="Path")
         if not path:
             self.assertIsNotNone(path)
         path_added = self.yeti_client.observable_search(value="/test/test")
         if not path_added:
             self.assertIsNotNone(path_added)
-        self.assertEqual(path_added[0]["value"],"/test/test")
+        self.assertEqual(path_added[0]["value"], "/test/test")
 
     def test_all(self):
         folder_entities = os.path.join(YETI_ROOT, "core", "observables")
