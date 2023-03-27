@@ -22,12 +22,14 @@ class EntityTest(unittest.TestCase):
         user_default = User(username="test", permissions=DEFAULT_PERMISSIONS)
 
         self.yeti_client = YetiApi(
-            api_key=user_default.api_key, url=yeti_config.pyeti.url
+            api_key=user_default.api_key, url="http://localhost:5000/api"
         )
         return super().setUp()
 
-    def test_malware(self):
+    def test_add_malware(self):
+        """Adds a malware with tags and tests for that value and tags match."""
         malware_name = "test_malware"
+<<<<<<< Updated upstream
         malware = self.yeti_client.add_malware(name=malware_name)
         malware_added = self.yeti_client.entity_search(name=malware_name)
         self.assertEqual(malware_added[0]["name"], malware_name)
@@ -63,6 +65,49 @@ class EntityTest(unittest.TestCase):
         ttp = self.yeti_client.add_ttp(name=ttp_name, killchain="Reconnaissance")
         ttp_added = self.yeti_client.entity_search(name=ttp_name)
         self.assertEqual(ttp_added[0]["name"], ttp_name)
+=======
+        self.yeti_client.entity_add(name=malware_name, entity_type='malware', tags=['asd'])
+        malware=self.yeti_client.entity_search(name=malware_name)
+        self.assertEqual(malware[0]['name'], malware_name)
+
+    
+    def test_add_campaign(self):
+        """Adds a campaign with tags and tests for that value and tags match."""
+        campaign_name = "test_campaign"
+        self.yeti_client.entity_add(name=campaign_name, entity_type='campaign', tags=['asd'])
+        campaign=self.yeti_client.entity_search(name=campaign_name)
+        self.assertEqual(campaign[0]['name'], campaign_name)
+
+    
+    def test_add_actor(self):
+        """Adds an actor with tags and tests for that value and tags match."""
+        actor_name = "test_actor"
+        self.yeti_client.entity_add(name=actor_name, entity_type='actor', tags=['asd'])
+        actor=self.yeti_client.entity_search(name=actor_name)
+        self.assertEqual(actor[0]['name'], actor_name)
+      
+    def test_add_ttp(self):
+        """Adds a ttp with tags and tests for that value and tags match."""
+        ttp_name = "test_ttp"
+        self.yeti_client.entity_add(name=ttp_name, entity_type='ttp', tags=['asd'],killchain='1')
+        ttp=self.yeti_client.entity_search(name=ttp_name)
+        self.assertEqual(ttp[0]['name'], ttp_name)
+       
+    
+    def test_add_exploit(self):
+        """Adds an exploit with tags and tests for that value and tags match."""
+        exploit_name = "test_exploit"
+        self.yeti_client.entity_add(name=exploit_name, entity_type='exploit', tags=['asd'])
+        exploit=self.yeti_client.entity_search(name=exploit_name)
+        self.assertEqual(exploit[0]['name'], exploit_name)
+    
+    def test_add_compagny(self):
+        """Adds a compagny with tags and tests for that value and tags match."""
+        compagny_name = "test_compagny"
+        self.yeti_client.entity_add(name=compagny_name, entity_type='compagny', tags=['asd'])
+        compagny=self.yeti_client.entity_search(name=compagny_name)
+        self.assertEqual(compagny[0]['name'], compagny_name)
+>>>>>>> Stashed changes
 
     def test_all(self):
         folder_entities = os.path.join(YETI_ROOT, "core", "entities")
