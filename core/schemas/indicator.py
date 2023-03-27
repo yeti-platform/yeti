@@ -38,6 +38,16 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object['type']](**object)
         return cls(**object)
 
+    def match(self, value: str) -> IndicatorMatch | None:
+        raise NotImplementedError
+
+    @classmethod
+    def search(cls, observables: list[str]) -> list[tuple[str, "Indicator"]]:
+        indicators = list(Indicator.list())
+        for observable in observables:
+            for indicator in indicators:
+                if indicator.match(observable):
+                    yield observable, indicator
 
 class Regex(Indicator):
     _type_filter: str = 'regex'
@@ -63,6 +73,7 @@ class Regex(Indicator):
         if result:
             return IndicatorMatch(name=self.name, match=result.group())
         return None
+
 
 TYPE_MAPPING = {
     'regex': Regex,
