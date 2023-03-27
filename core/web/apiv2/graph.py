@@ -98,3 +98,71 @@ async def delete(relationship_id: str) -> None:
             status_code=404,
             detail=f'Relationship {relationship_id} not found')
     relationship.delete()
+
+
+class AnalysisRequest(BaseModel):
+    observables: list[str]
+    add_tags: list[str] = []
+    fetch_neighbors: bool = True
+    add_unknown: bool = False
+
+class AnalysisResponse(BaseModel):
+    entities: list[tuple[Relationship, entity.Entity]]
+    observables: list[tuple[Relationship, observable.Observable]]
+    known: list[observable.Observable]
+    matches: list[tuple[str, Indicator]]  # IndicatorMatch?
+    unknown: set[str]
+
+
+@router.post('/match')
+async def match(request: AnalysisRequest) -> AnalysisResponse:
+    """Fetches neighbors for a given Yeti Object."""
+
+    entities = []  # type: list[tuple[Relationship, entity.Entity]]
+    observables = []  # type: list[tuple[Relationship, observable.Observable]]
+
+    unknown = set(request.observables)
+    known = {}  # type: dict[str, observable.Observable]
+    if request.add_unknown:
+        for value in request.observables:
+            try:
+                observable.Observable.add_text(value, tags=request.add_tags)
+                unknown.remove(value)
+            except ValueError:
+                pass
+
+    for db_observable in observable.Observable.filter(args={"value__in": request.observables}):
+        known[db_observable.value] = db_observable
+        unknown.remove(db_observable.value)
+        processed_relationships = set()
+
+        if request.fetch_neighbors:
+            vertices, edges = db_observable.neighbors()
+            # Get neighboring entities and relationships.
+            for edge in edges:
+                if edge.id in processed_relationships:
+                    continue
+
+                if edge.target == db_observable.extended_id:
+                    other = vertices[edge.source]
+                else:
+                    other = vertices[edge.target]
+
+                if isinstance(other, entity.Entity):
+                    entities.append((edge, other))
+                if isinstance(other, observable.Observable):
+                    observables.append((edge, other))
+
+                processed_relationships.add(edge.id)
+
+    matches = []
+    for observable_string, indicator in Indicator.search(request.observables):
+        matches.append((observable_string, indicator))
+
+    return AnalysisResponse(
+        entities=entities,
+        observables=observables,
+        unknown=unknown,
+        matches=matches,
+        known=list(known.values()),
+    )
