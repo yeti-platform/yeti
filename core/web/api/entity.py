@@ -29,7 +29,6 @@ class Entity(CrudApi):
         "actor": entities.Actor,
         "campaign": entities.Campaign,
         "company": entities.Company,
-        "exploitkit": entities.ExploitKit,
         "exploit": entities.Exploit,
         "malware": entities.Malware,
         "ttp": entities.TTP,
