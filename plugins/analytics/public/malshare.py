@@ -92,17 +92,21 @@ class MalshareQuery(OneShotAnalytics, MalshareAPI):
                     )
             context["nb C2"] = len(json_result["SOURCES"])
         if "FILENAMES" in json_result:
-            context["filenames"] = ' '.join(json_result["FILENAMES"])
+            context["filenames"] = " ".join(json_result["FILENAMES"])
         observable.add_context(context)
-        try: 
+        try:
             if observable.value != json_result["MD5"]:
                 new_hash = Hash.get_or_create(value=json_result["MD5"])
                 new_hash.add_context(context)
-                links.update(new_hash.active_link_to(observable, "md5", "malshare_query"))
+                links.update(
+                    new_hash.active_link_to(observable, "md5", "malshare_query")
+                )
             if observable.value != json_result["SHA1"]:
                 new_hash = Hash.get_or_create(value=json_result["SHA1"])
                 new_hash.add_context(context)
-                links.update(new_hash.active_link_to(observable, "sha1", "malshare_query"))
+                links.update(
+                    new_hash.active_link_to(observable, "sha1", "malshare_query")
+                )
             if observable.value != json_result["SHA256"]:
                 new_hash = Hash.get_or_create(value=json_result["SHA256"])
                 new_hash.add_context(context)
