@@ -179,7 +179,7 @@ class CrudApi(FlaskView):
         """
         obj = get_object_or_404(self.objectmanager, id=id)
         params = self._parse_request(request.json)
-        params.pop('type', None)  # remove 'type' if set.
+        params.pop("type", None)  # remove 'type' if set.
         obj = obj.clean_update(**params)
         return render(obj)
 
