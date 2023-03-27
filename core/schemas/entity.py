@@ -15,6 +15,7 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
     _type_filter: str = ''
 
     id: str | None = None
+    type: str
     name: str
     description: str = ''
     created: datetime.datetime = Field(default_factory=now)
