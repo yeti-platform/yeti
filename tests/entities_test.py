@@ -29,43 +29,6 @@ class EntityTest(unittest.TestCase):
     def test_add_malware(self):
         """Adds a malware with tags and tests for that value and tags match."""
         malware_name = "test_malware"
-<<<<<<< Updated upstream
-        malware = self.yeti_client.add_malware(name=malware_name)
-        malware_added = self.yeti_client.entity_search(name=malware_name)
-        self.assertEqual(malware_added[0]["name"], malware_name)
-
-    def test_actor(self):
-        actor_name = "test_actor"
-        actor = self.yeti_client.add_actor(name=actor_name)
-        actor_added = self.yeti_client.entity_search(name=actor_name)
-        self.assertEqual(actor_added[0]["name"], actor_name)
-
-
-    def test_campaign(self):
-        campaign_name = "test_campaign"
-        campaign = self.yeti_client.add_campaign(name=campaign_name)
-        campaign_added = self.yeti_client.entity_search(name=campaign_name)
-        self.assertEqual(campaign_added[0]["name"], campaign_name)
-
-    def test_company(self):
-        company_name = "test_company"
-        company = self.yeti_client.add_company(name=company_name)
-        company_added = self.yeti_client.entity_search(name=company_name)
-        self.assertEqual(company_added[0]["name"], company_name)
-
-
-    def test_exploit(self):
-        exploit_name = "test_exploit"
-        exploit = self.yeti_client.add_exploit(name=exploit_name)
-        exploit_added = self.yeti_client.entity_search(name=exploit_name)
-        self.assertEqual(exploit_added[0]["name"], exploit_name)
-
-    def test_ttp(self):
-        ttp_name = "test_ttp"
-        ttp = self.yeti_client.add_ttp(name=ttp_name, killchain="Reconnaissance")
-        ttp_added = self.yeti_client.entity_search(name=ttp_name)
-        self.assertEqual(ttp_added[0]["name"], ttp_name)
-=======
         self.yeti_client.entity_add(name=malware_name, entity_type='malware', tags=['asd'])
         malware=self.yeti_client.entity_search(name=malware_name)
         self.assertEqual(malware[0]['name'], malware_name)
@@ -107,7 +70,6 @@ class EntityTest(unittest.TestCase):
         self.yeti_client.entity_add(name=compagny_name, entity_type='compagny', tags=['asd'])
         compagny=self.yeti_client.entity_search(name=compagny_name)
         self.assertEqual(compagny[0]['name'], compagny_name)
->>>>>>> Stashed changes
 
     def test_all(self):
         folder_entities = os.path.join(YETI_ROOT, "core", "entities")
