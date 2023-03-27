@@ -23,7 +23,6 @@ from core.web.helpers import requires_permissions, get_queryset, get_user_groups
 
 
 class InvestigationSearch(CrudSearchApi):
-    template = "investigation_api.html"
     objectmanager = investigation.Investigation
 
     def search(self, query):

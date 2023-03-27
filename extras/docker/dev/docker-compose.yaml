@@ -5,7 +5,9 @@ services:
     build:
       context: ../../../
       dockerfile: ./extras/docker/dev/Dockerfile
-    image: yeti1-master
+    # let's call this yeti + branchname so that it doesn't
+    # conflict with images built from other branches.
+    image: yeti-frontend
     ports:
       - "5000:5000"
     command: ['webserver']
@@ -16,7 +18,7 @@ services:
       - /tmp/docker-yeti-exports:/opt/yeti/exports
 
   feeds:
-    image: yeti1-master
+    image: yeti-frontend
     command: ['feeds']
     depends_on:
       - redis
@@ -26,7 +28,7 @@ services:
       - TLDEXTRACT_CACHE=/tmp/tldextract.cache
 
   analytics:
-    image: yeti1-master
+    image: yeti-frontend
     command: ['analytics']
     depends_on:
       - redis
@@ -36,7 +38,7 @@ services:
       - TLDEXTRACT_CACHE=/tmp/tldextract.cache
 
   beat:
-    image: yeti1-master
+    image: yeti-frontend
     command: ['beat']
     depends_on:
       - redis
@@ -47,7 +49,7 @@ services:
       - exports
 
   exports:
-    image: yeti1-master
+    image: yeti-frontend
     command: ['exports']
     depends_on:
       - redis
@@ -57,7 +59,7 @@ services:
       - /tmp/docker-yeti-exports:/opt/yeti/exports
 
   oneshot:
-    image: yeti1-master
+    image: yeti-frontend
     command: ['oneshot']
     depends_on:
       - redis

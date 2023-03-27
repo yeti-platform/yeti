@@ -21,5 +21,5 @@ class Campaign(Entity):
     def info(self):
         i = Entity.info(self)
         i["aliases"] = self.aliases
-        i["type"] = "Campaign"
+        i["type"] = "campaign"
         return i

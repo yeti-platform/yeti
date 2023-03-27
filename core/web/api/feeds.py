@@ -9,7 +9,6 @@ from core.web.helpers import requires_permissions
 
 
 class Feed(CrudApi):
-
     template = "feeds_api.html"
     objectmanager = feed.Feed
 

@@ -214,7 +214,6 @@ class YetiFeedSender(object):
                 formatted_dict[key] = observable[key].isoformat()
             elif key == "context":
                 for context_entry_dict in observable[key]:
-
                     if context_entry_dict["source"] in excluded_feeds:
                         observable[key].remove(context_entry_dict)
 
@@ -229,7 +228,6 @@ class YetiFeedSender(object):
 
                 formatted_dict[key] = observable[key]
             else:
-
                 # Check for doc values of FILES.
                 # If it's a FILE, remove the "FILE:" prefix from the value
                 if key == "value" and str(observable[key]).startswith("FILE:"):
@@ -260,12 +258,10 @@ class YetiFeedSender(object):
 
         while True:
             try:
-
                 # Loop observables
                 for observable in observables.find(no_cursor_timeout=True).skip(
                     processed
                 ):
-
                     processed += 1
                     json_to_index = self.format_observable(
                         observable, excluded_feeds=self.excluded_feeds
@@ -276,7 +272,6 @@ class YetiFeedSender(object):
                         continue
 
                     try:
-
                         # Index to elasticsearch
                         response = self.elastic_instance.index(
                             index=self.elastic_index,

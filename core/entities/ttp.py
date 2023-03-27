@@ -6,7 +6,6 @@ from core.entities import Entity
 
 
 class TTP(Entity):
-
     KILL_CHAIN_STEPS = {
         "1": "Reconnaissance",
         "2": "Weaponisation",
@@ -29,14 +28,10 @@ class TTP(Entity):
         "ordering": ["killchain"],
     }
 
-    def __init__(self, *args, **kwargs):
-        super(TTP, self).__init__(*args, **kwargs)
-        self.get_killchain_display = self.get_killchain_display
-
     def info(self):
         i = Entity.info(self)
         i["killchain"] = self.KILL_CHAIN_STEPS[self.killchain]
-        i["type"] = "TTP"
+        i["type"] = "ttp"
         return i
 
     def generate_tags(self):

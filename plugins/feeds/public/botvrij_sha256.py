@@ -6,7 +6,6 @@ from core.observables import Hash
 
 
 class BotvrijSHA256(Feed):
-
     default_values = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijSHA256",

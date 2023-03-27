@@ -6,7 +6,6 @@ from core.entities import Entity
 
 
 class Company(Entity):
-
     rdap = DictField(verbose_name="RDAP")
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("rdap", "RDAP")]
@@ -14,5 +13,5 @@ class Company(Entity):
     def info(self):
         i = Entity.info(self)
         i["rdap"] = self.rdap
-        i["type"] = "Company"
+        i["type"] = "company"
         return i

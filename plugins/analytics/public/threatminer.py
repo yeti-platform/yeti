@@ -31,7 +31,6 @@ def aux_checker(json_result):
 
 
 class ThreatMinerApi(object):
-
     API_URL = "https://api.threatminer.org/v2/"
 
     @staticmethod

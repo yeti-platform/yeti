@@ -40,7 +40,7 @@ def iterify(element):
     if element is None:
         return ()
     elif (
-        isinstance(element, collections.Iterable)
+        isinstance(element, collections.abc.Iterable)
         and not isinstance(element, str)
         and not isinstance(element, Document)
     ):

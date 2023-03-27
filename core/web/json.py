@@ -15,7 +15,7 @@ from core.user import User
 def recursive_encoder(objects, template=None, ctx=None):
     if isinstance(objects, dict):
         newdict = {}
-        for (key, value) in objects.items():
+        for key, value in objects.items():
             newdict[key] = recursive_encoder(value)
         return newdict
 

@@ -7,7 +7,6 @@ from core.database import StringListField
 
 
 class Actor(Entity):
-
     aliases = ListField(StringField(), verbose_name="Aliases")
 
     DISPLAY_FIELDS = Entity.DISPLAY_FIELDS + [("aliases", "Aliases")]
@@ -24,5 +23,5 @@ class Actor(Entity):
     def info(self):
         i = Entity.info(self)
         i["aliases"] = self.aliases
-        i["type"] = "Actor"
+        i["type"] = "actor"
         return i

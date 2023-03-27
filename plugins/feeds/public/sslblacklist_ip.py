@@ -15,7 +15,6 @@ class SSLBlackListIP(Feed):
     }
 
     def update(self):
-
         for index, line in self.update_csv(
             delimiter=",",
             names=["Firstseen", "DstIP", "DstPort"],
@@ -24,7 +23,6 @@ class SSLBlackListIP(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-
         first_seen = line["Firstseen"]
         dst_ip = line["DstIP"]
         ip_obs = False

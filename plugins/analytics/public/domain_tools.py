@@ -92,7 +92,6 @@ class DomainToolsApi(object):
 
 
 class DTReverseIP(OneShotAnalytics, DomainToolsApi):
-
     default_values = {
         "group": "DomainTools",
         "name": "Reverse IP",
@@ -118,7 +117,6 @@ class DTReverseIP(OneShotAnalytics, DomainToolsApi):
 
 
 class DTReverseNS(OneShotAnalytics, DomainToolsApi):
-
     default_values = {
         "group": "DomainTools",
         "name": "DomanTools Reverse NS",
@@ -146,7 +144,6 @@ class DTReverseNS(OneShotAnalytics, DomainToolsApi):
 
 
 class DTWhoisHistory(OneShotAnalytics, DomainToolsApi):
-
     default_values = {
         "group": "DomainTools",
         "name": "Whois History",
@@ -204,7 +201,6 @@ class DTWhoisHistory(OneShotAnalytics, DomainToolsApi):
 
 
 class DTReverseWhois(OneShotAnalytics, DomainToolsApi):
-
     default_values = {
         "group": "DomainTools",
         "name": "DomainTools Reverse Whois",
@@ -230,7 +226,6 @@ class DTReverseWhois(OneShotAnalytics, DomainToolsApi):
 
 
 class DTWhois(OneShotAnalytics, DomainToolsApi):
-
     default_values = {
         "group": "DomainTools",
         "name": "DomainTools Whois",

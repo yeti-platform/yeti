@@ -56,7 +56,7 @@ class Investigation(Node):
     import_url = StringField()
     import_text = StringField()
     tags = ListField(StringField(), verbose_name="Relevant tags")
-    sharing = ListField(StringField())
+    sharing = ListField(ObjectIdField())
 
     exclude_fields = [
         "links",

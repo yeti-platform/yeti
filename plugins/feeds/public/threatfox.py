@@ -7,7 +7,6 @@ from core.errors import ObservableValidationError
 
 
 class ThreatFox(Feed):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "ThreatFox",

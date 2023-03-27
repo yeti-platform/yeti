@@ -11,7 +11,6 @@ class EmailRepAPI(object):
 
     @staticmethod
     def fetch(observable):
-
         try:
             r = requests.get("https://emailrep.io/{}".format(observable.value))
             if r.ok:

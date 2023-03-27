@@ -9,7 +9,6 @@ from core.investigation import ImportMethod
 
 
 class ImportPDF(ImportMethod):
-
     default_values = {
         "name": "import_pdf",
         "description": "Perform investigation import from a PDF document.",

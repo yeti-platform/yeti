@@ -22,7 +22,6 @@ def each(module_name, observable_json):
 
 @celery_app.task
 def schedule(id):
-
     try:
         a = ScheduledAnalytics.objects.get(
             id=id, lock=None

@@ -11,7 +11,6 @@ from core.observables import Hash, Url
 
 
 class CybercrimeAtmosTracker(Feed):
-
     default_values = {
         "frequency": timedelta(hours=1),
         "name": "CybercrimeAtmosTracker",
@@ -20,13 +19,11 @@ class CybercrimeAtmosTracker(Feed):
     }
 
     def update(self):
-
         since_last_run = datetime.now(timezone("UTC")) - self.frequency
 
         for item in self.update_xml(
             "item", ["title", "link", "pubDate", "description"]
         ):
-
             pub_date = parse_date_to_utc(item["pubDate"])
             if self.last_run is not None:
                 if since_last_run > pub_date:

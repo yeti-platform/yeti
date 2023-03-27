@@ -6,7 +6,6 @@ from core.observables import Url
 
 
 class BotvrijUrl(Feed):
-
     default_values = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijUrl",

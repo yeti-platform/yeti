@@ -20,7 +20,6 @@ except IOError as e:
 
 
 class ProcessIp(InlineAnalytics):
-
     default_values = {
         "name": "ProcessIp",
         "description": "Extracts information from IP addresses",

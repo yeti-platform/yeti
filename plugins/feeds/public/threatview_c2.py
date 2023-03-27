@@ -8,7 +8,6 @@ from core.observables import Hostname, Ip
 
 
 class ThreatviewC2(Feed):
-
     default_values = {
         "frequency": timedelta(hours=13),
         "name": "ThreatviewC2",

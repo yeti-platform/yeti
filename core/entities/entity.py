@@ -1,15 +1,15 @@
 from __future__ import unicode_literals
 
-from mongoengine import StringField, ListField
+from datetime import datetime
+
+from mongoengine import StringField, ListField, DateTimeField
 from flask_mongoengine.wtf import model_form
-from flask import url_for
 
 from core.database import Node, TagListField, EntityListField
 from core.observables import Tag
 
 
 class Entity(Node):
-
     SEARCH_ALIASES = {
         "name": "aliases",
     }
@@ -21,7 +21,7 @@ class Entity(Node):
         "TTP": {"Actor": "Leveraged by", "Malware": "Observed in"},
     }
 
-    DISPLAY_FIELDS = [("name", "Name"), ("tags", "Tags")]
+    DISPLAY_FIELDS = [("name", "Name"), ("tags", "Tags"), ("created", "Created")]
 
     name = StringField(
         verbose_name="Name",
@@ -32,6 +32,7 @@ class Entity(Node):
     )
     description = StringField(verbose_name="Description")
     tags = ListField(StringField(), verbose_name="Relevant tags")
+    created = DateTimeField(default=datetime.utcnow)
 
     meta = {
         "allow_inheritance": True,
@@ -46,18 +47,8 @@ class Entity(Node):
                 tags.append(Tag.get_or_create(name=t.lower().strip()))
         self.tags = [t.name for t in tags]
 
-    @classmethod
-    def get_form(klass, override=None):
-        if override:
-            klass = override
-        form = model_form(klass, exclude=klass.exclude_fields)
-        form.tags = TagListField("Tags that will link to this entity")
-        form.links = EntityListField("Bind to entities")
-
-        return form
-
     def __unicode__(self):
-        return "{}".format(self.name)
+        return self.name
 
     def action(self, target, source, verb=None):
         if not verb:
@@ -80,18 +71,9 @@ class Entity(Node):
         """
         i = {
             "name": self.name,
+            "created": self.created,
             "description": self.description,
             "tags": self.tags,
             "id": str(self.id),
         }
-
-        try:
-            i["url"] = url_for("api.Entity:post", id=str(self.id), _external=True)
-            i["human_url"] = url_for(
-                "frontend.EntityView:get", id=str(self.id), _external=True
-            )
-        except RuntimeError:
-            # No flask context, so we can't generate links
-            pass
-
         return i

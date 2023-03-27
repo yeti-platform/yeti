@@ -54,7 +54,6 @@ class Onyphe:
         self.url = urljoin(self.base_url, uri)
 
     def _request(self, method, payload, headers={}):
-
         data = None
 
         try:
@@ -63,7 +62,6 @@ class Onyphe:
             raise APIError("Unable to connect to Onyphe")
 
         if response.status_code == requests.codes.NOT_FOUND:
-
             raise APIError("Page Not found %s" % self.url)
         elif response.status_code == requests.codes.FORBIDDEN:
             raise APIError("Access Forbidden")
@@ -77,7 +75,6 @@ class Onyphe:
 
             raise APIError(error)
         try:
-
             data = response.json()
 
         except:

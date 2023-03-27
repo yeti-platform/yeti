@@ -121,7 +121,6 @@ class ScheduledAnalytics(ScheduleEntry):
 
 
 class OneShotAnalytics(OneShotEntry):
-
     group = StringField(default="")
 
     def __init__(self, *args, **kwargs):

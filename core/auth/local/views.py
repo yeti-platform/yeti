@@ -1,87 +1,95 @@
-from flask import Blueprint, render_template, request, redirect, flash
-from flask_login import login_user, logout_user, current_user, login_required
+from flask import Blueprint, abort, redirect, request, session
+from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash
 
+from core.auth import common
 from core.auth.local.group_management import create_group
 from core.auth.local.user_management import authenticate, create_user, set_password
 from core.user import User
+from core.web.api.api import render
 from core.web.helpers import get_object_or_404
 
-auth = Blueprint("auth", __name__, template_folder="templates")
+auth = Blueprint("auth", __name__)
 
 
-@auth.route("/login", methods=["GET", "POST"])
-def login():
-    if current_user.is_authenticated:
-        return redirect("/observable/")
-    if request.method == "GET":
-        return render_template("login.html")
-
-    else:
-        u = authenticate(request.form.get("login"), request.form.get("password"))
-        if u:
-            login_user(u)
-            print("User logged in (web):")
-            redir = request.args.get("next", "/")
-            return redirect(redir)
-        else:
-            flash("Invalid credentials", "danger")
-            return render_template("login.html")
-
-
-@auth.route("/logout")
-def logout():
-    logout_user()
-    flash("Logged out", "info")
+@auth.route("/auth/login", methods=["GET", "POST"])
+def login_redirect():
+    # The browser will request /auth/login, redirect to the VueJS login page.
     return redirect("/login")
 
 
-@auth.route("/createuser", methods=["POST"])
-@login_required
-def new_user():
-    username = request.form.get("username")
-    password = request.form.get("password")
-    admin = request.form.get("admin") is not None
-    if current_user.has_role("admin") and current_user.is_active:
-        create_user(username, password, admin=admin)
-    return redirect(request.referrer)
+@auth.route("/api/auth/login", methods=["GET", "POST"])
+def login():
+    params = request.get_json()
+    user = authenticate(params["user"], params["password"])
+    if not user:
+        return {"error": f'Invalid credentials for {params["user"]}.'}, 401
 
+    common.generate_session_token(user)
+    login_user(user)
+
+    return {"authenticated": True, "user": user.username}
+
+
+@auth.route("/api/auth/logout", methods=["POST"])
+@login_required
+def logout():
+    """Logout user."""
     logout_user()
+    session.clear()
+    return {"authenticated": False}
 
 
-@auth.route("/creategroup", methods=["POST"])
+@auth.route("/api/createuser", methods=["POST"])
 @login_required
-def new_group():
-    groupname = request.form.get("groupname")
+def api_new_user():
+    params = request.get_json()
+    username = params["username"]
+    password = params["password"]
+    admin = params["admin"]
     if current_user.has_role("admin") and current_user.is_active:
-        create_group(groupname)
-    return redirect(request.referrer)
+        try:
+            user = create_user(username, password, admin=admin)
+        except RuntimeError as error:
+            return render({"error": str(error)}), 400
+        return render(user)
+    abort(401)
 
 
-@auth.route("/change-password", methods=["POST"])
+@auth.route("/api/creategroup", methods=["POST"])
+@login_required
+def api_new_group():
+    params = request.get_json()
+    groupname = params.get("groupname")
+    if not current_user.has_role("admin") and current_user.is_active:
+        abort(401)
+    group = create_group(groupname)
+    if not group:
+        return render({"error": f"Group {groupname} already exists."}), 400
+    return render(group)
+
+
+@auth.route("/api/users/change-password", methods=["POST"])
 def change_password():
-    if current_user.has_role("admin") and request.args.get("id"):
-        u = get_object_or_404(User, id=request.args.get("id"))
+    params = request.get_json()
+    if current_user.has_role("admin") and params.get("id"):
+        u = get_object_or_404(User, id=params.get("id"))
     else:
         u = current_user
 
-    current = request.form.get("current", "")
-    new = request.form.get("new", "")
-    bis = request.form.get("bis", "")
+    current = params.get("current")
+    new = params.get("new")
+
+    if not (current and new):
+        return render({"error": "You must specify both current and new password"}), 400
 
     if not current_user.has_role("admin"):
         if not check_password_hash(u.password, current):
-            flash("Current password is invalid", "danger")
-            return redirect(request.referrer)
-
-    if new != bis:
-        flash("Password confirmation differs from new password.", "danger")
+            return render({"error": "Invalid password"}), 400
     else:
         u = set_password(u, new)
         u.save()
         # re-execute the login if the changes were made on current_user
         if u.id == current_user.id:
             login_user(u)
-        flash("Password was successfully changed.", "success")
-
-    return redirect(request.referrer)
+        return {}

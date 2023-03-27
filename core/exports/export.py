@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import os
 import codecs
 import logging
@@ -41,12 +39,11 @@ class ExportTemplate(YetiDocument):
         return m.hexdigest()
 
     def info(self):
-        return {"name": self.name, "template": self.template, "id": self.id}
+        return {"name": self.name, "template": self.template, "id": str(self.id)}
 
 
 @celery_app.task
 def execute_export(export_id):
-
     try:
         export = Export.objects.get(
             id=export_id, lock=None
@@ -88,7 +85,6 @@ def execute_export(export_id):
 
 
 class Export(ScheduleEntry):
-
     SCHEDULED_TASK = "core.exports.export.execute_export"
     CUSTOM_FILTER = Q()
 

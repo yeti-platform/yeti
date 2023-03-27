@@ -49,7 +49,6 @@ class OTXAlienvault(Feed):
             time.sleep(2)
 
     def analyze(self, item):
-
         context = dict(source=self.name)
         context["references"] = "\r\n".join(item["references"])
         context["description"] = item["description"]
@@ -59,7 +58,6 @@ class OTXAlienvault(Feed):
         tags = item["tags"]
 
         for indicator in item["indicators"]:
-
             type_ind = self.refs.get(indicator["type"])
             if not type_ind:
                 continue
@@ -80,7 +78,6 @@ class OTXAlienvault(Feed):
                     logging.error(e)
 
             elif issubclass(type_ind, Entity):
-
                 type_ind.get_or_create(name=indicator["indicator"])
 
             elif issubclass(type_ind, Indicator):

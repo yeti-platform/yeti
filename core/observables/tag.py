@@ -24,7 +24,7 @@ class Tag(Node):
     meta = {"ordering": ["name"], "indexes": ["name", "replaces"]}
 
     def __unicode__(self):
-        return unicode(self.name)
+        return self.name
 
     def info(self):
         i = {
@@ -59,7 +59,6 @@ class Tag(Node):
 
 
 class ObservableTag(EmbeddedDocument):
-
     name = StringField(required=True)
     first_seen = DateTimeField(default=datetime.utcnow)
     last_seen = DateTimeField(default=datetime.utcnow)

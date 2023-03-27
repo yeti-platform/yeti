@@ -153,7 +153,6 @@ def group_user_permission(investigation=False):
         return True
 
     elif investigation and hasattr(investigation, "sharing"):
-
         # means its public
         if investigation.sharing == []:
             return True

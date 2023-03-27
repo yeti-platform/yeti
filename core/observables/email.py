@@ -5,7 +5,6 @@ from core.helpers import refang
 
 
 class Email(Observable):
-
     regex = (
         r"(?P<search>[-.+\w!#%&'*/=?^_`{|}~]+@(?P<domain>" + Hostname.main_regex + "))"
     )

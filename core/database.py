@@ -93,7 +93,6 @@ class YetiDocument(Document):
 
 
 class LinkHistory(EmbeddedDocument):
-
     description = StringField()
     first_seen = DateTimeField(default=datetime.utcnow)
     last_seen = DateTimeField(default=datetime.utcnow)
@@ -102,7 +101,6 @@ class LinkHistory(EmbeddedDocument):
 
 
 class Link(Document):
-
     src = ReferenceField("Node", required=True, dbref=True)
     dst = ReferenceField("Node", required=True, dbref=True, unique_with="src")
     history = ListField(EmbeddedDocumentField(LinkHistory))
@@ -334,7 +332,6 @@ class AttachedFile(YetiDocument):
 
 
 class Node(YetiDocument):
-
     exclude_fields = ["attached_files"]
     attached_files = ListField(ReferenceField(AttachedFile, reverse_delete_rule=PULL))
 
@@ -342,14 +339,11 @@ class Node(YetiDocument):
         "abstract": True,
     }
 
-    @classmethod
-    def get_form(klass):
-        form = model_form(klass, exclude=klass.exclude_fields)
-        return form
+    SEARCH_ALIASES = {}
 
     @property
     def type(self):
-        return self._cls.split(".")[-1]
+        return self._cls.split(".")[-1].lower()
 
     @property
     def full_type(self):
@@ -424,7 +418,9 @@ class Node(YetiDocument):
             {"$unwind": "$related"},
             {"$match": {"related._cls": compiled_filter}},
         ]
-        pipeline.extend([match, {"$skip": skip * limit}, {"$limit": limit}])
+        pipeline.append(match)
+        if limit:
+            pipeline.extend([{"$skip": skip * limit}, {"$limit": limit}])
         results = list(Link.objects.aggregate(*pipeline))
         return results
 
@@ -457,12 +453,38 @@ class Node(YetiDocument):
             n["id"] = n.pop("_id")
             if "Observable." in n["_cls"] and klass.__name__ == "Observable":
                 n = klass.subclass_from_name(n["_cls"].split(".")[1])(**n)
+            elif "Entity." in n["_cls"] and klass.__name__ == "Entity":
+                n = klass.subclass_from_name(n["_cls"].split(".")[1])(**n)
             else:
                 n = klass(**n)
             l = Link(**node)  # necessary for first_seen and last_seen functions
             final_list.append((l, n))
 
         return final_list
+
+    def neighbors_total(self, klass, filters, regex, ignorecase):
+        result_filters = dict()
+
+        search_replace = {
+            "tags": "tags.name",
+        }
+
+        for key, value in filters.items():
+            if key in search_replace:
+                key = search_replace[key]
+
+            if regex and isinstance(value, str):
+                value = {"$regex": value}
+                if ignorecase:
+                    value["$options"] = "i"
+            if isinstance(value, list) and not key.endswith("__in"):
+                value = {"$in": value}
+            result_filters["related." + key] = value
+
+        outnodes = self._neighbors_aggregation("out", klass, result_filters, 0, 0)
+        innodes = self._neighbors_aggregation("in", klass, result_filters, 0, 0)
+
+        return len(outnodes) + len(innodes)
 
     def delete(self):
         Link.objects(Q(src=self) | Q(dst=self)).delete()

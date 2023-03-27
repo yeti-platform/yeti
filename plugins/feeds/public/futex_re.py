@@ -16,7 +16,6 @@ class FutexTracker(Feed):
     }
 
     def update(self):
-
         for index, line in self.update_csv(
             delimiter=";",
             filter_row="firstseen",
@@ -27,7 +26,6 @@ class FutexTracker(Feed):
 
     # pylint: disable=arguments-differ
     def analyze(self, item):
-
         _id = item["id"]
         _ = item["firstseen"]
         url = item["url"]

@@ -8,13 +8,26 @@ from core.entities import (
     Malware,
     TTP,
     Actor,
-    ExploitKit,
     Exploit,
     Campaign,
     Company,
 )
 from core.indicators import Indicator, Yara, Regex
-from core.observables import Observable
+from core.observables import (
+    Observable,
+    Hostname,
+    Bitcoin,
+    Certificate,
+    Email,
+    File,
+    Hash,
+    Ip,
+    MacAddress,
+    AutonomousSystem,
+    Path,
+    Text,
+    Url,
+)
 from core.web.api.api import render
 from core.web.api.crud import CrudApi
 from core.web.helpers import requires_permissions
@@ -28,10 +41,21 @@ NODES_CLASSES = {
     "actor": Actor,
     "campaign": Campaign,
     "exploit": Exploit,
-    "exploitkit": ExploitKit,
     "regex": Regex,
     "yara": Yara,
     "company": Company,
+    "hostname": Hostname,
+    "bitcoin": Bitcoin,
+    "certificate": Certificate,
+    "email": Email,
+    "file": File,
+    "hash": Hash,
+    "ip": Ip,
+    "macaddress": MacAddress,
+    "autonomoussystem": AutonomousSystem,
+    "path": Path,
+    "text": Text,
+    "url": Url,
 }
 
 
@@ -95,3 +119,21 @@ class Neighbors(CrudApi):
             return render(data, template="indicator_api.html")
         if issubclass(filter_class, Observable):
             return render(data, template="observable_api.html")
+
+    @route("/tuples/<klass>/<node_id>/<type_filter>/total", methods=["GET"])
+    @requires_permissions("read")
+    def total(self, klass, node_id, type_filter):
+        query = request.get_json(silent=True) or {}
+        fltr = query.get("filter", {})
+        params = query.get("params", {})
+
+        klass = NODES_CLASSES[klass.lower().split(".")[0]]
+        filter_class = NODES_CLASSES[type_filter.lower().split(".")[0]]
+        node = klass.objects.get(id=node_id)
+
+        regex = bool(params.pop("regex", False))
+        ignorecase = bool(params.pop("ignorecase", False))
+
+        return render(
+            {"total": node.neighbors_total(filter_class, fltr, regex, ignorecase)}
+        )

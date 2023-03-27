@@ -15,7 +15,6 @@ class UrlHaus(Feed):
     }
 
     def update(self):
-
         for index, line in self.update_csv(
             delimiter=",",
             names=[
@@ -34,7 +33,6 @@ class UrlHaus(Feed):
             self.analyze(line)
 
     def analyze(self, line):
-
         id_feed = line["id"]
         first_seen = line["dateadded"]
         url = line["url"]

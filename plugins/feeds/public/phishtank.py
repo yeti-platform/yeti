@@ -36,7 +36,6 @@ class PhishTank(Feed):
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
     def analyze(self, line):
-
         tags = ["phishing", "phishtank"]
 
         url = line["url"]

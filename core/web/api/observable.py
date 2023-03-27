@@ -105,6 +105,34 @@ class Observable(CrudApi):
             )
         return render(added)
 
+    @route("/bulk-tag", methods=["POST"])
+    @requires_permissions("read")
+    def tag(self):
+        """Adds tags to an observable.
+
+        :<json array tags: Array of tag names to add.
+        :<json array ids: Array of observables IDs to tag.
+        """
+        params = request.json
+        for id in params["ids"]:
+            observable = get_object_or_404(self.objectmanager, id=id)
+            observable.tag(params["tags"])
+        return ("", 200)
+
+    @route("/bulk-untag", methods=["POST"])
+    @requires_permissions("read")
+    def untag(self):
+        """Removes tags from an observable.
+
+        :<json array tags: Array of tag names to add.
+        :<json array ids: Array of observables IDs to tag.
+        """
+        params = request.json
+        for id in params["ids"]:
+            observable = get_object_or_404(self.objectmanager, id=id)
+            observable.untag(params["tags"])
+        return ("", 200)
+
     @route("/<id>/context", methods=["POST"])
     @requires_permissions("read")
     def context(self, id):
@@ -143,5 +171,4 @@ class Observable(CrudApi):
 
 
 class ObservableSearch(CrudSearchApi):
-    template = "observable_api.html"
     objectmanager = observables.Observable

@@ -10,7 +10,6 @@ from core.helpers import refang
 
 
 class Hostname(Observable):
-
     main_regex = r"[-.\w[\]]+\[?\.\]?[\w-]+"
     regex = r"(?P<pre>\W?)(?P<search>" + main_regex + ")(?P<post>\W?)"
 
@@ -36,6 +35,12 @@ class Hostname(Observable):
                     return True
 
         return False
+
+    def info(self):
+        info = super(Hostname, self).info()
+        info["idna"] = self.idna
+        info["domain"] = self.domain
+        return info
 
     def normalize(self):
         self.value = refang(self.value.lower())

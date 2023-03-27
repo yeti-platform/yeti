@@ -132,7 +132,6 @@ class Feed(ScheduleEntry):
         return content
 
     def _temp_feed_data_compare(self, content):
-
         """
         First load data from last fetch to compare them with current data
         This is useful for feeds without Last-modified header
@@ -253,7 +252,6 @@ class Feed(ScheduleEntry):
                     index_col=False,
                 )
         else:
-
             if comment and names:
                 df = pd.read_csv(
                     StringIO(feed),
@@ -337,7 +335,6 @@ class Feed(ScheduleEntry):
         verify=True,
         sort=True,
     ):
-
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
         Args:
