@@ -9,11 +9,7 @@ if [ ! -f yeti.conf ]; then
 fi
 
 if [ "$1" = 'webserver' ]; then
-    poetry run ./yeti.py webserver --debug
-elif  [ "$1" = 'uwsgi' ]; then
-    poetry add uwsgi && poetry run uwsgi --socket 0.0.0.0:8080 -w yeti --callable webapp --processes 4 --stats 0.0.0.0:9191 --max-requests 100 --lazy-apps
-elif  [ "$1" = 'uwsgi-http' ]; then
-    poetry add uwsgi && poetry run uwsgi --http 0.0.0.0:8080 -w yeti --callable webapp --processes 4 --stats 0.0.0.0:9191 --stats-http --max-requests 100 --lazy-apps
+    poetry poetry run uvicorn core.web.webapp:app --reload --host 0.0.0.0
 elif  [ "$1" = 'analytics' ]; then
     poetry run celery -A core.config.celeryctl.celery_app worker -Ofair --autoscale=10,2 --purge -Q analytics -n analytics
 elif  [ "$1" = 'beat' ]; then
