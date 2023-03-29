@@ -1,17 +1,16 @@
-from __future__ import unicode_literals
 
-from datetime import datetime
-import re
-import operator
 import logging
-from mongoengine import *
-from flask_mongoengine.wtf import model_form
+import operator
+import re
+from datetime import datetime
 
-from core.helpers import iterify
-from core.database import Node, TagListField
-from core.observables import ObservableTag, Tag
+from mongoengine import *
+
+from core.database import Node
 from core.entities import Entity
 from core.errors import ObservableValidationError
+from core.helpers import iterify
+from core.observables import ObservableTag, Tag
 
 
 class Observable(Node):
@@ -89,13 +88,6 @@ class Observable(Node):
     ignore = []
     search_regex = None
 
-    @classmethod
-    def get_form(klass):
-        """Gets the appropriate form for a given obseravble"""
-        form = model_form(klass, exclude=klass.exclude_fields)
-        form.tags = TagListField()
-        return form
-
     def __unicode__(self):
         return "{} ({} context)".format(self.value, len(self.context))
 
@@ -112,16 +104,8 @@ class Observable(Node):
         Raises:
             ObservableValidationError if no type could be guessed.
         """
-        from core.observables import (
-            Url,
-            Ip,
-            Email,
-            Path,
-            Hostname,
-            Hash,
-            Bitcoin,
-            MacAddress,
-        )
+        from core.observables import (Bitcoin, Email, Hash, Hostname, Ip,
+                                      MacAddress, Path, Url)
 
         if string and string.strip() != "":
             for t in [Url, Ip, Email, Path, Hostname, Hash, Bitcoin, MacAddress]:
@@ -134,7 +118,7 @@ class Observable(Node):
 
     @staticmethod
     def from_string(string):
-        from core.observables import Url, Ip, Hostname, Email, Hash, MacAddress
+        from core.observables import Email, Hash, Hostname, Ip, MacAddress, Url
 
         results = dict()
         for t in [Url, Ip, Email, Hostname, Hash, MacAddress]:
