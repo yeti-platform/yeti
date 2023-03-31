@@ -163,7 +163,6 @@ class ComplexGraphTest(unittest.TestCase):
         observable, indicator = data['matches'][0]
         self.assertEqual(observable, 'test2.com')
         self.assertEqual(indicator['name'], 'test c2')
-        breakpoint()
 
     def test_matches_nonexist(self):
         """Tests that indicator matches will surface."""
