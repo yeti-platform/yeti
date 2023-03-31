@@ -82,30 +82,46 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
         if strict:
             self.tags = {}
+
+        extra_tags = set()
         for tag_name in tags:
-            tag = Tag.find(name=tag_name)
+            # Attempt to find replacement tag
+            replacements = Tag.filter({"in__replaces": [tag_name]}, count=1)
+            tag: Optional[Tag]
+
+            if replacements:
+                tag = replacements[0]
+            # Attempt to find actual tag
+            else:
+                tag = Tag.find(name=tag_name)
+            # Create tag
             if not tag:
-                tag = Tag(
-                    name=tag_name,
-                    created=datetime.datetime.now(datetime.timezone.utc),
-                    default_expiration=datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS)
-                )
-            tag.count += 1
-            tag.save()
-            observable_tag = self.tags.get(tag_name)
+                tag = Tag(name=tag_name).save()
+
+            observable_tag = self.tags.get(tag.name)
             if observable_tag:
                 observable_tag.last_seen = datetime.datetime.now(datetime.timezone.utc)
                 observable_tag.fresh = True
             else:
-                self.tags[tag_name] = ObservableTag(
-                    name=tag_name,
+                self.tags[tag.name] = ObservableTag(
+                    name=tag.name,
                     first_seen=datetime.datetime.now(datetime.timezone.utc),
                     last_seen=datetime.datetime.now(datetime.timezone.utc),
                     expiration=tag.default_expiration
                 )
-            relevant_entities = Entity.filter(args={'relevant_tags': [tag_name]})
+                tag.count += 1
+                tag = tag.save()
+
+            extra_tags |= set(tag.produces)
+
+            relevant_entities = Entity.filter(args={'relevant_tags': [tag.name]})
             for entity in relevant_entities:
                 self.link_to(entity, 'tags', 'Tagged')
+
+        extra_tags -= set(tags)
+        if extra_tags:
+            self.tag(list(extra_tags))
+
         return self.save()
 
     def add_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
