@@ -423,6 +423,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         conditions = []
         sorts = []
         for key in args:
+            if key.startswith('in__'):
+                conditions.append(f'@{key} ALL IN o.{key[4:]}')
+                sorts.append(f'o.{key[4:]}')
             if key.endswith('__in'):
                 conditions.append(f'o.{key[:-4]} IN @{key}')
                 sorts.append(f'o.{key[:-4]}')
