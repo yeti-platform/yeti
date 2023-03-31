@@ -1,10 +1,16 @@
 import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core import database_arango
 
 DEFAULT_EXPIRATION_DAYS = 30  # Completely arbitrary
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc)
+
+def future():
+    return datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS)
 
 
 class Tag(BaseModel, database_arango.ArangoYetiConnector):
@@ -14,8 +20,8 @@ class Tag(BaseModel, database_arango.ArangoYetiConnector):
     id: str | None = None
     name: str
     count: int = 0
-    created: datetime.datetime
-    default_expiration: datetime.timedelta
+    created: datetime.datetime = Field(default_factory=now)
+    default_expiration: datetime.timedelta = Field(default_factory=future)
     produces: list[str] = []
     replaces: list[str] = []
 
