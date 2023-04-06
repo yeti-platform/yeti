@@ -1,10 +1,10 @@
 from core import database_arango
 
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import unittest
 
 from core.web import webapp
+from core.schemas.tag import Tag
 
 client = TestClient(webapp.app)
 
@@ -12,12 +12,13 @@ class tagTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
+        self.tag = Tag(name="tag1").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
 
     def test_create_tag(self):
-        response = client.post("/api/v2/tags/", json={"name": "tag1"})
+        response = client.post("/api/v2/tags/", json={"name": "tag2"})
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(data['id'])
@@ -25,28 +26,19 @@ class tagTest(unittest.TestCase):
         client.get(f"/api/v2/tags/{data['id']}")
         data = response.json()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(data['name'], "tag1")
+        self.assertEqual(data['name'], "tag2")
 
     def test_update_tag(self):
-        response = client.post("/api/v2/tags/", json={"name": "tag1"})
-        data1 = response.json()
-        self.assertIsNotNone(data1['id'])
-        self.assertEqual(response.status_code, 200)
-
         response = client.put(
-            f"/api/v2/tags/{data1['id']}",
+            f"/api/v2/tags/{self.tag.id}",
             json={"name": "tag111", "default_expiration_days": 10})
         self.assertEqual(response.status_code, 200)
         data2 = response.json()
-        self.assertEqual(data1["id"], data2["id"])
+        self.assertEqual(self.tag.id, data2["id"])
         self.assertEqual(data2['name'], "tag111")
         self.assertEqual(data2['default_expiration'], 864000)  # 10 days
 
     def test_tag_search(self):
-        response = client.post(
-            "/api/v2/tags/",
-            json={"name": "tag1-test"})
-        self.assertEqual(response.status_code, 200)
         response = client.post(
             "/api/v2/tags/",
             json={"name": "tag2-test"})
@@ -58,7 +50,7 @@ class tagTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['name'], 'tag1-test')
+        self.assertEqual(data[0]['name'], 'tag1')
 
         response = client.post(
             "/api/v2/tags/search",
@@ -66,3 +58,22 @@ class tagTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 2)
+
+    def test_tag_delete(self):
+        response = client.delete(f"/api/v2/tags/{self.tag.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(list(Tag.list())), 0)
+
+    def test_tag_merge(self):
+        tag2 = Tag(name="tag2", replaces=["tag3"]).save()
+        response = client.post(
+            "/api/v2/tags/merge",
+            json={
+                "merge": ["tag2"],
+                "merge_into": "tag1",
+                "permanent": True
+            })
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['merged'], 1)
+        self.assertEqual(data['into']["replaces"], ["tag2", "tag3"])

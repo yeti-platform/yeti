@@ -24,6 +24,14 @@ class TagSearchRequest(BaseModel):
     count: int
     page: int
 
+class MergeTagRequest(BaseModel):
+    merge: list[str]
+    merge_into: str
+    permanent: bool = False
+
+class MergeTagResult(BaseModel):
+    merged: int
+    into: Tag
 
 # API endpoints
 router = APIRouter()
@@ -41,7 +49,7 @@ async def new(request: NewRequest) -> Tag:
     return new
 
 @router.get('/{tag_id}')
-async def details(tag_id) -> Tag:
+async def details(tag_id: str) -> Tag:
     """Returns details about a Tag."""
     tag = Tag.get(tag_id)
     if not tag:
@@ -50,7 +58,7 @@ async def details(tag_id) -> Tag:
     return tag
 
 @router.put('/{tag_id}')
-async def update(tag_id, request: UpdateRequest) -> Tag:
+async def update(tag_id: str, request: UpdateRequest) -> Tag:
     """Updates an observable."""
     tag = Tag.get(tag_id)
     if not tag:
@@ -71,3 +79,19 @@ async def search(request: TagSearchRequest) -> list[Tag]:
     page = request_args.pop('page')
     tag = Tag.filter(request_args, offset=page*count, count=count)
     return tag
+
+@router.delete('/{tag_id}')
+async def delete(tag_id: str) -> None:
+    """Deletes a Tag."""
+    tag = Tag.get(tag_id)
+    if not tag:
+        raise HTTPException(status_code=404, detail="Tag ID {tag_id} not found")
+    tag.delete()
+
+@router.post('/merge')
+async def merge(request: MergeTagRequest) -> MergeTagResult:
+    target_tag = Tag.find(name=request.merge_into)
+    if not target_tag:
+        raise HTTPException(status_code=404, detail=f"Tag '{request.merge_into}' not found")
+    merged = target_tag.absorb(request.merge, request.permanent)
+    return MergeTagResult(merged=merged, into=target_tag)
