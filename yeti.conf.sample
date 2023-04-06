@@ -24,10 +24,10 @@
 
 # default_tag_expiration = 7776000
 
-[mongodb]
+[arangodb]
 
 ##
-## Use these settings to configure how to connect to your MongoDB database.
+## Use these settings to configure how to connect to your ArangoDB database.
 ## All settings are optional, with default values being the one in the comment.
 ## If you do not specify a username and password, there will be no authentication.
 ##
@@ -37,7 +37,6 @@
 # database = yeti
 # username = yeti
 # password = STRONG_PASSWORD
-# tls = ok
 
 [redis]
 

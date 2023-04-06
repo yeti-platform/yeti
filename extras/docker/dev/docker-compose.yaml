@@ -69,8 +69,9 @@ services:
   redis:
     image: redis:latest
 
-  mongodb:
-    image: mongo:4.0.12
+  arangodb:
+    image: arangodb
+    ports:
+      - 127.0.0.1:8529:8529
     environment:
-      - MONGO_LOG_DIR=/dev/null
-    command: mongod
+      - ARANGO_ROOT_PASSWORD=
