@@ -82,3 +82,54 @@ class TagTest(unittest.TestCase):
         tag = Tag.find(name="test")
         assert tag is not None
         self.assertEqual(tag.count, 1)
+
+    def test_tag_absorb_permanent(self) -> None:
+        """Test that a tag can absorb another tag."""
+        tag = Tag(name="test").save()
+        Tag(name="old_tag_1",
+            produces=["tag_prod1"],
+            count=10).save()
+        Tag(name="old_tag_2",
+            replaces=["typod_tag"],
+            produces=["tag_prod2"]).save()
+        merge_count = tag.absorb(
+            ["old_tag_1", "old_tag_2"], permanent=True)
+
+        self.assertEqual(merge_count, 2)
+        self.assertEqual(tag.count, 10)
+        self.assertEqual(
+            sorted(tag.replaces),
+            sorted(['old_tag_1', 'old_tag_2', 'typod_tag']))
+        self.assertEqual(
+            sorted(tag.produces),
+            sorted(['tag_prod1', 'tag_prod2']))
+
+        self.assertIsNone(Tag.find(name="old_tag_1"))
+        self.assertIsNone(Tag.find(name="old_tag_1"))
+        self.assertIsNotNone(Tag.find(name="test"))
+
+    def test_tag_absorb_non_permanent(self) -> None:
+        """Test that a tag can absorb another tag."""
+        tag = Tag(name="test").save()
+        Tag(name="old_tag_1",
+            produces=["tag_prod1"],
+            count=10).save()
+        Tag(name="old_tag_2",
+            replaces=["typod_tag"],
+            produces=["tag_prod2"]).save()
+
+        merge_count = tag.absorb(
+            ["old_tag_1", "old_tag_2"], permanent=False)
+
+        self.assertEqual(merge_count, 2)
+        self.assertEqual(tag.replaces, [])
+        self.assertEqual(tag.produces, [])
+        self.assertEqual(tag.count, 10)
+
+        self.assertIsNotNone(Tag.find(name="old_tag_1"))
+        self.assertIsNotNone(Tag.find(name="old_tag_2"))
+        self.assertIsNotNone(Tag.find(name="test"))
+
+        tag2 = Tag.find(name="old_tag_1")
+        assert tag2 is not None
+        self.assertEqual(tag2.count, 0)

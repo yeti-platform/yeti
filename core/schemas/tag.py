@@ -28,3 +28,27 @@ class Tag(BaseModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Tag":
         return cls(**object)
+
+    def absorb(self, other: list[str], permanent: bool) -> int:
+        """Absorb other tags into this one."""
+        merged = 0
+        for tag_name in other:
+            old_tag = Tag.find(name=tag_name)
+            if old_tag:
+                self.count += old_tag.count
+                old_tag.count = 0
+                if permanent:
+                    self.replaces.append(old_tag.name)
+                    self.replaces.extend(old_tag.replaces)
+                    self.produces.extend(old_tag.produces)
+                    old_tag.delete()
+                else:
+                    old_tag.save()
+                merged += 1
+            else:
+                self.replaces.append(tag_name)
+
+        self.produces = list(set(self.produces) - {self.name})
+        self.replaces = list(set(self.replaces) - {self.name})
+        self.save()
+        return merged
