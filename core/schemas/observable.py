@@ -26,8 +26,8 @@ class ObservableType(str, Enum):
 class ObservableTag(BaseModel):
     name: str
     fresh: bool = True
-    first_seen: datetime.datetime
-    last_seen: datetime.datetime
+    first_seen: datetime.datetime = Field(default_factory=now)
+    last_seen: datetime.datetime = Field(default_factory=now)
     expiration: datetime.timedelta
 
 class Observable(BaseModel, database_arango.ArangoYetiConnector):
@@ -78,7 +78,6 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
     def tag(self, tags: list[str], strict: bool = False, expiration_days: int | None = None) -> "Observable":
         """Adds tags to an observable."""
-        #TODO: Tag replacement / propagation
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
         if strict:
             self.tags = {}
@@ -104,11 +103,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
                 observable_tag.fresh = True
             else:
                 self.tags[tag.name] = ObservableTag(
-                    name=tag.name,
-                    first_seen=datetime.datetime.now(datetime.timezone.utc),
-                    last_seen=datetime.datetime.now(datetime.timezone.utc),
-                    expiration=tag.default_expiration
-                )
+                    name=tag.name,expiration=tag.default_expiration)
                 tag.count += 1
                 tag = tag.save()
 
