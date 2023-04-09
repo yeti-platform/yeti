@@ -14,6 +14,10 @@ class UserTest(unittest.TestCase):
     def tearDown(self) -> None:
         database_arango.db.clear()
 
+    def test_has_api_key(self) -> None:
+        self.assertRegex(self.user1.api_key, r"[a-f0-9]{32}")
+        self.assertTrue(self.user1.api_key)
+
     def test_set_user_password(self) -> None:
         self.user1.set_password("test")
         self.user1.save()
