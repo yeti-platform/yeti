@@ -1,7 +1,8 @@
 import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Security
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import APIKeyHeader
 from jose import JWTError, jwt
 
 from core.config.config import yeti_config
@@ -13,7 +14,7 @@ SECRET_KEY = yeti_config.auth['secret_key']
 ALGORITHM = yeti_config.auth['algorithm']
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/token")
-
+api_key_header = APIKeyHeader(name="x-yeti-apikey")
 
 def create_access_token(data: dict, expires_delta: datetime.timedelta | None = None):
     to_encode = data.copy()
@@ -54,14 +55,29 @@ router = APIRouter()
 
 @router.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    http_exception = HTTPException(
+    user = UserSensitive.find(username=form_data.username)
+    if not (user and user.verify_password(form_data.password)):
+        raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
     )
-    user = UserSensitive.find(username=form_data.username)
-    if not (user and user.verify_password(form_data.password)):
-        raise http_exception
+    return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/api-token")
+async def login_api(x_yeti_api_key: str = Security(api_key_header)):
+    user = UserSensitive.find(api_key=x_yeti_api_key)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
     )

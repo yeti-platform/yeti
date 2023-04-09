@@ -32,8 +32,11 @@ class UserSensitive(User):
     def load(cls, object: dict) -> "UserSensitive":
         return cls(**object)
 
-    def set_password(self, plain_password: str):
+    def set_password(self, plain_password: str) -> None:
         self.password = pwd_context.hash(plain_password)
+
+    def reset_api_key(self) -> None:
+        self.api_key = secrets.token_hex(32)
 
     def verify_password(self, plain_password: str) -> bool:
         return pwd_context.verify(plain_password, self.password)
