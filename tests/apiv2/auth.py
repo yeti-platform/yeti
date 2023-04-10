@@ -22,6 +22,32 @@ class SimpleGraphTest(unittest.TestCase):
     def tearDownClass(cls) -> None:
         database_arango.db.clear()
 
+    def test_login(self) -> None:
+        response = client.post(
+            "/api/v2/auth/token",
+            data={
+                "username": "tomchop",
+                "password": "test"
+            })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['token_type'], 'bearer')
+        # test that cookie is also set
+        self.assertIn('set-cookie', response.headers)
+        self.assertIn('yeti_session', response.headers['set-cookie'])
+        self.assertIn(data['access_token'], response.headers['set-cookie'])
+
+    def test_login_nonexistent(self) -> None:
+        response = client.post(
+            "/api/v2/auth/token",
+            data={
+                "username": "nope",
+                "password": "test"
+            })
+        self.assertEqual(response.status_code, 401)
+        data = response.json()
+        self.assertEqual(data['detail'], "Incorrect username or password")
+
     def test_api_not_auth(self) -> None:
         response = client.get("/api/v2/auth/me")
         self.assertEqual(response.status_code, 401)

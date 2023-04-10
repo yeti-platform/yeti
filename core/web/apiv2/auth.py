@@ -1,8 +1,9 @@
 import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status, Security
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from fastapi.security import APIKeyHeader
+from fastapi import APIRouter, Depends, HTTPException, Security, Response
+from fastapi import status
+from fastapi.security import APIKeyHeader, APIKeyCookie, OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 
 from core.config.config import yeti_config
@@ -14,6 +15,7 @@ SECRET_KEY = yeti_config.auth['secret_key']
 ALGORITHM = yeti_config.auth['algorithm']
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/token")
+cookie_scheme = APIKeyCookie(name="yeti_session", auto_error=False)
 api_key_header = APIKeyHeader(name="x-yeti-apikey")
 
 def create_access_token(data: dict, expires_delta: datetime.timedelta | None = None):
@@ -29,12 +31,16 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta | None = N
         algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme), cookie: str = Security(cookie_scheme)) -> User:
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not token and not cookie:
+        raise credentials_exception
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -54,7 +60,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
 router = APIRouter()
 
 @router.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     user = UserSensitive.find(username=form_data.username)
     if not (user and user.verify_password(form_data.password)):
         raise HTTPException(
@@ -66,6 +72,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
     )
+    response.set_cookie(key="yeti_session", value=access_token, httponly=True)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/api-token")
