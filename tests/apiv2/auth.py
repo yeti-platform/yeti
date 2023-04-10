@@ -11,11 +11,15 @@ client = TestClient(webapp.app)
 
 class SimpleGraphTest(unittest.TestCase):
 
-    def setUp(self) -> None:
+    @classmethod
+    def setUpClass(cls) -> None:
         database_arango.db.clear()
-        self.user1 = UserSensitive(username="tomchop").save()
+        cls.user1 = UserSensitive(username="tomchop")
+        cls.user1.set_password("test")
+        cls.user1.save()
 
-    def tearDown(self) -> None:
+    @classmethod
+    def tearDownClass(cls) -> None:
         database_arango.db.clear()
 
     def test_api_not_auth(self) -> None:
