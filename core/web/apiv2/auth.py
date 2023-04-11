@@ -14,7 +14,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
 SECRET_KEY = yeti_config.auth['secret_key']
 ALGORITHM = yeti_config.auth['algorithm']
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/token", auto_error=False)
 cookie_scheme = APIKeyCookie(name="yeti_session", auto_error=False)
 api_key_header = APIKeyHeader(name="x-yeti-apikey")
 
@@ -32,7 +32,6 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta | None = N
     return encoded_jwt
 
 async def get_current_user(token: str = Depends(oauth2_scheme), cookie: str = Security(cookie_scheme)) -> User:
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -41,6 +40,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme), cookie: str = Se
 
     if not token and not cookie:
         raise credentials_exception
+
+    token = token or cookie
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

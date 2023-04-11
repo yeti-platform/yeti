@@ -48,11 +48,31 @@ class SimpleGraphTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data['detail'], "Incorrect username or password")
 
+    def test_cookie_auth(self) -> None:
+        response = client.post(
+            "/api/v2/auth/token",
+            data={
+                "username": "tomchop",
+                "password": "test"
+            })
+        data = response.json()
+        token = data['access_token']
+
+        response = client.get(
+            "/api/v2/auth/me",
+            headers={
+                'cookie': "yeti_session=" + token
+            })
+        data = response.json()
+        breakpoint()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data['username'], 'tomchop')
+
     def test_api_not_auth(self) -> None:
         response = client.get("/api/v2/auth/me")
         self.assertEqual(response.status_code, 401)
         data = response.json()
-        self.assertEqual(data['detail'], "Not authenticated")
+        self.assertEqual(data['detail'], "Could not validate credentials")
 
     def test_api_with_key(self) -> None:
         response = client.post(
