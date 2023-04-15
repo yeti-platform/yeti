@@ -270,7 +270,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         except IntegrityError:
             return cls.find(**kwargs)
 
-    def link_to(self, target: TYetiObject, relationship_type, description: str) -> "Relationship":
+    def link_to(self, target: TYetiObject, relationship_type: str, description: str) -> "Relationship":
         """Creates a link between two YetiObjects.
 
         Args:
@@ -284,7 +284,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Check if a relationship with the same link_type already exists
         aql = f'''
         FOR v, e, p IN 1..1 OUTBOUND "{self.extended_id}"
-        links FILTER e.type == "{relationship_type}"
+        links
+          FILTER e.type == "{relationship_type}"
+          FILTER v._id == "{target.extended_id}"
         RETURN e'''
         neighbors = list(self._db.aql.execute(aql))
         if neighbors:
@@ -318,30 +320,47 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # return Relationship(self._arango_id, target._arango_id, stix_rel).save()
 
     # pylint: disable=too-many-arguments
-    def neighbors(self, link_type=None, direction='any', include_original=False,
-                  hops=1, raw=False) -> tuple[dict[str, "ArangoYetiConnector"], List["Relationship"]]:
+    def neighbors(
+        self,
+        link_types: List[str] = [],
+        target_types: List[str] = [],
+        direction: str = 'any',
+        include_original: bool = False,
+        hops: int = 1,
+    ) -> tuple[dict[str, "ArangoYetiConnector"], List["Relationship"]]:
         """Fetches neighbors of the YetiObject.
 
         Args:
-          link_type: The type of link.
+          link_types: The types of link.
+          target_types: The types of the target objects (as specified in the
+              'type' field).
           direction: outbound, inbound, or any.
           include_original: Whether the original object is to be included in the
               result or not.
           hops: The maximum number of nodes to go through (defaults to 1:
               direct neighbors)
           raw: Whether to return a raw dictionary or a Yeti object.
+
+        Returns:
+          A tuple of two lists: the first one contains the neighbors (vertices),
+            the second one contains the relationships (edges)
         """
         query_filter = ''
-        if link_type:
-            query_filter = f'FILTER e.type == "{link_type}"'
+        if link_types:
+            link_types_query = ', '.join([f'"{t}"' for t in link_types])
+            query_filter = f'FILTER e.type in [{link_types_query}]'
+        if target_types:
+            target_types_query = ', '.join([f'"{t}"' for t in target_types])
+            query_filter += f'\nFILTER v.type in [{target_types_query}]'
         aql = f"""
         FOR v, e, p IN 1..{hops} {direction} '{self.extended_id}'
           links
           {query_filter}
           RETURN p
         """
+
         neighbors = list(self._db.aql.execute(aql))
-        edges = []  # type: list[ArangoYetiConnector]
+        edges = []  # type: list[Relationship]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
         for path in neighbors:
             edges.extend(self._build_edges(path['edges']))
