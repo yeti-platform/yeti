@@ -119,9 +119,10 @@ class ObservableTest(unittest.TestCase):
             observable2, "resolves", "DNS resolution")
         self.assertEqual(relationship.type, "resolves")
 
-        vertices, edges = observable1.neighbors()
+        vertices, edges, count = observable1.neighbors()
 
         self.assertEqual(len(edges), 1)
+        self.assertEqual(count, 1)
         self.assertEqual(len(vertices), 1)
 
         relationships = edges

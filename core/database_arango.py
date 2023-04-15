@@ -327,7 +327,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         direction: str = 'any',
         include_original: bool = False,
         hops: int = 1,
-    ) -> tuple[dict[str, "ArangoYetiConnector"], List["Relationship"]]:
+        offset: int = 0,
+        count: int = 0
+    ) -> tuple[dict[str, "ArangoYetiConnector"], List["Relationship"], int]:
         """Fetches neighbors of the YetiObject.
 
         Args:
@@ -352,16 +354,26 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if target_types:
             target_types_query = ', '.join([f'"{t}"' for t in target_types])
             query_filter += f'\nFILTER v.type in [{target_types_query}]'
+
+        limit = ''
+        if offset:
+            limit += f'LIMIT {offset}'
+            if count:
+                limit += f', {count}'
+
         aql = f"""
         FOR v, e, p IN 1..{hops} {direction} '{self.extended_id}'
           links
           {query_filter}
+          {limit}
           RETURN p
         """
 
-        neighbors = list(self._db.aql.execute(aql))
+        cursor = self._db.aql.execute(aql, count=True, full_count=True)
+        count = cursor.count()
         edges = []  # type: list[Relationship]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
+        neighbors = list(cursor)
         for path in neighbors:
             edges.extend(self._build_edges(path['edges']))
             self._build_vertices(vertices, path['vertices'])
@@ -369,7 +381,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             vertices.pop(self.extended_id, None)
         edges = self._dedup_edges(edges)
 
-        return vertices, edges
+        return vertices, edges, count or 0
 
     def _dedup_edges(self, edges):
         """Deduplicates edges with same STIX ID, keeping the most recent one.

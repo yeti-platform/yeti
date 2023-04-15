@@ -45,8 +45,9 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(self.relationship.type, "resolves")
         self.assertEqual(self.relationship.description, "DNS resolution")
 
-        vertices, edges = self.observable1.neighbors()
+        vertices, edges, count = self.observable1.neighbors()
         self.assertEqual(len(vertices), 1)
+        self.assertEqual(count, 1)
         self.assertEqual(
             vertices[self.observable2.extended_id].value, "127.0.0.1")
 
@@ -59,15 +60,17 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(self.relationship.type, "network-traffic")
         self.assertEqual(self.relationship.description, "Sends network traffic")
 
-        vertices, edges = self.entity1.neighbors()
+        vertices, edges, count = self.entity1.neighbors()
         self.assertEqual(len(vertices), 1)
+        self.assertEqual(count, 1)
         self.assertEqual(
             vertices[self.observable1.extended_id].value, "tomchop.me")
 
     def test_no_neighbors(self):
         """Tests that a node with no neighbors returns an empty list."""
-        vertices, edges = self.observable1.neighbors()
+        vertices, edges, count = self.observable1.neighbors()
         self.assertEqual(len(vertices), 0)
+        self.assertEqual(count, 0)
 
     def test_same_link_diff_objects(self):
         """Tests that an object can have identical links to different objects."""
@@ -75,12 +78,14 @@ class ObservableTest(unittest.TestCase):
         self.entity1.link_to(self.observable1, "a", "b")
 
         # Entity has 2 links to observables
-        vertices, edges = self.entity1.neighbors()
+        vertices, edges, count = self.entity1.neighbors()
         self.assertEqual(len(vertices), 2)
+        self.assertEqual(count, 2)
         self.assertEqual(vertices[self.observable1.extended_id].value, "tomchop.me")
         self.assertEqual(vertices[self.observable2.extended_id].value, "127.0.0.1")
 
         # Observable has 1 link to entity1
-        vertices, edges = self.observable1.neighbors()
+        vertices, edges, count = self.observable1.neighbors()
         self.assertEqual(len(vertices), 1)
+        self.assertEqual(count, 1)
         self.assertEqual(vertices[self.entity1.extended_id].name, "plugx")

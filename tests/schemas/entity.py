@@ -49,7 +49,8 @@ class EntityTest(unittest.TestCase):
             type='hostname').save()
 
         observable.tag(["tag1"])
-        vertices, edges = observable.neighbors()
+        vertices, edges, count = observable.neighbors()
 
         self.assertEqual(len(vertices), 1)
         self.assertEqual(vertices[entity.extended_id].json(), entity.json())
+        self.assertEqual(count, 1)

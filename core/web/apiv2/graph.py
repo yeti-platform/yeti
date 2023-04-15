@@ -20,6 +20,7 @@ class GraphDirection(str, Enum):
     inbound = 'inbound'
     any = 'any'
 
+#TODO: #761 Add Pagination to GraphSearchRequest
 class GraphSearchRequest(BaseModel):
     source: str
     link_types: list[str] = []
@@ -27,6 +28,8 @@ class GraphSearchRequest(BaseModel):
     hops: int
     direction: GraphDirection
     include_original: bool
+    count: int = 50
+    page: int = 0
 
 class GraphAddRequest(BaseModel):
     source: str
@@ -37,6 +40,7 @@ class GraphAddRequest(BaseModel):
 class GraphSearchResponse(BaseModel):
     vertices: dict[str, observable.Observable | entity.Entity]
     edges: list[Relationship]
+    count: int
 
 
 # API endpoints
@@ -52,14 +56,16 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
     if not yeti_object:
         raise HTTPException(
             status_code=404, detail=f'Source object {request.source} not found')
-    vertices, edges = yeti_object.neighbors(
+    vertices, edges, count = yeti_object.neighbors(
         link_types=request.link_types,
         target_types=request.target_types,
         direction=request.direction,
         include_original=request.include_original,
         hops=request.hops,
+        count=request.count,
+        offset=request.page
     )
-    return GraphSearchResponse(vertices=vertices, edges=edges)
+    return GraphSearchResponse(vertices=vertices, edges=edges, count=count)
 
 @router.post('/add')
 async def add(request: GraphAddRequest) -> Relationship:
@@ -139,7 +145,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
         processed_relationships = set()
 
         if request.fetch_neighbors:
-            vertices, edges = db_observable.neighbors()
+            vertices, edges, _ = db_observable.neighbors()
             # Get neighboring entities and relationships.
             for edge in edges:
                 if edge.id in processed_relationships:
