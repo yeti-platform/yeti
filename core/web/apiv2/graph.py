@@ -127,13 +127,13 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
         for value in request.observables:
             try:
                 observable.Observable.add_text(value, tags=request.add_tags)
-                unknown.remove(value)
+                unknown.discard(value)
             except ValueError:
                 pass
 
     for db_observable in observable.Observable.filter(args={"value__in": request.observables}):
         known[db_observable.value] = db_observable
-        unknown.remove(db_observable.value)
+        unknown.discard(db_observable.value)
         processed_relationships = set()
 
         if request.fetch_neighbors:

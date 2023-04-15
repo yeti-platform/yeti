@@ -165,7 +165,7 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(indicator['name'], 'test c2')
 
     def test_matches_nonexist(self):
-        """Tests that indicator matches will surface."""
+        """Tests that uknown observables surface and match."""
         response = client.post(
             "/api/v2/graph/match",
             json={
@@ -190,13 +190,15 @@ class ComplexGraphTest(unittest.TestCase):
             "/api/v2/graph/match",
             json={
                 "observables": ["test3.com"],
+                "add_unknown": True
             }
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
 
-        # Observable is not known, has not been added.
-        self.assertEqual(data['unknown'], ['test3.com'])
+        # Observable is known, has been added.
+        self.assertEqual(len(data['known']), 1)
+        self.assertEqual(data['known'][0]['value'], 'test3.com')
 
         # Indicator matches, but no links have been added.
         self.assertEqual(len(data['matches']), 1)
