@@ -31,11 +31,11 @@ class DeleteContextRequest(AddContextRequest):
 
 class ObservableSearchRequest(BaseModel):
     value: str | None = None
-    name: str | None = None
+    # name: str | None = None
     type: ObservableType | None = None
-    tags: list[str] | None = None
-    count: int
-    page: int
+    tags: list[str] = []
+    count: int = 50
+    page: int = 0
 
 class ObservableTagRequest(BaseModel):
     ids: list[str]
