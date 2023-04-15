@@ -22,7 +22,8 @@ class GraphDirection(str, Enum):
 
 class GraphSearchRequest(BaseModel):
     source: str
-    link_type: str | None
+    link_types: list[str] = []
+    target_types: list[str] = []
     hops: int
     direction: GraphDirection
     include_original: bool
@@ -52,7 +53,8 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         raise HTTPException(
             status_code=404, detail=f'Source object {request.source} not found')
     vertices, edges = yeti_object.neighbors(
-        link_type=request.link_type,
+        link_types=request.link_types,
+        target_types=request.target_types,
         direction=request.direction,
         include_original=request.include_original,
         hops=request.hops,
