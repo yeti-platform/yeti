@@ -64,7 +64,6 @@ class SimpleGraphTest(unittest.TestCase):
                 'cookie': "yeti_session=" + token
             })
         data = response.json()
-        breakpoint()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['username'], 'tomchop')
 
