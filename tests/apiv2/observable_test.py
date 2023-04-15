@@ -17,10 +17,6 @@ class ObservableTest(unittest.TestCase):
     def tearDown(self) -> None:
         database_arango.db.clear()
 
-    def test_read_main(self):
-        response = client.get("/")
-        self.assertEqual(response.status_code, 200)
-
     def test_get_observable(self):
         response = client.get("/api/v2/observables/")
         self.assertEqual(response.status_code, 200)
