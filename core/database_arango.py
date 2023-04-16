@@ -370,7 +370,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
 
         cursor = self._db.aql.execute(aql, count=True, full_count=True)
-        count = cursor.count()
+        total = cursor.count()
         edges = []  # type: list[Relationship]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
         neighbors = list(cursor)
@@ -381,7 +381,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             vertices.pop(self.extended_id, None)
         edges = self._dedup_edges(edges)
 
-        return vertices, edges, count or 0
+        return vertices, edges, total or 0
 
     def _dedup_edges(self, edges):
         """Deduplicates edges with same STIX ID, keeping the most recent one.
@@ -434,7 +434,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def filter(cls: Type[TYetiObject],
                args: dict[str, Any],
                offset: int = 0,
-               count: int = 0) -> List[TYetiObject]:
+               count: int = 0) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
         Search the collection for all objects whose 'value' attribute matches
@@ -447,7 +447,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             count: How many objecst after `offset` to return.
 
         Returns:
-            A List of Yeti objects
+            A List of Yeti objects, and the total object count.
         """
         cls._get_collection()
         colname = cls._collection_name
@@ -483,12 +483,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
         args['@collection'] = colname
         for key in list(args.keys()):
             args[key.replace('.', '_')] = args.pop(key)
-        documents = cls._db.aql.execute(aql_string, bind_vars=args)
+        documents = cls._db.aql.execute(
+            aql_string, bind_vars=args, count=True, full_count=True)
         results = []
+        total = documents.count()
         for doc in documents:
             doc['id'] = doc.pop('_key')
             results.append(cls.load(doc))
-        return results
+        return results, total or 0
 
     @classmethod
     def fulltext_filter(cls, keywords):

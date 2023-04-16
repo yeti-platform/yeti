@@ -85,7 +85,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         extra_tags = set()
         for tag_name in tags:
             # Attempt to find replacement tag
-            replacements = Tag.filter({"in__replaces": [tag_name]}, count=1)
+            replacements, _ = Tag.filter({"in__replaces": [tag_name]}, count=1)
             tag: Optional[Tag]
 
             if replacements:
@@ -109,7 +109,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
             extra_tags |= set(tag.produces)
 
-            relevant_entities = Entity.filter(args={'relevant_tags': [tag.name]})
+            relevant_entities, _ = Entity.filter(args={'relevant_tags': [tag.name]})
             for entity in relevant_entities:
                 self.link_to(entity, 'tags', 'Tagged')
 

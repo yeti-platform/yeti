@@ -36,8 +36,9 @@ class ObservableTest(unittest.TestCase):
             json={"value": "toto.com", "page": 0, "count": 10})
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['value'], 'toto.com')
+        self.assertEqual(len(data['observables']), 1)
+        self.assertEqual(data['observables'][0]['value'], 'toto.com')
+        self.assertEqual(data['total'], 1)
 
         response = client.post(
             "/api/v2/observables/search",
@@ -126,13 +127,13 @@ class ObservableTest(unittest.TestCase):
         response = client.post(
             "/api/v2/observables/",
             json={"value": "toto.com", "type": "hostname"})
-        observable_data = response.json()
-        self.assertIsNotNone(observable_data['id'])
+        data = response.json()
+        self.assertIsNotNone(data['id'])
         self.assertEqual(response.status_code, 200)
 
         response = client.post(
             f"/api/v2/observables/tag",
-            json={"ids": [observable_data['id']], "tags": ["tag1", "tag2"]})
+            json={"ids": [data['id']], "tags": ["tag1", "tag2"]})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['tagged'], 1)
@@ -146,7 +147,8 @@ class ObservableTest(unittest.TestCase):
             f"/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0})
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(len(data), 1)
+        self.assertEqual(len(data['tags']), 1)
+        self.assertEqual(data['total'], 1)
 
 
 class ObservableContextTest(unittest.TestCase):

@@ -37,6 +37,10 @@ class ObservableSearchRequest(BaseModel):
     count: int = 50
     page: int = 0
 
+class ObservableSearchResponse(BaseModel):
+    observables: list[Observable]
+    total: int
+
 class ObservableTagRequest(BaseModel):
     ids: list[str]
     tags: list[str]
@@ -115,13 +119,13 @@ async def delete_context(observable_id, request: DeleteContextRequest) -> Observ
     return observable
 
 @router.post('/search')
-async def search(request: ObservableSearchRequest) -> list[Observable]:
+async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     """Searches for observables."""
     request_args = request.dict(exclude_unset=True)
     count = request_args.pop('count')
     page = request_args.pop('page')
-    observables = Observable.filter(request_args, offset=page*count, count=count)
-    return observables
+    observables, total = Observable.filter(request_args, offset=page*count, count=count)
+    return ObservableSearchResponse(observables=observables, total=total)
 
 @router.post('/add_text')
 async def add_text(request: AddTextRequest) -> Observable:

@@ -40,7 +40,7 @@ class GraphAddRequest(BaseModel):
 class GraphSearchResponse(BaseModel):
     vertices: dict[str, observable.Observable | entity.Entity]
     edges: list[Relationship]
-    count: int
+    total: int
 
 
 # API endpoints
@@ -56,7 +56,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
     if not yeti_object:
         raise HTTPException(
             status_code=404, detail=f'Source object {request.source} not found')
-    vertices, edges, count = yeti_object.neighbors(
+    vertices, edges, total = yeti_object.neighbors(
         link_types=request.link_types,
         target_types=request.target_types,
         direction=request.direction,
@@ -65,7 +65,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         count=request.count,
         offset=request.page
     )
-    return GraphSearchResponse(vertices=vertices, edges=edges, count=count)
+    return GraphSearchResponse(vertices=vertices, edges=edges, total=total)
 
 @router.post('/add')
 async def add(request: GraphAddRequest) -> Relationship:
@@ -138,8 +138,8 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
                 unknown.discard(value)
             except ValueError:
                 pass
-
-    for db_observable in observable.Observable.filter(args={"value__in": request.observables}):
+    db_observables, _ = observable.Observable.filter(args={"value__in": request.observables})
+    for db_observable in db_observables:
         known[db_observable.value] = db_observable
         unknown.discard(db_observable.value)
         processed_relationships = set()

@@ -49,8 +49,9 @@ class tagTest(unittest.TestCase):
             json={"name": "tag1", "page": 0, "count": 10})
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]['name'], 'tag1')
+        self.assertEqual(len(data['tags']), 1)
+        self.assertEqual(data['tags'][0]['name'], 'tag1')
+        self.assertEqual(data['total'], 1)
 
         response = client.post(
             "/api/v2/tags/search",

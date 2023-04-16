@@ -24,6 +24,10 @@ class TagSearchRequest(BaseModel):
     count: int
     page: int
 
+class TagSearchResponse(BaseModel):
+    tags: list[Tag]
+    total: int
+
 class MergeTagRequest(BaseModel):
     merge: list[str]
     merge_into: str
@@ -72,13 +76,13 @@ async def update(tag_id: str, request: UpdateRequest) -> Tag:
     return tag
 
 @router.post('/search')
-async def search(request: TagSearchRequest) -> list[Tag]:
+async def search(request: TagSearchRequest) -> TagSearchResponse:
     """Searches for Tags."""
     request_args = request.dict(exclude_unset=True)
     count = request_args.pop('count')
     page = request_args.pop('page')
-    tag = Tag.filter(request_args, offset=page*count, count=count)
-    return tag
+    tags, total = Tag.filter(request_args, offset=page*count, count=count)
+    return TagSearchResponse(tags=tags, total=total)
 
 @router.delete('/{tag_id}')
 async def delete(tag_id: str) -> None:
