@@ -48,7 +48,9 @@ def get_default_user():
         return create_user("yeti", "yeti", admin=True)
 
 
-def create_user(username:str, password:str, admin=False, permissions=DEFAULT_PERMISSIONS):
+def create_user(
+    username: str, password: str, admin=False, permissions=DEFAULT_PERMISSIONS
+):
     permissions["admin"] = admin
     u = User(username=username, permissions=permissions)
     u = set_password(u, password)
