@@ -83,7 +83,7 @@ class ArangoDatabase:
 
     def clear(self, truncate=True):
         if not self.db:
-            return
+            self.connect()
         for collection_data in self.db.collections():
             if collection_data['system']:
                 continue
