@@ -13,6 +13,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
     minutes=yeti_config.auth['access_token_expire_minutes'])
 SECRET_KEY = yeti_config.auth['secret_key']
 ALGORITHM = yeti_config.auth['algorithm']
+YETI_AUTH = yeti_config.auth['enabled']
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/token", auto_error=False)
 cookie_scheme = APIKeyCookie(name="yeti_session", auto_error=False)
@@ -59,8 +60,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme), cookie: str = Se
 
 # API Endpoints
 router = APIRouter()
-
-YETI_AUTH = False
 
 @router.post("/token")
 async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
