@@ -13,11 +13,13 @@ class TagTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
+        ip_google = Observable(value="8.8.8.8", type="ip").save()
         c2_google = Observable(value="c2.google.com", type="hostname").save()
         www_google = Observable(value="www.google.com", type="hostname").save()
         google = Observable(value="google.com", type="hostname").save()
         google.link_to(www_google, 'domain', 'Domain')
         google.link_to(c2_google, 'domain', 'Domain')
+        google.link_to(ip_google, 'ip', 'IP')
         ta = ThreatActor(name="GoogleActor", relevant_tags=["google_sus"]).save()
         ta.link_to(google, 'c2', 'C2 infrastructure')
         www_google.tag(['web', 'google'])
