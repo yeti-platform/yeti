@@ -9,7 +9,6 @@ class EntitySearch(CrudSearchApi):
     objectmanager = entities.Entity
 
     def search(self, query):
-
         fltr = query.get("filter", {})
         params = query.get("params", {})
         regex = params.pop("regex", False)

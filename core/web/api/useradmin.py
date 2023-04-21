@@ -44,7 +44,6 @@ class UserAdminSearch(CrudSearchApi):
 
 
 class UserAdmin(FlaskView):
-
     objectmanager = User
 
     @route("/<id>")
