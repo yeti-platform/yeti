@@ -17,7 +17,7 @@ class ScheduleEntry(YetiDocument):
     must inherit from this"""
 
     name = StringField(required=True, unique=True)
-    enabled = BooleanField(default=True)
+    enabled = BooleanField(default=False)
     description = StringField()
     frequency = TimeDeltaField()
     status = StringField()

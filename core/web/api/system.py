@@ -22,7 +22,6 @@ class Inspector(threading.Thread):
 
 
 class System(FlaskView):
-
     INSPECT_METHODS = ("registered", "active", "stats")
 
     @requires_role("admin")

@@ -74,3 +74,7 @@ services:
     environment:
       - MONGO_LOG_DIR=/dev/null
     command: mongod
+    volumes:
+      - ./data:/data/
+      - ./data/db:/data/db
+      - ./data/configdb:/data/configdb
