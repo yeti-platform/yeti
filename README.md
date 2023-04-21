@@ -42,6 +42,8 @@ Yeti has a `docker-compose` script to get up and running even faster; this is us
 
 Download in release page the lastest version of yeti <https://github.com/yeti-platform/yeti/releases>
 
+To install docker and docker-compose follow the instructions on the official documentation <https://docs.docker.com/compose/install/>
+
 ```bash
     gunzip yeti-<version>.zip
     cd yeti/extras/docker/dev
