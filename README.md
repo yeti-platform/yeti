@@ -2,7 +2,6 @@
 
 * [What is Yeti?](#what-is-yeti)
 * [Installation](#installation)
-* [Docker images](#docker-images)
 * [Useful links](#useful-links)
 
 ## What is Yeti?
@@ -39,26 +38,22 @@ This is done by:
 
 ## Installation
 
-There's are a few handy bootstrap scripts in [/extras](https://github.com/yeti-platform/yeti/tree/master/extras) that you can use to install a production instance of Yeti.
-
-If you're really in a hurry, you can `curl | bash` them.
-
-    $ curl https://raw.githubusercontent.com/yeti-platform/yeti/master/extras/ubuntu_bootstrap.sh | sudo /bin/bash
-
-Please refer to the [full documentation](http://yeti-platform.readthedocs.io/en/latest/installation.html) for more detailed steps.
-
-## Docker images
-
 Yeti has a `docker-compose` script to get up and running even faster; this is useful for testing or even running production instances of Yeti should your infrastructure support it. Full instructions [here](https://github.com/yeti-platform/yeti/tree/master/extras/docker), but in a nutshell:
 
-    $ git clone https://github.com/yeti-platform/yeti.git
-    $ cd yeti/extras/docker/dev
-    $ docker-compose up
+Download in release page the lastest version of yeti <https://github.com/yeti-platform/yeti/releases>
+
+```bash
+    gunzip yeti-<version>.zip
+    cd yeti/extras/docker/dev
+    docker-compose up
+```
+
+The docker-compose will start the following containers
 
 ## Useful links
 
-  * [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
-  * [Yeti users mailing list](https://groups.google.com/forum/#!forum/yeti-users)
-  * [Project website & blog](https://yeti-platform.github.io)
-  * [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
-  * [Use-cases](https://yeti-platform.readthedocs.io/en/latest/use-cases.html)
+* [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
+* [Yeti users mailing list](https://groups.google.com/forum/#!forum/yeti-users)
+* [Project website & blog](https://yeti-platform.github.io)
+* [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
+* [Use-cases](https://yeti-platform.readthedocs.io/en/latest/use-cases.html)
