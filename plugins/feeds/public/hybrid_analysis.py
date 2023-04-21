@@ -90,7 +90,7 @@ class HybridAnalysis(Feed):
                     f_hyb.active_link_to(new_host, "C2", self.name)
                     logging.debug(domain)
 
-                    new_host.add_context({"source": self.name, "contacted_by": f_hyb})
+                    new_host.add_context({"source": self.name, "contacted_by": f_hyb.value})
                     new_host.add_source("feed")
                 except ObservableValidationError as e:
                     logging.error(e)
