@@ -25,6 +25,7 @@ class ImportMisp:
             name = None
             description = ""
             tags = []
+            aliases = []
             ta = obj_dict.to_dict()
             try:
                 if "description" in ta:
@@ -56,10 +57,14 @@ class ImportMisp:
                     if "synonyms" in meta:
                         for synonym in meta["synonyms"]:
                             tags.append(synonym)
+                    if "synonyms" in meta:
+                        aliases = meta["synonyms"]
                     tags.append(name)
                 actor = Actor.get_or_create(name=name)
                 actor.description = description
                 actor.tags = tags
+                if aliases:
+                    actor.aliases = aliases
                 actor.save()
             except Exception as e:
                 print(f"Error: {e}")
