@@ -20,7 +20,6 @@ class ImportMisp:
         self.clusters = Clusters()
 
     def add_ThreatActor(self):
-
         cluster_threat_actors = self.clusters.get("threat-actor")
         for name_ta, obj_dict in cluster_threat_actors.cluster_values.items():
             name = None
