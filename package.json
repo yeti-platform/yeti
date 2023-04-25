@@ -16,6 +16,6 @@
         "pdfjs-dist-viewer-min": "^1.8.188",
         "simplemde": "^1.11.2",
         "typeahead.js": "^0.11.1",
-        "vis": "^4.20.0",
-    },
+        "vis": "^4.20.0"
+    }
 }
