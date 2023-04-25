@@ -20,7 +20,7 @@ class ImportMisp:
         self.clusters = Clusters()
 
     def add_ThreatActor(self):
-       
+
         cluster_threat_actors = self.clusters.get("threat-actor")
         for name_ta, obj_dict in cluster_threat_actors.cluster_values.items():
             name = None
@@ -41,10 +41,7 @@ class ImportMisp:
                             meta["cfr-suspected-state-sponsor"]
                         )
                         description = "{} {}".format(description, country)
-                    if (
-                        "cfr-target-category" in meta
-                        and meta["cfr-target-category"]
-                    ):
+                    if "cfr-target-category" in meta and meta["cfr-target-category"]:
                         target = "Target: {}.\n".format(
                             ",".join(meta["cfr-target-category"])
                         )
@@ -67,7 +64,7 @@ class ImportMisp:
                 actor.save()
             except Exception as e:
                 print(f"Error: {e}")
-    
+
     def add_Malware(self, name_cluster="malpedia"):
         cluster_malware = self.clusters.get(name_cluster)
         for name, obj_dict in cluster_malware.cluster_values.items():
