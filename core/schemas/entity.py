@@ -2,12 +2,21 @@ import datetime
 from enum import Enum
 
 from core.helpers import refang, REGEXES
+from typing import Type
 
 from pydantic import BaseModel, Field
 from core import database_arango
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
+
+
+class EntityType(str, Enum):
+    threat_actor = 'threat-actor'
+    intrusion_set = 'intrusion-set'
+    tool = 'tool'
+    malware = 'malware'
+    campaign = 'campaign'
 
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
@@ -23,16 +32,16 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
     relevant_tags: list[str] = []
 
     @classmethod
-    def load(cls, object: dict):
+    def load(cls, object: dict) -> "EntityTypes":
         if object['type'] in TYPE_MAPPING:
             return TYPE_MAPPING[object['type']](**object)
-        return cls(**object)
+        raise ValueError('Attempted to instantiate an undefined entity type.')
 
 
 class ThreatActor(Entity):
     _type_filter: str = 'threat-actor'
-
     type: str = Field('threat-actor', const=True)
+
     aliases: list[str] = []
 
 class IntrusionSet(Entity):
@@ -42,7 +51,6 @@ class IntrusionSet(Entity):
     aliases: list[str] = []
     first_seen: datetime.datetime = Field(default_factory=now)
     last_seen: datetime.datetime = Field(default_factory=now)
-
 
 class Tool(Entity):
     _type_filter: str = 'tool'
@@ -65,11 +73,13 @@ class Campaign(Entity):
     first_seen: datetime.datetime = Field(default_factory=now)
     last_seen: datetime.datetime = Field(default_factory=now)
 
-TYPE_MAPPING = {
+TYPE_MAPPING: dict[str, "EntityClasses"] = {
     'threat-actor': ThreatActor,
     'intrusion-set': IntrusionSet,
     'tool': Tool,
     'malware': Malware,
     'campaign': Campaign,
-    'entities': Entity,
 }
+
+EntityTypes = ThreatActor | IntrusionSet | Tool | Malware | Campaign
+EntityClasses = Type[ThreatActor] | Type[IntrusionSet] | Type[Tool] | Type[Malware] | Type[Campaign]
