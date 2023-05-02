@@ -18,7 +18,7 @@ class EntitySearchRequest(BaseModel):
     page: int = 0
 
 class EntitySearchResponse(BaseModel):
-    entities: list[entity.Entity]
+    entities: list[entity.EntityTypes]
     total: int
 
 # API endpoints
@@ -41,3 +41,12 @@ async def details(entity_id) -> entity.EntityTypes:
     if not db_entity:
         raise HTTPException(status_code=404, detail="entity not found")
     return db_entity
+
+@router.post('/search')
+async def search(request: EntitySearchRequest) -> EntitySearchResponse:
+    """Searches for observables."""
+    request_args = request.dict()
+    count = request_args.pop('count')
+    page = request_args.pop('page')
+    entities, total = entity.Entity.filter(request_args, offset=request.page*request.count, count=request.count)
+    return EntitySearchResponse(entities=entities, total=total)

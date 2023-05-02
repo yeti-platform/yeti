@@ -17,7 +17,8 @@ class EntityType(str, Enum):
     tool = 'tool'
     malware = 'malware'
     campaign = 'campaign'
-
+    attack_pattern = 'attack-pattern'
+    identity = 'identity'
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'entities'
@@ -59,11 +60,19 @@ class Tool(Entity):
     kill_chain_phases: list[str] = []
     tool_version: str = ''
 
+class AttackPattern(Entity):
+    _type_filter: str = 'attack-pattern'
+    type: str = Field('attack-pattern', const=True)
+
+    kill_chain_phases: list[str] = []
+
 class Malware(Entity):
     _type_filter: str = 'malware'
     type: str = Field('malware', const=True)
 
     kill_chain_phases: list[str] = []
+    aliases: list[str] = []
+    family: str = ''
 
 class Campaign(Entity):
     _type_filter: str = 'campaign'
@@ -73,13 +82,23 @@ class Campaign(Entity):
     first_seen: datetime.datetime = Field(default_factory=now)
     last_seen: datetime.datetime = Field(default_factory=now)
 
+class Identity(Entity):
+    _type_filter: str = 'identity'
+    type: str = Field('identity', const=True)
+
+    identity_class: list[str] = []
+    sectors: list[str] = []
+    contact_information: str = ''
+
 TYPE_MAPPING: dict[str, "EntityClasses"] = {
     'threat-actor': ThreatActor,
     'intrusion-set': IntrusionSet,
     'tool': Tool,
+    'attack-pattern': AttackPattern,
     'malware': Malware,
     'campaign': Campaign,
+    'entities': Entity,
 }
 
-EntityTypes = ThreatActor | IntrusionSet | Tool | Malware | Campaign
-EntityClasses = Type[ThreatActor] | Type[IntrusionSet] | Type[Tool] | Type[Malware] | Type[Campaign]
+EntityTypes = ThreatActor | IntrusionSet | Tool | Malware | Campaign | AttackPattern
+EntityClasses = Type[ThreatActor] | Type[IntrusionSet] | Type[Tool] | Type[Malware] | Type[Campaign] | Type[AttackPattern]

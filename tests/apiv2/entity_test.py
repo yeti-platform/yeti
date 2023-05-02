@@ -37,3 +37,14 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data['name'], "ta1")
         self.assertEqual(data['type'], "threat-actor")
+
+    def test_search_entities(self):
+        response = client.post(
+            "/api/v2/entities/search",
+            json={"name": "ta", "type": "threat-actor"}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['entities']), 1)
+        self.assertEqual(data['entities'][0]['name'], "ta1")
+        self.assertEqual(data['entities'][0]['type'], "threat-actor")
