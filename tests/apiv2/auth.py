@@ -5,11 +5,15 @@ from fastapi.testclient import TestClient
 from core import database_arango
 from core.schemas.user import UserSensitive
 from core.web import webapp
+from core.config.config import yeti_config
 
+SKIP_TESTS = not yeti_config.auth['enabled']
 
 client = TestClient(webapp.app)
 
-class SimpleGraphTest(unittest.TestCase):
+
+@unittest.skipIf(SKIP_TESTS, "Auth is disabled")
+class AuthTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
