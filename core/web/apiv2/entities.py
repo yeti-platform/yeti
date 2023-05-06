@@ -28,7 +28,7 @@ class EntitySearchResponse(BaseModel):
 router = APIRouter()
 
 @router.get('/')
-async def entities_root() -> Iterable[entity.Entity]:
+async def entities_root() -> Iterable[entity.EntityTypes]:
     return entity.Entity.list()
 
 @router.post('/')
