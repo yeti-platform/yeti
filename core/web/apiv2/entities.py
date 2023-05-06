@@ -38,7 +38,7 @@ async def new(request: NewEntityRequest) -> entity.Entity:
     return new
 
 @router.patch('/{entity_id}')
-async def patch(request: PatchEntityRequest, entity_id) -> entity.Entity:
+async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
     """Modifies entity in the database."""
     db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
     update_data = request.entity.dict(exclude_unset=True)
