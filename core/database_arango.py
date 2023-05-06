@@ -77,8 +77,8 @@ class ArangoDatabase:
         })
         self.create_edge_definition(self.graph('threat_graph'), {
             'edge_collection': 'links',
-            'from_vertex_collections': ['observables', 'entities'],
-            'to_vertex_collections': ['observables', 'entities'],
+            'from_vertex_collections': ['observables', 'entities', 'indicators'],
+            'to_vertex_collections': ['observables', 'entities', 'indicators'],
         })
 
     def clear(self, truncate=True):

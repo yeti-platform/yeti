@@ -1,8 +1,12 @@
-import re
 import datetime
+import re
+from enum import Enum
+from typing import Type
 
-from pydantic import BaseModel, Field, validator, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, validator
+
 from core import database_arango
+
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
@@ -11,6 +15,10 @@ def future():
     return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=DEFAULT_INDICATOR_VALIDITY_DAYS)
 
 DEFAULT_INDICATOR_VALIDITY_DAYS = 30
+
+class IndicatorType(str, Enum):
+    regex = 'regex'
+    yara = 'yara'
 
 class IndicatorMatch(BaseModel):
     name: str
@@ -78,5 +86,8 @@ class Regex(Indicator):
 TYPE_MAPPING = {
     'regex': Regex,
 }
+
+IndicatorTypes = Regex
+IndicatorClasses = Type[Regex]
 
 #TODO: Indicator tyeps: yara, sigma
