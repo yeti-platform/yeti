@@ -98,6 +98,7 @@ TYPE_MAPPING: dict[str, "EntityClasses"] = {
     'malware': Malware,
     'campaign': Campaign,
     'entities': Entity,
+    'entity': Entity,
 }
 
 EntityTypes = ThreatActor | IntrusionSet | Tool | Malware | Campaign | AttackPattern

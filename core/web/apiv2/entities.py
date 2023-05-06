@@ -11,6 +11,9 @@ from core.schemas import entity
 class NewEntityRequest(BaseModel):
     entity: entity.EntityTypes
 
+class PatchEntityRequest(BaseModel):
+    entity: entity.EntityTypes
+
 class EntitySearchRequest(BaseModel):
     name: str | None = None
     type: entity.EntityType | None = None
@@ -32,6 +35,15 @@ async def entities_root() -> Iterable[entity.Entity]:
 async def new(request: NewEntityRequest) -> entity.Entity:
     """Creates a new entity in the database."""
     new = request.entity.save()
+    return new
+
+@router.patch('/{entity_id}')
+async def patch(request: PatchEntityRequest, entity_id) -> entity.Entity:
+    """Modifies entity in the database."""
+    db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
+    update_data = request.entity.dict(exclude_unset=True)
+    updated_entity = db_entity.copy(update=update_data)
+    new = updated_entity.save()
     return new
 
 @router.get('/{entity_id}')
