@@ -32,7 +32,7 @@ async def entities_root() -> Iterable[entity.Entity]:
     return entity.Entity.list()
 
 @router.post('/')
-async def new(request: NewEntityRequest) -> entity.Entity:
+async def new(request: NewEntityRequest) -> entity.EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
     return new
