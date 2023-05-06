@@ -51,7 +51,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
     """Fetches neighbros for a given Yeti Object."""
     object_type, object_id = request.source.split('/')
     if object_type not in GRAPH_TYPE_MAPPINGS:
-        raise HTTPException(status_code=400, detail='Invalid object type')
+        raise HTTPException(status_code=400, detail=f'Invalid object type: {object_type}')
     yeti_object = GRAPH_TYPE_MAPPINGS[object_type].get(object_id)
     if not yeti_object:
         raise HTTPException(
