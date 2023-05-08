@@ -348,12 +348,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
             the second one contains the relationships (edges)
         """
         query_filter = ''
+        args = {}
         if link_types:
-            link_types_query = ', '.join([f'"{t}"' for t in link_types])
-            query_filter = f'FILTER e.type in [{link_types_query}]'
+            args['link_types_regex'] = '|'.join(link_types)
+            query_filter = f'FILTER e.type =~ @link_types_regex'
         if target_types:
-            target_types_query = ', '.join([f'"{t}"' for t in target_types])
-            query_filter += f'\nFILTER v.type in [{target_types_query}]'
+            args['target_types_regex'] = '|'.join(target_types)
+            query_filter += f'\nFILTER v.type =~ @target_types_regex'
 
         limit = ''
         if offset:
@@ -369,7 +370,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
           RETURN p
         """
 
-        cursor = self._db.aql.execute(aql, count=True, full_count=True)
+        cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
         total = cursor.count()
         edges = []  # type: list[Relationship]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
