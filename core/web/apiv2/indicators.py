@@ -40,7 +40,7 @@ async def new(request: NewIndicatorRequest) -> indicator.IndicatorTypes:
 @router.patch('/{indicator_id}')
 async def patch(request: PatchIndicatorRequest, indicator_id) -> indicator.IndicatorTypes:
     """Modifies an indicator in the database."""
-    db_indicator: indicator.IndicatorTypes = indicator.indicator.get(indicator_id)  # type: ignore
+    db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
     update_data = request.indicator.dict(exclude_unset=True)
     updated_indicator = db_indicator.copy(update=update_data)
     new = updated_indicator.save()
@@ -49,7 +49,7 @@ async def patch(request: PatchIndicatorRequest, indicator_id) -> indicator.Indic
 @router.get('/{indicator_id}')
 async def details(indicator_id) -> indicator.IndicatorTypes:
     """Returns details about an indicator."""
-    db_indicator: indicator.IndicatorTypes = indicator.indicator.get(indicator_id)  # type: ignore
+    db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
     return db_indicator
