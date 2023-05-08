@@ -86,6 +86,8 @@ class Regex(Indicator):
 
 TYPE_MAPPING = {
     'regex': Regex,
+    'indicator': Indicator,
+    'indicators': Indicator,
 }
 
 IndicatorTypes = Regex

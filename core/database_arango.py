@@ -417,10 +417,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Import happens here to avoid circular dependency
         from core.schemas import observable
         from core.schemas import entity
+        from core.schemas import indicator
 
         type_mapping = {}
         type_mapping.update(observable.TYPE_MAPPING)
         type_mapping.update(entity.TYPE_MAPPING)
+        type_mapping.update(indicator.TYPE_MAPPING)
 
         for vertex in arango_vertices:
             if vertex['_key'] in vertices:

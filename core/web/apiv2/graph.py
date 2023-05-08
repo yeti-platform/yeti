@@ -4,13 +4,13 @@ from typing import Type
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from core.schemas import entity, observable
+from core.schemas import entity, observable, indicator
 from core.schemas.graph import Relationship
-from core.schemas.indicator import Indicator
 
-GRAPH_TYPE_MAPPINGS = {} # type: dict[str, Type[entity.Entity] | Type[observable.Observable]]
+GRAPH_TYPE_MAPPINGS = {} # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(entity.TYPE_MAPPING)
+GRAPH_TYPE_MAPPINGS.update(indicator.TYPE_MAPPING)
 
 
 # Requequest schemas
@@ -38,7 +38,7 @@ class GraphAddRequest(BaseModel):
     description: str
 
 class GraphSearchResponse(BaseModel):
-    vertices: dict[str, observable.Observable | entity.Entity]
+    vertices: dict[str, observable.Observable | entity.Entity | indicator.Indicator]
     edges: list[Relationship]
     total: int
 
@@ -118,7 +118,7 @@ class AnalysisResponse(BaseModel):
     entities: list[tuple[Relationship, entity.Entity]]
     observables: list[tuple[Relationship, observable.Observable]]
     known: list[observable.Observable]
-    matches: list[tuple[str, Indicator]]  # IndicatorMatch?
+    matches: list[tuple[str, indicator.Indicator]]  # IndicatorMatch?
     unknown: set[str]
 
 
@@ -164,8 +164,8 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
                 processed_relationships.add(edge.id)
 
     matches = []
-    for observable_string, indicator in Indicator.search(request.observables):
-        matches.append((observable_string, indicator))
+    for observable_string, indi in indicator.Indicator.search(request.observables):
+        matches.append((observable_string, indi))
 
     return AnalysisResponse(
         entities=entities,
