@@ -24,6 +24,7 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'entities'
     _type_filter: str = ''
 
+    root_type: str = Field('entity', const=True)
     id: str | None = None
     type: str
     name: str

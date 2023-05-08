@@ -28,6 +28,7 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'indicators'
     _type_filter: str = ''
 
+    root_type: str = Field('indicator', const=True)
     id: str | None = None
     name: str
     description: str = ''

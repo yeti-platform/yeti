@@ -34,6 +34,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'observables'
     _type_filter: str | None = None
 
+    root_type: str = Field('observable', const=True)
     id: str | None = None
     value: str
     type: ObservableType
