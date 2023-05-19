@@ -10,11 +10,6 @@ app = Celery(
     'tasks',
     broker='redis://redis/',
     imports = (
-        # "core.config.celeryimports",
-        # "core.analytics_tasks",
-        # "core.exports.export",
-        # "core.feed",
-        # "core.investigation",
         # TESTING ONLY
         # "plugins.feeds.public.random",
         # "plugins.analytics.public.random_analytics",
