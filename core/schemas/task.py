@@ -6,6 +6,8 @@ from typing import Type
 
 from pydantic import BaseModel, Field
 from core import database_arango
+from core.schemas.observable import Observable
+
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
@@ -43,3 +45,37 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Task":
         return cls(**object)
+
+class AnalyticsTask(Task):
+
+    ACTS_ON: list[str] = []  # By default act on all observables
+
+    def run(self):
+        """Filters observables to analyze and then calls each()"""
+        targets = Observable.filter(args={'type__in': self.ACTS_ON})[0]
+        self.bulk(targets)
+
+    def bulk(self, observables: list[Observable]):
+        """Analyzes a set of observables. Can be overriden if needed."""
+        for observable in observables:
+            assert observable.id is not None
+            self.each(observable)
+            self.analysis_done(observable.id)
+
+    def analysis_done(self, observable_id: str):
+        """Updates the status of the analysis for a given observable"""
+        # TODO: Write a function that just updates a single field.
+        observable = Observable.get(observable_id)
+        assert observable is not None
+        observable.last_analysis[self.name] = now()
+        observable.save()
+
+    def each(self, observable: Observable) -> Observable:
+        """Analyzes a single observable.
+
+        Args:
+            observable: The observable to analyze.
+
+        Returns:
+            The observable that was processed, to track last analysis."""
+        raise NotImplementedError

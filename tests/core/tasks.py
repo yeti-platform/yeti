@@ -6,10 +6,10 @@ from core import database_arango
 # from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
 from core import taskmanager
-from core.schemas.task import Task, TaskStatus, TaskType
+from core.schemas.task import Task, AnalyticsTask, TaskStatus, TaskType
 from unittest import mock
 
-class TasksTest(unittest.TestCase):
+class TaskTest(unittest.TestCase):
 
     def setUp(self) -> None:
         class FakeTask(Task):
@@ -83,3 +83,68 @@ class TasksTest(unittest.TestCase):
         assert task is not None
         self.assertEqual(task.status, TaskStatus.failed)
         self.assertEqual(task.status_message, 'Test exception')
+
+
+class AnalyticsTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        database_arango.db.clear()
+        self.observable1 = Observable.add_text('asd1.com')
+        self.observable2 = Observable.add_text('asd2.com')
+        self.observable3 = Observable.add_text('asd3.com')
+        self.observable4 = Observable.add_text('8.8.8.8')
+
+    def tearDown(self) -> None:
+        database_arango.db.clear()
+
+    def test_run_analytics_task(self):
+        """Tests that the each function is called for each filtered observable."""
+        mock_inner_each = mock.MagicMock()
+        class FakeTask(AnalyticsTask):
+            _defaults = {
+                "frequency": datetime.timedelta(hours=1),
+                "type": "analytics",
+                "description": "Dummy analytics",
+            }
+
+            ACTS_ON: list[str] = ['hostname']
+
+            def each(self, observable):
+                # Do nothing, except call the mock.
+                mock_inner_each(observable.value)
+
+        taskmanager.TaskManager.register_task(FakeTask)
+        taskmanager.TaskManager.run_task('FakeTask')
+        task = FakeTask.find(name='FakeTask')
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.completed, task.status_message)
+        self.assertIsNotNone(task.last_run)
+        mock_inner_each.assert_has_calls([
+            mock.call(self.observable1.value),
+            mock.call(self.observable2.value),
+            mock.call(self.observable3.value),
+        ])
+        self.assertEqual(mock_inner_each.call_count, 3)
+
+    @mock.patch('core.schemas.task.now')
+    def test_run_analytics_sets_last_analysis(self, mock_now):
+        """Tests that the analytics will set the last_analysis field."""
+        mock_now.return_value = datetime.datetime(1970, 1, 1)
+        class FakeTask(AnalyticsTask):
+            _defaults = {
+                "frequency": datetime.timedelta(hours=1),
+                "type": "analytics",
+                "description": "Dummy analytics",
+            }
+
+            ACTS_ON: list[str] = ['ip']
+
+            def each(self, observable):
+                pass
+        taskmanager.TaskManager.register_task(FakeTask)
+        taskmanager.TaskManager.run_task('FakeTask')
+        db_observable = Observable.get(self.observable4.id)
+        assert db_observable is not None
+        self.assertEqual(
+            db_observable.last_analysis,
+            {'FakeTask': datetime.datetime(1970, 1, 1)})
