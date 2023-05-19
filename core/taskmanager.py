@@ -15,7 +15,9 @@ app = Celery(
         # "core.exports.export",
         # "core.feed",
         # "core.investigation",
-        "plugins.feeds.public.random",
+        # TESTING ONLY
+        # "plugins.feeds.public.random",
+        # "plugins.analytics.public.random_analytics",
     ))
 
 
