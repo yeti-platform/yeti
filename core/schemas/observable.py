@@ -41,7 +41,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
     tags: dict[str, ObservableTag] = {}
-    last_analysis: list[dict] = []
+    last_analysis: dict[str, datetime.datetime] = {}
 
     @classmethod
     def load(cls, object: dict) -> "Observable":
