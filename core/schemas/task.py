@@ -23,6 +23,7 @@ class TaskType(str, Enum):
     feed = 'feed'
     analytics = 'analytics'
     oneshot = 'oneshot'
+    inline = 'inline'
     export = 'export'
 
 class Task(BaseModel, database_arango.ArangoYetiConnector):
