@@ -42,17 +42,26 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
     # only used for cron tasks
     frequency: datetime.timedelta = datetime.timedelta(days=1)
 
+    def run(self):
+        """Runs the task"""
+        raise NotImplementedError('run() must be implemented in subclass')
+
     @classmethod
-    def load(cls, object: dict) -> "Task":
+    def load(cls, object: dict) -> "TaskTypes":
+        # If this is called using Task, then return a Task or AnalyticsTask
+        if cls == Task and object['type'] in TYPE_MAPPING:
+            cls = TYPE_MAPPING[object['type']]
+        # Otherwise, use the actual cls.
         return cls(**object)
+
 
 class AnalyticsTask(Task):
 
-    ACTS_ON: list[str] = []  # By default act on all observables
+    acts_on: list[str] = []  # By default act on all observables
 
     def run(self):
         """Filters observables to analyze and then calls each()"""
-        targets = Observable.filter(args={'type__in': self.ACTS_ON})[0]
+        targets = Observable.filter(args={'type__in': self.acts_on})[0]
         self.bulk(targets)
 
     def bulk(self, observables: list[Observable]):
@@ -79,3 +88,10 @@ class AnalyticsTask(Task):
         Returns:
             The observable that was processed, to track last analysis."""
         raise NotImplementedError
+
+TYPE_MAPPING = {
+    'analytics': AnalyticsTask,
+    'feed': Task,
+}
+
+TaskTypes = AnalyticsTask | Task

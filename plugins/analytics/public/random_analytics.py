@@ -13,7 +13,7 @@ class PrintDomains(task.AnalyticsTask):
         "description": "Extracts a domain from a URL",
     }
 
-    ACTS_ON = ['hostname']  # act on all observables
+    acts_on: list[str] = ['hostname']  # act on all observables
 
     # TODO Use server-side JS filter
     # CUSTOM_FILTER = Q(tags__not__size=0)  # filter only tagged elements

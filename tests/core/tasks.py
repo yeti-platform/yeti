@@ -50,6 +50,16 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(task.frequency, datetime.timedelta(hours=1))
         self.assertIsNone(task.last_run)
 
+    def test_task_types(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        task = taskmanager.TaskManager.get_task('FakeTask')
+        tasks, total = Task.filter({'type': 'feed'})
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0].name, 'FakeTask')
+        self.assertIsInstance(tasks[0], Task)
+        task = self.fake_task_class.find(name='FakeTask')
+        self.assertIsInstance(task, self.fake_task_class)
+
     def test_run_task(self) -> None:
         taskmanager.TaskManager.register_task(self.fake_task_class)
         observables = list(Observable.list())
@@ -107,7 +117,7 @@ class AnalyticsTest(unittest.TestCase):
                 "description": "Dummy analytics",
             }
 
-            ACTS_ON: list[str] = ['hostname']
+            acts_on: list[str] = ['hostname']
 
             def each(self, observable):
                 # Do nothing, except call the mock.
@@ -137,7 +147,7 @@ class AnalyticsTest(unittest.TestCase):
                 "description": "Dummy analytics",
             }
 
-            ACTS_ON: list[str] = ['ip']
+            acts_on: list[str] = ['ip']
 
             def each(self, observable):
                 pass

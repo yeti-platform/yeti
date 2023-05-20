@@ -4,7 +4,7 @@ from typing import Iterable
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from core.schemas.task import Task, TaskType
+from core.schemas.task import Task, TaskType, TaskTypes, TYPE_MAPPING
 from core import taskmanager
 
 # Request schemas
@@ -15,7 +15,7 @@ class TaskSearchRequest(BaseModel):
     page: int = 0
 
 class TaskSearchResponse(BaseModel):
-    tasks: list[Task]
+    tasks: list[TaskTypes]
     total: int
 
 # API endpoints
@@ -28,7 +28,7 @@ async def run(task_name):
     return {"status": "ok"}
 
 @router.post('/{task_name}/toggle')
-async def toggle(task_name) -> Task:
+async def toggle(task_name) -> TaskTypes:
     """Toggles the enabled status on a task."""
     db_task: Task = Task.find(name=task_name)  # type: ignore
     db_task.enabled = not db_task.enabled
@@ -42,4 +42,5 @@ async def search(request: TaskSearchRequest) -> TaskSearchResponse:
     count = request_args.pop('count')
     page = request_args.pop('page')
     tasks, total = Task.filter(request_args, offset=request.page*request.count, count=request.count)
+    print(tasks)
     return TaskSearchResponse(tasks=tasks, total=total)
