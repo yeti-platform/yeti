@@ -11,8 +11,8 @@ app = Celery(
     broker='redis://redis/',
     imports = (
         # TESTING ONLY
-        # "plugins.feeds.public.random",
-        # "plugins.analytics.public.random_analytics",
+        "plugins.feeds.public.random",
+        "plugins.analytics.public.random_analytics",
     ))
 
 
