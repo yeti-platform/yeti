@@ -42,5 +42,4 @@ async def search(request: TaskSearchRequest) -> TaskSearchResponse:
     count = request_args.pop('count')
     page = request_args.pop('page')
     tasks, total = Task.filter(request_args, offset=request.page*request.count, count=request.count)
-    print(tasks)
     return TaskSearchResponse(tasks=tasks, total=total)
