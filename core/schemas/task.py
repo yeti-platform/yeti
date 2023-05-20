@@ -94,4 +94,4 @@ TYPE_MAPPING = {
     'feed': Task,
 }
 
-TaskTypes = AnalyticsTask | Task
+TaskTypes =  Task | AnalyticsTask
