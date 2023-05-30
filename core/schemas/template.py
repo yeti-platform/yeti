@@ -14,3 +14,10 @@ class Template(BaseModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Template":
         return cls(**object)
+
+    def render(self, data: list["Observable"], output_file: str) -> None:
+        """Renders the template with the given data to the output file."""
+        #TODO: Change this to an actual render function
+        with open(output_file, 'w+') as fd:
+            for d in data:
+                fd.write(f'{d.value}\n')

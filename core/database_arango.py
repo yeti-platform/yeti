@@ -537,3 +537,26 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # for text_index in cls._text_indexes:
         #     collection.add_fulltext_index(**text_index)
         return collection
+
+def tagged_observables_export(cls, args):
+    aql = f"""
+        FOR o in observables
+        FILTER (o.type IN @acts_on OR @acts_on == [])
+        LET tagnames = (
+                FOR t in VALUES(o.tags)
+                FILTER t.name NOT IN @ignore
+                FILTER (t.fresh OR NOT @fresh)
+                RETURN t.name
+        )
+        FILTER tagnames != []
+        FILTER (@include ANY IN tagnames OR @include == [])
+        FILTER @exclude NONE IN tagnames
+        RETURN o
+        """
+    documents = db.aql.execute(
+        aql, bind_vars=args, count=True, full_count=True)
+    results = []
+    for doc in documents:
+        doc['id'] = doc.pop('_key')
+        results.append(cls.load(doc))
+    return results

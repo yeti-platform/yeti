@@ -1,5 +1,6 @@
 import datetime
 from enum import Enum
+import os
 
 from core.helpers import refang, REGEXES
 from typing import Type
@@ -7,6 +8,7 @@ from typing import Type
 from pydantic import BaseModel, Field
 from core import database_arango
 from core.schemas.observable import Observable
+from core.schemas.template import Template
 
 
 def now():
@@ -59,6 +61,7 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 class AnalyticsTask(Task):
 
     acts_on: list[str] = []  # By default act on all observables
+    type: str = Field('analytics', const=True)
 
     def run(self):
         """Filters observables to analyze and then calls each()"""
@@ -90,9 +93,65 @@ class AnalyticsTask(Task):
             The observable that was processed, to track last analysis."""
         raise NotImplementedError
 
+
+class ExportTask(Task):
+
+    type: str = Field('export', const=True)
+
+    include_tags: list[str] = []
+    exclude_tags: list[str] = []
+    ignore_tags: list[str] = []
+    fresh_tags: bool = True
+    output_dir: str = 'exports'
+    acts_on: list[str] = []
+    template_name: str
+    sha256: str | None
+
+    @property
+    def output_file(self) -> str:
+        return os.path.abspath(os.path.join(self.output_dir, self.name))
+
+    def run(self) -> None:
+        """Runs the export asynchronously."""
+        export_data = self.get_tagged_data(
+            acts_on=self.acts_on,
+            include_tags=self.include_tags,
+            exclude_tags=self.exclude_tags,
+            ignore_tags=self.ignore_tags,
+            fresh_tags=self.fresh_tags,
+        )
+
+        if not os.path.isdir(self.output_dir):
+            os.mkdir(self.output_dir)
+        template = Template.find(name=self.template_name)
+        template.render(export_data, self.output_file)
+        # hash output file and store result
+
+    def get_tagged_data(
+            self,
+            acts_on: list[str],
+            include_tags: list[str],
+            exclude_tags: list[str],
+            ignore_tags: list[str],
+            fresh_tags: bool):
+
+        args = {
+            'acts_on': acts_on,
+            'include': include_tags,
+            'exclude': exclude_tags,
+            'ignore': ignore_tags,
+            'fresh': fresh_tags
+        }
+
+        results = database_arango.tagged_observables_export(Observable, args)
+        return results
+
+
 TYPE_MAPPING = {
     'analytics': AnalyticsTask,
     'feed': Task,
+    'export': ExportTask
 }
 
-TaskTypes =  Task | AnalyticsTask
+
+TaskTypes =  Task | AnalyticsTask | ExportTask

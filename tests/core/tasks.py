@@ -6,7 +6,8 @@ from core import database_arango
 # from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
 from core import taskmanager
-from core.schemas.task import Task, AnalyticsTask, TaskStatus, TaskType
+from core.schemas.task import Task, AnalyticsTask, ExportTask, TaskStatus, TaskType
+from core.schemas.template import Template
 from unittest import mock
 
 class TaskTest(unittest.TestCase):
@@ -158,3 +159,78 @@ class AnalyticsTest(unittest.TestCase):
         self.assertEqual(
             db_observable.last_analysis,
             {'FakeTask': datetime.datetime(1970, 1, 1)})
+
+
+class ExportTaskTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        database_arango.db.clear()
+        self.observable1 = Observable.add_text('asd1.com', tags=['c2', 'legit'])
+        self.observable2 = Observable.add_text('asd2.com', tags=['c2'])
+        self.observable3 = Observable.add_text('asd3.com', tags=['c2', 'exclude'])
+        self.observable4 = Observable.add_text('asd4.com', tags=['legit'])
+        self.observable5 = Observable.add_text('asd5.com')
+        self.observable6 = Observable.add_text('127.0.0.1')
+        self.template = Template(name='RandomTemplate', template='<BLAH>').save()
+        self.export_task = ExportTask(
+            name='RandomExport',
+            acts_on=['hostname'],
+            template_name='RandomTemplate').save()
+        taskmanager.TaskManager.register_task(ExportTask, task_name='RandomExport')
+
+    @mock.patch('core.schemas.template.Template.render')
+    def test_run_export_task(self, mock_render):
+        """Tests that the each function is called for each filtered observable."""
+        taskmanager.TaskManager.run_task('RandomExport')
+        task = ExportTask.find(name='RandomExport')
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.completed, task.status_message)
+        mock_render.assert_called_with(
+            [self.observable1,
+             self.observable2,
+             self.observable3,
+             self.observable4],
+            '/app/exports/RandomExport')
+        self.assertIsNotNone(task.last_run)
+
+
+    def test_tag_filtering(self):
+        """Tests that the tag filtering works as intended."""
+        task = ExportTask.find(name='RandomExport')
+
+
+        # We expect all tagged hostnames to be returned
+        results = task.get_tagged_data(
+            acts_on=['hostname'],
+            include_tags=[],
+            exclude_tags=[],
+            ignore_tags=[],
+            fresh_tags=True)
+        self.assertEqual(results, [self.observable1, self.observable2, self.observable3, self.observable4])
+
+        # We expect all hostnames that aren't tagged "c2"
+        results = task.get_tagged_data(
+            acts_on=['hostname'],
+            include_tags=[],
+            exclude_tags=['c2'],
+            ignore_tags=[],
+            fresh_tags=True)
+        self.assertEqual(results, [self.observable4])
+
+        # We expect all hostnames that are tagged "c2" but NOT "exclude"
+        results = task.get_tagged_data(
+            acts_on=['hostname'],
+            include_tags=['c2'],
+            exclude_tags=['exclude'],
+            ignore_tags=[],
+            fresh_tags=True)
+        self.assertEqual(results, [self.observable1, self.observable2])
+
+        # We expect all tagged hostnames, excpet if the only tag is "legit"
+        results = task.get_tagged_data(
+            acts_on=['hostname'],
+            include_tags=[],
+            exclude_tags=[],
+            ignore_tags=['legit'],
+            fresh_tags=True)
+        self.assertEqual(results, [self.observable1, self.observable2, self.observable3])
