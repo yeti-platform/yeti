@@ -21,14 +21,17 @@ class TaskManager():
     _store = {}  # type: dict[str, Task]
 
     @classmethod
-    def register_task(cls, task_class: Type[Task]):
+    def register_task(cls, task_class: Type[Task], task_name: str | None = None):
         """Registers task in cache.
 
-        task_class: The task class to register
+        task_class: The task class to register.
+        task_name: The name of the task. Used with Exports, which all share
+            the same class.
 
         Will create DB entry if it does not exist.
         """
-        task_name = task_class.__name__
+        if not task_name:
+            task_name = task_class.__name__
         logging.info('Registering task', task_name)
         task = task_class.find(name=task_name)
         if not task:
@@ -45,8 +48,9 @@ class TaskManager():
 
     @classmethod
     def load_task(cls, task_name) -> Task:
-        """Loads tasks from the database and refreshes cashe."""
+        """Loads tasks from the database and refreshes cache."""
         if task_name not in cls._store:
+            # ExportTasks are
             logging.error(f'Task {task_name} not found. Was it registered?')
             logging.error('Registered tasks: ', cls._store.keys())
             raise ValueError(f'Task {task_name} not found. Was it registered?')
