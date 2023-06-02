@@ -5,7 +5,9 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from core import database_arango, taskmanager
-from core.schemas.task import Task
+from core.schemas.observable import Observable
+from core.schemas.task import ExportTask, Task
+from core.schemas.template import Template
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -57,3 +59,45 @@ class TaskTest(unittest.TestCase):
         mock_delay.assert_called_once_with("FakeTask")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['status'], "ok")
+
+
+class ExportTaskTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        database_arango.db.clear()
+
+        self.template = Template(
+            name='RandomTemplate', template='<BLAH>').save()
+        self.export_task = ExportTask(
+            name='RandomExport',
+            acts_on=['hostname'],
+            template_name='RandomTemplate').save()
+        self.observable1 = Observable.add_text('export1.com', tags=['c2', 'legit'])
+        self.observable2 = Observable.add_text('export2.com', tags=['c2'])
+        self.observable3 = Observable.add_text('export3.com', tags=['c2', 'exclude'])
+        taskmanager.TaskManager.register_task(ExportTask, task_name='RandomExport')
+
+    def test_new_export(self):
+        """Tests that new exports can be created."""
+        response = client.post("/api/v2/tasks/export/new", json={
+            "export": {
+                "name": "RandomExport2",
+                "acts_on": ["hostname"],
+                "template_name": "RandomTemplate"
+            }
+        })
+        data = response.json()
+        self.assertEqual(data['acts_on'], ['hostname'])
+        self.assertEqual(data['name'], 'RandomExport2')
+        self.assertEqual(data['template_name'], 'RandomTemplate')
+
+    def test_export_content(self):
+        """Tests that the API returns rendered data correctly."""
+        taskmanager.TaskManager.run_task('RandomExport')
+        response = client.get("/api/v2/tasks/export/RandomExport/content")
+        data = response.text
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data, 'export1.com\nexport2.com\nexport3.com\n')
+
+    def tearDown(self) -> None:
+        database_arango.db.clear()
