@@ -7,7 +7,7 @@ from typing import Type
 
 from pydantic import BaseModel, Field
 from core import database_arango
-from core.schemas.observable import Observable
+from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
 
 
@@ -24,9 +24,9 @@ class TaskStatus(str, Enum):
 class TaskType(str, Enum):
     feed = 'feed'
     analytics = 'analytics'
+    export = 'export'
     oneshot = 'oneshot'
     inline = 'inline'
-    export = 'export'
 
 class Task(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'tasks'
@@ -35,7 +35,6 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 
     id: str | None = None
     name: str
-    type: TaskType
     enabled: bool = True
     description: str = ''
     status: TaskStatus = TaskStatus.idle
@@ -57,11 +56,13 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
         # Otherwise, use the actual cls.
         return cls(**object)
 
+class FeedTask(Task):
+    type: str = Field(TaskType.feed, const=True)
 
 class AnalyticsTask(Task):
 
     acts_on: list[str] = []  # By default act on all observables
-    type: str = Field('analytics', const=True)
+    type: str = Field(TaskType.analytics, const=True)
 
     def run(self):
         """Filters observables to analyze and then calls each()"""
@@ -96,14 +97,14 @@ class AnalyticsTask(Task):
 
 class ExportTask(Task):
 
-    type: str = Field('export', const=True)
+    type: str = Field(TaskType.export, const=True)
 
     include_tags: list[str] = []
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
     output_dir: str = 'exports'
-    acts_on: list[str] = []
+    acts_on: list[ObservableType] = []
     template_name: str
     sha256: str | None
 
@@ -154,4 +155,4 @@ TYPE_MAPPING = {
 }
 
 
-TaskTypes =  Task | AnalyticsTask | ExportTask
+TaskTypes =  FeedTask | AnalyticsTask | ExportTask
