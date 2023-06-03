@@ -25,6 +25,9 @@ class TaskSearchResponse(BaseModel):
 class NewExportRequest(BaseModel):
     export: ExportTask
 
+class PatchExportRequest(BaseModel):
+    export: ExportTask
+
 # API endpoints
 router = APIRouter()
 
@@ -44,7 +47,7 @@ async def toggle(task_name) -> TaskTypes:
 
 @router.post('/search')
 async def search(request: TaskSearchRequest) -> TaskSearchResponse:
-    """Searches for observables."""
+    """Searches for tasks."""
     request_args = request.dict()
     count = request_args.pop('count')
     page = request_args.pop('page')
@@ -53,7 +56,7 @@ async def search(request: TaskSearchRequest) -> TaskSearchResponse:
 
 @router.post('/export/new')
 async def new_export(request: NewExportRequest) -> ExportTask:
-    """Creates a new export in the database."""
+    """Creates a new ExportTask in the database."""
     template = Template.find(name=request.export.template_name)
     if not template:
         raise HTTPException(
@@ -62,9 +65,29 @@ async def new_export(request: NewExportRequest) -> ExportTask:
     export = request.export.save()
     return export
 
+@router.patch('/export/{export_name}')
+async def patch_export(request: PatchExportRequest) -> ExportTask:
+    """Pathes an existing ExportTask in the database."""
+    db_export = ExportTask.find(name=request.export.name)
+    if not db_export:
+        raise HTTPException(
+            status_code=404,
+            detail=f"ExportTask {request.export.name} not found")
+
+    template = Template.find(name=request.export.template_name)
+    if not template:
+        raise HTTPException(
+            status_code=422,
+            detail=f"ExportTask could not be patched: Template {request.export.template_name} not found")
+
+    update_data = request.export.dict(exclude_unset=True)
+    updated_export = db_export.copy(update=update_data)
+    new = updated_export.save()
+    return new
+
 @router.get('/export/{export_name}/content')
 async def export_content(export_name: str):
-    """Downloads the latest contents of a given export."""
+    """Downloads the latest contents of a given ExportTask."""
     export = ExportTask.find(name=export_name)
     if not export:
         raise HTTPException(
