@@ -35,4 +35,11 @@ class TagTest(unittest.TestCase):
         regex = Regex(name='Hacker regex', pattern="^hacker.*", location="network").save()
 
         template = Template(name="RandomTemplate", template='<blah></blah>').save()
-        export = ExportTask(name='RandomExport', template_name=template.name).save()
+        export = ExportTask(
+            name='RandomExport',
+            template_name=template.name,
+            include_tags=['include'],
+            exclude_tags=['exclude'],
+            ignore_tags=['ignore'],
+            acts_on=['url']
+            ).save()
