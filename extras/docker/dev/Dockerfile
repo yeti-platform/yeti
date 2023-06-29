@@ -6,7 +6,10 @@ ENV LANG C.UTF-8
 # Python
 RUN apt-get update && apt-get install -y \
     python3-pip \
-    libmagic-dev
+    libmagic-dev \
+    build-essential \
+        python3-dev \
+        libssl-dev \
 
 # Upgrade pip
 RUN pip3 install --upgrade pip && pip3 install poetry
