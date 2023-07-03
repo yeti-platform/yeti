@@ -460,14 +460,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if key.startswith('in__'):
                 conditions.append(f'@{key} ALL IN o.{key[4:]}')
                 sorts.append(f'o.{key[4:]}')
-            if key.endswith('__in'):
+            elif key.endswith('__in'):
                 conditions.append(f'o.{key[:-4]} IN @{key}')
                 sorts.append(f'o.{key[:-4]}')
-            if key in ['value', 'name', 'type', 'attributes.id', 'email']:
+            elif key in ['value', 'name', 'type', 'attributes.id', 'username']:
                 conditions.append('o.{0:s} =~ @{1:s}'.format(key, key.replace('.', '_')))
                 sorts.append('o.{0:s}'.format(key))
-            if key in ['labels', 'relevant_tags']:
+            elif key in ['labels', 'relevant_tags']:
                 conditions.append('@{1:s} ALL IN o.{0:s}'.format(key, key.replace('.', '_')))
+                sorts.append('o.{0:s}'.format(key))
+            else:
+                conditions.append('o.{0:s} == @{0:s}'.format(key))
                 sorts.append('o.{0:s}'.format(key))
 
         limit = ''
