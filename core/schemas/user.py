@@ -18,12 +18,15 @@ class User(BaseModel, database_arango.ArangoYetiConnector):
     id: str | None
     username: str
     enabled: bool = True
+    admin: bool = False
     api_key: str = Field(default_factory=generate_api_key)
 
     @classmethod
     def load(cls, object: dict) -> "User":
         return cls(**object)
 
+    def reset_api_key(self) -> None:
+        self.api_key = secrets.token_hex(32)
 
 class UserSensitive(User):
     password: str = ''
@@ -34,9 +37,6 @@ class UserSensitive(User):
 
     def set_password(self, plain_password: str) -> None:
         self.password = pwd_context.hash(plain_password)
-
-    def reset_api_key(self) -> None:
-        self.api_key = secrets.token_hex(32)
 
     def verify_password(self, plain_password: str) -> bool:
         return pwd_context.verify(plain_password, self.password)
