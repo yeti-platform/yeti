@@ -97,5 +97,9 @@ async def merge(request: MergeTagRequest) -> MergeTagResult:
     target_tag = Tag.find(name=request.merge_into)
     if not target_tag:
         raise HTTPException(status_code=404, detail=f"Tag '{request.merge_into}' not found")
+
+    if request.merge_into in request.merge:
+        raise HTTPException(status_code=400, detail="Cannot merge a tag into itself")
+
     merged = target_tag.absorb(request.merge, request.permanent)
     return MergeTagResult(merged=merged, into=target_tag)

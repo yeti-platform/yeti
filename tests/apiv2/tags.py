@@ -78,3 +78,15 @@ class tagTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['merged'], 1)
         self.assertEqual(sorted(data['into']["replaces"]), ["tag2", "tag3"])
+
+    def test_tag_merge_into_itself(self):
+        response = client.post(
+            "/api/v2/tags/merge",
+            json={
+                "merge": ["tag1"],
+                "merge_into": "tag1",
+                "permanent": True
+            })
+        data = response.json()
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data['detail'], "Cannot merge a tag into itself")
