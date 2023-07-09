@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
 from core.schemas.user import UserSensitive, User
-from core.web.apiv2.auth import GetCurrentUserWithPermissions
+from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
 class SearchUserRequest(BaseModel):
     username: str
@@ -26,6 +26,10 @@ class ToggleUserRequest(BaseModel):
 class ResetApiKeyRequest(BaseModel):
     user_id: str
 
+class ResetPasswordRequest(BaseModel):
+    user_id: str
+    new_password: str
+
 class NewUserRequest(BaseModel):
     username: str
     password: str
@@ -33,6 +37,14 @@ class NewUserRequest(BaseModel):
 
 # API endpoints
 router = APIRouter()
+
+@router.get('/{user_id}')
+async def get(user_id: str) -> User:
+    """Gets a user by ID."""
+    user = User.get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f'user {user_id} not found')
+    return user
 
 @router.post('/search')
 async def search(request: SearchUserRequest) -> SearchUserResponse:
@@ -67,6 +79,25 @@ async def reset_api_key(
     if not user:
         raise HTTPException(status_code=404, detail="user {user_id} not found")
     user.reset_api_key()
+    return user.save()
+
+@router.post('/reset-password')
+async def reset_password(
+    request: ResetPasswordRequest,
+    current_user: UserSensitive = Depends(get_current_user)
+    ) -> User:
+    """Resets a user's password."""
+    # Only move forward if the current user is an admin or the target user
+    if not current_user.admin and current_user.id != request.user_id:
+        raise HTTPException(status_code=401, detail="cannot reset password for other users")
+
+    user = current_user
+    if current_user.id != request.user_id:
+        user = UserSensitive.get(request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="user {user_id} not found")
+
+    user.set_password(request.new_password)
     return user.save()
 
 @router.delete('/{user_id}')

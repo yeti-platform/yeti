@@ -32,7 +32,9 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta | None = N
         algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: str = Depends(oauth2_scheme), cookie: str = Security(cookie_scheme)) -> User:
+async def get_current_user(
+        token: str = Depends(oauth2_scheme),
+        cookie: str = Security(cookie_scheme)) -> UserSensitive:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -52,7 +54,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), cookie: str = Se
     except JWTError:
         raise credentials_exception
 
-    user = User.find(username=username)
+    user = UserSensitive.find(username=username)
     if user is None:
         raise credentials_exception
     return user
@@ -113,6 +115,7 @@ async def login_api(x_yeti_api_key: str = Security(api_key_header)):
         data={"sub": user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
 
 @router.get("/me")
 async def me(current_user: User = Depends(get_current_user)) -> User:

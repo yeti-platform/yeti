@@ -92,6 +92,41 @@ class userTest(unittest.TestCase):
         self.assertNotEqual(data['api_key'], self.user.api_key)
         self.assertEqual(data['username'], "tomchop")
 
+    def test_reset_own_password(self):
+        response = client.post(
+            f"/api/v2/users/reset-password",
+            json={"user_id": self.user.id, "new_password": "newpassword"},
+            headers={"Authorization": f"Bearer {self.user_token}"})
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data['username'], "tomchop")
+        self.assertTrue(UserSensitive.get(self.user.id).verify_password("newpassword"))
+
+    def test_reset_password_unprivileged(self):
+        response = client.post(
+            f"/api/v2/users/reset-password",
+            json={"user_id": self.admin.id, "new_password": "newpassword"},
+            headers={"Authorization": f"Bearer {self.user_token}"})
+
+        data = response.json()
+        self.assertEqual(response.status_code, 401, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data['detail'], "cannot reset password for other users")
+
+    def test_rest_password_admin(self):
+        response = client.post(
+            f"/api/v2/users/reset-password",
+            json={"user_id": self.user.id, "new_password": "newpassword"},
+            headers={"Authorization": f"Bearer {self.admin_token}"})
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data['username'], "tomchop")
+        self.assertTrue(UserSensitive.get(self.user.id).verify_password("newpassword"))
+
     def test_delete_user(self):
         user_in_db = UserSensitive.get(self.user.id)
         assert user_in_db is not None
