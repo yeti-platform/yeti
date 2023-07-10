@@ -1,7 +1,12 @@
 import datetime
+import requests
+import pandas as pd
+from io import BytesIO
+from zipfile import ZipFile
+
 from enum import Enum
 import os
-
+from dateutil import parser
 from core.helpers import refang, REGEXES
 from typing import Type
 
@@ -9,6 +14,8 @@ from pydantic import BaseModel, Field
 from core import database_arango
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
+
+from core.config.config import yeti_config
 
 
 def now():
@@ -58,6 +65,112 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 
 class FeedTask(Task):
     type: str = Field(TaskType.feed, const=True)
+
+    def update_csv(
+        self,
+        url,
+        delimiter: str = ";",
+        headers: dict = {},
+        auth: tuple = (),
+        verify: bool = True,
+        comment: str = "#",
+        datetime_filter_row: str | None = None,
+        column_names: list[str] | None = None,
+        parse_dates: list[str] = [],
+        zipped_content=False,
+    ) -> pd.DataFrame:
+        """Performs an HTTP request on `url`, expecting a CSV response.
+
+        Args:
+            url: The URL to fetch.
+            delimiter: A string delimiting fields in the CSV.
+            headers: Optional headers to be added to the HTTP request.
+            auth: Username / password tuple to be sent along with the HTTP request.
+            verify: Force SSL verification.
+            comment: Comment character in CSV data for Pandas to ignore.
+            datetime_filter_row: Filter rows by comparing datetime on this column.
+            column_names: Override names of the dataframe columns.
+            parse_dates: Attempt to parse dates in these columns.
+            zipped_content: If True, will unzip the content of the response.
+
+        Returns:
+            A Pandas DataFrame.
+        """
+        response = self._make_request(url, sort=False, headers=headers, auth=auth, verify=verify)
+        content = response.content
+
+        if zipped_content:
+            f = ZipFile(BytesIO(content))
+            name = f.namelist()[0]
+            content = f.read(name)
+
+        df = pd.read_csv(
+            BytesIO(content),
+            delimiter=delimiter,
+            comment=comment,
+            names=column_names,
+            header=0,
+            parse_dates=parse_dates
+        )
+
+        df.drop_duplicates(inplace=True)
+        df.fillna("", inplace=True)
+
+        if self.last_run and datetime_filter_row:
+            df = df[df[datetime_filter_row] > self.last_run]
+
+        return df
+
+    def _make_request(
+        self,
+        url: str,
+        method: str = "get",
+        headers: dict = {},
+        auth: tuple = (),
+        params: dict = {},
+        data: dict = {},
+        verify: bool = True,
+        sort: bool = True,
+    ) -> requests.Response:
+        """Helper function. Performs an HTTP request on ``source`` and returns request object.
+
+        Args:
+            method: Optional HTTP method to use, e.g. "get" or "post".
+            headers: Optional headers to be added to the HTTP request.
+            auth: Username / password tuple to be sent along with the HTTP request.
+            params: Optional param to be added to the HTTP GET request.
+            data: Optional param to be added to the HTTP POST request.
+            verify: Enforce (True) or skip (False) SSL verification.
+
+        Returns:
+            requests object.
+        """
+        response = getattr(requests, method.lower())(
+            url,
+            headers=headers,
+            auth=auth,
+            proxies=yeti_config.proxy,
+            params=params,
+            data=data,
+            verify=verify,
+            stream=True,
+        )
+
+        if response.status_code != 200:
+            raise RuntimeError(f"{url} returned code: {response.status_code}")
+
+        if not sort:
+            return response
+
+        last_modified_header = response.headers.get("Last-Modified")
+        if self.last_run is not None and last_modified_header:
+            last_modified = parser.parse(last_modified_header)
+            if self.last_run > last_modified.replace(tzinfo=None):
+                msg = (f"{url}: Last-Modified header ({last_modified_header}) "
+                       "before last-run ({self.last_run})")
+                raise RuntimeError(msg)
+
+        return response
 
 class AnalyticsTask(Task):
 
