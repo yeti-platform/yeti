@@ -73,11 +73,15 @@ async def toggle(
 @router.post('/reset-api-key')
 async def reset_api_key(
     request: ResetApiKeyRequest,
-    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True))) -> User:
+    current_user: UserSensitive = Depends(get_current_user)) -> User:
     """Resets a user's API key."""
+    if not current_user.admin and current_user.id != request.user_id:
+        raise HTTPException(status_code=401, detail="cannot reset API keys for other users")
+
     user = User.get(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user {user_id} not found")
+
     user.reset_api_key()
     return user.save()
 
@@ -91,11 +95,9 @@ async def reset_password(
     if not current_user.admin and current_user.id != request.user_id:
         raise HTTPException(status_code=401, detail="cannot reset password for other users")
 
-    user = current_user
-    if current_user.id != request.user_id:
-        user = UserSensitive.get(request.user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="user {user_id} not found")
+    user = UserSensitive.get(request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="user {user_id} not found")
 
     user.set_password(request.new_password)
     return user.save()
