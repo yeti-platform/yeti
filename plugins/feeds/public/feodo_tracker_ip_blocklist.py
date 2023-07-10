@@ -1,49 +1,49 @@
-import logging
-from datetime import timedelta, datetime
+import datetime
+from time import sleep
 
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Ip
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class FeodoTrackerIPBlockList(Feed):
+class FeodoTrackerIPBlockList(task.FeedTask):
     default_values = {
-        "frequency": timedelta(hours=24),
+        "frequency": datetime.timedelta(hours=24),
         "name": "FeodoTrackerIPBlocklist",
         "source": "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
         "description": "Feodo Tracker IP Feed. This feed shows a full list C2s.",
     }
 
-    def update(self):
-        firs_line = 0
-        for index, line in self.update_csv(
+    def run(self):
+        df = self.update_csv(
+            "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",
             delimiter=",",
-            filter_row="first_seen_utc",
-        ):
-            if firs_line != 0:
-                self.analyze(line)
-            firs_line += 1
+            parse_dates=["first_seen_utc"],
+        )
+
+        df.apply(self.analyze, axis=1)
+        # for _, line in df.iterrows():
+        #     self.analyze(line)
 
     # pylint: disable=arguments-differ
     def analyze(self, item):
-        tags = []
+        tags = ["c2", "blocklist"]
         tags.append(item["malware"].lower())
-        tags.append("c2")
-        tags.append("blocklist")
 
         context = {
-            "first_seen": item["first_seen_utc"],
-            "source": self.name,
+            "first_seen": str(item["first_seen_utc"]),
             "last_online": item["last_online"],
             "c2_status": item["c2_status"],
             "port": item["dst_port"],
-            "date_added": datetime.utcnow(),
+            "date_added": datetime.datetime.now(datetime.timezone.utc)
         }
 
-        try:
-            ip_obs = Ip.get_or_create(value=item["dst_ip"])
-            ip_obs.add_context(context, dedup_list=["last_online", "date_added"])
-            ip_obs.tag(tags)
-
-        except ObservableValidationError as e:
-            logging.error("Invalid line: {}\nLine: {}".format(e, item))
+        ip = item["dst_ip"]
+        ip_observable = observable.Observable.find(value=ip)
+        if not ip_observable:
+            ip_observable = observable.Observable(value=ip, type='ip').save()
+        ip_observable.add_context(
+            source=self.name,
+            context=context,
+            skip_compare={"last_online", "date_added"})
+        ip_observable.tag(tags)
