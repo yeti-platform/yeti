@@ -120,3 +120,9 @@ async def login_api(x_yeti_api_key: str = Security(api_key_header)):
 @router.get("/me")
 async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(key="yeti_session")
+    return {"message": "Logged out"}
