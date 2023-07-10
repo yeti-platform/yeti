@@ -10,8 +10,7 @@ from core.web.apiv2 import auth
 from core.web.apiv2 import tasks
 from core.web.apiv2 import templates
 from core.web.apiv2 import users
-
-from core.config.config import yeti_config
+from core.web.apiv2 import system
 
 app = FastAPI()
 api_router = APIRouter()
@@ -25,5 +24,6 @@ api_router.include_router(graph.router, prefix="/graph", tags=["graph"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(templates.router, prefix="/templates", tags=["templates"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(system.router, prefix="/system", tags=["system"])
 
 app.include_router(api_router, prefix="/api/v2")
