@@ -9,6 +9,7 @@ from core.schemas.tag import Tag
 from core.schemas.indicator import Regex
 from core.schemas.template import Template
 from core.schemas.task import ExportTask
+from core.schemas.user import UserSensitive
 
 import unittest
 
@@ -18,6 +19,14 @@ class TagTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_something(self):
+        user = UserSensitive(username="yeti", admin=True)
+        user.set_password("yeti")
+        user.save()
+
+        user = UserSensitive(username="user", admin=False)
+        user.set_password("user")
+        user.save()
+
         ip_hacker = Observable(value="8.8.8.8", type="ip").save()
         c2_hacker = Observable(value="c2.hacker.com", type="hostname").save()
         www_hacker = Observable(value="www.hacker.com", type="hostname").save()
