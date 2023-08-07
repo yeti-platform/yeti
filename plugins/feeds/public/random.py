@@ -1,4 +1,3 @@
-import logging
 from datetime import timedelta, datetime
 from time import sleep
 
@@ -15,7 +14,7 @@ DATA = [
 ]
 
 
-class Random(task.Task):
+class Random(task.FeedTask):
 
     _defaults = {
         "frequency": timedelta(hours=1),
@@ -26,12 +25,7 @@ class Random(task.Task):
 
     def run(self):
         for item in DATA:
-            sleep(10)
             print(item)
             observable.Observable.add_text(item)
-
-
-
-
 
 taskmanager.TaskManager.register_task(Random)
