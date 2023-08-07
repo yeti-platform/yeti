@@ -2,10 +2,11 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse, FileResponse
 from pydantic import BaseModel, Field
 
 from core.schemas.template import Template
-from core import taskmanager
+from core.schemas.observable import Observable
 
 # Request schemas
 class TemplateSearchRequest(BaseModel):
@@ -19,6 +20,11 @@ class TemplateSearchResponse(BaseModel):
 
 class PatchTemplateRequest(BaseModel):
     template: Template
+
+class RenderExportRequest(BaseModel):
+    template_id: str
+    observable_ids: list[str] | None
+    search_query: str | None = None
 
 # API endpoints
 router = APIRouter()
@@ -46,6 +52,29 @@ async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
     request_args = request.dict(exclude={'count', 'page'})
     templates, total = Template.filter(request_args, offset=request.page*request.count, count=request.count)
     return TemplateSearchResponse(templates=templates, total=total)
+
+@router.post('/render')
+async def render(request: RenderExportRequest) -> StreamingResponse:
+    """Renders a template."""
+    if not request.search_query and not request.observable_ids:
+        raise HTTPException(status_code=400, detail='Must specify either search_query or observable_ids.')
+
+    template = Template.get(request.template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail=f'Template {request.template_id} not found.')
+
+    if request.search_query:
+        observables, _ = Observable.filter({'value': request.search_query})
+        if not observables:
+            raise HTTPException(status_code=404, detail=f'No observables found for search query.')
+    else:
+        observables = [Observable.get(observable_id) for observable_id in request.observable_ids]
+    data = template.render_raw(observables)
+    def _stream():
+        for d in data.split('\n'):
+            yield d + '\n'
+    return StreamingResponse(_stream(), media_type='text/plain', headers={'Content-Disposition': f'attachment; filename={template.name}.txt'})
+
 
 @router.delete('/{template_id}')
 async def delete(template_id: str):

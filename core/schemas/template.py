@@ -21,3 +21,7 @@ class Template(BaseModel, database_arango.ArangoYetiConnector):
         with open(output_file, 'w+') as fd:
             for d in data:
                 fd.write(f'{d.value}\n')
+
+    def render_raw(self, data: list["Observable"]) -> str:
+        """Renders the template with the given data to a string."""
+        return '\n'.join([d.value for d in data])

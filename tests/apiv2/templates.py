@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas.template import Template
+from core.schemas.observable import Observable
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -67,3 +68,36 @@ class TemplateTest(unittest.TestCase):
         self.assertEqual(db_template.template, "<FOO>")
         self.assertEqual(db_template.name, "FakeTemplateFoo")
         self.assertEqual(db_template.id, data['id'])
+
+    def test_render_raw_template_by_id(self):
+        Observable(value="1.1.1.1", type='ip').save()
+        Observable(value="2.2.2.2", type='ip').save()
+        Observable(value="3.3.3.3", type='ip').save()
+        response = client.post(
+            f"/api/v2/templates/render",
+            json={
+                'template_id': self.template.id,
+                'observable_ids': [o.id for o in Observable.list()]
+            }
+        )
+        data = response.text
+        response.headers['Content-Disposition'] = 'attachment; filename=FakeTemplate.txt'
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data, "1.1.1.1\n2.2.2.2\n3.3.3.3\n")
+
+    def test_render_raw_template_by_search(self):
+        Observable(value="yeti1.com", type='hostname').save()
+        Observable(value="yeti2.com", type='hostname').save()
+        Observable(value="yeti3.com", type='hostname').save()
+        Observable(value="hacker.com", type='hostname').save()
+        response = client.post(
+            f"/api/v2/templates/render",
+            json={
+                'template_id': self.template.id,
+                'search_query': 'yeti'
+            }
+        )
+        data = response.text
+        response.headers['Content-Disposition'] = 'attachment; filename=FakeTemplate.txt'
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data, "yeti1.com\nyeti2.com\nyeti3.com\n")
