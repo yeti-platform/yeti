@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 from core import database_arango
 
+#TODO: Import Jinja functions to render templates
 
 class Template(BaseModel, database_arango.ArangoYetiConnector):
     """A template for exporting data to an external system."""
