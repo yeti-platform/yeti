@@ -1,3 +1,4 @@
+# DEPRECATED
 import logging
 from dateutil import parser
 from dateutil.tz import gettz, UTC
