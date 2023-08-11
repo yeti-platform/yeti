@@ -42,7 +42,7 @@ pandas = "^1.5.2"
 uWSGI = "^2.0.21"
 redis = "^4.4.0"
 pymisp = "^2.4.166"
-yara-python = "^4.2.3"
+yara-python = "4.2.3"
 python-whois = "^0.8.0"
 python3-pdns = "^1.0"
 PyJWT = "^2.6.0"
@@ -52,7 +52,7 @@ PyMISPGalaxies={git = "https://github.com/sebdraven/PyMISPGalaxies"}
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
-black = "^22.12.0"
+black = "^23.3.0"
 
 [build-system]
 requires = ["poetry-core"]
