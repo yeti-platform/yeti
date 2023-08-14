@@ -13,6 +13,7 @@ app = Celery(
         # TESTING ONLY
         "plugins.feeds.public.random",
         "plugins.analytics.public.random_analytics",
+        "plugins.feeds.public.abusech_malwarebazaar",
     ))
 
 

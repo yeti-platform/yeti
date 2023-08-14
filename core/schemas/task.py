@@ -65,62 +65,34 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 
 class FeedTask(Task):
     type: str = Field(TaskType.feed, const=True)
-
-    def update_csv(
-        self,
-        url,
-        delimiter: str = ";",
-        headers: dict = {},
-        auth: tuple = (),
-        verify: bool = True,
-        comment: str = "#",
-        datetime_filter_row: str | None = None,
-        column_names: list[str] | None = None,
-        parse_dates: list[str] = [],
-        zipped_content=False,
-    ) -> pd.DataFrame:
-        """Performs an HTTP request on `url`, expecting a CSV response.
+    
+    def _unzip_content(self, content: bytes) -> bytes:
+        """Unzip the content of a response.
 
         Args:
-            url: The URL to fetch.
-            delimiter: A string delimiting fields in the CSV.
-            headers: Optional headers to be added to the HTTP request.
-            auth: Username / password tuple to be sent along with the HTTP request.
-            verify: Force SSL verification.
-            comment: Comment character in CSV data for Pandas to ignore.
-            datetime_filter_row: Filter rows by comparing datetime on this column.
-            column_names: Override names of the dataframe columns.
-            parse_dates: Attempt to parse dates in these columns.
-            zipped_content: If True, will unzip the content of the response.
+            content: The content to unzip.
 
         Returns:
-            A Pandas DataFrame.
+            The unzipped content.
         """
-        response = self._make_request(url, sort=False, headers=headers, auth=auth, verify=verify)
-        content = response.content
+        f = ZipFile(BytesIO(content))
+        name = f.namelist()[0]
+        return f.read(name)
+    
+    def _filter_observables_by_time(self, df: pd.DataFrame, column: str) -> pd.DataFrame:
+        """Filter a dataframe by comparing the datetime in a column to the last run time.
 
-        if zipped_content:
-            f = ZipFile(BytesIO(content))
-            name = f.namelist()[0]
-            content = f.read(name)
+        Args:
+            df: The dataframe to filter.
+            column: The column containing the datetime to compare.
 
-        df = pd.read_csv(
-            BytesIO(content),
-            delimiter=delimiter,
-            comment=comment,
-            names=column_names,
-            header=0,
-            parse_dates=parse_dates
-        )
-
-        df.drop_duplicates(inplace=True)
-        df.fillna("", inplace=True)
-
-        if self.last_run and datetime_filter_row:
-            df = df[df[datetime_filter_row] > self.last_run]
-
+        Returns:
+            A filtered dataframe.
+        """
+        if self.last_run:
+            df = df[df[column] > self.last_run]
         return df
-
+    
     def _make_request(
         self,
         url: str,
