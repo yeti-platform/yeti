@@ -22,6 +22,13 @@ class ObservableType(str, Enum):
     url = 'url'
     observable = 'observable'
     guess = 'guess'
+    email = 'email'
+    file = 'file'
+    sha256 = 'sha256'
+    sha1 = 'sha1'
+    md5 = 'md5'
+    asn = 'asn'
+    cidr = 'cidr'
 
 class ObservableTag(BaseModel):
     name: str
