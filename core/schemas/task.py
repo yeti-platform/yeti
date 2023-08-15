@@ -1,5 +1,7 @@
 import datetime
 import requests
+import logging
+import numpy as np
 import pandas as pd
 from io import BytesIO
 from zipfile import ZipFile
@@ -90,7 +92,10 @@ class FeedTask(Task):
             A filtered dataframe.
         """
         if self.last_run:
-            df = df[df[column] > self.last_run]
+            logging.debug(f"Filtering {len(df)} observables by time.")
+            logging.debug(f"Last run: {self.last_run}")
+            logging.debug(f"Column: {column}")
+            df = df[df[column] > np.datetime64(self.last_run)]
         return df
     
     def _make_request(
@@ -137,7 +142,7 @@ class FeedTask(Task):
         last_modified_header = response.headers.get("Last-Modified")
         if self.last_run is not None and last_modified_header:
             last_modified = parser.parse(last_modified_header)
-            if self.last_run > last_modified.replace(tzinfo=None):
+            if self.last_run > last_modified:
                 msg = (f"{url}: Last-Modified header ({last_modified_header}) "
                        "before last-run ({self.last_run})")
                 raise RuntimeError(msg)
