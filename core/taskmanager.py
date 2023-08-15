@@ -82,6 +82,7 @@ class TaskManager():
             task.run()
         except Exception as error:  # pylint: disable=broad-except
             # We want to catch and report all errors
+            logging.error(f"Error running task {task_name}: {error}")
             task.status = TaskStatus.failed
             task.status_message = str(error)
             task.save()
