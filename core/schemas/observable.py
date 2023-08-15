@@ -166,4 +166,12 @@ TYPE_MAPPING = {
     'url': Observable,
     'observables': Observable,
     'observable': Observable,
+    'file': Observable,
+    'sha256': Observable,
+    'sha1': Observable,
+    'md5': Observable,
+    'asn': Observable,
+    'cidr': Observable,
+    'email': Observable,
+    'asn': Observable,
 }
