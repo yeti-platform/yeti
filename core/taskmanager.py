@@ -7,9 +7,9 @@ from typing import Type
 
 
 app = Celery(
-    'tasks',
-    broker='redis://redis/',
-    imports = (
+    "tasks",
+    broker="redis://redis/",
+    imports=(
         # TESTING ONLY
         "plugins.feeds.public.random",
         "plugins.analytics.public.random_analytics",
@@ -17,12 +17,31 @@ app = Celery(
         "plugins.feeds.public.abuseipdb",
         "plugins.feeds.public.azorult-tracker",
         "plugins.feeds.public.alienvault_ip_reputation",
-        "plugins.feeds.public.blocklistde_all"
-    ))
+        "plugins.feeds.public.blocklistde_all",
+        "plugins.feeds.public.blocklistde_apache",
+        "plugins.feeds.public.blocklistde_bots",
+        "plugins.feeds.public.blocklistde_bruteforcelogin",
+        "plugins.feeds.public.blocklistde_ftp",
+        "plugins.feeds.public.blocklistde_imap",
+        "plugins.feeds.public.blocklistde_ircbot",
+        "plugins.feeds.public.blocklistde_mail",
+        "plugins.feeds.public.blocklistde_sip",
+        "plugins.feeds.public.blocklistde_ssh",
+        "plugins.feeds.public.blocklistde_strongips",
+        "plugins.feeds.public.botvrij_domain",
+        "plugins.feeds.public.botvrij_filename",
+        "plugins.feeds.public.botvrij_hostname",
+        "plugins.feeds.public.botvrij_ipdst",
+        "plugins.feeds.public.botvrij_md5",
+        "plugins.feeds.public.botvrij_sha256",
+        "plugins.feeds.public.botvrij_sha1",
+        "plugins.feeds.public.botvrij_url",
+
+    ),
+)
 
 
-class TaskManager():
-
+class TaskManager:
     _store = {}  # type: dict[str, Task]
 
     @classmethod
@@ -37,12 +56,12 @@ class TaskManager():
         """
         if not task_name:
             task_name = task_class.__name__
-        logging.info('Registering task', task_name)
+        logging.info("Registering task", task_name)
         task = task_class.find(name=task_name)
         if not task:
-            logging.info('Task not found in database, creating.')
+            logging.info("Task not found in database, creating.")
             task_dict = task_class._defaults.copy()
-            task_dict['name'] = task_name
+            task_dict["name"] = task_name
             task = task_class(**task_dict).save()
         cls._store[task_name] = task
 
@@ -56,9 +75,9 @@ class TaskManager():
         """Loads tasks from the database and refreshes cache."""
         if task_name not in cls._store:
             # ExportTasks are
-            logging.error(f'Task {task_name} not found. Was it registered?')
-            logging.error('Registered tasks: ', cls._store.keys())
-            raise ValueError(f'Task {task_name} not found. Was it registered?')
+            logging.error(f"Task {task_name} not found. Was it registered?")
+            logging.error("Registered tasks: ", cls._store.keys())
+            raise ValueError(f"Task {task_name} not found. Was it registered?")
 
         task_class = cls._store[task_name].__class__
         task = task_class.find(name=task_name)
@@ -70,7 +89,7 @@ class TaskManager():
         logging.info(f"Running task {task_name}")
         task = TaskManager.load_task(task_name)
         if not task.enabled:
-            task.status_message = 'Task is disabled.'
+            task.status_message = "Task is disabled."
             task.status = TaskStatus.failed
             task.save()
             return
@@ -94,8 +113,9 @@ class TaskManager():
 
         task.status = TaskStatus.completed
         task.last_run = datetime.datetime.now(datetime.timezone.utc)
-        task.status_message = ''
+        task.status_message = ""
         task.save()
+
 
 @app.task
 def run_task(task_name):
