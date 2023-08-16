@@ -6,7 +6,7 @@ from core import taskmanager
 
 
 class BlocklistdeApache(task.FeedTask):
-    URL_FEED = "https://lists.blocklist.de/lists/apache.txt"
+    SOURCE = "https://lists.blocklist.de/lists/apache.txt"
 
     _defaults = {
         "frequency": timedelta(hours=1),
@@ -15,7 +15,7 @@ class BlocklistdeApache(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.URL_FEED, verify=True)
+        response = self._make_request(self.SOURCE, verify=True)
         if response:
             data = response.text
             for item in data.split("\n"):

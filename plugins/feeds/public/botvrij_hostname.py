@@ -6,7 +6,7 @@ from core import taskmanager
 
 
 class BotvrijHostname(task.FeedTask):
-    URL_FEED = "https://www.botvrij.eu/data/ioclist.hostname"
+    SOURCE = "https://www.botvrij.eu/data/ioclist.hostname"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijHostname",
@@ -14,7 +14,7 @@ class BotvrijHostname(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.URL_FEED, verify=True)
+        response = self._make_request(self.SOURCE, verify=True)
         if response:
             data = response.text
             for item in data.split("\n")[6:-1]:

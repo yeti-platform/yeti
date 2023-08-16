@@ -8,7 +8,7 @@ from io import StringIO
 
 
 class AlienVaultIPReputation(task.FeedTask):
-    URL_FEED = "http://reputation.alienvault.com/reputation.data"
+    SOURCE = "http://reputation.alienvault.com/reputation.data"
     _defaults = {
         "frequency": timedelta(hours=4),
         "name": "AlienVaultIPReputation",
@@ -16,7 +16,7 @@ class AlienVaultIPReputation(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.URL_FEED, verify=True)
+        response = self._make_request(self.SOURCE, verify=True)
         if response:
             data = response.text
 

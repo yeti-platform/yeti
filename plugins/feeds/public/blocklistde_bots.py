@@ -6,7 +6,7 @@ from core import taskmanager
 
 
 class BlocklistdeBots(task.FeedTask):
-    URL_FEED = "https://lists.blocklist.de/lists/bots.txt"
+    SOURCE = "https://lists.blocklist.de/lists/bots.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeBots",
@@ -14,7 +14,7 @@ class BlocklistdeBots(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.URL_FEED, verify=True)
+        response = self._make_request(self.SOURCE, verify=True)
         if response:
             data = response.text
             for item in data.split("\n"):

@@ -31,7 +31,7 @@ class DataplaneDNSAny(Feed):
         df["lastseen"] = pd.to_datetime(df["lastseen"])
         if self.last_run:
             df = df[df["lastseen"] > self.last_run]
-        for count, row in df.iterrows():
+        for _, row in df.iterrows():
             self.analyze(row)
 
     def analyze(self, item):

@@ -6,7 +6,7 @@ from core import taskmanager
 
 
 class BlocklistdeSSH(task.FeedTask):
-    URL_FEED = "https://lists.blocklist.de/lists/ssh.txt"
+    SOURCE = "https://lists.blocklist.de/lists/ssh.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeSSH",
@@ -14,7 +14,7 @@ class BlocklistdeSSH(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.URL_FEED, verify=True)
+        response = self._make_request(self.SOURCE, verify=True)
         if response:
             data = response.text
             for item in data.split("\n"):

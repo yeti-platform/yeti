@@ -38,7 +38,6 @@ class DataplaneDNSRecursive(task.FeedTask):
         context_ip = {
             "source": self.name,
             "last_seen": item["lastseen"],
-            "date_added": datetime.utcnow(),
         }
 
         ip = observable.Observable.find(value=item["ipaddr"])
@@ -58,7 +57,7 @@ class DataplaneDNSRecursive(task.FeedTask):
         context_asn = {
             "source": self.name,
             "name": item["ASname"],
-            "date_added": datetime.utcnow(),
+            "last_seen": item["lastseen"],
         }
         asn_obs.add_context(self.name, context_asn)
         asn_obs.tag(tags)

@@ -10,7 +10,7 @@ from core.config.config import yeti_config
 
 
 class AbuseIPDB(task.FeedTask):
-    URL_FEED = "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
+    SOURCE = "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
     _defaults = {
         "frequency": timedelta(hours=5),
         "name": "AbuseIPDB",
@@ -26,7 +26,7 @@ class AbuseIPDB(task.FeedTask):
         
         # change the limit rate if you subscribe to a paid plan
         
-        data = self._make_request(self.URL_FEED % api_key, verify=True).text
+        data = self._make_request(self.SOURCE % api_key, verify=True).text
 
         for line in data.split("\n"):
             self.analyze(line)

@@ -11,7 +11,7 @@ from core import taskmanager
 
 class AzorutTracker(task.FeedTask):
     """Azorult Tracker"""
-    URL_FEED = "https://azorult-tracker.net/api/last-data"
+    SOURCE = "https://azorult-tracker.net/api/last-data"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "Azorult-Tracker",
@@ -19,7 +19,7 @@ class AzorutTracker(task.FeedTask):
     }
 
     def run(self):
-        r = self._make_request(self.URL_FEED, auth=None, verify=True)
+        r = self._make_request(self.SOURCE, auth=None, verify=True)
 
         if r.status_code == 200:
             res = r.json()

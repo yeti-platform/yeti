@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class Cruzit(task.FeedTask):
-    URL_FEED = "https://iplists.firehol.org/files/cruzit_web_attacks.ipset"
+    SOURCE = "https://iplists.firehol.org/files/cruzit_web_attacks.ipset"
 
     _defaults = {
         "frequency": timedelta(hours=1),
@@ -16,7 +16,7 @@ class Cruzit(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.URL_FEED, verify=True)
+        response = self._make_request(self.SOURCE, verify=True)
         if response:
             data = response.text
             for line in data.split("\n")[63:]: 

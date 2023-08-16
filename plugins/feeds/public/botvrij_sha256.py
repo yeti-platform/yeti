@@ -6,7 +6,7 @@ from core import taskmanager
 
 
 class BotvrijSHA256(task.FeedTask):
-    URL_FEED = "https://www.botvrij.eu/data/ioclist.sha256"
+    SOURCE = "https://www.botvrij.eu/data/ioclist.sha256"
 
     _defaults = {
         "frequency": timedelta(hours=12),
@@ -15,7 +15,7 @@ class BotvrijSHA256(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.URL_FEED, verify=True)
+        response = self._make_request(self.SOURCE, verify=True)
         if response:
             data = response.text
             for item in data.split("\n")[6:-1]:
