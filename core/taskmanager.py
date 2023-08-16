@@ -36,6 +36,8 @@ app = Celery(
         "plugins.feeds.public.botvrij_sha256",
         "plugins.feeds.public.botvrij_sha1",
         "plugins.feeds.public.botvrij_url",
+        "plugins.feeds.public.cruzit",
+        "plugins.feeds.public.dataplane_dnsrd",
 
     ),
 )
