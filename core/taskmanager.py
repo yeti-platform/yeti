@@ -16,6 +16,7 @@ app = Celery(
         "plugins.feeds.public.abusech_malwarebazaar",
         "plugins.feeds.public.abuseipdb",
         "plugins.feeds.public.azorult-tracker",
+        "plugins.feeds.public.alienvault_ip_reputation",
     ))
 
 
