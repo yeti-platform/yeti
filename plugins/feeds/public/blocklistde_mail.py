@@ -1,32 +1,35 @@
 import logging
 from datetime import timedelta, datetime
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Ip
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class BlocklistdeMail(Feed):
-    default_values = {
+class BlocklistdeMail(task.FeedTask):
+    URL_FEED = "https://lists.blocklist.de/lists/mail.txt"
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeMail",
-        "source": "https://lists.blocklist.de/lists/mail.txt",
-        "description": "All IP addresses which have been reported within the last 48 hours as having run attacks on the service Mail, Postfix.",
+        "description": "All IP addresses which have been reported within the last 48 hours for attacks on the Service Mail.",
     }
 
-    def update(self):
-        for line in self.update_lines():
-            self.analyze(line)
+    def run(self):
+        response = self._make_request(self.URL_FEED, verify=True)
+        if response:
+            data = response.text
+            for item in data.split("\n"):
+                self.analyze(item)
 
     def analyze(self, item):
         ip = item.strip()
 
         context = {"source": self.name, "date_added": datetime.utcnow()}
 
-        try:
-            obs = Ip.get_or_create(value=ip)
-            obs.add_context(context, dedup_list=["date_added"])
-            obs.add_source(self.name)
-            obs.tag("blocklistde")
-            obs.tag("mail")
-        except ObservableValidationError as e:
-            logging.error(e)
+        obs = observable.Observable.find(value=ip)
+        if not obs:
+            obs = observable.Observable(value=ip, type="ip").save()
+        obs.add_context(self.name, context)
+        obs.tag(["blocklist", "mail"])
+
+
+taskmanager.TaskManager.register_task(BlocklistdeMail)
