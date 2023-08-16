@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class FeodoTrackerIPBlockList(task.FeedTask):
-    default_values = {
+    _defaults = {
         "frequency": datetime.timedelta(hours=24),
         "name": "FeodoTrackerIPBlocklist",
         "source": "https://feodotracker.abuse.ch/downloads/ipblocklist.csv",

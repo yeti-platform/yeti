@@ -3,27 +3,23 @@ from datetime import timedelta, datetime
 import logging
 import pandas as pd
 import numpy as np
-from core.feed import Feed
-from core.observables import AutonomousSystem, Ip, Hostname, Url
-from core.errors import ObservableValidationError
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class AzorutTracker(Feed):
+
+class AzorutTracker(task.FeedTask):
     """Azorult Tracker"""
-
-    default_values = {
+    URL_FEED = "https://azorult-tracker.net/api/last-data"
+    _defaults = {
         "frequency": timedelta(hours=12),
         "name": "Azorult-Tracker",
-        "source": "https://azorult-tracker.net/api/last-data",
         "description": "This feed contains panels of Azorult",
     }
 
-    def update(self):
-        for index, item in self.update_json():
-            self.analyze(item)
-
-    def update_json(self):
-        r = self._make_request()
+    def run(self):
+        r = self._make_request(self.URL_FEED, auth=None, verify=True)
 
         if r.status_code == 200:
             res = r.json()
@@ -34,7 +30,13 @@ class AzorutTracker(Feed):
             df["first_seen"] = pd.to_datetime(df["first_seen"], unit="s")
             if self.last_run:
                 df = df[df["first_seen"] > self.last_run]
-            return df.iterrows()
+
+            for _, item in df.iterrows():
+        
+                self.analyze(item)
+
+   
+        
 
     def analyze(self, item):
         context = {"source": self.name, "date_added": datetime.utcnow()}
@@ -72,31 +74,41 @@ class AzorutTracker(Feed):
             asn_obs = None
 
             if domain:
-                hostname = Hostname.get_or_create(value=domain)
-                hostname.add_context(context, dedup_list=["date_added"])
-                hostname.tag("azorult")
+                hostname = observable.Observable.find(value=domain)
+                if not hostname:
+                    hostname = observable.Observable(value=domain, type="hostname").save()
+                 
+                hostname.add_context(self.name, context)
+                hostname.tag(["azorult"])
             if ip:
-                ip_obs = Ip.get_or_create(value=ip)
-                ip_obs.add_context(context, dedup_list=["date_added"])
-                ip_obs.tag("azorult")
+                ip_obs = observable.Observable.find(value=ip)
+                if not ip_obs:
+                    ip_obs = observable.Observable(value=ip, type="ip").save()
+                ip_obs.add_context(self.name, context)
+                ip_obs.tag(["azorult"])
+
             if panel_url:
-                url = Url.get_or_create(value=panel_url)
-                url.add_context(context, dedup_list=["date_added"])
-                url.tag("azorult")
+                url = observable.Observable.find(value=panel_url)
+                if not url:
+                    url = observable.Observable(value=panel_url, type="url").save()
+                url.add_context(self.name, context)
+                url.tag(["azorult"])
 
             if asn:
-                asn_obs = AutonomousSystem.get_or_create(value=asn)
-                asn_obs.add_context(context, dedup_list=["date_added"])
-                asn_obs.tag("azorult")
+                asn_obs = observable.Observable.find(value=asn)
+                if not asn_obs:
+                    asn_obs = observable.Observable(value=asn, type="asn").save()
+                asn_obs.add_context(self.name, context)
+                asn_obs.tag(["azorult"])
 
             if hostname and ip_obs:
-                hostname.active_link_to(ip_obs, "IP", self.name)
+                hostname.link_to(ip_obs, "hostname-ip", self.name)
             if asn_obs and ip_obs:
-                asn_obs.active_link_to(ip_obs, "AS", self.name)
+                asn_obs.link_to(ip_obs, "asn-ip", self.name)
             if url and hostname:
-                url.active_link_to(hostname, "hostname", self.name)
+                url.link_to(hostname, "url-hostname", self.name)
 
-        except ObservableValidationError as e:
+        except Exception as e:
             logging.error(e)
-        except TypeError as e:
-            logging.error(item)
+        
+taskmanager.TaskManager.register_task(AzorutTracker)
