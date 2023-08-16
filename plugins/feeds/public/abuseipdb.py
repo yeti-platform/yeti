@@ -46,7 +46,7 @@ class AbuseIPDB(task.FeedTask):
             
             logging.debug("IP: %s" % ip_value)
             ip.add_context(self.name, context)
-            ip.tag(["blacklist"])
+            ip.tag(["blocklist"])
 
         except Exception as e:
             logging.error(e)
