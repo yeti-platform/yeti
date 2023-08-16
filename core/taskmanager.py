@@ -14,6 +14,7 @@ app = Celery(
         "plugins.feeds.public.random",
         "plugins.analytics.public.random_analytics",
         "plugins.feeds.public.abusech_malwarebazaar",
+        "plugins.feeds.public.abuseipdb",
     ))
 
 
