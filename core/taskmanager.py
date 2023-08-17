@@ -4,6 +4,7 @@ import datetime
 from celery import Celery
 from core.schemas.task import Task, TaskStatus
 from typing import Type
+import traceback
 
 
 app = Celery(
@@ -13,6 +14,7 @@ app = Celery(
         # TESTING ONLY
         "plugins.feeds.public.random",
         "plugins.analytics.public.random_analytics",
+        "plugins.feeds.public.abusech_malwarebazaar",
     ))
 
 
@@ -81,6 +83,7 @@ class TaskManager():
             task.run()
         except Exception as error:  # pylint: disable=broad-except
             # We want to catch and report all errors
+            logging.error(traceback.format_exc())
             task.status = TaskStatus.failed
             task.status_message = str(error)
             task.save()
