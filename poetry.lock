@@ -1497,6 +1497,22 @@ files = [
 ]
 
 [[package]]
+name = "otxv2"
+version = "1.5.12"
+description = "AlienVault OTX API"
+optional = false
+python-versions = "*"
+files = [
+    {file = "OTXv2-1.5.12-py3-none-any.whl", hash = "sha256:e6bc1230ce30c54a63bfde1ba9103c512614615ebb4316cb0c503a80b0ed0ed1"},
+    {file = "OTXv2-1.5.12.tar.gz", hash = "sha256:72b401c2a06d4cd592aa36238896aad19c010c79e97300a3385d9289787dc0e7"},
+]
+
+[package.dependencies]
+python-dateutil = "*"
+pytz = "*"
+requests = "*"
+
+[[package]]
 name = "pandas"
 version = "2.0.3"
 description = "Powerful data structures for data analysis, time series, and statistics"
@@ -2822,4 +2838,4 @@ requests = ">=2.28.2,<3.0.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "89f191286e1272bf87cd3cb74fbfbed1f14133599c27be36bb88abfd62e85355"
+content-hash = "a5121c80e7eda0e8c8e9223d8daa8fa380eb6e4f8063fe8e370c55f531d39b95"
