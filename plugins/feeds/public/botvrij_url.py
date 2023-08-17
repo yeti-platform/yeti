@@ -5,7 +5,6 @@ from core.schemas import task
 from core import taskmanager
 
 
-
 class BotvrijUrl(task.FeedTask):
     SOURCE = "https://www.botvrij.eu/data/ioclist.url"
 
@@ -22,16 +21,12 @@ class BotvrijUrl(task.FeedTask):
             for item in data.split("\n")[6:-1]:
                 self.analyze(item.strip())
 
-            
-
-
     def analyze(self, item):
         url, descr = item.split(" # url - ")
 
         context = {
             "source": self.name,
             "description": descr,
-            "date_added": datetime.utcnow(),
         }
 
         obs = observable.Observable.find(value=url)
@@ -39,5 +34,6 @@ class BotvrijUrl(task.FeedTask):
             obs = observable.Observable(value=url, type="url").save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
+
 
 taskmanager.TaskManager.register_task(BotvrijUrl)

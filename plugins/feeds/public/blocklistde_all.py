@@ -24,13 +24,12 @@ class BlocklistdeAll(task.FeedTask):
     def analyze(self, item):
         ip = item.strip()
 
-        context = {"source": self.name, "date_added": datetime.utcnow()}
+       
 
         try:
             obs = observable.Observable.find(value=ip)
             if not obs:
                 obs = observable.Observable(value=ip, type="ip").save()
-            obs.add_context(self.name, context)
             obs.tag(["blocklist"])
 
         except Exception as e:

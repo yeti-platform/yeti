@@ -23,12 +23,10 @@ class BlocklistdeIRCBot(task.FeedTask):
     def analyze(self, item):
         ip = item.strip()
 
-        context = {"source": self.name, "date_added": datetime.utcnow()}
-
         obs = observable.Observable.find(value=ip)
         if not obs:
             obs = observable.Observable(value=ip, type="ip").save()
-        obs.add_context(self.name, context)
+
         obs.tag(["blocklist", "irc"])
 
 

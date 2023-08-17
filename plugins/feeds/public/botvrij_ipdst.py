@@ -28,7 +28,6 @@ class BotvrijIPDst(task.FeedTask):
         context = {
             "source": self.name,
             "description": descr,
-            "date_added": datetime.utcnow(),
         }
 
         obs = observable.Observable.find(value=ip)

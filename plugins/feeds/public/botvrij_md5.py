@@ -26,7 +26,6 @@ class BotvrijMD5(task.FeedTask):
         context = {
             "source": self.name,
             "description": descr,
-            "date_added": datetime.utcnow(),
         }
 
         obs = observable.Observable.find(value=val)
@@ -34,5 +33,6 @@ class BotvrijMD5(task.FeedTask):
             obs = observable.Observable(value=val, type="md5").save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
+
 
 taskmanager.TaskManager.register_task(BotvrijMD5)

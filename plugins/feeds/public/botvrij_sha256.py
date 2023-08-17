@@ -27,7 +27,6 @@ class BotvrijSHA256(task.FeedTask):
         context = {
             "source": self.name,
             "description": descr,
-            "date_added": datetime.utcnow(),
         }
 
         obs = observable.Observable.find(value=val)
@@ -35,5 +34,6 @@ class BotvrijSHA256(task.FeedTask):
             obs = observable.Observable(value=val, type="sha256").save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
+
 
 taskmanager.TaskManager.register_task(BotvrijSHA256)
