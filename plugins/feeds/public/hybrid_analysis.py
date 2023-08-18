@@ -110,11 +110,15 @@ class HybridAnalysis(task.FeedTask):
             for domain in item["domains"]:
                 new_host = observable.Observable.find(value=domain)
                 if not new_host:
-                    new_host = observable.Observable(value=domain, type="hostname").save()
+                    new_host = observable.Observable(
+                        value=domain, type="hostname"
+                    ).save()
 
                 f_hyb.link_to(new_host, "contacted", self.name)
                 logging.debug(domain)
-                new_host.add_context(self.name,{"source": self.name, "contacted_by": f_hyb})
+                new_host.add_context(
+                    self.name, {"source": self.name, "contacted_by": f_hyb}
+                )
                 new_host.tag(tags)
 
         if "extracted_files" in item:
@@ -125,12 +129,16 @@ class HybridAnalysis(task.FeedTask):
                     logging.error(extracted_file)
                     continue
 
-                new_file = observable.Observable.find(value=f"FILE:{extracted_file['sha256']}")
+                new_file = observable.Observable.find(
+                    value=f"FILE:{extracted_file['sha256']}"
+                )
                 if not new_file:
                     new_file = observable.Observable(
                         value=f"FILE:{extracted_file['sha256']}", type="file"
                     ).save()
-                sha256_new_file = observable.Observable.find(value=extracted_file["sha256"])
+                sha256_new_file = observable.Observable.find(
+                    value=extracted_file["sha256"]
+                )
                 if not sha256_new_file:
                     sha256_new_file = observable.Observable(
                         value=extracted_file["sha256"], type="sha256"
@@ -159,7 +167,8 @@ class HybridAnalysis(task.FeedTask):
 
                 new_file.add_context(self.name, context_file_dropped)
                 sha256_new_file.add_context(self.name, context_file_dropped)
-       
+
                 f_hyb.link_to(new_file, "dropped", self.name)
+
 
 taskmanager.TaskManager.register_task(HybridAnalysis)
