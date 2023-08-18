@@ -29,6 +29,8 @@ class ObservableType(str, Enum):
     md5 = 'md5'
     asn = 'asn'
     cidr = 'cidr'
+    certificate = 'certificate'
+    bitcoin = 'bitcoin'
 
 class ObservableTag(BaseModel):
     name: str
