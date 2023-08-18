@@ -25,7 +25,7 @@ class OpenPhish(task.FeedTask):
             # iterate over the lines in the response and analyze each one
             for line in response.text.split("\n"):
                 self.analyze(line)
-    
+
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
     def analyze(self, url):
@@ -47,5 +47,6 @@ class OpenPhish(task.FeedTask):
         except Exception as e:
             logging.error(traceback.format_exc())
             raise RuntimeError("Error analyzing URL: {}".format(url))
+
 
 taskmanager.TaskManager.register_task(OpenPhish)
