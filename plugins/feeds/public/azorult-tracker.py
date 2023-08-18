@@ -8,9 +8,9 @@ from core.schemas import task
 from core import taskmanager
 
 
-
 class AzorutTracker(task.FeedTask):
     """Azorult Tracker"""
+
     SOURCE = "https://azorult-tracker.net/api/last-data"
     _defaults = {
         "frequency": timedelta(hours=12),
@@ -19,12 +19,11 @@ class AzorutTracker(task.FeedTask):
     }
 
     def run(self):
-        r = self._make_request(self.SOURCE, auth=None, verify=True)
+        response = self._make_request(self.SOURCE, auth=None, verify=True)
+        if response:
+            data = response.json()
 
-        if r.status_code == 200:
-            res = r.json()
-
-            df = pd.DataFrame(res)
+            df = pd.DataFrame(data)
             df.replace({np.nan: None}, inplace=True)
 
             df["first_seen"] = pd.to_datetime(df["first_seen"], unit="s")
@@ -32,11 +31,7 @@ class AzorutTracker(task.FeedTask):
                 df = df[df["first_seen"] > self.last_run]
 
             for _, item in df.iterrows():
-        
                 self.analyze(item)
-
-   
-        
 
     def analyze(self, item):
         context = {"source": self.name, "date_added": datetime.utcnow()}
@@ -76,8 +71,10 @@ class AzorutTracker(task.FeedTask):
             if domain:
                 hostname = observable.Observable.find(value=domain)
                 if not hostname:
-                    hostname = observable.Observable(value=domain, type="hostname").save()
-                 
+                    hostname = observable.Observable(
+                        value=domain, type="hostname"
+                    ).save()
+
                 hostname.add_context(self.name, context)
                 hostname.tag(["azorult"])
             if ip:
@@ -110,5 +107,6 @@ class AzorutTracker(task.FeedTask):
 
         except Exception as e:
             logging.error(e)
-        
+
+
 taskmanager.TaskManager.register_task(AzorutTracker)

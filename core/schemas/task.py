@@ -145,7 +145,8 @@ class FeedTask(Task):
             if self.last_run > last_modified:
                 msg = (f"{url}: Last-Modified header ({last_modified_header}) "
                        "before last-run ({self.last_run})")
-                raise RuntimeError(msg)
+                logging.debug(msg)
+                return
 
         return response
 
