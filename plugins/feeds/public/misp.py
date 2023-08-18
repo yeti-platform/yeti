@@ -3,43 +3,38 @@ from datetime import date, timedelta, datetime
 from urllib.parse import urljoin
 import pandas as pd
 from pymisp.api import PyMISP
-from mongoengine import DictField
 from core.config.config import yeti_config
-from core.feed import Feed
-from core.observables import Ip, Url, Hostname, Hash, Email, Bitcoin, Observable
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
+  
+    
+    
 
-class MispFeed(Feed):
-    last_runs = DictField()
-
-    default_values = {
+class MispFeed(task.FeedTask):
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "MispFeed",
         "description": "Parses events from a given MISP instance",
         "source": "MISP",
     }
 
-    TYPES_TO_IMPORT = {
-        "domain": Hostname,
-        "ip-dst": Ip,
-        "ip-src": Ip,
-        "url": Url,
-        "hostname": Hostname,
-        "md5": Hash,
-        "sha1": Hash,
-        "sha256": Hash,
-        "btc": Bitcoin,
-        "email-src": Email,
-        "email-dst": Email,
+    _TYPES_TO_IMPORT = {
+        "domain": observable.ObservableType.hostname,
+        "hostname": observable.ObservableType.hostname,
+        "ip-dst": observable.ObservableType.ip,
+        "ip-src": observable.ObservableType.ip,
+        "url": observable.ObservableType.url,
+        "md5": observable.ObservableType.md5,
+        "sha1": observable.ObservableType.sha1,
+        "sha256": observable.ObservableType.sha256,
+        "btc": observable.ObservableType.bitcoin,
+        "email" : observable.ObservableType.email
     }
-
-    def __init__(self, *args, **kwargs):
-        super(MispFeed, self).__init__(*args, **kwargs)
-        self.get_instances()
-
+        
     def get_instances(self):
-        self.instances = {}
-
+        instances = {}
         for instance in yeti_config.get("misp", "instances", "").split(","):
             config = {
                 "name": yeti_config.get(instance, "name") or instance,
@@ -48,22 +43,18 @@ class MispFeed(Feed):
                 "organisations": {},
             }
 
-            try:
-                config["url"] = yeti_config.get(instance, "url")
-                config["key"] = yeti_config.get(instance, "key")
-                self.instances[instance] = config
-            except Exception as e:
-                logging.error("Error Misp connection %s" % e)
+            
+            config["url"] = yeti_config.get(instance, "url")
+            config["key"] = yeti_config.get(instance, "key")
+            instances[instance] = config
+           
+        return instances
 
-    def last_run_for(self, instance):
-        last_run = [int(part) for part in self.last_runs[instance].split("-")]
-
-        return date(*last_run)
-
-    def get_organisations(self, instance):
-        try:
+    
+    def get_organisations(self,instance:dict):
+        
             misp_client = PyMISP(
-                url=self.instances[instance]["url"], key=self.instances[instance]["key"]
+                url=instance["url"], key=instance["key"]
             )
 
             if not misp_client:
@@ -74,15 +65,14 @@ class MispFeed(Feed):
             for org in orgs:
                 org_id = org["Organisation"]["id"]
                 org_name = org["Organisation"]["name"]
-                self.instances[instance]["organisations"][org_id] = org_name
-        except Exception as e:
-            logging.error("error http %s to get instances" % e)
-
-    def get_all_events(self, instance):
+                instance["organisations"][org_id] = org_name
+       
+    
+    def get_all_events(self,instance:dict):
         days = None
 
-        if "days" in self.instances[instance]:
-            days = self.instances[instance]["days"]
+        if "days" in instance:
+            days = instance["days"]
 
         if not days:
             days = 60
@@ -90,39 +80,40 @@ class MispFeed(Feed):
         today = date.today()
         start_date = today - timedelta(days=days)
 
-        range_time = [str(r) for r in pd.date_range(start_date, today, periods=7)]
-        for i in range(0, len(range_time) - 1, 2):
-            from_date = range_time[i]
-            to_date = range_time[i + 1]
+        weeks = self.decompose_weeks(start_date, today)
+        for from_date,to_date in weeks:
             for event in self.get_event(instance, from_date, to_date):
                 self.analyze(event, instance)
 
-    def get_last_events(self, instance):
+    def get_last_events(self, instance:dict):
         from_date = self.last_run
+        logging.debug(f"Getting events from {from_date} and {self.last_run}")
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
 
     def get_event(self, instance, from_date, to_date=None):
+  
         misp_client = PyMISP(
-            url=self.instances[instance]["url"], key=self.instances[instance]["key"]
+            url=instance["url"], key=instance["key"]
         )
+        from_date = from_date.strftime("%Y-%m-%d")
+        if to_date:
+            to_date = to_date.strftime("%Y-%m-%d")
         results = misp_client.search(date_from=from_date, date_to=to_date)
+        logging.debug("Found {} events".format(len(results)))
         for r in results:
             if "Event" in r:
                 yield r["Event"]
 
-    def update(self):
-        for instance in self.instances:
-            logging.debug("Processing instance {}".format(instance))
+    def run(self):
+        instances = self.get_instances()
+        for instance_name, instance in instances.items():
+            logging.debug("Processing instance {}".format(instance_name))
             self.get_organisations(instance)
-            if instance in self.last_runs:
+            if self.last_run:
                 self.get_last_events(instance)
             else:
                 self.get_all_events(instance)
-
-            self.modify(
-                **{"set__last_runs__{}".format(instance): date.today().isoformat()}
-            )
 
     def analyze(self, event, instance):
         tags = []
@@ -130,7 +121,7 @@ class MispFeed(Feed):
 
         context = {}
         context["date_added"] = datetime.utcnow()
-        context["source"] = self.instances[instance]["name"]
+        context["source"] = instance["name"]
         external_analysis = [
             attr["value"]
             for attr in event["Attribute"]
@@ -141,10 +132,10 @@ class MispFeed(Feed):
         if external_analysis:
             context["external sources"] = "\r\n".join(external_analysis)
         if "Tag" in event:
-            if not self.instances[instance].get("galaxy_filter"):
+            if not instance.get("galaxy_filter"):
                 tags = [tag["name"] for tag in event["Tag"]]
             else:
-                galaxies = self.instances[instance]["galaxy_filter"].split(",")
+                galaxies = instance["galaxy_filter"].split(",")
 
                 for tag in event["Tag"]:
                     found = False
@@ -168,21 +159,40 @@ class MispFeed(Feed):
         if attribute["category"] == "External analysis":
             return
 
-        if attribute.get("type") in self.TYPES_TO_IMPORT:
+        if attribute.get("type") in self._TYPES_TO_IMPORT:
             context["id"] = attribute["event_id"]
             context["link"] = urljoin(
-                self.instances[instance]["url"],
+                instance["url"],
                 "/events/{}".format(attribute["event_id"]),
             )
 
             context["comment"] = attribute["comment"]
 
-            obs = Observable.add_text(attribute["value"])
+            obs = observable.Observable.find(value=attribute["value"])
+            if not obs:
+                obs = observable.Observable.add_text(attribute['value'])
 
             if attribute["category"]:
-                obs.tag(attribute["category"].replace(" ", "_"))
+                tags.append(attribute["category"])
 
             if tags:
                 obs.tag(tags)
 
-            obs.add_context(context, dedup_list=["date_added"])
+            obs.add_context(instance["name"], context)
+
+    def decompose_weeks(self,start_day, last_day):
+    
+        # Génère la liste de tuples
+        weeks = []
+        current_start = start_day
+
+        while current_start < last_day:
+            current_end = current_start + timedelta(days=6)  # Jour suivant de 7 jours
+            if current_end > last_day:
+                current_end = last_day
+            weeks.append((current_start, current_end))
+            current_start += timedelta(days=7)  # Passe à la période de 7 jours suivante
+        logging.debug(f"Decomposed weeks: {weeks}")
+        return weeks
+
+taskmanager.TaskManager.register_task(MispFeed)
