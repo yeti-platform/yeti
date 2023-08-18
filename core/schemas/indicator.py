@@ -39,6 +39,7 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
 
     pattern: str
     location: str
+    diamond: str = ''
     kill_chain_phases: list[str] = []
 
     @classmethod

@@ -19,6 +19,7 @@ class EntityType(str, Enum):
     campaign = 'campaign'
     attack_pattern = 'attack-pattern'
     identity = 'identity'
+    exploit = 'exploit'
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'entities'
