@@ -44,7 +44,7 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 
     id: str | None = None
     name: str
-    enabled: bool = True
+    enabled: bool = False
     description: str = ''
     status: TaskStatus = TaskStatus.idle
     status_message: str = ''
