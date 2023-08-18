@@ -22,11 +22,11 @@ class FutexTracker(task.FeedTask):
         if response:
             data = response.text
             names = ["id", "firstseen", "url", "status", "hash", "country", "as"]
-            df = pd.read_csv(StringIO(data), names=names, delimiter=";",header=0)
+            df = pd.read_csv(StringIO(data), names=names, delimiter=";", header=0)
             df.fillna("", inplace=True)
 
             df = self._filter_observables_by_time(df, "firstseen")
-            
+
             for _, row in df.iterrows():
                 self.analyze(row)
 
@@ -66,7 +66,7 @@ class FutexTracker(task.FeedTask):
             hash_obs.tag(tags)
             if url_obs:
                 hash_obs.link_to(url_obs, "downloaded", self.name)
-        
+
         if asn:
             asn_obs = observable.Observable.find(value=asn)
             if not asn_obs:
@@ -76,6 +76,5 @@ class FutexTracker(task.FeedTask):
             if url_obs:
                 asn_obs.link_to(url_obs, "ASN-Url", self.name)
 
-taskmanager.TaskManager.register_task(FutexTracker)
 
-        
+taskmanager.TaskManager.register_task(FutexTracker)
