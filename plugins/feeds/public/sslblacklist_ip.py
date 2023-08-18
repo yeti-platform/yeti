@@ -48,11 +48,11 @@ class SSLBlackListIP(task.FeedTask):
         port = line["DstPort"]
         context = {}
         context["first_seen"] = first_seen
-    
+
         ip_obs = observable.Observable.find(value=dst_ip)
         if not ip_obs:
             ip_obs = observable.Observable(value=dst_ip, type="ip")
-        
+
         ip_obs.add_context(self.name, context)
         ip_obs.tag(tags)
         _url = "https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
@@ -61,8 +61,8 @@ class SSLBlackListIP(task.FeedTask):
             url_obs = observable.Observable(value=_url, type="url")
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
-        
+
         ip_obs.link_to(url_obs, "ip-url", self.name)
 
-    
+
 taskmanager.TaskManager.register_task(SSLBlackListIP)
