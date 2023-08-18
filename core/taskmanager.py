@@ -64,8 +64,8 @@ app = Celery(
     ),
 )
 
+class TaskManager():
 
-class TaskManager:
     _store = {}  # type: dict[str, Task]
 
     @classmethod

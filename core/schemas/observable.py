@@ -32,6 +32,7 @@ class ObservableType(str, Enum):
     certificate = 'certificate'
     bitcoin = 'bitcoin'
 
+
 class ObservableTag(BaseModel):
     name: str
     fresh: bool = True
