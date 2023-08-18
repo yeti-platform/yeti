@@ -4,6 +4,7 @@ import datetime
 from celery import Celery
 from core.schemas.task import Task, TaskStatus
 from typing import Type
+import traceback
 
 
 app = Celery(
@@ -38,7 +39,28 @@ app = Celery(
         "plugins.feeds.public.botvrij_url",
         "plugins.feeds.public.cruzit",
         "plugins.feeds.public.dataplane_dnsrd",
-
+        "plugins.feeds.public.dataplane_dnsrdany",
+        "plugins.feeds.public.dataplane_dnsversion",
+        "plugins.feeds.public.dataplane_proto41",
+        "plugins.feeds.public.dataplane_sipinvite",
+        "plugins.feeds.public.dataplane_sipregistr",
+        "plugins.feeds.public.dataplane_smtpdata",
+        "plugins.feeds.public.dataplane_smtpgreet",
+        "plugins.feeds.public.dataplane_sshclient",
+        "plugins.feeds.public.dataplane_sshpwauth",
+        "plugins.feeds.public.dataplane_telnetlogin",
+        "plugins.feeds.public.dataplane_vnc",
+        "plugins.feeds.public.feodo_tracker_ip_blocklist",
+        "plugins.feeds.public.futex_re",
+        "plugins.feeds.public.hybrid_analysis",
+        "plugins.feeds.public.misp",
+        "plugins.feeds.public.openphish",
+        "plugins.feeds.public.otx_alienvault",
+        "plugins.feeds.public.phishing_database",
+        "plugins.feeds.public.phishtank",
+        "plugins.feeds.public.rulezskbruteforceblocker",
+        "plugins.feeds.public.sslblacklist_fingerprints",
+        "plugins.feeds.public.sslblacklist_ip"
     ),
 )
 
@@ -107,7 +129,7 @@ class TaskManager:
             task.run()
         except Exception as error:  # pylint: disable=broad-except
             # We want to catch and report all errors
-            logging.error(f"Error running task {task_name}: {error}")
+            logging.error(traceback.format_exc())
             task.status = TaskStatus.failed
             task.status_message = str(error)
             task.save()
