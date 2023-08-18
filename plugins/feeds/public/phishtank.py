@@ -64,4 +64,5 @@ class PhishTank(task.FeedTask):
             urlobs.add_context(self.name, context)
             urlobs.tag(tags)
 
+
 taskmanager.TaskManager.register_task(PhishTank)
