@@ -21,15 +21,16 @@ class DataplaneDNSVersion(task.FeedTask):
         "name": "DataplaneDNSVersion",
         "description": "Feed DNS Version IPs with ASN",
     }
+    _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
         response = self._make_request(self.SOURCE,sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
-            columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
-            df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
+            
+            df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
 
-            for c in columns:
+            for c in self._NAMES:
                 df[c] = df[c].str.strip()
             df.fillna("", inplace=True)
             df["lastseen"] = pd.to_datetime(df["lastseen"])
