@@ -60,8 +60,13 @@ app = Celery(
         "plugins.feeds.public.phishtank",
         "plugins.feeds.public.rulezskbruteforceblocker",
         "plugins.feeds.public.sslblacklist_fingerprints",
-        "plugins.feeds.public.sslblacklist_ip"
-    ),
+        "plugins.feeds.public.sslblacklist_ip",
+        "plugins.feeds.public.threatfox",
+        "plugins.feeds.public.threatview_c2",
+        "plugins.feeds.public.tor_exit_nodes",
+        "plugins.feeds.public.urlhaus",
+        "plugins.feeds.public.viriback_tracker",
+        "plugins.feeds.public.vxvault_url",)
 )
 
 class TaskManager():
