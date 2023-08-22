@@ -11,7 +11,6 @@ from core.schemas import task
 from core import taskmanager
 
 
-
 class DataplaneTelenetLogin(task.FeedTask):
     """
     Feed of telnet login attempt of dataplane IPs and ASNs
@@ -24,17 +23,17 @@ class DataplaneTelenetLogin(task.FeedTask):
         "description": "Feed of telnet login attempt of dataplane IPs and ASNs",
     }
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
+
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self.SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
 
-            
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
 
             for c in self._NAMES:
                 df[c] = df[c].str.strip()
-            
+
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
@@ -69,5 +68,6 @@ class DataplaneTelenetLogin(task.FeedTask):
         asn_obs.tag(tags)
 
         asn_obs.link_to(ip, "ASN_IP", self.name)
+
 
 taskmanager.TaskManager.register_task(DataplaneTelenetLogin)

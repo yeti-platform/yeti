@@ -24,15 +24,15 @@ class DataplaneVNC(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self.SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[68:-5]
-            
+
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
 
             for c in self._NAMES:
                 df[c] = df[c].str.strip()
-        
+
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
@@ -65,5 +65,6 @@ class DataplaneVNC(task.FeedTask):
         asn_obs.add_context(self.name, context_asn)
         asn_obs.tag(tags)
         asn_obs.link_to(ip, "ASN_IP", self.name)
+
 
 taskmanager.TaskManager.register_task(DataplaneVNC)

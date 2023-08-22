@@ -10,8 +10,6 @@ from core.schemas import task
 from core import taskmanager
 
 
-
-
 class DataplaneSSHPwAuth(task.FeedTask):
     """
     Feed of Dataplane SSH bruteforce IPs and ASNs
@@ -24,23 +22,23 @@ class DataplaneSSHPwAuth(task.FeedTask):
         "description": "Feed of Dataplane SSH bruteforce IPs and ASNs",
     }
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
+
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self.SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[68:-5]
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
 
-
             for c in self._NAMES:
                 df[c] = df[c].str.strip()
             df = df.dropna()
-        
+
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
             for _, row in df.iterrows():
                 self.analyze(row)
-    
+
     def analyze(self, item):
         context_ip = {
             "source": self.name,
@@ -69,5 +67,6 @@ class DataplaneSSHPwAuth(task.FeedTask):
         asn_obs.tag(tags)
 
         asn_obs.link_to(ip, "ASN_IP", self.name)
+
 
 taskmanager.TaskManager.register_task(DataplaneSSHPwAuth)

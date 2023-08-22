@@ -22,15 +22,16 @@ class DataplaneSIPInvite(task.FeedTask):
         "description": "Feed of SIP INVITE attacks from Dataplane IPs and their Autonomous Systems",
     }
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
+
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self.SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
 
             for c in self._NAMES:
                 df[c] = df[c].str.strip()
-            
+
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")

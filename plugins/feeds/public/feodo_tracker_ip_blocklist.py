@@ -52,10 +52,8 @@ class FeodoTrackerIPBlockList(task.FeedTask):
         ip_observable = observable.Observable.find(value=ip)
         if not ip_observable:
             ip_observable = observable.Observable(value=ip, type="ip").save()
-        ip_observable.add_context(
-            source=self.name,
-            context=context
-        )
+        ip_observable.add_context(source=self.name, context=context)
         ip_observable.tag(tags)
+
 
 taskmanager.TaskManager.register_task(FeodoTrackerIPBlockList)

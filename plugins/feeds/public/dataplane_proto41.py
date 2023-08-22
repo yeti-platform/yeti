@@ -22,16 +22,17 @@ class DataplaneProto41(task.FeedTask):
         "description": "Feed DataplaneProto41: IPs from DataplaneProto41",
     }
     _NAME = ["ASN", "ASname", "ipaddr", "firstseen", "lastseen", "category"]
+
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self.SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
-            
+
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAME)
 
             for c in self._NAME:
                 df[c] = df[c].str.strip()
-        
+
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
