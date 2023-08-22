@@ -43,7 +43,7 @@ class AbuseIPDB(task.FeedTask):
             if not ip:
                 ip = observable.Observable(value=ip_value, type="ip").save()
 
-            logging.debug("IP: %s" % ip_value)
+            logging.debug(f"Adding context to {ip_value}")
             ip.add_context(self.name, context)
             ip.tag(["blocklist"])
 
