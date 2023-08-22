@@ -98,7 +98,8 @@ class ThreatFox(task.FeedTask):
 
         if obs:
             obs.add_context(self.name, context)
-            tags.extend(malware_alias.split(","))
+            if malware_alias:
+                tags.extend(malware_alias.split(","))
             tags.append(malware_printable)
             obs.tag(tags)
 taskmanager.TaskManager.register_task(ThreatFox)
