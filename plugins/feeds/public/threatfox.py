@@ -12,7 +12,7 @@ class ThreatFox(task.FeedTask):
         "name": "ThreatFox",
         "description": "This feed contains malware hashes",
     }
-    _SOURCE = "https://threatfox.abuse.ch/export/json/recent/"
+    SOURCE = "https://threatfox.abuse.ch/export/json/recent/"
 
     _MAPPING = {
         "ip": observable.ObservableType.ip,
@@ -21,7 +21,7 @@ class ThreatFox(task.FeedTask):
     }
 
     def run(self):
-        r = self._make_request(self._SOURCE, sort=False)
+        r = self._make_request(self.SOURCE, sort=False)
 
         if r:
             data = r.json()
