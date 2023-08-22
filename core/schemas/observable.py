@@ -30,7 +30,7 @@ class ObservableType(str, Enum):
     asn = 'asn'
     cidr = 'cidr'
     certificate = 'certificate'
-    bitcoin = 'bitcoin'
+    bitcoin_wallet = 'bitcoin_wallet'
 
 
 class ObservableTag(BaseModel):
