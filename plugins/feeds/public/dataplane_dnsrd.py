@@ -12,7 +12,7 @@ class DataplaneDNSRecursive(task.FeedTask):
     Feed of Dataplane DNS Recursive IPs with ASN
     """
 
-    URL_FEED = "https://dataplane.org/dnsrd.txt"
+    SOURCE = "https://dataplane.org/dnsrd.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneDNSRecursive",
@@ -20,19 +20,20 @@ class DataplaneDNSRecursive(task.FeedTask):
     }
 
     def run(self):
-        resp = self._make_request(sort=False)
-        lines = resp.content.decode("utf-8").split("\n")[64:-5]
-        columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
-        df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
+        response = self._make_request(self.SOURCE,sort=False)
+        if response:
+            lines = response.content.decode("utf-8").split("\n")[64:-5]
+            columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
+            df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
 
-        for c in columns:
-            df[c] = df[c].str.strip()
-        df = df.dropna()
-        df["lastseen"] = pd.to_datetime(df["lastseen"])
-        if self.last_run:
-            df = df[df["lastseen"] > self.last_run]
-        for count, row in df.iterrows():
-            self.analyze(row)
+            for c in columns:
+                df[c] = df[c].str.strip()
+        
+            df["lastseen"] = pd.to_datetime(df["lastseen"])
+            df.fillna("", inplace=True)
+            df = self._filter_observables_by_time(df, "lastseen")
+            for count, row in df.iterrows():
+                self.analyze(row)
 
     def analyze(self, item):
         context_ip = {
