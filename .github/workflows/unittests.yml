@@ -17,7 +17,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: poetry
-    - run: poetry install
+    - run: |
+        pip install poetry
+        poetry install
     - name: Edit config file
       run: |
         cp yeti.conf.sample yeti.conf
