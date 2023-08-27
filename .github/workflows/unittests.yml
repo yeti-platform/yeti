@@ -12,9 +12,8 @@ jobs:
         python-version: ["3.10"]
     steps:
     - uses: actions/checkout@v3
-    - run: /
-        sudo apt-get update && sudo apt-get install -y python3-pip
-        sudo pip3 install poetry
+    - run:
+        sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install poetry
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
