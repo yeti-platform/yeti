@@ -28,7 +28,7 @@ jobs:
         pip install poetry
         poetry install
     - name: Start redis & arangodb conainers
-      run: docker compose -f extras/docker/dev/docker-compose.yaml up redis arangodb -d
+      run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
     - name: Test with unittest
       run: |
         poetry run python -m unittest discover -s tests/schemas -p '*.py'
