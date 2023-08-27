@@ -1,8 +1,8 @@
 name: Unit tests
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+on: [push, pull_request]
+  # pull_request:
+  #   types: [opened, synchronize, reopened]
 
 jobs:
 
