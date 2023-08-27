@@ -26,5 +26,5 @@ jobs:
         poetry install
     - name: Test with unittest
       run: |
-        poetry run python -m unittest discover -s test/schemas -p '*.py'
-        poetry run python -m unittest discover -s test/apiv2 -p '*.py'
+        poetry run python -m unittest discover -s tests/schemas -p '*.py'
+        poetry run python -m unittest discover -s tests/apiv2 -p '*.py'
