@@ -1,29 +1,35 @@
 name: Unit tests
 
-on: [push, pull_request]
-  # pull_request:
-  #   types: [opened, synchronize, reopened]
+on: [pull_request]
 
 jobs:
 
-  poetry:
+  unittest:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.10"]
-    env:
-      DFTIMEWOLF_NO_CURSES: 1
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - run:
+        sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install poetry
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        cache: poetry
+    - run: poetry install
+    - name: Edit config file
       run: |
-        pip install poetry
-        poetry install
+        cp yeti.conf.sample yeti.conf
+        sed -i '42s/# host =/host =/' yeti.conf
+        sed -i '43s/# port =/port =/' yeti.conf
+        sed -i '44s/# username = yeti/username = root/' yeti.conf
+        sed -i '45s/# password = STRONG_PASSWORD/password =/' yeti.conf
+        sed -i '46s/# database = /database =/' yeti.conf
+    - name: Start redis & arangodb conainers
+      run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
     - name: Test with unittest
       run: |
         poetry run python -m unittest discover -s tests/schemas -p '*.py'
