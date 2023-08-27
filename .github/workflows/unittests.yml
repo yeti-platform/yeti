@@ -23,7 +23,7 @@ jobs:
         pip install poetry
         poetry install
     - name: start redis & arangodb conainers
-      run: /
+      run:
         docker compose -f extras/docker/dev/docker-compose.yml up redis arangodb -d
         cp yeti.conf.sample yeti.conf
         sed -i '44s/# username = yeti/username = root/' yeti.conf
