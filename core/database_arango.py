@@ -437,7 +437,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def filter(cls: Type[TYetiObject],
                args: dict[str, Any],
                offset: int = 0,
-               count: int = 0) -> tuple[List[TYetiObject], int]:
+               count: int = 0,
+               sorting: List[tuple[str, bool]] = []) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
         Search the collection for all objects whose 'value' attribute matches
@@ -448,6 +449,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
               defining the regular expression to match against.
             offset: Skip this many objects when querying the DB.
             count: How many objecst after `offset` to return.
+            sorting: A list of (order, ascending) fields to sort by.
 
         Returns:
             A List of Yeti objects, and the total object count.
@@ -456,6 +458,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         colname = cls._collection_name
         conditions = []
         sorts = []
+
+        # We want user-defined sorts to take precedence.
+        for field, asc in sorting:
+            sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
+
         for key in args:
             if key.startswith('in__'):
                 conditions.append(f'@{key} ALL IN o.{key[4:]}')
