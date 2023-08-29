@@ -56,9 +56,9 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(data['id'])
         self.assertEqual(data['value'], "toto.com")
         self.assertEqual(data['type'], "hostname")
-        self.assertEqual(data['tags']['tag1']['name'], 'tag1')
+        self.assertIn('tag1', data['tags'])
+        self.assertIn('tag2', data['tags'])
         self.assertEqual(data['tags']['tag1']['fresh'], True)
-        self.assertEqual(data['tags']['tag2']['name'], 'tag2')
         self.assertEqual(data['tags']['tag2']['fresh'], True)
 
         client.get(f"/api/v2/observables/{data['id']}")

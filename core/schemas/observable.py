@@ -10,6 +10,7 @@ from core import database_arango
 from core.helpers import REGEXES, refang
 from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
+from core.schemas.graph import TagRelationship
 
 
 def now():
@@ -37,6 +38,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     root_type: str = Field('observable', const=True)
     id: str | None = None
     value: str
+    tags: dict[str, TagRelationship] = {}
     type: ObservableType
     created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
@@ -102,6 +104,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
                 tag = Tag(name=tag_name).save()
 
             tag_link = self.observable_tag(tag.name)
+            self.tags[tag.name] = tag_link
 
             extra_tags |= set(tag.produces)
 
@@ -113,7 +116,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         if extra_tags:
             self.tag(list(extra_tags))
 
-        return self.save()
+        return self
 
     def add_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
         """Adds context to an observable."""
@@ -147,6 +150,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
                 del self.context[idx]
                 break
         return self.save()
+
 
 TYPE_MAPPING = {
     'ip': Observable,
