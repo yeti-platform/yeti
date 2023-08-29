@@ -668,10 +668,10 @@ def tagged_observables_export(cls, args):
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
         LET tagnames = (
-                FOR t in VALUES(o.tags)
-                FILTER t.name NOT IN @ignore
-                FILTER (t.fresh OR NOT @fresh)
-                RETURN t.name
+                FOR v, e in 1..1 OUTBOUND o tagged
+                    FILTER v.name NOT IN @ignore
+                    FILTER (e.fresh OR NOT @fresh)
+                RETURN v.name
         )
         FILTER tagnames != []
         FILTER (@include ANY IN tagnames OR @include == [])
