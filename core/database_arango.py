@@ -544,7 +544,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
                args: dict[str, Any],
                offset: int = 0,
                count: int = 0,
-               sorting: List[tuple[str, bool]] = []) -> tuple[List[TYetiObject], int]:
+               sorting: List[tuple[str, bool]] = [],
+               graph_queries: List[tuple[str, str, str, str]] = []) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
         Search the collection for all objects whose 'value' attribute matches
@@ -592,13 +593,21 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if count:
                 limit += f', {count}'
 
+        graph_query_string = ''
+        for name, graph, direction, field in graph_queries:
+            graph_query_string += f'\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN v.{field})'
+
         aql_string = f"""
             FOR o IN @@collection
                 FILTER {' AND '.join(conditions)}
+                {graph_query_string}
                 SORT {', '.join(sorts)}
                 {limit}
-                RETURN o
             """
+        if graph_queries:
+            aql_string += f'\nRETURN MERGE(o, {{ {", ".join([name + ": " + name for name, _, _, _ in graph_queries])} }})'
+        else:
+            aql_string += '\nRETURN o'
         args['@collection'] = colname
         for key in list(args.keys()):
             args[key.replace('.', '_')] = args.pop(key)
