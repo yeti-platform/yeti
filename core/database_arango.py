@@ -595,7 +595,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         graph_query_string = ''
         for name, graph, direction, field in graph_queries:
-            graph_query_string += f'\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN v.{field})'
+            graph_query_string += f'\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})'
 
         aql_string = f"""
             FOR o IN @@collection
@@ -605,7 +605,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 {limit}
             """
         if graph_queries:
-            aql_string += f'\nRETURN MERGE(o, {{ {", ".join([name + ": " + name for name, _, _, _ in graph_queries])} }})'
+            aql_string += f'\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
         else:
             aql_string += '\nRETURN o'
         args['@collection'] = colname
