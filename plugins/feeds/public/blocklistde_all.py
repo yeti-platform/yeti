@@ -22,14 +22,11 @@ class BlocklistdeAll(task.FeedTask):
 
     def analyze(self, item):
         ip = item.strip()
-
-        try:
-            obs = observable.Observable.find(value=ip)
-            if not obs:
-                obs = observable.Observable(value=ip, type="ip").save()
-            obs.tag(["blocklist"])
-
-        except Exception as e:
-            logging.error(e)
+        
+        obs = observable.Observable.find(value=ip)
+        
+        if not obs:
+            obs = observable.Observable(value=ip, type="ip").save()
+        obs.tag(["blocklist"])
 
 taskmanager.TaskManager.register_task(BlocklistdeAll)
