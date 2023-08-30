@@ -112,6 +112,7 @@ class OTXAlienvault(task.FeedTask):
                             pattern=otx_indic["content"],
                             type=indicator.IndicatorType.yara,
                             location="OTX",
+                            diamond=indicator.DiamondModel.capability,
                         ).save()
                     
 
