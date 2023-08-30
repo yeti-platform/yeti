@@ -25,7 +25,7 @@ class PhishTank(task.FeedTask):
         key_phishtank = yeti_config.get("phishtank", "key")
         assert key_phishtank, "PhishTank key not configured in yeti.conf"
 
-        response = self._make_request(self.SOURCE % key_phishtank, verify=True)
+        response = self._make_request(self.SOURCE % key_phishtank)
         if response:
             data = response.text
 

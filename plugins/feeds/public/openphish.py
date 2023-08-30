@@ -20,7 +20,7 @@ class OpenPhish(task.FeedTask):
     # it is the main entry point into the feed
     def run(self):
         # make a request to the feed URL
-        response = self._make_request(self.SOURCE, verify=True)
+        response = self._make_request(self.SOURCE)
         if response:
             # iterate over the lines in the response and analyze each one
             for line in response.text.split("\n"):

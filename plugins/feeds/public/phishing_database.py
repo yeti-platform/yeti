@@ -21,7 +21,7 @@ class PhishingDatabase(task.FeedTask):
     SOURCE = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
 
     def run(self):
-        response = self._make_request(self.SOURCE, verify=True)
+        response = self._make_request(self.SOURCE)
         if response:
             for line in response.text.split("\n"):
                 self.analyze(line.strip())

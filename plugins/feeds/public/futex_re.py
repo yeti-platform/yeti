@@ -18,7 +18,7 @@ class FutexTracker(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE, verify=True)
+        response = self._make_request(self.SOURCE)
         if response:
             data = response.text
             names = ["id", "firstseen", "url", "status", "hash", "country", "as"]

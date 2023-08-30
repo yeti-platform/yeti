@@ -26,7 +26,7 @@ class SSLBlackListCerts(task.FeedTask):
     SOURCE = "https://sslbl.abuse.ch/blacklist/sslblacklist.csv"
 
     def run(self):
-        response = self._make_request(self.SOURCE, verify=True)
+        response = self._make_request(self.SOURCE)
         if response:
             data = response.text
             names=["Listingdate", "SHA1", "Listingreason"]

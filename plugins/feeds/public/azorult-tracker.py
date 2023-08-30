@@ -19,7 +19,7 @@ class AzorutTracker(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE, auth=None, verify=True)
+        response = self._make_request(self.SOURCE, auth=None)
         if response:
             data = response.json()
 

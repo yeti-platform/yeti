@@ -17,7 +17,7 @@ class ViriBackTracker(task.FeedTask):
     
 
     def run(self):
-        response = self._make_request(self.SOURCE, verify=True)
+        response = self._make_request(self.SOURCE)
         if response:
             data = response.text
             df = pd.read_csv(

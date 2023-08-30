@@ -15,7 +15,7 @@ class BotvrijSHA256(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE, verify=True)
+        response = self._make_request(self.SOURCE)
         if response:
             data = response.text
             for item in data.split("\n")[6:-1]:

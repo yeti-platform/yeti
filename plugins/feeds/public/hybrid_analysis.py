@@ -20,7 +20,7 @@ class HybridAnalysis(task.FeedTask):
 
     def run(self):
         headers = {"User-agent": "VxApi Connector"}
-        response = self._make_request(self.SOURCE, verify=True, headers=headers)
+        response = self._make_request(self.SOURCE, headers=headers)
         if response:
             data = response.json()
             if "data" in data:
