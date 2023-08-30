@@ -425,6 +425,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 edge_data['id'] = edge_data.pop('_id')
                 tag_relationship = TagRelationship.load(edge_data)
                 relationships.append((tag_relationship, tag_data))
+                self.tags[tag_data.name] = tag_relationship
         return relationships
 
     # pylint: disable=too-many-arguments

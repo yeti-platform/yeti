@@ -18,11 +18,13 @@ class ObservableTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_get_observable(self):
-        Observable(value="tomchop.me", type="hostname").save()
-        response = client.get("/api/v2/observables/")
+        obs = Observable(value="tomchop.me", type="hostname").save()
+        obs.tag(['tag1'])
+        response = client.get(f"/api/v2/observables/{obs.id}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(len(data), 1)
+        self.assertEqual(data['value'], "tomchop.me")
+        self.assertIn('tag1', data['tags'])
 
     def test_observable_search(self):
         response = client.post(
