@@ -18,8 +18,11 @@ class ObservableTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_get_observable(self):
+        Observable(value="tomchop.me", type="hostname").save()
         response = client.get("/api/v2/observables/")
         self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 1)
 
     def test_observable_search(self):
         response = client.post(
@@ -47,6 +50,22 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(len(data), 2)
 
+    def test_observable_search_with_tags(self):
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "tag2"]})
+        self.assertEqual(response.status_code, 200)
+
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"value": "toto", "page": 0, "count": 10})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['observables']), 1)
+        self.assertEqual(data['total'], 1)
+        self.assertIn('tag1', data['observables'][0]['tags'])
+        self.assertIn('tag2', data['observables'][0]['tags'])
+
     def test_create_observable(self):
         response = client.post(
             "/api/v2/observables/",
@@ -56,9 +75,9 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(data['id'])
         self.assertEqual(data['value'], "toto.com")
         self.assertEqual(data['type'], "hostname")
-        self.assertEqual(data['tags']['tag1']['name'], 'tag1')
+        self.assertIn('tag1', data['tags'])
+        self.assertIn('tag2', data['tags'])
         self.assertEqual(data['tags']['tag1']['fresh'], True)
-        self.assertEqual(data['tags']['tag2']['name'], 'tag2')
         self.assertEqual(data['tags']['tag2']['fresh'], True)
 
         client.get(f"/api/v2/observables/{data['id']}")

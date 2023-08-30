@@ -10,6 +10,7 @@ from core import database_arango
 from core.helpers import REGEXES, refang
 from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
+from core.schemas.graph import TagRelationship
 
 
 def now():
@@ -30,13 +31,6 @@ class ObservableType(str, Enum):
     asn = 'asn'
     cidr = 'cidr'
 
-class ObservableTag(BaseModel):
-    name: str
-    fresh: bool = True
-    first_seen: datetime.datetime = Field(default_factory=now)
-    last_seen: datetime.datetime = Field(default_factory=now)
-    expiration: datetime.timedelta
-
 class Observable(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'observables'
     _type_filter: str | None = None
@@ -44,10 +38,10 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     root_type: str = Field('observable', const=True)
     id: str | None = None
     value: str
+    tags: dict[str, TagRelationship] = {}
     type: ObservableType
     created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
-    tags: dict[str, ObservableTag] = {}
     last_analysis: dict[str, datetime.datetime] = {}
 
     @classmethod
@@ -84,11 +78,15 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
         raise ValueError(f"Invalid observable '{text}'")
 
-    def tag(self, tags: list[str], strict: bool = False, expiration_days: int | None = None) -> "Observable":
-        """Adds tags to an observable."""
+    def tag(self,
+            tags: list[str],
+            strict: bool = False,
+            expiration_days: int | None = None) -> "Observable":
+        """Connects observable to tag graph."""
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
+
         if strict:
-            self.tags = {}
+            self.observable_clear_tags()
 
         extra_tags = set()
         for tag_name in tags:
@@ -105,15 +103,8 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
             if not tag:
                 tag = Tag(name=tag_name).save()
 
-            observable_tag = self.tags.get(tag.name)
-            if observable_tag:
-                observable_tag.last_seen = datetime.datetime.now(datetime.timezone.utc)
-                observable_tag.fresh = True
-            else:
-                self.tags[tag.name] = ObservableTag(
-                    name=tag.name,expiration=tag.default_expiration)
-                tag.count += 1
-                tag = tag.save()
+            tag_link = self.observable_tag(tag.name)
+            self.tags[tag.name] = tag_link
 
             extra_tags |= set(tag.produces)
 
@@ -125,7 +116,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         if extra_tags:
             self.tag(list(extra_tags))
 
-        return self.save()
+        return self
 
     def add_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
         """Adds context to an observable."""
@@ -159,6 +150,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
                 del self.context[idx]
                 break
         return self.save()
+
 
 TYPE_MAPPING = {
     'ip': Observable,

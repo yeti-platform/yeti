@@ -21,3 +21,17 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict):
         return cls(**object)
+
+
+class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
+    _type_filter: None = None
+
+    id: str | None
+    source: str
+    target: str
+    last_seen: datetime.datetime
+    fresh: bool
+
+    @classmethod
+    def load(cls, object: dict):
+        return cls(**object)

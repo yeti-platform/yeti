@@ -3,9 +3,12 @@ import datetime
 import json
 import sys
 import time
-from typing import TypeVar, Iterable, Type, Any, List, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING, Any, Iterable, List, Tuple, Type, TypeVar
+
 if TYPE_CHECKING:
     from core.schemas.graph import Relationship
+    from core.schemas.graph import TagRelationship
+    from core.schemas.tag import Tag
 
 import requests
 from arango import ArangoClient
@@ -270,12 +273,94 @@ class ArangoYetiConnector(AbstractYetiConnector):
         except IntegrityError:
             return cls.find(**kwargs)
 
+    #TODO: Consider extracting this to its own class, given it's only meant
+    # to be called by Observables.
+    def observable_tag(self, tag_name: str) -> "TagRelationship":
+        """Links an Observable to a Tag object.
+
+        Args:
+          tag_name: The name of the tag to link to.
+        """
+        # Import at runtime to avoid circular dependency.
+        from core.schemas.graph import TagRelationship
+        from core.schemas.tag import Tag
+        graph = self._db.graph('tags')
+
+        tags = self.observable_get_tags()
+
+        for tag_relationship, tag in tags:
+            if tag.name != tag_name:
+                continue
+            tag_relationship.last_seen = datetime.datetime.now(datetime.timezone.utc)
+            tag_relationship.fresh = True
+            edge = json.loads(tag_relationship.json())
+            edge['_id'] = tag_relationship.id
+            graph.update_edge(edge)
+            return tag_relationship
+
+        # Relationship doesn't exist, check if tag is already in the db
+        tag_obj = Tag.find(name=tag_name)
+        if not tag_obj:
+            tag_obj = Tag(name=tag_name).save()
+        tag_obj.count += 1
+        tag_obj.save()
+
+        tag_relationship = TagRelationship(
+            source=self.extended_id,
+            target=tag_obj.extended_id,
+            last_seen=datetime.datetime.now(datetime.timezone.utc),
+            fresh=True,
+        )
+
+        result = graph.edge_collection('tagged').link(
+            self.extended_id,
+            tag_obj.extended_id,
+            data=json.loads(tag_relationship.json()),
+            return_new=True)['new']
+        result['id'] = result.pop('_key')
+        return TagRelationship.load(result)
+
+    def observable_expire_tag(self, tag_name: str) -> "TagRelationship":
+        """Expires a tag on an Observable.
+
+        Args:
+          tag_name: The name of the tag to expire.
+        """
+        # Avoid circular dependency
+        from core.schemas.graph import TagRelationship
+        from core.schemas.tag import Tag
+        graph = self._db.graph('tags')
+
+        tags = self.observable_get_tags()
+
+        for tag_relationship, tag in tags:
+            if tag.name != tag_name:
+                continue
+            tag_relationship.fresh = False
+            edge = json.loads(tag_relationship.json())
+            edge['_id'] = tag_relationship.id
+            graph.update_edge(edge)
+            return tag_relationship
+
+        raise ValueError(f"Tag '{tag_name}' not found on observable '{self.extended_id}'")
+
+    def observable_clear_tags(self):
+        """Clears all tags on an Observable."""
+        # Avoid circular dependency
+        graph = self._db.graph('tags')
+
+        tags = self.observable_get_tags()
+        results = graph.edge_collection('tagged').edges(self.extended_id)
+        for edge in results['edges']:
+            graph.edge_collection('tagged').delete(edge['_id'])
+
     def link_to(self, target: TYetiObject, relationship_type: str, description: str) -> "Relationship":
         """Creates a link between two YetiObjects.
 
         Args:
           target: The YetiObject to link to.
           relationship_type: The type of link. (e.g. targets, uses, mitigates)
+          description: A description of the link.
         """
         # Avoid circular dependency
         from core.schemas.graph import Relationship
@@ -318,6 +403,29 @@ class ArangoYetiConnector(AbstractYetiConnector):
         #     return existing[0]
         # # pylint: disable=protected-access
         # return Relationship(self._arango_id, target._arango_id, stix_rel).save()
+
+    #TODO: Consider extracting this to its own class, given it's only meant
+    # to be called by Observables.
+    def observable_get_tags(self) -> List[Tuple["TagRelationship", "Tag"]]:
+        """Returns the tags linked to this object.
+
+        Returns:
+          A list of tuples (TagRelationship, Tag) representing each tag linked
+          to this object.
+        """
+        from core.schemas.graph import TagRelationship
+        from core.schemas.tag import Tag
+        traversed = self._db.graph('tags').traverse(
+            self.extended_id, direction='any', max_depth=1)
+        relationships = []
+        for path in traversed['paths']:
+            if path['edges']:
+                tag_data = Tag.load(path['vertices'][1])
+                edge_data = path['edges'][0]
+                edge_data['id'] = edge_data.pop('_id')
+                tag_relationship = TagRelationship.load(edge_data)
+                relationships.append((tag_relationship, tag_data))
+        return relationships
 
     # pylint: disable=too-many-arguments
     def neighbors(
@@ -416,9 +524,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def _build_vertices(self, vertices, arango_vertices):
         # Import happens here to avoid circular dependency
-        from core.schemas import observable
-        from core.schemas import entity
-        from core.schemas import indicator
+        from core.schemas import entity, indicator, observable
 
         type_mapping = {}
         type_mapping.update(observable.TYPE_MAPPING)
@@ -438,7 +544,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
                args: dict[str, Any],
                offset: int = 0,
                count: int = 0,
-               sorting: List[tuple[str, bool]] = []) -> tuple[List[TYetiObject], int]:
+               sorting: List[tuple[str, bool]] = [],
+               graph_queries: List[tuple[str, str, str, str]] = []) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
         Search the collection for all objects whose 'value' attribute matches
@@ -486,13 +593,21 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if count:
                 limit += f', {count}'
 
+        graph_query_string = ''
+        for name, graph, direction, field in graph_queries:
+            graph_query_string += f'\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})'
+
         aql_string = f"""
             FOR o IN @@collection
                 FILTER {' AND '.join(conditions)}
+                {graph_query_string}
                 SORT {', '.join(sorts)}
                 {limit}
-                RETURN o
             """
+        if graph_queries:
+            aql_string += f'\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
+        else:
+            aql_string += '\nRETURN o'
         args['@collection'] = colname
         for key in list(args.keys()):
             args[key.replace('.', '_')] = args.pop(key)
@@ -553,10 +668,10 @@ def tagged_observables_export(cls, args):
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
         LET tagnames = (
-                FOR t in VALUES(o.tags)
-                FILTER t.name NOT IN @ignore
-                FILTER (t.fresh OR NOT @fresh)
-                RETURN t.name
+                FOR v, e in 1..1 OUTBOUND o tagged
+                    FILTER v.name NOT IN @ignore
+                    FILTER (e.fresh OR NOT @fresh)
+                RETURN v.name
         )
         FILTER tagnames != []
         FILTER (@include ANY IN tagnames OR @include == [])

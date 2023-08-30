@@ -29,8 +29,11 @@ class TagTest(unittest.TestCase):
         self.obs1.tag(["test"])
         obs = Observable.find(value="test1.com")
         assert obs is not None
-        self.assertEqual(len(obs.tags), 1)
-        self.assertEqual(obs.tags["test"].name, "test")
+        tags = obs.observable_get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_rel, tag_data = tags[0]
+        self.assertEqual(tag_data.name, "test")
+        self.assertEqual(tag_rel.fresh, True)
 
     def test_tag_updates_count(self) -> None:
         """Test that the count of a tag is updated when a tag is added
@@ -49,6 +52,43 @@ class TagTest(unittest.TestCase):
         self.assertEqual(len(list(tags)), 1)
         self.assertEqual(tags[0].name, "test")
 
+    def test_tag_is_overwritten(self) -> None:
+        """Test that a tag is overwritten when it is added to an observable."""
+        self.obs1.tag(["test"])
+        self.obs1.tag(["test"])
+        tags = list(Tag.list())
+        self.assertEqual(len(list(tags)), 1)
+        self.assertEqual(tags[0].name, "test")
+
+    def test_tag_expiration(self) -> None:
+        """Test that a tag can be expired and it becomes fresh if tagged again."""
+        self.obs1.tag(["test"])
+        self.obs1.observable_expire_tag('test')
+        tags = self.obs1.observable_get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_relationship, _ = tags[0]
+        self.assertEqual(tag_relationship.fresh, False)
+
+        self.obs1.tag(["test"])
+        tags = self.obs1.observable_get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_relationship, _ = tags[0]
+        self.assertEqual(tag_relationship.fresh, True)
+
+    def test_clear_tags(self) -> None:
+        """Test that tags can be cleared from an observable."""
+        self.obs1.tag(["test"])
+        self.obs1.observable_clear_tags()
+        tags = self.obs1.observable_get_tags()
+        self.assertEqual(len(tags), 0)
+
+    def test_tag_strict(self) -> None:
+        """Test that tags can be cleared from an observable."""
+        self.obs1.tag(["test1", "test2", "test3"])
+        self.obs1.tag(["test"], strict=True)
+        tags = self.obs1.observable_get_tags()
+        self.assertEqual(len(tags), 1)
+
     def test_tag_replaces(self) -> None:
         """Test that a tag can replace another tag."""
         tag: Optional[Tag] = Tag(name="testst").save()
@@ -57,8 +97,10 @@ class TagTest(unittest.TestCase):
         newtag = newtag.save()
 
         self.obs1.tag(["testst"])
-        self.assertEqual(len(self.obs1.tags), 1)
-        self.assertEqual(self.obs1.tags["test"].name, "test")
+        tags = self.obs1.observable_get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_rel, tag_data = tags[0]
+        self.assertEqual(tag_data.name, "test")
 
         tag = Tag.find(name="testst")
         assert tag is not None
@@ -72,9 +114,10 @@ class TagTest(unittest.TestCase):
         Tag(name="test", produces=["test_extended"]).save()
 
         self.obs1.tag(["test"])
-        self.assertEqual(len(self.obs1.tags), 2)
-        self.assertEqual(self.obs1.tags["test"].name, "test")
-        self.assertEqual(self.obs1.tags["test_extended"].name, "test_extended")
+        tags = self.obs1.observable_get_tags()
+        self.assertEqual(len(tags), 2)
+        tag_names = [tag[1].name for tag in tags]
+        self.assertEqual(sorted(tag_names), sorted(["test", "test_extended"]))
 
         tag = Tag.find(name="test_extended")
         assert tag is not None
