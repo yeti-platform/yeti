@@ -18,21 +18,23 @@ class DataplaneDNSRecursive(task.FeedTask):
         "name": "DataplaneDNSRecursive",
         "description": "Feed of Dataplane DNS Recursive IPs with ASN",
     }
-
+    _NAMES = [
+        "ASN",
+        "ASname",
+        "ipaddr",
+        "lastseen",
+        "category",
+    ]
     def run(self):
         response = self._make_request(self.SOURCE,sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
-            columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
-            df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
-
-            for c in columns:
-                df[c] = df[c].str.strip()
-        
+            df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)        
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
-            for count, row in df.iterrows():
+            for _, row in df.iterrows():
                 self.analyze(row)
 
     def analyze(self, item):

@@ -26,9 +26,7 @@ class DataplaneDNSAny(task.FeedTask):
             lines = response.content.decode("utf-8").split("\n")[64:-5]
            
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
-
-            for c in self._NAMES:
-                df[c] = df[c].str.strip()
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df = df.dropna()
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
