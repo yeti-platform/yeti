@@ -126,8 +126,11 @@ async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     count = request_args.pop('count')
     page = request_args.pop('page')
     observables, total = Observable.filter(
-        request_args, offset=page*count, count=count, sorting=[('created', False)],
-        graph_queries=[('tags', 'tagged', 'OUTBOUND', 'name')])
+        request_args,
+        tags=request.tags,
+        offset=page*count,
+        count=count,
+        sorting=[('created', False)])
     return ObservableSearchResponse(observables=observables, total=total)
 
 @router.post('/add_text')

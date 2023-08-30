@@ -31,7 +31,7 @@ class ObservableType(str, Enum):
     asn = 'asn'
     cidr = 'cidr'
 
-class Observable(BaseModel, database_arango.ArangoYetiConnector):
+class Observable(BaseModel, database_arango.ObservableYetiConnector):
     _collection_name: str = 'observables'
     _type_filter: str | None = None
 
