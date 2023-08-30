@@ -38,17 +38,13 @@ class AbuseIPDB(task.FeedTask):
 
         context = {"source": self.name, "date_added": datetime.utcnow()}
 
-        try:
-            ip = observable.Observable.find(value=ip_value)
-            if not ip:
-                ip = observable.Observable(value=ip_value, type="ip").save()
+        
+        ip = observable.Observable.find(value=ip_value)
+        if not ip:
+            ip = observable.Observable(value=ip_value, type="ip").save()
 
-            logging.debug(f"Adding context to {ip_value}")
-            ip.add_context(self.name, context)
-            ip.tag(["blocklist"])
-
-        except Exception as e:
-            logging.error(e)
-
-
+        logging.debug(f"Adding context to {ip_value}")
+        ip.add_context(self.name, context)
+        ip.tag(["blocklist"])
+       
 taskmanager.TaskManager.register_task(AbuseIPDB)

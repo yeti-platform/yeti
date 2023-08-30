@@ -23,14 +23,11 @@ class BlocklistdeBruteforceLogin(task.FeedTask):
     def analyze(self, item):
         ip = item.strip()
 
-        try:
-            obs = observable.Observable.find(value=ip)
-            if not obs:
-                obs = observable.Observable(value=ip, type="ip").save()
+       
+        obs = observable.Observable.find(value=ip)
+        if not obs:
+            obs = observable.Observable(value=ip, type="ip").save()
 
-            obs.tag(["blocklist", "bruteforce"])
-        except Exception as e:
-            logging.error(e)
-
-
+        obs.tag(["blocklist", "bruteforce"])
+        
 taskmanager.TaskManager.register_task(BlocklistdeBruteforceLogin)
