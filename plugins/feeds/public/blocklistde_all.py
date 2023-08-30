@@ -5,7 +5,6 @@ from core.schemas import task
 from core import taskmanager
 
 
-
 class BlocklistdeAll(task.FeedTask):
     SOURCE = "https://lists.blocklist.de/lists/all.txt"
     _defaults = {
@@ -24,8 +23,6 @@ class BlocklistdeAll(task.FeedTask):
     def analyze(self, item):
         ip = item.strip()
 
-       
-
         try:
             obs = observable.Observable.find(value=ip)
             if not obs:
@@ -34,4 +31,5 @@ class BlocklistdeAll(task.FeedTask):
 
         except Exception as e:
             logging.error(e)
+
 taskmanager.TaskManager.register_task(BlocklistdeAll)
