@@ -45,7 +45,7 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
 
     pattern: str
     location: str
-    diamond: DiamondModel = Field(default_factory=DiamondModel.capability)
+    diamond: DiamondModel
     kill_chain_phases: list[str] = []
 
     @classmethod
