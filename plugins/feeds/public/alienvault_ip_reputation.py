@@ -44,9 +44,9 @@ class AlienVaultIPReputation(task.FeedTask):
             ip_str = item["IP"]
             category = item["Tag"]
             country = item["Country"]
-            
        
             ip = observable.Observable.find(value=ip_str)
+            
             if not ip:
                 ip = observable.Observable(value=ip_str, type="ip").save()
             
