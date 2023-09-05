@@ -50,6 +50,7 @@ passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 celery = {extras = ["redis"], version = "^5.2.7"}
 otxv2 = "^1.5.12"
+validators = "^0.22.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
