@@ -11,7 +11,7 @@ from core.helpers import REGEXES, refang
 from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 from core.schemas.graph import TagRelationship
-
+from core.helpers import validate_observable,find_type
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
@@ -50,7 +50,9 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Observable":
         return cls(**object)
-
+    @classmethod
+    def is_valid(cls, object: dict) -> bool:
+        return validate_observable(object)
     @classmethod
     def add_text(cls, text: str, tags: list[str] = []) -> "Observable":
         """Adds and returns an observable for a given string.
@@ -63,23 +65,22 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
             A saved Observable instance.
         """
         refanged = refang(text)
-        for observable_type, regex in REGEXES:
-            if not regex.match(refanged):
-                continue
-            observable = Observable.find(value=refanged)
-            if observable:
-                return observable.tag(tags)
-            else:
-                observable = Observable(
-                    value=refanged,
-                    type=observable_type,
-                    created=datetime.datetime.now(datetime.timezone.utc)
-                    ).save()
-            if tags:
-                observable = observable.tag(tags)
-            return observable
-
-        raise ValueError(f"Invalid observable '{text}'")
+        observable_type = find_type(refanged)
+        if not observable_type:
+            raise ValueError(f"Invalid observable '{text}'")
+                    
+        observable = Observable.find(value=refanged)
+        if observable:
+            return observable.tag(tags)
+        else:
+            observable = Observable(
+                value=refanged,
+                type=observable_type,
+                created=datetime.datetime.now(datetime.timezone.utc)
+                ).save()
+        if tags:
+            observable = observable.tag(tags)
+        return observable
 
     def tag(self,
             tags: list[str],
