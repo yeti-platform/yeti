@@ -29,6 +29,8 @@ class ObservableType(str, Enum):
     cidr = 'cidr'
     certificate = 'certificate'
     bitcoin_wallet = 'bitcoin_wallet'
+    path = 'path'
+    mac_address = 'mac_address'
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
