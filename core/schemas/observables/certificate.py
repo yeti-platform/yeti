@@ -3,6 +3,7 @@ import datetime
 from pydantic import Field
 from core.schemas.observable import ObservableType
 
+
 class Certificate(Observable):
     last_seen: datetime.datetime = Field(default_factory=datetime.datetime.now)
     first_seen: datetime.datetime = Field(default_factory=datetime.datetime.now)

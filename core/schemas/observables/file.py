@@ -4,6 +4,7 @@ from core.schemas.observables.md5 import MD5
 from core.schemas.observables.sha1 import SHA1
 from core.schemas.observables.sha256 import SHA256
 
+
 class File(Observable):
     value: str
     type: ObservableType = ObservableType.file
