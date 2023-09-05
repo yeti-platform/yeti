@@ -31,6 +31,8 @@ class ObservableType(str, Enum):
     bitcoin_wallet = 'bitcoin_wallet'
     path = 'path'
     mac_address = 'mac_address'
+    cli = 'cli'
+    registry_key = 'registry_key'
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
