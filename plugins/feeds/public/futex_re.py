@@ -1,28 +1,34 @@
+from io import StringIO
 import logging
 from datetime import timedelta, datetime
 
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import AutonomousSystem, Hash, Url
+import pandas as pd
+
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class FutexTracker(Feed):
-    default_values = {
-        "frequency": timedelta(minutes=60),
+class FutexTracker(task.FeedTask):
+    SOURCE = "https://futex.re/tracker/TinyTracker.csv"
+    _defaults = {
+        "frequency": timedelta(hours=1),
         "name": "FutexTracker",
-        "source": "https://futex.re/tracker/TinyTracker.csv",
-        "description": "Provides url, hash and hosting information on various malware samples.",
-        # pylint: disable=line-too-long
+        "description": "Futex Tracker",
     }
 
-    def update(self):
-        for index, line in self.update_csv(
-            delimiter=";",
-            filter_row="firstseen",
-            names=["id", "firstseen", "url", "status", "hash", "country", "as"],
-            header=None,
-        ):
-            self.analyze(line)
+    def run(self):
+        response = self._make_request(self.SOURCE)
+        if response:
+            data = response.text
+            names = ["id", "firstseen", "url", "status", "hash", "country", "as"]
+            df = pd.read_csv(StringIO(data), names=names, delimiter=";", header=0)
+            df.fillna("", inplace=True)
+
+            df = self._filter_observables_by_time(df, "firstseen")
+
+            for _, row in df.iterrows():
+                self.analyze(row)
 
     # pylint: disable=arguments-differ
     def analyze(self, item):
@@ -40,38 +46,35 @@ class FutexTracker(Feed):
         context = {
             "source": self.name,
             "country": country,
-            "date_added": datetime.utcnow(),
+            "status": _status,
         }
 
         url_obs = None
 
         if url:
-            try:
-                url_obs = Url.get_or_create(value=url.rstrip())
-                url_obs.add_context(context, dedup_list=["date_added"])
-                url_obs.tag(tags)
-                url_obs.add_source(self.name)
-            except ObservableValidationError as e:
-                logging.error(e)
+            url_obs = observable.Observable.find(value=url)
+            if not url_obs:
+                url_obs = observable.Observable(value=url, type="url").save()
+            url_obs.add_context(self.name, context)
+            url_obs.tag(tags)
 
         if _hash and len(_hash) > 16:
-            try:
-                hash_obs = Hash.get_or_create(value=_hash)
-                hash_obs.add_context(context, dedup_list=["date_added"])
-                hash_obs.tag(tags)
-                hash_obs.add_source(self.name)
-                if url_obs:
-                    hash_obs.active_link_to(url_obs, "MD5", self.name, clean_old=False)
-            except ObservableValidationError as e:
-                logging.error(e)
+            hash_obs = observable.Observable.find(value=_hash)
+            if not hash_obs:
+                hash_obs = observable.Observable(value=_hash, type="md5").save()
+            hash_obs.add_context(self.name, context)
+            hash_obs.tag(tags)
+            if url_obs:
+                hash_obs.link_to(url_obs, "downloaded", self.name)
 
         if asn:
-            try:
-                asn = asn.split(" ")[0].replace("AS", "")
-                asn_obs = AutonomousSystem.get_or_create(value=asn)
-                asn_obs.add_context(context, dedup_list=["date_added"])
-                asn_obs.tag(tags)
-                asn_obs.add_source(self.name)
-                asn_obs.active_link_to(url_obs, "ASN", self.name, clean_old=False)
-            except ObservableValidationError as e:
-                logging.error(e)
+            asn_obs = observable.Observable.find(value=asn)
+            if not asn_obs:
+                asn_obs = observable.Observable(value=asn, type="asn").save()
+            asn_obs.add_context(self.name, context)
+            asn_obs.tag(tags)
+            if url_obs:
+                asn_obs.link_to(url_obs, "ASN-Url", self.name)
+
+
+taskmanager.TaskManager.register_task(FutexTracker)

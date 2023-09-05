@@ -24,6 +24,12 @@ class IndicatorMatch(BaseModel):
     name: str
     match: str
 
+class DiamondModel(Enum):
+    adversary = 'adversary'
+    capability = 'capability'
+    infrastructure = 'infrastructure'
+    victim = 'victim'
+
 class Indicator(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'indicators'
     _type_filter: str = ''
@@ -39,6 +45,7 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
 
     pattern: str
     location: str
+    diamond: DiamondModel
     kill_chain_phases: list[str] = []
 
     @classmethod

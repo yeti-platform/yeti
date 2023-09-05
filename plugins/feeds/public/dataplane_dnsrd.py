@@ -2,58 +2,70 @@ import logging
 from datetime import datetime, timedelta
 
 import pandas as pd
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import AutonomousSystem, Ip
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class DataplaneDNSRecursive(Feed):
+class DataplaneDNSRecursive(task.FeedTask):
     """
     Feed of Dataplane DNS Recursive IPs with ASN
     """
 
-    default_values = {
-        "frequency": timedelta(hours=2),
+    SOURCE = "https://dataplane.org/dnsrd.txt"
+    _defaults = {
+        "frequency": timedelta(hours=12),
         "name": "DataplaneDNSRecursive",
-        "source": "https://dataplane.org/dnsrd.txt",
-        "description": "Entries below are records of source IP addresses that have been identified as sending recursive DNS queries.",
+        "description": "Feed of Dataplane DNS Recursive IPs with ASN",
     }
-
-    def update(self):
-        resp = self._make_request(sort=False)
-        lines = resp.content.decode("utf-8").split("\n")[64:-5]
-        columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
-        df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
-
-        for c in columns:
-            df[c] = df[c].str.strip()
-        df = df.dropna()
-        df["lastseen"] = pd.to_datetime(df["lastseen"])
-        if self.last_run:
-            df = df[df["lastseen"] > self.last_run]
-        for count, row in df.iterrows():
-            self.analyze(row)
+    _NAMES = [
+        "ASN",
+        "ASname",
+        "ipaddr",
+        "lastseen",
+        "category",
+    ]
+    def run(self):
+        response = self._make_request(self.SOURCE,sort=False)
+        if response:
+            lines = response.content.decode("utf-8").split("\n")[64:-5]
+            df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)        
+            df["lastseen"] = pd.to_datetime(df["lastseen"])
+            df.fillna("", inplace=True)
+            df = self._filter_observables_by_time(df, "lastseen")
+            for _, row in df.iterrows():
+                self.analyze(row)
 
     def analyze(self, item):
         context_ip = {
             "source": self.name,
             "last_seen": item["lastseen"],
-            "date_added": datetime.utcnow(),
         }
 
-        try:
-            ip = Ip.get_or_create(value=item["ipaddr"])
-            ip.add_context(context_ip, dedup_list=["date_added"])
-            ip.add_source(self.name)
-            ip.tag("dataplane")
-            ip.tag("dns")
-            ip.tag(item["category"])
+        ip = observable.Observable.find(value=item["ipaddr"])
+        if not ip:
+            ip = observable.Observable(value=item["ipaddr"], type="ip").save()
+        category = item["category"].lower()
+        tags = ["dataplane", "dnsrd"]
+        if category:
+            tags.append(category)
+        ip.add_context(self.name, context_ip)
+        ip.tag(tags)
 
-            asn = AutonomousSystem.get_or_create(value=item["ASN"])
-            context_ans = {"source": self.name, "name": item["ASname"]}
-            asn.add_context(context_ans, dedup_list=["date_added"])
-            asn.add_source(self.name)
-            asn.tag("dataplane")
-            asn.active_link_to(ip, "AS", self.name)
-        except ObservableValidationError as e:
-            logging.error(e)
+        asn_obs = observable.Observable.find(value=item["ASN"])
+        if not asn_obs:
+            asn_obs = observable.Observable(value=item["ASN"], type="asn").save()
+
+        context_asn = {
+            "source": self.name,
+            "name": item["ASname"],
+            "last_seen": item["lastseen"],
+        }
+        asn_obs.add_context(self.name, context_asn)
+        asn_obs.tag(tags)
+
+        asn_obs.link_to(ip, "ASN_IP", self.name)
+
+
+taskmanager.TaskManager.register_task(DataplaneDNSRecursive)

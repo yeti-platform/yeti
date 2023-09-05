@@ -44,7 +44,7 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 
     id: str | None = None
     name: str
-    enabled: bool = True
+    enabled: bool = False
     description: str = ''
     status: TaskStatus = TaskStatus.idle
     status_message: str = ''
@@ -145,7 +145,8 @@ class FeedTask(Task):
             if self.last_run > last_modified:
                 msg = (f"{url}: Last-Modified header ({last_modified_header}) "
                        "before last-run ({self.last_run})")
-                raise RuntimeError(msg)
+                logging.debug(msg)
+                return
 
         return response
 

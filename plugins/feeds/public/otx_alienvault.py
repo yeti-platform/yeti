@@ -1,96 +1,120 @@
+from io import StringIO
+import json
 import logging
 import time
 from datetime import datetime, timedelta
 
-from core import Feed
+import pandas as pd
 from core.config.config import yeti_config
-from core.entities import Exploit, Entity
-from core.errors import ObservableValidationError
-from core.indicators import Yara, Indicator
-from core.observables import Hash, Hostname, Url, Observable
+from core.schemas import observable
+from core.schemas import indicator
+from core.schemas import entity
+from core.schemas import task
+from core import taskmanager
+
+from OTXv2 import OTXv2
 
 
-class OTXAlienvault(Feed):
-    default_values = {
-        "frequency": timedelta(days=1),
+class OTXAlienvault(task.FeedTask):
+    _defaults = {
+        "frequency": timedelta(hours=1),
         "name": "OTXAlienvault",
-        "source": "https://otx.alienvault.com/api/v1/pulses/subscribed",
-        "description": "Feed of OTX by Alienvault",
+        "description": "Alienvault OTX",
     }
 
-    def __init__(self, *args, **kwargs):
-        self.refs = {
-            "hostname": Hostname,
-            "domain": Hostname,
-            "FileHash-MD5": Hash,
-            "FileHash-SHA256": Hash,
-            "FileHash-SHA1": Hash,
-            "URL": Url,
-            "YARA": Yara,
-            "CVE": Exploit,
-        }
-        super(OTXAlienvault, self).__init__(*args, **kwargs)
+    _TYPE_MAPPING = {
+        "hostname": observable.ObservableType.hostname,
+        "domain": observable.ObservableType.hostname,
+        "FileHash-MD5": observable.ObservableType.md5,
+        "FileHash-SHA256": observable.ObservableType.sha256,
+        "FileHash-SHA1": observable.ObservableType.sha1,
+        "URL": observable.ObservableType.url,
+        "YARA": indicator.IndicatorType.yara,
+        "CVE": entity.EntityType.exploit,
+    }
 
-    def update(self):
+    def run(self):
         otx_key = yeti_config.get("otx", "key")
+        limit = yeti_config.get("otx", "limit")
+        days = yeti_config.get("otx", "days")
 
-        number_page = yeti_config.get("otx", "pages")
+        assert otx_key, "OTX key not configured in yeti.conf"
 
-        assert otx_key and number_page, "OTX key and pages not configured in yeti.conf"
+        if not limit:
+            limit = 50
 
-        headers = {"X-OTX-API-KEY": otx_key}
+        if not days:
+            last_day = 60
 
-        for i in range(1, int(number_page)):
-            items = self.update_json(
-                headers=headers, params={"page": i}, key="results", filter_row="created"
-            )
-            for index, item in items:
-                self.analyze(item)
-            time.sleep(2)
+        client_otx = OTXv2(otx_key)
+        if not client_otx:
+            logging.error("Error to connect to OTX")
+            raise Exception("Error to connect to OTX")
+
+        if self.last_run:
+            data = client_otx.getsince(timestamp=self.last_run)
+
+        else:
+            delta_time = datetime.now() - timedelta(days=last_day)
+            logging.debug("Getting OTX data since %s" % delta_time)
+            data = client_otx.getsince(timestamp=delta_time)
+
+        df = pd.read_json(
+            StringIO(json.dumps(data)), orient="values", convert_dates=["created"]
+        )
+        df.fillna("", inplace=True)
+
+        for _, row in df.iterrows():
+            self.analyze(row)
 
     def analyze(self, item):
         context = dict(source=self.name)
         context["references"] = "\r\n".join(item["references"])
         context["description"] = item["description"]
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]
-        context["date_added"] = datetime.utcnow()
 
         tags = item["tags"]
 
-        for indicator in item["indicators"]:
-            type_ind = self.refs.get(indicator["type"])
+        for otx_indic in item["indicators"]:
+            type_ind = self._TYPE_MAPPING.get(otx_indic["type"])
             if not type_ind:
                 continue
 
-            context["title"] = indicator["title"]
-            context["infos"] = indicator["description"]
+            context["title"] = otx_indic["title"]
+            context["infos"] = otx_indic["description"]
             context["created"] = datetime.strptime(
-                indicator["created"], "%Y-%m-%dT%H:%M:%S"
+                otx_indic["created"], "%Y-%m-%dT%H:%M:%S"
             )
-            if issubclass(type_ind, Observable):
-                try:
-                    obs = type_ind.get_or_create(value=indicator["indicator"])
-                    obs.tag(tags)
-                    obs.add_context(context, dedup_list=["date_added"])
-                    obs.add_source("feed")
+            if type_ind in observable.ObservableType:
+                obs = observable.Observable.find(value=otx_indic["indicator"])
+                if not obs:
+                    obs = observable.Observable(
+                        value=otx_indic["indicator"],
+                        type=self._TYPE_MAPPING.get(otx_indic["type"]),
+                    ).save()
+                obs.tag(tags)
+                obs.add_context(self.name, context)
 
-                except ObservableValidationError as e:
-                    logging.error(e)
+            elif type_ind in entity.EntityType:
+                ent = entity.Entity.find(value=otx_indic["indicator"])
+                if not ent:
+                    ent = entity.Entity(
+                        name=otx_indic["indicator"],
+                        type=self._TYPE_MAPPING.get(otx_indic["type"]),
+                    ).save()
 
-            elif issubclass(type_ind, Entity):
-                type_ind.get_or_create(name=indicator["indicator"])
+            elif type_ind in indicator.IndicatorType:
+                if type_ind == indicator.IndicatorType.yara:
+                    yara_rule = indicator.Indicator.find(name=otx_indic["indicator"])
+                    if not yara_rule:
+                        yara_rule = indicator.Indicator(
+                            name=f"YARA_{otx_indic['indicator']}",
+                            pattern=otx_indic["content"],
+                            type=indicator.IndicatorType.yara,
+                            location="OTX",
+                            diamond=indicator.DiamondModel.capability,
+                        ).save()
+                    
 
-            elif issubclass(type_ind, Indicator):
-                if type_ind == Yara:
-                    try:
-                        type_ind.get_or_create(
-                            name="YARA_%s" % indicator["indicator"],
-                            diamond="capability",
-                            location="feeds",
-                            pattern=indicator["content"],
-                        )
-                    except Exception:
-                        logging.error("Error to create indicator %s" % indicator)
 
-            else:
-                logging.error("type of indicators is unknown %s", indicator["type"])
+taskmanager.TaskManager.register_task(OTXAlienvault)

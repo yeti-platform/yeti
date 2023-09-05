@@ -1,32 +1,34 @@
 import logging
 from datetime import timedelta, datetime
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Ip
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class BlocklistdeApache(Feed):
-    default_values = {
+class BlocklistdeApache(task.FeedTask):
+    SOURCE = "https://lists.blocklist.de/lists/apache.txt"
+
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeApache",
-        "source": "https://lists.blocklist.de/lists/apache.txt",
         "description": "All IP addresses which have been reported within the last 48 hours as having run attacks on the service Apache, Apache-DDOS, RFI-Attacks.",
     }
 
-    def update(self):
-        for line in self.update_lines():
-            self.analyze(line)
+    def run(self):
+        response = self._make_request(self.SOURCE)
+        if response:
+            data = response.text
+            for item in data.split("\n"):
+                self.analyze(item)
 
     def analyze(self, item):
         ip = item.strip()
 
-        context = {"source": self.name, "date_added": datetime.utcnow()}
+        obs = observable.Observable.find(value=ip)
+        if not obs:
+            obs = observable.Observable(value=ip, type="ip").save()
 
-        try:
-            obs = Ip.get_or_create(value=ip)
-            obs.add_context(context, dedup_list=["date_added"])
-            obs.add_source(self.name)
-            obs.tag("blocklistde")
-            obs.tag("apache")
-        except ObservableValidationError as e:
-            logging.error(e)
+        obs.tag(["blocklist", "apache"])
+
+
+taskmanager.TaskManager.register_task(BlocklistdeApache)

@@ -30,6 +30,9 @@ class ObservableType(str, Enum):
     md5 = 'md5'
     asn = 'asn'
     cidr = 'cidr'
+    certificate = 'certificate'
+    bitcoin_wallet = 'bitcoin_wallet'
+
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
     _collection_name: str = 'observables'

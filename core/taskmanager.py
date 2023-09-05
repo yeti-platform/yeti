@@ -8,15 +8,66 @@ import traceback
 
 
 app = Celery(
-    'tasks',
-    broker='redis://redis/',
-    imports = (
+    "tasks",
+    broker="redis://redis/",
+    imports=(
         # TESTING ONLY
         "plugins.feeds.public.random",
         "plugins.analytics.public.random_analytics",
         "plugins.feeds.public.abusech_malwarebazaar",
-    ))
-
+        "plugins.feeds.public.abuseipdb",
+        "plugins.feeds.public.azorult-tracker",
+        "plugins.feeds.public.alienvault_ip_reputation",
+        "plugins.feeds.public.blocklistde_all",
+        "plugins.feeds.public.blocklistde_apache",
+        "plugins.feeds.public.blocklistde_bots",
+        "plugins.feeds.public.blocklistde_bruteforcelogin",
+        "plugins.feeds.public.blocklistde_ftp",
+        "plugins.feeds.public.blocklistde_imap",
+        "plugins.feeds.public.blocklistde_ircbot",
+        "plugins.feeds.public.blocklistde_mail",
+        "plugins.feeds.public.blocklistde_sip",
+        "plugins.feeds.public.blocklistde_ssh",
+        "plugins.feeds.public.blocklistde_strongips",
+        "plugins.feeds.public.botvrij_domain",
+        "plugins.feeds.public.botvrij_filename",
+        "plugins.feeds.public.botvrij_hostname",
+        "plugins.feeds.public.botvrij_ipdst",
+        "plugins.feeds.public.botvrij_md5",
+        "plugins.feeds.public.botvrij_sha256",
+        "plugins.feeds.public.botvrij_sha1",
+        "plugins.feeds.public.botvrij_url",
+        "plugins.feeds.public.cruzit",
+        "plugins.feeds.public.dataplane_dnsrd",
+        "plugins.feeds.public.dataplane_dnsrdany",
+        "plugins.feeds.public.dataplane_dnsversion",
+        "plugins.feeds.public.dataplane_proto41",
+        "plugins.feeds.public.dataplane_sipinvite",
+        "plugins.feeds.public.dataplane_sipregistr",
+        "plugins.feeds.public.dataplane_smtpdata",
+        "plugins.feeds.public.dataplane_smtpgreet",
+        "plugins.feeds.public.dataplane_sshclient",
+        "plugins.feeds.public.dataplane_sshpwauth",
+        "plugins.feeds.public.dataplane_telnetlogin",
+        "plugins.feeds.public.dataplane_vnc",
+        "plugins.feeds.public.feodo_tracker_ip_blocklist",
+        "plugins.feeds.public.futex_re",
+        "plugins.feeds.public.hybrid_analysis",
+        "plugins.feeds.public.misp",
+        "plugins.feeds.public.openphish",
+        "plugins.feeds.public.otx_alienvault",
+        "plugins.feeds.public.phishing_database",
+        "plugins.feeds.public.phishtank",
+        "plugins.feeds.public.rulezskbruteforceblocker",
+        "plugins.feeds.public.sslblacklist_fingerprints",
+        "plugins.feeds.public.sslblacklist_ip",
+        "plugins.feeds.public.threatfox",
+        "plugins.feeds.public.threatview_c2",
+        "plugins.feeds.public.tor_exit_nodes",
+        "plugins.feeds.public.urlhaus",
+        "plugins.feeds.public.viriback_tracker",
+        "plugins.feeds.public.vxvault_url",)
+)
 
 class TaskManager():
 
@@ -34,12 +85,12 @@ class TaskManager():
         """
         if not task_name:
             task_name = task_class.__name__
-        logging.info('Registering task', task_name)
+        logging.info("Registering task", task_name)
         task = task_class.find(name=task_name)
         if not task:
-            logging.info('Task not found in database, creating.')
+            logging.info("Task not found in database, creating.")
             task_dict = task_class._defaults.copy()
-            task_dict['name'] = task_name
+            task_dict["name"] = task_name
             task = task_class(**task_dict).save()
         cls._store[task_name] = task
 
@@ -53,9 +104,9 @@ class TaskManager():
         """Loads tasks from the database and refreshes cache."""
         if task_name not in cls._store:
             # ExportTasks are
-            logging.error(f'Task {task_name} not found. Was it registered?')
-            logging.error('Registered tasks: ', cls._store.keys())
-            raise ValueError(f'Task {task_name} not found. Was it registered?')
+            logging.error(f"Task {task_name} not found. Was it registered?")
+            logging.error("Registered tasks: ", cls._store.keys())
+            raise ValueError(f"Task {task_name} not found. Was it registered?")
 
         task_class = cls._store[task_name].__class__
         task = task_class.find(name=task_name)
@@ -67,7 +118,7 @@ class TaskManager():
         logging.info(f"Running task {task_name}")
         task = TaskManager.load_task(task_name)
         if not task.enabled:
-            task.status_message = 'Task is disabled.'
+            task.status_message = "Task is disabled."
             task.status = TaskStatus.failed
             task.save()
             return
@@ -91,8 +142,9 @@ class TaskManager():
 
         task.status = TaskStatus.completed
         task.last_run = datetime.datetime.now(datetime.timezone.utc)
-        task.status_message = ''
+        task.status_message = ""
         task.save()
+
 
 @app.task
 def run_task(task_name):

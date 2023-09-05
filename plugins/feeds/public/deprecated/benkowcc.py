@@ -1,16 +1,16 @@
 import logging
 from datetime import timedelta, datetime
 
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Url, Ip
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class BenkowTracker(Feed):
-    default_values = {
+class BenkowTracker(task.FeedTask):
+    URL_FEED = "https://benkow.cc/export_csv.php"
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BenkowTracker",
-        "source": "http://benkow.cc/export.php",
         "description": "This feed contains known Malware C2 servers",
     }
 
@@ -32,21 +32,22 @@ class BenkowTracker(Feed):
 
         try:
             if url:
-                url_obs = Url.get_or_create(value=url)
-                url_obs.add_context(context, dedup_list=["date_added"])
-                url_obs.add_source(self.name)
+                url_obs = observable.Observable.find(value=url)
+                if not url_obs:
+                    url_obs = observable.Observable(value=url, type="url").save()
+                url_obs.add_context(self.name, context)
                 url_obs.tag(tags)
 
-        except ObservableValidationError as e:
+        except Exception as e:
             logging.error(e)
 
         try:
             if ip:
-                ip_obs = Ip.get_or_create(value=ip)
-                ip_obs.add_context(context, dedup_list=["date_added"])
-                ip_obs.add_source(self.name)
-                ip_obs.tag(tags)
+                ip_obs = observable.Observable.find(value=ip)
+                if not ip_obs:
+                    ip_obs = observable.Observable(value=ip, type="ip").save()
+                ip_obs.add_context(self.name, context)
                 if url_obs:
-                    ip_obs.active_link_to(url_obs, "url", self.name, clean_old=False)
-        except ObservableValidationError as e:
+                    url_obs.link_to(ip_obs, "url-ip", self.name)
+        except Exception as e:
             logging.error(e)
