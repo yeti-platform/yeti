@@ -2,20 +2,35 @@ import hashlib
 import re
 from datetime import timedelta
 
+from core.schemas.observable import Observable
+import validators
+import core.schemas.observable as observable
+
 REGEXES = [
-    ('ip', re.compile(r"(?P<pre>\W?)(?P<search>(?:\d{1,3}\.){3}\d{1,3})(?P<post>\W?)")),
-    ('hostname', re.compile(r"(?P<pre>\W?)(?P<search>[-.\w[\]]+\[?\.\]?[\w-]+)(?P<post>\W?)")),
-    ('url', re.compile(
-        r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>"
-        + r"[-.\w[\]]+\[?\.\]?[\w-]+"
-        + r")(\:[\d]{1,5})?(?P<path>((\/[^\?]*?)?(\?[^#]*?)?(\#.*?)?)[\w/])?)"
-    )),
-    ('email', re.compile(r"(?P<pre>\W?)(?P<search>[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[\w-]+)(?P<post>\W?)")),
-    ('md5', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{32})(?P<post>\W?)")),
-    ('sha1', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{40})(?P<post>\W?)")),
-    ('sha256', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{64})(?P<post>\W?)")),
-    ('sha512', re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{128})(?P<post>\W?)")),
-    ('cve', re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)")),
+    ("ip", re.compile(r"(?P<pre>\W?)(?P<search>(?:\d{1,3}\.){3}\d{1,3})(?P<post>\W?)")),
+    (
+        "hostname",
+        re.compile(r"(?P<pre>\W?)(?P<search>[-.\w[\]]+\[?\.\]?[\w-]+)(?P<post>\W?)"),
+    ),
+    (
+        "url",
+        re.compile(
+            r"(?P<search>((?P<scheme>[\w]{2,9}):\/\/)?([\S]*\:[\S]*\@)?(?P<hostname>"
+            + r"[-.\w[\]]+\[?\.\]?[\w-]+"
+            + r")(\:[\d]{1,5})?(?P<path>((\/[^\?]*?)?(\?[^#]*?)?(\#.*?)?)[\w/])?)"
+        ),
+    ),
+    (
+        "email",
+        re.compile(
+            r"(?P<pre>\W?)(?P<search>[\w-]+(?:\.[\w-]+)*@(?:[\w-]+\.)+[\w-]+)(?P<post>\W?)"
+        ),
+    ),
+    ("md5", re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{32})(?P<post>\W?)")),
+    ("sha1", re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{40})(?P<post>\W?)")),
+    ("sha256", re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{64})(?P<post>\W?)")),
+    ("sha512", re.compile(r"(?P<pre>\W?)(?P<search>[a-fA-F\d]{128})(?P<post>\W?)")),
+    ("cve", re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)")),
 ]
 
 timedelta_regex = re.compile(
@@ -40,9 +55,25 @@ def refang(url):
     return url
 
 
+def validate_observable(obs: Observable) -> bool:
+    if obs.type in _MAPPING_VALIDATORS:
+        return _MAPPING_VALIDATORS[obs.type](obs.value)
+    else:
+        if obs.type in dict(REGEXES):
+            return dict(REGEXES)[obs.type].match(obs.value)
 
 
 
+_MAPPING_VALIDATORS = {
+    observable.ObservableType.ip: validators.ipv4,
+    observable.ObservableType.bitcoin_wallet: validators.btc_address,
+    observable.ObservableType.sha256: validators.sha256,
+    observable.ObservableType.sha1: validators.sha1,
+    observable.ObservableType.md5: validators.md5,
+    observable.ObservableType.hostname: validators.domain,
+    observable.ObservableType.url: validators.url,
+    observable.ObservableType.email: validators.email,
+}
 
 
 def stream_sha256(stream):
