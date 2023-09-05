@@ -14,9 +14,10 @@ class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         db = ArangoDatabase()
         db.connect()
+        
 
     def test_certificate(self):
-        cert = Certificate(value="146465498223")
+        cert = Certificate.get_or_create(value="146465498223")
 
         cert.issuer = "CN=Test"
         cert.serial_number = "146465498223"
