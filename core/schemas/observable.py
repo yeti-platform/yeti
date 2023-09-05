@@ -11,7 +11,7 @@ from core.helpers import REGEXES, refang
 from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 from core.schemas.graph import TagRelationship
-from helpers import now
+from core.helpers import now
 
 # Data Schema
 class ObservableType(str, Enum):
