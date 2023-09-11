@@ -71,3 +71,4 @@ vagrant
 #venv
 venv*
 .vscode/settings.json
+extras/docker/*
