@@ -1,6 +1,7 @@
 import hashlib
 import re
 from datetime import timedelta
+import datetime
 
 import validators
 
@@ -63,6 +64,9 @@ TYPE_VALIDATOR_MAP = {
     observable.ObservableType.url: validators.url,
     observable.ObservableType.email: validators.email,
 }
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def stream_sha256(stream):

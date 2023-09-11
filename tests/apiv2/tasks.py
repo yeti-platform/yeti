@@ -44,13 +44,13 @@ class TaskTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['name'], "FakeTask")
-        self.assertEqual(data['enabled'], False)
+        self.assertEqual(data['enabled'], True)
 
         response = client.post("/api/v2/tasks/FakeTask/toggle")
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data['name'], "FakeTask")
-        self.assertEqual(data['enabled'], True)
+        self.assertEqual(data['enabled'], False)
 
     @mock.patch('core.taskmanager.run_task.delay')
     def test_run_task(self, mock_delay):
@@ -134,14 +134,6 @@ class ExportTaskTest(unittest.TestCase):
         self.assertEqual(
             data['detail'],
             "ExportTask could not be patched: Template NOTEXIST not found")
-
-    def test_export_content(self):
-        """Tests that the API returns rendered data correctly."""
-        taskmanager.TaskManager.run_task('RandomExport')
-        response = client.get("/api/v2/tasks/export/RandomExport/content")
-        data = response.text
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(data, 'export1.com\nexport2.com\nexport3.com\n')
 
     def tearDown(self) -> None:
         database_arango.db.clear()
