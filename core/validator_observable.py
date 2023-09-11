@@ -1,6 +1,7 @@
 
 import validators
-from core.schemas import observable
+from core.schemas.observable import ObservableType
+from core.schemas.observable import Observable
 from core.schemas import entity
 import re
 
@@ -9,17 +10,17 @@ REGEXES = [
 ]
 
 TYPE_VALIDATOR_MAP = {
-    observable.ObservableType.ip: validators.ipv4,
-    observable.ObservableType.bitcoin_wallet: validators.btc_address,
-    observable.ObservableType.sha256: validators.sha256,
-    observable.ObservableType.sha1: validators.sha1,
-    observable.ObservableType.md5: validators.md5,
-    observable.ObservableType.hostname: validators.domain,
-    observable.ObservableType.url: validators.url,
-    observable.ObservableType.email: validators.email,
+    ObservableType.ip: validators.ipv4,
+    ObservableType.bitcoin_wallet: validators.btc_address,
+    ObservableType.sha256: validators.sha256,
+    ObservableType.sha1: validators.sha1,
+    ObservableType.md5: validators.md5,
+    ObservableType.hostname: validators.domain,
+    ObservableType.url: validators.url,
+    ObservableType.email: validators.email,
 }
 
-def validate_observable(obs: observable.Observable) -> bool:
+def validate_observable(obs: Observable) -> bool:
     if obs.type in TYPE_VALIDATOR_MAP:
         return TYPE_VALIDATOR_MAP[obs.type](obs.value)
     elif obs.type in dict(REGEXES):
@@ -28,7 +29,7 @@ def validate_observable(obs: observable.Observable) -> bool:
         return False
 
 
-def find_type(value: str) -> observable.ObservableType | None:
+def find_type(value: str) -> ObservableType | None:
     for obs_type in TYPE_VALIDATOR_MAP:
         if TYPE_VALIDATOR_MAP[obs_type](value):
             return obs_type
