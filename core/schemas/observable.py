@@ -68,11 +68,9 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
         observable_type = find_type(refanged)
         if not observable_type:
             raise ValueError(f"Invalid observable '{text}'")
-                    
+
         observable = Observable.find(value=refanged)
-        if observable:
-            return observable.tag(tags)
-        else:
+        if not observable:
             observable = Observable(
                 value=refanged,
                 type=observable_type,
