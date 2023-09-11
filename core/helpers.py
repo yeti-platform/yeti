@@ -2,10 +2,11 @@ import hashlib
 import re
 from datetime import timedelta
 
-from core.schemas.observable import Observable
 import validators
-import core.schemas.observable as observable
+
 import core.schemas.entity as entity
+import core.schemas.observable as observable
+from core.schemas.observable import Observable
 
 REGEXES = [
     (entity.EntityType.exploit, re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)")),
@@ -34,25 +35,25 @@ def refang(url):
 
 
 def validate_observable(obs: Observable) -> bool:
-    if obs.type in _MAPPING_VALIDATORS:
-        return _MAPPING_VALIDATORS[obs.type](obs.value)
+    if obs.type in TYPE_VALIDATOR_MAP:
+        return TYPE_VALIDATOR_MAP[obs.type](obs.value)
     elif obs.type in dict(REGEXES):
         return dict(REGEXES)[obs.type].match(obs.value)
     else:
         return False
-    
+
 
 def find_type(value: str) -> observable.ObservableType | None:
-        for obs_type in _MAPPING_VALIDATORS:
-            if _MAPPING_VALIDATORS[obs_type](value):
-                return obs_type
-        for type_obs, regex in REGEXES:
-            if regex.match(value):
-                return 
-        return None
+    for obs_type in TYPE_VALIDATOR_MAP:
+        if TYPE_VALIDATOR_MAP[obs_type](value):
+            return obs_type
+    for type_obs, regex in REGEXES:
+        if regex.match(value):
+            return
+    return None
 
 
-_MAPPING_VALIDATORS = {
+TYPE_VALIDATOR_MAP = {
     observable.ObservableType.ip: validators.ipv4,
     observable.ObservableType.bitcoin_wallet: validators.btc_address,
     observable.ObservableType.sha256: validators.sha256,
