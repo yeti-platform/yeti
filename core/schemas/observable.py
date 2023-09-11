@@ -50,11 +50,9 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Observable":
         return cls(**object)
-
     @classmethod
     def is_valid(cls, object: dict) -> bool:
         return validate_observable(object)
-        
     @classmethod
     def add_text(cls, text: str, tags: list[str] = []) -> "Observable":
         """Adds and returns an observable for a given string.

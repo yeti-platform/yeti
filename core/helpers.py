@@ -47,7 +47,7 @@ def find_type(value: str) -> observable.ObservableType | None:
     for obs_type in TYPE_VALIDATOR_MAP:
         if TYPE_VALIDATOR_MAP[obs_type](value):
             return obs_type
-    for type_obs, regex in TYPE_VALIDATOR_MAP.items():
+    for type_obs, regex in REGEXES:
         if regex.match(value):
             return
     return None
