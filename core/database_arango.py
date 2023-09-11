@@ -572,7 +572,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
         for key, value in args.items():
-            args[key] = value.strip()
+            if isinstance(value, str):
+                args[key] = value.strip()
+            elif isinstance(value, list):
+                args[key] = [v.strip() for v in value]
+
             if key.startswith('in__'):
                 conditions.append(f'@{key} ALL IN o.{key[4:]}')
                 sorts.append(f'o.{key[4:]}')
@@ -699,7 +703,11 @@ class ObservableYetiConnector(ArangoYetiConnector):
             sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
         for key, value in args.items():
-            args[key] = value.strip()
+            if isinstance(value, str):
+                args[key] = value.strip()
+            elif isinstance(value, list):
+                args[key] = [v.strip() for v in value]
+
             if key.startswith('in__'):
                 conditions.append(f'@{key} ALL IN o.{key[4:]}')
                 sorts.append(f'o.{key[4:]}')
@@ -742,7 +750,6 @@ class ObservableYetiConnector(ArangoYetiConnector):
         aql_string += '\nRETURN MERGE(o, { tags: tags })'
         for key in list(args.keys()):
             args[key.replace('.', '_')] = args.pop(key)
-        print(aql_string, args)
         documents = cls._db.aql.execute(
             aql_string, bind_vars=args, count=True, full_count=True)
         results = []
