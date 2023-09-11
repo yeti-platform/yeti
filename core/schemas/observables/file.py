@@ -18,11 +18,16 @@ myme_type: str - The mime type of the file
 '''
 
 class File(Observable):
+    """Represents a file.
+
+    One of sha256, md5, or sha1 should be provided.
+    Value should to be in the form FILE:<HASH>.
+    """
     value: str
     type: ObservableType = ObservableType.file
     name: str = None
     size: int = None
-    sha256: str 
-    md5: MD5 = None
-    sha1: SHA1 = None
+    sha256: str = None
+    md5: str = None
+    sha1: str = None
     mime_type: str = None
