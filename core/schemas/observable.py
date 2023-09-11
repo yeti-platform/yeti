@@ -7,11 +7,11 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from core import database_arango
-from core.helpers import REGEXES, refang
+from core.helpers import refang
 from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 from core.schemas.graph import TagRelationship
-from core.helpers import validate_observable,find_type
+from core.validator_observable import validate_observable, find_type
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
