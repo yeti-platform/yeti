@@ -116,7 +116,7 @@ class ComplexGraphTest(unittest.TestCase):
         self.observable3 = Observable(
             value="http://test1.com/admin", type="url").save()
         self.entity1 = ThreatActor(name="tester").save()
-        self.indicator1 = Regex(name='test c2', pattern='test[0-9].com', location='network').save()
+        self.indicator1 = Regex(name='test c2', pattern='test[0-9].com', location='network', diamond='capability').save()
         self.observable1.link_to(self.observable3, "url", "URL on hostname.")
         self.entity1.link_to(self.observable1, "infra", "Known infrastructure.")
 
