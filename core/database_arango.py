@@ -572,7 +572,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
         for key, value in args.items():
-            args[key] = value.strip()
+            if isinstance(value, str):
+                args[key] = value.strip()
+            elif isinstance(value, list):
+                args[key] = [v.strip() for v in value]
+
             if key.startswith('in__'):
                 conditions.append(f'@{key} ALL IN o.{key[4:]}')
                 sorts.append(f'o.{key[4:]}')
