@@ -167,7 +167,7 @@ TYPE_VALIDATOR_MAP = {
     ObservableType.email: validators.email,
 }
 
-REGEXES_OBSERVABLES = [()]
+REGEXES_OBSERVABLES = {}
 
 def validate_observable(obs: Observable) -> bool:
     if obs.type in TYPE_VALIDATOR_MAP:
@@ -182,9 +182,11 @@ def find_type(value: str) -> ObservableType | None:
     for obs_type in TYPE_VALIDATOR_MAP:
         if TYPE_VALIDATOR_MAP[obs_type](value):
             return obs_type
-    for type_obs, regex in REGEXES_OBSERVABLES:
+    for type_obs, regex in REGEXES_OBSERVABLES.items():
         if regex.match(value):
-            return
+            return type_obs
+        else:
+            None
     return None
 
 TYPE_MAPPING = {
