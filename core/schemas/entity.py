@@ -1,7 +1,7 @@
 import datetime
 from enum import Enum
 
-from core.helpers import refang, REGEXES
+from core.validator_observable import REGEXES
 from typing import Type
 
 from pydantic import BaseModel, Field
