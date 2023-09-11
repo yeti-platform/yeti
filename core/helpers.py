@@ -36,3 +36,6 @@ def stream_sha256(stream):
             break
 
     return sha256.hexdigest()
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc)
