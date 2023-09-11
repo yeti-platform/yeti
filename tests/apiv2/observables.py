@@ -6,7 +6,7 @@ import unittest
 
 from core.schemas.observable import Observable
 from core.web import webapp
-from core.schemas.observables.certificate import Certificate
+
 
 client = TestClient(webapp.app)
 
