@@ -1,6 +1,64 @@
 version: '3.3'
 services:
 
+  # api:
+  #   build:
+  #     context: ./yeti/
+  #     dockerfile: ./extras/docker/dev/Dockerfile
+  #   image: yeti
+  #   ports:
+  #     - "127.0.0.1:5000:5000"
+  #   depends_on:
+  #     - redis
+  #     - mongodb
+  #   entrypoint:
+  #     - /docker-entrypoint.sh
+  #   command:
+  #     - envshell
+  #   volumes:
+  #     - /tmp/docker-yeti-exports:/opt/yeti/exports
+  #     - ./yeti/:/app/
+  #   stdin_open: true # docker run -i
+  #   tty: true        # docker run -t
+
+  fastapi:
+    build:
+      context: D:/workspace/yeti/
+      dockerfile: D:/workspace/yeti/extras/docker/dev/Dockerfile
+    image: yeti
+    entrypoint:
+      - /docker-entrypoint.sh
+    command: ['envshell']
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+      - arangodb
+    environment:
+      - TLDEXTRACT_CACHE=/tmp/tldextract.cache
+    volumes:
+      - D:/workspace/yeti/:/app/
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
+  frontend:
+    build:
+      context: D:/workspace/yeti-feeds-frontend/
+      dockerfile: D:/workspace/yeti-feeds-frontend/docker/dev/Dockerfile
+    image: yeti-feeds-frontend
+    environment:
+      - VUE_API_BACKEND=fastapi
+    ports:
+      - 8080:8080
+    volumes:
+      - D:/workspace/yeti-feeds-frontend/:/app
+    entrypoint:
+      - /docker-entrypoint.sh
+    command:
+      - /bin/bash
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
   redis:
     image: redis:latest
 
