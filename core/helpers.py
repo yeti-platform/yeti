@@ -1,6 +1,7 @@
 import hashlib
 import re
 from datetime import timedelta
+import datetime
 
 REGEXES = [
     ('ip', re.compile(r"(?P<pre>\W?)(?P<search>(?:\d{1,3}\.){3}\d{1,3})(?P<post>\W?)")),
@@ -39,6 +40,9 @@ def refang(url):
     url = domain_re.sub(".", url)
     return url
 
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 

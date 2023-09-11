@@ -1,8 +1,111 @@
 version: '3.3'
 services:
 
+  # api:
+  #   build:
+  #     context: ./yeti/
+  #     dockerfile: ./extras/docker/dev/Dockerfile
+  #   image: yeti
+  #   ports:
+  #     - "127.0.0.1:5000:5000"
+  #   depends_on:
+  #     - redis
+  #     - mongodb
+  #   entrypoint:
+  #     - /docker-entrypoint.sh
+  #   command:
+  #     - envshell
+  #   volumes:
+  #     - /tmp/docker-yeti-exports:/opt/yeti/exports
+  #     - ./yeti/:/app/
+  #   stdin_open: true # docker run -i
+  #   tty: true        # docker run -t
+
+  fastapi:
+    build:
+      context: D:/workspace/yeti/
+      dockerfile: ./extras/docker/dev/Dockerfile
+    image: yeti
+    entrypoint:
+      - /docker-entrypoint.sh
+    command: ['envshell']
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+      - arangodb
+    environment:
+      - TLDEXTRACT_CACHE=/tmp/tldextract.cache
+    volumes:
+      - /tmp/docker-yeti-exports:/opt/yeti/exports
+      -  D:/workspace/yeti/:/app/
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
+  frontend:
+    build:
+      context: D:/workspace/yeti-feeds-frontend/
+      dockerfile: ./docker/dev/Dockerfile
+    image: yeti-feeds-frontend
+    environment:
+      - VUE_API_BACKEND=fastapi
+    ports:
+      - 8080:8080
+    volumes:
+      -  D:/workspace/yeti-feeds-frontend/:/app
+    entrypoint:
+      - /docker-entrypoint.sh
+    command:
+      - /bin/bash
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+
+  # feeds:
+  #   image: yeti
+  #   command: ['feeds']
+  #   depends_on:
+  #     - redis
+  #     - mongodb
+  #     - api
+  #   environment:
+  #     - TLDEXTRACT_CACHE=/tmp/tldextract.cache
+
+  # analytics:
+  #   image: yeti
+  #   command: ['analytics']
+  #   depends_on:
+  #     - redis
+  #     - mongodb
+  #     - api
+  #   environment:
+  #     - TLDEXTRACT_CACHE=/tmp/tldextract.cache
+
+  # exports:
+  #   image: yeti
+  #   command: ['exports']
+  #   depends_on:
+  #     - redis
+  #     - mongodb
+  #     - api
+  #   volumes:
+  #     - /tmp/docker-yeti-exports:/opt/yeti/exports
+
+  # oneshot:
+  #   image: yeti
+  #   command: ['oneshot']
+  #   depends_on:
+  #     - redis
+  #     - mongodb
+  #     - api
+
   redis:
     image: redis:latest
+
+  # mongodb:
+  #   image: mongo:4.0.12
+  #   environment:
+  #     - MONGO_LOG_DIR=/dev/null
+  #   command: mongod
 
   arangodb:
     image: arangodb

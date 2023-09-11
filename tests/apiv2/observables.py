@@ -7,16 +7,14 @@ import unittest
 from core.schemas.observable import Observable
 from core.web import webapp
 
+
 client = TestClient(webapp.app)
 
 class ObservableTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
-
+    
     def test_get_observable(self):
         obs = Observable(value="tomchop.me", type="hostname").save()
         obs.tag(['tag1'])
@@ -204,3 +202,6 @@ class ObservableContextTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['context'], [])
+
+if __name__ == "__main__":
+    unittest.main()

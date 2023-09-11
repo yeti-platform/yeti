@@ -11,10 +11,7 @@ from core.helpers import REGEXES, refang
 from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 from core.schemas.graph import TagRelationship
-
-
-def now():
-    return datetime.datetime.now(datetime.timezone.utc)
+from core.helpers import now
 
 # Data Schema
 class ObservableType(str, Enum):
@@ -32,6 +29,10 @@ class ObservableType(str, Enum):
     cidr = 'cidr'
     certificate = 'certificate'
     bitcoin_wallet = 'bitcoin_wallet'
+    path = 'path'
+    mac_address = 'mac_address'
+    command_line = 'command_line'
+    registry_key = 'registry_key'
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
