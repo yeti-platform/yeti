@@ -185,8 +185,6 @@ def find_type(value: str) -> ObservableType | None:
     for type_obs, regex in REGEXES_OBSERVABLES.items():
         if regex.match(value):
             return type_obs
-        else:
-            None
     return None
 
 TYPE_MAPPING = {
