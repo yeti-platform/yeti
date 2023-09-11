@@ -5,12 +5,12 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
-
+import validators
 from core import database_arango
 from core.helpers import refang
+from core.schemas.entity import Entity
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 from core.schemas.graph import TagRelationship
-from core.validator_observable import validate_observable, find_type
 from core.helpers import now
 
 
@@ -155,6 +155,37 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
                 break
         return self.save()
 
+
+TYPE_VALIDATOR_MAP = {
+    ObservableType.ip: validators.ipv4,
+    ObservableType.bitcoin_wallet: validators.btc_address,
+    ObservableType.sha256: validators.sha256,
+    ObservableType.sha1: validators.sha1,
+    ObservableType.md5: validators.md5,
+    ObservableType.hostname: validators.domain,
+    ObservableType.url: validators.url,
+    ObservableType.email: validators.email,
+}
+
+REGEXES_OBSERVABLES = [()]
+
+def validate_observable(obs: Observable) -> bool:
+    if obs.type in TYPE_VALIDATOR_MAP:
+        return TYPE_VALIDATOR_MAP[obs.type](obs.value)
+    elif obs.type in dict(REGEXES_OBSERVABLES):
+        return dict(REGEXES_OBSERVABLES)[obs.type].match(obs.value)
+    else:
+        return False
+
+
+def find_type(value: str) -> ObservableType | None:
+    for obs_type in TYPE_VALIDATOR_MAP:
+        if TYPE_VALIDATOR_MAP[obs_type](value):
+            return obs_type
+    for type_obs, regex in REGEXES_OBSERVABLES:
+        if regex.match(value):
+            return
+    return None
 
 TYPE_MAPPING = {
     'ip': Observable,
