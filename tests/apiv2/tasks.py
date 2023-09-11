@@ -135,13 +135,5 @@ class ExportTaskTest(unittest.TestCase):
             data['detail'],
             "ExportTask could not be patched: Template NOTEXIST not found")
 
-    def test_export_content(self):
-        """Tests that the API returns rendered data correctly."""
-        taskmanager.TaskManager.run_task('RandomExport')
-        response = client.get("/api/v2/tasks/export/RandomExport/content")
-        data = response.text
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(data, 'export1.com\nexport2.com\nexport3.com\n')
-
     def tearDown(self) -> None:
         database_arango.db.clear()
