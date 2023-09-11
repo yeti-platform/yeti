@@ -14,7 +14,7 @@ class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         db = ArangoDatabase()
         db.connect()
-        
+
 
     def test_certificate(self):
         cert = Certificate.get_or_create(value="146465498223")
@@ -24,13 +24,12 @@ class ObservableTest(unittest.TestCase):
         cert.subject = "CN=Test"
         cert.save()
         cert = Certificate.find(value="146465498223")
-        self.assertEqual(cert.value, "146465498223") 
-    
+        self.assertEqual(cert.value, "146465498223")
+
     def test_file(self):
-        file = File(value="146465498223")
-        file.sha256 = SHA256(value="146465498223")
+        file = File(value="146465498223", sha256="146465498223")
         file.save()
-    
+
     def test_url(self):
         url = Url(value="https://www.google.com")
         url.save()

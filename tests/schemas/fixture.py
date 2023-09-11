@@ -6,7 +6,7 @@ from core import database_arango
 from core.schemas.observable import Observable
 from core.schemas.entity import ThreatActor
 from core.schemas.tag import Tag
-from core.schemas.indicator import Regex
+from core.schemas.indicator import Regex, DiamondModel
 from core.schemas.template import Template
 from core.schemas.task import ExportTask
 from core.schemas.user import UserSensitive
@@ -41,7 +41,7 @@ class TagTest(unittest.TestCase):
         c2_hacker.tag(['web', 'hacker'])
         sus_hacker = Observable(value="sus.hacker.com", type="hostname").save()
         sus_hacker.tag(['web', 'hacker', 'hacker_sus'])
-        regex = Regex(name='Hacker regex', pattern="^hacker.*", location="network").save()
+        regex = Regex(name='Hacker regex', pattern="^hacker.*", location="network", diamond=DiamondModel.capability).save()
 
         template = Template(name="RandomTemplate", template='<blah></blah>').save()
         export = ExportTask(

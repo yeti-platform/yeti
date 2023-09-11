@@ -2,7 +2,7 @@ import datetime
 import unittest
 
 from core import database_arango
-from core.schemas.indicator import Indicator, Regex
+from core.schemas.indicator import Indicator, Regex, DiamondModel
 from core.schemas.observable import Observable
 
 
@@ -15,14 +15,14 @@ class IndicatorTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_create_entity(self) -> None:
-        result = Regex(name="regex1", pattern="asd", location="any").save()
+        result = Regex(name="regex1", pattern="asd", location="any", diamond=DiamondModel.capability).save()
         self.assertIsNotNone(result.id)
         self.assertIsNotNone(result.created)
         self.assertEqual(result.name, "regex1")
         self.assertEqual(result.type, "regex")
 
     def test_filter_entities_different_types(self) -> None:
-        regex = Regex(name="regex1", pattern="asd", location="any").save()
+        regex = Regex(name="regex1", pattern="asd", location="any", diamond=DiamondModel.capability).save()
 
         all_entities = list(Indicator.list())
         regex_entities = list(Regex.list())
@@ -32,7 +32,7 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(regex_entities[0].json(), regex.json())
 
     def test_regex_match(self) -> None:
-        regex = Regex(name="regex1", pattern="Ba+dString", location="any").save()
+        regex = Regex(name="regex1", pattern="Ba+dString", location="any", diamond=DiamondModel.capability).save()
 
         result = regex.match('ThisIsAReallyBaaaadStringIsntIt')
         assert result is not None
@@ -41,6 +41,6 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(result.match, "BaaaadString")
 
     def test_regex_nomatch(self) -> None:
-        regex = Regex(name="regex1", pattern="Blah", location="any").save()
+        regex = Regex(name="regex1", pattern="Blah", location="any", diamond=DiamondModel.capability).save()
         result = regex.match('ThisIsAReallyBaaaadStringIsntIt')
         self.assertIsNone(result)
