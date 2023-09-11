@@ -31,7 +31,7 @@ class ObservableType(str, Enum):
     bitcoin_wallet = 'bitcoin_wallet'
     path = 'path'
     mac_address = 'mac_address'
-    cli = 'cli'
+    command_line = 'command_line'
     registry_key = 'registry_key'
 
 

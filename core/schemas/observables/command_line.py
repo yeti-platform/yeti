@@ -1,5 +1,7 @@
 from core.schemas.observable import Observable
 from core.schemas.observable import ObservableType
-class CLI(Observable):
+
+
+class CommandLine(Observable):
     value: str
-    type: ObservableType = ObservableType.cli
+    type: ObservableType = ObservableType.command_line
