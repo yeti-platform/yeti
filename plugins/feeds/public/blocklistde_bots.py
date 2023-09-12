@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta, datetime
-from core.schemas import observable
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 
@@ -21,11 +21,12 @@ class BlocklistdeBots(task.FeedTask):
                 self.analyze(item)
 
     def analyze(self, item):
-        ip = item.strip()
+        ip_str = item.strip()
 
-        obs = observable.Observable.find(value=ip)
+        obs = ipv4.IPv4.find(value=ip_str)
         if not obs:
-            obs = observable.Observable(value=ip, type="ip").save()
+            obs = ipv4.IPv4(value=ip_str).save()
+
         obs.tag(["blocklist", "bots"])
 
 
