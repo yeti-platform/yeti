@@ -2,7 +2,7 @@ import logging
 import pandas as pd
 from io import StringIO
 from datetime import timedelta
-from core.schemas import observable
+from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
 
@@ -51,7 +51,7 @@ class UrlHaus(task.FeedTask):
     def analyze(self, line):
         id_feed = line["id"]
         first_seen = line["dateadded"]
-        url = line["url"]
+        url_str = line["url"]
         url_status = line["url_status"]
         last_online = line["last_online"]
         threat = line["threat"]
@@ -70,11 +70,11 @@ class UrlHaus(task.FeedTask):
             "last_online": last_online,
         }
 
-        if url:
-            obs = observable.Observable.find(value=url)
-            if not obs:
-                obs = observable.Observable(value=url, type="url")
-            obs.add_context(self.name, context)
-            obs.tag(tags)
+        if url_str:
+            url_obs = url.Url.find(value=url_str)
+            if not url_obs:
+                url_obs = url.Url(value=url_str).save()
+            url_obs.add_context(self.name, context)
+            url_obs.tag(tags)
 
 taskmanager.TaskManager.register_task(UrlHaus)
