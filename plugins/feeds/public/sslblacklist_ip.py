@@ -1,10 +1,9 @@
 from io import StringIO
-import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 import pandas as pd
 
-from core.schemas import observable
+from core.schemas.observables import ipv4, url
 from core.schemas import task
 from core import taskmanager
 
@@ -49,16 +48,18 @@ class SSLBlackListIP(task.FeedTask):
         context = {}
         context["first_seen"] = first_seen
 
-        ip_obs = observable.Observable.find(value=dst_ip)
+        ip_obs = ipv4.IPv4.find(value=dst_ip)
         if not ip_obs:
-            ip_obs = observable.Observable(value=dst_ip, type="ip")
+            ip_obs = ipv4.IPv4(value=dst_ip).save()
 
         ip_obs.add_context(self.name, context)
         ip_obs.tag(tags)
         _url = "https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
-        url_obs = observable.Observable.find(value=_url)
+        
+        url_obs = url.Url.find(value=_url)
         if not url_obs:
-            url_obs = observable.Observable(value=_url, type="url")
+            url_obs = url.Url(value=_url).save()
+
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
 
