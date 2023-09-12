@@ -29,8 +29,10 @@ class MispFeed(task.FeedTask):
         "md5": observable.ObservableType.md5,
         "sha1": observable.ObservableType.sha1,
         "sha256": observable.ObservableType.sha256,
-        "btc": observable.ObservableType.bitcoin,
-        "email" : observable.ObservableType.email
+        "btc": observable.ObservableType.bitcoin_wallet,
+        "email" : observable.ObservableType.email,
+        "filename": observable.ObservableType.file,
+        "regkey": observable.ObservableType.registry_key,
     }
         
     def get_instances(self):
