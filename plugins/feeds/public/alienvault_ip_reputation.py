@@ -1,6 +1,6 @@
 import logging
-from datetime import timedelta, datetime
-from core.schemas import observable
+from datetime import timedelta
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 import pandas as pd
@@ -45,19 +45,19 @@ class AlienVaultIPReputation(task.FeedTask):
             category = item["Tag"]
             country = item["Country"]
        
-            ip = observable.Observable.find(value=ip_str)
+            ip_obs = ipv4.IPv4.find(value=ip_str)
             
-            if not ip:
-                ip = observable.Observable(value=ip_str, type="ip").save()
+            if not ip_obs:
+                ip_obs = ipv4.IPv4(value=ip_str).save()
             
             context["country"] = country
             context["threat"] = category
             context["reliability"] = item["number_1"]
             context["risk"] = item["number_2"]
-            context["date_added"] = datetime.utcnow()
 
-            ip.tag([category])
-            ip.add_context(self.name, context)
+            ip_obs.tag([category])
+            ip_obs.add_context(self.name, context)
+
 
 
 taskmanager.TaskManager.register_task(AlienVaultIPReputation)
