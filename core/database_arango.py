@@ -151,16 +151,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return self._collection_name + '/' + self.id
 
 
-    def _insert(self, document_json):
+    def _insert(self, document_json: str):
+        document: dict = json.loads(document_json)
         try:
             newdoc = self._get_collection().insert(
-                document_json, return_new=True)['new']
+                document, return_new=True)['new']
             newdoc['id'] = newdoc.pop('_key')
             return newdoc
         except DocumentInsertError as err:
             if not err.error_code == 1210: # Unique constraint violation
                 raise
-            conflict = 'name' if 'name' in document_json else 'value'
+            conflict = 'name' if 'name' in document else 'value'
             error = 'A {0} object with same `{1}` already exists'.format(
                 self.__class__.__name__, conflict)
             raise IntegrityError(str(error))
