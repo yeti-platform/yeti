@@ -1,6 +1,6 @@
 import logging
-from datetime import timedelta, datetime
-from core.schemas import observable
+from datetime import timedelta
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 
@@ -22,14 +22,11 @@ class Cruzit(task.FeedTask):
                 self.analyze(line)
 
     def analyze(self, line):
-        line = line.strip()
+        ip_str = line.strip()
 
-        ip = line
-
-        obs = observable.Observable.find(value=ip)
+        obs = ipv4.IPv4.find(value=ip_str)
         if not obs:
-            obs = observable.Observable(value=ip, type="ip").save()
-
+            obs = ipv4.IPv4(value=ip_str).save()
         obs.tag(["cruzit", "web attacks"])
 
 
