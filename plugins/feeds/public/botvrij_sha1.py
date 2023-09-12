@@ -1,6 +1,6 @@
 import logging
-from datetime import timedelta, datetime
-from core.schemas import observable
+from datetime import timedelta
+from core.schemas.observables import sha1
 from core.schemas import task
 from core import taskmanager
 
@@ -28,9 +28,10 @@ class BotvrijSHA1(task.FeedTask):
             "description": descr,
         }
 
-        obs = observable.Observable.find(value=val)
+        obs = sha1.SHA1.find(value=val)
         if not obs:
-            obs = observable.Observable(value=val, type="sha1").save()
+            obs = sha1.SHA1(value=val).save()
+            
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

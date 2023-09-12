@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta, datetime
-from core.schemas import observable
+from core.schemas.observables import hostname
 from core.schemas import task
 from core import taskmanager
 
@@ -28,9 +28,9 @@ class BotvrijDomain(task.FeedTask):
             "description": descr,
         }
 
-        obs = observable.Observable.find(value=hostn)
+        obs = hostname.Hostname.find(value=hostn)
         if not obs:
-            obs = observable.Observable(value=hostn, type="hostname").save()
+            obs = hostname.Hostname(value=hostn).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

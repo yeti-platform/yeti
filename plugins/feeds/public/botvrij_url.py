@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta, datetime
-from core.schemas import observable
+from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
 
@@ -29,9 +29,9 @@ class BotvrijUrl(task.FeedTask):
             "description": descr,
         }
 
-        obs = observable.Observable.find(value=url)
+        obs = url.URL.find(value=url)
         if not obs:
-            obs = observable.Observable(value=url, type="url").save()
+            obs = url.URL(value=url).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 
