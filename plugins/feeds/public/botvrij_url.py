@@ -22,16 +22,16 @@ class BotvrijUrl(task.FeedTask):
                 self.analyze(item.strip())
 
     def analyze(self, item):
-        url, descr = item.split(" # url - ")
+        url_str, descr = item.split(" # url - ")
 
         context = {
             "source": self.name,
             "description": descr,
         }
 
-        obs = url.URL.find(value=url)
+        obs = url.Url.find(value=url)
         if not obs:
-            obs = url.URL(value=url).save()
+            obs = url.Url(value=url).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 
