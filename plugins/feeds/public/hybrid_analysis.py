@@ -114,10 +114,7 @@ class HybridAnalysis(task.FeedTask):
                 if not new_host:
                     new_host = hostname.Hostname(value=domain).save()
                 f_hyb.link_to(new_host, "contacted", self.name)
-                logging.debug(domain)
-                new_host.add_context(
-                    self.name, {"source": self.name, "contacted_by": f_hyb}
-                )
+                
                 new_host.tag(tags)
 
         if "extracted_files" in item:
