@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 import logging
 
-from core.schemas import observable
+from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
 
@@ -31,9 +31,10 @@ class VXVaultUrl(task.FeedTask):
         tags = ["malware", "dropzone"]
         context = {"source": self.name}
         
-        url_obs = observable.Observable.find(value=item)
+        url_obs = url.Url.find(value=item)
         if not url_obs:
-            url_obs = observable.Observable(value=item, type="url").save()
+            url_obs = url.Url(value=item).save()
+            
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
 
