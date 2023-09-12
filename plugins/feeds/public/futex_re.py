@@ -1,10 +1,10 @@
 from io import StringIO
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 import pandas as pd
 
-from core.schemas import observable
+from core.schemas.observables import url,asn,md5
 from core.schemas import task
 from core import taskmanager
 
@@ -33,48 +33,53 @@ class FutexTracker(task.FeedTask):
     # pylint: disable=arguments-differ
     def analyze(self, item):
         _id = item["id"]
-        _ = item["firstseen"]
-        url = item["url"]
+        _firsteen = item["firstseen"]
+        url_str = item["url"]
         _status = item["status"]
 
-        _hash = item["hash"]
+        md5_str = item["hash"]
 
         country = item["country"]
-        asn = item["as"]
+        asn_str = item["as"]
 
         tags = ["collected_by_honeypot"]
         context = {
             "source": self.name,
             "country": country,
             "status": _status,
+            "first_seen": _firsteen,
         }
 
         url_obs = None
+        md5_obs = None
+        asn_obs = None
 
-        if url:
-            url_obs = observable.Observable.find(value=url)
+        if url_str:
+            url_obs = url.Url.find(value=url_str)
             if not url_obs:
-                url_obs = observable.Observable(value=url, type="url").save()
+                url_obs = url.Url(value=url_str).save()
             url_obs.add_context(self.name, context)
             url_obs.tag(tags)
 
-        if _hash and len(_hash) > 16:
-            hash_obs = observable.Observable.find(value=_hash)
-            if not hash_obs:
-                hash_obs = observable.Observable(value=_hash, type="md5").save()
-            hash_obs.add_context(self.name, context)
-            hash_obs.tag(tags)
-            if url_obs:
-                hash_obs.link_to(url_obs, "downloaded", self.name)
+        if md5_str:
+            md5_obs = md5.MD5.find(value=md5_str)
+            if not md5_obs:
+                md5_obs = md5.MD5(value=md5_str).save()
+            md5_obs.add_context(self.name, context)
+            md5_obs.tag(tags)
 
-        if asn:
-            asn_obs = observable.Observable.find(value=asn)
+        if asn_str:
+            asn_obs = asn.ASN.find(value=asn_str)
             if not asn_obs:
-                asn_obs = observable.Observable(value=asn, type="asn").save()
+                asn_obs = asn.ASN(value=asn_str).save()
             asn_obs.add_context(self.name, context)
             asn_obs.tag(tags)
-            if url_obs:
-                asn_obs.link_to(url_obs, "ASN-Url", self.name)
+
+        if url_obs and md5_obs:
+            url_obs.link_to(md5_obs, "URL to MD5", self.name)
+        
+        if url_obs and asn_obs:
+            url_obs.link_to(asn_obs, "URL to ASN", self.name)
 
 
 taskmanager.TaskManager.register_task(FutexTracker)
