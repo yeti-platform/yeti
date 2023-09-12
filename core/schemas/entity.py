@@ -1,11 +1,10 @@
 import datetime
 from enum import Enum
-
-from core.helpers import refang, REGEXES
 from typing import Type
 
 from pydantic import BaseModel, Field
 from core import database_arango
+import re
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
@@ -102,6 +101,8 @@ TYPE_MAPPING: dict[str, "EntityClasses"] = {
     'entities': Entity,
     'entity': Entity,
 }
-
+REGEXES_ENTITIES = [
+    (EntityType.exploit, re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)")),
+]
 EntityTypes = ThreatActor | IntrusionSet | Tool | Malware | Campaign | AttackPattern
 EntityClasses = Type[ThreatActor] | Type[IntrusionSet] | Type[Tool] | Type[Malware] | Type[Campaign] | Type[AttackPattern]
