@@ -1,8 +1,8 @@
 import logging
 import pandas as pd
 from io import StringIO
-from datetime import timedelta, datetime
-from core.schemas import observable
+from datetime import timedelta
+from core.schemas.observables import ipv4, url
 from core.schemas import task
 from core import taskmanager
 
@@ -33,31 +33,33 @@ class ViriBackTracker(task.FeedTask):
         url_obs = False
         ip_obs = False
         family = line["Family"]
-        url = line["URL"]
-        ip = line["IP"]
+        url_str = line["URL"]
+        ip_str = line["IP"]
         first_seen = line["FirstSeen"]
         family = family.lower()
         context = {
             "first_seen": first_seen,
             "source": self.name,
-            "date_added": datetime.utcnow(),
         }
+        tags = ['c2']
+        if family:
+            tags.append(family)
 
-        if url:
-            url_obs  = observable.Observable.find(value=url)
+        if url_str:
+            url_obs = url.Url.find(value=url_str)
             if not url_obs:
-                url_obs = observable.Observable(value=url, type="url")
+                url_obs = url.Url(value=url_str).save()
             url_obs.add_context(self.name, context)
-            url_obs.tag(['c2', family])
+            url_obs.tag(tags)
 
-        if ip:
-            obs_ip = observable.Observable.find(value=ip)
-            if not obs_ip:
-                obs_ip = observable.Observable(value=ip, type="ip")
-            obs_ip.add_context(self.name, context)
-            obs_ip.tag(['c2', family])
+        if ip_str:
+            ip_obs = ipv4.IPv4.find(value=ip_str)
+            if not ip_obs:
+                ip_obs = ipv4.IPv4(value=ip_str).save() 
 
+            ip_obs.add_context(self.name, context)
+            ip_obs.tag(tags)
         if url_obs and ip_obs:
             url_obs.link_to(ip_obs, "resolve_to", self.name)
-
+        
 taskmanager.TaskManager.register_task(ViriBackTracker)
