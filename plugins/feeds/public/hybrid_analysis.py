@@ -1,11 +1,11 @@
 from io import StringIO
 import json
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 import pandas as pd
 
-from core.schemas import observable
+from core.schemas.observables  import file, sha256, sha1, md5, hostname
 from core.schemas import task
 from core import taskmanager
 
@@ -38,17 +38,17 @@ class HybridAnalysis(task.FeedTask):
     def analyze(self, item):
         first_seen = item["analysis_start_time"]
 
-        f_hyb = observable.Observable.find(value=f"FILE:{item['sha256']}")
+        f_hyb = file.File.find(value=f"FILE:{item['sha256']}")
         if not f_hyb:
-            f_hyb = observable.Observable(
-                value=f"FILE:{item['sha256']}", type="file"
+            f_hyb = file.File( 
+                value=f"FILE:{item['sha256']}"
             ).save()
 
-        sha256 = observable.Observable.find(value=item["sha256"])
-        if not sha256:
-            sha256 = observable.Observable(value=item["sha256"], type="sha256").save()
+        sha256_obs = sha256.SHA256.find(value=item["sha256"])
+        if not sha256_obs:
+            sha256_obs = sha256.SHA256(value=item["sha256"]).save()
 
-        f_hyb.link_to(sha256, "sha256", self.name)
+        f_hyb.link_to(sha256_obs, "sha256", self.name)
         tags = []
         context = {
             "source": self.name,
@@ -72,6 +72,8 @@ class HybridAnalysis(task.FeedTask):
 
         if "size" in item:
             context["size"] = item["size"]
+            if item["size"]:
+                f_hyb.size = int(item["size"])
 
         if "vt_detect" in item:
             context["virustotal_score"] = item["vt_detect"]
@@ -87,33 +89,30 @@ class HybridAnalysis(task.FeedTask):
         f_hyb.add_context(self.name, context)
         f_hyb.tag(tags)
 
-        sha256.add_context(self.name, context)
-        sha256.tag(tags)
+        sha256_obs.add_context(self.name, context)
+        sha256_obs.tag(tags)
 
-        md5 = observable.Observable.find(value=item["md5"])
-        if not md5:
-            md5 = observable.Observable(value=item["md5"], type="md5").save()
+        md5_obs = md5.MD5.find(value=item["md5"])
+        if not md5_obs:
+            md5_obs = md5.MD5(value=item["md5"]).save()
 
-        md5.add_context(self.name, context)
-        md5.tag(tags)
-        f_hyb.link_to(md5, "md5", self.name)
+        md5_obs.add_context(self.name, context)
+        md5_obs.tag(tags)
+        f_hyb.link_to(md5_obs, "md5", self.name)
 
-        sha1 = observable.Observable.find(value=item["sha1"])
-        if not sha1:
-            sha1 = observable.Observable(value=item["sha1"], type="sha1").save()
+        sha1_obs = sha1.SHA1.find(value=item["sha1"])
+        if not sha1_obs:
+            sha1_obs = sha1.SHA1(value=item["sha1"]).save()
 
-        sha1.add_context(self.name, context)
-        sha1.tag(tags)
-        f_hyb.link_to(sha1, "sha1", self.name)
+        sha1_obs.add_context(self.name, context)
+        sha1_obs.tag(tags)
+        f_hyb.link_to(sha1_obs, "sha1", self.name)
 
         if "domains" in item:
             for domain in item["domains"]:
-                new_host = observable.Observable.find(value=domain)
+                new_host = hostname.Hostname.find(value=domain)
                 if not new_host:
-                    new_host = observable.Observable(
-                        value=domain, type="hostname"
-                    ).save()
-
+                    new_host = hostname.Hostname(value=domain).save()
                 f_hyb.link_to(new_host, "contacted", self.name)
                 logging.debug(domain)
                 new_host.add_context(
@@ -129,21 +128,18 @@ class HybridAnalysis(task.FeedTask):
                     logging.error(extracted_file)
                     continue
 
-                new_file = observable.Observable.find(
-                    value=f"FILE:{extracted_file['sha256']}"
-                )
+                new_file = file.File.find(value=f"FILE:{extracted_file['sha256']}")
                 if not new_file:
-                    new_file = observable.Observable(
+                    new_file = file.File(
                         value=f"FILE:{extracted_file['sha256']}", type="file"
                     ).save()
-                sha256_new_file = observable.Observable.find(
-                    value=extracted_file["sha256"]
-                )
-                if not sha256_new_file:
-                    sha256_new_file = observable.Observable(
-                        value=extracted_file["sha256"], type="sha256"
-                    ).save()
 
+                sha256_new_file = sha256.SHA256.find(value=extracted_file["sha256"])
+                if not sha256_new_file:
+                    sha256_new_file = sha256.SHA256(
+                        value=extracted_file["sha256"]
+                    ).save()
+                
                 new_file.link_to(sha256_new_file, "sha256", self.name)
 
                 context_file_dropped["virustotal_score"] = 0
