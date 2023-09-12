@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 """This class will incorporate the PhishingDatabase feed into yeti."""
 
-from datetime import timedelta, datetime
-import logging
-
-from core.schemas import observable
+from datetime import timedelta
+from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
 
@@ -27,12 +25,12 @@ class PhishingDatabase(task.FeedTask):
                 self.analyze(line.strip())
            
 
-    def analyze(self, url):
+    def analyze(self, url_str):
         context = {"source": self.name}
 
-        urlobs = observable.Observable.find(value=url)
+        urlobs = url.Url.find(value=url_str)
         if not urlobs:
-            urlobs = observable.Observable(value=url, type="url").save()
+            urlobs = url.Url(value=url_str).save()
         urlobs.add_context(self.name, context)
         urlobs.tag(["phish","phishing_database","blocklist"])
     
