@@ -5,7 +5,7 @@ from datetime import timedelta, datetime
 import pandas as pd
 
 from core.config.config import yeti_config
-from core.schemas import observable
+from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
 
@@ -45,7 +45,7 @@ class PhishTank(task.FeedTask):
     def analyze(self, line):
         tags = ["phishing", "phishtank"]
 
-        url = line["url"]
+        url_str = line["url"]
 
         context = {
             "source": self.name,
@@ -57,12 +57,13 @@ class PhishTank(task.FeedTask):
             "target": line["target"],
         }
 
-        if url is not None and url != "":
-            urlobs = observable.Observable.find(value=url)
-            if not urlobs:
-                urlobs = observable.Observable(value=url, type="url").save()
-            urlobs.add_context(self.name, context)
-            urlobs.tag(tags)
+        if url_str is not None and url_str != "":
+            url_obs = url.Url.find(value=url_str)
+            if not url_obs:
+                url_obs = url.Url(value=url_str).save()
+
+            url_obs.add_context(self.name, context)
+            url_obs.tag(tags)
 
 
 taskmanager.TaskManager.register_task(PhishTank)
