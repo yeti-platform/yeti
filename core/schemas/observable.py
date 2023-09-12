@@ -34,6 +34,9 @@ class ObservableType(str, Enum):
     mac_address = 'mac_address'
     command_line = 'command_line'
     registry_key = 'registry_key'
+    imphash = 'imphash'
+    tlsh = 'tlsh'
+    ssdeep = 'ssdeep'
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
