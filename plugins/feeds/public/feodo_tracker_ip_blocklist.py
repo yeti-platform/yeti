@@ -1,10 +1,9 @@
 import datetime
 from io import StringIO
-from time import sleep
 
 import pandas as pd
 
-from core.schemas import observable
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 
@@ -48,10 +47,9 @@ class FeodoTrackerIPBlockList(task.FeedTask):
             "port": item["dst_port"],
         }
 
-        ip = item["dst_ip"]
-        ip_observable = observable.Observable.find(value=ip)
+        ip_observable = ipv4.IPv4.find(value=item["dst_ip"])
         if not ip_observable:
-            ip_observable = observable.Observable(value=ip, type="ip").save()
+            ip_observable = ipv4.IPv4(value=item["dst_ip"]).save()
         ip_observable.add_context(source=self.name, context=context)
         ip_observable.tag(tags)
 
