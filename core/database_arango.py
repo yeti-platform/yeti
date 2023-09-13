@@ -259,25 +259,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         document['id'] = document.pop('_key')
         return cls.load(document)
 
-    @classmethod
-    def get_or_create(cls, **kwargs):
-        """Fetches an object matching dict_ or creates it.
-
-        If an object matching kwargs is found, return the existing object. If
-        not, create it and return the newly created object.
-
-        Args:
-          **kwargs: Dictionary used to create the object.
-
-        Returns:
-          A Yeti object.
-        """
-        obj = cls(**kwargs)
-        try:
-            return obj.save()
-        except IntegrityError:
-            return cls.find(**kwargs)
-
     #TODO: Consider extracting this to its own class, given it's only meant
     # to be called by Observables.
     def observable_tag(self, tag_name: str) -> "TagRelationship":
