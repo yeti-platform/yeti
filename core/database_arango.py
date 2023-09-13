@@ -83,6 +83,10 @@ class ArangoDatabase:
             'from_vertex_collections': ['observables', 'entities', 'indicators'],
             'to_vertex_collections': ['observables', 'entities', 'indicators'],
         })
+        self.db.collection('observables').add_persistent_index(fields=['value'],unique=True)
+        self.db.collection('entities').add_persistent_index(fields=['name'],unique=True)
+        self.db.collection('tags').add_persistent_index(fields=['name'],unique=True)
+        
 
     def clear(self, truncate=True):
         if not self.db:
