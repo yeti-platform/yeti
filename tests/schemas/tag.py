@@ -176,3 +176,9 @@ class TagTest(unittest.TestCase):
         tag2 = Tag.find(name="old_tag_1")
         assert tag2 is not None
         self.assertEqual(tag2.count, 0)
+
+    def test_duplicate_name(self):
+        """Tests that a saving a tag with the same name will return the existing tag."""
+        tag = Tag(name="test").save()
+        tag2 = Tag(name="test").save()
+        self.assertEqual(tag.id, tag2.id)

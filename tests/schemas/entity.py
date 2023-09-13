@@ -63,3 +63,8 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(vertices), 1)
         self.assertEqual(vertices[entity.extended_id].json(), entity.json())
         self.assertEqual(count, 1)
+
+    def test_duplicate_name(self):
+        """Tests that saving an entity with an existing name will return the existing entity."""
+        ta = ThreatActor(name="APT123").save()
+        self.assertEquals(ta.id, self.ta1.id)

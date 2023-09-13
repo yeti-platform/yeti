@@ -230,7 +230,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(len(observable.context), 0)
 
     def test_duplicate_value(self) -> None:
-        """Tests that a duplicate value is not allowed."""
+        """Tests saving two observables with the same value return the same observable."""
         obs1 = Observable(value="tomchop.me", type="hostname").save()
         obs2 = Observable(value="tomchop.me", type="hostname").save()
         self.assertEqual(obs1.id, obs2.id)
