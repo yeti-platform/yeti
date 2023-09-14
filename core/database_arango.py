@@ -200,12 +200,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if doc_dict.get('id') is not None:
             result = self._update(self.json())
         else:
-            try:
-                result = self._insert(self.json())
-            except RuntimeError:
-                pass
-
-            
+            result = self._insert(self.json())
+            if not result:
+                result = self._update(self.json())
         return self.__class__(**result)
 
     def update_links(self, new_id):
