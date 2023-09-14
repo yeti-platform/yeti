@@ -86,6 +86,7 @@ class ArangoDatabase:
         self.db.collection('observables').add_persistent_index(fields=['value'],unique=True)
         self.db.collection('entities').add_persistent_index(fields=['name'],unique=True)
         self.db.collection('tags').add_persistent_index(fields=['name'],unique=True)
+        self.db.collection('indicators').add_persistent_index(fields=['value'],unique=True)
 
     def clear(self, truncate=True):
         if not self.db:
@@ -199,9 +200,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if doc_dict.get('id') is not None:
             result = self._update(self.json())
         else:
-            result = self._insert(self.json())
-            if not result:
-                result = self._update(self.json())
+            try:
+                result = self._insert(self.json())
+            except RuntimeError:
+                pass
+
+            
         return self.__class__(**result)
 
     def update_links(self, new_id):

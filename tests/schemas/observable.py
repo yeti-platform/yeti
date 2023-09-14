@@ -5,6 +5,8 @@ from core.schemas.observable import Observable
 from core.schemas.graph import Relationship
 
 import unittest
+from core.schemas.observables.file import File
+from core.schemas.observables.url import Url
 
 from core.web import webapp
 
@@ -47,6 +49,18 @@ class ObservableTest(unittest.TestCase):
         assert observable is not None
         self.assertIsNotNone(observable)
         self.assertEqual(observable.value, "toto.com")
+    
+    def test_file(self):
+        file = File(value="test.txt")
+        file.save()
+
+    def test_file_update(self):
+        file = File(value="test.txt")
+        file.md5 = "1234567890"
+        file.save()
+    def test_url(self):
+        url = Url(value="https://www.google.com")
+        url.save()
 
     def test_observable_filter(self):
         obs1 = Observable(value="test1.com", type="hostname").save()
