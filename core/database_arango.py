@@ -202,7 +202,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             result = self._insert(self.json())
             if not result:
-                result = self._update(self.json())
+                result = self._update(self.json(exclude={'created'}))
         return self.__class__(**result)
 
     def update_links(self, new_id):
