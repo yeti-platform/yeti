@@ -44,12 +44,9 @@ class AlienVaultIPReputation(task.FeedTask):
             ip_str = item["IP"]
             category = item["Tag"]
             country = item["Country"]
-       
-            ip_obs = ipv4.IPv4.find(value=ip_str)
-            
-            if not ip_obs:
-                ip_obs = ipv4.IPv4(value=ip_str).save()
-            
+
+            ip_obs = ipv4.IPv4(value=ip_str).save()
+
             context["country"] = country
             context["threat"] = category
             context["reliability"] = item["number_1"]

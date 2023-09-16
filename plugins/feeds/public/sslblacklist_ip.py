@@ -48,18 +48,12 @@ class SSLBlackListIP(task.FeedTask):
         context = {}
         context["first_seen"] = first_seen
 
-        ip_obs = ipv4.IPv4.find(value=dst_ip)
-        if not ip_obs:
-            ip_obs = ipv4.IPv4(value=dst_ip).save()
-
+        ip_obs = ipv4.IPv4(value=dst_ip).save()
         ip_obs.add_context(self.name, context)
         ip_obs.tag(tags)
         _url = "https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
-        
-        url_obs = url.Url.find(value=_url)
-        if not url_obs:
-            url_obs = url.Url(value=_url).save()
 
+        url_obs = url.Url(value=_url).save()
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
 

@@ -49,9 +49,12 @@ class UrlHaus(task.FeedTask):
                 self.analyze(line)
 
     def analyze(self, line):
+        url_str = line["url"]
+        if not url_str:
+            return
+
         id_feed = line["id"]
         first_seen = line["dateadded"]
-        url_str = line["url"]
         url_status = line["url_status"]
         last_online = line["last_online"]
         threat = line["threat"]
@@ -70,11 +73,8 @@ class UrlHaus(task.FeedTask):
             "last_online": last_online,
         }
 
-        if url_str:
-            url_obs = url.Url.find(value=url_str)
-            if not url_obs:
-                url_obs = url.Url(value=url_str).save()
-            url_obs.add_context(self.name, context)
-            url_obs.tag(tags)
+        url_obs = url.Url(value=url_str).save()
+        url_obs.add_context(self.name, context)
+        url_obs.tag(tags)
 
 taskmanager.TaskManager.register_task(UrlHaus)

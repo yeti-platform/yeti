@@ -30,9 +30,7 @@ class BotvrijIPDst(task.FeedTask):
             "description": descr,
         }
 
-        obs = ipv4.IPv4.find(value=ip)
-        if not obs:
-            obs = ipv4.IPv4(value=ip).save()
+        obs = ipv4.IPv4(value=ip).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

@@ -29,9 +29,7 @@ class BotvrijSHA256(task.FeedTask):
             "description": descr,
         }
 
-        obs = sha256.SHA256.find(value=val)
-        if not obs:
-            obs = sha256.SHA256(value=val).save()
+        obs = sha256.SHA256(value=val).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

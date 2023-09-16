@@ -56,10 +56,7 @@ class TorExitNodes(task.FeedTask):
             "description": f"Tor exit node: {fields[1]} {fields[0]}",
         }
 
-        ip_obs = ipv4.IPv4.find(value=fields[0])
-        if not ip_obs:
-            ip_obs = ipv4.IPv4(value=fields[0]).save()
-            
+        ip_obs = ipv4.IPv4(value=fields[0]).save()
         ip_obs.add_context(self.name, context)
         ip_obs.tag(["tor", "exitnode"])
 

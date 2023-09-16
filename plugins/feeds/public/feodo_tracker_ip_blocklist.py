@@ -47,9 +47,7 @@ class FeodoTrackerIPBlockList(task.FeedTask):
             "port": item["dst_port"],
         }
 
-        ip_observable = ipv4.IPv4.find(value=item["dst_ip"])
-        if not ip_observable:
-            ip_observable = ipv4.IPv4(value=item["dst_ip"]).save()
+        ip_observable = ipv4.IPv4(value=item["dst_ip"]).save()
         ip_observable.add_context(source=self.name, context=context)
         ip_observable.tag(tags)
 

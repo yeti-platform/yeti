@@ -44,9 +44,7 @@ class DataplaneSMTPData(task.FeedTask):
             "last_seen": item["lastseen"],
         }
 
-        ip_obs = ipv4.IPv4.find(value=item["ipaddr"])
-        if not ip_obs:
-            ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
+        ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
         category = item["category"].lower()
         tags = ["dataplane", "smtpdata"]
         if category:
@@ -54,9 +52,7 @@ class DataplaneSMTPData(task.FeedTask):
         ip_obs.add_context(self.name, context_ip)
         ip_obs.tag(tags)
 
-        asn_obs = asn.ASN.find(value=item["ASN"])
-        if not asn_obs:
-            asn_obs = asn.ASN(value=item["ASN"]).save()
+        asn_obs = asn.ASN(value=item["ASN"]).save()
 
         context_asn = {
             "source": self.name,

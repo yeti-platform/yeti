@@ -28,14 +28,11 @@ class BotvrijFilename(task.FeedTask):
             "description": descr,
         }
 
-        obs = file.File.find(value=filen)
-        obs.name = filen
-        if not obs:
-            obs = file.File(value=filen).save()
+        obs = file.File(value=filen).save()
         obs.name = filen
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 
-       
+
 
 taskmanager.TaskManager.register_task(BotvrijFilename)

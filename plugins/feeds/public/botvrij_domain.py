@@ -28,9 +28,7 @@ class BotvrijDomain(task.FeedTask):
             "description": descr,
         }
 
-        obs = hostname.Hostname.find(value=hostn)
-        if not obs:
-            obs = hostname.Hostname(value=hostn).save()
+        obs = hostname.Hostname(value=hostn).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

@@ -38,15 +38,8 @@ class HybridAnalysis(task.FeedTask):
     def analyze(self, item):
         first_seen = item["analysis_start_time"]
 
-        f_hyb = file.File.find(value=f"FILE:{item['sha256']}")
-        if not f_hyb:
-            f_hyb = file.File( 
-                value=f"FILE:{item['sha256']}"
-            ).save()
-
-        sha256_obs = sha256.SHA256.find(value=item["sha256"])
-        if not sha256_obs:
-            sha256_obs = sha256.SHA256(value=item["sha256"]).save()
+        f_hyb = file.File(value=f"FILE:{item['sha256']}").save()
+        sha256_obs = sha256.SHA256(value=item["sha256"]).save()
 
         f_hyb.link_to(sha256_obs, "sha256", self.name)
         tags = []
@@ -92,29 +85,20 @@ class HybridAnalysis(task.FeedTask):
         sha256_obs.add_context(self.name, context)
         sha256_obs.tag(tags)
 
-        md5_obs = md5.MD5.find(value=item["md5"])
-        if not md5_obs:
-            md5_obs = md5.MD5(value=item["md5"]).save()
-
+        md5_obs = md5.MD5(value=item["md5"]).save()
         md5_obs.add_context(self.name, context)
         md5_obs.tag(tags)
         f_hyb.link_to(md5_obs, "md5", self.name)
 
-        sha1_obs = sha1.SHA1.find(value=item["sha1"])
-        if not sha1_obs:
-            sha1_obs = sha1.SHA1(value=item["sha1"]).save()
-
+        sha1_obs = sha1.SHA1(value=item["sha1"]).save()
         sha1_obs.add_context(self.name, context)
         sha1_obs.tag(tags)
         f_hyb.link_to(sha1_obs, "sha1", self.name)
 
         if "domains" in item:
             for domain in item["domains"]:
-                new_host = hostname.Hostname.find(value=domain)
-                if not new_host:
-                    new_host = hostname.Hostname(value=domain).save()
+                new_host = hostname.Hostname(value=domain).save()
                 f_hyb.link_to(new_host, "contacted", self.name)
-                
                 new_host.tag(tags)
 
         if "extracted_files" in item:
@@ -125,18 +109,13 @@ class HybridAnalysis(task.FeedTask):
                     logging.error(extracted_file)
                     continue
 
-                new_file = file.File.find(value=f"FILE:{extracted_file['sha256']}")
-                if not new_file:
-                    new_file = file.File(
-                        value=f"FILE:{extracted_file['sha256']}", type="file"
-                    ).save()
+                new_file = file.File(
+                    value=f"FILE:{extracted_file['sha256']}", type="file"
+                ).save()
+                sha256_new_file = sha256.SHA256(
+                    value=extracted_file["sha256"]
+                ).save()
 
-                sha256_new_file = sha256.SHA256.find(value=extracted_file["sha256"])
-                if not sha256_new_file:
-                    sha256_new_file = sha256.SHA256(
-                        value=extracted_file["sha256"]
-                    ).save()
-                
                 new_file.link_to(sha256_new_file, "sha256", self.name)
 
                 context_file_dropped["virustotal_score"] = 0

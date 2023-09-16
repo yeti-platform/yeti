@@ -28,10 +28,7 @@ class BotvrijMD5(task.FeedTask):
             "description": descr,
         }
 
-        obs = md5.MD5.find(value=val)
-        if not obs:
-            obs = md5.MD5(value=val).save()
-        
+        obs = md5.MD5(value=val).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

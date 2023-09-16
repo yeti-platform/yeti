@@ -36,15 +36,9 @@ class OpenPhish(task.FeedTask):
         # if it isn't, then we need to add it
         if not url_str:
             return
-        obs = url.Url.find(value=url_str)
-        if not obs:
-            obs = url.Url(value=url_str).save()
-        
-        # add the context to the observable
+        obs = url.Url(value=url_str).save()
         obs.add_context(self.name, context)
-
-        # tag the observable with 'phish'
         obs.tag(["phish"])
-    
+
 
 taskmanager.TaskManager.register_task(OpenPhish)

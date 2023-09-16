@@ -30,24 +30,12 @@ class BenkowTracker(task.FeedTask):
         tags = []
         tags.append(family.lower())
 
-        try:
-            if url:
-                url_obs = observable.Observable.find(value=url)
-                if not url_obs:
-                    url_obs = observable.Observable(value=url, type="url").save()
-                url_obs.add_context(self.name, context)
-                url_obs.tag(tags)
+        url_obs = observable.Observable(value=url, type="url").save()
+        url_obs.add_context(self.name, context)
+        url_obs.tag(tags)
 
-        except Exception as e:
-            logging.error(e)
+        ip_obs = observable.Observable(value=ip, type="ip").save()
+        ip_obs.add_context(self.name, context)
+        url_obs.link_to(ip_obs, "url-ip", self.name)
 
-        try:
-            if ip:
-                ip_obs = observable.Observable.find(value=ip)
-                if not ip_obs:
-                    ip_obs = observable.Observable(value=ip, type="ip").save()
-                ip_obs.add_context(self.name, context)
-                if url_obs:
-                    url_obs.link_to(ip_obs, "url-ip", self.name)
-        except Exception as e:
-            logging.error(e)
+taskmanager.TaskManager.register_task(BenkowTracker)

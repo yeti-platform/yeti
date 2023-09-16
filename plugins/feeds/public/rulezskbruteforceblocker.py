@@ -40,10 +40,7 @@ class RulezSKBruteforceBlocker(task.FeedTask):
         context["count"] = row["count"]
         context["id"] = row["id"]
 
-        ipobs = ipv4.IPv4.find(value=row["ip"])
-        if not ipobs:
-            ipobs = ipv4.IPv4(value=row["ip"]).save()
-        
+        ipobs = ipv4.IPv4(value=row["ip"]).save()
         ipobs.add_context(self.name, context)
         ipobs.tag(["bruteforceblocker", "blocklist", "rules.sk"])
 

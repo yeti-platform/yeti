@@ -58,10 +58,7 @@ class PhishTank(task.FeedTask):
         }
 
         if url_str is not None and url_str != "":
-            url_obs = url.Url.find(value=url_str)
-            if not url_obs:
-                url_obs = url.Url(value=url_str).save()
-
+            url_obs = url.Url(value=url_str).save()
             url_obs.add_context(self.name, context)
             url_obs.tag(tags)
 

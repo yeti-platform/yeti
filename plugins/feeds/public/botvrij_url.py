@@ -29,9 +29,7 @@ class BotvrijUrl(task.FeedTask):
             "description": descr,
         }
 
-        obs = url.Url.find(value=url)
-        if not obs:
-            obs = url.Url(value=url).save()
+        obs = url.Url(value=url).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

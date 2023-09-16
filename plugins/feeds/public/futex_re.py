@@ -55,29 +55,23 @@ class FutexTracker(task.FeedTask):
         asn_obs = None
 
         if url_str:
-            url_obs = url.Url.find(value=url_str)
-            if not url_obs:
-                url_obs = url.Url(value=url_str).save()
+            url_obs = url.Url(value=url_str).save()
             url_obs.add_context(self.name, context)
             url_obs.tag(tags)
 
         if md5_str:
-            md5_obs = md5.MD5.find(value=md5_str)
-            if not md5_obs:
-                md5_obs = md5.MD5(value=md5_str).save()
+            md5_obs = md5.MD5(value=md5_str).save()
             md5_obs.add_context(self.name, context)
             md5_obs.tag(tags)
 
         if asn_str:
-            asn_obs = asn.ASN.find(value=asn_str)
-            if not asn_obs:
-                asn_obs = asn.ASN(value=asn_str).save()
+            asn_obs = asn.ASN(value=asn_str).save()
             asn_obs.add_context(self.name, context)
             asn_obs.tag(tags)
 
         if url_obs and md5_obs:
             url_obs.link_to(md5_obs, "URL to MD5", self.name)
-        
+
         if url_obs and asn_obs:
             url_obs.link_to(asn_obs, "URL to ASN", self.name)
 

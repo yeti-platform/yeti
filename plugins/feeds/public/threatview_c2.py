@@ -27,16 +27,13 @@ class ThreatviewC2(task.FeedTask):
 
         context = {"source": self.name}
         tags = ["c2", "cobaltstrike"]
-        
-        obs = observable.Observable.find(value=item)
-        if not obs:
-            try:
-                obs = observable.Observable.add_text(item)
-                
-            except Exception as e:
-                return logging.error(e)
-        obs.add_context(self.name, context)
-        obs.tag(tags)
 
-            
+        try:
+            obs = observable.Observable.add_text(item)
+            obs.add_context(self.name, context)
+            obs.tag(tags)
+        except ValueError as error:
+            return logging.error(error)
+
+
 taskmanager.TaskManager.register_task(ThreatviewC2)

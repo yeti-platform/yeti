@@ -68,17 +68,11 @@ class SSLBlackListCerts(task.FeedTask):
             "source": self.name,
             "first_seen": first_seen,
         }
-        cert_obs = certificate.Certificate.find(value=f"CERT:{_sha1}")
-        if not cert_obs:
-            cert_obs = certificate.Certificate(value=f"CERT:{_sha1}").save()
-
+        cert_obs = certificate.Certificate(value=f"CERT:{_sha1}").save()
         cert_obs.add_context(self.name, context_hash)
         cert_obs.tag(tags)
 
-        sha1_obs = sha1.SHA1.find(value=_sha1)
-        if not sha1_obs:
-            sha1_obs = sha1.SHA1(value=_sha1).save()
-
+        sha1_obs = sha1.SHA1(value=_sha1).save()
         sha1_obs.add_context(self.name, context_hash)
         sha1_obs.tag(tags)
 

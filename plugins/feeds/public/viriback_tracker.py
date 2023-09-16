@@ -14,7 +14,7 @@ class ViriBackTracker(task.FeedTask):
         "description": "Malware C2 Urls and IPs",
     }
     SOURCE = "http://tracker.viriback.com/dump.php"
-    
+
 
     def run(self):
         response = self._make_request(self.SOURCE)
@@ -46,20 +46,16 @@ class ViriBackTracker(task.FeedTask):
             tags.append(family)
 
         if url_str:
-            url_obs = url.Url.find(value=url_str)
-            if not url_obs:
-                url_obs = url.Url(value=url_str).save()
+            url_obs = url.Url(value=url_str).save()
             url_obs.add_context(self.name, context)
             url_obs.tag(tags)
 
         if ip_str:
-            ip_obs = ipv4.IPv4.find(value=ip_str)
-            if not ip_obs:
-                ip_obs = ipv4.IPv4(value=ip_str).save() 
-
+            ip_obs = ipv4.IPv4(value=ip_str).save()
             ip_obs.add_context(self.name, context)
             ip_obs.tag(tags)
+
         if url_obs and ip_obs:
             url_obs.link_to(ip_obs, "resolve_to", self.name)
-        
+
 taskmanager.TaskManager.register_task(ViriBackTracker)

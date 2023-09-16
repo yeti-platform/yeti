@@ -22,11 +22,7 @@ class BlocklistdeAll(task.FeedTask):
 
     def analyze(self, item):
         ip_str = item.strip()
-        
-        obs = ipv4.IPv4.find(value=ip_str)
-        
-        if not obs:
-            obs = ipv4.IPv4(value=ip_str).save()
+        obs = ipv4.IPv4(value=ip_str).save()
         obs.tag(["blocklist"])
 
 taskmanager.TaskManager.register_task(BlocklistdeAll)

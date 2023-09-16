@@ -24,9 +24,7 @@ class Cruzit(task.FeedTask):
     def analyze(self, line):
         ip_str = line.strip()
 
-        obs = ipv4.IPv4.find(value=ip_str)
-        if not obs:
-            obs = ipv4.IPv4(value=ip_str).save()
+        obs = ipv4.IPv4(value=ip_str).save()
         obs.tag(["cruzit", "web attacks"])
 
 

@@ -30,7 +30,7 @@ class DataplaneDNSRecursive(task.FeedTask):
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
-            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)        
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.fillna("", inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
@@ -43,9 +43,7 @@ class DataplaneDNSRecursive(task.FeedTask):
             "last_seen": item["lastseen"],
         }
 
-        ip_obs = ipv4.IPv4.find(value=item["ipaddr"])
-        if not ip_obs:
-            ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
+        ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
         category = item["category"].lower()
         tags = ["dataplane", "dnsrd"]
         if category:
@@ -53,9 +51,7 @@ class DataplaneDNSRecursive(task.FeedTask):
         ip_obs.add_context(self.name, context_ip)
         ip_obs.tag(tags)
 
-        asn_obs = asn.ASN.find(value=item["ASN"])
-        if not asn_obs:
-            asn_obs = asn.ASN(value=item["ASN"]).save()
+        asn_obs = asn.ASN(value=item["ASN"]).save()
         context_asn = {
             "source": self.name,
             "name": item["ASname"],

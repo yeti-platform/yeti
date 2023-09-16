@@ -23,17 +23,11 @@ class PhishingDatabase(task.FeedTask):
         if response:
             for line in response.text.split("\n"):
                 self.analyze(line.strip())
-           
+
 
     def analyze(self, url_str):
-        context = {"source": self.name}
-
-        urlobs = url.Url.find(value=url_str)
-        if not urlobs:
-            urlobs = url.Url(value=url_str).save()
-        urlobs.add_context(self.name, context)
+        urlobs = url.Url(value=url_str).save()
+        urlobs.add_context(self.name, {"source": self.name})
         urlobs.tag(["phish","phishing_database","blocklist"])
-    
-taskmanager.TaskManager.register_task(PhishingDatabase)
 
-        
+taskmanager.TaskManager.register_task(PhishingDatabase)

@@ -27,14 +27,11 @@ class VXVaultUrl(task.FeedTask):
     # don't need to do much here; want to add the information
     # and tag it with 'malware'
     def analyze(self, item):
-        
+
         tags = ["malware", "dropzone"]
         context = {"source": self.name}
-        
-        url_obs = url.Url.find(value=item)
-        if not url_obs:
-            url_obs = url.Url(value=item).save()
-            
+
+        url_obs = url.Url(value=item).save()
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
 
