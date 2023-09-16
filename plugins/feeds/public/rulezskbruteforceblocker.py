@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from dateutil import parser
 import pandas as pd
-from core.schemas import observable
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 
@@ -40,11 +40,7 @@ class RulezSKBruteforceBlocker(task.FeedTask):
         context["count"] = row["count"]
         context["id"] = row["id"]
 
-        ip = row["ip"]
-
-        ipobs = observable.Observable.find(value=ip)
-        if not ipobs:
-            ipobs = observable.Observable(value=ip, type="ip").save()
+        ipobs = ipv4.IPv4(value=row["ip"]).save()
         ipobs.add_context(self.name, context)
         ipobs.tag(["bruteforceblocker", "blocklist", "rules.sk"])
 

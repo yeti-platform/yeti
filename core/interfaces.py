@@ -50,19 +50,6 @@ class AbstractYetiConnector(ABC):
 
     @classmethod
     @abstractmethod
-    def get_or_create(cls, **kwargs):
-        """Fetches an object matching dict_ or creates it.
-
-        Args:
-          **kwargs: Key-value dictionary used to create the object.
-
-        Returns:
-          A Yeti object.
-        """
-        raise NotImplementedError
-
-    @classmethod
-    @abstractmethod
     def filter(cls, args, offset=None, count=None):
         """Filters objects according to args.
 

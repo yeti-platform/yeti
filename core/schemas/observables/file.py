@@ -25,9 +25,9 @@ class File(Observable):
     """
     value: str
     type: ObservableType = ObservableType.file
-    name: str = None
-    size: int = None
-    sha256: str = None
-    md5: str = None
-    sha1: str = None
-    mime_type: str = None
+    name: str | None = None
+    size: int | None = None
+    sha256: str | None = None
+    md5: str | None = None
+    sha1: str | None = None
+    mime_type: str | None = None

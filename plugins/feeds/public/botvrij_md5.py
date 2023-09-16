@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta, datetime
-from core.schemas import observable
+from core.schemas.observables import md5
 from core.schemas import task
 from core import taskmanager
 
@@ -28,9 +28,7 @@ class BotvrijMD5(task.FeedTask):
             "description": descr,
         }
 
-        obs = observable.Observable.find(value=val)
-        if not obs:
-            obs = observable.Observable(value=val, type="md5").save()
+        obs = md5.MD5(value=val).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

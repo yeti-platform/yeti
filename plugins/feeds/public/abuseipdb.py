@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta, datetime
-from core.schemas import observable
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 
@@ -23,7 +23,6 @@ class AbuseIPDB(task.FeedTask):
             raise Exception("Your abuseIPDB API key is not set in the yeti.conf file")
 
         # change the limit rate if you subscribe to a paid plan
-
         response = self._make_request(self.SOURCE % api_key, verify=True)
         if response:
             data = response.text
@@ -37,14 +36,10 @@ class AbuseIPDB(task.FeedTask):
         ip_value = line
 
         context = {"source": self.name, "date_added": datetime.utcnow()}
-
-        
-        ip = observable.Observable.find(value=ip_value)
-        if not ip:
-            ip = observable.Observable(value=ip_value, type="ip").save()
+        ipv4_obs = ipv4.IPv4(value=ip_value).save()
 
         logging.debug(f"Adding context to {ip_value}")
-        ip.add_context(self.name, context)
-        ip.tag(["blocklist"])
-       
+        ipv4_obs.add_context(self.name, context)
+        ipv4_obs.tag(["blocklist"])
+
 taskmanager.TaskManager.register_task(AbuseIPDB)

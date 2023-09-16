@@ -83,6 +83,10 @@ class ArangoDatabase:
             'from_vertex_collections': ['observables', 'entities', 'indicators'],
             'to_vertex_collections': ['observables', 'entities', 'indicators'],
         })
+        self.db.collection('observables').add_persistent_index(fields=['value'],unique=True)
+        self.db.collection('entities').add_persistent_index(fields=['name'],unique=True)
+        self.db.collection('tags').add_persistent_index(fields=['name'],unique=True)
+        self.db.collection('indicators').add_persistent_index(fields=['value'],unique=True)
 
     def clear(self, truncate=True):
         if not self.db:
@@ -151,30 +155,44 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return self._collection_name + '/' + self.id
 
 
-    def _insert(self, document_json):
+    def _insert(self, document_json: str):
+        document: dict = json.loads(document_json)
         try:
             newdoc = self._get_collection().insert(
-                document_json, return_new=True)['new']
-            newdoc['id'] = newdoc.pop('_key')
-            return newdoc
+                document, return_new=True)['new']
         except DocumentInsertError as err:
             if not err.error_code == 1210: # Unique constraint violation
                 raise
-            conflict = 'name' if 'name' in document_json else 'value'
-            error = 'A {0} object with same `{1}` already exists'.format(
-                self.__class__.__name__, conflict)
-            raise IntegrityError(str(error))
+            return None
+
+        newdoc['id'] = newdoc.pop('_key')
+        return newdoc
+
 
     def _update(self, document_json):
         document = json.loads(document_json)
-        document['_key'] = document.pop('id')
-        newdoc = self._get_collection().update(
-            document, merge=False, return_new=True)['new']
+        doc_id = document.pop('id')
+        if doc_id:
+            document['_key'] = doc_id
+            newdoc = self._get_collection().update(
+                document, merge=False, return_new=True)['new']
+        else:
+            if 'value' in document:
+                filters = {'value': document['value']}
+            else:
+                filters = {'name': document['name']}
+            self._get_collection().update_match(
+                filters, document, merge=False)
+            newdoc = list(self._get_collection().find(filters, limit=1))[0]
+
         newdoc['id'] = newdoc.pop('_key')
         return newdoc
 
     def save(self: TYetiObject) -> TYetiObject:
         """Inserts or updates a Yeti object into the database.
+
+        We need to pass the JSON representation of the object to the database
+        because it may contain fields that are not JSON serializable by arango.
 
         Returns:
           The created Yeti object."""
@@ -183,6 +201,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             result = self._update(self.json())
         else:
             result = self._insert(self.json())
+            if not result:
+                result = self._update(self.json(exclude={'created'}))
         return self.__class__(**result)
 
     def update_links(self, new_id):
@@ -253,25 +273,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         document = documents[0]
         document['id'] = document.pop('_key')
         return cls.load(document)
-
-    @classmethod
-    def get_or_create(cls, **kwargs):
-        """Fetches an object matching dict_ or creates it.
-
-        If an object matching kwargs is found, return the existing object. If
-        not, create it and return the newly created object.
-
-        Args:
-          **kwargs: Dictionary used to create the object.
-
-        Returns:
-          A Yeti object.
-        """
-        obj = cls(**kwargs)
-        try:
-            return obj.save()
-        except IntegrityError:
-            return cls.find(**kwargs)
 
     #TODO: Consider extracting this to its own class, given it's only meant
     # to be called by Observables.

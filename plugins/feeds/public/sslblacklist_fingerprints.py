@@ -4,9 +4,9 @@ from datetime import timedelta, datetime
 
 import pandas as pd
 
-from core.schemas import observable
-from core.schemas import task
+from core.schemas.observables import certificate, sha1
 from core import taskmanager
+from core.schemas import task
 
 TYPE_DICT = {
     "MITM": ["mitm"],
@@ -68,19 +68,11 @@ class SSLBlackListCerts(task.FeedTask):
             "source": self.name,
             "first_seen": first_seen,
         }
-
-        cert_obs = observable.Observable.find(value=f"CERT:{_sha1}")
-        if not cert_obs:
-            cert_obs = observable.Observable(value=f"CERT:{_sha1}", type="certificate").save()
-        
-
+        cert_obs = certificate.Certificate(value=f"CERT:{_sha1}").save()
         cert_obs.add_context(self.name, context_hash)
         cert_obs.tag(tags)
 
-        sha1_obs = observable.Observable.find(value=_sha1)
-        if not sha1_obs:
-            sha1_obs = observable.Observable(value=_sha1, type="sha1").save()
-
+        sha1_obs = sha1.SHA1(value=_sha1).save()
         sha1_obs.add_context(self.name, context_hash)
         sha1_obs.tag(tags)
 

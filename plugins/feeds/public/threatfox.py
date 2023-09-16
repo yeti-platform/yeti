@@ -84,22 +84,18 @@ class ThreatFox(task.FeedTask):
 
         value = None
         obs = None
-      
+
         if ioc_type in self._MAPPING:
             if ioc_type == "ip":
                 value, port = ioc_value.split(":")
                 context["port"] = port
             else:
                 value = ioc_value
-            
-            obs = observable.Observable.find(value=value)
-            if not obs:
-                obs = observable.Observable(value=value, type=self._MAPPING["ip"]).save()
-
-        if obs:
+            obs = observable.Observable(value=value, type=self._MAPPING["ip"]).save()
             obs.add_context(self.name, context)
             if malware_alias:
                 tags.extend(malware_alias.split(","))
             tags.append(malware_printable)
             obs.tag(tags)
+
 taskmanager.TaskManager.register_task(ThreatFox)

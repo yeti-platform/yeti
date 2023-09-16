@@ -86,35 +86,29 @@ class OTXAlienvault(task.FeedTask):
                 otx_indic["created"], "%Y-%m-%dT%H:%M:%S"
             )
             if type_ind in observable.ObservableType:
-                obs = observable.Observable.find(value=otx_indic["indicator"])
-                if not obs:
-                    obs = observable.Observable(
-                        value=otx_indic["indicator"],
-                        type=self._TYPE_MAPPING.get(otx_indic["type"]),
-                    ).save()
+                obs = observable.Observable(
+                    value=otx_indic["indicator"],
+                    type=self._TYPE_MAPPING.get(otx_indic["type"]),
+                ).save()
                 obs.tag(tags)
                 obs.add_context(self.name, context)
 
             elif type_ind in entity.EntityType:
-                ent = entity.Entity.find(value=otx_indic["indicator"])
-                if not ent:
-                    ent = entity.Entity(
-                        name=otx_indic["indicator"],
-                        type=self._TYPE_MAPPING.get(otx_indic["type"]),
-                    ).save()
+                ent = entity.Entity(
+                    name=otx_indic["indicator"],
+                    type=self._TYPE_MAPPING.get(otx_indic["type"]),
+                ).save()
 
             elif type_ind in indicator.IndicatorType:
                 if type_ind == indicator.IndicatorType.yara:
-                    yara_rule = indicator.Indicator.find(name=otx_indic["indicator"])
-                    if not yara_rule:
-                        yara_rule = indicator.Indicator(
-                            name=f"YARA_{otx_indic['indicator']}",
-                            pattern=otx_indic["content"],
-                            type=indicator.IndicatorType.yara,
-                            location="OTX",
-                            diamond=indicator.DiamondModel.capability,
-                        ).save()
-                    
+                    yara_rule = indicator.Indicator(
+                        name=f"YARA_{otx_indic['indicator']}",
+                        pattern=otx_indic["content"],
+                        type=indicator.IndicatorType.yara,
+                        location="OTX",
+                        diamond=indicator.DiamondModel.capability,
+                    ).save()
+
 
 
 taskmanager.TaskManager.register_task(OTXAlienvault)

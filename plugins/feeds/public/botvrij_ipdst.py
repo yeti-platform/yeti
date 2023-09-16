@@ -1,7 +1,7 @@
 import logging
 from datetime import timedelta, datetime
 
-from core.schemas import observable
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 
@@ -30,9 +30,7 @@ class BotvrijIPDst(task.FeedTask):
             "description": descr,
         }
 
-        obs = observable.Observable.find(value=ip)
-        if not obs:
-            obs = observable.Observable(value=ip, type="ip").save()
+        obs = ipv4.IPv4(value=ip).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 

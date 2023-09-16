@@ -8,9 +8,9 @@ from core.schemas import observable
 from core.schemas import task
 from core import taskmanager
 
-  
-    
-    
+
+
+
 
 class MispFeed(task.FeedTask):
     _defaults = {
@@ -29,10 +29,12 @@ class MispFeed(task.FeedTask):
         "md5": observable.ObservableType.md5,
         "sha1": observable.ObservableType.sha1,
         "sha256": observable.ObservableType.sha256,
-        "btc": observable.ObservableType.bitcoin,
-        "email" : observable.ObservableType.email
+        "btc": observable.ObservableType.bitcoin_wallet,
+        "email" : observable.ObservableType.email,
+        "filename": observable.ObservableType.file,
+        "regkey": observable.ObservableType.registry_key,
     }
-        
+
     def get_instances(self):
         instances = {}
         for instance in yeti_config.get("misp", "instances", "").split(","):
@@ -43,16 +45,16 @@ class MispFeed(task.FeedTask):
                 "organisations": {},
             }
 
-            
+
             config["url"] = yeti_config.get(instance, "url")
             config["key"] = yeti_config.get(instance, "key")
             instances[instance] = config
-           
+
         return instances
 
-    
+
     def get_organisations(self,instance:dict):
-        
+
             misp_client = PyMISP(
                 url=instance["url"], key=instance["key"]
             )
@@ -66,8 +68,8 @@ class MispFeed(task.FeedTask):
                 org_id = org["Organisation"]["id"]
                 org_name = org["Organisation"]["name"]
                 instance["organisations"][org_id] = org_name
-       
-    
+
+
     def get_all_events(self,instance:dict):
         days = None
 
@@ -92,7 +94,7 @@ class MispFeed(task.FeedTask):
             self.analyze(event, instance)
 
     def get_event(self, instance, from_date, to_date=None):
-  
+
         misp_client = PyMISP(
             url=instance["url"], key=instance["key"]
         )
@@ -168,9 +170,7 @@ class MispFeed(task.FeedTask):
 
             context["comment"] = attribute["comment"]
 
-            obs = observable.Observable.find(value=attribute["value"])
-            if not obs:
-                obs = observable.Observable.add_text(attribute['value'])
+            obs = observable.Observable.add_text(attribute['value'])
 
             if attribute["category"]:
                 tags.append(attribute["category"])
@@ -181,7 +181,7 @@ class MispFeed(task.FeedTask):
             obs.add_context(instance["name"], context)
 
     def decompose_weeks(self,start_day, last_day):
-    
+
         # Génère la liste de tuples
         weeks = []
         current_start = start_day

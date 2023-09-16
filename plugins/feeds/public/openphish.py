@@ -1,8 +1,8 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 import logging
 import traceback
 
-from core.schemas import observable
+from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
 
@@ -10,7 +10,7 @@ from core import taskmanager
 class OpenPhish(task.FeedTask):
     # set default values for feed
     SOURCE = "https://openphish.com/feed.txt"
-    _default = {
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "OpenPhish",
         "description": "OpenPhish is a community feed of phishing URLs which are updated every 24 hours.",
@@ -28,25 +28,17 @@ class OpenPhish(task.FeedTask):
 
     # don't need to do much here; want to add the information
     # and tag it with 'phish'
-    def analyze(self, url):
+    def analyze(self, url_str):
         context = {"source": self.name}
 
         # check to see if the URL is already in the database
         # if it is, then we don't need to do anything
         # if it isn't, then we need to add it
-        try:
-            obs = observable.Observable.find(value=url)
-            if not obs:
-                obs = observable.Observable(value=url, type="url").save()
-
-            # add the context to the observable
-            obs.add_context(self.name, context)
-
-            # tag the observable with 'phish'
-            obs.tag(["phish"])
-        except Exception as e:
-            logging.error(traceback.format_exc())
-            raise RuntimeError("Error analyzing URL: {}".format(url))
+        if not url_str:
+            return
+        obs = url.Url(value=url_str).save()
+        obs.add_context(self.name, context)
+        obs.tag(["phish"])
 
 
 taskmanager.TaskManager.register_task(OpenPhish)

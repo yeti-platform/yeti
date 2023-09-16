@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta, datetime
-from core.schemas import observable
+from core.schemas.observables import file
 from core.schemas import task
 from core import taskmanager
 
@@ -28,12 +28,11 @@ class BotvrijFilename(task.FeedTask):
             "description": descr,
         }
 
-        obs = observable.Observable.find(value=filen)
-        if not obs:
-            obs = observable.Observable(value=filen, type="file").save()
+        obs = file.File(value=filen).save()
+        obs.name = filen
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 
-       
+
 
 taskmanager.TaskManager.register_task(BotvrijFilename)
