@@ -12,8 +12,8 @@ app = Celery(
     broker="redis://redis/",
     imports=(
         # TESTING ONLY
-        "plugins.feeds.public.random",
         "plugins.analytics.public.random_analytics",
+        # REAL TASKS
         "plugins.feeds.public.abusech_malwarebazaar",
         "plugins.feeds.public.abuseipdb",
         "plugins.feeds.public.azorult-tracker",
