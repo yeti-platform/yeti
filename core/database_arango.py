@@ -725,17 +725,13 @@ class ObservableYetiConnector(ArangoYetiConnector):
                 conditions.append('o.{0:s} == @{0:s}'.format(key))
                 sorts.append('o.{0:s}'.format(key))
 
-        limit = ''
-        if offset:
-            limit += f'LIMIT {offset}'
-            if count:
-                limit += f', {count}'
-
         tag_filter = ''
         if tags:
             tag_filter = f"""
                 FILTER {' AND '.join([f'HAS(tags, "{tag}")' for tag in tags])}
             """
+
+        limit = f'LIMIT {offset}, {count}'
 
         aql_string = f"""
             FOR o IN observables
@@ -754,7 +750,7 @@ class ObservableYetiConnector(ArangoYetiConnector):
         documents = cls._db.aql.execute(
             aql_string, bind_vars=args, count=True, full_count=True)
         results = []
-        total = documents.count()
+        total = documents.statistics().get('fullCount', count)
         for doc in documents:
             doc['id'] = doc.pop('_key')
             results.append(cls.load(doc))
