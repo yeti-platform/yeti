@@ -1,17 +1,6 @@
 import hashlib
 import re
-from datetime import timedelta
 import datetime
-
-timedelta_regex = re.compile(
-    r"(((?P<hours>[0-9]{1,2}):)?((?P<minutes>[0-9]{1,2}):))?(?P<seconds>[0-9]{1,2})$"
-)
-
-
-def string_to_timedelta(string):
-    d = {k: int(v) for k, v in timedelta_regex.search(string).groupdict().items() if v}
-    return timedelta(**d)
-
 
 def refang(url):
     def http(match):
