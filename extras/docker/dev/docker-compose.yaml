@@ -16,3 +16,9 @@ services:
       - 127.0.0.1:8529:8529
     environment:
       - ARANGO_ROOT_PASSWORD=
+      - MONGO_LOG_DIR=/dev/null
+    command: mongod
+    volumes:
+      - ./data:/data/
+      - ./data/db:/data/db
+      - ./data/configdb:/data/configdb
