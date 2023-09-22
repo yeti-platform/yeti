@@ -1,5 +1,0 @@
-[style]
-based_on_style = chromium
-indent_width = 4
-COALESCE_BRACKETS = True
-SPLIT_BEFORE_FIRST_ARGUMENT = True
