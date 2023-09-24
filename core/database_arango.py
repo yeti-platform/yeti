@@ -727,11 +727,14 @@ class ObservableYetiConnector(ArangoYetiConnector):
 
         tag_filter = ''
         if tags:
-            tag_filter = f"""
-                FILTER {' AND '.join([f'HAS(tags, "{tag}")' for tag in tags])}
-            """
+            tag_filter = "FILTER COUNT(INTERSECTION(ATTRIBUTES(tags), @tag_names)) > 0"
+            args['tag_names'] = tags
 
-        limit = f'LIMIT {offset}, {count}'
+        limit = ''
+        if count != 0:
+            limit = f'LIMIT @offset, @count'
+            args['offset'] = offset
+            args['count'] = count
 
         aql_string = f"""
             FOR o IN observables
@@ -745,8 +748,7 @@ class ObservableYetiConnector(ArangoYetiConnector):
             """
 
         aql_string += '\nRETURN MERGE(o, { tags: tags })'
-        for key in list(args.keys()):
-            args[key.replace('.', '_')] = args.pop(key)
+
         documents = cls._db.aql.execute(
             aql_string, bind_vars=args, count=True, full_count=True)
         results = []
