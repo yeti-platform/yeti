@@ -3,9 +3,11 @@ import logging
 
 import requests
 
-from core.analytics import OneShotAnalytics
+
 from core.config.config import yeti_config
-from core.observables import Certificate, CertificateSubject, Ip
+from core.schemas.observables import ipv4, certificate
+from core import taskmanager
+from core.schemas import task
 from OpenSSL.crypto import FILETYPE_PEM, load_certificate
 from OpenSSL.crypto import FILETYPE_ASN1, dump_certificate
 
@@ -26,25 +28,24 @@ class CirclPassiveSSLApi(object):
     HEADERS = {"User-Agent": "Yeti Analytics Worker", "accept": "application/json"}
 
     @staticmethod
-    def search_ip(observable, settings):
+    def search_ip(ip:ipv4.IPv4, settings:dict):
         auth = (settings["circl_username"], settings["circl_password"])
 
-        if isinstance(observable, Ip):
-            r = requests.get(
-                CirclPassiveSSLApi.API + "query/" + observable.value,
-                auth=auth,
-                headers={
-                    "User-Agent": "Yeti Analytics Worker",
-                    "accept": "application/json",
-                },
-                proxies=yeti_config.proxy,
-            )
+        r = requests.get(
+            CirclPassiveSSLApi.API + "query/" + ip.value,
+            auth=auth,
+            headers={
+                "User-Agent": "Yeti Analytics Worker",
+                "accept": "application/json",
+            },
+            proxies=yeti_config.proxy,
+        )
 
-            if r.ok:
-                return r.json()
+        if r.status_code == 200:
+            return r.json()
 
     @staticmethod
-    def fetch_cert(cert_sha1, settings):
+    def fetch_cert(cert_sha1:str, settings:dict):
         auth = (settings["circl_username"], settings["circl_password"])
 
         r = requests.get(
@@ -57,12 +58,12 @@ class CirclPassiveSSLApi(object):
             proxies=yeti_config.proxy,
         )
 
-        if r.ok:
+        if r.status_code == 200:
             return r.json()
 
 
-class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
-    default_values = {
+class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
+    _defaults = {
         "name": "Circl.lu IP to ssl certificate lookup.",
         "group": "SSL Tools",
         "description": "Perform a lookup on ssl certificates \
@@ -71,66 +72,35 @@ class CirclPassiveSSLSearchIP(OneShotAnalytics, CirclPassiveSSLApi):
 
     ACTS_ON = ["Ip"]
 
-    @staticmethod
-    def analyze(observable, results):
+    
+    def each(ip:ipv4.IPv4):
         links = set()
+        results = {}
+        
+        ip_search = CirclPassiveSSLApi.search_ip(ip, CirclPassiveSSLApi.settings)
+        if ip_search:
+            for ip_addr, ip_details in ip_search.items():
+                for cert_sha1 in ip_details.get("certificates", []):
+                    
+                    cert_result = CirclPassiveSSLApi.fetch_cert(
+                        cert_sha1, CirclPassiveSSLApi.settings
+                    )
+                    if cert_result:
+                        _info = cert_result.get("info", {})
+                        x509 = load_certificate(
+                            FILETYPE_PEM, cert_result.get("pem")
+                        )
 
-        if isinstance(observable, Ip):
-            ip_search = CirclPassiveSSLApi.search_ip(observable, results.settings)
-            if ip_search:
-                json_string = json.dumps(
-                    ip_search, sort_keys=True, indent=4, separators=(",", ": ")
-                )
+                        der = dump_certificate(FILETYPE_ASN1, x509)
 
-                results.update(raw=json_string)
+                        cert = certificate.Certificate.from_data(der)
 
-                for ip_addr, ip_details in ip_search.items():
-                    for cert_sha1 in ip_details.get("certificates", []):
-                        try:
-                            cert_result = CirclPassiveSSLApi.fetch_cert(
-                                cert_sha1, results.settings
-                            )
-                            if cert_result:
-                                _info = cert_result.get("info", {})
-                                x509 = load_certificate(
-                                    FILETYPE_PEM, cert_result.get("pem")
-                                )
+                        cert.subject = _info.get("subject", "")
+                        
+                        cert.issuer =_info.get("issuer", "")
+            
+                        cert.save()
 
-                                der = dump_certificate(FILETYPE_ASN1, x509)
+                        ip.link_to(cert,'ip-certificate','CirlPassiveSSL')
 
-                                cert_ob = Certificate.from_data(data=der)
-
-                                subject = CertificateSubject.get_or_create(
-                                    value=_info.get("subject", "")
-                                )
-
-                                issuer = CertificateSubject.get_or_create(
-                                    value=_info.get("issuer", "")
-                                )
-
-                                links.update(
-                                    observable.active_link_to(
-                                        cert_ob, "ssl-cert", "circl_passive_ssl_query"
-                                    )
-                                )
-
-                                links.update(
-                                    cert_ob.active_link_to(
-                                        subject,
-                                        "cert-subject",
-                                        "circl_passive_ssl_query",
-                                    )
-                                )
-
-                                links.update(
-                                    cert_ob.active_link_to(
-                                        issuer, "cert-issuer", "circl_passive_ssl_query"
-                                    )
-                                )
-
-                        except Exception as e:
-                            logging.error(
-                                "Error attempting to fetch cert file {}".format(e)
-                            )
-
-        return list(links)
+taskmanager.TaskManager.register_task(CirclPassiveSSLSearchIP)
