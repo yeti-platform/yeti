@@ -368,13 +368,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
         graph = self._db.graph('threat_graph')
 
         # Check if a relationship with the same link_type already exists
-        aql = f'''
-        FOR v, e, p IN 1..1 OUTBOUND "{self.extended_id}"
+        aql = '''
+        FOR v, e, p IN 1..1 OUTBOUND @extended_id
         links
-          FILTER e.type == "{relationship_type}"
-          FILTER v._id == "{target.extended_id}"
+          FILTER e.type == @relationship_type
+          FILTER v._id == @target_extended_id
         RETURN e'''
-        neighbors = list(self._db.aql.execute(aql))
+        args = {
+            'extended_id': self.extended_id,
+            'target_extended_id': target.extended_id,
+            'relationship_type': relationship_type,
+        }
+        neighbors = list(self._db.aql.execute(aql, bind_vars=args))
         if neighbors:
             relationship = Relationship.load(neighbors[0])
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
@@ -399,11 +404,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return_new=True)['new']
         result['id'] = result.pop('_key')
         return Relationship.load(result)
-        # existing = list(Relationship.filter({'attributes.id': stix_rel['id']}))
-        # if existing:
-        #     return existing[0]
-        # # pylint: disable=protected-access
-        # return Relationship(self._arango_id, target._arango_id, stix_rel).save()
 
     #TODO: Consider extracting this to its own class, given it's only meant
     # to be called by Observables.
@@ -458,13 +458,15 @@ class ArangoYetiConnector(AbstractYetiConnector):
             the second one contains the relationships (edges)
         """
         query_filter = ''
-        args = {}
+        args = {
+            'extended_id': self.extended_id,
+        }
         if link_types:
             args['link_types_regex'] = '|'.join(link_types)
-            query_filter = f'FILTER e.type =~ @link_types_regex'
+            query_filter = 'FILTER e.type =~ @link_types_regex'
         if target_types:
             args['target_types_regex'] = '|'.join(target_types)
-            query_filter += f'\nFILTER v.type =~ @target_types_regex'
+            query_filter += '\nFILTER v.type =~ @target_types_regex'
 
         limit = ''
         if offset:
@@ -473,7 +475,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 limit += f', {count}'
 
         aql = f"""
-        FOR v, e, p IN 1..{hops} {direction} '{self.extended_id}'
+        FOR v, e, p IN 1..{hops} {direction} @extended_id
           links
           {query_filter}
           {limit}
@@ -600,6 +602,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if count:
                 limit += f', {count}'
 
+        #TODO: Interpolate this query
         graph_query_string = ''
         for name, graph, direction, field in graph_queries:
             graph_query_string += f'\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})'
@@ -663,12 +666,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           The ArangoDB collection corresponding to the object class.
         """
-        collection = cls._db.collection(cls._collection_name)
-        # for index in cls._indexes:
-        #     collection.add_hash_index(**index)
-        # for text_index in cls._text_indexes:
-        #     collection.add_fulltext_index(**text_index)
-        return collection
+        return cls._db.collection(cls._collection_name)
 
 class ObservableYetiConnector(ArangoYetiConnector):
 
@@ -760,7 +758,7 @@ class ObservableYetiConnector(ArangoYetiConnector):
 
 
 def tagged_observables_export(cls, args):
-    aql = f"""
+    aql = """
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
         LET tagnames = (
