@@ -22,6 +22,7 @@ class EntityType(str, Enum):
     attack_pattern = "attack-pattern"
     identity = "identity"
     exploit = "exploit"
+    company = "company"
 
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
@@ -43,6 +44,10 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
 
+class Company(Entity):
+    
+    _type:str = EntityType.company
+    _type_filter:str = EntityType.company
 
 class ThreatActor(Entity):
     _type_filter: str = "threat-actor"
@@ -111,6 +116,7 @@ TYPE_MAPPING: dict[str, "EntityClasses"] = {
     "campaign": Campaign,
     "entities": Entity,
     "entity": Entity,
+    "compagny": Com
 }
 REGEXES_ENTITIES = {
     EntityType.exploit: re.compile(
