@@ -3,9 +3,11 @@ from datetime import datetime
 
 import requests
 
-from core.analytics import OneShotAnalytics
+from core.schemas import task
+from core import taskmanager
 from core.config.config import yeti_config
-from core.observables import Hostname, Ip, Observable
+from core.schemas.observables import ipv4,hostname
+from core.schemas.observable import Observable,ObservableType
 
 
 class CirclPDNSApi(object):
@@ -20,9 +22,8 @@ class CirclPDNSApi(object):
         },
     }
 
-    @staticmethod
-    def fetch(observable, settings):
-        auth = (settings["circl_username"], settings["circl_password"])
+    def fetch(observable:Observable):
+        auth = (CirclPDNSApi.settings["circl_username"], CirclPDNSApi.settings["circl_password"])
         API_URL = "https://www.circl.lu/pdns/query/"
         headers = {"accept": "application/json"}
         results = []
@@ -32,7 +33,7 @@ class CirclPDNSApi(object):
             headers=headers,
             proxies=yeti_config.proxy,
         )
-        if r.ok:
+        if r.status_code == 200:
             for l in filter(None, r.text.split("\n")):
                 obj = json.loads(l)
                 results.append(obj)
@@ -40,56 +41,31 @@ class CirclPDNSApi(object):
         return results
 
 
-class CirclPDNSApiQuery(OneShotAnalytics, CirclPDNSApi):
-    default_values = {
+class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
+    _defaults = {
         "name": "Circl.lu PDNS",
         "group": "PDNS",
         "description": "Perform passive DNS \
         lookups on domain names or ip address.",
     }
 
-    ACTS_ON = ["Hostname", "Ip"]
+    acts_on: list[ObservableType] = [ObservableType.hostname,ObservableType.ip]
 
-    @staticmethod
-    def analyze(observable, results):
-        links = set()
-        json_result = CirclPDNSApi.fetch(observable, results.settings)
-        json_string = json.dumps(
-            json_result, sort_keys=True, indent=4, separators=(",", ": ")
-        )
+    def each(observable:Observable):
+    
+        json_result = CirclPDNSApi.fetch(observable, CirclPDNSApi.settings)
 
-        results.update(raw=json_string)
         result = {}
         result["source"] = "circl_pdns_query"
-        result["raw"] = json_string
-
-        if isinstance(observable, Ip):
+    
+        if observable.type == ObservableType.ip:
             for record in json_result:
-                new = Observable.add_text(record["rrname"])
-                new.add_source("circl_pdns")
-                links.update(
-                    observable.link_to(
-                        new,
-                        source="Circl.lu Passive DNS",
-                        description="{} record".format(record["rrtype"]),
-                        first_seen=datetime.fromtimestamp(record["time_first"]),
-                        last_seen=datetime.fromtimestamp(record["time_last"]),
-                    )
-                )
-
-        elif isinstance(observable, Hostname):
+                new_hostname = hostname.Hostname(value=record['rrname'])
+                observable.link_to(new_hostname,record['rrtype'],'Circl PDNS')
+                
+        elif observable.type == ObservableType.hostname:
             for record in json_result:
-                new = Observable.add_text(record["rdata"])
-                new.add_source("circl_pdns")
-                links.update(
-                    observable.link_to(
-                        new,
-                        source="Circl.lu Passive DNS",
-                        description="{} record".format(record["rrtype"]),
-                        first_seen=datetime.fromtimestamp(record["time_first"]),
-                        last_seen=datetime.fromtimestamp(record["time_last"]),
-                    )
-                )
-
-        observable.add_context(result)
-        return list(links)
+                new_ip = hostname.Hostname(value=record["rdata"])
+                observable.link_to(new_ip,record['rrtype'],'Circl PDNS')
+                
+taskmanager.TaskManager.register_task(CirclPDNSApiQuery)
