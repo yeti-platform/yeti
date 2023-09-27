@@ -6,6 +6,7 @@ import requests
 
 from core.config.config import yeti_config
 from core.schemas.observables import ipv4, certificate
+from core.schemas.observable import ObservableType
 from core import taskmanager
 from core.schemas import task
 from OpenSSL.crypto import FILETYPE_PEM, load_certificate
@@ -70,7 +71,7 @@ class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
          related to an ip address.",
     }
 
-    ACTS_ON = ["Ip"]
+    acts_on:list[ObservableType]=[ObservableType.ip]
 
     
     def each(ip:ipv4.IPv4):
