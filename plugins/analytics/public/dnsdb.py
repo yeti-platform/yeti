@@ -22,19 +22,13 @@ class DNSDBApi(object):
 
         for record in DNSDBApi.lookup("rdata", observable):
             new = Observable.add_text(record["rrname"])
-            new.add_source("analytics")
+            new.link_to(
+                observable,
+                source="DNSDB Passive DNS",
+                description=f"{record['rrtype']} record"      
+        )
 
-            links.update(
-                new.link_to(
-                    observable,
-                    source="DNSDB Passive DNS",
-                    description="{} record".format(record["rrtype"]),
-                    first_seen=record["first_seen"],
-                    last_seen=record["last_seen"],
-                )
-            )
-
-        return list(links)
+        
 
     @staticmethod
     def rrset_lookup(hostname:hostname.Hostname):
