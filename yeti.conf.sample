@@ -126,3 +126,6 @@ password=
 [circl_pdns]
 username=
 password=
+
+[dnsdb]
+api_key=
