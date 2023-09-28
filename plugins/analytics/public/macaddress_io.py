@@ -8,21 +8,15 @@ from core import taskmanager
 from core.schemas import task
 from core.schemas.observables.mac_adress import MacAddress
 from core.schemas.entity import Company
-
+from core.config.config import yeti_config
 
 class MacAddressIoApi(object):
     __MODULE_GROUP__ = "MacAddress.io"
 
-    settings = {
-        "macaddress_io_api_key": {
-            "name": "macaddress.io API Key",
-            "description": "API Key provided by macaddress.io",
-        }
-    }
-
+  
     @staticmethod
     def get(mac_address):
-        api_client = ApiClient(MacAddressIoApi.settings["macaddress_io_api_key"])
+        api_client = ApiClient(yeti_config['macaddressio']['api_key'])
 
         try:
             response = api_client.get_raw_data(mac_address, "json")
@@ -66,7 +60,7 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
     ACTS_ON = ["MacAddress"]
 
     
-    def each(mac_address:MacAddress):
+    def each(self,mac_address:MacAddress):
         results = {}
 
         lookup_results = MacAddressIoApi.get(mac_address.value)

@@ -129,3 +129,6 @@ password=
 
 [dnsdb]
 api_key=
+
+[macaddressio]
+api_key=
