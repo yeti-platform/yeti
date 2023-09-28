@@ -475,11 +475,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 limit += f', {count}'
 
         aql = f"""
-        FOR v, e, p IN 1..{hops} {direction} @extended_id
-          links
+        FOR v, e, p IN 1..{hops} {direction} @extended_id links
+
           {query_filter}
+          LET v_with_tags = (
+            FOR observable in p['vertices']
+              let innertags = (FOR tag, edge in 1..1 OUTBOUND observable tagged RETURN {{ [tag.name]: edge }})
+              RETURN MERGE(observable, {{tags: MERGE(innertags)}})
+          )
           {limit}
-          RETURN p
+          RETURN {{ vertices: v_with_tags, edges: p['edges'] }}
         """
 
         cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
