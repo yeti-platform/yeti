@@ -118,3 +118,11 @@ enabled = False
 login=
 password=
 url=
+
+[circl_passivessl]
+username=
+password=
+
+[circl_pdns]
+username=
+password=

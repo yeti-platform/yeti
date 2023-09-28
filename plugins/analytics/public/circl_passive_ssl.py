@@ -1,6 +1,3 @@
-import json
-import logging
-
 import requests
 
 
@@ -9,28 +6,21 @@ from core.schemas.observables import ipv4, certificate
 from core.schemas.observable import ObservableType
 from core import taskmanager
 from core.schemas import task
+from core.config.config import yeti_config
 from OpenSSL.crypto import FILETYPE_PEM, load_certificate
 from OpenSSL.crypto import FILETYPE_ASN1, dump_certificate
 
 
-class CirclPassiveSSLApi(object):
-    settings = {
-        "circl_username": {
-            "name": "Circl.lu username",
-            "description": "Username for Circl.lu Passive SSL API.",
-        },
-        "circl_password": {
-            "name": "Circl.lu password",
-            "description": "Password for Circl.lu Passive SSL API.",
-        },
-    }
-
+class CirclPassiveSSLApi:
     API = "https://www.circl.lu/v2pssl/"
     HEADERS = {"User-Agent": "Yeti Analytics Worker", "accept": "application/json"}
 
     @staticmethod
-    def search_ip(ip:ipv4.IPv4, settings:dict):
-        auth = (settings["circl_username"], settings["circl_password"])
+    def search_ip(ip: ipv4.IPv4):
+        auth = (
+            yeti_config["circl_passivessl"]["username"],
+            yeti_config["circl_passivessl"]["password"],
+        )
 
         r = requests.get(
             CirclPassiveSSLApi.API + "query/" + ip.value,
@@ -46,8 +36,11 @@ class CirclPassiveSSLApi(object):
             return r.json()
 
     @staticmethod
-    def fetch_cert(cert_sha1:str, settings:dict):
-        auth = (settings["circl_username"], settings["circl_password"])
+    def fetch_cert(cert_sha1: str, settings: dict):
+        auth = (
+            yeti_config["circl_passivessl"]["username"],
+            yeti_config["circl_passivessl"]["password"],
+        )
 
         r = requests.get(
             CirclPassiveSSLApi.API + "cfetch/" + cert_sha1,
@@ -71,37 +64,32 @@ class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
          related to an ip address.",
     }
 
-    acts_on:list[ObservableType]=[ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.ip]
 
-    
-    def each(ip:ipv4.IPv4):
+    def each(self, ip: ipv4.IPv4):
         links = set()
         results = {}
-        
-        ip_search = CirclPassiveSSLApi.search_ip(ip, CirclPassiveSSLApi.settings)
+
+        ip_search = CirclPassiveSSLApi.search_ip(ip)
         if ip_search:
             for ip_addr, ip_details in ip_search.items():
                 for cert_sha1 in ip_details.get("certificates", []):
-                    
-                    cert_result = CirclPassiveSSLApi.fetch_cert(
-                        cert_sha1, CirclPassiveSSLApi.settings
-                    )
+                    cert_result = CirclPassiveSSLApi.fetch_cert(cert_sha1)
                     if cert_result:
                         _info = cert_result.get("info", {})
-                        x509 = load_certificate(
-                            FILETYPE_PEM, cert_result.get("pem")
-                        )
+                        x509 = load_certificate(FILETYPE_PEM, cert_result.get("pem"))
 
                         der = dump_certificate(FILETYPE_ASN1, x509)
 
                         cert = certificate.Certificate.from_data(der)
 
                         cert.subject = _info.get("subject", "")
-                        
-                        cert.issuer =_info.get("issuer", "")
-            
+
+                        cert.issuer = _info.get("issuer", "")
+
                         cert.save()
 
-                        ip.link_to(cert,'ip-certificate','CirlPassiveSSL')
+                        ip.link_to(cert, "ip-certificate", "CirlPassiveSSL")
+
 
 taskmanager.TaskManager.register_task(CirclPassiveSSLSearchIP)

@@ -11,19 +11,12 @@ from core.schemas.observable import Observable,ObservableType
 
 
 class CirclPDNSApi(object):
-    settings = {
-        "circl_username": {
-            "name": "Circl.lu username",
-            "description": "Username for Circl.lu API.",
-        },
-        "circl_password": {
-            "name": "Circl.lu password",
-            "description": "Password for Circl.lu API.",
-        },
-    }
 
     def fetch(observable:Observable):
-        auth = (CirclPDNSApi.settings["circl_username"], CirclPDNSApi.settings["circl_password"])
+        auth = (
+            yeti_config["circl_pdns"]["username"],
+            yeti_config["circl_pdns"]["password"],
+        )
         API_URL = "https://www.circl.lu/pdns/query/"
         headers = {"accept": "application/json"}
         results = []
@@ -51,7 +44,7 @@ class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
 
     acts_on: list[ObservableType] = [ObservableType.hostname,ObservableType.ip]
 
-    def each(observable:Observable):
+    def each(self,observable:Observable):
     
         json_result = CirclPDNSApi.fetch(observable, CirclPDNSApi.settings)
 
