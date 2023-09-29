@@ -115,3 +115,5 @@ class DNSDBPassiveDns(task.AnalyticsTask, DNSDBApi):
     
     def each(self,hostname:hostname.Hostname):
         return DNSDBApi.rrset_lookup(hostname)
+
+taskmanager.TaskManager.register_task(DNSDBPassiveDns)
