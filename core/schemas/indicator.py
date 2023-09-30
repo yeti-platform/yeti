@@ -19,6 +19,7 @@ DEFAULT_INDICATOR_VALIDITY_DAYS = 30
 class IndicatorType(str, Enum):
     regex = 'regex'
     yara = 'yara'
+    sigma = 'sigma'
 
 class IndicatorMatch(BaseModel):
     name: str
@@ -91,13 +92,37 @@ class Regex(Indicator):
         return None
 
 
+class Yara(Indicator):
+    """Represents a Yara rule.
+
+    Parsing and matching is yet TODO.
+    """
+    _type_filter: str = 'yara'
+    type: str = Field('yara', const=True)
+
+    def match(self, value: str) -> IndicatorMatch | None:
+        raise NotImplementedError
+
+
+class Sigma(Indicator):
+    """Represents a Sigma rule.
+
+    Parsing and matching is yet TODO.
+    """
+    _type_filter: str = 'sigma'
+    type: str = Field('sigma', const=True)
+
+    def match(self, value: str) -> IndicatorMatch | None:
+        raise NotImplementedError
+
+
 TYPE_MAPPING = {
     'regex': Regex,
+    'yara': Yara,
+    'sigma': Sigma,
     'indicator': Indicator,
     'indicators': Indicator,
 }
 
-IndicatorTypes = Regex
-IndicatorClasses = Type[Regex]
-
-#TODO: Indicator tyeps: yara, sigma
+IndicatorTypes = Regex | Yara | Sigma
+IndicatorClasses = Type[Regex] | Type[Yara] | Type[Sigma]
