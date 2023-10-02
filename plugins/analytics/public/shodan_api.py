@@ -31,27 +31,31 @@ class ShodanQuery(task.AnalyticsTask, ShodanApi):
         " extract relevant information.",
     }
 
-    acts_on: list[Observable] = [ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.ip]
 
     def each(self,ip:ipv4.IPv4):
         result = ShodanApi.fetch(ip)
+        logging.debug(result)
 
         if "tags" in result and result["tags"] is not None:
             ip.tag(result["tags"])
 
+        logging.debug(result['asn'])
         if "asn" in result and result["asn"] is not None:
             o_asn = asn.ASN(
-                value=result["asn"].replace("AS", "")
-            )
+                value=result["asn"],
+            ).save()
+            logging.debug(o_asn)
             o_asn.link_to(ip, "asn#", "Shodan Query")
 
         if "hostnames" in result and result["hostnames"] is not None:
             for hostname_str in result["hostnames"]:
-                h = hostname.Hostname(value=hostname_str)
+                h = hostname.Hostname(value=hostname_str).save()
                 h.link_to(ip, "A record", "Shodan Query")
 
         if "isp" in result and result["isp"] is not None:
-            o_isp = Company(name=result["isp"])
+            logging.debug(result["isp"])
+            o_isp = Company(name=result["isp"]).save()
             ip.link_to(o_isp, "hosting", "Shodan Query")
 
-taskmanager.TaskManager.register_task(ShodanQuery())
+taskmanager.TaskManager.register_task(ShodanQuery)
