@@ -29,7 +29,7 @@ class IndicatorTest(unittest.TestCase):
 
         self.assertEqual(len(all_entities), 1)
         self.assertEqual(len(regex_entities), 1)
-        self.assertEqual(regex_entities[0].json(), regex.json())
+        self.assertEqual(regex_entities[0].model_dump_json(), regex.model_dump_json())
 
     def test_regex_match(self) -> None:
         regex = Regex(name="regex1", pattern="Ba+dString", location="any", diamond=DiamondModel.capability).save()

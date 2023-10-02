@@ -78,7 +78,7 @@ async def update(tag_id: str, request: UpdateRequest) -> Tag:
 @router.post('/search')
 async def search(request: TagSearchRequest) -> TagSearchResponse:
     """Searches for Tags."""
-    request_args = request.dict(exclude_unset=True)
+    request_args = request.model_dump(exclude_unset=True)
     count = request_args.pop('count')
     page = request_args.pop('page')
     tags, total = Tag.filter(request_args, offset=page*count, count=count)

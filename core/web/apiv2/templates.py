@@ -41,15 +41,15 @@ async def update(template_id: str, request: PatchTemplateRequest) -> Template:
     db_template = Template.get(template_id)
     if not db_template:
         raise HTTPException(status_code=404, detail=f'Template {template_id} not found.')
-    update_data = request.template.dict(exclude_unset=True)
-    updated_template = db_template.copy(update=update_data)
+    update_data = request.template.model_dump(exclude_unset=True)
+    updated_template = db_template.model_copy(update=update_data)
     new = updated_template.save()
     return new
 
 @router.post('/search')
 async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
     """Searches for observables."""
-    request_args = request.dict(exclude={'count', 'page'})
+    request_args = request.model_dump(exclude={'count', 'page'})
     templates, total = Template.filter(request_args, offset=request.page*request.count, count=request.count)
     return TemplateSearchResponse(templates=templates, total=total)
 

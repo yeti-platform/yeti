@@ -1,22 +1,21 @@
 import datetime
-import requests
 import logging
-import numpy as np
-import pandas as pd
+import os
+from enum import Enum
 from io import BytesIO
+from typing import ClassVar, Literal
 from zipfile import ZipFile
 
-from enum import Enum
-import os
+import numpy as np
+import pandas as pd
+import requests
 from dateutil import parser
-
 from pydantic import BaseModel
+
 from core import database_arango
+from core.config.config import yeti_config
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
-
-from core.config.config import yeti_config
-from typing import Literal
 
 
 def now():
@@ -37,9 +36,9 @@ class TaskType(str, Enum):
     inline = 'inline'
 
 class Task(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = 'tasks'
-    _type_filter: str = ''
-    _defaults: dict = {}
+    _collection_name: ClassVar[str] = 'tasks'
+    _type_filter: ClassVar[str] = ''
+    _defaults: ClassVar[dict] = {}
 
     id: str | None = None
     name: str
@@ -66,7 +65,7 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 
 class FeedTask(Task):
     type: Literal[TaskType.feed] = TaskType.feed
-    
+
     def _unzip_content(self, content: bytes) -> bytes:
         """Unzip the content of a response.
 
@@ -79,7 +78,7 @@ class FeedTask(Task):
         f = ZipFile(BytesIO(content))
         name = f.namelist()[0]
         return f.read(name)
-    
+
     def _filter_observables_by_time(self, df: pd.DataFrame, column: str) -> pd.DataFrame:
         """Filter a dataframe by comparing the datetime in a column to the last run time.
 
@@ -96,7 +95,7 @@ class FeedTask(Task):
             logging.debug(f"Column: {column}")
             df = df[df[column] > np.datetime64(self.last_run)]
         return df
-    
+
     def _make_request(
         self,
         url: str,
@@ -240,7 +239,7 @@ class ExportTask(Task):
 
 TYPE_MAPPING = {
     'analytics': AnalyticsTask,
-    'feed': Task,
+    'feed': FeedTask,
     'export': ExportTask
 }
 

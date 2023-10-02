@@ -1,4 +1,5 @@
 import secrets
+from typing import ClassVar
 
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field
@@ -13,7 +14,7 @@ def generate_api_key():
 
 class User(BaseModel, database_arango.ArangoYetiConnector):
 
-    _collection_name = "users"
+    _collection_name: ClassVar[str] = "users"
 
     id: str | None = None
     username: str

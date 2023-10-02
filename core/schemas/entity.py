@@ -1,12 +1,11 @@
 import datetime
+import re
 from enum import Enum
+from typing import ClassVar, Literal, Type
 
-import re
-from typing import Literal, Type
+from pydantic import BaseModel, Field
 
-from pydantic import BaseModel, Field, PrivateAttr
 from core import database_arango
-import re
 
 
 def now():
@@ -25,8 +24,8 @@ class EntityType(str, Enum):
 
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = "entities"
-    _type_filter: str = ""
+    _collection_name: ClassVar[str] = "entities"
+    _type_filter: ClassVar[str] = ""
 
     root_type: Literal["entity"] = "entity"
     id: str | None = None
@@ -45,14 +44,14 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
 
 
 class ThreatActor(Entity):
-    _type_filter: str = EntityType.threat_actor
+    _type_filter: ClassVar[str] = EntityType.threat_actor
     type: Literal["threat-actor"] = EntityType.threat_actor
 
     aliases: list[str] = []
 
 
 class IntrusionSet(Entity):
-    _type_filter: str = EntityType.intrusion_set
+    _type_filter: ClassVar[str] = EntityType.intrusion_set
     type: Literal["intrusion-set"] = EntityType.intrusion_set
 
     aliases: list[str] = []
@@ -61,7 +60,7 @@ class IntrusionSet(Entity):
 
 
 class Tool(Entity):
-    _type_filter: str = EntityType.tool
+    _type_filter: ClassVar[str] = EntityType.tool
     type: Literal["tool"] = EntityType.tool
 
     kill_chain_phases: list[str] = []
@@ -69,14 +68,14 @@ class Tool(Entity):
 
 
 class AttackPattern(Entity):
-    _type_filter: str = EntityType.attack_pattern
+    _type_filter: ClassVar[str] = EntityType.attack_pattern
     type: Literal["attack-pattern"] = EntityType.attack_pattern
 
     kill_chain_phases: list[str] = []
 
 
 class Malware(Entity):
-    _type_filter: str = EntityType.malware
+    _type_filter: ClassVar[str] = EntityType.malware
     type: Literal["malware"] = EntityType.malware
 
     kill_chain_phases: list[str] = []
@@ -85,7 +84,7 @@ class Malware(Entity):
 
 
 class Campaign(Entity):
-    _type_filter: str = EntityType.campaign
+    _type_filter: ClassVar[str] = EntityType.campaign
     type: Literal["campaign"] = EntityType.campaign
 
     aliases: list[str] = []
@@ -94,7 +93,7 @@ class Campaign(Entity):
 
 
 class Identity(Entity):
-    _type_filter: str = EntityType.identity
+    _type_filter: ClassVar[str] = EntityType.identity
     type: Literal["identity"] = EntityType.identity
 
     identity_class: list[str] = []

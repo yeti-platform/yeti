@@ -1,14 +1,15 @@
 import datetime
-from enum import Enum
+from typing import ClassVar
 
 from pydantic import BaseModel
 
 from core import database_arango
 
+
 # Database model
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = 'links'
-    _type_filter: None = None
+    _collection_name: ClassVar[str] = 'links'
+    _type_filter: ClassVar[str | None] = None
 
     id: str | None = None
     source: str

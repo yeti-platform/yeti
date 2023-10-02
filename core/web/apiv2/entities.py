@@ -41,8 +41,8 @@ async def new(request: NewEntityRequest) -> entity.EntityTypes:
 async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
     """Modifies entity in the database."""
     db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
-    update_data = request.entity.dict(exclude_unset=True)
-    updated_entity = db_entity.copy(update=update_data)
+    update_data = request.entity.model_dump(exclude_unset=True)
+    updated_entity = db_entity.model_copy(update=update_data)
     new = updated_entity.save()
     return new
 
@@ -57,7 +57,7 @@ async def details(entity_id) -> entity.EntityTypes:
 @router.post('/search')
 async def search(request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
-    request_args = request.dict()
+    request_args = request.model_dump()
     count = request_args.pop('count')
     page = request_args.pop('page')
     entities, total = entity.Entity.filter(request_args, offset=request.page*request.count, count=request.count)

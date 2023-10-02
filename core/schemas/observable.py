@@ -2,7 +2,7 @@
 
 import datetime
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal, Optional, ClassVar
 
 from pydantic import BaseModel, Field
 import validators
@@ -40,8 +40,8 @@ class ObservableType(str, Enum):
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
-    _collection_name: str = 'observables'
-    _type_filter: str | None = None
+    _collection_name: ClassVar[str] = 'observables'
+    _type_filter: ClassVar[str | None] = None
 
     root_type: Literal['observable'] = 'observable'
     id: str | None = None

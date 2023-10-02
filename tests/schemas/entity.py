@@ -47,9 +47,9 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(tool_entities), 1)
         self.assertEqual(len(malware_entities), 1)
 
-        self.assertEqual(threat_actor_entities[0].json(), self.ta1.json())
-        self.assertEqual(tool_entities[0].json(), self.tool1.json())
-        self.assertEqual(malware_entities[0].json(), self.malware1.json())
+        self.assertEqual(threat_actor_entities[0].model_dump_json(), self.ta1.model_dump_json())
+        self.assertEqual(tool_entities[0].model_dump_json(), self.tool1.model_dump_json())
+        self.assertEqual(malware_entities[0].model_dump_json(), self.malware1.model_dump_json())
 
     def test_entity_with_tags(self):
         entity = ThreatActor(name="APT0", relevant_tags=["tag1", "tag2"]).save()
@@ -61,7 +61,7 @@ class EntityTest(unittest.TestCase):
         vertices, edges, count = observable.neighbors()
 
         self.assertEqual(len(vertices), 1)
-        self.assertEqual(vertices[entity.extended_id].json(), entity.json())
+        self.assertEqual(vertices[entity.extended_id].model_dump_json(), entity.model_dump_json())
         self.assertEqual(count, 1)
 
     def test_duplicate_name(self):

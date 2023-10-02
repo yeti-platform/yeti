@@ -1,9 +1,9 @@
 import datetime
 import re
 from enum import Enum
-from typing import Literal, Type
+from typing import ClassVar, Literal, Type
 
-from pydantic import field_validator, BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, field_validator
 
 from core import database_arango
 
@@ -32,8 +32,8 @@ class DiamondModel(Enum):
     victim = 'victim'
 
 class Indicator(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = 'indicators'
-    _type_filter: str = ''
+    _collection_name: ClassVar[str] = 'indicators'
+    _type_filter: ClassVar[str] = ''
 
     root_type: Literal['indicator'] = 'indicator'
     id: str | None = None
@@ -67,7 +67,7 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
                     yield observable, indicator
 
 class Regex(Indicator):
-    _type_filter: str = IndicatorType.regex
+    _type_filter: ClassVar[str] = IndicatorType.regex
     _compiled_pattern: re.Pattern | None = PrivateAttr(None)
     type: Literal['regex'] = IndicatorType.regex
 
@@ -98,7 +98,7 @@ class Yara(Indicator):
 
     Parsing and matching is yet TODO.
     """
-    _type_filter: str = IndicatorType.yara
+    _type_filter: ClassVar[str] = IndicatorType.yara
     type: Literal['yara'] = IndicatorType.yara
 
     def match(self, value: str) -> IndicatorMatch | None:
@@ -110,7 +110,7 @@ class Sigma(Indicator):
 
     Parsing and matching is yet TODO.
     """
-    _type_filter: str = IndicatorType.sigma
+    _type_filter: ClassVar[str] = IndicatorType.sigma
     type: Literal['sigma'] = IndicatorType.sigma
 
     def match(self, value: str) -> IndicatorMatch | None:
