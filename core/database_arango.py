@@ -488,7 +488,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
 
         cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
-        total = cursor.count()
+        total = cursor.statistics().get('fullCount', count)
         edges = []  # type: list[Relationship]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
         neighbors = list(cursor)
@@ -629,7 +629,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         documents = cls._db.aql.execute(
             aql_string, bind_vars=args, count=True, full_count=True)
         results = []
-        total = documents.count()
+        total = documents.statistics().get('fullCount', count)
         for doc in documents:
             doc['id'] = doc.pop('_key')
             results.append(cls.load(doc))
