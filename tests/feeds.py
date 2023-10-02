@@ -4,6 +4,7 @@ from core import database_arango
 from core.config.config import yeti_config
 from plugins.feeds.public import feodo_tracker_ip_blocklist
 from plugins.feeds.public import openphish
+from plugins.feeds.public import lolbas
 
 class FeedTest(unittest.TestCase):
 
@@ -22,4 +23,9 @@ class FeedTest(unittest.TestCase):
         defaults = openphish.OpenPhish._defaults.copy()
         defaults['name'] = 'OpenPhish'
         feed = openphish.OpenPhish(**defaults)
+        feed.run()
+
+    def test_lolbas(self):
+        defaults = lolbas.LoLBAS._defaults.copy()
+        feed = lolbas.LoLBAS(**defaults)
         feed.run()

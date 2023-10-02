@@ -86,7 +86,7 @@ class ArangoDatabase:
         self.db.collection('observables').add_persistent_index(fields=['value'],unique=True)
         self.db.collection('entities').add_persistent_index(fields=['name'],unique=True)
         self.db.collection('tags').add_persistent_index(fields=['name'],unique=True)
-        self.db.collection('indicators').add_persistent_index(fields=['value'],unique=True)
+        self.db.collection('indicators').add_persistent_index(fields=['name'],unique=True)
 
     def clear(self, truncate=True):
         if not self.db:
@@ -488,7 +488,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
 
         cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
-        total = cursor.count()
+        total = cursor.statistics().get('fullCount', count)
         edges = []  # type: list[Relationship]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
         neighbors = list(cursor)
@@ -592,7 +592,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f'o.{key[:-4]} IN @{key}')
                 sorts.append(f'o.{key[:-4]}')
             elif key in ['value', 'name', 'type', 'attributes.id', 'username']:
-                conditions.append('o.{0:s} =~ @{1:s}'.format(key, key.replace('.', '_')))
+                conditions.append('REGEX_TEST(o.{0:s}, @{1:s}, true)'.format(key, key.replace('.', '_')))
                 sorts.append('o.{0:s}'.format(key))
             elif key in ['labels', 'relevant_tags']:
                 conditions.append('@{1:s} ALL IN o.{0:s}'.format(key, key.replace('.', '_')))
@@ -629,7 +629,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         documents = cls._db.aql.execute(
             aql_string, bind_vars=args, count=True, full_count=True)
         results = []
-        total = documents.count()
+        total = documents.statistics().get('fullCount', count)
         for doc in documents:
             doc['id'] = doc.pop('_key')
             results.append(cls.load(doc))
@@ -719,7 +719,7 @@ class ObservableYetiConnector(ArangoYetiConnector):
                 conditions.append(f'o.{key[:-4]} IN @{key}')
                 sorts.append(f'o.{key[:-4]}')
             elif key == 'value':
-                conditions.append('o.value =~ @value')
+                conditions.append('REGEX_TEST(o.value, @value, true)')
                 sorts.append('o.{0:s}'.format(key))
             elif key in ['labels', 'relevant_tags']:
                 conditions.append('@{1:s} ALL IN o.{0:s}'.format(key, key.replace('.', '_')))
