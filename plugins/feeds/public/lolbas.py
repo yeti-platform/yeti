@@ -35,10 +35,10 @@ class LoLBAS(task.FeedTask):
             logging.error("Error parsing lolbas %s: %s", entry["Created"], error)
             created = datetime.strptime(entry["Created"], "%Y-%d-%m")
 
-        description = entry["Description"]
+        description = f'{entry["Description"]}\n\n{self.format_commands(entry["Commands"])}'
         tool = entity.Tool(
             name=entry["Name"],
-            description=f'{entry["Description"]}\n\n{self.format_commands(entry["Commands"])}',
+            description=description,
             created=created
         ).save()
 
@@ -83,7 +83,6 @@ class LoLBAS(task.FeedTask):
         ).save()
         sigma.link_to(tool, relationship_type='detects', description=f'Detects usage of {tool.name}')
 
-
     def format_commands(self, commands: list[dict[str, str]]) -> str:
         formatted_command = "### Example commands:\n"
         for command in commands:
@@ -93,9 +92,5 @@ class LoLBAS(task.FeedTask):
                     formatted_command += f"  * **{key}**: {value}\n"
             formatted_command += "\n"
         return formatted_command
-
-
-    def analyze(self):
-        pass
 
 taskmanager.TaskManager.register_task(LoLBAS)
