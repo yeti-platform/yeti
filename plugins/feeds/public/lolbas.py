@@ -56,7 +56,7 @@ class LoLBAS(task.FeedTask):
                 try:
                     self.process_sigma_rule(tool, detection)
                 except Exception as error:
-                    logging.error("Error processing sigma rule: %s", error)
+                    logging.error("Error processing sigma rule for %s: %s", entry["Name"], error)
 
     def process_sigma_rule(self, tool, detection):
         """Processes a Sigma rule as specified in the lolbas json."""
