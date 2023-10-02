@@ -45,16 +45,16 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
 class Note(Entity):
-    _type:str = EntityType.note
+    type:str = EntityType.note
     _type_filter:str = EntityType.note
 
 class Phone(Entity):
-    _type:str = EntityType.phone
+    type:str = EntityType.phone
     _type_filter:str = EntityType.phone
 
 class Company(Entity):
     
-    _type:str = EntityType.company
+    type:str = EntityType.company
     _type_filter:str = EntityType.company
 
 class ThreatActor(Entity):
