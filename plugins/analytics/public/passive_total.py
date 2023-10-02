@@ -229,3 +229,11 @@ class PassiveTotalReverseNS(task.AnalyticsTask, PassiveTotalApi):
         for record in data["results"]:
             domain = hostname.Hostname(value=record["domain"])
             whois_links(domain, record)
+
+
+taskmanager.TaskManager.register_task(PassiveTotalPassiveDNS)
+taskmanager.TaskManager.register_task(PassiveTotalMalware)
+taskmanager.TaskManager.register_task(PassiveTotalSubdomains)
+taskmanager.TaskManager.register_task(PassiveTotalWhois)
+taskmanager.TaskManager.register_task(PassiveTotalReverseWhois)
+taskmanager.TaskManager.register_task(PassiveTotalReverseNS)
