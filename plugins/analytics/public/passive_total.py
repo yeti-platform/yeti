@@ -45,7 +45,7 @@ def whois_links(observable: Observable, whois):
     for field in to_extract:
         if field["field"] in whois and whois[field["field"]] != "N/A":
             if field["Type"] == email.Email:
-                obs = field["type"](value=whois[field["field"]])
+                obs = field["type"](value=whois[field["field"]]).save()
                 observable.link_to(obs, field["label"], "PassiveTotal")
             else:
                 ent = field["type"].get_or_create(name=whois[field["field"]])
@@ -55,7 +55,7 @@ def whois_links(observable: Observable, whois):
         for ns in whois["nameServers"]:
             if ns not in ["No nameserver", "not.defined"]:
                 try:
-                    ns_obs = hostname.Hostname(value=ns)
+                    ns_obs = hostname.Hostname(value=ns).save()
                     observable.link_to(ns_obs, "NS record", "PassiveTotal")
                 except Exception as e:
                     print(e.with_traceback())
@@ -100,7 +100,7 @@ class PassiveTotalPassiveDNS(task.AnalyticsTask, PassiveTotalApi):
             context["first_seen"] = first_seen
             context["last_seen"] = last_seen
 
-            new = Observable.add_text(record["resolve"])
+            new = Observable.add_text(record["resolve"]).save()
             if observable.type is ObservableType.hostname:
                 observable.link_to(
                     new, "{} record".format(record["recordType"]), "PassiveTotal"
@@ -132,7 +132,7 @@ class PassiveTotalMalware(task.AnalyticsTask, PassiveTotalApi):
         for record in data["results"]:
             collection_date = parser.parse(record["collectionDate"])
 
-            malware_obs = sha256.SHA256(value=record["sample"])
+            malware_obs = sha256.SHA256(value=record["sample"]).save()
 
             malware_obs.link_to(observable, "Contact to", "PassiveTotal")
             malware_obs.add_context(
@@ -155,11 +155,11 @@ class PassiveTotalSubdomains(task.AnalyticsTask, PassiveTotalApi):
         data = PassiveTotalApi.get("/enrichment/subdomains", params)
 
         for record in data["subdomains"]:
-            subdomain = hostname.Hostname(value=f"{record}.{observable.value}")
+            subdomain = hostname.Hostname(value=f"{record}.{observable.value}").save()
 
             observable.link_to(subdomain, "Subdomain", "PassiveTotal")
 
-        return list(links)
+
 
 
 class PassiveTotalWhois(task.AnalyticsTask, PassiveTotalApi):
@@ -194,8 +194,7 @@ class PassiveTotalReverseWhois(task.AnalyticsTask, PassiveTotalApi):
     acts_on: list[ObservableType] = [ObservableType.email]
 
     def each(self, observable: Observable):
-        links = set()
-
+        
         if observable.type is ObservableType.email:
             field = "email"
         elif observable.type:
@@ -227,7 +226,7 @@ class PassiveTotalReverseNS(task.AnalyticsTask, PassiveTotalApi):
         data = PassiveTotalApi.get("/whois/search", params)
 
         for record in data["results"]:
-            domain = hostname.Hostname(value=record["domain"])
+            domain = hostname.Hostname(value=record["domain"]).save()
             whois_links(domain, record)
 
 

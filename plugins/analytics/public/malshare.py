@@ -66,7 +66,7 @@ class MalshareQuery(task.AnalyticsTask, MalshareAPI):
         if "SOURCES" in json_result:
             for source in json_result["SOURCES"]:
                 new_url = None
-                new_url = url.Url(value=source.strip())
+                new_url = url.Url(value=source.strip()).save()
                 observable.link_to(new_url, "c2", "malshare_query")
 
             context["nb C2"] = len(json_result["SOURCES"])
@@ -76,17 +76,17 @@ class MalshareQuery(task.AnalyticsTask, MalshareAPI):
 
         new_hash = None
         if observable.type != ObservableType.md5:
-            new_hash = md5.MD5(value=json_result["MD5"])
+            new_hash = md5.MD5(value=json_result["MD5"]).save()
             new_hash.add_context("malshare.com", context)
             new_hash.link_to(observable, "md5", "malshare_query")
 
         if observable.type != ObservableType.sha1:
-            new_hash = sha1.SHA1(value=json_result["SHA1"])
+            new_hash = sha1.SHA1(value=json_result["SHA1"]).save()
 
             new_hash.link_to(observable, "sha1", "malshare_query")
 
         if observable.type != ObservableType.sha256:
-            new_hash = sha256.SHA256(value=json_result["SHA256"])
+            new_hash = sha256.SHA256(value=json_result["SHA256"]).save()
             new_hash.link_to(observable, "sha256", "malshare_query")
 
         if new_hash:

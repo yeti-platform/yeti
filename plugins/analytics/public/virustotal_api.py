@@ -60,13 +60,13 @@ class VirustotalApi(object):
             for rr in last_dns_records:
                 related_obs = None
                 if rr["type"] == "A":
-                    related_obs = ipv4.IPv4(value=rr["value"])
+                    related_obs = ipv4.IPv4(value=rr["value"]).save()
                 elif rr["type"] == "MX":
-                    related_obs = hostname.Hostname(value=rr["value"])
+                    related_obs = hostname.Hostname(value=rr["value"]).save()
                 elif rr["type"] == "SOA":
-                    related_obs = hostname.Hostname(value=rr["value"])
+                    related_obs = hostname.Hostname(value=rr["value"]).save()
                 elif rr["type"] == "NS":
-                    related_obs = hostname.Hostname(value=rr["value"])
+                    related_obs = hostname.Hostname(value=rr["value"]).save()
                 if related_obs:
                     related_obs.link_to(domain, rr["type"], context["source"])
 
@@ -132,7 +132,7 @@ class VirustotalApi(object):
         if tags:
             file_vt.tag(tags)
         observables = [
-            (h, TYPE_MAPPING[h](value=attributes[h]))
+            (h, TYPE_MAPPING[h](value=attributes[h]).save())
             for h in ("sha256", "md5", "sha1")
             if file_vt.value != attributes[h]
         ]
@@ -163,7 +163,7 @@ class VTFileIPContacted(task.AnalyticsTask, VirustotalApi):
         result = VirustotalApi.fetch(endpoint)
         if result:
             for data in result["data"]:
-                ip = ipv4.IPv4(value=data["id"])
+                ip = ipv4.IPv4(value=data["id"]).save()
 
                 attributes = data["attributes"]
 
@@ -173,7 +173,7 @@ class VTFileIPContacted(task.AnalyticsTask, VirustotalApi):
                 context["whois_date"] = whois_date
 
                 context["country"] = attributes["country"]
-                asn_obs = asn.ASN(value=str(attributes["asn"]))
+                asn_obs = asn.ASN(value=str(attributes["asn"])).save()
                 ip.link_to(asn_obs, "ASN", context["source"])
 
                 context["as_owner"] = attributes["as_owner"]
@@ -221,7 +221,7 @@ class VTFileUrlContacted(task.AnalyticsTask, VirustotalApi):
                         timestamp_first_submit
                     ).isoformat()
 
-                    url_obs = url.Url(value=attributes["url"])
+                    url_obs = url.Url(value=attributes["url"]).save()
                     url_obs.link_to(observable, "contacted by", context["source"])
 
                     if "last_http_response_code" in attributes:
@@ -274,7 +274,7 @@ class VTDomainContacted(task.AnalyticsTask, VirustotalApi):
 
         if result:
             for data in result["data"]:
-                hostname_obs = hostname.Hostname(value=data["id"])
+                hostname_obs = hostname.Hostname(value=data["id"]).save()
                 context["first_seen"] = data["attributes"]["creation_date"]
                 stat_files = data["attributes"]["last_analysis_stats"]
                 context["registrar"] = data["attributes"]["registrar"]
@@ -348,8 +348,8 @@ class VTDomainResolution(task.AnalyticsTask, VirustotalApi):
             for data in result["data"]:
                 attribute = data["attributes"]
                 ip_address = attribute["ip_address"]
-                ip = ipv4.IPv4(value=ip_address)
-                ip.active_link_to(observable, "PDNS", context["source"])
+                ip = ipv4.IPv4(value=ip_address).save()
+                ip.link_to(observable, "resolved", context["source"])
                 timestamp_resolv = attribute["date"]
                 date_last_resolv = datetime.fromtimestamp(timestamp_resolv).isoformat()
                 context[ip_address] = date_last_resolv
@@ -371,16 +371,16 @@ class VTSubdomains(task.AnalyticsTask, VirustotalApi):
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
     def each(self, observable: Observable):
-        links = set()
+
         endpoint = "/domains/%s/subdomains" % observable.value
-        api_key = result.settings["virutotal_api_key"]
+        
         result = VirustotalApi.fetch(endpoint)
 
         if result:
             for data in result["data"]:
                 context = {"source": "VirusTotal"}
                 attributes = data["attributes"]
-                sub_domain = hostname.Hostname(value=data["id"])
+                sub_domain = hostname.Hostname(value=data["id"]).save()
                 VirustotalApi.process_domain(sub_domain, attributes)
 
                 sub_domain.link_to(observable, "Subdomain", "Virustotal")
@@ -401,7 +401,7 @@ class VTDomainComFile(task.AnalyticsTask, VirustotalApi):
         result = VirustotalApi.fetch(endpoint)
         for data in result["data"]:
             attributes = data["attributes"]
-            file_vt = sha256.SHA256(value=data["id"])
+            file_vt = sha256.SHA256(value=data["id"]).save()
 
             file_vt.link_to(observable, "communicating", "Virustotal")
 
@@ -423,7 +423,7 @@ class VTDomainReferrerFile(task.AnalyticsTask, VirustotalApi):
         result = VirustotalApi.fetch(endpoint)
         for data in result["data"]:
             attributes = data["attributes"]
-            file_vt = sha256.SHA256(value=data["id"])
+            file_vt = sha256.SHA256(value=data["id"]).save()
             file_vt.link_to(observable, "Referrer File", "Virustotal")
             VirustotalApi.process_file(file_vt, attributes)
 
@@ -446,7 +446,7 @@ class VTIPResolution(task.AnalyticsTask, VirustotalApi):
             for data in result["data"]:
                 context = {"source": "VirusTotal PDNS"}
                 attributes = data["attributes"]
-                hostname_obs = hostname.Hostname(value=attributes["host_name"])
+                hostname_obs = hostname.Hostname(value=attributes["host_name"]).save()
                 if "date" in attributes:
                     timestamp_date = attributes["date"]
                     date_last_resolv = datetime.fromtimestamp(
@@ -480,7 +480,7 @@ class VTIPComFile(task.AnalyticsTask, VirustotalApi):
 
         for data in result["data"]:
             attributes = data["attributes"]
-            file_vt = sha256.SHA256(value=data["id"])
+            file_vt = sha256.SHA256(value=data["id"]).save()
 
             file_vt.link_to(observable, "communicating", "Virustotal")
 
@@ -502,6 +502,6 @@ class VTIPReferrerFile(task.AnalyticsTask, VirustotalApi):
         result = VirustotalApi.fetch(endpoint)
         for data in result["data"]:
             attributes = data["attributes"]
-            file_vt = sha256.SHA256(value=data["id"])
+            file_vt = sha256.SHA256(value=data["id"]).save()
             file_vt.link_to(observable, "Referrer File", "Virustotal")
             VirustotalApi.process_file(file_vt, attributes)
