@@ -13,13 +13,13 @@ class FeedTest(unittest.TestCase):
         # pass
         database_arango.db.clear()
 
-    def skiptest_feodo_tracker_ip_blocklist(self):
+    def test_feodo_tracker_ip_blocklist(self):
         defaults = feodo_tracker_ip_blocklist.FeodoTrackerIPBlockList._defaults.copy()
         defaults['name'] = 'FeodoTrackerIPBlocklist'
         feed = feodo_tracker_ip_blocklist.FeodoTrackerIPBlockList(**defaults)
         feed.run()
 
-    def skiptest_openphish(self):
+    def test_openphish(self):
         defaults = openphish.OpenPhish._defaults.copy()
         defaults['name'] = 'OpenPhish'
         feed = openphish.OpenPhish(**defaults)
