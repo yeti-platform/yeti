@@ -23,6 +23,7 @@ class EntityType(str, Enum):
     identity = "identity"
     exploit = "exploit"
     company = "company"
+    phone = "phone"
 
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
@@ -43,6 +44,10 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
+
+class Phone(Entity):
+    _type:str = EntityType.phone
+    _type_filter:str = EntityType.phone
 
 class Company(Entity):
     
