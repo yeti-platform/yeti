@@ -51,7 +51,6 @@ class LoLBAS(task.FeedTask):
             path_obj.add_context(source='lolbas', context={'reference': entry["url"]})
             tool.link_to(path_obj, relationship_type='located_at', description=description)
 
-        print(entry['Name'])
         for detection in entry["Detection"] or []:
             if 'Sigma' in detection:
                 try:
