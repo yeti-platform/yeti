@@ -15,7 +15,7 @@ class User(BaseModel, database_arango.ArangoYetiConnector):
 
     _collection_name = "users"
 
-    id: str | None
+    id: str | None = None
     username: str
     enabled: bool = True
     admin: bool = False

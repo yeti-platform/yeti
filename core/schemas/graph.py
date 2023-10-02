@@ -10,7 +10,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: str = 'links'
     _type_filter: None = None
 
-    id: str | None
+    id: str | None = None
     source: str
     target: str
     type: str
@@ -26,7 +26,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
 class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
     _type_filter: None = None
 
-    id: str | None
+    id: str | None = None
     source: str
     target: str
     last_seen: datetime.datetime

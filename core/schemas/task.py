@@ -10,12 +10,13 @@ from enum import Enum
 import os
 from dateutil import parser
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from core import database_arango
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
 
 from core.config.config import yeti_config
+from typing import Literal
 
 
 def now():
@@ -64,7 +65,7 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 class FeedTask(Task):
-    type: str = Field(TaskType.feed, const=True)
+    type: Literal[TaskType.feed] = TaskType.feed
     
     def _unzip_content(self, content: bytes) -> bytes:
         """Unzip the content of a response.
@@ -151,7 +152,7 @@ class FeedTask(Task):
 class AnalyticsTask(Task):
 
     acts_on: list[str] = []  # By default act on all observables
-    type: str = Field(TaskType.analytics, const=True)
+    type: Literal[TaskType.analytics] = TaskType.analytics
 
     def run(self):
         """Filters observables to analyze and then calls each()"""
@@ -186,7 +187,7 @@ class AnalyticsTask(Task):
 
 class ExportTask(Task):
 
-    type: str = Field(TaskType.export, const=True)
+    type: Literal[TaskType.export] = TaskType.export
 
     include_tags: list[str] = []
     exclude_tags: list[str] = []
@@ -195,7 +196,7 @@ class ExportTask(Task):
     output_dir: str = 'exports'
     acts_on: list[ObservableType] = []
     template_name: str
-    sha256: str | None
+    sha256: str | None = None
 
     @property
     def output_file(self) -> str:

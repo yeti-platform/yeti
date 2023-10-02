@@ -8,7 +8,7 @@ class Template(BaseModel, database_arango.ArangoYetiConnector):
     """A template for exporting data to an external system."""
     _collection_name = 'templates'
 
-    id: str | None
+    id: str | None = None
     name: str
     template: str
 

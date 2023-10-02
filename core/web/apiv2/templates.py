@@ -23,7 +23,7 @@ class PatchTemplateRequest(BaseModel):
 
 class RenderExportRequest(BaseModel):
     template_id: str
-    observable_ids: list[str] | None
+    observable_ids: list[str] | None = None
     search_query: str | None = None
 
 # API endpoints
