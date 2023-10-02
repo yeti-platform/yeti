@@ -6,6 +6,7 @@ from datetime import datetime
 from maclookup import ApiClient, exceptions as maclookup_exceptions
 from core import taskmanager
 from core.schemas import task
+from core.schemas.observable import ObservableType
 from core.schemas.observables.mac_adress import MacAddress
 from core.schemas.entity import Company
 from core.config.config import yeti_config
@@ -57,7 +58,7 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
         "description": "Retrieve vendor details and other information regarding a given MAC address or an OUI from macaddress.io.",
     }
 
-    ACTS_ON = ["MacAddress"]
+    acts_on:list[ObservableType] = [ObservableType.mac_address]
 
     
     def each(self,mac_address:MacAddress):
@@ -82,7 +83,7 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
         try:
             if lookup_results["vendorDetails"]["companyName"] != "":
                 vendor = Company(
-                    name=lookup_results["vendorDetails"]["companyName"])
+                    name=lookup_results["vendorDetails"]["companyName"]).save()
 
                 
         except KeyError:

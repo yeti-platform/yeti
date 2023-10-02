@@ -21,7 +21,7 @@ class DNSDBApi(object):
         links = set()
 
         for record in DNSDBApi.lookup("rdata", observable):
-            new = Observable.add_text(record["rrname"])
+            new = Observable.add_text(record["rrname"]).save()
             new.link_to(
                 observable,
                 source="DNSDB Passive DNS",
@@ -36,7 +36,7 @@ class DNSDBApi(object):
 
         for record in DNSDBApi.lookup("rrset", hostname):
             for observable in record["rdata"]:
-                observable = Observable.add_text(observable)
+                observable = Observable.add_text(observable).save()
             
                 hostname.link_to(
                     observable,
@@ -117,3 +117,5 @@ class DNSDBPassiveDns(task.AnalyticsTask, DNSDBApi):
         return DNSDBApi.rrset_lookup(hostname)
 
 taskmanager.TaskManager.register_task(DNSDBPassiveDns)
+taskmanager.TaskManager.register_task(DNSDBReversePassiveDns)
+

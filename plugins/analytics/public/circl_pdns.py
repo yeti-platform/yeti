@@ -53,12 +53,12 @@ class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
     
         if observable.type == ObservableType.ip:
             for record in json_result:
-                new_hostname = hostname.Hostname(value=record['rrname'])
+                new_hostname = hostname.Hostname(value=record['rrname']).save()
                 observable.link_to(new_hostname,record['rrtype'],'Circl PDNS')
                 
         elif observable.type == ObservableType.hostname:
             for record in json_result:
-                new_ip = hostname.Hostname(value=record["rdata"])
+                new_ip = hostname.Hostname(value=record["rdata"]).save()
                 observable.link_to(new_ip,record['rrtype'],'Circl PDNS')
                 
 taskmanager.TaskManager.register_task(CirclPDNSApiQuery)
