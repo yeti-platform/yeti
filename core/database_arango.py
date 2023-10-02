@@ -592,7 +592,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f'o.{key[:-4]} IN @{key}')
                 sorts.append(f'o.{key[:-4]}')
             elif key in ['value', 'name', 'type', 'attributes.id', 'username']:
-                conditions.append('o.{0:s} =~ @{1:s}'.format(key, key.replace('.', '_')))
+                conditions.append('REGEX_TEST(o.{0:s}, @{1:s}, true)'.format(key, key.replace('.', '_')))
                 sorts.append('o.{0:s}'.format(key))
             elif key in ['labels', 'relevant_tags']:
                 conditions.append('@{1:s} ALL IN o.{0:s}'.format(key, key.replace('.', '_')))
@@ -719,7 +719,7 @@ class ObservableYetiConnector(ArangoYetiConnector):
                 conditions.append(f'o.{key[:-4]} IN @{key}')
                 sorts.append(f'o.{key[:-4]}')
             elif key == 'value':
-                conditions.append('o.value =~ @value')
+                conditions.append('REGEX_TEST(o.value, @value, true)')
                 sorts.append('o.{0:s}'.format(key))
             elif key in ['labels', 'relevant_tags']:
                 conditions.append('@{1:s} ALL IN o.{0:s}'.format(key, key.replace('.', '_')))
