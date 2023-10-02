@@ -13,6 +13,7 @@ app = Celery(
     imports=(
         # TESTING ONLY
         "plugins.analytics.public.random_analytics",
+        "plugins.analytics.public.shodan_api",
         # REAL TASKS
         "plugins.feeds.public.abusech_malwarebazaar",
         "plugins.feeds.public.abuseipdb",
