@@ -4,6 +4,7 @@ from typing import Optional
 
 from core import database_arango
 from core.schemas.observable import Observable
+from core.schemas.observables import ipv4, hostname, url
 from core.schemas.entity import ThreatActor
 from core.schemas.tag import Tag
 from core.schemas.indicator import Regex, DiamondModel
@@ -27,10 +28,10 @@ class TagTest(unittest.TestCase):
         user.set_password("user")
         user.save()
 
-        ip_hacker = Observable(value="8.8.8.8", type="ip").save()
-        c2_hacker = Observable(value="c2.hacker.com", type="hostname").save()
-        www_hacker = Observable(value="www.hacker.com", type="hostname").save()
-        hacker = Observable(value="hacker.com", type="hostname").save()
+        ip_hacker = ipv4.IPv4(value="8.8.8.8").save()
+        c2_hacker = hostname.Hostname(value="c2.hacker.com").save()
+        www_hacker = hostname.Hostname(value="www.hacker.com").save()
+        hacker = hostname.Hostname(value="hacker.com").save()
         hacker.link_to(www_hacker, 'domain', 'Domain')
         hacker.link_to(c2_hacker, 'domain', 'Domain')
         hacker.link_to(ip_hacker, 'ip', 'IP')
@@ -39,7 +40,7 @@ class TagTest(unittest.TestCase):
         ta.link_to(hacker, 'c2', 'C2 infrastructure')
         www_hacker.tag(['web', 'hacker'])
         c2_hacker.tag(['web', 'hacker'])
-        sus_hacker = Observable(value="sus.hacker.com", type="hostname").save()
+        sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
         sus_hacker.tag(['web', 'hacker', 'hacker_sus'])
         regex = Regex(name='Hacker regex', pattern="^hacker.*", location="network", diamond=DiamondModel.capability).save()
 

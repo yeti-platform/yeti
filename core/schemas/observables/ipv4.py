@@ -5,4 +5,4 @@ from typing import Literal
 
 class IPv4(Observable):
     value: str
-    type: Literal['ip'] = ObservableType.ip
+    type: ObservableType = ObservableType.ipv4

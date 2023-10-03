@@ -16,7 +16,7 @@ class ThreatFox(task.FeedTask):
     _SOURCE:ClassVar['str'] = "https://threatfox.abuse.ch/export/json/recent/"
 
     _MAPPING = {
-        "ip": observable.ObservableType.ip,
+        "ip": observable.ObservableType.ipv4,
         "domain": observable.ObservableType.hostname,
         "url": observable.ObservableType.url,
     }

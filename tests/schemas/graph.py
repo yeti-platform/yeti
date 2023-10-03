@@ -3,6 +3,7 @@ from core import database_arango
 from fastapi.testclient import TestClient
 import unittest
 from core.schemas.observable import Observable
+from core.schemas.observables import hostname, ipv4
 from core.schemas.entity import Malware
 from core.schemas.graph import Relationship
 import datetime
@@ -14,12 +15,8 @@ class ObservableTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.observable1 = Observable(
-            value="tomchop.me",
-            type="hostname").save()
-        self.observable2 = Observable(
-            value="127.0.0.1",
-            type="hostname").save()
+        self.observable1 = hostname.Hostname(value="tomchop.me").save()
+        self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.entity1 = Malware(name="plugx").save()
 
     def tearDown(self) -> None:
@@ -89,3 +86,16 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(len(vertices), 1)
         self.assertEqual(count, 1)
         self.assertEqual(vertices[self.entity1.extended_id].name, "plugx")
+
+    def test_neighbors_go_both_ways(self):
+        """Tests that a link between two nodes is bidirectional."""
+        self.observable1.link_to(self.observable2, "a", "b")
+
+        # Observable1 has 1 link to observable2
+        vertices, edges, count = self.observable1.neighbors()
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(count, 1)
+
+        vertices, edges, count = self.observable2.neighbors()
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(count, 1)

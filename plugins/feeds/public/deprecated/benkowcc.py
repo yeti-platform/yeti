@@ -1,7 +1,7 @@
 import logging
 from datetime import timedelta, datetime
 
-from core.schemas import observable
+from core.schemas.observables import ipv4, url
 from core.schemas import task
 from core import taskmanager
 
@@ -30,11 +30,11 @@ class BenkowTracker(task.FeedTask):
         tags = []
         tags.append(family.lower())
 
-        url_obs = observable.Observable(value=url, type="url").save()
+        url_obs = url.Url(value=url).save()
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
 
-        ip_obs = observable.Observable(value=ip, type="ip").save()
+        ip_obs = ipv4.IPv4(value=ip).save()
         ip_obs.add_context(self.name, context)
         url_obs.link_to(ip_obs, "url-ip", self.name)
 

@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 import unittest
 
 from core.schemas.observable import Observable
+from core.schemas.observables import hostname
 from core.web import webapp
 
 
@@ -14,9 +15,9 @@ class ObservableTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-    
+
     def test_get_observable(self):
-        obs = Observable(value="tomchop.me", type="hostname").save()
+        obs = hostname.Hostname(value="tomchop.me").save()
         obs.tag(['tag1'])
         response = client.get(f"/api/v2/observables/{obs.id}")
         self.assertEqual(response.status_code, 200)
@@ -108,7 +109,7 @@ class ObservableTest(unittest.TestCase):
     def test_add_text(self):
         TEST_CASES = [
             ("toto.com", "toto.com", "hostname"),
-            ("127.0.0.1", "127.0.0.1", "ip"),
+            ("127.0.0.1", "127.0.0.1", "ipv4"),
             ("http://google.com/", "http://google.com/", "url"),
             ("http://tomchop[.]me/", "http://tomchop.me/", "url"),
         ]
@@ -174,10 +175,7 @@ class ObservableContextTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.observable = Observable(
-            value="tomchop.me",
-            type="hostname",
-            created=datetime.datetime.now(datetime.timezone.utc)).save()
+        self.observable = hostname.Hostname(value="tomchop.me").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()

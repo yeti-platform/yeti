@@ -8,7 +8,7 @@ from core import database_arango
 from core.schemas.entity import ThreatActor
 from core.schemas.graph import Relationship
 from core.schemas.indicator import Regex
-from core.schemas.observable import Observable
+from core.schemas.observables import ipv4, hostname, url
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -17,14 +17,8 @@ class SimpleGraphTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.observable1 = Observable(
-            value="tomchop.me",
-            type="hostname",
-            created=datetime.datetime.now(datetime.timezone.utc)).save()
-        self.observable2 = Observable(
-            value="127.0.0.1",
-            type="ip",
-            created=datetime.datetime.now(datetime.timezone.utc)).save()
+        self.observable1 = hostname.Hostname(value="tomchop.me").save()
+        self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.entity1 = ThreatActor(name="actor0").save()
 
     def tearDown(self) -> None:
@@ -55,6 +49,44 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(edges[0]['source'], self.observable1.extended_id)
         self.assertEqual(edges[0]['target'], self.observable2.extended_id)
         self.assertEqual(edges[0]['type'], 'resolves')
+
+    def test_neighbors_go_both_ways(self):
+        self.relationship = self.observable1.link_to(
+            self.observable2, "resolves", "DNS resolution")
+
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable2.extended_id,
+                "link_type": "resolves",
+                "hops": 1,
+                "direction": "any",
+                "include_original": False
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['vertices']), 1)
+        neighbor = data['vertices'][self.observable1.extended_id]
+        self.assertEqual(neighbor['value'], 'tomchop.me')
+        self.assertEqual(neighbor['id'], self.observable1.id)
+
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable1.extended_id,
+                "link_type": "resolves",
+                "hops": 1,
+                "direction": "any",
+                "include_original": False
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['vertices']), 1)
+        neighbor = data['vertices'][self.observable2.extended_id]
+        self.assertEqual(neighbor['value'], '127.0.0.1')
+        self.assertEqual(neighbor['id'], self.observable2.id)
 
     def test_add_link(self):
         response = client.post(
@@ -111,10 +143,9 @@ class ComplexGraphTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.observable1 = Observable(value="test1.com", type="hostname").save()
-        self.observable2 = Observable(value="test2.com", type="hostname").save()
-        self.observable3 = Observable(
-            value="http://test1.com/admin", type="url").save()
+        self.observable1 = hostname.Hostname(value="test1.com").save()
+        self.observable2 = hostname.Hostname(value="test2.com").save()
+        self.observable3 = url.Url(value="http://test1.com/admin").save()
         self.entity1 = ThreatActor(name="tester").save()
         self.indicator1 = Regex(name='test c2', pattern='test[0-9].com', location='network', diamond='capability').save()
         self.observable1.link_to(self.observable3, "url", "URL on hostname.")

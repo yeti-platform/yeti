@@ -4,6 +4,7 @@ from typing import Optional
 
 from core import database_arango
 from core.schemas.observable import Observable
+from core.schemas.observables import hostname
 from core.schemas.tag import Tag
 
 import unittest
@@ -12,8 +13,8 @@ class TagTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.obs1 = Observable(value="test1.com", type="hostname").save()
-        self.obs2 = Observable(value="test2.com", type="hostname").save()
+        self.obs1 = hostname.Hostname(value="test1.com").save()
+        self.obs2 = hostname.Hostname(value="test2.com").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
