@@ -16,7 +16,7 @@ class ShodanApi(object):
         }
     }
 
-    
+
     def fetch(observable:Observable):
         try:
             return shodan.Shodan(yeti_config['shodan']['api_key']).host(observable.value)
@@ -31,9 +31,9 @@ class ShodanQuery(task.AnalyticsTask, ShodanApi):
         " extract relevant information.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.ipv4]
 
-    def each(self,ip:ipv4.IPv4):
+    def each(self, ip: ipv4.IPv4):
         result = ShodanApi.fetch(ip)
         logging.debug(result)
 
