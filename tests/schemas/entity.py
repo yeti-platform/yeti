@@ -1,10 +1,8 @@
-import datetime
 import unittest
 
 from core import database_arango
 from core.schemas.entity import Entity, Malware, ThreatActor, Tool
-from core.schemas.graph import Relationship
-from core.schemas.observable import Observable
+from core.schemas.observables import hostname
 
 
 class EntityTest(unittest.TestCase):
@@ -53,9 +51,7 @@ class EntityTest(unittest.TestCase):
 
     def test_entity_with_tags(self):
         entity = ThreatActor(name="APT0", relevant_tags=["tag1", "tag2"]).save()
-        observable = Observable(
-            value='doman.com',
-            type='hostname').save()
+        observable = hostname.Hostname(value='doman.com').save()
 
         observable.tag(["tag1"])
         vertices, edges, count = observable.neighbors()

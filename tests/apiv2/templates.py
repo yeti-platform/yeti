@@ -1,12 +1,11 @@
-import datetime
 import unittest
-from unittest import mock
 
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.template import Template
+from core.schemas.observables import hostname, ipv4
 from core.schemas.observable import Observable
+from core.schemas.template import Template
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -70,9 +69,9 @@ class TemplateTest(unittest.TestCase):
         self.assertEqual(db_template.id, data['id'])
 
     def test_render_raw_template_by_id(self):
-        Observable(value="1.1.1.1", type='ip').save()
-        Observable(value="2.2.2.2", type='ip').save()
-        Observable(value="3.3.3.3", type='ip').save()
+        ipv4.IPv4(value="1.1.1.1").save()
+        ipv4.IPv4(value="2.2.2.2").save()
+        ipv4.IPv4(value="3.3.3.3").save()
         response = client.post(
             f"/api/v2/templates/render",
             json={
@@ -86,10 +85,10 @@ class TemplateTest(unittest.TestCase):
         self.assertEqual(data, "1.1.1.1\n2.2.2.2\n3.3.3.3\n")
 
     def test_render_raw_template_by_search(self):
-        Observable(value="yeti1.com", type='hostname').save()
-        Observable(value="yeti2.com", type='hostname').save()
-        Observable(value="yeti3.com", type='hostname').save()
-        Observable(value="hacker.com", type='hostname').save()
+        hostname.Hostname(value="yeti1.com").save()
+        hostname.Hostname(value="yeti2.com").save()
+        hostname.Hostname(value="yeti3.com").save()
+        hostname.Hostname(value="hacker.com").save()
         response = client.post(
             f"/api/v2/templates/render",
             json={

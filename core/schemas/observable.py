@@ -16,7 +16,8 @@ from core.helpers import now
 
 # Data Schema
 class ObservableType(str, Enum):
-    ip = 'ip'
+    ipv4 = 'ipv4'
+    ipv6 = 'ipv6'
     hostname = 'hostname'
     url = 'url'
     observable = 'observable'
@@ -160,7 +161,8 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
 
 
 TYPE_VALIDATOR_MAP = {
-    ObservableType.ip: validators.ipv4,
+    ObservableType.ipv4: validators.ipv4,
+    ObservableType.ipv6: validators.ipv6,
     ObservableType.bitcoin_wallet: validators.btc_address,
     ObservableType.sha256: validators.sha256,
     ObservableType.sha1: validators.sha1,
