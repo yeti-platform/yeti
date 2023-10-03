@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta, datetime
+from typing import ClassVar
 from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
@@ -9,7 +10,7 @@ from core.config.config import yeti_config
 
 
 class AbuseIPDB(task.FeedTask):
-    SOURCE = "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
+    _SOURCE:ClassVar['str'] = "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
     _defaults = {
         "frequency": timedelta(hours=5),
         "name": "AbuseIPDB",
@@ -23,7 +24,7 @@ class AbuseIPDB(task.FeedTask):
             raise Exception("Your abuseIPDB API key is not set in the yeti.conf file")
 
         # change the limit rate if you subscribe to a paid plan
-        response = self._make_request(self.SOURCE % api_key, verify=True)
+        response = self._make_request(self._SOURCE % api_key, verify=True)
         if response:
             data = response.text
 

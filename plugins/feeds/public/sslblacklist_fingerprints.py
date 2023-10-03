@@ -1,6 +1,7 @@
 from io import StringIO
 import logging
 from datetime import timedelta, datetime
+from typing import ClassVar
 
 import pandas as pd
 
@@ -23,10 +24,10 @@ class SSLBlackListCerts(task.FeedTask):
         "description": "SSLBlackListCerts is a community feed of SSL fingerprints which are updated every 24 hours.",
     }
 
-    SOURCE = "https://sslbl.abuse.ch/blacklist/sslblacklist.csv"
+    _SOURCE:ClassVar['str'] = "https://sslbl.abuse.ch/blacklist/sslblacklist.csv"
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             names=["Listingdate", "SHA1", "Listingreason"]

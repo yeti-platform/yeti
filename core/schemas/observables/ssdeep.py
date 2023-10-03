@@ -1,7 +1,7 @@
 
 from core.schemas.observable import Observable,ObservableType
-
+from typing import Literal
 
 class SsdeepHash(Observable):
     value: str
-    type: str = ObservableType.ssdeep
+    type: Literal['ssdeep'] = ObservableType.ssdeep

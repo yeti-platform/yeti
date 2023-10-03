@@ -15,7 +15,7 @@ regex = "[A-Fa-f0-9]{64}"  # Find SHA256
 
 
 class VirusTotalPriv(Feed):
-    default_values = {
+    _defaults = {
         "frequency": timedelta(minutes=5),
         "name": "VirusTotalHuntingV3",
         "source": "https://www.virustotal.com/api/v3/intelligence/hunting_notifications",

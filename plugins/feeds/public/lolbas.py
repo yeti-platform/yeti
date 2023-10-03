@@ -3,6 +3,7 @@ import json
 import re
 
 from datetime import date, timedelta, datetime
+from typing import ClassVar
 from urllib.parse import urljoin
 import pandas as pd
 from core.config.config import yeti_config
@@ -12,7 +13,7 @@ from core.schemas import entity, indicator
 from core.schemas import task
 from core import taskmanager
 
-SOURCE = "https://lolbas-project.github.io/api/lolbas.json"
+
 
 class LoLBAS(task.FeedTask):
     _defaults = {
@@ -21,9 +22,11 @@ class LoLBAS(task.FeedTask):
         "description": "Gets list of o paths, sigma rules, and Tools",
         "source": "https://lolbas-project.github.io/",
     }
+    
+    _SOURCE:ClassVar['str'] = "https://lolbas-project.github.io/api/lolbas.json"
 
     def run(self):
-        lolbas_json = self._make_request(SOURCE).json()
+        lolbas_json = self._make_request(self._SOURCE).json()
         for entry in lolbas_json:
             self.analyze_entry(entry)
 

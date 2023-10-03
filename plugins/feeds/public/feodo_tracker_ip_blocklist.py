@@ -1,5 +1,6 @@
 import datetime
 from io import StringIO
+from typing import ClassVar
 
 import pandas as pd
 
@@ -9,7 +10,7 @@ from core import taskmanager
 
 
 class FeodoTrackerIPBlockList(task.FeedTask):
-    SOURCE = "https://feodotracker.abuse.ch/downloads/ipblocklist.csv"
+    _SOURCE:ClassVar['str'] = "https://feodotracker.abuse.ch/downloads/ipblocklist.csv"
 
     _defaults = {
         "frequency": datetime.timedelta(hours=24),
@@ -19,7 +20,7 @@ class FeodoTrackerIPBlockList(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             df = pd.read_csv(

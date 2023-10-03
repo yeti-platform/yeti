@@ -1,8 +1,9 @@
 """
     Feed DNS Version IPs with ASN
 """
-import logging
 from datetime import timedelta
+import logging
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4,asn
@@ -15,7 +16,7 @@ class DataplaneDNSVersion(task.FeedTask):
     Feed DNS Version IPs with ASN
     """
 
-    SOURCE = "https://dataplane.org/dnsversion.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/dnsversion.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneDNSVersion",
@@ -24,9 +25,9 @@ class DataplaneDNSVersion(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self._SOURCE,sort=False)
         if response:
-            lines = response.content.decode("utf-8").split("\n")[64:-5]
+            lines = response.content.decode("utf-8").split("\n")[66:-5]
 
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
 
@@ -41,7 +42,6 @@ class DataplaneDNSVersion(task.FeedTask):
     def analyze(self, item):
         context_ip = {
             "source": self.name,
-            "last_seen": item["lastseen"],
         }
 
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
@@ -49,9 +49,9 @@ class DataplaneDNSVersion(task.FeedTask):
         tags = ["dataplane", "dnsversion"]
         if category:
             tags.append(category)
-        ip_obs.add_context(self.name, context_ip)
+        logging.debug(f"Adding context {context_ip} to {ip_obs}")
+        ip_obs.add_context('dataplane dns version', context_ip)
         ip_obs.tag(tags)
-
         asn_obs = asn.ASN(value=item["ASN"]).save()
         context_asn = {
             "source": self.name,

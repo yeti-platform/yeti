@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from typing import ClassVar
 import numpy as np
 import pandas as pd
 from core.schemas.observables import ipv4,asn
@@ -12,7 +13,7 @@ class DataplaneDNSAny(task.FeedTask):
     Feed of dataplane dns any Ips with ASN
     """
 
-    SOURCE = "https://dataplane.org/dnsrdany.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/dnsrdany.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneDNSAny",
@@ -20,7 +21,7 @@ class DataplaneDNSAny(task.FeedTask):
     }
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self._SOURCE,sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
 

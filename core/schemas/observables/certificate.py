@@ -3,6 +3,7 @@ import datetime
 from pydantic import Field
 from core.schemas.observable import ObservableType
 import hashlib
+from typing import Literal
 """
 This is the schema for the Certificate observable type. It inherits from the Observable schema and has the following fields:
     type: ObservableType = ObservableType.certificate
@@ -17,7 +18,7 @@ This is the schema for the Certificate observable type. It inherits from the Obs
 """
 
 class Certificate(Observable):
-    type: ObservableType = ObservableType.certificate
+    type: Literal['certificate'] = ObservableType.certificate
     last_seen: datetime.datetime = Field(default_factory=datetime.datetime.now)
     first_seen: datetime.datetime = Field(default_factory=datetime.datetime.now)
     issuer: str | None = None

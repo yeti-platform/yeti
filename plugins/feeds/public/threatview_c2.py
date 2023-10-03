@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime, timedelta
+from typing import ClassVar
 from core.schemas import observable
 from core.schemas import task
 from core import taskmanager
@@ -14,9 +15,9 @@ class ThreatviewC2(task.FeedTask):
         "description": "This feed contains Cobalt Strike C2 IPs and Hostnames",
     }
 
-    SOURCE = "https://threatview.io/Downloads/High-Confidence-CobaltstrikeC2_IP_feed.txt"
+    _SOURCE:ClassVar['str'] = "https://threatview.io/Downloads/High-Confidence-CobaltstrikeC2_IP_feed.txt"
     def run(self):
-        response = self._make_request(self.SOURCE,sort=False)
+        response = self._make_request(self._SOURCE,sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[2:-1]
             for line in lines:

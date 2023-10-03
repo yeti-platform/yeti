@@ -3,6 +3,7 @@
 """
 import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4, asn
@@ -15,7 +16,7 @@ class DataplaneSMTPGreet(task.FeedTask):
     Feed of SMTP greetings from dataplane with IPs and ASN
     """
 
-    SOURCE = "https://dataplane.org/smtpgreet.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/smtpgreet.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSMTPGreet",
@@ -24,7 +25,7 @@ class DataplaneSMTPGreet(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[68:-5]
 
@@ -39,7 +40,6 @@ class DataplaneSMTPGreet(task.FeedTask):
     def analyze(self, item):
         context_ip = {
             "source": self.name,
-            "last_seen": item["lastseen"],
         }
 
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
@@ -55,7 +55,6 @@ class DataplaneSMTPGreet(task.FeedTask):
         context_asn = {
             "source": self.name,
             "name": item["ASname"],
-            "last_seen": item["lastseen"],
         }
         asn_obs.add_context(self.name, context_asn)
         asn_obs.tag(tags)

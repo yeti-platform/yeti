@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 import pandas as pd
 from io import StringIO
 from datetime import timedelta
@@ -13,11 +14,11 @@ class ViriBackTracker(task.FeedTask):
         "name": "ViriBackTracker",
         "description": "Malware C2 Urls and IPs",
     }
-    SOURCE = "http://tracker.viriback.com/dump.php"
 
+    _SOURCE:ClassVar['str'] = "http://tracker.viriback.com/dump.php"
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             df = pd.read_csv(

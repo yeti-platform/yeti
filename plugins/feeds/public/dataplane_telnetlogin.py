@@ -1,8 +1,8 @@
 """
        Feed of Dataplane SSH bruteforce IPs and ASNs
 """
-import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 
@@ -16,7 +16,7 @@ class DataplaneTelenetLogin(task.FeedTask):
     Feed of telnet login attempt of dataplane IPs and ASNs
     """
 
-    SOURCE = "https://dataplane.org/telnetlogin.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/telnetlogin.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneTelnetLogin",
@@ -25,7 +25,7 @@ class DataplaneTelenetLogin(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
 
@@ -40,7 +40,6 @@ class DataplaneTelenetLogin(task.FeedTask):
     def analyze(self, item):
         context_ip = {
             "source": self.name,
-            "last_seen": item["lastseen"],
         }
 
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
@@ -54,7 +53,6 @@ class DataplaneTelenetLogin(task.FeedTask):
         asn_obs = asn.ASN(value=item["ASN"]).save()
         context_asn = {
             "source": self.name,
-            "last_seen": item["lastseen"],
         }
         asn_obs.add_context(self.name, context_asn)
         asn_obs.tag(tags)

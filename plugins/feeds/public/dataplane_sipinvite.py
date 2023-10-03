@@ -3,6 +3,7 @@
 """
 import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4,asn
@@ -15,7 +16,7 @@ class DataplaneSIPInvite(task.FeedTask):
     Feed of SIP INVITE attacks from Dataplane IPs and their Autonomous Systems
     """
 
-    SOURCE = "https://dataplane.org/sipinvitation.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/sipinvitation.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSIPInvite",
@@ -24,9 +25,9 @@ class DataplaneSIPInvite(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
-            lines = response.content.decode("utf-8").split("\n")[64:-5]
+            lines = response.content.decode("utf-8").split("\n")[66:-5]
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df["lastseen"] = pd.to_datetime(df["lastseen"])
@@ -46,7 +47,7 @@ class DataplaneSIPInvite(task.FeedTask):
         tags = ["dataplane", "sipinvite"]
         if category:
             tags.append(category)
-        ip_obs.add_context(self.name, context_ip)
+        ip_obs.add_context('dataplane sip invite', context_ip)
         ip_obs.tag(tags)
 
         asn_obs = asn.ASN(value=item["ASN"]).save()

@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 import pandas as pd
 from io import StringIO
 from datetime import timedelta
@@ -13,7 +14,7 @@ class UrlHaus(task.FeedTask):
         "name": "UrlHaus",
         "description": "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.",
     }
-    SOURCE = "https://urlhaus.abuse.ch/downloads/csv_recent/"
+    _SOURCE:ClassVar['str'] = "https://urlhaus.abuse.ch/downloads/csv_recent/"
     _NAMES = [
         "id",
         "dateadded",
@@ -27,7 +28,7 @@ class UrlHaus(task.FeedTask):
     ]
 
     def run(self):
-        response = self._make_request(self.SOURCE, auth=None)
+        response = self._make_request(self._SOURCE, auth=None)
         if response:
             data = response.text
 

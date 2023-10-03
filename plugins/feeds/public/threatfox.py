@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta, datetime
+from typing import ClassVar
 import pandas as pd
 from core.schemas import observable
 from core.schemas import task
@@ -12,7 +13,7 @@ class ThreatFox(task.FeedTask):
         "name": "ThreatFox",
         "description": "This feed contains malware hashes",
     }
-    SOURCE = "https://threatfox.abuse.ch/export/json/recent/"
+    _SOURCE:ClassVar['str'] = "https://threatfox.abuse.ch/export/json/recent/"
 
     _MAPPING = {
         "ip": observable.ObservableType.ipv4,
@@ -21,7 +22,7 @@ class ThreatFox(task.FeedTask):
     }
 
     def run(self):
-        r = self._make_request(self.SOURCE, sort=False)
+        r = self._make_request(self._SOURCE, sort=False)
 
         if r:
             data = r.json()

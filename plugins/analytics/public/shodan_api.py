@@ -25,7 +25,7 @@ class ShodanApi(object):
 
 
 class ShodanQuery(task.AnalyticsTask, ShodanApi):
-    default_values = {
+    _defaults = {
         "name": "Shodan",
         "description": "Perform a Shodan query on the IP address and tries to"
         " extract relevant information.",

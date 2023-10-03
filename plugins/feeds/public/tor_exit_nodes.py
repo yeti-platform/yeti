@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from typing import ClassVar
 from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
@@ -11,10 +12,10 @@ class TorExitNodes(task.FeedTask):
         "name": "TorExitNodes",
         "description": "Tor exit nodes",
     }
-    SOURCE = "https://www.dan.me.uk/tornodes"
+    _SOURCE:ClassVar['str'] = "https://www.dan.me.uk/tornodes"
 
     def run(self):
-        feed = self._make_request(self.SOURCE).text
+        feed = self._make_request(self._SOURCE).text
 
         start = feed.find("<!-- __BEGIN_TOR_NODE_LIST__ //-->") + len(
             "<!-- __BEGIN_TOR_NODE_LIST__ //-->"

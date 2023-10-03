@@ -3,6 +3,7 @@
 """
 import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4,asn
@@ -15,7 +16,7 @@ class DataplaneProto41(task.FeedTask):
     Feed DataplaneProto41: IPs from DataplaneProto41
     """
 
-    SOURCE = "https://dataplane.org/proto41.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/proto41.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneProto41",
@@ -24,7 +25,7 @@ class DataplaneProto41(task.FeedTask):
     _NAME = ["ASN", "ASname", "ipaddr", "firstseen", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
 

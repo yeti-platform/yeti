@@ -1,12 +1,13 @@
 import logging
 from datetime import timedelta
+from typing import ClassVar
 from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 
 
 class BlocklistdeApache(task.FeedTask):
-    SOURCE = "https://lists.blocklist.de/lists/apache.txt"
+    _SOURCE:ClassVar['str'] = "https://lists.blocklist.de/lists/apache.txt"
 
     _defaults = {
         "frequency": timedelta(hours=1),
@@ -15,7 +16,7 @@ class BlocklistdeApache(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             for item in data.split("\n"):

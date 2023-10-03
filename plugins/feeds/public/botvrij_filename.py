@@ -1,12 +1,13 @@
 import logging
 from datetime import timedelta, datetime
+from typing import ClassVar
 from core.schemas.observables import file
 from core.schemas import task
 from core import taskmanager
 
 
 class BotvrijFilename(task.FeedTask):
-    SOURCE = "https://www.botvrij.eu/data/ioclist.filename"
+    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.filename"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijFilename",
@@ -14,7 +15,7 @@ class BotvrijFilename(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             for item in data.split("\n")[6:-1]:

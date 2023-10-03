@@ -1,6 +1,7 @@
 from io import StringIO
 import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 
@@ -10,7 +11,7 @@ from core import taskmanager
 
 
 class FutexTracker(task.FeedTask):
-    SOURCE = "https://futex.re/tracker/TinyTracker.csv"
+    _SOURCE:ClassVar['str'] = "https://futex.re/tracker/TinyTracker.csv"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "FutexTracker",
@@ -18,7 +19,7 @@ class FutexTracker(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             names = ["id", "firstseen", "url", "status", "hash", "country", "as"]
