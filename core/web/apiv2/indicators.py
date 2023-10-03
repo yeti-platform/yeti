@@ -41,8 +41,8 @@ async def new(request: NewIndicatorRequest) -> indicator.IndicatorTypes:
 async def patch(request: PatchIndicatorRequest, indicator_id) -> indicator.IndicatorTypes:
     """Modifies an indicator in the database."""
     db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
-    update_data = request.indicator.dict(exclude_unset=True)
-    updated_indicator = db_indicator.copy(update=update_data)
+    update_data = request.indicator.model_dump(exclude_unset=True)
+    updated_indicator = db_indicator.model_copy(update=update_data)
     new = updated_indicator.save()
     return new
 
@@ -57,7 +57,7 @@ async def details(indicator_id) -> indicator.IndicatorTypes:
 @router.post('/search')
 async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
     """Searches for indicators."""
-    request_args = request.dict()
+    request_args = request.model_dump()
     count = request_args.pop('count')
     page = request_args.pop('page')
     indicators, total = indicator.Indicator.filter(request_args, offset=request.page*request.count, count=request.count)

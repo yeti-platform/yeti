@@ -1,9 +1,9 @@
 import datetime
 import re
 from enum import Enum
-from typing import Type
+from typing import ClassVar, Literal, Type
 
-from pydantic import BaseModel, Field, PrivateAttr, validator
+from pydantic import BaseModel, Field, PrivateAttr, field_validator
 
 from core import database_arango
 
@@ -32,10 +32,10 @@ class DiamondModel(Enum):
     victim = 'victim'
 
 class Indicator(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = 'indicators'
-    _type_filter: str = ''
+    _collection_name: ClassVar[str] = 'indicators'
+    _type_filter: ClassVar[str] = ''
 
-    root_type: str = Field('indicator', const=True)
+    root_type: Literal['indicator'] = 'indicator'
     id: str | None = None
     name: str
     description: str = ''
@@ -67,9 +67,9 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
                     yield observable, indicator
 
 class Regex(Indicator):
-    _type_filter: str = 'regex'
+    _type_filter: ClassVar[str] = IndicatorType.regex
     _compiled_pattern: re.Pattern | None = PrivateAttr(None)
-    type: str = Field('regex', const=True)
+    type: Literal['regex'] = IndicatorType.regex
 
     @property
     def compiled_pattern(self):
@@ -77,7 +77,8 @@ class Regex(Indicator):
             self._compiled_pattern = re.compile(self.pattern)
         return self._compiled_pattern
 
-    @validator('pattern')
+    @field_validator('pattern')
+    @classmethod
     def validate_regex(cls, value) -> str:
         try:
             re.compile(value)
@@ -97,8 +98,8 @@ class Yara(Indicator):
 
     Parsing and matching is yet TODO.
     """
-    _type_filter: str = 'yara'
-    type: str = Field('yara', const=True)
+    _type_filter: ClassVar[str] = IndicatorType.yara
+    type: Literal['yara'] = IndicatorType.yara
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
@@ -109,8 +110,8 @@ class Sigma(Indicator):
 
     Parsing and matching is yet TODO.
     """
-    _type_filter: str = 'sigma'
-    type: str = Field('sigma', const=True)
+    _type_filter: ClassVar[str] = IndicatorType.sigma
+    type: Literal['sigma'] = IndicatorType.sigma
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError

@@ -2,7 +2,7 @@
 
 import datetime
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional, ClassVar
 
 from pydantic import BaseModel, Field
 import validators
@@ -40,10 +40,10 @@ class ObservableType(str, Enum):
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
-    _collection_name: str = 'observables'
-    _type_filter: str | None = None
+    _collection_name: ClassVar[str] = 'observables'
+    _type_filter: ClassVar[str | None] = None
 
-    root_type: str = Field('observable', const=True)
+    root_type: Literal['observable'] = 'observable'
     id: str | None = None
     value: str
     tags: dict[str, TagRelationship] = {}
@@ -99,7 +99,7 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
         for tag_name in tags:
             # Attempt to find replacement tag
             replacements, _ = Tag.filter({"in__replaces": [tag_name]}, count=1)
-            tag: Optional[Tag]
+            tag: Optional[Tag] = None
 
             if replacements:
                 tag = replacements[0]

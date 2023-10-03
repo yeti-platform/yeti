@@ -196,13 +196,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         Returns:
           The created Yeti object."""
-        doc_dict = self.dict(exclude_unset=True)
+        doc_dict = self.model_dump(exclude_unset=True)
         if doc_dict.get('id') is not None:
-            result = self._update(self.json())
+            result = self._update(self.model_dump_json())
         else:
-            result = self._insert(self.json())
+            result = self._insert(self.model_dump_json())
             if not result:
-                result = self._update(self.json(exclude={'created'}))
+                result = self._update(self.model_dump_json(exclude={'created'}))
         return self.__class__(**result)
 
     def update_links(self, new_id):
@@ -294,7 +294,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 continue
             tag_relationship.last_seen = datetime.datetime.now(datetime.timezone.utc)
             tag_relationship.fresh = True
-            edge = json.loads(tag_relationship.json())
+            edge = json.loads(tag_relationship.model_dump_json())
             edge['_id'] = tag_relationship.id
             graph.update_edge(edge)
             return tag_relationship
@@ -316,7 +316,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         result = graph.edge_collection('tagged').link(
             self.extended_id,
             tag_obj.extended_id,
-            data=json.loads(tag_relationship.json()),
+            data=json.loads(tag_relationship.model_dump_json()),
             return_new=True)['new']
         result['id'] = result.pop('_key')
         return TagRelationship.load(result)
@@ -338,7 +338,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if tag.name != tag_name:
                 continue
             tag_relationship.fresh = False
-            edge = json.loads(tag_relationship.json())
+            edge = json.loads(tag_relationship.model_dump_json())
             edge['_id'] = tag_relationship.id
             graph.update_edge(edge)
             return tag_relationship
@@ -384,7 +384,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             relationship = Relationship.load(neighbors[0])
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
             relationship.description = description
-            edge = json.loads(relationship.json())
+            edge = json.loads(relationship.model_dump_json())
             edge['_id'] = neighbors[0]['_id']
             graph.update_edge(edge)
             return relationship
@@ -400,7 +400,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         result = graph.edge_collection('links').link(
             relationship.source,
             relationship.target,
-            data=json.loads(relationship.json()),
+            data=json.loads(relationship.model_dump_json()),
             return_new=True)['new']
         result['id'] = result.pop('_key')
         return Relationship.load(result)

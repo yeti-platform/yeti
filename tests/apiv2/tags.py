@@ -36,7 +36,7 @@ class tagTest(unittest.TestCase):
         data2 = response.json()
         self.assertEqual(self.tag.id, data2["id"])
         self.assertEqual(data2['name'], "tag111")
-        self.assertEqual(data2['default_expiration'], 864000)  # 10 days
+        self.assertEqual(data2['default_expiration'], "P10D")  # 10 daysin ISO 8601
 
     def test_tag_search(self):
         response = client.post(

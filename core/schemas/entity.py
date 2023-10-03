@@ -1,12 +1,11 @@
 import datetime
-from enum import Enum
-
 import re
-from typing import Type
+from enum import Enum
+from typing import ClassVar, Literal, Type
 
 from pydantic import BaseModel, Field
+
 from core import database_arango
-import re
 
 
 def now():
@@ -27,10 +26,10 @@ class EntityType(str, Enum):
     note = "note"
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = "entities"
-    _type_filter: str = ""
+    _collection_name: ClassVar[str] = "entities"
+    _type_filter: ClassVar[str] = ""
 
-    root_type: str = Field("entity", const=True)
+    root_type: Literal["entity"] = "entity"
     id: str | None = None
     type: str
     name: str
@@ -58,15 +57,15 @@ class Company(Entity):
     _type_filter:str = EntityType.company
 
 class ThreatActor(Entity):
-    _type_filter: str = "threat-actor"
-    type: str = Field("threat-actor", const=True)
+    _type_filter: ClassVar[str] = EntityType.threat_actor
+    type: Literal["threat-actor"] = EntityType.threat_actor
 
     aliases: list[str] = []
 
 
 class IntrusionSet(Entity):
-    _type_filter: str = "intrusion-set"
-    type: str = Field("intrusion-set", const=True)
+    _type_filter: ClassVar[str] = EntityType.intrusion_set
+    type: Literal["intrusion-set"] = EntityType.intrusion_set
 
     aliases: list[str] = []
     first_seen: datetime.datetime = Field(default_factory=now)
@@ -74,23 +73,23 @@ class IntrusionSet(Entity):
 
 
 class Tool(Entity):
-    _type_filter: str = "tool"
-    type: str = Field("tool", const=True)
+    _type_filter: ClassVar[str] = EntityType.tool
+    type: Literal["tool"] = EntityType.tool
 
     kill_chain_phases: list[str] = []
     tool_version: str = ""
 
 
 class AttackPattern(Entity):
-    _type_filter: str = "attack-pattern"
-    type: str = Field("attack-pattern", const=True)
+    _type_filter: ClassVar[str] = EntityType.attack_pattern
+    type: Literal["attack-pattern"] = EntityType.attack_pattern
 
     kill_chain_phases: list[str] = []
 
 
 class Malware(Entity):
-    _type_filter: str = "malware"
-    type: str = Field("malware", const=True)
+    _type_filter: ClassVar[str] = EntityType.malware
+    type: Literal["malware"] = EntityType.malware
 
     kill_chain_phases: list[str] = []
     aliases: list[str] = []
@@ -98,8 +97,8 @@ class Malware(Entity):
 
 
 class Campaign(Entity):
-    _type_filter: str = "campaign"
-    type: str = Field("campaign", const=True)
+    _type_filter: ClassVar[str] = EntityType.campaign
+    type: Literal["campaign"] = EntityType.campaign
 
     aliases: list[str] = []
     first_seen: datetime.datetime = Field(default_factory=now)
@@ -107,8 +106,8 @@ class Campaign(Entity):
 
 
 class Identity(Entity):
-    _type_filter: str = "identity"
-    type: str = Field("identity", const=True)
+    _type_filter: ClassVar[str] = EntityType.identity
+    type: Literal["identity"] = EntityType.identity
 
     identity_class: list[str] = []
     sectors: list[str] = []

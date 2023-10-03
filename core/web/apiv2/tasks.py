@@ -48,7 +48,7 @@ async def toggle(task_name) -> TaskTypes:
 @router.post('/search')
 async def search(request: TaskSearchRequest) -> TaskSearchResponse:
     """Searches for tasks."""
-    request_args = request.dict()
+    request_args = request.model_dump()
     count = request_args.pop('count')
     page = request_args.pop('page')
     tasks, total = Task.filter(request_args, offset=request.page*request.count, count=request.count)
@@ -80,8 +80,8 @@ async def patch_export(request: PatchExportRequest) -> ExportTask:
             status_code=422,
             detail=f"ExportTask could not be patched: Template {request.export.template_name} not found")
 
-    update_data = request.export.dict(exclude_unset=True)
-    updated_export = db_export.copy(update=update_data)
+    update_data = request.export.model_dump(exclude_unset=True)
+    updated_export = db_export.model_copy(update=update_data)
     new = updated_export.save()
     return new
 
