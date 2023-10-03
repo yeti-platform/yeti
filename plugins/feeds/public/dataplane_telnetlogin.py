@@ -40,7 +40,6 @@ class DataplaneTelenetLogin(task.FeedTask):
     def analyze(self, item):
         context_ip = {
             "source": self.name,
-            "last_seen": item["lastseen"],
         }
 
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
@@ -54,7 +53,6 @@ class DataplaneTelenetLogin(task.FeedTask):
         asn_obs = asn.ASN(value=item["ASN"]).save()
         context_asn = {
             "source": self.name,
-            "last_seen": item["lastseen"],
         }
         asn_obs.add_context(self.name, context_asn)
         asn_obs.tag(tags)

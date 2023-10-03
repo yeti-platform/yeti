@@ -39,7 +39,6 @@ class DataplaneVNC(task.FeedTask):
     def analyze(self, item):
         context_ip = {
             "source": self.name,
-            "last_seen": item["lastseen"],
         }
 
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
