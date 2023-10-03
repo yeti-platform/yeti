@@ -1,12 +1,12 @@
 import json
 import logging
-
+from core import taskmanager
+from core.schemas.observable import Observable,ObservableType
+from core.schemas.observables import ipv4,asn,hostname
+from core.schemas.entity import Company
+from core.schemas import task
+from core.config.config import yeti_config
 import shodan
-
-from core.analytics import OneShotAnalytics
-from core.entities import Company
-from core.observables import Hostname, AutonomousSystem
-
 
 class ShodanApi(object):
     settings = {
@@ -16,58 +16,46 @@ class ShodanApi(object):
         }
     }
 
-    @staticmethod
-    def fetch(observable, api_key):
+    
+    def fetch(observable:Observable):
         try:
-            return shodan.Shodan(api_key).host(observable.value)
+            return shodan.Shodan(yeti_config['shodan']['api_key']).host(observable.value)
         except shodan.APIError as e:
             logging.error("Error: {}".format(e))
 
 
-class ShodanQuery(OneShotAnalytics, ShodanApi):
+class ShodanQuery(task.AnalyticsTask, ShodanApi):
     default_values = {
         "name": "Shodan",
         "description": "Perform a Shodan query on the IP address and tries to"
         " extract relevant information.",
     }
 
-    ACTS_ON = "Ip"
+    acts_on: list[ObservableType] = [ObservableType.ip]
 
-    @staticmethod
-    def analyze(ip, results):
-        links = set()
-        result = ShodanApi.fetch(ip, results.settings["shodan_api_key"])
-        json_string = json.dumps(
-            result, sort_keys=True, indent=4, separators=(",", ": ")
-        )
-        results.update(raw=json_string)
+    def each(self,ip:ipv4.IPv4):
+        result = ShodanApi.fetch(ip)
+        logging.debug(result)
 
         if "tags" in result and result["tags"] is not None:
             ip.tag(result["tags"])
 
+        logging.debug(result['asn'])
         if "asn" in result and result["asn"] is not None:
-            o_asn = AutonomousSystem.get_or_create(
-                value=result["asn"].replace("AS", "")
-            )
-            links.update(o_asn.active_link_to(ip, "asn#", "Shodan Query"))
+            o_asn = asn.ASN(
+                value=result["asn"],
+            ).save()
+            logging.debug(o_asn)
+            o_asn.link_to(ip, "asn#", "Shodan Query")
 
         if "hostnames" in result and result["hostnames"] is not None:
-            for hostname in result["hostnames"]:
-                h = Hostname.get_or_create(value=hostname)
-                links.update(h.active_link_to(ip, "A record", "Shodan Query"))
+            for hostname_str in result["hostnames"]:
+                h = hostname.Hostname(value=hostname_str).save()
+                h.link_to(ip, "A record", "Shodan Query")
 
         if "isp" in result and result["isp"] is not None:
-            o_isp = Company.get_or_create(name=result["isp"])
-            links.update(ip.active_link_to(o_isp, "hosting", "Shodan Query"))
+            logging.debug(result["isp"])
+            o_isp = Company(name=result["isp"]).save()
+            ip.link_to(o_isp, "hosting", "Shodan Query")
 
-        for context in ip.context:
-            if context["source"] == "shodan_query":
-                break
-        else:
-            # Remove the data part (Shodan Crawler Data, etc.)
-            result.pop("data", None)
-
-            result["source"] = "shodan_query"
-            ip.add_context(result)
-
-        return list(links)
+taskmanager.TaskManager.register_task(ShodanQuery)

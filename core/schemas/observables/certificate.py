@@ -2,6 +2,7 @@ from core.schemas.observable import Observable
 import datetime
 from pydantic import Field
 from core.schemas.observable import ObservableType
+import hashlib
 """
 This is the schema for the Certificate observable type. It inherits from the Observable schema and has the following fields:
     type: ObservableType = ObservableType.certificate
@@ -25,3 +26,9 @@ class Certificate(Observable):
     after: datetime.datetime | None = None
     before: datetime.datetime | None = None
     fingerprint: str | None = None
+    
+    @classmethod
+    def from_data(cls,data:str):
+        hash_256 = hashlib.sha256(data).hexdigest()
+        return cls(value=f"CERT:{hash_256}")
+
