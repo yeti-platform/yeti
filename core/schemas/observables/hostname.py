@@ -1,7 +1,7 @@
 from core.schemas.observable import Observable
 from core.schemas.observable import ObservableType
-
+from typing import Literal
 
 class Hostname(Observable):
     value: str
-    type: ObservableType = ObservableType.hostname
+    type: Literal['hostname'] = ObservableType.hostname

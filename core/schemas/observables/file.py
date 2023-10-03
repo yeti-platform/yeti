@@ -3,7 +3,7 @@ from core.schemas.observable import ObservableType
 from core.schemas.observables.md5 import MD5
 from core.schemas.observables.sha1 import SHA1
 from core.schemas.observables.sha256 import SHA256
-
+from typing import Literal
 '''
 File schema
 
@@ -24,7 +24,7 @@ class File(Observable):
     Value should to be in the form FILE:<HASH>.
     """
     value: str
-    type: ObservableType = ObservableType.file
+    type: Literal['file'] = ObservableType.file
     name: str | None = None
     size: int | None = None
     sha256: str | None = None

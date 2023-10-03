@@ -1,9 +1,9 @@
 from core.schemas.observable import Observable
 from core.schemas.observable import ObservableType
-
+from typing import Literal,ClassVar
 
 class ASN(Observable):
     value: str
-    type: ObservableType = ObservableType.asn
+    type:  Literal['asn']= ObservableType.asn
     country: str = None
     description: str = None
