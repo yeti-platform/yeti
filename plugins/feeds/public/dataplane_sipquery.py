@@ -25,7 +25,7 @@ class DataplaneSIPQuery(task.FeedTask):
     def run(self):
         response = self._make_request(self._SOURCE, sort=False)
         if response:
-            lines = response.content.decode("utf-8").split("\n")[64:-5]
+            lines = response.content.decode("utf-8").split("\n")[66:-5]
             columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
             df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
@@ -46,7 +46,7 @@ class DataplaneSIPQuery(task.FeedTask):
         tags = ["dataplane", "sipquery"]
         if category:
             tags.append(category)
-        ip_obs.add_context(self.name, context_ip)
+        ip_obs.add_context('dataplane sip query', context_ip)
         ip_obs.tag(tags)
 
         asn_obs = asn.ASN(value=item["ASN"]).save()

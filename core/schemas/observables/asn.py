@@ -5,5 +5,5 @@ from typing import Literal,ClassVar
 class ASN(Observable):
     value: str
     type:  Literal['asn']= ObservableType.asn
-    country: str = None
-    description: str = None
+    country: str | None = None
+    description: str | None = None

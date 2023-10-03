@@ -2,6 +2,7 @@
        Feed of SIP registr with IPs and ASNs
 """
 from datetime import timedelta
+import logging
 from typing import ClassVar
 
 import pandas as pd
@@ -26,7 +27,7 @@ class DataplaneSIPRegistr(task.FeedTask):
     def run(self):
         response = self._make_request(self._SOURCE, sort=False)
         if response:
-            lines = response.content.decode("utf-8").split("\n")[64:-5]
+            lines = response.content.decode("utf-8").split("\n")[66:-5]
 
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
@@ -38,8 +39,7 @@ class DataplaneSIPRegistr(task.FeedTask):
 
     def analyze(self, item):
         context_ip = {
-            "source": self.name,
-            "last_seen": item["lastseen"],
+            "source": 'dataplane sip registr',
         }
 
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
@@ -48,7 +48,8 @@ class DataplaneSIPRegistr(task.FeedTask):
         tags = ["dataplane", "sipregistr"]
         if category:
             tags.append(category)
-        ip_obs.add_context(self.name, context_ip)
+        logging.debug(f"Adding context {context_ip} to {ip_obs}")   
+        ip_obs.add_context('dataplane sip registr', context_ip)
         ip_obs.tag(tags)
 
         asn_obs = asn.ASN(value=item["ASN"]).save()
@@ -56,9 +57,9 @@ class DataplaneSIPRegistr(task.FeedTask):
         context_asn = {
             "source": self.name,
             "name": item["ASname"],
-            "last_seen": item["lastseen"],
         }
-        asn_obs.add_context(self.name, context_asn)
+    
+        asn_obs.add_context('dataplane sip registr', context_asn)
         asn_obs.tag(tags)
 
         asn_obs.link_to(ip_obs, "ASN to IP", self.name)
