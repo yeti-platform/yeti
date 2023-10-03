@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from pydantic import BaseModel
 
 from core import database_arango
@@ -6,9 +8,9 @@ from core import database_arango
 
 class Template(BaseModel, database_arango.ArangoYetiConnector):
     """A template for exporting data to an external system."""
-    _collection_name = 'templates'
+    _collection_name: ClassVar[str] = 'templates'
 
-    id: str | None
+    id: str | None = None
     name: str
     template: str
 

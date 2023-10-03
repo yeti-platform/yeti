@@ -122,7 +122,7 @@ async def delete_context(observable_id, request: DeleteContextRequest) -> Observ
 @router.post('/search')
 async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     """Searches for observables."""
-    request_args = request.dict(exclude_unset=True)
+    request_args = request.model_dump(exclude_unset=True)
     count = request_args.pop('count')
     page = request_args.pop('page')
     observables, total = Observable.filter(

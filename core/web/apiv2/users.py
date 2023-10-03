@@ -49,7 +49,7 @@ async def get(user_id: str) -> User:
 @router.post('/search')
 async def search(request: SearchUserRequest) -> SearchUserResponse:
     """Searches for users."""
-    request_args = request.dict(exclude={'count', 'page'})
+    request_args = request.model_dump(exclude={'count', 'page'})
     users, total = User.filter(request_args, offset=request.page, count=request.count)
     return SearchUserResponse(users=users, total=total)
 

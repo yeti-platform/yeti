@@ -1,4 +1,5 @@
 import datetime
+from typing import ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -14,8 +15,8 @@ def future():
 
 
 class Tag(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: str = 'tags'
-    _type_filter: str | None = None
+    _collection_name: ClassVar[str] = 'tags'
+    _type_filter: ClassVar[str | None] = None
 
     id: str | None = None
     name: str
