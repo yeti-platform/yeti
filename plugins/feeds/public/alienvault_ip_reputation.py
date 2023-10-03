@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from typing import ClassVar
 from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
@@ -8,7 +9,7 @@ from io import StringIO
 
 
 class AlienVaultIPReputation(task.FeedTask):
-    SOURCE = "http://reputation.alienvault.com/reputation.data"
+    _SOURCE:ClassVar['str'] = "http://reputation.alienvault.com/reputation.data"
     _defaults = {
         "frequency": timedelta(hours=4),
         "name": "AlienVaultIPReputation",
@@ -25,7 +26,7 @@ class AlienVaultIPReputation(task.FeedTask):
                     "number_3",
                 ]
     def run(self):
-        response = self._make_request(self.SOURCE, verify=True)
+        response = self._make_request(self._SOURCE, verify=True)
         if response:
             data = response.text
 

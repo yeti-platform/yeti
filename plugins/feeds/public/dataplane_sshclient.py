@@ -3,6 +3,7 @@
 """
 import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4, asn
@@ -15,7 +16,7 @@ class DataplaneSSHClient(task.FeedTask):
     Feed of ssh client bruteforce of Dataplane with IPs and ASNs.
     """
 
-    SOURCE = "https://dataplane.org/sshclient.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/sshclient.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSSHClient",
@@ -24,7 +25,7 @@ class DataplaneSSHClient(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)

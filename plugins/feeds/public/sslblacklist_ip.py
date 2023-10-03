@@ -1,5 +1,6 @@
 from io import StringIO
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 
@@ -15,10 +16,10 @@ class SSLBlackListIP(task.FeedTask):
         "description": "SSL Black List IP",
     }
 
-    SOURCE = "https://sslbl.abuse.ch/blacklist/sslipblacklist.csv"
+    _SOURCE:ClassVar['str'] = "https://sslbl.abuse.ch/blacklist/sslipblacklist.csv"
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             names = names = ["Firstseen", "DstIP", "DstPort"]

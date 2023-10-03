@@ -1,12 +1,13 @@
 import logging
 from datetime import timedelta
+from typing import ClassVar
 from core.schemas.observables import sha256
 from core.schemas import task
 from core import taskmanager
 
 
 class BotvrijSHA256(task.FeedTask):
-    SOURCE = "https://www.botvrij.eu/data/ioclist.sha256"
+    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.sha256"
 
     _defaults = {
         "frequency": timedelta(hours=12),
@@ -15,7 +16,7 @@ class BotvrijSHA256(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             for item in data.split("\n")[6:-1]:

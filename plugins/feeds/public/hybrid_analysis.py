@@ -2,6 +2,7 @@ from io import StringIO
 import json
 import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 
@@ -11,7 +12,7 @@ from core import taskmanager
 
 
 class HybridAnalysis(task.FeedTask):
-    SOURCE = "https://www.hybrid-analysis.com/feed?json"
+    _SOURCE:ClassVar['str'] = "https://www.hybrid-analysis.com/feed?json"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "HybridAnalysis",
@@ -20,7 +21,7 @@ class HybridAnalysis(task.FeedTask):
 
     def run(self):
         headers = {"User-agent": "VxApi Connector"}
-        response = self._make_request(self.SOURCE, headers=headers)
+        response = self._make_request(self._SOURCE, headers=headers)
         if response:
             data = response.json()
             if "data" in data:

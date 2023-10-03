@@ -1,8 +1,8 @@
 """
        Feed of Dataplane SSH bruteforce IPs and ASNs
 """
-import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 
@@ -16,7 +16,7 @@ class DataplaneTelenetLogin(task.FeedTask):
     Feed of telnet login attempt of dataplane IPs and ASNs
     """
 
-    SOURCE = "https://dataplane.org/telnetlogin.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/telnetlogin.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneTelnetLogin",
@@ -25,7 +25,7 @@ class DataplaneTelenetLogin(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
 

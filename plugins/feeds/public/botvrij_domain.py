@@ -1,12 +1,13 @@
 import logging
 from datetime import timedelta, datetime
+from typing import ClassVar
 from core.schemas.observables import hostname
 from core.schemas import task
 from core import taskmanager
 
 
 class BotvrijDomain(task.FeedTask):
-    SOURCE = "https://www.botvrij.eu/data/ioclist.domain"
+    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.domain"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijDomain",
@@ -14,7 +15,7 @@ class BotvrijDomain(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             for item in data.split("\n")[6:-1]:

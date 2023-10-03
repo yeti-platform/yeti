@@ -6,12 +6,13 @@ import numpy as np
 from core.schemas.observables import ipv4, hostname, url, asn
 from core.schemas import task
 from core import taskmanager
+from typing import ClassVar
 
 
 class AzorultTracker(task.FeedTask):
     """Azorult Tracker"""
 
-    SOURCE = "https://azorult-tracker.net/api/last-data"
+    _SOURCE:ClassVar['str'] = "https://azorult-tracker.net/api/last-data"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "Azorult-Tracker",
@@ -19,7 +20,7 @@ class AzorultTracker(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE, auth=None)
+        response = self._make_request(self._SOURCE, auth=None)
         if response:
             data = response.json()
 

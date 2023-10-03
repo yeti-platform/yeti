@@ -1,8 +1,8 @@
 """
     Feed of Dataplane SSH bruteforce IPs and ASNs
 """
-import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4, asn
@@ -15,7 +15,7 @@ class DataplaneVNC(task.FeedTask):
     Feed of VNC dataplane IPs.
     """
 
-    SOURCE = "https://dataplane.org/vncrfb.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/vncrfb.txt"
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
     _defaults = {
         "frequency": timedelta(hours=12),
@@ -24,7 +24,7 @@ class DataplaneVNC(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[68:-5]
 

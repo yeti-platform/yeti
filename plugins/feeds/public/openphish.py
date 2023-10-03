@@ -1,6 +1,7 @@
 from datetime import timedelta
 import logging
 import traceback
+from typing import ClassVar
 
 from core.schemas.observables import url
 from core.schemas import task
@@ -9,7 +10,7 @@ from core import taskmanager
 
 class OpenPhish(task.FeedTask):
     # set default values for feed
-    SOURCE = "https://openphish.com/feed.txt"
+    _SOURCE:ClassVar['str'] = "https://openphish.com/feed.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "OpenPhish",
@@ -20,7 +21,7 @@ class OpenPhish(task.FeedTask):
     # it is the main entry point into the feed
     def run(self):
         # make a request to the feed URL
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             # iterate over the lines in the response and analyze each one
             for line in response.text.split("\n"):

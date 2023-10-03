@@ -1,8 +1,8 @@
 """
        Feed of SIP registr with IPs and ASNs
 """
-import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4, asn
@@ -15,7 +15,7 @@ class DataplaneSIPRegistr(task.FeedTask):
     Feed of SIP registr with IPs and ASNs
     """
 
-    SOURCE = "https://dataplane.org/sipregistration.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/sipregistration.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSIPRegistr",
@@ -24,7 +24,7 @@ class DataplaneSIPRegistr(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
 

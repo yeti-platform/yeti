@@ -3,6 +3,7 @@
 """
 import logging
 from datetime import timedelta
+from typing import ClassVar
 
 import pandas as pd
 from core.schemas.observables import ipv4, asn
@@ -15,7 +16,7 @@ class DataplaneSMTPData(task.FeedTask):
     Feeds SMTP data from Dataplane with IPs and ASNs
     """
 
-    SOURCE = "https://dataplane.org/smtpdata.txt"
+    _SOURCE:ClassVar['str'] = "https://dataplane.org/smtpdata.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSMTPData",
@@ -24,7 +25,7 @@ class DataplaneSMTPData(task.FeedTask):
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
     def run(self):
-        response = self._make_request(self.SOURCE, sort=False)
+        response = self._make_request(self._SOURCE, sort=False)
         if response:
             lines = response.content.decode("utf-8").split("\n")[68:-5]
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)

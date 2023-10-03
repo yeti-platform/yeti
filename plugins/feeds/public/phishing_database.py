@@ -2,6 +2,7 @@
 """This class will incorporate the PhishingDatabase feed into yeti."""
 
 from datetime import timedelta
+from typing import ClassVar
 from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
@@ -16,10 +17,10 @@ class PhishingDatabase(task.FeedTask):
         "description": "PhishingDatabase is a community feed of phishing URLs which are updated every 24 hours.",
     }
 
-    SOURCE = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
+    _SOURCE:ClassVar['str'] = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             for line in response.text.split("\n"):
                 self.analyze(line.strip())

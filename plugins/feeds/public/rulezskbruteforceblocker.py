@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from typing import ClassVar
 
 from dateutil import parser
 import pandas as pd
@@ -15,10 +16,10 @@ class RulezSKBruteforceBlocker(task.FeedTask):
         "description": "This feed contains daily list of IPs from rules.sk",
     }
 
-    SOURCE = "http://danger.rulez.sk/projects/bruteforceblocker/blist.php"
+    _SOURCE:ClassVar['str'] = "http://danger.rulez.sk/projects/bruteforceblocker/blist.php"
 
     def run(self):
-        r = self._make_request(self.SOURCE, headers={"User-Agent": "yeti-project"})
+        r = self._make_request(self._SOURCE, headers={"User-Agent": "yeti-project"})
         if r:
             data = [
                 l.split("\t") for l in r.text.split("\n") if not l.startswith("#") and l

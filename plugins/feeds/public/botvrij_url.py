@@ -1,12 +1,13 @@
 import logging
 from datetime import timedelta, datetime
+from typing import ClassVar
 from core.schemas.observables import url
 from core.schemas import task
 from core import taskmanager
 
 
 class BotvrijUrl(task.FeedTask):
-    SOURCE = "https://www.botvrij.eu/data/ioclist.url"
+    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.url"
 
     _defaults = {
         "frequency": timedelta(hours=12),
@@ -15,7 +16,7 @@ class BotvrijUrl(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.SOURCE)
+        response = self._make_request(self._SOURCE)
         if response:
             data = response.text
             for item in data.split("\n")[6:-1]:
@@ -29,7 +30,7 @@ class BotvrijUrl(task.FeedTask):
             "description": descr,
         }
 
-        obs = url.Url(value=url).save()
+        obs = url.Url(value=url_str).save()
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
 
