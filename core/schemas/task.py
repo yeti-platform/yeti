@@ -192,7 +192,7 @@ class OneShotTask(Task):
     type: Literal[TaskType.oneshot] = TaskType.oneshot
     acts_on: list[str] = []  # By default act on all observables
 
-    def run(self, params: TaskParams):
+    def run(self, params: dict):
         """Runs the task.
 
         By default, we extract the 'value' parameter and get the corresponding
@@ -203,10 +203,10 @@ class OneShotTask(Task):
         """
         results, count = Observable.filter(args={
             'type__in': self.acts_on,
-            'value': params.params['value']
+            'value': params['value']
         })
         if not count:
-            logging.warning(f"Could not find observable with value {params.params['value']} with type in {self.acts_on}")
+            logging.warning(f"Could not find observable with value {params['value']} with type in {self.acts_on}")
             return
         self.each(results[0])
 
