@@ -5,26 +5,23 @@ from unittest import mock
 
 from core import database_arango, taskmanager
 from core.schemas.observable import Observable
-from core.schemas.task import (AnalyticsTask, ExportTask, Task, TaskParams,
-                               TaskStatus, TaskType)
+from core.schemas.task import (AnalyticsTask, ExportTask, FeedTask, Task,
+                               TaskParams, TaskStatus, TaskType)
 from core.schemas.template import Template
 
 
 class TaskTest(unittest.TestCase):
 
     def setUp(self) -> None:
-        class FakeTask(Task):
+        class FakeTask(FeedTask):
             # classvar
             _DATA: ClassVar[list[str]] = ['asd1.com', 'asd2.com', 'asd3.com']
             _defaults: ClassVar[dict] = {
                 "frequency": datetime.timedelta(hours=1),
-                "type": "feed",
                 # "source": "https://bazaar.abuse.ch/export/csv/recent/",
                 "description": "Dummy feed",
                 "enabled": True,
             }
-
-            type: ClassVar[TaskType] = TaskType.feed
 
             def run(self):
                 for item in self._DATA:
