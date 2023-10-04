@@ -73,6 +73,18 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(task.status, TaskStatus.completed)
         self.assertIsNotNone(task.last_run)
 
+    def test_run_task_with_param(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_task_class)
+        observables = list(Observable.list())
+        self.assertEqual(len(observables), 0)
+        taskmanager.TaskManager.run_task('FakeTask', 'param')
+        observables = list(Observable.list())
+        self.assertEqual(len(observables), 3)
+        task = self.fake_task_class.find(name='FakeTask')
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.completed)
+        self.assertIsNotNone(task.last_run)
+
     def test_run_disabled_task(self) -> None:
         self.fake_task_class._defaults['enabled'] = False
         taskmanager.TaskManager.register_task(self.fake_task_class)

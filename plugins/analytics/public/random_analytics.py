@@ -15,15 +15,19 @@ class PrintDomains(task.AnalyticsTask):
 
     acts_on: list[str] = ['hostname']  # act on all observables
 
-    # TODO Use server-side JS filter
-    # CUSTOM_FILTER = Q(tags__not__size=0)  # filter only tagged elements
+    def each(self, observable):
+        print(observable.value)
 
-    # def bulk(self, observables):
-    #     for o in observables:
-    #         self.each(o)
+class PrintDomain(task.OneShotTask):
+    _defaults = {
+        "type": "oneshot",
+        "description": "Just prints an observable's value",
+    }
+
+    acts_on: list[str] = ['hostname']
 
     def each(self, observable):
         print(observable.value)
 
-
 taskmanager.TaskManager.register_task(PrintDomains)
+taskmanager.TaskManager.register_task(PrintDomain)
