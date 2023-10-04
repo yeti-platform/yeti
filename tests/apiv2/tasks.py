@@ -56,9 +56,17 @@ class TaskTest(unittest.TestCase):
     def test_run_task(self, mock_delay):
         response = client.post("/api/v2/tasks/FakeTask/run")
         data = response.json()
-        mock_delay.assert_called_once_with("FakeTask")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data['status'], "ok")
+        mock_delay.assert_called_once_with("FakeTask", '{"params":{}}')
+
+    @mock.patch('core.taskmanager.run_task.delay')
+    def test_run_task_with_params(self, mock_delay):
+        response = client.post("/api/v2/tasks/FakeTask/run", json={'params': {'value': 'test'}})
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data['status'], "ok")
+        mock_delay.assert_called_once_with("FakeTask", '{"params":{"value":"test"}}')
 
 
 class ExportTaskTest(unittest.TestCase):

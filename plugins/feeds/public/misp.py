@@ -23,8 +23,8 @@ class MispFeed(task.FeedTask):
     _TYPES_TO_IMPORT = {
         "domain": observable.ObservableType.hostname,
         "hostname": observable.ObservableType.hostname,
-        "ip-dst": observable.ObservableType.ip,
-        "ip-src": observable.ObservableType.ip,
+        "ip-dst": observable.ObservableType.ipv4,
+        "ip-src": observable.ObservableType.ipv4,
         "url": observable.ObservableType.url,
         "md5": observable.ObservableType.md5,
         "sha1": observable.ObservableType.sha1,

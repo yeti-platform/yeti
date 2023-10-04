@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from core import taskmanager
 from core.schemas.task import (TYPE_MAPPING, ExportTask, Task, TaskType,
-                               TaskTypes)
+                               TaskTypes, TaskParams)
 from core.schemas.template import Template
 
 # Request schemas
@@ -32,9 +32,11 @@ class PatchExportRequest(BaseModel):
 router = APIRouter()
 
 @router.post('/{task_name}/run')
-async def run(task_name):
+async def run(task_name, params: TaskParams | None = None) -> dict:
     """Runs a task asynchronously."""
-    taskmanager.run_task.delay(task_name)
+    if params is None:
+        params = TaskParams()
+    taskmanager.run_task.delay(task_name, params.model_dump_json())
     return {"status": "ok"}
 
 @router.post('/{task_name}/toggle')
