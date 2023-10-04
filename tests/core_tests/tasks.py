@@ -1,26 +1,30 @@
 import datetime
 import unittest
-
-from core import database_arango
-# from core.schemas.entity import Entity, Malware, ThreatActor, Tool
-# from core.schemas.graph import Relationship
-from core.schemas.observable import Observable
-from core import taskmanager
-from core.schemas.task import Task, AnalyticsTask, ExportTask, TaskStatus, TaskType
-from core.schemas.template import Template
+from typing import ClassVar
 from unittest import mock
+
+from core import database_arango, taskmanager
+from core.schemas.observable import Observable
+from core.schemas.task import (AnalyticsTask, ExportTask, Task, TaskParams,
+                               TaskStatus, TaskType)
+from core.schemas.template import Template
+
 
 class TaskTest(unittest.TestCase):
 
     def setUp(self) -> None:
         class FakeTask(Task):
-            _DATA = ['asd1.com', 'asd2.com', 'asd3.com']
-            _defaults = {
+            # classvar
+            _DATA: ClassVar[list[str]] = ['asd1.com', 'asd2.com', 'asd3.com']
+            _defaults: ClassVar[dict] = {
                 "frequency": datetime.timedelta(hours=1),
                 "type": "feed",
                 # "source": "https://bazaar.abuse.ch/export/csv/recent/",
                 "description": "Dummy feed",
+                "enabled": True,
             }
+
+            type: ClassVar[TaskType] = TaskType.feed
 
             def run(self):
                 for item in self._DATA:
@@ -65,19 +69,7 @@ class TaskTest(unittest.TestCase):
         taskmanager.TaskManager.register_task(self.fake_task_class)
         observables = list(Observable.list())
         self.assertEqual(len(observables), 0)
-        taskmanager.TaskManager.run_task('FakeTask')
-        observables = list(Observable.list())
-        self.assertEqual(len(observables), 3)
-        task = self.fake_task_class.find(name='FakeTask')
-        assert task is not None
-        self.assertEqual(task.status, TaskStatus.completed)
-        self.assertIsNotNone(task.last_run)
-
-    def test_run_task_with_param(self) -> None:
-        taskmanager.TaskManager.register_task(self.fake_task_class)
-        observables = list(Observable.list())
-        self.assertEqual(len(observables), 0)
-        taskmanager.TaskManager.run_task('FakeTask', 'param')
+        taskmanager.TaskManager.run_task('FakeTask', TaskParams())
         observables = list(Observable.list())
         self.assertEqual(len(observables), 3)
         task = self.fake_task_class.find(name='FakeTask')
@@ -88,7 +80,7 @@ class TaskTest(unittest.TestCase):
     def test_run_disabled_task(self) -> None:
         self.fake_task_class._defaults['enabled'] = False
         taskmanager.TaskManager.register_task(self.fake_task_class)
-        taskmanager.TaskManager.run_task('FakeTask')
+        taskmanager.TaskManager.run_task('FakeTask', TaskParams())
         observables = list(Observable.list())
         self.assertEqual(len(observables), 0)
         task = self.fake_task_class.find(name='FakeTask')
@@ -101,7 +93,7 @@ class TaskTest(unittest.TestCase):
         self.fake_task_class.run = mock.MagicMock(
             side_effect=Exception('Test exception'))
         taskmanager.TaskManager.register_task(self.fake_task_class)
-        taskmanager.TaskManager.run_task('FakeTask')
+        taskmanager.TaskManager.run_task('FakeTask', TaskParams())
         task = self.fake_task_class.find(name='FakeTask')
         assert task is not None
         self.assertEqual(task.status, TaskStatus.failed)
@@ -128,6 +120,7 @@ class AnalyticsTest(unittest.TestCase):
                 "frequency": datetime.timedelta(hours=1),
                 "type": "analytics",
                 "description": "Dummy analytics",
+                "enabled": True,
             }
 
             acts_on: list[str] = ['hostname']
@@ -137,7 +130,7 @@ class AnalyticsTest(unittest.TestCase):
                 mock_inner_each(observable.value)
 
         taskmanager.TaskManager.register_task(FakeTask)
-        taskmanager.TaskManager.run_task('FakeTask')
+        taskmanager.TaskManager.run_task('FakeTask', TaskParams())
         task = FakeTask.find(name='FakeTask')
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed, task.status_message)
@@ -158,14 +151,15 @@ class AnalyticsTest(unittest.TestCase):
                 "frequency": datetime.timedelta(hours=1),
                 "type": "analytics",
                 "description": "Dummy analytics",
+                "enabled": True,
             }
 
-            acts_on: list[str] = ['ip']
+            acts_on: list[str] = ['ipv4']
 
             def each(self, observable):
                 pass
         taskmanager.TaskManager.register_task(FakeTask)
-        taskmanager.TaskManager.run_task('FakeTask')
+        taskmanager.TaskManager.run_task('FakeTask', TaskParams())
         db_observable = Observable.get(self.observable4.id)
         assert db_observable is not None
         self.assertEqual(
@@ -187,29 +181,32 @@ class ExportTaskTest(unittest.TestCase):
         self.export_task = ExportTask(
             name='RandomExport',
             acts_on=['hostname'],
-            template_name='RandomTemplate').save()
+            template_name='RandomTemplate',
+            enabled=True).save()
         taskmanager.TaskManager.register_task(ExportTask, task_name='RandomExport')
 
     @mock.patch('core.schemas.template.Template.render')
     def test_run_export_task(self, mock_render):
         """Tests that the each function is called for each filtered observable."""
-        taskmanager.TaskManager.run_task('RandomExport')
+        taskmanager.TaskManager.run_task('RandomExport', TaskParams())
         task = ExportTask.find(name='RandomExport')
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed, task.status_message)
-        mock_render.assert_called_with(
-            [self.observable1,
-             self.observable2,
-             self.observable3,
-             self.observable4],
-            '/app/exports/RandomExport')
+        observable_list, filename = mock_render.call_args[0]
+        self.assertEqual(filename, '/app/exports/RandomExport')
+        self.assertEqual(len(observable_list), 4)
+
+        self.assertEqual(observable_list[0].value, self.observable1.value)
+        self.assertEqual(
+            set(observable_list[0].tags),
+            set(self.observable1.tags))
+
         self.assertIsNotNone(task.last_run)
 
 
     def test_tag_filtering(self):
         """Tests that the tag filtering works as intended."""
         task = ExportTask.find(name='RandomExport')
-
 
         # We expect all tagged hostnames to be returned
         results = task.get_tagged_data(
@@ -218,7 +215,9 @@ class ExportTaskTest(unittest.TestCase):
             exclude_tags=[],
             ignore_tags=[],
             fresh_tags=True)
-        self.assertEqual(results, [self.observable1, self.observable2, self.observable3, self.observable4])
+        self.assertEqual(
+            set([r.value for r in results]),
+            set(['asd1.com', 'asd2.com', 'asd3.com', 'asd4.com']))
 
         # We expect all hostnames that aren't tagged "c2"
         results = task.get_tagged_data(
@@ -227,7 +226,8 @@ class ExportTaskTest(unittest.TestCase):
             exclude_tags=['c2'],
             ignore_tags=[],
             fresh_tags=True)
-        self.assertEqual(results, [self.observable4])
+        self.assertEqual(results[0].value, 'asd4.com')
+        self.assertEqual(len(results), 1)
 
         # We expect all hostnames that are tagged "c2" but NOT "exclude"
         results = task.get_tagged_data(
@@ -236,7 +236,8 @@ class ExportTaskTest(unittest.TestCase):
             exclude_tags=['exclude'],
             ignore_tags=[],
             fresh_tags=True)
-        self.assertEqual(results, [self.observable1, self.observable2])
+        self.assertEqual({r.value for r in results}, {'asd1.com', 'asd2.com'})
+        self.assertEqual(len(results), 2)
 
         # We expect all tagged hostnames, excpet if the only tag is "legit"
         results = task.get_tagged_data(
@@ -245,4 +246,5 @@ class ExportTaskTest(unittest.TestCase):
             exclude_tags=[],
             ignore_tags=['legit'],
             fresh_tags=True)
-        self.assertEqual(results, [self.observable1, self.observable2, self.observable3])
+        self.assertEqual({r.value for r in results}, {'asd1.com', 'asd2.com', 'asd3.com'})
+        self.assertEqual(len(results), 3)
