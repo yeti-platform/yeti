@@ -96,7 +96,7 @@ class DNSDBReversePassiveDns(task.AnalyticsTask, DNSDBApi):
         "description": "Perform passive DNS reverse lookups on domain names or IP addresses.",
     }
 
-    acts_on:list[ObservableType] = [ObservableType.hostname,ObservableType.ip]
+    acts_on:list[ObservableType] = [ObservableType.hostname,ObservableType.ipv4]
 
     
     def each(self,observable):

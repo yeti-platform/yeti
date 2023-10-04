@@ -87,7 +87,7 @@ class PassiveTotalPassiveDNS(task.AnalyticsTask, PassiveTotalApi):
         "description": "Perform passive DNS (reverse) lookups on domain names or IP addresses.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
     def each(self, observable: Observable):
         params = {"query": observable.value}
@@ -122,7 +122,7 @@ class PassiveTotalMalware(task.AnalyticsTask, PassiveTotalApi):
         "description": "Find malware related to domain names or IP addresses.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
     def each(self, observable: Observable):
         params = {"query": observable.value}
