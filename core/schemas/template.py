@@ -1,3 +1,4 @@
+import os
 from typing import ClassVar
 
 from pydantic import BaseModel
@@ -21,6 +22,7 @@ class Template(BaseModel, database_arango.ArangoYetiConnector):
     def render(self, data: list["Observable"], output_file: str) -> None:
         """Renders the template with the given data to the output file."""
         #TODO: Change this to an actual render function
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, 'w+') as fd:
             for d in data:
                 fd.write(f'{d.value}\n')
