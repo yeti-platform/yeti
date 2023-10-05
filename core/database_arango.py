@@ -54,6 +54,7 @@ class ArangoDatabase:
 
         host_string = f'http://{host}:{port}'
         client = ArangoClient(hosts=host_string)
+
         sys_db = client.db('_system', username=username, password=password)
         for _ in range(0, 4):
             try:
