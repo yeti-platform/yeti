@@ -51,7 +51,7 @@ class Phone(Entity):
     _type_filter: ClassVar[str] = EntityType.phone
     type: Literal['phone'] = EntityType.phone
 
-class Company(Entity):    
+class Company(Entity):
     type: Literal['company'] = EntityType.company
     _type_filter: ClassVar[str] = EntityType.company
 
@@ -122,7 +122,7 @@ TYPE_MAPPING: dict[str, "EntityClasses"] = {
     "campaign": Campaign,
     "entities": Entity,
     "entity": Entity,
-    "compagny": Company,
+    "company": Company,
     "phone": Phone,
     "note": Note,
 }
