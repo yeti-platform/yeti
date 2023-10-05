@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+import json
 
 import logging
 from core import taskmanager
@@ -45,14 +46,12 @@ class VirustotalApi(object):
     @staticmethod
     def process_domain(domain: hostname.Hostname, attributes):
         context = {"source": "VirusTotal"}
-
-        timestamp_creation = attributes["creation_date"]
-        context["first_seen"] = datetime.fromtimestamp(timestamp_creation).isoformat()
+        logging.debug(attributes)
         context["whois"] = attributes["whois"]
         if "whois_date" in attributes:
             timestamp_whois_date = attributes["whois_date"]
             context["whois_date"] = datetime.fromtimestamp(
-                timestamp_creation
+                timestamp_whois_date
             ).isoformat()
         if "last_dns_records" in attributes:
             last_dns_records = attributes["last_dns_records"]
@@ -82,15 +81,9 @@ class VirustotalApi(object):
         if tags:
             domain.tag(tags)
         if "popularity_ranks" in attributes:
-            alexa_rank = attributes["popularity_ranks"]
-
-            if alexa_rank:
-                context["alexa_rank"] = alexa_rank["Alexa"]["rank"]
-                timestamp_rank = alexa_rank["Alexa"]["timestamp"]
-                context["alexa_rank_date"] = datetime.fromtimestamp(
-                    timestamp_creation
-                ).isoformat()
-
+            populary_rank = attributes["popularity_ranks"]
+            for k, v in populary_rank.items():
+                context[k] = v
         if "last_analysis_stats" in attributes:
             stats_analysis = attributes["last_analysis_stats"]
 
@@ -132,18 +125,19 @@ class VirustotalApi(object):
         if tags:
             file_vt.tag(tags)
         observables = [
-            (h, TYPE_MAPPING[h](value=attributes[h]).save())
-            for h in ("sha256", "md5", "sha1")
+            (h, TYPE_MAPPING[h](value=attributes[h], type=h).save())
+            for h in (ObservableType.sha256, ObservableType.sha1, ObservableType.md5)
             if file_vt.value != attributes[h]
         ]
         for h, obs in observables:
-            obs.add_context(context)
+            obs.add_context("Virustotal", context)
             obs.link_to(file_vt, h, "Virustotal")
+            obs.tag(tags)
 
-        file_vt.add_context(context)
+        file_vt.add_context("VirusTotal", context)
 
 
-class VTFileIPContacted(task.AnalyticsTask, VirustotalApi):
+class VTFileIPContacted(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT IP Contacted",
@@ -187,12 +181,12 @@ class VTFileIPContacted(task.AnalyticsTask, VirustotalApi):
                 for k, v in stat_files.items():
                     context[k] = v
 
-                ip.add_context(context)
+                ip.add_context("VirusTotal", context)
 
                 ip.link_to(observable, "contacted by", context["source"])
 
 
-class VTFileUrlContacted(task.AnalyticsTask, VirustotalApi):
+class VTFileUrlContacted(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Urls Contacted",
@@ -252,7 +246,7 @@ class VTFileUrlContacted(task.AnalyticsTask, VirustotalApi):
                     url_obs.add_context("VirusTotal", context)
 
 
-class VTDomainContacted(task.AnalyticsTask, VirustotalApi):
+class VTDomainContacted(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Domain Contacted",
@@ -285,7 +279,7 @@ class VTDomainContacted(task.AnalyticsTask, VirustotalApi):
                 hostname_obs.add_context("VirusTotal", context)
 
 
-class VTFileReport(task.AnalyticsTask, VirustotalApi):
+class VTFileReport(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Hash Report",
@@ -309,7 +303,7 @@ class VTFileReport(task.AnalyticsTask, VirustotalApi):
             VirustotalApi.process_file(observable, result["data"]["attributes"])
 
 
-class VTDomainReport(task.AnalyticsTask, VirustotalApi):
+class VTDomainReport(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Domain Report",
@@ -328,7 +322,7 @@ class VTDomainReport(task.AnalyticsTask, VirustotalApi):
             VirustotalApi.process_domain(observable, attributes)
 
 
-class VTDomainResolution(task.AnalyticsTask, VirustotalApi):
+class VTDomainResolution(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Domain Resolution",
@@ -355,13 +349,14 @@ class VTDomainResolution(task.AnalyticsTask, VirustotalApi):
                 context[ip_address] = date_last_resolv
 
                 ip.add_context(
-                    {"source": context["source"], observable.value: date_last_resolv}
+                    "Virustotal",
+                    {"source": context["source"], observable.value: date_last_resolv},
                 )
 
             observable.add_context("VirusTotal", context)
 
 
-class VTSubdomains(task.AnalyticsTask, VirustotalApi):
+class VTSubdomains(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Subdomains",
@@ -373,7 +368,7 @@ class VTSubdomains(task.AnalyticsTask, VirustotalApi):
     def each(self, observable: Observable):
 
         endpoint = "/domains/%s/subdomains" % observable.value
-        
+
         result = VirustotalApi.fetch(endpoint)
 
         if result:
@@ -386,7 +381,7 @@ class VTSubdomains(task.AnalyticsTask, VirustotalApi):
                 sub_domain.link_to(observable, "Subdomain", "Virustotal")
 
 
-class VTDomainComFile(task.AnalyticsTask, VirustotalApi):
+class VTDomainComFile(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Com files domain",
@@ -408,7 +403,7 @@ class VTDomainComFile(task.AnalyticsTask, VirustotalApi):
             VirustotalApi.process_file(file_vt, attributes)
 
 
-class VTDomainReferrerFile(task.AnalyticsTask, VirustotalApi):
+class VTDomainReferrerFile(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT Referrer files domain",
@@ -428,7 +423,7 @@ class VTDomainReferrerFile(task.AnalyticsTask, VirustotalApi):
             VirustotalApi.process_file(file_vt, attributes)
 
 
-class VTIPResolution(task.AnalyticsTask, VirustotalApi):
+class VTIPResolution(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT IP Resolution",
@@ -464,14 +459,14 @@ class VTIPResolution(task.AnalyticsTask, VirustotalApi):
                     hostname_obs.link_to(observable, "resolved", context["source"])
 
 
-class VTIPComFile(task.AnalyticsTask, VirustotalApi):
+class VTIPComFile(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT IP Com files",
         "description": "Perform a query to have files communicating on the IP ",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.ipv4]
 
     def each(self, observable: Observable):
         endpoint = "/ip_addresses/%s/communicating_files" % observable.value
@@ -487,7 +482,7 @@ class VTIPComFile(task.AnalyticsTask, VirustotalApi):
             VirustotalApi.process_file(file_vt, attributes)
 
 
-class VTIPReferrerFile(task.AnalyticsTask, VirustotalApi):
+class VTIPReferrerFile(task.OneShotTask, VirustotalApi):
     _defaults = {
         "group": "Virustotal",
         "name": "VT IP Referrer files",
@@ -505,3 +500,17 @@ class VTIPReferrerFile(task.AnalyticsTask, VirustotalApi):
             file_vt = sha256.SHA256(value=data["id"]).save()
             file_vt.link_to(observable, "Referrer File", "Virustotal")
             VirustotalApi.process_file(file_vt, attributes)
+
+
+taskmanager.TaskManager.register_task(VTFileIPContacted)
+taskmanager.TaskManager.register_task(VTFileUrlContacted)
+taskmanager.TaskManager.register_task(VTDomainContacted)
+taskmanager.TaskManager.register_task(VTFileReport)
+taskmanager.TaskManager.register_task(VTDomainReport)
+taskmanager.TaskManager.register_task(VTDomainResolution)
+taskmanager.TaskManager.register_task(VTSubdomains)
+taskmanager.TaskManager.register_task(VTDomainComFile)
+taskmanager.TaskManager.register_task(VTDomainReferrerFile)
+taskmanager.TaskManager.register_task(VTIPResolution)
+taskmanager.TaskManager.register_task(VTIPComFile)
+taskmanager.TaskManager.register_task(VTIPReferrerFile)

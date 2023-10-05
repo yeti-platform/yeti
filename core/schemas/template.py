@@ -5,11 +5,13 @@ from pydantic import BaseModel
 
 from core import database_arango
 
-#TODO: Import Jinja functions to render templates
+# TODO: Import Jinja functions to render templates
+
 
 class Template(BaseModel, database_arango.ArangoYetiConnector):
     """A template for exporting data to an external system."""
-    _collection_name: ClassVar[str] = 'templates'
+
+    _collection_name: ClassVar[str] = "templates"
 
     id: str | None = None
     name: str
@@ -21,12 +23,12 @@ class Template(BaseModel, database_arango.ArangoYetiConnector):
 
     def render(self, data: list["Observable"], output_file: str) -> None:
         """Renders the template with the given data to the output file."""
-        #TODO: Change this to an actual render function
+        # TODO: Change this to an actual render function
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        with open(output_file, 'w+') as fd:
+        with open(output_file, "w+") as fd:
             for d in data:
-                fd.write(f'{d.value}\n')
+                fd.write(f"{d.value}\n")
 
     def render_raw(self, data: list["Observable"]) -> str:
         """Renders the template with the given data to a string."""
-        return '\n'.join([d.value for d in data])
+        return "\n".join([d.value for d in data])

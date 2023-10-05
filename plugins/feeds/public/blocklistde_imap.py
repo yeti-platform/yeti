@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BlocklistdeIMAP(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://lists.blocklist.de/lists/imap.txt"
+    _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/imap.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeIMAP",

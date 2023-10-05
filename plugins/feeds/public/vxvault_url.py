@@ -7,7 +7,6 @@ from core.schemas import task
 from core import taskmanager
 
 
-
 class VXVaultUrl(task.FeedTask):
     # set default values for feed
     _defaults = {
@@ -16,7 +15,7 @@ class VXVaultUrl(task.FeedTask):
         "description": "VXVault Community URL list.",
     }
 
-    _SOURCE:ClassVar['str'] = "http://vxvault.net/URL_List.php"
+    _SOURCE: ClassVar["str"] = "http://vxvault.net/URL_List.php"
     # should tell yeti how to get and chunk the feed
     def run(self):
         response = self._make_request(self._SOURCE)
@@ -35,5 +34,6 @@ class VXVaultUrl(task.FeedTask):
         url_obs = url.Url(value=item).save()
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
+
 
 taskmanager.TaskManager.register_task(VXVaultUrl)

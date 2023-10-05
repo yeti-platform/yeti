@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BlocklistdeSIP(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://lists.blocklist.de/lists/sip.txt"
+    _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/sip.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeSIP",

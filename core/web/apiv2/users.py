@@ -6,60 +6,74 @@ from pydantic import BaseModel
 from core.schemas.user import UserSensitive, User
 from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
+
 class SearchUserRequest(BaseModel):
     username: str
     count: int = 50
     page: int = 0
 
+
 class SearchUserResponse(BaseModel):
     users: list[User]
     total: int
 
+
 class ToggleableField(str, Enum):
-    enabled = 'enabled'
-    admin = 'admin'
+    enabled = "enabled"
+    admin = "admin"
+
 
 class ToggleUserRequest(BaseModel):
     user_id: str
     field: ToggleableField
 
+
 class ResetApiKeyRequest(BaseModel):
     user_id: str
+
 
 class ResetPasswordRequest(BaseModel):
     user_id: str
     new_password: str
+
 
 class NewUserRequest(BaseModel):
     username: str
     password: str
     admin: bool
 
+
 # API endpoints
 router = APIRouter()
 
-@router.get('/{user_id}')
+
+@router.get("/{user_id}")
 async def get(user_id: str) -> User:
     """Gets a user by ID."""
     user = User.get(user_id)
     if not user:
-        raise HTTPException(status_code=404, detail=f'user {user_id} not found')
+        raise HTTPException(status_code=404, detail=f"user {user_id} not found")
     return user
 
-@router.post('/search')
+
+@router.post("/search")
 async def search(request: SearchUserRequest) -> SearchUserResponse:
     """Searches for users."""
-    request_args = request.model_dump(exclude={'count', 'page'})
+    request_args = request.model_dump(exclude={"count", "page"})
     users, total = User.filter(request_args, offset=request.page, count=request.count)
     return SearchUserResponse(users=users, total=total)
 
-@router.post('/toggle')
+
+@router.post("/toggle")
 async def toggle(
     request: ToggleUserRequest,
-    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True))) -> User:
+    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
+) -> User:
     """Toggles a user's enabled or admin state."""
     if current_user.id == request.user_id:
-        raise HTTPException(status_code=400, detail=f"cannot toggle own user ({current_user.username})")
+        raise HTTPException(
+            status_code=400, detail=f"cannot toggle own user ({current_user.username})"
+        )
 
     user = User.get(request.user_id)
     if not user:
@@ -70,13 +84,16 @@ async def toggle(
         user.enabled = not user.enabled
     return user.save()
 
-@router.post('/reset-api-key')
+
+@router.post("/reset-api-key")
 async def reset_api_key(
-    request: ResetApiKeyRequest,
-    current_user: UserSensitive = Depends(get_current_user)) -> User:
+    request: ResetApiKeyRequest, current_user: UserSensitive = Depends(get_current_user)
+) -> User:
     """Resets a user's API key."""
     if not current_user.admin and current_user.id != request.user_id:
-        raise HTTPException(status_code=401, detail="cannot reset API keys for other users")
+        raise HTTPException(
+            status_code=401, detail="cannot reset API keys for other users"
+        )
 
     user = User.get(request.user_id)
     if not user:
@@ -85,15 +102,18 @@ async def reset_api_key(
     user.reset_api_key()
     return user.save()
 
-@router.post('/reset-password')
+
+@router.post("/reset-password")
 async def reset_password(
     request: ResetPasswordRequest,
-    current_user: UserSensitive = Depends(get_current_user)
-    ) -> User:
+    current_user: UserSensitive = Depends(get_current_user),
+) -> User:
     """Resets a user's password."""
     # Only move forward if the current user is an admin or the target user
     if not current_user.admin and current_user.id != request.user_id:
-        raise HTTPException(status_code=401, detail="cannot reset password for other users")
+        raise HTTPException(
+            status_code=401, detail="cannot reset password for other users"
+        )
 
     user = UserSensitive.get(request.user_id)
     if not user:
@@ -102,20 +122,24 @@ async def reset_password(
     user.set_password(request.new_password)
     return user.save()
 
-@router.delete('/{user_id}')
+
+@router.delete("/{user_id}")
 async def delete(
     user_id: str,
-    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)) ) -> None:
+    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
+) -> None:
     """Deletes a user from the database."""
     user = User.get(user_id)
     if not user:
-        raise HTTPException(status_code=404, detail=f'user {user_id} not found')
+        raise HTTPException(status_code=404, detail=f"user {user_id} not found")
     user.delete()
 
-@router.post('/')
+
+@router.post("/")
 async def create(
     request: NewUserRequest,
-    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True))) -> User:
+    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
+) -> User:
     """Creates a new user."""
     user = UserSensitive(username=request.username, admin=request.admin)
     user.set_password(request.password)

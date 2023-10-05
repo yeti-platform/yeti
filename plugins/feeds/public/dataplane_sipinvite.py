@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import ClassVar
 
 import pandas as pd
-from core.schemas.observables import ipv4,asn
+from core.schemas.observables import ipv4, asn
 from core.schemas import task
 from core import taskmanager
 
@@ -16,7 +16,7 @@ class DataplaneSIPInvite(task.FeedTask):
     Feed of SIP INVITE attacks from Dataplane IPs and their Autonomous Systems
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/sipinvitation.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/sipinvitation.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSIPInvite",
@@ -47,7 +47,7 @@ class DataplaneSIPInvite(task.FeedTask):
         tags = ["dataplane", "sipinvite"]
         if category:
             tags.append(category)
-        ip_obs.add_context('dataplane sip invite', context_ip)
+        ip_obs.add_context("dataplane sip invite", context_ip)
         ip_obs.tag(tags)
 
         asn_obs = asn.ASN(value=item["ASN"]).save()

@@ -48,23 +48,53 @@ class Config:
 
 
 yeti_config = Config()
-yeti_config.set_default_value("system", "export_root", os.getenv("YETI_SYSTEM_EXPORT_ROOT", '/var/opt/yeti'))
+yeti_config.set_default_value(
+    "system", "export_root", os.getenv("YETI_SYSTEM_EXPORT_ROOT", "/var/opt/yeti")
+)
 yeti_config.set_default_value("auth", "module", "local")
-yeti_config.set_default_value("auth", "secret_key", os.getenv("YETI_AUTH_SECRET_KEY", "SECRET"))
-yeti_config.set_default_value("auth", "algorithm", os.getenv("YETI_AUTH_ALGORITHM", "HS256"))
-yeti_config.set_default_value("auth", "access_token_expire_minutes", int(os.getenv("YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES", "30")))
-yeti_config.set_default_value("auth", "enabled", os.getenv("YETI_AUTH_ENABLED", "False") == "True")
+yeti_config.set_default_value(
+    "auth", "secret_key", os.getenv("YETI_AUTH_SECRET_KEY", "SECRET")
+)
+yeti_config.set_default_value(
+    "auth", "algorithm", os.getenv("YETI_AUTH_ALGORITHM", "HS256")
+)
+yeti_config.set_default_value(
+    "auth",
+    "access_token_expire_minutes",
+    int(os.getenv("YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES", "30")),
+)
+yeti_config.set_default_value(
+    "auth", "enabled", os.getenv("YETI_AUTH_ENABLED", "False") == "True"
+)
 
-yeti_config.set_default_value("redis", "host", os.getenv("YETI_REDIS_HOST", "127.0.0.1"))
-yeti_config.set_default_value("redis", "port", int(os.getenv("YETI_REDIS_PORT", "6379")))
-yeti_config.set_default_value("redis", "database", int(os.getenv("YETI_REDIS_DATABASE", "0")))
+yeti_config.set_default_value(
+    "redis", "host", os.getenv("YETI_REDIS_HOST", "127.0.0.1")
+)
+yeti_config.set_default_value(
+    "redis", "port", int(os.getenv("YETI_REDIS_PORT", "6379"))
+)
+yeti_config.set_default_value(
+    "redis", "database", int(os.getenv("YETI_REDIS_DATABASE", "0"))
+)
 
-yeti_config.set_default_value("arangodb", "host", os.getenv("YETI_ARANGODB_HOST", "127.0.0.1"))
-yeti_config.set_default_value("arangodb", "port", int(os.getenv("YETI_ARANGODB_PORT", "8529")))
-yeti_config.set_default_value("arangodb", "username", os.getenv("YETI_ARANGODB_USERNAME", "root"))
-yeti_config.set_default_value("arangodb", "password", os.getenv("YETI_ARANGODB_PASSWORD", "asd"))
-yeti_config.set_default_value("arangodb", "database", os.getenv("YETI_ARANGODB_DATABASE", "yeti"))
+yeti_config.set_default_value(
+    "arangodb", "host", os.getenv("YETI_ARANGODB_HOST", "127.0.0.1")
+)
+yeti_config.set_default_value(
+    "arangodb", "port", int(os.getenv("YETI_ARANGODB_PORT", "8529"))
+)
+yeti_config.set_default_value(
+    "arangodb", "username", os.getenv("YETI_ARANGODB_USERNAME", "root")
+)
+yeti_config.set_default_value(
+    "arangodb", "password", os.getenv("YETI_ARANGODB_PASSWORD", "asd")
+)
+yeti_config.set_default_value(
+    "arangodb", "database", os.getenv("YETI_ARANGODB_DATABASE", "yeti")
+)
 
 yeti_config.set_default_value("proxy", "http", os.getenv("YETI_PROXY_HTTP", None))
 yeti_config.set_default_value("proxy", "https", os.getenv("YETI_PROXY_HTTPS", None))
-yeti_config.set_default_value("logging", "filename", os.getenv("YETI_LOGFILE", "/var/log/yeti/user_activity.log"))
+yeti_config.set_default_value(
+    "logging", "filename", os.getenv("YETI_LOGFILE", "/var/log/yeti/user_activity.log")
+)

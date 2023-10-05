@@ -4,6 +4,7 @@ from pydantic import Field
 from core.schemas.observable import ObservableType
 import hashlib
 from typing import Literal
+
 """
 This is the schema for the Certificate observable type. It inherits from the Observable schema and has the following fields:
     type: ObservableType = ObservableType.certificate
@@ -17,8 +18,9 @@ This is the schema for the Certificate observable type. It inherits from the Obs
     fingerprint: str | None, the fingerprint of the certificate
 """
 
+
 class Certificate(Observable):
-    type: Literal['certificate'] = ObservableType.certificate
+    type: Literal["certificate"] = ObservableType.certificate
     last_seen: datetime.datetime = Field(default_factory=datetime.datetime.now)
     first_seen: datetime.datetime = Field(default_factory=datetime.datetime.now)
     issuer: str | None = None
@@ -27,9 +29,8 @@ class Certificate(Observable):
     after: datetime.datetime | None = None
     before: datetime.datetime | None = None
     fingerprint: str | None = None
-    
+
     @classmethod
-    def from_data(cls,data:str):
+    def from_data(cls, data: str):
         hash_256 = hashlib.sha256(data).hexdigest()
         return cls(value=f"CERT:{hash_256}")
-

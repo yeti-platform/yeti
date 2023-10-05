@@ -7,15 +7,17 @@ from core import database_arango
 
 DEFAULT_EXPIRATION_DAYS = 30  # Completely arbitrary
 
+
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
+
 
 def future():
     return datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS)
 
 
 class Tag(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: ClassVar[str] = 'tags'
+    _collection_name: ClassVar[str] = "tags"
     _type_filter: ClassVar[str | None] = None
 
     id: str | None = None

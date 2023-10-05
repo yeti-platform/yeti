@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BotvrijMD5(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.md5"
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.md5"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijMD5",

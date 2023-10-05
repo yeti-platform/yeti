@@ -16,7 +16,7 @@ class DataplaneSSHClient(task.FeedTask):
     Feed of ssh client bruteforce of Dataplane with IPs and ASNs.
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/sshclient.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/sshclient.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSSHClient",
@@ -40,7 +40,6 @@ class DataplaneSSHClient(task.FeedTask):
     def analyze(self, item):
         context_ip = {
             "source": self.name,
-           
         }
 
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
@@ -54,7 +53,6 @@ class DataplaneSSHClient(task.FeedTask):
         asn_obs = asn.ASN(value=item["ASN"]).save()
         context_asn = {
             "source": self.name,
-            
         }
         asn_obs.add_context(self.name, context_asn)
         asn_obs.tag(tags)

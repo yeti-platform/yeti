@@ -11,8 +11,10 @@ from core.schemas import entity
 class NewEntityRequest(BaseModel):
     entity: entity.EntityTypes
 
+
 class PatchEntityRequest(BaseModel):
     entity: entity.EntityTypes
+
 
 class EntitySearchRequest(BaseModel):
     name: str | None = None
@@ -20,24 +22,29 @@ class EntitySearchRequest(BaseModel):
     count: int = 50
     page: int = 0
 
+
 class EntitySearchResponse(BaseModel):
     entities: list[entity.EntityTypes]
     total: int
 
+
 # API endpoints
 router = APIRouter()
 
-@router.get('/')
+
+@router.get("/")
 async def entities_root() -> Iterable[entity.EntityTypes]:
     return entity.Entity.list()
 
-@router.post('/')
+
+@router.post("/")
 async def new(request: NewEntityRequest) -> entity.EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
     return new
 
-@router.patch('/{entity_id}')
+
+@router.patch("/{entity_id}")
 async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
     """Modifies entity in the database."""
     db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
@@ -46,7 +53,8 @@ async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
     new = updated_entity.save()
     return new
 
-@router.get('/{entity_id}')
+
+@router.get("/{entity_id}")
 async def details(entity_id) -> entity.EntityTypes:
     """Returns details about an observable."""
     db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
@@ -54,11 +62,14 @@ async def details(entity_id) -> entity.EntityTypes:
         raise HTTPException(status_code=404, detail="entity not found")
     return db_entity
 
-@router.post('/search')
+
+@router.post("/search")
 async def search(request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
     request_args = request.model_dump()
-    count = request_args.pop('count')
-    page = request_args.pop('page')
-    entities, total = entity.Entity.filter(request_args, offset=request.page*request.count, count=request.count)
+    count = request_args.pop("count")
+    page = request_args.pop("page")
+    entities, total = entity.Entity.filter(
+        request_args, offset=request.page * request.count, count=request.count
+    )
     return EntitySearchResponse(entities=entities, total=total)

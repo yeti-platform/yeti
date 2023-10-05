@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BotvrijUrl(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.url"
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.url"
 
     _defaults = {
         "frequency": timedelta(hours=12),

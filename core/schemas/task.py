@@ -23,32 +23,35 @@ def now():
 
 
 class TaskStatus(str, Enum):
-    idle = 'idle'
-    running = 'running'
-    completed = 'completed'
-    failed = 'failed'
+    idle = "idle"
+    running = "running"
+    completed = "completed"
+    failed = "failed"
+
 
 class TaskType(str, Enum):
-    feed = 'feed'
-    analytics = 'analytics'
-    export = 'export'
-    oneshot = 'oneshot'
-    inline = 'inline'
+    feed = "feed"
+    analytics = "analytics"
+    export = "export"
+    oneshot = "oneshot"
+    inline = "inline"
+
 
 class TaskParams(BaseModel):
     params: dict = Field(default_factory=dict)
 
+
 class Task(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: ClassVar[str] = 'tasks'
-    _type_filter: ClassVar[str] = ''
+    _collection_name: ClassVar[str] = "tasks"
+    _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}
 
     id: str | None = None
     name: str
     enabled: bool = False
-    description: str = ''
+    description: str = ""
     status: TaskStatus = TaskStatus.idle
-    status_message: str = ''
+    status_message: str = ""
     last_run: datetime.datetime | None = None
 
     # only used for cron tasks
@@ -56,15 +59,16 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 
     def run(self, params: "TaskParams"):
         """Runs the task"""
-        raise NotImplementedError('run() must be implemented in subclass')
+        raise NotImplementedError("run() must be implemented in subclass")
 
     @classmethod
     def load(cls, object: dict) -> "TaskTypes":
         # If this is called using Task, then return a Task or AnalyticsTask
-        if cls == Task and object['type'] in TYPE_MAPPING:
-            cls = TYPE_MAPPING[object['type']]
+        if cls == Task and object["type"] in TYPE_MAPPING:
+            cls = TYPE_MAPPING[object["type"]]
         # Otherwise, use the actual cls.
         return cls(**object)
+
 
 class FeedTask(Task):
     type: Literal[TaskType.feed] = TaskType.feed
@@ -82,7 +86,9 @@ class FeedTask(Task):
         name = f.namelist()[0]
         return f.read(name)
 
-    def _filter_observables_by_time(self, df: pd.DataFrame, column: str) -> pd.DataFrame:
+    def _filter_observables_by_time(
+        self, df: pd.DataFrame, column: str
+    ) -> pd.DataFrame:
         """Filter a dataframe by comparing the datetime in a column to the last run time.
 
         Args:
@@ -144,12 +150,15 @@ class FeedTask(Task):
         if self.last_run is not None and last_modified_header:
             last_modified = parser.parse(last_modified_header)
             if self.last_run > last_modified:
-                msg = (f"{url}: Last-Modified header ({last_modified_header}) "
-                       "before last-run ({self.last_run})")
+                msg = (
+                    f"{url}: Last-Modified header ({last_modified_header}) "
+                    "before last-run ({self.last_run})"
+                )
                 logging.debug(msg)
                 return
 
         return response
+
 
 class AnalyticsTask(Task):
 
@@ -158,7 +167,7 @@ class AnalyticsTask(Task):
 
     def run(self):
         """Filters observables to analyze and then calls each()"""
-        targets, _ = Observable.filter(args={'type__in': self.acts_on})
+        targets, _ = Observable.filter(args={"type__in": self.acts_on})
         self.bulk(targets)
 
     def bulk(self, observables: list[Observable]):
@@ -201,12 +210,13 @@ class OneShotTask(Task):
         Args:
             params: Parameters to run the task with.
         """
-        results, count = Observable.filter(args={
-            'type__in': self.acts_on,
-            'value': params['value']
-        })
+        results, count = Observable.filter(
+            args={"type__in": self.acts_on, "value": params["value"]}
+        )
         if not count:
-            logging.warning(f"Could not find observable with value {params['value']} with type in {self.acts_on}")
+            logging.warning(
+                f"Could not find observable with value {params['value']} with type in {self.acts_on}"
+            )
             return
         self.each(results[0])
 
@@ -227,7 +237,7 @@ class ExportTask(Task):
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
-    output_dir: str = 'exports'
+    output_dir: str = "exports"
     acts_on: list[ObservableType] = []
     template_name: str
     sha256: str | None = None
@@ -235,7 +245,7 @@ class ExportTask(Task):
     @property
     def output_file(self) -> str:
         """Returns the output file for the export."""
-        base_path = yeti_config.system.export_path or ''
+        base_path = yeti_config.system.export_path or ""
         return os.path.abspath(os.path.join(base_path, self.output_dir, self.name))
 
     def run(self) -> None:
@@ -255,19 +265,20 @@ class ExportTask(Task):
         # hash output file and store result
 
     def get_tagged_data(
-            self,
-            acts_on: list[str],
-            include_tags: list[str],
-            exclude_tags: list[str],
-            ignore_tags: list[str],
-            fresh_tags: bool):
+        self,
+        acts_on: list[str],
+        include_tags: list[str],
+        exclude_tags: list[str],
+        ignore_tags: list[str],
+        fresh_tags: bool,
+    ):
 
         args = {
-            'acts_on': acts_on,
-            'include': include_tags,
-            'exclude': exclude_tags,
-            'ignore': ignore_tags,
-            'fresh': fresh_tags
+            "acts_on": acts_on,
+            "include": include_tags,
+            "exclude": exclude_tags,
+            "ignore": ignore_tags,
+            "fresh": fresh_tags,
         }
 
         results = database_arango.tagged_observables_export(Observable, args)
@@ -275,11 +286,11 @@ class ExportTask(Task):
 
 
 TYPE_MAPPING = {
-    'feed': FeedTask,
-    'analytics': AnalyticsTask,
-    'oneshot': OneShotTask,
-    'export': ExportTask
+    "feed": FeedTask,
+    "analytics": AnalyticsTask,
+    "oneshot": OneShotTask,
+    "export": ExportTask,
 }
 
 
-TaskTypes =  FeedTask | AnalyticsTask | OneShotTask | ExportTask
+TaskTypes = FeedTask | AnalyticsTask | OneShotTask | ExportTask

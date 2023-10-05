@@ -11,34 +11,42 @@ from core import database_arango
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
 
+
 def future():
-    return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=DEFAULT_INDICATOR_VALIDITY_DAYS)
+    return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+        days=DEFAULT_INDICATOR_VALIDITY_DAYS
+    )
+
 
 DEFAULT_INDICATOR_VALIDITY_DAYS = 30
 
+
 class IndicatorType(str, Enum):
-    regex = 'regex'
-    yara = 'yara'
-    sigma = 'sigma'
+    regex = "regex"
+    yara = "yara"
+    sigma = "sigma"
+
 
 class IndicatorMatch(BaseModel):
     name: str
     match: str
 
+
 class DiamondModel(Enum):
-    adversary = 'adversary'
-    capability = 'capability'
-    infrastructure = 'infrastructure'
-    victim = 'victim'
+    adversary = "adversary"
+    capability = "capability"
+    infrastructure = "infrastructure"
+    victim = "victim"
+
 
 class Indicator(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: ClassVar[str] = 'indicators'
-    _type_filter: ClassVar[str] = ''
+    _collection_name: ClassVar[str] = "indicators"
+    _type_filter: ClassVar[str] = ""
 
-    root_type: Literal['indicator'] = 'indicator'
+    root_type: Literal["indicator"] = "indicator"
     id: str | None = None
     name: str
-    description: str = ''
+    description: str = ""
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
     valid_from: datetime.datetime = Field(default_factory=now)
@@ -51,8 +59,8 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
 
     @classmethod
     def load(cls, object: dict):
-        if object['type'] in TYPE_MAPPING:
-            return TYPE_MAPPING[object['type']](**object)
+        if object["type"] in TYPE_MAPPING:
+            return TYPE_MAPPING[object["type"]](**object)
         return cls(**object)
 
     def match(self, value: str) -> IndicatorMatch | None:
@@ -66,10 +74,11 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
                 if indicator.match(observable):
                     yield observable, indicator
 
+
 class Regex(Indicator):
     _type_filter: ClassVar[str] = IndicatorType.regex
     _compiled_pattern: re.Pattern | None = PrivateAttr(None)
-    type: Literal['regex'] = IndicatorType.regex
+    type: Literal["regex"] = IndicatorType.regex
 
     @property
     def compiled_pattern(self):
@@ -77,13 +86,13 @@ class Regex(Indicator):
             self._compiled_pattern = re.compile(self.pattern)
         return self._compiled_pattern
 
-    @field_validator('pattern')
+    @field_validator("pattern")
     @classmethod
     def validate_regex(cls, value) -> str:
         try:
             re.compile(value)
         except re.error as error:
-            raise ValueError(f'Invalid regex pattern: {error}')
+            raise ValueError(f"Invalid regex pattern: {error}")
         return value
 
     def match(self, value: str) -> IndicatorMatch | None:
@@ -98,8 +107,9 @@ class Yara(Indicator):
 
     Parsing and matching is yet TODO.
     """
+
     _type_filter: ClassVar[str] = IndicatorType.yara
-    type: Literal['yara'] = IndicatorType.yara
+    type: Literal["yara"] = IndicatorType.yara
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
@@ -110,19 +120,20 @@ class Sigma(Indicator):
 
     Parsing and matching is yet TODO.
     """
+
     _type_filter: ClassVar[str] = IndicatorType.sigma
-    type: Literal['sigma'] = IndicatorType.sigma
+    type: Literal["sigma"] = IndicatorType.sigma
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
 
 
 TYPE_MAPPING = {
-    'regex': Regex,
-    'yara': Yara,
-    'sigma': Sigma,
-    'indicator': Indicator,
-    'indicators': Indicator,
+    "regex": Regex,
+    "yara": Yara,
+    "sigma": Sigma,
+    "indicator": Indicator,
+    "indicators": Indicator,
 }
 
 IndicatorTypes = Regex | Yara | Sigma

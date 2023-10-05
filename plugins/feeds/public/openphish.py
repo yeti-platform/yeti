@@ -10,7 +10,7 @@ from core import taskmanager
 
 class OpenPhish(task.FeedTask):
     # set default values for feed
-    _SOURCE:ClassVar['str'] = "https://openphish.com/feed.txt"
+    _SOURCE: ClassVar["str"] = "https://openphish.com/feed.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "OpenPhish",

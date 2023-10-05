@@ -12,7 +12,7 @@ class TorExitNodes(task.FeedTask):
         "name": "TorExitNodes",
         "description": "Tor exit nodes",
     }
-    _SOURCE:ClassVar['str'] = "https://www.dan.me.uk/tornodes"
+    _SOURCE: ClassVar["str"] = "https://www.dan.me.uk/tornodes"
 
     def run(self):
         feed = self._make_request(self._SOURCE).text

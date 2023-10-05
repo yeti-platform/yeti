@@ -9,9 +9,6 @@ from core.schemas import task
 from core import taskmanager
 
 
-
-
-
 class MispFeed(task.FeedTask):
     _defaults = {
         "frequency": timedelta(hours=1),
@@ -30,7 +27,7 @@ class MispFeed(task.FeedTask):
         "sha1": observable.ObservableType.sha1,
         "sha256": observable.ObservableType.sha256,
         "btc": observable.ObservableType.bitcoin_wallet,
-        "email" : observable.ObservableType.email,
+        "email": observable.ObservableType.email,
         "filename": observable.ObservableType.file,
         "regkey": observable.ObservableType.registry_key,
     }
@@ -45,32 +42,27 @@ class MispFeed(task.FeedTask):
                 "organisations": {},
             }
 
-
             config["url"] = yeti_config.get(instance, "url")
             config["key"] = yeti_config.get(instance, "key")
             instances[instance] = config
 
         return instances
 
+    def get_organisations(self, instance: dict):
 
-    def get_organisations(self,instance:dict):
+        misp_client = PyMISP(url=instance["url"], key=instance["key"])
 
-            misp_client = PyMISP(
-                url=instance["url"], key=instance["key"]
-            )
+        if not misp_client:
+            logging.error("Issue on misp client")
+            return
 
-            if not misp_client:
-                logging.error("Issue on misp client")
-                return
+        orgs = misp_client.organisations(scope="all")
+        for org in orgs:
+            org_id = org["Organisation"]["id"]
+            org_name = org["Organisation"]["name"]
+            instance["organisations"][org_id] = org_name
 
-            orgs = misp_client.organisations(scope="all")
-            for org in orgs:
-                org_id = org["Organisation"]["id"]
-                org_name = org["Organisation"]["name"]
-                instance["organisations"][org_id] = org_name
-
-
-    def get_all_events(self,instance:dict):
+    def get_all_events(self, instance: dict):
         days = None
 
         if "days" in instance:
@@ -83,11 +75,11 @@ class MispFeed(task.FeedTask):
         start_date = today - timedelta(days=days)
 
         weeks = self.decompose_weeks(start_date, today)
-        for from_date,to_date in weeks:
+        for from_date, to_date in weeks:
             for event in self.get_event(instance, from_date, to_date):
                 self.analyze(event, instance)
 
-    def get_last_events(self, instance:dict):
+    def get_last_events(self, instance: dict):
         from_date = self.last_run
         logging.debug(f"Getting events from {from_date} and {self.last_run}")
         for event in self.get_event(instance, from_date):
@@ -95,9 +87,7 @@ class MispFeed(task.FeedTask):
 
     def get_event(self, instance, from_date, to_date=None):
 
-        misp_client = PyMISP(
-            url=instance["url"], key=instance["key"]
-        )
+        misp_client = PyMISP(url=instance["url"], key=instance["key"])
         from_date = from_date.strftime("%Y-%m-%d")
         if to_date:
             to_date = to_date.strftime("%Y-%m-%d")
@@ -170,7 +160,7 @@ class MispFeed(task.FeedTask):
 
             context["comment"] = attribute["comment"]
 
-            obs = observable.Observable.add_text(attribute['value'])
+            obs = observable.Observable.add_text(attribute["value"])
 
             if attribute["category"]:
                 tags.append(attribute["category"])
@@ -180,7 +170,7 @@ class MispFeed(task.FeedTask):
 
             obs.add_context(instance["name"], context)
 
-    def decompose_weeks(self,start_day, last_day):
+    def decompose_weeks(self, start_day, last_day):
 
         # Génère la liste de tuples
         weeks = []
@@ -194,5 +184,6 @@ class MispFeed(task.FeedTask):
             current_start += timedelta(days=7)  # Passe à la période de 7 jours suivante
         logging.debug(f"Decomposed weeks: {weeks}")
         return weeks
+
 
 taskmanager.TaskManager.register_task(MispFeed)

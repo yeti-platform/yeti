@@ -7,12 +7,12 @@ successfully carry out all interactions with the database.
 from abc import abstractmethod, ABC
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
-  from core.schemas.graph import Relationship
+    from core.schemas.graph import Relationship
 
 
 class AbstractYetiConnector(ABC):
-
     @classmethod
     @abstractmethod
     def load(cls, object):
@@ -73,8 +73,9 @@ class AbstractYetiConnector(ABC):
 
     @abstractmethod
     # pylint: disable=too-many-arguments
-    def neighbors(self, link_type, direction='any', include_original=False,
-                  hops=1, raw=False):
+    def neighbors(
+        self, link_type, direction="any", include_original=False, hops=1, raw=False
+    ):
         """Fetches neighbors of the YetiObject.
 
         Args:

@@ -7,7 +7,9 @@ from pydantic import BaseModel
 from core.schemas import entity, observable, indicator
 from core.schemas.graph import Relationship
 
-GRAPH_TYPE_MAPPINGS = {} # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
+GRAPH_TYPE_MAPPINGS = (
+    {}
+)  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(entity.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(indicator.TYPE_MAPPING)
@@ -15,12 +17,14 @@ GRAPH_TYPE_MAPPINGS.update(indicator.TYPE_MAPPING)
 
 # Requequest schemas
 
-class GraphDirection(str, Enum):
-    outbound = 'outbound'
-    inbound = 'inbound'
-    any = 'any'
 
-#TODO: #761 Add Pagination to GraphSearchRequest
+class GraphDirection(str, Enum):
+    outbound = "outbound"
+    inbound = "inbound"
+    any = "any"
+
+
+# TODO: #761 Add Pagination to GraphSearchRequest
 class GraphSearchRequest(BaseModel):
     source: str
     link_types: list[str] = []
@@ -31,11 +35,13 @@ class GraphSearchRequest(BaseModel):
     count: int = 50
     page: int = 0
 
+
 class GraphAddRequest(BaseModel):
     source: str
     target: str
     link_type: str
     description: str
+
 
 class GraphSearchResponse(BaseModel):
     vertices: dict[str, observable.Observable | entity.Entity | indicator.Indicator]
@@ -46,16 +52,20 @@ class GraphSearchResponse(BaseModel):
 # API endpoints
 router = APIRouter()
 
-@router.post('/search')
+
+@router.post("/search")
 async def search(request: GraphSearchRequest) -> GraphSearchResponse:
     """Fetches neighbros for a given Yeti Object."""
-    object_type, object_id = request.source.split('/')
+    object_type, object_id = request.source.split("/")
     if object_type not in GRAPH_TYPE_MAPPINGS:
-        raise HTTPException(status_code=400, detail=f'Invalid object type: {object_type}')
+        raise HTTPException(
+            status_code=400, detail=f"Invalid object type: {object_type}"
+        )
     yeti_object = GRAPH_TYPE_MAPPINGS[object_type].get(object_id)
     if not yeti_object:
         raise HTTPException(
-            status_code=404, detail=f'Source object {request.source} not found')
+            status_code=404, detail=f"Source object {request.source} not found"
+        )
     vertices, edges, total = yeti_object.neighbors(
         link_types=request.link_types,
         target_types=request.target_types,
@@ -63,48 +73,51 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         include_original=request.include_original,
         hops=request.hops,
         count=request.count,
-        offset=request.page
+        offset=request.page,
     )
     return GraphSearchResponse(vertices=vertices, edges=edges, total=total)
 
-@router.post('/add')
+
+@router.post("/add")
 async def add(request: GraphAddRequest) -> Relationship:
     """Adds a link to the graph."""
-    source_type, source_id = request.source.split('/')
-    target_type, target_id = request.target.split('/')
+    source_type, source_id = request.source.split("/")
+    target_type, target_id = request.target.split("/")
 
     if source_type not in GRAPH_TYPE_MAPPINGS:
         raise HTTPException(
-            status_code=400,
-            detail=f'Invalid source object type: {source_type}')
+            status_code=400, detail=f"Invalid source object type: {source_type}"
+        )
     if target_type not in GRAPH_TYPE_MAPPINGS:
         raise HTTPException(
-            status_code=400,
-            detail=f'Invalid target object type: {target_type}')
+            status_code=400, detail=f"Invalid target object type: {target_type}"
+        )
 
     source_object = GRAPH_TYPE_MAPPINGS[source_type].get(source_id)
     target_object = GRAPH_TYPE_MAPPINGS[target_type].get(target_id)
     if source_object is None:
         raise HTTPException(
-            status_code=404,
-            detail=f'Source object {request.source} not found')
+            status_code=404, detail=f"Source object {request.source} not found"
+        )
     if target_object is None:
         raise HTTPException(
-            status_code=404,
-            detail=f'Target object {request.target} not found')
+            status_code=404, detail=f"Target object {request.target} not found"
+        )
 
     relationship = source_object.link_to(
-        target_object, request.link_type, request.description)
+        target_object, request.link_type, request.description
+    )
     return relationship
 
-@router.delete('/{relationship_id}')
+
+@router.delete("/{relationship_id}")
 async def delete(relationship_id: str) -> None:
     """Deletes a link from the graph."""
     relationship = Relationship.get(relationship_id)
     if relationship is None:
         raise HTTPException(
-            status_code=404,
-            detail=f'Relationship {relationship_id} not found')
+            status_code=404, detail=f"Relationship {relationship_id} not found"
+        )
     relationship.delete()
 
 
@@ -114,6 +127,7 @@ class AnalysisRequest(BaseModel):
     fetch_neighbors: bool = True
     add_unknown: bool = False
 
+
 class AnalysisResponse(BaseModel):
     entities: list[tuple[Relationship, entity.Entity]]
     observables: list[tuple[Relationship, observable.Observable]]
@@ -122,7 +136,7 @@ class AnalysisResponse(BaseModel):
     unknown: set[str]
 
 
-@router.post('/match')
+@router.post("/match")
 async def match(request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
@@ -138,7 +152,9 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
                 unknown.discard(value)
             except ValueError:
                 pass
-    db_observables, _ = observable.Observable.filter(args={"value__in": request.observables})
+    db_observables, _ = observable.Observable.filter(
+        args={"value__in": request.observables}
+    )
     for db_observable in db_observables:
         known[db_observable.value] = db_observable
         unknown.discard(db_observable.value)

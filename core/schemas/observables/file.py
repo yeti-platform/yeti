@@ -4,7 +4,8 @@ from core.schemas.observables.md5 import MD5
 from core.schemas.observables.sha1 import SHA1
 from core.schemas.observables.sha256 import SHA256
 from typing import Literal
-'''
+
+"""
 File schema
 
 value: str - The value of the file observable file:f{sha256}
@@ -15,7 +16,8 @@ sha256: str - The sha256 hash of the file
 md5: MD5 - The md5 hash of the file
 sha1: SHA1 - The sha1 hash of the file
 myme_type: str - The mime type of the file
-'''
+"""
+
 
 class File(Observable):
     """Represents a file.
@@ -23,8 +25,9 @@ class File(Observable):
     One of sha256, md5, or sha1 should be provided.
     Value should to be in the form FILE:<HASH>.
     """
+
     value: str
-    type: Literal['file'] = ObservableType.file
+    type: Literal["file"] = ObservableType.file
     name: str | None = None
     size: int | None = None
     sha256: str | None = None

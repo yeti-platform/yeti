@@ -16,7 +16,7 @@ class DataplaneSMTPGreet(task.FeedTask):
     Feed of SMTP greetings from dataplane with IPs and ASN
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/smtpgreet.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/smtpgreet.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSMTPGreet",

@@ -110,5 +110,4 @@ class OTXAlienvault(task.FeedTask):
                     ).save()
 
 
-
 taskmanager.TaskManager.register_task(OTXAlienvault)

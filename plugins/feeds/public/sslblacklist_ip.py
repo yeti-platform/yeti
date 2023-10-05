@@ -16,7 +16,7 @@ class SSLBlackListIP(task.FeedTask):
         "description": "SSL Black List IP",
     }
 
-    _SOURCE:ClassVar['str'] = "https://sslbl.abuse.ch/blacklist/sslipblacklist.csv"
+    _SOURCE: ClassVar["str"] = "https://sslbl.abuse.ch/blacklist/sslipblacklist.csv"
 
     def run(self):
         response = self._make_request(self._SOURCE)

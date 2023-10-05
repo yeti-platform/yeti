@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BlocklistdeSSH(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://lists.blocklist.de/lists/ssh.txt"
+    _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/ssh.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeSSH",

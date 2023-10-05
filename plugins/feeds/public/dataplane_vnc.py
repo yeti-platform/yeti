@@ -15,7 +15,7 @@ class DataplaneVNC(task.FeedTask):
     Feed of VNC dataplane IPs.
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/vncrfb.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/vncrfb.txt"
     _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
     _defaults = {
         "frequency": timedelta(hours=12),

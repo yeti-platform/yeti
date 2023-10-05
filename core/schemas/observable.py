@@ -1,4 +1,4 @@
-#TODO Observable value normalization
+# TODO Observable value normalization
 
 import datetime
 from enum import Enum
@@ -16,35 +16,35 @@ from core.helpers import now
 
 # Data Schema
 class ObservableType(str, Enum):
-    ipv4 = 'ipv4'
-    ipv6 = 'ipv6'
-    hostname = 'hostname'
-    url = 'url'
-    observable = 'observable'
-    guess = 'guess'
-    email = 'email'
-    file = 'file'
-    sha256 = 'sha256'
-    sha1 = 'sha1'
-    md5 = 'md5'
-    asn = 'asn'
-    cidr = 'cidr'
-    certificate = 'certificate'
-    bitcoin_wallet = 'bitcoin_wallet'
-    path = 'path'
-    mac_address = 'mac_address'
-    command_line = 'command_line'
-    registry_key = 'registry_key'
-    imphash = 'imphash'
-    tlsh = 'tlsh'
-    ssdeep = 'ssdeep'
+    ipv4 = "ipv4"
+    ipv6 = "ipv6"
+    hostname = "hostname"
+    url = "url"
+    observable = "observable"
+    guess = "guess"
+    email = "email"
+    file = "file"
+    sha256 = "sha256"
+    sha1 = "sha1"
+    md5 = "md5"
+    asn = "asn"
+    cidr = "cidr"
+    certificate = "certificate"
+    bitcoin_wallet = "bitcoin_wallet"
+    path = "path"
+    mac_address = "mac_address"
+    command_line = "command_line"
+    registry_key = "registry_key"
+    imphash = "imphash"
+    tlsh = "tlsh"
+    ssdeep = "ssdeep"
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
-    _collection_name: ClassVar[str] = 'observables'
+    _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
 
-    root_type: Literal['observable'] = 'observable'
+    root_type: Literal["observable"] = "observable"
     id: str | None = None
     value: str
     tags: dict[str, TagRelationship] = {}
@@ -56,9 +56,11 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Observable":
         return cls(**object)
+
     @classmethod
     def is_valid(cls, object: dict) -> bool:
         return validate_observable(object)
+
     @classmethod
     def add_text(cls, text: str, tags: list[str] = []) -> "Observable":
         """Adds and returns an observable for a given string.
@@ -80,16 +82,15 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
             observable = Observable(
                 value=refanged,
                 type=observable_type,
-                created=datetime.datetime.now(datetime.timezone.utc)
-                ).save()
+                created=datetime.datetime.now(datetime.timezone.utc),
+            ).save()
         if tags:
             observable = observable.tag(tags)
         return observable
 
-    def tag(self,
-            tags: list[str],
-            strict: bool = False,
-            expiration_days: int | None = None) -> "Observable":
+    def tag(
+        self, tags: list[str], strict: bool = False, expiration_days: int | None = None
+    ) -> "Observable":
         """Connects observable to tag graph."""
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
 
@@ -116,9 +117,9 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
 
             extra_tags |= set(tag.produces)
 
-            relevant_entities, _ = Entity.filter(args={'relevant_tags': [tag.name]})
+            relevant_entities, _ = Entity.filter(args={"relevant_tags": [tag.name]})
             for entity in relevant_entities:
-                self.link_to(entity, 'tags', 'Tagged')
+                self.link_to(entity, "tags", "Tagged")
 
         extra_tags -= set(tags)
         if extra_tags:
@@ -126,30 +127,34 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
 
         return self
 
-    def add_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
+    def add_context(
+        self, source: str, context: dict, skip_compare: set = set()
+    ) -> "Observable":
         """Adds context to an observable."""
-        compare_fields = set(context.keys()) - skip_compare - {'source'}
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
-            if db_context['source'] != source:
+            if db_context["source"] != source:
                 continue
             for field in compare_fields:
                 if db_context.get(field) != context.get(field):
-                    context['source'] = source
+                    context["source"] = source
                     self.context[idx] = context
                     break
             else:
                 db_context.update(context)
                 break
         else:
-            context['source'] = source
+            context["source"] = source
             self.context.append(context)
         return self.save()
 
-    def delete_context(self, source: str, context: dict, skip_compare: set = set()) -> "Observable":
+    def delete_context(
+        self, source: str, context: dict, skip_compare: set = set()
+    ) -> "Observable":
         """Deletes context from an observable."""
-        compare_fields = set(context.keys()) - skip_compare - {'source'}
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
-            if db_context['source'] != source:
+            if db_context["source"] != source:
                 continue
             for field in compare_fields:
                 if db_context.get(field) != context.get(field):
@@ -174,6 +179,7 @@ TYPE_VALIDATOR_MAP = {
 
 REGEXES_OBSERVABLES = {}
 
+
 def validate_observable(obs: Observable) -> bool:
     if obs.type in TYPE_VALIDATOR_MAP:
         return TYPE_VALIDATOR_MAP[obs.type](obs.value)
@@ -192,28 +198,29 @@ def find_type(value: str) -> ObservableType | None:
             return type_obs
     return None
 
+
 TYPE_MAPPING = {
-    'ip': Observable,
-    'hostname': Observable,
-    'url': Observable,
-    'observables': Observable,
-    'observable': Observable,
-    'file': Observable,
-    'sha256': Observable,
-    'sha1': Observable,
-    'md5': Observable,
-    'asn': Observable,
-    'cidr': Observable,
-    'email': Observable,
-    'command_line': Observable,
-    'bitcoin_wallet': Observable,
-    'certificate': Observable,
-    'imphash': Observable,
-    'ipv4': Observable,
-    'ipv6': Observable,
-    'mac_adress': Observable,
-    'path': Observable,
-    'registry_key': Observable,
-    'ssdeep': Observable,
-    'tlsh': Observable,
+    "ip": Observable,
+    "hostname": Observable,
+    "url": Observable,
+    "observables": Observable,
+    "observable": Observable,
+    "file": Observable,
+    "sha256": Observable,
+    "sha1": Observable,
+    "md5": Observable,
+    "asn": Observable,
+    "cidr": Observable,
+    "email": Observable,
+    "command_line": Observable,
+    "bitcoin_wallet": Observable,
+    "certificate": Observable,
+    "imphash": Observable,
+    "ipv4": Observable,
+    "ipv6": Observable,
+    "mac_adress": Observable,
+    "path": Observable,
+    "registry_key": Observable,
+    "ssdeep": Observable,
+    "tlsh": Observable,
 }

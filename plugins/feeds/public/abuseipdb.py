@@ -10,7 +10,9 @@ from core.config.config import yeti_config
 
 
 class AbuseIPDB(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
+    _SOURCE: ClassVar[
+        "str"
+    ] = "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
     _defaults = {
         "frequency": timedelta(hours=5),
         "name": "AbuseIPDB",
@@ -42,5 +44,6 @@ class AbuseIPDB(task.FeedTask):
         logging.debug(f"Adding context to {ip_value}")
         ipv4_obs.add_context(self.name, context)
         ipv4_obs.tag(["blocklist"])
+
 
 taskmanager.TaskManager.register_task(AbuseIPDB)

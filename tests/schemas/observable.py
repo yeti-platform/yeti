@@ -11,8 +11,8 @@ from core.schemas.observables.url import Url
 
 from core.web import webapp
 
-class ObservableTest(unittest.TestCase):
 
+class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
 
@@ -50,6 +50,7 @@ class ObservableTest(unittest.TestCase):
         file = File(value="test.txt")
         file.md5 = "1234567890"
         file.save()
+
     def test_url(self):
         url = Url(value="https://www.google.com")
         url.save()
@@ -71,7 +72,9 @@ class ObservableTest(unittest.TestCase):
         obs2 = hostname.Hostname(value="test2.com").save()
         obs3 = hostname.Hostname(value="test3.com").save()
 
-        result, total = Observable.filter(args={"value__in": ["test1.com", "test3.com"]})
+        result, total = Observable.filter(
+            args={"value__in": ["test1.com", "test3.com"]}
+        )
         self.assertEqual(len(result), 2)
         self.assertEqual(total, 2)
         self.assertEqual(result[0].id, obs1.id)
@@ -105,8 +108,7 @@ class ObservableTest(unittest.TestCase):
         observable1 = hostname.Hostname(value="tomchop.me").save()
         observable2 = ipv4.IPv4(value="127.0.0.1").save()
 
-        relationship = observable1.link_to(
-            observable2, "resolves", "DNS resolution")
+        relationship = observable1.link_to(observable2, "resolves", "DNS resolution")
         self.assertEqual(relationship.type, "resolves")
 
         vertices, edges, count = observable1.neighbors()
@@ -135,9 +137,9 @@ class ObservableTest(unittest.TestCase):
         observable = Observable.get(observable.id)
         self.assertEqual(len(observable.context), 2)
         self.assertEqual(observable.context[0]["abc"], 123)
-        self.assertEqual(observable.context[0]["source"], 'test_source')
+        self.assertEqual(observable.context[0]["source"], "test_source")
         self.assertEqual(observable.context[1]["abc"], 123)
-        self.assertEqual(observable.context[1]["source"], 'test_source2')
+        self.assertEqual(observable.context[1]["source"], "test_source2")
 
     def test_add_dupe_context(self) -> None:
         """Tests that identical contexts aren't added twice."""
@@ -159,17 +161,16 @@ class ObservableTest(unittest.TestCase):
         observable = hostname.Hostname(value="tomchop.me").save()
         observable.add_context("test_source", {"abc": 123, "def": 456})
         observable.add_context(
-            "test_source", {"abc": 123, "def": 666}, skip_compare={"def"})
+            "test_source", {"abc": 123, "def": 666}, skip_compare={"def"}
+        )
         self.assertEqual(len(observable.context), 1)
-        self.assertEqual(observable.context[0]['def'], 666)
+        self.assertEqual(observable.context[0]["def"], 666)
 
     def test_delete_context(self) -> None:
         """Tests that a context is deleted if contents fully match."""
         observable = hostname.Hostname(value="tomchop.me").save()
-        observable = observable.add_context(
-            "test_source", {"abc": 123, "def": 456})
-        observable = observable.delete_context(
-            "test_source", {"def": 456, "abc": 123})
+        observable = observable.add_context("test_source", {"abc": 123, "def": 456})
+        observable = observable.delete_context("test_source", {"def": 456, "abc": 123})
         assert observable.id is not None
         observable = Observable.get(observable.id)  # type: ignore
 
@@ -178,10 +179,8 @@ class ObservableTest(unittest.TestCase):
     def test_delete_context_diff(self) -> None:
         """Tests that a context is not deleted if contents don't match."""
         observable = hostname.Hostname(value="tomchop.me").save()
-        observable = observable.add_context(
-            "test_source", {"abc": 123, "def": 456})
-        observable = observable.delete_context(
-            "test_source", {"def": 456, "abc": 000})
+        observable = observable.add_context("test_source", {"abc": 123, "def": 456})
+        observable = observable.delete_context("test_source", {"def": 456, "abc": 000})
         observable = Observable.get(observable.id)  # type: ignore
         self.assertEqual(len(observable.context), 1)
 
@@ -189,10 +188,10 @@ class ObservableTest(unittest.TestCase):
         """Tests that a context is deleted if the difference is not being
         compared."""
         observable = hostname.Hostname(value="tomchop.me").save()
-        observable = observable.add_context(
-            "test_source", {"abc": 123, "def": 456})
+        observable = observable.add_context("test_source", {"abc": 123, "def": 456})
         observable = observable.delete_context(
-            "test_source", {"abc": 000, "def": 456}, skip_compare={"abc"})
+            "test_source", {"abc": 000, "def": 456}, skip_compare={"abc"}
+        )
         observable = Observable.get(observable.id)  # type: ignore
         self.assertEqual(len(observable.context), 0)
 

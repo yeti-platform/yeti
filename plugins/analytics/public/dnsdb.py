@@ -5,14 +5,14 @@ from datetime import datetime
 from core.schemas import task
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas.observable import ObservableType,Observable
-from core.schemas.observables import hostname,ipv4
+from core.schemas.observable import ObservableType, Observable
+from core.schemas.observables import hostname, ipv4
 
 from core.config.config import yeti_config
 
 
 class DNSDBApi(object):
-    
+
     API_URL = "https://api.dnsdb.info/lookup"
     RECORD_TYPES = ["A", "CNAME", "NS"]
 
@@ -25,31 +25,28 @@ class DNSDBApi(object):
             new.link_to(
                 observable,
                 source="DNSDB Passive DNS",
-                description=f"{record['rrtype']} record"      
-        )
-
-        
+                description=f"{record['rrtype']} record",
+            )
 
     @staticmethod
-    def rrset_lookup(hostname:hostname.Hostname):
-        
+    def rrset_lookup(hostname: hostname.Hostname):
 
         for record in DNSDBApi.lookup("rrset", hostname):
             for observable in record["rdata"]:
                 observable = Observable.add_text(observable).save()
-            
+
                 hostname.link_to(
                     observable,
                     source="DNSDB Passive DNS",
-                    description=f"{record['rrtype']} record",    
+                    description=f"{record['rrtype']} record",
                 )
 
-
-        
-
     @staticmethod
-    def lookup(type, observable:Observable):
-        headers = {"accept": "application/json", "X-Api-Key": yeti_config['dnsdb']['api_key']}
+    def lookup(type, observable: Observable):
+        headers = {
+            "accept": "application/json",
+            "X-Api-Key": yeti_config["dnsdb"]["api_key"],
+        }
 
         if observable.type == ObservableType.hostname:
             obs_type = "name"
@@ -96,10 +93,9 @@ class DNSDBReversePassiveDns(task.AnalyticsTask, DNSDBApi):
         "description": "Perform passive DNS reverse lookups on domain names or IP addresses.",
     }
 
-    acts_on:list[ObservableType] = [ObservableType.hostname,ObservableType.ipv4]
+    acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
-    
-    def each(self,observable):
+    def each(self, observable):
         return DNSDBApi.rdata_lookup(observable)
 
 
@@ -112,10 +108,9 @@ class DNSDBPassiveDns(task.AnalyticsTask, DNSDBApi):
 
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
-    
-    def each(self,hostname:hostname.Hostname):
+    def each(self, hostname: hostname.Hostname):
         return DNSDBApi.rrset_lookup(hostname)
+
 
 taskmanager.TaskManager.register_task(DNSDBPassiveDns)
 taskmanager.TaskManager.register_task(DNSDBReversePassiveDns)
-
