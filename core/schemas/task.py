@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import requests
 from dateutil import parser
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core import database_arango
 from core.config.config import yeti_config
@@ -35,6 +35,9 @@ class TaskType(str, Enum):
     oneshot = 'oneshot'
     inline = 'inline'
 
+class TaskParams(BaseModel):
+    params: dict = Field(default_factory=dict)
+
 class Task(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = 'tasks'
     _type_filter: ClassVar[str] = ''
@@ -51,7 +54,7 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
     # only used for cron tasks
     frequency: datetime.timedelta = datetime.timedelta(days=1)
 
-    def run(self):
+    def run(self, params: "TaskParams"):
         """Runs the task"""
         raise NotImplementedError('run() must be implemented in subclass')
 
@@ -155,7 +158,7 @@ class AnalyticsTask(Task):
 
     def run(self):
         """Filters observables to analyze and then calls each()"""
-        targets = Observable.filter(args={'type__in': self.acts_on})[0]
+        targets, _ = Observable.filter(args={'type__in': self.acts_on})
         self.bulk(targets)
 
     def bulk(self, observables: list[Observable]):
@@ -181,6 +184,38 @@ class AnalyticsTask(Task):
 
         Returns:
             The observable that was processed, to track last analysis."""
+        raise NotImplementedError
+
+
+class OneShotTask(Task):
+
+    type: Literal[TaskType.oneshot] = TaskType.oneshot
+    acts_on: list[str] = []  # By default act on all observables
+
+    def run(self, params: dict):
+        """Runs the task.
+
+        By default, we extract the 'value' parameter and get the corresponding
+        observable which we pass to each().
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        results, count = Observable.filter(args={
+            'type__in': self.acts_on,
+            'value': params['value']
+        })
+        if not count:
+            logging.warning(f"Could not find observable with value {params['value']} with type in {self.acts_on}")
+            return
+        self.each(results[0])
+
+    def each(self, observable: Observable) -> None:
+        """Analyzes a single observable.
+
+        Args:
+            observable: The observable to analyze.
+        """
         raise NotImplementedError
 
 
@@ -238,10 +273,11 @@ class ExportTask(Task):
 
 
 TYPE_MAPPING = {
-    'analytics': AnalyticsTask,
     'feed': FeedTask,
+    'analytics': AnalyticsTask,
+    'oneshot': OneShotTask,
     'export': ExportTask
 }
 
 
-TaskTypes =  FeedTask | AnalyticsTask | ExportTask
+TaskTypes =  FeedTask | AnalyticsTask | OneShotTask | ExportTask

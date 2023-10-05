@@ -1,8 +1,9 @@
 import logging
 import datetime
+import json
 
 from celery import Celery
-from core.schemas.task import Task, TaskStatus
+from core.schemas.task import Task, TaskStatus, TaskParams
 from typing import Type
 import traceback
 
@@ -115,9 +116,10 @@ class TaskManager():
         return task
 
     @classmethod
-    def run_task(cls, task_name):
-        logging.info(f"Running task {task_name}")
+    def run_task(cls, task_name: str, task_params: TaskParams):
         task = TaskManager.load_task(task_name)
+        logging.info("Running task %s (%s)", task.name, task.type)
+
         if not task.enabled:
             task.status_message = "Task is disabled."
             task.status = TaskStatus.failed
@@ -132,7 +134,10 @@ class TaskManager():
         task.save()
 
         try:
-            task.run()
+            if task_params.params:
+                task.run(params=task_params.params)
+            else:
+                task.run()
         except Exception as error:  # pylint: disable=broad-except
             # We want to catch and report all errors
             logging.error(traceback.format_exc())
@@ -146,7 +151,14 @@ class TaskManager():
         task.status_message = ""
         task.save()
 
-
 @app.task
-def run_task(task_name):
-    TaskManager.run_task(task_name)
+def run_task(task_name: str, params: str):
+    """Runs a task.
+
+    Args:
+        task_name: The name of a registered task to run.
+        params: A string-encoded JSON representation of a TaskParams object
+            (obtained through model_dump_json)
+    """
+    task_params = TaskParams(**json.loads(params))
+    TaskManager.run_task(task_name, task_params)

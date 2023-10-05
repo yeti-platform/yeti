@@ -18,7 +18,6 @@ passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = "^0.0.6"
 pandas = "^2.1.1"
 redis = "^5.0.0"
-shodan = "^1.30.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
@@ -26,10 +25,10 @@ black = "^22.12.0"
 mypy = "^1.0.0"
 httpx = "^0.23.3"
 
-
-[tool.poetry.group.feeds.dependencies]
+[tool.poetry.group.plugins.dependencies]
 pymisp = "^2.4.176"
 otxv2 = "^1.5.12"
+shodan = "^1.30.0"
 
 [build-system]
 requires = ["poetry-core"]

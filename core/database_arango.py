@@ -766,17 +766,20 @@ def tagged_observables_export(cls, args):
     aql = """
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
-        LET tagnames = (
+        LET tags = MERGE(
                 FOR v, e in 1..1 OUTBOUND o tagged
                     FILTER v.name NOT IN @ignore
                     FILTER (e.fresh OR NOT @fresh)
-                RETURN v.name
+                RETURN {[v.name]: MERGE(e, {id: e._id})}
         )
-        FILTER tagnames != []
-        FILTER (@include ANY IN tagnames OR @include == [])
-        FILTER @exclude NONE IN tagnames
-        RETURN o
+        FILTER tags != {}
+        LET tagnames = ATTRIBUTES(tags)
+
+        FILTER COUNT(INTERSECTION(tagnames, @include)) > 0 OR @include == []
+        FILTER COUNT(INTERSECTION(tagnames, @exclude)) == 0
+        RETURN MERGE(o, {tags: tags})
         """
+    print(aql)
     documents = db.aql.execute(
         aql, bind_vars=args, count=True, full_count=True)
     results = []

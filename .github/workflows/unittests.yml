@@ -34,3 +34,4 @@ jobs:
       run: |
         poetry run python -m unittest discover -s tests/schemas -p '*.py'
         poetry run python -m unittest discover -s tests/apiv2 -p '*.py'
+        poetry run python -m unittest discover -s tests/core_tests -p '*.py'
