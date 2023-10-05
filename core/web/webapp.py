@@ -33,3 +33,7 @@ app.include_router(api_router, prefix="/api/v2")
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
+
+@api_router.get("/")
+async def root():
+    return {"message": "Hello World (api/v2)"}
