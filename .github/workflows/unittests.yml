@@ -15,6 +15,10 @@ jobs:
       YETI_ARANGODB_DATABASE: yeti
       YETI_ARANGODB_USERNAME: root
       YETI_ARANGODB_PASSWORD: ""
+      YETI_AUTH_SECRET_KEY: SECRET
+      YETI_AUTH_ALGORITHM: HS256
+      YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      YETI_AUTH_ENABLED: False
     strategy:
       matrix:
         os: [ubuntu-latest]
