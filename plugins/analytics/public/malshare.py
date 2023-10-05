@@ -41,7 +41,7 @@ class MalshareAPI(object):
             raise RuntimeError("Error Feeds")
 
 
-class MalshareQuery(task.AnalyticsTask, MalshareAPI):
+class MalshareQuery(task.OneShotTask, MalshareAPI):
     _defaults = {
         "name": "MalShare",
         "description": "Perform a MalShare query.",

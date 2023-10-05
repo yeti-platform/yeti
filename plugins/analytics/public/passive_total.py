@@ -80,7 +80,7 @@ class PassiveTotalApi(object):
         return response.json()
 
 
-class PassiveTotalPassiveDNS(task.AnalyticsTask, PassiveTotalApi):
+class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
     _defaults = {
         "group": "PassiveTotal",
         "name": "PassiveTotal Passive DNS",

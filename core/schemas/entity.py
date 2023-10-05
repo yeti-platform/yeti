@@ -125,6 +125,7 @@ TYPE_MAPPING: dict[str, "EntityClasses"] = {
     "company": Company,
     "phone": Phone,
     "note": Note,
+    "identity": Identity,
 }
 REGEXES_ENTITIES = {
     EntityType.exploit: re.compile(

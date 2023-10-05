@@ -15,6 +15,9 @@ app = Celery(
         # TESTING ONLY
         "plugins.analytics.public.random_analytics",
         "plugins.analytics.public.shodan_api",
+        "plugins.analytics.public.virustotal_api",
+        "plugins.analytics.public.passive_total",
+        "plugins.analytics.public.malshare",
         # REAL TASKS
         "plugins.feeds.public.abusech_malwarebazaar",
         "plugins.feeds.public.abuseipdb",
