@@ -5,7 +5,7 @@ import logging
 from core.schemas import task
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas.observables import url, sha1, md5, sha256
+from core.schemas.observables import url, sha1, md5, sha256,ssdeep
 from core.schemas.observable import ObservableType, Observable
 
 
@@ -33,6 +33,8 @@ class MalshareAPI(object):
             response = requests.get("https://malshare.com/api.php", params=params)
             if response.status_code == 200:
                 return response.json()
+            elif response.status_code == 404:
+                return
             else:
                 raise RuntimeError(
                     f"Could not retrieve feed, HTTP response: {response.status_code}"
@@ -62,7 +64,7 @@ class MalshareQuery(task.OneShotTask, MalshareAPI):
             return []
 
         context = {"source": "malshare.com"}
-
+        logging.debug(json_result)
         if "SOURCES" in json_result:
             for source in json_result["SOURCES"]:
                 new_url = None
@@ -91,6 +93,11 @@ class MalshareQuery(task.OneShotTask, MalshareAPI):
 
         if new_hash:
             new_hash.add_context("malshare.com", context)
+        
+        if json_result["SSDEEP"]:
+            ssdeep_data = ssdeep.SsdeepHash(value=json_result["SSDEEP"]).save()
+            ssdeep_data.add_context("malshare.com", context)
+            ssdeep_data.link_to(observable, "ssdeep", "malshare_query")
 
 
 taskmanager.TaskManager.register_task(MalshareQuery)

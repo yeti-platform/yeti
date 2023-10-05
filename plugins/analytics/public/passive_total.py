@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 
 import requests
 from dateutil import parser
@@ -99,8 +100,12 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
             last_seen = datetime.strptime(record["lastSeen"], "%Y-%m-%d %H:%M:%S")
             context["first_seen"] = first_seen
             context["last_seen"] = last_seen
-
-            new = Observable.add_text(record["resolve"]).save()
+            try:
+                context["resolve"] = record["resolve"]
+                new = Observable.add_text(record["resolve"]).save()
+            except ValueError:
+                logging.error("Could not add text observable for {}".format(record))
+            
             if observable.type is ObservableType.hostname:
                 observable.link_to(
                     new, "{} record".format(record["recordType"]), "PassiveTotal"
@@ -115,7 +120,7 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
             new.add_context("PassiveTotal", context)
 
 
-class PassiveTotalMalware(task.AnalyticsTask, PassiveTotalApi):
+class PassiveTotalMalware(task.OneShotTask, PassiveTotalApi):
     _defaults = {
         "group": "PassiveTotal",
         "name": "Get Malware",
@@ -140,7 +145,7 @@ class PassiveTotalMalware(task.AnalyticsTask, PassiveTotalApi):
             )
 
 
-class PassiveTotalSubdomains(task.AnalyticsTask, PassiveTotalApi):
+class PassiveTotalSubdomains(task.OneShotTask, PassiveTotalApi):
     _defaults = {
         "group": "PassiveTotal",
         "name": "Get Subdomains",
@@ -162,7 +167,7 @@ class PassiveTotalSubdomains(task.AnalyticsTask, PassiveTotalApi):
 
 
 
-class PassiveTotalWhois(task.AnalyticsTask, PassiveTotalApi):
+class PassiveTotalWhois(task.OneShotTask, PassiveTotalApi):
     _defaults = {
         "group": "PassiveTotal",
         "name": "PassiveTotal Whois",
@@ -184,7 +189,7 @@ class PassiveTotalWhois(task.AnalyticsTask, PassiveTotalApi):
         whois_links(observable, data)
 
 
-class PassiveTotalReverseWhois(task.AnalyticsTask, PassiveTotalApi):
+class PassiveTotalReverseWhois(task.OneShotTask, PassiveTotalApi):
     _defaults = {
         "group": "PassiveTotal",
         "name": "PassiveTotal Reverse Whois",
@@ -211,7 +216,7 @@ class PassiveTotalReverseWhois(task.AnalyticsTask, PassiveTotalApi):
             whois_links(domain, record)
 
 
-class PassiveTotalReverseNS(task.AnalyticsTask, PassiveTotalApi):
+class PassiveTotalReverseNS(task.OneShotTask, PassiveTotalApi):
     _defaults = {
         "group": "PassiveTotal",
         "name": "PassiveTotal Reverse NS",
