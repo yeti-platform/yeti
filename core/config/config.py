@@ -48,6 +48,7 @@ class Config:
 
 
 yeti_config = Config()
+yeti_config.set_default_value("system", "export_root", os.getenv("YETI_SYSTEM_EXPORT_ROOT", '/var/opt/yeti'))
 yeti_config.set_default_value("auth", "module", "local")
 yeti_config.set_default_value("auth", "secret_key", os.getenv("YETI_AUTH_SECRET_KEY", "SECRET"))
 yeti_config.set_default_value("auth", "algorithm", os.getenv("YETI_AUTH_ALGORITHM", "HS256"))
