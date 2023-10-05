@@ -49,10 +49,10 @@ class Config:
 
 yeti_config = Config()
 yeti_config.set_default_value("auth", "module", "local")
-yeti_config.set_default_value("auth", os.getenv("YETI_AUTH_SECRET_KEY", "SECRET"))
-yeti_config.set_default_value("auth", os.getenv("YETI_AUTH_ALGORITHM", "HS256"))
-yeti_config.set_default_value("auth", int(os.getenv("YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES", "30")))
-yeti_config.set_default_value("auth", os.getenv("YETI_AUTH_ENABLED", "False") == "True")
+yeti_config.set_default_value("auth", "secret_key", os.getenv("YETI_AUTH_SECRET_KEY", "SECRET"))
+yeti_config.set_default_value("auth", "algorithm", os.getenv("YETI_AUTH_ALGORITHM", "HS256"))
+yeti_config.set_default_value("auth", "access_token_expire_minutes", int(os.getenv("YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES", "30")))
+yeti_config.set_default_value("auth", "enabled", os.getenv("YETI_AUTH_ENABLED", "False") == "True")
 
 yeti_config.set_default_value("redis", "host", os.getenv("YETI_REDIS_HOST", "127.0.0.1"))
 yeti_config.set_default_value("redis", "port", int(os.getenv("YETI_REDIS_PORT", "6379")))
