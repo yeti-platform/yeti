@@ -6,13 +6,13 @@ from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables  import file, sha256, sha1, md5, hostname
+from core.schemas.observables import file, sha256, sha1, md5, hostname
 from core.schemas import task
 from core import taskmanager
 
 
 class HybridAnalysis(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://www.hybrid-analysis.com/feed?json"
+    _SOURCE: ClassVar["str"] = "https://www.hybrid-analysis.com/feed?json"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "HybridAnalysis",
@@ -113,9 +113,7 @@ class HybridAnalysis(task.FeedTask):
                 new_file = file.File(
                     value=f"FILE:{extracted_file['sha256']}", type="file"
                 ).save()
-                sha256_new_file = sha256.SHA256(
-                    value=extracted_file["sha256"]
-                ).save()
+                sha256_new_file = sha256.SHA256(value=extracted_file["sha256"]).save()
 
                 new_file.link_to(sha256_new_file, "sha256", self.name)
 

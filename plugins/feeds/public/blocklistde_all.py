@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BlocklistdeAll(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://lists.blocklist.de/lists/all.txt"
+    _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/all.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeAll",
@@ -25,5 +25,6 @@ class BlocklistdeAll(task.FeedTask):
         ip_str = item.strip()
         obs = ipv4.IPv4(value=ip_str).save()
         obs.tag(["blocklist"])
+
 
 taskmanager.TaskManager.register_task(BlocklistdeAll)

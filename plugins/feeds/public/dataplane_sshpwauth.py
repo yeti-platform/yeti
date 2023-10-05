@@ -15,7 +15,7 @@ class DataplaneSSHPwAuth(task.FeedTask):
     Feed of Dataplane SSH bruteforce IPs and ASNs
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/sshpwauth.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/sshpwauth.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSSHPwAuth",

@@ -12,7 +12,7 @@ from typing import ClassVar
 class AzorultTracker(task.FeedTask):
     """Azorult Tracker"""
 
-    _SOURCE:ClassVar['str'] = "https://azorult-tracker.net/api/last-data"
+    _SOURCE: ClassVar["str"] = "https://azorult-tracker.net/api/last-data"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "Azorult-Tracker",

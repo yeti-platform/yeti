@@ -6,8 +6,8 @@ from plugins.feeds.public import feodo_tracker_ip_blocklist
 from plugins.feeds.public import openphish
 from plugins.feeds.public import lolbas
 
-class FeedTest(unittest.TestCase):
 
+class FeedTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         # pass
@@ -15,13 +15,13 @@ class FeedTest(unittest.TestCase):
 
     def test_feodo_tracker_ip_blocklist(self):
         defaults = feodo_tracker_ip_blocklist.FeodoTrackerIPBlockList._defaults.copy()
-        defaults['name'] = 'FeodoTrackerIPBlocklist'
+        defaults["name"] = "FeodoTrackerIPBlocklist"
         feed = feodo_tracker_ip_blocklist.FeodoTrackerIPBlockList(**defaults)
         feed.run()
 
     def test_openphish(self):
         defaults = openphish.OpenPhish._defaults.copy()
-        defaults['name'] = 'OpenPhish'
+        defaults["name"] = "OpenPhish"
         feed = openphish.OpenPhish(**defaults)
         feed.run()
 

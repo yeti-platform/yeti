@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BotvrijFilename(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.filename"
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.filename"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijFilename",
@@ -33,7 +33,6 @@ class BotvrijFilename(task.FeedTask):
         obs.name = filen
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])
-
 
 
 taskmanager.TaskManager.register_task(BotvrijFilename)

@@ -13,7 +13,7 @@ class ThreatFox(task.FeedTask):
         "name": "ThreatFox",
         "description": "This feed contains malware hashes",
     }
-    _SOURCE:ClassVar['str'] = "https://threatfox.abuse.ch/export/json/recent/"
+    _SOURCE: ClassVar["str"] = "https://threatfox.abuse.ch/export/json/recent/"
 
     _MAPPING = {
         "ip": observable.ObservableType.ipv4,
@@ -98,5 +98,6 @@ class ThreatFox(task.FeedTask):
                 tags.extend(malware_alias.split(","))
             tags.append(malware_printable)
             obs.tag(tags)
+
 
 taskmanager.TaskManager.register_task(ThreatFox)

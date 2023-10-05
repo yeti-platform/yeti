@@ -5,7 +5,7 @@ import logging
 from core.schemas import task
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas.observables import url, sha1, md5, sha256,ssdeep
+from core.schemas.observables import url, sha1, md5, sha256, ssdeep
 from core.schemas.observable import ObservableType, Observable
 
 
@@ -93,7 +93,7 @@ class MalshareQuery(task.OneShotTask, MalshareAPI):
 
         if new_hash:
             new_hash.add_context("malshare.com", context)
-        
+
         if json_result["SSDEEP"]:
             ssdeep_data = ssdeep.SsdeepHash(value=json_result["SSDEEP"]).save()
             ssdeep_data.add_context("malshare.com", context)

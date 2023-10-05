@@ -16,7 +16,7 @@ class DataplaneSMTPData(task.FeedTask):
     Feeds SMTP data from Dataplane with IPs and ASNs
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/smtpdata.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/smtpdata.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSMTPData",

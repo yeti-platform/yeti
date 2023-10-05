@@ -12,6 +12,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def generate_api_key():
     return secrets.token_hex(32)
 
+
 class User(BaseModel, database_arango.ArangoYetiConnector):
 
     _collection_name: ClassVar[str] = "users"
@@ -29,8 +30,9 @@ class User(BaseModel, database_arango.ArangoYetiConnector):
     def reset_api_key(self) -> None:
         self.api_key = secrets.token_hex(32)
 
+
 class UserSensitive(User):
-    password: str = ''
+    password: str = ""
 
     @classmethod
     def load(cls, object: dict) -> "UserSensitive":

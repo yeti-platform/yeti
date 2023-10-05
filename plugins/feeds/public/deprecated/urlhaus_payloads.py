@@ -2,8 +2,6 @@ import logging
 from datetime import timedelta, datetime
 
 
-
-
 class UrlHausPayloads(Feed):
     default_values = {
         "frequency": timedelta(days=1),
@@ -12,6 +10,7 @@ class UrlHausPayloads(Feed):
         "description": "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution. (Warning RAM consumer)",
     }
     _NAMEs
+
     def update(self):
         for index, line in self.update_csv(
             delimiter=",",

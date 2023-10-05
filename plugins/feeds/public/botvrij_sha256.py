@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BotvrijSHA256(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.sha256"
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.sha256"
 
     _defaults = {
         "frequency": timedelta(hours=12),

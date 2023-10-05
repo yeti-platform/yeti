@@ -2,6 +2,7 @@ import hashlib
 import re
 import datetime
 
+
 def refang(url):
     def http(match):
         return "http{}".format(match.group("real"))
@@ -12,6 +13,7 @@ def refang(url):
     url = schema_re.sub(http, url)
     url = domain_re.sub(".", url)
     return url
+
 
 def stream_sha256(stream):
     sha256 = hashlib.sha256()
@@ -25,6 +27,7 @@ def stream_sha256(stream):
             break
 
     return sha256.hexdigest()
+
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)

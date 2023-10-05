@@ -17,7 +17,9 @@ class PhishingDatabase(task.FeedTask):
         "description": "PhishingDatabase is a community feed of phishing URLs which are updated every 24 hours.",
     }
 
-    _SOURCE:ClassVar['str'] = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
+    _SOURCE: ClassVar[
+        "str"
+    ] = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
 
     def run(self):
         response = self._make_request(self._SOURCE)
@@ -25,10 +27,10 @@ class PhishingDatabase(task.FeedTask):
             for line in response.text.split("\n"):
                 self.analyze(line.strip())
 
-
     def analyze(self, url_str):
         urlobs = url.Url(value=url_str).save()
         urlobs.add_context(self.name, {"source": self.name})
-        urlobs.tag(["phish","phishing_database","blocklist"])
+        urlobs.tag(["phish", "phishing_database", "blocklist"])
+
 
 taskmanager.TaskManager.register_task(PhishingDatabase)

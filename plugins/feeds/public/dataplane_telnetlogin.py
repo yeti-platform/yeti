@@ -16,7 +16,7 @@ class DataplaneTelenetLogin(task.FeedTask):
     Feed of telnet login attempt of dataplane IPs and ASNs
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/telnetlogin.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/telnetlogin.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneTelnetLogin",

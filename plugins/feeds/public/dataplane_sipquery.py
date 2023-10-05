@@ -15,7 +15,7 @@ class DataplaneSIPQuery(task.FeedTask):
     Feed of SIPs from Dataplane with IPs and ASNs
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/sipquery.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/sipquery.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneSIPQuery",
@@ -46,7 +46,7 @@ class DataplaneSIPQuery(task.FeedTask):
         tags = ["dataplane", "sipquery"]
         if category:
             tags.append(category)
-        ip_obs.add_context('dataplane sip query', context_ip)
+        ip_obs.add_context("dataplane sip query", context_ip)
         ip_obs.tag(tags)
 
         asn_obs = asn.ASN(value=item["ASN"]).save()

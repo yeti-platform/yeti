@@ -9,8 +9,8 @@ from core.web import webapp
 
 client = TestClient(webapp.app)
 
-class ObservableTest(unittest.TestCase):
 
+class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.entity1 = entity.ThreatActor(name="ta1").save()
@@ -25,26 +25,26 @@ class ObservableTest(unittest.TestCase):
     def test_new_entity(self):
         response = client.post(
             "/api/v2/entities/",
-            json={"entity": {"name": "ta2", "type": "threat-actor"}})
+            json={"entity": {"name": "ta2", "type": "threat-actor"}},
+        )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['name'], "ta2")
-        self.assertEqual(data['type'], "threat-actor")
+        self.assertEqual(data["name"], "ta2")
+        self.assertEqual(data["type"], "threat-actor")
 
     def test_get_entity(self):
         response = client.get(f"/api/v2/entities/{self.entity1.id}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['name'], "ta1")
-        self.assertEqual(data['type'], "threat-actor")
+        self.assertEqual(data["name"], "ta1")
+        self.assertEqual(data["type"], "threat-actor")
 
     def test_search_entities(self):
         response = client.post(
-            "/api/v2/entities/search",
-            json={"name": "ta", "type": "threat-actor"}
+            "/api/v2/entities/search", json={"name": "ta", "type": "threat-actor"}
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(len(data['entities']), 1)
-        self.assertEqual(data['entities'][0]['name'], "ta1")
-        self.assertEqual(data['entities'][0]['type'], "threat-actor")
+        self.assertEqual(len(data["entities"]), 1)
+        self.assertEqual(data["entities"][0]["name"], "ta1")
+        self.assertEqual(data["entities"][0]["type"], "threat-actor")

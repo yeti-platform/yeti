@@ -5,13 +5,13 @@ from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import url,asn,md5
+from core.schemas.observables import url, asn, md5
 from core.schemas import task
 from core import taskmanager
 
 
 class FutexTracker(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://futex.re/tracker/TinyTracker.csv"
+    _SOURCE: ClassVar["str"] = "https://futex.re/tracker/TinyTracker.csv"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "FutexTracker",

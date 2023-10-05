@@ -14,7 +14,7 @@ class UrlHaus(task.FeedTask):
         "name": "UrlHaus",
         "description": "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.",
     }
-    _SOURCE:ClassVar['str'] = "https://urlhaus.abuse.ch/downloads/csv_recent/"
+    _SOURCE: ClassVar["str"] = "https://urlhaus.abuse.ch/downloads/csv_recent/"
     _NAMES = [
         "id",
         "dateadded",
@@ -77,5 +77,6 @@ class UrlHaus(task.FeedTask):
         url_obs = url.Url(value=url_str).save()
         url_obs.add_context(self.name, context)
         url_obs.tag(tags)
+
 
 taskmanager.TaskManager.register_task(UrlHaus)

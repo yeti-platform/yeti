@@ -11,13 +11,13 @@ from core.schemas.observables.mac_address import MacAddress
 from core.schemas.entity import Company
 from core.config.config import yeti_config
 
+
 class MacAddressIoApi(object):
     __MODULE_GROUP__ = "MacAddress.io"
 
-  
     @staticmethod
     def get(mac_address):
-        api_client = ApiClient(yeti_config['macaddressio']['api_key'])
+        api_client = ApiClient(yeti_config["macaddressio"]["api_key"])
 
         try:
             response = api_client.get_raw_data(mac_address, "json")
@@ -58,10 +58,9 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
         "description": "Retrieve vendor details and other information regarding a given MAC address or an OUI from macaddress.io.",
     }
 
-    acts_on:list[ObservableType] = [ObservableType.mac_address]
+    acts_on: list[ObservableType] = [ObservableType.mac_address]
 
-    
-    def each(self,mac_address:MacAddress):
+    def each(self, mac_address: MacAddress):
         results = {}
 
         lookup_results = MacAddressIoApi.get(mac_address.value)
@@ -83,18 +82,17 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
         try:
             if lookup_results["vendorDetails"]["companyName"] != "":
                 vendor = Company(
-                    name=lookup_results["vendorDetails"]["companyName"]).save()
+                    name=lookup_results["vendorDetails"]["companyName"]
+                ).save()
 
-                
         except KeyError:
             pass
 
         MacAddressIo.add_context_to_observable(mac_address, lookup_results)
-        mac_address.link_to(vendor,'Vendor', 'MacAdress.io')
-        
+        mac_address.link_to(vendor, "Vendor", "MacAdress.io")
 
     @staticmethod
-    def add_context_to_observable(mac_address: MacAddress, lookup_results:dict):
+    def add_context_to_observable(mac_address: MacAddress, lookup_results: dict):
         context = dict(
             [
                 ("raw", json.dumps(lookup_results, indent=2)),
@@ -154,6 +152,7 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
 
         context = {k: v for k, v in context.items() if v}
 
-        mac_address.add_context("MacAdress.io",context)
+        mac_address.add_context("MacAdress.io", context)
+
 
 taskmanager.TaskManager.register_task(MacAddressIo)

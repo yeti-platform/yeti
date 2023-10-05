@@ -8,7 +8,7 @@ from core import database_arango
 
 # Database model
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
-    _collection_name: ClassVar[str] = 'links'
+    _collection_name: ClassVar[str] = "links"
     _type_filter: ClassVar[str | None] = None
 
     id: str | None = None

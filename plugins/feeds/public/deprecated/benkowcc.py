@@ -38,4 +38,5 @@ class BenkowTracker(task.FeedTask):
         ip_obs.add_context(self.name, context)
         url_obs.link_to(ip_obs, "url-ip", self.name)
 
+
 taskmanager.TaskManager.register_task(BenkowTracker)

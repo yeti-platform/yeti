@@ -125,16 +125,16 @@ class VirustotalApi(object):
         if tags:
             file_vt.tag(tags)
         observables = [
-            (h, TYPE_MAPPING[h](value=attributes[h],type=h).save())
+            (h, TYPE_MAPPING[h](value=attributes[h], type=h).save())
             for h in (ObservableType.sha256, ObservableType.sha1, ObservableType.md5)
             if file_vt.value != attributes[h]
         ]
         for h, obs in observables:
-            obs.add_context('Virustotal',context)
+            obs.add_context("Virustotal", context)
             obs.link_to(file_vt, h, "Virustotal")
             obs.tag(tags)
 
-        file_vt.add_context('VirusTotal', context)
+        file_vt.add_context("VirusTotal", context)
 
 
 class VTFileIPContacted(task.OneShotTask, VirustotalApi):
@@ -181,7 +181,7 @@ class VTFileIPContacted(task.OneShotTask, VirustotalApi):
                 for k, v in stat_files.items():
                     context[k] = v
 
-                ip.add_context("VirusTotal",context)
+                ip.add_context("VirusTotal", context)
 
                 ip.link_to(observable, "contacted by", context["source"])
 
@@ -348,8 +348,9 @@ class VTDomainResolution(task.OneShotTask, VirustotalApi):
                 date_last_resolv = datetime.fromtimestamp(timestamp_resolv).isoformat()
                 context[ip_address] = date_last_resolv
 
-                ip.add_context('Virustotal',
-                    {"source": context["source"], observable.value: date_last_resolv}
+                ip.add_context(
+                    "Virustotal",
+                    {"source": context["source"], observable.value: date_last_resolv},
                 )
 
             observable.add_context("VirusTotal", context)
@@ -367,7 +368,7 @@ class VTSubdomains(task.OneShotTask, VirustotalApi):
     def each(self, observable: Observable):
 
         endpoint = "/domains/%s/subdomains" % observable.value
-        
+
         result = VirustotalApi.fetch(endpoint)
 
         if result:
@@ -500,6 +501,7 @@ class VTIPReferrerFile(task.OneShotTask, VirustotalApi):
             file_vt.link_to(observable, "Referrer File", "Virustotal")
             VirustotalApi.process_file(file_vt, attributes)
 
+
 taskmanager.TaskManager.register_task(VTFileIPContacted)
 taskmanager.TaskManager.register_task(VTFileUrlContacted)
 taskmanager.TaskManager.register_task(VTDomainContacted)
@@ -512,4 +514,3 @@ taskmanager.TaskManager.register_task(VTDomainReferrerFile)
 taskmanager.TaskManager.register_task(VTIPResolution)
 taskmanager.TaskManager.register_task(VTIPComFile)
 taskmanager.TaskManager.register_task(VTIPReferrerFile)
-

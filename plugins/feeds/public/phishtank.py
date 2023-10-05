@@ -18,7 +18,7 @@ class PhishTank(task.FeedTask):
         "description": "PhishTank is a collaborative clearing house for data and information about phishing on the Internet.",
     }
 
-    _SOURCE:ClassVar['str'] = "http://data.phishtank.com/data/%s/online-valid.csv"
+    _SOURCE: ClassVar["str"] = "http://data.phishtank.com/data/%s/online-valid.csv"
 
     # don't need to do much here; want to add the information
     # and tag it with 'phish'

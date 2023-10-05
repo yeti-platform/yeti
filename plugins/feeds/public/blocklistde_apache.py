@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BlocklistdeApache(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://lists.blocklist.de/lists/apache.txt"
+    _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/apache.txt"
 
     _defaults = {
         "frequency": timedelta(hours=1),

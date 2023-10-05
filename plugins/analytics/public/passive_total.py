@@ -105,7 +105,7 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
                 new = Observable.add_text(record["resolve"]).save()
             except ValueError:
                 logging.error("Could not add text observable for {}".format(record))
-            
+
             if observable.type is ObservableType.hostname:
                 observable.link_to(
                     new, "{} record".format(record["recordType"]), "PassiveTotal"
@@ -165,8 +165,6 @@ class PassiveTotalSubdomains(task.OneShotTask, PassiveTotalApi):
             observable.link_to(subdomain, "Subdomain", "PassiveTotal")
 
 
-
-
 class PassiveTotalWhois(task.OneShotTask, PassiveTotalApi):
     _defaults = {
         "group": "PassiveTotal",
@@ -199,7 +197,7 @@ class PassiveTotalReverseWhois(task.OneShotTask, PassiveTotalApi):
     acts_on: list[ObservableType] = [ObservableType.email]
 
     def each(self, observable: Observable):
-        
+
         if observable.type is ObservableType.email:
             field = "email"
         elif observable.type:

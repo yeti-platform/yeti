@@ -11,8 +11,8 @@ from core.web import webapp
 
 client = TestClient(webapp.app)
 
-class ObservableTest(unittest.TestCase):
 
+class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
@@ -25,7 +25,8 @@ class ObservableTest(unittest.TestCase):
     def test_node_deletion_affects_link(self) -> None:
         """Tests that deleting a node also deletes assocaited relationships."""
         self.relationship = self.observable1.link_to(
-            self.observable2, "resolves", "DNS resolution")
+            self.observable2, "resolves", "DNS resolution"
+        )
         all_relationships = list(Relationship.list())
         self.assertEqual(len(all_relationships), 1)
 
@@ -36,7 +37,8 @@ class ObservableTest(unittest.TestCase):
     def test_observable_to_observable_link(self) -> None:
         """Tests that a link between two observables can be created."""
         self.relationship = self.observable1.link_to(
-            self.observable2, "resolves", "DNS resolution")
+            self.observable2, "resolves", "DNS resolution"
+        )
         self.assertEqual(self.relationship.source, self.observable1.extended_id)
         self.assertEqual(self.relationship.target, self.observable2.extended_id)
         self.assertEqual(self.relationship.type, "resolves")
@@ -45,13 +47,13 @@ class ObservableTest(unittest.TestCase):
         vertices, edges, count = self.observable1.neighbors()
         self.assertEqual(len(vertices), 1)
         self.assertEqual(count, 1)
-        self.assertEqual(
-            vertices[self.observable2.extended_id].value, "127.0.0.1")
+        self.assertEqual(vertices[self.observable2.extended_id].value, "127.0.0.1")
 
     def test_observable_to_entity_link(self) -> None:
         """Tests that a link between an observable and an entity can be created."""
         self.relationship = self.observable1.link_to(
-            self.entity1, "network-traffic", "Sends network traffic")
+            self.entity1, "network-traffic", "Sends network traffic"
+        )
         self.assertEqual(self.relationship.source, self.observable1.extended_id)
         self.assertEqual(self.relationship.target, self.entity1.extended_id)
         self.assertEqual(self.relationship.type, "network-traffic")
@@ -60,8 +62,7 @@ class ObservableTest(unittest.TestCase):
         vertices, edges, count = self.entity1.neighbors()
         self.assertEqual(len(vertices), 1)
         self.assertEqual(count, 1)
-        self.assertEqual(
-            vertices[self.observable1.extended_id].value, "tomchop.me")
+        self.assertEqual(vertices[self.observable1.extended_id].value, "tomchop.me")
 
     def test_no_neighbors(self):
         """Tests that a node with no neighbors returns an empty list."""

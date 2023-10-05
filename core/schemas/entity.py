@@ -25,6 +25,7 @@ class EntityType(str, Enum):
     phone = "phone"
     note = "note"
 
+
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "entities"
     _type_filter: ClassVar[str] = ""
@@ -43,17 +44,22 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
+
+
 class Note(Entity):
-    type: Literal['note'] = EntityType.note
+    type: Literal["note"] = EntityType.note
     _type_filter: ClassVar[str] = EntityType.note
+
 
 class Phone(Entity):
     _type_filter: ClassVar[str] = EntityType.phone
-    type: Literal['phone'] = EntityType.phone
+    type: Literal["phone"] = EntityType.phone
+
 
 class Company(Entity):
-    type: Literal['company'] = EntityType.company
+    type: Literal["company"] = EntityType.company
     _type_filter: ClassVar[str] = EntityType.company
+
 
 class ThreatActor(Entity):
     _type_filter: ClassVar[str] = EntityType.threat_actor
@@ -133,9 +139,23 @@ REGEXES_ENTITIES = {
     )
 }
 REGEXES_ENTITIES = [
-    (EntityType.exploit, re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)")),
+    (
+        EntityType.exploit,
+        re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"),
+    ),
 ]
-EntityTypes = ThreatActor | IntrusionSet | Tool | Malware | Campaign | AttackPattern | Identity | Company | Phone | Note
+EntityTypes = (
+    ThreatActor
+    | IntrusionSet
+    | Tool
+    | Malware
+    | Campaign
+    | AttackPattern
+    | Identity
+    | Company
+    | Phone
+    | Note
+)
 EntityClasses = (
     Type[ThreatActor]
     | Type[IntrusionSet]

@@ -71,10 +71,12 @@ app = Celery(
         "plugins.feeds.public.tor_exit_nodes",
         "plugins.feeds.public.urlhaus",
         "plugins.feeds.public.viriback_tracker",
-        "plugins.feeds.public.vxvault_url",)
+        "plugins.feeds.public.vxvault_url",
+    ),
 )
 
-class TaskManager():
+
+class TaskManager:
 
     _store = {}  # type: dict[str, Task]
 
@@ -153,6 +155,7 @@ class TaskManager():
         task.last_run = datetime.datetime.now(datetime.timezone.utc)
         task.status_message = ""
         task.save()
+
 
 @app.task
 def run_task(task_name: str, params: str):

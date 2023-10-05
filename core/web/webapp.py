@@ -15,7 +15,9 @@ from core.web.apiv2 import system
 app = FastAPI()
 api_router = APIRouter()
 
-api_router.include_router(observables.router, prefix="/observables", tags=["observables"])
+api_router.include_router(
+    observables.router, prefix="/observables", tags=["observables"]
+)
 api_router.include_router(entities.router, prefix="/entities", tags=["entities"])
 api_router.include_router(indicators.router, prefix="/indicators", tags=["indicators"])
 api_router.include_router(tag.router, prefix="/tags", tags=["tags"])

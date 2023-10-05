@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BotvrijDomain(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.domain"
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.domain"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijDomain",

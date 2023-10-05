@@ -7,7 +7,7 @@ from core import taskmanager
 
 
 class BlocklistdeMail(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://lists.blocklist.de/lists/mail.txt"
+    _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/mail.txt"
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeMail",

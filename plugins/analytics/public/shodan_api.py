@@ -1,12 +1,13 @@
 import json
 import logging
 from core import taskmanager
-from core.schemas.observable import Observable,ObservableType
-from core.schemas.observables import ipv4,asn,hostname
+from core.schemas.observable import Observable, ObservableType
+from core.schemas.observables import ipv4, asn, hostname
 from core.schemas.entity import Company
 from core.schemas import task
 from core.config.config import yeti_config
 import shodan
+
 
 class ShodanApi(object):
     settings = {
@@ -16,10 +17,11 @@ class ShodanApi(object):
         }
     }
 
-
-    def fetch(observable:Observable):
+    def fetch(observable: Observable):
         try:
-            return shodan.Shodan(yeti_config['shodan']['api_key']).host(observable.value)
+            return shodan.Shodan(yeti_config["shodan"]["api_key"]).host(
+                observable.value
+            )
         except shodan.APIError as e:
             logging.error("Error: {}".format(e))
 
@@ -33,8 +35,7 @@ class ShodanQuery(task.OneShotTask, ShodanApi):
 
     acts_on: list[ObservableType] = [ObservableType.ipv4]
 
-
-    def each(self,ip:ipv4.IPv4) -> Observable:
+    def each(self, ip: ipv4.IPv4) -> Observable:
 
         result = ShodanApi.fetch(ip)
         logging.debug(result)
@@ -42,7 +43,7 @@ class ShodanQuery(task.OneShotTask, ShodanApi):
         if "tags" in result and result["tags"] is not None:
             ip.tag(result["tags"])
 
-        logging.debug(result['asn'])
+        logging.debug(result["asn"])
         if "asn" in result and result["asn"] is not None:
             o_asn = asn.ASN(
                 value=result["asn"],
@@ -60,4 +61,6 @@ class ShodanQuery(task.OneShotTask, ShodanApi):
             o_isp = Company(name=result["isp"]).save()
             ip.link_to(o_isp, "hosting", "Shodan Query")
         return ip
+
+
 taskmanager.TaskManager.register_task(ShodanQuery)

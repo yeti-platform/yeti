@@ -6,7 +6,7 @@ from datetime import timedelta
 from typing import ClassVar
 
 import pandas as pd
-from core.schemas.observables import ipv4,asn
+from core.schemas.observables import ipv4, asn
 from core.schemas import task
 from core import taskmanager
 
@@ -16,7 +16,7 @@ class DataplaneProto41(task.FeedTask):
     Feed DataplaneProto41: IPs from DataplaneProto41
     """
 
-    _SOURCE:ClassVar['str'] = "https://dataplane.org/proto41.txt"
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/proto41.txt"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "DataplaneProto41",

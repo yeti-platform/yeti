@@ -14,8 +14,8 @@ from core.schemas.user import UserSensitive
 
 import unittest
 
-class TagTest(unittest.TestCase):
 
+class TagTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
 
@@ -32,24 +32,29 @@ class TagTest(unittest.TestCase):
         c2_hacker = hostname.Hostname(value="c2.hacker.com").save()
         www_hacker = hostname.Hostname(value="www.hacker.com").save()
         hacker = hostname.Hostname(value="hacker.com").save()
-        hacker.link_to(www_hacker, 'domain', 'Domain')
-        hacker.link_to(c2_hacker, 'domain', 'Domain')
-        hacker.link_to(ip_hacker, 'ip', 'IP')
-        hacker.tag(['hacker'])
+        hacker.link_to(www_hacker, "domain", "Domain")
+        hacker.link_to(c2_hacker, "domain", "Domain")
+        hacker.link_to(ip_hacker, "ip", "IP")
+        hacker.tag(["hacker"])
         ta = ThreatActor(name="HackerActor", relevant_tags=["hacker_sus"]).save()
-        ta.link_to(hacker, 'c2', 'C2 infrastructure')
-        www_hacker.tag(['web', 'hacker'])
-        c2_hacker.tag(['web', 'hacker'])
+        ta.link_to(hacker, "c2", "C2 infrastructure")
+        www_hacker.tag(["web", "hacker"])
+        c2_hacker.tag(["web", "hacker"])
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
-        sus_hacker.tag(['web', 'hacker', 'hacker_sus'])
-        regex = Regex(name='Hacker regex', pattern="^hacker.*", location="network", diamond=DiamondModel.capability).save()
+        sus_hacker.tag(["web", "hacker", "hacker_sus"])
+        regex = Regex(
+            name="Hacker regex",
+            pattern="^hacker.*",
+            location="network",
+            diamond=DiamondModel.capability,
+        ).save()
 
-        template = Template(name="RandomTemplate", template='<blah></blah>').save()
+        template = Template(name="RandomTemplate", template="<blah></blah>").save()
         export = ExportTask(
-            name='RandomExport',
+            name="RandomExport",
             template_name=template.name,
-            include_tags=['include'],
-            exclude_tags=['exclude'],
-            ignore_tags=['ignore'],
-            acts_on=['url']
-            ).save()
+            include_tags=["include"],
+            exclude_tags=["exclude"],
+            ignore_tags=["ignore"],
+            acts_on=["url"],
+        ).save()

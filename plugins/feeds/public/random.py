@@ -6,11 +6,11 @@ from core.schemas import task
 from core import taskmanager
 
 DATA = [
-    'hostname1.com',
-    'hostname2.com',
-    'hostname3.com',
-    'hostname4.com',
-    'hostname5.com',
+    "hostname1.com",
+    "hostname2.com",
+    "hostname3.com",
+    "hostname4.com",
+    "hostname5.com",
 ]
 
 
@@ -27,5 +27,6 @@ class Random(task.FeedTask):
         for item in DATA:
             print(item)
             observable.Observable.add_text(item)
+
 
 taskmanager.TaskManager.register_task(Random)

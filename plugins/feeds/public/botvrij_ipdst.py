@@ -8,7 +8,7 @@ from core import taskmanager
 
 
 class BotvrijIPDst(task.FeedTask):
-    _SOURCE:ClassVar['str'] = "https://www.botvrij.eu/data/ioclist.ip-dst"
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.ip-dst"
     _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijIPDst",
