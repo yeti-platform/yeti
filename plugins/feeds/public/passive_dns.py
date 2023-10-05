@@ -55,7 +55,7 @@ class PassiveDNS(Feed):
         context_ip["last_updated"] = infos["last_updated_at"]
         context_ip["first_updated"] = infos["first_updated_at"]
 
-        ip.active_link_to(company, "compagny", self.name)
+        ip.active_link_to(company, "company", self.name)
 
         domain_name.active_link_to(ip, "ip", self.name, clean_old=False)
 

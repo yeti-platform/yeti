@@ -4,6 +4,7 @@ from typing import ClassVar
 from unittest import mock
 
 from core import database_arango, taskmanager
+from core.config.config import yeti_config
 from core.schemas.observable import Observable
 from core.schemas.task import (AnalyticsTask, ExportTask, FeedTask, Task,
                                TaskParams, TaskStatus, TaskType)
@@ -190,7 +191,7 @@ class ExportTaskTest(unittest.TestCase):
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed, task.status_message)
         observable_list, filename = mock_render.call_args[0]
-        self.assertEqual(filename, '/app/exports/RandomExport')
+        self.assertTrue(filename.endswith('/exports/RandomExport'))
         self.assertEqual(len(observable_list), 4)
 
         self.assertEqual(observable_list[0].value, self.observable1.value)
@@ -200,6 +201,18 @@ class ExportTaskTest(unittest.TestCase):
 
         self.assertIsNotNone(task.last_run)
 
+    @mock.patch('core.schemas.template.Template.render')
+    def test_run_export_task_with_config_path(self, mock_render):
+        """Tests that the each function is called for each filtered observable."""
+        previous = yeti_config.system.export_path
+        yeti_config.system.export_path = '/tmp'
+        taskmanager.TaskManager.run_task('RandomExport', TaskParams())
+        task = ExportTask.find(name='RandomExport')
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.completed, task.status_message)
+        _, filename = mock_render.call_args[0]
+        self.assertEqual(filename, '/tmp/exports/RandomExport')
+        yeti_config.system.export_path = previous
 
     def test_tag_filtering(self):
         """Tests that the tag filtering works as intended."""

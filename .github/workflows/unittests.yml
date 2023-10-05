@@ -6,6 +6,19 @@ jobs:
 
   unittest:
     runs-on: ubuntu-latest
+    env:
+      YETI_REDIS_HOST: localhost
+      YETI_REDIS_PORT: 6379
+      YETI_REDIS_DATABASE: 0
+      YETI_ARANGODB_HOST: localhost
+      YETI_ARANGODB_PORT: 8529
+      YETI_ARANGODB_DATABASE: yeti
+      YETI_ARANGODB_USERNAME: root
+      YETI_ARANGODB_PASSWORD: ""
+      YETI_AUTH_SECRET_KEY: SECRET
+      YETI_AUTH_ALGORITHM: HS256
+      YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      YETI_AUTH_ENABLED: False
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -19,15 +32,8 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: poetry
-    - run: poetry install
-    - name: Edit config file
-      run: |
-        cp yeti.conf.sample yeti.conf
-        sed -i '42s/# host =/host =/' yeti.conf
-        sed -i '43s/# port =/port =/' yeti.conf
-        sed -i '44s/# username = yeti/username = root/' yeti.conf
-        sed -i '45s/# password = STRONG_PASSWORD/password =/' yeti.conf
-        sed -i '46s/# database = /database =/' yeti.conf
+    - name: Install Python dependencies
+      run: poetry install
     - name: Start redis & arangodb conainers
       run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
     - name: Test with unittest
