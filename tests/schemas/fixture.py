@@ -5,7 +5,7 @@ from typing import Optional
 from core import database_arango
 from core.schemas.observable import Observable
 from core.schemas.observables import ipv4, hostname, url
-from core.schemas.entity import ThreatActor
+from core.schemas.entity import ThreatActor,Campaign
 from core.schemas.tag import Tag
 from core.schemas.indicator import Regex, DiamondModel
 from core.schemas.template import Template
@@ -38,6 +38,9 @@ class TagTest(unittest.TestCase):
         hacker.tag(["hacker"])
         ta = ThreatActor(name="HackerActor", relevant_tags=["hacker_sus"]).save()
         ta.link_to(hacker, "c2", "C2 infrastructure")
+        campaign = Campaign(name="HackerCampaign").save()
+        campaign.link_to(ta, "actor", "Actor")
+        campaign.relevant_tags = ["hacker_sus"]
         www_hacker.tag(["web", "hacker"])
         c2_hacker.tag(["web", "hacker"])
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
