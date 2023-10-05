@@ -4,12 +4,6 @@ services:
   redis:
     image: redis:latest
 
-  # mongodb:
-  #   image: mongo:4.0.12
-  #   environment:
-  #     - MONGO_LOG_DIR=/dev/null
-  #   command: mongod
-
   arangodb:
     image: arangodb
     ports:
