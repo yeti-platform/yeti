@@ -29,6 +29,7 @@ httpx = "^0.23.3"
 pymisp = "^2.4.176"
 otxv2 = "^1.5.12"
 shodan = "^1.30.0"
+pymispgalaxies = {git = "https://github.com/MISP/PyMISPGalaxies.git"}
 
 [build-system]
 requires = ["poetry-core"]
