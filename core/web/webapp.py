@@ -35,5 +35,5 @@ async def root():
     return {"message": "Hello World"}
 
 @api_router.get("/")
-async def root():
+async def rootapi():
     return {"message": "Hello World (api/v2)"}
