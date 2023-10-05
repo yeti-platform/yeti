@@ -24,7 +24,7 @@ class ShodanApi(object):
             logging.error("Error: {}".format(e))
 
 
-class ShodanQuery(task.AnalyticsTask, ShodanApi):
+class ShodanQuery(task.OneShotTask, ShodanApi):
     _defaults = {
         "name": "Shodan",
         "description": "Perform a Shodan query on the IP address and tries to"
