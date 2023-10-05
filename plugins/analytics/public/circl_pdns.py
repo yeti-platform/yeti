@@ -42,7 +42,7 @@ class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
         lookups on domain names or ip address.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.hostname,ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.hostname,ObservableType.ipv4]
 
     def each(self,observable:Observable):
     
@@ -51,7 +51,7 @@ class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
         result = {}
         result["source"] = "circl_pdns_query"
     
-        if observable.type == ObservableType.ip:
+        if observable.type == ObservableType.ipv4:
             for record in json_result:
                 new_hostname = hostname.Hostname(value=record['rrname']).save()
                 observable.link_to(new_hostname,record['rrtype'],'Circl PDNS')

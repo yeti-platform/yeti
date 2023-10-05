@@ -435,7 +435,7 @@ class VTIPResolution(task.AnalyticsTask, VirustotalApi):
         "description": "Perform a query to have domains with PDNS.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.ipv4]
 
     def each(self, observable: Observable):
         endpoint = "/ip_addresses/%s/resolutions" % observable.value
@@ -494,7 +494,7 @@ class VTIPReferrerFile(task.AnalyticsTask, VirustotalApi):
         "description": "Perform a Virustotal query to have refferer files.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.ipv4]
 
     def each(self, observable: Observable):
         endpoint = "/ip_addresses/%s/referrer_files" % observable.value

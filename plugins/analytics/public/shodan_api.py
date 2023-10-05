@@ -33,7 +33,9 @@ class ShodanQuery(task.AnalyticsTask, ShodanApi):
 
     acts_on: list[ObservableType] = [ObservableType.ipv4]
 
-    def each(self, ip: ipv4.IPv4):
+
+    def each(self,ip:ipv4.IPv4) -> Observable:
+
         result = ShodanApi.fetch(ip)
         logging.debug(result)
 
@@ -57,5 +59,5 @@ class ShodanQuery(task.AnalyticsTask, ShodanApi):
             logging.debug(result["isp"])
             o_isp = Company(name=result["isp"]).save()
             ip.link_to(o_isp, "hosting", "Shodan Query")
-
+        return ip
 taskmanager.TaskManager.register_task(ShodanQuery)
