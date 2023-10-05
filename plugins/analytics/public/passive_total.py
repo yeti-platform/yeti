@@ -100,11 +100,11 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
             last_seen = datetime.strptime(record["lastSeen"], "%Y-%m-%d %H:%M:%S")
             context["first_seen"] = first_seen
             context["last_seen"] = last_seen
-            try:
-                context["resolve"] = record["resolve"]
+            context["resolve"] = record["resolve"]
+            try: 
                 new = Observable.add_text(record["resolve"]).save()
             except ValueError:
-                logging.error("Could not add text observable for {}".format(record))
+                logging.error(f"Could not add text observable for {record}")
 
             if observable.type is ObservableType.hostname:
                 observable.link_to(
