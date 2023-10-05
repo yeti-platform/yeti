@@ -56,8 +56,8 @@ yeti_config.set_default_value("redis", "database", int(os.getenv("YETI_REDIS_DAT
 
 yeti_config.set_default_value("arangodb", "host", os.getenv("YETI_ARANGODB_HOST", "127.0.0.1"))
 yeti_config.set_default_value("arangodb", "port", int(os.getenv("YETI_ARANGODB_PORT", "8529")))
-yeti_config.set_default_value("arangodb", "username", os.getenv("YETI_ARANGODB_username", "root"))
-yeti_config.set_default_value("arangodb", "password", os.getenv("YETI_ARANGODB_PORT", None))
+yeti_config.set_default_value("arangodb", "username", os.getenv("YETI_ARANGODB_USERNAME", "root"))
+yeti_config.set_default_value("arangodb", "password", os.getenv("YETI_ARANGODB_PASSWORD", "asd"))
 yeti_config.set_default_value("arangodb", "database", os.getenv("YETI_ARANGODB_DATABASE", "yeti"))
 
 yeti_config.set_default_value("proxy", "http", os.getenv("YETI_PROXY_HTTP", None))
