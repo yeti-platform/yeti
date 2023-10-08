@@ -6,10 +6,7 @@ from typing import ClassVar, Literal, Type
 from pydantic import BaseModel, Field
 
 from core import database_arango
-
-
-def now():
-    return datetime.datetime.now(datetime.timezone.utc)
+from core.helpers import now
 
 
 class EntityType(str, Enum):

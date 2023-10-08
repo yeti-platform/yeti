@@ -4,13 +4,9 @@ from typing import ClassVar
 from pydantic import BaseModel, Field
 
 from core import database_arango
+from core.helpers import now
 
 DEFAULT_EXPIRATION_DAYS = 30  # Completely arbitrary
-
-
-def now():
-    return datetime.datetime.now(datetime.timezone.utc)
-
 
 def future():
     return datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS)
