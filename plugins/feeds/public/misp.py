@@ -50,7 +50,6 @@ class MispFeed(task.FeedTask):
         return instances
 
     def get_organisations(self, instance: dict):
-
         misp_client = PyMISP(url=instance["url"], key=instance["key"])
 
         if not misp_client:
@@ -86,8 +85,7 @@ class MispFeed(task.FeedTask):
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
 
-    def get_event(self, instance:dict, from_date:str, to_date:str=None):
-
+    def get_event(self, instance: dict, from_date: str, to_date: str = None):
         misp_client = PyMISP(url=instance["url"], key=instance["key"])
         from_date = from_date.strftime("%Y-%m-%d")
         if to_date:
@@ -108,7 +106,7 @@ class MispFeed(task.FeedTask):
             else:
                 self.get_all_events(instance)
 
-    def analyze(self, event:dict, instance:dict):
+    def analyze(self, event: dict, instance: dict):
         tags = []
         galaxies_to_context = []
 
@@ -148,7 +146,9 @@ class MispFeed(task.FeedTask):
             for attribute in obj["Attribute"]:
                 self.__add_attribute(instance, attribute, context, tags)
 
-    def __add_attribute(self, instance:dict, attribute:dict, context:dict, tags:list):
+    def __add_attribute(
+        self, instance: dict, attribute: dict, context: dict, tags: list
+    ):
         if attribute["category"] == "External analysis":
             return
 
@@ -171,8 +171,7 @@ class MispFeed(task.FeedTask):
 
             obs.add_context(instance["name"], context)
 
-    def decompose_weeks(self, start_day:datetime, last_day:datetime):
-
+    def decompose_weeks(self, start_day: datetime, last_day: datetime):
         # Génère la liste de tuples
         weeks = []
         current_start = start_day
@@ -186,15 +185,12 @@ class MispFeed(task.FeedTask):
         logging.debug(f"Decomposed weeks: {weeks}")
         return weeks
 
-    def __add_tag(self, obs:observable.Observable, instance:dict,attribute:dict):
-        instance_name = instance['name'].lower()
-        nfkd_form = unicodedata.normalize('NFKD', instance_name)
+    def __add_tag(self, obs: observable.Observable, instance: dict, attribute: dict):
+        instance_name = instance["name"].lower()
+        nfkd_form = unicodedata.normalize("NFKD", instance_name)
         instance_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
-        tag =f"{instance_name}:{attribute['event_id']}"
+        tag = f"{instance_name}:{attribute['event_id']}"
         obs.tag(tag)
 
 
-
-        
-       
 taskmanager.TaskManager.register_task(MispFeed)
