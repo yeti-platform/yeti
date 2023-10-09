@@ -146,7 +146,7 @@ class MispFeed(task.FeedTask):
             for attribute in obj["Attribute"]:
                 self.__add_attribute(instance, attribute, context, tags)
 
-    def __add_attribute(
+    def _add_attribute(
         self, instance: dict, attribute: dict, context: dict, tags: list
     ):
         if attribute["category"] == "External analysis":
@@ -185,7 +185,7 @@ class MispFeed(task.FeedTask):
         logging.debug(f"Decomposed weeks: {weeks}")
         return weeks
 
-    def __add_tag(self, obs: observable.Observable, instance: dict, attribute: dict):
+    def _add_tag(self, obs: observable.Observable, instance: dict, attribute: dict):
         instance_name = instance["name"].lower()
         nfkd_form = unicodedata.normalize("NFKD", instance_name)
         instance_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
@@ -194,3 +194,4 @@ class MispFeed(task.FeedTask):
 
 
 taskmanager.TaskManager.register_task(MispFeed)
+ 
