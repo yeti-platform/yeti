@@ -140,11 +140,11 @@ class MispFeed(task.FeedTask):
                         tags.append(tag["name"])
 
         for attribute in event["Attribute"]:
-            self.__add_attribute(instance, attribute, context, tags)
+            self._add_attribute(instance, attribute, context, tags)
 
         for obj in event["Object"]:
             for attribute in obj["Attribute"]:
-                self.__add_attribute(instance, attribute, context, tags)
+                self._add_attribute(instance, attribute, context, tags)
 
     def _add_attribute(
         self, instance: dict, attribute: dict, context: dict, tags: list
@@ -162,7 +162,7 @@ class MispFeed(task.FeedTask):
             context["comment"] = attribute["comment"]
 
             obs = observable.Observable.add_text(attribute["value"])
-            self.__add_tag(obs, instance, attribute)
+            self._add_tag(obs, instance, attribute)
             if attribute["category"]:
                 tags.append(attribute["category"])
 
@@ -194,4 +194,3 @@ class MispFeed(task.FeedTask):
 
 
 taskmanager.TaskManager.register_task(MispFeed)
- 
