@@ -7,6 +7,7 @@ from core.config.config import yeti_config
 from core.schemas import observable
 from core.schemas import task
 from core import taskmanager
+import unicodedata
 
 
 class MispFeed(task.FeedTask):
@@ -161,7 +162,7 @@ class MispFeed(task.FeedTask):
             context["comment"] = attribute["comment"]
 
             obs = observable.Observable.add_text(attribute["value"])
-
+            self.__add_tag(obs, instance, attribute)
             if attribute["category"]:
                 tags.append(attribute["category"])
 
@@ -185,5 +186,15 @@ class MispFeed(task.FeedTask):
         logging.debug(f"Decomposed weeks: {weeks}")
         return weeks
 
+    def __add_tag(self, obs:observable.Observable, instance:dict,attribute:dict):
+        instance_name = instance['name'].lower()
+        nfkd_form = unicodedata.normalize('NFKD', instance_name)
+        instance_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+        tag =f"{instance_name}:{attribute['event_id']}"
+        obs.tag(tag)
 
+
+
+        
+       
 taskmanager.TaskManager.register_task(MispFeed)
