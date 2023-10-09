@@ -85,7 +85,7 @@ class MispFeed(task.FeedTask):
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
 
-    def get_event(self, instance, from_date, to_date=None):
+    def get_event(self, instance:dict, from_date:str, to_date:str=None):
 
         misp_client = PyMISP(url=instance["url"], key=instance["key"])
         from_date = from_date.strftime("%Y-%m-%d")
@@ -107,7 +107,7 @@ class MispFeed(task.FeedTask):
             else:
                 self.get_all_events(instance)
 
-    def analyze(self, event, instance):
+    def analyze(self, event:dict, instance:dict):
         tags = []
         galaxies_to_context = []
 
@@ -147,7 +147,7 @@ class MispFeed(task.FeedTask):
             for attribute in obj["Attribute"]:
                 self.__add_attribute(instance, attribute, context, tags)
 
-    def __add_attribute(self, instance, attribute, context, tags):
+    def __add_attribute(self, instance:dict, attribute:dict, context:dict, tags:list):
         if attribute["category"] == "External analysis":
             return
 
@@ -170,7 +170,7 @@ class MispFeed(task.FeedTask):
 
             obs.add_context(instance["name"], context)
 
-    def decompose_weeks(self, start_day, last_day):
+    def decompose_weeks(self, start_day:datetime, last_day:datetime):
 
         # Génère la liste de tuples
         weeks = []
