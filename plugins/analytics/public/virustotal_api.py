@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import json
 
 import logging
@@ -40,7 +39,7 @@ class VirustotalApi(object):
             else:
                 return None
         except Exception as e:
-            print("Exception while getting ip report {}".format(e.message))
+            logging.error("Exception while getting ip report {}".format(e.message))
             return None
 
     @staticmethod

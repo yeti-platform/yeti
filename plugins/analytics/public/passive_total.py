@@ -59,7 +59,7 @@ def whois_links(observable: Observable, whois):
                     ns_obs = hostname.Hostname(value=ns).save()
                     observable.link_to(ns_obs, "NS record", "PassiveTotal")
                 except Exception as e:
-                    print(e.with_traceback())
+                    logging.error(e.with_traceback())
 
 
 class PassiveTotalApi(object):

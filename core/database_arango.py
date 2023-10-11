@@ -1,6 +1,7 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
 import datetime
 import json
+import logging
 import sys
 import time
 from typing import TYPE_CHECKING, Any, Iterable, List, Tuple, Type, TypeVar
@@ -62,11 +63,11 @@ class ArangoDatabase:
                 yeti_db = sys_db.has_database(database)
                 break
             except requests.exceptions.ConnectionError as e:
-                print("Connection error: {0:s}".format(str(e)))
-                print("Retrying in 5 seconds...")
+                logging.error("Connection error: {0:s}".format(str(e)))
+                logging.error("Retrying in 5 seconds...")
                 time.sleep(5)
         else:
-            print("Could not connect, bailing.")
+            logging.error("Could not connect, bailing.")
             sys.exit(1)
 
         if not yeti_db:
@@ -820,7 +821,6 @@ def tagged_observables_export(cls, args):
         FILTER COUNT(INTERSECTION(tagnames, @exclude)) == 0
         RETURN MERGE(o, {tags: tags})
         """
-    print(aql)
     documents = db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
     results = []
     for doc in documents:
