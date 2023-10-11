@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class CIDR(Observable):
+
+class CIDR(observable.Observable):
     value: str
-    type: Literal["cidr"] = ObservableType.cidr
+    type: Literal[observable.ObservableType.cidr] = observable.ObservableType.cidr
+
+
+observable.TYPE_MAPPING[observable.ObservableType.cidr] = CIDR

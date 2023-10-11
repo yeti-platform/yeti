@@ -5,6 +5,8 @@ from core.constants import YETI_ROOT
 
 
 class Dictionary(dict):
+    """A dictionary that allows to access its elements as attributes."""
+
     def __getattr__(self, key):
         return self.get(key, None)
 
@@ -33,68 +35,36 @@ class Config:
     def __getitem__(self, key):
         return getattr(self, key)
 
-    def set_default_value(self, section, key, value):
-        if not hasattr(self, section):
-            setattr(self, section, Dictionary())
+    def find_env_variable(self, section, key) -> bool | int | str | None:
+        """Attempts to find an environment variable corresponding to the setting.
 
-        if key not in self[section]:
-            self[section][key] = value
+        Environment variables should be defined with the following format:
+          YETI_<SECTION>_<KEY>
 
-    def get(self, section, key, default=None):
-        if not hasattr(self, section) or key not in self[section]:
-            return default
-        else:
+        Args:
+            section: The section of the setting as it appears in the config file.
+            key: They key of the setting as it appears in the config file.
+        """
+        env_var = f"YETI_{section.upper()}_{key.upper()}"
+        if env_var in os.environ:
+            var = os.environ[env_var]
+            if var.lower() in ["true", "false"]:
+                return var.lower() == "true"
+            if var.isdigit():
+                return int(var)
+            return var
+        return None
+
+    def get(self, section, key=None, default=None):
+        """Gets a setting from the config file."""
+        if key is None:
+            return getattr(self, section)
+        if hasattr(self, section) and key in self[section]:
             return self[section][key]
-
+        else:
+            env_var = self.find_env_variable(section, key)
+            if env_var is not None:
+                return env_var
+            return default
 
 yeti_config = Config()
-yeti_config.set_default_value(
-    "system", "export_root", os.getenv("YETI_SYSTEM_EXPORT_ROOT", "/var/opt/yeti")
-)
-yeti_config.set_default_value("auth", "module", "local")
-yeti_config.set_default_value(
-    "auth", "secret_key", os.getenv("YETI_AUTH_SECRET_KEY", "SECRET")
-)
-yeti_config.set_default_value(
-    "auth", "algorithm", os.getenv("YETI_AUTH_ALGORITHM", "HS256")
-)
-yeti_config.set_default_value(
-    "auth",
-    "access_token_expire_minutes",
-    int(os.getenv("YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES", "30")),
-)
-yeti_config.set_default_value(
-    "auth", "enabled", os.getenv("YETI_AUTH_ENABLED", "False") == "True"
-)
-
-yeti_config.set_default_value(
-    "redis", "host", os.getenv("YETI_REDIS_HOST", "127.0.0.1")
-)
-yeti_config.set_default_value(
-    "redis", "port", int(os.getenv("YETI_REDIS_PORT", "6379"))
-)
-yeti_config.set_default_value(
-    "redis", "database", int(os.getenv("YETI_REDIS_DATABASE", "0"))
-)
-
-yeti_config.set_default_value(
-    "arangodb", "host", os.getenv("YETI_ARANGODB_HOST", "127.0.0.1")
-)
-yeti_config.set_default_value(
-    "arangodb", "port", int(os.getenv("YETI_ARANGODB_PORT", "8529"))
-)
-yeti_config.set_default_value(
-    "arangodb", "username", os.getenv("YETI_ARANGODB_USERNAME", "root")
-)
-yeti_config.set_default_value(
-    "arangodb", "password", os.getenv("YETI_ARANGODB_PASSWORD", "asd")
-)
-yeti_config.set_default_value(
-    "arangodb", "database", os.getenv("YETI_ARANGODB_DATABASE", "yeti")
-)
-
-yeti_config.set_default_value("proxy", "http", os.getenv("YETI_PROXY_HTTP", None))
-yeti_config.set_default_value("proxy", "https", os.getenv("YETI_PROXY_HTTPS", None))
-yeti_config.set_default_value(
-    "logging", "filename", os.getenv("YETI_LOGFILE", "/var/log/yeti/user_activity.log")
-)

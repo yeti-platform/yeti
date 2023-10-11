@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class CommandLine(Observable):
+
+class CommandLine(observable.Observable):
     value: str
-    type: Literal["cli"] = ObservableType.command_line
+    type: Literal[observable.ObservableType.command_line] = observable.ObservableType.command_line
+
+
+observable.TYPE_MAPPING[observable.ObservableType.command_line] = CommandLine

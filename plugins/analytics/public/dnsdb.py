@@ -45,7 +45,7 @@ class DNSDBApi(object):
     def lookup(type, observable: Observable):
         headers = {
             "accept": "application/json",
-            "X-Api-Key": yeti_config["dnsdb"]["api_key"],
+            "X-Api-Key": yeti_config.get("dnsdb", "api_key"),
         }
 
         if observable.type == ObservableType.hostname:
@@ -55,7 +55,7 @@ class DNSDBApi(object):
 
         url = f"{DNSDBApi.API_URL}/{type}/{obs_type}/{observable.value}"
 
-        r = requests.get(url, headers=headers, proxies=yeti_config.proxy)
+        r = requests.get(url, headers=headers, proxies=yeti_config.get('proxy'))
 
         if r.status_code == 200:
             records = []

@@ -1,7 +1,10 @@
-from core.schemas.observable import Observable, ObservableType
+from core.schemas import observable
 from typing import Literal
 
 
-class TLSH(Observable):
+class TLSH(observable.Observable):
     value: str
-    type: Literal["tlsh"] = ObservableType.tlsh
+    type: Literal[observable.ObservableType.tlsh] = observable.ObservableType.tlsh
+
+
+observable.TYPE_MAPPING[observable.ObservableType.tlsh] = TLSH

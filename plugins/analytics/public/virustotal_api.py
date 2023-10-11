@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import json
 
 import logging
@@ -32,15 +31,15 @@ class VirustotalApi(object):
             response = None
             base_url = "https://www.virustotal.com/api/v3"
             url = base_url + endpoint
-            header = {"x-apikey": yeti_config["virustotal"]["api_key"]}
-            response = requests.get(url, headers=header, proxies=yeti_config.proxy)
+            header = {"x-apikey": yeti_config.get("virustotal", "api_key")}
+            response = requests.get(url, headers=header, proxies=yeti_config.get('proxy'))
 
             if response.ok:
                 return response.json()
             else:
                 return None
         except Exception as e:
-            print("Exception while getting ip report {}".format(e.message))
+            logging.error("Exception while getting ip report {}".format(e.message))
             return None
 
     @staticmethod

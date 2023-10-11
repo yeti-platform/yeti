@@ -1,6 +1,7 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
 import datetime
 import json
+import logging
 import sys
 import time
 from typing import TYPE_CHECKING, Any, Iterable, List, Tuple, Type, TypeVar
@@ -47,11 +48,11 @@ class ArangoDatabase:
         database: str = None,
     ):
 
-        host = host or yeti_config.arangodb.host
-        port = port or yeti_config.arangodb.port
-        username = username or yeti_config.arangodb.username
-        password = password or yeti_config.arangodb.password
-        database = database or yeti_config.arangodb.database
+        host = host or yeti_config.get('arangodb', 'host')
+        port = port or yeti_config.get('arangodb', 'port')
+        username = username or yeti_config.get('arangodb', 'username')
+        password = password or yeti_config.get('arangodb', 'password')
+        database = database or yeti_config.get('arangodb', 'database')
 
         host_string = f"http://{host}:{port}"
         client = ArangoClient(hosts=host_string)
@@ -62,11 +63,11 @@ class ArangoDatabase:
                 yeti_db = sys_db.has_database(database)
                 break
             except requests.exceptions.ConnectionError as e:
-                print("Connection error: {0:s}".format(str(e)))
-                print("Retrying in 5 seconds...")
+                logging.error("Connection error: {0:s}".format(str(e)))
+                logging.error("Retrying in 5 seconds...")
                 time.sleep(5)
         else:
-            print("Could not connect, bailing.")
+            logging.error("Could not connect, bailing.")
             sys.exit(1)
 
         if not yeti_db:
@@ -820,7 +821,6 @@ def tagged_observables_export(cls, args):
         FILTER COUNT(INTERSECTION(tagnames, @exclude)) == 0
         RETURN MERGE(o, {tags: tags})
         """
-    print(aql)
     documents = db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
     results = []
     for doc in documents:

@@ -17,28 +17,28 @@ from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 # Data Schema
 class ObservableType(str, Enum):
-    ipv4 = "ipv4"
-    ipv6 = "ipv6"
-    hostname = "hostname"
-    url = "url"
-    observable = "observable"
-    guess = "guess"
+    asn = "asn"
+    bitcoin_wallet = "bitcoin_wallet"
+    certificate = "certificate"
+    cidr = "cidr"
+    command_line = "command_line"
     email = "email"
     file = "file"
-    sha256 = "sha256"
-    sha1 = "sha1"
-    md5 = "md5"
-    asn = "asn"
-    cidr = "cidr"
-    certificate = "certificate"
-    bitcoin_wallet = "bitcoin_wallet"
-    path = "path"
-    mac_address = "mac_address"
-    command_line = "command_line"
-    registry_key = "registry_key"
+    guess = "guess"
+    hostname = "hostname"
     imphash = "imphash"
-    tlsh = "tlsh"
+    ipv4 = "ipv4"
+    ipv6 = "ipv6"
+    mac_address = "mac_address"
+    md5 = "md5"
+    observable = "observable"
+    path = "path"
+    registry_key = "registry_key"
+    sha1 = "sha1"
+    sha256 = "sha256"
     ssdeep = "ssdeep"
+    tlsh = "tlsh"
+    url = "url"
 
 
 class Observable(BaseModel, database_arango.ObservableYetiConnector):
@@ -189,16 +189,19 @@ REGEXES_OBSERVABLES = {
 
 def validate_observable(obs: Observable) -> bool:
     if obs.type in TYPE_VALIDATOR_MAP:
-        return TYPE_VALIDATOR_MAP[obs.type](obs.value)
+        return TYPE_VALIDATOR_MAP[obs.type](obs.value) is True
     elif obs.type in dict(REGEXES_OBSERVABLES):
-        return dict(REGEXES_OBSERVABLES)[obs.type].match(obs.value)
+        for regex in REGEXES_OBSERVABLES[obs.type]:
+            if regex.match(obs.value):
+                return True
+        return False
     else:
         return False
 
 
 def find_type(value: str) -> ObservableType | None:
-    for obs_type in TYPE_VALIDATOR_MAP:
-        if TYPE_VALIDATOR_MAP[obs_type](value):
+    for obs_type, validator in TYPE_VALIDATOR_MAP.items():
+        if validator(value):
             return obs_type
     for obs_type, regexes in REGEXES_OBSERVABLES.items():
         for regex in regexes:
@@ -208,27 +211,6 @@ def find_type(value: str) -> ObservableType | None:
 
 
 TYPE_MAPPING = {
-    "ip": Observable,
-    "hostname": Observable,
-    "url": Observable,
-    "observables": Observable,
-    "observable": Observable,
-    "file": Observable,
-    "sha256": Observable,
-    "sha1": Observable,
-    "md5": Observable,
-    "asn": Observable,
-    "cidr": Observable,
-    "email": Observable,
-    "command_line": Observable,
-    "bitcoin_wallet": Observable,
-    "certificate": Observable,
-    "imphash": Observable,
-    "ipv4": Observable,
-    "ipv6": Observable,
-    "mac_adress": Observable,
-    "path": Observable,
-    "registry_key": Observable,
-    "ssdeep": Observable,
-    "tlsh": Observable,
+    'observable': Observable,
+    'observables': Observable
 }

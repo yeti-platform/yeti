@@ -96,7 +96,7 @@ class UrlScanIoApi(object):
         params = {"q": types[observable.type].format(observable.value)}
         try:
             response = requests.get(
-                UrlScanIoApi.API_URL, params=params, proxies=yeti_config.proxy
+                UrlScanIoApi.API_URL, params=params, proxies=yeti_config.get('proxy')
             )
             if not response.ok:
                 raise GenericYetiError("Status code: ".format(response.status_code))

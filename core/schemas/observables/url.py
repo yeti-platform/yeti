@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class Url(Observable):
+
+class Url(observable.Observable):
     value: str
-    type: Literal["url"] = ObservableType.url
+    type: Literal[observable.ObservableType.url] = observable.ObservableType.url
+
+
+observable.TYPE_MAPPING[observable.ObservableType.url] = Url

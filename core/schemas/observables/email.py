@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class Email(Observable):
+
+class Email(observable.Observable):
     value: str
-    type: Literal["email"] = ObservableType.email
+    type: Literal[observable.ObservableType.email] = observable.ObservableType.email
+
+
+observable.TYPE_MAPPING[observable.ObservableType.email] = Email

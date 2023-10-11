@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class SHA256(Observable):
+
+class SHA256(observable.Observable):
     value: str
-    type: Literal["sha256"] = ObservableType.sha256
+    type: Literal[observable.ObservableType.sha256] = observable.ObservableType.sha256
+
+
+observable.TYPE_MAPPING[observable.ObservableType.sha256] = SHA256

@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class MD5(Observable):
+
+class MD5(observable.Observable):
     value: str
-    type: Literal["md5"] = ObservableType.md5
+    type: Literal[observable.ObservableType.md5] = observable.ObservableType.md5
+
+
+observable.TYPE_MAPPING[observable.ObservableType.md5] = MD5
