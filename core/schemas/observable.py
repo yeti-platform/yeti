@@ -10,9 +10,7 @@ from pydantic import BaseModel, Field
 
 from core import database_arango
 from core.helpers import now, refang
-from core.schemas.entity import Entity
 from core.schemas.graph import TagRelationship
-from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 
 # Data Schema
