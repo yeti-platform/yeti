@@ -32,7 +32,7 @@ class VirustotalApi(object):
             base_url = "https://www.virustotal.com/api/v3"
             url = base_url + endpoint
             header = {"x-apikey": yeti_config.get("virustotal", "api_key")}
-            response = requests.get(url, headers=header, proxies=yeti_config.proxy)
+            response = requests.get(url, headers=header, proxies=yeti_config.get('proxy'))
 
             if response.ok:
                 return response.json()

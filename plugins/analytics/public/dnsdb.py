@@ -55,7 +55,7 @@ class DNSDBApi(object):
 
         url = f"{DNSDBApi.API_URL}/{type}/{obs_type}/{observable.value}"
 
-        r = requests.get(url, headers=headers, proxies=yeti_config.proxy)
+        r = requests.get(url, headers=headers, proxies=yeti_config.get('proxy'))
 
         if r.status_code == 200:
             records = []

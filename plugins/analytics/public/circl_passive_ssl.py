@@ -29,7 +29,7 @@ class CirclPassiveSSLApi:
                 "User-Agent": "Yeti Analytics Worker",
                 "accept": "application/json",
             },
-            proxies=yeti_config.proxy,
+            proxies=yeti_config.get('proxy'),
         )
 
         if r.status_code == 200:
@@ -49,7 +49,7 @@ class CirclPassiveSSLApi:
                 "User-Agent": "Yeti Analytics Worker",
                 "accept": "application/json",
             },
-            proxies=yeti_config.proxy,
+            proxies=yeti_config.get('proxy'),
         )
 
         if r.status_code == 200:

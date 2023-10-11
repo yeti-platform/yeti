@@ -74,7 +74,7 @@ class PassiveTotalApi(object):
         )
 
         response = requests.get(
-            url, auth=auth, params=params, proxies=yeti_config.proxy
+            url, auth=auth, params=params, proxies=yeti_config.get('proxy')
         )
         response.raise_for_status()
 

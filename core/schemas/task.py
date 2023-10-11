@@ -133,7 +133,7 @@ class FeedTask(Task):
             url,
             headers=headers,
             auth=auth,
-            proxies=yeti_config.proxy,
+            proxies=yeti_config.get('proxy'),
             params=params,
             data=data,
             verify=verify,

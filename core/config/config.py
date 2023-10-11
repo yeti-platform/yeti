@@ -55,8 +55,10 @@ class Config:
             return var
         return None
 
-    def get(self, section, key, default=None):
-        """Gets a setting from the config file."""
+    def get(self, section, key=None, default=None):
+        """Gets a setting from the config file."""\
+        if key is None:
+            return getattr(self, section)
         if hasattr(self, section) and key in self[section]:
             return self[section][key]
         else:
