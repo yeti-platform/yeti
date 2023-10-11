@@ -2,7 +2,7 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
