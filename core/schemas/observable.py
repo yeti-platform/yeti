@@ -210,4 +210,7 @@ def find_type(value: str) -> ObservableType | None:
     return None
 
 
-TYPE_MAPPING = {}
+TYPE_MAPPING = {
+    'observable': Observable,
+    'observables': Observable
+}
