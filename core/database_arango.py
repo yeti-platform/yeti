@@ -78,7 +78,7 @@ class ArangoDatabase:
             self.graph("tags"),
             {
                 "edge_collection": "tagged",
-                "from_vertex_collections": ["observables"],
+                "from_vertex_collections": ["observables", "entities", "indicators"],
                 "to_vertex_collections": ["tags"],
             },
         )
