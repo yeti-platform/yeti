@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class Path(Observable):
+
+class Path(observable.Observable):
     value: str
-    type: Literal["path"] = ObservableType.path
+    type: Literal[observable.ObservableType.path] = observable.ObservableType.path
+
+
+observable.TYPE_MAPPING[observable.ObservableType.path] = Path

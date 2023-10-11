@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class IPv6(Observable):
+
+class IPv6(observable.Observable):
     value: str
-    type: ObservableType = ObservableType.ipv6
+    type: Literal[observable.ObservableType.ipv6] = observable.ObservableType.ipv6
+
+
+observable.TYPE_MAPPING[observable.ObservableType.ipv6] = IPv6

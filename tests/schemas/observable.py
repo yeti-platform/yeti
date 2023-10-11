@@ -1,15 +1,13 @@
-import datetime
+import unittest
 
 from core import database_arango
-from core.schemas.observable import Observable
-from core.schemas.observables import hostname, ipv4
 from core.schemas.graph import Relationship
-
-import unittest
-from core.schemas.observables.file import File
-from core.schemas.observables.url import Url
-
-from core.web import webapp
+from core.schemas.observable import Observable
+from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
+                                      command_line, email, file, hostname,
+                                      imphash, ipv4, ipv6, mac_address, md5,
+                                      path, registry_key, sha1, sha256, ssdeep,
+                                      tlsh, url)
 
 
 class ObservableTest(unittest.TestCase):
@@ -41,19 +39,6 @@ class ObservableTest(unittest.TestCase):
         assert observable is not None
         self.assertIsNotNone(observable)
         self.assertEqual(observable.value, "toto.com")
-
-    def test_file(self):
-        file = File(value="test.txt")
-        file.save()
-
-    def test_file_update(self):
-        file = File(value="test.txt")
-        file.md5 = "1234567890"
-        file.save()
-
-    def test_url(self):
-        url = Url(value="https://www.google.com")
-        url.save()
 
     def test_observable_filter(self):
         obs1 = hostname.Hostname(value="test1.com").save()
@@ -200,3 +185,147 @@ class ObservableTest(unittest.TestCase):
         obs1 = hostname.Hostname(value="tomchop.me").save()
         obs2 = hostname.Hostname(value="tomchop.me").save()
         self.assertEqual(obs1.id, obs2.id)
+
+    def test_create_asn(self) -> None:
+        """Tests creating an ASN."""
+        observable = asn.ASN(value="AS123").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "AS123")
+        self.assertIsInstance(observable, asn.ASN)
+
+    def test_create_bitcoin_wallet(self) -> None:
+        """Tests creating a Bitcoin wallet."""
+        observable = bitcoin_wallet.BitcoinWallet(value="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+        self.assertIsInstance(observable, bitcoin_wallet.BitcoinWallet)
+
+    def test_create_certificate(self) -> None:
+        """Tests creating a certificate."""
+        observable = certificate.Certificate.from_data(b'1234').save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "CERT:03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4")
+        self.assertIsInstance(observable, certificate.Certificate)
+
+    def test_create_cidr(self) -> None:
+        """Tests creating a CIDR."""
+        observable = cidr.CIDR(value="0.0.0.0/0").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "0.0.0.0/0")
+        self.assertIsInstance(observable, cidr.CIDR)
+
+    def test_create_command_line(self) -> None:
+        """Tests creating a command line."""
+        observable = command_line.CommandLine(value="ls -la").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "ls -la")
+        self.assertIsInstance(observable, command_line.CommandLine)
+
+    def test_create_email(self) -> None:
+        """Tests creating an email."""
+        observable = email.Email(value="example@gmail.com").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "example@gmail.com")
+        self.assertIsInstance(observable, email.Email)
+
+    def test_create_file(self) -> None:
+        """Tests creating a file."""
+        observable = file.File(value="FILE:HASH").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "FILE:HASH")
+        self.assertIsInstance(observable, file.File)
+
+    def test_create_hostname(self) -> None:
+        """Tests creating a hostname."""
+        observable = hostname.Hostname(value="tomchop.me").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "tomchop.me")
+        self.assertIsInstance(observable, hostname.Hostname)
+
+    def test_create_imphash(self) -> None:
+        """Tests creating an imphash."""
+        observable = imphash.Imphash(value="1234567890").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1234567890")
+        self.assertIsInstance(observable, imphash.Imphash)
+
+    def test_create_ipv4(self) -> None:
+        """Tests creating an IPv4."""
+        observable = ipv4.IPv4(value="127.0.0.1").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "127.0.0.1")
+        self.assertIsInstance(observable, ipv4.IPv4)
+
+    def test_create_ipv6(self) -> None:
+        """Tests creating an IPv6."""
+        observable = ipv6.IPv6(value="::1").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "::1")
+        self.assertIsInstance(observable, ipv6.IPv6)
+
+    def test_create_mac_address(self) -> None:
+        """Tests creating a MAC address."""
+        observable = mac_address.MacAddress(value="00:00:00:00:00:00").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "00:00:00:00:00:00")
+        self.assertIsInstance(observable, mac_address.MacAddress)
+
+    def test_create_md5(self) -> None:
+        """Tests creating an MD5."""
+        observable = md5.MD5(value="1234567890").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1234567890")
+        self.assertIsInstance(observable, md5.MD5)
+
+    def test_create_path(self) -> None:
+        """Tests creating a path."""
+        observable = path.Path(value="/var/test").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "/var/test")
+        self.assertIsInstance(observable, path.Path)
+
+    def test_create_registry_key(self) -> None:
+        """Tests creating a registry key."""
+        observable = registry_key.RegistryKey(
+            key="Microsoft\\Windows\\CurrentVersion\\Run",
+            value="persist",
+            data=b"cmd.exe",
+            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software).save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "persist")
+        self.assertIsInstance(observable, registry_key.RegistryKey)
+
+    def test_create_sha1(self) -> None:
+        """Tests creating a SHA1."""
+        observable = sha1.SHA1(value="1234567890").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1234567890")
+        self.assertIsInstance(observable, sha1.SHA1)
+
+    def test_create_sha256(self) -> None:
+        """Tests creating a SHA256."""
+        observable = sha256.SHA256(value="1234567890").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1234567890")
+        self.assertIsInstance(observable, sha256.SHA256)
+
+    def test_create_ssdeep(self) -> None:
+        """Tests creating an ssdeep."""
+        observable = ssdeep.SsdeepHash(value="1234567890").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1234567890")
+        self.assertIsInstance(observable, ssdeep.SsdeepHash)
+
+    def test_create_tlsh(self) -> None:
+        """Tests creating a TLSH."""
+        observable = tlsh.TLSH(value="1234567890").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1234567890")
+        self.assertIsInstance(observable, tlsh.TLSH)
+
+    def test_create_url(self) -> None:
+        """Tests creating a URL."""
+        observable = url.Url(value="https://www.google.com").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "https://www.google.com")
+        self.assertIsInstance(observable, url.Url)
