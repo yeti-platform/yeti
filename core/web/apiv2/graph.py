@@ -4,8 +4,7 @@ from typing import Type
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from core.schemas import entity, observable, indicator, tag
-from core.schemas import graph
+from core.schemas import entity, graph, indicator, observable, tag
 
 GRAPH_TYPE_MAPPINGS = (
     {}
@@ -16,15 +15,12 @@ GRAPH_TYPE_MAPPINGS.update(indicator.TYPE_MAPPING)
 
 
 # Requequest schemas
-
-
 class GraphDirection(str, Enum):
     outbound = "outbound"
     inbound = "inbound"
     any = "any"
 
 
-# TODO: #761 Add Pagination to GraphSearchRequest
 class GraphSearchRequest(BaseModel):
     source: str
     link_types: list[str] = []
