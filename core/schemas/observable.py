@@ -2,17 +2,18 @@
 
 import datetime
 import unicodedata
+import re
 from enum import Enum
-from typing import Literal, Optional, ClassVar
+from typing import ClassVar, Literal, Optional
 
-from pydantic import BaseModel, Field
 import validators
+from pydantic import BaseModel, Field
+
 from core import database_arango
-from core.helpers import refang
+from core.helpers import now, refang
 from core.schemas.entity import Entity
-from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 from core.schemas.graph import TagRelationship
-from core.helpers import now
+from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 
 # Data Schema
@@ -190,7 +191,13 @@ TYPE_VALIDATOR_MAP = {
     ObservableType.email: validators.email,
 }
 
-REGEXES_OBSERVABLES = {}
+REGEXES_OBSERVABLES = {
+    # Unix
+    ObservableType.path : [
+        re.compile(r"^(\/[^\/\0]+)+$"),
+        re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+")
+    ]
+}
 
 
 def validate_observable(obs: Observable) -> bool:
@@ -206,9 +213,10 @@ def find_type(value: str) -> ObservableType | None:
     for obs_type in TYPE_VALIDATOR_MAP:
         if TYPE_VALIDATOR_MAP[obs_type](value):
             return obs_type
-    for type_obs, regex in REGEXES_OBSERVABLES.items():
-        if regex.match(value):
-            return type_obs
+    for obs_type, regexes in REGEXES_OBSERVABLES.items():
+        for regex in regexes:
+            if regex.match(value):
+                return obs_type
     return None
 
 

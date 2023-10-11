@@ -69,6 +69,7 @@ app = Celery(
         "plugins.feeds.public.sslblacklist_ip",
         "plugins.feeds.public.threatfox",
         "plugins.feeds.public.threatview_c2",
+        "plugins.feeds.public.timesketch",
         "plugins.feeds.public.tor_exit_nodes",
         "plugins.feeds.public.urlhaus",
         "plugins.feeds.public.viriback_tracker",

@@ -143,3 +143,8 @@ api_key=
 
 [malshare]
 api_key=
+
+[timesketch]
+endpoint =
+username =
+password =

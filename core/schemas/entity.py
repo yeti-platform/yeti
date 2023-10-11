@@ -21,6 +21,7 @@ class EntityType(str, Enum):
     company = "company"
     phone = "phone"
     note = "note"
+    investigation = "investigation"
 
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
@@ -115,6 +116,12 @@ class Identity(Entity):
     sectors: list[str] = []
     contact_information: str = ""
 
+class Investigation(Entity):
+    _type_filter: ClassVar[str] = EntityType.investigation
+    type: Literal["investigation"] = EntityType.investigation
+
+    reference: str = ""
+
 
 TYPE_MAPPING: dict[str, "EntityClasses"] = {
     "threat-actor": ThreatActor,
@@ -125,10 +132,12 @@ TYPE_MAPPING: dict[str, "EntityClasses"] = {
     "campaign": Campaign,
     "entities": Entity,
     "entity": Entity,
+    "identity": Identity,
     "company": Company,
     "phone": Phone,
     "note": Note,
     "identity": Identity,
+    "investigation": Investigation,
 }
 REGEXES_ENTITIES = {
     EntityType.exploit: re.compile(
@@ -152,6 +161,7 @@ EntityTypes = (
     | Company
     | Phone
     | Note
+    | Investigation
 )
 EntityClasses = (
     Type[ThreatActor]
@@ -164,4 +174,5 @@ EntityClasses = (
     | Type[Company]
     | Type[Phone]
     | Type[Note]
+    | Type[Investigation]
 )
