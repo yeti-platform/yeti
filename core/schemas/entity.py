@@ -132,6 +132,7 @@ TYPE_MAPPING: dict[str, "EntityClasses"] = {
     "campaign": Campaign,
     "entities": Entity,
     "entity": Entity,
+    "identity": Identity,
     "company": Company,
     "phone": Phone,
     "note": Note,
