@@ -10,7 +10,7 @@ from core.web import webapp
 client = TestClient(webapp.app)
 
 
-class ObservableTest(unittest.TestCase):
+class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.entity1 = entity.ThreatActor(name="ta1").save()

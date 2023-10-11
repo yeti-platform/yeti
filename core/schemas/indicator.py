@@ -6,10 +6,7 @@ from typing import ClassVar, Literal, Type
 from pydantic import BaseModel, Field, PrivateAttr, field_validator
 
 from core import database_arango
-
-
-def now():
-    return datetime.datetime.now(datetime.timezone.utc)
+from core.helpers import now
 
 
 def future():
@@ -25,6 +22,7 @@ class IndicatorType(str, Enum):
     regex = "regex"
     yara = "yara"
     sigma = "sigma"
+    query = "query"
 
 
 class IndicatorMatch(BaseModel):
@@ -56,6 +54,7 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
     location: str
     diamond: DiamondModel
     kill_chain_phases: list[str] = []
+    relevant_tags: list[str] = []
 
     @classmethod
     def load(cls, object: dict):
@@ -102,6 +101,25 @@ class Regex(Indicator):
         return None
 
 
+class QueryType(str, Enum):
+    opensearch = "opensearch"
+    osquery = "osquery"
+    sql = "sql"
+    splunk = "splunk"
+
+
+class Query(Indicator):
+    """Represents a query that can be sent to another system."""
+    _type_filter: ClassVar[str] = IndicatorType.query
+    type: Literal["query"] = IndicatorType.query
+
+    query_type: QueryType
+    target_systems: list[str] = []
+
+    def match(self, value: str) -> IndicatorMatch | None:
+        return None
+
+
 class Yara(Indicator):
     """Represents a Yara rule.
 
@@ -132,9 +150,10 @@ TYPE_MAPPING = {
     "regex": Regex,
     "yara": Yara,
     "sigma": Sigma,
+    "query": Query,
     "indicator": Indicator,
     "indicators": Indicator,
 }
 
-IndicatorTypes = Regex | Yara | Sigma
-IndicatorClasses = Type[Regex] | Type[Yara] | Type[Sigma]
+IndicatorTypes = Regex | Yara | Sigma | Query
+IndicatorClasses = Type[Regex] | Type[Yara] | Type[Sigma] | Type[Query]

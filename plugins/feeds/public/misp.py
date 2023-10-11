@@ -7,6 +7,7 @@ from core.config.config import yeti_config
 from core.schemas import observable
 from core.schemas import task
 from core import taskmanager
+import unicodedata
 
 
 class MispFeed(task.FeedTask):
@@ -49,7 +50,6 @@ class MispFeed(task.FeedTask):
         return instances
 
     def get_organisations(self, instance: dict):
-
         misp_client = PyMISP(url=instance["url"], key=instance["key"])
 
         if not misp_client:
@@ -85,8 +85,7 @@ class MispFeed(task.FeedTask):
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
 
-    def get_event(self, instance, from_date, to_date=None):
-
+    def get_event(self, instance: dict, from_date: str, to_date: str = None):
         misp_client = PyMISP(url=instance["url"], key=instance["key"])
         from_date = from_date.strftime("%Y-%m-%d")
         if to_date:
@@ -107,7 +106,7 @@ class MispFeed(task.FeedTask):
             else:
                 self.get_all_events(instance)
 
-    def analyze(self, event, instance):
+    def analyze(self, event: dict, instance: dict):
         tags = []
         galaxies_to_context = []
 
@@ -141,13 +140,15 @@ class MispFeed(task.FeedTask):
                         tags.append(tag["name"])
 
         for attribute in event["Attribute"]:
-            self.__add_attribute(instance, attribute, context, tags)
+            self._add_attribute(instance, attribute, context, tags)
 
         for obj in event["Object"]:
             for attribute in obj["Attribute"]:
-                self.__add_attribute(instance, attribute, context, tags)
+                self._add_attribute(instance, attribute, context, tags)
 
-    def __add_attribute(self, instance, attribute, context, tags):
+    def _add_attribute(
+        self, instance: dict, attribute: dict, context: dict, tags: list
+    ):
         if attribute["category"] == "External analysis":
             return
 
@@ -161,7 +162,7 @@ class MispFeed(task.FeedTask):
             context["comment"] = attribute["comment"]
 
             obs = observable.Observable.add_text(attribute["value"])
-
+            self._add_tag(obs, instance, attribute)
             if attribute["category"]:
                 tags.append(attribute["category"])
 
@@ -170,8 +171,7 @@ class MispFeed(task.FeedTask):
 
             obs.add_context(instance["name"], context)
 
-    def decompose_weeks(self, start_day, last_day):
-
+    def decompose_weeks(self, start_day: datetime, last_day: datetime):
         # Génère la liste de tuples
         weeks = []
         current_start = start_day
@@ -184,6 +184,13 @@ class MispFeed(task.FeedTask):
             current_start += timedelta(days=7)  # Passe à la période de 7 jours suivante
         logging.debug(f"Decomposed weeks: {weeks}")
         return weeks
+
+    def _add_tag(self, obs: observable.Observable, instance: dict, attribute: dict):
+        instance_name = instance["name"].lower()
+        nfkd_form = unicodedata.normalize("NFKD", instance_name)
+        instance_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+        tag = f"{instance_name}:{attribute['event_id']}"
+        obs.tag(tag)
 
 
 taskmanager.TaskManager.register_task(MispFeed)
