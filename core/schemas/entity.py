@@ -45,30 +45,30 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
 
 
 class Note(Entity):
-    type: Literal["note"] = EntityType.note
+    type: Literal[EntityType.note] = EntityType.note
     _type_filter: ClassVar[str] = EntityType.note
 
 
 class Phone(Entity):
     _type_filter: ClassVar[str] = EntityType.phone
-    type: Literal["phone"] = EntityType.phone
+    type: Literal[EntityType.phone] = EntityType.phone
 
 
 class Company(Entity):
-    type: Literal["company"] = EntityType.company
+    type: Literal[EntityType.company] = EntityType.company
     _type_filter: ClassVar[str] = EntityType.company
 
 
 class ThreatActor(Entity):
     _type_filter: ClassVar[str] = EntityType.threat_actor
-    type: Literal["threat-actor"] = EntityType.threat_actor
+    type: Literal[EntityType.threat_actor] = EntityType.threat_actor
 
     aliases: list[str] = []
 
 
 class IntrusionSet(Entity):
     _type_filter: ClassVar[str] = EntityType.intrusion_set
-    type: Literal["intrusion-set"] = EntityType.intrusion_set
+    type: Literal[EntityType.intrusion_set] = EntityType.intrusion_set
 
     aliases: list[str] = []
     first_seen: datetime.datetime = Field(default_factory=now)
@@ -77,7 +77,7 @@ class IntrusionSet(Entity):
 
 class Tool(Entity):
     _type_filter: ClassVar[str] = EntityType.tool
-    type: Literal["tool"] = EntityType.tool
+    type: Literal[EntityType.tool] = EntityType.tool
 
     kill_chain_phases: list[str] = []
     tool_version: str = ""
@@ -85,14 +85,14 @@ class Tool(Entity):
 
 class AttackPattern(Entity):
     _type_filter: ClassVar[str] = EntityType.attack_pattern
-    type: Literal["attack-pattern"] = EntityType.attack_pattern
+    type: Literal[EntityType.attack_pattern] = EntityType.attack_pattern
 
     kill_chain_phases: list[str] = []
 
 
 class Malware(Entity):
     _type_filter: ClassVar[str] = EntityType.malware
-    type: Literal["malware"] = EntityType.malware
+    type: Literal[EntityType.malware] = EntityType.malware
 
     kill_chain_phases: list[str] = []
     aliases: list[str] = []
@@ -101,7 +101,7 @@ class Malware(Entity):
 
 class Campaign(Entity):
     _type_filter: ClassVar[str] = EntityType.campaign
-    type: Literal["campaign"] = EntityType.campaign
+    type: Literal[EntityType.campaign] = EntityType.campaign
 
     aliases: list[str] = []
     first_seen: datetime.datetime = Field(default_factory=now)
@@ -110,46 +110,44 @@ class Campaign(Entity):
 
 class Identity(Entity):
     _type_filter: ClassVar[str] = EntityType.identity
-    type: Literal["identity"] = EntityType.identity
+    type: Literal[EntityType.identity] = EntityType.identity
 
     identity_class: list[str] = []
     sectors: list[str] = []
     contact_information: str = ""
 
+
 class Investigation(Entity):
     _type_filter: ClassVar[str] = EntityType.investigation
-    type: Literal["investigation"] = EntityType.investigation
+    type: Literal[EntityType.investigation] = EntityType.investigation
 
     reference: str = ""
 
 
-TYPE_MAPPING: dict[str, "EntityClasses"] = {
-    "threat-actor": ThreatActor,
-    "intrusion-set": IntrusionSet,
-    "tool": Tool,
-    "attack-pattern": AttackPattern,
-    "malware": Malware,
-    "campaign": Campaign,
-    "entities": Entity,
-    "entity": Entity,
-    "identity": Identity,
-    "company": Company,
-    "phone": Phone,
-    "note": Note,
-    "identity": Identity,
-    "investigation": Investigation,
+TYPE_MAPPING = {
+    'entities': Entity,
+    'entity': Entity,
+    EntityType.threat_actor: ThreatActor,
+    EntityType.intrusion_set: IntrusionSet,
+    EntityType.tool: Tool,
+    EntityType.attack_pattern: AttackPattern,
+    EntityType.malware: Malware,
+    EntityType.campaign: Campaign,
+    EntityType.company: Company,
+    EntityType.phone: Phone,
+    EntityType.note: Note,
+    EntityType.identity: Identity,
+    EntityType.investigation: Investigation,
 }
+
+
 REGEXES_ENTITIES = {
     EntityType.exploit: re.compile(
         r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"
     )
 }
-REGEXES_ENTITIES = [
-    (
-        EntityType.exploit,
-        re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"),
-    ),
-]
+
+
 EntityTypes = (
     ThreatActor
     | IntrusionSet
@@ -163,6 +161,8 @@ EntityTypes = (
     | Note
     | Investigation
 )
+
+
 EntityClasses = (
     Type[ThreatActor]
     | Type[IntrusionSet]
