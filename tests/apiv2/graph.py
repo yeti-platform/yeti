@@ -1,14 +1,12 @@
-import datetime
 import unittest
 
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas.entity import ThreatActor
 from core.schemas.graph import Relationship
 from core.schemas.indicator import Regex
-from core.schemas.observables import ipv4, hostname, url
+from core.schemas.observables import hostname, ipv4, url
 from core.web import webapp
 
 client = TestClient(webapp.app)
