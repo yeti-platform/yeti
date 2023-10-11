@@ -15,7 +15,7 @@ class SystemConfig(BaseModel):
     arangodb: dict
     redis: dict
     proxy: dict
-    logging: dict
+    system: dict
 
 
 @router.get("/config")
@@ -26,6 +26,6 @@ async def get_config() -> SystemConfig:
         arangodb=yeti_config.arangodb,
         redis=yeti_config.redis,
         proxy=yeti_config.proxy,
-        logging=yeti_config.logging,
+        system=yeti_config.system,
     )
     return config

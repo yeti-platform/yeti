@@ -4,7 +4,8 @@
 ## Basic system settings
 ##
 
-export_root =
+export_root = /var/opt/yeti
+logging = /var/log/yeti_user_activity.log
 
 [auth]
 
@@ -13,14 +14,6 @@ export_root =
 ##
 
 # module = local
-
-##
-## If you specify module = apache, you can set the environment
-## variable from which the username can be retrieved (defaults to
-## REMOTE_USER).
-##
-
-# apache_variable = REMOTE_USER
 
 # to get a stronger value run:
 # openssl rand -hex 32
@@ -37,7 +30,7 @@ enabled = False
 ## Value must be in seconds (7776000 seconds is 90 days).
 ##
 
-# default_tag_expiration = 7776000
+default_tag_expiration = 7776000
 
 [arangodb]
 
@@ -47,11 +40,11 @@ enabled = False
 ## If you do not specify a username and password, there will be no authentication.
 ##
 
-# host = 127.0.0.1
-# port = 8529
-# username = yeti
-# password = STRONG_PASSWORD
-# database = yeti
+host = arangodb
+port = 8529
+username = yeti
+password =
+database = yeti
 
 [redis]
 
@@ -60,10 +53,10 @@ enabled = False
 ## All settings are optional, with default values being the one in the comment.
 ##
 
-# host = 127.0.0.1
-# port = 6379
-# database = 0
-# tls = ok
+host = redis
+port = 6379
+database = 0
+tls = ok
 
 [misp]
 
@@ -90,17 +83,10 @@ enabled = False
 
 [proxy]
 
-# http = socks5://user:pass@host:port
-# https = socks5://user:pass@host:port
+# Format proxies like socks5://user:pass@host:port
 
-[maxmind]
-
-# path = /full/path/to/GeoLite2-City.mmdb
-
-[tldextract]
-# comma separated list of tlds, WITHOUT dots, example: bit,tor2web,pw
-# extra_suffixes =
-# suffix_list_urls =
+http =
+https =
 
 [github]
 # Generate token: https://github.com/settings/tokens
@@ -110,17 +96,17 @@ enabled = False
 # token =
 
 [otx]
-# key = YourOTXKey
-# pages = 1
+key = YourOTXKey
+pages = 1
 
 [abuseIPDB]
-# key = YourKey
+key = YourKey
 
 [phishtank]
-# key=
+key=
 
 [vt]
-# key=
+key=
 
 [passivedns]
 login=
