@@ -5,7 +5,7 @@ from typing import Optional
 from core import database_arango
 from core.schemas.observable import Observable
 from core.schemas.observables import ipv4, hostname, url
-from core.schemas.entity import ThreatActor, Malware
+from core.schemas.entity import ThreatActor, Malware, Investigation
 from core.schemas.tag import Tag
 from core.schemas.indicator import Regex, DiamondModel, Query, QueryType
 from core.schemas.template import Template
@@ -59,6 +59,11 @@ class TagTest(unittest.TestCase):
             query_type=QueryType.opensearch,
             target_systems=['timesketch', 'plaso'],
             relevant_tags=['ssh', 'login']).save()
+
+        i = Investigation(
+            name='coin mining case',
+            reference='http://timesketch-server/sketch/12345',
+            relevant_tags=['coin', 'mining']).save()
         template = Template(name="RandomTemplate", template="<blah></blah>").save()
         export = ExportTask(
             name="RandomExport",
