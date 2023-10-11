@@ -1,10 +1,12 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
-from typing import Literal, ClassVar
+from typing import Literal
+
+from core.schemas import observable
 
 
-class ASN(Observable):
+class ASN(observable.Observable):
     value: str
-    type: Literal["asn"] = ObservableType.asn
+    type: Literal[observable.ObservableType.asn] = observable.ObservableType.asn
     country: str | None = None
     description: str | None = None
+
+observable.TYPE_MAPPING[observable.ObservableType.asn] = ASN

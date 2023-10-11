@@ -1,7 +1,11 @@
-from core.schemas.observable import Observable, ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class SsdeepHash(Observable):
+
+class SsdeepHash(observable.Observable):
     value: str
-    type: Literal["ssdeep"] = ObservableType.ssdeep
+    type: Literal[observable.ObservableType.ssdeep] = observable.ObservableType.ssdeep
+
+
+observable.TYPE_MAPPING[observable.ObservableType.ssdeep] = SsdeepHash

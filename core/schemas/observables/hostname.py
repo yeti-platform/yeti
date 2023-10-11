@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class Hostname(Observable):
+
+class Hostname(observable.Observable):
     value: str
-    type: Literal["hostname"] = ObservableType.hostname
+    type: Literal[observable.ObservableType.hostname] = observable.ObservableType.hostname
+
+
+observable.TYPE_MAPPING[observable.ObservableType.hostname] = Hostname

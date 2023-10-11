@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class MacAddress(Observable):
+
+class MacAddress(observable.Observable):
     value: str
-    type: Literal["macaddress"] = ObservableType.mac_address
+    type: Literal[observable.ObservableType.mac_address] = observable.ObservableType.mac_address
+
+
+observable.TYPE_MAPPING[observable.ObservableType.mac_address] = MacAddress

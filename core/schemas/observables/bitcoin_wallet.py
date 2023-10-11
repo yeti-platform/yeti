@@ -1,8 +1,11 @@
-from core.schemas.observable import Observable
-from core.schemas.observable import ObservableType
 from typing import Literal
 
+from core.schemas import observable
 
-class BitcoinWallet(Observable):
+
+class BitcoinWallet(observable.Observable):
     value: str
-    type: Literal["bitcoin-wallet"] = ObservableType.bitcoin_wallet
+    type: Literal[observable.ObservableType.bitcoin_wallet] = observable.ObservableType.bitcoin_wallet
+
+
+observable.TYPE_MAPPING[observable.ObservableType.bitcoin_wallet] = BitcoinWallet
