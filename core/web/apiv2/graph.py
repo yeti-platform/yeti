@@ -4,8 +4,8 @@ from typing import Type
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from core.schemas import entity, observable, indicator
-from core.schemas.graph import Relationship
+from core.schemas import entity, observable, indicator, tag
+from core.schemas import graph
 
 GRAPH_TYPE_MAPPINGS = (
     {}
@@ -30,6 +30,7 @@ class GraphSearchRequest(BaseModel):
     link_types: list[str] = []
     target_types: list[str] = []
     hops: int
+    graph: str
     direction: GraphDirection
     include_original: bool
     count: int = 50
@@ -44,8 +45,8 @@ class GraphAddRequest(BaseModel):
 
 
 class GraphSearchResponse(BaseModel):
-    vertices: dict[str, observable.Observable | entity.Entity | indicator.Indicator]
-    edges: list[Relationship]
+    vertices: dict[str, observable.Observable | entity.Entity | indicator.Indicator | tag.Tag]
+    edges: list[graph.Relationship | graph.TagRelationship]
     total: int
 
 
@@ -71,6 +72,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         target_types=request.target_types,
         direction=request.direction,
         include_original=request.include_original,
+        graph=request.graph,
         hops=request.hops,
         count=request.count,
         offset=request.page,
@@ -79,7 +81,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
 
 
 @router.post("/add")
-async def add(request: GraphAddRequest) -> Relationship:
+async def add(request: GraphAddRequest) -> graph.Relationship:
     """Adds a link to the graph."""
     source_type, source_id = request.source.split("/")
     target_type, target_id = request.target.split("/")
@@ -113,7 +115,7 @@ async def add(request: GraphAddRequest) -> Relationship:
 @router.delete("/{relationship_id}")
 async def delete(relationship_id: str) -> None:
     """Deletes a link from the graph."""
-    relationship = Relationship.get(relationship_id)
+    relationship = graph.Relationship.get(relationship_id)
     if relationship is None:
         raise HTTPException(
             status_code=404, detail=f"Relationship {relationship_id} not found"
@@ -129,8 +131,8 @@ class AnalysisRequest(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
-    entities: list[tuple[Relationship, entity.Entity]]
-    observables: list[tuple[Relationship, observable.Observable]]
+    entities: list[tuple[graph.Relationship, entity.Entity]]
+    observables: list[tuple[graph.Relationship, observable.Observable]]
     known: list[observable.Observable]
     matches: list[tuple[str, indicator.Indicator]]  # IndicatorMatch?
     unknown: set[str]
@@ -140,8 +142,8 @@ class AnalysisResponse(BaseModel):
 async def match(request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
-    entities = []  # type: list[tuple[Relationship, entity.Entity]]
-    observables = []  # type: list[tuple[Relationship, observable.Observable]]
+    entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]
+    observables = []  # type: list[tuple[graph.Relationship, observable.Observable]]
 
     unknown = set(request.observables)
     known = {}  # type: dict[str, observable.Observable]
