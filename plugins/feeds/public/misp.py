@@ -190,7 +190,7 @@ class MispFeed(task.FeedTask):
         nfkd_form = unicodedata.normalize("NFKD", instance_name)
         instance_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
         tag = f"{instance_name}:{attribute['event_id']}"
-        obs.tag(tag)
+        obs.tag(tag,normalize=False)
 
 
 taskmanager.TaskManager.register_task(MispFeed)
