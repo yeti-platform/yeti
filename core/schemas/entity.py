@@ -45,39 +45,6 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
 
-    def tag(self, tags: list[str],strict: bool = False,normalize: bool = False) -> "Entity":
-        extra_tags = set()
-        for tag_name in tags:
-            if normalize:
-                nfkd_form = unicodedata.normalize("NFKD", tag_name)
-                tag_normalized = "".join(
-                    [c for c in nfkd_form if not unicodedata.combining(c)]
-                )
-            else:
-                tag_normalized = tag_name
-
-            replacements, _ = Tag.filter({"in__replaces": [tag_normalized]}, count=1)
-            tag: Optional[Tag] = None
-
-            if replacements:
-                tag = replacements[0]
-            # Attempt to find actual tag
-            else:
-                tag = Tag.find(name=tag_name)
-            # Create tag
-            if not tag:
-                tag = Tag(name=tag_name).save()
-            
-            tag_link = self.observable_tag(tag.name)
-            self.tags[tag.name] = tag_link
-            extra_tags |= set(tag.produces)
-
-            extra_tags -= set(tags)
-            if extra_tags:
-                self.tag(list(extra_tags))
-
-        return self
-        
 class Note(Entity):
     type: Literal[EntityType.note] = EntityType.note
     _type_filter: ClassVar[str] = EntityType.note

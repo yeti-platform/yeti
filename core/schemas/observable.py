@@ -3,7 +3,7 @@
 import datetime
 import re
 from enum import Enum
-from typing import ClassVar, Literal, Optional
+from typing import ClassVar, Literal
 
 import validators
 from pydantic import BaseModel, Field
@@ -88,45 +88,6 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
         if tags:
             observable = observable.tag(tags)
         return observable
-
-    def tag(
-        self, tags: list[str], strict: bool = False, expiration_days: int | None = None
-    ) -> "Observable":
-        """Connects observable to tag graph."""
-        expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
-
-        if strict:
-            self.observable_clear_tags()
-
-        extra_tags = set()
-        for tag_name in tags:
-            # Attempt to find replacement tag
-            replacements, _ = Tag.filter({"in__replaces": [tag_name]}, count=1)
-            tag: Optional[Tag] = None
-
-            if replacements:
-                tag = replacements[0]
-            # Attempt to find actual tag
-            else:
-                tag = Tag.find(name=tag_name)
-            # Create tag
-            if not tag:
-                tag = Tag(name=tag_name).save()
-
-            tag_link = self.observable_tag(tag.name)
-            self.tags[tag.name] = tag_link
-
-            extra_tags |= set(tag.produces)
-
-            relevant_entities, _ = Entity.filter(args={"relevant_tags": [tag.name]})
-            for entity in relevant_entities:
-                self.link_to(entity, "tags", "Tagged")
-
-        extra_tags -= set(tags)
-        if extra_tags:
-            self.tag(list(extra_tags))
-
-        return self
 
     def add_context(
         self, source: str, context: dict, skip_compare: set = set()

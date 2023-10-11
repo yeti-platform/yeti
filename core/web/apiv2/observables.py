@@ -102,7 +102,7 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[Observable]:
 async def details(observable_id) -> Observable:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
-    observable.observable_get_tags()
+    observable.get_tags()
     if not observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     return observable

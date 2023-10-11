@@ -3,6 +3,7 @@ import unittest
 from core import database_arango
 from core.schemas.entity import Entity, Malware, ThreatActor, Tool
 from core.schemas.observables import hostname
+from core.schemas import tag
 
 
 class EntityTest(unittest.TestCase):
@@ -55,17 +56,28 @@ class EntityTest(unittest.TestCase):
         )
 
     def test_entity_with_tags(self):
-        entity = ThreatActor(name="APT0", relevant_tags=["tag1", "tag2"]).save()
+        entity = ThreatActor(name="APT0").save()
+        entity.tag(['tag1', 'tag2'])
         observable = hostname.Hostname(value="doman.com").save()
 
         observable.tag(["tag1"])
-        vertices, edges, count = observable.neighbors()
+        vertices, edges, count = observable.neighbors(
+            graph='tagged',
+            hops=2
+            )
 
-        self.assertEqual(len(vertices), 1)
+        new_tag = tag.Tag.find(name="tag1")
+
+        self.assertEqual(len(vertices), 2)
         self.assertEqual(
-            vertices[entity.extended_id].model_dump_json(), entity.model_dump_json()
+            vertices[entity.extended_id].extended_id, entity.extended_id
         )
-        self.assertEqual(count, 1)
+        self.assertEqual(edges[0].source, observable.extended_id)
+        self.assertEqual(edges[0].target, new_tag.extended_id)
+        self.assertEqual(edges[1].source, entity.extended_id)
+        self.assertEqual(edges[1].target, new_tag.extended_id)
+
+        self.assertEqual(count, 2)
 
     def test_duplicate_name(self):
         """Tests that saving an entity with an existing name will return the existing entity."""
