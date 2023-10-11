@@ -127,17 +127,17 @@ class Investigation(Entity):
 TYPE_MAPPING = {
     'entities': Entity,
     'entity': Entity,
-    EntityType.threat_actor: ThreatActor,
-    EntityType.intrusion_set: IntrusionSet,
-    EntityType.tool: Tool,
     EntityType.attack_pattern: AttackPattern,
-    EntityType.malware: Malware,
     EntityType.campaign: Campaign,
     EntityType.company: Company,
-    EntityType.phone: Phone,
-    EntityType.note: Note,
     EntityType.identity: Identity,
+    EntityType.intrusion_set: IntrusionSet,
     EntityType.investigation: Investigation,
+    EntityType.malware: Malware,
+    EntityType.note: Note,
+    EntityType.phone: Phone,
+    EntityType.threat_actor: ThreatActor,
+    EntityType.tool: Tool,
 }
 
 
