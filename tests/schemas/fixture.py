@@ -30,6 +30,7 @@ class TagTest(unittest.TestCase):
 
         ip_hacker = ipv4.IPv4(value="8.8.8.8").save()
         c2_hacker = hostname.Hostname(value="c2.hacker.com").save()
+        c2_hacker.tag(["hacker"])
         www_hacker = hostname.Hostname(value="www.hacker.com").save()
         hacker = hostname.Hostname(value="hacker.com").save()
         hacker.link_to(www_hacker, "domain", "Domain")
