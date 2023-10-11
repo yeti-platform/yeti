@@ -1,6 +1,7 @@
 # TODO Observable value normalization
 
 import datetime
+import unicodedata
 import re
 from enum import Enum
 from typing import ClassVar, Literal, Optional
@@ -90,7 +91,11 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
         return observable
 
     def tag(
-        self, tags: list[str], strict: bool = False, expiration_days: int | None = None
+        self,
+        tags: list[str],
+        strict: bool = False,
+        normalize: bool = True,
+        expiration_days: int | None = None,
     ) -> "Observable":
         """Connects observable to tag graph."""
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
@@ -101,17 +106,25 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
         extra_tags = set()
         for tag_name in tags:
             # Attempt to find replacement tag
-            replacements, _ = Tag.filter({"in__replaces": [tag_name]}, count=1)
+            if normalize:
+                nfkd_form = unicodedata.normalize("NFKD", tag_name)
+                tag_normalized = "".join(
+                    [c for c in nfkd_form if not unicodedata.combining(c)]
+                )
+            else:
+                tag_normalized = tag_name
+
+            replacements, _ = Tag.filter({"in__replaces": [tag_normalized]}, count=1)
             tag: Optional[Tag] = None
 
             if replacements:
                 tag = replacements[0]
             # Attempt to find actual tag
             else:
-                tag = Tag.find(name=tag_name)
+                tag = Tag.find(name=tag_normalized)
             # Create tag
             if not tag:
-                tag = Tag(name=tag_name).save()
+                tag = Tag(name=tag_normalized).save()
 
             tag_link = self.observable_tag(tag.name)
             self.tags[tag.name] = tag_link

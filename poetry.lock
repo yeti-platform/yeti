@@ -1573,6 +1573,24 @@ url = ["pyfaup (>=1.2,<2.0)"]
 virustotal = ["validators (>=0.22.0,<0.23.0)"]
 
 [[package]]
+name = "pymispgalaxies"
+version = "0.4"
+description = "Python API for the MISP Galaxies."
+optional = false
+python-versions = "^3.8.1"
+files = []
+develop = false
+
+[package.dependencies]
+jsonschema = "^4.19.1"
+
+[package.source]
+type = "git"
+url = "https://github.com/MISP/PyMISPGalaxies.git"
+reference = "HEAD"
+resolved_reference = "1773a1d112adc49d9b83074db5a7dff2bf146ba6"
+
+[[package]]
 name = "python-arango"
 version = "7.7.0"
 description = "Python Driver for ArangoDB"
@@ -2263,4 +2281,5 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "5e9d430887e4febe4322978966b00d13de1b6f880dd4ce3bbc5144127ef8de06"
+content-hash = "8e76a2a07e2b29558ed5cc8ba527abdaedf76896ccf3f13a49a24ec69099130e"
+
