@@ -13,7 +13,7 @@ logging = /var/log/yeti_user_activity.log
 ## Use these settings to configure Yeti authentication.
 ##
 
-# module = local
+module = local
 
 # to get a stronger value run:
 # openssl rand -hex 32
