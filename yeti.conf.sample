@@ -17,10 +17,10 @@ module = local
 
 # to get a stronger value run:
 # openssl rand -hex 32
-SECRET_KEY = SECRET
-ALGORITHM = HS256
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-enabled = False
+# SECRET_KEY = SECRET
+# ALGORITHM = HS256
+# ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# enabled = False
 
 [tag]
 
@@ -30,7 +30,7 @@ enabled = False
 ## Value must be in seconds (7776000 seconds is 90 days).
 ##
 
-default_tag_expiration = 7776000
+# default_tag_expiration = 7776000
 
 [arangodb]
 
@@ -40,11 +40,11 @@ default_tag_expiration = 7776000
 ## If you do not specify a username and password, there will be no authentication.
 ##
 
-host = arangodb
-port = 8529
-username = yeti
-password =
-database = yeti
+# host = arangodb
+# port = 8529
+# username = root
+# password =
+# database = yeti_dev
 
 [redis]
 
@@ -53,10 +53,10 @@ database = yeti
 ## All settings are optional, with default values being the one in the comment.
 ##
 
-host = redis
-port = 6379
-database = 0
-tls = ok
+# host = redis
+# port = 6379
+# database = 0
+# tls = ok
 
 [misp]
 
