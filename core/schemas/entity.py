@@ -10,18 +10,18 @@ from core.helpers import now
 
 
 class EntityType(str, Enum):
-    threat_actor = "threat-actor"
-    intrusion_set = "intrusion-set"
-    tool = "tool"
-    malware = "malware"
-    campaign = "campaign"
     attack_pattern = "attack-pattern"
-    identity = "identity"
-    exploit = "exploit"
+    campaign = "campaign"
     company = "company"
-    phone = "phone"
-    note = "note"
+    exploit = "exploit"
+    identity = "identity"
+    intrusion_set = "intrusion-set"
     investigation = "investigation"
+    malware = "malware"
+    note = "note"
+    phone = "phone"
+    threat_actor = "threat-actor"
+    tool = "tool"
 
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
@@ -149,30 +149,30 @@ REGEXES_ENTITIES = {
 
 
 EntityTypes = (
-    ThreatActor
-    | IntrusionSet
-    | Tool
-    | Malware
+    AttackPattern
     | Campaign
-    | AttackPattern
-    | Identity
     | Company
-    | Phone
-    | Note
+    | Identity
+    | IntrusionSet
     | Investigation
+    | Malware
+    | Note
+    | Phone
+    | ThreatActor
+    | Tool
 )
 
 
 EntityClasses = (
-    Type[ThreatActor]
-    | Type[IntrusionSet]
-    | Type[Tool]
-    | Type[Malware]
+    Type[AttackPattern]
     | Type[Campaign]
-    | Type[AttackPattern]
-    | Type[Identity]
     | Type[Company]
-    | Type[Phone]
-    | Type[Note]
+    | Type[Identity]
+    | Type[IntrusionSet]
     | Type[Investigation]
+    | Type[Malware]
+    | Type[Note]
+    | Type[Phone]
+    | Type[ThreatActor]
+    | Type[Tool]
 )
