@@ -2,21 +2,27 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 
 from core.schemas import entity
 
 
 # Request schemas
 class NewEntityRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     entity: entity.EntityTypes
 
 
 class PatchEntityRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     entity: entity.EntityTypes
 
 
 class EntitySearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     name: str | None = None
     type: entity.EntityType | None = None
     count: int = 50
@@ -24,6 +30,8 @@ class EntitySearchRequest(BaseModel):
 
 
 class EntitySearchResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     entities: list[entity.EntityTypes]
     total: int
 

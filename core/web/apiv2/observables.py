@@ -2,7 +2,7 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
@@ -10,21 +10,29 @@ from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 # Request schemas
 class NewObservableRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     value: str
     tags: list[str] = []
     type: ObservableType
 
 
 class NewBulkObservableAddRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     observables: list[NewObservableRequest]
 
 
 class AddTextRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     text: str
     tags: list[str] = []
 
 
 class AddContextRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     source: str
     context: dict
     skip_compare: set = set()
@@ -35,6 +43,8 @@ class DeleteContextRequest(AddContextRequest):
 
 
 class ObservableSearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     value: str | None = None
     # name: str | None = None
     type: ObservableType | None = None
@@ -44,11 +54,15 @@ class ObservableSearchRequest(BaseModel):
 
 
 class ObservableSearchResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     observables: list[Observable]
     total: int
 
 
 class ObservableTagRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     ids: list[str]
     tags: list[str]
     strict: bool = False

@@ -1,19 +1,23 @@
 from enum import Enum
 
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict
 
-from core.schemas.user import UserSensitive, User
+from core.schemas.user import User, UserSensitive
 from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
 
 class SearchUserRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     username: str
     count: int = 50
     page: int = 0
 
 
 class SearchUserResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     users: list[User]
     total: int
 
@@ -24,20 +28,28 @@ class ToggleableField(str, Enum):
 
 
 class ToggleUserRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     user_id: str
     field: ToggleableField
 
 
 class ResetApiKeyRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     user_id: str
 
 
 class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     user_id: str
     new_password: str
 
 
 class NewUserRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     username: str
     password: str
     admin: bool
@@ -50,7 +62,7 @@ router = APIRouter()
 @router.get("/{user_id}")
 async def get(user_id: str) -> User:
     """Gets a user by ID."""
-    user = User.get(user_id)
+    user = UserSensitive.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"user {user_id} not found")
     return user
@@ -60,7 +72,7 @@ async def get(user_id: str) -> User:
 async def search(request: SearchUserRequest) -> SearchUserResponse:
     """Searches for users."""
     request_args = request.model_dump(exclude={"count", "page"})
-    users, total = User.filter(request_args, offset=request.page, count=request.count)
+    users, total = UserSensitive.filter(request_args, offset=request.page, count=request.count)
     return SearchUserResponse(users=users, total=total)
 
 
@@ -75,7 +87,7 @@ async def toggle(
             status_code=400, detail=f"cannot toggle own user ({current_user.username})"
         )
 
-    user = User.get(request.user_id)
+    user = UserSensitive.get(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user {user_id} not found")
     if request.field == ToggleableField.admin:
@@ -95,7 +107,7 @@ async def reset_api_key(
             status_code=401, detail="cannot reset API keys for other users"
         )
 
-    user = User.get(request.user_id)
+    user = UserSensitive.get(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user {user_id} not found")
 
@@ -129,7 +141,7 @@ async def delete(
     current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
 ) -> None:
     """Deletes a user from the database."""
-    user = User.get(user_id)
+    user = UserSensitive.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"user {user_id} not found")
     user.delete()

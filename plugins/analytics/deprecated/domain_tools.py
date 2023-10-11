@@ -299,6 +299,4 @@ class DTWhois(OneShotAnalytics, DomainToolsApi):
             else:
                 observable.save()
 
-            print(links)
-
         return links
