@@ -5,9 +5,9 @@ from typing import Optional
 from core import database_arango
 from core.schemas.observable import Observable
 from core.schemas.observables import ipv4, hostname, url
-from core.schemas.entity import ThreatActor
+from core.schemas.entity import ThreatActor, Malware
 from core.schemas.tag import Tag
-from core.schemas.indicator import Regex, DiamondModel
+from core.schemas.indicator import Regex, DiamondModel, Query, QueryType
 from core.schemas.template import Template
 from core.schemas.task import ExportTask
 from core.schemas.user import UserSensitive
@@ -43,12 +43,22 @@ class TagTest(unittest.TestCase):
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
         sus_hacker.tag(["web", "hacker", "hacker_sus"])
         regex = Regex(
-            name="Hacker regex",
-            pattern="^hacker.*",
-            location="network",
+            name="hex",
+            pattern="/tmp/[0-9a-f]",
+            location="bodyfile",
             diamond=DiamondModel.capability,
         ).save()
+        mal = Malware(name='xmrig', relevant_tags=['xmrig']).save()
+        mal.link_to(regex, "indicates", "Usual name for dropped binary")
 
+        q = Query(
+            name="ssh succesful logins",
+            location="syslogs",
+            diamond=DiamondModel.capability,
+            pattern='(reporter:"sshd" AND Accepted)',
+            query_type=QueryType.opensearch,
+            target_systems=['timesketch', 'plaso'],
+            relevant_tags=['ssh', 'login']).save()
         template = Template(name="RandomTemplate", template="<blah></blah>").save()
         export = ExportTask(
             name="RandomExport",
