@@ -19,7 +19,7 @@ class ShodanApi(object):
 
     def fetch(observable: Observable):
         try:
-            return shodan.Shodan(yeti_config["shodan"]["api_key"]).host(
+            return shodan.Shodan(yeti_config.get("shodan", "api_key")).host(
                 observable.value
             )
         except shodan.APIError as e:

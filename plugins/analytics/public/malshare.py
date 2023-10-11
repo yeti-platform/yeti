@@ -27,7 +27,7 @@ class MalshareAPI(object):
         try:
             params = {
                 "hash": observable.value,
-                "api_key": yeti_config["malshare"]["api_key"],
+                "api_key": yeti_config.get("malshare", "api_key"),
                 "action": "details",
             }
             response = requests.get("https://malshare.com/api.php", params=params)

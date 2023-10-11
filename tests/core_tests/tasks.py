@@ -213,7 +213,7 @@ class ExportTaskTest(unittest.TestCase):
     @mock.patch("core.schemas.template.Template.render")
     def test_run_export_task_with_config_path(self, mock_render):
         """Tests that the each function is called for each filtered observable."""
-        previous = yeti_config.system.export_path
+        previous = yeti_config.get('system', 'export_path')
         yeti_config.system.export_path = "/tmp"
         taskmanager.TaskManager.run_task("RandomExport", TaskParams())
         task = ExportTask.find(name="RandomExport")

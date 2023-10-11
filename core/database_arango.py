@@ -47,11 +47,11 @@ class ArangoDatabase:
         database: str = None,
     ):
 
-        host = host or yeti_config.arangodb.host
-        port = port or yeti_config.arangodb.port
-        username = username or yeti_config.arangodb.username
-        password = password or yeti_config.arangodb.password
-        database = database or yeti_config.arangodb.database
+        host = host or yeti_config.get('arangodb', 'host')
+        port = port or yeti_config.get('arangodb', 'port')
+        username = username or yeti_config.get('arangodb', 'username')
+        password = password or yeti_config.get('arangodb', 'password')
+        database = database or yeti_config.get('arangodb', 'database')
 
         host_string = f"http://{host}:{port}"
         client = ArangoClient(hosts=host_string)

@@ -45,7 +45,7 @@ class DNSDBApi(object):
     def lookup(type, observable: Observable):
         headers = {
             "accept": "application/json",
-            "X-Api-Key": yeti_config["dnsdb"]["api_key"],
+            "X-Api-Key": yeti_config.get("dnsdb", "api_key"),
         }
 
         if observable.type == ObservableType.hostname:

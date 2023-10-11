@@ -20,4 +20,4 @@ class userTest(unittest.TestCase):
         self.assertIn("arangodb", data)
         self.assertIn("redis", data)
         self.assertIn("proxy", data)
-        self.assertIn("logging", data)
+        self.assertIn("system", data)

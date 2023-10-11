@@ -69,8 +69,8 @@ class PassiveTotalApi(object):
     def get(uri, params={}):
         url = PassiveTotalApi.API_URL + uri
         auth = (
-            yeti_config["passivetotal"]["username"],
-            yeti_config["passivetotal"]["api_key"],
+            yeti_config.get("passivetotal", "username"),
+            yeti_config.get("passivetotal", "api_key"),
         )
 
         response = requests.get(
@@ -101,7 +101,7 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
             context["first_seen"] = first_seen
             context["last_seen"] = last_seen
             context["resolve"] = record["resolve"]
-            try: 
+            try:
                 new = Observable.add_text(record["resolve"]).save()
             except ValueError:
                 logging.error(f"Could not add text observable for {record}")

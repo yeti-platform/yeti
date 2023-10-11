@@ -245,7 +245,7 @@ class ExportTask(Task):
     @property
     def output_file(self) -> str:
         """Returns the output file for the export."""
-        base_path = yeti_config.system.export_path or ""
+        base_path = yeti_config.get('system', 'export_path', "")
         return os.path.abspath(os.path.join(base_path, self.output_dir, self.name))
 
     def run(self) -> None:

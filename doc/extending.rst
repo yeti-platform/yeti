@@ -112,11 +112,11 @@ How to extract iocs/observables from text::
 
   from core.observables import Observable
   observables = Observable.from_string(text)
-  
+
 How to access config data::
-  
+
   from core.config.config import yeti_config
-  example: yeti_config.redis.host
+  example: yeti_config.get('redis', 'host')
 
 Extend web api
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -137,16 +137,16 @@ How to check if all **services** running correctly
 * Service state should be **running** not loaded::
 
   "systemctl status yeti_*"
-  
+
 Logging
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 All the logging by default can be found in **/var/log/syslog**::
 
   tail -f /var/log/syslog
-  
+
 You can modify some of the systemd services to change **Celery** logging to file, if you need that::
-  
+
   -f PATH_TO_LOGFILE
 
 Pushing into production
