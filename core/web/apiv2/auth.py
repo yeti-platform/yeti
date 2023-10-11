@@ -10,11 +10,11 @@ from core.config.config import yeti_config
 from core.schemas.user import User, UserSensitive
 
 ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
-    minutes=yeti_config.auth["access_token_expire_minutes"]
+    minutes=yeti_config.get('auth', "access_token_expire_minutes")
 )
-SECRET_KEY = yeti_config.auth["secret_key"]
-ALGORITHM = yeti_config.auth["algorithm"]
-YETI_AUTH = yeti_config.auth["enabled"]
+SECRET_KEY = yeti_config.get('auth', "secret_key")
+ALGORITHM = yeti_config.get('auth', "algorithm")
+YETI_AUTH = yeti_config.get('auth', "enabled")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v2/auth/token", auto_error=False)
 cookie_scheme = APIKeyCookie(name="yeti_session", auto_error=False)

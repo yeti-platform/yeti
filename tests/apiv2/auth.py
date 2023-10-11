@@ -7,7 +7,7 @@ from core.schemas.user import UserSensitive
 from core.web import webapp
 from core.config.config import yeti_config
 
-SKIP_TESTS = not yeti_config.auth["enabled"]
+SKIP_TESTS = not yeti_config.get("auth", "enabled")
 
 client = TestClient(webapp.app)
 

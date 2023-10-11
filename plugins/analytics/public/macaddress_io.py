@@ -17,7 +17,7 @@ class MacAddressIoApi(object):
 
     @staticmethod
     def get(mac_address):
-        api_client = ApiClient(yeti_config["macaddressio"]["api_key"])
+        api_client = ApiClient(yeti_config.get("macaddressio", "api_key"))
 
         try:
             response = api_client.get_raw_data(mac_address, "json")

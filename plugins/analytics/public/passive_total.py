@@ -59,7 +59,7 @@ def whois_links(observable: Observable, whois):
                     ns_obs = hostname.Hostname(value=ns).save()
                     observable.link_to(ns_obs, "NS record", "PassiveTotal")
                 except Exception as e:
-                    print(e.with_traceback())
+                    logging.error(e.with_traceback())
 
 
 class PassiveTotalApi(object):
@@ -69,12 +69,12 @@ class PassiveTotalApi(object):
     def get(uri, params={}):
         url = PassiveTotalApi.API_URL + uri
         auth = (
-            yeti_config["passivetotal"]["username"],
-            yeti_config["passivetotal"]["api_key"],
+            yeti_config.get("passivetotal", "username"),
+            yeti_config.get("passivetotal", "api_key"),
         )
 
         response = requests.get(
-            url, auth=auth, params=params, proxies=yeti_config.proxy
+            url, auth=auth, params=params, proxies=yeti_config.get('proxy')
         )
         response.raise_for_status()
 
@@ -101,7 +101,7 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
             context["first_seen"] = first_seen
             context["last_seen"] = last_seen
             context["resolve"] = record["resolve"]
-            try: 
+            try:
                 new = Observable.add_text(record["resolve"]).save()
             except ValueError:
                 logging.error(f"Could not add text observable for {record}")

@@ -23,7 +23,7 @@ class CirclPDNSApi(object):
             API_URL + observable.value,
             auth=auth,
             headers=headers,
-            proxies=yeti_config.proxy,
+            proxies=yeti_config.get('proxy'),
         )
         if r.status_code == 200:
             for l in filter(None, r.text.split("\n")):
