@@ -1,13 +1,15 @@
 import datetime
 import re
 from enum import Enum
-from typing import ClassVar, Literal, Type
+from typing import ClassVar, Literal, Optional, Type
+import unicodedata
 
 from pydantic import BaseModel, Field
 
 from core import database_arango
 from core.helpers import now
-
+from core.schemas.graph import TagRelationship
+from core.schemas.tag import Tag
 
 class EntityType(str, Enum):
     attack_pattern = "attack-pattern"
@@ -35,14 +37,13 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
     description: str = ""
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
-    relevant_tags: list[str] = []
+    tags: dict[str, TagRelationship] = {}
 
     @classmethod
     def load(cls, object: dict) -> "EntityTypes":
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
-
 
 class Note(Entity):
     type: Literal[EntityType.note] = EntityType.note
