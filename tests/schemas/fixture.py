@@ -1,18 +1,12 @@
-import datetime
-
-from typing import Optional
+import unittest
 
 from core import database_arango
-from core.schemas.observable import Observable
-from core.schemas.observables import ipv4, hostname, url
-from core.schemas.entity import ThreatActor, Malware, Investigation
-from core.schemas.tag import Tag
-from core.schemas.indicator import Regex, DiamondModel, Query, QueryType
-from core.schemas.template import Template
+from core.schemas.entity import Investigation, Malware, ThreatActor
+from core.schemas.indicator import DiamondModel, Query, QueryType, Regex
+from core.schemas.observables import hostname, ipv4
 from core.schemas.task import ExportTask
+from core.schemas.template import Template
 from core.schemas.user import UserSensitive
-
-import unittest
 
 
 class TagTest(unittest.TestCase):
@@ -30,27 +24,30 @@ class TagTest(unittest.TestCase):
 
         ip_hacker = ipv4.IPv4(value="8.8.8.8").save()
         c2_hacker = hostname.Hostname(value="c2.hacker.com").save()
-        c2_hacker.tag(["hacker"])
         www_hacker = hostname.Hostname(value="www.hacker.com").save()
         hacker = hostname.Hostname(value="hacker.com").save()
+        sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
+
         hacker.link_to(www_hacker, "domain", "Domain")
         hacker.link_to(c2_hacker, "domain", "Domain")
         hacker.link_to(ip_hacker, "ip", "IP")
+
+        c2_hacker.tag(["hacker", "web"])
         hacker.tag(["hacker"])
+        www_hacker.tag(["web", "hacker"])
+        sus_hacker.tag(["web", "hacker", "hacker_sus"])
+
         ta = ThreatActor(name="HackerActor").save()
         ta.tag(["hacker"])
         ta.link_to(hacker, "c2", "C2 infrastructure")
-        www_hacker.tag(["web", "hacker"])
-        c2_hacker.tag(["web", "hacker"])
-        sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
-        sus_hacker.tag(["web", "hacker", "hacker_sus"])
+
         regex = Regex(
             name="hex",
             pattern="/tmp/[0-9a-f]",
             location="bodyfile",
             diamond=DiamondModel.capability,
         ).save()
-        mal = Malware(name='xmrig', relevant_tags=['xmrig']).save()
+        mal = Malware(name='xmrig').save()
         mal.link_to(regex, "indicates", "Usual name for dropped binary")
 
         q = Query(
@@ -61,7 +58,6 @@ class TagTest(unittest.TestCase):
             query_type=QueryType.opensearch,
             target_systems=['timesketch', 'plaso'],
             relevant_tags=['ssh', 'login']).save()
-
         i = Investigation(
             name='coin mining case',
             reference='http://timesketch-server/sketch/12345',
