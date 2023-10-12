@@ -1,16 +1,16 @@
-import logging
 import datetime
 import json
+import logging
+import traceback
+from typing import Type
 
 from celery import Celery
-from core.schemas.task import Task, TaskStatus, TaskParams
-from typing import Type
-import traceback
-
+from core.config.config import yeti_config
+from core.schemas.task import Task, TaskParams, TaskStatus
 
 app = Celery(
     "tasks",
-    broker="redis://redis/",
+    broker=f"redis://{yeti_config.get('redis', 'host')}/",
     imports=(
         # TESTING ONLY
         "plugins.analytics.public.malshare",
