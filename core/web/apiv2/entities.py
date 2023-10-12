@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
 from core.schemas import entity
-
+from core.schemas import graph
 
 # Request schemas
 class NewEntityRequest(BaseModel):
@@ -34,6 +34,21 @@ class EntitySearchResponse(BaseModel):
 
     entities: list[entity.EntityTypes]
     total: int
+
+
+class EntityTagRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    ids: list[str]
+    tags: list[str]
+    strict: bool = False
+
+
+class EntityTagResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    tagged: int
+    tags: dict[str, dict[str, graph.TagRelationship]]
 
 
 # API endpoints
@@ -66,6 +81,7 @@ async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
 async def details(entity_id) -> entity.EntityTypes:
     """Returns details about an observable."""
     db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
+    db_entity.get_tags()
     if not db_entity:
         raise HTTPException(status_code=404, detail="entity not found")
     return db_entity
@@ -81,3 +97,22 @@ async def search(request: EntitySearchRequest) -> EntitySearchResponse:
         request_args, offset=request.page * request.count, count=request.count
     )
     return EntitySearchResponse(entities=entities, total=total)
+
+@router.post("/tag")
+async def tag(request: EntityTagRequest) -> EntityTagResponse:
+    """Tags entities."""
+    entities = []
+    for entity_id in request.ids:
+        db_entity = entity.Entity.get(entity_id)
+        if not db_entity:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Tagging request contained an unknown entity: ID:{entity_id}")
+        entities.append(db_entity)
+
+    entity_tags = {}
+    for db_entity in entities:
+        db_entity.tag(request.tags, strict=request.strict)
+        entity_tags[db_entity.extended_id] = db_entity.tags
+
+    return EntityTagResponse(tagged=len(entities), tags=entity_tags)

@@ -1,13 +1,10 @@
-from core import database_arango
-import datetime
-
-from fastapi.testclient import TestClient
 import unittest
 
-from core.schemas.observable import Observable
+from fastapi.testclient import TestClient
+
+from core import database_arango
 from core.schemas.observables import hostname
 from core.web import webapp
-
 
 client = TestClient(webapp.app)
 
@@ -152,19 +149,21 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertIsNotNone(data["id"])
         self.assertEqual(response.status_code, 200)
+        observable_id = data["id"]
 
         response = client.post(
             f"/api/v2/observables/tag",
-            json={"ids": [data["id"]], "tags": ["tag1", "tag2"]},
+            json={"ids": [observable_id], "tags": ["tag1", "tag2"]},
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["tagged"], 1)
-        self.assertEqual(len(data["tags"]), 2)
-        self.assertEqual(data["tags"][0]["name"], "tag1")
-        self.assertIsNotNone(data["tags"][0]["id"])
-        self.assertEqual(data["tags"][1]["name"], "tag2")
-        self.assertIsNotNone(data["tags"][1]["id"])
+        self.assertEqual(data["tagged"], 1, data)
+        tag_relationships = data["tags"][f'observables/{observable_id}']
+        self.assertEqual(len(tag_relationships), 2, data)
+        self.assertIn("tag1", tag_relationships)
+        self.assertEquals(tag_relationships["tag1"]["source"], f'observables/{observable_id}')
+        self.assertIn("tag2", tag_relationships)
+        self.assertEquals(tag_relationships["tag2"]["source"], f'observables/{observable_id}')
 
         response = client.post(
             f"/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0}

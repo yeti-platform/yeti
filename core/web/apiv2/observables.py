@@ -4,8 +4,8 @@ from typing import Iterable
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
+from core.schemas import graph
 from core.schemas.observable import Observable, ObservableType
-from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 
 # Request schemas
@@ -66,6 +66,12 @@ class ObservableTagRequest(BaseModel):
     ids: list[str]
     tags: list[str]
     strict: bool = False
+
+class ObservableTagResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    tagged: int
+    tags: dict[str, dict[str, graph.TagRelationship]]
 
 
 # API endpoints
@@ -179,7 +185,7 @@ async def add_text(request: AddTextRequest) -> Observable:
 
 
 @router.post("/tag")
-async def tag_observable(request: ObservableTagRequest) -> dict:
+async def tag_observable(request: ObservableTagRequest) -> ObservableTagResponse:
     """Tags a set of observables, individually or in bulk."""
     observables = []
     for observable_id in request.ids:
@@ -191,20 +197,9 @@ async def tag_observable(request: ObservableTagRequest) -> dict:
             )
         observables.append(observable)
 
+    observable_tags = {}
     for observable in observables:
         observable.tag(request.tags, strict=request.strict)
+        observable_tags[observable.extended_id] = observable.tags
 
-    db_tags = []
-    for tag in request.tags:
-        db_tag = Tag.find(name=tag)
-        if db_tag:
-            db_tag.count += 1
-        else:
-            db_tag = Tag(
-                name=tag,
-                created=datetime.datetime.now(datetime.timezone.utc),
-                default_expiration=datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS),
-            )
-        db_tag = db_tag.save()
-        db_tags.append(db_tag)
-    return {"tagged": len(observables), "tags": db_tags}
+    return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
