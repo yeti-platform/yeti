@@ -1,7 +1,6 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from core.schemas.template import Template
 from core.config.config import yeti_config
 
 # API endpoints
@@ -10,6 +9,7 @@ router = APIRouter()
 
 class SystemConfig(BaseModel):
     """System config template."""
+    model_config = ConfigDict(extra='forbid')
 
     auth: dict
     arangodb: dict

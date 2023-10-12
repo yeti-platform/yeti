@@ -30,15 +30,14 @@ class SimpleGraphTest(unittest.TestCase):
             "/api/v2/graph/search",
             json={
                 "source": self.observable1.extended_id,
-                "link_type": "resolves",
                 "hops": 1,
                 "graph": "links",
                 "direction": "any",
                 "include_original": False,
             },
         )
-        self.assertEqual(response.status_code, 200)
         data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["vertices"]), 1)
         neighbor = data["vertices"][self.observable2.extended_id]
         self.assertEqual(neighbor["value"], "127.0.0.1")
@@ -58,7 +57,6 @@ class SimpleGraphTest(unittest.TestCase):
             "/api/v2/graph/search",
             json={
                 "source": self.observable1.extended_id,
-                "link_type": "resolves",
                 "hops": 2,
                 "graph": "tagged",
                 "direction": "any",
@@ -81,7 +79,6 @@ class SimpleGraphTest(unittest.TestCase):
             "/api/v2/graph/search",
             json={
                 "source": self.observable2.extended_id,
-                "link_type": "resolves",
                 "hops": 1,
                 "graph": "links",
                 "direction": "any",
@@ -99,15 +96,14 @@ class SimpleGraphTest(unittest.TestCase):
             "/api/v2/graph/search",
             json={
                 "source": self.observable1.extended_id,
-                "link_type": "resolves",
                 "hops": 1,
                 "graph": "links",
                 "direction": "any",
                 "include_original": False,
             },
         )
-        self.assertEqual(response.status_code, 200)
         data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["vertices"]), 1)
         neighbor = data["vertices"][self.observable2.extended_id]
         self.assertEqual(neighbor["value"], "127.0.0.1")

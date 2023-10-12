@@ -1,24 +1,18 @@
-import datetime
 import os
-from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 
+from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
 from core import taskmanager
-from core.schemas.task import (
-    TYPE_MAPPING,
-    ExportTask,
-    Task,
-    TaskType,
-    TaskTypes,
-    TaskParams,
-)
 from core.schemas.template import Template
+
 
 # Request schemas
 class TaskSearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     name: str | None = None
     type: TaskType | None = None
     count: int = 50
@@ -26,15 +20,21 @@ class TaskSearchRequest(BaseModel):
 
 
 class TaskSearchResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     tasks: list[TaskTypes]
     total: int
 
 
 class NewExportRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     export: ExportTask
 
 
 class PatchExportRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     export: ExportTask
 
 
