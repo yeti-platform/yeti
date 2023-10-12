@@ -1,30 +1,36 @@
-import datetime
-from typing import Iterable
-
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse, FileResponse
-from pydantic import BaseModel, Field
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, ConfigDict
 
-from core.schemas.template import Template
 from core.schemas.observable import Observable
+from core.schemas.template import Template
+
 
 # Request schemas
 class TemplateSearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     name: str = ""
     count: int = 50
     page: int = 0
 
 
 class TemplateSearchResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     templates: list[Template]
     total: int
 
 
 class PatchTemplateRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     template: Template
 
 
 class RenderExportRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     template_id: str
     observable_ids: list[str] | None = None
     search_query: str | None = None

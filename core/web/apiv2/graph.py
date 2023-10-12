@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Type
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from core.schemas import entity, graph, indicator, observable, tag
 
@@ -22,6 +22,8 @@ class GraphDirection(str, Enum):
 
 
 class GraphSearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     source: str
     link_types: list[str] = []
     target_types: list[str] = []
@@ -34,6 +36,8 @@ class GraphSearchRequest(BaseModel):
 
 
 class GraphAddRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     source: str
     target: str
     link_type: str
@@ -41,6 +45,8 @@ class GraphAddRequest(BaseModel):
 
 
 class GraphSearchResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     vertices: dict[str, observable.Observable | entity.Entity | indicator.Indicator | tag.Tag]
     edges: list[graph.Relationship | graph.TagRelationship]
     total: int

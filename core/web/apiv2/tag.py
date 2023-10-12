@@ -2,13 +2,15 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
 
 
 # Request schemas
 class NewRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     name: str
     default_expiration_days: int = DEFAULT_EXPIRATION_DAYS
     produces: list[str] = []
@@ -16,10 +18,14 @@ class NewRequest(BaseModel):
 
 
 class UpdateRequest(NewRequest):
+    model_config = ConfigDict(extra='forbid')
+
     pass
 
 
 class TagSearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     name: str | None = None
     produces: list[str] = []
     replaces: list[str] = []
@@ -28,17 +34,23 @@ class TagSearchRequest(BaseModel):
 
 
 class TagSearchResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     tags: list[Tag]
     total: int
 
 
 class MergeTagRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     merge: list[str]
     merge_into: str
     permanent: bool = False
 
 
 class MergeTagResult(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     merged: int
     into: Tag
 

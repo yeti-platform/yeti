@@ -2,21 +2,27 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 
 from core.schemas import indicator
 
 
 # Request schemas
 class NewIndicatorRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     indicator: indicator.IndicatorTypes
 
 
 class PatchIndicatorRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     indicator: indicator.IndicatorTypes
 
 
 class IndicatorSearchRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     name: str | None = None
     type: indicator.IndicatorType | None = None
     count: int = 50
@@ -24,6 +30,8 @@ class IndicatorSearchRequest(BaseModel):
 
 
 class IndicatorSearchResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
     indicators: list[indicator.IndicatorTypes]
     total: int
 
