@@ -1,12 +1,14 @@
+import datetime
 import unittest
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas.entity import ThreatActor
 from core.schemas.graph import Relationship
 from core.schemas.indicator import Regex
-from core.schemas.observables import hostname, ipv4, url
+from core.schemas.observables import ipv4, hostname, url
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -31,7 +33,6 @@ class SimpleGraphTest(unittest.TestCase):
             json={
                 "source": self.observable1.extended_id,
                 "hops": 1,
-                "graph": "links",
                 "direction": "any",
                 "include_original": False,
             },
@@ -48,6 +49,7 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(edges[0]["source"], self.observable1.extended_id)
         self.assertEqual(edges[0]["target"], self.observable2.extended_id)
         self.assertEqual(edges[0]["type"], "resolves")
+
 
     def test_get_neighbors_tag(self):
         self.entity1.tag(['hacker1'])
@@ -80,7 +82,6 @@ class SimpleGraphTest(unittest.TestCase):
             json={
                 "source": self.observable2.extended_id,
                 "hops": 1,
-                "graph": "links",
                 "direction": "any",
                 "include_original": False,
             },
@@ -97,7 +98,6 @@ class SimpleGraphTest(unittest.TestCase):
             json={
                 "source": self.observable1.extended_id,
                 "hops": 1,
-                "graph": "links",
                 "direction": "any",
                 "include_original": False,
             },

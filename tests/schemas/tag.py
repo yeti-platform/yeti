@@ -30,7 +30,7 @@ class TagTest(unittest.TestCase):
         self.obs1.tag(["test"])
         obs = Observable.find(value="test1.com")
         assert obs is not None
-        tags = obs.get_tags()
+        tags = obs.observable_get_tags()
         self.assertEqual(len(tags), 1)
         tag_rel, tag_data = tags[0]
         self.assertEqual(tag_data.name, "test")
@@ -64,14 +64,14 @@ class TagTest(unittest.TestCase):
     def test_tag_expiration(self) -> None:
         """Test that a tag can be expired and it becomes fresh if tagged again."""
         self.obs1.tag(["test"])
-        self.obs1.expire_tag("test")
-        tags = self.obs1.get_tags()
+        self.obs1.observable_expire_tag("test")
+        tags = self.obs1.observable_get_tags()
         self.assertEqual(len(tags), 1)
         tag_relationship, _ = tags[0]
         self.assertEqual(tag_relationship.fresh, False)
 
         self.obs1.tag(["test"])
-        tags = self.obs1.get_tags()
+        tags = self.obs1.observable_get_tags()
         self.assertEqual(len(tags), 1)
         tag_relationship, _ = tags[0]
         self.assertEqual(tag_relationship.fresh, True)
@@ -79,15 +79,15 @@ class TagTest(unittest.TestCase):
     def test_clear_tags(self) -> None:
         """Test that tags can be cleared from an observable."""
         self.obs1.tag(["test"])
-        self.obs1.clear_tags()
-        tags = self.obs1.get_tags()
+        self.obs1.observable_clear_tags()
+        tags = self.obs1.observable_get_tags()
         self.assertEqual(len(tags), 0)
 
     def test_tag_strict(self) -> None:
         """Test that tags can be cleared from an observable."""
         self.obs1.tag(["test1", "test2", "test3"])
         self.obs1.tag(["test"], strict=True)
-        tags = self.obs1.get_tags()
+        tags = self.obs1.observable_get_tags()
         self.assertEqual(len(tags), 1)
 
     def test_tag_replaces(self) -> None:
@@ -98,7 +98,7 @@ class TagTest(unittest.TestCase):
         newtag = newtag.save()
 
         self.obs1.tag(["testst"])
-        tags = self.obs1.get_tags()
+        tags = self.obs1.observable_get_tags()
         self.assertEqual(len(tags), 1)
         tag_rel, tag_data = tags[0]
         self.assertEqual(tag_data.name, "test")
@@ -115,7 +115,7 @@ class TagTest(unittest.TestCase):
         Tag(name="test", produces=["test_extended"]).save()
 
         self.obs1.tag(["test"])
-        tags = self.obs1.get_tags()
+        tags = self.obs1.observable_get_tags()
         self.assertEqual(len(tags), 2)
         tag_names = [tag[1].name for tag in tags]
         self.assertEqual(sorted(tag_names), sorted(["test", "test_extended"]))
