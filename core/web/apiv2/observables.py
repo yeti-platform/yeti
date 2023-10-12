@@ -2,7 +2,7 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
@@ -102,7 +102,7 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[Observable]:
 async def details(observable_id) -> Observable:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
-    observable.get_tags()
+    observable.observable_get_tags()
     if not observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     return observable
