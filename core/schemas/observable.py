@@ -173,3 +173,11 @@ TYPE_MAPPING = {
     'observable': Observable,
     'observables': Observable
 }
+
+# Import all observable types, as these register themselves in the TYPE_MAPPING
+# disable: pylint=wrong-import-position
+from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
+                                      command_line, email, file, hostname,
+                                      imphash, ipv4, ipv6, mac_address, md5,
+                                      path, registry_key, sha1, sha256, ssdeep,
+                                      tlsh, url)
