@@ -4,7 +4,7 @@ from typing import Type
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
-from core.schemas import entity, observable, indicator
+from core.schemas import entity, observable, indicator,tag, graph
 from core.schemas.graph import Relationship
 
 GRAPH_TYPE_MAPPINGS = (
