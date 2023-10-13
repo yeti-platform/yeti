@@ -13,6 +13,7 @@ class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.entity1 = entity.ThreatActor(name="ta1").save()
+        self.entity1.tag(['ta1-tag'])
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -47,6 +48,20 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(data["entities"]), 1)
         self.assertEqual(data["entities"][0]["name"], "ta1")
         self.assertEqual(data["entities"][0]["type"], "threat-actor")
+
+        # Check tags
+        self.assertEqual(len(data["entities"][0]["tags"]), 1, data)
+        self.assertIn("ta1-tag", data["entities"][0]["tags"])
+
+    def test_new_entity_with_tag(self):
+        response = client.post(
+            "/api/v2/entities/",
+            json={"entity": {"name": "ta2", "type": "threat-actor"}, "tags": ["hacker"]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["name"], "ta2")
+        self.assertIn("hacker", data["tags"], data["tags"])
 
     def test_tag_entity(self):
         """Tests that an entity gets tagged and tags are generated."""

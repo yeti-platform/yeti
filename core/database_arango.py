@@ -671,10 +671,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 sorts.append("o.{0:s}".format(key))
 
         limit = ""
-        if offset:
-            limit += f"LIMIT {offset}"
-            if count:
-                limit += f", {count}"
+        if count != 0:
+            limit = f"LIMIT @offset, @count"
+            args["offset"] = offset
+            args["count"] = count
 
         # TODO: Interpolate this query
         graph_query_string = ""
