@@ -12,6 +12,7 @@ class NewEntityRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     entity: entity.EntityTypes
+    tags: list[str] = []
 
 
 class PatchEntityRequest(BaseModel):
@@ -64,6 +65,8 @@ async def entities_root() -> Iterable[entity.EntityTypes]:
 async def new(request: NewEntityRequest) -> entity.EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
+    if request.tags:
+        new.tag(request.tags)
     return new
 
 
@@ -94,7 +97,8 @@ async def search(request: EntitySearchRequest) -> EntitySearchResponse:
     count = request_args.pop("count")
     page = request_args.pop("page")
     entities, total = entity.Entity.filter(
-        request_args, offset=request.page * request.count, count=request.count
+        request_args, offset=request.page * request.count, count=request.count,
+        graph_queries=[('tags', 'tagged', 'outbound', 'name')]
     )
     return EntitySearchResponse(entities=entities, total=total)
 
