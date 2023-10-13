@@ -171,3 +171,25 @@ class TagTest(unittest.TestCase):
         tag = Tag(name="test").save()
         tag2 = Tag(name="test").save()
         self.assertEqual(tag.id, tag2.id)
+
+    def test_normalized_tag(self):
+        """Tests that a tag can be normalized."""
+        cases = cases = [
+        ("H@ackërS T3st", "hackers_t3st"),
+        ("    SpaCesStartEnd  ", "spacesstartend"),
+        ("!!Sp3cial##", "sp3cial"),
+        ("Multi    Spaces", "multi_spaces"),
+        ("Élévation", "elevation"),
+        ("UNDER_score", "under_score"),
+        ("mixCaseMix123", "mixcasemix123"),
+        ("MïxedÁccénts", "mixedaccents"),
+        ("123456", "123456"),
+        ("测试chinese", "chinese"),
+        ("", "")
+    ]
+
+
+        for cmp, (tag_non_norm, tag_norm) in enumerate(cases):
+            obs = Observable.add_text(f"test_{cmp}.com")
+            obs.tag([tag_non_norm])
+            self.assertIn(tag_norm, obs.tags)
