@@ -2,10 +2,12 @@
 import datetime
 import json
 import logging
+import re
 import sys
 import time
 from typing import (TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type,
                     TypeVar)
+import unicodedata
 
 if TYPE_CHECKING:
     from core.schemas.graph import Relationship
@@ -291,7 +293,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return cls.load(document)
 
     def tag(
-        self: TYetiObject, tags: List[str], strict: bool = False, expiration_days: int | None = None
+        self: TYetiObject, tags: List[str], strict: bool = False, normalized: bool = True, expiration_days: int | None = None
     ) -> TYetiObject:
         """Connects object to tag graph."""
         # Import at runtime to avoid circular dependency.
@@ -304,6 +306,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
         extra_tags = set()
         for tag_name in tags:
             # Attempt to find replacement tag
+            if normalized:
+                tag_name = re.sub(r'\s+', '_', tag_name).lower()
+                nfkd_form = unicodedata.normalize("NFKD", tag_name)
+                nfkd_form.encode('ASCII', 'ignore').decode('UTF-8')
+                tag_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+                
             replacements, _ = Tag.filter({"in__replaces": [tag_name]}, count=1)
             tag: Optional[Tag] = None
 
