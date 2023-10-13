@@ -38,7 +38,7 @@ class TagTest(unittest.TestCase):
         sus_hacker.tag(["web", "hacker", "hacker_sus"])
 
         ta = ThreatActor(name="HackerActor").save()
-        ta.tag(["hacker"])
+        ta.tag(["Hack!ré T@ëst"])
         ta.link_to(hacker, "c2", "C2 infrastructure")
 
         regex = Regex(
