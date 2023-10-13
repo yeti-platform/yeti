@@ -5,8 +5,13 @@ import traceback
 from typing import Type
 
 from celery import Celery
+from celery.utils.log import get_task_logger
+
 from core.config.config import yeti_config
 from core.schemas.task import Task, TaskParams, TaskStatus
+
+logger = get_task_logger(__name__)
+
 
 app = Celery(
     "tasks",
@@ -77,6 +82,18 @@ app = Celery(
     ),
 )
 
+@app.on_after_configure.connect
+def setup_periodic_tasks(sender, **kwargs):
+    """Registers periodic tasks."""
+    for task in Task.list():
+        if not task.frequency:
+            continue
+        logger.info("Registering periodic task %s (%s)", task.name, task.frequency)
+        sender.add_periodic_task(
+            task.frequency,
+            run_task.s(task.name, '{}'),
+            name=f'Schedule for {task.name}')
+    return
 
 class TaskManager:
 

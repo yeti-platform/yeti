@@ -55,7 +55,7 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
     last_run: datetime.datetime | None = None
 
     # only used for cron tasks
-    frequency: datetime.timedelta = datetime.timedelta(days=1)
+    frequency: datetime.timedelta | None = None
 
     def run(self, params: "TaskParams"):
         """Runs the task"""
