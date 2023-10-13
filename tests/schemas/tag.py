@@ -176,7 +176,7 @@ class TagTest(unittest.TestCase):
         """Tests that a tag can be normalized."""
         cases = cases = [
         ("H@ackërS T3st", "hackers_t3st"),
-        ("    SpaCesStartEnd  ", "_spacesstartend_"),
+        ("    SpaCesStartEnd  ", "spacesstartend"),
         ("!!Sp3cial##", "sp3cial"),
         ("Multi    Spaces", "multi_spaces"),
         ("Élévation", "elevation"),
