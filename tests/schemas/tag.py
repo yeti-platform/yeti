@@ -178,9 +178,8 @@ class TagTest(unittest.TestCase):
 
         cases = [("H@ackërS T3st", "hackers_t3st")]
 
-        for tag_non_norm, tag_norm in cases:
-            obs = Observable.add_text("test.com")
+        for cmp,(tag_non_norm, tag_norm) in enumerate(cases):
+            obs = Observable.add_text(f"test_{cmp}.com")
             obs.tag([tag_non_norm])
             tags = list(obs.tags.keys())
-        
-        self.assertEqual(tags[0], tag_norm)
+            self.assertIn(tag_norm, obs.tags)
