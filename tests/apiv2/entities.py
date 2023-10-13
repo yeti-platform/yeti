@@ -13,7 +13,7 @@ class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.entity1 = entity.ThreatActor(name="ta1").save()
-        self.entity1.tag(['ta1-tag'])
+        self.entity1.tag(['ta1'])
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -51,7 +51,7 @@ class EntityTest(unittest.TestCase):
 
         # Check tags
         self.assertEqual(len(data["entities"][0]["tags"]), 1, data)
-        self.assertIn("ta1-tag", data["entities"][0]["tags"])
+        self.assertIn("ta1", data["entities"][0]["tags"])
 
     def test_new_entity_with_tag(self):
         response = client.post(
