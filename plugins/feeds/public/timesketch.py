@@ -31,24 +31,19 @@ class Timesketch(task.FeedTask):
         "description": "This feed creates Investigations from a Timesketch server.",
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._endpoint = yeti_config.get("timesketch", "endpoint")
-        if not self._endpoint:
-            logging.error("Timesketch cannot proceed without an endpoint.")
-            return
-        username = yeti_config.get("timesketch", "username")
-        password = yeti_config.get("timesketch", "password")
-
-        self._ts_client = client.TimesketchApi(self._endpoint, username, password)
-
-
     def run(self):
-        if not self._endpoint:
+
+        endpoint= yeti_config.get("timesketch", "endpoint")
+        username= yeti_config.get("timesketch", "username")
+        password= yeti_config.get("timesketch", "password")
+
+        if not endpoint:
             logging.error("Timesketch cannot proceed without an endpoint.")
             return
 
-        sketches = self._ts_client.list_sketches()
+        ts_client = client.TimesketchApi(endpoint, username, password)
+
+        sketches = ts_client.list_sketches()
 
         for sketch in sketches:
             description = "# Timelines\n\n"
@@ -60,7 +55,7 @@ class Timesketch(task.FeedTask):
             investigation = Investigation(
                 name=sketch.name,
                 created=created_at,
-                reference=f'{self._endpoint}/sketch/{sketch.id}',
+                reference=f'{endpoint}/sketch/{sketch.id}',
                 description=description,
             ).save()
             for intel in sketch.get_intelligence_attribute():
