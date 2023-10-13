@@ -174,12 +174,9 @@ class TagTest(unittest.TestCase):
 
     def test_normalized_tag(self):
         """Tests that a tag can be normalized."""
-        obs = Observable.add_text("test.com")
-
         cases = [("H@ackërS T3st", "hackers_t3st")]
 
-        for cmp,(tag_non_norm, tag_norm) in enumerate(cases):
+        for cmp, (tag_non_norm, tag_norm) in enumerate(cases):
             obs = Observable.add_text(f"test_{cmp}.com")
             obs.tag([tag_non_norm])
-            tags = list(obs.tags.keys())
             self.assertIn(tag_norm, obs.tags)
