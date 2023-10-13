@@ -171,3 +171,16 @@ class TagTest(unittest.TestCase):
         tag = Tag(name="test").save()
         tag2 = Tag(name="test").save()
         self.assertEqual(tag.id, tag2.id)
+
+    def test_normalized_tag(self):
+        """Tests that a tag can be normalized."""
+        obs = Observable.add_text("test.com")
+
+        cases = [("H@ackërS T3st", "hackers_t3st")]
+
+        for tag_non_norm, tag_norm in cases:
+            obs = Observable.add_text("test.com")
+            obs.tag([tag_non_norm])
+            tags = list(obs.tags.keys())
+        
+        self.assertEqual(tags[0], tag_norm)
