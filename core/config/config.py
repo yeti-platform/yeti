@@ -59,12 +59,11 @@ class Config:
         """Gets a setting from the config file."""
         if key is None:
             return getattr(self, section)
-        if hasattr(self, section) and key in self[section]:
+        if hasattr(self, section) and key in self[section] and self[section][key]:
             return self[section][key]
-        else:
-            env_var = self.find_env_variable(section, key)
-            if env_var is not None:
-                return env_var
-            return default
+        env_var = self.find_env_variable(section, key)
+        if env_var is not None:
+            return env_var
+        return default
 
 yeti_config = Config()
