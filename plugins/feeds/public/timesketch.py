@@ -71,7 +71,11 @@ class Timesketch(task.FeedTask):
                         continue
 
                 obs.tag(intel['tags'])
-                obs.add_context("timesketch", {'sketch_link': intel['externalURI'], 'sketch_tags': intel['tags']})
+                obs.add_context("timesketch", {
+                    'link': f'{endpoint}/sketch/{sketch.id}',
+                    'id': sketch.id,
+                    'timesketch_tags': intel['tags']
+                })
                 obs.link_to(investigation, "seen in", f"Observable seen in {investigation.name}")
 
 
