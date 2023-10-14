@@ -15,7 +15,7 @@ class TaskSearchRequest(BaseModel):
 
     name: str | None = None
     type: TaskType | None = None
-    count: int = 50
+    count: int = 100
     page: int = 0
 
 
