@@ -38,8 +38,9 @@ class Timesketch(task.FeedTask):
         password= yeti_config.get("timesketch", "password")
 
         if not endpoint:
-            logging.error("Timesketch cannot proceed without an endpoint.")
-            return
+            msg = "Timesketch cannot proceed without an endpoint."
+            logging.error(msg)
+            raise RuntimeError(msg)
 
         ts_client = client.TimesketchApi(endpoint, username, password)
 
