@@ -1,5 +1,7 @@
 import datetime
 import re
+import logging
+
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
@@ -70,8 +72,12 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
         indicators = list(Indicator.list())
         for observable in observables:
             for indicator in indicators:
-                if indicator.match(observable):
-                    yield observable, indicator
+                try:
+                    if indicator.match(observable):
+                        yield observable, indicator
+                except NotImplementedError as error:
+                    logging.error(
+                        f"Indicator type {indicator.type} has not implemented match(): {error}")
 
 
 class Regex(Indicator):
