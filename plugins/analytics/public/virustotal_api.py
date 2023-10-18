@@ -9,6 +9,7 @@ from core.config.config import yeti_config
 from datetime import datetime
 import requests
 
+VT_BASE_URL = "https://www.virustotal.com/api/v3"
 
 class VirustotalApi(object):
     """Base class for querying the VirusTotal API.
@@ -19,32 +20,35 @@ class VirustotalApi(object):
     limit rejection, as it could cause api key deactivation.
     """
 
+
     @staticmethod
     def fetch(endpoint):
         """
-        :param observable: The extended observable klass
-        :param api_key: The api key obtained from VirusTotal
-        :param endpoint: endpoint VT API
-        :return:  virustotal json response or None if error
-        """
-        try:
-            response = None
-            base_url = "https://www.virustotal.com/api/v3"
-            url = base_url + endpoint
-            header = {"x-apikey": yeti_config.get("virustotal", "api_key")}
-            response = requests.get(url, headers=header, proxies=yeti_config.get('proxy'))
+        Args:
+            The Virustotal API endpoint to query.
 
-            if response.ok:
-                return response.json()
-            else:
-                return None
-        except Exception as e:
-            logging.error("Exception while getting ip report {}".format(e.message))
-            return None
+        Returns:
+            The Virustotal JSON response.
+
+        Raises:
+            RuntimeError if the request fails.
+        """
+
+        response = None
+        url = VT_BASE_URL + endpoint
+        header = {"X-Apikey": yeti_config.get("vt", "key")}
+        response = requests.get(url, headers=header, proxies=yeti_config.get('proxy'))
+        if response.ok:
+            return response.json()
+        else:
+            msg = f"Failed to query Virustotal API: {response.json()}"
+            logging.error(msg)
+            raise RuntimeError(msg)
 
     @staticmethod
     def process_domain(domain: hostname.Hostname, attributes):
-        context = {"source": "VirusTotal"}
+        context_key = "VirusTotalDomainInfo"
+        context = {"source": context_key}
         logging.debug(attributes)
         context["whois"] = attributes["whois"]
         if "whois_date" in attributes:
@@ -99,11 +103,12 @@ class VirustotalApi(object):
             except TypeError or ValueError:
                 pass
 
-        domain.add_context("VirusTotal", context)
+        domain.add_context(context_key, context)
 
     @staticmethod
     def process_file(file_vt: Observable, attributes):
-        context = {"source": "VirusTotal"}
+        context_key = "VirusTotalFileInfo"
+        context = {"source": context_key}
 
         stat_files = attributes["last_analysis_stats"]
 
@@ -117,10 +122,10 @@ class VirustotalApi(object):
 
         last_seen = attributes["last_analysis_date"]
         context["last_seen"] = datetime.fromtimestamp(last_seen).isoformat()
-        context["names"] = " ".join(n for n in attributes["names"])
+        context["names"] = ", ".join(n for n in attributes["names"])
         tags = attributes["tags"]
         if attributes["last_analysis_results"]:
-            context["raw"] = attributes["last_analysis_results"]
+            context["last_analysis_results"] = attributes["last_analysis_results"]
         if tags:
             file_vt.tag(tags)
         observables = [
@@ -129,11 +134,11 @@ class VirustotalApi(object):
             if file_vt.value != attributes[h]
         ]
         for h, obs in observables:
-            obs.add_context("Virustotal", context)
-            obs.link_to(file_vt, h, "Virustotal")
+            obs.add_context(context_key, context)
+            obs.link_to(file_vt, h, context_key)
             obs.tag(tags)
 
-        file_vt.add_context("VirusTotal", context)
+        file_vt.add_context(context_key, context)
 
 
 class VTFileIPContacted(task.OneShotTask, VirustotalApi):
