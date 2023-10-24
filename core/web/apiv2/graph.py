@@ -2,7 +2,8 @@ from enum import Enum
 from typing import Type
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationInfo
+from pydantic.functional_validators import field_validator
 
 from core.schemas import entity, graph, indicator, observable, tag
 
@@ -42,6 +43,19 @@ class GraphAddRequest(BaseModel):
     target: str
     link_type: str
     description: str
+
+    @field_validator('source', 'target')
+    @classmethod
+    def check_entity_descriptor(cls, value: str, info: ValidationInfo) -> str:
+        if value.count("/") != 1:
+            raise ValueError(f'{info.field_name} must describe the entity using using the "<type>/<id>" schema')
+
+        entity_type, _ = value.split("/")
+
+        if entity_type not in GRAPH_TYPE_MAPPINGS:
+            raise ValueError(f'{info.field_name} uses an invalid object type: {entity_type}')
+
+        return value
 
 
 class GraphSearchResponse(BaseModel):
@@ -87,15 +101,6 @@ async def add(request: GraphAddRequest) -> graph.Relationship:
     """Adds a link to the graph."""
     source_type, source_id = request.source.split("/")
     target_type, target_id = request.target.split("/")
-
-    if source_type not in GRAPH_TYPE_MAPPINGS:
-        raise HTTPException(
-            status_code=400, detail=f"Invalid source object type: {source_type}"
-        )
-    if target_type not in GRAPH_TYPE_MAPPINGS:
-        raise HTTPException(
-            status_code=400, detail=f"Invalid target object type: {target_type}"
-        )
 
     source_object = GRAPH_TYPE_MAPPINGS[source_type].get(source_id)
     target_object = GRAPH_TYPE_MAPPINGS[target_type].get(target_id)
