@@ -190,11 +190,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 document, merge=False, return_new=True
             )["new"]
         else:
-            filters = {"type": document["type"]}
+
             if "value" in document:
-                filters["value"] = document["value"]
+                filters = {"value": document["value"]}
             else:
-                filters["name"] = document["name"]
+                filters = {"name": document["name"]}
+            if "type" in document:
+                filters["type"] = document["type"]
             self._get_collection().update_match(filters, document, merge=False)
 
             newdoc = list(self._get_collection().find(filters, limit=1))[0]
