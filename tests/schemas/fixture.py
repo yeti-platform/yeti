@@ -3,7 +3,7 @@ import unittest
 from core import database_arango
 from core.schemas.entity import Investigation, Malware, ThreatActor
 from core.schemas.indicator import DiamondModel, Query, QueryType, Regex
-from core.schemas.observables import hostname, ipv4
+from core.schemas.observables import generic_observable, hostname, ipv4, mac_address
 from core.schemas.task import ExportTask
 from core.schemas.template import Template
 from core.schemas.user import UserSensitive
@@ -27,6 +27,8 @@ class TagTest(unittest.TestCase):
         www_hacker = hostname.Hostname(value="www.hacker.com").save()
         hacker = hostname.Hostname(value="hacker.com").save()
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
+        macaddr = mac_address.MacAddress(value="00:11:22:33:44:55").save()
+        generic = generic_observable.GenericObservable(value="SomeInterestingString").save()
 
         hacker.link_to(www_hacker, "domain", "Domain")
         hacker.link_to(c2_hacker, "domain", "Domain")

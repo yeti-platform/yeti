@@ -4,7 +4,7 @@ from core import database_arango
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
 from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
-                                      command_line, email, file, hostname,
+                                      command_line, email, file, generic_observable, hostname,
                                       imphash, ipv4, ipv6, mac_address, md5,
                                       path, registry_key, sha1, sha256, ssdeep,
                                       tlsh, url)
@@ -21,6 +21,12 @@ class ObservableTest(unittest.TestCase):
         result = hostname.Hostname(value="toto.com").save()
         self.assertIsNotNone(result.id)
         self.assertEqual(result.value, "toto.com")
+
+    def test_create_generic_observable(self):
+        result = generic_observable.GenericObservable(value="Some_String").save()
+        self.assertIsNotNone(result.id)
+        self.assertEqual(result.value, "Some_String")
+        self.assertEqual(result.type, "observable")
 
     def test_observable_no_value(self):
         with self.assertRaises(ValueError):
