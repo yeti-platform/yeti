@@ -5,19 +5,15 @@ import logging
 import re
 import sys
 import time
-from typing import (TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type,
-                    TypeVar)
 import unicodedata
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas.graph import Relationship
-    from core.schemas.graph import TagRelationship
+    from core.schemas.graph import Relationship, TagRelationship
 
 import requests
 from arango import ArangoClient
-from arango.exceptions import (DocumentInsertError, DocumentUpdateError,
-                               GraphCreateError)
-from dateutil import parser
+from arango.exceptions import DocumentInsertError, GraphCreateError
 
 from core.config.config import yeti_config
 
@@ -50,12 +46,11 @@ class ArangoDatabase:
         password: str = None,
         database: str = None,
     ):
-
-        host = host or yeti_config.get('arangodb', 'host')
-        port = port or yeti_config.get('arangodb', 'port')
-        username = username or yeti_config.get('arangodb', 'username')
-        password = password or yeti_config.get('arangodb', 'password')
-        database = database or yeti_config.get('arangodb', 'database')
+        host = host or yeti_config.get("arangodb", "host")
+        port = port or yeti_config.get("arangodb", "port")
+        username = username or yeti_config.get("arangodb", "username")
+        password = password or yeti_config.get("arangodb", "password")
+        database = database or yeti_config.get("arangodb", "database")
 
         host_string = f"http://{host}:{port}"
         client = ArangoClient(hosts=host_string)
@@ -98,11 +93,11 @@ class ArangoDatabase:
             fields=["value"], unique=True
         )
         self.db.collection("entities").add_persistent_index(
-            fields=["name"], unique=True
+            fields=["name", "type"], unique=True
         )
         self.db.collection("tags").add_persistent_index(fields=["name"], unique=True)
         self.db.collection("indicators").add_persistent_index(
-            fields=["name"], unique=True
+            fields=["name", "type"], unique=True
         )
 
     def clear(self, truncate=True):
@@ -195,11 +190,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 document, merge=False, return_new=True
             )["new"]
         else:
+            filters = {"type": document["type"]}
             if "value" in document:
-                filters = {"value": document["value"]}
+                filters["value"] = document["value"]
             else:
-                filters = {"name": document["name"]}
+                filters["name"] = document["name"]
             self._get_collection().update_match(filters, document, merge=False)
+
             newdoc = list(self._get_collection().find(filters, limit=1))[0]
 
         newdoc["id"] = newdoc.pop("_key")
@@ -293,11 +290,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return cls.load(document)
 
     def tag(
-        self: TYetiObject, tags: List[str], strict: bool = False, normalized: bool = True, expiration_days: int | None = None
+        self: TYetiObject,
+        tags: List[str],
+        strict: bool = False,
+        normalized: bool = True,
+        expiration_days: int | None = None,
     ) -> TYetiObject:
         """Connects object to tag graph."""
         # Import at runtime to avoid circular dependency.
         from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
+
         expiration_days = expiration_days or DEFAULT_EXPIRATION_DAYS
 
         if strict:
@@ -307,14 +309,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for tag_name in tags:
             # Attempt to find replacement tag
             if normalized:
-                
                 nfkd_form = unicodedata.normalize("NFKD", tag_name)
-                nfkd_form.encode('ASCII', 'ignore').decode('UTF-8')
-                tag_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
+                nfkd_form.encode("ASCII", "ignore").decode("UTF-8")
+                tag_name = "".join(
+                    [c for c in nfkd_form if not unicodedata.combining(c)]
+                )
                 tag_name = tag_name.strip()
-                tag_name = re.sub(r'\s+', '_', tag_name).lower()
-                tag_name = re.sub(r'[^a-zA-Z0-9_]', '', tag_name)
-                
+                tag_name = re.sub(r"\s+", "_", tag_name).lower()
+                tag_name = re.sub(r"[^a-zA-Z0-9_]", "", tag_name)
             replacements, _ = Tag.filter({"in__replaces": [tag_name]}, count=1)
             tag: Optional[Tag] = None
 
@@ -590,12 +592,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def _build_edges(self, arango_edges) -> List["graph.RelationshipTypes"]:
         # Avoid circular dependency
         from core.schemas import graph
+
         relationships = []
         for edge in arango_edges:
             edge["id"] = edge.pop("_key")
             edge["source"] = edge.pop("_from")
             edge["target"] = edge.pop("_to")
-            if 'tagged' in edge['_id']:
+            if "tagged" in edge["_id"]:
                 relationships.append(graph.TagRelationship.load(edge))
             else:
                 relationships.append(graph.Relationship.load(edge))
@@ -606,7 +609,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         from core.schemas import entity, indicator, observable, tag
 
         type_mapping = {
-            'tag': tag.Tag,
+            "tag": tag.Tag,
         }
         type_mapping.update(observable.TYPE_MAPPING)
         type_mapping.update(entity.TYPE_MAPPING)

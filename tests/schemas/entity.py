@@ -1,12 +1,13 @@
 import unittest
 
 from core import database_arango
-from core.schemas.entity import Entity, Malware, ThreatActor, Tool
+from core.schemas.entity import Entity, Malware, ThreatActor, Tool, AttackPattern
 from core.schemas.observables import hostname
 from core.schemas import tag
 
 
 class EntityTest(unittest.TestCase):
+
     def setUp(self) -> None:
         database_arango.db.clear()
         self.ta1 = ThreatActor(name="APT123").save()
@@ -83,3 +84,11 @@ class EntityTest(unittest.TestCase):
         """Tests that saving an entity with an existing name will return the existing entity."""
         ta = ThreatActor(name="APT123").save()
         self.assertEqual(ta.id, self.ta1.id)
+
+    def test_entity_duplicate_name(self):
+        """Tests that two entities of different types can have the same name."""
+        psexec_tool = Tool(name="psexec").save()
+        psexec_ap = AttackPattern(name="psexec").save()
+        self.assertNotEqual(psexec_tool.id, psexec_ap.id)
+        self.assertEqual(psexec_tool.type, "tool")
+        self.assertEqual(psexec_ap.type, "attack-pattern")
