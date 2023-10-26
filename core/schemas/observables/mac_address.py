@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class MacAddress(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.mac_address] = observable.ObservableType.mac_address
 
 

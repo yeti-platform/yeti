@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class SsdeepHash(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.ssdeep] = observable.ObservableType.ssdeep
 
 

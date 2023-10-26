@@ -92,3 +92,8 @@ class EntityTest(unittest.TestCase):
         self.assertNotEqual(psexec_tool.id, psexec_ap.id)
         self.assertEqual(psexec_tool.type, "tool")
         self.assertEqual(psexec_ap.type, "attack-pattern")
+
+    def test_no_empty_name(self):
+        """Tests that an entity with an empty name cannot be saved."""
+        with self.assertRaises(ValueError):
+            ThreatActor(name="").save()

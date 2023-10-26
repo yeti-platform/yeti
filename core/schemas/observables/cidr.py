@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class CIDR(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.cidr] = observable.ObservableType.cidr
 
 

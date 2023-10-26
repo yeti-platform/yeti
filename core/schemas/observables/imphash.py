@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class Imphash(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.imphash] = observable.ObservableType.imphash
 
 

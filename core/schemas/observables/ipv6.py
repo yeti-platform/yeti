@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class IPv6(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.ipv6] = observable.ObservableType.ipv6
 
 

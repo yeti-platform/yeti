@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class Hostname(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.hostname] = observable.ObservableType.hostname
 
 

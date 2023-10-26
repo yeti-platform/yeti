@@ -3,7 +3,6 @@ from typing import Literal
 
 
 class TLSH(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.tlsh] = observable.ObservableType.tlsh
 
 

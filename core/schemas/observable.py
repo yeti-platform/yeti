@@ -45,7 +45,7 @@ class Observable(BaseModel, database_arango.ObservableYetiConnector):
 
     root_type: Literal["observable"] = "observable"
     id: str | None = None
-    value: str
+    value: str = Field(min_length=1)
     tags: dict[str, TagRelationship] = {}
     type: ObservableType
     created: datetime.datetime = Field(default_factory=now)

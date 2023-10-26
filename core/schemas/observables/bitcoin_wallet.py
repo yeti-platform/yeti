@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class BitcoinWallet(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.bitcoin_wallet] = observable.ObservableType.bitcoin_wallet
 
 

@@ -22,6 +22,10 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(result.id)
         self.assertEqual(result.value, "toto.com")
 
+    def test_observable_no_value(self):
+        with self.assertRaises(ValueError):
+            hostname.Hostname(value="").save()
+
     def test_observable_find(self) -> None:
         result = hostname.Hostname(value="toto.com").save()
         observable = Observable.find(value="toto.com")

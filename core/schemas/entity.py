@@ -33,7 +33,7 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
     root_type: Literal["entity"] = "entity"
     id: str | None = None
     type: str
-    name: str
+    name: str = Field(min_length=1)
     description: str = ""
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)

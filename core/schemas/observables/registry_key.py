@@ -27,7 +27,6 @@ class RegistryKey(observable.Observable):
     """
     type: Literal[observable.ObservableType.registry_key] = observable.ObservableType.registry_key
     key: str
-    value: str
     data: bytes
     hive: RegistryHive
     path_file: str | None = None

@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class MD5(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.md5] = observable.ObservableType.md5
 
 

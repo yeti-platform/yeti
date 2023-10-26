@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class Url(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.url] = observable.ObservableType.url
 
 

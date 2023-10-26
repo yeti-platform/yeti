@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class SHA256(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.sha256] = observable.ObservableType.sha256
 
 

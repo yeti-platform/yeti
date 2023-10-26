@@ -9,8 +9,6 @@ class File(observable.Observable):
     One of sha256, md5, or sha1 should be provided.
     Value should to be in the form FILE:<HASH>.
     """
-
-    value: str
     type: Literal[observable.ObservableType.file] = observable.ObservableType.file
     name: str | None = None
     size: int | None = None

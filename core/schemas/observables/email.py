@@ -4,7 +4,6 @@ from core.schemas import observable
 
 
 class Email(observable.Observable):
-    value: str
     type: Literal[observable.ObservableType.email] = observable.ObservableType.email
 
 
