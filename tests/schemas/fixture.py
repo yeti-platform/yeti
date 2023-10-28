@@ -34,14 +34,13 @@ class TagTest(unittest.TestCase):
         hacker.link_to(c2_hacker, "domain", "Domain")
         hacker.link_to(ip_hacker, "ip", "IP")
 
-        c2_hacker.tag(["hacker", "web"])
+        c2_hacker.tag(["hacker", "web", "xmrig"])
         hacker.tag(["hacker"])
-        www_hacker.tag(["web", "hacker"])
+        www_hacker.tag(["web", "hacker", "xmrig"])
         sus_hacker.tag(["web", "hacker", "hacker_sus"])
 
         ta = ThreatActor(name="HackerActor").save()
         ta.tag(["Hack!ré T@ëst"])
-        ta.link_to(hacker, "c2", "C2 infrastructure")
 
         regex = Regex(
             name="hex",
@@ -49,8 +48,9 @@ class TagTest(unittest.TestCase):
             location="bodyfile",
             diamond=DiamondModel.capability,
         ).save()
-        mal = Malware(name='xmrig').save()
-        mal.link_to(regex, "indicates", "Usual name for dropped binary")
+        xmrig = Malware(name='xmrig').save()
+        xmrig.tag(['xmrig'])
+        regex.link_to(xmrig, "indicates", "Usual name for dropped binary")
 
         q = Query(
             name="ssh succesful logins",

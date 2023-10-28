@@ -85,6 +85,8 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["value"], "toto.com")
+        self.assertIn("tag1", data["tags"])
+        self.assertIn("tag2", data["tags"])
 
     def test_bulk_add(self):
         request = {
