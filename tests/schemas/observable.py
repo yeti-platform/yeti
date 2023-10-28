@@ -106,17 +106,16 @@ class ObservableTest(unittest.TestCase):
         relationship = observable1.link_to(observable2, "resolves", "DNS resolution")
         self.assertEqual(relationship.type, "resolves")
 
-        vertices, edges, count = observable1.neighbors()
+        vertices, paths, count = observable1.neighbors()
 
-        self.assertEqual(len(edges), 1)
+        self.assertEqual(len(paths), 1)
         self.assertEqual(count, 1)
         self.assertEqual(len(vertices), 1)
 
-        relationships = edges
-        self.assertEqual(relationships[0].source, observable1.extended_id)
-        self.assertEqual(relationships[0].target, observable2.extended_id)
-        self.assertEqual(relationships[0].description, "DNS resolution")
-        self.assertEqual(relationships[0].type, "resolves")
+        self.assertEqual(paths[0][0].source, observable1.extended_id)
+        self.assertEqual(paths[0][0].target, observable2.extended_id)
+        self.assertEqual(paths[0][0].description, "DNS resolution")
+        self.assertEqual(paths[0][0].type, "resolves")
 
         self.assertIn(observable2.extended_id, vertices)
         neighbor = vertices[observable2.extended_id]

@@ -554,7 +554,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 limit += f", {count}"
 
         aql = f"""
-        FOR v, e, p IN 1..{hops} {direction} @extended_id @@graph
+        FOR v, e, p IN {hops}..{hops} {direction} @extended_id @@graph
 
           {query_filter}
           LET v_with_tags = (
