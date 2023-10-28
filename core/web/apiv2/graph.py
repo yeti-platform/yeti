@@ -62,7 +62,7 @@ class GraphSearchResponse(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     vertices: dict[str, observable.Observable | entity.Entity | indicator.Indicator | tag.Tag]
-    edges: list[graph.Relationship | graph.TagRelationship]
+    paths: list[list[graph.Relationship | graph.TagRelationship]]
     total: int
 
 
@@ -83,7 +83,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         raise HTTPException(
             status_code=404, detail=f"Source object {request.source} not found"
         )
-    vertices, edges, total = yeti_object.neighbors(
+    vertices, paths, total = yeti_object.neighbors(
         link_types=request.link_types,
         target_types=request.target_types,
         direction=request.direction,
@@ -93,7 +93,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         count=request.count,
         offset=request.page,
     )
-    return GraphSearchResponse(vertices=vertices, edges=edges, total=total)
+    return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 
 
 @router.post("/add")

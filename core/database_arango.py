@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, Ty
 
 if TYPE_CHECKING:
     from core.schemas.graph import Relationship, TagRelationship
+    from core.schemas import observable
+    from core.schemas import entity
+    from core.schemas import indicator
 
 import requests
 from arango import ArangoClient
@@ -514,7 +517,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         hops: int = 1,
         offset: int = 0,
         count: int = 0,
-    ) -> tuple[dict[str, "ArangoYetiConnector"], List["Relationship"], int]:
+    ) -> tuple[dict[str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"], List[List["Relationship | TagRelationship"]], int]:
         """Fetches neighbors of the YetiObject.
 
         Args:
@@ -560,22 +563,20 @@ class ArangoYetiConnector(AbstractYetiConnector):
               RETURN MERGE(observable, {{tags: MERGE(innertags)}})
           )
           {limit}
-          RETURN {{ vertices: v_with_tags, edges: p['edges'] }}
+          RETURN {{ vertices: v_with_tags, g: p }}
         """
-
         cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
         total = cursor.statistics().get("fullCount", count)
-        edges = []  # type: list[Relationship]
+        paths = []  # type: list[list[Relationship]]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
         neighbors = list(cursor)
         for path in neighbors:
-            edges.extend(self._build_edges(path["edges"]))
+            paths.append(self._build_edges(path["g"]["edges"]))
             self._build_vertices(vertices, path["vertices"])
         if not include_original:
             vertices.pop(self.extended_id, None)
-        edges = self._dedup_edges(edges)
 
-        return vertices, edges, total or 0
+        return vertices, paths, total or 0
 
     def _dedup_edges(self, edges):
         """Deduplicates edges with same STIX ID, keeping the most recent one.

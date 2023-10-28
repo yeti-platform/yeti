@@ -43,11 +43,11 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(neighbor["value"], "127.0.0.1")
         self.assertEqual(neighbor["id"], self.observable2.id)
 
-        edges = data["edges"]
+        edges = data["paths"]
         self.assertEqual(len(edges), 1)
-        self.assertEqual(edges[0]["source"], self.observable1.extended_id)
-        self.assertEqual(edges[0]["target"], self.observable2.extended_id)
-        self.assertEqual(edges[0]["type"], "resolves")
+        self.assertEqual(edges[0][0]["source"], self.observable1.extended_id)
+        self.assertEqual(edges[0][0]["target"], self.observable2.extended_id)
+        self.assertEqual(edges[0][0]["type"], "resolves")
 
     def test_get_neighbors_tag(self):
         self.entity1.tag(['hacker1'])

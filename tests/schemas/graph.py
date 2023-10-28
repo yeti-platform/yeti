@@ -44,9 +44,11 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(self.relationship.type, "resolves")
         self.assertEqual(self.relationship.description, "DNS resolution")
 
-        vertices, edges, count = self.observable1.neighbors()
+        vertices, paths, count = self.observable1.neighbors()
         self.assertEqual(len(vertices), 1)
         self.assertEqual(count, 1)
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(paths[0], [self.relationship])
         self.assertEqual(vertices[self.observable2.extended_id].value, "127.0.0.1")
 
     def test_observable_to_entity_link(self) -> None:
