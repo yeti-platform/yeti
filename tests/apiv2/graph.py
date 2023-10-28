@@ -66,7 +66,7 @@ class SimpleGraphTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["vertices"]), 2)
-        self.assertEqual(data["total"], 2)
+        self.assertEqual(data["total"], 1)
 
         self.assertIn(self.entity1.extended_id, data["vertices"])
 

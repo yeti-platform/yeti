@@ -163,9 +163,9 @@ class ObservableTest(unittest.TestCase):
         tag_relationships = data["tags"][f'observables/{observable_id}']
         self.assertEqual(len(tag_relationships), 2, data)
         self.assertIn("tag1", tag_relationships)
-        self.assertEquals(tag_relationships["tag1"]["source"], f'observables/{observable_id}')
+        self.assertEqual(tag_relationships["tag1"]["source"], f'observables/{observable_id}')
         self.assertIn("tag2", tag_relationships)
-        self.assertEquals(tag_relationships["tag2"]["source"], f'observables/{observable_id}')
+        self.assertEqual(tag_relationships["tag2"]["source"], f'observables/{observable_id}')
 
         response = client.post(
             f"/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0}

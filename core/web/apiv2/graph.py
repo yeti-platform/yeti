@@ -170,9 +170,9 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
         processed_relationships = set()
 
         if request.fetch_neighbors:
-            vertices, edges, _ = db_observable.neighbors()
-            # Get neighboring entities and relationships.
-            for edge in edges:
+            vertices, paths, _ = db_observable.neighbors()
+            for path in paths:
+                edge = path[0]  # neighbors only returns 1 hop max by default
                 if edge.id in processed_relationships:
                     continue
 
