@@ -25,6 +25,10 @@ black = "^22.12.0"
 mypy = "^1.0.0"
 httpx = "^0.23.3"
 
+
+[tool.poetry.scripts]
+yetictl = 'extras.yetictl.cli:main'
+
 [tool.poetry.group.plugins.dependencies]
 pymisp = "^2.4.176"
 otxv2 = "^1.5.12"
