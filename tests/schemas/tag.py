@@ -171,18 +171,18 @@ class TagTest(unittest.TestCase):
 
     def test_normalized_tag(self):
         """Tests that a tag can be normalized."""
-        cases = cases = [
+        cases = [
             ("H@ackërS T3st", "hackers_t3st"),
             ("    SpaCesStartEnd  ", "spacesstartend"),
             ("!!Sp3cial##", "sp3cial"),
-            ("Multi    Spaces", "multi_spaces"),
+            ("Multi    Spaces   After", "multi_spaces_after"),
             ("Élévation", "elevation"),
             ("UNDER_score", "under_score"),
             ("mixCaseMix123", "mixcasemix123"),
             ("MïxedÁccénts", "mixedaccents"),
             ("123456", "123456"),
             ("测试chinese", "chinese"),
-            ("", ""),
+            ("type:some-custom-type", "type:some-custom-type")
         ]
 
         for cmp, (tag_non_norm, tag_norm) in enumerate(cases):
