@@ -186,7 +186,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if doc_id:
             document["_key"] = doc_id
             newdoc = self._get_collection().update(
-                document, merge=False, return_new=True
+                document, return_new=True
             )["new"]
         else:
 
@@ -196,7 +196,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 filters = {"name": document["name"]}
             if "type" in document:
                 filters["type"] = document["type"]
-            self._get_collection().update_match(filters, document, merge=False)
+            self._get_collection().update_match(filters, document)
 
             newdoc = list(self._get_collection().find(filters, limit=1))[0]
 
@@ -220,19 +220,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not result:
                 result = self._update(self.model_dump_json(exclude={"created"}))
         return self.__class__(**result)
-
-    def update_links(self, new_id):
-        if not self._arango_id:
-            return
-        graph = self._db.graph("stix")
-        neighbors = graph.traverse(self._arango_id, direction="any", max_depth=1)
-        for path in neighbors["paths"]:
-            for edge in path["edges"]:
-                if edge["attributes"]["target_ref"] == self.id:
-                    edge["_to"] = new_id
-                elif edge["attributes"]["source_ref"] == self.id:
-                    edge["_from"] = new_id
-                graph.update_edge(edge)
 
     @classmethod
     def list(cls: Type[TYetiObject]) -> Iterable[TYetiObject]:
