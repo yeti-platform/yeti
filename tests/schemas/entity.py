@@ -33,7 +33,7 @@ class EntityTest(unittest.TestCase):
         self.assertIsInstance(result, ThreatActor)
         self.assertEqual(result.type, "threat-actor")
 
-    def test_filter_entities_different_types(self) -> None:
+    def test_list_entities(self) -> None:
 
         all_entities = list(Entity.list())
         threat_actor_entities = list(ThreatActor.list())
@@ -47,14 +47,20 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(malware_entities), 1)
 
         self.assertEqual(
-            threat_actor_entities[0].model_dump_json(), self.ta1.model_dump_json()
+            threat_actor_entities[0], self.ta1
         )
         self.assertEqual(
-            tool_entities[0].model_dump_json(), self.tool1.model_dump_json()
+            tool_entities[0], self.tool1
         )
         self.assertEqual(
-            malware_entities[0].model_dump_json(), self.malware1.model_dump_json()
+            malware_entities[0], self.malware1
         )
+
+    def test_filter_entities(self):
+        entities, total = Entity.filter({"name": "APT123"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.ta1)
 
     def test_entity_with_tags(self):
         entity = ThreatActor(name="APT0").save()

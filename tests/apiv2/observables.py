@@ -23,33 +23,55 @@ class ObservableTest(unittest.TestCase):
         self.assertIn("tag1", data["tags"])
 
     def test_observable_search(self):
+        hostname.Hostname(value="tomchop.me").save()
+        hostname.Hostname(value="tomchop2.com").save()
+        # Test that we get all domain names that have toto in them
         response = client.post(
-            "/api/v2/observables/", json={"value": "toto.com", "type": "hostname"}
-        )
-        self.assertEqual(response.status_code, 200)
-        response = client.post(
-            "/api/v2/observables/", json={"value": "toto2.com", "type": "hostname"}
-        )
-        self.assertEqual(response.status_code, 200)
-
-        response = client.post(
-            "/api/v2/observables/search",
-            json={"value": "toto.com", "page": 0, "count": 10},
-        )
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(len(data["observables"]), 1)
-        self.assertEqual(data["observables"][0]["value"], "toto.com")
-        self.assertEqual(data["total"], 1)
-
-        response = client.post(
-            "/api/v2/observables/search", json={"value": "toto", "page": 0, "count": 10}
+            "/api/v2/observables/search", json={"query": {"value": "tomch"}, "page": 0, "count": 10}
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 2)
 
-    def test_observable_search_with_tags(self):
+    def test_observable_search_tags_nonexist(self):
+        obs1 = hostname.Hostname(value="tomchop.me").save()
+        obs2 = hostname.Hostname(value="tomchop2.com").save()
+        obs1.tag(["tag1"])
+        obs2.tag(["tag2"])
+
+        response = client.post(
+            "/api/v2/observables/search",
+            json={
+                "query": {"tags": ["nonexist"]},
+                "page": 0,
+                "count": 10
+            }
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data['observables']), 0)
+        self.assertEqual(data['total'], 0)
+
+    def test_observable_search_tags_exist(self):
+        obs1 = hostname.Hostname(value="tomchop.me").save()
+        obs2 = hostname.Hostname(value="tomchop2.com").save()
+        obs1.tag(["tag1"])
+        obs2.tag(["tag2"])
+        response = client.post(
+            "/api/v2/observables/search",
+            json={
+                "query": {"tags": ["tag1"]},
+                "page": 0,
+                "count": 10
+            }
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data['observables']), 1)
+        self.assertEqual(data['observables'][0]['value'], 'tomchop.me')
+        self.assertEqual(data['total'], 1)
+
+    def test_observable_search_returns_tags(self):
         response = client.post(
             "/api/v2/observables/",
             json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "tag2"]},
@@ -57,10 +79,10 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
         response = client.post(
-            "/api/v2/observables/search", json={"value": "toto", "page": 0, "count": 10}
+            "/api/v2/observables/search", json={"query": {"value": "toto"}, "page": 0, "count": 10}
         )
-        self.assertEqual(response.status_code, 200)
         data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["observables"]), 1)
         self.assertEqual(data["total"], 1)
         self.assertIn("tag1", data["observables"][0]["tags"])

@@ -24,7 +24,7 @@ class PatchEntityRequest(BaseModel):
 class EntitySearchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    name: str | None = None
+    query: dict[str, str|int|list] = {}
     type: entity.EntityType | None = None
     count: int = 50
     page: int = 0
@@ -93,11 +93,11 @@ async def details(entity_id) -> entity.EntityTypes:
 @router.post("/search")
 async def search(request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
-    request_args = request.model_dump()
-    count = request_args.pop("count")
-    page = request_args.pop("page")
+    query = request.query
+    if request.type:
+        query['type'] = request.type
     entities, total = entity.Entity.filter(
-        request_args, offset=request.page * request.count, count=request.count,
+        query, offset=request.page * request.count, count=request.count,
         graph_queries=[('tags', 'tagged', 'outbound', 'name')]
     )
     return EntitySearchResponse(entities=entities, total=total)

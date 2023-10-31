@@ -20,7 +20,7 @@ class TemplateTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_search_template(self):
-        response = client.post("/api/v2/templates/search", json={"name": ""})
+        response = client.post("/api/v2/templates/search", json={"query": {"name": ""}})
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["templates"][0]["name"], "FakeTemplate")

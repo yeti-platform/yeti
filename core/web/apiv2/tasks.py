@@ -13,7 +13,7 @@ from core.schemas.template import Template
 class TaskSearchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    name: str | None = None
+    query: dict[str, str|int|list] = {}
     type: TaskType | None = None
     count: int = 100
     page: int = 0
@@ -63,11 +63,11 @@ async def toggle(task_name) -> TaskTypes:
 @router.post("/search")
 async def search(request: TaskSearchRequest) -> TaskSearchResponse:
     """Searches for tasks."""
-    request_args = request.model_dump()
-    count = request_args.pop("count")
-    page = request_args.pop("page")
+    query = request.query
+    if request.type:
+        query['type'] = request.type
     tasks, total = Task.filter(
-        request_args, offset=request.page * request.count, count=request.count
+        query, offset=request.page * request.count, count=request.count
     )
     return TaskSearchResponse(tasks=tasks, total=total)
 

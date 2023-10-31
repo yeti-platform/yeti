@@ -182,7 +182,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
             except ValueError:
                 pass
     db_observables, _ = observable.Observable.filter(
-        args={"value__in": request.observables}
+        query_args={"value__in": request.observables}
     )
     for db_observable in db_observables:
         known[db_observable.value] = db_observable

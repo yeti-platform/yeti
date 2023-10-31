@@ -45,10 +45,8 @@ class DeleteContextRequest(AddContextRequest):
 class ObservableSearchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    value: str | None = None
-    # name: str | None = None
+    query: dict[str, str|int|list] = {}
     type: ObservableType | None = None
-    tags: list[str] = []
     count: int = 50
     page: int = 0
 
@@ -161,15 +159,17 @@ async def delete_context(observable_id, request: DeleteContextRequest) -> Observ
 @router.post("/search")
 async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     """Searches for observables."""
-    request_args = request.model_dump(exclude_unset=True)
-    count = request_args.pop("count")
-    page = request_args.pop("page")
+    query = request.query
+    tags = query.pop('tags', [])
+    if request.type:
+        query["type"] = request.type
     observables, total = Observable.filter(
-        request_args,
-        tags=request.tags,
-        offset=page * count,
-        count=count,
+        query,
+        tag_filter=tags,
+        offset=request.page * request.count,
+        count=request.count,
         sorting=[("created", False)],
+        graph_queries=[('tags', 'tagged', 'outbound', 'name')]
     )
     return ObservableSearchResponse(observables=observables, total=total)
 
