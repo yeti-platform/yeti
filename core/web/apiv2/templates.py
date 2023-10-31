@@ -10,7 +10,7 @@ from core.schemas.template import Template
 class TemplateSearchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    name: str = ""
+    query: dict[str, str|int|list] = {}
     count: int = 50
     page: int = 0
 
@@ -64,9 +64,9 @@ async def update(template_id: str, request: PatchTemplateRequest) -> Template:
 @router.post("/search")
 async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
     """Searches for observables."""
-    request_args = request.model_dump(exclude={"count", "page"})
+    query = request.query
     templates, total = Template.filter(
-        request_args, offset=request.page * request.count, count=request.count
+        query, offset=request.page * request.count, count=request.count
     )
     return TemplateSearchResponse(templates=templates, total=total)
 

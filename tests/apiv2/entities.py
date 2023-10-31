@@ -12,8 +12,9 @@ client = TestClient(webapp.app)
 class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.entity1 = entity.ThreatActor(name="ta1").save()
+        self.entity1 = entity.ThreatActor(name="ta1", aliases=["badactor"]).save()
         self.entity1.tag(['ta1'])
+        self.entity2 = entity.ThreatActor(name="bears").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -41,10 +42,10 @@ class EntityTest(unittest.TestCase):
 
     def test_search_entities(self):
         response = client.post(
-            "/api/v2/entities/search", json={"name": "ta", "type": "threat-actor"}
+            "/api/v2/entities/search", json={"query": {"name": "ta"}, "type": "threat-actor"}
         )
-        self.assertEqual(response.status_code, 200)
         data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["entities"]), 1)
         self.assertEqual(data["entities"][0]["name"], "ta1")
         self.assertEqual(data["entities"][0]["type"], "threat-actor")
@@ -52,6 +53,16 @@ class EntityTest(unittest.TestCase):
         # Check tags
         self.assertEqual(len(data["entities"][0]["tags"]), 1, data)
         self.assertIn("ta1", data["entities"][0]["tags"])
+
+    def test_search_entities_subfields(self):
+        response = client.post(
+            "/api/v2/entities/search", json={"query": {"in__aliases": ["badactor"]}, "type": "threat-actor"}
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 1)
+        self.assertEqual(data["entities"][0]["name"], "ta1")
+        self.assertEqual(data["entities"][0]["type"], "threat-actor")
 
     def test_new_entity_with_tag(self):
         response = client.post(

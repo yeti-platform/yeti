@@ -1,4 +1,6 @@
 import datetime
+import re
+import unicodedata
 from typing import ClassVar
 
 from pydantic import BaseModel, Field
@@ -6,11 +8,21 @@ from pydantic import BaseModel, Field
 from core import database_arango
 from core.helpers import now
 
-DEFAULT_EXPIRATION_DAYS = 30  # Completely arbitrary
+DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
 
 def future():
-    return datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS)
+    return DEFAULT_EXPIRATION
 
+def normalize_name(tag_name: str) -> str:
+    nfkd_form = unicodedata.normalize("NFKD", tag_name)
+    nfkd_form.encode("ASCII", "ignore").decode("UTF-8")
+    tag_name = "".join(
+        [c for c in nfkd_form if not unicodedata.combining(c)]
+    )
+    tag_name = tag_name.strip().lower()
+    tag_name = re.sub(r"\s+", "_", tag_name)
+    tag_name = re.sub(r"[^a-zA-Z0-9_:-]", "", tag_name)
+    return tag_name
 
 class Tag(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tags"
@@ -20,7 +32,7 @@ class Tag(BaseModel, database_arango.ArangoYetiConnector):
     name: str
     count: int = 0
     created: datetime.datetime = Field(default_factory=now)
-    default_expiration: datetime.timedelta = Field(default_factory=future)
+    default_expiration: datetime.timedelta = DEFAULT_EXPIRATION
     produces: list[str] = []
     replaces: list[str] = []
 

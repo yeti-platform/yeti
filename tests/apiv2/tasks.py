@@ -34,22 +34,22 @@ class TaskTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_search_tasks(self):
-        response = client.post("/api/v2/tasks/search", json={"name": "FakeTask"})
+        response = client.post("/api/v2/tasks/search", json={"query": {"name": "FakeTask"}})
         data = response.json()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tasks"][0]["name"], "FakeTask")
         self.assertEqual(data["total"], 1)
 
     def test_toggle_task(self):
         response = client.post("/api/v2/tasks/FakeTask/toggle")
         data = response.json()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "FakeTask")
         self.assertEqual(data["enabled"], True)
 
         response = client.post("/api/v2/tasks/FakeTask/toggle")
         data = response.json()
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "FakeTask")
         self.assertEqual(data["enabled"], False)
 
@@ -107,9 +107,9 @@ class ExportTaskTest(unittest.TestCase):
 
     def test_search_export(self):
         """Tests that exports can be searched."""
-        response = client.post("/api/v2/tasks/search", json={"name": "RandomExport"})
-        self.assertEqual(response.status_code, 200)
+        response = client.post("/api/v2/tasks/search", json={"query": {"name": "RandomExport"}})
         data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tasks"][0]["name"], "RandomExport")
         self.assertEqual(data["tasks"][0]["type"], "export")
         self.assertEqual(data["tasks"][0]["ignore_tags"], ["ignore"])
@@ -126,8 +126,8 @@ class ExportTaskTest(unittest.TestCase):
             f"/api/v2/tasks/export/RandomExport", json={"export": patch_data}
         )
 
-        self.assertEqual(response.status_code, 200)
         data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "RandomExport")
         self.assertEqual(data["ignore_tags"], ["ignore_new"])
 

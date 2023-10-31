@@ -167,7 +167,7 @@ class AnalyticsTask(Task):
 
     def run(self):
         """Filters observables to analyze and then calls each()"""
-        targets, _ = Observable.filter(args={"type__in": self.acts_on})
+        targets, _ = Observable.filter(query_args={"type__in": self.acts_on})
         self.bulk(targets)
 
     def bulk(self, observables: list[Observable]):
@@ -211,7 +211,7 @@ class OneShotTask(Task):
             params: Parameters to run the task with.
         """
         results, count = Observable.filter(
-            args={"type__in": self.acts_on, "value": params["value"]}
+            query_args={"type__in": self.acts_on, "value": params["value"]}
         )
         if not count:
             logging.warning(

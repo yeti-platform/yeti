@@ -1,5 +1,5 @@
+import datetime
 from enum import Enum
-from typing import Type
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, ValidationInfo
@@ -56,6 +56,11 @@ class GraphAddRequest(BaseModel):
             raise ValueError(f'{info.field_name} uses an invalid object type: {entity_type}')
 
         return value
+
+
+class GraphPatchRequest(BaseModel):
+    link_type: str
+    description: str
 
 
 class GraphSearchResponse(BaseModel):
@@ -118,6 +123,21 @@ async def add(request: GraphAddRequest) -> graph.Relationship:
     )
     return relationship
 
+@router.patch('/{relationship_id}')
+async def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relationship:
+    """Edits a Relationship in the graph."""
+    relationship = graph.Relationship.get(relationship_id)
+    if relationship is None:
+        raise HTTPException(
+            status_code=404, detail=f"Relationship {relationship_id} not found"
+        )
+
+    relationship.description = request.description
+    relationship.type = request.link_type
+    relationship.modified = datetime.datetime.now(datetime.timezone.utc)
+
+    return relationship.save()
+
 
 @router.delete("/{relationship_id}")
 async def delete(relationship_id: str) -> None:
@@ -162,7 +182,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
             except ValueError:
                 pass
     db_observables, _ = observable.Observable.filter(
-        args={"value__in": request.observables}
+        query_args={"value__in": request.observables}
     )
     for db_observable in db_observables:
         known[db_observable.value] = db_observable

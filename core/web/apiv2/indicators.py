@@ -23,7 +23,7 @@ class PatchIndicatorRequest(BaseModel):
 class IndicatorSearchRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    name: str | None = None
+    query: dict[str, str|int|list] = {}
     type: indicator.IndicatorType | None = None
     count: int = 50
     page: int = 0
@@ -76,10 +76,10 @@ async def details(indicator_id) -> indicator.IndicatorTypes:
 @router.post("/search")
 async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
     """Searches for indicators."""
-    request_args = request.model_dump()
-    count = request_args.pop("count")
-    page = request_args.pop("page")
+    query = request.query
+    if request.type:
+        query["type"] = request.type
     indicators, total = indicator.Indicator.filter(
-        request_args, offset=request.page * request.count, count=request.count
+        query, offset=request.page * request.count, count=request.count
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)

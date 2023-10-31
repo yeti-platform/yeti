@@ -39,7 +39,7 @@ class ObservableType(str, Enum):
     url = "url"
 
 
-class Observable(BaseModel, database_arango.ObservableYetiConnector):
+class Observable(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
 
