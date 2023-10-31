@@ -18,6 +18,12 @@ class IndicatorTest(unittest.TestCase):
             location='filesystem',
             diamond=indicator.DiamondModel.capability
             ).save()
+        self.indicator2 = indicator.Regex(
+            name="localhost",
+            pattern="127.0.0.1",
+            location='network',
+            diamond=indicator.DiamondModel.infrastructure
+            ).save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -52,7 +58,17 @@ class IndicatorTest(unittest.TestCase):
 
     def test_sarch_indicators(self):
         response = client.post(
-            "/api/v2/indicators/search", json={"name": "h", "type": "regex"}
+            "/api/v2/indicators/search", json={"query": {"name": "he"}, "type": "regex"}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["indicators"]), 1)
+        self.assertEqual(data["indicators"][0]["name"], "hex")
+        self.assertEqual(data["indicators"][0]["type"], "regex")
+
+    def test_search_indicators_subfields(self):
+        response = client.post(
+            "/api/v2/indicators/search", json={"query": {"location": "filesystem"}, "type": "regex"}
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()

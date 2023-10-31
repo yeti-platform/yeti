@@ -4,7 +4,7 @@ from typing import Iterable
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
-from core.schemas.tag import DEFAULT_EXPIRATION_DAYS, Tag
+from core.schemas.tag import DEFAULT_EXPIRATION, Tag
 
 
 # Request schemas
@@ -12,7 +12,7 @@ class NewRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     name: str
-    default_expiration_days: int = DEFAULT_EXPIRATION_DAYS
+    default_expiration: datetime.timedelta = DEFAULT_EXPIRATION
     produces: list[str] = []
     replaces: list[str] = []
 
@@ -64,7 +64,7 @@ async def new(request: NewRequest) -> Tag:
     """Creates a new observable in the database."""
     tag = Tag(
         name=request.name,
-        default_expiration=datetime.timedelta(days=request.default_expiration_days),
+        default_expiration=request.default_expiration,
         created=datetime.datetime.now(datetime.timezone.utc),
         produces=request.produces,
         replaces=request.replaces,
@@ -92,7 +92,7 @@ async def update(tag_id: str, request: UpdateRequest) -> Tag:
     tag.name = request.name
     tag.produces = request.produces
     tag.replaces = request.replaces
-    tag.default_expiration = datetime.timedelta(days=request.default_expiration_days)
+    tag.default_expiration = request.default_expiration
     tag = tag.save()
     return tag
 

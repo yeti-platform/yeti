@@ -282,13 +282,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         tags: List[str],
         strict: bool = False,
         normalized: bool = True,
-        expiration_days: int | None = None,
+        expiration: datetime.timedelta | None = None,
     ) -> TYetiObject:
         """Connects object to tag graph."""
         # Import at runtime to avoid circular dependency.
         from core.schemas import tag
 
-        expiration_days = expiration_days or tag.DEFAULT_EXPIRATION_DAYS
+        expiration = expiration or tag.DEFAULT_EXPIRATION
 
         if strict:
             self.clear_tags()
@@ -605,7 +605,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
     @classmethod
     def filter(
         cls: Type[TYetiObject],
-        args: dict[str, Any],
+        query_args: dict[str, Any],
+        tag_filter: List[str] = [],
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
@@ -617,11 +618,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
         the regex defined in the 'value' key of the args dict.
 
         Args:
-            args: A key:value dictionary containing a 'value' or 'name' key
-              defining the regular expression to match against.
+            query_args: A key:value dictionary containing keys to filter objects
+                on.
+            tag_filter: A list of tags to filter on.
             offset: Skip this many objects when querying the DB.
             count: How many objecst after `offset` to return.
             sorting: A list of (order, ascending) fields to sort by.
+            graph_queries: A list of (name, graph, direction, field) tuples to
+                query the graph with.
 
         Returns:
             A List of Yeti objects, and the total object count.
@@ -635,49 +639,56 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for field, asc in sorting:
             sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
-        for key, value in args.items():
+        aql_args: dict[str, str | int | list] = {}
+        for i, (key, value) in enumerate(list(query_args.items())):
             if isinstance(value, str):
-                args[key] = value.strip()
+                aql_args[f'arg{i}_value'] = value
             elif isinstance(value, list):
-                args[key] = [v.strip() for v in value]
+                aql_args[f'arg{i}_value'] = [v.strip() for v in value]
 
             if key.startswith("in__"):
-                conditions.append(f"@{key} ALL IN o.{key[4:]}")
-                sorts.append(f"o.{key[4:]}")
+                conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
+                aql_args[f"arg{i}_key"] = key[4:]
+                sorts.append(f"o.@arg{i}_key")
             elif key.endswith("__in"):
-                conditions.append(f"o.{key[:-4]} IN @{key}")
-                sorts.append(f"o.{key[:-4]}")
+                conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
+                aql_args[f"arg{i}_key"] = key[:-4]
+                sorts.append(f"o.@arg{i}_key")
             elif key in ["value", "name", "type", "attributes.id", "username"]:
-                conditions.append(
-                    "REGEX_TEST(o.{0:s}, @{1:s}, true)".format(
-                        key, key.replace(".", "_")
-                    )
-                )
-                sorts.append("o.{0:s}".format(key))
+                conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+                aql_args[f'arg{i}_key'] = key
+                sorts.append(f"o.@arg{i}_key")
             elif key in ["labels", "relevant_tags"]:
-                conditions.append(
-                    "@{1:s} ALL IN o.{0:s}".format(key, key.replace(".", "_"))
-                )
-                sorts.append("o.{0:s}".format(key))
+                conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
+                aql_args[f'arg{i}_key'] = key
+                sorts.append(f"o.@arg{i}_key")
             else:
-                conditions.append("o.{0:s} == @{0:s}".format(key))
-                sorts.append("o.{0:s}".format(key))
+                conditions.append(f"o.@arg{i}_key == @arg{i}_value")
+                aql_args[f'arg{i}_key'] = key
+                sorts.append(f"o.@arg{i}_key")
 
         limit = ""
         if count != 0:
             limit = f"LIMIT @offset, @count"
-            args["offset"] = offset
-            args["count"] = count
+            aql_args["offset"] = offset
+            aql_args["count"] = count
 
         # TODO: Interpolate this query
         graph_query_string = ""
         for name, graph, direction, field in graph_queries:
             graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
 
+        if tag_filter:
+            conditions.append("COUNT(INTERSECTION(ATTRIBUTES(MERGE(tags)), @tag_names)) > 0")
+            aql_args["tag_names"] = tag_filter
+
+        aql_filter = ""
+        if conditions:
+            aql_filter = f"FILTER {' AND '.join(conditions)}"
         aql_string = f"""
             FOR o IN @@collection
-                FILTER {' AND '.join(conditions)}
                 {graph_query_string}
+                {aql_filter}
                 SORT {', '.join(sorts)}
                 {limit}
             """
@@ -685,11 +696,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             aql_string += f'\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
         else:
             aql_string += "\nRETURN o"
-        args["@collection"] = colname
-        for key in list(args.keys()):
-            args[key.replace(".", "_")] = args.pop(key)
+        aql_args["@collection"] = colname
         documents = cls._db.aql.execute(
-            aql_string, bind_vars=args, count=True, full_count=True
+            aql_string, bind_vars=aql_args, count=True, full_count=True
         )
         results = []
         total = documents.statistics().get("fullCount", count)
@@ -738,98 +747,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         return cls._db.collection(cls._collection_name)
 
-
-class ObservableYetiConnector(ArangoYetiConnector):
-    @classmethod
-    def filter(
-        cls: Type[TYetiObject],
-        args: dict[str, Any],
-        tags: List[str] = [],
-        offset: int = 0,
-        count: int = 0,
-        sorting: List[tuple[str, bool]] = [],
-    ) -> tuple[List[TYetiObject], int]:
-        """Search in an ArangoDb collection.
-
-        Search the collection for all objects whose 'value' attribute matches
-        the regex defined in the 'value' key of the args dict.
-
-        Args:
-            args: A key:value dictionary containing a 'value' or 'name' key
-                defining the regular expression to match against.
-            offset: Skip this many objects when querying the DB.
-            count: How many objecst after `offset` to return.
-            sorting: A list of (order, ascending) fields to sort by.
-
-        Returns:
-            A List of Yeti objects, and the total object count.
-        """
-        cls._get_collection()
-        conditions = []
-        sorts = []
-        tags = args.pop("tags", [])
-
-        # We want user-defined sorts to take precedence.
-        for field, asc in sorting:
-            sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
-
-        for key, value in args.items():
-            if isinstance(value, str):
-                args[key] = value.strip()
-            elif isinstance(value, list):
-                args[key] = [v.strip() for v in value]
-
-            if key.startswith("in__"):
-                conditions.append(f"@{key} ALL IN o.{key[4:]}")
-                sorts.append(f"o.{key[4:]}")
-            elif key.endswith("__in"):
-                conditions.append(f"o.{key[:-4]} IN @{key}")
-                sorts.append(f"o.{key[:-4]}")
-            elif key == "value":
-                conditions.append("REGEX_TEST(o.value, @value, true)")
-                sorts.append("o.{0:s}".format(key))
-            elif key in ["labels", "relevant_tags"]:
-                conditions.append(
-                    "@{1:s} ALL IN o.{0:s}".format(key, key.replace(".", "_"))
-                )
-                sorts.append("o.{0:s}".format(key))
-            else:
-                conditions.append("o.{0:s} == @{0:s}".format(key))
-                sorts.append("o.{0:s}".format(key))
-
-        tag_filter = ""
-        if tags:
-            tag_filter = "FILTER COUNT(INTERSECTION(ATTRIBUTES(tags), @tag_names)) > 0"
-            args["tag_names"] = tags
-
-        limit = ""
-        if count != 0:
-            limit = f"LIMIT @offset, @count"
-            args["offset"] = offset
-            args["count"] = count
-
-        aql_string = f"""
-            FOR o IN observables
-                FILTER {' AND '.join(conditions)}
-                LET tags = MERGE(
-                    FOR v, e in 1..1 OUTBOUND o tagged RETURN {{ [v.name]: e }}
-                )
-                {tag_filter}
-                SORT {', '.join(sorts)}
-                {limit}
-            """
-
-        aql_string += "\nRETURN MERGE(o, { tags: tags })"
-
-        documents = cls._db.aql.execute(
-            aql_string, bind_vars=args, count=True, full_count=True
-        )
-        results = []
-        total = documents.statistics().get("fullCount", count)
-        for doc in documents:
-            doc["id"] = doc.pop("_key")
-            results.append(cls.load(doc))
-        return results, total or 0
 
 
 def tagged_observables_export(cls, args):

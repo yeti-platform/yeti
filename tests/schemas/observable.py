@@ -54,7 +54,7 @@ class ObservableTest(unittest.TestCase):
         obs1 = hostname.Hostname(value="test1.com").save()
         obs2 = hostname.Hostname(value="test2.com").save()
 
-        result, total = Observable.filter(args={"value": "test"})
+        result, total = Observable.filter(query_args={"value": "test"})
         self.assertEqual(len(result), 2)
         self.assertEqual(total, 2)
         self.assertEqual(result[0].id, obs1.id)
@@ -68,7 +68,7 @@ class ObservableTest(unittest.TestCase):
         obs3 = hostname.Hostname(value="test3.com").save()
 
         result, total = Observable.filter(
-            args={"value__in": ["test1.com", "test3.com"]}
+            query_args={"value__in": ["test1.com", "test3.com"]}
         )
         self.assertEqual(len(result), 2)
         self.assertEqual(total, 2)
