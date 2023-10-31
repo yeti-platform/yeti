@@ -282,13 +282,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         tags: List[str],
         strict: bool = False,
         normalized: bool = True,
-        expiration_days: int | None = None,
+        expiration: datetime.timedelta | None = None,
     ) -> TYetiObject:
         """Connects object to tag graph."""
         # Import at runtime to avoid circular dependency.
         from core.schemas import tag
 
-        expiration_days = expiration_days or tag.DEFAULT_EXPIRATION_DAYS
+        expiration = expiration or tag.DEFAULT_EXPIRATION
 
         if strict:
             self.clear_tags()

@@ -8,10 +8,10 @@ from pydantic import BaseModel, Field
 from core import database_arango
 from core.helpers import now
 
-DEFAULT_EXPIRATION_DAYS = 30  # Completely arbitrary
+DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
 
 def future():
-    return datetime.timedelta(days=DEFAULT_EXPIRATION_DAYS)
+    return DEFAULT_EXPIRATION
 
 def normalize_name(tag_name: str) -> str:
     nfkd_form = unicodedata.normalize("NFKD", tag_name)
@@ -32,7 +32,7 @@ class Tag(BaseModel, database_arango.ArangoYetiConnector):
     name: str
     count: int = 0
     created: datetime.datetime = Field(default_factory=now)
-    default_expiration: datetime.timedelta = Field(default_factory=future)
+    default_expiration: datetime.timedelta = DEFAULT_EXPIRATION
     produces: list[str] = []
     replaces: list[str] = []
 
