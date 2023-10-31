@@ -16,6 +16,7 @@ def generate_api_key():
 class User(BaseModel, database_arango.ArangoYetiConnector):
 
     _collection_name: ClassVar[str] = "users"
+    _type_filter: ClassVar[None] = None
 
     id: str | None = None
     username: str
