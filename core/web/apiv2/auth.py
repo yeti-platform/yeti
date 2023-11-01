@@ -89,7 +89,9 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
     if not YETI_AUTH:
         user = UserSensitive.find(username="yeti")
         if not user:
-            user = UserSensitive(username="yeti", admin=True).save()
+            user = UserSensitive(username="yeti", admin=True)
+            user.set_password("yeti")
+            user.save()
     else:
         user = UserSensitive.find(username=form_data.username)
         if not (user and user.verify_password(form_data.password)):
