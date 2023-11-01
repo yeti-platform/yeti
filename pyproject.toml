@@ -27,7 +27,7 @@ mypy = "^1.0.0"
 httpx = "^0.23.3"
 
 [tool.poetry.scripts]
-yetictl = 'extras.yetictl.cli:cli'
+yetictl = 'yetictl.cli:cli'
 
 [tool.poetry.group.plugins.dependencies]
 pymisp = "^2.4.176"
