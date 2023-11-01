@@ -13,3 +13,4 @@ elif  [ "$1" = 'envshell' ]; then
     poetry shell
 else
     exec "$@"
+fi
