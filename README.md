@@ -1,8 +1,19 @@
+# DEPRECATION NOTICE
+
+This version of Yeti is deprecated. We're working hard on a new version, which
+you can check out by following instructions at
+
+    https://github.com/yeti-platform/yeti-docker
+
+(or on the `fastapi` branch here)
+
 # Yeti - Your everyday threat intelligence
 
-* [What is Yeti?](#what-is-yeti)
-* [Installation](#installation)
-* [Useful links](#useful-links)
+- [DEPRECATION NOTICE](#deprecation-notice)
+- [Yeti - Your everyday threat intelligence](#yeti---your-everyday-threat-intelligence)
+  - [What is Yeti?](#what-is-yeti)
+  - [Installation](#installation)
+  - [Useful links](#useful-links)
 
 ## What is Yeti?
 
