@@ -202,6 +202,9 @@ class ObservableContextTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.observable = hostname.Hostname(value="tomchop.me").save()
+        self.observable2 = hostname.Hostname(value="tomchop2.me").save()
+        self.observable2.add_context(
+            "tests:ObservableContextTest", {'context_key': 'context_value'})
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -213,7 +216,19 @@ class ObservableContextTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["context"], [{"key": "value", "source": "test_source"}])
+        self.assertEqual(
+            data["context"], [{"key": "value", "source": "test_source"}])
+
+    def test_sarch_context(self) -> None:
+        """Tests that we can filter observables based on context subfields."""
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"query": {"context.source": "tests:"}, "page": 0, "count": 10},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["observables"]), 1)
+        self.assertEqual(data["observables"][0]["value"], "tomchop2.me")
 
     def test_delete_context(self) -> None:
         response = client.post(

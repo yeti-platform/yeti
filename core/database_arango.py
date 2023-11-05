@@ -654,7 +654,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key[:-4]
                 sorts.append(f"o.@arg{i}_key")
-            elif key in ["value", "name", "type", "attributes.id", "username"]:
+            elif key in ["value", "name", "type", "username"]:
                 conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
                 aql_args[f'arg{i}_key'] = key
                 sorts.append(f"o.@arg{i}_key")
@@ -662,6 +662,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
                 aql_args[f'arg{i}_key'] = key
                 sorts.append(f"o.@arg{i}_key")
+            elif key.startswith("context."):
+                context_field = key[8:]
+                conditions.append(f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value) RETURN c) > 0")
+                aql_args[f'arg{i}_key'] = context_field
+                sorts.append(f"o.context[*].@arg{i}_key")
             else:
                 conditions.append(f"o.@arg{i}_key == @arg{i}_value")
                 aql_args[f'arg{i}_key'] = key
