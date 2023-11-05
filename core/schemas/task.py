@@ -73,6 +73,10 @@ class Task(BaseModel, database_arango.ArangoYetiConnector):
 class FeedTask(Task):
     type: Literal[TaskType.feed] = TaskType.feed
 
+    def add_feed_context(self, observable: Observable, context: dict) -> None:
+        """Adds context to an observable."""
+        observable.add_context(source=f"feed:{self.name}", context=context)
+
     def _unzip_content(self, content: bytes) -> bytes:
         """Unzip the content of a response.
 

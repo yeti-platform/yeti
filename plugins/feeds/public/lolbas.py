@@ -50,7 +50,7 @@ class LoLBAS(task.FeedTask):
         for filepath in entry["Full_Path"]:
             path_obj = path.Path(value=filepath["Path"]).save()
             path_obj.tag(list(tags))
-            path_obj.add_context(source="lolbas", context={"reference": entry["url"]})
+            self.add_feed_context(path_obj, {"reference": entry["url"]})
             tool.link_to(
                 path_obj, relationship_type="located_at", description=description
             )
