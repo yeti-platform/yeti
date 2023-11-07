@@ -2,7 +2,7 @@ import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from core.schemas import graph
 from core.schemas.observable import Observable, ObservableType
@@ -15,6 +15,14 @@ class NewObservableRequest(BaseModel):
     value: str
     tags: list[str] = []
     type: ObservableType
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, value) -> list[str]:
+        for tag in value:
+            if not tag:
+                raise ValueError("Tags cannot be empty")
+        return value
 
 
 class NewBulkObservableAddRequest(BaseModel):

@@ -121,6 +121,15 @@ class ObservableTest(unittest.TestCase):
         self.assertIn("tag1", data["tags"])
         self.assertIn("tag2", data["tags"])
 
+    def test_create_observable_empty_tags(self):
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": [""]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertEquals(data["detail"][0]["msg"], "Value error, Tags cannot be empty", data)
+
     def test_bulk_add(self):
         request = {
             "observables": [
