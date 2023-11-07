@@ -83,7 +83,17 @@ async def observables_root() -> Iterable[Observable]:
 
 @router.post("/")
 async def new(request: NewObservableRequest) -> Observable:
-    """Creates a new observable in the database."""
+    """Creates a new observable in the database.
+
+    Raises:
+        HTTPException(400) if observable already exists.
+    """
+    observable = Observable.find(value=request.value)
+    if observable:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Observable with value {request.value} already exists",
+        )
     observable = Observable(
         value=request.value,
         type=request.type,
@@ -91,7 +101,7 @@ async def new(request: NewObservableRequest) -> Observable:
     )
     new = observable.save()
     if request.tags:
-        new = new.tag(request.tags)
+        new.tag(request.tags)
     return new
 
 
@@ -120,9 +130,9 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[Observable]:
 async def details(observable_id) -> Observable:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
-    observable.get_tags()
     if not observable:
         raise HTTPException(status_code=404, detail="Observable not found")
+    observable.get_tags()
     return observable
 
 

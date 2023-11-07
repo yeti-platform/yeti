@@ -22,6 +22,17 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["value"], "tomchop.me")
         self.assertIn("tag1", data["tags"])
 
+    def test_post_existing_observable(self):
+        obs = hostname.Hostname(value="tomchop.me").save()
+        obs.tag(["tag1"])
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "tomchop.me", "type": "hostname", "tags": []},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data["detail"], "Observable with value tomchop.me already exists")
+
     def test_observable_search(self):
         hostname.Hostname(value="tomchop.me").save()
         hostname.Hostname(value="tomchop2.com").save()
