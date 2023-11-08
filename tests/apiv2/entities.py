@@ -13,7 +13,7 @@ class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.entity1 = entity.ThreatActor(name="ta1", aliases=["badactor"]).save()
-        self.entity1.tag(['ta1'])
+        self.entity1.tag(["ta1"])
         self.entity2 = entity.ThreatActor(name="bears").save()
 
     def tearDown(self) -> None:
@@ -42,7 +42,8 @@ class EntityTest(unittest.TestCase):
 
     def test_search_entities(self):
         response = client.post(
-            "/api/v2/entities/search", json={"query": {"name": "ta"}, "type": "threat-actor"}
+            "/api/v2/entities/search",
+            json={"query": {"name": "ta"}, "type": "threat-actor"},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -56,7 +57,8 @@ class EntityTest(unittest.TestCase):
 
     def test_search_entities_subfields(self):
         response = client.post(
-            "/api/v2/entities/search", json={"query": {"in__aliases": ["badactor"]}, "type": "threat-actor"}
+            "/api/v2/entities/search",
+            json={"query": {"in__aliases": ["badactor"]}, "type": "threat-actor"},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -67,7 +69,10 @@ class EntityTest(unittest.TestCase):
     def test_new_entity_with_tag(self):
         response = client.post(
             "/api/v2/entities/",
-            json={"entity": {"name": "ta2", "type": "threat-actor"}, "tags": ["hacker"]},
+            json={
+                "entity": {"name": "ta2", "type": "threat-actor"},
+                "tags": ["hacker"],
+            },
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -84,3 +89,27 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tagged"], 1)
         self.assertIn("hacker", data["tags"][self.entity1.extended_id], data)
+
+    def test_patch_entity(self):
+        """Tests that an entity gets patched."""
+        response = client.patch(
+            f"/api/v2/entities/{self.entity1.id}",
+            json={"entity": {"name": "ta2", "type": "threat-actor"}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["name"], "ta2")
+        self.assertEqual(data["type"], "threat-actor")
+
+    def test_patch_entity_type_mismatch(self):
+        """Tests that an entity gets patched."""
+        response = client.patch(
+            f"/api/v2/entities/{self.entity1.id}",
+            json={"entity": {"name": "ta2", "type": "malware"}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 400, data)
+        self.assertEqual(
+            data["detail"],
+            f"Entity {self.entity1.id} type mismatch. Provided 'malware'. Expected 'threat-actor'",
+        )

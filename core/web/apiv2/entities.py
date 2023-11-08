@@ -73,7 +73,13 @@ async def new(request: NewEntityRequest) -> entity.EntityTypes:
 @router.patch("/{entity_id}")
 async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
     """Modifies entity in the database."""
-    db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
+    db_entity: entity.EntityTypes = entity.Entity.get(entity_id)
+    if not db_entity:
+        raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
+    if db_entity.type != request.entity.type:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Entity {entity_id} type mismatch. Provided '{request.entity.type}'. Expected '{db_entity.type}'")
     update_data = request.entity.model_dump(exclude_unset=True)
     updated_entity = db_entity.model_copy(update=update_data)
     new = updated_entity.save()
@@ -84,9 +90,9 @@ async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
 async def details(entity_id) -> entity.EntityTypes:
     """Returns details about an observable."""
     db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
-    db_entity.get_tags()
     if not db_entity:
-        raise HTTPException(status_code=404, detail="entity not found")
+        raise HTTPException(status_code=404, detail=f"Entity {entity_id}  not found")
+    db_entity.get_tags()
     return db_entity
 
 
