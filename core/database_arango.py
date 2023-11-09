@@ -524,10 +524,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             query_filter += "\nFILTER v.type =~ @target_types_regex"
 
         limit = ""
-        if offset:
-            limit += f"LIMIT {offset}"
-            if count:
-                limit += f", {count}"
+        if count != 0:
+            limit += f"LIMIT @offset, @count"
+            args['offset'] = offset
+            args['count'] = count
 
         aql = f"""
         FOR v, e, p IN {hops}..{hops} {direction} @extended_id @@graph

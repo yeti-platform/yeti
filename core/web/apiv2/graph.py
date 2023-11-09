@@ -96,7 +96,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         graph=request.graph,
         hops=request.hops,
         count=request.count,
-        offset=request.page,
+        offset=request.page * request.count,
     )
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 
