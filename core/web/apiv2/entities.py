@@ -95,6 +95,13 @@ async def details(entity_id) -> entity.EntityTypes:
     db_entity.get_tags()
     return db_entity
 
+@router.delete("/{entity_id}")
+async def delete(entity_id: str) -> None:
+    """Deletes an Entity."""
+    db_entity = entity.Entity.get(entity_id)
+    if not db_entity:
+        raise HTTPException(status_code=404, detail="Entity ID {entity_id} not found")
+    db_entity.delete()
 
 @router.post("/search")
 async def search(request: EntitySearchRequest) -> EntitySearchResponse:

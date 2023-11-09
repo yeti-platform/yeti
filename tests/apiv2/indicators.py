@@ -75,3 +75,9 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(len(data["indicators"]), 1)
         self.assertEqual(data["indicators"][0]["name"], "hex")
         self.assertEqual(data["indicators"][0]["type"], "regex")
+
+    def test_delete_indicator(self):
+        response = client.delete(f"/api/v2/indicators/{self.indicator1.id}")
+        self.assertEqual(response.status_code, 200)
+        response = client.get(f"/api/v2/indicators/{self.indicator1.id}")
+        self.assertEqual(response.status_code, 404)

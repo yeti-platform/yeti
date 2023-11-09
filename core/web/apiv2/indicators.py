@@ -72,6 +72,13 @@ async def details(indicator_id) -> indicator.IndicatorTypes:
         raise HTTPException(status_code=404, detail="indicator not found")
     return db_indicator
 
+@router.delete("/{indicator_id}")
+async def delete(indicator_id: str) -> None:
+    """Deletes an indicator."""
+    db_indicator = indicator.Indicator.get(indicator_id)
+    if not db_indicator:
+        raise HTTPException(status_code=404, detail="Indicator ID {indicator_id} not found")
+    db_indicator.delete()
 
 @router.post("/search")
 async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:

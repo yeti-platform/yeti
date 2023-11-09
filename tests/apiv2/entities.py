@@ -113,3 +113,10 @@ class EntityTest(unittest.TestCase):
             data["detail"],
             f"Entity {self.entity1.id} type mismatch. Provided 'malware'. Expected 'threat-actor'",
         )
+
+    def test_delete_entity(self):
+        """Tests that an entity gets deleted."""
+        response = client.delete(f"/api/v2/entities/{self.entity1.id}")
+        self.assertEqual(response.status_code, 200)
+        response = client.get(f"/api/v2/entities/{self.entity1.id}")
+        self.assertEqual(response.status_code, 404)
