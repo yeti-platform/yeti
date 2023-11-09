@@ -517,20 +517,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "@graph": graph,
         }
         if link_types:
-            args["link_types_regex"] = "|".join(link_types)
-            query_filter = "FILTER e.type =~ @link_types_regex"
+            args["link_types"] = link_types
+            query_filter = "FILTER COUNT(FOR r IN @link_types FILTER e.type == r RETURN r) > 0"
         if target_types:
-            args["target_types_regex"] = "|".join(target_types)
-            query_filter += "\nFILTER v.type =~ @target_types_regex"
+            args["target_types"] = target_types
+            query_filter = "FILTER COUNT(FOR r IN @target_types FILTER v.type == r RETURN r) > 0"
 
         limit = ""
         if count != 0:
-            limit += f"LIMIT @offset, @count"
+            limit += "LIMIT @offset, @count"
             args['offset'] = offset
             args['count'] = count
 
+        args["hops"] = hops
+        if direction not in {'any', 'inbound', 'outbound'}:
+            direction = 'any'
+
         aql = f"""
-        FOR v, e, p IN {hops}..{hops} {direction} @extended_id @@graph
+        FOR v, e, p IN @hops..@hops {direction} @extended_id @@graph
 
           {query_filter}
           LET v_with_tags = (

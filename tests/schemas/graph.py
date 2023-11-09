@@ -17,6 +17,7 @@ class ObservableTest(unittest.TestCase):
         database_arango.db.clear()
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
+        self.observable3 = ipv4.IPv4(value="8.8.8.8").save()
         self.entity1 = Malware(name="plugx").save()
 
     def tearDown(self) -> None:
@@ -102,3 +103,30 @@ class ObservableTest(unittest.TestCase):
         vertices, edges, count = self.observable2.neighbors()
         self.assertEqual(len(vertices), 1)
         self.assertEqual(count, 1)
+
+    def test_neighbors_link_types(self):
+        """Tests that a link between two nodes is bidirectional."""
+        self.observable1.link_to(self.observable2, "a", "a")
+        self.observable1.link_to(self.observable2, "b", "b")
+        self.observable1.link_to(self.observable3, "c", "c")
+
+        vertices, edges, edge_count = self.observable1.neighbors(link_types=['a'])
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(edge_count, 1)
+
+        vertices, edges, edge_count = self.observable1.neighbors()
+        self.assertEqual(len(vertices), 2)
+        self.assertEqual(edge_count, 3)
+
+    def test_neighbors_target_types(self):
+        """Tests that a link between two nodes is bidirectional."""
+        self.observable1.link_to(self.observable2, "a", "a")
+        self.observable1.link_to(self.observable3, "c", "c")
+
+        vertices, edges, edge_count = self.observable1.neighbors(target_types=['ipv4'])
+        self.assertEqual(len(vertices), 2)
+        self.assertEqual(edge_count, 2)
+
+        vertices, edges, edge_count = self.observable1.neighbors()
+        self.assertEqual(len(vertices), 2)
+        self.assertEqual(edge_count, 2)
