@@ -24,11 +24,16 @@ class TagTest(unittest.TestCase):
 
         ip_hacker = ipv4.IPv4(value="8.8.8.8").save()
         c2_hacker = hostname.Hostname(value="c2.hacker.com").save()
+        for i in range(100):
+            ip = ipv4.IPv4(value=f"8.8.8.{i}").save()
+            ip.link_to(c2_hacker, 'resolves', 'resolves')
+        c2_hacker.link_to(ip_hacker, 'pdns', 'pdns')
         www_hacker = hostname.Hostname(value="www.hacker.com").save()
         hacker = hostname.Hostname(value="hacker.com").save()
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
         macaddr = mac_address.MacAddress(value="00:11:22:33:44:55").save()
         generic = generic_observable.GenericObservable(value="SomeInterestingString").save()
+        generic.add_context("test_source", {"test": "test"})
 
         hacker.link_to(www_hacker, "domain", "Domain")
         hacker.link_to(c2_hacker, "domain", "Domain")
@@ -41,6 +46,7 @@ class TagTest(unittest.TestCase):
 
         ta = ThreatActor(name="HackerActor").save()
         ta.tag(["Hack!ré T@ëst"])
+        ta.link_to(hacker, "uses", "Uses domain")
 
         regex = Regex(
             name="hex",
@@ -48,6 +54,7 @@ class TagTest(unittest.TestCase):
             location="bodyfile",
             diamond=DiamondModel.capability,
         ).save()
+        regex.link_to(hacker, "indicates", "Domain dropped by this regex")
         xmrig = Malware(name='xmrig').save()
         xmrig.tag(['xmrig'])
         regex.link_to(xmrig, "indicates", "Usual name for dropped binary")
