@@ -45,6 +45,6 @@ jobs:
         with:
           context: .
           file: ./extras/docker/Dockerfile
-          push: false  # change to True after we tested this works.
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
