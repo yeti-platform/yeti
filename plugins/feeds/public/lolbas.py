@@ -43,9 +43,12 @@ class LoLBAS(task.FeedTask):
         tool = entity.Tool(
             name=entry["Name"], description=description, created=created
         ).save()
+        entity_slug = entry["Name"].lower().replace(".exe", "")
+        tool.tag([entity_slug])
 
         tags = set([cmd["Category"].lower() for cmd in entry["Commands"]])
         tags.add("lolbas")
+        tags.add(entity_slug)
 
         for filepath in entry["Full_Path"]:
             path_obj = path.Path(value=filepath["Path"]).save()
