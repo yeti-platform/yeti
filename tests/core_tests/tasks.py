@@ -202,7 +202,7 @@ class ExportTaskTest(unittest.TestCase):
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed, task.status_message)
         observable_list, filename = mock_render.call_args[0]
-        self.assertTrue(filename.endswith("/exports/RandomExport"))
+        self.assertTrue(filename.endswith("/exports/randomexport"))
         self.assertEqual(len(observable_list), 4)
 
         self.assertEqual(observable_list[0].value, self.observable1.value)
@@ -220,7 +220,7 @@ class ExportTaskTest(unittest.TestCase):
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed, task.status_message)
         _, filename = mock_render.call_args[0]
-        self.assertEqual(filename, "/tmp/exports/RandomExport")
+        self.assertEqual(filename, "/tmp/exports/randomexport")
         yeti_config.system.export_path = previous
 
     def test_tag_filtering(self):
