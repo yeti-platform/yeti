@@ -16,6 +16,7 @@ logger = get_task_logger(__name__)
 app = Celery(
     "tasks",
     broker=f"redis://{yeti_config.get('redis', 'host')}/",
+    worker_pool_restarts=True,
     imports=(
         # TESTING ONLY
         "plugins.analytics.public.malshare",
