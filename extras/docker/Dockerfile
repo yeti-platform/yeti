@@ -11,7 +11,7 @@ ADD . /app
 
 WORKDIR /app
 RUN cp yeti.conf.sample yeti.conf
-RUN cp ./extras/docker/scripts/docker-entrypoint.sh /docker-entrypoint.sh
+RUN cp ./extras/docker/docker-entrypoint.sh /docker-entrypoint.sh
 
 # Upgrade pip
 RUN pip3 install --upgrade pip && pip3 install poetry
