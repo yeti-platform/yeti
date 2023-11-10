@@ -25,7 +25,10 @@ class LoLBAS(task.FeedTask):
     _SOURCE: ClassVar["str"] = "https://lolbas-project.github.io/api/lolbas.json"
 
     def run(self):
-        lolbas_json = self._make_request(self._SOURCE).json()
+        response = self._make_request(self._SOURCE)
+        if not response:
+            return
+        lolbas_json = response.json()
         for entry in lolbas_json:
             self.analyze_entry(entry)
 
