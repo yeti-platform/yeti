@@ -10,11 +10,17 @@ from core.web import webapp
 
 client = TestClient(webapp.app)
 
+TEST_TEMPLATE = """<blah>
+{% for obs in data %}{{ obs.value }}
+{% endfor %}
+</blah>
+"""
+
 
 class TemplateTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.template = Template(name="FakeTemplate", template="<BLAH>").save()
+        self.template = Template(name="FakeTemplate", template=TEST_TEMPLATE).save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -63,7 +69,7 @@ class TemplateTest(unittest.TestCase):
         self.assertEqual(db_template.name, "FakeTemplateFoo")
         self.assertEqual(db_template.id, data["id"])
 
-    def test_render_raw_template_by_id(self):
+    def test_render_template_by_id(self):
         ipv4.IPv4(value="1.1.1.1").save()
         ipv4.IPv4(value="2.2.2.2").save()
         ipv4.IPv4(value="3.3.3.3").save()
@@ -79,9 +85,9 @@ class TemplateTest(unittest.TestCase):
             "Content-Disposition"
         ] = "attachment; filename=FakeTemplate.txt"
         self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(data, "1.1.1.1\n2.2.2.2\n3.3.3.3\n")
+        self.assertEqual(data, "<blah>\n1.1.1.1\n2.2.2.2\n3.3.3.3\n\n</blah>\n")
 
-    def test_render_raw_template_by_search(self):
+    def test_render_template_by_search(self):
         hostname.Hostname(value="yeti1.com").save()
         hostname.Hostname(value="yeti2.com").save()
         hostname.Hostname(value="yeti3.com").save()
@@ -95,4 +101,4 @@ class TemplateTest(unittest.TestCase):
             "Content-Disposition"
         ] = "attachment; filename=FakeTemplate.txt"
         self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(data, "yeti1.com\nyeti2.com\nyeti3.com\n")
+        self.assertEqual(data, "<blah>\nyeti1.com\nyeti2.com\nyeti3.com\n\n</blah>\n")

@@ -96,7 +96,7 @@ async def render(request: RenderExportRequest) -> StreamingResponse:
         observables = [
             Observable.get(observable_id) for observable_id in request.observable_ids
         ]
-    data = template.render_raw(observables)
+    data = template.render(observables, None)
 
     def _stream():
         for d in data.split("\n"):

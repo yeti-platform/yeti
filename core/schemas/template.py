@@ -1,6 +1,7 @@
 import os
 from typing import ClassVar
 
+import jinja2
 from pydantic import BaseModel
 
 from core import database_arango
@@ -21,14 +22,15 @@ class Template(BaseModel, database_arango.ArangoYetiConnector):
     def load(cls, object: dict) -> "Template":
         return cls(**object)
 
-    def render(self, data: list["Observable"], output_file: str) -> None:
+    def render(self, data: list["Observable"], output_file: str | None) -> None | str:
         """Renders the template with the given data to the output file."""
-        # TODO: Change this to an actual render function
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        with open(output_file, "w+") as fd:
-            for d in data:
-                fd.write(f"{d.value}\n")
 
-    def render_raw(self, data: list["Observable"]) -> str:
-        """Renders the template with the given data to a string."""
-        return "\n".join([d.value for d in data])
+        environment = jinja2.Environment()
+        template = environment.from_string(self.template)
+        result = template.render(data=data)
+        if output_file:
+            os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            with open(output_file, "w+") as fd:
+                fd.write(result)
+        else:
+            return result

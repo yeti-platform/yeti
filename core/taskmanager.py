@@ -8,7 +8,7 @@ from celery import Celery
 from celery.utils.log import get_task_logger
 
 from core.config.config import yeti_config
-from core.schemas.task import Task, TaskParams, TaskStatus
+from core.schemas.task import Task, TaskParams, TaskStatus, ExportTask
 
 logger = get_task_logger(__name__)
 
@@ -111,10 +111,10 @@ class TaskManager:
         """
         if not task_name:
             task_name = task_class.__name__
-        logging.info("Registering task", task_name)
+        logging.info(f"Registering task: {task_name}")
         task = task_class.find(name=task_name)
         if not task:
-            logging.info("Task not found in database, creating.")
+            logging.info(f"Task {task_name} not found in database, creating.")
             task_dict = task_class._defaults.copy()
             task_dict["name"] = task_name
             task = task_class(**task_dict).save()
@@ -129,13 +129,18 @@ class TaskManager:
     def load_task(cls, task_name) -> Task:
         """Loads tasks from the database and refreshes cache."""
         if task_name not in cls._store:
-            # ExportTasks are
+            # Only ExportTasks are registered dynamically
+            logging.info(f'Registering ExportTask {task_name}')
+            cls.register_task(ExportTask, task_name=task_name)
+
+        if task_name not in cls._store:
             logging.error(f"Task {task_name} not found. Was it registered?")
-            logging.error("Registered tasks: ", cls._store.keys())
+            logging.error(f"Registered tasks: {cls._store.keys()}")
             raise ValueError(f"Task {task_name} not found. Was it registered?")
 
         task_class = cls._store[task_name].__class__
         task = task_class.find(name=task_name)
+        assert task is not None
         cls._store[task_name] = task
         return task
 
