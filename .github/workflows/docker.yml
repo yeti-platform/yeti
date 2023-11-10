@@ -6,7 +6,7 @@ name: Publish Docker image
 on:
   push:
     branches:
-      - fastapi
+      - docker
 
 jobs:
   push_to_registries:
@@ -44,7 +44,7 @@ jobs:
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
           context: .
-          file: ./prod/yeti/Dockerfile
+          file: ./extras/docker/Dockerfile
           push: false  # change to True after we tested this works.
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
