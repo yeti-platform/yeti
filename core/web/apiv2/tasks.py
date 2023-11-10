@@ -115,7 +115,15 @@ async def export_content(export_name: str):
         raise HTTPException(
             status_code=404, detail=f"ExportTask {export_name} not found"
         )
+    return FileResponse(export.output_file)
 
-    directory = export.output_dir
-    filepath = os.path.join(directory, export.name)
-    return FileResponse(filepath)
+@router.delete("/export/{export_name}")
+async def delete_export(export_name: str):
+    """Deletes an ExportTask."""
+    export = ExportTask.find(name=export_name)
+    if not export:
+        raise HTTPException(
+            status_code=404, detail=f"ExportTask {export_name} not found"
+        )
+    export.delete()
+    return {"status": "ok"}

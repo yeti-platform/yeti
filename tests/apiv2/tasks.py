@@ -149,5 +149,14 @@ class ExportTaskTest(unittest.TestCase):
             "ExportTask could not be patched: Template NOTEXIST not found",
         )
 
+    def test_delete_export(self):
+        """Tests that exports can be deleted."""
+        response = client.delete("/api/v2/tasks/export/RandomExport")
+        self.assertEqual(response.status_code, 200)
+        # verify the export doesn't exist
+        response = client.post("/api/v2/tasks/search", json={"query": {"name": "RandomExport"}})
+        data = response.json()
+        self.assertEqual(data["total"], 0)
+
     def tearDown(self) -> None:
         database_arango.db.clear()
