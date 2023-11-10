@@ -128,7 +128,7 @@ class ObservableTest(unittest.TestCase):
         )
         data = response.json()
         self.assertEqual(response.status_code, 422, data)
-        self.assertEquals(data["detail"][0]["msg"], "Value error, Tags cannot be empty", data)
+        self.assertEqual(data["detail"][0]["msg"], "Value error, Tags cannot be empty", data)
 
     def test_bulk_add(self):
         request = {
