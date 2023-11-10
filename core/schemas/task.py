@@ -250,7 +250,8 @@ class ExportTask(Task):
     def output_file(self) -> str:
         """Returns the output file for the export."""
         base_path = yeti_config.get('system', 'export_path', "")
-        return os.path.abspath(os.path.join(base_path, self.output_dir, self.name))
+        name_slug = self.name.replace(" ", "_").lower()
+        return os.path.abspath(os.path.join(base_path, self.output_dir, name_slug))
 
     def run(self) -> None:
         """Runs the export asynchronously."""
@@ -265,6 +266,8 @@ class ExportTask(Task):
         if not os.path.isdir(self.output_dir):
             os.mkdir(self.output_dir)
         template = Template.find(name=self.template_name)
+        assert template is not None
+        logging.info(f"Rendering template {template.name} to {self.output_file}")
         template.render(export_data, self.output_file)
         # hash output file and store result
 
