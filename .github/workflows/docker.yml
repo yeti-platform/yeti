@@ -1,16 +1,12 @@
 name: Publish Docker image
 
-# on:
-#   release:
-#     types: [published]
 on:
-  push:
-    branches:
-      - fastapi
+  release:
+    types: [published]
 
 jobs:
   push_to_registries:
-    name: Push Docker image to multiple registries
+    name: Push Docker image to DockerHub and GHCR
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -44,7 +40,7 @@ jobs:
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
           context: .
-          file: ./prod/yeti/Dockerfile
-          push: false  # change to True after we tested this works.
+          file: ./extras/docker/Dockerfile
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

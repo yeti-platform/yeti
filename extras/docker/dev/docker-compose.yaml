@@ -1,0 +1,12 @@
+version: '3.3'
+services:
+
+  redis:
+    image: redis:latest
+
+  arangodb:
+    image: arangodb
+    ports:
+      - 127.0.0.1:8529:8529
+    environment:
+      - ARANGO_ROOT_PASSWORD=
