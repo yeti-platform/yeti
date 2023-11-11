@@ -6,6 +6,7 @@ from plugins.feeds.public import feodo_tracker_ip_blocklist
 from plugins.feeds.public import openphish
 from plugins.feeds.public import lolbas
 from plugins.feeds.public import timesketch
+from plugins.feeds.public import attack
 
 
 class FeedTest(unittest.TestCase):
@@ -34,4 +35,9 @@ class FeedTest(unittest.TestCase):
     def test_timesketch(self):
         defaults = timesketch.Timesketch._defaults.copy()
         feed = timesketch.Timesketch(**defaults)
+        feed.run()
+
+    def test_attack(self):
+        defaults = attack.MitreAttack._defaults.copy()
+        feed = attack.MitreAttack(**defaults)
         feed.run()
