@@ -30,7 +30,7 @@ class OTXAlienvault(task.FeedTask):
         "FileHash-SHA1": observable.ObservableType.sha1,
         "URL": observable.ObservableType.url,
         "YARA": indicator.IndicatorType.yara,
-        "CVE": entity.EntityType.exploit,
+        "CVE": entity.EntityType.vulnerability,
     }
 
     def run(self):

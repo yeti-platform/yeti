@@ -15,7 +15,6 @@ class EntityType(str, Enum):
     attack_pattern = "attack-pattern"
     campaign = "campaign"
     company = "company"
-    exploit = "exploit"
     identity = "identity"
     intrusion_set = "intrusion-set"
     investigation = "investigation"
@@ -24,6 +23,8 @@ class EntityType(str, Enum):
     phone = "phone"
     threat_actor = "threat-actor"
     tool = "tool"
+    vulnerability = "vulnerability"
+    course_of_action = "course-of-action"
 
 
 class Entity(BaseModel, database_arango.ArangoYetiConnector):
@@ -64,7 +65,10 @@ class ThreatActor(Entity):
     _type_filter: ClassVar[str] = EntityType.threat_actor
     type: Literal[EntityType.threat_actor] = EntityType.threat_actor
 
+    threat_actor_types: list[str] = []
     aliases: list[str] = []
+    first_seen: datetime.datetime = Field(default_factory=now)
+    last_seen: datetime.datetime = Field(default_factory=now)
 
 
 class IntrusionSet(Entity):
@@ -80,6 +84,7 @@ class Tool(Entity):
     _type_filter: ClassVar[str] = EntityType.tool
     type: Literal[EntityType.tool] = EntityType.tool
 
+    aliases: list[str] = []
     kill_chain_phases: list[str] = []
     tool_version: str = ""
 
@@ -113,7 +118,7 @@ class Identity(Entity):
     _type_filter: ClassVar[str] = EntityType.identity
     type: Literal[EntityType.identity] = EntityType.identity
 
-    identity_class: list[str] = []
+    identity_class: str = ""
     sectors: list[str] = []
     contact_information: str = ""
 
@@ -125,12 +130,25 @@ class Investigation(Entity):
     reference: str = ""
 
 
+class Vulnerability(Entity):
+    _type_filter: ClassVar[str] = EntityType.vulnerability
+    type: Literal[EntityType.vulnerability] = EntityType.vulnerability
+
+    reference: str = ""
+
+
+class CourseOfAction(Entity):
+    _type_filter: ClassVar[str] = EntityType.course_of_action
+    type: Literal[EntityType.course_of_action] = EntityType.course_of_action
+
+
 TYPE_MAPPING = {
     'entities': Entity,
     'entity': Entity,
     EntityType.attack_pattern: AttackPattern,
     EntityType.campaign: Campaign,
     EntityType.company: Company,
+    EntityType.course_of_action: CourseOfAction,
     EntityType.identity: Identity,
     EntityType.intrusion_set: IntrusionSet,
     EntityType.investigation: Investigation,
@@ -139,11 +157,12 @@ TYPE_MAPPING = {
     EntityType.phone: Phone,
     EntityType.threat_actor: ThreatActor,
     EntityType.tool: Tool,
+    EntityType.vulnerability: Vulnerability,
 }
 
 
 REGEXES_ENTITIES = {
-    EntityType.exploit: re.compile(
+    EntityType.vulnerability: re.compile(
         r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"
     )
 }
@@ -153,6 +172,7 @@ EntityTypes = (
     AttackPattern
     | Campaign
     | Company
+    | CourseOfAction
     | Identity
     | IntrusionSet
     | Investigation
@@ -161,6 +181,7 @@ EntityTypes = (
     | Phone
     | ThreatActor
     | Tool
+    | Vulnerability
 )
 
 
@@ -168,6 +189,7 @@ EntityClasses = (
     Type[AttackPattern]
     | Type[Campaign]
     | Type[Company]
+    | Type[CourseOfAction]
     | Type[Identity]
     | Type[IntrusionSet]
     | Type[Investigation]
@@ -176,4 +198,5 @@ EntityClasses = (
     | Type[Phone]
     | Type[ThreatActor]
     | Type[Tool]
+    | Type[Vulnerability]
 )
