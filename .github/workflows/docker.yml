@@ -38,7 +38,7 @@ jobs:
         with:
           images: |
             yetiplatform/yeti
-            ghcr.io/${{ github.repository }}/yeti
+            ghcr.io/${{ github.repository }}
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v5
@@ -47,5 +47,5 @@ jobs:
           file: ./extras/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }},yetiplatform/yeti:latest
+          tags: ${{ steps.meta.outputs.tags }},yetiplatform/yeti:latest,ghcr.io/${{ github.repository }}:latest
           labels: ${{ steps.meta.outputs.labels }}
