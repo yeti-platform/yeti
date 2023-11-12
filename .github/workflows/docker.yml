@@ -3,6 +3,10 @@ name: Publish Docker image
 on:
   release:
     types: [published]
+  push:
+    branches:
+      - docker
+
 
 jobs:
   push_to_registries:
@@ -47,5 +51,5 @@ jobs:
           file: ./extras/docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ steps.meta.outputs.tags }},yetiplatform/yeti:latest
+          tags: ${{ steps.meta.outputs.tags }},yetiplatform/yeti:latest,ghcr.io/${{ github.repository }}/yeti:latest
           labels: ${{ steps.meta.outputs.labels }}
