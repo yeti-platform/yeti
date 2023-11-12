@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
 
+on:
+  push:
+    branches:
+      - docker
+
 jobs:
   push_to_registries:
     name: Push Docker image to DockerHub and GHCR
@@ -41,6 +46,7 @@ jobs:
         with:
           context: .
           file: ./extras/docker/Dockerfile
-          push: true
+          platforms: linux/amd64,linux/arm64,linux/386
+          push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
