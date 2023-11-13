@@ -5,7 +5,7 @@ Before opening an issue, please make do a quick search through the current issue
 
 ### Environment
 
-| Question         | Answer
+| Question                  | Answer
 |---------------------------|--------------------
 | Yeti release              |
 | Yeti-frontend release     |
