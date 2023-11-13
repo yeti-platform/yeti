@@ -1,36 +1,36 @@
 #!/usr/bin/env python
 """This class will incorporate the PhishingDatabase feed into yeti."""
 
-from datetime import timedelta, datetime
-import logging
+from datetime import timedelta
+from typing import ClassVar
+from core.schemas.observables import url
+from core.schemas import task
+from core import taskmanager
 
-from core.observables import Url
-from core.feed import Feed
-from core.errors import ObservableValidationError
 
+class PhishingDatabase(task.FeedTask):
+    """This class will incorporate the PhishingDatabase feed into yeti."""
 
-class PhishingDatabase(Feed):
-    """This class will pull the PhishingDatabase feed from github on a 12 hour interval."""
-
-    default_values = {
-        "frequency": timedelta(hours=12),
+    _defaults = {
+        "frequency": timedelta(hours=1),
         "name": "PhishingDatabase",
-        "source": "https://raw.githubusercontent.com/mitchellkrogza/Phishing.Database/master/phishing-links-NEW-today.txt",
-        "description": "Phishing Domains, urls websites and threats database.",
+        "description": "PhishingDatabase is a community feed of phishing URLs which are updated every 24 hours.",
     }
 
-    def update(self):
-        for url in self.update_lines():
-            self.analyze(url)
+    _SOURCE: ClassVar[
+        "str"
+    ] = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
 
-    def analyze(self, url):
-        context = {"source": self.name, "date_added": datetime.utcnow()}
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            for line in response.text.split("\n"):
+                self.analyze(line.strip())
 
-        try:
-            url = Url.get_or_create(value=url)
-            url.add_context(context, dedup_list=["date_added"])
-            url.add_source(self.name)
-            url.tag(["phishing"])
-            url.tag(["phishing_database"])
-        except ObservableValidationError as e:
-            logging.error(e)
+    def analyze(self, url_str):
+        urlobs = url.Url(value=url_str).save()
+        urlobs.add_context(self.name, {"source": self.name})
+        urlobs.tag(["phish", "phishing_database", "blocklist"])
+
+
+taskmanager.TaskManager.register_task(PhishingDatabase)

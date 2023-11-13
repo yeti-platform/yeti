@@ -1,24 +1,25 @@
 import logging
 from datetime import timedelta, datetime
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Hostname
+from typing import ClassVar
+from core.schemas.observables import hostname
+from core.schemas import task
+from core import taskmanager
 
 
-class BotvrijHostname(Feed):
-    default_values = {
+class BotvrijHostname(task.FeedTask):
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.hostname"
+    _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijHostname",
-        "source": "https://www.botvrij.eu/data/ioclist.hostname",
-        "description": "Detect possible outbound malicious activity.",
+        "description": "Botvrij.eu is a project of the Dutch National Cyber Security Centre (NCSC-NL) and SIDN Labs, the R&D team of SIDN, the registry for the .nl domain.",
     }
 
-    def update(self):
-        resp = self._make_request(sort=False)
-        lines = resp.content.decode("utf-8").split("\n")[6:-1]
-
-        for line in lines:
-            self.analyze(line.strip())
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            data = response.text
+            for item in data.split("\n")[6:-1]:
+                self.analyze(item.strip())
 
     def analyze(self, item):
         hostn, descr = item.split(" # hostname - ")
@@ -26,13 +27,11 @@ class BotvrijHostname(Feed):
         context = {
             "source": self.name,
             "description": descr,
-            "date_added": datetime.utcnow(),
         }
 
-        try:
-            obs = Hostname.get_or_create(value=hostn)
-            obs.add_context(context, dedup_list=["date_added"])
-            obs.add_source(self.name)
-            obs.tag("botvrij")
-        except ObservableValidationError as e:
-            logging.error(e)
+        obs = hostname.Hostname(value=hostn).save()
+        obs.add_context(self.name, context)
+        obs.tag(["botvrij"])
+
+
+taskmanager.TaskManager.register_task(BotvrijHostname)

@@ -1,39 +1,43 @@
 import logging
 from datetime import timedelta, datetime
-from core import Feed
+from typing import ClassVar
 import pandas as pd
-from core.observables import Ip, Observable
-from core.errors import ObservableValidationError
+from core.schemas import observable
+from core.schemas import task
+from core import taskmanager
 
 
-class ThreatFox(Feed):
-    default_values = {
+class ThreatFox(task.FeedTask):
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "ThreatFox",
-        "source": "https://threatfox.abuse.ch/export/json/recent/",
-        "description": "Feed ThreatFox by Abuse.ch",
+        "description": "This feed contains malware hashes",
+    }
+    _SOURCE: ClassVar["str"] = "https://threatfox.abuse.ch/export/json/recent/"
+
+    _MAPPING = {
+        "ip": observable.ObservableType.ipv4,
+        "domain": observable.ObservableType.hostname,
+        "url": observable.ObservableType.url,
     }
 
-    def update(self):
-        for index, line in self.update_json():
-            self.analyze(line)
-
-    def update_json(self):
-        r = self._make_request(sort=False)
+    def run(self):
+        r = self._make_request(self._SOURCE, sort=False)
 
         if r:
-            res = r.json()
+            data = r.json()
 
-            values = [r[0] for r in res.values()]
+            values = [r[0] for r in data.values()]
 
             df = pd.DataFrame(values)
 
             df["first_seen_utc"] = pd.to_datetime(df["first_seen_utc"])
             df["last_seen_utc"] = pd.to_datetime(df["last_seen_utc"])
-            if self.last_run:
-                df = df[df["first_seen_utc"] > self.last_run]
-            df.fillna("-", inplace=True)
-            return df.iterrows()
+            df.fillna("", inplace=True)
+            df = self._filter_observables_by_time(df, "first_seen_utc")
+
+        for _, line in df.iterrows():
+            self.analyze(line)
 
     def analyze(self, item):
         first_seen = item["first_seen_utc"]
@@ -48,7 +52,7 @@ class ThreatFox(Feed):
         reporter = item["reporter"]
         tags = []
 
-        context = {"source": self.name, "date_added": datetime.utcnow()}
+        context = {"source": self.name}
         context["first_seen"] = first_seen
 
         if reference:
@@ -81,22 +85,19 @@ class ThreatFox(Feed):
 
         value = None
         obs = None
-        try:
-            if "ip" in ioc_type:
+
+        if ioc_type in self._MAPPING:
+            if ioc_type == "ip":
                 value, port = ioc_value.split(":")
                 context["port"] = port
-                obs = Ip.get_or_create(value=value)
             else:
-                obs = Observable.add_text(ioc_value)
+                value = ioc_value
+            obs = observable.Observable(value=value, type=self._MAPPING["ip"]).save()
+            obs.add_context(self.name, context)
+            if malware_alias:
+                tags.extend(malware_alias.split(","))
+            tags.append(malware_printable)
+            obs.tag(tags)
 
-        except ObservableValidationError as e:
-            logging.error(e)
-            return
 
-        if obs:
-            obs.add_context(context, dedup_list=["date_added"])
-            obs.add_source(self.name)
-            if tags:
-                obs.tag(tags)
-            if malware_printable:
-                obs.tags
+taskmanager.TaskManager.register_task(ThreatFox)

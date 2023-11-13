@@ -1,80 +1,12 @@
 version: '3.3'
 services:
 
-  yeti:
-    build:
-      context: ../../../
-      dockerfile: ./extras/docker/dev/Dockerfile
-    # let's call this yeti + branchname so that it doesn't
-    # conflict with images built from other branches.
-    image: yeti-frontend
-    ports:
-      - "5000:5000"
-    command: ['webserver']
-    depends_on:
-      - redis
-      - mongodb
-    volumes:
-      - /tmp/docker-yeti-exports:/opt/yeti/exports
-
-  feeds:
-    image: yeti-frontend
-    command: ['feeds']
-    depends_on:
-      - redis
-      - mongodb
-      - yeti
-    environment:
-      - TLDEXTRACT_CACHE=/tmp/tldextract.cache
-
-  analytics:
-    image: yeti-frontend
-    command: ['analytics']
-    depends_on:
-      - redis
-      - mongodb
-      - yeti
-    environment:
-      - TLDEXTRACT_CACHE=/tmp/tldextract.cache
-
-  beat:
-    image: yeti-frontend
-    command: ['beat']
-    depends_on:
-      - redis
-      - mongodb
-      - yeti
-      - feeds
-      - analytics
-      - exports
-
-  exports:
-    image: yeti-frontend
-    command: ['exports']
-    depends_on:
-      - redis
-      - mongodb
-      - yeti
-    volumes:
-      - /tmp/docker-yeti-exports:/opt/yeti/exports
-
-  oneshot:
-    image: yeti-frontend
-    command: ['oneshot']
-    depends_on:
-      - redis
-      - mongodb
-      - yeti
-
   redis:
     image: redis:latest
 
-  mongodb:
-    image: mongo:4.0.12
+  arangodb:
+    image: arangodb
+    ports:
+      - 127.0.0.1:8529:8529
     environment:
-      - MONGO_LOG_DIR=/dev/null
-    command: mongod
-    volumes:
-      - ./data:/data/
-      - ./data/db:/data/db
-      - ./data/configdb:/data/configdb
+      - ARANGO_ROOT_PASSWORD=

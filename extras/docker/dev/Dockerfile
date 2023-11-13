@@ -7,9 +7,7 @@ ENV LANG C.UTF-8
 RUN apt-get update && apt-get install -y \
     python3-pip \
     libmagic-dev \
-    build-essential \
-    python3-dev \
-    libssl-dev
+    git
 
 # Upgrade pip
 RUN pip3 install --upgrade pip && pip3 install poetry
@@ -17,17 +15,9 @@ RUN pip3 install --upgrade pip && pip3 install poetry
 # Install & Configure YETI
 ADD . /app
 WORKDIR /app
-RUN poetry install && \
-        mv yeti.conf.sample yeti.conf && \
-        sed -i '35s/# host = 127.0.0.1/host = mongodb/' yeti.conf && \
-        sed -i '49s/# host = 127.0.0.1/host = redis/' yeti.conf
+RUN poetry install --with dev,plugins
 
-RUN mkdir /var/log/yeti
-
-# Update tld domain list
-RUN poetry run tldextract --update
-
-COPY --chmod=744 ./extras/docker/scripts/docker-entrypoint.sh /docker-entrypoint.sh
+COPY --chmod=744 ./extras/docker/docker-entrypoint.sh /docker-entrypoint.sh
 
 ENV PYTHONPATH /app
 

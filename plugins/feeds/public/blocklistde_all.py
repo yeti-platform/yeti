@@ -1,31 +1,30 @@
 import logging
-from datetime import timedelta, datetime
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Ip
+from datetime import timedelta
+from typing import ClassVar
+from core.schemas.observables import ipv4
+from core.schemas import task
+from core import taskmanager
 
 
-class BlocklistdeAll(Feed):
-    default_values = {
+class BlocklistdeAll(task.FeedTask):
+    _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/all.txt"
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeAll",
-        "source": "https://lists.blocklist.de/lists/all.txt",
         "description": "All IP addresses that have attacked one of our customers/servers in the last 48 hours. It's not recommended to use this feed due to the lesser amount of contextual information, it's better to use each blocklist.de feed separately.",
     }
 
-    def update(self):
-        for line in self.update_lines():
-            self.analyze(line)
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            data = response.text
+            for item in data.split("\n"):
+                self.analyze(item)
 
     def analyze(self, item):
-        ip = item.strip()
+        ip_str = item.strip()
+        obs = ipv4.IPv4(value=ip_str).save()
+        obs.tag(["blocklist"])
 
-        context = {"source": self.name, "date_added": datetime.utcnow()}
 
-        try:
-            obs = Ip.get_or_create(value=ip)
-            obs.add_context(context, dedup_list=["date_added"])
-            obs.add_source(self.name)
-            obs.tag("blocklistde")
-        except ObservableValidationError as e:
-            logging.error(e)
+taskmanager.TaskManager.register_task(BlocklistdeAll)

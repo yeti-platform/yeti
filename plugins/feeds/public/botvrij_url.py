@@ -1,38 +1,38 @@
 import logging
 from datetime import timedelta, datetime
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Url
+from typing import ClassVar
+from core.schemas.observables import url
+from core.schemas import task
+from core import taskmanager
 
 
-class BotvrijUrl(Feed):
-    default_values = {
+class BotvrijUrl(task.FeedTask):
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.url"
+
+    _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijUrl",
-        "source": "https://www.botvrij.eu/data/ioclist.url",
-        "description": "Detect possible outbound malicious activity.",
+        "description": "Botvrij.eu is a project of the Dutch National Cyber Security Centre (NCSC-NL) and SIDN Labs, the R&D team of SIDN, the registry for the .nl domain.",
     }
 
-    def update(self):
-        resp = self._make_request(sort=False)
-        lines = resp.content.decode("utf-8").split("\n")[6:-1]
-
-        for line in lines:
-            self.analyze(line.strip())
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            data = response.text
+            for item in data.split("\n")[6:-1]:
+                self.analyze(item.strip())
 
     def analyze(self, item):
-        url, descr = item.split(" # url - ")
+        url_str, descr = item.split(" # url - ")
 
         context = {
             "source": self.name,
             "description": descr,
-            "date_added": datetime.utcnow(),
         }
 
-        try:
-            obs = Url.get_or_create(value=url)
-            obs.add_context(context, dedup_list=["date_added"])
-            obs.add_source(self.name)
-            obs.tag("botvrij")
-        except ObservableValidationError as e:
-            logging.error(e)
+        obs = url.Url(value=url_str).save()
+        obs.add_context(self.name, context)
+        obs.tag(["botvrij"])
+
+
+taskmanager.TaskManager.register_task(BotvrijUrl)

@@ -1,47 +1,67 @@
 import logging
+from typing import ClassVar
+import pandas as pd
+from io import StringIO
 from datetime import timedelta
+from core.schemas.observables import url
+from core.schemas import task
+from core import taskmanager
 
-from core import Feed
-from core.errors import ObservableValidationError
-from core.observables import Url
 
-
-class UrlHaus(Feed):
-    default_values = {
+class UrlHaus(task.FeedTask):
+    _defaults = {
         "frequency": timedelta(minutes=20),
         "name": "UrlHaus",
-        "source": "https://urlhaus.abuse.ch/downloads/csv_recent/",
         "description": "URLhaus is a project from abuse.ch with the goal of sharing malicious URLs that are being used for malware distribution.",
     }
+    _SOURCE: ClassVar["str"] = "https://urlhaus.abuse.ch/downloads/csv_recent/"
+    _NAMES = [
+        "id",
+        "dateadded",
+        "url",
+        "url_status",
+        "last_online",
+        "threat",
+        "tags",
+        "urlhaus_link",
+        "reporter",
+    ]
 
-    def update(self):
-        for index, line in self.update_csv(
-            delimiter=",",
-            names=[
-                "id",
-                "dateadded",
-                "url",
-                "url_status",
-                "last_online",
-                "threat",
-                "tags",
-                "urlhaus_link",
-                "reporter",
-            ],
-            filter_row="dateadded",
-        ):
-            self.analyze(line)
+    def run(self):
+        response = self._make_request(self._SOURCE, auth=None)
+        if response:
+            data = response.text
+
+            df = pd.read_csv(
+                StringIO(data),
+                comment="#",
+                delimiter=",",
+                names=self._NAMES,
+                quotechar='"',
+                quoting=True,
+                skipinitialspace=True,
+                parse_dates=["dateadded", "last_online"],
+                header=0,
+            )
+            df = self._filter_observables_by_time(df, "dateadded")
+            df.fillna("", inplace=True)
+
+            for _, line in df.iterrows():
+                self.analyze(line)
 
     def analyze(self, line):
+        url_str = line["url"]
+        if not url_str:
+            return
+
         id_feed = line["id"]
         first_seen = line["dateadded"]
-        url = line["url"]
         url_status = line["url_status"]
         last_online = line["last_online"]
         threat = line["threat"]
         tags = line["tags"]
         urlhaus_link = line["urlhaus_link"]
-        source = line["reporter"]  # pylint: disable=line-too-long
+        source = line["reporter"]
 
         context = {
             "id_urlhaus": id_feed,
@@ -54,12 +74,9 @@ class UrlHaus(Feed):
             "last_online": last_online,
         }
 
-        if url:
-            try:
-                url_obs = Url.get_or_create(value=url)
-                if tags != "None":
-                    url_obs.tag(tags.split(","))
-                url_obs.add_context(context, dedup_list=["date_added"])
-                url_obs.add_source(self.name)
-            except ObservableValidationError as e:
-                logging.error(e)
+        url_obs = url.Url(value=url_str).save()
+        url_obs.add_context(self.name, context)
+        url_obs.tag(tags)
+
+
+taskmanager.TaskManager.register_task(UrlHaus)

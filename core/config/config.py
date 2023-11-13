@@ -5,6 +5,8 @@ from core.constants import YETI_ROOT
 
 
 class Dictionary(dict):
+    """A dictionary that allows to access its elements as attributes."""
+
     def __getattr__(self, key):
         return self.get(key, None)
 
@@ -33,32 +35,35 @@ class Config:
     def __getitem__(self, key):
         return getattr(self, key)
 
-    def set_default_value(self, section, key, value):
-        if not hasattr(self, section):
-            setattr(self, section, Dictionary())
+    def find_env_variable(self, section, key) -> bool | int | str | None:
+        """Attempts to find an environment variable corresponding to the setting.
 
-        if key not in self[section]:
-            self[section][key] = value
+        Environment variables should be defined with the following format:
+          YETI_<SECTION>_<KEY>
 
-    def get(self, section, key, default=None):
-        if not hasattr(self, section) or key not in self[section]:
-            return default
-        else:
+        Args:
+            section: The section of the setting as it appears in the config file.
+            key: They key of the setting as it appears in the config file.
+        """
+        env_var = f"YETI_{section.upper()}_{key.upper()}"
+        if env_var in os.environ:
+            var = os.environ[env_var]
+            if var.lower() in ["true", "false"]:
+                return var.lower() == "true"
+            if var.isdigit():
+                return int(var)
+            return var
+        return None
+
+    def get(self, section, key=None, default=None):
+        """Gets a setting from the config file."""
+        if key is None:
+            return getattr(self, section)
+        if hasattr(self, section) and key in self[section] and self[section][key]:
             return self[section][key]
-
+        env_var = self.find_env_variable(section, key)
+        if env_var is not None:
+            return env_var
+        return default
 
 yeti_config = Config()
-yeti_config.set_default_value("auth", "module", "local")
-yeti_config.set_default_value("auth", "apache_variable", "REMOTE_USER")
-yeti_config.set_default_value("mongodb", "host", "127.0.0.1")
-yeti_config.set_default_value("mongodb", "port", 27017)
-yeti_config.set_default_value("mongodb", "database", "yeti")
-yeti_config.set_default_value("mongodb", "username", None)
-yeti_config.set_default_value("mongodb", "password", None)
-yeti_config.set_default_value("redis", "host", "127.0.0.1")
-yeti_config.set_default_value("redis", "port", 6379)
-yeti_config.set_default_value("redis", "database", 0)
-yeti_config.set_default_value("proxy", "http", None)
-yeti_config.set_default_value("proxy", "https", None)
-yeti_config.set_default_value("logging", "filename", "/var/log/yeti/user_activity.log")
-yeti_config.set_default_value("tag", "default_tag_expiration", 7776000)

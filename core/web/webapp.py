@@ -1,107 +1,31 @@
-from __future__ import unicode_literals
+from fastapi import FastAPI
+from fastapi import APIRouter
 
-import os
-from importlib import import_module
-from bson.json_util import dumps
-from mongoengine import connect
+from core.web.apiv2 import observables
+from core.web.apiv2 import entities
+from core.web.apiv2 import indicators
+from core.web.apiv2 import tag
+from core.web.apiv2 import graph
+from core.web.apiv2 import auth
+from core.web.apiv2 import tasks
+from core.web.apiv2 import templates
+from core.web.apiv2 import users
+from core.web.apiv2 import system
 
-from flask import Flask, url_for, request, current_app, session
-from flask_login import LoginManager, current_user
+app = FastAPI()
+api_router = APIRouter()
 
-from core.config.config import yeti_config
-from core.user import User
-from core.web.json import JSONDecoder
-from core.web.api import api
-from mongoengine.errors import DoesNotExist
-from core.yeti_plugins import get_plugins
-
-webapp = Flask(__name__, static_folder="frontend")
-
-webapp.secret_key = os.urandom(24)
-webapp.json_decoder = JSONDecoder
-webapp.before_first_request(get_plugins)
-
-login_manager = LoginManager()
-login_manager.init_app(webapp)
-login_manager.login_view = "/login"
-
-auth_module = import_module("core.auth.%s" % yeti_config.auth.module)
-webapp.register_blueprint(auth_module.auth)
-is_true = False
-
-if yeti_config.mongodb.tls:
-    is_true = True
-
-connect(
-    yeti_config.mongodb.database,
-    host=yeti_config.mongodb.host,
-    port=yeti_config.mongodb.port,
-    username=yeti_config.mongodb.username,
-    password=yeti_config.mongodb.password,
-    connect=False,
-    tls=False,
+api_router.include_router(
+    observables.router, prefix="/observables", tags=["observables"]
 )
+api_router.include_router(entities.router, prefix="/entities", tags=["entities"])
+api_router.include_router(indicators.router, prefix="/indicators", tags=["indicators"])
+api_router.include_router(tag.router, prefix="/tags", tags=["tags"])
+api_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+api_router.include_router(graph.router, prefix="/graph", tags=["graph"])
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(templates.router, prefix="/templates", tags=["templates"])
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(system.router, prefix="/system", tags=["system"])
 
-
-# Handle authentication
-@login_manager.user_loader
-def load_user(session_token):
-    try:
-        # Requires to use login_user() in the auth methods
-        return User.objects.get(session_token=session_token)
-    except DoesNotExist:
-        return None
-
-
-@login_manager.request_loader
-def api_auth(request):
-    try:
-        return User.objects.get(api_key=request.headers.get("X-Api-Key"))
-    except DoesNotExist:
-        return None
-
-
-login_manager.anonymous_user = auth_module.get_default_user
-
-
-@api.before_request
-def api_login_required():
-    if not current_user.is_active and not request.method == "OPTIONS":
-        return dumps({"error": "unauthorized"}), 401
-
-
-webapp.register_blueprint(api, url_prefix="/api")
-
-
-@webapp.route("/", defaults={"path": ""})
-@webapp.route("/<path:path>")
-def index(path):
-    if path.startswith("css/") or path.startswith("js/"):
-        return current_app.send_static_file(path)
-    return current_app.send_static_file("index.html")
-
-
-@webapp.route("/list_routes")
-def list_routes():
-    import urllib
-
-    output = []
-    for rule in webapp.url_map.iter_rules():
-        options = {}
-        for arg in rule.arguments:
-            options[arg] = "[{0}]".format(arg)
-
-        methods = ",".join(rule.methods)
-        url = url_for(rule.endpoint, **options)
-        line = "{:50s} {:20s} {}".format(rule.endpoint, methods, url)
-        output.append(line)
-
-    for line in sorted(output):
-        print(line)
-
-    return "\n".join(output)
-
-
-@webapp.template_test()
-def startswith(string, pattern):
-    return string.startswith(pattern)
+app.include_router(api_router, prefix="/api/v2")

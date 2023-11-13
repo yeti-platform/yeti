@@ -1,18 +1,26 @@
+[system]
+
+##
+## Basic system settings
+##
+
+export_root = /var/opt/yeti
+logging = /var/log/yeti_user_activity.log
+
 [auth]
 
 ##
 ## Use these settings to configure Yeti authentication.
 ##
 
-# module = local
+module = local
 
-##
-## If you specify module = apache, you can set the environment
-## variable from which the username can be retrieved (defaults to
-## REMOTE_USER).
-##
-
-# apache_variable = REMOTE_USER
+# to get a stronger value run:
+# openssl rand -hex 32
+# SECRET_KEY = SECRET
+# ALGORITHM = HS256
+# ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# enabled = False
 
 [tag]
 
@@ -24,20 +32,19 @@
 
 # default_tag_expiration = 7776000
 
-[mongodb]
+[arangodb]
 
 ##
-## Use these settings to configure how to connect to your MongoDB database.
+## Use these settings to configure how to connect to your ArangoDB database.
 ## All settings are optional, with default values being the one in the comment.
 ## If you do not specify a username and password, there will be no authentication.
 ##
 
-# host = 127.0.0.1
-# port = 27017
-# database = yeti
-# username = yeti
-# password = STRONG_PASSWORD
-# tls = ok
+# host = arangodb
+# port = 8529
+# username = root
+# password =
+# database = yeti_dev
 
 [redis]
 
@@ -46,7 +53,7 @@
 ## All settings are optional, with default values being the one in the comment.
 ##
 
-# host = 127.0.0.1
+# host = redis
 # port = 6379
 # database = 0
 # tls = ok
@@ -76,17 +83,10 @@
 
 [proxy]
 
-# http = socks5://user:pass@host:port
-# https = socks5://user:pass@host:port
+# Format proxies like socks5://user:pass@host:port
 
-[maxmind]
-
-# path = /full/path/to/GeoLite2-City.mmdb
-
-[tldextract]
-# comma separated list of tlds, WITHOUT dots, example: bit,tor2web,pw
-# extra_suffixes =
-# suffix_list_urls =
+http =
+https =
 
 [github]
 # Generate token: https://github.com/settings/tokens
@@ -96,19 +96,41 @@
 # token =
 
 [otx]
-# key = YourOTXKey
-# pages = 1
+key = YourOTXKey
+pages = 1
 
 [abuseIPDB]
-# key = YourKey
+key = YourKey
 
 [phishtank]
-# key=
+key=
 
 [vt]
-# key=
+key=
 
 [passivedns]
 login=
 password=
 url=
+
+[circl_passivessl]
+username=
+password=
+
+[circl_pdns]
+username=
+password=
+
+[dnsdb]
+api_key=
+
+[macaddressio]
+api_key=
+
+[malshare]
+api_key=
+
+[timesketch]
+endpoint =
+username =
+password =

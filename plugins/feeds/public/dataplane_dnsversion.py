@@ -1,63 +1,67 @@
 """
     Feed DNS Version IPs with ASN
 """
+from datetime import timedelta
 import logging
-from datetime import datetime, timedelta
+from typing import ClassVar
 
 import pandas as pd
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import AutonomousSystem, Ip
+from core.schemas.observables import ipv4, asn
+from core.schemas import task
+from core import taskmanager
 
 
-class DataplaneDNSVersion(Feed):
+class DataplaneDNSVersion(task.FeedTask):
     """
     Feed DNS Version IPs with ASN
     """
 
-    default_values = {
-        "frequency": timedelta(hours=2),
+    _SOURCE: ClassVar["str"] = "https://dataplane.org/dnsversion.txt"
+    _defaults = {
+        "frequency": timedelta(hours=12),
         "name": "DataplaneDNSVersion",
-        "source": "https://dataplane.org/dnsversion.txt",
-        "description": "Entries below are records of source IP addresses that have been identified as sending DNS CH TXT VERSION.BIND queries.",
+        "description": "Feed DNS Version IPs with ASN",
     }
+    _NAMES = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
 
-    def update(self):
-        resp = self._make_request(sort=False)
-        lines = resp.content.decode("utf-8").split("\n")[64:-5]
-        columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
-        df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
+    def run(self):
+        response = self._make_request(self._SOURCE, sort=False)
+        if response:
+            lines = response.content.decode("utf-8").split("\n")[66:-5]
 
-        for c in columns:
-            df[c] = df[c].str.strip()
-        df = df.dropna()
-        df["lastseen"] = pd.to_datetime(df["lastseen"])
-        if self.last_run:
-            df = df[df["lastseen"] > self.last_run]
-        for count, row in df.iterrows():
-            self.analyze(row)
+            df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
+
+            df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+            df.fillna("", inplace=True)
+            df["lastseen"] = pd.to_datetime(df["lastseen"])
+            df = self._filter_observables_by_time(df, "lastseen")
+
+            for _, row in df.iterrows():
+                self.analyze(row)
 
     def analyze(self, item):
         context_ip = {
             "source": self.name,
-            "last_seen": item["lastseen"],
-            "date_added": datetime.utcnow(),
         }
 
-        try:
-            ip = Ip.get_or_create(value=item["ipaddr"])
-            ip.add_context(context_ip, dedup_list=["date_added"])
-            ip.add_source(self.name)
-            ip.tag("dataplane")
-            ip.tag("dns")
-            ip.tag("recon")
-            ip.tag(item["category"])
+        ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
+        category = item["category"].lower()
+        tags = ["dataplane", "dnsversion"]
+        if category:
+            tags.append(category)
+        logging.debug(f"Adding context {context_ip} to {ip_obs}")
+        ip_obs.add_context("dataplane dns version", context_ip)
+        ip_obs.tag(tags)
+        asn_obs = asn.ASN(value=item["ASN"]).save()
+        context_asn = {
+            "source": self.name,
+            "name": item["ASname"],
+            "last_seen": item["lastseen"],
+        }
+        asn_obs.add_context(self.name, context_asn)
+        asn_obs.tag(tags)
 
-            asn = AutonomousSystem.get_or_create(value=item["ASN"])
-            context_ans = {"source": self.name, "name": item["ASname"]}
-            asn.add_context(context_ans, dedup_list=["date_added"])
-            asn.add_source(self.name)
-            asn.tag("dataplane")
-            asn.active_link_to(ip, "AS", self.name)
-        except ObservableValidationError as e:
-            logging.error(e)
+        asn_obs.link_to(ip_obs, "ASN_IP", self.name)
+
+
+taskmanager.TaskManager.register_task(DataplaneDNSVersion)

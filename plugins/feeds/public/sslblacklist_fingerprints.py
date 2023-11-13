@@ -1,9 +1,13 @@
+from io import StringIO
 import logging
 from datetime import timedelta, datetime
+from typing import ClassVar
 
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Hash
+import pandas as pd
+
+from core.schemas.observables import certificate, sha1
+from core import taskmanager
+from core.schemas import task
 
 TYPE_DICT = {
     "MITM": ["mitm"],
@@ -13,22 +17,36 @@ TYPE_DICT = {
 }
 
 
-class SSLBlackListCerts(Feed):
-    default_values = {
-        "frequency": timedelta(hours=24),
+class SSLBlackListCerts(task.FeedTask):
+    _defaults = {
+        "frequency": timedelta(hours=1),
         "name": "SSLBlackListCerts",
-        "source": "https://sslbl.abuse.ch/blacklist/sslblacklist.csv",
-        "description": "SSLBL SSL Certificate Blacklist (SHA1 Fingerprints)",
+        "description": "SSLBlackListCerts is a community feed of SSL fingerprints which are updated every 24 hours.",
     }
 
-    def update(self):
-        for index, line in self.update_csv(
-            delimiter=",",
-            names=["Listingdate", "SHA1", "Listingreason"],
-            filter_row="Listingdate",
-            header=8,
-        ):
-            self.analyze(line)
+    _SOURCE: ClassVar["str"] = "https://sslbl.abuse.ch/blacklist/sslblacklist.csv"
+
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            data = response.text
+            names = ["Listingdate", "SHA1", "Listingreason"]
+            df = pd.read_csv(
+                StringIO(data),
+                comment="#",
+                delimiter=",",
+                names=names,
+                quotechar='"',
+                quoting=True,
+                skipinitialspace=True,
+                parse_dates=["Listingdate"],
+                header=8,
+            )
+            df.fillna("", inplace=True)
+            df = self._filter_observables_by_time(df, "Listingdate")
+
+            for _, line in df.iterrows():
+                self.analyze(line)
 
     def analyze(self, line):
         first_seen = line["Listingdate"]
@@ -50,12 +68,16 @@ class SSLBlackListCerts(Feed):
         context_hash = {
             "source": self.name,
             "first_seen": first_seen,
-            "date_added": datetime.utcnow(),
         }
+        cert_obs = certificate.Certificate(value=f"CERT:{_sha1}").save()
+        cert_obs.add_context(self.name, context_hash)
+        cert_obs.tag(tags)
 
-        try:
-            sha1 = Hash.get_or_create(value=_sha1)
-            sha1.tag(tags)
-            sha1.add_context(context_hash)
-        except ObservableValidationError as e:
-            logging.error("Invalid line: {}\nLine: {}".format(e, line))
+        sha1_obs = sha1.SHA1(value=_sha1).save()
+        sha1_obs.add_context(self.name, context_hash)
+        sha1_obs.tag(tags)
+
+        cert_obs.link_to(sha1_obs, "cert_sha1", self.name)
+
+
+taskmanager.TaskManager.register_task(SSLBlackListCerts)

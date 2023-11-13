@@ -4,24 +4,20 @@ import json
 from datetime import datetime
 
 from maclookup import ApiClient, exceptions as maclookup_exceptions
-
-from core.analytics import OneShotAnalytics
-from core.entities import Company
+from core import taskmanager
+from core.schemas import task
+from core.schemas.observable import ObservableType
+from core.schemas.observables.mac_address import MacAddress
+from core.schemas.entity import Company
+from core.config.config import yeti_config
 
 
 class MacAddressIoApi(object):
     __MODULE_GROUP__ = "MacAddress.io"
 
-    settings = {
-        "macaddress_io_api_key": {
-            "name": "macaddress.io API Key",
-            "description": "API Key provided by macaddress.io",
-        }
-    }
-
     @staticmethod
-    def get(mac_address, settings):
-        api_client = ApiClient(settings["macaddress_io_api_key"])
+    def get(mac_address):
+        api_client = ApiClient(yeti_config.get("macaddressio", "api_key"))
 
         try:
             response = api_client.get_raw_data(mac_address, "json")
@@ -55,22 +51,19 @@ class MacAddressIoApi(object):
             raise LookupError("Unknown error")
 
 
-class MacAddressIo(OneShotAnalytics, MacAddressIoApi):
-    default_values = {
+class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
+    _defaults = {
         "group": MacAddressIoApi.__MODULE_GROUP__,
         "name": "MacAddress Vendor lookup (macaddress.io)",
         "description": "Retrieve vendor details and other information regarding a given MAC address or an OUI from macaddress.io.",
     }
 
-    ACTS_ON = ["MacAddress"]
+    acts_on: list[ObservableType] = [ObservableType.mac_address]
 
-    @staticmethod
-    def analyze(observable, results):
-        links = set()
+    def each(self, mac_address: MacAddress):
+        results = {}
 
-        lookup_results = MacAddressIoApi.get(observable.value, results.settings)
-
-        results.update(raw=json.dumps(lookup_results, indent=2))
+        lookup_results = MacAddressIoApi.get(mac_address.value)
 
         if lookup_results["blockDetails"]["dateCreated"]:
             date_created = datetime.strptime(
@@ -88,28 +81,18 @@ class MacAddressIo(OneShotAnalytics, MacAddressIoApi):
 
         try:
             if lookup_results["vendorDetails"]["companyName"] != "":
-                vendor = Company.get_or_create(
+                vendor = Company(
                     name=lookup_results["vendorDetails"]["companyName"]
-                )
+                ).save()
 
-                links.update(
-                    observable.link_to(
-                        vendor,
-                        "Vendor",
-                        MacAddressIoApi.__MODULE_GROUP__,
-                        date_created,
-                        date_updated,
-                    )
-                )
         except KeyError:
             pass
 
-        MacAddressIo.add_context_to_observable(observable, lookup_results)
-
-        return list(links)
+        MacAddressIo.add_context_to_observable(mac_address, lookup_results)
+        mac_address.link_to(vendor, "Vendor", "MacAdress.io")
 
     @staticmethod
-    def add_context_to_observable(observable, lookup_results):
+    def add_context_to_observable(mac_address: MacAddress, lookup_results: dict):
         context = dict(
             [
                 ("raw", json.dumps(lookup_results, indent=2)),
@@ -169,4 +152,7 @@ class MacAddressIo(OneShotAnalytics, MacAddressIoApi):
 
         context = {k: v for k, v in context.items() if v}
 
-        observable.add_context(context, replace_source=True)
+        mac_address.add_context("MacAdress.io", context)
+
+
+taskmanager.TaskManager.register_task(MacAddressIo)

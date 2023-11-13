@@ -37,7 +37,7 @@ class ThreatMinerApi(object):
     def fetch(observable, params, uri):
         try:
             url = ThreatMinerApi.API_URL + uri
-            response = requests.get(url, params=params, proxies=yeti_config.proxy)
+            response = requests.get(url, params=params, proxies=yeti_config.get('proxy'))
             if not response.ok:
                 raise GenericYetiError("Status code: ".format(response.status_code))
             return response.json()

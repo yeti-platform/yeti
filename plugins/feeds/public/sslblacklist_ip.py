@@ -1,26 +1,44 @@
-import logging
-from datetime import timedelta, datetime
+from io import StringIO
+from datetime import timedelta
+from typing import ClassVar
 
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Ip, Url
+import pandas as pd
+
+from core.schemas.observables import ipv4, url
+from core.schemas import task
+from core import taskmanager
 
 
-class SSLBlackListIP(Feed):
-    default_values = {
-        "frequency": timedelta(minutes=1440),
-        "name": "SSLBlackListIPs",
-        "source": "https://sslbl.abuse.ch/blacklist/sslipblacklist.csv",
-        "description": "abuse.ch SSLBL Botnet C2 IP Blacklist (CSV)",
+class SSLBlackListIP(task.FeedTask):
+    _defaults = {
+        "frequency": timedelta(hours=1),
+        "name": "SSLBlackListIP",
+        "description": "SSL Black List IP",
     }
 
-    def update(self):
-        for index, line in self.update_csv(
-            delimiter=",",
-            names=["Firstseen", "DstIP", "DstPort"],
-            filter_row="Firstseen",
-        ):
-            self.analyze(line)
+    _SOURCE: ClassVar["str"] = "https://sslbl.abuse.ch/blacklist/sslipblacklist.csv"
+
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            data = response.text
+            names = names = ["Firstseen", "DstIP", "DstPort"]
+            df = pd.read_csv(
+                StringIO(data),
+                comment="#",
+                delimiter=",",
+                names=names,
+                quotechar='"',
+                quoting=True,
+                skipinitialspace=True,
+                parse_dates=["Firstseen"],
+                header=8,
+            )
+            df.fillna("", inplace=True)
+            df = self._filter_observables_by_time(df, "Firstseen")
+
+            for _, line in df.iterrows():
+                self.analyze(line)
 
     def analyze(self, line):
         first_seen = line["Firstseen"]
@@ -28,27 +46,19 @@ class SSLBlackListIP(Feed):
         ip_obs = False
         tags = ["potentially_malicious_infrastructure", "c2"]
         port = line["DstPort"]
-        context = dict(source=self.name)
+        context = {}
         context["first_seen"] = first_seen
-        context["date_added"] = datetime.utcnow()
 
-        try:
-            ip_obs = Ip.get_or_create(value=dst_ip)
-            ip_obs.add_source(self.name)
-            ip_obs.tag(tags)
-            ip_obs.add_context(context, dedup_list=["date_added"])
-        except ObservableValidationError as e:
-            logging.error(e)
-            return False
+        ip_obs = ipv4.IPv4(value=dst_ip).save()
+        ip_obs.add_context(self.name, context)
+        ip_obs.tag(tags)
+        _url = "https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
 
-        try:
-            _url = "https://{dst_ip}:{port}/".format(dst_ip=dst_ip, port=port)
-            url = Url.get_or_create(value=_url)
-            url.add_source(self.name)
-            url.tag(tags)
-            url.add_context(context, dedup_list=["date_added"])
-            if ip_obs:
-                url.active_link_to(ip_obs, "ip", self.name)
-        except ObservableValidationError as e:
-            logging.error(e)
-            return False
+        url_obs = url.Url(value=_url).save()
+        url_obs.add_context(self.name, context)
+        url_obs.tag(tags)
+
+        ip_obs.link_to(url_obs, "ip-url", self.name)
+
+
+taskmanager.TaskManager.register_task(SSLBlackListIP)

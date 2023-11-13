@@ -71,5 +71,5 @@ vagrant
 #venv
 venv*
 .vscode/settings.json
-
-extras/docker/dev/data/*
+*extras/docker/dev/data/*
+extras/docker/dev/docker-compose.yaml

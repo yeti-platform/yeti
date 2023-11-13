@@ -1,77 +1,80 @@
+from io import StringIO
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
+from typing import ClassVar
 
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import AutonomousSystem, Hash, Url
+import pandas as pd
+
+from core.schemas.observables import url, asn, md5
+from core.schemas import task
+from core import taskmanager
 
 
-class FutexTracker(Feed):
-    default_values = {
-        "frequency": timedelta(minutes=60),
+class FutexTracker(task.FeedTask):
+    _SOURCE: ClassVar["str"] = "https://futex.re/tracker/TinyTracker.csv"
+    _defaults = {
+        "frequency": timedelta(hours=1),
         "name": "FutexTracker",
-        "source": "https://futex.re/tracker/TinyTracker.csv",
-        "description": "Provides url, hash and hosting information on various malware samples.",
-        # pylint: disable=line-too-long
+        "description": "Futex Tracker",
     }
 
-    def update(self):
-        for index, line in self.update_csv(
-            delimiter=";",
-            filter_row="firstseen",
-            names=["id", "firstseen", "url", "status", "hash", "country", "as"],
-            header=None,
-        ):
-            self.analyze(line)
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            data = response.text
+            names = ["id", "firstseen", "url", "status", "hash", "country", "as"]
+            df = pd.read_csv(StringIO(data), names=names, delimiter=";", header=0)
+            df.fillna("", inplace=True)
+
+            df = self._filter_observables_by_time(df, "firstseen")
+
+            for _, row in df.iterrows():
+                self.analyze(row)
 
     # pylint: disable=arguments-differ
     def analyze(self, item):
         _id = item["id"]
-        _ = item["firstseen"]
-        url = item["url"]
+        _firsteen = item["firstseen"]
+        url_str = item["url"]
         _status = item["status"]
 
-        _hash = item["hash"]
+        md5_str = item["hash"]
 
         country = item["country"]
-        asn = item["as"]
+        asn_str = item["as"]
 
         tags = ["collected_by_honeypot"]
         context = {
             "source": self.name,
             "country": country,
-            "date_added": datetime.utcnow(),
+            "status": _status,
+            "first_seen": _firsteen,
         }
 
         url_obs = None
+        md5_obs = None
+        asn_obs = None
 
-        if url:
-            try:
-                url_obs = Url.get_or_create(value=url.rstrip())
-                url_obs.add_context(context, dedup_list=["date_added"])
-                url_obs.tag(tags)
-                url_obs.add_source(self.name)
-            except ObservableValidationError as e:
-                logging.error(e)
+        if url_str:
+            url_obs = url.Url(value=url_str).save()
+            url_obs.add_context(self.name, context)
+            url_obs.tag(tags)
 
-        if _hash and len(_hash) > 16:
-            try:
-                hash_obs = Hash.get_or_create(value=_hash)
-                hash_obs.add_context(context, dedup_list=["date_added"])
-                hash_obs.tag(tags)
-                hash_obs.add_source(self.name)
-                if url_obs:
-                    hash_obs.active_link_to(url_obs, "MD5", self.name, clean_old=False)
-            except ObservableValidationError as e:
-                logging.error(e)
+        if md5_str:
+            md5_obs = md5.MD5(value=md5_str).save()
+            md5_obs.add_context(self.name, context)
+            md5_obs.tag(tags)
 
-        if asn:
-            try:
-                asn = asn.split(" ")[0].replace("AS", "")
-                asn_obs = AutonomousSystem.get_or_create(value=asn)
-                asn_obs.add_context(context, dedup_list=["date_added"])
-                asn_obs.tag(tags)
-                asn_obs.add_source(self.name)
-                asn_obs.active_link_to(url_obs, "ASN", self.name, clean_old=False)
-            except ObservableValidationError as e:
-                logging.error(e)
+        if asn_str:
+            asn_obs = asn.ASN(value=asn_str).save()
+            asn_obs.add_context(self.name, context)
+            asn_obs.tag(tags)
+
+        if url_obs and md5_obs:
+            url_obs.link_to(md5_obs, "URL to MD5", self.name)
+
+        if url_obs and asn_obs:
+            url_obs.link_to(asn_obs, "URL to ASN", self.name)
+
+
+taskmanager.TaskManager.register_task(FutexTracker)

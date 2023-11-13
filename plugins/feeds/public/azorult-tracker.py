@@ -3,46 +3,44 @@ from datetime import timedelta, datetime
 import logging
 import pandas as pd
 import numpy as np
-from core.feed import Feed
-from core.observables import AutonomousSystem, Ip, Hostname, Url
-from core.errors import ObservableValidationError
+from core.schemas.observables import ipv4, hostname, url, asn
+from core.schemas import task
+from core import taskmanager
+from typing import ClassVar
 
 
-class AzorutTracker(Feed):
+class AzorultTracker(task.FeedTask):
     """Azorult Tracker"""
 
-    default_values = {
+    _SOURCE: ClassVar["str"] = "https://azorult-tracker.net/api/last-data"
+    _defaults = {
         "frequency": timedelta(hours=12),
         "name": "Azorult-Tracker",
-        "source": "https://azorult-tracker.net/api/last-data",
         "description": "This feed contains panels of Azorult",
     }
 
-    def update(self):
-        for index, item in self.update_json():
-            self.analyze(item)
+    def run(self):
+        response = self._make_request(self._SOURCE, auth=None)
+        if response:
+            data = response.json()
 
-    def update_json(self):
-        r = self._make_request()
-
-        if r.status_code == 200:
-            res = r.json()
-
-            df = pd.DataFrame(res)
+            df = pd.DataFrame(data)
             df.replace({np.nan: None}, inplace=True)
 
-            df["first_seen"] = pd.to_datetime(df["first_seen"], unit="s")
+            df["first_seen"] = pd.to_datetime(df["first_seen"], unit="s", utc=True)
             if self.last_run:
                 df = df[df["first_seen"] > self.last_run]
-            return df.iterrows()
+
+            for _, item in df.iterrows():
+                self.analyze(item)
 
     def analyze(self, item):
         context = {"source": self.name, "date_added": datetime.utcnow()}
 
         _id = item["_id"]
         domain = item["domain"]
-        ip = item["ip"]
-        asn = item["asn"]
+        ip_str = item["ip"]
+        asn_str = item["asn"]
         country_code = item["country_code"]
         panel_url = item["panel_index"]
         panel_path = item["panel_path"]
@@ -66,37 +64,40 @@ class AzorutTracker(Feed):
         context["date_added"] = datetime.utcnow()
 
         try:
-            hostname = None
-            url = None
+            hostname_obs = None
+            url_obs = None
             ip_obs = None
             asn_obs = None
 
             if domain:
-                hostname = Hostname.get_or_create(value=domain)
-                hostname.add_context(context, dedup_list=["date_added"])
-                hostname.tag("azorult")
-            if ip:
-                ip_obs = Ip.get_or_create(value=ip)
-                ip_obs.add_context(context, dedup_list=["date_added"])
-                ip_obs.tag("azorult")
+                hostname_obs = hostname.Hostname(value=domain).save()
+
+                hostname_obs.add_context(self.name, context)
+                hostname_obs.tag(["azorult"])
+            if ip_str:
+                ip_obs = ipv4.IPv4(value=ip_str).save()
+                ip_obs.add_context(self.name, context)
+                ip_obs.tag(["azorult"])
+
             if panel_url:
-                url = Url.get_or_create(value=panel_url)
-                url.add_context(context, dedup_list=["date_added"])
-                url.tag("azorult")
+                url_obs = url.Url(value=panel_url).save()
+                url_obs.add_context(self.name, context)
+                url_obs.tag(["azorult"])
 
-            if asn:
-                asn_obs = AutonomousSystem.get_or_create(value=asn)
-                asn_obs.add_context(context, dedup_list=["date_added"])
-                asn_obs.tag("azorult")
+            if asn_str:
+                asn_obs = asn.ASN(value=asn_str).save()
+                asn_obs.add_context(self.name, context)
+                asn_obs.tag(["azorult"])
 
-            if hostname and ip_obs:
-                hostname.active_link_to(ip_obs, "IP", self.name)
+            if hostname_obs and ip_obs:
+                hostname_obs.link_to(ip_obs, "hostname-ip", self.name)
             if asn_obs and ip_obs:
-                asn_obs.active_link_to(ip_obs, "AS", self.name)
-            if url and hostname:
-                url.active_link_to(hostname, "hostname", self.name)
+                asn_obs.link_to(ip_obs, "asn-ip", self.name)
+            if url_obs and hostname_obs:
+                url_obs.link_to(hostname_obs, "url-hostname", self.name)
 
-        except ObservableValidationError as e:
+        except Exception as e:
             logging.error(e)
-        except TypeError as e:
-            logging.error(item)
+
+
+taskmanager.TaskManager.register_task(AzorultTracker)

@@ -1,24 +1,25 @@
 import logging
 from datetime import timedelta, datetime
-from core.errors import ObservableValidationError
-from core.feed import Feed
-from core.observables import Hash
+from typing import ClassVar
+from core.schemas.observables import md5
+from core.schemas import task
+from core import taskmanager
 
 
-class BotvrijMD5(Feed):
-    default_values = {
+class BotvrijMD5(task.FeedTask):
+    _SOURCE: ClassVar["str"] = "https://www.botvrij.eu/data/ioclist.md5"
+    _defaults = {
         "frequency": timedelta(hours=12),
         "name": "BotvrijMD5",
-        "source": "https://www.botvrij.eu/data/ioclist.md5",
-        "description": "File hashes that can be used when doing incident response.",
+        "description": "Botvrij.eu is a project of the Dutch National Cyber Security Centre (NCSC-NL) and SIDN Labs, the R&D team of SIDN, the registry for the .nl domain.",
     }
 
-    def update(self):
-        resp = self._make_request(sort=False)
-        lines = resp.content.decode("utf-8").split("\n")[6:-1]
-
-        for line in lines:
-            self.analyze(line.strip())
+    def run(self):
+        response = self._make_request(self._SOURCE)
+        if response:
+            data = response.text
+            for item in data.split("\n")[6:-1]:
+                self.analyze(item.strip())
 
     def analyze(self, item):
         val, descr = item.split(" # md5 - ")
@@ -26,13 +27,11 @@ class BotvrijMD5(Feed):
         context = {
             "source": self.name,
             "description": descr,
-            "date_added": datetime.utcnow(),
         }
 
-        try:
-            obs = Hash.get_or_create(value=val)
-            obs.add_context(context, dedup_list=["date_added"])
-            obs.add_source(self.name)
-            obs.tag("botvrij")
-        except ObservableValidationError as e:
-            logging.error(e)
+        obs = md5.MD5(value=val).save()
+        obs.add_context(self.name, context)
+        obs.tag(["botvrij"])
+
+
+taskmanager.TaskManager.register_task(BotvrijMD5)

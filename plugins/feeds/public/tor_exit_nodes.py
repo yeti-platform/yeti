@@ -1,26 +1,27 @@
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
+from typing import ClassVar
+from core.schemas.observables import ipv4
+from core.schemas import task
+from core import taskmanager
 
-from core.feed import Feed
-from core.observables import Ip
-from core.errors import ObservableValidationError
 
-
-class TorExitNodes(Feed):
-    default_values = {
+class TorExitNodes(task.FeedTask):
+    _defaults = {
         "frequency": timedelta(hours=1),
         "name": "TorExitNodes",
-        "source": "https://www.dan.me.uk/tornodes",
         "description": "Tor exit nodes",
     }
+    _SOURCE: ClassVar["str"] = "https://www.dan.me.uk/tornodes"
 
-    def update(self):
-        feed = self._make_request().text
+    def run(self):
+        feed = self._make_request(self._SOURCE).text
 
         start = feed.find("<!-- __BEGIN_TOR_NODE_LIST__ //-->") + len(
             "<!-- __BEGIN_TOR_NODE_LIST__ //-->"
         )
         end = feed.find("<!-- __END_TOR_NODE_LIST__ //-->")
+        logging.debug(f"start: {start}, end: {end}")
 
         feed_raw = (
             feed[start:end]
@@ -33,8 +34,6 @@ class TorExitNodes(Feed):
         feed = feed_raw.split("\n")
         if len(feed) > 10:
             self.status = "OK"
-
-        feed = self._temp_feed_data_compare(feed_raw)
 
         for line in feed:
             self.analyze(line)
@@ -55,14 +54,12 @@ class TorExitNodes(Feed):
             "version": fields[6],
             "contactinfo": fields[7],
             "source": self.name,
-            "description": "Tor exit node: %s (%s)" % (fields[1], fields[0]),
-            "date_added": datetime.utcnow(),
+            "description": f"Tor exit node: {fields[1]} {fields[0]}",
         }
 
-        try:
-            ip = Ip.get_or_create(value=fields[0])
-            ip.add_context(context, dedup_list=["date_added"])
-            ip.add_source(self.name)
-            ip.tag(["tor"])
-        except ObservableValidationError as e:
-            logging.error(e)
+        ip_obs = ipv4.IPv4(value=fields[0]).save()
+        ip_obs.add_context(self.name, context)
+        ip_obs.tag(["tor", "exitnode"])
+
+
+taskmanager.TaskManager.register_task(TorExitNodes)
