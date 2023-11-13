@@ -1,72 +1,34 @@
-# DEPRECATION NOTICE
+# Yeti Platform
 
-This version of Yeti is deprecated. We're working hard on a new version, which
-you can check out by following instructions at
+Yeti aims to bridge the gap between CTI and DFIR practitioners by providing a
+Forensics Intelligence platform and pipeline for DFIR teams. It was born out of frustration
+of having to answer the question "where have I seen this artifact before?" or
+"how do I search for IOCs related to this threat (or all threats?) in my timeline?"
 
-    https://github.com/yeti-platform/yeti-docker
+Documentation links:
 
-(or on the `fastapi` branch here)
-
-# Yeti - Your everyday threat intelligence
-
-- [DEPRECATION NOTICE](#deprecation-notice)
-- [Yeti - Your everyday threat intelligence](#yeti---your-everyday-threat-intelligence)
-  - [What is Yeti?](#what-is-yeti)
-  - [Installation](#installation)
-  - [Useful links](#useful-links)
+* Main website: https://yeti-platform.io/
+* [Documentation](https://yeti-platform.io/docs)
+* [Guides](https://yeti-platform.io/guides)
 
 ## What is Yeti?
 
-Yeti is a platform meant to organize observables, indicators of compromise,
-TTPs, and knowledge on threats in a single, unified repository. Yeti will also
-automatically enrich observables (e.g. resolve domains, geolocate IPs) so that
-you don't have to. Yeti provides an interface for humans (shiny Bootstrap-based
-UI) and one for machines (web API) so that your other tools can talk nicely to
-it.
-
-Yeti was born out of frustration of having to answer the question "where have
-I seen this artifact before?" or Googling shady domains to tie them to a
-malware family.
-
 In a nutshell, Yeti allows you to:
 
-* Submit observables and get a pretty good guess on the nature of the threat.
-* Inversely, focus on a threat and quickly list all TTPs, Observables, and
-  associated malware.
-* Let responders skip the "Google the artifact" stage of incident response.
-* Let analysts focus on adding intelligence rather than worrying about
+- Bulk search observables and get a pretty good guess on the nature of the
+  threat, and how to find it on a system.
+- Inversely, focus on a threat and quickly list all TTPs, malware, and related
+  DFIR artifacts.
+- Let CTI analysts focus on adding intelligence rather than worrying about
   machine-readable export formats.
-* Visualize relationship graphs between different threats.
+- Incorporate your own data sources, analytics, and logic very easily.
 
 This is done by:
 
-* Collecting and processing observables from a wide array of different sources
-  (MISP instances, malware trackers, XML feeds, JSON feeds...)
-* Providing a web API to automate queries (think incident management platform)
+- Storing technical and tactical CTI (observables, TTPs, campagins, etc.) from
+  internal or external systems.
+- Being a backend for DFIR-related queries: Yara signatures, Sigma rules, DFIQ.
+- Providing a web API to automate queries (think incident management platform)
   and enrichment (think malware sandbox).
-* Export the data in user-defined formats so that they can be ingested by
-  third-party applications (think blocklists, SIEM).
-
-## Installation
-
-Yeti has a `docker-compose` script to get up and running even faster; this is useful for testing or even running production instances of Yeti should your infrastructure support it. Full instructions [here](https://github.com/yeti-platform/yeti/tree/master/extras/docker), but in a nutshell:
-
-Download in release page the lastest version of yeti <https://github.com/yeti-platform/yeti/releases>
-
-To install docker and docker-compose follow the instructions on the official documentation <https://docs.docker.com/compose/install/>
-
-```bash
-    gunzip yeti-<version>.zip
-    cd yeti/extras/docker/dev
-    docker-compose up
-```
-
-The docker-compose will start the following containers
-
-## Useful links
-
-* [Documentation](http://yeti-platform.readthedocs.io/en/latest/)
-* [Yeti users mailing list](https://groups.google.com/forum/#!forum/yeti-users)
-* [Project website & blog](https://yeti-platform.github.io)
-* [Installation](http://yeti-platform.readthedocs.io/en/latest/installation.html)
-* [Use-cases](https://yeti-platform.readthedocs.io/en/latest/use-cases.html)
+- Export the data in user-defined formats so that they can be ingested by
+  third-party applications (SIEM, DFIR platforms).
