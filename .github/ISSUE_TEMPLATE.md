@@ -1,6 +1,4 @@
-Before opening an issue, please make do a quick search through the current issues
-and the mailing list (https://groups.google.com/forum/#!forum/yeti-users) to see
-if it hasn't been answered already.
+Before opening an issue, please make do a quick search through the current issues.
 
 ### Description
 [Please provide a description of the issue encountered]
@@ -8,16 +6,15 @@ if it hasn't been answered already.
 ### Environment
 
 | Question         | Answer
-|------------------|--------------------
-| Git commit       | Type `$ git log | head -n1` to find out
-| OS version       | Ubuntu 16.04, Windows 10, macOS 10.12.3
-| Browser          | Chrome 56.0.2924.87
+|---------------------------|--------------------
+| Yeti release              |
+| Yeti-frontend release     |
+| OS version                | Ubuntu 22.04, Windows 11, macOS 13.6.2
+| Browser                   | Chrome 119.0.6045.123
 
 ### Steps to Reproduce
-1. git clone the repo
-1. cd yeti
-1. pip install -r
-1. observe stacktrace
+
+[Please explain how to reproduce the issue.]
 
 #### Expected behavior
 [How are you expecting the application to behave?]
