@@ -29,7 +29,7 @@ class ObservableType(str, Enum):
     ipv6 = "ipv6"
     mac_address = "mac_address"
     md5 = "md5"
-    observable = "observable"
+    generic = "generic"
     path = "path"
     registry_key = "registry_key"
     sha1 = "sha1"
@@ -179,7 +179,7 @@ TYPE_MAPPING = {
 # disable: pylint=wrong-import-position
 from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       command_line, docker_image, email, file,
-                                      hostname, imphash, ipv4, ipv6,
+                                      generic_observable, hostname, imphash, ipv4, ipv6,
                                       mac_address, md5, path, registry_key,
                                       sha1, sha256, ssdeep, tlsh, url,
                                       user_agent)
