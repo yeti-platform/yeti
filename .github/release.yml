@@ -1,0 +1,17 @@
+changelog:
+  categories:
+    - title: Enhancements 📈
+      labels:
+        - enhancement
+    - title: Bug fixes 🐛
+      labels:
+        - bug
+    - title: New feeds
+      labels:
+        - tasks:feed
+    - title: New analytics
+      labels:
+        - tasks:analytics
+    - title: Other Changes
+      labels:
+        - "*"
