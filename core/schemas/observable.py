@@ -6,11 +6,10 @@ from enum import Enum
 from typing import ClassVar, Literal
 
 import validators
-from pydantic import BaseModel, Field
-
 from core import database_arango
 from core.helpers import now, refang
 from core.schemas.graph import TagRelationship
+from pydantic import BaseModel, Field
 
 
 # Data Schema
@@ -20,6 +19,7 @@ class ObservableType(str, Enum):
     certificate = "certificate"
     cidr = "cidr"
     command_line = "command_line"
+    docker_image = "docker_image"
     email = "email"
     file = "file"
     guess = "guess"
@@ -177,7 +177,7 @@ TYPE_MAPPING = {
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
 from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
-                                      command_line, email, file, hostname,
-                                      imphash, ipv4, ipv6, mac_address, md5,
-                                      path, registry_key, sha1, sha256, ssdeep,
-                                      tlsh, url)
+                                      command_line, docker_image, email, file,
+                                      hostname, imphash, ipv4, ipv6,
+                                      mac_address, md5, path, registry_key,
+                                      sha1, sha256, ssdeep, tlsh, url)

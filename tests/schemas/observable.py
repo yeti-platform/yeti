@@ -4,10 +4,11 @@ from core import database_arango
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
 from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
-                                      command_line, email, file, generic_observable, hostname,
-                                      imphash, ipv4, ipv6, mac_address, md5,
-                                      path, registry_key, sha1, sha256, ssdeep,
-                                      tlsh, url)
+                                      command_line, docker_image, email, file,
+                                      generic_observable, hostname, imphash,
+                                      ipv4, ipv6, mac_address, md5, path,
+                                      registry_key, sha1, sha256, ssdeep, tlsh,
+                                      url)
 
 
 class ObservableTest(unittest.TestCase):
@@ -229,6 +230,13 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "ls -la")
         self.assertIsInstance(observable, command_line.CommandLine)
+
+    def test_create_command_line(self) -> None:
+        """Tests creating a docker image."""
+        observable = docker_image.DockerImage(value="yetiplatform/yeti:latest").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "yetiplatform/yeti:latest")
+        self.assertIsInstance(observable, docker_image.DockerImage)
 
     def test_create_email(self) -> None:
         """Tests creating an email."""
