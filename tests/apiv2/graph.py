@@ -263,7 +263,7 @@ class ComplexGraphTest(unittest.TestCase):
         response = client.post(
             "/api/v2/graph/match",
             json={
-                "observables": ["genericobs"],
+                "observables": ["test3.com"],
                 "add_unknown": True,
                 "add_type": "generic",
             },
@@ -273,5 +273,5 @@ class ComplexGraphTest(unittest.TestCase):
 
         # Observable is known, has been added.
         self.assertEqual(len(data["known"]), 1)
-        self.assertEqual(data["known"][0]["value"], "genericobs")
+        self.assertEqual(data["known"][0]["value"], "test3.com")
         self.assertEqual(data["known"][0]["type"], "generic")
