@@ -37,6 +37,7 @@ class ObservableType(str, Enum):
     ssdeep = "ssdeep"
     tlsh = "tlsh"
     url = "url"
+    user_agent = "user_agent"
 
 
 class Observable(BaseModel, database_arango.ArangoYetiConnector):
@@ -180,4 +181,5 @@ from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       command_line, docker_image, email, file,
                                       hostname, imphash, ipv4, ipv6,
                                       mac_address, md5, path, registry_key,
-                                      sha1, sha256, ssdeep, tlsh, url)
+                                      sha1, sha256, ssdeep, tlsh, url,
+                                      user_agent)
