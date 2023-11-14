@@ -231,7 +231,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable.value, "ls -la")
         self.assertIsInstance(observable, command_line.CommandLine)
 
-    def test_create_command_line(self) -> None:
+    def test_create_docker_image(self) -> None:
         """Tests creating a docker image."""
         observable = docker_image.DockerImage(value="yetiplatform/yeti:latest").save()
         self.assertIsNotNone(observable.id)
