@@ -8,7 +8,7 @@ from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       generic_observable, hostname, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url)
+                                      url, user_agent)
 
 
 class ObservableTest(unittest.TestCase):
@@ -346,3 +346,10 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "https://www.google.com")
         self.assertIsInstance(observable, url.Url)
+
+    def test_create_user_agent(self) -> None:
+        """Tests creating a user agent."""
+        observable = user_agent.UserAgent(value="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36").save() # noqa: E501
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36") # noqa: E501
+        self.assertIsInstance(observable, user_agent.UserAgent)
