@@ -153,6 +153,7 @@ async def delete(relationship_id: str) -> None:
 class AnalysisRequest(BaseModel):
     observables: list[str]
     add_tags: list[str] = []
+    type: observable.ObservableType = None
     fetch_neighbors: bool = True
     add_unknown: bool = False
 
@@ -176,11 +177,16 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
     known = {}  # type: dict[str, observable.Observable]
     if request.add_unknown:
         for value in request.observables:
-            try:
-                observable.Observable.add_text(value, tags=request.add_tags)
-                unknown.discard(value)
-            except ValueError:
-                pass
+            if request.type:
+                obs = observable.TYPE_MAPPING[request.type](value=value).save()
+                obs.tag(request.add_tags)
+            else:
+                try:
+                    observable.Observable.add_text(value, tags=request.add_tags)
+                except ValueError:
+                    pass
+            unknown.discard(value)
+
     db_observables, _ = observable.Observable.filter(
         query_args={"value__in": request.observables}
     )
