@@ -40,6 +40,8 @@ class DataplaneSMTPData(task.FeedTask):
                 self.analyze(row)
 
     def analyze(self, item):
+        if not item["ipaddr"]:
+            return
         context_ip = {
             "source": self.name,
             "last_seen": item["lastseen"],

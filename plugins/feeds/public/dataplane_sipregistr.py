@@ -38,10 +38,12 @@ class DataplaneSIPRegistr(task.FeedTask):
                 self.analyze(row)
 
     def analyze(self, item):
+        if not item["ipaddr"]:
+            return
+        
         context_ip = {
             "source": "dataplane sip registr",
         }
-
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
 
         category = item["category"].lower()

@@ -37,11 +37,13 @@ class DataplaneSIPInvite(task.FeedTask):
                 self.analyze(row)
 
     def analyze(self, item):
+        if not item["ipaddr"]:
+            return
+        
         context_ip = {
             "source": self.name,
             "last_seen": item["lastseen"],
         }
-
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
         category = item["category"].lower()
         tags = ["dataplane", "sipinvite"]
