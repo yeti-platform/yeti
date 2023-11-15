@@ -24,7 +24,7 @@ class FutexTracker(task.FeedTask):
             data = response.text
             names = ["id", "firstseen", "url", "status", "hash", "country", "as"]
             df = pd.read_csv(StringIO(data), names=names, delimiter=";", header=0)
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
 
             df = self._filter_observables_by_time(df, "firstseen")
 

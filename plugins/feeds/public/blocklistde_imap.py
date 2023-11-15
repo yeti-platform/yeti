@@ -23,8 +23,9 @@ class BlocklistdeIMAP(task.FeedTask):
 
     def analyze(self, item):
         ip_str = item.strip()
-        obs = ipv4.IPv4(value=ip_str).save()
-        obs.tag(["blocklist", "imap"])
+        if ip_str:
+            obs = ipv4.IPv4(value=ip_str).save()
+            obs.tag(["blocklist", "imap"])
 
 
 taskmanager.TaskManager.register_task(BlocklistdeIMAP)

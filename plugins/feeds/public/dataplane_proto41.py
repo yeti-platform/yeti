@@ -32,18 +32,21 @@ class DataplaneProto41(task.FeedTask):
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAME)
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df["lastseen"] = pd.to_datetime(df["lastseen"])
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
             for _, row in df.iterrows():
                 self.analyze(row)
 
     def analyze(self, item):
+        if not item["ipaddr"]:
+            return
+        
         context_ip = {
             "source": self.name,
             "firstseen": item["firstseen"],
             "lastseen": item["lastseen"],
         }
-
+        
         ip_obs = ipv4.IPv4(value=item["ipaddr"]).save()
         category = item["category"].lower()
         tags = ["dataplane", "proto41"]

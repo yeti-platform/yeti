@@ -30,7 +30,7 @@ class HybridAnalysis(task.FeedTask):
                     orient="values",
                     convert_dates=["analysis_start_time"],
                 )
-                df.fillna("", inplace=True)
+                df.ffill(inplace=True)
                 df = self._filter_observables_by_time(df, "analysis_start_time")
                 for _, row in df.iterrows():
                     self.analyze(row)

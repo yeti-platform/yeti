@@ -23,8 +23,9 @@ class BlocklistdeFTP(task.FeedTask):
 
     def analyze(self, item):
         ip_str = item.strip()
-        obs = ipv4.IPv4(value=ip_str).save()
-        obs.tag(["blocklist", "ftp"])
+        if ip_str:
+            obs = ipv4.IPv4(value=ip_str).save()
+            obs.tag(["blocklist", "ftp"])
 
 
 taskmanager.TaskManager.register_task(BlocklistdeFTP)

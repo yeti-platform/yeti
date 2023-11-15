@@ -62,7 +62,7 @@ class OTXAlienvault(task.FeedTask):
         df = pd.read_json(
             StringIO(json.dumps(data)), orient="values", convert_dates=["created"]
         )
-        df.fillna("", inplace=True)
+        df.ffill(inplace=True)
 
         for _, row in df.iterrows():
             self.analyze(row)
@@ -74,7 +74,6 @@ class OTXAlienvault(task.FeedTask):
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]
 
         tags = item["tags"]
-
         for otx_indic in item["indicators"]:
             type_ind = self._TYPE_MAPPING.get(otx_indic["type"])
             if not type_ind:
@@ -90,6 +89,7 @@ class OTXAlienvault(task.FeedTask):
                     value=otx_indic["indicator"],
                     type=self._TYPE_MAPPING.get(otx_indic["type"]),
                 ).save()
+
                 obs.tag(tags)
                 obs.add_context(self.name, context)
 

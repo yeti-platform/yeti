@@ -32,12 +32,15 @@ class DataplaneSSHPwAuth(task.FeedTask):
             df = df.dropna()
 
             df["lastseen"] = pd.to_datetime(df["lastseen"])
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
             for _, row in df.iterrows():
                 self.analyze(row)
 
     def analyze(self, item):
+        if not item["ipaddr"]:
+            return
+        
         context_ip = {
             "source": self.name,
         }

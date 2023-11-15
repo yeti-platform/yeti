@@ -25,7 +25,7 @@ class ViriBackTracker(task.FeedTask):
                 StringIO(data),
                 parse_dates=["FirstSeen"],
             )
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "FirstSeen")
             for _, line in df.iterrows():
                 self.analyze(line)

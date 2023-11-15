@@ -289,7 +289,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         from core.schemas import tag
 
         expiration = expiration or tag.DEFAULT_EXPIRATION
-
+        tags = [t.strip() for t in tags if t.strip()]
         if strict:
             self.clear_tags()
 

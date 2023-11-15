@@ -23,8 +23,9 @@ class BlocklistdeSSH(task.FeedTask):
 
     def analyze(self, item):
         ip_str = item.strip()
-        obs = ipv4.IPv4(value=ip_str).save()
-        obs.tag(["blocklist", "ssh"])
+        if ip_str:
+            obs = ipv4.IPv4(value=ip_str).save()
+            obs.tag(["blocklist", "ssh"])
 
 
 taskmanager.TaskManager.register_task(BlocklistdeSSH)
