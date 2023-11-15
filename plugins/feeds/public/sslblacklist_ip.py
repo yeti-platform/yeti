@@ -34,7 +34,7 @@ class SSLBlackListIP(task.FeedTask):
                 parse_dates=["Firstseen"],
                 header=8,
             )
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "Firstseen")
 
             for _, line in df.iterrows():

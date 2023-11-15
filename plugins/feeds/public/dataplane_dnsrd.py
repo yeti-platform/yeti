@@ -34,7 +34,7 @@ class DataplaneDNSRecursive(task.FeedTask):
             df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df["lastseen"] = pd.to_datetime(df["lastseen"])
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "lastseen")
             for _, row in df.iterrows():
                 self.analyze(row)

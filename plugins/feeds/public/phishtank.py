@@ -37,7 +37,7 @@ class PhishTank(task.FeedTask):
                 comment=None,
                 parse_dates=["submission_time"],
             )
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
 
             df = self._filter_observables_by_time(df, "submission_time")
             for _, line in df.iterrows():

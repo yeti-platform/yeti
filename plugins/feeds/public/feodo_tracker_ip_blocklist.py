@@ -33,7 +33,7 @@ class FeodoTrackerIPBlockList(task.FeedTask):
                 parse_dates=["first_seen_utc"],
             )
             df = self._filter_observables_by_time(df, "first_seen_utc")
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             for _, line in df.iterrows():
                 self.analyze(line)
 

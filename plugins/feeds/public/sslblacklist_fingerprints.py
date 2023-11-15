@@ -42,7 +42,7 @@ class SSLBlackListCerts(task.FeedTask):
                 parse_dates=["Listingdate"],
                 header=8,
             )
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "Listingdate")
 
             for _, line in df.iterrows():

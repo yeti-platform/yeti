@@ -33,7 +33,7 @@ class ThreatFox(task.FeedTask):
 
             df["first_seen_utc"] = pd.to_datetime(df["first_seen_utc"])
             df["last_seen_utc"] = pd.to_datetime(df["last_seen_utc"])
-            df.fillna("", inplace=True)
+            df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "first_seen_utc")
 
         for _, line in df.iterrows():

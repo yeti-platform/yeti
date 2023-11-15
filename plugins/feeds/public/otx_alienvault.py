@@ -62,7 +62,7 @@ class OTXAlienvault(task.FeedTask):
         df = pd.read_json(
             StringIO(json.dumps(data)), orient="values", convert_dates=["created"]
         )
-        df.fillna("", inplace=True)
+        df.ffill(inplace=True)
 
         for _, row in df.iterrows():
             self.analyze(row)
