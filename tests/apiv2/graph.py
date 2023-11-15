@@ -240,7 +240,7 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(indicator["name"], "test c2")
 
     def test_match_and_add(self):
-        """Tests that indicator matches will surface."""
+        """Tests that unknown observables are added."""
         response = client.post(
             "/api/v2/graph/match",
             json={"observables": ["test3.com"], "add_unknown": True},
@@ -257,3 +257,35 @@ class ComplexGraphTest(unittest.TestCase):
         observable, indicator = data["matches"][0]
         self.assertEqual(observable, "test3.com")
         self.assertEqual(indicator["name"], "test c2")
+
+    def test_match_add_with_type(self):
+        """Tests that unknown observables are added."""
+        response = client.post(
+            "/api/v2/graph/match",
+            json={
+                "observables": ["test3.com"],
+                "add_unknown": True,
+                "add_type": "generic",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+
+        # Observable is known, has been added.
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(data["known"][0]["value"], "test3.com")
+        self.assertEqual(data["known"][0]["type"], "generic")
+
+    def test_match_add_with_wrong_type_fails(self):
+        """Tests that unknown observables are added."""
+        response = client.post(
+            "/api/v2/graph/match",
+            json={
+                "observables": ["test3.com"],
+                "add_unknown": True,
+                "add_type": "WRONG_TYPE",
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+        data = response.json()
+        self.assertIn("add_type", data["detail"][0]["loc"])

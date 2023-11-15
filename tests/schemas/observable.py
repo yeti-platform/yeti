@@ -27,7 +27,7 @@ class ObservableTest(unittest.TestCase):
         result = generic_observable.GenericObservable(value="Some_String").save()
         self.assertIsNotNone(result.id)
         self.assertEqual(result.value, "Some_String")
-        self.assertEqual(result.type, "observable")
+        self.assertEqual(result.type, "generic")
 
     def test_observable_no_value(self):
         with self.assertRaises(ValueError):
