@@ -3,7 +3,7 @@
 
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas.observables import url
+from core.schemas.observables import hostname
 from core.schemas import task
 from core import taskmanager
 
@@ -27,10 +27,11 @@ class PhishingDatabase(task.FeedTask):
             for line in response.text.split("\n"):
                 self.analyze(line.strip())
 
-    def analyze(self, url_str):
-        urlobs = url.Url(value=url_str).save()
-        urlobs.add_context(self.name, {"source": self.name})
-        urlobs.tag(["phish", "phishing_database", "blocklist"])
+    def analyze(self, domain):
+        if domain:
+            obs = hostname.Hostname(value=domain).save()
+            obs.add_context(self.name, {"source": self.name})
+            obs.tag(["phish", "phishing_database", "blocklist"])
 
 
 taskmanager.TaskManager.register_task(PhishingDatabase)
