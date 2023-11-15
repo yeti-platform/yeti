@@ -23,8 +23,9 @@ class BlocklistdeBots(task.FeedTask):
 
     def analyze(self, item):
         ip_str = item.strip()
-        obs = ipv4.IPv4(value=ip_str).save()
-        obs.tag(["blocklist", "bots"])
+        if ip_str:
+            obs = ipv4.IPv4(value=ip_str).save()
+            obs.tag(["blocklist", "bots"])
 
 
 taskmanager.TaskManager.register_task(BlocklistdeBots)
