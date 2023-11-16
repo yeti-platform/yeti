@@ -56,13 +56,13 @@ class CisaKEV(task.FeedTask):
             nvd_json = _cves_as_dict(response.json())
         for entry in kev_json.get('vulnerabilities', list()):
             cve_id = entry.get('cveID')
-            cve_details = nvd_json.get(cve_id, None)
+            cve_details = nvd_json.get(cve_id, {})
             self.analyze_entry(entry, cve_details)
 
 
-    def _analyze_cve_details(self, cve_details: str):
+    def _analyze_cve_details(self, cve_details: dict):
         """Analyzes an entry as specified in nist nvd json."""
-        if cve_details is None:
+        if not isinstance(cve_details, dict) or len(dict) == 0:
             return 0, 'none', ''
         cve = cve_details.get('cve')
         cvss_version, cvss_metric = _extract_cvss_metric(cve)
@@ -111,7 +111,9 @@ class CisaKEV(task.FeedTask):
             logging.error("Error parsing kev %s: %s", entry["dateAdded"], error)
             return
 
-        cve_id = entry.get('cveID')
+        cve_id = entry.get('cveID', None)
+        if cve_id is None:
+            return 
         reference = f'https://nvd.nist.gov/vuln/detail/{cve_id}'
         description = "#### Summary\n\n"
         description = entry.get("shortDescription") + "\n\n"
