@@ -130,12 +130,29 @@ class Investigation(Entity):
     reference: str = ""
 
 
+class SeverityType(str, Enum):
+    none = "None"
+    low = "Low"
+    medium = "Medium"
+    high = "High"
+    critical = "Critical"
+
+
 class Vulnerability(Entity):
+    """
+    This class represents a vulnerability in the schema.
+
+    Attributes:
+        base_score : base score of the vulnerability obtained from cvss metric
+                     ranging from 0.0 to 10.0.
+        severity: represents the severity of a vulnerabily being in none, low,
+                  medium, high, critical.
+    """
     _type_filter: ClassVar[str] = EntityType.vulnerability
     type: Literal[EntityType.vulnerability] = EntityType.vulnerability
 
-    base_score: float = 0.0
-    severity: str = ""
+    base_score: float = Field(gte=0.0, lte=10.0, default=0.0)
+    severity: SeverityType = "None"
     reference: str = ""
 
 
