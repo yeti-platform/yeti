@@ -131,11 +131,11 @@ class Investigation(Entity):
 
 
 class SeverityType(str, Enum):
-    none = "None"
-    low = "Low"
-    medium = "Medium"
-    high = "High"
-    critical = "Critical"
+    none = "none"
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
 
 
 class Vulnerability(Entity):
