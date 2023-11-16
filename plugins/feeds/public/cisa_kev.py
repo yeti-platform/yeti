@@ -135,12 +135,10 @@ class CisaKEV(task.FeedTask):
         base_score, severity, cve_description = self._analyze_cve_details(cve_details)
         description += cve_description
 
+        name = f'{cve_id}'
         vulnerability_name = entry.get('vulnerabilityName', '')
-        if len(vulnerability_name):
-            name = f"{cve_id} - {vulnerability_name}"
-        else:
-            name = f'{cve_id}'
-        vulnerability = entity.Vulnerability(
+        if vulnerability_name:
+            name += "- {vulnerability_name}"
             name=name, 
             description=description, 
             created=created,
