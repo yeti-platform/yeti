@@ -43,20 +43,20 @@ class CisaKEV(task.FeedTask):
     NVD_SOURCE: ClassVar["str"] = "https://services.nvd.nist.gov/rest/json/cves/2.0?hasKev"
 
     def run(self):
-        response = self._make_request(self.CISA_SOURCE)
+        response = self._make_request(self.CISA_SOURCE, sort=False)
         if not response:
-            logging.warning(f"Unable to fetch feed from {self.CISA_SOURCE}")
+            logging.info(f"Skipping: no updates from {self.CISA_SOURCE}")
             return
         kev_json = response.json()
         response = self._make_request(self.NVD_SOURCE)
         if not response:
-            logging.warning(f"Unable to fetch feed from {self.NVD_SOURCE}")
+            logging.info(f"No updates from {self.NVD_SOURCE}")
             nvd_json = {}
         else:
             nvd_json = _cves_as_dict(response.json())
         for entry in kev_json.get('vulnerabilities', list()):
             cve_id = entry.get('cveID', '')
-            if not len(cve_id):
+            if not cve_id:
                 continue
             cve_details = nvd_json.get(cve_id, {})
             self.analyze_entry(entry, cve_details)
@@ -64,9 +64,7 @@ class CisaKEV(task.FeedTask):
 
     def _analyze_cve_details(self, cve_details: dict):
         """Analyzes an entry as specified in nist nvd json."""
-        if not isinstance(cve_details, dict) or len(cve_details) == 0:
-            return 0, 'none', ''
-        cve = cve_details.get('cve')
+        cve = cve_details.get('cve', {})
         cvss_version, cvss_metric = _extract_cvss_metric(cve)
         if cvss_version == 0:
             return 0, 'none', ''
@@ -132,13 +130,18 @@ class CisaKEV(task.FeedTask):
         description += f"* Product: {entry.get('product', 'N/A')}\n"
         known_ransom_campaign = entry.get("knownRansomwareCampaignUse", "Unknown")
         description += f"* Known to be used in ransomware campaigns: {known_ransom_campaign}\n\n"
-        base_score, severity, cve_description = self._analyze_cve_details(cve_details)
-        description += cve_description
+        if cve_details:
+            base_score, severity, cve_description = self._analyze_cve_details(cve_details)
+            description += cve_description
+        else:
+            base_score = 0.0
+            severity = 'none'
 
-        name = f'{cve_id}'
+        name = f"{cve_id}"
         vulnerability_name = entry.get('vulnerabilityName', '')
         if vulnerability_name:
-            name += "- {vulnerability_name}"
+            name += f"- {vulnerability_name}"
+        vulnerability = entity.Vulnerability(
             name=name, 
             description=description, 
             created=created,
