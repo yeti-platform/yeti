@@ -56,6 +56,8 @@ class CisaKEV(task.FeedTask):
             nvd_json = _cves_as_dict(response.json())
         for entry in kev_json.get('vulnerabilities', list()):
             cve_id = entry.get('cveID')
+            if cve_id is None:
+                continue
             cve_details = nvd_json.get(cve_id, {})
             self.analyze_entry(entry, cve_details)
 
@@ -111,21 +113,23 @@ class CisaKEV(task.FeedTask):
             logging.error("Error parsing kev %s: %s", entry["dateAdded"], error)
             return
 
-        cve_id = entry.get('cveID', None)
-        if cve_id is None:
-            return 
+        cve_id = entry['cveID']
         reference = f'https://nvd.nist.gov/vuln/detail/{cve_id}'
         description = "#### Summary\n\n"
         description = entry.get("shortDescription") + "\n\n"
         description += f"* Added to KEV: {entry['dateAdded']}\n"
-        description += f"* Vendor/Project: {entry.get('vendorProject')}\n"
-        description += f"* Product: {entry.get('product')}\n"
+        description += f"* Vendor/Project: {entry.get('vendorProject', 'N/A')}\n"
+        description += f"* Product: {entry.get('product', 'N/A')}\n"
         known_ransom_campaign = entry.get("knownRansomwareCampaignUse", "Unknown")
         description += f"* Known to be used in ransomware campaigns: {known_ransom_campaign}\n\n"
         base_score, severity, cve_description = self._analyze_cve_details(cve_details)
         description += cve_description
 
-        name = f"{cve_id} - {entry.get('vulnerabilityName')}"
+        vulnerability_name = entry.get('vulnerabilityName')
+        if vulnerability_name is None:
+            name = f'{cve_id}'
+        else:
+            name = f"{cve_id} - {vulnerability_name}"
         vulnerability = entity.Vulnerability(
             name=name, 
             description=description, 
