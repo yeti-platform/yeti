@@ -55,8 +55,8 @@ class CisaKEV(task.FeedTask):
         else:
             nvd_json = _cves_as_dict(response.json())
         for entry in kev_json.get('vulnerabilities', list()):
-            cve_id = entry.get('cveID')
-            if cve_id is None:
+            cve_id = entry.get('cveID', '')
+            if not len(cve_id):
                 continue
             cve_details = nvd_json.get(cve_id, {})
             self.analyze_entry(entry, cve_details)
@@ -64,7 +64,7 @@ class CisaKEV(task.FeedTask):
 
     def _analyze_cve_details(self, cve_details: dict):
         """Analyzes an entry as specified in nist nvd json."""
-        if not isinstance(cve_details, dict) or len(dict) == 0:
+        if not isinstance(cve_details, dict) or len(cve_details) == 0:
             return 0, 'none', ''
         cve = cve_details.get('cve')
         cvss_version, cvss_metric = _extract_cvss_metric(cve)
@@ -75,33 +75,43 @@ class CisaKEV(task.FeedTask):
         description = "#### Details\n\n"
         for cve_description in cve.get('descriptions', []):
             if cve_description.get('lang') == 'en':
-                description += cve_description.get('value') + '\n'
+                en_description = cve_description.get('value', '')
+                if len(en_description):
+                    description += f"{en_description}\n"
         description += f"#### CVSS {cvss_version} Severity and Metrics\n\n"
-        description += f"* **Vector:** {cvss_data.get('vectorString')}\n"
-        description += f"* **Impact Score:** {cve.get('impactScore')}\n"
-        description += f"* **Exploitability Score:** {cve.get('exploitabilityScore')}\n"
+        description += f"* **Vector:** {cvss_data.get('vectorString', 'N/A')}\n"
+        description += f"* **Impact Score:** {cve.get('impactScore', 'N/A')}\n"
+        description += f"* **Exploitability Score:** {cve.get('exploitabilityScore', 'N/A')}\n"
         if cvss_version == 2:
             severity = cvss_metric.get('baseSeverity', 'none').lower()
-            description += f"* **Access Vector (AV):** {cvss_data.get('accessVector').capitalize()}\n"
-            description += f"* **Access Complexity (C):**: {cvss_data.get('accessComplexity').capitalize()}\n"
-            description += f"* **Authentication (AU):** {cvss_data.get('authentication').capitalize()}\n"
-            description += f"* **Confidentiality (C):**: {cvss_data.get('confidentialityImpact').capitalize()}\n"
-            description += f"* **Integrigty (I):**: {cvss_data.get('integrityImpact').capitalize()}\n"
-            description += f"* **Availability (A):** {cvss_data.get('availabilityImpact').capitalize()}\n\n"
+            description += f"* **Access Vector (AV):** {cvss_data.get('accessVector', 'N/A').capitalize()}\n"
+            description += f"* **Access Complexity (C):**: {cvss_data.get('accessComplexity', 'N/A').capitalize()}\n"
+            description += f"* **Authentication (AU):** {cvss_data.get('authentication', 'N/A').capitalize()}\n"
+            description += f"* **Confidentiality (C):**: {cvss_data.get('confidentialityImpact', 'N/A').capitalize()}\n"
+            description += f"* **Integrigty (I):**: {cvss_data.get('integrityImpact', 'N/A').capitalize()}\n"
+            description += f"* **Availability (A):** {cvss_data.get('availabilityImpact', 'N/A').capitalize()}\n\n"
         else:
             severity = cvss_data.get('baseSeverity', 'none').lower()
-            description += f"* **Attack Vector (AV):** {cvss_data.get('attackVector').capitalize()}\n"
-            description += f"* **Attack Complexity (AC):** {cvss_data.get('attackComplexity').capitalize()}\n"
-            description += f"* **Privileges Required (PR):** {cvss_data.get('privilegesRequired').capitalize()}\n"
-            description += f"* **User Interaction (UI):** {cvss_data.get('userInteraction').capitalize()}\n"
-            description += f"* **Scope (S):** {cvss_data.get('scope').capitalize()}\n"
-            description += f"* **Confidentiality (C):** {cvss_data.get('confidentialityImpact').capitalize()}\n"
-            description += f"* **Integrety (I):** {cvss_data.get('integrityImpact').capitalize()}\n"
-            description += f"* **Availability (A):** {cvss_data.get('availabilityImpact').capitalize()}\n\n"
-        description += "#### References\n\n"
+            description += f"* **Attack Vector (AV):** {cvss_data.get('attackVector', 'N/A').capitalize()}\n"
+            description += f"* **Attack Complexity (AC):** {cvss_data.get('attackComplexity', 'N/A').capitalize()}\n"
+            description += f"* **Privileges Required (PR):** {cvss_data.get('privilegesRequired', 'N/A').capitalize()}\n"
+            description += f"* **User Interaction (UI):** {cvss_data.get('userInteraction', 'N/A').capitalize()}\n"
+            description += f"* **Scope (S):** {cvss_data.get('scope', 'N/A').capitalize()}\n"
+            description += f"* **Confidentiality (C):** {cvss_data.get('confidentialityImpact', 'N/A').capitalize()}\n"
+            description += f"* **Integrety (I):** {cvss_data.get('integrityImpact', 'N/A').capitalize()}\n"
+            description += f"* **Availability (A):** {cvss_data.get('availabilityImpact', 'N/A').capitalize()}\n\n"
+        urls = ""
         for reference in cve.get('references', []):
+            url = reference.get('url', '')
+            if not len(url):
+                continue
             tags = " ".join([f"`{tag}`" for tag in reference.get('tags', [])])
-            description += f"* {reference.get('url')} {tags}\n"
+            if len(tags):
+                urls += f"* {reference.get('url')} {tags}\n"
+            else:
+                urls += f"* {reference.get('url')}\n"
+        if len(urls):
+            description += f"#### References\n\n{urls}"
         return base_score, severity, description
 
 
@@ -125,11 +135,11 @@ class CisaKEV(task.FeedTask):
         base_score, severity, cve_description = self._analyze_cve_details(cve_details)
         description += cve_description
 
-        vulnerability_name = entry.get('vulnerabilityName')
-        if vulnerability_name is None:
-            name = f'{cve_id}'
-        else:
+        vulnerability_name = entry.get('vulnerabilityName', '')
+        if len(vulnerability_name):
             name = f"{cve_id} - {vulnerability_name}"
+        else:
+            name = f'{cve_id}'
         vulnerability = entity.Vulnerability(
             name=name, 
             description=description, 
