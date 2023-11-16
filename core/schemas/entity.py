@@ -1,15 +1,15 @@
 import datetime
 import re
+import unicodedata
 from enum import Enum
 from typing import ClassVar, Literal, Optional, Type
-import unicodedata
-
-from pydantic import BaseModel, Field
 
 from core import database_arango
 from core.helpers import now
 from core.schemas.graph import TagRelationship
 from core.schemas.tag import Tag
+from pydantic import BaseModel, Field
+
 
 class EntityType(str, Enum):
     attack_pattern = "attack-pattern"
@@ -134,6 +134,8 @@ class Vulnerability(Entity):
     _type_filter: ClassVar[str] = EntityType.vulnerability
     type: Literal[EntityType.vulnerability] = EntityType.vulnerability
 
+    base_score: str = ""
+    severity: float = 0.0
     reference: str = ""
 
 
