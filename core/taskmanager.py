@@ -6,9 +6,8 @@ from typing import Type
 
 from celery import Celery
 from celery.utils.log import get_task_logger
-
 from core.config.config import yeti_config
-from core.schemas.task import Task, TaskParams, TaskStatus, ExportTask
+from core.schemas.task import ExportTask, Task, TaskParams, TaskStatus
 
 logger = get_task_logger(__name__)
 
@@ -49,6 +48,7 @@ app = Celery(
         "plugins.feeds.public.botvrij_sha256",
         "plugins.feeds.public.botvrij_url",
         "plugins.feeds.public.cruzit",
+        "plugins.feeds.public.cisa_kev",
         "plugins.feeds.public.dataplane_dnsrd",
         "plugins.feeds.public.dataplane_dnsrdany",
         "plugins.feeds.public.dataplane_dnsversion",
