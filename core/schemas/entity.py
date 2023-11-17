@@ -46,6 +46,10 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
 
+    @classmethod
+    def is_valid(cls, object: dict) -> bool:
+        return validate_entity(object)
+
 class Note(Entity):
     type: Literal[EntityType.note] = EntityType.note
     _type_filter: ClassVar[str] = EntityType.note
@@ -181,12 +185,24 @@ TYPE_MAPPING = {
     EntityType.vulnerability: Vulnerability,
 }
 
+TYPE_VALIDATOR_MAP = {}
 
 REGEXES_ENTITIES = {
-    EntityType.vulnerability: re.compile(
+    EntityType.vulnerability: ('name', re.compile(
         r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"
-    )
+    ))
 }
+
+def validate_entity(ent: Entity) -> bool:
+    if ent.type in TYPE_VALIDATOR_MAP:
+        return TYPE_VALIDATOR_MAP[ent.type](ent) is True
+    elif ent.type in dict(REGEXES_ENTITIES):
+        for field, regex in REGEXES_ENTITIES[ent.type]:
+            if regex.match(getattr(ent, field)):
+                return True
+        return False
+    else:
+        return False
 
 
 EntityTypes = (
