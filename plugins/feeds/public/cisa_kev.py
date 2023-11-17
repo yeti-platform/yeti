@@ -138,11 +138,10 @@ class CisaKEV(task.FeedTask):
             severity = 'none'
 
         name = f"{cve_id}"
-        vulnerability_name = entry.get('vulnerabilityName', '')
-        if vulnerability_name:
-            name += f"- {vulnerability_name}"
+        title = entry.get('vulnerabilityName', '')
         vulnerability = entity.Vulnerability(
-            name=name, 
+            name=name,
+            title=title,
             description=description, 
             created=created,
             reference=reference,
