@@ -151,6 +151,7 @@ class Vulnerability(Entity):
     _type_filter: ClassVar[str] = EntityType.vulnerability
     type: Literal[EntityType.vulnerability] = EntityType.vulnerability
 
+    title: str = ""
     base_score: float = Field(gte=0.0, lte=10.0, default=0.0)
     severity: SeverityType = "None"
     reference: str = ""
