@@ -1,9 +1,10 @@
 import unittest
 
 from core import database_arango
-from core.schemas.entity import Entity, Malware, ThreatActor, Tool, AttackPattern
-from core.schemas.observables import hostname
 from core.schemas import tag
+from core.schemas.entity import (AttackPattern, Entity, Malware, ThreatActor,
+                                 Tool, Vulnerability)
+from core.schemas.observables import hostname
 
 
 class EntityTest(unittest.TestCase):
@@ -104,3 +105,11 @@ class EntityTest(unittest.TestCase):
         """Tests that an entity with an empty name cannot be saved."""
         with self.assertRaises(ValueError):
             ThreatActor(name="").save()
+
+    def test_bad_cve_name(self):
+        vulnerability = Vulnerability(name="1337-4242").save()
+        self.assertEqual(Vulnerability.is_valid(vulnerability), False)
+
+    def test_correct_cve_name(self):
+        vulnerability = Vulnerability(name="CVE-1337-4242").save()
+        self.assertEqual(Vulnerability.is_valid(vulnerability), True)
