@@ -158,7 +158,7 @@ class Vulnerability(Entity):
 
     title: str = ""
     base_score: float = Field(gte=0.0, lte=10.0, default=0.0)
-    severity: SeverityType = "None"
+    severity: SeverityType = "none"
     reference: str = ""
 
 
@@ -196,14 +196,13 @@ REGEXES_ENTITIES = {
 def validate_entity(ent: Entity) -> bool:
     if ent.type in TYPE_VALIDATOR_MAP:
         return TYPE_VALIDATOR_MAP[ent.type](ent) is True
-    elif ent.type in dict(REGEXES_ENTITIES):
-        for field, regex in REGEXES_ENTITIES[ent.type]:
-            if regex.match(getattr(ent, field)):
-                return True
-        return False
-    else:
-        return False
-
+    elif ent.type in REGEXES_ENTITIES:
+        field, regex = REGEXES_ENTITIES[ent.type]
+        if regex.match(getattr(ent, field)):
+            return True
+        else:
+            return False
+    return True
 
 EntityTypes = (
     AttackPattern

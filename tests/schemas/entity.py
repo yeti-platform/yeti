@@ -106,6 +106,10 @@ class EntityTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             ThreatActor(name="").save()
 
-    def test_cve_name(self):
-        with self.assertRaises(ValueError):
-            Vulnerability(name="1337-4242").save()
+    def test_bad_cve_name(self):
+        vulnerability = Vulnerability(name="1337-4242").save()
+        self.assertEqual(Vulnerability.is_valid(vulnerability), False)
+
+    def test_correct_cve_name(self):
+        vulnerability = Vulnerability(name="CVE-1337-4242").save()
+        self.assertEqual(Vulnerability.is_valid(vulnerability), True)
