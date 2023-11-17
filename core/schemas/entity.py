@@ -46,6 +46,10 @@ class Entity(BaseModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined entity type.")
 
+    @classmethod
+    def is_valid(cls, object: dict) -> bool:
+        return validate_entity(object)
+
 class Note(Entity):
     type: Literal[EntityType.note] = EntityType.note
     _type_filter: ClassVar[str] = EntityType.note
@@ -143,6 +147,7 @@ class Vulnerability(Entity):
     This class represents a vulnerability in the schema.
 
     Attributes:
+        title: title of the vulnerability.
         base_score : base score of the vulnerability obtained from CVSS metric
                      ranging from 0.0 to 10.0.
         severity: represents the severity of a vulnerability. One of none, low,
@@ -151,8 +156,9 @@ class Vulnerability(Entity):
     _type_filter: ClassVar[str] = EntityType.vulnerability
     type: Literal[EntityType.vulnerability] = EntityType.vulnerability
 
+    title: str = ""
     base_score: float = Field(gte=0.0, lte=10.0, default=0.0)
-    severity: SeverityType = "None"
+    severity: SeverityType = "none"
     reference: str = ""
 
 
@@ -179,13 +185,24 @@ TYPE_MAPPING = {
     EntityType.vulnerability: Vulnerability,
 }
 
+TYPE_VALIDATOR_MAP = {}
 
 REGEXES_ENTITIES = {
-    EntityType.vulnerability: re.compile(
+    EntityType.vulnerability: ('name', re.compile(
         r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"
-    )
+    ))
 }
 
+def validate_entity(ent: Entity) -> bool:
+    if ent.type in TYPE_VALIDATOR_MAP:
+        return TYPE_VALIDATOR_MAP[ent.type](ent) is True
+    elif ent.type in REGEXES_ENTITIES:
+        field, regex = REGEXES_ENTITIES[ent.type]
+        if regex.match(getattr(ent, field)):
+            return True
+        else:
+            return False
+    return True
 
 EntityTypes = (
     AttackPattern
