@@ -143,6 +143,7 @@ class Vulnerability(Entity):
     This class represents a vulnerability in the schema.
 
     Attributes:
+        title: title of the vulnerability.
         base_score : base score of the vulnerability obtained from CVSS metric
                      ranging from 0.0 to 10.0.
         severity: represents the severity of a vulnerability. One of none, low,
