@@ -37,6 +37,7 @@ class ObservableType(str, Enum):
     ssdeep = "ssdeep"
     tlsh = "tlsh"
     url = "url"
+    user_account = "user_account"
     user_agent = "user_agent"
 
 
@@ -182,4 +183,4 @@ from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       generic_observable, hostname, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_agent)
+                                      url, user_account, user_agent)

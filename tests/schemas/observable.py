@@ -8,7 +8,7 @@ from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       generic_observable, hostname, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_agent)
+                                      url, user_account, user_agent)
 
 
 class ObservableTest(unittest.TestCase):
@@ -346,6 +346,17 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "https://www.google.com")
         self.assertIsInstance(observable, url.Url)
+
+    def test_create_user_account(self) -> None:
+        """Tests creating a user agent."""
+        observable = user_account.UserAccount(value="ses_legion", account_type="aws_iam").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "ses_legion")
+        self.assertEqual(observable.account_type, "aws_iam")
+        self.assertEqual(observable.is_disabled, None)
+        self.assertEqual(observable.account_created, None)
+        self.assertIsInstance(observable, user_account.UserAccount)
+
 
     def test_create_user_agent(self) -> None:
         """Tests creating a user agent."""
