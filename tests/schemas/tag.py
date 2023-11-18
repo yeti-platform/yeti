@@ -33,6 +33,13 @@ class TagTest(unittest.TestCase):
         self.assertEqual(tag_data.name, "test")
         self.assertEqual(tag_rel.fresh, True)
 
+    def test_tags_must_be_saved(self) -> None:
+        """Test that ObservableTags must be saved to the database."""
+        unsaved = hostname.Hostname(value="test1.com")
+        with self.assertRaises(RuntimeError) as error:
+            unsaved.tag(["tag"])
+        self.assertEqual(str(error.exception), 'Cannot tag unsaved object, make sure to save() it first.')
+
     def test_tag_updates_count(self) -> None:
         """Test that the count of a tag is updated when a tag is added
         to an observable."""

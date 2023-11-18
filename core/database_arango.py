@@ -288,6 +288,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Import at runtime to avoid circular dependency.
         from core.schemas import tag
 
+        if self.id is None:
+            raise RuntimeError("Cannot tag unsaved object, make sure to save() it first.")
+
         expiration = expiration or tag.DEFAULT_EXPIRATION
         tags = [t.strip() for t in tags if t.strip()]
         if strict:
