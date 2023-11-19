@@ -697,11 +697,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_filter = ""
         if conditions:
             aql_filter = f"FILTER {' AND '.join(conditions)}"
+
+        aql_sort = ''
+        if sorts:
+            aql_sort = f"SORT {', '.join(sorts)}"
+
         aql_string = f"""
             FOR o IN @@collection
                 {graph_query_string}
                 {aql_filter}
-                SORT {', '.join(sorts)}
+                {aql_sort}
                 {limit}
             """
         if graph_queries:
