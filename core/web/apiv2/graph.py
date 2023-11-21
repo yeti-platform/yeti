@@ -153,7 +153,7 @@ async def delete(relationship_id: str) -> None:
 class AnalysisRequest(BaseModel):
     observables: list[str]
     add_tags: list[str] = []
-    add_type: observable.ObservableType = None
+    add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True
     add_unknown: bool = False
 
