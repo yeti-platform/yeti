@@ -153,7 +153,7 @@ async def delete(relationship_id: str) -> None:
 class AnalysisRequest(BaseModel):
     observables: list[str]
     add_tags: list[str] = []
-    add_type: observable.ObservableType = None
+    add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True
     add_unknown: bool = False
 
@@ -170,7 +170,7 @@ class AnalysisResponse(BaseModel):
 async def match(request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
-    entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]
+    entities = []  # type: list[ttuple[graph.Relationship, entity.Entity]]
     observables = []  # type: list[tuple[graph.Relationship, observable.Observable]]
 
     unknown = set(request.observables)
