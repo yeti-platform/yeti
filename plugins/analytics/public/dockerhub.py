@@ -84,6 +84,19 @@ class DockerHubAPI(object):
 
 
 class DockerImageInspect(task.OneShotTask):
+    """DockerImageInspect analytics queries docker hub to get more
+    details related to docker_image observable.
+
+    This analytics adds several information as context to docker_image:
+    * user's details
+    * image's details (including layers information and instructions)
+    * image's stats
+
+    This analytics also creates new observables:
+    * generic observable with tag type:user_account to link to a user
+    * sha256 including image's digest, layers' digests and added files' digests
+    """
+
     _defaults = {
         "name": "DockerImageMetadata",
         "description": "Fetch metadata from docker hub for a docker image",
