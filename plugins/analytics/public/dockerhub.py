@@ -9,7 +9,7 @@ from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType
 
 
-class DockerHubAPI(object):
+class DockerHubApi(object):
     """Base class for querying the DockerHub API."""
 
     @staticmethod
@@ -21,13 +21,13 @@ class DockerHubAPI(object):
 
     @staticmethod
     def _iter_endpoint_pages(endpoint) -> dict:
-        data = DockerHubAPI._make_request(endpoint)
+        data = DockerHubApi._make_request(endpoint)
         while data:
             for result in data.get("results", []):
                 yield result
             next = data.get("next")
             if next:
-                data = DockerHubAPI._make_request(next)
+                data = DockerHubApi._make_request(next)
             else:
                 data = {}
 
@@ -39,26 +39,26 @@ class DockerHubAPI(object):
             )
         else:
             endpoint = f"https://hub.docker.com/v2/repositories/{image}"
-        return DockerHubAPI._make_request(endpoint)
+        return DockerHubApi._make_request(endpoint)
 
     @staticmethod
     def inspect_user(user) -> dict:
         endpoint = f"https://hub.docker.com/v2/orgs/{user}"
         # if orgs does not exist, redirects to
         # https://hub.docker.com/v2/users/
-        return DockerHubAPI._make_request(endpoint)
+        return DockerHubApi._make_request(endpoint)
 
     @staticmethod
     def user_images(user, page_size=50) -> iter:
         endpoint = f"https://hub.docker.com/v2/repositories/{user}?page_size={page_size}&ordering=last_updated"
-        yield from DockerHubAPI._iter_endpoint_pages(endpoint)
+        yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
     # https://hub.docker.com/v2/repositories/yetiplatform/yeti/tags/2.0.1
 
     @staticmethod
     def image_tags(image, page_size=100) -> iter:
         endpoint = f"https://hub.docker.com/v2/repositories/{image}/tags/?page_size={page_size}&page=1&name&ordering"
-        yield from DockerHubAPI._iter_endpoint_pages(endpoint)
+        yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
     def image_full_details(image):
         if image.find("/") == -1:
@@ -67,17 +67,17 @@ class DockerHubAPI(object):
             image, tag = image.split(":")
         else:
             tag = ""
-        image_metadata = DockerHubAPI.inspect_image(image)
+        image_metadata = DockerHubApi.inspect_image(image)
         if not image_metadata:
             return {}
-        image_metadata["user"] = DockerHubAPI.inspect_user(image_metadata.get("user"))
+        image_metadata["user"] = DockerHubApi.inspect_user(image_metadata.get("user"))
         image_metadata["tags"] = dict()
         if tag:
-            image_metadata["tags"][tag] = DockerHubAPI.inspect_image(image, tag)
+            image_metadata["tags"][tag] = DockerHubApi.inspect_image(image, tag)
         else:
-            for tag in DockerHubAPI.image_tags(image):
+            for tag in DockerHubApi.image_tags(image):
                 tag_name = tag.get("name")
-                image_metadata["tags"][tag_name] = DockerHubAPI.inspect_image(
+                image_metadata["tags"][tag_name] = DockerHubApi.inspect_image(
                     image, tag_name
                 )
         return image_metadata
@@ -188,7 +188,7 @@ class DockerImageInspect(task.OneShotTask):
                         )
 
     def each(self, observable: Observable):
-        metadata = DockerHubAPI.image_full_details(observable.value)
+        metadata = DockerHubApi.image_full_details(observable.value)
 
         if metadata is None:
             return []
