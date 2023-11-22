@@ -88,9 +88,9 @@ class DockerImageInspect(task.OneShotTask):
     details related to docker_image observable.
 
     This analytics adds several information as context to docker_image:
-    * user's details
-    * image's details (including layers information and instructions)
-    * image's stats
+    * Image stats: provide details about pulls, registered, updated
+    * Image details: provide information related to image tags including layers information and instructions
+    * User details: provides details about the user owning the image.
 
     This analytics also creates new observables:
     * generic observable with tag type:user_account to link to a user
