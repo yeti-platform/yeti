@@ -2,13 +2,12 @@ import datetime
 import unittest
 from unittest import mock
 
-from fastapi.testclient import TestClient
-
 from core import database_arango, taskmanager
 from core.schemas.observable import Observable
 from core.schemas.task import ExportTask, FeedTask
 from core.schemas.template import Template
 from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -53,7 +52,7 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(data["name"], "FakeTask")
         self.assertEqual(data["enabled"], False)
 
-    @mock.patch("core.taskmanager.run_task.delay")
+    @mock.patch("core.taskscheduler.run_task.delay")
     def test_run_task(self, mock_delay):
         response = client.post("/api/v2/tasks/FakeTask/run")
         data = response.json()
@@ -61,7 +60,7 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(data["status"], "ok")
         mock_delay.assert_called_once_with("FakeTask", '{"params":{}}')
 
-    @mock.patch("core.taskmanager.run_task.delay")
+    @mock.patch("core.taskscheduler.run_task.delay")
     def test_run_task_with_params(self, mock_delay):
         response = client.post(
             "/api/v2/tasks/FakeTask/run", json={"params": {"value": "test"}}
