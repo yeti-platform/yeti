@@ -9,7 +9,7 @@ from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType
 
 
-class DockerHubApi(object):
+class DockerHubApi:
     """Base class for querying the DockerHub API."""
 
     @staticmethod
