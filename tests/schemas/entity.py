@@ -11,7 +11,8 @@ class EntityTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.ta1 = ThreatActor(name="APT123").save()
+        self.ta1 = ThreatActor(name="APT123", aliases=['CrazyFrog']).save()
+        self.vuln1 = Vulnerability(name="CVE-2018-1337", title='elite exploit').save()
         self.malware1 = Malware(name="zeus").save()
         self.tool1 = Tool(name="mimikatz").save()
 
@@ -41,7 +42,7 @@ class EntityTest(unittest.TestCase):
         tool_entities = list(Tool.list())
         malware_entities = list(Malware.list())
 
-        self.assertEqual(len(all_entities), 3)
+        self.assertEqual(len(all_entities), 4)
 
         self.assertEqual(len(threat_actor_entities), 1)
         self.assertEqual(len(tool_entities), 1)
@@ -62,6 +63,12 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.ta1)
+
+    def test_filter_entities_regex(self):
+        entities, total = Entity.filter({"name": "CVE", 'title': 'Elite .xploit'})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.vuln1)
 
     def test_entity_with_tags(self):
         entity = ThreatActor(name="APT0").save()
