@@ -670,6 +670,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value) RETURN c) > 0")
                 aql_args[f'arg{i}_key'] = context_field
                 sorts.append(f"o.context[*].@arg{i}_key")
+            elif key == 'created':
+                operator = value[0]
+                if operator not in ['<', '>']:
+                    operator = '='
+                else:
+                    aql_args[f'arg{i}_value'] = value[1:]
+                conditions.append(f"DATE_TIMESTAMP(o.created) {operator}= DATE_TIMESTAMP(@arg{i}_value)")
+                sorts.append("o.created")
             else:
                 conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
                 aql_args[f'arg{i}_key'] = key
@@ -710,6 +718,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
+        print(aql_string, aql_args)
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )

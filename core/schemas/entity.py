@@ -1,14 +1,13 @@
 import datetime
 import re
-import unicodedata
 from enum import Enum
-from typing import ClassVar, Literal, Optional, Type
+from typing import ClassVar, Literal, Type
+
+from pydantic import BaseModel, Field
 
 from core import database_arango
 from core.helpers import now
 from core.schemas.graph import TagRelationship
-from core.schemas.tag import Tag
-from pydantic import BaseModel, Field
 
 
 class EntityType(str, Enum):

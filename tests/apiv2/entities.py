@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 from fastapi.testclient import TestClient
@@ -12,7 +13,10 @@ client = TestClient(webapp.app)
 class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
-        self.entity1 = entity.ThreatActor(name="ta1", aliases=["badactor"]).save()
+        self.entity1 = entity.ThreatActor(
+            name="ta1",
+            aliases=["badactor"],
+            created=datetime.datetime(2020, 1, 1)).save()
         self.entity1.tag(["ta1"])
         self.entity2 = entity.ThreatActor(name="bears").save()
 
@@ -64,6 +68,33 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["entities"]), 1)
         self.assertEqual(data["entities"][0]["name"], "ta1")
+        self.assertEqual(data["entities"][0]["type"], "threat-actor")
+
+    def test_search_entities_with_creation_date(self):
+        response = client.post(
+            "/api/v2/entities/search",
+            json={
+                "query": {"created": "<2020-01-02"},
+                "type": "threat-actor",
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 1)
+        self.assertEqual(data["entities"][0]["name"], "ta1")
+        self.assertEqual(data["entities"][0]["type"], "threat-actor")
+
+        response = client.post(
+            "/api/v2/entities/search",
+            json={
+                "query": {"created": ">2020-01-03"},
+                "type": "threat-actor",
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 1, data)
+        self.assertEqual(data["entities"][0]["name"], "bears")
         self.assertEqual(data["entities"][0]["type"], "threat-actor")
 
     def test_new_entity_with_tag(self):

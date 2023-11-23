@@ -5,7 +5,7 @@ from core.schemas import tag
 from core.schemas.entity import (AttackPattern, Entity, Malware, ThreatActor,
                                  Tool, Vulnerability)
 from core.schemas.observables import hostname
-
+import datetime
 
 class EntityTest(unittest.TestCase):
 
@@ -13,7 +13,7 @@ class EntityTest(unittest.TestCase):
         database_arango.db.clear()
         self.ta1 = ThreatActor(name="APT123", aliases=['CrazyFrog']).save()
         self.vuln1 = Vulnerability(name="CVE-2018-1337", title='elite exploit').save()
-        self.malware1 = Malware(name="zeus").save()
+        self.malware1 = Malware(name="zeus", created=datetime.datetime(2020, 1, 1)).save()
         self.tool1 = Tool(name="mimikatz").save()
 
     def tearDown(self) -> None:
@@ -69,6 +69,22 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.vuln1)
+
+    def test_filter_entities_time(self):
+        entities, total = Entity.filter({"created": "2020-01-01"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.malware1)
+
+        entities, total = Entity.filter({"created": "<2020-01-02"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.malware1)
+
+        entities, total = Entity.filter({"created": ">2020-01-02"})
+        self.assertEqual(len(entities), 3)
+        self.assertEqual(total, 3)
+        self.assertNotIn(self.malware1, entities)
 
     def test_entity_with_tags(self):
         entity = ThreatActor(name="APT0").save()
