@@ -50,8 +50,6 @@ class DockerHubApi:
         endpoint = f"https://hub.docker.com/v2/repositories/{user}?page_size={page_size}&ordering=last_updated"
         yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
-    # https://hub.docker.com/v2/repositories/yetiplatform/yeti/tags/2.0.1
-
     @staticmethod
     def image_tags(image, page_size=100) -> iter:
         endpoint = f"https://hub.docker.com/v2/repositories/{image}/tags/?page_size={page_size}&page=1&name&ordering"
