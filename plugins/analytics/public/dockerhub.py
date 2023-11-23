@@ -160,18 +160,18 @@ class DockerImageInspect(task.OneShotTask):
                 digest = self.DIGEST_REGEX.match(image_tag.get("digest", ""))
                 if digest:
                     self._create_digest_observable(
-                        image_obs, digest.group(1), context, "results_to"
+                        image_obs, digest.group(1), context, "generates"
                     )
                 for layer in image_tag.get("layers", []):
                     layer_digest = self.DIGEST_REGEX.match(layer.get("digest", ""))
                     if layer_digest:
                         self._create_digest_observable(
-                            image_obs, layer_digest.group(1), context, "generates"
+                            image_obs, layer_digest.group(1), context, "embeds"
                         )
                     file_digest = self.FILE_REGEX.match(layer.get("instruction", ""))
                     if file_digest:
                         self._create_digest_observable(
-                            image_obs, file_digest.group(1), context, "embeds"
+                            image_obs, file_digest.group(1), context, "adds"
                         )
 
     def each(self, observable: Observable):
