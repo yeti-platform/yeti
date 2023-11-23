@@ -1,6 +1,10 @@
 import datetime
+import importlib
+import inspect
 import json
 import logging
+import pathlib
+import pkgutil
 import traceback
 from typing import Type
 
@@ -12,77 +16,28 @@ from core.schemas.task import ExportTask, Task, TaskParams, TaskStatus
 logger = get_task_logger(__name__)
 
 
+def get_plugins_packages():
+    plugins_list = set()
+    plugins_path = pathlib.Path(yeti_config.get('system', 'plugins_path'))
+    if not plugins_path.exists():
+        logger.warning(f"Plugins path {str(plugin_path.absolute())} does not exist")
+        return plugins_list
+    for module_info in pkgutil.walk_packages([str(plugins_path.absolute())], prefix=f"{plugins_path.name}."):
+        if not module_info.ispkg:
+            try:
+                module = importlib.import_module(module_info.name)
+                for _, obj in inspect.getmembers(module, inspect.isclass):
+                    if issubclass(obj, Task):
+                        plugins_list.add(module_info.name)
+            except Exception as error:
+                logger.warning(f"Cannot import plugin {module_info.name}\n{traceback.format_exc()}")
+    return plugins_list
+
 app = Celery(
     "tasks",
     broker=f"redis://{yeti_config.get('redis', 'host')}/",
     worker_pool_restarts=True,
-    imports=(
-        # TESTING ONLY
-        "plugins.analytics.public.malshare",
-        "plugins.analytics.public.passive_total",
-        "plugins.analytics.public.random_analytics",
-        "plugins.analytics.public.shodan_api",
-        "plugins.analytics.public.virustotal_api",
-        "plugins.analytics.public.dockerhub",
-        # REAL TASKS
-        "plugins.feeds.public.attack",
-        "plugins.feeds.public.abusech_malwarebazaar",
-        "plugins.feeds.public.abuseipdb",
-        "plugins.feeds.public.alienvault_ip_reputation",
-        "plugins.feeds.public.azorult-tracker",
-        "plugins.feeds.public.blocklistde_all",
-        "plugins.feeds.public.blocklistde_apache",
-        "plugins.feeds.public.blocklistde_bots",
-        "plugins.feeds.public.blocklistde_bruteforcelogin",
-        "plugins.feeds.public.blocklistde_ftp",
-        "plugins.feeds.public.blocklistde_imap",
-        "plugins.feeds.public.blocklistde_ircbot",
-        "plugins.feeds.public.blocklistde_mail",
-        "plugins.feeds.public.blocklistde_sip",
-        "plugins.feeds.public.blocklistde_ssh",
-        "plugins.feeds.public.blocklistde_strongips",
-        "plugins.feeds.public.botvrij_domain",
-        "plugins.feeds.public.botvrij_filename",
-        "plugins.feeds.public.botvrij_hostname",
-        "plugins.feeds.public.botvrij_ipdst",
-        "plugins.feeds.public.botvrij_md5",
-        "plugins.feeds.public.botvrij_sha1",
-        "plugins.feeds.public.botvrij_sha256",
-        "plugins.feeds.public.botvrij_url",
-        "plugins.feeds.public.cruzit",
-        "plugins.feeds.public.cisa_kev",
-        "plugins.feeds.public.dataplane_dnsrd",
-        "plugins.feeds.public.dataplane_dnsrdany",
-        "plugins.feeds.public.dataplane_dnsversion",
-        "plugins.feeds.public.dataplane_proto41",
-        "plugins.feeds.public.dataplane_sipinvite",
-        "plugins.feeds.public.dataplane_sipregistr",
-        "plugins.feeds.public.dataplane_smtpdata",
-        "plugins.feeds.public.dataplane_smtpgreet",
-        "plugins.feeds.public.dataplane_sshclient",
-        "plugins.feeds.public.dataplane_sshpwauth",
-        "plugins.feeds.public.dataplane_telnetlogin",
-        "plugins.feeds.public.dataplane_vnc",
-        "plugins.feeds.public.feodo_tracker_ip_blocklist",
-        "plugins.feeds.public.futex_re",
-        "plugins.feeds.public.hybrid_analysis",
-        "plugins.feeds.public.lolbas",
-        "plugins.feeds.public.misp",
-        "plugins.feeds.public.openphish",
-        "plugins.feeds.public.otx_alienvault",
-        "plugins.feeds.public.phishing_database",
-        "plugins.feeds.public.phishtank",
-        "plugins.feeds.public.rulezskbruteforceblocker",
-        "plugins.feeds.public.sslblacklist_fingerprints",
-        "plugins.feeds.public.sslblacklist_ip",
-        "plugins.feeds.public.threatfox",
-        "plugins.feeds.public.threatview_c2",
-        "plugins.feeds.public.timesketch",
-        "plugins.feeds.public.tor_exit_nodes",
-        "plugins.feeds.public.urlhaus",
-        "plugins.feeds.public.viriback_tracker",
-        "plugins.feeds.public.vxvault_url",
-    ),
+    imports=get_plugins_packages()
 )
 
 @app.on_after_configure.connect
