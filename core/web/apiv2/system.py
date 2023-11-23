@@ -1,8 +1,7 @@
+from core.config.config import yeti_config
+from core.taskscheduler import app
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict
-
-from core.config.config import yeti_config
-from core.taskmanager import app
 
 # API endpoints
 router = APIRouter()
