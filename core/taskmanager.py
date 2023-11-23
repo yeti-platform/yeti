@@ -23,7 +23,9 @@ app = Celery(
         "plugins.analytics.public.random_analytics",
         "plugins.analytics.public.shodan_api",
         "plugins.analytics.public.virustotal_api",
+        "plugins.analytics.public.dockerhub",
         # REAL TASKS
+        "plugins.feeds.public.attack",
         "plugins.feeds.public.abusech_malwarebazaar",
         "plugins.feeds.public.abuseipdb",
         "plugins.feeds.public.alienvault_ip_reputation",
