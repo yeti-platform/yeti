@@ -1,12 +1,11 @@
 import os
 
+from core import taskscheduler
+from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
+from core.schemas.template import Template
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
-
-from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
-from core import taskmanager
-from core.schemas.template import Template
 
 
 # Request schemas
@@ -47,7 +46,7 @@ async def run(task_name, params: TaskParams | None = None) -> dict:
     """Runs a task asynchronously."""
     if params is None:
         params = TaskParams()
-    taskmanager.run_task.delay(task_name, params.model_dump_json())
+    taskscheduler.run_task.delay(task_name, params.model_dump_json())
     return {"status": "ok"}
 
 

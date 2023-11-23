@@ -1,105 +1,12 @@
 import datetime
-import json
 import logging
 import traceback
 from typing import Type
 
-from celery import Celery
-from celery.utils.log import get_task_logger
-from core.config.config import yeti_config
 from core.schemas.task import ExportTask, Task, TaskParams, TaskStatus
 
-logger = get_task_logger(__name__)
-
-
-app = Celery(
-    "tasks",
-    broker=f"redis://{yeti_config.get('redis', 'host')}/",
-    worker_pool_restarts=True,
-    imports=(
-        # TESTING ONLY
-        "plugins.analytics.public.malshare",
-        "plugins.analytics.public.passive_total",
-        "plugins.analytics.public.random_analytics",
-        "plugins.analytics.public.shodan_api",
-        "plugins.analytics.public.virustotal_api",
-        "plugins.analytics.public.dockerhub",
-        # REAL TASKS
-        "plugins.feeds.public.attack",
-        "plugins.feeds.public.abusech_malwarebazaar",
-        "plugins.feeds.public.abuseipdb",
-        "plugins.feeds.public.alienvault_ip_reputation",
-        "plugins.feeds.public.azorult-tracker",
-        "plugins.feeds.public.blocklistde_all",
-        "plugins.feeds.public.blocklistde_apache",
-        "plugins.feeds.public.blocklistde_bots",
-        "plugins.feeds.public.blocklistde_bruteforcelogin",
-        "plugins.feeds.public.blocklistde_ftp",
-        "plugins.feeds.public.blocklistde_imap",
-        "plugins.feeds.public.blocklistde_ircbot",
-        "plugins.feeds.public.blocklistde_mail",
-        "plugins.feeds.public.blocklistde_sip",
-        "plugins.feeds.public.blocklistde_ssh",
-        "plugins.feeds.public.blocklistde_strongips",
-        "plugins.feeds.public.botvrij_domain",
-        "plugins.feeds.public.botvrij_filename",
-        "plugins.feeds.public.botvrij_hostname",
-        "plugins.feeds.public.botvrij_ipdst",
-        "plugins.feeds.public.botvrij_md5",
-        "plugins.feeds.public.botvrij_sha1",
-        "plugins.feeds.public.botvrij_sha256",
-        "plugins.feeds.public.botvrij_url",
-        "plugins.feeds.public.cruzit",
-        "plugins.feeds.public.cisa_kev",
-        "plugins.feeds.public.dataplane_dnsrd",
-        "plugins.feeds.public.dataplane_dnsrdany",
-        "plugins.feeds.public.dataplane_dnsversion",
-        "plugins.feeds.public.dataplane_proto41",
-        "plugins.feeds.public.dataplane_sipinvite",
-        "plugins.feeds.public.dataplane_sipregistr",
-        "plugins.feeds.public.dataplane_smtpdata",
-        "plugins.feeds.public.dataplane_smtpgreet",
-        "plugins.feeds.public.dataplane_sshclient",
-        "plugins.feeds.public.dataplane_sshpwauth",
-        "plugins.feeds.public.dataplane_telnetlogin",
-        "plugins.feeds.public.dataplane_vnc",
-        "plugins.feeds.public.feodo_tracker_ip_blocklist",
-        "plugins.feeds.public.futex_re",
-        "plugins.feeds.public.hybrid_analysis",
-        "plugins.feeds.public.lolbas",
-        "plugins.feeds.public.misp",
-        "plugins.feeds.public.openphish",
-        "plugins.feeds.public.otx_alienvault",
-        "plugins.feeds.public.phishing_database",
-        "plugins.feeds.public.phishtank",
-        "plugins.feeds.public.rulezskbruteforceblocker",
-        "plugins.feeds.public.sslblacklist_fingerprints",
-        "plugins.feeds.public.sslblacklist_ip",
-        "plugins.feeds.public.threatfox",
-        "plugins.feeds.public.threatview_c2",
-        "plugins.feeds.public.timesketch",
-        "plugins.feeds.public.tor_exit_nodes",
-        "plugins.feeds.public.urlhaus",
-        "plugins.feeds.public.viriback_tracker",
-        "plugins.feeds.public.vxvault_url",
-    ),
-)
-
-@app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    """Registers periodic tasks."""
-    for task in Task.list():
-        if not task.frequency:
-            continue
-        logger.info("Registering periodic task %s (%s)", task.name, task.frequency)
-        sender.add_periodic_task(
-            task.frequency,
-            run_task.s(task.name, '{}'),
-            name=f'Schedule for {task.name}')
-    return
 
 class TaskManager:
-
     _store = {}  # type: dict[str, Task]
 
     @classmethod
@@ -133,7 +40,7 @@ class TaskManager:
         """Loads tasks from the database and refreshes cache."""
         if task_name not in cls._store:
             # Only ExportTasks are registered dynamically
-            logging.info(f'Registering ExportTask {task_name}')
+            logging.info(f"Registering ExportTask {task_name}")
             cls.register_task(ExportTask, task_name=task_name)
 
         if task_name not in cls._store:
@@ -182,16 +89,3 @@ class TaskManager:
         task.last_run = datetime.datetime.now(datetime.timezone.utc)
         task.status_message = ""
         task.save()
-
-
-@app.task
-def run_task(task_name: str, params: str):
-    """Runs a task.
-
-    Args:
-        task_name: The name of a registered task to run.
-        params: A string-encoded JSON representation of a TaskParams object
-            (obtained through model_dump_json)
-    """
-    task_params = TaskParams(**json.loads(params))
-    TaskManager.run_task(task_name, task_params)
