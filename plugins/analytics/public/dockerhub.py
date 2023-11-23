@@ -102,8 +102,8 @@ class DockerImageInspect(task.OneShotTask):
         ObservableType.docker_image,
     ]
 
-    FILE_REGEX : re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*", re.IGNORECASE)
-    DIGEST_REGEX : re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$", re.IGNORECASE)
+    FILE_REGEX: re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*", re.IGNORECASE)
+    DIGEST_REGEX: re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$", re.IGNORECASE)
 
     def _get_or_create_observable(self, obs_type, value):
         cls = observable.TYPE_MAPPING[obs_type]
@@ -139,7 +139,9 @@ class DockerImageInspect(task.OneShotTask):
         return context
 
     def _create_digest_observable(self, image_obs, digest, context, link_type):
-        sha_obs = self._get_or_create_observable(observable.ObservableType.sha256, value=digest)
+        sha_obs = self._get_or_create_observable(
+            observable.ObservableType.sha256, value=digest
+        )
         if context:
             sha_obs.add_context("hub.docker.com", context)
             sha_obs.tag({"dockerhub"})
