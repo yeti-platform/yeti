@@ -102,8 +102,8 @@ class DockerImageInspect(task.OneShotTask):
         ObservableType.docker_image,
     ]
 
-    FILE_REGEX : re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*")
-    DIGEST_REGEX : re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$")
+    FILE_REGEX : re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*", re.IGNORECASE)
+    DIGEST_REGEX : re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$", re.IGNORECASE)
 
     def _get_or_create_observable(self, obs_type, value):
         cls = observable.TYPE_MAPPING[obs_type]
@@ -139,7 +139,7 @@ class DockerImageInspect(task.OneShotTask):
         return context
 
     def _create_digest_observable(self, image_obs, digest, context, link_type):
-        sha_obs = self._get_observable(observable.ObservableType.sha256, value=digest)
+        sha_obs = self._get_or_create_observable(observable.ObservableType.sha256, value=digest)
         if context:
             sha_obs.add_context("hub.docker.com", context)
             sha_obs.tag({"dockerhub"})
@@ -149,26 +149,26 @@ class DockerImageInspect(task.OneShotTask):
     def _make_relationships(self, image_obs, metadata):
         username = metadata.get("user", {}).get("username", "")
         if username:
-            user_obs = self._get_observable(
+            user_obs = self._get_or_create_observable(
                 observable.ObservableType.generic, value=username
             )
             user_obs.tag({"type:user_account", "dockerhub"})
-            user_obs.link_to(image_obs, "creates", "")
+            user_obs.link_to(image_obs, "owns", "")
         for tag_name, image_tags in metadata.get("tags", {}).items():
             for image_tag in image_tags:
                 context = self._create_digest_context(image_obs, tag_name, image_tag)
-                digest = DIGEST_REGEX.match(image_tag.get("digest", ""), re.IGNORECASE)
+                digest = self.DIGEST_REGEX.match(image_tag.get("digest", ""))
                 if digest:
                     self._create_digest_observable(
                         image_obs, digest.group(1), context, "results_to"
                     )
                 for layer in image_tag.get("layers", []):
-                    layer_digest = DIGEST_REGEX.match(layer.get("digest", ""), re.IGNORECASE)
+                    layer_digest = self.DIGEST_REGEX.match(layer.get("digest", ""))
                     if layer_digest:
                         self._create_digest_observable(
                             image_obs, layer_digest.group(1), context, "generates"
                         )
-                    file_digest = FILE_REGEX.match(layer.get("instruction", ""), re.IGNORECASE)
+                    file_digest = self.FILE_REGEX.match(layer.get("instruction", ""))
                     if file_digest:
                         self._create_digest_observable(
                             image_obs, file_digest.group(1), context, "embeds"
