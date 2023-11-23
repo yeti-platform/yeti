@@ -33,12 +33,9 @@ class DockerHubApi:
 
     @staticmethod
     def inspect_image(image, tag=None) -> dict:
+        endpoint = f"https://hub.docker.com/v2/repositories/{image}"
         if tag:
-            endpoint = (
-                f"https://hub.docker.com/v2/repositories/{image}/tags/{tag}/images"
-            )
-        else:
-            endpoint = f"https://hub.docker.com/v2/repositories/{image}"
+            endpoint += f"/tags/{tag}/images"
         return DockerHubApi._make_request(endpoint)
 
     @staticmethod
