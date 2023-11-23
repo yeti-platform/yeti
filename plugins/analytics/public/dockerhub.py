@@ -102,7 +102,7 @@ class DockerImageInspect(task.OneShotTask):
         ObservableType.docker_image,
     ]
 
-    def _get_observable(self, obs_type, value):
+    def _get_or_create_observable(self, obs_type, value):
         cls = observable.TYPE_MAPPING[obs_type]
         obs = cls.find(value=value)
         if not obs:
