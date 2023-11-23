@@ -42,7 +42,7 @@ class EntityTest(unittest.TestCase):
         tool_entities = list(Tool.list())
         malware_entities = list(Malware.list())
 
-        self.assertEqual(len(all_entities), 3)
+        self.assertEqual(len(all_entities), 4)
 
         self.assertEqual(len(threat_actor_entities), 1)
         self.assertEqual(len(tool_entities), 1)
