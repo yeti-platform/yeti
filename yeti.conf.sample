@@ -6,6 +6,7 @@
 
 export_root = /var/opt/yeti
 logging = /var/log/yeti_user_activity.log
+plugins_path = ./plugins
 
 [auth]
 
