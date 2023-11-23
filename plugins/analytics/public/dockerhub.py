@@ -55,6 +55,7 @@ class DockerHubApi:
         endpoint = f"https://hub.docker.com/v2/repositories/{image}/tags/?page_size={page_size}&page=1&name&ordering"
         yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
+    @staticmethod
     def image_full_details(image):
         if image.find("/") == -1:
             return {}
