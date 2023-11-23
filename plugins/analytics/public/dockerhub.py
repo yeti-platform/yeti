@@ -102,6 +102,9 @@ class DockerImageInspect(task.OneShotTask):
         ObservableType.docker_image,
     ]
 
+    FILE_REGEX : re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*")
+    DIGEST_REGEX : re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$")
+
     def _get_or_create_observable(self, obs_type, value):
         cls = observable.TYPE_MAPPING[obs_type]
         obs = cls.find(value=value)
@@ -154,30 +157,18 @@ class DockerImageInspect(task.OneShotTask):
         for tag_name, image_tags in metadata.get("tags", {}).items():
             for image_tag in image_tags:
                 context = self._create_digest_context(image_obs, tag_name, image_tag)
-                digest = re.match(
-                    r"sha256:([0-9a-f]{64})$",
-                    image_tag.get("digest", ""),
-                    re.IGNORECASE,
-                )
+                digest = DIGEST_REGEX.match(image_tag.get("digest", ""), re.IGNORECASE)
                 if digest:
                     self._create_digest_observable(
                         image_obs, digest.group(1), context, "results_to"
                     )
                 for layer in image_tag.get("layers", []):
-                    layer_digest = re.match(
-                        r"sha256:([0-9a-f]{64})$",
-                        layer.get("digest", ""),
-                        re.IGNORECASE,
-                    )
+                    layer_digest = DIGEST_REGEX.match(layer.get("digest", ""), re.IGNORECASE)
                     if layer_digest:
                         self._create_digest_observable(
                             image_obs, layer_digest.group(1), context, "generates"
                         )
-                    file_digest = re.match(
-                        r"^\w+ file:([0-9a-f]{64}) .*",
-                        layer.get("instruction", ""),
-                        re.IGNORECASE,
-                    )
+                    file_digest = FILE_REGEX.match(layer.get("instruction", ""), re.IGNORECASE)
                     if file_digest:
                         self._create_digest_observable(
                             image_obs, file_digest.group(1), context, "embeds"
