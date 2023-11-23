@@ -57,9 +57,9 @@ class DockerHubApi:
 
     @staticmethod
     def image_full_details(image):
-        if image.find("/") == -1:
+        if "/" not in image:
             return {}
-        if image.find(":") != -1:
+        if ":" in image:
             image, tag = image.split(":")
         else:
             tag = ""
