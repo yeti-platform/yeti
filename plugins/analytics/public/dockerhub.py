@@ -66,13 +66,13 @@ class DockerHubApi:
         image_metadata = DockerHubApi.inspect_image(image)
         if not image_metadata:
             return {}
-        image_metadata["user"] = DockerHubApi.inspect_user(image_metadata.get("user"))
+        image_metadata["user"] = DockerHubApi.inspect_user(image_metadata["user"])
         image_metadata["tags"] = dict()
         if tag:
             image_metadata["tags"][tag] = DockerHubApi.inspect_image(image, tag)
         else:
             for tag in DockerHubApi.image_tags(image):
-                tag_name = tag.get("name")
+                tag_name = tag["name"]
                 image_metadata["tags"][tag_name] = DockerHubApi.inspect_image(
                     image, tag_name
                 )
