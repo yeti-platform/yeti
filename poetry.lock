@@ -606,6 +606,24 @@ files = [
 graph = ["objgraph (>=1.7.2)"]
 
 [[package]]
+name = "dnspython"
+version = "2.0.0"
+description = "DNS toolkit"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "dnspython-2.0.0-py3-none-any.whl", hash = "sha256:40bb3c24b9d4ec12500f0124288a65df232a3aa749bb0c39734b782873a2544d"},
+    {file = "dnspython-2.0.0.zip", hash = "sha256:044af09374469c3a39eeea1a146e8cac27daec951f1f1f157b1962fc7cb9d1b7"},
+]
+
+[package.extras]
+curio = ["curio (>=1.2)", "sniffio (>=1.1)"]
+dnssec = ["cryptography (>=2.6)"]
+doh = ["requests", "requests-toolbelt"]
+idna = ["idna (>=2.1)"]
+trio = ["sniffio (>=1.1)", "trio (>=0.14.0)"]
+
+[[package]]
 name = "ecdsa"
 version = "0.18.0"
 description = "ECDSA cryptographic signature library (pure python)"
@@ -672,6 +690,16 @@ files = [
 docs = ["furo (>=2023.7.26)", "sphinx (>=7.1.2)", "sphinx-autodoc-typehints (>=1.24)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.3)", "diff-cover (>=7.7)", "pytest (>=7.4)", "pytest-cov (>=4.1)", "pytest-mock (>=3.11.1)", "pytest-timeout (>=2.1)"]
 typing = ["typing-extensions (>=4.7.1)"]
+
+[[package]]
+name = "future"
+version = "0.18.3"
+description = "Clean single-source support for Python 3 and 2"
+optional = false
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "future-0.18.3.tar.gz", hash = "sha256:34a17436ed1e96697a86f9de3d15a3b0be01d8bc8de9c1dffd59fb8234ed5307"},
+]
 
 [[package]]
 name = "google-auth"
@@ -798,6 +826,20 @@ zipp = ">=0.5"
 docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
 perf = ["ipython"]
 testing = ["flufl.flake8", "importlib-resources (>=1.3)", "packaging", "pyfakefs", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy (>=0.9.1)", "pytest-perf (>=0.9.2)", "pytest-ruff"]
+
+[[package]]
+name = "ipwhois"
+version = "1.2.0"
+description = "Retrieve and parse whois data for IPv4 and IPv6 addresses."
+optional = false
+python-versions = "*"
+files = [
+    {file = "ipwhois-1.2.0-py2.py3-none-any.whl", hash = "sha256:9f14dfafb5d9eb7c7f56ab34cfad9868b5e453ab4161a90d69fb714fe712056a"},
+    {file = "ipwhois-1.2.0.tar.gz", hash = "sha256:831e3fef3b8041201a048e9456e3b80f45c6c8b7174f34ed211f66b596c84bbe"},
+]
+
+[package.dependencies]
+dnspython = "<=2.0.0"
 
 [[package]]
 name = "isort"
@@ -944,6 +986,24 @@ files = [
     {file = "lazy_object_proxy-1.9.0-cp39-cp39-win32.whl", hash = "sha256:9090d8e53235aa280fc9239a86ae3ea8ac58eff66a705fa6aa2ec4968b95c821"},
     {file = "lazy_object_proxy-1.9.0-cp39-cp39-win_amd64.whl", hash = "sha256:db1c1722726f47e10e0b5fdbf15ac3b8adb58c091d12b3ab713965795036985f"},
 ]
+
+[[package]]
+name = "maclookup"
+version = "1.0.3"
+description = "Python client library for macaddress.io API."
+optional = false
+python-versions = "*"
+files = [
+    {file = "maclookup-1.0.3-py2.py3-none-any.whl", hash = "sha256:33bf8eaebe3b1e4ab4ae9277dd93c78024e0ebf6b3c42f76c37695bc26ce287a"},
+    {file = "maclookup-1.0.3.tar.gz", hash = "sha256:795e792cd3e03c9bdad77e52904d43ff71d3ac03b360443f99d4bae08a6bffef"},
+]
+
+[package.dependencies]
+future = "*"
+python-dateutil = "*"
+
+[package.extras]
+dev = ["mock", "tox"]
 
 [[package]]
 name = "markupsafe"
@@ -2281,4 +2341,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "45c80a1ab48ff14e0f49a730f4dffcf085f46569cde6136cfb3c31e5f9f5bc18"
+content-hash = "fdc9914a3c79498d2455b8e586ec6cd50e67831a46228e38cc516c838df6270d"
