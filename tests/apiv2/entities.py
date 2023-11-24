@@ -93,6 +93,8 @@ class EntityTest(unittest.TestCase):
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
+        # self.entity2 is created with a default timestamp of now(), so should
+        # be the only threat-actor entity captured with this filter.
         self.assertEqual(len(data["entities"]), 1, data)
         self.assertEqual(data["entities"][0]["name"], "bears")
         self.assertEqual(data["entities"][0]["type"], "threat-actor")
