@@ -17,7 +17,7 @@ def get_plugins_list():
     plugins_list = set()
     plugins_path = pathlib.Path(yeti_config.get('system', 'plugins_path'))
     if not plugins_path.exists():
-        logging.warning(f"Plugins path {str(plugin_path.absolute())} does not exist")
+        logging.warning(f"Plugins path {str(plugins_path.absolute())} does not exist")
         return plugins_list
     for module_info in pkgutil.walk_packages([str(plugins_path.absolute())], prefix=f"{plugins_path.name}."):
         if not module_info.ispkg:

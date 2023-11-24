@@ -4,12 +4,7 @@ from hashlib import sha1
 
 import requests
 from dateutil import parser
-
-from core.analytics import OneShotAnalytics
 from core.config.config import yeti_config
-from core.errors import GenericYetiError
-from core.errors import ObservableValidationError
-from core.observables import Hash, Ip, Hostname, Url
 
 
 def aux_checker(json_result):

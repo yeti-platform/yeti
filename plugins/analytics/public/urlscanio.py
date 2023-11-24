@@ -2,11 +2,8 @@ import json
 import logging
 
 import requests
-
-from core.analytics import OneShotAnalytics
 from core.config.config import yeti_config
-from core.errors import GenericYetiError, ObservableValidationError
-from core.observables import AutonomousSystem, Hostname, Ip, Text, Url
+
 
 
 class UrlScanIoApi(object):
