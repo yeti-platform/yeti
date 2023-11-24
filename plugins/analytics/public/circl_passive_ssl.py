@@ -64,7 +64,7 @@ class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
          related to an ip address.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.ip4]
+    acts_on: list[ObservableType] = [ObservableType.ipv4]
 
     def each(self, ip: ipv4.IPv4):
         links = set()

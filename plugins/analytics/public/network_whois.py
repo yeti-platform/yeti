@@ -13,7 +13,7 @@ class NetworkWhois(task.AnalyticsTask):
         " extract relevant information.",
     }
 
-    acts_on: list[ObservableType] = [ObservableType.ip]
+    acts_on: list[ObservableType] = [ObservableType.ipv4]
 
     def each(self, ip: ipv4.IPv4):
 
