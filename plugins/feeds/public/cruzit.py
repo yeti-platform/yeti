@@ -1,15 +1,14 @@
 import logging
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas.observables import ipv4
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import ipv4
 
 
 class Cruzit(task.FeedTask):
-    _SOURCE: ClassVar[
-        "str"
-    ] = "https://iplists.firehol.org/files/cruzit_web_attacks.ipset"
+    _SOURCE: ClassVar["str"] = "https://iplists.firehol.org/files/cruzit_web_attacks.ipset"
 
     _defaults = {
         "frequency": timedelta(hours=1),
@@ -27,7 +26,10 @@ class Cruzit(task.FeedTask):
     def analyze(self, line):
         ip_str = line.strip()
 
+        context = {"source": self.name}
+
         obs = ipv4.IPv4(value=ip_str).save()
+        obs.add_context(self.name, context)
         obs.tag(["cruzit", "web attacks"])
 
 

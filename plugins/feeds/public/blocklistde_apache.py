@@ -1,14 +1,14 @@
 import logging
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas.observables import ipv4
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import ipv4
 
 
 class BlocklistdeApache(task.FeedTask):
     _SOURCE: ClassVar["str"] = "https://lists.blocklist.de/lists/apache.txt"
-
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "BlocklistdeApache",
@@ -24,8 +24,12 @@ class BlocklistdeApache(task.FeedTask):
 
     def analyze(self, item):
         ip_str = item.strip()
+
+        context = {"source": self.name}
+
         if ip_str:
             obs = ipv4.IPv4(value=ip_str).save()
+            obs.add_context(self.name, context)
             obs.tag(["blocklist", "apache"])
 
 

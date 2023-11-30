@@ -1,12 +1,12 @@
-from io import StringIO
 from datetime import timedelta
+from io import StringIO
 from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import ipv4, url
-from core.schemas import task
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import ipv4, url
 
 
 class SSLBlackListIP(task.FeedTask):
@@ -46,8 +46,10 @@ class SSLBlackListIP(task.FeedTask):
         ip_obs = False
         tags = ["potentially_malicious_infrastructure", "c2"]
         port = line["DstPort"]
-        context = {}
-        context["first_seen"] = first_seen
+        context = {
+            "source": self.name,
+            "first_seen": first_seen,
+        }
 
         ip_obs = ipv4.IPv4(value=dst_ip).save()
         ip_obs.add_context(self.name, context)
