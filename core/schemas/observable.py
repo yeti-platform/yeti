@@ -89,7 +89,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         return observable
 
     def add_context(
-        self, source: str, context: dict, skip_compare: set = set()
+        self, source: str, context: dict={}, skip_compare: set = set()
     ) -> "Observable":
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
