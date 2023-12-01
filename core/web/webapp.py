@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi import APIRouter
+from starlette.middleware.sessions import SessionMiddleware
 
 from core.web.apiv2 import observables
 from core.web.apiv2 import entities
@@ -11,8 +12,13 @@ from core.web.apiv2 import tasks
 from core.web.apiv2 import templates
 from core.web.apiv2 import users
 from core.web.apiv2 import system
+from core.config.config import yeti_config
+
+SECRET_KEY = yeti_config.get('auth', "secret_key")
 
 app = FastAPI()
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
 api_router = APIRouter()
 
 api_router.include_router(
