@@ -2,9 +2,7 @@ import logging
 import re
 from datetime import timedelta, datetime
 
-from core import Feed
 from core.config.config import yeti_config
-from core.observables import Hash, File
 
 # Variable
 VTAPI = yeti_config.get("vt", "key")

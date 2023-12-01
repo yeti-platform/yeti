@@ -35,6 +35,9 @@ pymisp = "^2.4.176"
 otxv2 = "^1.5.12"
 shodan = "^1.30.0"
 timesketch-api-client = "^20230721"
+pyopenssl = "^23.3.0"
+ipwhois = "^1.2.0"
+maclookup = "^1.0.3"
 
 [build-system]
 requires = ["poetry-core"]
