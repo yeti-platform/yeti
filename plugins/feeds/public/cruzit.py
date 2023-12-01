@@ -27,10 +27,10 @@ class Cruzit(task.FeedTask):
         ip_str = line.strip()
 
         context = {"source": self.name}
-
-        obs = ipv4.IPv4(value=ip_str).save()
-        obs.add_context(self.name, context)
-        obs.tag(["cruzit", "web attacks"])
-
+        if ip_str:
+            obs = ipv4.IPv4(value=ip_str).save()
+            obs.add_context(self.name, context)
+            obs.tag(["cruzit", "web attacks"])
+            logging.debug(f"Adding {ip_str} to cruzit feed")
 
 taskmanager.TaskManager.register_task(Cruzit)
