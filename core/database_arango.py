@@ -4,7 +4,8 @@ import json
 import logging
 import sys
 import time
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import (TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type,
+                    TypeVar)
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable
@@ -13,7 +14,6 @@ if TYPE_CHECKING:
 import requests
 from arango import ArangoClient
 from arango.exceptions import DocumentInsertError, GraphCreateError
-
 from core.config.config import yeti_config
 
 from .interfaces import AbstractYetiConnector
@@ -290,6 +290,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         if self.id is None:
             raise RuntimeError("Cannot tag unsaved object, make sure to save() it first.")
+
+        if not isinstance(tags, (list, set, tuple)):
+            raise ValueError("Tags must be of type list, set or tuple.")
 
         expiration = expiration or tag.DEFAULT_EXPIRATION
         tags = [t.strip() for t in tags if t.strip()]
