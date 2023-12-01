@@ -21,7 +21,8 @@ def list_users():
 @click.argument("username")
 @click.argument("password")
 @click.option("--admin", is_flag=True, default=False)
-def create_user(username: str, password: str, admin: bool = False) -> None:
+@click.option("--api_key")
+def create_user(username: str, password: str, admin: bool = False, api_key: str | None = None) -> None:
     """Creates a new user in the system."""
     user = UserSensitive.find(username=username)
     if user:
@@ -29,6 +30,8 @@ def create_user(username: str, password: str, admin: bool = False) -> None:
     user = UserSensitive(username=username, admin=admin)
     user.set_password(password)
     user.save()
+    if api_key:
+        user.reset_api_key(api_key=api_key)
     click.echo(
         f"User {username} succesfully created! API key: {username}:{user.api_key}"
     )
