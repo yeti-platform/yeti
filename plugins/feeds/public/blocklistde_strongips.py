@@ -1,9 +1,10 @@
 import logging
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas.observables import ipv4
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import ipv4
 
 
 class BlocklistdeStrongIPs(task.FeedTask):
@@ -23,8 +24,12 @@ class BlocklistdeStrongIPs(task.FeedTask):
 
     def analyze(self, item):
         ip_str = item.strip()
+
+        context = {"source": self.name}
+
         if ip_str:
             obs = ipv4.IPv4(value=ip_str).save()
+            obs.add_context(self.name, context)
             obs.tag(["blocklist", "strongips"])
 
 
