@@ -27,12 +27,10 @@ class SystemConfigResponse(BaseModel):
 @router.get("/config")
 async def get_config() -> SystemConfigResponse:
     """Gets the system config."""
-    auth = yeti_config.get('auth')
-    print(auth)
     config = SystemConfigResponse(
         auth={
-            'module': auth['module'],
-            'enabled': auth['enabled']
+            'module': yeti_config.get('auth', 'module'),
+            'enabled': yeti_config.get('auth', 'enabled')
         },
         system=yeti_config.get('system'),
     )
