@@ -15,7 +15,7 @@ RUN pip3 install --upgrade pip && pip3 install poetry
 # Install & Configure YETI
 ADD . /app
 WORKDIR /app
-RUN poetry install --with dev,plugins
+RUN poetry install --no-root --with dev,plugins
 
 COPY --chmod=744 ./extras/docker/docker-entrypoint.sh /docker-entrypoint.sh
 
