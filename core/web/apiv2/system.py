@@ -28,6 +28,7 @@ class SystemConfigResponse(BaseModel):
 async def get_config() -> SystemConfigResponse:
     """Gets the system config."""
     auth = yeti_config.get('auth')
+    print(auth)
     config = SystemConfigResponse(
         auth={
             'module': auth['module'],

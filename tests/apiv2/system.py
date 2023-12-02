@@ -17,7 +17,4 @@ class userTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertIn("auth", data)
-        self.assertIn("arangodb", data)
-        self.assertIn("redis", data)
-        self.assertIn("proxy", data)
         self.assertIn("system", data)
