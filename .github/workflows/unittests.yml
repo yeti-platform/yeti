@@ -34,7 +34,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: poetry
     - name: Install Python dependencies
-      run: poetry install
+      run: poetry install --no-root
     - name: Copy dummy config file
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
