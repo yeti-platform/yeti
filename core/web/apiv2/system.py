@@ -21,20 +21,18 @@ class SystemConfigResponse(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
     auth: dict
-    arangodb: dict
-    redis: dict
-    proxy: dict
     system: dict
 
 
 @router.get("/config")
 async def get_config() -> SystemConfigResponse:
     """Gets the system config."""
+    auth = yeti_config.get('auth')
     config = SystemConfigResponse(
-        auth=yeti_config.get('auth'),
-        arangodb=yeti_config.get('arangodb'),
-        redis=yeti_config.get('redis'),
-        proxy=yeti_config.get('proxy'),
+        auth={
+            'module': auth['module'],
+            'enabled': auth['enabled']
+        },
         system=yeti_config.get('system'),
     )
     return config
