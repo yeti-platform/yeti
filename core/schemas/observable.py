@@ -92,14 +92,12 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         self, source: str, context: dict | None = None, skip_compare: set | None = None
     ) -> "Observable":
         """Adds context to an observable."""
-        
         if not context:
-            raise ValueError("Context cannot be empty")
-        
-        compare_fields = set(context.keys()) - {"source"}
-        if skip_compare:
-            compare_fields -= skip_compare
+            context = {}
+        if not skip_compare:
+            skip_compare = set()
 
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
                 continue
@@ -121,11 +119,11 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     ) -> "Observable":
         """Deletes context from an observable."""
         if not context:
-            raise ValueError("Context cannot be empty")
-        
-        compare_fields = set(context.keys()) - {"source"}
-        if skip_compare:
-            compare_fields -= skip_compare
+            context = {}
+        if not skip_compare:
+            skip_compare = set()
+
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
                 continue
