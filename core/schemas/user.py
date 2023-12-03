@@ -1,3 +1,4 @@
+import re
 import secrets
 from typing import ClassVar
 
@@ -28,8 +29,13 @@ class User(BaseModel, database_arango.ArangoYetiConnector):
     def load(cls, object: dict) -> "User":
         return cls(**object)
 
-    def reset_api_key(self) -> None:
-        self.api_key = secrets.token_hex(32)
+    def reset_api_key(self, api_key=None) -> None:
+        if api_key:
+            if not re.match(r"^[a-f0-9]{64}$", api_key):
+                raise ValueError("Invalid API key: must match ^[a-f0-9]{64}$")
+            self.api_key = api_key
+        else:
+            self.api_key = secrets.token_hex(32)
 
 
 class UserSensitive(User):
