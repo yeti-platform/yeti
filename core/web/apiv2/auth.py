@@ -135,7 +135,7 @@ if AUTH_MODULE == 'oidc':
         access_token = create_access_token(
             data={"sub": db_user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
         )
-        response = RedirectResponse(url='http://localhost:8080/')
+        response = RedirectResponse(url='/')
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
         return response
 
