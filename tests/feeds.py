@@ -2,17 +2,18 @@ import unittest
 
 from core import database_arango
 from core.config.config import yeti_config
-from plugins.feeds.public import feodo_tracker_ip_blocklist
-from plugins.feeds.public import openphish
-from plugins.feeds.public import lolbas
-from plugins.feeds.public import timesketch
-from plugins.feeds.public import attack
+from plugins.feeds.public import (
+    attack,
+    feodo_tracker_ip_blocklist,
+    lolbas,
+    openphish,
+    timesketch,
+)
 
 
 class FeedTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        # pass
         database_arango.db.clear()
 
     def test_feodo_tracker_ip_blocklist(self):
@@ -32,6 +33,9 @@ class FeedTest(unittest.TestCase):
         feed = lolbas.LoLBAS(**defaults)
         feed.run()
 
+    @unittest.skipIf(
+        yeti_config.get("timesketch", "endpoint") is None, "Timesketch not setup"
+    )
     def test_timesketch(self):
         defaults = timesketch.Timesketch._defaults.copy()
         feed = timesketch.Timesketch(**defaults)
