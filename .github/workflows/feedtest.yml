@@ -1,10 +1,11 @@
 name: Test feeds
 
-on: [pull_request]
+on:
+  schedule:
+    - cron: '0 6 * * 3' # Run every Wednesday at 06:00 UTC
 
 jobs:
-
-  unittest:
+  testfeeds:
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
@@ -34,7 +35,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: poetry
     - name: Install Python dependencies
-      run: poetry install --no-root
+      run: poetry install --no-root --with plugins
     - name: Copy dummy config file
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
