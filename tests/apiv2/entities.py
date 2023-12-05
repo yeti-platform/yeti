@@ -123,6 +123,17 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(data["tagged"], 1)
         self.assertIn("hacker", data["tags"][self.entity1.extended_id], data)
 
+    def test_search_entities_by_tag(self):
+        response = client.post(
+            "/api/v2/entities/search",
+            json={"query": {"tags": ["ta1"]}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 1)
+        self.assertEqual(data["entities"][0]["name"], "ta1")
+        self.assertEqual(data["entities"][0]["type"], "threat-actor")
+
     def test_patch_entity(self):
         """Tests that an entity gets patched."""
         response = client.patch(
