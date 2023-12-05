@@ -107,10 +107,14 @@ async def delete(entity_id: str) -> None:
 async def search(request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
     query = request.query
+    tags = query.pop('tags', [])
     if request.type:
         query['type'] = request.type
     entities, total = entity.Entity.filter(
-        query, offset=request.page * request.count, count=request.count,
+        query,
+        tag_filter=tags,
+        offset=request.page * request.count,
+        count=request.count,
         graph_queries=[('tags', 'tagged', 'outbound', 'name')]
     )
     return EntitySearchResponse(entities=entities, total=total)
