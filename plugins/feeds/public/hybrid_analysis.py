@@ -144,7 +144,8 @@ class HybridAnalysis(task.FeedTask):
                     new_file.tag(extracted_file["type_tags"])
                     if path_extracted_file:
                         path_extracted_file.tag(extracted_file["type_tags"])
-                        sha256_new_file.tag(extracted_file["type_tags"])
+                    
+                    sha256_new_file.tag(extracted_file["type_tags"])
 
                 new_file.add_context(self.name, context_file_dropped)
                 sha256_new_file.add_context(self.name, context_file_dropped)
