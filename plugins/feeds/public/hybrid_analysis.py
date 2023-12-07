@@ -149,7 +149,6 @@ class HybridAnalysis(task.FeedTask):
 
                 new_file.add_context(self.name, context_file_dropped)
                 sha256_new_file.add_context(self.name, context_file_dropped)
-    
                 f_hyb.link_to(new_file, "dropped", self.name)
 
 
