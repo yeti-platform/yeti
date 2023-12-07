@@ -61,7 +61,7 @@ class UrlHaus(task.FeedTask):
         threat = line["threat"]
         tags = None
         logging.debug(f"tags: {tags} line: {line['tags']}")
-        if line["tags"] and type(line["tags"])==str:
+        if line["tags"] and isinstance(line["tags"], str):
             tags = line['tags'].split(",")
 
         urlhaus_link = line["urlhaus_link"]
