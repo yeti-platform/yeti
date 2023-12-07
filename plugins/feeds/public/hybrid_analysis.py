@@ -120,7 +120,7 @@ class HybridAnalysis(task.FeedTask):
                 new_file.link_to(sha256_new_file, "sha256", self.name)
                 
                 path_extracted_file = None
-                if extracted_file["file_path"] and isinstance(extracted_file["file_path"], str):
+                if "file_path" is extracted_file and extracted_file["file_path"] and isinstance(extracted_file["file_path"], str):
                     path_extracted_file = path.Path(value=extracted_file["file_path"]).save()
                     new_file.link_to(path_extracted_file, "path", self.name)
 
