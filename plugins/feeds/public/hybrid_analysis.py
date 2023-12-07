@@ -6,7 +6,7 @@ from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import file, sha256, sha1, md5, hostname
+from core.schemas.observables import file, sha256, sha1, md5, hostname,path
 from core.schemas import task
 from core import taskmanager
 
@@ -35,8 +35,8 @@ class HybridAnalysis(task.FeedTask):
                 for _, row in df.iterrows():
                     self.analyze(row)
 
-    # pylint: disable=arguments-differ
     def analyze(self, item):
+        logging.debug(f"HybridAnalysis: {item}")
         first_seen = item["analysis_start_time"]
 
         f_hyb = file.File(value=f"FILE:{item['sha256']}").save()
@@ -118,6 +118,11 @@ class HybridAnalysis(task.FeedTask):
                 sha256_new_file = sha256.SHA256(value=extracted_file["sha256"]).save()
 
                 new_file.link_to(sha256_new_file, "sha256", self.name)
+                
+                path_extracted_file = None
+                if extracted_file["file_path"] and isinstance(extracted_file["file_path"], str):
+                    path_extracted_file = path.Path(value=extracted_file["file_path"]).save()
+                    new_file.link_to(path_extracted_file, "path", self.name)
 
                 context_file_dropped["virustotal_score"] = 0
                 context_file_dropped["size"] = extracted_file["file_size"]
@@ -137,10 +142,13 @@ class HybridAnalysis(task.FeedTask):
 
                 if "type_tags" in extracted_file and isinstance('type_tags', list):
                     new_file.tag(extracted_file["type_tags"])
+                    if path_extracted_file:
+                        path_extracted_file.tag(extracted_file["type_tags"])
+                        sha256_new_file.tag(extracted_file["type_tags"])
 
                 new_file.add_context(self.name, context_file_dropped)
                 sha256_new_file.add_context(self.name, context_file_dropped)
-
+    
                 f_hyb.link_to(new_file, "dropped", self.name)
 
 
