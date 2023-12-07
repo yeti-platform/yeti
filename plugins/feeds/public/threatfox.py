@@ -92,7 +92,7 @@ class ThreatFox(task.FeedTask):
                 context["port"] = port
             else:
                 value = ioc_value
-            obs = observable.Observable(value=value, type=self._MAPPING["ip"]).save()
+            obs = observable.Observable(value=value, type=self._MAPPING[ioc_type]).save()
             obs.add_context(self.name, context)
             if malware_alias:
                 tags.extend(malware_alias.split(","))

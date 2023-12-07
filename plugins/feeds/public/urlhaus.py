@@ -78,7 +78,7 @@ class UrlHaus(task.FeedTask):
         }
         if last_online:
             context["last_online"] = last_online
-
+        logging.debug(f'url_str: {url_str}')
         url_obs = url.Url(value=url_str).save()
         logging.debug(f"context: {context}")
         url_obs.add_context(self.name, context)
