@@ -8,6 +8,7 @@ from plugins.feeds.public import (
     lolbas,
     openphish,
     timesketch,
+    hybrid_analysis
 )
 
 
@@ -44,4 +45,9 @@ class FeedTest(unittest.TestCase):
     def test_attack(self):
         defaults = attack.MitreAttack._defaults.copy()
         feed = attack.MitreAttack(**defaults)
+        feed.run()
+    
+    def test_hybrid_analysis(self):
+        defaults = hybrid_analysis.HybridAnalysis._defaults.copy()
+        feed = hybrid_analysis.HybridAnalysis(**defaults)
         feed.run()
