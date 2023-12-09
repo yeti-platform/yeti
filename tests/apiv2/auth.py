@@ -21,6 +21,10 @@ class AuthTest(unittest.TestCase):
         cls.user1.set_password("test")
         cls.user1.save()
 
+        cls.user2 = UserSensitive(username="test", enabled=False)
+        cls.user2.set_password("test")
+        cls.user2.save()
+
     @classmethod
     def tearDownClass(cls) -> None:
         database_arango.db.clear()
@@ -44,6 +48,16 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         data = response.json()
         self.assertEqual(data["detail"], "Incorrect username or password")
+
+    def test_login_disabled(self) -> None:
+        response = client.post(
+            "/api/v2/auth/token", data={"username": "test", "password": "test"}
+        )
+        self.assertEqual(response.status_code, 401)
+        data = response.json()
+        self.assertEqual(
+            data["detail"], "User account disabled. Please contact your server admin."
+        )
 
     def test_cookie_auth(self) -> None:
         response = client.post(
@@ -73,6 +87,16 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["token_type"], "bearer")
         self.assertIn("access_token", data)
+
+    def test_api_with_disabled_user(self) -> None:
+        response = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2.api_key}
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(
+            data["detail"], "User account disabled. Please contact your server admin."
+        )
 
     def test_api_with_bad_key(self) -> None:
         response = client.post(
