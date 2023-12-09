@@ -70,6 +70,12 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    disabled_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="User account disabled. Please contact your server admin.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     if not token and not cookie:
         raise credentials_exception
 
@@ -86,6 +92,8 @@ async def get_current_user(
     user = UserSensitive.find(username=username)
     if user is None:
         raise credentials_exception
+    if not user.enabled:
+        raise disabled_exception
     return user
 
 
@@ -117,8 +125,13 @@ if AUTH_MODULE == 'oidc':
     async def login_info(request: Request):
         redirect_uri = request.url_for('oidc_callback')
         redirect_uri = redirect_uri.replace(netloc='localhost:8000')
-        return await get_oauth_client().oidc.authorize_redirect(request, redirect_uri)
-
+        try:
+            return await get_oauth_client().oidc.authorize_redirect(request, redirect_uri)
+        except OAuthError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error while authenticating with upstream OIDC provider. Please contact your server admin."
+            )
 
     @router.get('/oidc-callback', response_class=RedirectResponse)
     async def oidc_callback(request: Request) -> RedirectResponse:
@@ -126,10 +139,16 @@ if AUTH_MODULE == 'oidc':
         username = token['userinfo']['email']
         db_user = User.find(username=username)
         if not db_user:
-            db_user = User(username=username, admin=False)
+            db_user = User(username=username, admin=False, enabled=False)
             db_user.save()
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account disabled. Please contact your server admin."
+            )
+
         access_token = create_access_token(
-            data={"sub": db_user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
+            data={"sub": db_user.username, "enabled": db_user.enabled},
+            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
         )
         response = RedirectResponse(url='/')
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
@@ -155,9 +174,16 @@ if AUTH_MODULE == 'local':
                     detail="Incorrect username or password",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
+            if not user.enabled:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User account disabled. Please contact your server admin.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
 
         access_token = create_access_token(
-            data={"sub": user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
+            data={"sub": user.username, "enabled": user.enabled},
+            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
         )
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
         return {"access_token": access_token, "token_type": "bearer"}
@@ -173,8 +199,15 @@ async def login_api(x_yeti_api_key: str = Security(api_key_header)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if not user.enabled:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User account disabled. Please contact your server admin.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
+        data={"sub": user.username, "enabled": user.enabled}, expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
