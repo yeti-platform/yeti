@@ -198,6 +198,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 filters["type"] = document["type"]
             self._get_collection().update_match(filters, document)
 
+            logging.debug(f"filters: {filters}")
             newdoc = list(self._get_collection().find(filters, limit=1))[0]
 
         newdoc["id"] = newdoc.pop("_key")

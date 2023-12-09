@@ -163,6 +163,7 @@ class ComplexGraphTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
         self.observable1 = hostname.Hostname(value="test1.com").save()
+        self.observable1.tag(['tag1', 'tag2'])
         self.observable2 = hostname.Hostname(value="test2.com").save()
         self.observable3 = url.Url(value="http://test1.com/admin").save()
         self.entity1 = ThreatActor(name="tester").save()
@@ -289,3 +290,20 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         data = response.json()
         self.assertIn("add_type", data["detail"][0]["loc"])
+
+    def test_match_known_observables_have_tags(self):
+        """Tests that observables have all tags."""
+        response = client.post(
+            "/api/v2/graph/match",
+            json={
+                "observables": ["test1.com"],
+                "add_unknown": False
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+
+        # Observable is known, has been added.
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(data["known"][0]["value"], "test1.com")
+        self.assertEqual(sorted(data["known"][0]["tags"].keys()), ["tag1", "tag2"])

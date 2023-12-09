@@ -14,8 +14,6 @@ def _format_description_from_obj(obj):
     description = ""
     if obj.get("x_mitre_deprecated"):
         description += "**DEPRECATED**\n\n"
-    if obj.get("revoked"):
-        description += "**REVOKED**\n\n"
     if obj.get("description"):
         description += obj["description"] + "\n\n"
 
@@ -187,10 +185,7 @@ class MitreAttack(task.FeedTask):
                     data = json.load(f)
                     for item in data["objects"]:
                         if item.get("revoked"):
-                            db_entity = entity.Entity.find(name=item["name"])
-                            if db_entity:
-                                object_cache[item["id"]] = db_entity
-                                continue
+                            continue
                         object_cache[item["id"]] = TYPE_FUNCTIONS[item["type"]](item)
                         obj_count += 1
             logging.info("Processed %s %s objects", obj_count, subdir)
@@ -204,6 +199,8 @@ class MitreAttack(task.FeedTask):
                 data = json.load(f)
                 for item in data["objects"]:
                     if item.get("revoked"):
+                        continue
+                    if item['relationship_type'] == 'revoked-by':
                         continue
 
                     if item["source_ref"].startswith("x-mitre") or item[

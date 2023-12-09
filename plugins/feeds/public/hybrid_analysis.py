@@ -6,7 +6,7 @@ from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import file, sha256, sha1, md5, hostname
+from core.schemas.observables import file, sha256, sha1, md5, hostname,path
 from core.schemas import task
 from core import taskmanager
 
@@ -30,13 +30,13 @@ class HybridAnalysis(task.FeedTask):
                     orient="values",
                     convert_dates=["analysis_start_time"],
                 )
-                df.ffill(inplace=True)
+                df.fillna(0, inplace=True)
                 df = self._filter_observables_by_time(df, "analysis_start_time")
                 for _, row in df.iterrows():
                     self.analyze(row)
 
-    # pylint: disable=arguments-differ
     def analyze(self, item):
+        logging.debug(f"HybridAnalysis: {item}")
         first_seen = item["analysis_start_time"]
 
         f_hyb = file.File(value=f"FILE:{item['sha256']}").save()
@@ -52,7 +52,7 @@ class HybridAnalysis(task.FeedTask):
         if "vxfamily" in item:
             context["vxfamily"] = item["vxfamily"]
 
-        if "tags" in item:
+        if "tags" in item and isinstance(item["tags"], list):
             tags.extend(item["tags"])
 
         if "threatlevel_human" in item:
@@ -80,6 +80,8 @@ class HybridAnalysis(task.FeedTask):
 
         context["url"] = "https://www.hybrid-analysis.com" + item["reporturl"]
 
+        logging.debug(f"HybridAnalysis: {context}")
+
         f_hyb.add_context(self.name, context)
         f_hyb.tag(tags)
 
@@ -96,13 +98,13 @@ class HybridAnalysis(task.FeedTask):
         sha1_obs.tag(tags)
         f_hyb.link_to(sha1_obs, "sha1", self.name)
 
-        if "domains" in item:
+        if "domains" in item and isinstance(item["domains"], list):
             for domain in item["domains"]:
                 new_host = hostname.Hostname(value=domain).save()
-                f_hyb.link_to(new_host, "contacted", self.name)
+                f_hyb.link_to(new_host, "contact", self.name)
                 new_host.tag(tags)
 
-        if "extracted_files" in item:
+        if "extracted_files" in item and isinstance(item["extracted_files"], list):
             for extracted_file in item["extracted_files"]:
                 context_file_dropped = {"source": self.name}
 
@@ -116,29 +118,37 @@ class HybridAnalysis(task.FeedTask):
                 sha256_new_file = sha256.SHA256(value=extracted_file["sha256"]).save()
 
                 new_file.link_to(sha256_new_file, "sha256", self.name)
+                
+                path_extracted_file = None
+                if "file_path" is extracted_file and extracted_file["file_path"] and isinstance(extracted_file["file_path"], str):
+                    path_extracted_file = path.Path(value=extracted_file["file_path"]).save()
+                    new_file.link_to(path_extracted_file, "path", self.name)
 
                 context_file_dropped["virustotal_score"] = 0
                 context_file_dropped["size"] = extracted_file["file_size"]
 
-                if "av_matched" in extracted_file:
+                if "av_matched" in extracted_file and isinstance('av_matched', int):
                     context_file_dropped["virustotal_score"] = extracted_file[
                         "av_matched"
                     ]
 
-                if "threatlevel_readable" in extracted_file:
+                if "threatlevel_readable" in extracted_file and isinstance('threatlevel_readable', str):
                     context_file_dropped["threatlevel"] = extracted_file[
                         "threatlevel_readable"
                     ]
 
-                if "av_label" in extracted_file:
+                if "av_label" in extracted_file and isinstance('av_label', str):
                     context_file_dropped["av_label"] = extracted_file["av_label"]
 
-                if "type_tags" in extracted_file:
+                if "type_tags" in extracted_file and isinstance('type_tags', list):
                     new_file.tag(extracted_file["type_tags"])
+                    if path_extracted_file:
+                        path_extracted_file.tag(extracted_file["type_tags"])
+                    
+                    sha256_new_file.tag(extracted_file["type_tags"])
 
                 new_file.add_context(self.name, context_file_dropped)
                 sha256_new_file.add_context(self.name, context_file_dropped)
-
                 f_hyb.link_to(new_file, "dropped", self.name)
 
 
