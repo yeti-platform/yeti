@@ -3,7 +3,7 @@
 import datetime
 import re
 from enum import Enum
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, Type
 
 import validators
 from core import database_arango
@@ -140,9 +140,9 @@ TYPE_VALIDATOR_MAP = {
 
 REGEXES_OBSERVABLES = {
     # Unix
-    ObservableType.path : [
+    ObservableType.path: [
         re.compile(r"^(\/[^\/\0]+)+$"),
-        re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+")
+        re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
     ]
 }
 
@@ -170,16 +170,46 @@ def find_type(value: str) -> ObservableType | None:
     return None
 
 
-TYPE_MAPPING = {
-    'observable': Observable,
-    'observables': Observable
-}
+TYPE_MAPPING = {"observable": Observable, "observables": Observable}
+
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
-                                      command_line, docker_image, email, file,
-                                      generic_observable, hostname, imphash, ipv4, ipv6,
-                                      mac_address, md5, path, registry_key,
-                                      sha1, sha256, ssdeep, tlsh, url,
-                                      user_agent)
+from core.schemas.observables import (
+    asn,
+    bitcoin_wallet,
+    certificate,
+    cidr,
+    command_line,
+    docker_image,
+    email,
+    file,
+    generic_observable,
+    hostname,
+    imphash,
+    ipv4,
+    ipv6,
+    mac_address,
+    md5,
+    path,
+    registry_key,
+    sha1,
+    sha256,
+    ssdeep,
+    tlsh,
+    url,
+    user_agent,
+)
+
+ObservableTypes = ()
+ObservableClasses = ()
+
+for key in TYPE_MAPPING:
+    cls = TYPE_MAPPING[key]
+    if not ObservableTypes:
+        ObservableTypes = cls
+    else:
+        ObservableType |= cls
+    if not ObservableClasses:
+        ObservableClasses = Type[cls]
+    ObservableClasses |= Type[cls]
