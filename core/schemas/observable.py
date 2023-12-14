@@ -89,9 +89,14 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         return observable
 
     def add_context(
-        self, source: str, context: dict, skip_compare: set = set()
+        self, source: str, context: dict | None = None, skip_compare: set | None = None
     ) -> "Observable":
         """Adds context to an observable."""
+        if not context:
+            context = {}
+        if not skip_compare:
+            skip_compare = set()
+
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
@@ -110,9 +115,14 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
         return self.save()
 
     def delete_context(
-        self, source: str, context: dict, skip_compare: set = set()
+        self, source: str, context: dict | None = None, skip_compare: set | None = None
     ) -> "Observable":
         """Deletes context from an observable."""
+        if not context:
+            context = {}
+        if not skip_compare:
+            skip_compare = set()
+
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
