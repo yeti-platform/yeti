@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 from core import database_arango
@@ -8,7 +9,7 @@ from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       generic_observable, hostname, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_agent)
+                                      url, user_account, user_agent)
 
 
 class ObservableTest(unittest.TestCase):
@@ -353,3 +354,50 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36") # noqa: E501
         self.assertIsInstance(observable, user_agent.UserAgent)
+
+    def test_create_user_account(self) -> None:
+        """Tests creating a user account."""
+        observable = user_account.UserAccount(
+            value = "test_account",
+            user_id = "test_user_id",
+            credential = "test_credential",
+            account_login = "test_account_login",
+            account_type = "test_account_type",
+            display_name = "test_display_name",
+            is_service_account = True,
+            is_privileged = True,
+            can_escalate_privs = True,
+            is_disabled = True,
+            account_created = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+            account_expires = datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc),
+            credential_last_changed = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+            account_first_login = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+            account_last_login = datetime.datetime(2023, 12, 15, tzinfo=datetime.timezone.utc),
+        ).save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "test_account")
+        self.assertIsInstance(observable, user_account.UserAccount)
+        self.assertEqual(observable.user_id, "test_user_id")
+        self.assertEqual(observable.credential, "test_credential")
+        self.assertEqual(observable.account_login, "test_account_login")
+        self.assertEqual(observable.account_type, "test_account_type")
+        self.assertEqual(observable.display_name, "test_display_name")
+        self.assertEqual(observable.is_service_account, True)
+        self.assertEqual(observable.is_privileged, True)
+        self.assertEqual(observable.can_escalate_privs, True)
+        self.assertEqual(observable.is_disabled, True)
+        self.assertEqual(observable.account_created, datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc))
+        self.assertEqual(observable.account_expires, datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc))
+        self.assertEqual(observable.credential_last_changed, datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc))
+        self.assertEqual(observable.account_first_login, datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc))
+        self.assertEqual(observable.account_last_login, datetime.datetime(2023, 12, 15, tzinfo=datetime.timezone.utc))
+
+    def test_create_user_account_incoherent_dates(self) -> None:
+        """Tests creating a user account with incoherent dates."""
+        with self.assertRaises(ValueError):
+            observable = user_account.UserAccount(
+                value = "test_account",
+                account_created = datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc),
+                account_expires = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+            ).save()
+
