@@ -77,7 +77,7 @@ class ObservableSearchRequest(BaseModel):
 class ObservableSearchResponse(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
-    observables: list[Observable]
+    observables: list[ObservableTypes]
     total: int
 
 
@@ -142,7 +142,7 @@ async def new(request: NewExtendedObservableRequest) -> ObservableTypes:
             detail=f"Observable with value {request.observable.value} already exists",
         )
     cls = TYPE_MAPPING[request.observable.type]
-    new = cls(**request.observable.dict()).save()
+    new = cls(**request.observable.model_dump()).save()
     if request.tags:
         new.tag(request.tags)
     return new
@@ -158,12 +158,11 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[ObservableTypes
                 new_observable.value, tags=new_observable.tags
             )
         else:
-            new_observable = new_observable.dict()
+            new_observable = new_observable.model_dump()
             obs_type = new_observable.pop("type")
             tags = new_observable.pop("tags", [])
             cls = TYPE_MAPPING[obs_type]
-            observable = cls(**new_observable)
-            observable.save()
+            observable = cls(**new_observable).save()
             if tags:
                 observable = observable.tag(tags)
         added.append(observable)
@@ -174,9 +173,12 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[ObservableTypes
 async def details(observable_id) -> ObservableTypes:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
+    print(f"/{observable_id} --> {observable}\n")
     if not observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     observable.get_tags()
+    print(f"--------> TYPE: {type(observable)}")
+    print(f"After get_tags /{observable_id} --> {observable}\n")
     return observable
 
 

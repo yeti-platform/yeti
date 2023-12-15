@@ -1,10 +1,9 @@
 import unittest
 
-from fastapi.testclient import TestClient
-
 from core import database_arango
-from core.schemas.observables import hostname
+from core.schemas.observables import file, hostname
 from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -13,13 +12,29 @@ class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
 
+    def assert_empty_file_observable(self, data):
+        self.assertEqual(data["name"], "empty")
+        self.assertEqual(data["type"], "file")
+        self.assertEqual(data["size"], 0)
+        self.assertEqual(data["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+        self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
+        self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
+
     def test_get_observable(self):
-        obs = hostname.Hostname(value="tomchop.me").save()
+        obs = file.File(
+            value="empty",
+            name="empty",
+            size=0,
+            sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709",
+            md5="d41d8cd98f00b204e9800998ecf8427e",
+            mime_type="inode/x-empty; charset=binary").save()
         obs.tag(["tag1"])
         response = client.get(f"/api/v2/observables/{obs.id}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["value"], "tomchop.me")
+        self.assert_empty_file_observable(data)
         self.assertIn("tag1", data["tags"])
 
     def test_post_existing_observable(self):
@@ -43,6 +58,23 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 2)
+
+    def test_observable_search_extended_response(self):
+        obs = file.File(
+            value="empty",
+            name="empty",
+            size=0,
+            sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709",
+            md5="d41d8cd98f00b204e9800998ecf8427e",
+            mime_type="inode/x-empty; charset=binary").save()
+        response = client.post(
+            "/api/v2/observables/search", json={"query": {"value": "empty"}, "page": 0, "count": 10}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data['observables']), 1)
+        self.assert_empty_file_observable(data)
 
     def test_observable_search_tags_nonexist(self):
         obs1 = hostname.Hostname(value="tomchop.me").save()
@@ -130,6 +162,34 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 422, data)
         self.assertEqual(data["detail"][0]["msg"], "Value error, Tags cannot be empty", data)
 
+    def test_create_extended_observable(self):
+        response = client.post(
+            "/api/v2/observables/extended",
+            json={
+                "observable":
+                {
+                    "value": "empty",
+                    "name": "empty",
+                    "size": 0,
+                    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "sha1": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+                    "md5": "d41d8cd98f00b204e9800998ecf8427e",
+                    "mime_type": "inode/x-empty; charset=binary",
+                    "type": "file",
+                },
+                "tags": ["tag1", "tag2"],
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(data["id"])
+        self.assert_empty_file_observable(data)
+        self.assertIn("tag1", data["tags"])
+        self.assertIn("tag2", data["tags"])
+        self.assertEqual(data["tags"]["tag1"]["fresh"], True)
+        self.assertEqual(data["tags"]["tag2"]["fresh"], True)
+
+
     def test_bulk_add(self):
         request = {
             "observables": [
@@ -150,6 +210,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data[2]["type"], "hostname")
         self.assertEqual(len(data[2]["tags"]), 2)
 
+
     def test_add_text(self):
         TEST_CASES = [
             ("toto.com", "toto.com", "hostname"),
@@ -167,6 +228,7 @@ class ObservableTest(unittest.TestCase):
             self.assertIsNotNone(data["id"])
             self.assertEqual(data["value"], expected_response)
             self.assertEqual(data["type"], expected_type)
+
 
     def test_add_text_invalid(self):
         response = client.post("/api/v2/observables/add_text", json={"text": "--toto"})
