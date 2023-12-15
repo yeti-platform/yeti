@@ -183,16 +183,3 @@ from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
                                       url, user_agent)
-
-ObservableTypes = ()
-ObservableClasses = ()
-
-for key in TYPE_MAPPING:
-    cls = TYPE_MAPPING[key]
-    if not ObservableTypes:
-        ObservableTypes = cls
-    else:
-        ObservableTypes |= cls
-    if not ObservableClasses:
-        ObservableClasses = Type[cls]
-    ObservableClasses |= Type[cls]
