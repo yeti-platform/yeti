@@ -18,36 +18,31 @@ for key in TYPE_MAPPING:
         ObservableTypes |= cls
 
 
+class TagRequestMixin:
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, value) -> list[str]:
+        for tag in value:
+            if not tag:
+                raise ValueError("Tags cannot be empty")
+        return value
+
+
 # Request schemas
-class NewObservableRequest(BaseModel):
+class NewObservableRequest(BaseModel, TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     value: str
     tags: list[str] = []
     type: ObservableType
 
-    @field_validator("tags")
-    @classmethod
-    def validate_tags(cls, value) -> list[str]:
-        for tag in value:
-            if not tag:
-                raise ValueError("Tags cannot be empty")
-        return value
 
-
-class NewExtendedObservableRequest(BaseModel):
+class NewExtendedObservableRequest(BaseModel, TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     observable: ObservableTypes
     tags: list[str] = []
-
-    @field_validator("tags")
-    @classmethod
-    def validate_tags(cls, value) -> list[str]:
-        for tag in value:
-            if not tag:
-                raise ValueError("Tags cannot be empty")
-        return value
 
 
 class NewBulkObservableAddRequest(BaseModel):
@@ -56,7 +51,7 @@ class NewBulkObservableAddRequest(BaseModel):
     observables: list[NewObservableRequest]
 
 
-class AddTextRequest(BaseModel):
+class AddTextRequest(BaseModel, TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     text: str
@@ -91,7 +86,7 @@ class ObservableSearchResponse(BaseModel):
     total: int
 
 
-class ObservableTagRequest(BaseModel):
+class ObservableTagRequest(BaseModel, TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     ids: list[str]
