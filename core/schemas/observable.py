@@ -3,7 +3,7 @@
 import datetime
 import re
 from enum import Enum
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, Type
 
 import validators
 from core import database_arango
@@ -53,16 +53,19 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
     context: list[dict] = []
     last_analysis: dict[str, datetime.datetime] = {}
 
+
     @classmethod
-    def load(cls, object: dict) -> "Observable":
-        return cls(**object)
+    def load(cls, object: dict) -> "ObservableTypes":
+        if object["type"] in TYPE_MAPPING:
+            return TYPE_MAPPING[object["type"]](**object)
+        raise ValueError("Attempted to instantiate an undefined observable type.")
 
     @classmethod
     def is_valid(cls, object: dict) -> bool:
         return validate_observable(object)
 
     @classmethod
-    def add_text(cls, text: str, tags: list[str] = []) -> "Observable":
+    def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":
         """Adds and returns an observable for a given string.
 
         Args:
@@ -79,9 +82,8 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
         observable = Observable.find(value=refanged)
         if not observable:
-            observable = Observable(
+            observable = TYPE_MAPPING[observable_type](
                 value=refanged,
-                type=observable_type,
                 created=datetime.datetime.now(datetime.timezone.utc),
             ).save()
         if tags:
@@ -90,7 +92,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
     def add_context(
         self, source: str, context: dict, skip_compare: set = set()
-    ) -> "Observable":
+    ) -> "ObservableTypes":
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
@@ -111,7 +113,7 @@ class Observable(BaseModel, database_arango.ArangoYetiConnector):
 
     def delete_context(
         self, source: str, context: dict, skip_compare: set = set()
-    ) -> "Observable":
+    ) -> "ObservableTypes":
         """Deletes context from an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
@@ -140,9 +142,9 @@ TYPE_VALIDATOR_MAP = {
 
 REGEXES_OBSERVABLES = {
     # Unix
-    ObservableType.path : [
+    ObservableType.path: [
         re.compile(r"^(\/[^\/\0]+)+$"),
-        re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+")
+        re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
     ]
 }
 
@@ -170,16 +172,14 @@ def find_type(value: str) -> ObservableType | None:
     return None
 
 
-TYPE_MAPPING = {
-    'observable': Observable,
-    'observables': Observable
-}
+TYPE_MAPPING = {"observable": Observable, "observables": Observable}
+
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
 from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
                                       command_line, docker_image, email, file,
-                                      generic_observable, hostname, imphash, ipv4, ipv6,
-                                      mac_address, md5, path, registry_key,
-                                      sha1, sha256, ssdeep, tlsh, url,
-                                      user_agent)
+                                      generic_observable, hostname, imphash,
+                                      ipv4, ipv6, mac_address, md5, path,
+                                      registry_key, sha1, sha256, ssdeep, tlsh,
+                                      url, user_agent)
