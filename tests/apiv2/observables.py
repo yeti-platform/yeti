@@ -48,6 +48,23 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["detail"], "Observable with value tomchop.me already exists")
 
+    def test_post_file_observable(self):
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "test_file", "type": "file", "tags": []},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["value"], "test_file")
+        self.assertEqual(data["type"], "file")
+        self.assertEqual(data["name"], None)
+        self.assertEqual(data["size"], None)
+        self.assertEqual(data["sha256"], None)
+        self.assertEqual(data["sha1"], None)
+        self.assertEqual(data["md5"], None)
+        self.assertEqual(data["mime_type"], None)
+
+
     def test_observable_search(self):
         hostname.Hostname(value="tomchop.me").save()
         hostname.Hostname(value="tomchop2.com").save()
@@ -74,7 +91,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data['observables']), 1)
-        self.assert_empty_file_observable(data)
+        self.assert_empty_file_observable(data["observables"][0])
 
     def test_observable_search_tags_nonexist(self):
         obs1 = hostname.Hostname(value="tomchop.me").save()
