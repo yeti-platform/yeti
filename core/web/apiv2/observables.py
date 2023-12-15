@@ -18,7 +18,9 @@ for key in TYPE_MAPPING:
         ObservableTypes |= cls
 
 
-class TagRequestMixin:
+class TagRequestMixin(BaseModel):
+
+    tags: list[str] = []
 
     @field_validator("tags")
     @classmethod
@@ -30,19 +32,17 @@ class TagRequestMixin:
 
 
 # Request schemas
-class NewObservableRequest(BaseModel, TagRequestMixin):
+class NewObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     value: str
-    tags: list[str] = []
     type: ObservableType
 
 
-class NewExtendedObservableRequest(BaseModel, TagRequestMixin):
+class NewExtendedObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     observable: ObservableTypes
-    tags: list[str] = []
 
 
 class NewBulkObservableAddRequest(BaseModel):
@@ -51,11 +51,10 @@ class NewBulkObservableAddRequest(BaseModel):
     observables: list[NewObservableRequest]
 
 
-class AddTextRequest(BaseModel, TagRequestMixin):
+class AddTextRequest(TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     text: str
-    tags: list[str] = []
 
 
 class AddContextRequest(BaseModel):
@@ -86,11 +85,10 @@ class ObservableSearchResponse(BaseModel):
     total: int
 
 
-class ObservableTagRequest(BaseModel, TagRequestMixin):
+class ObservableTagRequest(TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
     ids: list[str]
-    tags: list[str]
     strict: bool = False
 
 class ObservableTagResponse(BaseModel):
