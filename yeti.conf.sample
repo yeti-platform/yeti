@@ -14,6 +14,7 @@ plugins_path = ./plugins
 ## Use these settings to configure Yeti authentication.
 ##
 
+# oidc, local
 module = local
 
 # to get a stronger value run:
@@ -22,6 +23,15 @@ module = local
 # ALGORITHM = HS256
 # ACCESS_TOKEN_EXPIRE_MINUTES = 30
 # enabled = False
+
+# OIDC
+#
+# Google can be used as an OIDC provider:
+#  See Instructions here: https://developers.google.com/identity/protocols/oauth2
+#
+# OIDC_CLIENT_ID = LONGRANDOMSTRING.apps.googleusercontent.com
+# OIDC_CLIENT_SECRET = BLABLA-BLABLABLA
+# OIDC_DISCOVERY_URL = https://accounts.google.com/.well-known/openid-configuration
 
 [tag]
 

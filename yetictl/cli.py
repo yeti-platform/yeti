@@ -39,6 +39,28 @@ def create_user(username: str, password: str, admin: bool = False, api_key: str 
 
 @cli.command()
 @click.argument("username")
+def toggle_user(username: str):
+    user = UserSensitive.find(username=username)
+    if not user:
+        raise RuntimeError(f"User with username {username} does not exist")
+    user.enabled = not user.enabled
+    user.save()
+    click.echo(f"User {username} succesfully {'enabled' if user.enabled else 'disabled'}")
+
+
+@cli.command()
+@click.argument("username")
+def toggle_admin(username: str):
+    user = UserSensitive.find(username=username)
+    if not user:
+        raise RuntimeError(f"User with username {username} does not exist")
+    user.admin = not user.admin
+    user.save()
+    click.echo(f"User {username} succesfully {'promoted to admin' if user.admin else 'demoted from admin'}")
+
+
+@cli.command()
+@click.argument("username")
 def delete_user(username: str) -> None:
     """Deletes a user from the system."""
     user = UserSensitive.find(username=username)
