@@ -2,10 +2,20 @@ import datetime
 from typing import Iterable
 
 from core.schemas import graph
-from core.schemas.observable import (TYPE_MAPPING, Observable, ObservableType,
-                                     ObservableTypes)
+from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, field_validator
+
+ObservableTypes = ()
+
+for key in TYPE_MAPPING:
+    if key in ["observable", "observables"]:
+        continue
+    cls = TYPE_MAPPING[key]
+    if not ObservableTypes:
+        ObservableTypes = cls
+    else:
+        ObservableTypes |= cls
 
 
 # Request schemas
@@ -105,7 +115,7 @@ async def observables_root() -> Iterable[Observable]:
 
 
 @router.post("/")
-async def new(request: NewObservableRequest) -> Observable:
+async def new(request: NewObservableRequest) -> ObservableTypes:
     """Creates a new observable in the database.
 
     Raises:
@@ -173,12 +183,9 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[ObservableTypes
 async def details(observable_id) -> ObservableTypes:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
-    print(f"/{observable_id} --> {observable}\n")
     if not observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     observable.get_tags()
-    print(f"--------> TYPE: {type(observable)}")
-    print(f"After get_tags /{observable_id} --> {observable}\n")
     return observable
 
 
