@@ -168,13 +168,10 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[ObservableTypes
                 new_observable.value, tags=new_observable.tags
             )
         else:
-            new_observable = new_observable.model_dump()
-            obs_type = new_observable.pop("type")
-            tags = new_observable.pop("tags", [])
-            cls = TYPE_MAPPING[obs_type]
-            observable = cls(**new_observable).save()
-            if tags:
-                observable = observable.tag(tags)
+            cls = TYPE_MAPPING[new_observable.type]
+            observable = cls(value=new_observable.value).save()
+            if new_observable.tags:
+                observable = observable.tag(new_observable.tags)
         added.append(observable)
     return added
 
