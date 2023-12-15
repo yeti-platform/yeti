@@ -1,11 +1,11 @@
 import datetime
 from typing import Iterable
 
+from core.schemas import graph
+from core.schemas.observable import (TYPE_MAPPING, Observable, ObservableType,
+                                     ObservableTypes)
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, field_validator
-
-from core.schemas import graph
-from core.schemas.observable import Observable, ObservableType
 
 
 # Request schemas
@@ -15,6 +15,21 @@ class NewObservableRequest(BaseModel):
     value: str
     tags: list[str] = []
     type: ObservableType
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, value) -> list[str]:
+        for tag in value:
+            if not tag:
+                raise ValueError("Tags cannot be empty")
+        return value
+
+
+class NewExtendedObservableRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    observable: ObservableTypes
+    tags: list[str] = []
 
     @field_validator("tags")
     @classmethod
@@ -113,8 +128,28 @@ async def new(request: NewObservableRequest) -> Observable:
     return new
 
 
+@router.post("/extended")
+async def new(request: NewExtendedObservableRequest) -> ObservableTypes:
+    """Creates a new observable in the database with extended properties.
+
+    Raises:
+        HTTPException(400) if observable already exists.
+    """
+    observable = Observable.find(value=request.observable.value, type=request.observable.type)
+    if observable:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Observable with value {request.observable.value} already exists",
+        )
+    cls = TYPE_MAPPING[request.observable.type]
+    new = cls(**request.observable.dict()).save()
+    if request.tags:
+        new.tag(request.tags)
+    return new
+
+
 @router.post("/bulk")
-async def bulk_add(request: NewBulkObservableAddRequest) -> list[Observable]:
+async def bulk_add(request: NewBulkObservableAddRequest) -> list[ObservableTypes]:
     """Bulk-creates new observables in the database."""
     added = []
     for new_observable in request.observables:
@@ -123,19 +158,20 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> list[Observable]:
                 new_observable.value, tags=new_observable.tags
             )
         else:
-            observable = Observable(
-                value=new_observable.value,
-                type=new_observable.type,
-                created=datetime.datetime.now(datetime.timezone.utc),
-            ).save()
-            if new_observable.tags:
-                observable = observable.tag(new_observable.tags)
+            new_observable = new_observable.dict()
+            obs_type = new_observable.pop("type")
+            tags = new_observable.pop("tags", [])
+            cls = TYPE_MAPPING[obs_type]
+            observable = cls(**new_observable)
+            observable.save()
+            if tags:
+                observable = observable.tag(tags)
         added.append(observable)
     return added
 
 
 @router.get("/{observable_id}")
-async def details(observable_id) -> Observable:
+async def details(observable_id) -> ObservableTypes:
     """Returns details about an observable."""
     observable = Observable.get(observable_id)
     if not observable:
@@ -145,7 +181,7 @@ async def details(observable_id) -> Observable:
 
 
 @router.post("/{observable_id}/context")
-async def add_context(observable_id, request: AddContextRequest) -> Observable:
+async def add_context(observable_id, request: AddContextRequest) -> ObservableTypes:
     """Adds context to an observable."""
     observable = Observable.get(observable_id)
     if not observable:
@@ -160,7 +196,7 @@ async def add_context(observable_id, request: AddContextRequest) -> Observable:
 
 
 @router.post("/{observable_id}/context/delete")
-async def delete_context(observable_id, request: DeleteContextRequest) -> Observable:
+async def delete_context(observable_id, request: DeleteContextRequest) -> ObservableTypes:
     """Removes context to an observable."""
     observable = Observable.get(observable_id)
     if not observable:
@@ -193,7 +229,7 @@ async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
 
 
 @router.post("/add_text")
-async def add_text(request: AddTextRequest) -> Observable:
+async def add_text(request: AddTextRequest) -> ObservableTypes:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
