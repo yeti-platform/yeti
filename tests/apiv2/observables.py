@@ -12,15 +12,6 @@ class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
 
-    def assert_empty_file_observable(self, data):
-        self.assertEqual(data["name"], "empty")
-        self.assertEqual(data["type"], "file")
-        self.assertEqual(data["size"], 0)
-        self.assertEqual(data["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
-        self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
-        self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
-        self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
-
     def test_get_observable(self):
         obs = file.File(
             value="empty",
@@ -34,7 +25,13 @@ class ObservableTest(unittest.TestCase):
         response = client.get(f"/api/v2/observables/{obs.id}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assert_empty_file_observable(data)
+        self.assertEqual(data["name"], "empty")
+        self.assertEqual(data["type"], "file")
+        self.assertEqual(data["size"], 0)
+        self.assertEqual(data["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+        self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
+        self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
         self.assertIn("tag1", data["tags"])
 
     def test_post_existing_observable(self):
@@ -91,7 +88,14 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data['observables']), 1)
-        self.assert_empty_file_observable(data["observables"][0])
+        observable = data['observables'][0]
+        self.assertEqual(observable["name"], "empty")
+        self.assertEqual(observable["type"], "file")
+        self.assertEqual(observable["size"], 0)
+        self.assertEqual(observable["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        self.assertEqual(observable["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+        self.assertEqual(observable["md5"], "d41d8cd98f00b204e9800998ecf8427e")
+        self.assertEqual(observable["mime_type"], "inode/x-empty; charset=binary")
 
     def test_observable_search_tags_nonexist(self):
         obs1 = hostname.Hostname(value="tomchop.me").save()
@@ -200,7 +204,13 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(data["id"])
-        self.assert_empty_file_observable(data)
+        self.assertEqual(data["name"], "empty")
+        self.assertEqual(data["type"], "file")
+        self.assertEqual(data["size"], 0)
+        self.assertEqual(data["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+        self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
+        self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
         self.assertIn("tag1", data["tags"])
         self.assertIn("tag2", data["tags"])
         self.assertEqual(data["tags"]["tag1"]["fresh"], True)
