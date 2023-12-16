@@ -9,13 +9,13 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import requests
-from dateutil import parser
-from pydantic import BaseModel, Field
-
 from core import database_arango
 from core.config.config import yeti_config
+from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
+from dateutil import parser
+from pydantic import BaseModel, Field
 
 
 def now():
@@ -41,12 +41,12 @@ class TaskParams(BaseModel):
     params: dict = Field(default_factory=dict)
 
 
-class Task(BaseModel, database_arango.ArangoYetiConnector):
+class Task(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tasks"
     _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}
 
-    id: str | None = None
+    #id: str | None = None
     name: str
     enabled: bool = False
     description: str = ""

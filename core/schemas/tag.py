@@ -3,10 +3,10 @@ import re
 import unicodedata
 from typing import ClassVar
 
-from pydantic import BaseModel, Field
-
 from core import database_arango
 from core.helpers import now
+from core.schemas.model import YetiModel
+from pydantic import BaseModel, Field
 
 DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
 
@@ -24,11 +24,11 @@ def normalize_name(tag_name: str) -> str:
     tag_name = re.sub(r"[^a-zA-Z0-9_:-]", "", tag_name)
     return tag_name
 
-class Tag(BaseModel, database_arango.ArangoYetiConnector):
+class Tag(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tags"
     _type_filter: ClassVar[str | None] = None
 
-    id: str | None = None
+    #id: str | None = None
     name: str
     count: int = 0
     created: datetime.datetime = Field(default_factory=now)

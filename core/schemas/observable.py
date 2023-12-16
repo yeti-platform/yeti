@@ -8,7 +8,7 @@ from typing import ClassVar, Literal, Type
 import validators
 from core import database_arango
 from core.helpers import now, refang
-from core.schemas.graph import TagRelationship
+from core.schemas.graph import TaggedModel, TagRelationship
 from pydantic import BaseModel, Field
 
 
@@ -40,14 +40,14 @@ class ObservableType(str, Enum):
     user_agent = "user_agent"
 
 
-class Observable(BaseModel, database_arango.ArangoYetiConnector):
+class Observable(TaggedModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
 
     root_type: Literal["observable"] = "observable"
-    id: str | None = None
+#    id: str | None = None
     value: str = Field(min_length=1)
-    tags: dict[str, TagRelationship] = {}
+#    tags: dict[str, TagRelationship] = {}
     type: ObservableType
     created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
