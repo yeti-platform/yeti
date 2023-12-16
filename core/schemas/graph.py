@@ -1,12 +1,14 @@
 import datetime
 from typing import ClassVar
 
-from pydantic import BaseModel
-
 from core import database_arango
+from core.schemas.model import YetiModel
+from pydantic import BaseModel, computed_field
 
 
 # Database model
+# Relationship and TagRelationship do not inherit from YetiModel
+# because they represent and id in the form of collection_name/id
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "links"
     _type_filter: ClassVar[str | None] = None
@@ -38,3 +40,11 @@ class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 RelationshipTypes = Relationship | TagRelationship
+
+class TaggedModel(YetiModel):
+   _tags: dict[str, TagRelationship] = {}
+
+   @computed_field(return_type=dict[str, TagRelationship])
+   @property
+   def tags(self):
+      return self._tags
