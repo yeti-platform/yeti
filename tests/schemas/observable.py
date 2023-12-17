@@ -24,6 +24,29 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(result.id)
         self.assertEqual(result.value, "toto.com")
 
+    def test_observable_update(self) -> None:
+        """Tests that calling save() on an observable treats it as PATCH."""
+        result = registry_key.RegistryKey(
+            key="Microsoft\\Windows\\CurrentVersion\\Run",
+            value="persist",
+            data=b"cmd.exe",
+            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software).save()
+        result.tag(['tag1'])
+        result.add_context(source='source1', context={'some': 'info'})
+        self.assertEqual(list(result.tags.keys()), ['tag1'])
+        self.assertEqual(
+            result.context[0], {'source': 'source1', 'some': 'info'})
+        result = registry_key.RegistryKey(
+            key="Microsoft\\Windows\\CurrentVersion\\RunOnce",
+            value="persist",
+            data=b"other.exe",
+            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software).save()
+        self.assertEqual(result.key, "Microsoft\\Windows\\CurrentVersion\\RunOnce")
+        self.assertEqual(result.data, b"other.exe")
+        self.assertEqual(list(result.tags.keys()), ['tag1'])
+        self.assertEqual(
+            result.context[0], {'source': 'source1', 'some': 'info'})
+
     def test_create_generic_observable(self):
         result = generic_observable.GenericObservable(value="Some_String").save()
         self.assertIsNotNone(result.id)
