@@ -5,7 +5,7 @@ from typing import ClassVar
 from core import database_arango
 from core.schemas.model import YetiModel
 from passlib.context import CryptContext
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

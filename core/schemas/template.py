@@ -4,7 +4,6 @@ from typing import ClassVar
 import jinja2
 from core import database_arango
 from core.schemas.model import YetiModel
-from pydantic import BaseModel
 
 # TODO: Import Jinja functions to render templates
 

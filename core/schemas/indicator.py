@@ -7,7 +7,8 @@ from typing import ClassVar, Literal, Type
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiModel
-from pydantic import BaseModel, Field, PrivateAttr, field_validator
+from pydantic import (BaseModel, Field, PrivateAttr, computed_field,
+                      field_validator)
 
 
 def future():
@@ -41,9 +42,8 @@ class DiamondModel(Enum):
 class Indicator(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "indicators"
     _type_filter: ClassVar[str] = ""
+    _root_type: Literal["indicator"] = "indicator"
 
-    root_type: Literal["indicator"] = "indicator"
-    #id: str | None = None
     name: str
     type: str
     description: str = ""
@@ -57,6 +57,11 @@ class Indicator(YetiModel, database_arango.ArangoYetiConnector):
     diamond: DiamondModel
     kill_chain_phases: list[str] = []
     relevant_tags: list[str] = []
+
+    @computed_field(return_type=Literal["indicator"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @classmethod
     def load(cls, object: dict):

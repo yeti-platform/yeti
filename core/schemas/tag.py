@@ -6,7 +6,7 @@ from typing import ClassVar
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiModel
-from pydantic import BaseModel, Field
+from pydantic import Field, computed_field
 
 DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
 
@@ -28,7 +28,6 @@ class Tag(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tags"
     _type_filter: ClassVar[str | None] = None
 
-    #id: str | None = None
     name: str
     count: int = 0
     created: datetime.datetime = Field(default_factory=now)
