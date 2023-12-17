@@ -6,6 +6,14 @@ from pydantic import model_validator
 
 
 class UserAccount(observable.Observable):
+    """A user account observable based on the Oasis schema.
+    https://docs.oasis-open.org/cti/stix/v2.1/os/stix-v2.1-os.html#_azo70vgj1vm2
+
+    Args:
+       value: The value of the observable. This is the username of the account.
+    """
+
+
     type: Literal[observable.ObservableType.user_account] = observable.ObservableType.user_account
     user_id: str | None = None
     credential: str | None = None
