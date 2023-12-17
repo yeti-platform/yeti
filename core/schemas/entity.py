@@ -5,7 +5,7 @@ from typing import ClassVar, Literal, Type
 
 from core import database_arango
 from core.helpers import now
-from core.schemas.graph import TaggedModel
+from core.schemas.model import YetiTagModel
 from pydantic import Field, computed_field
 
 
@@ -25,7 +25,7 @@ class EntityType(str, Enum):
     course_of_action = "course-of-action"
 
 
-class Entity(TaggedModel, database_arango.ArangoYetiConnector):
+class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "entities"
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["entity"] = "entity"

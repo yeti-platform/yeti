@@ -1,3 +1,4 @@
+from core.schemas.graph import TagRelationship
 from pydantic import BaseModel, computed_field
 
 
@@ -12,3 +13,12 @@ class YetiModel(BaseModel):
    @property
    def id(self):
       return self.__id
+   
+class YetiTagModel(YetiModel):
+   _tags: dict[str, TagRelationship] = {}
+
+   @computed_field(return_type=dict[str, TagRelationship])
+   @property
+   def tags(self):
+      return self._tags
+

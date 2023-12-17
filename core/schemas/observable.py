@@ -8,7 +8,7 @@ from typing import ClassVar, Literal
 import validators
 from core import database_arango
 from core.helpers import now, refang
-from core.schemas.graph import TaggedModel
+from core.schemas.model import YetiTagModel
 from pydantic import Field, computed_field
 
 
@@ -40,7 +40,7 @@ class ObservableType(str, Enum):
     user_agent = "user_agent"
 
 
-class Observable(TaggedModel, database_arango.ArangoYetiConnector):
+class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["observable"] = "observable"
