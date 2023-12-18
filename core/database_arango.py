@@ -215,17 +215,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         doc_dict = self.model_dump(exclude_unset=True)
         if doc_dict.get("id") is not None:
-            print("UPDATE ----->", doc_dict)
             result = self._update(self.model_dump_json())
-            print("UPDATED ---->", result)
         else:
-            print("INSERT ---->", doc_dict)
             result = self._insert(self.model_dump_json())
-            print("INSERTED -->", result)
             if not result:
                 result = self._update(self.model_dump_json(exclude={"created"}))
         cls = self.__class__(**result)
-        print("SAVED ----->", cls)
         return cls
 
     @classmethod
@@ -444,6 +439,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         neighbors = list(self._db.aql.execute(aql, bind_vars=args))
         if neighbors:
+            neighbors[0]["__id"] = neighbors[0].pop("_key")
             relationship = Relationship.load(neighbors[0])
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
             relationship.description = description
@@ -489,7 +485,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if path["edges"]:
                 tag_data = Tag.load(path["vertices"][1])
                 edge_data = path["edges"][0]
-                edge_data["id"] = edge_data.pop("_id")
+                #edge_data["id"] = edge_data.pop("_id")
+                edge_data["__id"] = edge_data.pop("_id")
                 tag_relationship = TagRelationship.load(edge_data)
                 relationships.append((tag_relationship, tag_data))
                 self._tags[tag_data.name] = tag_relationship
@@ -651,6 +648,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         conditions = []
         sorts = []
 
+        from core.schemas.graph import TagRelationship
+
         # We want user-defined sorts to take precedence.
         for field, asc in sorting:
             sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
@@ -734,6 +733,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         total = documents.statistics().get("fullCount", count)
         for doc in documents:
             doc["__id"] = doc.pop("_key")
+            tags = {}
+            for tag_name, value in doc.pop("tags", {}).items():
+                value["__id"] = value.pop("_key")
+                tags[tag_name] = TagRelationship.load(value)
+            doc["_tags"] = tags
             results.append(cls.load(doc))
         return results, total or 0
 
@@ -780,6 +784,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
 
 def tagged_observables_export(cls, args):
+    from core.schemas.graph import TagRelationship
     aql = """
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
@@ -800,5 +805,10 @@ def tagged_observables_export(cls, args):
     results = []
     for doc in documents:
         doc["__id"] = doc.pop("_key")
+        tags = {}
+        for tag_name, value in doc.pop("tags", {}).items():
+            value["__id"] = value.pop("_key")
+            tags[tag_name] = TagRelationship.load(value)
+        doc["_tags"] = tags
         results.append(cls.load(doc))
     return results
