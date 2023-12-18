@@ -6,7 +6,6 @@ class YetiModel(BaseModel):
    __id: str | None = None
 
    def __init__(self, **data):
-      print("MODEL ---->", data)
       super().__init__(**data)
       self.__id = data.get("__id", None)
 
@@ -20,7 +19,6 @@ class YetiTagModel(YetiModel):
    _tags: dict[str, TagRelationship] = {}
 
    def __init__(self, **data):
-      print("TAGMODEL ---->", data)
       super().__init__(**data)
       self._tags = data.get("_tags", {})
 
