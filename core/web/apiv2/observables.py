@@ -9,8 +9,8 @@ from pydantic import BaseModel, ConfigDict, field_validator
 ObservableTypes = ()
 
 for key in TYPE_MAPPING:
-    if key in ["observable", "observables"]:
-        continue
+#    if key in ["observable", "observables"]:
+#        continue
     cls = TYPE_MAPPING[key]
     if not ObservableTypes:
         ObservableTypes = cls
@@ -128,6 +128,7 @@ async def new(request: NewObservableRequest) -> ObservableTypes:
     new = observable.save()
     if request.tags:
         new.tag(request.tags)
+    print("NEW POST ---->", new)
     return new
 
 

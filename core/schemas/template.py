@@ -13,7 +13,6 @@ class Template(YetiModel, database_arango.ArangoYetiConnector):
 
     _collection_name: ClassVar[str] = "templates"
 
-    #id: str | None = None
     name: str
     template: str
 

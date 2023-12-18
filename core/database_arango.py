@@ -215,12 +215,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         doc_dict = self.model_dump(exclude_unset=True)
         if doc_dict.get("id") is not None:
+            print("UPDATE ----->", doc_dict)
             result = self._update(self.model_dump_json())
+            print("UPDATED ---->", result)
         else:
+            print("INSERT ---->", doc_dict)
             result = self._insert(self.model_dump_json())
+            print("INSERTED -->", result)
             if not result:
                 result = self._update(self.model_dump_json(exclude={"created"}))
-        return self.__class__(**result)
+        cls = self.__class__(**result)
+        print("SAVED ----->", cls)
+        return cls
 
     @classmethod
     def list(cls: Type[TYetiObject]) -> Iterable[TYetiObject]:
@@ -318,7 +324,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 new_tag = tag.Tag(name=tag_name).save()
 
             tag_link = self.link_to_tag(new_tag.name)
-            self.tags[new_tag.name] = tag_link
+            self._tags[new_tag.name] = tag_link
 
             extra_tags |= set(new_tag.produces)
 
@@ -486,7 +492,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 edge_data["id"] = edge_data.pop("_id")
                 tag_relationship = TagRelationship.load(edge_data)
                 relationships.append((tag_relationship, tag_data))
-                self.tags[tag_data.name] = tag_relationship
+                self._tags[tag_data.name] = tag_relationship
         return relationships
 
     # pylint: disable=too-many-arguments

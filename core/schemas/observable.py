@@ -59,6 +59,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "ObservableTypes":
         if object["type"] in TYPE_MAPPING:
+            print("LOAD ------->", object)
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
 
