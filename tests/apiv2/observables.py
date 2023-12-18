@@ -141,7 +141,6 @@ class ObservableTest(unittest.TestCase):
             json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "tag2"]},
         )
         self.assertEqual(response.status_code, 200)
-
         response = client.post(
             "/api/v2/observables/search", json={"query": {"value": "toto"}, "page": 0, "count": 10}
         )
@@ -153,13 +152,11 @@ class ObservableTest(unittest.TestCase):
         self.assertIn("tag2", data["observables"][0]["tags"])
 
     def test_create_observable(self):
-        print("\n\n\n\n---------- TEST CREATE OBSERVABLE ----------")
         response = client.post(
             "/api/v2/observables/",
             json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "tag2"]},
         )
         data = response.json()
-        print("NEW TEST --->", data)
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(data["id"])
         self.assertEqual(data["value"], "toto.com")
