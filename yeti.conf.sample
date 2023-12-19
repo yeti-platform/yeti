@@ -8,6 +8,10 @@ export_root = /var/opt/yeti
 logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
 
+# Public hostname for Yeti. Use it if you want to specify an OIDC callback
+# For testing use also a port number, e.g. localhost:8000
+# netloc =
+
 [auth]
 
 ##

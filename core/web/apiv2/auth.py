@@ -21,6 +21,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
 SECRET_KEY = yeti_config.get('auth', "secret_key")
 ALGORITHM = yeti_config.get('auth', "algorithm")
 YETI_AUTH = yeti_config.get('auth', "enabled")
+YETI_NETLOC = yeti_config.get('system', "netloc")
 
 AUTH_MODULE = yeti_config.get('auth', "module")
 if AUTH_MODULE == 'oidc':
@@ -124,7 +125,7 @@ if AUTH_MODULE == 'oidc':
     @router.get('/oidc-login')
     async def login_info(request: Request):
         redirect_uri = request.url_for('oidc_callback')
-        redirect_uri = redirect_uri.replace(netloc='localhost:8000')
+        redirect_uri = redirect_uri.replace(netloc=YETI_NETLOC)
         try:
             return await get_oauth_client().oidc.authorize_redirect(request, redirect_uri)
         except OAuthError:
