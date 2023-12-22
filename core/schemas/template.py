@@ -2,19 +2,17 @@ import os
 from typing import ClassVar
 
 import jinja2
-from pydantic import BaseModel
-
 from core import database_arango
+from core.schemas.model import YetiModel
 
 # TODO: Import Jinja functions to render templates
 
 
-class Template(BaseModel, database_arango.ArangoYetiConnector):
+class Template(YetiModel, database_arango.ArangoYetiConnector):
     """A template for exporting data to an external system."""
 
     _collection_name: ClassVar[str] = "templates"
 
-    id: str | None = None
     name: str
     template: str
 

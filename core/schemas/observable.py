@@ -3,13 +3,13 @@
 import datetime
 import re
 from enum import Enum
-from typing import ClassVar, Literal, Type
+from typing import ClassVar, Literal
 
 import validators
 from core import database_arango
 from core.helpers import now, refang
-from core.schemas.graph import TagRelationship
-from pydantic import BaseModel, Field
+from core.schemas.model import YetiTagModel
+from pydantic import Field, computed_field
 
 
 # Data Schema
@@ -41,19 +41,21 @@ class ObservableType(str, Enum):
     user_account = "user_account"
 
 
-class Observable(BaseModel, database_arango.ArangoYetiConnector):
+class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
+    _root_type: Literal["observable"] = "observable"
 
-    root_type: Literal["observable"] = "observable"
-    id: str | None = None
     value: str = Field(min_length=1)
-    tags: dict[str, TagRelationship] = {}
     type: ObservableType
     created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
     last_analysis: dict[str, datetime.datetime] = {}
 
+    @computed_field(return_type=Literal["observable"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @classmethod
     def load(cls, object: dict) -> "ObservableTypes":

@@ -6,15 +6,8 @@ from unittest import mock
 from core import database_arango, taskmanager
 from core.config.config import yeti_config
 from core.schemas.observable import Observable
-from core.schemas.task import (
-    AnalyticsTask,
-    ExportTask,
-    FeedTask,
-    Task,
-    TaskParams,
-    TaskStatus,
-    TaskType,
-)
+from core.schemas.task import (AnalyticsTask, ExportTask, FeedTask, Task,
+                               TaskParams, TaskStatus, TaskType)
 from core.schemas.template import Template
 
 
