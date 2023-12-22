@@ -10,7 +10,7 @@ ObservableTypes = ()
 
 for key in TYPE_MAPPING:
     if key in ["observable", "observables"]:
-      continue
+        continue
     cls = TYPE_MAPPING[key]
     if not ObservableTypes:
         ObservableTypes = cls
