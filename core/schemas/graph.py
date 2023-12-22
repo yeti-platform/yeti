@@ -11,8 +11,14 @@ from pydantic import BaseModel, computed_field
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "links"
     _type_filter: ClassVar[str | None] = None
-
     __id: str | None = None
+
+    source: str
+    target: str
+    type: str
+    description: str
+    created: datetime.datetime
+    modified: datetime.datetime
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -22,14 +28,6 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     @property
     def id(self):
         return self.__id
-
-#    id: str | None = None
-    source: str
-    target: str
-    type: str
-    description: str
-    created: datetime.datetime
-    modified: datetime.datetime
 
     @classmethod
     def load(cls, object: dict):
@@ -38,8 +36,12 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
 
 class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
     _type_filter: None = None
-
     __id: str | None = None
+
+    source: str
+    target: str
+    last_seen: datetime.datetime
+    fresh: bool
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -49,11 +51,7 @@ class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
     @property
     def id(self):
         return self.__id
-
-    source: str
-    target: str
-    last_seen: datetime.datetime
-    fresh: bool
+    
 
     @classmethod
     def load(cls, object: dict):
