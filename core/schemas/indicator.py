@@ -1,14 +1,14 @@
 import datetime
-import re
 import logging
-
+import re
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
-from pydantic import BaseModel, Field, PrivateAttr, field_validator
-
 from core import database_arango
 from core.helpers import now
+from core.schemas.model import YetiModel
+from pydantic import (BaseModel, Field, PrivateAttr, computed_field,
+                      field_validator)
 
 
 def future():
@@ -39,12 +39,11 @@ class DiamondModel(Enum):
     victim = "victim"
 
 
-class Indicator(BaseModel, database_arango.ArangoYetiConnector):
+class Indicator(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "indicators"
     _type_filter: ClassVar[str] = ""
+    _root_type: Literal["indicator"] = "indicator"
 
-    root_type: Literal["indicator"] = "indicator"
-    id: str | None = None
     name: str
     type: str
     description: str = ""
@@ -58,6 +57,11 @@ class Indicator(BaseModel, database_arango.ArangoYetiConnector):
     diamond: DiamondModel
     kill_chain_phases: list[str] = []
     relevant_tags: list[str] = []
+
+    @computed_field(return_type=Literal["indicator"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @classmethod
     def load(cls, object: dict):

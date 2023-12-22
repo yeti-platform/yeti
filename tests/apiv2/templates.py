@@ -1,12 +1,11 @@
 import unittest
 
-from fastapi.testclient import TestClient
-
 from core import database_arango
-from core.schemas.observables import hostname, ipv4
 from core.schemas.observable import Observable
+from core.schemas.observables import hostname, ipv4
 from core.schemas.template import Template
 from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -49,11 +48,10 @@ class TemplateTest(unittest.TestCase):
         self.assertEqual(data["id"], Template.find(name="FakeTemplate2").id)
 
     def test_update_template(self):
-        response = client.post(
-            f"/api/v2/templates",
+        response = client.patch(
+            f"/api/v2/templates/{self.template.id}",
             json={
                 "template": {
-                    "id": self.template.id,
                     "name": "FakeTemplateFoo",
                     "template": "<FOO>",
                 }

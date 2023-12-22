@@ -2,10 +2,10 @@ import re
 import secrets
 from typing import ClassVar
 
-from passlib.context import CryptContext
-from pydantic import BaseModel, Field
-
 from core import database_arango
+from core.schemas.model import YetiModel
+from passlib.context import CryptContext
+from pydantic import Field
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -14,12 +14,12 @@ def generate_api_key():
     return secrets.token_hex(32)
 
 
-class User(BaseModel, database_arango.ArangoYetiConnector):
+class User(YetiModel, database_arango.ArangoYetiConnector):
 
     _collection_name: ClassVar[str] = "users"
     _type_filter: ClassVar[None] = None
 
-    id: str | None = None
+    #id: str | None = None
     username: str
     enabled: bool = True
     admin: bool = False
