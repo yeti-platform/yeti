@@ -1,11 +1,10 @@
 import datetime
 from enum import Enum
 
+from core.schemas import entity, graph, indicator, observable, tag
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 from pydantic.functional_validators import field_validator
-
-from core.schemas import entity, graph, indicator, observable, tag
 
 GRAPH_TYPE_MAPPINGS = (
     {}

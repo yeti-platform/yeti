@@ -120,11 +120,8 @@ async def new(request: NewObservableRequest) -> ObservableTypes:
             status_code=400,
             detail=f"Observable with value {request.value} already exists",
         )
-    observable = Observable(
-        value=request.value,
-        type=request.type,
-        created=datetime.datetime.now(datetime.timezone.utc),
-    )
+    cls = TYPE_MAPPING[request.type]
+    observable = cls(value=request.value).save()
     new = observable.save()
     if request.tags:
         new.tag(request.tags)

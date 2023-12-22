@@ -141,7 +141,6 @@ class ObservableTest(unittest.TestCase):
             json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "tag2"]},
         )
         self.assertEqual(response.status_code, 200)
-
         response = client.post(
             "/api/v2/observables/search", json={"query": {"value": "toto"}, "page": 0, "count": 10}
         )

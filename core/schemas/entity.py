@@ -3,11 +3,10 @@ import re
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
-from pydantic import BaseModel, Field
-
 from core import database_arango
 from core.helpers import now
-from core.schemas.graph import TagRelationship
+from core.schemas.model import YetiTagModel
+from pydantic import Field, computed_field
 
 
 class EntityType(str, Enum):
@@ -26,18 +25,21 @@ class EntityType(str, Enum):
     course_of_action = "course-of-action"
 
 
-class Entity(BaseModel, database_arango.ArangoYetiConnector):
+class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "entities"
     _type_filter: ClassVar[str] = ""
+    _root_type: Literal["entity"] = "entity"
 
-    root_type: Literal["entity"] = "entity"
-    id: str | None = None
     type: str
     name: str = Field(min_length=1)
     description: str = ""
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
-    tags: dict[str, TagRelationship] = {}
+
+    @computed_field(return_type=Literal["entity"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @classmethod
     def load(cls, object: dict) -> "EntityTypes":
