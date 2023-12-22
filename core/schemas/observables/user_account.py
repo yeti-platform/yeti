@@ -6,11 +6,11 @@ from pydantic import model_validator
 
 
 class UserAccount(observable.Observable):
-    """A user account observable based on the Oasis schema.
+    """Represents a user account observable based on the Oasis schema.
     https://docs.oasis-open.org/cti/stix/v2.1/os/stix-v2.1-os.html#_azo70vgj1vm2
 
-    Args:
-       value: The value of the observable. This is the username of the account.
+    account_login and account_type must be provided.
+    Value should to be in the form <ACCOUNT_TYPE>:<ACCOUNT_LOGIN>.
     """
 
 
