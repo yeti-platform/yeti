@@ -204,11 +204,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
         newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
-    def save(self: TYetiObject) -> TYetiObject:
+    def save(
+            self: TYetiObject,
+            exclude_overwrite: list[str] = ['created', 'tags', 'context']
+        ) -> TYetiObject:
         """Inserts or updates a Yeti object into the database.
 
         We need to pass the JSON representation of the object to the database
         because it may contain fields that are not JSON serializable by arango.
+
+        Args:
+          exclude_overwrite: Exclude overwriting these fields if observable
+            already exists in the database.
 
         Returns:
           The created Yeti object.
@@ -219,9 +226,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             result = self._insert(self.model_dump_json())
             if not result:
-                result = self._update(self.model_dump_json(exclude={"created"}))
-        cls = self.__class__(**result)
-        return cls
+                result = self._update(self.model_dump_json(exclude=exclude_overwrite))
+        yeti_object = self.__class__(**result)
+        #TODO: Override this if we decide to implement YetiTagModel
+        if hasattr(self, 'tags'):
+            yeti_object.get_tags()
+        return yeti_object
 
     @classmethod
     def list(cls: Type[TYetiObject]) -> Iterable[TYetiObject]:
