@@ -22,9 +22,7 @@ class YetiTagModel(YetiModel):
       super().__init__(**data)
       self._tags = data.get("_tags", {})
 
-
    @computed_field(return_type=dict[str, TagRelationship])
    @property
    def tags(self):
       return self._tags
-
