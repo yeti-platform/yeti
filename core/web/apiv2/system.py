@@ -1,6 +1,6 @@
 from core.config.config import yeti_config
 from core.taskscheduler import app
-from core.web.auth import get_current_active_user
+from core.web.apiv2.auth import get_current_active_user
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 
@@ -38,7 +38,7 @@ async def get_config() -> SystemConfigResponse:
     return config
 
 
-@router.get("/workers", dependencies=[Depends(auth.get_current_active_user)])
+@router.get("/workers", dependencies=[Depends(get_current_active_user)])
 async def get_worker_status() -> WorkerStatusResponse:
     inspect = app.control.inspect(timeout=5, destination=None)
 
@@ -57,7 +57,7 @@ async def get_worker_status() -> WorkerStatusResponse:
         active=active_tasks,
     )
 
-@router.post("/restartworker/{worker_name}", dependencies=[Depends(auth.get_current_active_user)])
+@router.post("/restartworker/{worker_name}", dependencies=[Depends(get_current_active_user)])
 async def restart_worker(worker_name: str) -> WorkerRestartResponse:
     """Restarts a single or all Celery workers."""
     destination = [worker_name] if worker_name != "all" else None
