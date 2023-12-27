@@ -21,7 +21,7 @@ class JsonFormatter(Formatter):
             json_record["path"] = record.__dict__["path"]
         if "method" in record.__dict__:
             json_record["method"] = record.__dict__["method"]
-        if "body" in record.__dict__:
+        if "body" in record.__dict__ and record.__dict__["body"]:
             json_record["body"] = json.loads(record.__dict__["body"].decode("utf-8"))
         if record.levelno == logging.ERROR and record.exc_info:
             json_record["err"] = self.formatException(record.exc_info)
