@@ -62,23 +62,32 @@ async def set_body(request: Request, body: bytes):
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-
-    req_body = await request.body()
-    await set_body(request, req_body)
-    response = await call_next(request)
-    if getattr(request.state, 'username', None):
+    try:
+        req_body = await request.body()
+        await set_body(request, req_body)
+        response = await call_next(request)
         extra = {
-            "username": request.state.username,
+            "type": "audit.log",
             "path": request.url.path,
             "method": request.method,
+            "username": "anonymous",
+            # When behind a proxy, we should start uvicorn with --proxy-headers
+            # and use request.headers.get('x-forwarded-for') instead.
+            "client": request.client.host,
+            "status_code": response.status_code,
+            "body": b"{}"
         }
-        if request.method == "POST":
-            try:
-                extra["body"] = req_body
-            except:
-                extra["body"] = None
+        if getattr(request.state, 'username', None):
+            extra["username"] = request.state.username
+        if req_body:
+            extra["body"] = req_body
         if response.status_code == 200:
             logger.info("Authorized request", extra=extra)
         elif response.status_code == 401:
-            logger.info("Unauthorized request", extra=extra)
-    return response
+            logger.warning("Unauthorized request", extra=extra)
+        else:
+            logger.error("Bad request", extra=extra)
+        return response
+    except Exception as e:
+        logger.exception("Error while processing request")
+        raise e
