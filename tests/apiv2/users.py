@@ -1,10 +1,9 @@
-from core import database_arango
-
-from fastapi.testclient import TestClient
 import unittest
 
-from core.web import webapp
+from core import database_arango
 from core.schemas.user import UserSensitive
+from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -27,7 +26,8 @@ class userTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_search_users(self):
-        response = client.post("/api/v2/users/search", json={"username": "tomch"})
+        response = client.post("/api/v2/users/search", json={"username": "tomch"},
+                               headers={"Authorization": f"Bearer {self.user_token}"})
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(data)
