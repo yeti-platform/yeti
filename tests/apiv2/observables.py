@@ -2,6 +2,7 @@ import unittest
 
 from core import database_arango
 from core.schemas.observables import file, hostname
+from core.schemas.user import UserSensitive
 from core.web import webapp
 from fastapi.testclient import TestClient
 
