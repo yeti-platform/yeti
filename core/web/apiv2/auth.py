@@ -1,5 +1,4 @@
 import datetime
-from typing import Annotated
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from core.config.config import yeti_config
@@ -89,7 +88,7 @@ async def get_current_user(request: Request,
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Security(get_current_user)]
+    current_user: User = Security(get_current_user)
 ):
     
     disabled_exception = HTTPException(
