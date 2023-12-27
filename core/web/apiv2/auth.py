@@ -90,15 +90,11 @@ async def get_current_user(request: Request,
 async def get_current_active_user(
     current_user: User = Security(get_current_user)
 ):
-    
-    disabled_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="User account disabled. Please contact your server admin.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
     if not current_user.enabled:
-        raise disabled_exception
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="User account disabled. Please contact your server admin.",
+                            headers={"WWW-Authenticate": "Bearer"}
+                            )
     return current_user
 
 
