@@ -228,19 +228,25 @@ class ObservableTest(unittest.TestCase):
                 {"value": "toto.com", "type": "hostname"},
                 {"value": "toto2.com", "type": "hostname", "tags": ["tag1"]},
                 {"value": "toto3.com", "type": "guess", "tags": ["tag1", "tag2"]},
+                {"value": "blablabla", "type": "guess"},
             ]
         }
         response = client.post("/api/v2/observables/bulk", json=request)
         data = response.json()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data), 3)
-        self.assertEqual(data[0]["value"], "toto.com")
-        self.assertEqual(len(data[0]["tags"]), 0)
-        self.assertEqual(data[1]["value"], "toto2.com")
-        self.assertEqual(len(data[1]["tags"]), 1)
-        self.assertEqual(data[2]["value"], "toto3.com")
-        self.assertEqual(data[2]["type"], "hostname")
-        self.assertEqual(len(data[2]["tags"]), 2)
+        self.assertEqual(len(data['added']), 3)
+        self.assertEqual(len(data['failed']), 1)
+
+        added = data['added']
+        self.assertEqual(added[0]["value"], "toto.com")
+        self.assertEqual(len(added[0]["tags"]), 0)
+        self.assertEqual(added[1]["value"], "toto2.com")
+        self.assertEqual(len(added[1]["tags"]), 1)
+        self.assertEqual(added[2]["value"], "toto3.com")
+        self.assertEqual(added[2]["type"], "hostname")
+        self.assertEqual(len(added[2]["tags"]), 2)
+
+        self.assertEqual(data['failed'][0], "blablabla")
 
 
     def test_add_text(self):
@@ -266,7 +272,7 @@ class ObservableTest(unittest.TestCase):
         response = client.post("/api/v2/observables/add_text", json={"text": "--toto"})
         self.assertEqual(response.status_code, 400)
         data = response.json()
-        self.assertEqual(data["detail"], "Invalid observable '--toto'")
+        self.assertEqual(data["detail"], "Invalid type for observable '--toto'")
 
     def test_add_text_tags(self):
         response = client.post(

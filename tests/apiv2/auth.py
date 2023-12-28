@@ -137,7 +137,7 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["username"], "tomchop")
 
-        response = client.get(
+        response = client.post(
             "/api/v2/auth/logout", headers={"cookie": "yeti_session=" + token}
         )
         self.assertEqual(response.status_code, 200)
