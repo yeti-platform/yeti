@@ -82,29 +82,35 @@ class JsonFormatter(Formatter):
         return json.dumps(json_record)
 
 
+logger = logging.getLogger("yeti.audit.log")
+logger.setLevel(logging.INFO)
+logger.propagate = False
+
 log_queue = queue.Queue(-1)
 queue_handler = QueueHandler(log_queue)
-
-audit_logfile = yeti_config.get('system', 'audit_logfile')
-
-logger = logging.getLogger("yeti.audit.log")
-logger.propagate = False
 logger.addHandler(queue_handler)
 
 json_formatter = JsonFormatter()
-
 console_formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(username)s - %(path)s - %(method)s - %(body)s - %(client)s - %(status_code)s"
 )
+
+handlers = list()
+
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
+handlers.append(console_handler)
 
-file_handler = logging.FileHandler(audit_logfile)
-file_handler.setFormatter(json_formatter)
+audit_logfile = yeti_config.get('system', 'audit_logfile')
+if audit_logfile:
+    file_handler = logging.FileHandler(audit_logfile)
+    file_handler.setFormatter(json_formatter)
+    handlers.append(file_handler)
+else:
+    logging.getLogger().warning("Audit log file not configured, using console only")
 
 arango_handler = ArangoHandler()
+handlers.append(arango_handler)
 
-listener = QueueListener(log_queue, console_handler, file_handler, arango_handler)
+listener = QueueListener(log_queue, *handlers)
 listener.start()
-logger.setLevel(logging.INFO)
-
