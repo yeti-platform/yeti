@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import queue
+import sys
 from logging import Formatter
 from logging.handlers import QueueHandler, QueueListener
 
@@ -98,9 +99,10 @@ console_formatter = logging.Formatter(
 
 handlers = list()
 
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(console_formatter)
-handlers.append(console_handler)
+if 'unittest' not in sys.modules.keys():
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(console_formatter)
+    handlers.append(console_handler)
 
 audit_logfile = yeti_config.get('system', 'audit_logfile')
 
