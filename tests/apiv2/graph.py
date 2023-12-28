@@ -1,13 +1,13 @@
 import unittest
 
-from fastapi.testclient import TestClient
-
 from core import database_arango
 from core.schemas.entity import ThreatActor
 from core.schemas.graph import Relationship
 from core.schemas.indicator import Regex
 from core.schemas.observables import hostname, ipv4, url
+from core.schemas.user import UserSensitive
 from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -15,6 +15,11 @@ client = TestClient(webapp.app)
 class SimpleGraphTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.entity1 = ThreatActor(name="actor0").save()
@@ -162,6 +167,11 @@ class SimpleGraphTest(unittest.TestCase):
 class ComplexGraphTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.observable1 = hostname.Hostname(value="test1.com").save()
         self.observable1.tag(['tag1', 'tag2'])
         self.observable2 = hostname.Hostname(value="test2.com").save()

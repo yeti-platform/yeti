@@ -7,6 +7,7 @@
 export_root = /var/opt/yeti
 logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
+audit_logfile = /var/log/yeti_audit.log
 
 # Public scheme + hostname + port for Yeti. Use it if you want to specify an
 # OIDC callback

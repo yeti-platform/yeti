@@ -1,11 +1,11 @@
 import datetime
 import unittest
 
-from fastapi.testclient import TestClient
-
 from core import database_arango
 from core.schemas import entity
+from core.schemas.user import UserSensitive
 from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -13,6 +13,11 @@ client = TestClient(webapp.app)
 class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.entity1 = entity.ThreatActor(
             name="ta1",
             aliases=["badactor"],

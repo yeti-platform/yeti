@@ -1,19 +1,15 @@
 import datetime
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
-from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
-from fastapi.responses import RedirectResponse
-from fastapi.security import (
-    APIKeyCookie,
-    APIKeyHeader,
-    OAuth2PasswordBearer,
-    OAuth2PasswordRequestForm,
-)
-from jose import JWTError, jwt
-from starlette.requests import Request
-
 from core.config.config import yeti_config
 from core.schemas.user import User, UserSensitive
+from fastapi import (APIRouter, Depends, HTTPException, Response, Security,
+                     status)
+from fastapi.responses import RedirectResponse
+from fastapi.security import (APIKeyCookie, APIKeyHeader, OAuth2PasswordBearer,
+                              OAuth2PasswordRequestForm)
+from jose import JWTError, jwt
+from starlette.requests import Request
 
 ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
     minutes=yeti_config.get('auth', "access_token_expire_minutes")
@@ -62,7 +58,7 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta | None = N
     return encoded_jwt
 
 
-async def get_current_user(
+async def get_current_user(request: Request,
     token: str = Depends(oauth2_scheme), cookie: str = Security(cookie_scheme)
 ) -> UserSensitive:
     credentials_exception = HTTPException(
@@ -70,13 +66,7 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
-    disabled_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="User account disabled. Please contact your server admin.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
+    request.state.username = None
     if not token and not cookie:
         raise credentials_exception
 
@@ -93,9 +83,19 @@ async def get_current_user(
     user = UserSensitive.find(username=username)
     if user is None:
         raise credentials_exception
-    if not user.enabled:
-        raise disabled_exception
+    request.state.username = user.username
     return user
+
+
+async def get_current_active_user(
+    current_user: User = Security(get_current_user)
+):
+    if not current_user.enabled:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="User account disabled. Please contact your server admin.",
+                            headers={"WWW-Authenticate": "Bearer"}
+                            )
+    return current_user
 
 
 class GetCurrentUserWithPermissions:

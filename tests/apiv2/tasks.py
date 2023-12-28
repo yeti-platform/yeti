@@ -6,6 +6,7 @@ from core import database_arango, taskmanager
 from core.schemas.observable import Observable
 from core.schemas.task import ExportTask, FeedTask
 from core.schemas.template import Template
+from core.schemas.user import UserSensitive
 from core.web import webapp
 from fastapi.testclient import TestClient
 
@@ -27,6 +28,11 @@ class FakeTask(FeedTask):
 class TaskTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         taskmanager.TaskManager.register_task(FakeTask)
 
     def tearDown(self) -> None:
@@ -74,6 +80,11 @@ class TaskTest(unittest.TestCase):
 class ExportTaskTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
         self.template = Template(name="RandomTemplate", template="<BLAH>").save()
         self.export_task = ExportTask(

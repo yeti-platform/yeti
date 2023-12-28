@@ -1,10 +1,10 @@
-from core import database_arango
-
-from fastapi.testclient import TestClient
 import unittest
 
-from core.web import webapp
+from core import database_arango
 from core.schemas.tag import Tag
+from core.schemas.user import UserSensitive
+from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -12,6 +12,11 @@ client = TestClient(webapp.app)
 class tagTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.clear()
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.tag = Tag(name="tag1").save()
 
     def tearDown(self) -> None:

@@ -20,6 +20,7 @@ jobs:
       YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: 30
       YETI_AUTH_ENABLED: False
       YETI_SYSTEM_PLUGINS_PATH: ./plugins
+      YETI_SYSTEM_AUDIT_LOGFILE: /tmp/yeti_audit.log
     strategy:
       matrix:
         os: [ubuntu-latest]
