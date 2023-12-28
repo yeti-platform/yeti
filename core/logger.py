@@ -5,6 +5,7 @@ import queue
 from logging import Formatter
 from logging.handlers import QueueHandler, QueueListener
 
+from core.config.config import yeti_config
 from core.schemas.audit import AuditLog
 
 # Inspired by 
@@ -84,6 +85,8 @@ class JsonFormatter(Formatter):
 log_queue = queue.Queue(-1)
 queue_handler = QueueHandler(log_queue)
 
+audit_logfile = yeti_config.get('system', 'audit_logfile')
+
 logger = logging.getLogger("yeti.audit.log")
 logger.propagate = False
 logger.addHandler(queue_handler)
@@ -96,7 +99,7 @@ console_formatter = logging.Formatter(
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
 
-file_handler = logging.FileHandler("yeti.log")
+file_handler = logging.FileHandler(audit_logfile)
 file_handler.setFormatter(json_formatter)
 
 arango_handler = ArangoHandler()
