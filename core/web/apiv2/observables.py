@@ -51,6 +51,13 @@ class NewBulkObservableAddRequest(BaseModel):
     observables: list[NewObservableRequest]
 
 
+class BulkObservableAddResponse(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    added: list[ObservableTypes] = []
+    failed: list[str] = []
+
+
 class AddTextRequest(TagRequestMixin):
     model_config = ConfigDict(extra='forbid')
 
@@ -129,7 +136,7 @@ async def new(request: NewObservableRequest) -> ObservableTypes:
 
 
 @router.post("/extended")
-async def new(request: NewExtendedObservableRequest) -> ObservableTypes:
+async def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes:
     """Creates a new observable in the database with extended properties.
 
     Raises:
@@ -149,21 +156,34 @@ async def new(request: NewExtendedObservableRequest) -> ObservableTypes:
 
 
 @router.post("/bulk")
-async def bulk_add(request: NewBulkObservableAddRequest) -> list[ObservableTypes]:
+async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddResponse:
     """Bulk-creates new observables in the database."""
-    added = []
+    response = BulkObservableAddResponse()
     for new_observable in request.observables:
         if new_observable.type == ObservableType.guess:
-            observable = Observable.add_text(
-                new_observable.value, tags=new_observable.tags
-            )
+            try:
+                observable = Observable.add_text(
+                    new_observable.value, tags=new_observable.tags
+                )
+            except ValueError:
+                response.failed.append(new_observable.value)
+                continue
         else:
             cls = TYPE_MAPPING[new_observable.type]
-            observable = cls(value=new_observable.value).save()
-            if new_observable.tags:
-                observable = observable.tag(new_observable.tags)
-        added.append(observable)
-    return added
+            try:
+                observable = cls(value=new_observable.value).save()
+                if new_observable.tags:
+                    observable = observable.tag(new_observable.tags)
+            except ValueError:
+                response.failed.append(new_observable.value)
+                continue
+        response.added.append(observable)
+    if not response.added:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to add any observables.",
+        )
+    return response
 
 
 @router.get("/{observable_id}")
