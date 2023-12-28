@@ -11,12 +11,6 @@ class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["auditlog"] = "auditlog"
 
-    @computed_field(return_type=Literal["auditlog"])
-    @property
-    def root_type(self):
-        return self._root_type
-
-
     created: datetime.datetime
     username: str
     action: str
@@ -25,6 +19,11 @@ class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
     content: dict = {}
     ip: str
     status_code: int
+
+    @computed_field(return_type=Literal["auditlog"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @classmethod
     def load(cls, object: dict) -> "AuditLog":
