@@ -103,5 +103,3 @@ listener = QueueListener(log_queue, console_handler, file_handler, arango_handle
 listener.start()
 logger.setLevel(logging.INFO)
 
-#logging.getLogger("uvicorn.access").disabled = True
-
