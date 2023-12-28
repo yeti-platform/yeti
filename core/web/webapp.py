@@ -75,7 +75,8 @@ async def log_requests(request: Request, call_next):
             # and use request.headers.get('x-forwarded-for') instead.
             "client": request.client.host,
             "status_code": response.status_code,
-            "body": b"{}"
+            "content-type": request.headers.get("content-type", ""),
+            "body": b""
         }
         if getattr(request.state, 'username', None):
             extra["username"] = request.state.username
