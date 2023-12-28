@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import os
 import queue
 from logging import Formatter
 from logging.handlers import QueueHandler, QueueListener
@@ -102,10 +103,14 @@ console_handler.setFormatter(console_formatter)
 handlers.append(console_handler)
 
 audit_logfile = yeti_config.get('system', 'audit_logfile')
+
 if audit_logfile:
-    file_handler = logging.FileHandler(audit_logfile)
-    file_handler.setFormatter(json_formatter)
-    handlers.append(file_handler)
+    if os.access(audit_logfile, os.W_OK):
+        file_handler = logging.FileHandler(audit_logfile)
+        file_handler.setFormatter(json_formatter)
+        handlers.append(file_handler)
+    else:
+        logging.getLogger().warning("Audit log file not writable, using console only")
 else:
     logging.getLogger().warning("Audit log file not configured, using console only")
 
