@@ -45,7 +45,7 @@ class ArangoHandler(logging.Handler):
         else:
             content = {}
         AuditLog(
-            created = datetime.datetime.fromtimestamp(record.created),
+            timestamp = datetime.datetime.fromtimestamp(record.created),
             username = record.__dict__["username"],
             action = action,
             status = status,

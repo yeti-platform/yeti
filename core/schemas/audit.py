@@ -11,7 +11,7 @@ class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["auditlog"] = "auditlog"
 
-    created: datetime.datetime
+    timestamp: datetime.datetime
     username: str
     action: str
     status: str
