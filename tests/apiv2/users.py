@@ -1,3 +1,5 @@
+import logging
+import sys
 import unittest
 
 from core import database_arango
@@ -10,6 +12,7 @@ client = TestClient(webapp.app)
 
 class userTest(unittest.TestCase):
     def setUp(self) -> None:
+        logging.disable(sys.maxsize)
         database_arango.db.clear()
         self.admin = UserSensitive(username="admin", admin=True).save()
         self.user = UserSensitive(username="tomchop", admin=False).save()
