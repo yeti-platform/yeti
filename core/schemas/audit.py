@@ -24,6 +24,7 @@ class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
     target: str
     content: dict = {}
     ip: str
+    status_code: int
 
     @classmethod
     def load(cls, object: dict) -> "AuditLog":

@@ -37,6 +37,7 @@ class ArangoHandler(logging.Handler):
             status = "succeeded"
         else:
             status = "failed"
+        
         if "body" in record.__dict__ and record.__dict__["body"]:
             content = json.loads(record.__dict__["body"].decode("utf-8"))
         else:
@@ -48,6 +49,7 @@ class ArangoHandler(logging.Handler):
             status = status,
             target = target,
             content = content,
+            status_code = record.__dict__["status_code"],
             ip = record.__dict__["client"],
         ).save()
 
