@@ -1,15 +1,17 @@
-from core import database_arango
-
-from fastapi.testclient import TestClient
+import logging
+import sys
 import unittest
 
+from core import database_arango
 from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
 
 class userTest(unittest.TestCase):
     def setUp(self) -> None:
+        logging.disable(sys.maxsize)
         database_arango.db.clear()
 
     def test_get_config(self) -> None:

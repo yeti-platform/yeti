@@ -1,3 +1,5 @@
+import logging
+import sys
 import unittest
 
 from core import database_arango
@@ -19,6 +21,7 @@ TEST_TEMPLATE = """<blah>
 
 class TemplateTest(unittest.TestCase):
     def setUp(self) -> None:
+        logging.disable(sys.maxsize)
         database_arango.db.clear()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(

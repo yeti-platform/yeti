@@ -1,3 +1,5 @@
+import logging
+import sys
 import unittest
 
 from core import database_arango
@@ -11,6 +13,7 @@ client = TestClient(webapp.app)
 
 class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
+        logging.disable(sys.maxsize)
         database_arango.db.clear()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
@@ -320,6 +323,7 @@ class ObservableTest(unittest.TestCase):
 
 class ObservableContextTest(unittest.TestCase):
     def setUp(self) -> None:
+        logging.disable(sys.maxsize)
         database_arango.db.clear()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
