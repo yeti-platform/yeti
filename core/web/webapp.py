@@ -1,3 +1,5 @@
+import logging
+
 from core.config.config import yeti_config
 from core.logger import logger
 from core.web.apiv2 import (auth, entities, graph, indicators, observables,
@@ -62,10 +64,10 @@ async def set_body(request: Request, body: bytes):
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
+    req_body = await request.body()
+    await set_body(request, req_body)
+    response = await call_next(request)
     try:
-        req_body = await request.body()
-        await set_body(request, req_body)
-        response = await call_next(request)
         extra = {
             "type": "audit.log",
             "path": request.url.path,
@@ -88,7 +90,7 @@ async def log_requests(request: Request, call_next):
             logger.warning("Unauthorized request", extra=extra)
         else:
             logger.error("Bad request", extra=extra)
-        return response
     except Exception as e:
-        logger.exception("Error while processing request")
-        raise e
+        err_logger = logging.getLogger("webapp.log_requests")
+        err_logger.exception("Error while logging request")
+    return response
