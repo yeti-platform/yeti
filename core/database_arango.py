@@ -745,7 +745,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
             doc["__id"] = doc.pop("_key")
             tags = {}
             for tag_name, value in doc.pop("tags", {}).items():
-                value["__id"] = value.pop("_key")
+                if "_key" in value:
+                    value["__id"] = value.pop("_key")
+                elif "id" in value:
+                    value["__id"] = value.pop("id").split("/")[-1]
+                else:
+                    value["__id"] = ""
                 tags[tag_name] = TagRelationship.load(value)
             doc["_tags"] = tags
             results.append(cls.load(doc))
