@@ -6,8 +6,9 @@ from unittest import mock
 from core import database_arango, taskmanager
 from core.config.config import yeti_config
 from core.schemas.observable import Observable
-from core.schemas.task import (AnalyticsTask, ExportTask, FeedTask, Task,
-                               TaskParams, TaskStatus, TaskType)
+from core.schemas.task import (AnalyticsTask, ExportTask, FeedTask,
+                               OneShotTask, Task, TaskParams, TaskStatus,
+                               TaskType)
 from core.schemas.template import Template
 
 
@@ -126,6 +127,9 @@ class AnalyticsTest(unittest.TestCase):
             acts_on: list[str] = ["hostname"]
 
             def each(self, observable):
+                import logging
+                logging.debug("Running FakeTask")
+
                 # Do nothing, except call the mock.
                 mock_inner_each(observable.value)
 
@@ -170,6 +174,67 @@ class AnalyticsTest(unittest.TestCase):
             db_observable.last_analysis, {"FakeTask": datetime.datetime(1970, 1, 1)}
         )
 
+
+class OneShotTaskTest(unittest.TestCase):
+    def setUp(self) -> None:
+        class FakeOneShotTask(OneShotTask):
+            # classvar
+            _defaults = {
+                "name": "FakeOneShotTask",
+                "description": "Add fake metadata to hostname observable",
+                "enabled": True
+            }
+
+            acts_on: list[str] = ["hostname"]
+
+            def each(self, observable):
+                observable.add_context("test", {"test": "test"})
+
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+        self.fake_oneshot_task_class = FakeOneShotTask
+        observable = Observable.add_text("asd1.com")
+        observable.tag(["c2", "legit"])
+        observable.save()
+
+    def test_register_task(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_oneshot_task_class)
+        task = taskmanager.TaskManager.get_task("FakeOneShotTask")
+        self.assertEqual(task.name, "FakeOneShotTask")
+        self.assertEqual(task.type, TaskType.oneshot)
+        self.assertEqual(task.description, "Add fake metadata to hostname observable")
+        self.assertIsNone(task.last_run)
+
+    def test_registered_task_is_in_db(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_oneshot_task_class)
+        task = Task.find(name="FakeOneShotTask")
+        assert task is not None
+        self.assertEqual(task.name, "FakeOneShotTask")
+        self.assertEqual(task.type, TaskType.oneshot)
+        self.assertEqual(task.description, "Add fake metadata to hostname observable")
+        self.assertIsNone(task.last_run)
+
+    def test_task_types(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_oneshot_task_class)
+        task = taskmanager.TaskManager.get_task("FakeOneShotTask")
+        tasks, total = Task.filter({"type": "oneshot"})
+        self.assertEqual(len(tasks), 1)
+        self.assertEqual(tasks[0].name, "FakeOneShotTask")
+        self.assertIsInstance(tasks[0], Task)
+        task = self.fake_oneshot_task_class.find(name="FakeOneShotTask")
+        self.assertIsInstance(task, self.fake_oneshot_task_class)
+
+    def test_run_oneshot_task(self) -> None:
+        taskmanager.TaskManager.register_task(self.fake_oneshot_task_class)
+        taskmanager.TaskManager.run_task("FakeOneShotTask", TaskParams(params={"value": "asd1.com"}))
+        observable = Observable.find(value="asd1.com")
+        self.assertEqual(observable.context, [{'source': 'test', 'test': 'test'}])
+        task = self.fake_oneshot_task_class.find(name="FakeOneShotTask")
+        assert task is not None
+        self.assertEqual(task.status, TaskStatus.completed)
+        self.assertIsNotNone(task.last_run)
+
+    
 
 class ExportTaskTest(unittest.TestCase):
     def setUp(self) -> None:
