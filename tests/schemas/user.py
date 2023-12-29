@@ -1,13 +1,13 @@
 import datetime
+import unittest
 
 from core import database_arango
 from core.schemas.user import User, UserSensitive
 
-import unittest
-
 
 class UserTest(unittest.TestCase):
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.user1 = UserSensitive(username="tomchop").save()
 

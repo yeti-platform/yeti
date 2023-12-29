@@ -17,6 +17,7 @@ client = TestClient(webapp.app)
 class SimpleGraphTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
@@ -170,6 +171,7 @@ class SimpleGraphTest(unittest.TestCase):
 class ComplexGraphTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(

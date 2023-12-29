@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 from core import database_arango
@@ -5,11 +6,12 @@ from core.schemas import tag
 from core.schemas.entity import (AttackPattern, Entity, Malware, ThreatActor,
                                  Tool, Vulnerability)
 from core.schemas.observables import hostname
-import datetime
+
 
 class EntityTest(unittest.TestCase):
 
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.ta1 = ThreatActor(name="APT123", aliases=['CrazyFrog']).save()
         self.vuln1 = Vulnerability(name="CVE-2018-1337", title='elite exploit').save()
