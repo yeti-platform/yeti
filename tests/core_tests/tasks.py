@@ -26,6 +26,7 @@ class TaskTest(unittest.TestCase):
             def run(self):
                 for item in self._DATA:
                     Observable.add_text(item)
+
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.fake_task_class = FakeTask
