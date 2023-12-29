@@ -750,7 +750,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 elif "id" in value:
                     value["__id"] = value.pop("id").split("/")[-1]
                 else:
-                    value["__id"] = ""
+                    continue
                 tags[tag_name] = TagRelationship.load(value)
             doc["_tags"] = tags
             results.append(cls.load(doc))
