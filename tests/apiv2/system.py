@@ -12,6 +12,7 @@ client = TestClient(webapp.app)
 class userTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
     def test_get_config(self) -> None:

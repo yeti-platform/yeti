@@ -3,7 +3,8 @@ import unittest
 from core import database_arango
 from core.schemas.entity import Investigation, Malware, ThreatActor
 from core.schemas.indicator import DiamondModel, Query, QueryType, Regex
-from core.schemas.observables import generic_observable, hostname, ipv4, mac_address
+from core.schemas.observables import (generic_observable, hostname, ipv4,
+                                      mac_address)
 from core.schemas.task import ExportTask
 from core.schemas.template import Template
 from core.schemas.user import UserSensitive
@@ -11,6 +12,7 @@ from core.schemas.user import UserSensitive
 
 class TagTest(unittest.TestCase):
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
     def test_something(self):

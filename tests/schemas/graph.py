@@ -1,19 +1,20 @@
-from core import database_arango
-
-from fastapi.testclient import TestClient
+import datetime
 import unittest
-from core.schemas.observable import Observable
-from core.schemas.observables import hostname, ipv4
+
+from core import database_arango
 from core.schemas.entity import Malware
 from core.schemas.graph import Relationship
-import datetime
+from core.schemas.observable import Observable
+from core.schemas.observables import hostname, ipv4
 from core.web import webapp
+from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
 
 class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()

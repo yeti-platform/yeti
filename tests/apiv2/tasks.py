@@ -30,6 +30,7 @@ class FakeTask(FeedTask):
 class TaskTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
@@ -83,6 +84,7 @@ class TaskTest(unittest.TestCase):
 class ExportTaskTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
