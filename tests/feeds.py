@@ -2,19 +2,15 @@ import unittest
 
 from core import database_arango
 from core.config.config import yeti_config
-from plugins.feeds.public import (
-    attack,
-    feodo_tracker_ip_blocklist,
-    lolbas,
-    openphish,
-    timesketch,
-    hybrid_analysis
-)
+from plugins.feeds.public import (attack, feodo_tracker_ip_blocklist,
+                                  hybrid_analysis, lolbas, openphish,
+                                  timesketch)
 
 
 class FeedTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
     def test_feodo_tracker_ip_blocklist(self):

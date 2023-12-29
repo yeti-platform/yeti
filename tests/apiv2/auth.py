@@ -18,6 +18,7 @@ class AuthTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         cls.user1 = UserSensitive(username="tomchop")
         cls.user1.set_password("test")

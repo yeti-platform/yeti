@@ -26,7 +26,7 @@ class TaskTest(unittest.TestCase):
             def run(self):
                 for item in self._DATA:
                     Observable.add_text(item)
-
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.fake_task_class = FakeTask
 
@@ -100,6 +100,7 @@ class TaskTest(unittest.TestCase):
 
 class AnalyticsTest(unittest.TestCase):
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.observable1 = Observable.add_text("asd1.com")
         self.observable2 = Observable.add_text("asd2.com")
@@ -171,6 +172,7 @@ class AnalyticsTest(unittest.TestCase):
 
 class ExportTaskTest(unittest.TestCase):
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.observable1 = Observable.add_text("asd1.com", tags=["c2", "legit"])
         self.observable2 = Observable.add_text("asd2.com", tags=["c2"])

@@ -13,6 +13,7 @@ client = TestClient(webapp.app)
 class userTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.admin = UserSensitive(username="admin", admin=True).save()
         self.user = UserSensitive(username="tomchop", admin=False).save()

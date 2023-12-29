@@ -2,12 +2,13 @@ import datetime
 import unittest
 
 from core import database_arango
-from core.schemas.indicator import Indicator, Regex, DiamondModel
+from core.schemas.indicator import DiamondModel, Indicator, Regex
 from core.schemas.observable import Observable
 
 
 class IndicatorTest(unittest.TestCase):
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
     def tearDown(self) -> None:
