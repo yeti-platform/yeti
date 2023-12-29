@@ -64,6 +64,13 @@ class ObservableTest(unittest.TestCase):
         obs1 = user_account.UserAccount(value="test@test.com").save()
         obs2 = email.Email(value="test@test.com").save()
         self.assertNotEqual(obs1.id, obs2.id)
+    
+    def test_two_observables_same_value_same_type(self):
+        """Tests that two observables with the same value and same type
+        are the same observable."""
+        obs1 = user_account.UserAccount(value="test@test.com").save()
+        obs2 = user_account.UserAccount(value="test@test.com").save()
+        self.assertEqual(obs1.id, obs2.id)
 
     def test_observable_find(self) -> None:
         result = hostname.Hostname(value="toto.com").save()
