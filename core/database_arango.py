@@ -89,7 +89,7 @@ class ArangoDatabase:
             },
         )
         self.db.collection("observables").add_persistent_index(
-            fields=["value","type"], unique=True
+            fields=["value", "type"], unique=True
         )
         self.db.collection("entities").add_persistent_index(
             fields=["name", "type"], unique=True
