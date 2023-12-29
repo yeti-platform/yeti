@@ -14,6 +14,7 @@ from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
 
 class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
     def tearDown(self) -> None:
