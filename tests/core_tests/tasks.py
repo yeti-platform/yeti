@@ -127,9 +127,6 @@ class AnalyticsTest(unittest.TestCase):
             acts_on: list[str] = ["hostname"]
 
             def each(self, observable):
-                import logging
-                logging.debug("Running FakeTask")
-
                 # Do nothing, except call the mock.
                 mock_inner_each(observable.value)
 
