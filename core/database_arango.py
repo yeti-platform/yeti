@@ -743,16 +743,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         total = documents.statistics().get("fullCount", count)
         for doc in documents:
             doc["__id"] = doc.pop("_key")
-            tags = {}
-            for tag_name, value in doc.pop("tags", {}).items():
-                if "_key" in value:
-                    value["__id"] = value.pop("_key")
-                elif "id" in value:
-                    value["__id"] = value.pop("id").split("/")[-1]
-                else:
-                    continue
-                tags[tag_name] = TagRelationship.load(value)
-            doc["_tags"] = tags
             results.append(cls.load(doc))
         return results, total or 0
 
@@ -820,10 +810,5 @@ def tagged_observables_export(cls, args):
     results = []
     for doc in documents:
         doc["__id"] = doc.pop("_key")
-        tags = {}
-        for tag_name, value in doc.pop("tags", {}).items():
-            value["__id"] = value.pop("_key")
-            tags[tag_name] = TagRelationship.load(value)
-        doc["_tags"] = tags
         results.append(cls.load(doc))
     return results
