@@ -323,3 +323,33 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(len(data["known"]), 1)
         self.assertEqual(data["known"][0]["value"], "test1.com")
         self.assertEqual(sorted(data["known"][0]["tags"].keys()), ["tag1", "tag2"])
+
+    def test_match_guessing_type(self):
+        response = client.post(
+            "/api/v2/graph/match",
+            json={
+                "observables": ["test3.com"],
+                "add_unknown": True,
+                "add_type": "guess",
+            },
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(data["known"][0]["value"], "test3.com")
+        self.assertEqual(data["known"][0]["type"], "hostname")
+
+        response = client.post(
+            "/api/v2/graph/match",
+            json={
+                "observables": ["test4.com"],
+                "add_unknown": True
+            },
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(data["known"][0]["value"], "test4.com")
+        self.assertEqual(data["known"][0]["type"], "hostname")
