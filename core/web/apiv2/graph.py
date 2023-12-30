@@ -1,10 +1,12 @@
 import datetime
 from enum import Enum
 
-from core.schemas import entity, graph, indicator, observable, tag
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 from pydantic.functional_validators import field_validator
+
+from core.schemas import entity, graph, indicator, observable, tag
+from core.schemas.observable import ObservableType
 
 GRAPH_TYPE_MAPPINGS = (
     {}
@@ -176,14 +178,15 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
     known = {}  # type: dict[str, observable.Observable]
     if request.add_unknown:
         for value in request.observables:
-            if request.add_type:
-                obs = observable.TYPE_MAPPING[request.add_type](value=value).save()
-                obs.tag(request.add_tags)
-            else:
+            if request.add_type == ObservableType.guess or not request.add_type:
                 try:
                     observable.Observable.add_text(value, tags=request.add_tags)
                 except ValueError:
-                    pass
+                    continue
+            elif request.add_type:
+                obs = observable.TYPE_MAPPING[request.add_type](value=value).save()
+                obs.tag(request.add_tags)
+
             unknown.discard(value)
 
     db_observables, _ = observable.Observable.filter(
