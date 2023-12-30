@@ -28,7 +28,7 @@ module = local
 # SECRET_KEY = SECRET
 # ALGORITHM = HS256
 # ACCESS_TOKEN_EXPIRE_MINUTES = 30
-# enabled = False
+enabled = True
 
 # OIDC
 #
