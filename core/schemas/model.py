@@ -20,7 +20,9 @@ class YetiTagModel(YetiModel):
 
    def __init__(self, **data):
       super().__init__(**data)
-      self._tags = data.get("_tags", {})
+      for tag_name, value in data.get("tags", {}).items():
+         self._tags[tag_name] = TagRelationship(**value)
+
 
    @computed_field(return_type=dict[str, TagRelationship])
    @property
