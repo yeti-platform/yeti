@@ -29,9 +29,9 @@ def create_user(username: str, password: str, admin: bool = False, api_key: str 
         raise RuntimeError(f"User with username {username} already exists")
     user = UserSensitive(username=username, admin=admin)
     user.set_password(password)
-    user.save()
     if api_key:
         user.reset_api_key(api_key=api_key)
+    user.save()
     click.echo(
         f"User {username} succesfully created! API key: {username}:{user.api_key}"
     )
