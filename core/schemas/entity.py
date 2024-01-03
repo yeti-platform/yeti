@@ -158,7 +158,7 @@ class Vulnerability(Entity):
     type: Literal[EntityType.vulnerability] = EntityType.vulnerability
 
     title: str = ""
-    base_score: float = Field(gte=0.0, lte=10.0, default=0.0)
+    base_score: float = Field(ge=0.0, le=10.0, default=0.0)
     severity: SeverityType = "none"
     reference: str = ""
 
