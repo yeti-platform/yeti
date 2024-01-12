@@ -4,7 +4,8 @@
 ## Basic system settings
 ##
 
-export_root = /var/opt/yeti
+# if export_path is not set, then the default value is /tmp
+export_path = /opt/yeti/exports
 logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
 audit_logfile = /var/log/yeti_audit.log
