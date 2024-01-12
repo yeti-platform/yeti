@@ -25,6 +25,7 @@ class IndicatorType(str, Enum):
     yara = "yara"
     sigma = "sigma"
     query = "query"
+    artifact = "artifact"
 
 
 class IndicatorMatch(BaseModel):
