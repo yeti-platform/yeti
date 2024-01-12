@@ -249,7 +249,7 @@ class ExportTask(Task):
     @property
     def output_file(self) -> str:
         """Returns the output file for the export."""
-        export_path = yeti_config.get('system', 'export_path', "/tmp")
+        export_path = yeti_config.get('system', 'export_path', "/opt/yeti/exports")
         name_slug = self.name.replace(" ", "_").lower()
         return os.path.abspath(os.path.join(export_path, name_slug))
 
@@ -263,7 +263,7 @@ class ExportTask(Task):
             fresh_tags=self.fresh_tags,
         )
 
-        export_path = pathlib.Path(yeti_config.get('system', 'export_path', "/tmp"))
+        export_path = pathlib.Path(yeti_config.get('system', 'export_path', "/opt/yeti/exports"))
         export_path.mkdir(parents=True, exist_ok=True)
         template = Template.find(name=self.template_name)
         assert template is not None
