@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import pathlib
 from enum import Enum
 from io import BytesIO
 from typing import ClassVar, Literal
@@ -241,7 +242,6 @@ class ExportTask(Task):
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
-    output_dir: str = "exports"
     acts_on: list[ObservableType] = []
     template_name: str
     sha256: str | None = None
@@ -249,9 +249,9 @@ class ExportTask(Task):
     @property
     def output_file(self) -> str:
         """Returns the output file for the export."""
-        base_path = yeti_config.get('system', 'export_path', "")
+        export_path = yeti_config.get('system', 'export_path', "/opt/yeti/exports")
         name_slug = self.name.replace(" ", "_").lower()
-        return os.path.abspath(os.path.join(base_path, self.output_dir, name_slug))
+        return os.path.abspath(os.path.join(export_path, name_slug))
 
     def run(self) -> None:
         """Runs the export asynchronously."""
@@ -263,8 +263,8 @@ class ExportTask(Task):
             fresh_tags=self.fresh_tags,
         )
 
-        if not os.path.isdir(self.output_dir):
-            os.mkdir(self.output_dir)
+        export_path = pathlib.Path(yeti_config.get('system', 'export_path', "/opt/yeti/exports"))
+        export_path.mkdir(parents=True, exist_ok=True)
         template = Template.find(name=self.template_name)
         assert template is not None
         logging.info(f"Rendering template {template.name} to {self.output_file}")
