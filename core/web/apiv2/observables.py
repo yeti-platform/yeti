@@ -19,7 +19,6 @@ for key in TYPE_MAPPING:
 
 
 class TagRequestMixin(BaseModel):
-
     tags: list[str] = []
 
     @field_validator("tags")
@@ -33,39 +32,45 @@ class TagRequestMixin(BaseModel):
 
 # Request schemas
 class NewObservableRequest(TagRequestMixin):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     value: str
     type: ObservableType
 
 
 class NewExtendedObservableRequest(TagRequestMixin):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
+
+    observable: ObservableTypes
+
+
+class PatchObservableRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
     observable: ObservableTypes
 
 
 class NewBulkObservableAddRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     observables: list[NewObservableRequest]
 
 
 class BulkObservableAddResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     added: list[ObservableTypes] = []
     failed: list[str] = []
 
 
 class AddTextRequest(TagRequestMixin):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     text: str
 
 
 class AddContextRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     source: str
     context: dict
@@ -77,29 +82,30 @@ class DeleteContextRequest(AddContextRequest):
 
 
 class ObservableSearchRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
-    query: dict[str, str|int|list] = {}
+    query: dict[str, str | int | list] = {}
     type: ObservableType | None = None
     count: int = 50
     page: int = 0
 
 
 class ObservableSearchResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     observables: list[ObservableTypes]
     total: int
 
 
 class ObservableTagRequest(TagRequestMixin):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     ids: list[str]
     strict: bool = False
 
+
 class ObservableTagResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     tagged: int
     tags: dict[str, dict[str, graph.TagRelationship]]
@@ -142,7 +148,9 @@ async def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes
     Raises:
         HTTPException(400) if observable already exists.
     """
-    observable = Observable.find(value=request.observable.value, type=request.observable.type)
+    observable = Observable.find(
+        value=request.observable.value, type=request.observable.type
+    )
     if observable:
         raise HTTPException(
             status_code=400,
@@ -152,6 +160,25 @@ async def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes
     new = cls(**request.observable.model_dump()).save()
     if request.tags:
         new.tag(request.tags)
+    return new
+
+
+@router.patch("/{observable_id}")
+async def patch(request: PatchObservableRequest, observable_id) -> ObservableTypes:
+    """Modifies observable in the database."""
+    db_observable = Observable.get(observable_id)
+    if not db_observable:
+        raise HTTPException(
+            status_code=404, detail=f"Observable {observable_id} not found"
+        )
+    if db_observable.type != request.observable.type:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Observable {observable_id} type mismatch. Provided '{request.observable.type}'. Expected '{db_observable.type}'",
+        )
+    update_data = request.observable.model_dump(exclude_unset=True)
+    updated_observable = db_observable.model_copy(update=update_data)
+    new = updated_observable.save()
     return new
 
 
@@ -212,7 +239,9 @@ async def add_context(observable_id, request: AddContextRequest) -> ObservableTy
 
 
 @router.post("/{observable_id}/context/delete")
-async def delete_context(observable_id, request: DeleteContextRequest) -> ObservableTypes:
+async def delete_context(
+    observable_id, request: DeleteContextRequest
+) -> ObservableTypes:
     """Removes context to an observable."""
     observable = Observable.get(observable_id)
     if not observable:
@@ -230,7 +259,7 @@ async def delete_context(observable_id, request: DeleteContextRequest) -> Observ
 async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     """Searches for observables."""
     query = request.query
-    tags = query.pop('tags', [])
+    tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
     observables, total = Observable.filter(
@@ -239,7 +268,7 @@ async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
         offset=request.page * request.count,
         count=request.count,
         sorting=[("created", False)],
-        graph_queries=[('tags', 'tagged', 'outbound', 'name')]
+        graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     return ObservableSearchResponse(observables=observables, total=total)
 
