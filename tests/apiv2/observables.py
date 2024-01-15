@@ -71,6 +71,18 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["md5"], None)
         self.assertEqual(data["mime_type"], None)
 
+    def test_patch_observable(self):
+        obs = hostname.Hostname(value="tomchop.me").save()
+        obs.tag(["tag1"])
+        response = client.patch(
+            f"/api/v2/observables/{obs.id}",
+            json={"observable": {"value": "tomchop.com", "type": "hostname"}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["value"], "tomchop.com")
+        self.assertEqual(data["type"], "hostname")
+        self.assertIn("tag1", data["tags"])
 
     def test_observable_search(self):
         hostname.Hostname(value="tomchop.me").save()
