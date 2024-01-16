@@ -164,7 +164,7 @@ class userTest(unittest.TestCase):
 
     def test_create_user(self):
         response = client.post(
-            f"/api/v2/users",
+            f"/api/v2/users/",
             json={"username": "newuser", "password": "password", "admin": False},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )

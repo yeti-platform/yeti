@@ -48,7 +48,7 @@ class TemplateTest(unittest.TestCase):
 
     def test_create_template(self):
         response = client.post(
-            "/api/v2/templates",
+            "/api/v2/templates/",
             json={"template": {"name": "FakeTemplate2", "template": "<BLAH>"}},
         )
         data = response.json()
