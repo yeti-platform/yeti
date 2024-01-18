@@ -4,12 +4,12 @@ import unittest
 from core import database_arango
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
-from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
-                                      command_line, docker_image, email, file,
+from core.schemas.observables import (asn, certificate, cidr, command_line,
+                                      docker_image, email, file,
                                       generic_observable, hostname, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_account, user_agent)
+                                      url, user_account, user_agent, wallet)
 
 
 class ObservableTest(unittest.TestCase):
@@ -242,12 +242,16 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable.value, "AS123")
         self.assertIsInstance(observable, asn.ASN)
 
-    def test_create_bitcoin_wallet(self) -> None:
-        """Tests creating a Bitcoin wallet."""
-        observable = bitcoin_wallet.BitcoinWallet(value="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa").save()
+    def test_create_wallet(self) -> None:
+        """Tests creating a wallet."""
+        observable = wallet.Wallet(value="btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+                                   coin="btc",
+                                   address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa").save()
+        self.assertIsInstance(observable, wallet.Wallet)
         self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        self.assertIsInstance(observable, bitcoin_wallet.BitcoinWallet)
+        self.assertEqual(observable.value, "btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+        self.assertEqual(observable.address, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+        self.assertEqual(observable.coin, "btc")
 
     def test_create_certificate(self) -> None:
         """Tests creating a certificate."""
