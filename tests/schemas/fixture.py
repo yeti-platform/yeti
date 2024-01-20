@@ -3,7 +3,7 @@ import unittest
 from core import database_arango
 from core.schemas.entity import Investigation, Malware, ThreatActor
 from core.schemas.indicator import DiamondModel, Query, QueryType, Regex
-from core.schemas.observables import (generic_observable, hostname, ipv4,
+from core.schemas.observables import (bic, generic_observable, hostname, iban, ipv4,
                                       mac_address)
 from core.schemas.task import ExportTask
 from core.schemas.template import Template
@@ -45,6 +45,11 @@ class TagTest(unittest.TestCase):
         hacker.tag(["hacker"])
         www_hacker.tag(["web", "hacker", "xmrig"])
         sus_hacker.tag(["web", "hacker", "hacker_sus"])
+
+        ibantest = iban.IBAN(value="GB33BUKB20201555555555").save()
+        bictest = bic.BIC(value="BUKBGB22XXX").save()
+        ibantest.link_to(bictest, "bic", "BIC")
+        ibantest.tag(["example"])
 
         ta = ThreatActor(name="HackerActor").save()
         ta.tag(["Hack!ré T@ëst"])
