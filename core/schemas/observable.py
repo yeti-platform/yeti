@@ -15,7 +15,7 @@ from pydantic import Field, computed_field
 # Data Schema
 class ObservableType(str, Enum):
     asn = "asn"
-    bitcoin_wallet = "bitcoin_wallet"
+    bic = "bic"
     certificate = "certificate"
     cidr = "cidr"
     command_line = "command_line"
@@ -24,6 +24,7 @@ class ObservableType(str, Enum):
     file = "file"
     guess = "guess"
     hostname = "hostname"
+    iban = "iban"
     imphash = "imphash"
     ipv4 = "ipv4"
     ipv6 = "ipv6"
@@ -39,6 +40,7 @@ class ObservableType(str, Enum):
     url = "url"
     user_agent = "user_agent"
     user_account = "user_account"
+    wallet = "wallet"
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -134,13 +136,13 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
 TYPE_VALIDATOR_MAP = {
     ObservableType.ipv4: validators.ipv4,
     ObservableType.ipv6: validators.ipv6,
-    ObservableType.bitcoin_wallet: validators.btc_address,
     ObservableType.sha256: validators.sha256,
     ObservableType.sha1: validators.sha1,
     ObservableType.md5: validators.md5,
     ObservableType.hostname: validators.domain,
     ObservableType.url: validators.url,
     ObservableType.email: validators.email,
+    ObservableType.iban: validators.iban,
 }
 
 REGEXES_OBSERVABLES = {
@@ -148,7 +150,9 @@ REGEXES_OBSERVABLES = {
     ObservableType.path: [
         re.compile(r"^(\/[^\/\0]+)+$"),
         re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
-    ]
+    ],
+
+    ObservableType.bic: [re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")],
 }
 
 
@@ -180,9 +184,9 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-from core.schemas.observables import (asn, bitcoin_wallet, certificate, cidr,
-                                      command_line, docker_image, email, file,
-                                      generic_observable, hostname, imphash,
+from core.schemas.observables import (asn, bic, certificate, cidr, command_line,
+                                      docker_image, email, file,
+                                      generic_observable, hostname, iban, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_account, user_agent)
+                                      url, user_account, user_agent, wallet)
