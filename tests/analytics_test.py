@@ -39,7 +39,7 @@ class AnalyticsTest(unittest.TestCase):
         mock_filter.assert_called_once_with({'query_type': indicator.QueryType.censys})
         mock_hosts_api.search.assert_called_once_with('test_pattern', fields=['ip'], pages=-1)
         mock_observable_instance.tag.assert_called_with(['test_tag'])
-        mock_query.link_to.assert_called_with(mock_observable_instance, 'censys',f'IP found with Censys query: {mock_query}')
+        mock_query.link_to.assert_called_with(mock_observable_instance, 'censys','IP found with Censys query: test_pattern')
 
 if __name__ == '__main__':
     unittest.main()
