@@ -2,7 +2,7 @@ import logging
 
 from core.config.config import yeti_config
 from core.logger import logger
-from core.web.apiv2 import (auth, entities, graph, indicators, observables,
+from core.web.apiv2 import (auth, entities, graph, indicators, dfiq, observables,
                             system, tag, tasks, templates, users)
 from fastapi import APIRouter, Depends, FastAPI, Request
 from starlette.middleware.sessions import SessionMiddleware
@@ -28,6 +28,10 @@ api_router.include_router(
 )
 api_router.include_router(
     indicators.router, prefix="/indicators", tags=["indicators"],
+    dependencies=[Depends(auth.get_current_active_user)]
+)
+api_router.include_router(
+    dfiq.router, prefix="/dfiq", tags=["dfiq"],
     dependencies=[Depends(auth.get_current_active_user)]
 )
 api_router.include_router(
