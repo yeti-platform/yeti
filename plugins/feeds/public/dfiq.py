@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import tempfile
@@ -7,21 +6,100 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from core import taskmanager
-from core.schemas import dfiq, task
+from core.schemas import dfiq, task, indicator
 
-def _process_scenario(obj):
-    print(obj)
-    # return entity.DFIQScenario(
-    #     name=obj["name"],
-    #     description=_format_description_from_obj(obj),
-    #     dfiq_id=obj["id"],
-    #     dfiq_version=obj["x_dfiq_version"],
-    #     tags=obj.get("tags", []),
-    #     contributors=obj.get("x_dfiq_contributors", []),
-    # ).save()
+import yaml
+
+
+def _process_scenario(data):
+    return dfiq.DFIQScenario(
+        name=data["display_name"],
+        description=data["description"] or "",
+        dfiq_id=data["id"],
+        dfiq_version=data["dfiq_version"],
+        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
+        contributors=data.get("contributors", []),
+    ).save()
+
+
+def _process_facet(data):
+    facet = dfiq.DFIQFacet(
+        name=data["display_name"],
+        description=data["description"] or "",
+        dfiq_id=data["id"],
+        dfiq_version=data["dfiq_version"],
+        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
+        contributors=data.get("contributors", []),
+        parent_ids=data.get("parent_ids", []),
+    ).save()
+    for parent_id in data.get("parent_ids", []):
+        parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
+        if not parent:
+            logging.error("Missing parent %s for %s", parent_id, data["id"])
+        if parent:
+            parent.link_to(facet, "facet", "Uses DFIQ Facet")
+
+
+def _process_question(data):
+    question = dfiq.DFIQQuestion(
+        name=data["display_name"],
+        description=data["description"] or "",
+        dfiq_id=data["id"],
+        dfiq_version=data["dfiq_version"],
+        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
+        contributors=data.get("contributors", []),
+        parent_ids=data.get("parent_ids", []),
+    ).save()
+    for parent_id in data.get("parent_ids", []):
+        parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
+        if not parent:
+            logging.error("Missing parent %s for %s", parent_id, data["id"])
+        if parent:
+            parent.link_to(question, "question", "Uses DFIQ question")
+
+
+def _process_approach(data):
+    approach = dfiq.DFIQApproach(
+        name=data["display_name"],
+        description=dfiq.DFIQApproachDescription(**data["description"]),
+        view=dfiq.DFIQApproachView(**data["view"]),
+        dfiq_id=data["id"],
+        dfiq_version=data["dfiq_version"],
+        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
+        contributors=data.get("contributors", [])
+    ).save()
+    parent_id = approach.dfiq_id.split(".")[0]
+    parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
+    if not parent:
+        logging.error("Missing parent %s for %s", parent_id, data["id"])
+    if parent:
+        parent.link_to(approach, "approach", "Uses DFIQ approach")
+
+    for processor in approach.view.processors:
+        for analysis in processor.analysis:
+            for step in analysis.steps:
+                if step.type in ("opensearch-query", "opensearch-query-variable"):
+                    query = indicator.Query.find(pattern=step.value)
+                    if not query:
+                        query = indicator.Query(
+                            name=step.description,
+                            pattern=step.value,
+                            relevant_tags=approach.dfiq_tags,
+                            query_type=indicator.QueryType.opensearch,
+                            location=processor.name,
+                            diamond=indicator.DiamondModel.victim
+                        ).save()
+                    approach.link_to(query, "query", "Uses query")
+                else:
+                    logging.warning("Unknown step type %s in %s", step.type, approach.dfiq_id)
+
+
 
 TYPE_FUNCTIONS = {
     "scenarios": _process_scenario,
+    "facets": _process_facet,
+    "questions": _process_question,
+    "approaches": _process_approach,
 }
 
 
@@ -43,9 +121,7 @@ class DFIQFeed(task.FeedTask):
 
         tempdir = tempfile.TemporaryDirectory()
         ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
-        dfiq_datadir = os.path.join(
-            tempdir.name, "dfiq-main", "data"
-        )
+        dfiq_datadir = os.path.join(tempdir.name, "dfiq-main", "data")
 
         object_cache = {}
 
@@ -58,45 +134,11 @@ class DFIQFeed(task.FeedTask):
                 if not file.endswith(".yaml"):
                     continue
                 with open(os.path.join(dfiq_datadir, subdir, file), "r") as f:
-                    TYPE_FUNCTIONS[subdir](f.read())
-                    obj_count +=1
+                    yaml_data = yaml.safe_load(f)
+                    TYPE_FUNCTIONS[subdir](yaml_data)
+                    obj_count += 1
 
             logging.info("Processed %s %s objects", obj_count, subdir)
-
-        # logging.info("Processing relationships")
-        # rel_count = 0
-        # for file in os.listdir(os.path.join(dfiq_datadir, "relationship")):
-        #     if not file.endswith(".json"):
-        #         continue
-        #     with open(os.path.join(dfiq_datadir, "relationship", file), "r") as f:
-        #         data = json.load(f)
-        #         for item in data["objects"]:
-        #             if item.get("revoked"):
-        #                 continue
-        #             if item['relationship_type'] == 'revoked-by':
-        #                 continue
-
-        #             if item["source_ref"].startswith("x-mitre") or item[
-        #                 "target_ref"
-        #             ].startswith("x-mitre"):
-        #                 continue
-
-        #             source = object_cache.get(item["source_ref"])
-        #             target = object_cache.get(item["target_ref"])
-
-        #             if not source:
-        #                 logging.error("Missing source for %s", item["source_ref"])
-        #             if not target:
-        #                 logging.error("Missing target for %s", item["target_ref"])
-
-        #             if source and target:
-        #                 source.link_to(
-        #                     target,
-        #                     item["relationship_type"],
-        #                     item.get("description", ""),
-        #                 )
-        #                 rel_count += 1
-        # logging.info("Processed %s relationships", rel_count)
 
 
 taskmanager.TaskManager.register_task(DFIQFeed)
