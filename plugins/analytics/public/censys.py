@@ -27,7 +27,7 @@ class CensysApiQuery(task.AnalyticsTask):
         for ip in ip_addresses:
           ip_object = Observable.add_text(ip)
           ip_object.tag(query.relevant_tags)
-          query.link_to(ip_object, 'censys', f'IP found with Censys query: {query}')
+          query.link_to(ip_object, 'censys', f'IP found with Censys query: {query.pattern}')
 
 
   def query_censys(self, api, query: str) -> set[str]:
