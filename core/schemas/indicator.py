@@ -25,7 +25,6 @@ class IndicatorType(str, Enum):
     yara = "yara"
     sigma = "sigma"
     query = "query"
-    artifact = "artifact"
 
 
 class IndicatorMatch(BaseModel):
@@ -118,6 +117,7 @@ class QueryType(str, Enum):
     osquery = "osquery"
     sql = "sql"
     splunk = "splunk"
+    censys = "censys"
 
 
 class Query(Indicator):
