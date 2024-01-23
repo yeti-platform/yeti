@@ -15,6 +15,7 @@ from pydantic import Field, computed_field
 # Data Schema
 class ObservableType(str, Enum):
     asn = "asn"
+    bic = "bic"
     certificate = "certificate"
     cidr = "cidr"
     command_line = "command_line"
@@ -23,6 +24,7 @@ class ObservableType(str, Enum):
     file = "file"
     guess = "guess"
     hostname = "hostname"
+    iban = "iban"
     imphash = "imphash"
     ipv4 = "ipv4"
     ipv6 = "ipv6"
@@ -140,6 +142,7 @@ TYPE_VALIDATOR_MAP = {
     ObservableType.hostname: validators.domain,
     ObservableType.url: validators.url,
     ObservableType.email: validators.email,
+    ObservableType.iban: validators.iban,
 }
 
 REGEXES_OBSERVABLES = {
@@ -147,7 +150,9 @@ REGEXES_OBSERVABLES = {
     ObservableType.path: [
         re.compile(r"^(\/[^\/\0]+)+$"),
         re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
-    ]
+    ],
+
+    ObservableType.bic: [re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")],
 }
 
 
@@ -179,9 +184,9 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-from core.schemas.observables import (asn, certificate, cidr, command_line,
+from core.schemas.observables import (asn, bic, certificate, cidr, command_line,
                                       docker_image, email, file,
-                                      generic_observable, hostname, imphash,
+                                      generic_observable, hostname, iban, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
                                       url, user_account, user_agent, wallet)
