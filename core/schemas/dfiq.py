@@ -2,12 +2,12 @@ import datetime
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
+import yaml
+from pydantic import BaseModel, Field, computed_field
+
 from core import database_arango
 from core.helpers import now
-
 from core.schemas.model import YetiModel
-
-from pydantic import BaseModel, Field, computed_field
 
 
 class DFIQType(str, Enum):
@@ -49,17 +49,55 @@ class DFIQScenario(DFIQBase):
 
     type: Literal[DFIQType.scenario] = DFIQType.scenario
 
+    @classmethod
+    def from_yaml(cls: Type["DFIQScenario"], yaml_string: str) -> "DFIQScenario":
+        yaml_data = yaml.safe_load(yaml_string)
+        return cls(
+            name=yaml_data["display_name"],
+            description=yaml_data["description"] or "",
+            dfiq_id=yaml_data["id"],
+            dfiq_version=yaml_data["dfiq_version"],
+            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
+            contributors=yaml_data.get("contributors", []),
+        )
+
 
 class DFIQFacet(DFIQBase):
     parent_ids: list[str] = []
 
     type: Literal[DFIQType.facet] = DFIQType.facet
 
+    @classmethod
+    def from_yaml(cls: Type["DFIQFacet"], yaml_string: str) -> "DFIQFacet":
+        yaml_data = yaml.safe_load(yaml_string)
+        return cls(
+            name=yaml_data["display_name"],
+            description=yaml_data["description"] or "",
+            dfiq_id=yaml_data["id"],
+            dfiq_version=yaml_data["dfiq_version"],
+            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
+            contributors=yaml_data.get("contributors", []),
+            parent_ids=yaml_data.get("parent_ids", []),
+        )
+
 
 class DFIQQuestion(DFIQBase):
     parent_ids: list[str] = []
 
     type: Literal[DFIQType.question] = DFIQType.question
+
+    @classmethod
+    def from_yaml(cls: Type["DFIQQuestion"], yaml_string: str) -> "DFIQQuestion":
+        yaml_data = yaml.safe_load(yaml_string)
+        return cls(
+            name=yaml_data["display_name"],
+            description=yaml_data["description"] or "",
+            dfiq_id=yaml_data["id"],
+            dfiq_version=yaml_data["dfiq_version"],
+            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
+            contributors=yaml_data.get("contributors", []),
+            parent_ids=yaml_data.get("parent_ids", []),
+        )
 
 
 class DFIQData(BaseModel):
@@ -114,6 +152,19 @@ class DFIQApproach(DFIQBase):
     view: DFIQApproachView
 
     type: Literal[DFIQType.approach] = DFIQType.approach
+
+    @classmethod
+    def from_yaml(cls: Type["DFIQApproach"], yaml_string: str) -> "DFIQApproach":
+        yaml_data = yaml.safe_load(yaml_string)
+        return cls(
+            name=yaml_data["display_name"],
+            description=DFIQApproachDescription(**yaml_data["description"]),
+            view=DFIQApproachView(**yaml_data["view"]),
+            dfiq_id=yaml_data["id"],
+            dfiq_version=yaml_data["dfiq_version"],
+            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
+            contributors=yaml_data.get("contributors", []),
+        )
 
 
 TYPE_MAPPING = {

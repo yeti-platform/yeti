@@ -8,70 +8,37 @@ from zipfile import ZipFile
 from core import taskmanager
 from core.schemas import dfiq, task, indicator
 
-import yaml
+
+def _process_scenario(yaml_string: str) -> None:
+    dfiq.DFIQScenario.from_yaml(yaml_string).save()
 
 
-def _process_scenario(data):
-    return dfiq.DFIQScenario(
-        name=data["display_name"],
-        description=data["description"] or "",
-        dfiq_id=data["id"],
-        dfiq_version=data["dfiq_version"],
-        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
-        contributors=data.get("contributors", []),
-    ).save()
-
-
-def _process_facet(data):
-    facet = dfiq.DFIQFacet(
-        name=data["display_name"],
-        description=data["description"] or "",
-        dfiq_id=data["id"],
-        dfiq_version=data["dfiq_version"],
-        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
-        contributors=data.get("contributors", []),
-        parent_ids=data.get("parent_ids", []),
-    ).save()
-    for parent_id in data.get("parent_ids", []):
+def _process_facet(yaml_string: str) -> None:
+    facet = dfiq.DFIQFacet.from_yaml(yaml_string).save()
+    for parent_id in facet.parent_ids:
         parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
         if not parent:
-            logging.error("Missing parent %s for %s", parent_id, data["id"])
+            logging.error("Missing parent %s for %s", parent_id, facet.dfiq_id)
         if parent:
             parent.link_to(facet, "facet", "Uses DFIQ Facet")
 
 
-def _process_question(data):
-    question = dfiq.DFIQQuestion(
-        name=data["display_name"],
-        description=data["description"] or "",
-        dfiq_id=data["id"],
-        dfiq_version=data["dfiq_version"],
-        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
-        contributors=data.get("contributors", []),
-        parent_ids=data.get("parent_ids", []),
-    ).save()
-    for parent_id in data.get("parent_ids", []):
+def _process_question(yaml_string: str) -> None:
+    question = dfiq.DFIQQuestion.from_yaml(yaml_string).save()
+    for parent_id in question.parent_ids:
         parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
         if not parent:
-            logging.error("Missing parent %s for %s", parent_id, data["id"])
+            logging.error("Missing parent %s for %s", parent_id, question.dfiq_id)
         if parent:
             parent.link_to(question, "question", "Uses DFIQ question")
 
 
-def _process_approach(data):
-    approach = dfiq.DFIQApproach(
-        name=data["display_name"],
-        description=dfiq.DFIQApproachDescription(**data["description"]),
-        view=dfiq.DFIQApproachView(**data["view"]),
-        dfiq_id=data["id"],
-        dfiq_version=data["dfiq_version"],
-        dfiq_tags=[tag.lower() for tag in data.get("tags", []) or []],
-        contributors=data.get("contributors", [])
-    ).save()
+def _process_approach(yaml_string: str) -> None:
+    approach = dfiq.DFIQApproach.from_yaml(yaml_string).save()
     parent_id = approach.dfiq_id.split(".")[0]
     parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
     if not parent:
-        logging.error("Missing parent %s for %s", parent_id, data["id"])
+        logging.error("Missing parent %s for %s", parent_id, approach.dfiq_id)
     if parent:
         parent.link_to(approach, "approach", "Uses DFIQ approach")
 
@@ -92,7 +59,6 @@ def _process_approach(data):
                     approach.link_to(query, "query", "Uses query")
                 else:
                     logging.warning("Unknown step type %s in %s", step.type, approach.dfiq_id)
-
 
 
 TYPE_FUNCTIONS = {
@@ -123,8 +89,6 @@ class DFIQFeed(task.FeedTask):
         ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
         dfiq_datadir = os.path.join(tempdir.name, "dfiq-main", "data")
 
-        object_cache = {}
-
         for subdir in TYPE_FUNCTIONS:
             logging.info("Processing %s", subdir)
             obj_count = 0
@@ -134,8 +98,7 @@ class DFIQFeed(task.FeedTask):
                 if not file.endswith(".yaml"):
                     continue
                 with open(os.path.join(dfiq_datadir, subdir, file), "r") as f:
-                    yaml_data = yaml.safe_load(f)
-                    TYPE_FUNCTIONS[subdir](yaml_data)
+                    TYPE_FUNCTIONS[subdir](f)
                     obj_count += 1
 
             logging.info("Processed %s %s objects", obj_count, subdir)
