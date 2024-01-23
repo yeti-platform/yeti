@@ -1,13 +1,13 @@
 import logging
-from datetime import date, timedelta, datetime
-from urllib.parse import urljoin
-import pandas as pd
-from pymisp.api import PyMISP
-from core.config.config import yeti_config
-from core.schemas import observable
-from core.schemas import task
-from core import taskmanager
 import unicodedata
+from datetime import date, datetime, timedelta
+from urllib.parse import urljoin
+
+import pandas as pd
+from core import taskmanager
+from core.config.config import yeti_config
+from core.schemas import observable, task
+from pymisp.api import PyMISP
 
 
 class MispFeed(task.FeedTask):
@@ -27,7 +27,7 @@ class MispFeed(task.FeedTask):
         "md5": observable.ObservableType.md5,
         "sha1": observable.ObservableType.sha1,
         "sha256": observable.ObservableType.sha256,
-        "btc": observable.ObservableType.bitcoin_wallet,
+        "btc": observable.ObservableType.wallet,
         "email": observable.ObservableType.email,
         "filename": observable.ObservableType.file,
         "regkey": observable.ObservableType.registry_key,
