@@ -1,0 +1,57 @@
+---
+display_name: Approach1
+type: approach
+id: Q1020.10
+dfiq_version: 1.0.0
+tags:
+  - Lots
+  - Of
+  - Tags
+description:
+  summary: Description for approach
+  details: >
+    Details for approach
+  references:
+    - "ref1"
+    - "ref2"
+view:
+  data:
+    - type: artifact
+      value: RandomArtifact
+    - type: description
+      value: Random description
+  notes:
+    covered:
+      - Covered1
+      - Covered2
+      - Covered3
+    not_covered:
+      - Not covered1
+      - Not covered2
+  processors:
+    - name: processor1
+      options:
+        - type: parsers
+          value: parser1option
+      analysis:
+        - name: OpenSearch
+          steps:
+            - description: random parser description
+              type: opensearch-query
+              value: data_type:("fs:stat")
+        - name: Python Notebook
+          steps:
+            - description: random step description
+              type: pandas
+              value: query('data_type in ("fs:stat")')
+    - name: processor2
+      options:
+        - type: format
+          value: jsonl
+      analysis:
+        - name: analysis1
+          steps:
+            - description: &filter-desc-processor2 >
+                something else
+              type: opensearch-query
+              value: data_type:"chrome:history:page_visited")
