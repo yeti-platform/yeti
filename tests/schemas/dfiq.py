@@ -1,10 +1,14 @@
-import datetime
 import unittest
 
-import yaml
-
 from core import database_arango
-from core.schemas.dfiq import DFIQBase, DFIQFacet, DFIQQuestion, DFIQScenario, DFIQApproach, DFIQType
+from core.schemas.dfiq import (
+    DFIQApproach,
+    DFIQFacet,
+    DFIQQuestion,
+    DFIQScenario,
+    DFIQType,
+)
+
 
 class DFIQTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -25,7 +29,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.dfiq_version, "1.0.0")
         self.assertEqual(result.description, "Long description 1\n")
         self.assertEqual(result.type, DFIQType.scenario)
-        self.assertEqual(result.dfiq_tags, ['tag1', 'tag2', 'tag3'])
+        self.assertEqual(result.dfiq_tags, ["tag1", "tag2", "tag3"])
 
     def test_dfiq_facet(self) -> None:
         with open("tests/schemas/dfiq_data/F1005.yaml", "r") as f:
@@ -70,28 +74,47 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.name, "Approach1")
         self.assertEqual(result.description.summary, "Description for approach")
         self.assertEqual(result.description.details, "Details for approach\n")
-        self.assertEqual(result.description.references, ['ref1', 'ref2'])
+        self.assertEqual(result.description.references, ["ref1", "ref2"])
 
         self.assertEqual(result.view.data[0].type, "artifact")
         self.assertEqual(result.view.data[0].value, "RandomArtifact")
         self.assertEqual(result.view.data[1].type, "description")
         self.assertEqual(result.view.data[1].value, "Random description")
-        self.assertEqual(result.view.notes.covered, ["Covered1", "Covered2", "Covered3"])
-        self.assertEqual(result.view.notes.not_covered, ["Not covered1", "Not covered2"])
+        self.assertEqual(
+            result.view.notes.covered, ["Covered1", "Covered2", "Covered3"]
+        )
+        self.assertEqual(
+            result.view.notes.not_covered, ["Not covered1", "Not covered2"]
+        )
         self.assertEqual(result.view.processors[0].name, "processor1")
         self.assertEqual(result.view.processors[0].options[0].type, "parsers")
         self.assertEqual(result.view.processors[0].options[0].value, "parser1option")
         self.assertEqual(result.view.processors[0].analysis[0].name, "OpenSearch")
-        self.assertEqual(result.view.processors[0].analysis[0].steps[0].description, "random parser description")
-        self.assertEqual(result.view.processors[0].analysis[0].steps[0].type, "opensearch-query")
-        self.assertEqual(result.view.processors[0].analysis[0].steps[0].value, "data_type:(\"fs:stat\")")
-        self.assertEqual(result.view.processors[0].analysis[1].steps[0].description, "random step description")
+        self.assertEqual(
+            result.view.processors[0].analysis[0].steps[0].description,
+            "random parser description",
+        )
+        self.assertEqual(
+            result.view.processors[0].analysis[0].steps[0].type, "opensearch-query"
+        )
+        self.assertEqual(
+            result.view.processors[0].analysis[0].steps[0].value,
+            'data_type:("fs:stat")',
+        )
+        self.assertEqual(
+            result.view.processors[0].analysis[1].steps[0].description,
+            "random step description",
+        )
         self.assertEqual(result.view.processors[0].analysis[1].steps[0].type, "pandas")
-        self.assertEqual(result.view.processors[0].analysis[1].steps[0].value, """query('data_type in ("fs:stat")')""")
+        self.assertEqual(
+            result.view.processors[0].analysis[1].steps[0].value,
+            """query('data_type in ("fs:stat")')""",
+        )
 
-        self.assertEqual(result.view.processors[1].analysis[0].steps[0].description, "something else\n")
-
-
+        self.assertEqual(
+            result.view.processors[1].analysis[0].steps[0].description,
+            "something else\n",
+        )
 
     # def test_dfiq_approach(self) -> None:
     #     result = DFIQApproach(
