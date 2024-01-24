@@ -531,8 +531,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
           raw: Whether to return a raw dictionary or a Yeti object.
 
         Returns:
-          A tuple of two lists: the first one contains the neighbors (vertices),
-            the second one contains the relationships (edges)
+          Tuple[dict, list, int]:
+            - the neighbors (vertices),
+            - the relationships (edges),
+            - total neighbor (vertices) count
         """
         query_filter = ""
         args = {
