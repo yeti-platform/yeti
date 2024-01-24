@@ -7,7 +7,7 @@ from core.schemas.observable import Observable
 from core.schemas.observables import (bic, asn, certificate, cidr, command_line,
                                       docker_image, email, file,
                                       generic_observable, hostname, iban, imphash,
-                                      ipv4, ipv6, mac_address, md5, mutex, path,
+                                      ipv4, ipv6, mac_address, md5, mutex, name_pipe,path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
                                       url, user_account, user_agent, wallet)
 
@@ -315,7 +315,12 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(mutex_obs.id)
         self.assertEqual(mutex_obs.value, "test_mutex")
 
-
+    def test_create_name_pipe(self) -> None:
+        """Tests creating a name pipe."""
+        observable = name_pipe.NamePipe(value="\\\\.\\pipe\\test").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "\\\\.\\pipe\\test")
+        
     def test_create_ipv4(self) -> None:
         """Tests creating an IPv4."""
         observable = ipv4.IPv4(value="127.0.0.1").save()

@@ -42,6 +42,7 @@ class ObservableType(str, Enum):
     user_account = "user_account"
     wallet = "wallet"
     mutex = "mutex"
+    name_pipe = "name_pipe"
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -188,6 +189,6 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 from core.schemas.observables import (asn, bic, certificate, cidr, command_line,
                                       docker_image, email, file,
                                       generic_observable, hostname, iban, imphash,
-                                      ipv4, ipv6, mac_address, md5, path,mutex,
+                                      ipv4, ipv6, mac_address, md5, path,mutex,name_pipe,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
                                       url, user_account, user_agent, wallet)
