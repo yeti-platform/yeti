@@ -8,7 +8,7 @@ from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import observable, task
 from pymisp.api import PyMISP
-from core.helpers import MISP_TYPES_TO_IMPORT
+from core.common.misp_to_yeti import MISP_TYPES_TO_IMPORT
 
 class MispFeed(task.FeedTask):
     _defaults = {

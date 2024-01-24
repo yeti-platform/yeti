@@ -1,7 +1,5 @@
 from core.schemas import observable
-
-class MispToYeti:
-    MISP_TYPES_TO_IMPORT = {
+MISP_TYPES_TO_IMPORT = {
         "domain": observable.ObservableType.hostname,
         "hostname": observable.ObservableType.hostname,
         "ip-dst": observable.ObservableType.ipv4,
@@ -16,12 +14,14 @@ class MispToYeti:
         "regkey": observable.ObservableType.registry_key,
     }
 
+class MispToYeti:
+    
     def __init__(self, misp_event):
         self.misp_event = misp_event
 
     def attr_misp_to_yeti(self, attribute:dict) -> observable.Observable:
-        if attribute.get("type") in self.MISP_TYPES_TO_IMPORT:
-            obs_yeti = self.MISP_TYPES_TO_IMPORT[attribute.get("type")](value=attribute.get("value")).save()
+        if attribute.get("type") in MISP_TYPES_TO_IMPORT:
+            obs_yeti = MISP_TYPES_TO_IMPORT[attribute.get("type")](value=attribute.get("value")).save()
             return obs_yeti
 
     def add_context_by_misp(attribute_misp:dict,event:dict,obs_yeti:observable.Observable)-> dict:
