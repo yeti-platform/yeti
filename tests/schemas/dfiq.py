@@ -21,7 +21,7 @@ class DFIQTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_dfiq_scenario(self) -> None:
-        with open("tests/schemas/dfiq_data/S1003.yaml", "r") as f:
+        with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
             yaml_string = f.read()
 
         result = DFIQScenario.from_yaml(yaml_string).save()
@@ -34,7 +34,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.dfiq_tags, ["Tag1", "Tag2", "Tag3"])
 
     def test_dfiq_facet(self) -> None:
-        with open("tests/schemas/dfiq_data/F1005.yaml", "r") as f:
+        with open("tests/dfiq_test_data/F1005.yaml", "r") as f:
             yaml_string = f.read()
 
         result = DFIQFacet.from_yaml(yaml_string).save()
@@ -50,7 +50,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.type, DFIQType.facet)
 
     def test_dfiq_question(self) -> None:
-        with open("tests/schemas/dfiq_data/Q1020.yaml", "r") as f:
+        with open("tests/dfiq_test_data/Q1020.yaml", "r") as f:
             yaml_string = f.read()
 
         result = DFIQQuestion.from_yaml(yaml_string).save()
@@ -66,7 +66,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.type, DFIQType.question)
 
     def test_dfiq_approach(self) -> None:
-        with open("tests/schemas/dfiq_data/Q1020.10.yaml", "r") as f:
+        with open("tests/dfiq_test_data/Q1020.10.yaml", "r") as f:
             yaml_string = f.read()
 
         result = DFIQApproach.from_yaml(yaml_string).save()
@@ -121,10 +121,10 @@ class DFIQTest(unittest.TestCase):
     def test_dfiq_conversion_to_yaml(self) -> None:
         self.maxDiff = None
         type_map = [
-            (DFIQScenario, "tests/schemas/dfiq_data/S1003.yaml"),
-            (DFIQFacet, "tests/schemas/dfiq_data/F1005.yaml"),
-            (DFIQQuestion, "tests/schemas/dfiq_data/Q1020.yaml"),
-            (DFIQApproach, "tests/schemas/dfiq_data/Q1020.10.yaml"),
+            (DFIQScenario, "tests/dfiq_test_data/S1003.yaml"),
+            (DFIQFacet, "tests/dfiq_test_data/F1005.yaml"),
+            (DFIQQuestion, "tests/dfiq_test_data/Q1020.yaml"),
+            (DFIQApproach, "tests/dfiq_test_data/Q1020.10.yaml"),
         ]
 
         for type_, file_path in type_map:

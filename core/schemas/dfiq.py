@@ -60,7 +60,10 @@ class DFIQScenario(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQScenario"], yaml_string: str) -> "DFIQScenario":
-        yaml_data = yaml.safe_load(yaml_string)
+        try:
+            yaml_data = yaml.safe_load(yaml_string)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML: {e}")
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data["description"],
