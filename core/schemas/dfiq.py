@@ -23,11 +23,10 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["dfiq"] = "dfiq"
 
     name: str
-    description: str = ""
     dfiq_id: str
     dfiq_version: str
-    dfiq_tags: list[str] = []
-    contributors: list[str] = []
+    dfiq_tags: list[str] | None
+    contributors: list[str] | None
 
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
@@ -43,9 +42,19 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         return cls(**object)
 
+    def to_yaml(self):
+        dump = self.model_dump(exclude={"created", "modified", "id", "root_type"})
+        dump["type"] = dump["type"].removeprefix("DFIQType.")
+        dump["display_name"] = dump.pop("name")
+        dump["tags"] = dump.pop("dfiq_tags")
+        dump["id"] = dump.pop("dfiq_id")
+        if dump["contributors"] is None:
+            dump.pop("contributors")
+        return yaml.dump(dump)
+
 
 class DFIQScenario(DFIQBase):
-    parent_ids: list[str] = []
+    description: str
 
     type: Literal[DFIQType.scenario] = DFIQType.scenario
 
@@ -54,16 +63,18 @@ class DFIQScenario(DFIQBase):
         yaml_data = yaml.safe_load(yaml_string)
         return cls(
             name=yaml_data["display_name"],
-            description=yaml_data["description"] or "",
+            description=yaml_data["description"],
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
-            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
-            contributors=yaml_data.get("contributors", []),
+            dfiq_tags=yaml_data.get("tags"),
+            contributors=yaml_data.get("contributors"),
         )
 
 
 class DFIQFacet(DFIQBase):
-    parent_ids: list[str] = []
+    description: str | None
+
+    parent_ids: list[str]
 
     type: Literal[DFIQType.facet] = DFIQType.facet
 
@@ -72,17 +83,18 @@ class DFIQFacet(DFIQBase):
         yaml_data = yaml.safe_load(yaml_string)
         return cls(
             name=yaml_data["display_name"],
-            description=yaml_data["description"] or "",
+            description=yaml_data.get("description"),
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
-            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
-            contributors=yaml_data.get("contributors", []),
-            parent_ids=yaml_data.get("parent_ids", []),
+            dfiq_tags=yaml_data.get("tags"),
+            contributors=yaml_data.get("contributors"),
+            parent_ids=yaml_data["parent_ids"],
         )
 
 
 class DFIQQuestion(DFIQBase):
-    parent_ids: list[str] = []
+    description: str | None
+    parent_ids: list[str]
 
     type: Literal[DFIQType.question] = DFIQType.question
 
@@ -91,12 +103,12 @@ class DFIQQuestion(DFIQBase):
         yaml_data = yaml.safe_load(yaml_string)
         return cls(
             name=yaml_data["display_name"],
-            description=yaml_data["description"] or "",
+            description=yaml_data.get("description"),
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
-            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
-            contributors=yaml_data.get("contributors", []),
-            parent_ids=yaml_data.get("parent_ids", []),
+            dfiq_tags=yaml_data.get("tags"),
+            contributors=yaml_data.get("contributors"),
+            parent_ids=yaml_data["parent_ids"],
         )
 
 
@@ -131,7 +143,7 @@ class DFIQApproachDescription(BaseModel):
     summary: str
     details: str
     references: list[str] = []
-    references_internal: list[str] = []
+    references_internal: list[str] | None = None
 
 
 class DFIQApproachNotes(BaseModel):
@@ -143,8 +155,6 @@ class DFIQApproachView(BaseModel):
     data: list[DFIQData] = []
     notes: DFIQApproachNotes
     processors: list[DFIQProcessors] = []
-
-    type: Literal[DFIQType.approach] = DFIQType.approach
 
 
 class DFIQApproach(DFIQBase):
@@ -162,8 +172,8 @@ class DFIQApproach(DFIQBase):
             view=DFIQApproachView(**yaml_data["view"]),
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
-            dfiq_tags=[tag.lower() for tag in yaml_data.get("tags", []) or []],
-            contributors=yaml_data.get("contributors", []),
+            dfiq_tags=yaml_data.get("tags"),
+            contributors=yaml_data.get("contributors"),
         )
 
 

@@ -1,5 +1,7 @@
 import unittest
 
+import yaml
+
 from core import database_arango
 from core.schemas.dfiq import (
     DFIQApproach,
@@ -29,7 +31,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.dfiq_version, "1.0.0")
         self.assertEqual(result.description, "Long description 1\n")
         self.assertEqual(result.type, DFIQType.scenario)
-        self.assertEqual(result.dfiq_tags, ["tag1", "tag2", "tag3"])
+        self.assertEqual(result.dfiq_tags, ["Tag1", "Tag2", "Tag3"])
 
     def test_dfiq_facet(self) -> None:
         with open("tests/schemas/dfiq_data/F1005.yaml", "r") as f:
@@ -43,7 +45,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.description, "Long description of facet1\n")
         self.assertEqual(result.dfiq_id, "F1005")
         self.assertEqual(result.dfiq_version, "1.0.0")
-        self.assertEqual(result.dfiq_tags, ["web browser"])
+        self.assertEqual(result.dfiq_tags, ["Web Browser"])
         self.assertEqual(result.parent_ids, ["S1003"])
         self.assertEqual(result.type, DFIQType.facet)
 
@@ -56,10 +58,10 @@ class DFIQTest(unittest.TestCase):
         self.assertIsNotNone(result.id)
         self.assertIsNotNone(result.created)
         self.assertEqual(result.name, "What is a question?")
-        self.assertEqual(result.description, "")
+        self.assertEqual(result.description, None)
         self.assertEqual(result.dfiq_id, "Q1020")
         self.assertEqual(result.dfiq_version, "1.0.0")
-        self.assertEqual(result.dfiq_tags, ["web browser"])
+        self.assertEqual(result.dfiq_tags, ["Web Browser"])
         self.assertEqual(result.parent_ids, ["F1005"])
         self.assertEqual(result.type, DFIQType.question)
 
@@ -116,29 +118,23 @@ class DFIQTest(unittest.TestCase):
             "something else\n",
         )
 
-    # def test_dfiq_approach(self) -> None:
-    #     result = DFIQApproach(
-    #         name="approach1",
-    #         description=DFIQApproachDescription(
-    #             description="description",
-    #             examples=["example1", "example2"],
-    #             references=["reference1", "reference2"],
-    #             notes=["note1", "note2"],
-    #         ),
-    #         view=DFIQApproachView(
-    #             name="view1",
-    #             description="description",
-    #             examples=["example1", "example2"],
-    #             references=["reference1", "reference2"],
-    #             notes=["note1", "note2"],
-    #         ),
-    #         dfiq_id="1234",
-    #         dfiq_version="1.0",
-    #         dfiq_tags=["tag1", "tag2"],
-    #         contributors=["contributor1"],
-    #         parent_ids=["1234"],
-    #     ).save()
-    #     self.assertIsNotNone(result.id)
-    #     self.assertIsNotNone(result.created)
-    #     self.assertEqual(result.name, "approach1")
-    #     self.assertEqual(result.type, DFIQType.approach)
+    def test_dfiq_conversion_to_yaml(self) -> None:
+        self.maxDiff = None
+        type_map = [
+            (DFIQScenario, "tests/schemas/dfiq_data/S1003.yaml"),
+            (DFIQFacet, "tests/schemas/dfiq_data/F1005.yaml"),
+            (DFIQQuestion, "tests/schemas/dfiq_data/Q1020.yaml"),
+            (DFIQApproach, "tests/schemas/dfiq_data/Q1020.10.yaml"),
+        ]
+
+        for type_, file_path in type_map:
+            with open(file_path, "r") as f:
+                yaml_string = f.read()
+
+            result = type_.from_yaml(yaml_string).save()
+
+            expected_yaml_string = yaml.dump(
+                yaml.safe_load(yaml_string)
+            )
+            result_yaml_string = result.to_yaml()
+            self.assertEqual(expected_yaml_string, result_yaml_string)
