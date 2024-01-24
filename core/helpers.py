@@ -1,9 +1,6 @@
 import hashlib
 import re
 import datetime
-import pymisp
-from core.schemas import observable
-from core.common.misp_to_yeti import MispToYeti
 
 
 def refang(url):
