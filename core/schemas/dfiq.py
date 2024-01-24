@@ -25,8 +25,8 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     name: str
     dfiq_id: str
     dfiq_version: str
-    dfiq_tags: list[str] | None
-    contributors: list[str] | None
+    dfiq_tags: list[str] | None = None
+    contributors: list[str] | None = None
 
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
