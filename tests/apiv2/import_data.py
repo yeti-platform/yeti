@@ -2506,7 +2506,8 @@ class ImportData(unittest.TestCase):
             r=client.post('/api/v2/import_data/import_misp_json',files=files)
             self.assertEqual(r.status_code,200)
             
-
+if __name__ == "__main__":
+    unittest.main()
 
 
     
