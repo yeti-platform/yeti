@@ -21,10 +21,11 @@ class MispToYeti:
 
     def attr_misp_to_yeti(self, attribute:dict) -> observable.Observable:
         if attribute.get("type") in MISP_TYPES_TO_IMPORT:
-            obs_yeti = MISP_TYPES_TO_IMPORT[attribute.get("type")](value=attribute.get("value")).save()
+            obs_yeti = observable.TYPE_MAPPING[MISP_TYPES_TO_IMPORT[attribute.get("type")]](value=attribute.get("value")).save()
+            print(f"Attribute {attribute.get('value')} imported")
             return obs_yeti
 
-    def add_context_by_misp(attribute_misp:dict,event:dict,obs_yeti:observable.Observable)-> dict:
+    def add_context_by_misp(self,attribute_misp:dict,event:dict,obs_yeti:observable.Observable)-> dict:
         context = {}
         event_id = attribute_misp.get("event_id")
         context["Org"] = event.get("Org")['name']
@@ -47,6 +48,10 @@ class MispToYeti:
     def misp_to_yeti(self):
         for object_misp in self.misp_event.get("Object"):
             self.obs_misp_to_yeti(object_misp)
+            
         for attribute_misp in self.misp_event.get("Attribute"):
             obs_yeti = self.attr_misp_to_yeti(attribute_misp)
-            self.add_context_by_misp(attribute_misp,self.misp_event,obs_yeti)
+            if obs_yeti:
+                self.add_context_by_misp(attribute_misp,self.misp_event,obs_yeti)
+            else:
+                print(f"Attribute {attribute_misp} not imported")
