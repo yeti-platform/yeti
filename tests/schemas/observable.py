@@ -4,9 +4,9 @@ import unittest
 from core import database_arango
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
-from core.schemas.observables import (asn, certificate, cidr, command_line,
+from core.schemas.observables import (bic, asn, certificate, cidr, command_line,
                                       docker_image, email, file,
-                                      generic_observable, hostname, imphash,
+                                      generic_observable, hostname, iban, imphash,
                                       ipv4, ipv6, mac_address, md5, path,
                                       registry_key, sha1, sha256, ssdeep, tlsh,
                                       url, user_account, user_agent, wallet)
@@ -329,6 +329,20 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "00:00:00:00:00:00")
         self.assertIsInstance(observable, mac_address.MacAddress)
+
+    def test_create_iban(self) -> None:
+        """Tests creating an IBAN."""
+        observable = iban.IBAN(value="GB33BUKB20201555555555").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "GB33BUKB20201555555555")
+        self.assertIsInstance(observable, iban.IBAN)
+
+    def test_create_bic(self) -> None:
+        """Tests creating a BIC."""
+        observable = bic.BIC(value="BUKBGB22XXX").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "BUKBGB22XXX")
+        self.assertIsInstance(observable, bic.BIC)
 
     def test_create_md5(self) -> None:
         """Tests creating an MD5."""
