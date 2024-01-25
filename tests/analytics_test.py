@@ -1,9 +1,11 @@
+import os
 import unittest
 from unittest.mock import patch, MagicMock
 from plugins.analytics.public import censys
 from core import database_arango
 from censys.search import CensysHosts
 from core.schemas import indicator
+from core.config.config import yeti_config
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
 from core.schemas import observable
@@ -19,6 +21,9 @@ class AnalyticsTest(unittest.TestCase):
     def test_censys_query(self, mock_censys_hosts):
         mock_hosts_api = MagicMock(spec=CensysHosts)
         mock_censys_hosts.return_value = mock_hosts_api
+
+        os.environ["YETI_CENSYS_API_KEY"] = "test_api_key"
+        os.environ["YETI_CENSYS_SECRET"] = "test_secret"
 
         censys_query = indicator.Query(
             name="Censys test query name",
@@ -38,6 +43,7 @@ class AnalyticsTest(unittest.TestCase):
 
         defaults = censys.CensysApiQuery._defaults.copy()
         analytics = censys.CensysApiQuery(**defaults)
+
         analytics.run()
 
         mock_censys_hosts.assert_called_once()
