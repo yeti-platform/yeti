@@ -21,9 +21,9 @@ class CensysApiQuery(task.AnalyticsTask):
         api_key = yeti_config.get("censys", "api_key")
         api_secret = yeti_config.get("censys", "secret")
 
-        if not (api_key or api_secret):
+        if not (api_key and api_secret):
             logging.error(
-                "Error: please configure a api_key and secret to use Censys analytics"
+                "Error: please configure an api_key and secret to use Censys analytics"
             )
             raise RuntimeError
 
