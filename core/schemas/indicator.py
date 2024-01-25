@@ -117,6 +117,7 @@ class QueryType(str, Enum):
     osquery = "osquery"
     sql = "sql"
     splunk = "splunk"
+    censys = "censys"
 
 
 class Query(Indicator):

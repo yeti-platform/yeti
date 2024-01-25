@@ -40,6 +40,7 @@ timesketch-api-client = "^20230721"
 pyopenssl = "^23.3.0"
 ipwhois = "^1.2.0"
 maclookup = "^1.0.3"
+censys = "^2.2.10"
 
 [build-system]
 requires = ["poetry-core"]
