@@ -152,3 +152,7 @@ api_key=
 endpoint =
 username =
 password =
+
+[censys]
+api_key =
+secret =
