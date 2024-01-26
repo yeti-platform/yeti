@@ -156,3 +156,10 @@ password =
 [censys]
 api_key =
 secret =
+
+[shodan]
+
+# Set result_limit to -1 for unlimited results, default is 100
+
+api_key =
+result_limit =

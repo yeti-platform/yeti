@@ -1,7 +1,7 @@
 import os
 import unittest
 from unittest.mock import patch, MagicMock
-from plugins.analytics.public import censys
+from plugins.analytics.public import censys, shodan
 from core import database_arango
 from censys.search import CensysHosts
 from core.schemas import indicator
@@ -9,12 +9,35 @@ from core.config.config import yeti_config
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
 from core.schemas import observable
+from parameterized import parameterized
 
 
-class AnalyticsTest(unittest.TestCase):
+class AnalyticsTestBase(unittest.TestCase):
+    def check_observables_and_neighbors(self, query, expected_values):
+        observables = observable.Observable.filter(
+            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
+        )
+        observable_obj, _ = observables
+
+        self.assertEqual(len(observable_obj), len(expected_values))
+
+        for obs, expected_value in zip(observable_obj, expected_values):
+            self.assertEqual(obs.value, expected_value["value"])
+            self.assertEqual(obs.type, expected_value["type"])
+            self.assertEqual(set(obs.tags.keys()), expected_value["tags"])
+
+        query_neighbors = [o.value for o in query.neighbors()[0].values()]
+        for expected_value in expected_values:
+            self.assertIn(expected_value["value"], query_neighbors)
+
+
+class CensysAnalyticsTest(AnalyticsTestBase):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+
+    def tearDown(self) -> None:
         database_arango.db.clear()
 
     @patch("plugins.analytics.public.censys.CensysHosts")
@@ -51,24 +74,139 @@ class AnalyticsTest(unittest.TestCase):
             "test_censys_query", fields=["ip"], pages=-1
         )
 
-        observables = observable.Observable.filter(
-            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
-        )
-        observable_obj, _ = observables
+        expected_values = [
+            {
+                "value": "192.0.2.1",
+                "type": ObservableType.ipv4,
+                "tags": {"censys_query_tag"},
+            },
+            {
+                "value": "2001:db8:3333:4444:5555:6666:7777:8888",
+                "type": ObservableType.ipv6,
+                "tags": {"censys_query_tag"},
+            },
+        ]
 
-        self.assertEqual(observable_obj[0].value, "192.0.2.1")
-        self.assertEqual(observable_obj[0].type, ObservableType.ipv4)
-        self.assertEqual(set(observable_obj[0].tags.keys()), {"censys_query_tag"})
+        self.check_observables_and_neighbors(censys_query, expected_values)
 
-        self.assertEqual(
-            observable_obj[1].value, "2001:db8:3333:4444:5555:6666:7777:8888"
-        )
-        self.assertEqual(observable_obj[1].type, ObservableType.ipv6)
-        self.assertEqual(set(observable_obj[1].tags.keys()), {"censys_query_tag"})
 
-        query_neighbors = [o.value for o in censys_query.neighbors()[0].values()]
-        self.assertIn("192.0.2.1", query_neighbors)
-        self.assertIn("2001:db8:3333:4444:5555:6666:7777:8888", query_neighbors)
+class ShodanAnalyticsTest(AnalyticsTestBase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+
+    def tearDown(self) -> None:
+        database_arango.db.clear()
+
+    @parameterized.expand([(-1, 5), (500, 5), (3, 3)])
+    @patch("plugins.analytics.public.shodan.Shodan")
+    def test_shodan_query_with_various_limits(self, limit, expected_count, mock_shodan):
+        mock_shodan_api = MagicMock()
+        mock_shodan.return_value = mock_shodan_api
+
+        os.environ["YETI_SHODAN_API_KEY"] = "test_api_key"
+
+        shodan_query = indicator.Query(
+            name="Shodan test query name",
+            description="Shodan test query description",
+            pattern="shodan_test_query",
+            location="shodan",
+            diamond=DiamondModel.infrastructure,
+            relevant_tags=["shodan_query_tag"],
+            query_type=indicator.QueryType.shodan,
+        ).save()
+
+        def mock_search_cursor(query):
+            records = [
+                {"ip_str": "192.0.2.1"},
+                {"ip_str": "192.0.2.2"},
+                {"ip_str": "192.0.2.3"},
+                {"ip_str": "192.0.2.4"},
+                {"ip_str": "192.0.2.5"},
+            ]
+
+            return iter(records)
+
+        mock_shodan_api.search_cursor.side_effect = mock_search_cursor
+
+        defaults = shodan.ShodanApiQuery._defaults.copy()
+        analytics = shodan.ShodanApiQuery(**defaults)
+
+        with patch.object(yeti_config.shodan, "result_limit", limit):
+            analytics.run()
+
+            mock_shodan_api.search_cursor.assert_called_with("shodan_test_query")
+
+            observables = observable.Observable.filter(
+                {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
+            )
+            observable_obj, _ = observables
+
+            observables_added = [o.value for o in observable_obj]
+            self.assertEqual(len(observables_added), expected_count)
+
+    @patch("plugins.analytics.public.shodan.Shodan")
+    def test_shodan_observables_and_neighbors(self, mock_shodan):
+        mock_shodan_api = MagicMock()
+        mock_shodan.return_value = mock_shodan_api
+
+        os.environ["YETI_SHODAN_API_KEY"] = "test_api_key"
+
+        shodan_query = indicator.Query(
+            name="Shodan test query name",
+            description="Shodan test query description",
+            pattern="shodan_test_query",
+            location="shodan",
+            diamond=DiamondModel.infrastructure,
+            relevant_tags=["shodan_query_tag"],
+            query_type=indicator.QueryType.shodan,
+        ).save()
+
+        def mock_search_cursor(query):
+            records = [
+                {"ip_str": "192.0.2.1"},
+                {"ip_str": "192.0.2.2"},
+                {"ip_str": "192.0.2.3"},
+                {"ip_str": "192.0.2.4"},
+                {"ip_str": "192.0.2.5"},
+            ]
+            return iter(records)
+
+        mock_shodan_api.search_cursor.side_effect = mock_search_cursor
+
+        analytics = shodan.ShodanApiQuery(**shodan.ShodanApiQuery._defaults.copy())
+        analytics.run()
+
+        expected_values = [
+            {
+                "value": "192.0.2.1",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.2",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.3",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.4",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.5",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+        ]
+
+        self.check_observables_and_neighbors(shodan_query, expected_values)
 
 
 if __name__ == "__main__":
