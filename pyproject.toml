@@ -45,3 +45,7 @@ censys = "^2.2.10"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# Enable the isort rules.
+extend-select = ["I"]
