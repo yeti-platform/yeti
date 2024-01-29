@@ -11,5 +11,7 @@ jobs:
       - uses: actions/setup-python@v4
       - name: Install ruff
         run: pip install ruff
-      - name: Run ruff check
-        run: ruff check . --exclude deprecated
+      - name: Run ruff linkt check
+        run: ruff check . --exclude deprecated --select I
+      - name: Run ruff format check
+        run: ruff format . --check --exclude deprecated
