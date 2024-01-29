@@ -90,7 +90,7 @@ async def render(request: RenderExportRequest) -> StreamingResponse:
         observables, _ = Observable.filter({"value": request.search_query})
         if not observables:
             raise HTTPException(
-                status_code=404, detail=f"No observables found for search query."
+                status_code=404, detail="No observables found for search query."
             )
     else:
         observables = [

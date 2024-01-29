@@ -1,12 +1,11 @@
 import json
-from datetime import datetime
 
 import requests
 
 from core.schemas import task
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas.observables import ipv4, hostname
+from core.schemas.observables import hostname
 from core.schemas.observable import Observable, ObservableType
 
 

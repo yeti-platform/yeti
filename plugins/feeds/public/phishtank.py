@@ -1,6 +1,5 @@
 from io import StringIO
-import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 from typing import ClassVar
 
 import pandas as pd

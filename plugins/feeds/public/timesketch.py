@@ -1,5 +1,4 @@
 from datetime import timedelta, datetime
-from time import sleep
 import logging
 
 from core.schemas import observable

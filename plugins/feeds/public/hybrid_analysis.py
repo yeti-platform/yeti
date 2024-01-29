@@ -108,7 +108,7 @@ class HybridAnalysis(task.FeedTask):
             for extracted_file in item["extracted_files"]:
                 context_file_dropped = {"source": self.name}
 
-                if not "sha256" in extracted_file:
+                if "sha256" not in extracted_file:
                     logging.error(extracted_file)
                     continue
 
@@ -120,7 +120,7 @@ class HybridAnalysis(task.FeedTask):
                 new_file.link_to(sha256_new_file, "sha256", self.name)
                 
                 path_extracted_file = None
-                if "file_path" is extracted_file and extracted_file["file_path"] and isinstance(extracted_file["file_path"], str):
+                if "file_path" == extracted_file and extracted_file["file_path"] and isinstance(extracted_file["file_path"], str):
                     path_extracted_file = path.Path(value=extracted_file["file_path"]).save()
                     new_file.link_to(path_extracted_file, "path", self.name)
 

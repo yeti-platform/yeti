@@ -1,4 +1,3 @@
-import logging
 from datetime import timedelta
 from typing import ClassVar
 from core.schemas.observables import sha1

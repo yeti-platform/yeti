@@ -1,8 +1,7 @@
-import datetime
 import unittest
 
 from core import database_arango
-from core.schemas.user import User, UserSensitive
+from core.schemas.user import UserSensitive
 
 
 class UserTest(unittest.TestCase):

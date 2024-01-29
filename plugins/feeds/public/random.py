@@ -1,5 +1,4 @@
-from datetime import timedelta, datetime
-from time import sleep
+from datetime import timedelta
 
 from core.schemas import observable
 from core.schemas import task

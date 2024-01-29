@@ -1,5 +1,4 @@
-import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import ClassVar
 
 from dateutil import parser

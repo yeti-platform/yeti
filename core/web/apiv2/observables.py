@@ -1,4 +1,3 @@
-import datetime
 from typing import Iterable
 
 from core.schemas import graph
@@ -208,7 +207,7 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddRes
     if not response.added:
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to add any observables.",
+            detail="Failed to add any observables.",
         )
     return response
 

@@ -40,7 +40,7 @@ class userTest(unittest.TestCase):
 
     def test_toggle_user_admin(self):
         response = client.post(
-            f"/api/v2/users/toggle",
+            "/api/v2/users/toggle",
             json={"user_id": self.user.id, "field": "enabled"},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
@@ -53,7 +53,7 @@ class userTest(unittest.TestCase):
         self.assertEqual(data["admin"], False)
 
         response = client.post(
-            f"/api/v2/users/toggle",
+            "/api/v2/users/toggle",
             json={"user_id": self.user.id, "field": "admin"},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
@@ -64,7 +64,7 @@ class userTest(unittest.TestCase):
 
     def test_toggle_user_unprivileged(self):
         response = client.post(
-            f"/api/v2/users/toggle",
+            "/api/v2/users/toggle",
             json={"user_id": self.admin.id, "field": "enabled"},
             headers={"Authorization": f"Bearer {self.user_token}"},
         )
@@ -76,7 +76,7 @@ class userTest(unittest.TestCase):
 
     def test_toggle_user_self(self):
         response = client.post(
-            f"/api/v2/users/toggle",
+            "/api/v2/users/toggle",
             json={"user_id": self.admin.id, "field": "enabled"},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
@@ -88,7 +88,7 @@ class userTest(unittest.TestCase):
 
     def test_reset_api_key(self):
         response = client.post(
-            f"/api/v2/users/reset-api-key",
+            "/api/v2/users/reset-api-key",
             json={"user_id": self.user.id},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
@@ -101,7 +101,7 @@ class userTest(unittest.TestCase):
 
     def test_reset_own_password(self):
         response = client.post(
-            f"/api/v2/users/reset-password",
+            "/api/v2/users/reset-password",
             json={"user_id": self.user.id, "new_password": "newpassword"},
             headers={"Authorization": f"Bearer {self.user_token}"},
         )
@@ -114,7 +114,7 @@ class userTest(unittest.TestCase):
 
     def test_reset_password_unprivileged(self):
         response = client.post(
-            f"/api/v2/users/reset-password",
+            "/api/v2/users/reset-password",
             json={"user_id": self.admin.id, "new_password": "newpassword"},
             headers={"Authorization": f"Bearer {self.user_token}"},
         )
@@ -126,7 +126,7 @@ class userTest(unittest.TestCase):
 
     def test_rest_password_admin(self):
         response = client.post(
-            f"/api/v2/users/reset-password",
+            "/api/v2/users/reset-password",
             json={"user_id": self.user.id, "new_password": "newpassword"},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
@@ -164,7 +164,7 @@ class userTest(unittest.TestCase):
 
     def test_create_user(self):
         response = client.post(
-            f"/api/v2/users/",
+            "/api/v2/users/",
             json={"username": "newuser", "password": "password", "admin": False},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )

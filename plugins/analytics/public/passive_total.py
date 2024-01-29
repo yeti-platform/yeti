@@ -9,8 +9,7 @@ from core import taskmanager
 from core.schemas.observable import ObservableType, Observable
 from core.config.config import yeti_config
 from core.schemas.observables import email, hostname, sha256
-from core.schemas.entity import Company, Phone, Note
-from core.schemas.entity import EntityTypes
+from core.schemas.entity import Company, Phone
 
 
 def whois_links(observable: Observable, whois):

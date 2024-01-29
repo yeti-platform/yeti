@@ -139,7 +139,7 @@ class ExportTaskTest(unittest.TestCase):
             "ignore_tags": ["ignore_new"],
         }
         response = client.patch(
-            f"/api/v2/tasks/export/RandomExport", json={"export": patch_data}
+            "/api/v2/tasks/export/RandomExport", json={"export": patch_data}
         )
 
         data = response.json()
@@ -155,7 +155,7 @@ class ExportTaskTest(unittest.TestCase):
             "ignore_tags": ["ignore_new"],
         }
         response = client.patch(
-            f"/api/v2/tasks/export/RandomExport", json={"export": patch_data}
+            "/api/v2/tasks/export/RandomExport", json={"export": patch_data}
         )
 
         self.assertEqual(response.status_code, 422)

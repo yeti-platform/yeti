@@ -1,4 +1,3 @@
-import json
 import logging
 from core import taskmanager
 from core.schemas.observable import Observable, ObservableType

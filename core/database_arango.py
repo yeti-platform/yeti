@@ -658,7 +658,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         conditions = []
         sorts = []
 
-        from core.schemas.graph import TagRelationship
 
         # We want user-defined sorts to take precedence.
         for field, asc in sorting:
@@ -703,7 +702,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         limit = ""
         if count != 0:
-            limit = f"LIMIT @offset, @count"
+            limit = "LIMIT @offset, @count"
             aql_args["offset"] = offset
             aql_args["count"] = count
 
@@ -789,7 +788,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
 
 def tagged_observables_export(cls, args):
-    from core.schemas.graph import TagRelationship
     aql = """
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])

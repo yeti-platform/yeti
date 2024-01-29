@@ -1,7 +1,5 @@
-import logging
 from datetime import timedelta
 from typing import ClassVar
-import numpy as np
 import pandas as pd
 from core.schemas.observables import ipv4, asn
 from core.schemas import task

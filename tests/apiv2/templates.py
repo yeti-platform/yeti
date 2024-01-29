@@ -82,7 +82,7 @@ class TemplateTest(unittest.TestCase):
         ipv4.IPv4(value="2.2.2.2").save()
         ipv4.IPv4(value="3.3.3.3").save()
         response = client.post(
-            f"/api/v2/templates/render",
+            "/api/v2/templates/render",
             json={
                 "template_id": self.template.id,
                 "observable_ids": [o.id for o in Observable.list()],
@@ -101,7 +101,7 @@ class TemplateTest(unittest.TestCase):
         hostname.Hostname(value="yeti3.com").save()
         hostname.Hostname(value="hacker.com").save()
         response = client.post(
-            f"/api/v2/templates/render",
+            "/api/v2/templates/render",
             json={"template_id": self.template.id, "search_query": "yeti"},
         )
         data = response.text

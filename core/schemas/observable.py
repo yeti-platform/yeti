@@ -11,7 +11,6 @@ from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
 from pydantic import Field, computed_field
 
-
 # Data Schema
 class ObservableType(str, Enum):
     asn = "asn"
@@ -70,7 +69,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return validate_observable(object)
 
     @classmethod
-    def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":
+    def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":  # noqa: F821
         """Adds and returns an observable for a given string.
 
         Args:
@@ -184,9 +183,9 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-from core.schemas.observables import (asn, bic, certificate, cidr, command_line,
-                                      docker_image, email, file,
-                                      generic_observable, hostname, iban, imphash,
-                                      ipv4, ipv6, mac_address, md5, path,
-                                      registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_account, user_agent, wallet)
+from core.schemas.observables import (asn, bic, certificate, cidr, command_line,  # noqa: E402, F401
+                                      docker_image, email, file,  # noqa: F401
+                                      generic_observable, hostname, iban, imphash,  # noqa: F401
+                                      ipv4, ipv6, mac_address, md5, path,  # noqa: F401
+                                      registry_key, sha1, sha256, ssdeep, tlsh,  # noqa: F401
+                                      url, user_account, user_agent, wallet)  # noqa: F401

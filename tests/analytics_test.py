@@ -5,7 +5,6 @@ from plugins.analytics.public import censys
 from core import database_arango
 from censys.search import CensysHosts
 from core.schemas import indicator
-from core.config.config import yeti_config
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
 from core.schemas import observable

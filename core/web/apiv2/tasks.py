@@ -1,4 +1,3 @@
-import os
 
 from core import taskscheduler
 from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes

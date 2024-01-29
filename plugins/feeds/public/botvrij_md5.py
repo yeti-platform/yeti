@@ -1,5 +1,4 @@
-import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 from typing import ClassVar
 from core.schemas.observables import md5
 from core.schemas import task

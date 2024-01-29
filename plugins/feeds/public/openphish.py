@@ -1,6 +1,4 @@
 from datetime import timedelta
-import logging
-import traceback
 from typing import ClassVar
 
 from core.schemas.observables import url

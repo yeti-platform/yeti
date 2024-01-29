@@ -312,7 +312,7 @@ class ObservableTest(unittest.TestCase):
         observable_id = data["id"]
 
         response = client.post(
-            f"/api/v2/observables/tag",
+            "/api/v2/observables/tag",
             json={"ids": [observable_id], "tags": ["tag1", "tag2"]},
         )
         self.assertEqual(response.status_code, 200)
@@ -326,7 +326,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(tag_relationships["tag2"]["source"], f'observables/{observable_id}')
 
         response = client.post(
-            f"/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0}
+            "/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0}
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()

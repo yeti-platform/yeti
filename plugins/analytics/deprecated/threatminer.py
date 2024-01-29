@@ -39,7 +39,7 @@ class ThreatMinerApi(object):
             url = ThreatMinerApi.API_URL + uri
             response = requests.get(url, params=params, proxies=yeti_config.get('proxy'))
             if not response.ok:
-                raise GenericYetiError("Status code: ".format(response.status_code))
+                raise GenericYetiError("Status code: ".format())
             return response.json()
         except Exception as e:
             raise GenericYetiError(

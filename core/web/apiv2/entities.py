@@ -1,4 +1,3 @@
-import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException

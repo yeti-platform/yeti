@@ -1,7 +1,6 @@
 """
     Feed of ssh client bruteforce of Dataplane with IPs and ASNs
 """
-import logging
 from datetime import timedelta
 from typing import ClassVar
 

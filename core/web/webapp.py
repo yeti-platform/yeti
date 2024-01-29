@@ -90,7 +90,7 @@ async def log_requests(request: Request, call_next):
             logger.warning("Unauthorized request", extra=extra)
         else:
             logger.error("Bad request", extra=extra)
-    except Exception as e:
+    except Exception:
         err_logger = logging.getLogger("webapp.log_requests")
         err_logger.exception("Error while logging request")
     return response

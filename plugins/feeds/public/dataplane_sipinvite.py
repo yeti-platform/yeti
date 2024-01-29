@@ -1,7 +1,6 @@
 """
        Feed of SIP INVITE attacks from Dataplane IPs and their Autonomous Systems
 """
-import logging
 from datetime import timedelta
 from typing import ClassVar
 
