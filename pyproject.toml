@@ -49,3 +49,5 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 # Enable the isort rules.
 extend-select = ["I"]
+# exclude files in the /deprecated/ directories
+exclude = ["deprecated"]

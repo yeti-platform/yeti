@@ -12,6 +12,6 @@ jobs:
       - name: Install ruff
         run: pip install ruff
       - name: Run ruff lint check
-        run: ruff check . --exclude deprecated --select I
+        run: ruff check .
       - name: Run ruff format check
-        run: ruff format . --check --exclude deprecated
+        run: ruff format . --check
