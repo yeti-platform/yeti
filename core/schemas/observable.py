@@ -184,31 +184,31 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-from core.schemas.observables import (
-    asn,
-    bic,
-    certificate,
-    cidr,
+from core.schemas.observables import (  # noqa: E402
+    asn,  # noqa: F401
+    bic,  # noqa: F401
+    certificate,  # noqa: F401
+    cidr,  # noqa: F401
     command_line,  # noqa: E402, F401
-    docker_image,
-    email,
+    docker_image,  # noqa: F401
+    email,  # noqa: F401
     file,  # noqa: F401
-    generic_observable,
-    hostname,
-    iban,
+    generic_observable,  # noqa: F401
+    hostname,  # noqa: F401
+    iban,  # noqa: F401
     imphash,  # noqa: F401
-    ipv4,
-    ipv6,
-    mac_address,
-    md5,
+    ipv4,  # noqa: F401
+    ipv6,  # noqa: F401
+    mac_address,  # noqa: F401
+    md5,  # noqa: F401
     path,  # noqa: F401
-    registry_key,
-    sha1,
-    sha256,
-    ssdeep,
+    registry_key,  # noqa: F401
+    sha1,  # noqa: F401
+    sha256,  # noqa: F401
+    ssdeep,  # noqa: F401
     tlsh,  # noqa: F401
-    url,
-    user_account,
-    user_agent,
-    wallet,
+    url,  # noqa: F401
+    user_account,  # noqa: F401
+    user_agent,  # noqa: F401
+    wallet,  # noqa: F401
 )
