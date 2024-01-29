@@ -2,11 +2,11 @@ import json
 
 import requests
 
-from core.schemas import task
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas.observables import hostname
+from core.schemas import task
 from core.schemas.observable import Observable, ObservableType
+from core.schemas.observables import hostname
 
 
 class CirclPDNSApi(object):

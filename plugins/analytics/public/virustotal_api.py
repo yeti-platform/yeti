@@ -1,13 +1,14 @@
 import json
-
 import logging
-from core import taskmanager
-from core.schemas.observable import Observable, ObservableType, TYPE_MAPPING
-from core.schemas.observables import ipv4, asn, hostname, sha256, url
-from core.schemas import task
-from core.config.config import yeti_config
 from datetime import datetime
+
 import requests
+
+from core import taskmanager
+from core.config.config import yeti_config
+from core.schemas import task
+from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
+from core.schemas.observables import asn, hostname, ipv4, sha256, url
 
 VT_BASE_URL = "https://www.virustotal.com/api/v3"
 

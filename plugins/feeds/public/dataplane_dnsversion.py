@@ -1,14 +1,15 @@
 """
     Feed DNS Version IPs with ASN
 """
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from typing import ClassVar
 
 import pandas as pd
-from core.schemas.observables import ipv4, asn
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import asn, ipv4
 
 
 class DataplaneDNSVersion(task.FeedTask):

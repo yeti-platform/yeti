@@ -1,8 +1,7 @@
 from datetime import timedelta
 
-from core.schemas import observable
-from core.schemas import task
 from core import taskmanager
+from core.schemas import observable, task
 
 DATA = [
     "hostname1.com",

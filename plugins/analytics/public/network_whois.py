@@ -1,9 +1,10 @@
-from core.schemas import task
-from core import taskmanager
-from core.schemas.observable import ObservableType
-from core.schemas.observables import ipv4, email
-from core.schemas.entity import Company
 from ipwhois import IPWhois
+
+from core import taskmanager
+from core.schemas import task
+from core.schemas.entity import Company
+from core.schemas.observable import ObservableType
+from core.schemas.observables import email, ipv4
 
 
 class NetworkWhois(task.AnalyticsTask):

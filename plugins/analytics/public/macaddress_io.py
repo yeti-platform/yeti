@@ -3,13 +3,15 @@ from __future__ import unicode_literals
 import json
 from datetime import datetime
 
-from maclookup import ApiClient, exceptions as maclookup_exceptions
+from maclookup import ApiClient
+from maclookup import exceptions as maclookup_exceptions
+
 from core import taskmanager
+from core.config.config import yeti_config
 from core.schemas import task
+from core.schemas.entity import Company
 from core.schemas.observable import ObservableType
 from core.schemas.observables.mac_address import MacAddress
-from core.schemas.entity import Company
-from core.config.config import yeti_config
 
 
 class MacAddressIoApi(object):

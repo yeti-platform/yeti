@@ -1,9 +1,10 @@
 import datetime
 from typing import ClassVar, Literal
 
+from pydantic import computed_field
+
 from core import database_arango
 from core.schemas.model import YetiModel
-from pydantic import computed_field
 
 
 class AuditLog(YetiModel, database_arango.ArangoYetiConnector):

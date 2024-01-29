@@ -1,15 +1,13 @@
-from datetime import timedelta, datetime
 import logging
-
-from core.schemas import observable
-from core.schemas.observables import ipv4, hostname, url, sha1, md5, sha256, path
-from core.schemas.entity import Investigation
-from core.schemas import task
-from core import taskmanager
-from core.config.config import yeti_config
+from datetime import datetime, timedelta
 
 from timesketch_api_client import client
 
+from core import taskmanager
+from core.config.config import yeti_config
+from core.schemas import observable, task
+from core.schemas.entity import Investigation
+from core.schemas.observables import hostname, ipv4, md5, path, sha1, sha256, url
 
 TIMESKETCH_TYPE_MAPPING = {
     "ipv4": ipv4.IPv4,

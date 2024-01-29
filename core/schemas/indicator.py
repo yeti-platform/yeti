@@ -4,10 +4,11 @@ import re
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
+from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_validator
+
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiModel
-from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_validator
 
 
 def future():

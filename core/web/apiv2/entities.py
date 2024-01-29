@@ -3,8 +3,7 @@ from typing import Iterable
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
-from core.schemas import entity
-from core.schemas import graph
+from core.schemas import entity, graph
 
 
 # Request schemas

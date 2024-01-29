@@ -2,11 +2,12 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas.tag import Tag
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 

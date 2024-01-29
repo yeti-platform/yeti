@@ -1,8 +1,6 @@
 import datetime
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
-from core.config.config import yeti_config
-from core.schemas.user import User, UserSensitive
 from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import (
@@ -13,6 +11,9 @@ from fastapi.security import (
 )
 from jose import JWTError, jwt
 from starlette.requests import Request
+
+from core.config.config import yeti_config
+from core.schemas.user import User, UserSensitive
 
 ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
     minutes=yeti_config.get("auth", "access_token_expire_minutes")

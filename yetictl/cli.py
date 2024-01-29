@@ -1,6 +1,6 @@
 import click
 
-from core.schemas.user import UserSensitive, User
+from core.schemas.user import User, UserSensitive
 
 
 @click.group()

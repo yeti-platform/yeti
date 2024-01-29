@@ -2,13 +2,14 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas.observable import Observable
 from core.schemas.observables import hostname, ipv4
 from core.schemas.template import Template
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 

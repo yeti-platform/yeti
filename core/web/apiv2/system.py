@@ -1,8 +1,9 @@
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel, ConfigDict
+
 from core.config.config import yeti_config
 from core.taskscheduler import app
 from core.web.apiv2.auth import get_current_active_user
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel, ConfigDict
 
 # API endpoints
 router = APIRouter()

@@ -1,13 +1,14 @@
 import os
 import unittest
-from unittest.mock import patch, MagicMock
-from plugins.analytics.public import censys
-from core import database_arango
+from unittest.mock import MagicMock, patch
+
 from censys.search import CensysHosts
-from core.schemas import indicator
+
+from core import database_arango
+from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
-from core.schemas import observable
+from plugins.analytics.public import censys
 
 
 class AnalyticsTest(unittest.TestCase):

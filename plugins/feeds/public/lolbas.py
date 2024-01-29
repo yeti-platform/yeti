@@ -1,13 +1,11 @@
 import logging
 import re
-
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from typing import ClassVar
-from core.schemas.observables import path
-from core.schemas import entity, indicator
 
-from core.schemas import task
 from core import taskmanager
+from core.schemas import entity, indicator, task
+from core.schemas.observables import path
 
 
 class LoLBAS(task.FeedTask):

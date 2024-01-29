@@ -6,10 +6,11 @@ from enum import Enum
 from typing import ClassVar, Literal
 
 import validators
+from pydantic import Field, computed_field
+
 from core import database_arango
 from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
-from pydantic import Field, computed_field
 
 
 # Data Schema
@@ -210,4 +211,4 @@ from core.schemas.observables import (
     user_account,
     user_agent,
     wallet,
-)  # noqa: F401
+)

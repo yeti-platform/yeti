@@ -3,10 +3,11 @@ import re
 import unicodedata
 from typing import ClassVar
 
+from pydantic import Field
+
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiModel
-from pydantic import Field
 
 DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
 

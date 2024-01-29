@@ -1,8 +1,9 @@
 import datetime
 from typing import Literal
 
-from core.schemas import observable
 from pydantic import model_validator
+
+from core.schemas import observable
 
 
 class UserAccount(observable.Observable):

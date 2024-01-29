@@ -1,11 +1,12 @@
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas.entity import Malware
 from core.schemas.graph import Relationship
 from core.schemas.observables import hostname, ipv4
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 

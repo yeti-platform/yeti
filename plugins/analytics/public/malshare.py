@@ -1,10 +1,12 @@
-import requests
 import logging
-from core.schemas import task
+
+import requests
+
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas.observables import url, sha1, md5, sha256, ssdeep
-from core.schemas.observable import ObservableType, Observable
+from core.schemas import task
+from core.schemas.observable import Observable, ObservableType
+from core.schemas.observables import md5, sha1, sha256, ssdeep, url
 
 
 class MalshareAPI(object):

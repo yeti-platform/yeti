@@ -1,5 +1,6 @@
-from core.schemas.graph import TagRelationship
 from pydantic import BaseModel, computed_field
+
+from core.schemas.graph import TagRelationship
 
 
 class YetiModel(BaseModel):

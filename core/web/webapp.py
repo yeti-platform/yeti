@@ -1,5 +1,9 @@
 import logging
 
+from fastapi import APIRouter, Depends, FastAPI, Request
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.types import Message
+
 from core.config.config import yeti_config
 from core.logger import logger
 from core.web.apiv2 import (
@@ -14,9 +18,6 @@ from core.web.apiv2 import (
     templates,
     users,
 )
-from fastapi import APIRouter, Depends, FastAPI, Request
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.types import Message
 
 SECRET_KEY = yeti_config.get("auth", "secret_key")
 

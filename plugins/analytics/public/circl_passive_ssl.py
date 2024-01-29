@@ -1,13 +1,16 @@
 import requests
+from OpenSSL.crypto import (
+    FILETYPE_ASN1,
+    FILETYPE_PEM,
+    dump_certificate,
+    load_certificate,
+)
 
-
-from core.config.config import yeti_config
-from core.schemas.observables import ipv4, certificate
-from core.schemas.observable import ObservableType
 from core import taskmanager
+from core.config.config import yeti_config
 from core.schemas import task
-from OpenSSL.crypto import FILETYPE_PEM, load_certificate
-from OpenSSL.crypto import FILETYPE_ASN1, dump_certificate
+from core.schemas.observable import ObservableType
+from core.schemas.observables import certificate, ipv4
 
 
 class CirclPassiveSSLApi:

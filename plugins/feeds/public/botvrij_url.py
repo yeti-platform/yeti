@@ -1,8 +1,9 @@
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas.observables import url
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import url
 
 
 class BotvrijUrl(task.FeedTask):

@@ -2,11 +2,12 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.config.config import yeti_config
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 SKIP_TESTS = not yeti_config.get("auth", "enabled")
 

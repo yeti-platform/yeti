@@ -8,12 +8,13 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, Ty
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable
-    from core.schemas.graph import Relationship, TagRelationship, RelationshipTypes
+    from core.schemas.graph import Relationship, RelationshipTypes, TagRelationship
     from core.schemas.tag import Tag
 
 import requests
 from arango import ArangoClient
 from arango.exceptions import DocumentInsertError, GraphCreateError
+
 from core.config.config import yeti_config
 
 from .interfaces import AbstractYetiConnector

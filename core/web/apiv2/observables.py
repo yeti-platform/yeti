@@ -1,9 +1,10 @@
 from typing import Iterable
 
-from core.schemas import graph
-from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, field_validator
+
+from core.schemas import graph
+from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
 
 ObservableTypes = ()
 

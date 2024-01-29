@@ -1,14 +1,14 @@
-from io import StringIO
 import json
 import logging
 from datetime import timedelta
+from io import StringIO
 from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import file, sha256, sha1, md5, hostname, path
-from core.schemas import task
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import file, hostname, md5, path, sha1, sha256
 
 
 class HybridAnalysis(task.FeedTask):

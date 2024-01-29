@@ -1,9 +1,9 @@
 import logging
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas import observable
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import observable, task
 
 
 class ThreatviewC2(task.FeedTask):

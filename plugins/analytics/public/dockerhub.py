@@ -1,6 +1,7 @@
 import re
 
 import requests
+
 from core import taskmanager
 from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType

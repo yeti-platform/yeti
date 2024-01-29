@@ -10,13 +10,14 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import requests
+from dateutil import parser
+from pydantic import BaseModel, Field
+
 from core import database_arango
 from core.config.config import yeti_config
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
-from dateutil import parser
-from pydantic import BaseModel, Field
 
 
 def now():

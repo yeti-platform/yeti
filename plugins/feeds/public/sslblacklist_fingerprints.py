@@ -1,12 +1,12 @@
-from io import StringIO
 from datetime import timedelta
+from io import StringIO
 from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import certificate, sha1
 from core import taskmanager
 from core.schemas import task
+from core.schemas.observables import certificate, sha1
 
 TYPE_DICT = {
     "MITM": ["mitm"],

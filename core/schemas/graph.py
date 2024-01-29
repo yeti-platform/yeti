@@ -1,8 +1,9 @@
 import datetime
 from typing import ClassVar
 
-from core import database_arango
 from pydantic import BaseModel, computed_field
+
+from core import database_arango
 
 
 # Database model

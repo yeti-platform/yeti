@@ -2,10 +2,11 @@ import re
 import secrets
 from typing import ClassVar
 
-from core import database_arango
-from core.schemas.model import YetiModel
 from passlib.context import CryptContext
 from pydantic import Field
+
+from core import database_arango
+from core.schemas.model import YetiModel
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

@@ -1,17 +1,14 @@
-from io import StringIO
 import json
 import logging
 from datetime import datetime, timedelta
+from io import StringIO
 
 import pandas as pd
-from core.config.config import yeti_config
-from core.schemas import observable
-from core.schemas import indicator
-from core.schemas import entity
-from core.schemas import task
-from core import taskmanager
-
 from OTXv2 import OTXv2
+
+from core import taskmanager
+from core.config.config import yeti_config
+from core.schemas import entity, indicator, observable, task
 
 
 class OTXAlienvault(task.FeedTask):

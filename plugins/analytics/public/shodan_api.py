@@ -1,11 +1,13 @@
 import logging
-from core import taskmanager
-from core.schemas.observable import Observable, ObservableType
-from core.schemas.observables import ipv4, asn, hostname
-from core.schemas.entity import Company
-from core.schemas import task
-from core.config.config import yeti_config
+
 import shodan
+
+from core import taskmanager
+from core.config.config import yeti_config
+from core.schemas import task
+from core.schemas.entity import Company
+from core.schemas.observable import Observable, ObservableType
+from core.schemas.observables import asn, hostname, ipv4
 
 
 class ShodanApi(object):

@@ -1,12 +1,14 @@
 """Azorult Tracker feeds"""
-from datetime import timedelta, datetime
 import logging
-import pandas as pd
-import numpy as np
-from core.schemas.observables import ipv4, hostname, url, asn
-from core.schemas import task
-from core import taskmanager
+from datetime import datetime, timedelta
 from typing import ClassVar
+
+import numpy as np
+import pandas as pd
+
+from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import asn, hostname, ipv4, url
 
 
 class AzorultTracker(task.FeedTask):

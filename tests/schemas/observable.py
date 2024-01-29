@@ -5,8 +5,8 @@ from core import database_arango
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
 from core.schemas.observables import (
-    bic,
     asn,
+    bic,
     certificate,
     cidr,
     command_line,

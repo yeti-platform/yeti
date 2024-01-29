@@ -7,6 +7,7 @@ import pkgutil
 
 from celery import Celery
 from celery.utils.log import get_task_logger
+
 from core.config.config import yeti_config
 from core.schemas.task import Task, TaskParams
 from core.taskmanager import TaskManager

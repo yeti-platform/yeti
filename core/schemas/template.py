@@ -1,7 +1,8 @@
 import os
-from typing import ClassVar, TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import jinja2
+
 from core import database_arango
 from core.schemas.model import YetiModel
 

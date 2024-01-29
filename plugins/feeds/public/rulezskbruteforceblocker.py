@@ -1,11 +1,12 @@
 from datetime import timedelta
 from typing import ClassVar
 
-from dateutil import parser
 import pandas as pd
-from core.schemas.observables import ipv4
-from core.schemas import task
+from dateutil import parser
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import ipv4
 
 
 class RulezSKBruteforceBlocker(task.FeedTask):

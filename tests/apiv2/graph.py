@@ -2,6 +2,8 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas.entity import ThreatActor
 from core.schemas.graph import Relationship
@@ -9,7 +11,6 @@ from core.schemas.indicator import Regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
