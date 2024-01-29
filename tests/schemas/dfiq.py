@@ -133,8 +133,6 @@ class DFIQTest(unittest.TestCase):
 
             result = type_.from_yaml(yaml_string).save()
 
-            expected_yaml_string = yaml.dump(
-                yaml.safe_load(yaml_string)
-            )
+            expected_yaml_string = yaml.dump(yaml.safe_load(yaml_string))
             result_yaml_string = result.to_yaml()
             self.assertEqual(expected_yaml_string, result_yaml_string)

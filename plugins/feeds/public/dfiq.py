@@ -54,11 +54,13 @@ def _process_approach(yaml_string: str) -> None:
                             relevant_tags=approach.dfiq_tags,
                             query_type=indicator.QueryType.opensearch,
                             location=processor.name,
-                            diamond=indicator.DiamondModel.victim
+                            diamond=indicator.DiamondModel.victim,
                         ).save()
                     approach.link_to(query, "query", "Uses query")
                 else:
-                    logging.warning("Unknown step type %s in %s", step.type, approach.dfiq_id)
+                    logging.warning(
+                        "Unknown step type %s in %s", step.type, approach.dfiq_id
+                    )
 
 
 TYPE_FUNCTIONS = {

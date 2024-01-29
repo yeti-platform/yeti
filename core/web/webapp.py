@@ -56,8 +56,10 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    dfiq.router, prefix="/dfiq", tags=["dfiq"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    dfiq.router,
+    prefix="/dfiq",
+    tags=["dfiq"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 
 api_router.include_router(

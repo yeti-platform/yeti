@@ -71,7 +71,12 @@ class GraphSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     vertices: dict[
-        str, observable.Observable | entity.Entity | indicator.Indicator | tag.Tag | dfiq.DFIQBase
+        str,
+        observable.Observable
+        | entity.Entity
+        | indicator.Indicator
+        | tag.Tag
+        | dfiq.DFIQBase,
     ]
     paths: list[list[graph.Relationship | graph.TagRelationship]]
     total: int

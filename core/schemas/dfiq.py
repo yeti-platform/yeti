@@ -84,7 +84,7 @@ class DFIQScenario(DFIQBase):
             yaml_data = yaml.safe_load(yaml_string)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML: {e}")
-        if yaml_data['type'] != 'scenario':
+        if yaml_data["type"] != "scenario":
             raise ValueError(f"Invalid type for DFIQ scenario: {yaml_data['type']}")
 
         return cls(
@@ -110,7 +110,7 @@ class DFIQFacet(DFIQBase):
             yaml_data = yaml.safe_load(yaml_string)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML: {e}")
-        if yaml_data['type'] != 'facet':
+        if yaml_data["type"] != "facet":
             raise ValueError(f"Invalid type for DFIQ facet: {yaml_data['type']}")
 
         return cls(
@@ -136,7 +136,7 @@ class DFIQQuestion(DFIQBase):
             yaml_data = yaml.safe_load(yaml_string)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML: {e}")
-        if yaml_data['type'] != 'question':
+        if yaml_data["type"] != "question":
             raise ValueError(f"Invalid type for DFIQ question: {yaml_data['type']}")
 
         return cls(
@@ -207,7 +207,7 @@ class DFIQApproach(DFIQBase):
             yaml_data = yaml.safe_load(yaml_string)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML: {e}")
-        if yaml_data['type'] != 'approach':
+        if yaml_data["type"] != "approach":
             raise ValueError(f"Invalid type for DFIQ approach: {yaml_data['type']}")
         return cls(
             name=yaml_data["display_name"],

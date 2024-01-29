@@ -85,8 +85,18 @@ class ArangoDatabase:
             self.graph("threat_graph"),
             {
                 "edge_collection": "links",
-                "from_vertex_collections": ["observables", "entities", "indicators", "dfiq"],
-                "to_vertex_collections": ["observables", "entities", "indicators", "dfiq"],
+                "from_vertex_collections": [
+                    "observables",
+                    "entities",
+                    "indicators",
+                    "dfiq",
+                ],
+                "to_vertex_collections": [
+                    "observables",
+                    "entities",
+                    "indicators",
+                    "dfiq",
+                ],
             },
         )
         self.db.collection("observables").add_persistent_index(
