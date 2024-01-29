@@ -11,6 +11,7 @@ import requests
 
 VT_BASE_URL = "https://www.virustotal.com/api/v3"
 
+
 class VirustotalApi(object):
     """Base class for querying the VirusTotal API.
     This is the public API, so there is a limit for up to 3
@@ -19,7 +20,6 @@ class VirustotalApi(object):
     TODO: Register a redis key with the last query time and prevent
     limit rejection, as it could cause api key deactivation.
     """
-
 
     @staticmethod
     def fetch(endpoint):
@@ -37,7 +37,7 @@ class VirustotalApi(object):
         response = None
         url = VT_BASE_URL + endpoint
         header = {"X-Apikey": yeti_config.get("vt", "key")}
-        response = requests.get(url, headers=header, proxies=yeti_config.get('proxy'))
+        response = requests.get(url, headers=header, proxies=yeti_config.get("proxy"))
         if response.ok:
             return response.json()
         else:
@@ -297,7 +297,6 @@ class VTFileReport(task.OneShotTask, VirustotalApi):
     ]
 
     def each(self, observable: Observable):
-
         endpoint = "/files/%s" % observable.value
 
         result = VirustotalApi.fetch(endpoint)
@@ -369,7 +368,6 @@ class VTSubdomains(task.OneShotTask, VirustotalApi):
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
     def each(self, observable: Observable):
-
         endpoint = "/domains/%s/subdomains" % observable.value
 
         result = VirustotalApi.fetch(endpoint)

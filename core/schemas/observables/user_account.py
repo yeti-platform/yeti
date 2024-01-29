@@ -13,8 +13,9 @@ class UserAccount(observable.Observable):
     Value should to be in the form <ACCOUNT_TYPE>:<ACCOUNT_LOGIN>.
     """
 
-
-    type: Literal[observable.ObservableType.user_account] = observable.ObservableType.user_account
+    type: Literal[
+        observable.ObservableType.user_account
+    ] = observable.ObservableType.user_account
     user_id: str | None = None
     credential: str | None = None
     account_login: str | None = None
@@ -30,11 +31,14 @@ class UserAccount(observable.Observable):
     account_first_login: datetime.datetime | None = None
     account_last_login: datetime.datetime | None = None
 
-    @model_validator(mode='after')
-    def check_timestamp_coherence(self) -> 'UserAccount':
+    @model_validator(mode="after")
+    def check_timestamp_coherence(self) -> "UserAccount":
         if self.account_created and self.account_expires:
             if self.account_created > self.account_expires:
-                raise ValueError("Account created date is after account expiration date.")
+                raise ValueError(
+                    "Account created date is after account expiration date."
+                )
         return self
+
 
 observable.TYPE_MAPPING[observable.ObservableType.user_account] = UserAccount

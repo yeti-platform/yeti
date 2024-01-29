@@ -14,7 +14,6 @@ DATA = [
 
 
 class Random(task.FeedTask):
-
     _defaults = {
         "frequency": timedelta(hours=1),
         "type": "feed",

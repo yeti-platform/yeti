@@ -16,6 +16,7 @@ class VXVaultUrl(task.FeedTask):
     }
 
     _SOURCE: ClassVar["str"] = "http://vxvault.net/URL_List.php"
+
     # should tell yeti how to get and chunk the feed
     def run(self):
         response = self._make_request(self._SOURCE)

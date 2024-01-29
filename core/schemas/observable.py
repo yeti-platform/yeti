@@ -11,6 +11,7 @@ from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
 from pydantic import Field, computed_field
 
+
 # Data Schema
 class ObservableType(str, Enum):
     asn = "asn"
@@ -150,7 +151,6 @@ REGEXES_OBSERVABLES = {
         re.compile(r"^(\/[^\/\0]+)+$"),
         re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
     ],
-
     ObservableType.bic: [re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")],
 }
 
@@ -183,9 +183,31 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-from core.schemas.observables import (asn, bic, certificate, cidr, command_line,  # noqa: E402, F401
-                                      docker_image, email, file,  # noqa: F401
-                                      generic_observable, hostname, iban, imphash,  # noqa: F401
-                                      ipv4, ipv6, mac_address, md5, path,  # noqa: F401
-                                      registry_key, sha1, sha256, ssdeep, tlsh,  # noqa: F401
-                                      url, user_account, user_agent, wallet)  # noqa: F401
+from core.schemas.observables import (
+    asn,
+    bic,
+    certificate,
+    cidr,
+    command_line,  # noqa: E402, F401
+    docker_image,
+    email,
+    file,  # noqa: F401
+    generic_observable,
+    hostname,
+    iban,
+    imphash,  # noqa: F401
+    ipv4,
+    ipv6,
+    mac_address,
+    md5,
+    path,  # noqa: F401
+    registry_key,
+    sha1,
+    sha256,
+    ssdeep,
+    tlsh,  # noqa: F401
+    url,
+    user_account,
+    user_agent,
+    wallet,
+)  # noqa: F401

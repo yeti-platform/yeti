@@ -16,7 +16,6 @@ class NetworkWhois(task.AnalyticsTask):
     acts_on: list[ObservableType] = [ObservableType.ipv4]
 
     def each(self, ip: ipv4.IPv4):
-
         r = IPWhois(ip.value)
         result = r.lookup_whois()
 

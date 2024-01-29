@@ -51,6 +51,7 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     def is_valid(cls, object: dict) -> bool:
         return validate_entity(object)
 
+
 class Note(Entity):
     type: Literal[EntityType.note] = EntityType.note
     _type_filter: ClassVar[str] = EntityType.note
@@ -154,6 +155,7 @@ class Vulnerability(Entity):
         severity: represents the severity of a vulnerability. One of none, low,
                   medium, high, critical.
     """
+
     _type_filter: ClassVar[str] = EntityType.vulnerability
     type: Literal[EntityType.vulnerability] = EntityType.vulnerability
 
@@ -169,8 +171,8 @@ class CourseOfAction(Entity):
 
 
 TYPE_MAPPING = {
-    'entities': Entity,
-    'entity': Entity,
+    "entities": Entity,
+    "entity": Entity,
     EntityType.attack_pattern: AttackPattern,
     EntityType.campaign: Campaign,
     EntityType.company: Company,
@@ -189,10 +191,12 @@ TYPE_MAPPING = {
 TYPE_VALIDATOR_MAP = {}
 
 REGEXES_ENTITIES = {
-    EntityType.vulnerability: ('name', re.compile(
-        r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"
-    ))
+    EntityType.vulnerability: (
+        "name",
+        re.compile(r"(?P<pre>\W?)(?P<search>CVE-\d{4}-\d{4,7})(?P<post>\W?)"),
+    )
 }
+
 
 def validate_entity(ent: Entity) -> bool:
     if ent.type in TYPE_VALIDATOR_MAP:
@@ -204,6 +208,7 @@ def validate_entity(ent: Entity) -> bool:
         else:
             return False
     return True
+
 
 EntityTypes = (
     AttackPattern

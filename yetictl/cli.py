@@ -22,7 +22,9 @@ def list_users():
 @click.argument("password")
 @click.option("--admin", is_flag=True, default=False)
 @click.option("--api_key")
-def create_user(username: str, password: str, admin: bool = False, api_key: str | None = None) -> None:
+def create_user(
+    username: str, password: str, admin: bool = False, api_key: str | None = None
+) -> None:
     """Creates a new user in the system."""
     user = UserSensitive.find(username=username)
     if user:
@@ -45,7 +47,9 @@ def toggle_user(username: str):
         raise RuntimeError(f"User with username {username} does not exist")
     user.enabled = not user.enabled
     user.save()
-    click.echo(f"User {username} succesfully {'enabled' if user.enabled else 'disabled'}")
+    click.echo(
+        f"User {username} succesfully {'enabled' if user.enabled else 'disabled'}"
+    )
 
 
 @cli.command()
@@ -56,7 +60,9 @@ def toggle_admin(username: str):
         raise RuntimeError(f"User with username {username} does not exist")
     user.admin = not user.admin
     user.save()
-    click.echo(f"User {username} succesfully {'promoted to admin' if user.admin else 'demoted from admin'}")
+    click.echo(
+        f"User {username} succesfully {'promoted to admin' if user.admin else 'demoted from admin'}"
+    )
 
 
 @cli.command()

@@ -73,7 +73,7 @@ class PassiveTotalApi(object):
         )
 
         response = requests.get(
-            url, auth=auth, params=params, proxies=yeti_config.get('proxy')
+            url, auth=auth, params=params, proxies=yeti_config.get("proxy")
         )
         response.raise_for_status()
 
@@ -196,7 +196,6 @@ class PassiveTotalReverseWhois(task.OneShotTask, PassiveTotalApi):
     acts_on: list[ObservableType] = [ObservableType.email]
 
     def each(self, observable: Observable):
-
         if observable.type is ObservableType.email:
             field = "email"
         elif observable.type:

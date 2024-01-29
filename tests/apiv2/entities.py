@@ -23,9 +23,8 @@ class EntityTest(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.entity1 = entity.ThreatActor(
-            name="ta1",
-            aliases=["badactor"],
-            created=datetime.datetime(2020, 1, 1)).save()
+            name="ta1", aliases=["badactor"], created=datetime.datetime(2020, 1, 1)
+        ).save()
         self.entity1.tag(["ta1"])
         self.entity2 = entity.ThreatActor(name="bears").save()
 

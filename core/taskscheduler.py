@@ -13,14 +13,17 @@ from core.taskmanager import TaskManager
 
 logger = get_task_logger(__name__)
 
+
 def get_plugins_list():
     plugins_list = set()
-    plugins_path = pathlib.Path(yeti_config.get('system', 'plugins_path'))
+    plugins_path = pathlib.Path(yeti_config.get("system", "plugins_path"))
     if not plugins_path.exists():
         logging.warning(f"Plugins path {str(plugins_path.absolute())} does not exist")
         return plugins_list
-    for module_info in pkgutil.walk_packages([str(plugins_path.absolute())], prefix=f"{plugins_path.name}."):
-        if not module_info.ispkg and 'deprecated' not in module_info.name:
+    for module_info in pkgutil.walk_packages(
+        [str(plugins_path.absolute())], prefix=f"{plugins_path.name}."
+    ):
+        if not module_info.ispkg and "deprecated" not in module_info.name:
             try:
                 module = importlib.import_module(module_info.name)
                 for _, obj in inspect.getmembers(module, inspect.isclass):
@@ -35,8 +38,9 @@ app = Celery(
     "tasks",
     broker=f"redis://{yeti_config.get('redis', 'host')}/",
     worker_pool_restarts=True,
-    imports=get_plugins_list()
+    imports=get_plugins_list(),
 )
+
 
 @app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -47,9 +51,11 @@ def setup_periodic_tasks(sender, **kwargs):
         logger.info("Registering periodic task %s (%s)", task.name, task.frequency)
         sender.add_periodic_task(
             task.frequency,
-            run_task.s(task.name, '{}'),
-            name=f'Schedule for {task.name}')
+            run_task.s(task.name, "{}"),
+            name=f"Schedule for {task.name}",
+        )
     return
+
 
 @app.task
 def run_task(task_name: str, params: str):
@@ -62,4 +68,3 @@ def run_task(task_name: str, params: str):
     """
     task_params = TaskParams(**json.loads(params))
     TaskManager.run_task(task_name, task_params)
-

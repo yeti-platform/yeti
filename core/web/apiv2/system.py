@@ -7,19 +7,25 @@ from pydantic import BaseModel, ConfigDict
 # API endpoints
 router = APIRouter()
 
+
 class WorkerStatusResponse(BaseModel):
     """Worker status API response."""
+
     registered: dict[str, list[str]]
     active: list[tuple[str, str]]
 
+
 class WorkerRestartResponse(BaseModel):
     """Worker restart API response."""
+
     successes: set[str]
     failures: set[str]
 
+
 class SystemConfigResponse(BaseModel):
     """System config template."""
-    model_config = ConfigDict(extra='forbid')
+
+    model_config = ConfigDict(extra="forbid")
 
     auth: dict
     system: dict
@@ -30,10 +36,10 @@ async def get_config() -> SystemConfigResponse:
     """Gets the system config."""
     config = SystemConfigResponse(
         auth={
-            'module': yeti_config.get('auth', 'module'),
-            'enabled': yeti_config.get('auth', 'enabled')
+            "module": yeti_config.get("auth", "module"),
+            "enabled": yeti_config.get("auth", "enabled"),
         },
-        system=yeti_config.get('system'),
+        system=yeti_config.get("system"),
     )
     return config
 
@@ -49,7 +55,7 @@ async def get_worker_status() -> WorkerStatusResponse:
     active_tasks = []
     for host, tasks in inspect.active().items():
         for task in tasks:
-            task_name, params = task['args']
+            task_name, params = task["args"]
             active_tasks.append((task_name, params))
 
     return WorkerStatusResponse(
@@ -57,16 +63,19 @@ async def get_worker_status() -> WorkerStatusResponse:
         active=active_tasks,
     )
 
-@router.post("/restartworker/{worker_name}", dependencies=[Depends(get_current_active_user)])
+
+@router.post(
+    "/restartworker/{worker_name}", dependencies=[Depends(get_current_active_user)]
+)
 async def restart_worker(worker_name: str) -> WorkerRestartResponse:
     """Restarts a single or all Celery workers."""
     destination = [worker_name] if worker_name != "all" else None
     response = app.control.broadcast(
-            "pool_restart",
-            arguments={"reload": True},
-            destination=destination,
-            reply=True,
-        )
+        "pool_restart",
+        arguments={"reload": True},
+        destination=destination,
+        reply=True,
+    )
 
     failures = set()
     successes = set()

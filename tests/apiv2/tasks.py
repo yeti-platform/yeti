@@ -43,7 +43,9 @@ class TaskTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_search_tasks(self):
-        response = client.post("/api/v2/tasks/search", json={"query": {"name": "FakeTask"}})
+        response = client.post(
+            "/api/v2/tasks/search", json={"query": {"name": "FakeTask"}}
+        )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tasks"][0]["name"], "FakeTask")
@@ -123,7 +125,9 @@ class ExportTaskTest(unittest.TestCase):
 
     def test_search_export(self):
         """Tests that exports can be searched."""
-        response = client.post("/api/v2/tasks/search", json={"query": {"name": "RandomExport"}})
+        response = client.post(
+            "/api/v2/tasks/search", json={"query": {"name": "RandomExport"}}
+        )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tasks"][0]["name"], "RandomExport")
@@ -170,7 +174,9 @@ class ExportTaskTest(unittest.TestCase):
         response = client.delete("/api/v2/tasks/export/RandomExport")
         self.assertEqual(response.status_code, 200)
         # verify the export doesn't exist
-        response = client.post("/api/v2/tasks/search", json={"query": {"name": "RandomExport"}})
+        response = client.post(
+            "/api/v2/tasks/search", json={"query": {"name": "RandomExport"}}
+        )
         data = response.json()
         self.assertEqual(data["total"], 0)
 

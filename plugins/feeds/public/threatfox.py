@@ -32,9 +32,9 @@ class ThreatFox(task.FeedTask):
 
             df["first_seen_utc"] = pd.to_datetime(df["first_seen_utc"])
             df["last_seen_utc"] = pd.to_datetime(df["last_seen_utc"])
-            
+
             df = self._filter_observables_by_time(df, "first_seen_utc")
-            df['last_seen_utc'] = df['last_seen_utc'].replace(pd.NaT, False)
+            df["last_seen_utc"] = df["last_seen_utc"].replace(pd.NaT, False)
         for _, line in df.iterrows():
             self.analyze(line)
 
@@ -91,7 +91,9 @@ class ThreatFox(task.FeedTask):
                 context["port"] = port
             else:
                 value = ioc_value
-            obs = observable.Observable(value=value, type=self._MAPPING[ioc_type]).save()
+            obs = observable.Observable(
+                value=value, type=self._MAPPING[ioc_type]
+            ).save()
             obs.add_context(self.name, context)
             if malware_alias:
                 tags.extend(malware_alias.split(","))

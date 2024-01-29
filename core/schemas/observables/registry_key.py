@@ -4,9 +4,9 @@ from enum import Enum
 from core.schemas import observable
 
 
-
 class RegistryHive(str, Enum):
     """Registry Hive enum class."""
+
     HKEY_CURRENT_CONFIG = "HKEY_CURRENT_CONFIG"
     HKEY_CURRENT_USER = "HKEY_CURRENT_USER"
     HKEY_LOCAL_MACHINE_SAM = "HKEY_LOCAL_MACHINE_SAM"
@@ -25,7 +25,10 @@ class RegistryKey(observable.Observable):
         hive: The registry hive like SYSEM, SOFTWARE, etc.
         path_file: The filesystem path to the file that contains the registry key value.
     """
-    type: Literal[observable.ObservableType.registry_key] = observable.ObservableType.registry_key
+
+    type: Literal[
+        observable.ObservableType.registry_key
+    ] = observable.ObservableType.registry_key
     key: str
     data: bytes
     hive: RegistryHive

@@ -22,7 +22,7 @@ class CirclPDNSApi(object):
             API_URL + observable.value,
             auth=auth,
             headers=headers,
-            proxies=yeti_config.get('proxy'),
+            proxies=yeti_config.get("proxy"),
         )
         if r.status_code == 200:
             for line in filter(None, r.text.split("\n")):
@@ -43,7 +43,6 @@ class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
     acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
     def each(self, observable: Observable):
-
         json_result = CirclPDNSApi.fetch(observable, CirclPDNSApi.settings)
 
         result = {}

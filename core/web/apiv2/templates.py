@@ -8,28 +8,28 @@ from core.schemas.template import Template
 
 # Request schemas
 class TemplateSearchRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
-    query: dict[str, str|int|list] = {}
+    query: dict[str, str | int | list] = {}
     count: int = 50
     page: int = 0
 
 
 class TemplateSearchResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     templates: list[Template]
     total: int
 
 
 class PatchTemplateRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     template: Template
 
 
 class RenderExportRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     template_id: str
     observable_ids: list[str] | None = None

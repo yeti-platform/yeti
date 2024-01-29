@@ -44,7 +44,7 @@ class UrlHaus(task.FeedTask):
                 header=0,
             )
             df = self._filter_observables_by_time(df, "dateadded")
-            df['last_online'] = df['last_online'].replace(pd.NaT, False)
+            df["last_online"] = df["last_online"].replace(pd.NaT, False)
 
             for _, line in df.iterrows():
                 self.analyze(line)
@@ -62,7 +62,7 @@ class UrlHaus(task.FeedTask):
         tags = None
         logging.debug(f"tags: {tags} line: {line['tags']}")
         if line["tags"] and isinstance(line["tags"], str):
-            tags = line['tags'].split(",")
+            tags = line["tags"].split(",")
 
         urlhaus_link = line["urlhaus_link"]
         source = line["reporter"]
@@ -78,13 +78,13 @@ class UrlHaus(task.FeedTask):
         }
         if last_online:
             context["last_online"] = last_online
-        logging.debug(f'url_str: {url_str}')
+        logging.debug(f"url_str: {url_str}")
         url_obs = url.Url(value=url_str).save()
         logging.debug(f"context: {context}")
         url_obs.add_context(self.name, context)
         logging.debug(f"tags: {tags}")
         if tags:
             url_obs.tag(tags)
-        
+
 
 taskmanager.TaskManager.register_task(UrlHaus)

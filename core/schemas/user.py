@@ -15,11 +15,10 @@ def generate_api_key():
 
 
 class User(YetiModel, database_arango.ArangoYetiConnector):
-
     _collection_name: ClassVar[str] = "users"
     _type_filter: ClassVar[None] = None
 
-    #id: str | None = None
+    # id: str | None = None
     username: str
     enabled: bool = True
     admin: bool = False

@@ -47,7 +47,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}
 
-    #id: str | None = None
+    # id: str | None = None
     name: str
     enabled: bool = False
     description: str = ""
@@ -138,7 +138,7 @@ class FeedTask(Task):
             url,
             headers=headers,
             auth=auth,
-            proxies=yeti_config.get('proxy'),
+            proxies=yeti_config.get("proxy"),
             params=params,
             data=data,
             verify=verify,
@@ -166,7 +166,6 @@ class FeedTask(Task):
 
 
 class AnalyticsTask(Task):
-
     acts_on: list[str] = []  # By default act on all observables
     type: Literal[TaskType.analytics] = TaskType.analytics
 
@@ -202,7 +201,6 @@ class AnalyticsTask(Task):
 
 
 class OneShotTask(Task):
-
     type: Literal[TaskType.oneshot] = TaskType.oneshot
     acts_on: list[str] = []  # By default act on all observables
 
@@ -235,7 +233,6 @@ class OneShotTask(Task):
 
 
 class ExportTask(Task):
-
     type: Literal[TaskType.export] = TaskType.export
 
     include_tags: list[str] = []
@@ -249,7 +246,7 @@ class ExportTask(Task):
     @property
     def output_file(self) -> str:
         """Returns the output file for the export."""
-        export_path = yeti_config.get('system', 'export_path', "/opt/yeti/exports")
+        export_path = yeti_config.get("system", "export_path", "/opt/yeti/exports")
         name_slug = self.name.replace(" ", "_").lower()
         return os.path.abspath(os.path.join(export_path, name_slug))
 
@@ -263,7 +260,9 @@ class ExportTask(Task):
             fresh_tags=self.fresh_tags,
         )
 
-        export_path = pathlib.Path(yeti_config.get('system', 'export_path', "/opt/yeti/exports"))
+        export_path = pathlib.Path(
+            yeti_config.get("system", "export_path", "/opt/yeti/exports")
+        )
         export_path.mkdir(parents=True, exist_ok=True)
         template = Template.find(name=self.template_name)
         assert template is not None
@@ -279,7 +278,6 @@ class ExportTask(Task):
         ignore_tags: list[str],
         fresh_tags: bool,
     ):
-
         args = {
             "acts_on": acts_on,
             "include": include_tags,
