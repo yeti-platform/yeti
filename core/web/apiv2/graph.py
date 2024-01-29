@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 from pydantic.functional_validators import field_validator
 
-from core.schemas import entity, graph, indicator, observable, tag, dfiq
+from core.schemas import dfiq, entity, graph, indicator, observable, tag
 from core.schemas.observable import ObservableType
 
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]

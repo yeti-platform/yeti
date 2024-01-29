@@ -8,8 +8,8 @@ from core.config.config import yeti_config
 from core.logger import logger
 from core.web.apiv2 import (
     auth,
-    entities,
     dfiq,
+    entities,
     graph,
     indicators,
     observables,

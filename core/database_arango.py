@@ -624,7 +624,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def _build_vertices(self, vertices, arango_vertices):
         # Import happens here to avoid circular dependency
-        from core.schemas import entity, indicator, observable, tag, dfiq
+        from core.schemas import dfiq, entity, indicator, observable, tag
 
         type_mapping = {
             "tag": tag.Tag,

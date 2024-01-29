@@ -6,7 +6,7 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from core import taskmanager
-from core.schemas import dfiq, task, indicator
+from core.schemas import dfiq, indicator, task
 
 
 def _process_scenario(yaml_string: str) -> None:
