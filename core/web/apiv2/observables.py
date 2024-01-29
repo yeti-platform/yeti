@@ -1,10 +1,10 @@
-import datetime
 from typing import Iterable
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from core.schemas import graph
 from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, field_validator
 
 ObservableTypes = ()
 
@@ -208,7 +208,7 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddRes
     if not response.added:
         raise HTTPException(
             status_code=400,
-            detail=f"Failed to add any observables.",
+            detail="Failed to add any observables.",
         )
     return response
 

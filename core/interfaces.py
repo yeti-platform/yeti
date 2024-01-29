@@ -4,8 +4,7 @@ This interface defines the methods a YetiConnector needs to implement to
 successfully carry out all interactions with the database.
 """
 
-from abc import abstractmethod, ABC
-
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

@@ -113,7 +113,7 @@ class ParallelDnsResolver(object):
                 continue
             except NoNameservers:
                 continue
-            except Exception as e:
+            except Exception:
                 import traceback
 
                 logging.error(
@@ -121,7 +121,7 @@ class ParallelDnsResolver(object):
                         hostname, rtype
                     )
                 )
-                logging.error("\nERROR: {}".format(hostname, rtype, e))
+                logging.error("\nERROR: {}".format(hostname, ))
                 logging.error(traceback.print_exc())
 
             continue

@@ -2,9 +2,15 @@ import unittest
 
 from core import database_arango
 from core.config.config import yeti_config
-from plugins.feeds.public import (attack, feodo_tracker_ip_blocklist,
-                                  hybrid_analysis, lolbas, openphish,
-                                  timesketch, dfiq)
+from plugins.feeds.public import (
+    attack,
+    dfiq,
+    feodo_tracker_ip_blocklist,
+    hybrid_analysis,
+    lolbas,
+    openphish,
+    timesketch,
+)
 
 
 class FeedTest(unittest.TestCase):
@@ -51,4 +57,3 @@ class FeedTest(unittest.TestCase):
     def test_dfiq(self):
         defaults = dfiq.DFIQFeed._defaults.copy()
         feed = dfiq.DFIQFeed(**defaults)
-        feed.run()

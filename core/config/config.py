@@ -66,4 +66,5 @@ class Config:
             return self[section][key]
         return default
 
+
 yeti_config = Config()

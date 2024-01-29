@@ -1,9 +1,13 @@
 import os
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import jinja2
+
 from core import database_arango
 from core.schemas.model import YetiModel
+
+if TYPE_CHECKING:
+    from core.schemas.observable import Observable
 
 # TODO: Import Jinja functions to render templates
 

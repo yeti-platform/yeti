@@ -1,9 +1,10 @@
 import logging
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas.observables import ipv4
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import ipv4
 
 
 class TorExitNodes(task.FeedTask):

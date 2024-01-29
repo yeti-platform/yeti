@@ -6,9 +6,16 @@ from unittest import mock
 from core import database_arango, taskmanager
 from core.config.config import yeti_config
 from core.schemas.observable import Observable
-from core.schemas.task import (AnalyticsTask, ExportTask, FeedTask,
-                               OneShotTask, Task, TaskParams, TaskStatus,
-                               TaskType)
+from core.schemas.task import (
+    AnalyticsTask,
+    ExportTask,
+    FeedTask,
+    OneShotTask,
+    Task,
+    TaskParams,
+    TaskStatus,
+    TaskType,
+)
 from core.schemas.template import Template
 
 
@@ -179,7 +186,7 @@ class OneShotTaskTest(unittest.TestCase):
             _defaults = {
                 "name": "FakeOneShotTask",
                 "description": "Add fake metadata to hostname observable",
-                "enabled": True
+                "enabled": True,
             }
 
             acts_on: list[str] = ["hostname"]
@@ -223,15 +230,16 @@ class OneShotTaskTest(unittest.TestCase):
 
     def test_run_oneshot_task(self) -> None:
         taskmanager.TaskManager.register_task(self.fake_oneshot_task_class)
-        taskmanager.TaskManager.run_task("FakeOneShotTask", TaskParams(params={"value": "asd1.com"}))
+        taskmanager.TaskManager.run_task(
+            "FakeOneShotTask", TaskParams(params={"value": "asd1.com"})
+        )
         observable = Observable.find(value="asd1.com")
-        self.assertEqual(observable.context, [{'source': 'test', 'test': 'test'}])
+        self.assertEqual(observable.context, [{"source": "test", "test": "test"}])
         task = self.fake_oneshot_task_class.find(name="FakeOneShotTask")
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed)
         self.assertIsNotNone(task.last_run)
 
-    
 
 class ExportTaskTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -271,7 +279,7 @@ class ExportTaskTest(unittest.TestCase):
     @mock.patch("core.schemas.template.Template.render")
     def test_run_export_task_with_config_path(self, mock_render):
         """Tests that the each function is called for each filtered observable."""
-        previous = yeti_config.get('system', 'export_path')
+        previous = yeti_config.get("system", "export_path")
         yeti_config.system.export_path = "/tmp"
         taskmanager.TaskManager.run_task("RandomExport", TaskParams())
         task = ExportTask.find(name="RandomExport")

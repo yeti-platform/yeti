@@ -2,11 +2,12 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas.observables import file, hostname
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -30,7 +31,8 @@ class ObservableTest(unittest.TestCase):
             sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709",
             md5="d41d8cd98f00b204e9800998ecf8427e",
-            mime_type="inode/x-empty; charset=binary").save()
+            mime_type="inode/x-empty; charset=binary",
+        ).save()
         obs.tag(["tag1"])
         response = client.get(f"/api/v2/observables/{obs.id}")
         self.assertEqual(response.status_code, 200)
@@ -38,7 +40,10 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["name"], "empty")
         self.assertEqual(data["type"], "file")
         self.assertEqual(data["size"], 0)
-        self.assertEqual(data["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        self.assertEqual(
+            data["sha256"],
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        )
         self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
         self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
         self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
@@ -53,7 +58,9 @@ class ObservableTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
         data = response.json()
-        self.assertEqual(data["detail"], "Observable with value tomchop.me already exists")
+        self.assertEqual(
+            data["detail"], "Observable with value tomchop.me already exists"
+        )
 
     def test_post_file_observable(self):
         response = client.post(
@@ -89,32 +96,38 @@ class ObservableTest(unittest.TestCase):
         hostname.Hostname(value="tomchop2.com").save()
         # Test that we get all domain names that have toto in them
         response = client.post(
-            "/api/v2/observables/search", json={"query": {"value": "tomch"}, "page": 0, "count": 10}
+            "/api/v2/observables/search",
+            json={"query": {"value": "tomch"}, "page": 0, "count": 10},
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(len(data), 2)
 
     def test_observable_search_extended_response(self):
-        obs = file.File(
+        file.File(
             value="empty",
             name="empty",
             size=0,
             sha256="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             sha1="da39a3ee5e6b4b0d3255bfef95601890afd80709",
             md5="d41d8cd98f00b204e9800998ecf8427e",
-            mime_type="inode/x-empty; charset=binary").save()
+            mime_type="inode/x-empty; charset=binary",
+        ).save()
         response = client.post(
-            "/api/v2/observables/search", json={"query": {"value": "empty"}, "page": 0, "count": 10}
+            "/api/v2/observables/search",
+            json={"query": {"value": "empty"}, "page": 0, "count": 10},
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(len(data['observables']), 1)
-        observable = data['observables'][0]
+        self.assertEqual(len(data["observables"]), 1)
+        observable = data["observables"][0]
         self.assertEqual(observable["name"], "empty")
         self.assertEqual(observable["type"], "file")
         self.assertEqual(observable["size"], 0)
-        self.assertEqual(observable["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        self.assertEqual(
+            observable["sha256"],
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        )
         self.assertEqual(observable["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
         self.assertEqual(observable["md5"], "d41d8cd98f00b204e9800998ecf8427e")
         self.assertEqual(observable["mime_type"], "inode/x-empty; charset=binary")
@@ -127,16 +140,12 @@ class ObservableTest(unittest.TestCase):
 
         response = client.post(
             "/api/v2/observables/search",
-            json={
-                "query": {"tags": ["nonexist"]},
-                "page": 0,
-                "count": 10
-            }
+            json={"query": {"tags": ["nonexist"]}, "page": 0, "count": 10},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(len(data['observables']), 0)
-        self.assertEqual(data['total'], 0)
+        self.assertEqual(len(data["observables"]), 0)
+        self.assertEqual(data["total"], 0)
 
     def test_observable_search_tags_exist(self):
         obs1 = hostname.Hostname(value="tomchop.me").save()
@@ -145,17 +154,13 @@ class ObservableTest(unittest.TestCase):
         obs2.tag(["tag2"])
         response = client.post(
             "/api/v2/observables/search",
-            json={
-                "query": {"tags": ["tag1"]},
-                "page": 0,
-                "count": 10
-            }
+            json={"query": {"tags": ["tag1"]}, "page": 0, "count": 10},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(len(data['observables']), 1)
-        self.assertEqual(data['observables'][0]['value'], 'tomchop.me')
-        self.assertEqual(data['total'], 1)
+        self.assertEqual(len(data["observables"]), 1)
+        self.assertEqual(data["observables"][0]["value"], "tomchop.me")
+        self.assertEqual(data["total"], 1)
 
     def test_observable_search_returns_tags(self):
         response = client.post(
@@ -164,7 +169,8 @@ class ObservableTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         response = client.post(
-            "/api/v2/observables/search", json={"query": {"value": "toto"}, "page": 0, "count": 10}
+            "/api/v2/observables/search",
+            json={"query": {"value": "toto"}, "page": 0, "count": 10},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -202,14 +208,15 @@ class ObservableTest(unittest.TestCase):
         )
         data = response.json()
         self.assertEqual(response.status_code, 422, data)
-        self.assertEqual(data["detail"][0]["msg"], "Value error, Tags cannot be empty", data)
+        self.assertEqual(
+            data["detail"][0]["msg"], "Value error, Tags cannot be empty", data
+        )
 
     def test_create_extended_observable(self):
         response = client.post(
             "/api/v2/observables/extended",
             json={
-                "observable":
-                {
+                "observable": {
                     "value": "empty",
                     "name": "empty",
                     "size": 0,
@@ -228,7 +235,10 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["name"], "empty")
         self.assertEqual(data["type"], "file")
         self.assertEqual(data["size"], 0)
-        self.assertEqual(data["sha256"], "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+        self.assertEqual(
+            data["sha256"],
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        )
         self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
         self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
         self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
@@ -236,7 +246,6 @@ class ObservableTest(unittest.TestCase):
         self.assertIn("tag2", data["tags"])
         self.assertEqual(data["tags"]["tag1"]["fresh"], True)
         self.assertEqual(data["tags"]["tag2"]["fresh"], True)
-
 
     def test_bulk_add(self):
         request = {
@@ -250,10 +259,10 @@ class ObservableTest(unittest.TestCase):
         response = client.post("/api/v2/observables/bulk", json=request)
         data = response.json()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(data['added']), 3)
-        self.assertEqual(len(data['failed']), 1)
+        self.assertEqual(len(data["added"]), 3)
+        self.assertEqual(len(data["failed"]), 1)
 
-        added = data['added']
+        added = data["added"]
         self.assertEqual(added[0]["value"], "toto.com")
         self.assertEqual(len(added[0]["tags"]), 0)
         self.assertEqual(added[1]["value"], "toto2.com")
@@ -262,8 +271,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(added[2]["type"], "hostname")
         self.assertEqual(len(added[2]["tags"]), 2)
 
-        self.assertEqual(data['failed'][0], "blablabla")
-
+        self.assertEqual(data["failed"][0], "blablabla")
 
     def test_add_text(self):
         TEST_CASES = [
@@ -282,7 +290,6 @@ class ObservableTest(unittest.TestCase):
             self.assertIsNotNone(data["id"])
             self.assertEqual(data["value"], expected_response)
             self.assertEqual(data["type"], expected_type)
-
 
     def test_add_text_invalid(self):
         response = client.post("/api/v2/observables/add_text", json={"text": "--toto"})
@@ -312,21 +319,25 @@ class ObservableTest(unittest.TestCase):
         observable_id = data["id"]
 
         response = client.post(
-            f"/api/v2/observables/tag",
+            "/api/v2/observables/tag",
             json={"ids": [observable_id], "tags": ["tag1", "tag2"]},
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data["tagged"], 1, data)
-        tag_relationships = data["tags"][f'observables/{observable_id}']
+        tag_relationships = data["tags"][f"observables/{observable_id}"]
         self.assertEqual(len(tag_relationships), 2, data)
         self.assertIn("tag1", tag_relationships)
-        self.assertEqual(tag_relationships["tag1"]["source"], f'observables/{observable_id}')
+        self.assertEqual(
+            tag_relationships["tag1"]["source"], f"observables/{observable_id}"
+        )
         self.assertIn("tag2", tag_relationships)
-        self.assertEqual(tag_relationships["tag2"]["source"], f'observables/{observable_id}')
+        self.assertEqual(
+            tag_relationships["tag2"]["source"], f"observables/{observable_id}"
+        )
 
         response = client.post(
-            f"/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0}
+            "/api/v2/tags/search", json={"name": "tag1", "count": 1, "page": 0}
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -347,7 +358,8 @@ class ObservableContextTest(unittest.TestCase):
         self.observable = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = hostname.Hostname(value="tomchop2.me").save()
         self.observable2.add_context(
-            "tests:ObservableContextTest", {'context_key': 'context_value'})
+            "tests:ObservableContextTest", {"context_key": "context_value"}
+        )
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -359,8 +371,7 @@ class ObservableContextTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(
-            data["context"], [{"key": "value", "source": "test_source"}])
+        self.assertEqual(data["context"], [{"key": "value", "source": "test_source"}])
 
     def test_sarch_context(self) -> None:
         """Tests that we can filter observables based on context subfields."""

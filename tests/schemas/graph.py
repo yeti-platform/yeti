@@ -1,13 +1,12 @@
-import datetime
 import unittest
+
+from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas.entity import Malware
 from core.schemas.graph import Relationship
-from core.schemas.observable import Observable
 from core.schemas.observables import hostname, ipv4
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -111,7 +110,7 @@ class ObservableTest(unittest.TestCase):
         self.observable1.link_to(self.observable2, "b", "b")
         self.observable1.link_to(self.observable3, "c", "c")
 
-        vertices, edges, edge_count = self.observable1.neighbors(link_types=['a'])
+        vertices, edges, edge_count = self.observable1.neighbors(link_types=["a"])
         self.assertEqual(len(vertices), 1)
         self.assertEqual(edge_count, 1)
 
@@ -124,7 +123,7 @@ class ObservableTest(unittest.TestCase):
         self.observable1.link_to(self.observable2, "a", "a")
         self.observable1.link_to(self.observable3, "c", "c")
 
-        vertices, edges, edge_count = self.observable1.neighbors(target_types=['ipv4'])
+        vertices, edges, edge_count = self.observable1.neighbors(target_types=["ipv4"])
         self.assertEqual(len(vertices), 2)
         self.assertEqual(edge_count, 2)
 

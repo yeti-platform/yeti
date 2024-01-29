@@ -1,16 +1,15 @@
-from datetime import datetime
 import logging
+from datetime import datetime
 
 import requests
 from dateutil import parser
 
-from core.schemas import task
 from core import taskmanager
-from core.schemas.observable import ObservableType, Observable
 from core.config.config import yeti_config
+from core.schemas import task
+from core.schemas.entity import Company, Phone
+from core.schemas.observable import Observable, ObservableType
 from core.schemas.observables import email, hostname, sha256
-from core.schemas.entity import Company, Phone, Note
-from core.schemas.entity import EntityTypes
 
 
 def whois_links(observable: Observable, whois):
@@ -74,7 +73,7 @@ class PassiveTotalApi(object):
         )
 
         response = requests.get(
-            url, auth=auth, params=params, proxies=yeti_config.get('proxy')
+            url, auth=auth, params=params, proxies=yeti_config.get("proxy")
         )
         response.raise_for_status()
 
@@ -197,7 +196,6 @@ class PassiveTotalReverseWhois(task.OneShotTask, PassiveTotalApi):
     acts_on: list[ObservableType] = [ObservableType.email]
 
     def each(self, observable: Observable):
-
         if observable.type is ObservableType.email:
             field = "email"
         elif observable.type:

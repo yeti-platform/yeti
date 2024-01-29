@@ -4,11 +4,11 @@ import re
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
+from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_validator
+
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiModel
-from pydantic import (BaseModel, Field, PrivateAttr, computed_field,
-                      field_validator)
 
 
 def future():
@@ -82,7 +82,8 @@ class Indicator(YetiModel, database_arango.ArangoYetiConnector):
                         yield observable, indicator
                 except NotImplementedError as error:
                     logging.error(
-                        f"Indicator type {indicator.type} has not implemented match(): {error}")
+                        f"Indicator type {indicator.type} has not implemented match(): {error}"
+                    )
 
 
 class Regex(Indicator):
@@ -117,10 +118,12 @@ class QueryType(str, Enum):
     osquery = "osquery"
     sql = "sql"
     splunk = "splunk"
+    censys = "censys"
 
 
 class Query(Indicator):
     """Represents a query that can be sent to another system."""
+
     _type_filter: ClassVar[str] = IndicatorType.query
     type: Literal["query"] = IndicatorType.query
 

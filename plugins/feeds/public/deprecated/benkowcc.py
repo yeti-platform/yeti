@@ -1,7 +1,6 @@
-import logging
 from datetime import timedelta, datetime
 
-from core.schemas.observables import ipv4, url
+from core.schemas.observables import ipv4
 from core.schemas import task
 from core import taskmanager
 

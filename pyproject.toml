@@ -26,9 +26,9 @@ pyyaml = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
-black = "^22.12.0"
 mypy = "^1.0.0"
 httpx = "^0.23.3"
+ruff = "^0.1.14"
 
 [tool.poetry.scripts]
 yetictl = 'yetictl.cli:cli'
@@ -41,7 +41,14 @@ timesketch-api-client = "^20230721"
 pyopenssl = "^23.3.0"
 ipwhois = "^1.2.0"
 maclookup = "^1.0.3"
+censys = "^2.2.10"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# Enable the isort rules.
+extend-select = ["I"]
+# exclude files in the /deprecated/ directories
+exclude = ["deprecated"]

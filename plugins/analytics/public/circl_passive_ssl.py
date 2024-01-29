@@ -1,14 +1,16 @@
 import requests
+from OpenSSL.crypto import (
+    FILETYPE_ASN1,
+    FILETYPE_PEM,
+    dump_certificate,
+    load_certificate,
+)
 
-
-from core.config.config import yeti_config
-from core.schemas.observables import ipv4, certificate
-from core.schemas.observable import ObservableType
 from core import taskmanager
-from core.schemas import task
 from core.config.config import yeti_config
-from OpenSSL.crypto import FILETYPE_PEM, load_certificate
-from OpenSSL.crypto import FILETYPE_ASN1, dump_certificate
+from core.schemas import task
+from core.schemas.observable import ObservableType
+from core.schemas.observables import certificate, ipv4
 
 
 class CirclPassiveSSLApi:
@@ -29,7 +31,7 @@ class CirclPassiveSSLApi:
                 "User-Agent": "Yeti Analytics Worker",
                 "accept": "application/json",
             },
-            proxies=yeti_config.get('proxy'),
+            proxies=yeti_config.get("proxy"),
         )
 
         if r.status_code == 200:
@@ -49,7 +51,7 @@ class CirclPassiveSSLApi:
                 "User-Agent": "Yeti Analytics Worker",
                 "accept": "application/json",
             },
-            proxies=yeti_config.get('proxy'),
+            proxies=yeti_config.get("proxy"),
         )
 
         if r.status_code == 200:
@@ -67,9 +69,6 @@ class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
     acts_on: list[ObservableType] = [ObservableType.ipv4]
 
     def each(self, ip: ipv4.IPv4):
-        links = set()
-        results = {}
-
         ip_search = CirclPassiveSSLApi.search_ip(ip)
         if ip_search:
             for ip_addr, ip_details in ip_search.items():
