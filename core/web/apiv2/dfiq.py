@@ -15,7 +15,9 @@ class NewDFIQRequest(BaseModel):
 class PatchDFIQRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    dfiq: dfiq.DFIQTypes
+    dfiq_yaml: str
+    dfiq_type: dfiq.DFIQType
+
 
 
 class DFIQSearchRequest(BaseModel):
@@ -74,9 +76,19 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
 async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     """Modifies an DFIQ object in the database."""
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
-    update_data = request.dfiq.model_dump(exclude_unset=True)
-    updated_dfiq = db_dfiq.model_copy(update=update_data)
+    if not db_dfiq:
+        raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
+
+    update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
+
+    if db_dfiq.type != update_data.type:
+        raise HTTPException(
+            status_code=400,
+            detail=f"DFIQ type mismatch: {db_dfiq.type} != {update_data.type}",
+        )
+    updated_dfiq = db_dfiq.model_copy(update=update_data.model_dump())
     new = updated_dfiq.save()
+    new.update_parents()
     return new
 
 

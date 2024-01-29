@@ -52,6 +52,26 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             dump.pop("contributors")
         return yaml.dump(dump)
 
+    def update_parents(self):
+        if not hasattr(self, "parent_ids"):
+            return
+        # remove all links:
+        vertices, relationships, total = self.neighbors()
+        for edge in relationships:
+            for rel in edge:
+                if rel.type not in {t.value for t in DFIQType}:
+                    continue
+                if rel.target != self.extended_id:
+                    continue
+                if vertices[rel.source].dfiq_id not in self.parent_ids:
+                    rel.delete()
+
+        for parent_id in self.parent_ids:
+            parent = DFIQBase.find(dfiq_id=parent_id)
+            if not parent:
+                raise ValueError(f"Missing parent {parent_id} for {self.dfiq_id}")
+            parent.link_to(self, self.type, f"Uses DFIQ {self.type}")
+
 
 class DFIQScenario(DFIQBase):
     description: str
@@ -64,6 +84,9 @@ class DFIQScenario(DFIQBase):
             yaml_data = yaml.safe_load(yaml_string)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML: {e}")
+        if yaml_data['type'] != 'scenario':
+            raise ValueError(f"Invalid type for DFIQ scenario: {yaml_data['type']}")
+
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data["description"],
@@ -83,7 +106,13 @@ class DFIQFacet(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQFacet"], yaml_string: str) -> "DFIQFacet":
-        yaml_data = yaml.safe_load(yaml_string)
+        try:
+            yaml_data = yaml.safe_load(yaml_string)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML: {e}")
+        if yaml_data['type'] != 'facet':
+            raise ValueError(f"Invalid type for DFIQ facet: {yaml_data['type']}")
+
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data.get("description"),
@@ -103,7 +132,13 @@ class DFIQQuestion(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQQuestion"], yaml_string: str) -> "DFIQQuestion":
-        yaml_data = yaml.safe_load(yaml_string)
+        try:
+            yaml_data = yaml.safe_load(yaml_string)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML: {e}")
+        if yaml_data['type'] != 'question':
+            raise ValueError(f"Invalid type for DFIQ question: {yaml_data['type']}")
+
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data.get("description"),
@@ -168,7 +203,12 @@ class DFIQApproach(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQApproach"], yaml_string: str) -> "DFIQApproach":
-        yaml_data = yaml.safe_load(yaml_string)
+        try:
+            yaml_data = yaml.safe_load(yaml_string)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML: {e}")
+        if yaml_data['type'] != 'approach':
+            raise ValueError(f"Invalid type for DFIQ approach: {yaml_data['type']}")
         return cls(
             name=yaml_data["display_name"],
             description=DFIQApproachDescription(**yaml_data["description"]),
