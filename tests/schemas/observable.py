@@ -73,7 +73,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(obs1.id, obs2.id)
 
     def test_observable_find(self) -> None:
-        result = hostname.Hostname(value="toto.com").save()
+        hostname.Hostname(value="toto.com").save()
         observable = Observable.find(value="toto.com")
         self.assertIsNotNone(observable)
         assert observable is not None
@@ -104,7 +104,7 @@ class ObservableTest(unittest.TestCase):
 
     def test_observable_filter_in(self):
         obs1 = hostname.Hostname(value="test1.com").save()
-        obs2 = hostname.Hostname(value="test2.com").save()
+        hostname.Hostname(value="test2.com").save()
         obs3 = hostname.Hostname(value="test3.com").save()
 
         result, total = Observable.filter(
@@ -451,7 +451,7 @@ class ObservableTest(unittest.TestCase):
     def test_create_user_account_incoherent_dates(self) -> None:
         """Tests creating a user account with incoherent dates."""
         with self.assertRaises(ValueError):
-            observable = user_account.UserAccount(
+            user_account.UserAccount(
                 value = "test_account",
                 account_created = datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc),
                 account_expires = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),

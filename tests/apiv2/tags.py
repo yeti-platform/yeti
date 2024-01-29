@@ -74,7 +74,7 @@ class tagTest(unittest.TestCase):
         self.assertEqual(len(list(Tag.list())), 0)
 
     def test_tag_merge(self):
-        tag2 = Tag(name="tag2", replaces=["tag3"]).save()
+        Tag(name="tag2", replaces=["tag3"]).save()
         response = client.post(
             "/api/v2/tags/merge",
             json={"merge": ["tag2"], "merge_into": "tag1", "permanent": True},

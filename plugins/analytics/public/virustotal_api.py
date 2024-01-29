@@ -297,7 +297,6 @@ class VTFileReport(task.OneShotTask, VirustotalApi):
     ]
 
     def each(self, observable: Observable):
-        context = {"source": "VirusTotal"}
 
         endpoint = "/files/%s" % observable.value
 
@@ -377,7 +376,6 @@ class VTSubdomains(task.OneShotTask, VirustotalApi):
 
         if result:
             for data in result["data"]:
-                context = {"source": "VirusTotal"}
                 attributes = data["attributes"]
                 sub_domain = hostname.Hostname(value=data["id"]).save()
                 VirustotalApi.process_domain(sub_domain, attributes)
@@ -395,7 +393,6 @@ class VTDomainComFile(task.OneShotTask, VirustotalApi):
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
     def each(self, observable: Observable):
-        links = set()
         endpoint = "/domains/%s/communicating_files" % observable.value
         result = VirustotalApi.fetch(endpoint)
         for data in result["data"]:

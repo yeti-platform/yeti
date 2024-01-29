@@ -59,7 +59,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return self._root_type
 
     @classmethod
-    def load(cls, object: dict) -> "ObservableTypes":
+    def load(cls, object: dict) -> "ObservableTypes":  # noqa: F821
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
@@ -96,7 +96,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
 
     def add_context(
         self, source: str, context: dict, skip_compare: set = set()
-    ) -> "ObservableTypes":
+    ) -> "ObservableTypes":  # noqa: F821
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
@@ -117,7 +117,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
 
     def delete_context(
         self, source: str, context: dict, skip_compare: set = set()
-    ) -> "ObservableTypes":
+    ) -> "ObservableTypes":  # noqa: F821
         """Deletes context from an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):

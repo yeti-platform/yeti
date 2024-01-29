@@ -38,7 +38,7 @@ class MalshareAPI(object):
                 raise RuntimeError(
                     f"Could not retrieve feed, HTTP response: {response.status_code}"
                 )
-        except:
+        except Exception:
             raise RuntimeError("Error Feeds")
 
 

@@ -9,7 +9,8 @@ from typing import (TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type,
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable
-    from core.schemas.graph import Relationship, TagRelationship
+    from core.schemas.graph import Relationship, TagRelationship, RelationshipTypes
+    from core.schemas.tag import Tag
 
 import requests
 from arango import ArangoClient
@@ -415,7 +416,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Avoid circular dependency
         graph = self._db.graph("tags")
 
-        tags = self.get_tags()
+        self.get_tags()
         results = graph.edge_collection("tagged").edges(self.extended_id)
         for edge in results["edges"]:
             graph.edge_collection("tagged").delete(edge["_id"])
@@ -591,7 +592,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             seen[edge.id] = edge
         return list(seen.values())
 
-    def _build_edges(self, arango_edges) -> List["graph.RelationshipTypes"]:
+    def _build_edges(self, arango_edges) -> List["RelationshipTypes"]:
         # Avoid circular dependency
         from core.schemas import graph
 

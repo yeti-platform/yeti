@@ -33,7 +33,7 @@ class TagTest(unittest.TestCase):
         www_hacker = hostname.Hostname(value="www.hacker.com").save()
         hacker = hostname.Hostname(value="hacker.com").save()
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
-        macaddr = mac_address.MacAddress(value="00:11:22:33:44:55").save()
+        mac_address.MacAddress(value="00:11:22:33:44:55").save()
         generic = generic_observable.GenericObservable(value="SomeInterestingString").save()
         generic.add_context("test_source", {"test": "test"})
 
@@ -66,7 +66,7 @@ class TagTest(unittest.TestCase):
         xmrig.tag(['xmrig'])
         regex.link_to(xmrig, "indicates", "Usual name for dropped binary")
 
-        q = Query(
+        Query(
             name="ssh succesful logins",
             location="syslogs",
             diamond=DiamondModel.capability,
@@ -79,7 +79,7 @@ class TagTest(unittest.TestCase):
             reference='http://timesketch-server/sketch/12345',
             relevant_tags=['coin', 'mining']).save()
         template = Template(name="RandomTemplate", template="<blah></blah>").save()
-        export = ExportTask(
+        ExportTask(
             name="RandomExport",
             template_name=template.name,
             include_tags=["include"],

@@ -96,7 +96,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(len(data), 2)
 
     def test_observable_search_extended_response(self):
-        obs = file.File(
+        file.File(
             value="empty",
             name="empty",
             size=0,

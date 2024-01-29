@@ -25,8 +25,8 @@ class CirclPDNSApi(object):
             proxies=yeti_config.get('proxy'),
         )
         if r.status_code == 200:
-            for l in filter(None, r.text.split("\n")):
-                obj = json.loads(l)
+            for line in filter(None, r.text.split("\n")):
+                obj = json.loads(line)
                 results.append(obj)
 
         return results

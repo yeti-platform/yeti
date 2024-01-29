@@ -93,14 +93,14 @@ class OTXAlienvault(task.FeedTask):
                 obs.add_context(self.name, context)
 
             elif type_ind in entity.EntityType:
-                ent = entity.Entity(
+                entity.Entity(
                     name=otx_indic["indicator"],
                     type=self._TYPE_MAPPING.get(otx_indic["type"]),
                 ).save()
 
             elif type_ind in indicator.IndicatorType:
                 if type_ind == indicator.IndicatorType.yara:
-                    yara_rule = indicator.Indicator(
+                    indicator.Indicator(
                         name=f"YARA_{otx_indic['indicator']}",
                         pattern=otx_indic["content"],
                         type=indicator.IndicatorType.yara,

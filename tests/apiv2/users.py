@@ -146,7 +146,7 @@ class userTest(unittest.TestCase):
             f"/api/v2/users/{self.user.id}",
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
-        data = response.json()
+        response.json()
         self.assertEqual(response.status_code, 200)
 
         user_in_db = UserSensitive.get(self.user.id)

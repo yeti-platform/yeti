@@ -77,7 +77,7 @@ class ThreatTracking(Feed):
             title = s["title"]
             if title in ["Home", "_Malware", "_Download", "_Schemes", "_Sources"]:
                 continue
-            size = s["gridProperties"]
+            s["gridProperties"]
             # print(title, size['columnCount'], size['rowCount'])
             actors_list_info = self.each_sheet_work(s)
             self.create_entities(title, actors_list_info)
@@ -117,13 +117,13 @@ class ThreatTracking(Feed):
             if len(actor_aliases) == 0:
                 actor_aliases.append(sheet_name + "-ACTOR-%d" % i)
             else:
-                l = []
+                aliases = []
                 for alias in actor_aliases:
                     if "," in alias:
-                        l.extend(alias.split(","))
+                        aliases.extend(alias.split(","))
                     else:
-                        l.append(alias)
-                actor_aliases = l
+                        aliases.append(alias)
+                actor_aliases = aliases
             # can't use a set
             actor_aliases = [n.strip() for n in actor_aliases]
             r_names.append(actor_aliases)
