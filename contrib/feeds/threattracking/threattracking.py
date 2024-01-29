@@ -77,7 +77,6 @@ class ThreatTracking(Feed):
             title = s["title"]
             if title in ["Home", "_Malware", "_Download", "_Schemes", "_Sources"]:
                 continue
-            s["gridProperties"]
             # print(title, size['columnCount'], size['rowCount'])
             actors_list_info = self.each_sheet_work(s)
             self.create_entities(title, actors_list_info)
