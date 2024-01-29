@@ -19,7 +19,6 @@ class PatchDFIQRequest(BaseModel):
     dfiq_type: dfiq.DFIQType
 
 
-
 class DFIQSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

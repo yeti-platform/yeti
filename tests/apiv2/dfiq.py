@@ -2,11 +2,12 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas import dfiq
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -185,10 +186,7 @@ class DFIQTest(unittest.TestCase):
 
         response = client.patch(
             f"/api/v2/dfiq/{facet.id}",
-            json={
-                "dfiq_yaml": facet.to_yaml(),
-                "dfiq_type": facet.type
-            },
+            json={"dfiq_yaml": facet.to_yaml(), "dfiq_type": facet.type},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -202,7 +200,7 @@ class DFIQTest(unittest.TestCase):
 
         vertices, edges, total = scenario2.neighbors()
         self.assertEqual(len(vertices), 1)
-        self.assertEqual(vertices[f'dfiq/{facet.id}'].dfiq_id, "F1005")
+        self.assertEqual(vertices[f"dfiq/{facet.id}"].dfiq_id, "F1005")
         self.assertEqual(edges[0][0].type, "facet")
         self.assertEqual(edges[0][0].description, "Uses DFIQ facet")
         self.assertEqual(total, 1)
