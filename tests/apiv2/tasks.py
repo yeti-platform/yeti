@@ -4,13 +4,14 @@ import sys
 import unittest
 from unittest import mock
 
+from fastapi.testclient import TestClient
+
 from core import database_arango, taskmanager
 from core.schemas.observable import Observable
 from core.schemas.task import ExportTask, FeedTask
 from core.schemas.template import Template
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -43,7 +44,9 @@ class TaskTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_search_tasks(self):
-        response = client.post("/api/v2/tasks/search", json={"query": {"name": "FakeTask"}})
+        response = client.post(
+            "/api/v2/tasks/search", json={"query": {"name": "FakeTask"}}
+        )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tasks"][0]["name"], "FakeTask")
@@ -123,7 +126,9 @@ class ExportTaskTest(unittest.TestCase):
 
     def test_search_export(self):
         """Tests that exports can be searched."""
-        response = client.post("/api/v2/tasks/search", json={"query": {"name": "RandomExport"}})
+        response = client.post(
+            "/api/v2/tasks/search", json={"query": {"name": "RandomExport"}}
+        )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["tasks"][0]["name"], "RandomExport")
@@ -139,7 +144,7 @@ class ExportTaskTest(unittest.TestCase):
             "ignore_tags": ["ignore_new"],
         }
         response = client.patch(
-            f"/api/v2/tasks/export/RandomExport", json={"export": patch_data}
+            "/api/v2/tasks/export/RandomExport", json={"export": patch_data}
         )
 
         data = response.json()
@@ -155,7 +160,7 @@ class ExportTaskTest(unittest.TestCase):
             "ignore_tags": ["ignore_new"],
         }
         response = client.patch(
-            f"/api/v2/tasks/export/RandomExport", json={"export": patch_data}
+            "/api/v2/tasks/export/RandomExport", json={"export": patch_data}
         )
 
         self.assertEqual(response.status_code, 422)
@@ -170,7 +175,9 @@ class ExportTaskTest(unittest.TestCase):
         response = client.delete("/api/v2/tasks/export/RandomExport")
         self.assertEqual(response.status_code, 200)
         # verify the export doesn't exist
-        response = client.post("/api/v2/tasks/search", json={"query": {"name": "RandomExport"}})
+        response = client.post(
+            "/api/v2/tasks/search", json={"query": {"name": "RandomExport"}}
+        )
         data = response.json()
         self.assertEqual(data["total"], 0)
 

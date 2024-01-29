@@ -1,10 +1,8 @@
-import json
-import logging
 import re
 
 import requests
+
 from core import taskmanager
-from core.config.config import yeti_config
 from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType
 

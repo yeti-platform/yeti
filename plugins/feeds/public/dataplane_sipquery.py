@@ -5,9 +5,10 @@ from datetime import timedelta
 from typing import ClassVar
 
 import pandas as pd
-from core.schemas.observables import ipv4, asn
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import asn, ipv4
 
 
 class DataplaneSIPQuery(task.FeedTask):
@@ -27,7 +28,7 @@ class DataplaneSIPQuery(task.FeedTask):
         if response:
             lines = response.content.decode("utf-8").split("\n")[66:-5]
             columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
-            df = pd.DataFrame([l.split("|") for l in lines], columns=columns)
+            df = pd.DataFrame([line.split("|") for line in lines], columns=columns)
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.ffill(inplace=True)
@@ -38,7 +39,7 @@ class DataplaneSIPQuery(task.FeedTask):
     def analyze(self, item):
         if not item["ipaddr"]:
             return
-        
+
         context_ip = {
             "source": self.name,
             "last_seen": item["lastseen"],

@@ -58,7 +58,7 @@ class Onyphe:
 
         try:
             response = self.methods[method](self.url, params=payload, headers=headers)
-        except:
+        except Exception:
             raise APIError("Unable to connect to Onyphe")
 
         if response.status_code == requests.codes.NOT_FOUND:
@@ -77,7 +77,7 @@ class Onyphe:
         try:
             data = response.json()
 
-        except:
+        except Exception:
             raise APIError("Unable to parse JSON")
 
         return data

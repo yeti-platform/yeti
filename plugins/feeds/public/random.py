@@ -1,9 +1,7 @@
-from datetime import timedelta, datetime
-from time import sleep
+from datetime import timedelta
 
-from core.schemas import observable
-from core.schemas import task
 from core import taskmanager
+from core.schemas import observable, task
 
 DATA = [
     "hostname1.com",
@@ -15,7 +13,6 @@ DATA = [
 
 
 class Random(task.FeedTask):
-
     _defaults = {
         "frequency": timedelta(hours=1),
         "type": "feed",

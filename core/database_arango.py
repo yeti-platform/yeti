@@ -4,16 +4,17 @@ import json
 import logging
 import sys
 import time
-from typing import (TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type,
-                    TypeVar)
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable
-    from core.schemas.graph import Relationship, TagRelationship
+    from core.schemas.graph import Relationship, RelationshipTypes, TagRelationship
+    from core.schemas.tag import Tag
 
 import requests
 from arango import ArangoClient
 from arango.exceptions import DocumentInsertError, GraphCreateError
+
 from core.config.config import yeti_config
 
 from .interfaces import AbstractYetiConnector
@@ -185,11 +186,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         doc_id = document.pop("id")
         if doc_id:
             document["_key"] = doc_id
-            newdoc = self._get_collection().update(
-                document, return_new=True
-            )["new"]
+            newdoc = self._get_collection().update(document, return_new=True)["new"]
         else:
-
             if "value" in document:
                 filters = {"value": document["value"]}
             else:
@@ -205,9 +203,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return newdoc
 
     def save(
-            self: TYetiObject,
-            exclude_overwrite: list[str] = ['created', 'tags', 'context']
-        ) -> TYetiObject:
+        self: TYetiObject, exclude_overwrite: list[str] = ["created", "tags", "context"]
+    ) -> TYetiObject:
         """Inserts or updates a Yeti object into the database.
 
         We need to pass the JSON representation of the object to the database
@@ -228,8 +225,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not result:
                 result = self._update(self.model_dump_json(exclude=exclude_overwrite))
         yeti_object = self.__class__(**result)
-        #TODO: Override this if we decide to implement YetiTagModel
-        if hasattr(self, 'tags'):
+        # TODO: Override this if we decide to implement YetiTagModel
+        if hasattr(self, "tags"):
             yeti_object.get_tags()
         return yeti_object
 
@@ -301,7 +298,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         from core.schemas import tag
 
         if self.id is None:
-            raise RuntimeError("Cannot tag unsaved object, make sure to save() it first.")
+            raise RuntimeError(
+                "Cannot tag unsaved object, make sure to save() it first."
+            )
 
         if not isinstance(tags, (list, set, tuple)):
             raise ValueError("Tags must be of type list, set or tuple.")
@@ -315,7 +314,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for provided_tag_name in tags:
             tag_name = tag.normalize_name(provided_tag_name)
             if not tag_name:
-                raise RuntimeError(f"Cannot tag object with empty tag: '{provided_tag_name}' -> '{tag_name}'")
+                raise RuntimeError(
+                    f"Cannot tag object with empty tag: '{provided_tag_name}' -> '{tag_name}'"
+                )
             replacements, _ = tag.Tag.filter({"in__replaces": [tag_name]}, count=1)
             new_tag: Optional[tag.Tag] = None
 
@@ -415,7 +416,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Avoid circular dependency
         graph = self._db.graph("tags")
 
-        tags = self.get_tags()
+        self.get_tags()
         results = graph.edge_collection("tagged").edges(self.extended_id)
         for edge in results["edges"]:
             graph.edge_collection("tagged").delete(edge["_id"])
@@ -495,7 +496,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if path["edges"]:
                 tag_data = Tag.load(path["vertices"][1])
                 edge_data = path["edges"][0]
-                #edge_data["id"] = edge_data.pop("_id")
+                # edge_data["id"] = edge_data.pop("_id")
                 edge_data["__id"] = edge_data.pop("_id")
                 tag_relationship = TagRelationship.load(edge_data)
                 relationships.append((tag_relationship, tag_data))
@@ -513,7 +514,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         hops: int = 1,
         offset: int = 0,
         count: int = 0,
-    ) -> tuple[dict[str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"], List[List["Relationship | TagRelationship"]], int]:
+    ) -> tuple[
+        dict[
+            str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"
+        ],
+        List[List["Relationship | TagRelationship"]],
+        int,
+    ]:
         """Fetches neighbors of the YetiObject.
 
         Args:
@@ -538,20 +545,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         if link_types:
             args["link_types"] = link_types
-            query_filter = "FILTER COUNT(FOR r IN @link_types FILTER e.type == r RETURN r) > 0"
+            query_filter = (
+                "FILTER COUNT(FOR r IN @link_types FILTER e.type == r RETURN r) > 0"
+            )
         if target_types:
             args["target_types"] = target_types
-            query_filter = "FILTER COUNT(FOR r IN @target_types FILTER v.type == r RETURN r) > 0"
+            query_filter = (
+                "FILTER COUNT(FOR r IN @target_types FILTER v.type == r RETURN r) > 0"
+            )
 
         limit = ""
         if count != 0:
             limit += "LIMIT @offset, @count"
-            args['offset'] = offset
-            args['count'] = count
+            args["offset"] = offset
+            args["count"] = count
 
         args["hops"] = hops
-        if direction not in {'any', 'inbound', 'outbound'}:
-            direction = 'any'
+        if direction not in {"any", "inbound", "outbound"}:
+            direction = "any"
 
         aql = f"""
         FOR v, e, p IN @hops..@hops {direction} @extended_id @@graph
@@ -591,7 +602,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             seen[edge.id] = edge
         return list(seen.values())
 
-    def _build_edges(self, arango_edges) -> List["graph.RelationshipTypes"]:
+    def _build_edges(self, arango_edges) -> List["RelationshipTypes"]:
         # Avoid circular dependency
         from core.schemas import graph
 
@@ -658,8 +669,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         conditions = []
         sorts = []
 
-        from core.schemas.graph import TagRelationship
-
         # We want user-defined sorts to take precedence.
         for field, asc in sorting:
             sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
@@ -667,9 +676,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
             if isinstance(value, str):
-                aql_args[f'arg{i}_value'] = value
+                aql_args[f"arg{i}_value"] = value
             elif isinstance(value, list):
-                aql_args[f'arg{i}_value'] = [v.strip() for v in value]
+                aql_args[f"arg{i}_value"] = [v.strip() for v in value]
 
             if key.startswith("in__"):
                 conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
@@ -681,29 +690,33 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 sorts.append(f"o.@arg{i}_key")
             elif key in ["labels", "relevant_tags"]:
                 conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
-                aql_args[f'arg{i}_key'] = key
+                aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
             elif key.startswith("context."):
                 context_field = key[8:]
-                conditions.append(f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value) RETURN c) > 0")
-                aql_args[f'arg{i}_key'] = context_field
+                conditions.append(
+                    f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value) RETURN c) > 0"
+                )
+                aql_args[f"arg{i}_key"] = context_field
                 sorts.append(f"o.context[*].@arg{i}_key")
-            elif key == 'created':
+            elif key == "created":
                 operator = value[0]
-                if operator not in ['<', '>']:
-                    operator = '='
+                if operator not in ["<", ">"]:
+                    operator = "="
                 else:
-                    aql_args[f'arg{i}_value'] = value[1:]
-                conditions.append(f"DATE_TIMESTAMP(o.created) {operator}= DATE_TIMESTAMP(@arg{i}_value)")
+                    aql_args[f"arg{i}_value"] = value[1:]
+                conditions.append(
+                    f"DATE_TIMESTAMP(o.created) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
+                )
                 sorts.append("o.created")
             else:
                 conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
-                aql_args[f'arg{i}_key'] = key
+                aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
 
         limit = ""
         if count != 0:
-            limit = f"LIMIT @offset, @count"
+            limit = "LIMIT @offset, @count"
             aql_args["offset"] = offset
             aql_args["count"] = count
 
@@ -713,14 +726,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
             graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
 
         if tag_filter:
-            conditions.append("COUNT(INTERSECTION(ATTRIBUTES(MERGE(tags)), @tag_names)) > 0")
+            conditions.append(
+                "COUNT(INTERSECTION(ATTRIBUTES(MERGE(tags)), @tag_names)) > 0"
+            )
             aql_args["tag_names"] = tag_filter
 
         aql_filter = ""
         if conditions:
             aql_filter = f"FILTER {' AND '.join(conditions)}"
 
-        aql_sort = ''
+        aql_sort = ""
         if sorts:
             aql_sort = f"SORT {', '.join(sorts)}"
 
@@ -787,9 +802,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return cls._db.collection(cls._collection_name)
 
 
-
 def tagged_observables_export(cls, args):
-    from core.schemas.graph import TagRelationship
     aql = """
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
