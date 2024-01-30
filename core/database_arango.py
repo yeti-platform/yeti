@@ -305,7 +305,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if not isinstance(tags, (list, set, tuple)):
             raise ValueError("Tags must be of type list, set or tuple.")
 
-        expiration = expiration or tag.DEFAULT_EXPIRATION
         tags = [t.strip() for t in tags if t.strip()]
         if strict:
             self.clear_tags()
@@ -329,6 +328,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not new_tag:
                 new_tag = tag.Tag(name=tag_name).save()
 
+            expiration = expiration or new_tag.default_expiration
             tag_link = self.link_to_tag(new_tag.name, expiration=expiration)
             self._tags[new_tag.name] = tag_link
 
