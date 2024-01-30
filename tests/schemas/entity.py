@@ -3,19 +3,26 @@ import unittest
 
 from core import database_arango
 from core.schemas import tag
-from core.schemas.entity import (AttackPattern, Entity, Malware, ThreatActor,
-                                 Tool, Vulnerability)
+from core.schemas.entity import (
+    AttackPattern,
+    Entity,
+    Malware,
+    ThreatActor,
+    Tool,
+    Vulnerability,
+)
 from core.schemas.observables import hostname
 
 
 class EntityTest(unittest.TestCase):
-
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
-        self.ta1 = ThreatActor(name="APT123", aliases=['CrazyFrog']).save()
-        self.vuln1 = Vulnerability(name="CVE-2018-1337", title='elite exploit').save()
-        self.malware1 = Malware(name="zeus", created=datetime.datetime(2020, 1, 1)).save()
+        self.ta1 = ThreatActor(name="APT123", aliases=["CrazyFrog"]).save()
+        self.vuln1 = Vulnerability(name="CVE-2018-1337", title="elite exploit").save()
+        self.malware1 = Malware(
+            name="zeus", created=datetime.datetime(2020, 1, 1)
+        ).save()
         self.tool1 = Tool(name="mimikatz").save()
 
     def tearDown(self) -> None:
@@ -38,7 +45,6 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(result.type, "threat-actor")
 
     def test_list_entities(self) -> None:
-
         all_entities = list(Entity.list())
         threat_actor_entities = list(ThreatActor.list())
         tool_entities = list(Tool.list())
@@ -50,15 +56,9 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(tool_entities), 1)
         self.assertEqual(len(malware_entities), 1)
 
-        self.assertEqual(
-            threat_actor_entities[0], self.ta1
-        )
-        self.assertEqual(
-            tool_entities[0], self.tool1
-        )
-        self.assertEqual(
-            malware_entities[0], self.malware1
-        )
+        self.assertEqual(threat_actor_entities[0], self.ta1)
+        self.assertEqual(tool_entities[0], self.tool1)
+        self.assertEqual(malware_entities[0], self.malware1)
 
     def test_filter_entities(self):
         entities, total = Entity.filter({"name": "APT123"})
@@ -67,7 +67,7 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(entities[0], self.ta1)
 
     def test_filter_entities_regex(self):
-        entities, total = Entity.filter({"name": "CVE", 'title': 'Elite .xploit'})
+        entities, total = Entity.filter({"name": "CVE", "title": "Elite .xploit"})
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.vuln1)
@@ -90,21 +90,16 @@ class EntityTest(unittest.TestCase):
 
     def test_entity_with_tags(self):
         entity = ThreatActor(name="APT0").save()
-        entity.tag(['tag1', 'tag2'])
+        entity.tag(["tag1", "tag2"])
         observable = hostname.Hostname(value="doman.com").save()
 
         observable.tag(["tag1"])
-        vertices, paths, count = observable.neighbors(
-            graph='tagged',
-            hops=2
-        )
+        vertices, paths, count = observable.neighbors(graph="tagged", hops=2)
 
         new_tag = tag.Tag.find(name="tag1")
 
         self.assertEqual(len(vertices), 2)
-        self.assertEqual(
-            vertices[entity.extended_id].extended_id, entity.extended_id
-        )
+        self.assertEqual(vertices[entity.extended_id].extended_id, entity.extended_id)
         self.assertEqual(paths[0][0].source, observable.extended_id)
         self.assertEqual(paths[0][0].target, new_tag.extended_id)
 

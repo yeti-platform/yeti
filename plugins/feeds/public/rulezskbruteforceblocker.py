@@ -1,12 +1,12 @@
-import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import ClassVar
 
-from dateutil import parser
 import pandas as pd
-from core.schemas.observables import ipv4
-from core.schemas import task
+from dateutil import parser
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import ipv4
 
 
 class RulezSKBruteforceBlocker(task.FeedTask):
@@ -24,7 +24,9 @@ class RulezSKBruteforceBlocker(task.FeedTask):
         r = self._make_request(self._SOURCE, headers={"User-Agent": "yeti-project"})
         if r:
             data = [
-                l.split("\t") for l in r.text.split("\n") if not l.startswith("#") and l
+                line.split("\t")
+                for line in r.text.split("\n")
+                if not line.startswith("#") and line.strip()
             ]
             df = pd.DataFrame(data)
             df.drop([1, 3], axis=1, inplace=True)

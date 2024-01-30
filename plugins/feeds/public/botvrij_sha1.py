@@ -1,9 +1,9 @@
-import logging
 from datetime import timedelta
 from typing import ClassVar
-from core.schemas.observables import sha1
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import sha1
 
 
 class BotvrijSHA1(task.FeedTask):

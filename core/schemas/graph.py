@@ -1,8 +1,9 @@
 import datetime
 from typing import ClassVar
 
-from core import database_arango
 from pydantic import BaseModel, computed_field
+
+from core import database_arango
 
 
 # Database model
@@ -35,12 +36,14 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
 
 
 class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
+    _collection_name: ClassVar[str] = "tagged"
     _type_filter: None = None
     __id: str | None = None
 
     source: str
     target: str
     last_seen: datetime.datetime
+    expires: datetime.datetime | None = None
     fresh: bool
 
     def __init__(self, **data):
@@ -51,10 +54,10 @@ class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
     @property
     def id(self):
         return self.__id
-    
 
     @classmethod
     def load(cls, object: dict):
         return cls(**object)
+
 
 RelationshipTypes = Relationship | TagRelationship

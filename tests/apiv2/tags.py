@@ -2,11 +2,12 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas.tag import Tag
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -40,7 +41,7 @@ class tagTest(unittest.TestCase):
     def test_update_tag(self):
         response = client.put(
             f"/api/v2/tags/{self.tag.id}",
-            json={"name": "tag111", "default_expiration": 'P10D'},
+            json={"name": "tag111", "default_expiration": "P10D"},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -74,7 +75,7 @@ class tagTest(unittest.TestCase):
         self.assertEqual(len(list(Tag.list())), 0)
 
     def test_tag_merge(self):
-        tag2 = Tag(name="tag2", replaces=["tag3"]).save()
+        Tag(name="tag2", replaces=["tag3"]).save()
         response = client.post(
             "/api/v2/tags/merge",
             json={"merge": ["tag2"], "merge_into": "tag1", "permanent": True},

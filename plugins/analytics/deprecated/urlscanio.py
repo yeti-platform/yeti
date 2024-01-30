@@ -99,7 +99,7 @@ class UrlScanIoApi(object):
                 UrlScanIoApi.API_URL, params=params, proxies=yeti_config.get('proxy')
             )
             if not response.ok:
-                raise GenericYetiError("Status code: ".format(response.status_code))
+                raise GenericYetiError("Status code: ".format())
 
             if response.json().get("total", 0) > 0:
                 return response.json()["results"]

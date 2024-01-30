@@ -1,4 +1,3 @@
-import datetime
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
@@ -9,28 +8,28 @@ from core.schemas import indicator
 
 # Request schemas
 class NewIndicatorRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     indicator: indicator.IndicatorTypes
 
 
 class PatchIndicatorRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     indicator: indicator.IndicatorTypes
 
 
 class IndicatorSearchRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
-    query: dict[str, str|int|list] = {}
+    query: dict[str, str | int | list] = {}
     type: indicator.IndicatorType | None = None
     count: int = 50
     page: int = 0
 
 
 class IndicatorSearchResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     indicators: list[indicator.IndicatorTypes]
     total: int
@@ -72,13 +71,17 @@ async def details(indicator_id) -> indicator.IndicatorTypes:
         raise HTTPException(status_code=404, detail="indicator not found")
     return db_indicator
 
+
 @router.delete("/{indicator_id}")
 async def delete(indicator_id: str) -> None:
     """Deletes an indicator."""
     db_indicator = indicator.Indicator.get(indicator_id)
     if not db_indicator:
-        raise HTTPException(status_code=404, detail="Indicator ID {indicator_id} not found")
+        raise HTTPException(
+            status_code=404, detail="Indicator ID {indicator_id} not found"
+        )
     db_indicator.delete()
+
 
 @router.post("/search")
 async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:

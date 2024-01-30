@@ -1,13 +1,12 @@
-from io import StringIO
-import logging
 from datetime import timedelta
+from io import StringIO
 from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import url, asn, md5
-from core.schemas import task
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import asn, md5, url
 
 
 class FutexTracker(task.FeedTask):

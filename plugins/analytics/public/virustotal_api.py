@@ -1,15 +1,17 @@
 import json
-
 import logging
-from core import taskmanager
-from core.schemas.observable import Observable, ObservableType, TYPE_MAPPING
-from core.schemas.observables import ipv4, asn, hostname, sha256, url
-from core.schemas import task
-from core.config.config import yeti_config
 from datetime import datetime
+
 import requests
 
+from core import taskmanager
+from core.config.config import yeti_config
+from core.schemas import task
+from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
+from core.schemas.observables import asn, hostname, ipv4, sha256, url
+
 VT_BASE_URL = "https://www.virustotal.com/api/v3"
+
 
 class VirustotalApi(object):
     """Base class for querying the VirusTotal API.
@@ -19,7 +21,6 @@ class VirustotalApi(object):
     TODO: Register a redis key with the last query time and prevent
     limit rejection, as it could cause api key deactivation.
     """
-
 
     @staticmethod
     def fetch(endpoint):
@@ -37,7 +38,7 @@ class VirustotalApi(object):
         response = None
         url = VT_BASE_URL + endpoint
         header = {"X-Apikey": yeti_config.get("vt", "key")}
-        response = requests.get(url, headers=header, proxies=yeti_config.get('proxy'))
+        response = requests.get(url, headers=header, proxies=yeti_config.get("proxy"))
         if response.ok:
             return response.json()
         else:
@@ -297,8 +298,6 @@ class VTFileReport(task.OneShotTask, VirustotalApi):
     ]
 
     def each(self, observable: Observable):
-        context = {"source": "VirusTotal"}
-
         endpoint = "/files/%s" % observable.value
 
         result = VirustotalApi.fetch(endpoint)
@@ -370,14 +369,12 @@ class VTSubdomains(task.OneShotTask, VirustotalApi):
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
     def each(self, observable: Observable):
-
         endpoint = "/domains/%s/subdomains" % observable.value
 
         result = VirustotalApi.fetch(endpoint)
 
         if result:
             for data in result["data"]:
-                context = {"source": "VirusTotal"}
                 attributes = data["attributes"]
                 sub_domain = hostname.Hostname(value=data["id"]).save()
                 VirustotalApi.process_domain(sub_domain, attributes)
@@ -395,7 +392,6 @@ class VTDomainComFile(task.OneShotTask, VirustotalApi):
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
     def each(self, observable: Observable):
-        links = set()
         endpoint = "/domains/%s/communicating_files" % observable.value
         result = VirustotalApi.fetch(endpoint)
         for data in result["data"]:
