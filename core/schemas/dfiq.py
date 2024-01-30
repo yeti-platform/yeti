@@ -44,7 +44,9 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
     def to_yaml(self):
-        dump = self.model_dump(exclude={"created", "modified", "id", "root_type", "dfiq_yaml"})
+        dump = self.model_dump(
+            exclude={"created", "modified", "id", "root_type", "dfiq_yaml"}
+        )
         dump["type"] = dump["type"].removeprefix("DFIQType.")
         dump["display_name"] = dump.pop("name")
         dump["tags"] = dump.pop("dfiq_tags")
@@ -62,9 +64,13 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         else:
             return
 
-        intended_parents = [DFIQBase.find(dfiq_id=parent_id) for parent_id in intended_parent_ids]
+        intended_parents = [
+            DFIQBase.find(dfiq_id=parent_id) for parent_id in intended_parent_ids
+        ]
         if not all(intended_parents):
-            raise ValueError(f"Missing parent(s) {intended_parent_ids} for {self.dfiq_id}")
+            raise ValueError(
+                f"Missing parent(s) {intended_parent_ids} for {self.dfiq_id}"
+            )
 
         # remove all links:
         vertices, relationships, total = self.neighbors()
