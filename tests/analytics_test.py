@@ -1,3 +1,4 @@
+import datetime
 import os
 import unittest
 from unittest.mock import MagicMock, patch
@@ -8,7 +9,7 @@ from core import database_arango
 from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
-from plugins.analytics.public import censys
+from plugins.analytics.public import censys, expire_tags
 
 
 class AnalyticsTest(unittest.TestCase):
@@ -69,6 +70,18 @@ class AnalyticsTest(unittest.TestCase):
         query_neighbors = [o.value for o in censys_query.neighbors()[0].values()]
         self.assertIn("192.0.2.1", query_neighbors)
         self.assertIn("2001:db8:3333:4444:5555:6666:7777:8888", query_neighbors)
+
+    def test_expire_tags(self) -> None:
+        o = observable.Observable.add_text("google.com")
+        o.tag(["test_tag"], expiration=datetime.timedelta(seconds=-10))
+
+        defaults = expire_tags.ExpireTags._defaults.copy()
+        analytics = expire_tags.ExpireTags(**defaults)
+
+        self.assertTrue(o.tags["test_tag"].fresh)
+        analytics.run()
+        o.get_tags()
+        self.assertFalse(o.tags["test_tag"].fresh)
 
 
 if __name__ == "__main__":
