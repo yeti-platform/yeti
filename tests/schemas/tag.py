@@ -1,6 +1,6 @@
+import datetime
 import unittest
 from typing import Optional
-import datetime
 
 from core import database_arango
 from core.schemas.observable import Observable
@@ -111,7 +111,7 @@ class TagTest(unittest.TestCase):
 
     def test_default_tag_expiration(self) -> None:
         """Test that a tag's expiration date tages the tag's default."""
-        tag = Tag(name="test", default_expiration=datetime.timedelta(days=365)).save()
+        Tag(name="test", default_expiration=datetime.timedelta(days=365)).save()
         self.obs1.tag(["test"])
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 1)
