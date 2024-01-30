@@ -9,6 +9,8 @@ from core import taskmanager
 from core.schemas import task
 from core.schemas.entity import AttackPattern, Campaign, IntrusionSet, Tool
 
+VALUE_PROPERTIES = ['tags', 'attribution', 'mitre tactic', 'initial access', 'impact', 'type']
+TITLED_PROPERTIES = ['incidents', 'actors', 'observed techniques', 'observed tools', 'targeted technologies', 'techniques']
 
 def _get_build_id():
     response = requests.get("https://threats.wiz.io")
@@ -62,9 +64,9 @@ def _get_property_details(blocks: dict, property_key: str) -> dict:
             properties[property_name] = [technique[0] for technique in property if technique]
         if property_name == 'aliases':
             properties[property_name] = property[0][0].split(',')
-        elif property_name in ['tags', 'attribution', 'mitre tactic', 'initial access', 'impact', 'type']:
+        elif property_name in VALUE_PROPERTIES:
             properties[property_name] = [prop['value'] for prop in property]
-        elif property_name in ['incidents', 'actors', 'observed techniques', 'observed tools', 'targeted technologies', 'techniques']:
+        elif property_name in TITLED_PROPERTIES:
             properties[property_name] = [data[1][0][1]['title'][0][0] for data in property if data and data[0] != ',']
         elif property_name == 'references':
             properties[property_name] = [reference["fileName"].strip() for reference in property]
