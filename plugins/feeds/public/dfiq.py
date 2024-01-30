@@ -51,7 +51,7 @@ def _process_approach(yaml_string: str) -> None:
                         query = indicator.Query(
                             name=step.description,
                             pattern=step.value,
-                            relevant_tags=approach.dfiq_tags,
+                            relevant_tags=approach.dfiq_tags or [],
                             query_type=indicator.QueryType.opensearch,
                             location=processor.name,
                             diamond=indicator.DiamondModel.victim,
@@ -100,7 +100,7 @@ class DFIQFeed(task.FeedTask):
                 if not file.endswith(".yaml"):
                     continue
                 with open(os.path.join(dfiq_datadir, subdir, file), "r") as f:
-                    TYPE_FUNCTIONS[subdir](f)
+                    TYPE_FUNCTIONS[subdir](f.read())
                     obj_count += 1
 
             logging.info("Processed %s %s objects", obj_count, subdir)
