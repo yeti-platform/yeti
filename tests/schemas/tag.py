@@ -1,5 +1,6 @@
 import unittest
 from typing import Optional
+import datetime
 
 from core import database_arango
 from core.schemas.observable import Observable
@@ -91,6 +92,39 @@ class TagTest(unittest.TestCase):
         self.assertEqual(len(tags), 1)
         tag_relationship, _ = tags[0]
         self.assertEqual(tag_relationship.fresh, True)
+
+    def test_tag_manual_expiration_date(self) -> None:
+        """Test that a tag's expiration date takes in the manualy specified value."""
+        self.obs1.tag(["test"], expiration=datetime.timedelta(minutes=1))
+        tags = self.obs1.get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_relationship, _ = tags[0]
+        self.assertIsNotNone(tag_relationship.expires)
+        self.assertGreater(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(minutes=1),
+        )
+        self.assertLess(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(minutes=2),
+        )
+
+    def test_default_tag_expiration(self) -> None:
+        """Test that a tag's expiration date tages the tag's default."""
+        tag = Tag(name="test", default_expiration=datetime.timedelta(days=365)).save()
+        self.obs1.tag(["test"])
+        tags = self.obs1.get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_relationship, _ = tags[0]
+        self.assertIsNotNone(tag_relationship.expires)
+        self.assertGreater(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(days=364),
+        )
+        self.assertLess(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(days=366),
+        )
 
     def test_clear_tags(self) -> None:
         """Test that tags can be cleared from an observable."""

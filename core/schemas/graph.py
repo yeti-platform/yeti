@@ -43,7 +43,7 @@ class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
     source: str
     target: str
     last_seen: datetime.datetime
-    expires: datetime.datetime | None
+    expires: datetime.datetime | None = None
     fresh: bool
 
     def __init__(self, **data):
