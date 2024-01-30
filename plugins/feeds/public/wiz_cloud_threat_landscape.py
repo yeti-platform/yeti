@@ -1,10 +1,9 @@
 import logging
 import re
-from datetime import datetime, timedelta
-from io import StringIO
 from typing import ClassVar
 
 import requests
+
 from core import taskmanager
 from core.schemas import task
 from core.schemas.entity import AttackPattern, Campaign, IntrusionSet, Tool
@@ -121,7 +120,7 @@ class WizCloudThreatLandscape(task.FeedTask):
 
     def _create_intrusion_sets_relationships(self):
         # attributed-to
-        logging.info(f"Processing intrusion-set relationships")
+        logging.info("Processing intrusion-set relationships")
         count = 0
         for name, properties in self._intrusion_sets.items():
             intrusion_set = IntrusionSet.find(name=name)
@@ -136,7 +135,7 @@ class WizCloudThreatLandscape(task.FeedTask):
         logging.info(f"Processed {count} intrusion-set relationships")
 
     def _create_attack_patterns_relationships(self):
-        logging.info(f"Processing attack-pattern relationships")
+        logging.info("Processing attack-pattern relationships")
         count = 0
         for name, properties in self._techniques.items():
             attack_pattern = AttackPattern.find(name=name)
@@ -151,7 +150,7 @@ class WizCloudThreatLandscape(task.FeedTask):
         logging.info(f"Processed {count} attack-pattern relationships")
 
     def _create_tools_relationships(self):
-        logging.info(f"Processing tool relationships")
+        logging.info("Processing tool relationships")
         count = 0
         for name, properties in self._tools.items():
             tool = Tool.find(name=name)
@@ -172,7 +171,7 @@ class WizCloudThreatLandscape(task.FeedTask):
         logging.info(f"Processed {count} tool relationships")
         
     def _create_campaigns_relationships(self):
-        logging.info(f"Processing campaign relationships")
+        logging.info("Processing campaign relationships")
         count = 0
         for name, properties in self._campaigns.items():
             campaign = Campaign.find(name=name)
@@ -217,7 +216,7 @@ class WizCloudThreatLandscape(task.FeedTask):
         return description
 
     def _create_intrusion_sets(self, build_id):
-        logging.info(f"Processing intrusion-set")
+        logging.info("Processing intrusion-set")
         self._intrusion_sets = _get_properties(build_id, "actors")
         for name, properties in self._intrusion_sets.items():
             aliases = properties.get("aliases", [])
@@ -229,7 +228,7 @@ class WizCloudThreatLandscape(task.FeedTask):
         logging.info(f"Processed {len(self._intrusion_sets)} intrusion-set objects")
 
     def _create_attack_patterns(self, build_id):
-        logging.info(f"Processing attack-pattern")
+        logging.info("Processing attack-pattern")
         self._techniques = _get_properties(build_id, "techniques")
         for name, properties in self._techniques.items():
             entity = AttackPattern.find(name=name)
@@ -249,7 +248,7 @@ class WizCloudThreatLandscape(task.FeedTask):
         logging.info(f"Processed {len(self._techniques)} attack-pattern objects")
 
     def _create_tools(self, build_id):
-        logging.info(f"Processing attack")
+        logging.info("Processing attack")
         self._tools = _get_properties(build_id, "tools")
         for name, properties in self._tools.items():
             entity = Tool.find(name=name)
@@ -261,7 +260,7 @@ class WizCloudThreatLandscape(task.FeedTask):
         logging.info(f"Processed {len(self._tools)} tool objects")
 
     def _create_campaigns(self, build_id):
-        logging.info(f"Processing campaign")
+        logging.info("Processing campaign")
         self._campaigns = _get_properties(build_id, "incidents")
         for name, properties in self._campaigns.items():
             entity = Campaign.find(name=name)
