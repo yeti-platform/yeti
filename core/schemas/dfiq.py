@@ -44,7 +44,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
     def to_yaml(self):
-        dump = self.model_dump(exclude={"created", "modified", "id", "root_type"})
+        dump = self.model_dump(exclude={"created", "modified", "id", "root_type", "dfiq_yaml"})
         dump["type"] = dump["type"].removeprefix("DFIQType.")
         dump["display_name"] = dump.pop("name")
         dump["tags"] = dump.pop("dfiq_tags")
