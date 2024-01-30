@@ -27,6 +27,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     dfiq_version: str
     dfiq_tags: list[str] | None = None
     contributors: list[str] | None = None
+    dfiq_yaml: str
 
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
@@ -53,8 +54,18 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         return yaml.dump(dump)
 
     def update_parents(self):
-        if not hasattr(self, "parent_ids"):
+        intended_parent_ids = None
+        if hasattr(self, "parent_ids"):
+            intended_parent_ids = self.parent_ids
+        elif self.type == DFIQType.approach:
+            intended_parent_ids = [self.dfiq_id.split(".")[0]]
+        else:
             return
+
+        intended_parents = [DFIQBase.find(dfiq_id=parent_id) for parent_id in intended_parent_ids]
+        if not all(intended_parents):
+            raise ValueError(f"Missing parent(s) {intended_parent_ids} for {self.dfiq_id}")
+
         # remove all links:
         vertices, relationships, total = self.neighbors()
         for edge in relationships:
@@ -63,13 +74,10 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
                     continue
                 if rel.target != self.extended_id:
                     continue
-                if vertices[rel.source].dfiq_id not in self.parent_ids:
+                if vertices[rel.source].dfiq_id not in intended_parent_ids:
                     rel.delete()
 
-        for parent_id in self.parent_ids:
-            parent = DFIQBase.find(dfiq_id=parent_id)
-            if not parent:
-                raise ValueError(f"Missing parent {parent_id} for {self.dfiq_id}")
+        for parent in intended_parents:
             parent.link_to(self, self.type, f"Uses DFIQ {self.type}")
 
 
@@ -94,6 +102,7 @@ class DFIQScenario(DFIQBase):
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
+            dfiq_yaml=yaml_string,
         )
 
 
@@ -121,6 +130,7 @@ class DFIQFacet(DFIQBase):
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
+            dfiq_yaml=yaml_string,
         )
 
 
@@ -147,6 +157,7 @@ class DFIQQuestion(DFIQBase):
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
+            dfiq_yaml=yaml_string,
         )
 
 
@@ -217,6 +228,7 @@ class DFIQApproach(DFIQBase):
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
+            dfiq_yaml=yaml_string,
         )
 
 

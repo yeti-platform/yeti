@@ -47,26 +47,11 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
     new = new.save()
-    # link to parent IDs if existing
-    if hasattr(new, "parent_ids"):
-        for parent_id in new.parent_ids:
-            parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
-            if not parent:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Missing parent {parent_id} for {new.dfiq_id}",
-                )
-            parent.link_to(new, request.dfiq_type, f"Uses DFIQ {request.dfiq_type}")
-    # approaches always have one partent, derived from their ID
-    if request.dfiq_type == dfiq.DFIQType.approach:
-        parent_id = new.dfiq_id.split(".")[0]
-        parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
-        if not parent:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Missing parent {parent_id} for {new.dfiq_id}",
-            )
-        parent.link_to(new, request.dfiq_type, f"Uses DFIQ {request.dfiq_type}")
+
+    try:
+        new.update_parents()
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     return new
 
