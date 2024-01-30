@@ -19,9 +19,9 @@ def _get_build_id():
     if m:
         return m.group(1)
     else:
-        None
+        return None
 
-def _get_properties(build_id, property):
+def _get_properties(build_id: str, property: str) -> dict:
     base_uri = f"https://threats.wiz.io/_next/data/{build_id}/all-{property}"
     main_endpoint = f"{base_uri}.json?page=all-{property}"
     response = requests.get(main_endpoint)
@@ -29,7 +29,7 @@ def _get_properties(build_id, property):
     if response.status_code != 200:
         return properties
     data = response.json()
-    for record in data.get('pageProps').get('records').get('block'):
+    for record in data['pageProps']['records']['block']:
         if not record.startswith(f"all-{property}-"):
             continue
         property_id = record.replace(f"all-{property}-", "")
@@ -42,19 +42,19 @@ def _get_properties(build_id, property):
         property_key = f"all-{property}-{property_id}"
         if not blocks.get(property_key, {}):
             continue
-        property_url = data.get("pageProps", {}).get("head", {}).get("url", "").strip()
-        property_name = data.get("pageProps", {}).get("head", {}).get("title", "").strip()
+        property_url = data["pageProps"]["head"]["url"].strip()
+        property_name = data["pageProps"]["head"]["title"].strip()
         logging.debug(f"Importing {property}: {property_name}")
         property_details = _get_property_details(blocks, property_key)
         property_details["url"] = property_url
         properties[property_name] = property_details
     return properties
 
-def _get_property_details(blocks, property_key):
-    property_data = blocks.get(property_key)
-    property_to_name = {property.get('property'): property.get('name').lower() for property in property_data.get('propertySort')}
+def _get_property_details(blocks: dict, property_key: str) -> dict:
+    property_data = blocks[property_key]
+    property_to_name = {property['property']: property['name'].lower() for property in property_data['propertySort']}
     properties = dict()
-    for property_id, property in property_data.get("propertyValues", {}).items():
+    for property_id, property in property_data["propertyValues"].items():
         if property_id not in property_to_name:
             continue
         property_name = property_to_name[property_id]
@@ -63,11 +63,11 @@ def _get_property_details(blocks, property_key):
         if property_name == 'aliases':
             properties[property_name] = property[0][0].split(',')
         elif property_name in ['tags', 'attribution', 'mitre tactic', 'initial access', 'impact', 'type']:
-            properties[property_name] = [prop.get('value') for prop in property]
+            properties[property_name] = [prop['value'] for prop in property]
         elif property_name in ['incidents', 'actors', 'observed techniques', 'observed tools', 'targeted technologies', 'techniques']:
-            properties[property_name] = [data[1][0][1].get('title')[0][0] for data in property if data and data[0] != ',']
+            properties[property_name] = [data[1][0][1]['title'][0][0] for data in property if data and data[0] != ',']
         elif property_name == 'references':
-            properties[property_name] = [reference.get("fileName").strip() for reference in property]
+            properties[property_name] = [reference["fileName"].strip() for reference in property]
     description = ""
     for child in property_data.get("children", []):
         child_data = blocks.get(child)
