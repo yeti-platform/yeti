@@ -318,7 +318,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if not isinstance(tags, (list, set, tuple)):
             raise ValueError("Tags must be of type list, set or tuple.")
 
-        expiration = expiration or tag.DEFAULT_EXPIRATION
         tags = [t.strip() for t in tags if t.strip()]
         if strict:
             self.clear_tags()
@@ -342,7 +341,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not new_tag:
                 new_tag = tag.Tag(name=tag_name).save()
 
-            tag_link = self.link_to_tag(new_tag.name)
+            expiration = expiration or new_tag.default_expiration
+            tag_link = self.link_to_tag(new_tag.name, expiration=expiration)
             self._tags[new_tag.name] = tag_link
 
             extra_tags |= set(new_tag.produces)
@@ -353,7 +353,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         return self
 
-    def link_to_tag(self, tag_name: str) -> "TagRelationship":
+    def link_to_tag(
+        self, tag_name: str, expiration: datetime.timedelta
+    ) -> "TagRelationship":
         """Links a YetiObject to a Tag object.
 
         Args:
@@ -388,6 +390,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             source=self.extended_id,
             target=tag_obj.extended_id,
             last_seen=datetime.datetime.now(datetime.timezone.utc),
+            expires=datetime.datetime.now(datetime.timezone.utc) + expiration,
             fresh=True,
         )
 
@@ -715,16 +718,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 )
                 aql_args[f"arg{i}_key"] = context_field
                 sorts.append(f"o.context[*].@arg{i}_key")
-            elif key == "created":
+            elif key in ("created", "expires"):
                 operator = value[0]
                 if operator not in ["<", ">"]:
                     operator = "="
                 else:
                     aql_args[f"arg{i}_value"] = value[1:]
                 conditions.append(
-                    f"DATE_TIMESTAMP(o.created) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
+                    f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
                 )
-                sorts.append("o.created")
+                sorts.append(f"o.{key}")
             else:
                 conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
                 aql_args[f"arg{i}_key"] = key
