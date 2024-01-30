@@ -340,7 +340,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         return self
 
-    def link_to_tag(self, tag_name: str, expiration: datetime.timedelta) -> "TagRelationship":
+    def link_to_tag(
+        self, tag_name: str, expiration: datetime.timedelta
+    ) -> "TagRelationship":
         """Links a YetiObject to a Tag object.
 
         Args:

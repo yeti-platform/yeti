@@ -72,16 +72,16 @@ class AnalyticsTest(unittest.TestCase):
         self.assertIn("2001:db8:3333:4444:5555:6666:7777:8888", query_neighbors)
 
     def test_expire_tags(self) -> None:
-        o = observable.Observable.add_text('google.com')
-        o.tag(['test_tag'], expiration=datetime.timedelta(seconds=-10))
+        o = observable.Observable.add_text("google.com")
+        o.tag(["test_tag"], expiration=datetime.timedelta(seconds=-10))
 
         defaults = expire_tags.ExpireTags._defaults.copy()
         analytics = expire_tags.ExpireTags(**defaults)
 
-        self.assertTrue(o.tags['test_tag'].fresh)
+        self.assertTrue(o.tags["test_tag"].fresh)
         analytics.run()
         o.get_tags()
-        self.assertFalse(o.tags['test_tag'].fresh)
+        self.assertFalse(o.tags["test_tag"].fresh)
 
 
 if __name__ == "__main__":
