@@ -36,12 +36,14 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
 
 
 class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
+    _collection_name: ClassVar[str] = "tagged"
     _type_filter: None = None
     __id: str | None = None
 
     source: str
     target: str
     last_seen: datetime.datetime
+    expires: datetime.datetime | None
     fresh: bool
 
     def __init__(self, **data):

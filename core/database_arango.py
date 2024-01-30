@@ -329,7 +329,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not new_tag:
                 new_tag = tag.Tag(name=tag_name).save()
 
-            tag_link = self.link_to_tag(new_tag.name)
+            tag_link = self.link_to_tag(new_tag.name, expiration=expiration)
             self._tags[new_tag.name] = tag_link
 
             extra_tags |= set(new_tag.produces)
@@ -340,7 +340,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         return self
 
-    def link_to_tag(self, tag_name: str) -> "TagRelationship":
+    def link_to_tag(self, tag_name: str, expiration: datetime.timedelta) -> "TagRelationship":
         """Links a YetiObject to a Tag object.
 
         Args:
@@ -375,6 +375,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             source=self.extended_id,
             target=tag_obj.extended_id,
             last_seen=datetime.datetime.now(datetime.timezone.utc),
+            expires=datetime.datetime.now(datetime.timezone.utc) + expiration,
             fresh=True,
         )
 
@@ -699,16 +700,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 )
                 aql_args[f"arg{i}_key"] = context_field
                 sorts.append(f"o.context[*].@arg{i}_key")
-            elif key == "created":
+            elif key in ("created", "expires"):
                 operator = value[0]
                 if operator not in ["<", ">"]:
                     operator = "="
                 else:
                     aql_args[f"arg{i}_value"] = value[1:]
                 conditions.append(
-                    f"DATE_TIMESTAMP(o.created) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
+                    f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
                 )
-                sorts.append("o.created")
+                sorts.append(f"o.{key}")
             else:
                 conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
                 aql_args[f"arg{i}_key"] = key
@@ -751,6 +752,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
+        # print(aql_string)
+        # print(aql_args)
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )
@@ -759,7 +762,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for doc in documents:
             doc["__id"] = doc.pop("_key")
             results.append(cls.load(doc))
-        return results, total or 0
+        return results, (total or 0)
 
     @classmethod
     def fulltext_filter(cls, keywords):
