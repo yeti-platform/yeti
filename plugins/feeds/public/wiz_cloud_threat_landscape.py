@@ -9,8 +9,23 @@ from core import taskmanager
 from core.schemas import task
 from core.schemas.entity import AttackPattern, Campaign, IntrusionSet, Tool
 
-VALUE_PROPERTIES = ['tags', 'attribution', 'mitre tactic', 'initial access', 'impact', 'type']
-TITLED_PROPERTIES = ['incidents', 'actors', 'observed techniques', 'observed tools', 'targeted technologies', 'techniques']
+VALUE_PROPERTIES = [
+    "tags",
+    "attribution",
+    "mitre tactic",
+    "initial access",
+    "impact",
+    "type",
+]
+TITLED_PROPERTIES = [
+    "incidents",
+    "actors",
+    "observed techniques",
+    "observed tools",
+    "targeted technologies",
+    "techniques",
+]
+
 
 def _get_build_id():
     response = requests.get("https://threats.wiz.io")
@@ -23,6 +38,7 @@ def _get_build_id():
     else:
         return None
 
+
 def _get_properties(build_id: str, property: str) -> dict:
     base_uri = f"https://threats.wiz.io/_next/data/{build_id}/all-{property}"
     main_endpoint = f"{base_uri}.json?page=all-{property}"
@@ -31,11 +47,13 @@ def _get_properties(build_id: str, property: str) -> dict:
     if response.status_code != 200:
         return properties
     data = response.json()
-    for record in data['pageProps']['records']['block']:
+    for record in data["pageProps"]["records"]["block"]:
         if not record.startswith(f"all-{property}-"):
             continue
         property_id = record.replace(f"all-{property}-", "")
-        property_endpoint = f"{base_uri}/{property_id}.json?page=all-{property}&page={property_id}"
+        property_endpoint = (
+            f"{base_uri}/{property_id}.json?page=all-{property}&page={property_id}"
+        )
         response = requests.get(property_endpoint)
         if response.status_code != 200:
             continue
@@ -52,31 +70,43 @@ def _get_properties(build_id: str, property: str) -> dict:
         properties[property_name] = property_details
     return properties
 
+
 def _get_property_details(blocks: dict, property_key: str) -> dict:
     property_data = blocks[property_key]
-    property_to_name = {property['property']: property['name'].lower() for property in property_data['propertySort']}
+    property_to_name = {
+        property["property"]: property["name"].lower()
+        for property in property_data["propertySort"]
+    }
     properties = dict()
     for property_id, property in property_data["propertyValues"].items():
         if property_id not in property_to_name:
             continue
         property_name = property_to_name[property_id]
         if property_name == "mitre technique":
-            properties[property_name] = [technique[0] for technique in property if technique]
-        if property_name == 'aliases':
-            properties[property_name] = property[0][0].split(',')
+            properties[property_name] = [
+                technique[0] for technique in property if technique
+            ]
+        if property_name == "aliases":
+            properties[property_name] = property[0][0].split(",")
         elif property_name in VALUE_PROPERTIES:
-            properties[property_name] = [prop['value'] for prop in property]
+            properties[property_name] = [prop["value"] for prop in property]
         elif property_name in TITLED_PROPERTIES:
-            properties[property_name] = [data[1][0][1]['title'][0][0] for data in property if data and data[0] != ',']
-        elif property_name == 'references':
-            properties[property_name] = [reference["fileName"].strip() for reference in property]
+            properties[property_name] = [
+                data[1][0][1]["title"][0][0]
+                for data in property
+                if data and data[0] != ","
+            ]
+        elif property_name == "references":
+            properties[property_name] = [
+                reference["fileName"].strip() for reference in property
+            ]
     description = ""
     for child in property_data.get("children", []):
         child_data = blocks.get(child)
         if not child_data:
             continue
         content = ""
-        titles = child_data.get('title', [])
+        titles = child_data.get("title", [])
         if not titles:
             continue
         for item in titles:
@@ -170,7 +200,7 @@ class WizCloudThreatLandscape(task.FeedTask):
                 count += 1
                 campaign.link_to(tool, "uses", "")
         logging.info(f"Processed {count} tool relationships")
-        
+
     def _create_campaigns_relationships(self):
         logging.info("Processing campaign relationships")
         count = 0
@@ -222,7 +252,9 @@ class WizCloudThreatLandscape(task.FeedTask):
         for name, properties in self._intrusion_sets.items():
             aliases = properties.get("aliases", [])
             description = self._format_description(properties)
-            entity = IntrusionSet(name=name, aliases=aliases, description=description).save()
+            entity = IntrusionSet(
+                name=name, aliases=aliases, description=description
+            ).save()
             tags = properties.get("tags", [])
             tags.append("cloud")
             entity.tag(tags)
