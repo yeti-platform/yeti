@@ -1,38 +1,37 @@
-import os
-
-from core import taskscheduler
-from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
-from core.schemas.template import Template
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict
 
+from core import taskscheduler
+from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
+from core.schemas.template import Template
+
 
 # Request schemas
 class TaskSearchRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
-    query: dict[str, str|int|list] = {}
+    query: dict[str, str | int | list] = {}
     type: TaskType | None = None
     count: int = 100
     page: int = 0
 
 
 class TaskSearchResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     tasks: list[TaskTypes]
     total: int
 
 
 class NewExportRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     export: ExportTask
 
 
 class PatchExportRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     export: ExportTask
 
@@ -64,7 +63,7 @@ async def search(request: TaskSearchRequest) -> TaskSearchResponse:
     """Searches for tasks."""
     query = request.query
     if request.type:
-        query['type'] = request.type
+        query["type"] = request.type
     tasks, total = Task.filter(
         query, offset=request.page * request.count, count=request.count
     )
@@ -115,6 +114,7 @@ async def export_content(export_name: str):
             status_code=404, detail=f"ExportTask {export_name} not found"
         )
     return FileResponse(export.output_file)
+
 
 @router.delete("/export/{export_name}")
 async def delete_export(export_name: str):

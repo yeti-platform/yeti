@@ -1,15 +1,17 @@
+import datetime
 import os
 import unittest
+
 from unittest.mock import patch, MagicMock
-from plugins.analytics.public import censys, shodan
-from core import database_arango
 from censys.search import CensysHosts
-from core.schemas import indicator
-from core.config.config import yeti_config
+
+from core import database_arango
+from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
 from core.schemas import observable
 from parameterized import parameterized
+from plugins.analytics.public import censys, expire_tags, shodan
 
 
 class AnalyticsTestBase(unittest.TestCase):
@@ -207,6 +209,18 @@ class ShodanAnalyticsTest(AnalyticsTestBase):
         ]
 
         self.check_observables_and_neighbors(shodan_query, expected_values)
+
+    def test_expire_tags(self) -> None:
+        o = observable.Observable.add_text("google.com")
+        o.tag(["test_tag"], expiration=datetime.timedelta(seconds=-10))
+
+        defaults = expire_tags.ExpireTags._defaults.copy()
+        analytics = expire_tags.ExpireTags(**defaults)
+
+        self.assertTrue(o.tags["test_tag"].fresh)
+        analytics.run()
+        o.get_tags()
+        self.assertFalse(o.tags["test_tag"].fresh)
 
 
 if __name__ == "__main__":

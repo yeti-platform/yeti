@@ -8,7 +8,7 @@ from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
 
 class SearchUserRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     username: str
     count: int = 50
@@ -16,7 +16,7 @@ class SearchUserRequest(BaseModel):
 
 
 class SearchUserResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     users: list[User]
     total: int
@@ -28,27 +28,27 @@ class ToggleableField(str, Enum):
 
 
 class ToggleUserRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     user_id: str
     field: ToggleableField
 
 
 class ResetApiKeyRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     user_id: str
 
 
 class ResetPasswordRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     user_id: str
     new_password: str
 
 
 class NewUserRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     username: str
     password: str
@@ -72,7 +72,9 @@ async def get(user_id: str) -> User:
 async def search(request: SearchUserRequest) -> SearchUserResponse:
     """Searches for users."""
     request_args = request.model_dump(exclude={"count", "page"})
-    users, total = UserSensitive.filter(request_args, offset=request.page, count=request.count)
+    users, total = UserSensitive.filter(
+        request_args, offset=request.page, count=request.count
+    )
     return SearchUserResponse(users=users, total=total)
 
 

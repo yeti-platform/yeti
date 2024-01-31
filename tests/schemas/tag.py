@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from typing import Optional
 
@@ -39,7 +40,10 @@ class TagTest(unittest.TestCase):
         unsaved = hostname.Hostname(value="test1.com")
         with self.assertRaises(RuntimeError) as error:
             unsaved.tag(["tag"])
-        self.assertEqual(str(error.exception), 'Cannot tag unsaved object, make sure to save() it first.')
+        self.assertEqual(
+            str(error.exception),
+            "Cannot tag unsaved object, make sure to save() it first.",
+        )
 
     def test_tag_updates_count(self) -> None:
         """Test that the count of a tag is updated when a tag is added
@@ -62,7 +66,9 @@ class TagTest(unittest.TestCase):
         """Test that tags input is of type list, set or tuple."""
         with self.assertRaises(ValueError) as error:
             self.obs1.tag("tag")
-        self.assertEqual(str(error.exception), "Tags must be of type list, set or tuple.")
+        self.assertEqual(
+            str(error.exception), "Tags must be of type list, set or tuple."
+        )
 
     def test_tag_is_overwritten(self) -> None:
         """Test that a tag is overwritten when it is added to an observable."""
@@ -86,6 +92,39 @@ class TagTest(unittest.TestCase):
         self.assertEqual(len(tags), 1)
         tag_relationship, _ = tags[0]
         self.assertEqual(tag_relationship.fresh, True)
+
+    def test_tag_manual_expiration_date(self) -> None:
+        """Test that a tag's expiration date takes in the manualy specified value."""
+        self.obs1.tag(["test"], expiration=datetime.timedelta(minutes=1))
+        tags = self.obs1.get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_relationship, _ = tags[0]
+        self.assertIsNotNone(tag_relationship.expires)
+        self.assertGreater(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(minutes=1),
+        )
+        self.assertLess(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(minutes=2),
+        )
+
+    def test_default_tag_expiration(self) -> None:
+        """Test that a tag's expiration date tages the tag's default."""
+        Tag(name="test", default_expiration=datetime.timedelta(days=365)).save()
+        self.obs1.tag(["test"])
+        tags = self.obs1.get_tags()
+        self.assertEqual(len(tags), 1)
+        tag_relationship, _ = tags[0]
+        self.assertIsNotNone(tag_relationship.expires)
+        self.assertGreater(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(days=364),
+        )
+        self.assertLess(
+            tag_relationship.expires,
+            tag_relationship.last_seen + datetime.timedelta(days=366),
+        )
 
     def test_clear_tags(self) -> None:
         """Test that tags can be cleared from an observable."""
@@ -196,7 +235,7 @@ class TagTest(unittest.TestCase):
             ("MïxedÁccénts", "mixedaccents"),
             ("123456", "123456"),
             ("测试chinese", "chinese"),
-            ("type:some-custom-type", "type:some-custom-type")
+            ("type:some-custom-type", "type:some-custom-type"),
         ]
 
         for cmp, (tag_non_norm, tag_norm) in enumerate(cases):

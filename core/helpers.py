@@ -1,6 +1,6 @@
+import datetime
 import hashlib
 import re
-import datetime
 
 
 def refang(url):

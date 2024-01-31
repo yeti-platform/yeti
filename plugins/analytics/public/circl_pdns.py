@@ -1,13 +1,12 @@
 import json
-from datetime import datetime
 
 import requests
 
-from core.schemas import task
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas.observables import ipv4, hostname
+from core.schemas import task
 from core.schemas.observable import Observable, ObservableType
+from core.schemas.observables import hostname
 
 
 class CirclPDNSApi(object):
@@ -23,11 +22,11 @@ class CirclPDNSApi(object):
             API_URL + observable.value,
             auth=auth,
             headers=headers,
-            proxies=yeti_config.get('proxy'),
+            proxies=yeti_config.get("proxy"),
         )
         if r.status_code == 200:
-            for l in filter(None, r.text.split("\n")):
-                obj = json.loads(l)
+            for line in filter(None, r.text.split("\n")):
+                obj = json.loads(line)
                 results.append(obj)
 
         return results
@@ -44,7 +43,6 @@ class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
     acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
     def each(self, observable: Observable):
-
         json_result = CirclPDNSApi.fetch(observable, CirclPDNSApi.settings)
 
         result = {}

@@ -1,14 +1,25 @@
 import logging
 
-from core.config.config import yeti_config
-from core.logger import logger
-from core.web.apiv2 import (auth, entities, graph, indicators, observables,
-                            system, tag, tasks, templates, users)
 from fastapi import APIRouter, Depends, FastAPI, Request
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import Message
 
-SECRET_KEY = yeti_config.get('auth', "secret_key")
+from core.config.config import yeti_config
+from core.logger import logger
+from core.web.apiv2 import (
+    auth,
+    entities,
+    graph,
+    indicators,
+    observables,
+    system,
+    tag,
+    tasks,
+    templates,
+    users,
+)
+
+SECRET_KEY = yeti_config.get("auth", "secret_key")
 
 app = FastAPI()
 
@@ -19,48 +30,69 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 
 api_router.include_router(
-    observables.router, prefix="/observables", tags=["observables"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    observables.router,
+    prefix="/observables",
+    tags=["observables"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 api_router.include_router(
-    entities.router, prefix="/entities", tags=["entities"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    entities.router,
+    prefix="/entities",
+    tags=["entities"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 api_router.include_router(
-    indicators.router, prefix="/indicators", tags=["indicators"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    indicators.router,
+    prefix="/indicators",
+    tags=["indicators"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 api_router.include_router(
-    tag.router, prefix="/tags", tags=["tags"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    tag.router,
+    prefix="/tags",
+    tags=["tags"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 api_router.include_router(
-    tasks.router, prefix="/tasks", tags=["tasks"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    tasks.router,
+    prefix="/tasks",
+    tags=["tasks"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 api_router.include_router(
-    graph.router, prefix="/graph", tags=["graph"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    graph.router,
+    prefix="/graph",
+    tags=["graph"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 api_router.include_router(
-    templates.router, prefix="/templates", tags=["templates"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    templates.router,
+    prefix="/templates",
+    tags=["templates"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 api_router.include_router(
-    users.router, prefix="/users", tags=["users"],
-    dependencies=[Depends(auth.get_current_active_user)]
+    users.router,
+    prefix="/users",
+    tags=["users"],
+    dependencies=[Depends(auth.get_current_active_user)],
 )
 # Dependencies are set in system endpoints
 api_router.include_router(
-    system.router, prefix="/system", tags=["system"],
+    system.router,
+    prefix="/system",
+    tags=["system"],
 )
 
 app.include_router(api_router, prefix="/api/v2")
 
+
 async def set_body(request: Request, body: bytes):
     async def receive() -> Message:
-        return {'type': 'http.request', 'body': body}
+        return {"type": "http.request", "body": body}
+
     request._receive = receive
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -78,9 +110,9 @@ async def log_requests(request: Request, call_next):
             "client": request.client.host,
             "status_code": response.status_code,
             "content-type": request.headers.get("content-type", ""),
-            "body": b""
+            "body": b"",
         }
-        if getattr(request.state, 'username', None):
+        if getattr(request.state, "username", None):
             extra["username"] = request.state.username
         if req_body:
             extra["body"] = req_body
@@ -90,7 +122,7 @@ async def log_requests(request: Request, call_next):
             logger.warning("Unauthorized request", extra=extra)
         else:
             logger.error("Bad request", extra=extra)
-    except Exception as e:
+    except Exception:
         err_logger = logging.getLogger("webapp.log_requests")
         err_logger.exception("Error while logging request")
     return response

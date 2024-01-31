@@ -1,9 +1,7 @@
-import datetime
 import unittest
 
 from core import database_arango
 from core.schemas.indicator import DiamondModel, Indicator, Regex
-from core.schemas.observable import Observable
 
 
 class IndicatorTest(unittest.TestCase):

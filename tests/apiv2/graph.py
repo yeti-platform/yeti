@@ -2,6 +2,8 @@ import logging
 import sys
 import unittest
 
+from fastapi.testclient import TestClient
+
 from core import database_arango
 from core.schemas.entity import ThreatActor
 from core.schemas.graph import Relationship
@@ -9,7 +11,6 @@ from core.schemas.indicator import Regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from fastapi.testclient import TestClient
 
 client = TestClient(webapp.app)
 
@@ -59,8 +60,8 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(edges[0][0]["type"], "resolves")
 
     def test_get_neighbors_tag(self):
-        self.entity1.tag(['hacker1'])
-        self.observable1.tag(['hacker1'])
+        self.entity1.tag(["hacker1"])
+        self.observable1.tag(["hacker1"])
 
         response = client.post(
             "/api/v2/graph/search",
@@ -179,7 +180,7 @@ class ComplexGraphTest(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.observable1 = hostname.Hostname(value="test1.com").save()
-        self.observable1.tag(['tag1', 'tag2'])
+        self.observable1.tag(["tag1", "tag2"])
         self.observable2 = hostname.Hostname(value="test2.com").save()
         self.observable3 = url.Url(value="http://test1.com/admin").save()
         self.entity1 = ThreatActor(name="tester").save()
@@ -311,10 +312,7 @@ class ComplexGraphTest(unittest.TestCase):
         """Tests that observables have all tags."""
         response = client.post(
             "/api/v2/graph/match",
-            json={
-                "observables": ["test1.com"],
-                "add_unknown": False
-            },
+            json={"observables": ["test1.com"], "add_unknown": False},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -342,10 +340,7 @@ class ComplexGraphTest(unittest.TestCase):
 
         response = client.post(
             "/api/v2/graph/match",
-            json={
-                "observables": ["test4.com"],
-                "add_unknown": True
-            },
+            json={"observables": ["test4.com"], "add_unknown": True},
         )
 
         data = response.json()
