@@ -18,7 +18,6 @@ from core.schemas import indicator
 
 
 class AnalyticsTestBase(unittest.TestCase):
-
     def check_observables(self, expected_values: list[dict[str, Any]]):
         """Checks observables against a list of expected values.
 
@@ -38,7 +37,9 @@ class AnalyticsTestBase(unittest.TestCase):
             self.assertEqual(obs.type, expected_value["type"])
             self.assertEqual(set(obs.tags.keys()), expected_value["tags"])
 
-    def check_neighbors(self, indicator: indicator.Query, expected_neighbor_values: list[str]):
+    def check_neighbors(
+        self, indicator: indicator.Query, expected_neighbor_values: list[str]
+    ):
         """Checks an indicator's neighbors against a list of expected values.
 
         Args:
@@ -114,11 +115,11 @@ class CensysAnalyticsTest(AnalyticsTestBase):
         self.check_observables(expected_observable_values)
 
         expected_neighbor_values = [
-            "192.0.2.1", "2001:db8:3333:4444:5555:6666:7777:8888"
+            "192.0.2.1",
+            "2001:db8:3333:4444:5555:6666:7777:8888",
         ]
 
         self.check_neighbors(censys_query, expected_neighbor_values)
-
 
 
 class ShodanAnalyticsTest(AnalyticsTestBase):

@@ -1,12 +1,12 @@
 import logging
 from datetime import timedelta
 
-from core.schemas import task
+from shodan import Shodan
+
 from core import taskmanager
 from core.config.config import yeti_config
+from core.schemas import indicator, task
 from core.schemas.observable import Observable
-from core.schemas import indicator
-from shodan import Shodan
 
 
 class ShodanApiQuery(task.AnalyticsTask):
