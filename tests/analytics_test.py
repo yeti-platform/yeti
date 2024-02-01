@@ -1,20 +1,18 @@
 import datetime
 import os
 import unittest
-
-from core.config.config import yeti_config
-from unittest.mock import patch, MagicMock
-from censys.search import CensysHosts
-
 from typing import Any
+from unittest.mock import MagicMock, patch
+
+from censys.search import CensysHosts
+from parameterized import parameterized
+
 from core import database_arango
+from core.config.config import yeti_config
 from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
-from core.schemas import observable
-from parameterized import parameterized
 from plugins.analytics.public import censys, expire_tags, shodan
-from core.schemas import indicator
 
 
 class AnalyticsTestBase(unittest.TestCase):
@@ -139,7 +137,7 @@ class ShodanAnalyticsTest(AnalyticsTestBase):
 
         os.environ["YETI_SHODAN_API_KEY"] = "test_api_key"
 
-        shodan_query = indicator.Query(
+        indicator.Query(
             name="Shodan test query name",
             description="Shodan test query description",
             pattern="shodan_test_query",
