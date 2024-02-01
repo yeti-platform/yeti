@@ -119,6 +119,7 @@ class QueryType(str, Enum):
     sql = "sql"
     splunk = "splunk"
     censys = "censys"
+    shodan = "shodan"
 
 
 class Query(Indicator):

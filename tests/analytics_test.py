@@ -1,21 +1,66 @@
 import datetime
 import os
 import unittest
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from censys.search import CensysHosts
+from parameterized import parameterized
 
 from core import database_arango
+from core.config.config import yeti_config
 from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
-from plugins.analytics.public import censys, expire_tags
+from plugins.analytics.public import censys, expire_tags, shodan
 
 
-class AnalyticsTest(unittest.TestCase):
+class AnalyticsTestBase(unittest.TestCase):
+    def check_observables(self, expected_values: list[dict[str, Any]]):
+        """Checks observables against a list of expected values.
+
+        Args:
+            expected_values: A list of dictionaries, each containing expected values
+                for 'value', 'type', and 'tags' attributes.
+        """
+        observables = observable.Observable.filter(
+            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
+        )
+        observable_obj, _ = observables
+
+        self.assertEqual(len(observable_obj), len(expected_values))
+
+        for obs, expected_value in zip(observable_obj, expected_values):
+            self.assertEqual(obs.value, expected_value["value"])
+            self.assertEqual(obs.type, expected_value["type"])
+            self.assertEqual(set(obs.tags.keys()), expected_value["tags"])
+
+    def check_neighbors(
+        self, indicator: indicator.Query, expected_neighbor_values: list[str]
+    ):
+        """Checks an indicator's neighbors against a list of expected values.
+
+        Args:
+            indicator: The indicator.Query object to use for neighbor comparison.
+            expected_neighbor_values: A list of expected neighbor values.
+        """
+        indicator_neighbors = [
+            o.value
+            for o in indicator.neighbors()[0].values()
+            if isinstance(o, observable.Observable)
+        ]
+
+        for expected_value in expected_neighbor_values:
+            self.assertIn(expected_value, indicator_neighbors)
+
+
+class CensysAnalyticsTest(AnalyticsTestBase):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+
+    def tearDown(self) -> None:
         database_arango.db.clear()
 
     @patch("plugins.analytics.public.censys.CensysHosts")
@@ -52,24 +97,156 @@ class AnalyticsTest(unittest.TestCase):
             "test_censys_query", fields=["ip"], pages=-1
         )
 
-        observables = observable.Observable.filter(
-            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
-        )
-        observable_obj, _ = observables
+        expected_observable_values = [
+            {
+                "value": "192.0.2.1",
+                "type": ObservableType.ipv4,
+                "tags": {"censys_query_tag"},
+            },
+            {
+                "value": "2001:db8:3333:4444:5555:6666:7777:8888",
+                "type": ObservableType.ipv6,
+                "tags": {"censys_query_tag"},
+            },
+        ]
 
-        self.assertEqual(observable_obj[0].value, "192.0.2.1")
-        self.assertEqual(observable_obj[0].type, ObservableType.ipv4)
-        self.assertEqual(set(observable_obj[0].tags.keys()), {"censys_query_tag"})
+        self.check_observables(expected_observable_values)
 
-        self.assertEqual(
-            observable_obj[1].value, "2001:db8:3333:4444:5555:6666:7777:8888"
-        )
-        self.assertEqual(observable_obj[1].type, ObservableType.ipv6)
-        self.assertEqual(set(observable_obj[1].tags.keys()), {"censys_query_tag"})
+        expected_neighbor_values = [
+            "192.0.2.1",
+            "2001:db8:3333:4444:5555:6666:7777:8888",
+        ]
 
-        query_neighbors = [o.value for o in censys_query.neighbors()[0].values()]
-        self.assertIn("192.0.2.1", query_neighbors)
-        self.assertIn("2001:db8:3333:4444:5555:6666:7777:8888", query_neighbors)
+        self.check_neighbors(censys_query, expected_neighbor_values)
+
+
+class ShodanAnalyticsTest(AnalyticsTestBase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+
+    def tearDown(self) -> None:
+        database_arango.db.clear()
+
+    @parameterized.expand([(-1, 5), (500, 5), (3, 3)])
+    @patch("plugins.analytics.public.shodan.Shodan")
+    def test_shodan_query_with_various_limits(self, limit, expected_count, mock_shodan):
+        mock_shodan_api = MagicMock()
+        mock_shodan.return_value = mock_shodan_api
+
+        os.environ["YETI_SHODAN_API_KEY"] = "test_api_key"
+
+        indicator.Query(
+            name="Shodan test query name",
+            description="Shodan test query description",
+            pattern="shodan_test_query",
+            location="shodan",
+            diamond=DiamondModel.infrastructure,
+            relevant_tags=["shodan_query_tag"],
+            query_type=indicator.QueryType.shodan,
+        ).save()
+
+        def mock_search_cursor(query):
+            records = [
+                {"ip_str": "192.0.2.1"},
+                {"ip_str": "192.0.2.2"},
+                {"ip_str": "192.0.2.3"},
+                {"ip_str": "192.0.2.4"},
+                {"ip_str": "192.0.2.5"},
+            ]
+
+            return iter(records)
+
+        mock_shodan_api.search_cursor.side_effect = mock_search_cursor
+
+        defaults = shodan.ShodanApiQuery._defaults.copy()
+        analytics = shodan.ShodanApiQuery(**defaults)
+
+        with patch.object(yeti_config.shodan, "result_limit", limit):
+            analytics.run()
+
+            mock_shodan_api.search_cursor.assert_called_with("shodan_test_query")
+
+            observables = observable.Observable.filter(
+                {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
+            )
+            observable_obj, _ = observables
+
+            observables_added = [o.value for o in observable_obj]
+            self.assertEqual(len(observables_added), expected_count)
+
+    @patch("plugins.analytics.public.shodan.Shodan")
+    def test_shodan_observables_and_neighbors(self, mock_shodan):
+        mock_shodan_api = MagicMock()
+        mock_shodan.return_value = mock_shodan_api
+
+        os.environ["YETI_SHODAN_API_KEY"] = "test_api_key"
+
+        shodan_query = indicator.Query(
+            name="Shodan test query name",
+            description="Shodan test query description",
+            pattern="shodan_test_query",
+            location="shodan",
+            diamond=DiamondModel.infrastructure,
+            relevant_tags=["shodan_query_tag"],
+            query_type=indicator.QueryType.shodan,
+        ).save()
+
+        def mock_search_cursor(query):
+            records = [
+                {"ip_str": "192.0.2.1"},
+                {"ip_str": "192.0.2.2"},
+                {"ip_str": "192.0.2.3"},
+                {"ip_str": "192.0.2.4"},
+                {"ip_str": "192.0.2.5"},
+            ]
+            return iter(records)
+
+        mock_shodan_api.search_cursor.side_effect = mock_search_cursor
+
+        analytics = shodan.ShodanApiQuery(**shodan.ShodanApiQuery._defaults.copy())
+        analytics.run()
+
+        expected_observable_values = [
+            {
+                "value": "192.0.2.1",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.2",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.3",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.4",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+            {
+                "value": "192.0.2.5",
+                "type": ObservableType.ipv4,
+                "tags": {"shodan_query_tag"},
+            },
+        ]
+
+        self.check_observables(expected_observable_values)
+
+        expected_neighbor_values = [
+            "192.0.2.1",
+            "192.0.2.2",
+            "192.0.2.3",
+            "192.0.2.4",
+            "192.0.2.5",
+        ]
+
+        self.check_neighbors(shodan_query, expected_neighbor_values)
 
     def test_expire_tags(self) -> None:
         o = observable.Observable.add_text("google.com")
