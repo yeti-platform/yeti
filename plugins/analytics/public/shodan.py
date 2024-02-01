@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 from datetime import timedelta
 
 from core.schemas import task
@@ -32,7 +31,7 @@ class ShodanApiQuery(task.AnalyticsTask):
         )
 
         for query in shodan_queries:
-            ip_addresses = self.query_shodan(shodan_api, query.pattern, result_limit)
+            ip_addresses = query_shodan(shodan_api, query.pattern, result_limit)
             for ip in ip_addresses:
                 ip_object = Observable.add_text(ip)
                 ip_object.tag(query.relevant_tags)
@@ -40,19 +39,21 @@ class ShodanApiQuery(task.AnalyticsTask):
                     ip_object, "shodan", f"IP found with Shodan query: {query.pattern}"
                 )
 
-    def query_shodan(self, api: Shodan, query: str, limit: int) -> set[Optional[str]]:
-        """Queries Shodan and returns a set of identified IP addresses."""
-        ip_addresses: set[Optional[str]] = set()
-        count = 0
+def query_shodan(api: Shodan, query: str, limit: int) -> set[str]:
+    """Queries Shodan and returns a set of identified IP addresses."""
+    ip_addresses: set[str] = set()
+    count = 0
 
-        for record in api.search_cursor(query):
-            ip_addresses.add(record.get("ip_str"))
-            if limit != -1:
-                count += 1
-                if count >= limit:
-                    break
+    for record in api.search_cursor(query):
+        if record.get("ip_str") is not None:
+          ip_addresses.add(record.get("ip_str"))
+          # Setting the limit to -1 indicates the user wants unlimited results.
+          if limit != -1:
+              count += 1
+              if count >= limit:
+                  break
 
-        return ip_addresses
+    return ip_addresses
 
 
 taskmanager.TaskManager.register_task(ShodanApiQuery)

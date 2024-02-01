@@ -1,6 +1,5 @@
 import logging
 from datetime import timedelta
-from typing import Optional
 
 from censys.search import CensysHosts
 
@@ -37,7 +36,7 @@ class CensysApiQuery(task.AnalyticsTask):
         )
 
         for query in censys_queries:
-            ip_addresses = self.query_censys(hosts_api, query.pattern)
+            ip_addresses = query_censys(hosts_api, query.pattern)
             for ip in ip_addresses:
                 ip_object = Observable.add_text(ip)
                 ip_object.tag(query.relevant_tags)
@@ -45,14 +44,18 @@ class CensysApiQuery(task.AnalyticsTask):
                     ip_object, "censys", f"IP found with Censys query: {query.pattern}"
                 )
 
-    def query_censys(self, api: CensysHosts, query: str) -> set[Optional[str]]:
-        """Queries Censys and returns all identified IP addresses."""
-        ip_addresses: set[Optional[str]] = set()
-        results = api.search(query, fields=["ip"], pages=-1)
-        for result in results:
-            ip_addresses.update(record.get("ip") for record in result)
+def query_censys(api: CensysHosts, query: str) -> set[str]:
+    """Queries Censys and returns all identified IP addresses."""
+    ip_addresses: set[str] = set()
+    results = api.search(query, fields=["ip"], pages=-1)
 
-        return ip_addresses
+    for result in results:
+        for record in result:
+          ip = record.get("ip")
+          if ip is not None:
+              ip_addresses.add(ip)
+
+    return ip_addresses
 
 
 taskmanager.TaskManager.register_task(CensysApiQuery)

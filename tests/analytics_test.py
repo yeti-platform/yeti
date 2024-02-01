@@ -2,9 +2,11 @@ import datetime
 import os
 import unittest
 
+from core.config.config import yeti_config
 from unittest.mock import patch, MagicMock
 from censys.search import CensysHosts
 
+from typing import Any
 from core import database_arango
 from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
@@ -12,10 +14,18 @@ from core.schemas.observable import ObservableType
 from core.schemas import observable
 from parameterized import parameterized
 from plugins.analytics.public import censys, expire_tags, shodan
+from core.schemas import indicator
 
 
 class AnalyticsTestBase(unittest.TestCase):
-    def check_observables_and_neighbors(self, query, expected_values):
+
+    def check_observables(self, expected_values: list[dict[str, Any]]):
+        """Checks observables against a list of expected values.
+
+        Args:
+            expected_values: A list of dictionaries, each containing expected values
+                for 'value', 'type', and 'tags' attributes.
+        """
         observables = observable.Observable.filter(
             {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
         )
@@ -28,9 +38,21 @@ class AnalyticsTestBase(unittest.TestCase):
             self.assertEqual(obs.type, expected_value["type"])
             self.assertEqual(set(obs.tags.keys()), expected_value["tags"])
 
-        query_neighbors = [o.value for o in query.neighbors()[0].values()]
-        for expected_value in expected_values:
-            self.assertIn(expected_value["value"], query_neighbors)
+    def check_neighbors(self, indicator: indicator.Query, expected_neighbor_values: list[str]):
+        """Checks an indicator's neighbors against a list of expected values.
+
+        Args:
+            indicator: The indicator.Query object to use for neighbor comparison.
+            expected_neighbor_values: A list of expected neighbor values.
+        """
+        indicator_neighbors = [
+            o.value
+            for o in indicator.neighbors()[0].values()
+            if isinstance(o, observable.Observable)
+        ]
+
+        for expected_value in expected_neighbor_values:
+            self.assertIn(expected_value, indicator_neighbors)
 
 
 class CensysAnalyticsTest(AnalyticsTestBase):
@@ -76,7 +98,7 @@ class CensysAnalyticsTest(AnalyticsTestBase):
             "test_censys_query", fields=["ip"], pages=-1
         )
 
-        expected_values = [
+        expected_observable_values = [
             {
                 "value": "192.0.2.1",
                 "type": ObservableType.ipv4,
@@ -89,7 +111,14 @@ class CensysAnalyticsTest(AnalyticsTestBase):
             },
         ]
 
-        self.check_observables_and_neighbors(censys_query, expected_values)
+        self.check_observables(expected_observable_values)
+
+        expected_neighbor_values = [
+            "192.0.2.1", "2001:db8:3333:4444:5555:6666:7777:8888"
+        ]
+
+        self.check_neighbors(censys_query, expected_neighbor_values)
+
 
 
 class ShodanAnalyticsTest(AnalyticsTestBase):
@@ -180,7 +209,7 @@ class ShodanAnalyticsTest(AnalyticsTestBase):
         analytics = shodan.ShodanApiQuery(**shodan.ShodanApiQuery._defaults.copy())
         analytics.run()
 
-        expected_values = [
+        expected_observable_values = [
             {
                 "value": "192.0.2.1",
                 "type": ObservableType.ipv4,
@@ -208,7 +237,17 @@ class ShodanAnalyticsTest(AnalyticsTestBase):
             },
         ]
 
-        self.check_observables_and_neighbors(shodan_query, expected_values)
+        self.check_observables(expected_observable_values)
+
+        expected_neighbor_values = [
+            "192.0.2.1",
+            "192.0.2.2",
+            "192.0.2.3",
+            "192.0.2.4",
+            "192.0.2.5",
+        ]
+
+        self.check_neighbors(shodan_query, expected_neighbor_values)
 
     def test_expire_tags(self) -> None:
         o = observable.Observable.add_text("google.com")
