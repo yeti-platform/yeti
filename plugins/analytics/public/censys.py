@@ -44,6 +44,7 @@ class CensysApiQuery(task.AnalyticsTask):
                     ip_object, "censys", f"IP found with Censys query: {query.pattern}"
                 )
 
+
 def query_censys(api: CensysHosts, query: str) -> set[str]:
     """Queries Censys and returns all identified IP addresses."""
     ip_addresses: set[str] = set()
@@ -51,9 +52,9 @@ def query_censys(api: CensysHosts, query: str) -> set[str]:
 
     for result in results:
         for record in result:
-          ip = record.get("ip")
-          if ip is not None:
-              ip_addresses.add(ip)
+            ip = record.get("ip")
+            if ip is not None:
+                ip_addresses.add(ip)
 
     return ip_addresses
 

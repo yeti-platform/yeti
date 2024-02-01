@@ -39,6 +39,7 @@ class ShodanApiQuery(task.AnalyticsTask):
                     ip_object, "shodan", f"IP found with Shodan query: {query.pattern}"
                 )
 
+
 def query_shodan(api: Shodan, query: str, limit: int) -> set[str]:
     """Queries Shodan and returns a set of identified IP addresses."""
     ip_addresses: set[str] = set()
@@ -46,12 +47,12 @@ def query_shodan(api: Shodan, query: str, limit: int) -> set[str]:
 
     for record in api.search_cursor(query):
         if record.get("ip_str") is not None:
-          ip_addresses.add(record.get("ip_str"))
-          # Setting the limit to -1 indicates the user wants unlimited results.
-          if limit != -1:
-              count += 1
-              if count >= limit:
-                  break
+            ip_addresses.add(record.get("ip_str"))
+            # Setting the limit to -1 indicates the user wants unlimited results.
+            if limit != -1:
+                count += 1
+                if count >= limit:
+                    break
 
     return ip_addresses
 
