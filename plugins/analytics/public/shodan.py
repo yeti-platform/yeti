@@ -18,7 +18,9 @@ class ShodanApiQuery(task.AnalyticsTask):
 
     def run(self):
         api_key = yeti_config.get("shodan", "api_key")
-        result_limit = yeti_config.get("shodan", "result_limit", 100)
+        result_limit = yeti_config.get("shodan", "result_limit")
+        if not result_limit:
+            result_limit = 100
 
         if not api_key:
             logging.error("Error: please configure an api_key to use Shodan analytics")

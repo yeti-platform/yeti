@@ -129,7 +129,7 @@ class ShodanAnalyticsTest(AnalyticsTestBase):
     def tearDown(self) -> None:
         database_arango.db.clear()
 
-    @parameterized.expand([(-1, 5), (500, 5), (3, 3)])
+    @parameterized.expand([(-1, 5), (500, 5), (3, 3), (None, 5)])
     @patch("plugins.analytics.public.shodan.Shodan")
     def test_shodan_query_with_various_limits(self, limit, expected_count, mock_shodan):
         mock_shodan_api = MagicMock()
