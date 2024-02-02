@@ -26,7 +26,7 @@ class ImportData(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
-        cls.path_json = "test/misp_test_data/misp_event.json"
+        cls.path_json = "tests/misp_test_data/misp_event.json"
 
     def test_import_misp(self):
         logging.info("Test import misp")
