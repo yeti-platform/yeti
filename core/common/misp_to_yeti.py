@@ -54,7 +54,7 @@ class MispToYeti:
             links.append(obs_yeti)
         obs_yeti = links.pop()
         for obj_to_link in links:
-            obs_yeti.link_to(obj_to_link, f"link_by_misp_{objs_type}", "misp")
+            obs_yeti.link_to(obj_to_link, f"linked_by_misp_{objs_type}", "misp")
 
     def misp_to_yeti(self):
         for object_misp in self.misp_event.get("Object"):
