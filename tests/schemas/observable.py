@@ -4,7 +4,6 @@ import unittest
 from core import database_arango
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
-
 from core.schemas.observables import (
     asn,
     bic,
@@ -22,6 +21,8 @@ from core.schemas.observables import (
     ipv6,
     mac_address,
     md5,
+    mutex,
+    named_pipe,
     path,
     registry_key,
     sha1,
@@ -33,7 +34,6 @@ from core.schemas.observables import (
     user_agent,
     wallet,
 )
-
 
 
 class ObservableTest(unittest.TestCase):
@@ -349,7 +349,7 @@ class ObservableTest(unittest.TestCase):
         observable = named_pipe.NamedPipe(value="\\\\.\\pipe\\test").save()
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "\\\\.\\pipe\\test")
-        
+
     def test_create_ipv4(self) -> None:
         """Tests creating an IPv4."""
         observable = ipv4.IPv4(value="127.0.0.1").save()
