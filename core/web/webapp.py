@@ -96,8 +96,8 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    import_data.router, prefix="/import_data", tags=["import_data"]
-
+    import_data.router, prefix="/import_data", tags=["import_data"],dependencies=[Depends(auth.get_current_active_user)]
+)
 
 app.include_router(api_router, prefix="/api/v2")
 
