@@ -8,4 +8,5 @@ class ASN(observable.Observable):
     country: str | None = None
     description: str | None = None
 
+
 observable.TYPE_MAPPING[observable.ObservableType.asn] = ASN

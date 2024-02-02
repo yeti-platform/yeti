@@ -1,11 +1,11 @@
-import logging
 from datetime import timedelta
 from typing import ClassVar
-import numpy as np
+
 import pandas as pd
-from core.schemas.observables import ipv4, asn
-from core.schemas import task
+
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import asn, ipv4
 
 
 class DataplaneDNSAny(task.FeedTask):
@@ -26,7 +26,7 @@ class DataplaneDNSAny(task.FeedTask):
         if response:
             lines = response.content.decode("utf-8").split("\n")[64:-5]
 
-            df = pd.DataFrame([l.split("|") for l in lines], columns=self._NAMES)
+            df = pd.DataFrame([line.split("|") for line in lines], columns=self._NAMES)
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df = df.dropna()
             df["lastseen"] = pd.to_datetime(df["lastseen"])

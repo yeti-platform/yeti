@@ -1,8 +1,10 @@
 # DEPRECATED
 import logging
+
 from dateutil import parser
-from dateutil.tz import gettz, UTC
+from dateutil.tz import UTC, gettz
 from tldextract import TLDExtract
+
 from core.config.config import yeti_config
 
 tzinfos = {"CEST": gettz("Europe/Amsterdam"), "CST": gettz("Europe/Amsterdam")}

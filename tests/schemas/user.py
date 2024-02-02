@@ -1,8 +1,7 @@
-import datetime
 import unittest
 
 from core import database_arango
-from core.schemas.user import User, UserSensitive
+from core.schemas.user import UserSensitive
 
 
 class UserTest(unittest.TestCase):
@@ -39,9 +38,14 @@ class UserTest(unittest.TestCase):
         self.assertRegex(user.api_key, r"[a-f0-9]{64}")
 
     def test_reset_api_key_with_param(self) -> None:
-        self.user1.reset_api_key(api_key="1234123412341234123412341234123412341234123412341234123412341234")
+        self.user1.reset_api_key(
+            api_key="1234123412341234123412341234123412341234123412341234123412341234"
+        )
         self.user1.save()
 
         user = UserSensitive.find(username="tomchop")
         assert user is not None
-        self.assertEqual(self.user1.api_key, "1234123412341234123412341234123412341234123412341234123412341234")
+        self.assertEqual(
+            self.user1.api_key,
+            "1234123412341234123412341234123412341234123412341234123412341234",
+        )

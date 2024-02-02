@@ -3,7 +3,8 @@ import unicodedata
 from datetime import date, datetime, timedelta
 from urllib.parse import urljoin
 
-import pandas as pd
+from pymisp.api import PyMISP
+
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import observable, task

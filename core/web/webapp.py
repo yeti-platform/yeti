@@ -1,5 +1,4 @@
 import logging
-
 from core.config.config import yeti_config
 from core.logger import logger
 from core.web.apiv2 import (
@@ -15,9 +14,11 @@ from core.web.apiv2 import (
     users,
     import_data,
 )
+
 from fastapi import APIRouter, Depends, FastAPI, Request
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import Message
+
 
 SECRET_KEY = yeti_config.get("auth", "secret_key")
 
@@ -53,7 +54,17 @@ api_router.include_router(
     tags=["tags"],
     dependencies=[Depends(auth.get_current_active_user)],
 )
+
 api_router.include_router(
+
+    dfiq.router,
+    prefix="/dfiq",
+    tags=["dfiq"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
+
+api_router.include_router(
+
     tasks.router,
     prefix="/tasks",
     tags=["tasks"],
@@ -86,7 +97,7 @@ api_router.include_router(
 
 api_router.include_router(
     import_data.router, prefix="/import_data", tags=["import_data"]
-)
+
 
 app.include_router(api_router, prefix="/api/v2")
 
@@ -126,7 +137,7 @@ async def log_requests(request: Request, call_next):
             logger.warning("Unauthorized request", extra=extra)
         else:
             logger.error("Bad request", extra=extra)
-    except Exception as e:
+    except Exception:
         err_logger = logging.getLogger("webapp.log_requests")
         err_logger.exception("Error while logging request")
     return response

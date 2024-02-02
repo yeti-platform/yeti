@@ -1,10 +1,10 @@
-from datetime import timedelta, datetime
 import logging
+from datetime import timedelta
 from typing import ClassVar
 
-from core.schemas.observables import url
-from core.schemas import task
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import url
 
 
 class VXVaultUrl(task.FeedTask):
@@ -16,6 +16,7 @@ class VXVaultUrl(task.FeedTask):
     }
 
     _SOURCE: ClassVar["str"] = "http://vxvault.net/URL_List.php"
+
     # should tell yeti how to get and chunk the feed
     def run(self):
         response = self._make_request(self._SOURCE)

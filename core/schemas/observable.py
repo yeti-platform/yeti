@@ -6,10 +6,11 @@ from enum import Enum
 from typing import ClassVar, Literal
 
 import validators
+from pydantic import Field, computed_field
+
 from core import database_arango
 from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
-from pydantic import Field, computed_field
 
 
 # Data Schema
@@ -62,7 +63,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return self._root_type
 
     @classmethod
-    def load(cls, object: dict) -> "ObservableTypes":
+    def load(cls, object: dict) -> "ObservableTypes":  # noqa: F821
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
@@ -72,7 +73,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return validate_observable(object)
 
     @classmethod
-    def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":
+    def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":  # noqa: F821
         """Adds and returns an observable for a given string.
 
         Args:
@@ -99,7 +100,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
 
     def add_context(
         self, source: str, context: dict, skip_compare: set = set()
-    ) -> "ObservableTypes":
+    ) -> "ObservableTypes":  # noqa: F821
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
@@ -120,7 +121,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
 
     def delete_context(
         self, source: str, context: dict, skip_compare: set = set()
-    ) -> "ObservableTypes":
+    ) -> "ObservableTypes":  # noqa: F821
         """Deletes context from an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
@@ -153,7 +154,6 @@ REGEXES_OBSERVABLES = {
         re.compile(r"^(\/[^\/\0]+)+$"),
         re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
     ],
-
     ObservableType.bic: [re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")],
 }
 
@@ -186,9 +186,32 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-from core.schemas.observables import (asn, bic, certificate, cidr, command_line,
-                                      docker_image, email, file,
-                                      generic_observable, hostname, iban, imphash,
-                                      ipv4, ipv6, mac_address, md5, path,mutex,named_pipe,
-                                      registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_account, user_agent, wallet)
+
+from core.schemas.observables import (  # noqa: E402
+    asn,  # noqa: F401
+    bic,  # noqa: F401
+    certificate,  # noqa: F401
+    cidr,  # noqa: F401
+    command_line,  # noqa: E402, F401
+    docker_image,  # noqa: F401
+    email,  # noqa: F401
+    file,  # noqa: F401
+    generic_observable,  # noqa: F401
+    hostname,  # noqa: F401
+    iban,  # noqa: F401
+    imphash,  # noqa: F401
+    ipv4,  # noqa: F401
+    ipv6,  # noqa: F401
+    mac_address,  # noqa: F401
+    md5,  # noqa: F401
+    path,  # noqa: F401
+    registry_key,  # noqa: F401
+    sha1,  # noqa: F401
+    sha256,  # noqa: F401
+    ssdeep,  # noqa: F401
+    tlsh,  # noqa: F401
+    url,  # noqa: F401
+    user_account,  # noqa: F401
+    user_agent,  # noqa: F401
+    wallet,  # noqa: F401
+)

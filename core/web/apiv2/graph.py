@@ -5,15 +5,14 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 from pydantic.functional_validators import field_validator
 
-from core.schemas import entity, graph, indicator, observable, tag
+from core.schemas import dfiq, entity, graph, indicator, observable, tag
 from core.schemas.observable import ObservableType
 
-GRAPH_TYPE_MAPPINGS = (
-    {}
-)  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
+GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(entity.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(indicator.TYPE_MAPPING)
+GRAPH_TYPE_MAPPINGS.update(dfiq.TYPE_MAPPING)
 
 
 # Requequest schemas
@@ -24,7 +23,7 @@ class GraphDirection(str, Enum):
 
 
 class GraphSearchRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     source: str
     link_types: list[str] = []
@@ -38,23 +37,27 @@ class GraphSearchRequest(BaseModel):
 
 
 class GraphAddRequest(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     source: str
     target: str
     link_type: str
     description: str
 
-    @field_validator('source', 'target')
+    @field_validator("source", "target")
     @classmethod
     def check_entity_descriptor(cls, value: str, info: ValidationInfo) -> str:
         if value.count("/") != 1:
-            raise ValueError(f'{info.field_name} must describe the entity using using the "<type>/<id>" schema')
+            raise ValueError(
+                f'{info.field_name} must describe the entity using using the "<type>/<id>" schema'
+            )
 
         entity_type, _ = value.split("/")
 
         if entity_type not in GRAPH_TYPE_MAPPINGS:
-            raise ValueError(f'{info.field_name} uses an invalid object type: {entity_type}')
+            raise ValueError(
+                f"{info.field_name} uses an invalid object type: {entity_type}"
+            )
 
         return value
 
@@ -65,9 +68,16 @@ class GraphPatchRequest(BaseModel):
 
 
 class GraphSearchResponse(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
-    vertices: dict[str, observable.Observable | entity.Entity | indicator.Indicator | tag.Tag]
+    vertices: dict[
+        str,
+        observable.Observable
+        | entity.Entity
+        | indicator.Indicator
+        | tag.Tag
+        | dfiq.DFIQBase,
+    ]
     paths: list[list[graph.Relationship | graph.TagRelationship]]
     total: int
 
@@ -124,7 +134,8 @@ async def add(request: GraphAddRequest) -> graph.Relationship:
     )
     return relationship
 
-@router.patch('/{relationship_id}')
+
+@router.patch("/{relationship_id}")
 async def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relationship:
     """Edits a Relationship in the graph."""
     relationship = graph.Relationship.get(relationship_id)
@@ -191,7 +202,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
 
     db_observables, _ = observable.Observable.filter(
         query_args={"value__in": request.observables},
-        graph_queries=[('tags', 'tagged', 'outbound', 'name')]
+        graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     for db_observable in db_observables:
         known[db_observable.value] = db_observable

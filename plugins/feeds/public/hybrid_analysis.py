@@ -1,14 +1,14 @@
-from io import StringIO
 import json
 import logging
 from datetime import timedelta
+from io import StringIO
 from typing import ClassVar
 
 import pandas as pd
 
-from core.schemas.observables import file, sha256, sha1, md5, hostname,path
-from core.schemas import task
 from core import taskmanager
+from core.schemas import task
+from core.schemas.observables import file, hostname, md5, path, sha1, sha256
 
 
 class HybridAnalysis(task.FeedTask):
@@ -108,7 +108,7 @@ class HybridAnalysis(task.FeedTask):
             for extracted_file in item["extracted_files"]:
                 context_file_dropped = {"source": self.name}
 
-                if not "sha256" in extracted_file:
+                if "sha256" not in extracted_file:
                     logging.error(extracted_file)
                     continue
 
@@ -118,33 +118,41 @@ class HybridAnalysis(task.FeedTask):
                 sha256_new_file = sha256.SHA256(value=extracted_file["sha256"]).save()
 
                 new_file.link_to(sha256_new_file, "sha256", self.name)
-                
+
                 path_extracted_file = None
-                if "file_path" is extracted_file and extracted_file["file_path"] and isinstance(extracted_file["file_path"], str):
-                    path_extracted_file = path.Path(value=extracted_file["file_path"]).save()
+                if (
+                    "file_path" == extracted_file
+                    and extracted_file["file_path"]
+                    and isinstance(extracted_file["file_path"], str)
+                ):
+                    path_extracted_file = path.Path(
+                        value=extracted_file["file_path"]
+                    ).save()
                     new_file.link_to(path_extracted_file, "path", self.name)
 
                 context_file_dropped["virustotal_score"] = 0
                 context_file_dropped["size"] = extracted_file["file_size"]
 
-                if "av_matched" in extracted_file and isinstance('av_matched', int):
+                if "av_matched" in extracted_file and isinstance("av_matched", int):
                     context_file_dropped["virustotal_score"] = extracted_file[
                         "av_matched"
                     ]
 
-                if "threatlevel_readable" in extracted_file and isinstance('threatlevel_readable', str):
+                if "threatlevel_readable" in extracted_file and isinstance(
+                    "threatlevel_readable", str
+                ):
                     context_file_dropped["threatlevel"] = extracted_file[
                         "threatlevel_readable"
                     ]
 
-                if "av_label" in extracted_file and isinstance('av_label', str):
+                if "av_label" in extracted_file and isinstance("av_label", str):
                     context_file_dropped["av_label"] = extracted_file["av_label"]
 
-                if "type_tags" in extracted_file and isinstance('type_tags', list):
+                if "type_tags" in extracted_file and isinstance("type_tags", list):
                     new_file.tag(extracted_file["type_tags"])
                     if path_extracted_file:
                         path_extracted_file.tag(extracted_file["type_tags"])
-                    
+
                     sha256_new_file.tag(extracted_file["type_tags"])
 
                 new_file.add_context(self.name, context_file_dropped)

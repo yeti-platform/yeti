@@ -8,7 +8,9 @@ from core.schemas.observables import ipv4
 
 
 class Cruzit(task.FeedTask):
-    _SOURCE: ClassVar["str"] = "https://iplists.firehol.org/files/cruzit_web_attacks.ipset"
+    _SOURCE: ClassVar[
+        "str"
+    ] = "https://iplists.firehol.org/files/cruzit_web_attacks.ipset"
 
     _defaults = {
         "frequency": timedelta(hours=1),
@@ -32,5 +34,6 @@ class Cruzit(task.FeedTask):
             obs.add_context(self.name, context)
             obs.tag(["cruzit", "web attacks"])
             logging.debug(f"Adding {ip_str} to cruzit feed")
+
 
 taskmanager.TaskManager.register_task(Cruzit)

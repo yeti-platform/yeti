@@ -9,13 +9,12 @@ from logging.handlers import QueueHandler, QueueListener
 from core.config.config import yeti_config
 from core.schemas.audit import AuditLog
 
-# Inspired by 
+# Inspired by
 # * https://www.sheshbabu.com/posts/fastapi-structured-json-logging/
 # * https://rob-blackbourn.medium.com/how-to-use-python-logging-queuehandler-with-dictconfig-1e8b1284e27a
 
 
 class ArangoHandler(logging.Handler):
-
     actions = {
         "GET": "read",
         "POST": "create",
@@ -39,20 +38,20 @@ class ArangoHandler(logging.Handler):
             status = "succeeded"
         else:
             status = "failed"
-        
+
         if "body" in record.__dict__ and record.__dict__["body"]:
             content = json.loads(record.__dict__["body"].decode("utf-8"))
         else:
             content = {}
         AuditLog(
-            timestamp = datetime.datetime.fromtimestamp(record.created),
-            username = record.__dict__["username"],
-            action = action,
-            status = status,
-            target = target,
-            content = content,
-            status_code = record.__dict__["status_code"],
-            ip = record.__dict__["client"],
+            timestamp=datetime.datetime.fromtimestamp(record.created),
+            username=record.__dict__["username"],
+            action=action,
+            status=status,
+            target=target,
+            content=content,
+            status_code=record.__dict__["status_code"],
+            ip=record.__dict__["client"],
         ).save()
 
 
@@ -71,7 +70,9 @@ class JsonFormatter(Formatter):
             json_record["method"] = record.__dict__["method"]
         if "body" in record.__dict__ and record.__dict__["body"]:
             if record.__dict__["content-type"] == "application/json":
-                json_record["body"] = json.loads(record.__dict__["body"].decode("utf-8"))
+                json_record["body"] = json.loads(
+                    record.__dict__["body"].decode("utf-8")
+                )
             else:
                 json_record["body"] = record.__dict__["body"].decode("utf-8")
         if "client" in record.__dict__:
@@ -102,7 +103,7 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(console_formatter)
 handlers.append(console_handler)
 
-audit_logfile = yeti_config.get('system', 'audit_logfile')
+audit_logfile = yeti_config.get("system", "audit_logfile")
 
 if audit_logfile:
     if os.access(audit_logfile, os.W_OK):

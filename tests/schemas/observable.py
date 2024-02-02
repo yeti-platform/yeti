@@ -4,12 +4,36 @@ import unittest
 from core import database_arango
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
-from core.schemas.observables import (bic, asn, certificate, cidr, command_line,
-                                      docker_image, email, file,
-                                      generic_observable, hostname, iban, imphash,
-                                      ipv4, ipv6, mac_address, md5, mutex, named_pipe,path,
-                                      registry_key, sha1, sha256, ssdeep, tlsh,
-                                      url, user_account, user_agent, wallet)
+
+from core.schemas.observables import (
+    asn,
+    bic,
+    certificate,
+    cidr,
+    command_line,
+    docker_image,
+    email,
+    file,
+    generic_observable,
+    hostname,
+    iban,
+    imphash,
+    ipv4,
+    ipv6,
+    mac_address,
+    md5,
+    path,
+    registry_key,
+    sha1,
+    sha256,
+    ssdeep,
+    tlsh,
+    url,
+    user_account,
+    user_agent,
+    wallet,
+)
+
 
 
 class ObservableTest(unittest.TestCase):
@@ -31,22 +55,22 @@ class ObservableTest(unittest.TestCase):
             key="Microsoft\\Windows\\CurrentVersion\\Run",
             value="persist",
             data=b"cmd.exe",
-            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software).save()
-        result.tag(['tag1'])
-        result.add_context(source='source1', context={'some': 'info'})
-        self.assertEqual(list(result.tags.keys()), ['tag1'])
-        self.assertEqual(
-            result.context[0], {'source': 'source1', 'some': 'info'})
+            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software,
+        ).save()
+        result.tag(["tag1"])
+        result.add_context(source="source1", context={"some": "info"})
+        self.assertEqual(list(result.tags.keys()), ["tag1"])
+        self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
         result = registry_key.RegistryKey(
             key="Microsoft\\Windows\\CurrentVersion\\RunOnce",
             value="persist",
             data=b"other.exe",
-            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software).save()
+            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software,
+        ).save()
         self.assertEqual(result.key, "Microsoft\\Windows\\CurrentVersion\\RunOnce")
         self.assertEqual(result.data, b"other.exe")
-        self.assertEqual(list(result.tags.keys()), ['tag1'])
-        self.assertEqual(
-            result.context[0], {'source': 'source1', 'some': 'info'})
+        self.assertEqual(list(result.tags.keys()), ["tag1"])
+        self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
 
     def test_create_generic_observable(self):
         result = generic_observable.GenericObservable(value="Some_String").save()
@@ -57,14 +81,14 @@ class ObservableTest(unittest.TestCase):
     def test_observable_no_value(self):
         with self.assertRaises(ValueError):
             hostname.Hostname(value="").save()
-            
+
     def test_observable_same_value_different_types(self):
         """Tests that two observables with the same value but different types
         are not the same observable."""
         obs1 = user_account.UserAccount(value="test@test.com").save()
         obs2 = email.Email(value="test@test.com").save()
         self.assertNotEqual(obs1.id, obs2.id)
-    
+
     def test_two_observables_same_value_same_type(self):
         """Tests that two observables with the same value and same type
         are the same observable."""
@@ -73,7 +97,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(obs1.id, obs2.id)
 
     def test_observable_find(self) -> None:
-        result = hostname.Hostname(value="toto.com").save()
+        hostname.Hostname(value="toto.com").save()
         observable = Observable.find(value="toto.com")
         self.assertIsNotNone(observable)
         assert observable is not None
@@ -104,7 +128,7 @@ class ObservableTest(unittest.TestCase):
 
     def test_observable_filter_in(self):
         obs1 = hostname.Hostname(value="test1.com").save()
-        obs2 = hostname.Hostname(value="test2.com").save()
+        hostname.Hostname(value="test2.com").save()
         obs3 = hostname.Hostname(value="test3.com").save()
 
         result, total = Observable.filter(
@@ -244,9 +268,11 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_wallet(self) -> None:
         """Tests creating a wallet."""
-        observable = wallet.Wallet(value="btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
-                                   coin="btc",
-                                   address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa").save()
+        observable = wallet.Wallet(
+            value="btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+            coin="btc",
+            address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
+        ).save()
         self.assertIsInstance(observable, wallet.Wallet)
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
@@ -255,9 +281,12 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_certificate(self) -> None:
         """Tests creating a certificate."""
-        observable = certificate.Certificate.from_data(b'1234').save()
+        observable = certificate.Certificate.from_data(b"1234").save()
         self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "CERT:03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4")
+        self.assertEqual(
+            observable.value,
+            "CERT:03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+        )
         self.assertIsInstance(observable, certificate.Certificate)
 
     def test_create_cidr(self) -> None:
@@ -376,7 +405,8 @@ class ObservableTest(unittest.TestCase):
             key="Microsoft\\Windows\\CurrentVersion\\Run",
             value="persist",
             data=b"cmd.exe",
-            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software).save()
+            hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software,
+        ).save()
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "persist")
         self.assertIsInstance(observable, registry_key.RegistryKey)
@@ -418,29 +448,42 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_user_agent(self) -> None:
         """Tests creating a user agent."""
-        observable = user_agent.UserAgent(value="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36").save() # noqa: E501
+        observable = user_agent.UserAgent(
+            value="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+        ).save()  # noqa: E501
         self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36") # noqa: E501
+        self.assertEqual(
+            observable.value,
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        )  # noqa: E501
         self.assertIsInstance(observable, user_agent.UserAgent)
 
     def test_create_user_account(self) -> None:
         """Tests creating a user account."""
         observable = user_account.UserAccount(
-            value = "test_account",
-            user_id = "test_user_id",
-            credential = "test_credential",
-            account_login = "test_account_login",
-            account_type = "test_account_type",
-            display_name = "test_display_name",
-            is_service_account = True,
-            is_privileged = True,
-            can_escalate_privs = True,
-            is_disabled = True,
-            account_created = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
-            account_expires = datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc),
-            credential_last_changed = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
-            account_first_login = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
-            account_last_login = datetime.datetime(2023, 12, 15, tzinfo=datetime.timezone.utc),
+            value="test_account",
+            user_id="test_user_id",
+            credential="test_credential",
+            account_login="test_account_login",
+            account_type="test_account_type",
+            display_name="test_display_name",
+            is_service_account=True,
+            is_privileged=True,
+            can_escalate_privs=True,
+            is_disabled=True,
+            account_created=datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+            account_expires=datetime.datetime(
+                2023, 12, 31, tzinfo=datetime.timezone.utc
+            ),
+            credential_last_changed=datetime.datetime(
+                2023, 1, 1, tzinfo=datetime.timezone.utc
+            ),
+            account_first_login=datetime.datetime(
+                2023, 1, 1, tzinfo=datetime.timezone.utc
+            ),
+            account_last_login=datetime.datetime(
+                2023, 12, 15, tzinfo=datetime.timezone.utc
+            ),
         ).save()
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "test_account")
@@ -454,18 +497,36 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable.is_privileged, True)
         self.assertEqual(observable.can_escalate_privs, True)
         self.assertEqual(observable.is_disabled, True)
-        self.assertEqual(observable.account_created, datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc))
-        self.assertEqual(observable.account_expires, datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc))
-        self.assertEqual(observable.credential_last_changed, datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc))
-        self.assertEqual(observable.account_first_login, datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc))
-        self.assertEqual(observable.account_last_login, datetime.datetime(2023, 12, 15, tzinfo=datetime.timezone.utc))
+        self.assertEqual(
+            observable.account_created,
+            datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(
+            observable.account_expires,
+            datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(
+            observable.credential_last_changed,
+            datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(
+            observable.account_first_login,
+            datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+        )
+        self.assertEqual(
+            observable.account_last_login,
+            datetime.datetime(2023, 12, 15, tzinfo=datetime.timezone.utc),
+        )
 
     def test_create_user_account_incoherent_dates(self) -> None:
         """Tests creating a user account with incoherent dates."""
         with self.assertRaises(ValueError):
-            observable = user_account.UserAccount(
-                value = "test_account",
-                account_created = datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc),
-                account_expires = datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
+            user_account.UserAccount(
+                value="test_account",
+                account_created=datetime.datetime(
+                    2023, 12, 31, tzinfo=datetime.timezone.utc
+                ),
+                account_expires=datetime.datetime(
+                    2023, 1, 1, tzinfo=datetime.timezone.utc
+                ),
             ).save()
-

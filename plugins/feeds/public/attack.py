@@ -200,7 +200,7 @@ class MitreAttack(task.FeedTask):
                 for item in data["objects"]:
                     if item.get("revoked"):
                         continue
-                    if item['relationship_type'] == 'revoked-by':
+                    if item["relationship_type"] == "revoked-by":
                         continue
 
                     if item["source_ref"].startswith("x-mitre") or item[

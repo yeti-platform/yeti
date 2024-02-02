@@ -3,13 +3,15 @@ from __future__ import unicode_literals
 import json
 from datetime import datetime
 
-from maclookup import ApiClient, exceptions as maclookup_exceptions
+from maclookup import ApiClient
+from maclookup import exceptions as maclookup_exceptions
+
 from core import taskmanager
+from core.config.config import yeti_config
 from core.schemas import task
+from core.schemas.entity import Company
 from core.schemas.observable import ObservableType
 from core.schemas.observables.mac_address import MacAddress
-from core.schemas.entity import Company
-from core.config.config import yeti_config
 
 
 class MacAddressIoApi(object):
@@ -61,35 +63,20 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
     acts_on: list[ObservableType] = [ObservableType.mac_address]
 
     def each(self, mac_address: MacAddress):
-        results = {}
-
         lookup_results = MacAddressIoApi.get(mac_address.value)
 
-        if lookup_results["blockDetails"]["dateCreated"]:
-            date_created = datetime.strptime(
-                lookup_results["blockDetails"]["dateCreated"], "%Y-%m-%d"
-            )
-        else:
-            date_created = None
-
-        if lookup_results["blockDetails"]["dateUpdated"]:
-            date_updated = datetime.strptime(
-                lookup_results["blockDetails"]["dateUpdated"], "%Y-%m-%d"
-            )
-        else:
-            date_updated = None
-
+        vendor = None
         try:
             if lookup_results["vendorDetails"]["companyName"] != "":
                 vendor = Company(
                     name=lookup_results["vendorDetails"]["companyName"]
                 ).save()
-
         except KeyError:
-            pass
+            return
 
         MacAddressIo.add_context_to_observable(mac_address, lookup_results)
-        mac_address.link_to(vendor, "Vendor", "MacAdress.io")
+        if vendor:
+            mac_address.link_to(vendor, "Vendor", "MacAdress.io")
 
     @staticmethod
     def add_context_to_observable(mac_address: MacAddress, lookup_results: dict):
