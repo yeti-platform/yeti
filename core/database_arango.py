@@ -85,8 +85,18 @@ class ArangoDatabase:
             self.graph("threat_graph"),
             {
                 "edge_collection": "links",
-                "from_vertex_collections": ["observables", "entities", "indicators"],
-                "to_vertex_collections": ["observables", "entities", "indicators"],
+                "from_vertex_collections": [
+                    "observables",
+                    "entities",
+                    "indicators",
+                    "dfiq",
+                ],
+                "to_vertex_collections": [
+                    "observables",
+                    "entities",
+                    "indicators",
+                    "dfiq",
+                ],
             },
         )
         self.db.collection("observables").add_persistent_index(
@@ -97,6 +107,9 @@ class ArangoDatabase:
         )
         self.db.collection("tags").add_persistent_index(fields=["name"], unique=True)
         self.db.collection("indicators").add_persistent_index(
+            fields=["name", "type"], unique=True
+        )
+        self.db.collection("dfiq").add_persistent_index(
             fields=["name", "type"], unique=True
         )
 
@@ -143,7 +156,7 @@ class ArangoDatabase:
         if not self.db.has_collection(definition["edge_collection"]):
             collection = graph.create_edge_definition(**definition)
         else:
-            collection = graph.edge_collection(definition["edge_collection"])
+            collection = graph.replace_edge_definition(**definition)
 
         self.collections[definition["edge_collection"]] = collection
         return collection
@@ -274,7 +287,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """Fetches a single object by value.
 
         Args:
-          value: The value to search for.
+          **kwargs: Keyword arguments that will be matched to the document.
 
         Returns:
           A Yeti object.
@@ -538,8 +551,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
           raw: Whether to return a raw dictionary or a Yeti object.
 
         Returns:
-          A tuple of two lists: the first one contains the neighbors (vertices),
-            the second one contains the relationships (edges)
+          Tuple[dict, list, int]:
+            - the neighbors (vertices),
+            - the relationships (edges),
+            - total neighbor (vertices) count
         """
         query_filter = ""
         args = {
@@ -622,7 +637,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def _build_vertices(self, vertices, arango_vertices):
         # Import happens here to avoid circular dependency
-        from core.schemas import entity, indicator, observable, tag
+        from core.schemas import dfiq, entity, indicator, observable, tag
 
         type_mapping = {
             "tag": tag.Tag,
@@ -630,6 +645,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         type_mapping.update(observable.TYPE_MAPPING)
         type_mapping.update(entity.TYPE_MAPPING)
         type_mapping.update(indicator.TYPE_MAPPING)
+        type_mapping.update(dfiq.TYPE_MAPPING)
 
         for vertex in arango_vertices:
             if vertex["_key"] in vertices:

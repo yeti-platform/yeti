@@ -8,6 +8,7 @@ from core.config.config import yeti_config
 from core.logger import logger
 from core.web.apiv2 import (
     auth,
+    dfiq,
     entities,
     graph,
     indicators,
@@ -53,6 +54,14 @@ api_router.include_router(
     tags=["tags"],
     dependencies=[Depends(auth.get_current_active_user)],
 )
+
+api_router.include_router(
+    dfiq.router,
+    prefix="/dfiq",
+    tags=["dfiq"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
+
 api_router.include_router(
     tasks.router,
     prefix="/tasks",

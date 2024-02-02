@@ -4,6 +4,7 @@ from core import database_arango
 from core.config.config import yeti_config
 from plugins.feeds.public import (
     attack,
+    dfiq,
     feodo_tracker_ip_blocklist,
     hybrid_analysis,
     lolbas,
@@ -51,4 +52,9 @@ class FeedTest(unittest.TestCase):
     def test_hybrid_analysis(self):
         defaults = hybrid_analysis.HybridAnalysis._defaults.copy()
         feed = hybrid_analysis.HybridAnalysis(**defaults)
+        feed.run()
+
+    def test_dfiq(self):
+        defaults = dfiq.DFIQFeed._defaults.copy()
+        feed = dfiq.DFIQFeed(**defaults)
         feed.run()

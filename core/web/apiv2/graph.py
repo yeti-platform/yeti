@@ -5,13 +5,14 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 from pydantic.functional_validators import field_validator
 
-from core.schemas import entity, graph, indicator, observable, tag
+from core.schemas import dfiq, entity, graph, indicator, observable, tag
 from core.schemas.observable import ObservableType
 
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(entity.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(indicator.TYPE_MAPPING)
+GRAPH_TYPE_MAPPINGS.update(dfiq.TYPE_MAPPING)
 
 
 # Requequest schemas
@@ -70,7 +71,12 @@ class GraphSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     vertices: dict[
-        str, observable.Observable | entity.Entity | indicator.Indicator | tag.Tag
+        str,
+        observable.Observable
+        | entity.Entity
+        | indicator.Indicator
+        | tag.Tag
+        | dfiq.DFIQBase,
     ]
     paths: list[list[graph.Relationship | graph.TagRelationship]]
     total: int

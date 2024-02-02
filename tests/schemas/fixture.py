@@ -16,17 +16,17 @@ from core.schemas.template import Template
 from core.schemas.user import UserSensitive
 
 
-class TagTest(unittest.TestCase):
+class FixtureTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
     def test_something(self):
-        user = UserSensitive(username="yeti", admin=True)
+        user = UserSensitive(username="yeti", admin=True, enabled=True)
         user.set_password("yeti")
         user.save()
 
-        user = UserSensitive(username="user", admin=False)
+        user = UserSensitive(username="user", admin=False, enabled=True)
         user.set_password("user")
         user.save()
 

@@ -1,0 +1,10 @@
+---
+display_name: What is a question?
+type: question
+description:
+id: Q1020
+dfiq_version: 1.0.0
+tags:
+ - Web Browser
+parent_ids:
+ - F1005

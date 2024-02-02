@@ -1,0 +1,11 @@
+---
+display_name: facet1
+type: facet
+description: >
+  Long description of facet1
+id: F1005
+dfiq_version: 1.0.0
+tags:
+ - Web Browser
+parent_ids:
+ - S1003
