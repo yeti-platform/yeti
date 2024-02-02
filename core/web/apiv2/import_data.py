@@ -1,6 +1,7 @@
 import json
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-import pymisp
+
+from fastapi import APIRouter, File, UploadFile
+
 from core.common.misp_to_yeti import MispToYeti
 
 router = APIRouter()
