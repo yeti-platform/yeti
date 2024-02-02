@@ -31,4 +31,3 @@ def stream_sha256(stream):
 
 def now():
     return datetime.datetime.now(datetime.timezone.utc)
-    
