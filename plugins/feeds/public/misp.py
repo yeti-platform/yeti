@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 from pymisp.api import PyMISP
 
 from core import taskmanager
+from core.common.misp_to_yeti import MISP_TYPES_TO_IMPORT
 from core.config.config import yeti_config
 from core.schemas import observable, task
 
@@ -16,21 +17,6 @@ class MispFeed(task.FeedTask):
         "name": "MispFeed",
         "description": "Parses events from a given MISP instance",
         "source": "MISP",
-    }
-
-    _TYPES_TO_IMPORT = {
-        "domain": observable.ObservableType.hostname,
-        "hostname": observable.ObservableType.hostname,
-        "ip-dst": observable.ObservableType.ipv4,
-        "ip-src": observable.ObservableType.ipv4,
-        "url": observable.ObservableType.url,
-        "md5": observable.ObservableType.md5,
-        "sha1": observable.ObservableType.sha1,
-        "sha256": observable.ObservableType.sha256,
-        "btc": observable.ObservableType.wallet,
-        "email": observable.ObservableType.email,
-        "filename": observable.ObservableType.file,
-        "regkey": observable.ObservableType.registry_key,
     }
 
     def get_instances(self):
@@ -152,7 +138,7 @@ class MispFeed(task.FeedTask):
         if attribute["category"] == "External analysis":
             return
 
-        if attribute.get("type") in self._TYPES_TO_IMPORT:
+        if attribute.get("type") in MISP_TYPES_TO_IMPORT:
             context["id"] = attribute["event_id"]
             context["link"] = urljoin(
                 instance["url"],

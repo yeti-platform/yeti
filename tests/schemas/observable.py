@@ -21,6 +21,8 @@ from core.schemas.observables import (
     ipv6,
     mac_address,
     md5,
+    mutex,
+    named_pipe,
     path,
     registry_key,
     sha1,
@@ -335,6 +337,18 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "1234567890")
         self.assertIsInstance(observable, imphash.Imphash)
+
+    def test_create_mutex(self) -> None:
+        """Tests creating a mutex."""
+        mutex_obs = mutex.Mutex(value="test_mutex").save()
+        self.assertIsNotNone(mutex_obs.id)
+        self.assertEqual(mutex_obs.value, "test_mutex")
+
+    def test_create_named_pipe(self) -> None:
+        """Tests creating a name pipe."""
+        observable = named_pipe.NamedPipe(value="\\\\.\\pipe\\test").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "\\\\.\\pipe\\test")
 
     def test_create_ipv4(self) -> None:
         """Tests creating an IPv4."""

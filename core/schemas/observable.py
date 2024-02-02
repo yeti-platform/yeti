@@ -42,6 +42,8 @@ class ObservableType(str, Enum):
     user_agent = "user_agent"
     user_account = "user_account"
     wallet = "wallet"
+    mutex = "mutex"
+    named_pipe = "named_pipe"
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -184,6 +186,7 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
+
 from core.schemas.observables import (  # noqa: E402
     asn,  # noqa: F401
     bic,  # noqa: F401
