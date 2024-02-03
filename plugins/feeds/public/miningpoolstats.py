@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import timedelta
-from typing import ClassVar
+from typing import ClassVar, Generator
 
 import requests
 
@@ -24,6 +24,8 @@ class MiningPoolStats(task.FeedTask):
     ] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
     def run(self):
+        self._session = requests.Session()
+        self._session.headers.update({"User-Agent": self._USER_AGENT})
         data = {"query": "get_recent", "selector": "time"}
         coin_names = self._get_coin_names()
         if not coin_names:
@@ -52,10 +54,13 @@ class MiningPoolStats(task.FeedTask):
                         logging.error(f"Can't add {pool_id} as observable - {err}")
         return True
 
-    def _extract_pool_urls(self, coin_name):
+    def _extract_pool_urls(self, coin_name: str) -> Generator[dict]:
+        """
+        Yield data associated to the provided coin name, in two steps. At first, extract the
+        timestamped endpoint from the coin page. Then, fetch the endpoint to extract the pool urls.
+        """
         endpoint = f"{self._SOURCE}/{coin_name}"
-        headers = {"User-Agent": self._USER_AGENT}
-        response = requests.get(endpoint, headers=headers)
+        response = self._session.get(endpoint)
         if response.status_code != 200:
             logging.debug(
                 f"Can't fetch coin page {coin_name} - code: {response.status_code}, reason: {response.reason}"
@@ -70,7 +75,7 @@ class MiningPoolStats(task.FeedTask):
         if not m:
             logging.debug("Can't find pools endpoint")
             return
-        response = requests.get(m.group(1), headers=headers)
+        response = self._session.get(m.group(1))
         if response.status_code != 200:
             logging.debug(
                 f"Can't fetch pool page - code: {response.status_code}, reason: {response.reason}"
@@ -80,10 +85,13 @@ class MiningPoolStats(task.FeedTask):
             yield data
         return
 
-    def _get_coin_names(self):
+    def _get_coin_names(self) -> list:
+        """
+        Return available coin names in two steps. At first, fetch the main page to extract the
+        timestamped endpoint. Then, add to a set the coin name from the page key.
+        """
         coin_names = set()
-        headers = {"User-Agent": self._USER_AGENT}
-        response = requests.get("https://miningpoolstats.stream", headers=headers)
+        response = self._session.get("https://miningpoolstats.stream")
         if response.status_code != 200:
             logging.debug(
                 f"Can't fetch main page - code: {response.status_code}, reason: {response.reason}"
@@ -96,7 +104,7 @@ class MiningPoolStats(task.FeedTask):
         if not m:
             logging.debug("Can't extract pages from response")
             return None
-        response = requests.get(m.group(1), headers=headers)
+        response = self._session.get(m.group(1))
         if response.status_code != 200:
             logging.debug(
                 f"Can't fetch data - code: {response.status_code}, reason: {response.reason}"
