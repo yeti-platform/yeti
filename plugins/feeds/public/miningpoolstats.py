@@ -39,7 +39,6 @@ class MiningPoolStats(task.FeedTask):
             tags = ["cryptomining", "cryptominer", "cryptomining-pool", coin_name]
             for data in self._extract_pool_urls(coin_name):
                 url_value = data.get("url", "").strip()
-                url_obs = None
                 if url_value:
                     url_obs = url.Url(value=url_value).save()
                     url_obs.tag(tags)
