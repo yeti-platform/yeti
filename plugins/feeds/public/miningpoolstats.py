@@ -54,7 +54,7 @@ class MiningPoolStats(task.FeedTask):
                         logging.error(f"Can't add {pool_id} as observable - {err}")
         return True
 
-    def _extract_pool_urls(self, coin_name: str) -> Generator[dict]:
+    def _extract_pool_urls(self, coin_name: str) -> Generator[dict, None, None]:
         """
         Yield data associated to the provided coin name, in two steps. At first, extract the
         timestamped endpoint from the coin page. Then, fetch the endpoint to extract the pool urls.
