@@ -32,3 +32,13 @@ This is done by:
   and enrichment (think malware sandbox).
 - Export the data in user-defined formats so that they can be ingested by
   third-party applications (SIEM, DFIR platforms).
+
+## Some screenshots
+
+![](https://yeti-platform.io/scattered.png)
+
+![](https://yeti-platform.io/attack.png)
+
+![](https://yeti-platform.io/vuln.png)
+
+![](https://yeti-platform.io/intrusionset.png)
