@@ -1,5 +1,6 @@
 import datetime
 import logging
+import io
 import re
 from enum import Enum
 from typing import ClassVar, Literal, Type
@@ -9,6 +10,9 @@ from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_valida
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiModel
+from artifacts import reader
+from artifacts.scripts import validator
+from artifacts import reader, writer, errors, definitions
 
 
 def future():
@@ -25,6 +29,7 @@ class IndicatorType(str, Enum):
     yara = "yara"
     sigma = "sigma"
     query = "query"
+    forensicartifact = "forensicartifact"
 
 
 class IndicatorMatch(BaseModel):
@@ -161,14 +166,107 @@ class Sigma(Indicator):
         raise NotImplementedError
 
 
+class ForensicArtifact(Indicator):
+    """Represents a Forensic Artifact
+
+    As defined in https://github.com/ForensicArtifacts/artifacts
+    """
+
+    _type_filter: ClassVar[str] = IndicatorType.forensicartifact
+    type: Literal[IndicatorType.forensicartifact] = IndicatorType.forensicartifact
+
+    sources: list[dict] = []
+    aliases: list[str] = []
+    supported_os: list[str] = []
+
+    def match(self, value: str) -> IndicatorMatch | None:
+        raise NotImplementedError
+
+    @classmethod
+    def from_yaml_string(
+        cls, yaml_string: str, update_parents: bool = False
+    ) -> list["ForensicArtifact"]:
+        artifact_reader = reader.YamlArtifactsReader()
+        artifact_writer = writer.YamlArtifactsWriter()
+
+        artifacts_dict = {}
+
+        for definition in artifact_reader.ReadFileObject(io.StringIO(yaml_string)):
+            definition_dict = definition.AsDict()
+            definition_dict["description"] = definition_dict.pop("doc")
+            if definition.urls:
+                definition_dict["description"] += "\n\nURLs:\n"
+                definition_dict["description"] += " ".join(
+                    [f"* {url}\n" for url in definition.urls]
+                )
+            definition_dict["pattern"] = artifact_writer.FormatArtifacts([definition])
+            definition_dict[
+                "location"
+            ] = "TBD"  # TOOD: Grab location from sources' type
+            definition_dict["diamond"] = DiamondModel.victim
+            definition_dict["relevant_tags"] = [definition_dict['name']]
+
+            forensic_indicator = cls(**definition_dict).save()
+            artifacts_dict[definition.name] = forensic_indicator
+
+        if update_parents:
+            for artifact in artifacts_dict.values():
+                artifact.update_parents(artifacts_dict)
+
+        return list(artifacts_dict.values())
+
+    def update_parents(self, artifacts_dict: dict[str, "ForensicArtifact"]) -> None:
+        for source in self.sources:
+            if not source["type"] == definitions.TYPE_INDICATOR_ARTIFACT_GROUP:
+                continue
+            for child_name in source["attributes"]["names"]:
+                child = artifacts_dict.get(child_name)
+                if not child:
+                    logging.error(f"Missing child {child_name} for {self.name}")
+                    continue
+
+                add_tags = set(self.relevant_tags + [self.name])
+                child.relevant_tags = list(add_tags | set(child.relevant_tags))
+                child.save()
+                self.link_to(child, "child source", "Uses ForensicArtifact child")
+
+    def extract_indicators(self):
+        indicators = []
+        for source in self.sources:
+            if source["type"] == definitions.TYPE_INDICATOR_FILE:
+                for path in source["attributes"]["paths"]:
+                    escaped = re.escape(path).replace("*", ".*")
+                    escaped = ARTIFACT_INTERPOLATION_RE.sub(".*", escaped)
+                    try:
+                        indicator = Regex(
+                            name=path,
+                            pattern=escaped,
+                            location="filesystem",
+                            diamond=DiamondModel.victim,
+                            relevant_tags=self.relevant_tags,
+                        )
+                        indicators.append(indicator)
+                    except Exception:
+                        logging.error(
+                            f"Failed to create indicator for {path} (was: {source['attributes']['paths']})"
+                        )
+                        continue
+        return indicators
+
+
+ARTIFACT_INTERPOLATION_RE = re.compile("%%[a-z._]+%%")
+
 TYPE_MAPPING = {
     "regex": Regex,
     "yara": Yara,
     "sigma": Sigma,
     "query": Query,
+    "forensicartifact": ForensicArtifact,
     "indicator": Indicator,
     "indicators": Indicator,
 }
 
-IndicatorTypes = Regex | Yara | Sigma | Query
-IndicatorClasses = Type[Regex] | Type[Yara] | Type[Sigma] | Type[Query]
+IndicatorTypes = Regex | Yara | Sigma | Query | ForensicArtifact
+IndicatorClasses = (
+    Type[Regex] | Type[Yara] | Type[Sigma] | Type[Query] | Type[ForensicArtifact]
+)
