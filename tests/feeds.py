@@ -54,7 +54,7 @@ class FeedTest(unittest.TestCase):
         feed = hybrid_analysis.HybridAnalysis(**defaults)
         feed.run()
 
-    def test_dfiq(self):
-        defaults = dfiq.DFIQFeed._defaults.copy()
-        feed = dfiq.DFIQFeed(**defaults)
+    def test_forensic_artifacts(self):
+        defaults = artifacts.ForensicArtifacts._defaults.copy()
+        feed = artifacts.ForensicArtifacts(**defaults)
         feed.run()
