@@ -85,6 +85,21 @@ files = [
 test = ["coverage", "mypy", "pexpect", "ruff", "wheel"]
 
 [[package]]
+name = "artifacts"
+version = "20240128"
+description = "ForensicArtifacts.com Artifact Repository."
+optional = false
+python-versions = ">=3.7"
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/forensicartifacts/artifacts.git"
+reference = "main"
+resolved_reference = "6304c2b035fd8560224f4d30bd4599c8be2f5ec2"
+
+[[package]]
 name = "astroid"
 version = "2.15.8"
 description = "An abstract syntax tree for Python with inference support."
@@ -2521,4 +2536,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "2c37c6701a75724f2ce83bf339ac6dcb0b68575205b7281ec7647ef264646aac"
+content-hash = "a1ad51595f02db2c0ac14d5e48982f42311db906a1b1ed07d019c5c281a2c906"
