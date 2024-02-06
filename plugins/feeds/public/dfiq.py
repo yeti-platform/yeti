@@ -73,7 +73,7 @@ TYPE_FUNCTIONS = {
 
 class DFIQFeed(task.FeedTask):
     _defaults = {
-        "name": "MitreAttack",
+        "name": "DFIQ Github repo",
         "frequency": timedelta(hours=1),
         "type": "feed",
         "description": "DFIQ feed",

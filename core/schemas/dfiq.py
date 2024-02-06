@@ -43,7 +43,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         return cls(**object)
 
-    def to_yaml(self):
+    def to_yaml(self) -> str:
         dump = self.model_dump(
             exclude={"created", "modified", "id", "root_type", "dfiq_yaml"}
         )
@@ -55,7 +55,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             dump.pop("contributors")
         return yaml.dump(dump)
 
-    def update_parents(self):
+    def update_parents(self) -> None:
         intended_parent_ids = None
         if hasattr(self, "parent_ids"):
             intended_parent_ids = self.parent_ids
