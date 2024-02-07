@@ -237,20 +237,27 @@ class ForensicArtifact(Indicator):
                 for path in source["attributes"]["paths"]:
                     escaped = re.escape(path).replace("*", ".*")
                     escaped = ARTIFACT_INTERPOLATION_RE.sub(".*", escaped)
-                    try:
-                        indicator = Regex(
-                            name=path,
-                            pattern=escaped,
-                            location="filesystem",
-                            diamond=DiamondModel.victim,
-                            relevant_tags=self.relevant_tags,
+                    indicator = Regex.find(name=path)
+                    if not indicator:
+                        try:
+                            indicator = Regex(
+                                name=path,
+                                pattern=escaped,
+                                location="filesystem",
+                                diamond=DiamondModel.victim,
+                                relevant_tags=self.relevant_tags,
+                            )
+                            indicators.append(indicator)
+                        except Exception:
+                            logging.error(
+                                f"Failed to create indicator for {path} (was: {source['attributes']['paths']})"
+                            )
+                            continue
+                    else:
+                        indicator.relevant_tags = list(
+                            set(indicator.relevant_tags + self.relevant_tags)
                         )
-                        indicators.append(indicator)
-                    except Exception:
-                        logging.error(
-                            f"Failed to create indicator for {path} (was: {source['attributes']['paths']})"
-                        )
-                        continue
+                        indicator.save()
         return indicators
 
 
