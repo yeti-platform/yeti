@@ -59,11 +59,15 @@ async def patch(
     """Modifies an indicator in the database."""
     db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
-        raise HTTPException(status_code=404, detail=f"Indicator {indicator_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Indicator {indicator_id} not found"
+        )
 
     if db_indicator.type == indicator.IndicatorType.forensicartifact:
         if db_indicator.pattern != request.indicator.pattern:
-            return indicator.ForensicArtifact.from_yaml_string(request.indicator.pattern)[0]
+            return indicator.ForensicArtifact.from_yaml_string(
+                request.indicator.pattern
+            )[0]
 
     update_data = request.indicator.model_dump(exclude_unset=True)
     updated_indicator = db_indicator.model_copy(update=update_data)

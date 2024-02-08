@@ -66,12 +66,13 @@ def _process_approach(yaml_string: str) -> None:
         if data.type == "ForensicArtifact":
             artifact = indicator.ForensicArtifact.find(name=data.value)
             if not artifact:
-                logging.warning("Missing artifact %s in %s", data.value, approach.dfiq_id)
+                logging.warning(
+                    "Missing artifact %s in %s", data.value, approach.dfiq_id
+                )
                 continue
             approach.link_to(artifact, "artifact", "Uses artifact")
         else:
             logging.warning("Unknown data type %s in %s", data.type, approach.dfiq_id)
-
 
 
 TYPE_FUNCTIONS = {

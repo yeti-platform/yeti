@@ -224,8 +224,10 @@ class ForensicArtifact(Indicator):
 
     def update_yaml(self):
         artifact_reader = reader.YamlArtifactsReader()
-        definition_dict = next(artifact_reader.ReadFileObject(io.StringIO(self.pattern))).AsDict()
-        definition_dict["doc"] = self.description.split('\n\nURLs:')[0]
+        definition_dict = next(
+            artifact_reader.ReadFileObject(io.StringIO(self.pattern))
+        ).AsDict()
+        definition_dict["doc"] = self.description.split("\n\nURLs:")[0]
         definition_dict["name"] = self.name
         definition_dict["supported_os"] = self.supported_os
         self.pattern = yaml.safe_dump(definition_dict)

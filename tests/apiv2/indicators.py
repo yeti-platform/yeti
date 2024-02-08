@@ -95,7 +95,7 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_patch_indicator(self):
-        self.indicator1.pattern = 'blah'
+        self.indicator1.pattern = "blah"
         dump = self.indicator1.model_dump_json()
         response = client.patch(
             f"/api/v2/indicators/{self.indicator1.id}",
