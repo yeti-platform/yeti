@@ -228,7 +228,7 @@ class ForensicArtifact(Indicator):
                 add_tags = set(self.relevant_tags + [self.name])
                 child.relevant_tags = list(add_tags | set(child.relevant_tags))
                 child.save()
-                self.link_to(child, "child source", "Uses ForensicArtifact child")
+                self.link_to(child, "includes", "Uses ForensicArtifact child")
 
     def save_indicators(self, create_links: bool = False):
         indicators = []
@@ -253,6 +253,7 @@ class ForensicArtifact(Indicator):
                                 f"Failed to create indicator for {path} (was: {source['attributes']['paths']})"
                             )
                             continue
+
                     else:
                         indicator.relevant_tags = list(
                             set(indicator.relevant_tags + self.relevant_tags)

@@ -10,6 +10,7 @@ from plugins.feeds.public import (
     lolbas,
     openphish,
     timesketch,
+    artifacts
 )
 
 
@@ -52,6 +53,11 @@ class FeedTest(unittest.TestCase):
     def test_hybrid_analysis(self):
         defaults = hybrid_analysis.HybridAnalysis._defaults.copy()
         feed = hybrid_analysis.HybridAnalysis(**defaults)
+        feed.run()
+
+    def test_dfiq(self):
+        defaults = dfiq.DFIQFeed._defaults.copy()
+        feed = dfiq.DFIQFeed(**defaults)
         feed.run()
 
     def test_forensic_artifacts(self):
