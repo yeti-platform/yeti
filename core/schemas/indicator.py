@@ -230,23 +230,23 @@ class ForensicArtifact(Indicator):
                 child.save()
                 self.link_to(child, "child source", "Uses ForensicArtifact child")
 
-    def extract_indicators(self):
+    def save_indicators(self, create_links: bool = False):
         indicators = []
         for source in self.sources:
             if source["type"] == definitions.TYPE_INDICATOR_FILE:
                 for path in source["attributes"]["paths"]:
-                    escaped = re.escape(path).replace("*", ".*")
-                    escaped = ARTIFACT_INTERPOLATION_RE.sub(".*", escaped)
+                    pattern = ARTIFACT_INTERPOLATION_RE.sub("*", path)
+                    pattern = re.escape(pattern).replace("\\*", ".*")
                     indicator = Regex.find(name=path)
                     if not indicator:
                         try:
                             indicator = Regex(
                                 name=path,
-                                pattern=escaped,
+                                pattern=pattern,
                                 location="filesystem",
                                 diamond=DiamondModel.victim,
                                 relevant_tags=self.relevant_tags,
-                            )
+                            ).save()
                             indicators.append(indicator)
                         except Exception:
                             logging.error(
@@ -258,10 +258,13 @@ class ForensicArtifact(Indicator):
                             set(indicator.relevant_tags + self.relevant_tags)
                         )
                         indicator.save()
+        if create_links:
+            for indicator in indicators:
+                indicator.link_to(self, "indicates", f"Indicates Artifact {self.name}")
         return indicators
 
 
-ARTIFACT_INTERPOLATION_RE = re.compile("%%[a-z._]+%%")
+ARTIFACT_INTERPOLATION_RE = re.compile(r"%%[a-z._]+%%")
 
 TYPE_MAPPING = {
     "regex": Regex,

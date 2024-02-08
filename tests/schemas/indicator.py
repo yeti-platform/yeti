@@ -1,7 +1,7 @@
 import unittest
 
 from core import database_arango
-from core.schemas.indicator import DiamondModel, Indicator, Regex
+from core.schemas.indicator import DiamondModel, ForensicArtifact, Indicator, Regex
 
 
 class IndicatorTest(unittest.TestCase):
@@ -62,3 +62,107 @@ class IndicatorTest(unittest.TestCase):
         ).save()
         result = regex.match("ThisIsAReallyBaaaadStringIsntIt")
         self.assertIsNone(result)
+
+    def test_forensis_artifacts_indicator_extraction(self) -> None:
+        pattern = """
+        doc: random description
+        name: ForensicArtifact1
+        sources:
+        - attributes:
+            paths:
+                - /etc/shadow
+                - /etc/random/*
+                - '%%users.homedir%%/random'
+                - '%%users.homedir%%/.dropbox/instance*/sync_history.db'
+                - '%%environ_systemdrive%%\$Extend\$UsnJrnl'
+          supported_os:
+            - Darwin
+            - Linux
+          type: FILE
+        supported_os:
+        - Darwin
+        - Linux"""
+
+        artifacts = ForensicArtifact.from_yaml_string(pattern)
+        db_artifact = artifacts[0]
+        self.assertIsNotNone(db_artifact.id)
+        self.assertIsNotNone(db_artifact.created)
+        self.assertEqual(db_artifact.name, "ForensicArtifact1")
+        self.assertEqual(db_artifact.supported_os, ["Darwin", "Linux"])
+
+        indicators = db_artifact.save_indicators(create_links=True)
+        vertices, _, total = db_artifact.neighbors()
+
+        self.assertEqual(total, 5)
+        self.assertEqual(len(vertices), 5)
+
+        self.assertEqual(vertices[indicators[0].extended_id].name, "/etc/shadow")
+        self.assertEqual(vertices[indicators[0].extended_id].pattern, r"/etc/shadow")
+        self.assertEqual(vertices[indicators[0].extended_id].type, "regex")
+
+        self.assertEqual(vertices[indicators[1].extended_id].name, "/etc/random/*")
+        self.assertEqual(vertices[indicators[1].extended_id].pattern, r"/etc/random/.*")
+        self.assertEqual(vertices[indicators[1].extended_id].type, "regex")
+
+        self.assertEqual(
+            vertices[indicators[2].extended_id].name, "%%users.homedir%%/random"
+        )
+        self.assertEqual(vertices[indicators[2].extended_id].pattern, r".*/random")
+        self.assertEqual(vertices[indicators[2].extended_id].type, "regex")
+
+        self.assertEqual(
+            vertices[indicators[3].extended_id].name,
+            "%%users.homedir%%/.dropbox/instance*/sync_history.db",
+        )
+        self.assertEqual(
+            vertices[indicators[3].extended_id].pattern,
+            r".*/\.dropbox/instance.*/sync_history\.db",
+        )
+        self.assertEqual(vertices[indicators[3].extended_id].type, "regex")
+
+        self.assertEqual(
+            vertices[indicators[4].extended_id].name,
+            "%%environ_systemdrive%%\\$Extend\\$UsnJrnl",
+        )
+        self.assertEqual(
+            vertices[indicators[4].extended_id].pattern, r".*\\\$Extend\\\$UsnJrnl"
+        )
+        self.assertEqual(vertices[indicators[4].extended_id].type, "regex")
+
+    def test_forensic_artifacts_parent_extraction(self):
+        pattern = """
+name: KasperskyCaretoIndicators
+doc: Kaspersky Careto indicators of compromise (IOCs).
+sources:
+- type: ARTIFACT_GROUP
+  attributes:
+    names:
+    - Artifact2
+    - Artifact3
+---
+name: Artifact2
+doc: random description
+sources:
+- type: FILE
+  attributes:
+    paths:
+    - blah
+---
+name: Artifact3
+doc: random description
+sources:
+- type: FILE
+  attributes:
+    paths:
+    - blah3
+"""
+
+        artifacts = ForensicArtifact.from_yaml_string(pattern, update_parents=True)
+        self.assertEqual(len(artifacts), 3)
+
+        vertices, _, total = artifacts[0].neighbors()
+        self.assertEqual(total, 2)
+        self.assertEqual(len(vertices), 2)
+
+        self.assertEqual(vertices[artifacts[1].extended_id].name, "Artifact2")
+        self.assertEqual(vertices[artifacts[2].extended_id].name, "Artifact3")
