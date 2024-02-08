@@ -1,6 +1,7 @@
 import logging
 import sys
 import unittest
+import json
 
 from fastapi.testclient import TestClient
 
@@ -92,3 +93,15 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         response = client.get(f"/api/v2/indicators/{self.indicator1.id}")
         self.assertEqual(response.status_code, 404)
+
+    def test_patch_indicator(self):
+        self.indicator1.pattern = 'blah'
+        dump = self.indicator1.model_dump_json()
+        response = client.patch(
+            f"/api/v2/indicators/{self.indicator1.id}",
+            json={"indicator": json.loads(dump)},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["pattern"], "blah")
+        self.assertEqual(data["type"], "regex")
