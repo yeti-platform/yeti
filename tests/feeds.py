@@ -3,6 +3,7 @@ import unittest
 from core import database_arango
 from core.config.config import yeti_config
 from plugins.feeds.public import (
+    artifacts,
     attack,
     dfiq,
     feodo_tracker_ip_blocklist,
@@ -57,4 +58,9 @@ class FeedTest(unittest.TestCase):
     def test_dfiq(self):
         defaults = dfiq.DFIQFeed._defaults.copy()
         feed = dfiq.DFIQFeed(**defaults)
+        feed.run()
+
+    def test_forensic_artifacts(self):
+        defaults = artifacts.ForensicArtifacts._defaults.copy()
+        feed = artifacts.ForensicArtifacts(**defaults)
         feed.run()

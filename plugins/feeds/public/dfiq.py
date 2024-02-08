@@ -62,6 +62,18 @@ def _process_approach(yaml_string: str) -> None:
                         "Unknown step type %s in %s", step.type, approach.dfiq_id
                     )
 
+    for data in approach.view.data:
+        if data.type == "ForensicArtifact":
+            artifact = indicator.ForensicArtifact.find(name=data.value)
+            if not artifact:
+                logging.warning(
+                    "Missing artifact %s in %s", data.value, approach.dfiq_id
+                )
+                continue
+            approach.link_to(artifact, "artifact", "Uses artifact")
+        else:
+            logging.warning("Unknown data type %s in %s", data.type, approach.dfiq_id)
+
 
 TYPE_FUNCTIONS = {
     "scenarios": _process_scenario,
@@ -73,7 +85,7 @@ TYPE_FUNCTIONS = {
 
 class DFIQFeed(task.FeedTask):
     _defaults = {
-        "name": "MitreAttack",
+        "name": "DFIQ Github repo",
         "frequency": timedelta(hours=1),
         "type": "feed",
         "description": "DFIQ feed",

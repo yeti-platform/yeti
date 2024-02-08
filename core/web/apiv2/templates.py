@@ -11,6 +11,7 @@ class TemplateSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: dict[str, str | int | list] = {}
+    sorting: list[tuple[str, bool]] = []
     count: int = 50
     page: int = 0
 
@@ -66,7 +67,10 @@ async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
     """Searches for observables."""
     query = request.query
     templates, total = Template.filter(
-        query, offset=request.page * request.count, count=request.count
+        query,
+        offset=request.page * request.count,
+        count=request.count,
+        sorting=request.sorting,
     )
     return TemplateSearchResponse(templates=templates, total=total)
 

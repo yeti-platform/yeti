@@ -24,6 +24,7 @@ class IndicatorSearchRequest(BaseModel):
 
     query: dict[str, str | int | list] = {}
     type: indicator.IndicatorType | None = None
+    sorting: list[tuple[str, bool]] = []
     count: int = 50
     page: int = 0
 
@@ -57,9 +58,25 @@ async def patch(
 ) -> indicator.IndicatorTypes:
     """Modifies an indicator in the database."""
     db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
+    if not db_indicator:
+        raise HTTPException(
+            status_code=404, detail=f"Indicator {indicator_id} not found"
+        )
+
+    if db_indicator.type == indicator.IndicatorType.forensicartifact:
+        if db_indicator.pattern != request.indicator.pattern:
+            return indicator.ForensicArtifact.from_yaml_string(
+                request.indicator.pattern
+            )[0]
+
     update_data = request.indicator.model_dump(exclude_unset=True)
     updated_indicator = db_indicator.model_copy(update=update_data)
     new = updated_indicator.save()
+
+    if new.type == indicator.IndicatorType.forensicartifact:
+        new.update_yaml()
+        new = new.save()
+
     return new
 
 
@@ -90,6 +107,9 @@ async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
     if request.type:
         query["type"] = request.type
     indicators, total = indicator.Indicator.filter(
-        query, offset=request.page * request.count, count=request.count
+        query,
+        offset=request.page * request.count,
+        count=request.count,
+        sorting=request.sorting,
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)

@@ -86,6 +86,7 @@ class ObservableSearchRequest(BaseModel):
 
     query: dict[str, str | int | list] = {}
     type: ObservableType | None = None
+    sorting: list[tuple[str, bool]] = []
     count: int = 50
     page: int = 0
 
@@ -267,7 +268,7 @@ async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
         tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
-        sorting=[("created", False)],
+        sorting=request.sorting,
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     return ObservableSearchResponse(observables=observables, total=total)
