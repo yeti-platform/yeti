@@ -36,7 +36,6 @@ class ForensicArtifacts(task.FeedTask):
             tempdir.name, "artifacts-main", "artifacts", "data"
         )
 
-        # glob files ending in yaml
         data_files_glob = glob.glob(os.path.join(artifacts_datadir, "*.yaml"))
         artifacts_dict = {}
         for file in data_files_glob:
@@ -56,15 +55,7 @@ class ForensicArtifacts(task.FeedTask):
 
         for artifact in artifacts_dict.values():
             artifact.update_parents(artifacts_dict)
-
-
-        for artifact in artifacts_dict.values():
-            indicators = artifact.extract_indicators()
-            for ind in indicators:
-                ind = ind.save()
-                ind.link_to(artifact, "indicates", f"Indicates Artifact {artifact.name}")
-
-        # logging.info("Processed %s %s objects", obj_count, subdir)
+            artifact.save_indicators(create_links=True)
 
 
 taskmanager.TaskManager.register_task(ForensicArtifacts)
