@@ -3,6 +3,7 @@ import unittest
 from core import database_arango
 from core.config.config import yeti_config
 from plugins.feeds.public import (
+    artifacts,
     attack,
     dfiq,
     feodo_tracker_ip_blocklist,
@@ -10,7 +11,6 @@ from plugins.feeds.public import (
     lolbas,
     openphish,
     timesketch,
-    artifacts
 )
 
 
