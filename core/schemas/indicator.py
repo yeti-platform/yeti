@@ -1,18 +1,16 @@
 import datetime
-import logging
 import io
+import logging
 import re
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
+from artifacts import definitions, reader, writer
 from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_validator
 
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiModel
-from artifacts import reader
-from artifacts.scripts import validator
-from artifacts import reader, writer, errors, definitions
 
 
 def future():
@@ -204,7 +202,7 @@ class ForensicArtifact(Indicator):
                 "location"
             ] = "TBD"  # TOOD: Grab location from sources' type
             definition_dict["diamond"] = DiamondModel.victim
-            definition_dict["relevant_tags"] = [definition_dict['name']]
+            definition_dict["relevant_tags"] = [definition_dict["name"]]
 
             forensic_indicator = cls(**definition_dict).save()
             artifacts_dict[definition.name] = forensic_indicator
