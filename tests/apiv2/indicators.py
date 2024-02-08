@@ -1,7 +1,7 @@
+import json
 import logging
 import sys
 import unittest
-import json
 
 from fastapi.testclient import TestClient
 
