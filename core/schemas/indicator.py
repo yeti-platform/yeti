@@ -5,7 +5,9 @@ import re
 from enum import Enum
 from typing import ClassVar, Literal, Type
 
+import yaml
 from artifacts import definitions, reader, writer
+from artifacts import errors as artifacts_errors
 from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_validator
 
 from core import database_arango
@@ -180,6 +182,16 @@ class ForensicArtifact(Indicator):
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
 
+    @field_validator("pattern")
+    @classmethod
+    def validate_artifact(cls, value) -> str:
+        artifact_reader = reader.YamlArtifactsReader()
+        try:
+            list(artifact_reader.ReadFileObject(io.StringIO(value)))
+        except artifacts_errors.FormatError as error:
+            raise ValueError(f"Invalid ForensicArtifact YAML: {error}")
+        return value
+
     @classmethod
     def from_yaml_string(
         cls, yaml_string: str, update_parents: bool = False
@@ -198,12 +210,9 @@ class ForensicArtifact(Indicator):
                     [f"* {url}\n" for url in definition.urls]
                 )
             definition_dict["pattern"] = artifact_writer.FormatArtifacts([definition])
-            definition_dict[
-                "location"
-            ] = "TBD"  # TOOD: Grab location from sources' type
+            definition_dict["location"] = "host"
             definition_dict["diamond"] = DiamondModel.victim
             definition_dict["relevant_tags"] = [definition_dict["name"]]
-
             forensic_indicator = cls(**definition_dict).save()
             artifacts_dict[definition.name] = forensic_indicator
 
@@ -212,6 +221,14 @@ class ForensicArtifact(Indicator):
                 artifact.update_parents(artifacts_dict)
 
         return list(artifacts_dict.values())
+
+    def update_yaml(self):
+        artifact_reader = reader.YamlArtifactsReader()
+        definition_dict = next(artifact_reader.ReadFileObject(io.StringIO(self.pattern))).AsDict()
+        definition_dict["doc"] = self.description.split('\n\nURLs:')[0]
+        definition_dict["name"] = self.name
+        definition_dict["supported_os"] = self.supported_os
+        self.pattern = yaml.safe_dump(definition_dict)
 
     def update_parents(self, artifacts_dict: dict[str, "ForensicArtifact"]) -> None:
         for source in self.sources:
