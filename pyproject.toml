@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 uvicorn = "^0.23.2"
-fastapi = "^0.107.0"
+fastapi = "^0.109.0"
 python-arango = "^7.7.0"
 celery = "^5.3.4"
 validators = "^0.22.0"
