@@ -11,6 +11,8 @@ Documentation links:
 * [Documentation](https://yeti-platform.io/docs)
 * [Guides](https://yeti-platform.io/guides)
 
+![](https://yeti-platform.io/logo.png)
+
 ## What is Yeti?
 
 In a nutshell, Yeti allows you to:
