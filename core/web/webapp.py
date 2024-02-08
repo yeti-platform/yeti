@@ -104,17 +104,10 @@ api_router.include_router(
 app.include_router(api_router, prefix="/api/v2")
 
 
-async def set_body(request: Request, body: bytes):
-    async def receive() -> Message:
-        return {"type": "http.request", "body": body}
-
-    request._receive = receive
-
-
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     req_body = await request.body()
-    await set_body(request, req_body)
+
     response = await call_next(request)
     try:
         extra = {
