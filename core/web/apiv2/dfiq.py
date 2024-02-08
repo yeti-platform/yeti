@@ -24,6 +24,7 @@ class DFIQSearchRequest(BaseModel):
 
     query: dict[str, str | int | list] = {}
     type: dfiq.DFIQType | None = None
+    sorting: list[tuple[str, bool]] = []
     count: int = 50
     page: int = 0
 
@@ -101,6 +102,9 @@ async def search(request: DFIQSearchRequest) -> DFIQSearchResponse:
     if request.type:
         query["type"] = request.type
     dfiq_objects, total = dfiq.DFIQBase.filter(
-        query, offset=request.page * request.count, count=request.count
+        query,
+        offset=request.page * request.count,
+        count=request.count,
+        sorting=request.sorting,
     )
     return DFIQSearchResponse(dfiq=dfiq_objects, total=total)

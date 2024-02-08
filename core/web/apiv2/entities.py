@@ -25,6 +25,7 @@ class EntitySearchRequest(BaseModel):
 
     query: dict[str, str | int | list] = {}
     type: entity.EntityType | None = None
+    sorting: list[tuple[str, bool]] = []
     count: int = 50
     page: int = 0
 
@@ -117,6 +118,7 @@ async def search(request: EntitySearchRequest) -> EntitySearchResponse:
         tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
+        sorting=request.sorting,
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     return EntitySearchResponse(entities=entities, total=total)

@@ -13,6 +13,7 @@ class TaskSearchRequest(BaseModel):
 
     query: dict[str, str | int | list] = {}
     type: TaskType | None = None
+    sorting: list[tuple[str, bool]] = []
     count: int = 100
     page: int = 0
 
@@ -65,7 +66,10 @@ async def search(request: TaskSearchRequest) -> TaskSearchResponse:
     if request.type:
         query["type"] = request.type
     tasks, total = Task.filter(
-        query, offset=request.page * request.count, count=request.count
+        query,
+        offset=request.page * request.count,
+        count=request.count,
+        sorting=request.sorting,
     )
     return TaskSearchResponse(tasks=tasks, total=total)
 
