@@ -26,7 +26,6 @@ class CiscoUmbrellaTopDomains(task.FeedTask):
             "name": self.name,
         }
         feed = io.BytesIO(data)
-        top_domains = int(top_domains)
         while top_domains > 0:
             line = feed.readline().decode("utf-8").strip()
             _, domain = line.split(",")
