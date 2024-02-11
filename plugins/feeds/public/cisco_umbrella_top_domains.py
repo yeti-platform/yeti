@@ -10,7 +10,7 @@ from core.schemas.observables import hostname
 
 class CiscoUmbrellaTopDomains(task.FeedTask):
     _defaults = {
-        "frequency": timedelta(hours=1),
+        "frequency": timedelta(hours=24),
         "name": "CloudflareTopDomains",
         "description": "Import Cloudflare top domains",
     }
@@ -19,7 +19,7 @@ class CiscoUmbrellaTopDomains(task.FeedTask):
     ] = "http://s3-us-west-1.amazonaws.com/umbrella-static/top-1m.csv.zip"
 
     def run(self):
-        top_domains = int(yeti_config.get("umbrella", "top_domains", 10000))
+        top_domains = yeti_config.get("umbrella", "top_domains", 10000)
         response = self._make_request(self._SOURCE, sort=False)
         data = self._unzip_content(response.content)
         context = {
