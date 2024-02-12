@@ -17,7 +17,6 @@ def extract_indicators(approach) -> None:
                 if step.type == 'manual':
                     continue
 
-                query_type = map_step_type_to_query_type(step.type)
                 if not query_type:
                     logging.warning(
                         "Unknown step type %s in %s", step.type, approach.dfiq_id
@@ -30,7 +29,7 @@ def extract_indicators(approach) -> None:
                         name=step.description,
                         pattern=step.value,
                         relevant_tags=approach.dfiq_tags or [],
-                        query_type=query_type,
+                        query_type=step.type,
                         location=step.type,
                         diamond=indicator.DiamondModel.victim,
                     ).save()
