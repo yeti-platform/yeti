@@ -17,12 +17,6 @@ def extract_indicators(approach) -> None:
                 if step.type == 'manual':
                     continue
 
-                if not query_type:
-                    logging.warning(
-                        "Unknown step type %s in %s", step.type, approach.dfiq_id
-                    )
-                    continue
-
                 query = indicator.Query.find(pattern=step.value)
                 if not query:
                     query = indicator.Query(
