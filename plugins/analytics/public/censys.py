@@ -31,9 +31,7 @@ class CensysApiQuery(task.AnalyticsTask):
             api_secret=api_secret,
         )
 
-        censys_queries, _ = indicator.Query.filter(
-            {"query_type": "censys"}
-        )
+        censys_queries, _ = indicator.Query.filter({"query_type": "censys"})
 
         for query in censys_queries:
             ip_addresses = query_censys(hosts_api, query.pattern)
