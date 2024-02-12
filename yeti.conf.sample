@@ -163,3 +163,9 @@ secret =
 
 api_key =
 result_limit =
+
+
+[dfiq]
+
+# Comma-separated list of additional directories to load DFIQ objects from.
+extra_dirs = /dfiq

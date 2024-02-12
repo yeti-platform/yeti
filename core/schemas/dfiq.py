@@ -28,6 +28,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     dfiq_tags: list[str] | None = None
     contributors: list[str] | None = None
     dfiq_yaml: str
+    internal: bool = False
 
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
@@ -42,6 +43,16 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         return cls(**object)
+
+    @classmethod
+    def from_yaml(cls, yaml_string: str) -> "DFIQBase":
+        try:
+            yaml_data = yaml.safe_load(yaml_string)
+        except yaml.YAMLError as e:
+            raise ValueError(f"Invalid YAML: {e}")
+        if yaml_data["type"] not in TYPE_MAPPING:
+            raise ValueError(f"Invalid type for DFIQ: {yaml_data['type']}")
+        return TYPE_MAPPING[yaml_data["type"]].from_yaml(yaml_string)
 
     def to_yaml(self) -> str:
         dump = self.model_dump(
@@ -109,6 +120,7 @@ class DFIQScenario(DFIQBase):
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             dfiq_yaml=yaml_string,
+            internal=yaml_data["id"][1] == "0",
         )
 
 
@@ -137,6 +149,7 @@ class DFIQFacet(DFIQBase):
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
             dfiq_yaml=yaml_string,
+            internal=yaml_data["id"][1] == "0",
         )
 
 
@@ -164,6 +177,7 @@ class DFIQQuestion(DFIQBase):
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
             dfiq_yaml=yaml_string,
+            internal=yaml_data["id"][1] == "0",
         )
 
 
@@ -235,6 +249,7 @@ class DFIQApproach(DFIQBase):
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             dfiq_yaml=yaml_string,
+            internal=yaml_data["id"][1] == "0",
         )
 
 

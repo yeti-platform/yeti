@@ -122,6 +122,8 @@ class QueryType(str, Enum):
     opensearch = "opensearch"
     osquery = "osquery"
     sql = "sql"
+    command = "command"
+    pandas = "pandas"
     splunk = "splunk"
     censys = "censys"
     shodan = "shodan"
