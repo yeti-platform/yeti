@@ -52,7 +52,7 @@ def _process_approach(yaml_string: str) -> None:
                             name=step.description,
                             pattern=step.value,
                             relevant_tags=approach.dfiq_tags or [],
-                            query_type=indicator.QueryType.opensearch,
+                            query_type="opensearch",
                             location=processor.name,
                             diamond=indicator.DiamondModel.victim,
                         ).save()
