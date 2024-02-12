@@ -29,7 +29,7 @@ class ShodanApiQuery(task.AnalyticsTask):
         shodan_api = Shodan(api_key)
 
         shodan_queries, _ = indicator.Query.filter(
-            {"query_type": indicator.QueryType.shodan}
+            {"query_type": "shodan"}
         )
 
         for query in shodan_queries:

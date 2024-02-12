@@ -2,7 +2,7 @@ import unittest
 
 from core import database_arango
 from core.schemas.entity import Investigation, Malware, ThreatActor
-from core.schemas.indicator import DiamondModel, Query, QueryType, Regex
+from core.schemas.indicator import DiamondModel, Query, Regex
 from core.schemas.observables import (
     bic,
     generic_observable,
@@ -79,7 +79,7 @@ class FixtureTest(unittest.TestCase):
             location="syslogs",
             diamond=DiamondModel.capability,
             pattern='(reporter:"sshd" AND Accepted)',
-            query_type=QueryType.opensearch,
+            query_type="opensearch",
             target_systems=["timesketch", "plaso"],
             relevant_tags=["ssh", "login"],
         ).save()

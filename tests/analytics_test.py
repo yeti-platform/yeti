@@ -78,7 +78,7 @@ class CensysAnalyticsTest(AnalyticsTestBase):
             location="censys",
             diamond=DiamondModel.infrastructure,
             relevant_tags=["censys_query_tag"],
-            query_type=indicator.QueryType.censys,
+            query_type="censys",
         ).save()
 
         mock_search_result = [
@@ -144,7 +144,7 @@ class ShodanAnalyticsTest(AnalyticsTestBase):
             location="shodan",
             diamond=DiamondModel.infrastructure,
             relevant_tags=["shodan_query_tag"],
-            query_type=indicator.QueryType.shodan,
+            query_type="shodan",
         ).save()
 
         def mock_search_cursor(query):
@@ -190,7 +190,7 @@ class ShodanAnalyticsTest(AnalyticsTestBase):
             location="shodan",
             diamond=DiamondModel.infrastructure,
             relevant_tags=["shodan_query_tag"],
-            query_type=indicator.QueryType.shodan,
+            query_type="shodan",
         ).save()
 
         def mock_search_cursor(query):

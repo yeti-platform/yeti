@@ -118,22 +118,13 @@ class Regex(Indicator):
         return None
 
 
-class QueryType(str, Enum):
-    opensearch = "opensearch"
-    osquery = "osquery"
-    sql = "sql"
-    splunk = "splunk"
-    censys = "censys"
-    shodan = "shodan"
-
-
 class Query(Indicator):
     """Represents a query that can be sent to another system."""
 
     _type_filter: ClassVar[str] = IndicatorType.query
     type: Literal["query"] = IndicatorType.query
 
-    query_type: QueryType
+    query_type: str
     target_systems: list[str] = []
 
     def match(self, value: str) -> IndicatorMatch | None:

@@ -32,7 +32,7 @@ class CensysApiQuery(task.AnalyticsTask):
         )
 
         censys_queries, _ = indicator.Query.filter(
-            {"query_type": indicator.QueryType.censys}
+            {"query_type": "censys"}
         )
 
         for query in censys_queries:
