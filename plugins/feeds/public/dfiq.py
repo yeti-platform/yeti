@@ -14,7 +14,7 @@ def extract_indicators(approach) -> None:
     for processor in approach.view.processors:
         for analysis in processor.analysis:
             for step in analysis.steps:
-                if step.type == 'manual':
+                if step.type == "manual":
                     continue
 
                 query = indicator.Query.find(pattern=step.value)
@@ -28,7 +28,6 @@ def extract_indicators(approach) -> None:
                         diamond=indicator.DiamondModel.victim,
                     ).save()
                 approach.link_to(query, "query", "Uses query")
-
 
     for data in approach.view.data:
         if data.type == "ForensicArtifact":
@@ -59,8 +58,8 @@ class DFIQFeed(task.FeedTask):
         for root, _, files in os.walk(directory):
             for file in files:
                 if file.endswith(".yaml"):
-                    if 'spec' in file or 'template' in file:
-                    # Don't process DIFQ specification files
+                    if "spec" in file or "template" in file:
+                        # Don't process DIFQ specification files
                         continue
                     with open(os.path.join(root, file), "r") as f:
                         try:
@@ -68,6 +67,7 @@ class DFIQFeed(task.FeedTask):
                         except ValueError as e:
                             logging.error("Error processing %s: %s", file, e)
                             continue
+
                     self._dfiq_kb[dfiq_object.dfiq_id] = dfiq_object
 
         for dfiq_id, dfiq_object in self._dfiq_kb.items():
