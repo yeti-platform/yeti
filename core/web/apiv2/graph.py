@@ -1,8 +1,9 @@
 import datetime
 from enum import Enum
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, ValidationInfo
+from pydantic import BaseModel, ConfigDict, ValidationInfo, model_validator
 from pydantic.functional_validators import field_validator
 
 from core.schemas import dfiq, entity, graph, indicator, observable, tag
@@ -28,13 +29,42 @@ class GraphSearchRequest(BaseModel):
     source: str
     link_types: list[str] = []
     target_types: list[str] = []
-    min_hops: int
-    max_hops: int
+    hops: int | None = None
+    min_hops: int | None = None
+    max_hops: int | None = None
     graph: str
     direction: GraphDirection
     include_original: bool
     count: int = 50
     page: int = 0
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_hops(cls, data: Any):
+        hops = data.get("hops")
+        min_hops = data.get("min_hops")
+        max_hops = data.get("max_hops")
+
+        if all(x is None for x in [hops, min_hops, max_hops]):
+            raise ValueError("hops, min_hops, or max_hops must be provided")
+
+        if hops is not None:
+            if min_hops is not None or max_hops is not None:
+                raise ValueError("hops cannot be used with min_hops or max_hops")
+        elif min_hops is not None or max_hops is not None:
+            if min_hops is None or max_hops is None:
+                raise ValueError("min_hops and max_hops must be used together")
+            if min_hops > max_hops:
+                raise ValueError("min_hops must be less than or equal to max_hops")
+
+        if hops is not None and hops < 1:
+            raise ValueError("hops must be greater than 0")
+        if min_hops is not None and min_hops < 1:
+            raise ValueError("min_hops must be greater than 0")
+        if max_hops is not None and max_hops < 1:
+            raise ValueError("max_hops must be greater than 0")
+
+        return data
 
 
 class GraphAddRequest(BaseModel):
@@ -106,8 +136,8 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         direction=request.direction,
         include_original=request.include_original,
         graph=request.graph,
-        min_hops=request.min_hops,
-        max_hops=request.max_hops,
+        min_hops=request.min_hops or request.hops,
+        max_hops=request.max_hops or request.hops,
         count=request.count,
         offset=request.page * request.count,
     )

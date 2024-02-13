@@ -59,6 +59,74 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(edges[0][0]["target"], self.observable2.extended_id)
         self.assertEqual(edges[0][0]["type"], "resolves")
 
+    def test_get_neighbors_bad_hops(self):
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable1.extended_id,
+                "hops": 0,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertIn("hops must be greater than 0", data["detail"][0]["msg"])
+
+        # min / max hops bad values
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable1.extended_id,
+                "min_hops": 2,
+                "max_hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertIn(
+            "min_hops must be less than or equal to max_hops", data["detail"][0]["msg"]
+        )
+
+        # both hops and min / max hops provided
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable1.extended_id,
+                "hops": 2,
+                "min_hops": 1,
+                "max_hops": 3,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertIn(
+            "hops cannot be used with min_hops or max_hops", data["detail"][0]["msg"]
+        )
+
+        # test none provided
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable1.extended_id,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertIn(
+            "hops, min_hops, or max_hops must be provided", data["detail"][0]["msg"]
+        )
+
     def test_get_neighbors_tag(self):
         self.entity1.tag(["hacker1"])
         self.observable1.tag(["hacker1"])
