@@ -50,6 +50,10 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             yaml_data = yaml.safe_load(yaml_string)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML: {e}")
+        if "type" not in yaml_data:
+            raise ValueError(
+                f"Invalid DIFQ YAML (missing 'type' attribute): {yaml_data}"
+            )
         if yaml_data["type"] not in TYPE_MAPPING:
             raise ValueError(f"Invalid type for DFIQ: {yaml_data['type']}")
         return TYPE_MAPPING[yaml_data["type"]].from_yaml(yaml_string)
