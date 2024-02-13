@@ -94,7 +94,9 @@ class EntityTest(unittest.TestCase):
         observable = hostname.Hostname(value="doman.com").save()
 
         observable.tag(["tag1"])
-        vertices, paths, count = observable.neighbors(graph="tagged", hops=2)
+        vertices, paths, count = observable.neighbors(
+            graph="tagged", min_hops=2, max_hops=2
+        )
 
         new_tag = tag.Tag.find(name="tag1")
 

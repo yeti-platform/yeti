@@ -28,7 +28,8 @@ class GraphSearchRequest(BaseModel):
     source: str
     link_types: list[str] = []
     target_types: list[str] = []
-    hops: int
+    min_hops: int
+    max_hops: int
     graph: str
     direction: GraphDirection
     include_original: bool
@@ -105,7 +106,8 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         direction=request.direction,
         include_original=request.include_original,
         graph=request.graph,
-        hops=request.hops,
+        min_hops=request.min_hops,
+        max_hops=request.max_hops,
         count=request.count,
         offset=request.page * request.count,
     )

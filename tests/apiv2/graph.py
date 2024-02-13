@@ -5,9 +5,9 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.entity import ThreatActor
+from core.schemas.entity import AttackPattern, ThreatActor
 from core.schemas.graph import Relationship
-from core.schemas.indicator import Regex
+from core.schemas.indicator import ForensicArtifact, Regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -348,3 +348,69 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(len(data["known"]), 1)
         self.assertEqual(data["known"][0]["value"], "test4.com")
         self.assertEqual(data["known"][0]["type"], "hostname")
+
+
+class GraphTraversalTest(unittest.TestCase):
+    def setUp(self) -> None:
+        logging.disable(sys.maxsize)
+        database_arango.db.connect(database="yeti_test")
+        database_arango.db.clear()
+
+        user = UserSensitive(username="test", password="test", enabled=True).save()
+        token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+        ).json()
+        client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
+
+        self.persistence = AttackPattern(name="persistence").save()
+        self.persistence.tag(["triage"])
+        self.persistence_artifact = ForensicArtifact.from_yaml_string(
+            """doc: Crontab files.
+name: LinuxCronTabs
+sources:
+- attributes:
+    paths:
+    - /etc/crontab
+    - /etc/cron.d/*
+    - /var/spool/cron/**
+  type: FILE
+supported_os:
+- Linux
+"""
+        )[0].save()
+        self.persistence_artifact.save_indicators(create_links=True)
+        self.persistence_artifact.link_to(
+            self.persistence, "indicates", "Indicators of persistence"
+        )
+
+    def test_get_indicators_from_entity(self):
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.persistence.extended_id,
+                "min_hops": 1,
+                "max_hops": 4,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 4)
+        artifacts = [
+            v for v in data["vertices"].values() if v["type"] == "forensicartifact"
+        ]
+        regexes = [v for v in data["vertices"].values() if v["type"] == "regex"]
+        self.assertEqual(len(artifacts), 1)
+        self.assertEqual(len(regexes), 3)
+        self.assertEqual(artifacts[0]["name"], "LinuxCronTabs")
+        regex_names = {r["name"] for r in regexes}
+        self.assertEqual(
+            regex_names,
+            {
+                "/etc/crontab",
+                "/etc/cron.d/*",
+                "/var/spool/cron/**",
+            },
+        )
