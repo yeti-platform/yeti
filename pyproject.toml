@@ -15,7 +15,7 @@ celery = "^5.3.4"
 validators = "^0.22.0"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
-python-multipart = "^0.0.6"
+python-multipart = ">=0.0.6,<0.0.8"
 pandas = "^2.1.1"
 redis = "^5.0.0"
 click = "^8.1.7"
