@@ -5,10 +5,11 @@ successfully carry out all interactions with the database.
 """
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
-    from core.schemas.graph import Relationship
+    from core.schemas import entity, indicator, observable, tag
+    from core.schemas.graph import Relationship, TagRelationship
 
 
 class AbstractYetiConnector(ABC):
@@ -73,8 +74,23 @@ class AbstractYetiConnector(ABC):
     @abstractmethod
     # pylint: disable=too-many-arguments
     def neighbors(
-        self, link_type, direction="any", include_original=False, hops=1, raw=False
-    ):
+        self,
+        link_types: List[str] = [],
+        target_types: List[str] = [],
+        direction: str = "any",
+        graph: str = "links",
+        include_original: bool = False,
+        min_hops: int = 1,
+        max_hops: int = 1,
+        offset: int = 0,
+        count: int = 0,
+    ) -> tuple[
+        dict[
+            str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"
+        ],
+        List[List["Relationship | TagRelationship"]],
+        int,
+    ]:
         """Fetches neighbors of the YetiObject.
 
         Args:
