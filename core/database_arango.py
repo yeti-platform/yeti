@@ -527,7 +527,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         direction: str = "any",
         graph: str = "links",
         include_original: bool = False,
-        hops: int = 1,
+        min_hops: int = 1,
+        max_hops: int = 1,
         offset: int = 0,
         count: int = 0,
     ) -> tuple[
@@ -546,7 +547,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
           direction: outbound, inbound, or any.
           include_original: Whether the original object is to be included in the
               result or not.
-          hops: The maximum number of nodes to go through (defaults to 1:
+          min_hops: The minumum number of nodes to go through (defaults to 1:
+              direct neighbors)
+          max_hops: The maximum number of nodes to go through (defaults to 1:
               direct neighbors)
           raw: Whether to return a raw dictionary or a Yeti object.
 
@@ -578,12 +581,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
             args["offset"] = offset
             args["count"] = count
 
-        args["hops"] = hops
+        args["min_hops"] = min_hops
+        args["max_hops"] = max_hops
         if direction not in {"any", "inbound", "outbound"}:
             direction = "any"
 
         aql = f"""
-        FOR v, e, p IN @hops..@hops {direction} @extended_id @@graph
+        FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
 
           {query_filter}
           LET v_with_tags = (
