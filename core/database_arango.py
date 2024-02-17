@@ -566,14 +566,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         if link_types:
             args["link_types"] = link_types
-            query_filter = (
-                "FILTER COUNT(FOR r IN @link_types FILTER e.type == r RETURN r) > 0"
-            )
+            query_filter = "FILTER e.type IN @link_types"
         if target_types:
             args["target_types"] = target_types
-            query_filter = (
-                "FILTER COUNT(FOR r IN @target_types FILTER v.type == r RETURN r) > 0"
-            )
+            query_filter = "FILTER v.type IN @target_types"
 
         limit = ""
         if count != 0:
@@ -588,7 +584,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         aql = f"""
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
-
+          OPTIONS {{ uniqueVertices: "path" }}
           {query_filter}
           LET v_with_tags = (
             FOR observable in p['vertices']
