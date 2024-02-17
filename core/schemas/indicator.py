@@ -243,6 +243,7 @@ class ForensicArtifact(Indicator):
         for source in self.sources:
             if source["type"] == definitions.TYPE_INDICATOR_FILE:
                 for path in source["attributes"]["paths"]:
+                    # TODO: consider using https://github.com/log2timeline/dfvfs/blob/main/dfvfs/lib/glob2regex.py
                     pattern = ARTIFACT_INTERPOLATION_RE.sub("*", path)
                     pattern = re.escape(pattern).replace("\\*", ".*")
                     indicator = Regex.find(name=path)
@@ -269,7 +270,7 @@ class ForensicArtifact(Indicator):
                         indicator.save()
         if create_links:
             for indicator in indicators:
-                indicator.link_to(self, "indicates", f"Indicates Artifact {self.name}")
+                self.link_to(indicator, "uses", f"Uses regex {indicator.name}")
         return indicators
 
 
