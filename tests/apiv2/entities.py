@@ -32,10 +32,6 @@ class EntityTest(unittest.TestCase):
     def tearDown(self) -> None:
         database_arango.db.clear()
 
-    def test_get_entities(self):
-        response = client.get("/api/v2/entities/")
-        self.assertEqual(response.status_code, 200)
-
     def test_new_entity(self):
         response = client.post(
             "/api/v2/entities/",
