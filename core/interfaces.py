@@ -59,6 +59,7 @@ class AbstractYetiConnector(ABC):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
+        aliases: List[tuple[str, str]] = [],
         graph_queries: List[tuple[str, str, str, str]] = [],
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
