@@ -663,6 +663,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
+        aliases: List[tuple[str, str]] = [],
         graph_queries: List[tuple[str, str, str, str]] = [],
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
@@ -714,7 +715,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             elif key.startswith("context."):
                 context_field = key[8:]
                 conditions.append(
-                    f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value) RETURN c) > 0"
+                    f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value, true) RETURN c) > 0"
                 )
                 aql_args[f"arg{i}_key"] = context_field
                 sorts.append(f"o.context[*].@arg{i}_key")
@@ -728,6 +729,22 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
                 )
                 sorts.append(f"o.{key}")
+            elif key in ("name"):
+                key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
+                for alias, alias_type in aliases:
+                    if alias_type in {"text", "option"}:
+                        key_conditions.append(
+                            f"REGEX_TEST(o.{alias}, @arg{i}_value, true)"
+                        )
+                    if alias_type == "list":
+                        key_conditions.append(
+                            f"COUNT(FOR i IN o.{alias} || [] FILTER REGEX_TEST(i, @arg{i}_value, true) RETURN i) > 0"
+                        )
+                    sorts.append(f"o.{alias}")
+                key_condition = " OR ".join(key_conditions)
+                conditions.append(f"({key_condition})")
+                aql_args[f"arg{i}_key"] = key
+                sorts.append(f"o.@arg{i}_key")
             else:
                 conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
                 aql_args[f"arg{i}_key"] = key

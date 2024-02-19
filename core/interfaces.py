@@ -5,11 +5,13 @@ successfully carry out all interactions with the database.
 """
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, List, Type, TypeVar
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable, tag
     from core.schemas.graph import Relationship, TagRelationship
+
+TYetiObject = TypeVar("TYetiObject")
 
 
 class AbstractYetiConnector(ABC):
@@ -50,13 +52,32 @@ class AbstractYetiConnector(ABC):
 
     @classmethod
     @abstractmethod
-    def filter(cls, args, offset=None, count=None):
-        """Filters objects according to args.
+    def filter(
+        cls: Type[TYetiObject],
+        query_args: dict[str, Any],
+        tag_filter: List[str] = [],
+        offset: int = 0,
+        count: int = 0,
+        sorting: List[tuple[str, bool]] = [],
+        graph_queries: List[tuple[str, str, str, str]] = [],
+    ) -> tuple[List[TYetiObject], int]:
+        """Search in an ArangoDb collection.
+
+        Search the collection for all objects whose 'value' attribute matches
+        the regex defined in the 'value' key of the args dict.
 
         Args:
-          args: parameters used to filter the objects.
-          offset: Skip this many objects when querying the DB.
-          count: How many objecst after `offset` to return.
+            query_args: A key:value dictionary containing keys to filter objects
+                on.
+            tag_filter: A list of tags to filter on.
+            offset: Skip this many objects when querying the DB.
+            count: How many objecst after `offset` to return.
+            sorting: A list of (order, ascending) fields to sort by.
+            graph_queries: A list of (name, graph, direction, field) tuples to
+                query the graph with.
+
+        Returns:
+            A List of Yeti objects, and the total object count.
         """
         raise NotImplementedError
 

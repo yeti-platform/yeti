@@ -25,6 +25,7 @@ class IndicatorSearchRequest(BaseModel):
     query: dict[str, str | int | list] = {}
     type: indicator.IndicatorType | None = None
     sorting: list[tuple[str, bool]] = []
+    filter_aliases: list[tuple[str, str]] = []
     count: int = 50
     page: int = 0
 
@@ -107,9 +108,10 @@ async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
     if request.type:
         query["type"] = request.type
     indicators, total = indicator.Indicator.filter(
-        query,
+        query_args=query,
         offset=request.page * request.count,
         count=request.count,
         sorting=request.sorting,
+        aliases=request.filter_aliases,
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)
