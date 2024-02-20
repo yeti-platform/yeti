@@ -29,7 +29,7 @@ class SSLBlackListIP(task.FeedTask):
                 delimiter=",",
                 names=names,
                 quotechar='"',
-                quoting=True,
+                quoting=0,
                 skipinitialspace=True,
                 parse_dates=["Firstseen"],
                 header=8,
