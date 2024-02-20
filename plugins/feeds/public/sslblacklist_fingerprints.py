@@ -36,7 +36,7 @@ class SSLBlackListCerts(task.FeedTask):
                 delimiter=",",
                 names=names,
                 quotechar='"',
-                quoting=True,
+                quoting=0,
                 skipinitialspace=True,
                 parse_dates=["Listingdate"],
                 header=8,
