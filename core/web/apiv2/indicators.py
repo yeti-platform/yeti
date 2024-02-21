@@ -1,9 +1,7 @@
-from typing import Iterable
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
-from core.schemas import indicator
+from core.schemas import graph, indicator
 
 
 # Request schemas
@@ -37,13 +35,23 @@ class IndicatorSearchResponse(BaseModel):
     total: int
 
 
+class IndicatorTagRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ids: list[str]
+    tags: list[str]
+    strict: bool = False
+
+
+class IndicatorTagResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tagged: int
+    tags: dict[str, dict[str, graph.TagRelationship]]
+
+
 # API endpoints
 router = APIRouter()
-
-
-@router.get("/")
-async def indicators_root() -> Iterable[indicator.IndicatorTypes]:
-    return indicator.Indicator.list()
 
 
 @router.post("/")
@@ -87,6 +95,7 @@ async def details(indicator_id) -> indicator.IndicatorTypes:
     db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
+    db_indicator.get_tags()
     return db_indicator
 
 
@@ -105,13 +114,37 @@ async def delete(indicator_id: str) -> None:
 async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
     """Searches for indicators."""
     query = request.query
+    tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
     indicators, total = indicator.Indicator.filter(
         query_args=query,
+        tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
+        graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)
+
+
+@router.post("/tag")
+async def tag(request: IndicatorTagRequest) -> IndicatorTagResponse:
+    """Tags entities."""
+    indicators = []
+    for indicator_id in request.ids:
+        db_indicator = indicator.Indicator.get(indicator_id)
+        if not db_indicator:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Tagging request contained an unknown indicator: ID:{indicator_id}",
+            )
+        indicators.append(db_indicator)
+
+    indicator_tags = {}
+    for db_indicator in indicators:
+        db_indicator.tag(request.tags, strict=request.strict)
+        indicator_tags[db_indicator.extended_id] = db_indicator.tags
+
+    return IndicatorTagResponse(tagged=len(indicators), tags=indicator_tags)
