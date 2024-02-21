@@ -88,6 +88,28 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(data["indicators"][0]["name"], "hex")
         self.assertEqual(data["indicators"][0]["type"], "regex")
 
+    def test_search_indicators_by_alias(self):
+        indicator.Query(
+            name="query1",
+            pattern="SELECT * FROM table",
+            location="database",
+            target_systems=["mysql"],
+            query_type="sql",
+            diamond=indicator.DiamondModel.capability,
+        ).save()
+        response = client.post(
+            "/api/v2/indicators/search",
+            json={
+                "query": {"name": "mys"},
+                "type": "query",
+                "filter_aliases": [["target_systems", "list"]],
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["indicators"]), 1)
+        self.assertEqual(data["indicators"][0]["name"], "query1")
+
     def test_delete_indicator(self):
         response = client.delete(f"/api/v2/indicators/{self.indicator1.id}")
         self.assertEqual(response.status_code, 200)

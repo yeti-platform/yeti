@@ -90,6 +90,21 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(data["entities"][0]["name"], "ta1")
         self.assertEqual(data["entities"][0]["type"], "threat-actor")
 
+    def test_search_entities_by_alias(self):
+        response = client.post(
+            "/api/v2/entities/search",
+            json={
+                "query": {"name": "bad"},
+                "type": "threat-actor",
+                "filter_aliases": [["aliases", "list"]],
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 1)
+        self.assertEqual(data["entities"][0]["name"], "ta1")
+        self.assertEqual(data["entities"][0]["type"], "threat-actor")
+
     def test_search_entities_with_creation_date(self):
         response = client.post(
             "/api/v2/entities/search",
