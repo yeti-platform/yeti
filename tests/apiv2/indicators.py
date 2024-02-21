@@ -29,6 +29,7 @@ class IndicatorTest(unittest.TestCase):
             location="filesystem",
             diamond=indicator.DiamondModel.capability,
         ).save()
+        self.indicator1.tag(["hextag"])
         self.indicator2 = indicator.Regex(
             name="localhost",
             pattern="127.0.0.1",
@@ -70,6 +71,21 @@ class IndicatorTest(unittest.TestCase):
     def test_sarch_indicators(self):
         response = client.post(
             "/api/v2/indicators/search", json={"query": {"name": "he"}, "type": "regex"}
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["indicators"]), 1)
+        self.assertEqual(data["indicators"][0]["name"], "hex")
+        self.assertEqual(data["indicators"][0]["type"], "regex")
+
+        # check tag
+        self.assertEqual(len(data["indicators"][0]["tags"]), 1)
+        self.assertIn("hextag", data["indicators"][0]["tags"])
+
+    def test_search_indicators_tagged(self):
+        response = client.post(
+            "/api/v2/indicators/search",
+            json={"query": {"name": "", "tags": ["hextag"]}, "type": "regex"},
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
