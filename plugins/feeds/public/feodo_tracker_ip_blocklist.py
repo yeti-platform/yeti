@@ -28,7 +28,7 @@ class FeodoTrackerIPBlockList(task.FeedTask):
                 comment="#",
                 delimiter=",",
                 quotechar='"',
-                quoting=True,
+                quoting=1,
                 skipinitialspace=True,
                 parse_dates=["first_seen_utc"],
             )

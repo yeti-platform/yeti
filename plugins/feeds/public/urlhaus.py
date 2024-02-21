@@ -40,7 +40,7 @@ class UrlHaus(task.FeedTask):
                 delimiter=",",
                 names=self._NAMES,
                 quotechar='"',
-                quoting=True,
+                quoting=1,
                 skipinitialspace=True,
                 parse_dates=["dateadded", "last_online"],
                 header=0,
