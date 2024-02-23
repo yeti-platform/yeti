@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict
 
@@ -26,6 +24,7 @@ class EntitySearchRequest(BaseModel):
     query: dict[str, str | int | list] = {}
     type: entity.EntityType | None = None
     sorting: list[tuple[str, bool]] = []
+    filter_aliases: list[tuple[str, str]] = []
     count: int = 50
     page: int = 0
 
@@ -54,11 +53,6 @@ class EntityTagResponse(BaseModel):
 
 # API endpoints
 router = APIRouter()
-
-
-@router.get("/")
-async def entities_root() -> Iterable[entity.EntityTypes]:
-    return entity.Entity.list()
 
 
 @router.post("/")
@@ -114,11 +108,12 @@ async def search(request: EntitySearchRequest) -> EntitySearchResponse:
     if request.type:
         query["type"] = request.type
     entities, total = entity.Entity.filter(
-        query,
+        query_args=query,
         tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
         sorting=request.sorting,
+        aliases=request.filter_aliases,
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     return EntitySearchResponse(entities=entities, total=total)
