@@ -26,7 +26,8 @@ class PhishingDatabase(task.FeedTask):
         response = self._make_request(self._SOURCE)
         if response:
             for line in response.text.split("\n"):
-                self.analyze(line.strip())
+                if not line.startswith("#"):
+                    self.analyze(line.strip())
 
     def analyze(self, domain):
         if domain:
