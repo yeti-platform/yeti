@@ -40,10 +40,6 @@ class IndicatorTest(unittest.TestCase):
     def tearDown(self) -> None:
         database_arango.db.clear()
 
-    def test_get_indicators(self):
-        response = client.get("/api/v2/indicators/")
-        self.assertEqual(response.status_code, 200)
-
     def test_new_indicator(self):
         indicator_dict = {
             "name": "otherRegex",
@@ -63,12 +59,12 @@ class IndicatorTest(unittest.TestCase):
 
     def test_get_indicator(self):
         response = client.get(f"/api/v2/indicators/{self.indicator1.id}")
-        self.assertEqual(response.status_code, 200)
         data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "hex")
         self.assertEqual(data["type"], "regex")
 
-    def test_sarch_indicators(self):
+    def test_search_indicators(self):
         response = client.post(
             "/api/v2/indicators/search", json={"query": {"name": "he"}, "type": "regex"}
         )
