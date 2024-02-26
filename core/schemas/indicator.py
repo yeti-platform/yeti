@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_valida
 
 from core import database_arango
 from core.helpers import now
-from core.schemas.model import YetiModel
+from core.schemas.model import YetiTagModel
 
 
 def future():
@@ -44,7 +44,7 @@ class DiamondModel(Enum):
     victim = "victim"
 
 
-class Indicator(YetiModel, database_arango.ArangoYetiConnector):
+class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "indicators"
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["indicator"] = "indicator"
