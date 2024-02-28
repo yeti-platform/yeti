@@ -257,9 +257,9 @@ class ForensicArtifact(Indicator):
                                 relevant_tags=self.relevant_tags,
                             ).save()
                             indicators.append(indicator)
-                        except Exception:
+                        except Exception as error:
                             logging.error(
-                                f"Failed to create indicator for {path} (was: {source['attributes']['paths']})"
+                                f"Failed to create indicator for {path} (was: {source['attributes']['paths']}): {error}"
                             )
                             continue
 
@@ -268,6 +268,40 @@ class ForensicArtifact(Indicator):
                             set(indicator.relevant_tags + self.relevant_tags)
                         )
                         indicator.save()
+        if source["type"] == definitions.TYPE_INDICATOR_WINDOWS_REGISTRY_KEY:
+            for key in source["attributes"]["keys"]:
+                pattern = key
+                prefix = ""
+                if pattern.startswith("HKEY_USERS\\%%users.sid%%"):
+                    prefix = "(HKEY_USERS\\\\.*|HKEY_CURRENT_USER)"
+                    pattern = pattern.replace("HKEY_USERS\\%%users.sid%%", "")
+                pattern = ARTIFACT_INTERPOLATION_RE.sub("*", pattern)
+                pattern = re.sub(r"\\\*$", "", pattern)
+                pattern = re.escape(pattern).replace("*", ".*").replace("?", ".")
+                pattern = prefix + pattern
+
+                indicator = Regex.find(name=key)
+
+                if not indicator:
+                    try:
+                        indicator = Regex(
+                            name=key,
+                            pattern=pattern,
+                            location="registry",
+                            diamond=DiamondModel.victim,
+                            relevant_tags=self.relevant_tags,
+                        ).save()
+                        indicators.append(indicator)
+                    except Exception as error:
+                        logging.error(
+                            f"Failed to create indicator for {key} (was: {source['attributes']['keys']}): {error}"
+                        )
+                        continue
+                else:
+                    indicator.relevant_tags = list(
+                        set(indicator.relevant_tags + self.relevant_tags)
+                    )
+                    indicator.save()
         if create_links:
             for indicator in indicators:
                 self.link_to(indicator, "uses", f"Uses regex {indicator.name}")
@@ -275,6 +309,7 @@ class ForensicArtifact(Indicator):
 
 
 ARTIFACT_INTERPOLATION_RE = re.compile(r"%%[a-z._]+%%")
+ARTIFACT_INTERPOLATION_RE_HKEY_USERS = re.compile(r"HKEY_USERS\\%%users.sid%%")
 
 TYPE_MAPPING = {
     "regex": Regex,
