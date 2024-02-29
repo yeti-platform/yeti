@@ -137,6 +137,7 @@ sources:
     keys:
     - HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\*
     - HKEY_USERS\\%%users.sid%%\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\*
+    - HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Services\\amdi2c
   type: REGISTRY_KEY
 supported_os:
 - Windows"""
@@ -151,8 +152,8 @@ supported_os:
         indicators = db_artifact.save_indicators(create_links=True)
         vertices, _, total = db_artifact.neighbors()
 
-        self.assertEqual(total, 2)
-        self.assertEqual(len(vertices), 2)
+        self.assertEqual(total, 3)
+        self.assertEqual(len(vertices), 3)
 
         self.assertEqual(
             vertices[indicators[0].extended_id].name,
@@ -163,6 +164,7 @@ supported_os:
             r"HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
         )
         self.assertEqual(vertices[indicators[0].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[0].extended_id].location, "registry")
 
         self.assertEqual(
             vertices[indicators[1].extended_id].name,
@@ -173,6 +175,18 @@ supported_os:
             r"(HKEY_USERS\\.*|HKEY_CURRENT_USER)\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
         )
         self.assertEqual(vertices[indicators[1].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[1].extended_id].location, "registry")
+
+        self.assertEqual(
+            vertices[indicators[2].extended_id].name,
+            "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Services\\amdi2c",
+        )
+        self.assertEqual(
+            vertices[indicators[2].extended_id].pattern,
+            r"HKEY_LOCAL_MACHINE\\System\\(CurrentControlSet|ControlSet[0-9]+)\\Services\\amdi2c",
+        )
+        self.assertEqual(vertices[indicators[2].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[2].extended_id].location, "registry")
 
     def test_forensic_artifacts_parent_extraction(self):
         pattern = """

@@ -270,15 +270,17 @@ class ForensicArtifact(Indicator):
                         indicator.save()
         if source["type"] == definitions.TYPE_INDICATOR_WINDOWS_REGISTRY_KEY:
             for key in source["attributes"]["keys"]:
-                pattern = key
-                prefix = ""
-                if pattern.startswith("HKEY_USERS\\%%users.sid%%"):
-                    prefix = "(HKEY_USERS\\\\.*|HKEY_CURRENT_USER)"
-                    pattern = pattern.replace("HKEY_USERS\\%%users.sid%%", "")
+                pattern = re.sub(r"\\\*$", "", key)
+                pattern = re.escape(pattern)
+                pattern = pattern.replace(
+                    "HKEY_USERS\\\\%%users\\.sid%%",
+                    r"(HKEY_USERS\\%%users.sid%%|HKEY_CURRENT_USER)",
+                )
                 pattern = ARTIFACT_INTERPOLATION_RE.sub("*", pattern)
-                pattern = re.sub(r"\\\*$", "", pattern)
-                pattern = re.escape(pattern).replace("*", ".*").replace("?", ".")
-                pattern = prefix + pattern
+                pattern = pattern.replace("*", r".*").replace("?", r".")
+                pattern = pattern.replace(
+                    "CurrentControlSet", "(CurrentControlSet|ControlSet[0-9]+)"
+                )
 
                 indicator = Regex.find(name=key)
 
