@@ -183,7 +183,7 @@ supported_os:
         )
         self.assertEqual(
             vertices[indicators[2].extended_id].pattern,
-            r"HKEY_LOCAL_MACHINE\\System\\(CurrentControlSet|ControlSet[0-9]+)\\Services\\amdi2c",
+            r"(CurrentControlSet|ControlSet[0-9]+)\\Services\\amdi2c",
         )
         self.assertEqual(vertices[indicators[2].extended_id].type, "regex")
         self.assertEqual(vertices[indicators[2].extended_id].location, "registry")

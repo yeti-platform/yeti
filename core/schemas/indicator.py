@@ -278,9 +278,11 @@ class ForensicArtifact(Indicator):
                 )
                 pattern = ARTIFACT_INTERPOLATION_RE.sub("*", pattern)
                 pattern = pattern.replace("*", r".*").replace("?", r".")
-                pattern = pattern.replace(
-                    "CurrentControlSet", "(CurrentControlSet|ControlSet[0-9]+)"
-                )
+                if "CurrentControlSet" in pattern:
+                    pattern = pattern.replace(
+                        "CurrentControlSet", "(CurrentControlSet|ControlSet[0-9]+)"
+                    )
+                    pattern = pattern.replace("HKEY_LOCAL_MACHINE\\\\System\\\\", "")
 
                 indicator = Regex.find(name=key)
 
