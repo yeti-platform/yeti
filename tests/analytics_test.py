@@ -1,7 +1,6 @@
 import datetime
 import os
 import unittest
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 from censys.search import CensysHosts
@@ -13,7 +12,6 @@ from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
 from plugins.analytics.public import censys, expire_tags, shodan
-from core.database_arango import ArangoYetiConnector
 from tests.helpers import TestHelpers
 
 
