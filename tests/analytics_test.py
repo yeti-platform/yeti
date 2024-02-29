@@ -13,48 +13,11 @@ from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
 from plugins.analytics.public import censys, expire_tags, shodan
+from core.database_arango import ArangoYetiConnector
+from tests.helpers import TestHelpers
 
 
-class AnalyticsTestBase(unittest.TestCase):
-    def check_observables(self, expected_values: list[dict[str, Any]]):
-        """Checks observables against a list of expected values.
-
-        Args:
-            expected_values: A list of dictionaries, each containing expected values
-                for 'value', 'type', and 'tags' attributes.
-        """
-        observables = observable.Observable.filter(
-            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
-        )
-        observable_obj, _ = observables
-
-        self.assertEqual(len(observable_obj), len(expected_values))
-
-        for obs, expected_value in zip(observable_obj, expected_values):
-            self.assertEqual(obs.value, expected_value["value"])
-            self.assertEqual(obs.type, expected_value["type"])
-            self.assertEqual(set(obs.tags.keys()), expected_value["tags"])
-
-    def check_neighbors(
-        self, indicator: indicator.Query, expected_neighbor_values: list[str]
-    ):
-        """Checks an indicator's neighbors against a list of expected values.
-
-        Args:
-            indicator: The indicator.Query object to use for neighbor comparison.
-            expected_neighbor_values: A list of expected neighbor values.
-        """
-        indicator_neighbors = [
-            o.value
-            for o in indicator.neighbors()[0].values()
-            if isinstance(o, observable.Observable)
-        ]
-
-        for expected_value in expected_neighbor_values:
-            self.assertIn(expected_value, indicator_neighbors)
-
-
-class CensysAnalyticsTest(AnalyticsTestBase):
+class CensysAnalyticsTest(TestHelpers):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
@@ -120,7 +83,7 @@ class CensysAnalyticsTest(AnalyticsTestBase):
         self.check_neighbors(censys_query, expected_neighbor_values)
 
 
-class ShodanAnalyticsTest(AnalyticsTestBase):
+class ShodanAnalyticsTest(TestHelpers):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
