@@ -99,16 +99,19 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(vertices[indicators[0].extended_id].name, "/etc/shadow")
         self.assertEqual(vertices[indicators[0].extended_id].pattern, r"/etc/shadow")
         self.assertEqual(vertices[indicators[0].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[0].extended_id].location, "filesystem")
 
         self.assertEqual(vertices[indicators[1].extended_id].name, "/etc/random/*")
         self.assertEqual(vertices[indicators[1].extended_id].pattern, r"/etc/random/.*")
         self.assertEqual(vertices[indicators[1].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[1].extended_id].location, "filesystem")
 
         self.assertEqual(
             vertices[indicators[2].extended_id].name, "%%users.homedir%%/random"
         )
         self.assertEqual(vertices[indicators[2].extended_id].pattern, r".*/random")
         self.assertEqual(vertices[indicators[2].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[2].extended_id].location, "filesystem")
 
         self.assertEqual(
             vertices[indicators[3].extended_id].name,
@@ -119,6 +122,7 @@ class IndicatorTest(unittest.TestCase):
             r".*/\.dropbox/instance.*/sync_history\.db",
         )
         self.assertEqual(vertices[indicators[3].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[3].extended_id].location, "filesystem")
 
         self.assertEqual(
             vertices[indicators[4].extended_id].name,
@@ -128,6 +132,7 @@ class IndicatorTest(unittest.TestCase):
             vertices[indicators[4].extended_id].pattern, r".*\\\$Extend\\\$UsnJrnl"
         )
         self.assertEqual(vertices[indicators[4].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[4].extended_id].location, "filesystem")
 
     def test_forensics_artifacts_indicator_extraction_registry(self) -> None:
         pattern = """doc: asd
