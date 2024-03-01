@@ -31,6 +31,7 @@ class MispToYeti:
         self.func_by_type = {
         "asn": self.__import_asn_object,
         "av-signature": self.__import_av_signature,
+        "btc-wallet": self.__import_btc_wallet,
     }
 
     def attr_misp_to_yeti(
@@ -109,3 +110,19 @@ class MispToYeti:
         asn.add_context(f"misp {self.misp_event['Orgc']['name']} ", context)
         
         invest.link_to(asn, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
+    
+    def __import_btc_wallet(self, invest: entity.Investigation,object_btc: dict):
+        btc = observable.wallet.Wallet(value=object_btc["wallet-address"]).save()
+        context = {}
+        if object_btc["BTC_received"]:
+            context["BTC_received"] = object_btc["BTC_received"]
+        if object_btc["BTC_sent"]:
+            context["BTC_sent"] = object_btc["BTC_sent"]
+        if object_btc["BTC_balance"]:
+            context["BTC_balance"] = object_btc["BTC_balance"]
+        if object_btc["time"]:
+            context["time"] = object_btc["time"]
+        if context:
+            btc.add_context(f"misp {self.misp_event['Orgc']['name']} ", context)
+        invest.link_to(btc, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
+    
