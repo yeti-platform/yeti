@@ -1,6 +1,6 @@
 import logging
 
-from core.schemas import entity, observable
+from core.schemas import entity, observable, indicator
 
 MISP_Attribute_TO_IMPORT = {
     "domain": observable.ObservableType.hostname,
@@ -30,6 +30,7 @@ class MispToYeti:
         self.misp_event = misp_event
         self.func_by_type = {
         "asn": self.__import_asn_object,
+        "av-signature": self.__import_av_signature,
     }
 
     def attr_misp_to_yeti(
@@ -80,7 +81,11 @@ class MispToYeti:
         invest.save()
 
     def __import_av_signature(self, invest: entity.Investigation,object_av_signature: dict):
-        
+        av_sig = indicator.av_signature(name=object_av_signature["signature"],software=object_av_signature["software"]).save()
+        av_sig.description = object_av_signature["description"]
+        av_sig.save()
+        invest.link_to(av_sig, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
+
     def __import_asn_object(self, invest: entity.Investigation,object_asn: dict):
         asn = observable.asn.ASN(value=object_asn["asn"]).save()
         context = {}

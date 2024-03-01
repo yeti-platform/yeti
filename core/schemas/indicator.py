@@ -30,6 +30,7 @@ class IndicatorType(str, Enum):
     sigma = "sigma"
     query = "query"
     forensicartifact = "forensicartifact"
+    av_signature = "av_signature"
 
 
 class IndicatorMatch(BaseModel):
@@ -273,6 +274,13 @@ class ForensicArtifact(Indicator):
                 self.link_to(indicator, "uses", f"Uses regex {indicator.name}")
         return indicators
 
+class av_signature(Indicator):
+    _type_filter: ClassVar[str] = IndicatorType.av_signature
+    type: Literal[IndicatorType.av_signature] = IndicatorType.av_signature
+    software: str
+
+    def match(self, value: str) -> IndicatorMatch | None:
+        raise NotImplementedError
 
 ARTIFACT_INTERPOLATION_RE = re.compile(r"%%[a-z._]+%%")
 
@@ -282,6 +290,7 @@ TYPE_MAPPING = {
     "sigma": Sigma,
     "query": Query,
     "forensicartifact": ForensicArtifact,
+    "av_signature": av_signature,
     "indicator": Indicator,
     "indicators": Indicator,
 }
