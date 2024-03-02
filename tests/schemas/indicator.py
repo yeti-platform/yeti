@@ -63,7 +63,7 @@ class IndicatorTest(unittest.TestCase):
         result = regex.match("ThisIsAReallyBaaaadStringIsntIt")
         self.assertIsNone(result)
 
-    def test_forensis_artifacts_indicator_extraction(self) -> None:
+    def test_forensics_artifacts_indicator_extraction_file(self) -> None:
         pattern = """
         doc: random description
         name: ForensicArtifact1
@@ -99,16 +99,19 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(vertices[indicators[0].extended_id].name, "/etc/shadow")
         self.assertEqual(vertices[indicators[0].extended_id].pattern, r"/etc/shadow")
         self.assertEqual(vertices[indicators[0].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[0].extended_id].location, "filesystem")
 
         self.assertEqual(vertices[indicators[1].extended_id].name, "/etc/random/*")
         self.assertEqual(vertices[indicators[1].extended_id].pattern, r"/etc/random/.*")
         self.assertEqual(vertices[indicators[1].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[1].extended_id].location, "filesystem")
 
         self.assertEqual(
             vertices[indicators[2].extended_id].name, "%%users.homedir%%/random"
         )
         self.assertEqual(vertices[indicators[2].extended_id].pattern, r".*/random")
         self.assertEqual(vertices[indicators[2].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[2].extended_id].location, "filesystem")
 
         self.assertEqual(
             vertices[indicators[3].extended_id].name,
@@ -119,6 +122,7 @@ class IndicatorTest(unittest.TestCase):
             r".*/\.dropbox/instance.*/sync_history\.db",
         )
         self.assertEqual(vertices[indicators[3].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[3].extended_id].location, "filesystem")
 
         self.assertEqual(
             vertices[indicators[4].extended_id].name,
@@ -128,6 +132,66 @@ class IndicatorTest(unittest.TestCase):
             vertices[indicators[4].extended_id].pattern, r".*\\\$Extend\\\$UsnJrnl"
         )
         self.assertEqual(vertices[indicators[4].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[4].extended_id].location, "filesystem")
+
+    def test_forensics_artifacts_indicator_extraction_registry(self) -> None:
+        pattern = """doc: asd
+name: WindowsRunKeys
+sources:
+- attributes:
+    keys:
+    - HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\*
+    - HKEY_USERS\\%%users.sid%%\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\*
+    - HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Services\\amdi2c
+  type: REGISTRY_KEY
+supported_os:
+- Windows"""
+
+        artifacts = ForensicArtifact.from_yaml_string(pattern)
+        db_artifact = artifacts[0]
+        self.assertIsNotNone(db_artifact.id)
+        self.assertIsNotNone(db_artifact.created)
+        self.assertEqual(db_artifact.name, "WindowsRunKeys")
+        self.assertEqual(db_artifact.supported_os, ["Windows"])
+
+        indicators = db_artifact.save_indicators(create_links=True)
+        vertices, _, total = db_artifact.neighbors()
+
+        self.assertEqual(total, 3)
+        self.assertEqual(len(vertices), 3)
+
+        self.assertEqual(
+            vertices[indicators[0].extended_id].name,
+            "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\*",
+        )
+        self.assertEqual(
+            vertices[indicators[0].extended_id].pattern,
+            r"HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        )
+        self.assertEqual(vertices[indicators[0].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[0].extended_id].location, "registry")
+
+        self.assertEqual(
+            vertices[indicators[1].extended_id].name,
+            "HKEY_USERS\\%%users.sid%%\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\*",
+        )
+        self.assertEqual(
+            vertices[indicators[1].extended_id].pattern,
+            r"(HKEY_USERS\\.*|HKEY_CURRENT_USER)\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        )
+        self.assertEqual(vertices[indicators[1].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[1].extended_id].location, "registry")
+
+        self.assertEqual(
+            vertices[indicators[2].extended_id].name,
+            "HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Services\\amdi2c",
+        )
+        self.assertEqual(
+            vertices[indicators[2].extended_id].pattern,
+            r"(CurrentControlSet|ControlSet[0-9]+)\\Services\\amdi2c",
+        )
+        self.assertEqual(vertices[indicators[2].extended_id].type, "regex")
+        self.assertEqual(vertices[indicators[2].extended_id].location, "registry")
 
     def test_forensic_artifacts_parent_extraction(self):
         pattern = """
