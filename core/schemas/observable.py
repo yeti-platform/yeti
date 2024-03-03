@@ -94,6 +94,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
                 value=refanged,
                 created=datetime.datetime.now(datetime.timezone.utc),
             ).save()
+        observable.get_tags()
         if tags:
             observable = observable.tag(tags)
         return observable
