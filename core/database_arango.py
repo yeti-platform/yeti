@@ -1,4 +1,5 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
+
 import datetime
 import json
 import logging

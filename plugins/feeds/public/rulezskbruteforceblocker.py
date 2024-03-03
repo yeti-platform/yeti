@@ -16,9 +16,9 @@ class RulezSKBruteforceBlocker(task.FeedTask):
         "description": "This feed contains daily list of IPs from rules.sk",
     }
 
-    _SOURCE: ClassVar[
-        "str"
-    ] = "http://danger.rulez.sk/projects/bruteforceblocker/blist.php"
+    _SOURCE: ClassVar["str"] = (
+        "http://danger.rulez.sk/projects/bruteforceblocker/blist.php"
+    )
 
     def run(self):
         r = self._make_request(self._SOURCE, headers={"User-Agent": "yeti-project"})
