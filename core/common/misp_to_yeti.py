@@ -1,4 +1,5 @@
 import logging
+import pycountry
 from datetime import timedelta
 from core.schemas import entity, observable, indicator
 
@@ -24,25 +25,30 @@ MISP_Attribute_TO_IMPORT = {
     "asn": observable.ObservableType.asn,
 }
 
+
 class MispToYeti:
 
     def __init__(self, misp_event):
         self.misp_event = misp_event
         self.func_by_type = {
-        "asn": self.__import_asn_object,
-        "av-signature": self.__import_av_signature,
-        "btc-wallet": self.__import_btc_wallet,
-        "c2-list": self.__import_c2_list,
-    }
+            "asn": self.__import_asn_object,
+            "av-signature": self.__import_av_signature,
+            "btc-wallet": self.__import_btc_wallet,
+            "c2-list": self.__import_c2_list,
+            "crowdsec-ip-context": self.__import_crowdsec_ip_context,
+            "command-line": self.__import_commande_line,
+        }
 
     def attr_misp_to_yeti(
         self, invest: entity.Investigation, attribute: dict
-    ) -> observable.Observable: # type: ignore
+    ) -> observable.Observable:  # type: ignore
         if attribute.get("type") in MISP_Attribute_TO_IMPORT:
             obs_yeti = observable.TYPE_MAPPING[
-                MISP_Attribute_TO_IMPORT[attribute.get("type")] # type: ignore
+                MISP_Attribute_TO_IMPORT[attribute.get("type")]  # type: ignore
             ](value=attribute.get("value")).save()
-            invest.link_to(obs_yeti, "imported_by_misp",f"misp {self.misp_event['Orgc']['name']}")
+            invest.link_to(
+                obs_yeti, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+            )
             print(f"Attribute {attribute.get('value')} imported")
             return obs_yeti
 
@@ -57,50 +63,62 @@ class MispToYeti:
             context["comment"] = attribute_misp.get("comment")
 
         obs_yeti.add_context("misp", context)
-    
-    def add_obs(self,invest: entity.Investigation,obs_misp: dict):
+
+    def add_obs(self, invest: entity.Investigation, obs_misp: dict):
         for attr in obs_misp["Attribute"]:
-            obs_yeti = self.attr_misp_to_yeti(invest,attr)
-        
+            obs_yeti = self.attr_misp_to_yeti(invest, attr)
+
             if obs_yeti:
                 self.add_context_by_misp(attr, obs_misp, obs_yeti)
                 yield obs_yeti
             else:
                 print(f"Attribute {attr} not imported")
-    
-    def obs_misp_to_yeti(self,invest: entity.Investigation, object_misp: dict):
+
+    def obs_misp_to_yeti(self, invest: entity.Investigation, object_misp: dict):
         if object_misp["name"] in self.func_by_type:
-            self.func_by_type[object_misp["name"]](invest,object_misp)
+            self.func_by_type[object_misp["name"]](invest, object_misp)
         else:
-            for obs_yeti in self.add_obs(invest,object_misp):
-                invest.link_to(obs_yeti, "imported_by_misp",f"misp {self.misp_event['Orgc']['name']}")
-            
+            for obs_yeti in self.add_obs(invest, object_misp):
+                invest.link_to(
+                    obs_yeti,
+                    "imported_by_misp",
+                    f"misp {self.misp_event['Orgc']['name']}",
+                )
 
     def misp_to_yeti(self):
         invest = entity.Investigation(name=self.misp_event["info"]).save()
 
         if self.misp_event["Tag"]:
             invest.tag(self.misp_event["Tag"])
-            
-
+        invest.description =f"Org {self.misp_event['Orgc']['name']} Event id: {self.misp_event['id']}"
         for object_misp in self.misp_event["Object"]:
-            self.obs_misp_to_yeti(invest,object_misp)
+            self.obs_misp_to_yeti(invest, object_misp)
 
         for attribute_misp in self.misp_event["Attribute"]:
-            obs_yeti = self.attr_misp_to_yeti(invest,attribute_misp)
+            obs_yeti = self.attr_misp_to_yeti(invest, attribute_misp)
             if obs_yeti:
                 self.add_context_by_misp(attribute_misp, self.misp_event, obs_yeti)
             else:
                 print(f"Attribute {attribute_misp} not imported")
         invest.save()
 
-    def __import_av_signature(self, invest: entity.Investigation,object_av_signature: dict):
-        av_sig = indicator.av_signature(name=object_av_signature["signature"],software=object_av_signature["software"]).save()
+    def __import_av_signature(
+        self, invest: entity.Investigation, object_av_signature: dict
+    ):
+        av_sig = indicator.av_signature(
+            name=object_av_signature["signature"],
+            software=object_av_signature["software"],
+            diamond=indicator.DiamondModel.capability,
+            pattern=object_av_signature["signature"],
+            location='misp',
+        ).save()
         av_sig.description = object_av_signature["description"]
         av_sig.save()
-        invest.link_to(av_sig, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
+        invest.link_to(
+            av_sig, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+        )
 
-    def __import_asn_object(self, invest: entity.Investigation,object_asn: dict):
+    def __import_asn_object(self, invest: entity.Investigation, object_asn: dict):
         asn = observable.asn.ASN(value=object_asn["asn"]).save()
         context = {}
 
@@ -111,20 +129,22 @@ class MispToYeti:
             except ValueError:
                 logging.error(f"Invalid subnet: {subnet}")
 
-        if object_asn['last-seen']:
-            context["last-seen"] = object_asn['last-seen']
-        if object_asn['first-seen']:
-            context["first-seen"] = object_asn['first-seen']
-        if object_asn['description']:
-            context["description"] = object_asn['description']
-        if object_asn['country']:
-            context["country"] = object_asn['country']
-        
+        if object_asn["last-seen"]:
+            context["last-seen"] = object_asn["last-seen"]
+        if object_asn["first-seen"]:
+            context["first-seen"] = object_asn["first-seen"]
+        if object_asn["description"]:
+            context["description"] = object_asn["description"]
+        if object_asn["country"]:
+            context["country"] = object_asn["country"]
+
         asn.add_context(f"misp {self.misp_event['Orgc']['name']} ", context)
-        
-        invest.link_to(asn, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
-        
-    def __import_btc_wallet(self, invest: entity.Investigation,object_btc: dict):
+
+        invest.link_to(
+            asn, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+        )
+
+    def __import_btc_wallet(self, invest: entity.Investigation, object_btc: dict):
         btc = observable.wallet.Wallet(value=object_btc["wallet-address"]).save()
         context = {}
         if object_btc["BTC_received"]:
@@ -137,19 +157,105 @@ class MispToYeti:
             context["time"] = object_btc["time"]
         if context:
             btc.add_context(f"misp {self.misp_event['Orgc']['name']} ", context)
-        invest.link_to(btc, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
-    
-    
-    def __import_c2_list(self, invest: entity.Investigation,object_c2_list: dict):
-            list_c2_ip  = filter(lambda x: x["type"] == "c2-ip", object_c2_list["Attribute"])
-            list_c2_domain  = filter(lambda x: x["type"] == "c2-ipport", object_c2_list["Attribute"])
-            for c2 in list_c2_ip:
-                obs_yeti=self.attr_misp_to_yeti(invest,c2)
-                obs_yeti.link_to_tag(object_c2_list['threat'],timedelta(days=30))        
-            for c2 in list_c2_domain:
-                ip,port = c2["value"].split("|")
-                obs_yeti=observable.TYPE_MAPPING[MISP_Attribute_TO_IMPORT["ip-src"]](value=ip)
-                obs_yeti.link_to_tag(object_c2_list['threat'],timedelta(days=30))
-                obs_yeti.add_context("misp",{"port":port})
+        invest.link_to(
+            btc, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+        )
 
+    def __import_c2_list(self, invest: entity.Investigation, object_c2_list: dict):
+        list_c2_ip = filter(lambda x: x["type"] == "c2-ip", object_c2_list["Attribute"])
+        list_c2_domain = filter(
+            lambda x: x["type"] == "c2-ipport", object_c2_list["Attribute"]
+        )
+        for c2 in list_c2_ip:
+            obs_yeti = self.attr_misp_to_yeti(invest, c2)
+            obs_yeti.link_to_tag(object_c2_list["threat"], timedelta(days=30))
+        for c2 in list_c2_domain:
+            ip, port = c2["value"].split("|")
+            obs_yeti = observable.TYPE_MAPPING[MISP_Attribute_TO_IMPORT["ip-src"]](
+                value=ip
+            )
+            obs_yeti.link_to_tag(object_c2_list["threat"], timedelta(days=30))
+            obs_yeti.add_context("misp", {"port": port})
+    
+    def __import_crowdsec_ip_context(self, invest: entity.Investigation, object_crowdsec_ip: dict):
+        ip = observable.ipv4.IPv4(value=object_crowdsec_ip["ip"]).save()
         
+        as_num = object_crowdsec_ip.get("as_num")
+        if as_num:
+            as_num = observable.asn.ASN(value=as_num).save()
+            ip.link_to(as_num, "part_of", "asn")
+        
+        context = {}
+        attack_details = object_crowdsec_ip.get("attack-details")
+
+        if attack_details:
+            context["attack-details"] = attack_details
+        
+        background_noise = object_crowdsec_ip.get("background-noise")
+        if background_noise:
+            context["background-noise"] = background_noise
+        
+        behaviors = object_crowdsec_ip.get("behaviors")
+        if behaviors:
+            context["behaviors"] = behaviors
+
+        city = object_crowdsec_ip.get("city")
+        country = object_crowdsec_ip.get("country")
+        country_code = object_crowdsec_ip.get("country_code")
+        
+        if city or country or country_code:
+            if city:
+                location = entity.Location(name=city,city=city).save()
+
+            if country:
+                location = entity.Location(name=country,country=country).save()
+                location.set_country_code_by_name(country)
+            if country_code:
+                country_name = pycountry.countries.get(alpha_2=country_code).name
+                location = entity.Location(name=country_name,country=country_name).save()
+            if location:
+                ip.link_to(location, "located_at", "location")
+                invest.link_to(location, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} CrowdSec")
+        dst_port = object_crowdsec_ip.get("dst-port")
+        if dst_port:
+            context["dst_port"] = dst_port
+
+        ip_range_scope = object_crowdsec_ip.get("ip-range-scope")
+        if ip_range_scope:
+            context["ip-range-scope"] = ip_range_scope
+        
+        trust = object_crowdsec_ip.get("trust")
+        if trust:
+            context["trust"] = trust
+        
+        ip_range = object_crowdsec_ip.get("ip-range")
+        if ip_range:
+            cidr_obs = observable.cidr.CIDR(value=ip_range).save() # type: ignore
+            ip.link_to(cidr_obs, "part_of", "subnet")
+            invest.link_to(cidr_obs, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} CrowdSec")
+
+        ip.add_context(f"misp {self.misp_event['Orgc']['name']} CrowdSec", context)
+
+        reverse_dns = object_crowdsec_ip.get("reverse_dns")
+        if reverse_dns:
+            hostname = observable.hostname.Hostname(value=reverse_dns).save()
+            ip.link_to(hostname, "resolved_to", "hostname")
+            invest.link_to(hostname, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} CrowdSec")
+        
+        invest.link_to(ip, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} CrowdSec")
+
+    def __import_commande_line(self, invest: entity.Investigation, object_command_line: dict):
+            cmd_line = object_command_line["value"]
+            cmd_line = observable.command_line.CommandLine(value=cmd_line).save()
+             
+            description = object_command_line.get("description")
+            context = {}
+            if description:
+                context["description"] = description
+            if context:
+                cmd_line.add_context(f"misp {self.misp_event['Orgc']['name']}", context)        
+            invest.link_to(cmd_line, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
+    
+        
+
+    
