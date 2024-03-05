@@ -3,8 +3,9 @@ from datetime import timedelta
 
 import dateparser
 import pycountry
-
+from pymisp import MISPObject,MISPEvent,MISPAttribute
 from core.schemas import entity, indicator, observable
+import json
 
 MISP_Attribute_TO_IMPORT = {
     "btc": observable.ObservableType.wallet,
@@ -33,7 +34,8 @@ MISP_Attribute_TO_IMPORT = {
 
 class MispToYeti:
     def __init__(self, misp_event):
-        self.misp_event = misp_event
+        self.misp_event = MISPEvent()
+        self.misp_event.from_json(json.dumps(misp_event))
         self.func_by_type = {
             "asn": self.__import_asn_object,
             "av-signature": self.__import_av_signature,
@@ -45,7 +47,7 @@ class MispToYeti:
         }
 
     def attr_misp_to_yeti(
-        self, invest: entity.Investigation, attribute: dict, description: str = ""
+        self, invest: entity.Investigation, attribute: MISPAttribute, description: str = ""
     ) -> observable.Observable:  # type: ignore
         if attribute.get("type") in MISP_Attribute_TO_IMPORT:
             obs_yeti = observable.TYPE_MAPPING[
@@ -59,16 +61,16 @@ class MispToYeti:
             return obs_yeti
 
     def add_context_by_misp(
-        self, attribute_misp: dict, obs_yeti: observable.Observable
+        self, attribute_misp: MISPAttribute, obs_yeti: observable.Observable
     ):
         context = {}
-        context["Org"] = self.misp_event["Org"]["name"]
+        context["Org"] = self.misp_event.org.name
 
         if attribute_misp.get("comment"):
             context["comment"] = attribute_misp.get("comment")
         obs_yeti.add_context("misp", context)
 
-    def add_obs(self, invest: entity.Investigation, obs_misp: dict):
+    def add_obs(self, invest: entity.Investigation, obs_misp: MISPObject):
         for attr in obs_misp["Attribute"]:
             obs_yeti = self.attr_misp_to_yeti(invest, attr)
 
@@ -78,7 +80,7 @@ class MispToYeti:
             else:
                 print(f"Attribute {attr} not imported")
 
-    def obs_misp_to_yeti(self, invest: entity.Investigation, object_misp: dict):
+    def obs_misp_to_yeti(self, invest: entity.Investigation, object_misp: MISPObject):
         if object_misp["name"] in self.func_by_type:
             self.func_by_type[object_misp["name"]](invest, object_misp)
         else:
@@ -91,16 +93,16 @@ class MispToYeti:
 
     def misp_to_yeti(self):
         invest = entity.Investigation(name=self.misp_event["info"]).save()
-        tags = self.misp_event.get("Tag")
+        tags = self.misp_event.tags
         if tags:
             invest.tag([t["name"] for t in tags])
         invest.description = (
             f"Org {self.misp_event['Orgc']['name']} Event id: {self.misp_event['id']}"
         )
-        for object_misp in self.misp_event["Object"]:
+        for object_misp in self.misp_event.objects:
             self.obs_misp_to_yeti(invest, object_misp)
 
-        for attribute_misp in self.misp_event["Attribute"]:
+        for attribute_misp in self.misp_event.attributes:
             obs_yeti = self.attr_misp_to_yeti(invest, attribute_misp)
             if obs_yeti:
                 self.add_context_by_misp(attribute_misp, obs_yeti)
@@ -154,45 +156,52 @@ class MispToYeti:
             asn, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
         )
 
-    def __import_btc_wallet(self, invest: entity.Investigation, object_btc: dict):
-        btc_address = list(
-            filter(lambda x: x["type"] == "wallet-address", object_btc["Attribute"])
-        )[0]
-        btc = self.attr_misp_to_yeti(
-            invest, btc_address, description=f"misp {self.misp_event['Orgc']['name']}"
-        )
-        context = {}
-        if object_btc["BTC_received"]:
-            context["BTC_received"] = object_btc["BTC_received"]
-        if object_btc["BTC_sent"]:
-            context["BTC_sent"] = object_btc["BTC_sent"]
-        if object_btc["BTC_balance"]:
-            context["BTC_balance"] = object_btc["BTC_balance"]
-        if object_btc["time"]:
-            context["time"] = object_btc["time"]
-        if context:
-            btc.add_context(f"misp {self.misp_event['Orgc']['name']} ", context)
-        invest.link_to(
-            btc, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
-        )
-        btc.save()
+    def __import_btc_wallet(self, invest: entity.Investigation, object_btc: MISPObject):
+        
+        
+        address = object_btc.get_attributes_by_relation('wallet-address')[0]
 
-    def __import_c2_list(self, invest: entity.Investigation, object_c2_list: dict):
-        list_c2_ip = filter(lambda x: x["type"] == "c2-ip", object_c2_list["Attribute"])
-        list_c2_domain = filter(
-            lambda x: x["type"] == "c2-ipport", object_c2_list["Attribute"]
-        )
-        for c2 in list_c2_ip:
+        btc = observable.wallet.Wallet(value=address['value'],coin='btc',address=address["value"]).save()
+        
+        btc_received = object_btc.get_attributes_by_relation('BTC_received')
+        btc_sent = object_btc.get_attributes_by_relation('BTC_sent')
+        btc_balance = object_btc.get_attributes_by_relation('balence_btc')
+
+        context = {}
+
+        if btc_received:
+            context["BTC_received"] = btc_received[0]['value']
+        if btc_sent:
+            context["BTC_sent"] = btc_sent[0]['value']
+        if btc_balance:
+            context["balence_btc"] = btc_balance[0]['value']
+        
+        btc.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
+        
+        
+
+
+
+    def __import_c2_list(self, invest: entity.Investigation, object_c2:MISPObject):
+        threat_actor = object_c2.get_attributes_by_relation('threat')
+        tags =[ t['value'] for t in threat_actor]
+        
+
+        
+        for c2 in object_c2.get_attributes_by_relation('c2-ip'):
             obs_yeti = self.attr_misp_to_yeti(
                 invest, c2, description=f"misp {self.misp_event['Orgc']['name']}"
             )
-            obs_yeti.link_to_tag(object_c2_list["threat"], timedelta(days=30))
-        for c2 in list_c2_domain:
+            if tags:
+                obs_yeti.tag(tags)
+
+        for c2 in object_c2.get_attributes_by_relation('c2-ipport'):
             ip, port = c2["value"].split("|")
             obs_yeti = observable.TYPE_MAPPING[MISP_Attribute_TO_IMPORT["ip-src"]](
                 value=ip
-            )
-            obs_yeti.link_to_tag(object_c2_list["threat"], timedelta(days=30))
+            ).save()
+            if tags:
+                obs_yeti.tag(tags)
             obs_yeti.add_context("misp", {"port": port})
 
     def __import_crowdsec_ip_context(
