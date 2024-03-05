@@ -24,6 +24,7 @@ class EntityType(str, Enum):
     tool = "tool"
     vulnerability = "vulnerability"
     course_of_action = "course-of-action"
+    location = "location"
 
 
 class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -136,7 +137,15 @@ class Investigation(Entity):
 
     reference: str = ""
 
+class location(Entity):
+    _type_filter: ClassVar[str] = EntityType.location
+    type: Literal[EntityType.location] = EntityType.location
 
+    location: str = ""
+    reference: str = ""
+    lat: float = 0.0
+    lon: float = 0.0
+    
 class SeverityType(str, Enum):
     none = "none"
     low = "low"
