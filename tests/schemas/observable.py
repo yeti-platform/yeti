@@ -531,7 +531,9 @@ class ObservableTest(unittest.TestCase):
                     2023, 1, 1, tzinfo=datetime.timezone.utc
                 ),
             ).save()
+
     def test_cookie(self):
+        """Tests creating a cookie."""
         cookie_obs = cookie.Cookie(value="test_cookie")
         cookie_obs.http_only = True
         cookie_obs.secure = True
@@ -543,4 +545,3 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(cookie_obs.secure, True)
         self.assertEqual(cookie_obs.type_cookie, "Session management")
         self.assertIsNotNone(cookie_obs.expires)
-
