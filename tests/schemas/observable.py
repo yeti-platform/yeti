@@ -20,6 +20,7 @@ from core.schemas.observables import (
     imphash,
     ipv4,
     ipv6,
+    jarm,
     mac_address,
     md5,
     mutex,
@@ -545,3 +546,9 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(cookie_obs.secure, True)
         self.assertEqual(cookie_obs.type_cookie, "Session management")
         self.assertIsNotNone(cookie_obs.expires)
+
+    def test_jarm(self):
+        """Tests creating a JARM."""
+        jarm_obs = jarm.Jarm(value="1234567890")
+        jarm_obs.save()
+        self.assertEqual(jarm_obs.type, "jarm")
