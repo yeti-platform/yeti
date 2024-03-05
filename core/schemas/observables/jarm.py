@@ -11,4 +11,5 @@ class Jarm(observable.Observable):
 
     type: Literal[observable.ObservableType.jarm] = observable.ObservableType.jarm
 
+
 observable.TYPE_MAPPING[observable.ObservableType.jarm] = Jarm
