@@ -22,7 +22,6 @@ MISP_Attribute_TO_IMPORT = {
     "ssdeep": observable.ObservableType.ssdeep,
     "mutex": observable.ObservableType.mutex,
     "named pipe": observable.ObservableType.named_pipe,
-    "btc": observable.ObservableType.wallet,
     "email": observable.ObservableType.email,
     "filename": observable.ObservableType.file,
     "regkey": observable.ObservableType.registry_key,
@@ -156,7 +155,12 @@ class MispToYeti:
         )
 
     def __import_btc_wallet(self, invest: entity.Investigation, object_btc: dict):
-        btc = self.attr_misp_to_yeti(invest, object_btc["wallet-address"])
+        btc_address = list(
+            filter(lambda x: x["type"] == "wallet-address", object_btc["Attribute"])
+        )[0]
+        btc = self.attr_misp_to_yeti(
+            invest, btc_address, description=f"misp {self.misp_event['Orgc']['name']}"
+        )
         context = {}
         if object_btc["BTC_received"]:
             context["BTC_received"] = object_btc["BTC_received"]
