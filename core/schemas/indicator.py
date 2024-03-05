@@ -274,6 +274,7 @@ class ForensicArtifact(Indicator):
                 self.link_to(indicator, "uses", f"Uses regex {indicator.name}")
         return indicators
 
+
 class av_signature(Indicator):
     _type_filter: ClassVar[str] = IndicatorType.av_signature
     type: Literal[IndicatorType.av_signature] = IndicatorType.av_signature
@@ -281,6 +282,7 @@ class av_signature(Indicator):
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
+
 
 ARTIFACT_INTERPOLATION_RE = re.compile(r"%%[a-z._]+%%")
 

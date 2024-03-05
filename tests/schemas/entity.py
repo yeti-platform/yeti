@@ -136,10 +136,9 @@ class EntityTest(unittest.TestCase):
     def test_correct_cve_name(self):
         vulnerability = Vulnerability(name="CVE-1337-4242").save()
         self.assertEqual(Vulnerability.is_valid(vulnerability), True)
-    
+
     def test_location(self):
         location = Location(name="France").save()
         location.set_country_code_by_name(location.name)
         self.assertEqual(location.name, "France")
         self.assertEqual(location.country_code, "FR")
-        
