@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import dateparser
 import pycountry
-from pymisp import MISPObject,MISPEvent,MISPAttribute
+from pymisp import MISPObject, MISPEvent, MISPAttribute
 from core.schemas import entity, indicator, observable
 import json
 
@@ -47,7 +47,10 @@ class MispToYeti:
         }
 
     def attr_misp_to_yeti(
-        self, invest: entity.Investigation, attribute: MISPAttribute, description: str = ""
+        self,
+        invest: entity.Investigation,
+        attribute: MISPAttribute,
+        description: str = "",
     ) -> observable.Observable:  # type: ignore
         if attribute.get("type") in MISP_Attribute_TO_IMPORT:
             obs_yeti = observable.TYPE_MAPPING[
@@ -157,45 +160,39 @@ class MispToYeti:
         )
 
     def __import_btc_wallet(self, invest: entity.Investigation, object_btc: MISPObject):
-        
-        
-        address = object_btc.get_attributes_by_relation('wallet-address')[0]
+        address = object_btc.get_attributes_by_relation("wallet-address")[0]
 
-        btc = observable.wallet.Wallet(value=address['value'],coin='btc',address=address["value"]).save()
-        
-        btc_received = object_btc.get_attributes_by_relation('BTC_received')
-        btc_sent = object_btc.get_attributes_by_relation('BTC_sent')
-        btc_balance = object_btc.get_attributes_by_relation('balence_btc')
+        btc = observable.wallet.Wallet(
+            value=address["value"], coin="btc", address=address["value"]
+        ).save()
+
+        btc_received = object_btc.get_attributes_by_relation("BTC_received")
+        btc_sent = object_btc.get_attributes_by_relation("BTC_sent")
+        btc_balance = object_btc.get_attributes_by_relation("balence_btc")
 
         context = {}
 
         if btc_received:
-            context["BTC_received"] = btc_received[0]['value']
+            context["BTC_received"] = btc_received[0]["value"]
         if btc_sent:
-            context["BTC_sent"] = btc_sent[0]['value']
+            context["BTC_sent"] = btc_sent[0]["value"]
         if btc_balance:
-            context["balence_btc"] = btc_balance[0]['value']
-        
+            context["balence_btc"] = btc_balance[0]["value"]
+
         btc.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
-        
-        
 
+    def __import_c2_list(self, invest: entity.Investigation, object_c2: MISPObject):
+        threat_actor = object_c2.get_attributes_by_relation("threat")
+        tags = [t["value"] for t in threat_actor]
 
-
-    def __import_c2_list(self, invest: entity.Investigation, object_c2:MISPObject):
-        threat_actor = object_c2.get_attributes_by_relation('threat')
-        tags =[ t['value'] for t in threat_actor]
-        
-
-        
-        for c2 in object_c2.get_attributes_by_relation('c2-ip'):
+        for c2 in object_c2.get_attributes_by_relation("c2-ip"):
             obs_yeti = self.attr_misp_to_yeti(
                 invest, c2, description=f"misp {self.misp_event['Orgc']['name']}"
             )
             if tags:
                 obs_yeti.tag(tags)
 
-        for c2 in object_c2.get_attributes_by_relation('c2-ipport'):
+        for c2 in object_c2.get_attributes_by_relation("c2-ipport"):
             ip, port = c2["value"].split("|")
             obs_yeti = observable.TYPE_MAPPING[MISP_Attribute_TO_IMPORT["ip-src"]](
                 value=ip
