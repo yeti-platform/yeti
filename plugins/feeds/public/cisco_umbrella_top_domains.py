@@ -14,9 +14,9 @@ class CiscoUmbrellaTopDomains(task.FeedTask):
         "name": "CloudflareTopDomains",
         "description": "Import Cloudflare top domains",
     }
-    _SOURCE: ClassVar[
-        "str"
-    ] = "http://s3-us-west-1.amazonaws.com/umbrella-static/top-1m.csv.zip"
+    _SOURCE: ClassVar["str"] = (
+        "http://s3-us-west-1.amazonaws.com/umbrella-static/top-1m.csv.zip"
+    )
 
     def run(self):
         top_domains = yeti_config.get("umbrella", "top_domains", 10000)
