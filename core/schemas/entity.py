@@ -137,7 +137,8 @@ class Investigation(Entity):
 
     reference: str = ""
 
-class location(Entity):
+
+class Location(Entity):
     _type_filter: ClassVar[str] = EntityType.location
     type: Literal[EntityType.location] = EntityType.location
 
@@ -148,6 +149,17 @@ class location(Entity):
     country: str = ""
     city: str = ""
     country_code: int = 0
+
+    def set_country_name_by_code(self, code: int):
+        import pycountry
+
+        self.country = pycountry.countries.get(numeric=str(code)).name
+
+    def set_country_code_by_name(self, name: str):
+        import pycountry
+
+        self.country_code = pycountry.countries.get(name=name).numeric
+
 
 class SeverityType(str, Enum):
     none = "none"
