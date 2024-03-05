@@ -141,4 +141,4 @@ class EntityTest(unittest.TestCase):
         location = Location(name="France").save()
         location.set_country_code_by_name(location.name)
         self.assertEqual(location.name, "France")
-        self.assertEqual(location.country_code, "FR")
+        self.assertEqual(location.country_code, 250)
