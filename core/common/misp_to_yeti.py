@@ -51,6 +51,9 @@ class MispToYeti:
             obs_yeti = observable.TYPE_MAPPING[
                 MISP_Attribute_TO_IMPORT[attribute.get("type")]  # type: ignore
             ](value=attribute.get("value")).save()
+            
+            if attribute['Tag']:
+                obs_yeti.tag([t["name"] for t in attribute["Tag"]])
             invest.link_to(obs_yeti, "imported_by_misp", description)
             print(f"Attribute {attribute.get('value')} imported")
             return obs_yeti
@@ -90,7 +93,7 @@ class MispToYeti:
         invest = entity.Investigation(name=self.misp_event["info"]).save()
 
         if self.misp_event["Tag"]:
-            invest.tag(self.misp_event["Tag"])
+            invest.tag([t['name'] for t in self.misp_event["Tag"]])
         invest.description = (
             f"Org {self.misp_event['Orgc']['name']} Event id: {self.misp_event['id']}"
         )
