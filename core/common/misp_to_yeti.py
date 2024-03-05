@@ -1,11 +1,11 @@
+import json
 import logging
-from datetime import timedelta
 
 import dateparser
 import pycountry
-from pymisp import MISPObject, MISPEvent, MISPAttribute
+from pymisp import MISPAttribute, MISPEvent, MISPObject
+
 from core.schemas import entity, indicator, observable
-import json
 
 MISP_Attribute_TO_IMPORT = {
     "btc": observable.ObservableType.wallet,
