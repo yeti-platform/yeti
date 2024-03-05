@@ -10,6 +10,7 @@ from core.schemas.observables import (
     certificate,
     cidr,
     command_line,
+    cookie,
     docker_image,
     email,
     file,
@@ -530,3 +531,16 @@ class ObservableTest(unittest.TestCase):
                     2023, 1, 1, tzinfo=datetime.timezone.utc
                 ),
             ).save()
+    def test_cookie(self):
+        cookie_obs = cookie.Cookie(value="test_cookie")
+        cookie_obs.http_only = True
+        cookie_obs.secure = True
+        cookie_obs.type_cookie = "Session management"
+        cookie_obs.expires = datetime.datetime.now(datetime.timezone.utc)
+        cookie_obs.save()
+        self.assertEqual(cookie_obs.type, "cookie")
+        self.assertEqual(cookie_obs.http_only, True)
+        self.assertEqual(cookie_obs.secure, True)
+        self.assertEqual(cookie_obs.type_cookie, "Session management")
+        self.assertIsNotNone(cookie_obs.expires)
+

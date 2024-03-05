@@ -20,6 +20,7 @@ class ObservableType(str, Enum):
     certificate = "certificate"
     cidr = "cidr"
     command_line = "command_line"
+    cookie = "cookie"
     docker_image = "docker_image"
     email = "email"
     file = "file"
@@ -193,6 +194,7 @@ from core.schemas.observables import (  # noqa: E402
     certificate,  # noqa: F401
     cidr,  # noqa: F401
     command_line,  # noqa: E402, F401
+    cookie,  # noqa: F401
     docker_image,  # noqa: F401
     email,  # noqa: F401
     file,  # noqa: F401
