@@ -7,6 +7,7 @@ import pycountry
 from core.schemas import entity, indicator, observable
 
 MISP_Attribute_TO_IMPORT = {
+    "btc": observable.ObservableType.wallet,
     "domain": observable.ObservableType.hostname,
     "hostname": observable.ObservableType.hostname,
     "ip-dst": observable.ObservableType.ipv4,
@@ -51,7 +52,7 @@ class MispToYeti:
             obs_yeti = observable.TYPE_MAPPING[
                 MISP_Attribute_TO_IMPORT[attribute.get("type")]  # type: ignore
             ](value=attribute.get("value")).save()
-            tags = attribute.get("Tag") 
+            tags = attribute.get("Tag")
             if tags:
                 obs_yeti.tag([t["name"] for t in tags])
             invest.link_to(obs_yeti, "imported_by_misp", description)
@@ -155,7 +156,7 @@ class MispToYeti:
         )
 
     def __import_btc_wallet(self, invest: entity.Investigation, object_btc: dict):
-        btc = observable.wallet.Wallet(value=object_btc["wallet-address"])
+        btc = self.attr_misp_to_yeti(invest, object_btc["wallet-address"])
         context = {}
         if object_btc["BTC_received"]:
             context["BTC_received"] = object_btc["BTC_received"]
