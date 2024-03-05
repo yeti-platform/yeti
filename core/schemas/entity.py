@@ -158,7 +158,7 @@ class Location(Entity):
     def set_country_code_by_name(self, name: str):
         import pycountry
 
-        self.country_code = pycountry.countries.get(name=name).numeric
+        self.country_code = int(pycountry.countries.get(name=name).numeric)
 
 
 class SeverityType(str, Enum):
