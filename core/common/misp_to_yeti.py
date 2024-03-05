@@ -114,16 +114,23 @@ class MispToYeti:
         invest.save()
 
     def __import_av_signature(
-        self, invest: entity.Investigation, object_av_signature: dict
+        self, invest: entity.Investigation, object_av_signature: MISPObject
     ):
+        signature = object_av_signature.get_attributes_by_relation("signature")[0]
+        description = object_av_signature.get_attributes_by_relation("Text")
+        software = object_av_signature.get_attributes_by_relation("software")
+
         av_sig = indicator.av_signature(
-            name=object_av_signature["signature"],
-            software=object_av_signature["software"],
+            name=signature["value"],
+            pattern=signature["value"],
             diamond=indicator.DiamondModel.capability,
-            pattern=object_av_signature["signature"],
             location="misp",
-        )
-        av_sig.description = object_av_signature["description"]
+        ).save()
+
+        if description:
+            av_sig.description = description[0]["value"]
+        if software:
+            av_sig.software = software[0]["value"]
         av_sig.save()
         invest.link_to(
             av_sig, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"

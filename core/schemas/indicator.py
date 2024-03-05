@@ -316,7 +316,7 @@ class ForensicArtifact(Indicator):
 class av_signature(Indicator):
     _type_filter: ClassVar[str] = IndicatorType.av_signature
     type: Literal[IndicatorType.av_signature] = IndicatorType.av_signature
-    software: str
+    software: str = ""
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
