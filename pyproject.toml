@@ -26,6 +26,7 @@ pyyaml = "^6.0.1"
 parameterized = "^0.9.0"
 artifacts = {git = "https://github.com/forensicartifacts/artifacts.git", rev = "main"}
 pycountry = "^23.12.11"
+dateparser = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"

@@ -2,6 +2,7 @@ import logging
 import pycountry
 from datetime import timedelta
 from core.schemas import entity, observable, indicator
+import dateparser
 
 MISP_Attribute_TO_IMPORT = {
     "domain": observable.ObservableType.hostname,
@@ -23,6 +24,7 @@ MISP_Attribute_TO_IMPORT = {
     "filename": observable.ObservableType.file,
     "regkey": observable.ObservableType.registry_key,
     "asn": observable.ObservableType.asn,
+    "cookie": observable.ObservableType.cookie,
 }
 
 
@@ -37,17 +39,18 @@ class MispToYeti:
             "c2-list": self.__import_c2_list,
             "crowdsec-ip-context": self.__import_crowdsec_ip_context,
             "command-line": self.__import_commande_line,
+            "cookie": self.__import_cookie,
         }
 
     def attr_misp_to_yeti(
-        self, invest: entity.Investigation, attribute: dict
+        self, invest: entity.Investigation, attribute: dict, description: str ="" 
     ) -> observable.Observable:  # type: ignore
         if attribute.get("type") in MISP_Attribute_TO_IMPORT:
             obs_yeti = observable.TYPE_MAPPING[
                 MISP_Attribute_TO_IMPORT[attribute.get("type")]  # type: ignore
             ](value=attribute.get("value")).save()
             invest.link_to(
-                obs_yeti, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+                obs_yeti, "imported_by_misp", description
             )
             print(f"Attribute {attribute.get('value')} imported")
             return obs_yeti
@@ -56,12 +59,10 @@ class MispToYeti:
         self, attribute_misp: dict, event: dict, obs_yeti: observable.Observable
     ):
         context = {}
-        event_id = attribute_misp.get("event_id")
         context["Org"] = event["Org"]["name"]
-        context["event_id"] = event_id
+       
         if attribute_misp.get("comment"):
             context["comment"] = attribute_misp.get("comment")
-
         obs_yeti.add_context("misp", context)
 
     def add_obs(self, invest: entity.Investigation, obs_misp: dict):
@@ -82,7 +83,7 @@ class MispToYeti:
                 invest.link_to(
                     obs_yeti,
                     "imported_by_misp",
-                    f"misp {self.misp_event['Orgc']['name']}",
+                    description=f"misp {self.misp_event['Orgc']['name']}",
                 )
 
     def misp_to_yeti(self):
@@ -111,7 +112,7 @@ class MispToYeti:
             diamond=indicator.DiamondModel.capability,
             pattern=object_av_signature["signature"],
             location='misp',
-        ).save()
+        )    
         av_sig.description = object_av_signature["description"]
         av_sig.save()
         invest.link_to(
@@ -119,7 +120,7 @@ class MispToYeti:
         )
 
     def __import_asn_object(self, invest: entity.Investigation, object_asn: dict):
-        asn = observable.asn.ASN(value=object_asn["asn"]).save()
+        asn = self.attr_misp_to_yeti(invest, object_asn['value'], description=f"misp {self.misp_event['Orgc']['name']}")
         context = {}
 
         if subnet := object_asn.get("subnet"):
@@ -145,7 +146,7 @@ class MispToYeti:
         )
 
     def __import_btc_wallet(self, invest: entity.Investigation, object_btc: dict):
-        btc = observable.wallet.Wallet(value=object_btc["wallet-address"]).save()
+        btc = observable.wallet.Wallet(value=object_btc["wallet-address"])
         context = {}
         if object_btc["BTC_received"]:
             context["BTC_received"] = object_btc["BTC_received"]
@@ -159,7 +160,8 @@ class MispToYeti:
             btc.add_context(f"misp {self.misp_event['Orgc']['name']} ", context)
         invest.link_to(
             btc, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
-        )
+        ) 
+        btc.save()
 
     def __import_c2_list(self, invest: entity.Investigation, object_c2_list: dict):
         list_c2_ip = filter(lambda x: x["type"] == "c2-ip", object_c2_list["Attribute"])
@@ -167,7 +169,7 @@ class MispToYeti:
             lambda x: x["type"] == "c2-ipport", object_c2_list["Attribute"]
         )
         for c2 in list_c2_ip:
-            obs_yeti = self.attr_misp_to_yeti(invest, c2)
+            obs_yeti = self.attr_misp_to_yeti(invest, c2, description=f"misp {self.misp_event['Orgc']['name']}")
             obs_yeti.link_to_tag(object_c2_list["threat"], timedelta(days=30))
         for c2 in list_c2_domain:
             ip, port = c2["value"].split("|")
@@ -178,12 +180,12 @@ class MispToYeti:
             obs_yeti.add_context("misp", {"port": port})
     
     def __import_crowdsec_ip_context(self, invest: entity.Investigation, object_crowdsec_ip: dict):
-        ip = observable.ipv4.IPv4(value=object_crowdsec_ip["ip"]).save()
+        ip = self.attr_misp_to_yeti(invest, object_crowdsec_ip['ip'],description=f"misp {self.misp_event['Orgc']['name']} CrowdSec")
         
         as_num = object_crowdsec_ip.get("as_num")
         if as_num:
-            as_num = observable.asn.ASN(value=as_num).save()
-            ip.link_to(as_num, "part_of", "asn")
+            asn = self.attr_misp_to_yeti(invest, as_num)
+            ip.link_to(asn, "part_of", "asn")
         
         context = {}
         attack_details = object_crowdsec_ip.get("attack-details")
@@ -238,12 +240,9 @@ class MispToYeti:
 
         reverse_dns = object_crowdsec_ip.get("reverse_dns")
         if reverse_dns:
-            hostname = observable.hostname.Hostname(value=reverse_dns).save()
+            hostname = self.attr_misp_to_yeti(invest, reverse_dns,description=f"misp {self.misp_event['Orgc']['name']} CrowdSec")
             ip.link_to(hostname, "resolved_to", "hostname")
-            invest.link_to(hostname, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} CrowdSec")
-        
-        invest.link_to(ip, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} CrowdSec")
-
+            
     def __import_commande_line(self, invest: entity.Investigation, object_command_line: dict):
             cmd_line = object_command_line["value"]
             cmd_line = observable.command_line.CommandLine(value=cmd_line).save()
@@ -256,6 +255,24 @@ class MispToYeti:
                 cmd_line.add_context(f"misp {self.misp_event['Orgc']['name']}", context)        
             invest.link_to(cmd_line, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}")
     
+    def __import_cookie(self, invest: entity.Investigation, object_cookie: dict):
         
-
-    
+        name = object_cookie['name']
+        
+        cookie_attr = object_cookie['cookie']
+        cookie = self.attr_misp_to_yeti(invest, cookie_attr,description=f"misp {self.misp_event['Orgc']['name']}")
+        cookie.name = name
+        https_only = object_cookie.get("http-only")
+        if https_only:
+            cookie.http_only = https_only
+        secure = object_cookie.get("secure")
+        if secure:
+            cookie.secure = secure
+        cookie_type = object_cookie.get("type")
+        if cookie_type:
+            cookie.type_cookie = cookie_type
+        expires = object_cookie.get("expires")
+        if expires:
+            cookie.expires = dateparser.parse(expires)
+        cookie.save()
+        

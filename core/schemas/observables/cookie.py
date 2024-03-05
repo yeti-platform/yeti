@@ -19,5 +19,7 @@ class Cookie(observable.Observable):
         "Other",
     ] = "Session management"
     expires: Optional[datetime.datetime] = None
+    name: Optional[str] = None
+    cookie: Optional[str] = None
 
 observable.TYPE_MAPPING[observable.ObservableType.cookie] = Cookie
