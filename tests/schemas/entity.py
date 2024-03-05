@@ -6,11 +6,11 @@ from core.schemas import tag
 from core.schemas.entity import (
     AttackPattern,
     Entity,
+    Location,
     Malware,
     ThreatActor,
     Tool,
     Vulnerability,
-    Location,
 )
 from core.schemas.observables import hostname
 
