@@ -145,7 +145,10 @@ class location(Entity):
     reference: str = ""
     lat: float = 0.0
     lon: float = 0.0
-    
+    country: str = ""
+    city: str = ""
+    country_code: int = 0
+
 class SeverityType(str, Enum):
     none = "none"
     low = "low"
