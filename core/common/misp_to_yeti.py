@@ -1,8 +1,10 @@
 import logging
-import pycountry
 from datetime import timedelta
-from core.schemas import entity, observable, indicator
+
 import dateparser
+import pycountry
+
+from core.schemas import entity, indicator, observable
 
 MISP_Attribute_TO_IMPORT = {
     "domain": observable.ObservableType.hostname,
@@ -25,6 +27,7 @@ MISP_Attribute_TO_IMPORT = {
     "regkey": observable.ObservableType.registry_key,
     "asn": observable.ObservableType.asn,
     "cookie": observable.ObservableType.cookie,
+    "other": observable.ObservableType.generic,
 }
 
 
@@ -275,4 +278,70 @@ class MispToYeti:
         if expires:
             cookie.expires = dateparser.parse(expires)
         cookie.save()
+
+    def __import_cs_beaconing(self, invest: entity.Investigation, object_cs_beaconing: dict):
+        cs_malware = entity.Malware(name="Cobalt Strike").save()
+        sha256_obs =  self.attr_misp_to_yeti(invest, object_cs_beaconing['sha256'], description=f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing")
+        sha1_obs = self.attr_misp_to_yeti(invest, object_cs_beaconing['sha1'], description=f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing")
+        md5_obs = self.attr_misp_to_yeti(invest, object_cs_beaconing['md5'], description=f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing")
+        file_cs = observable.file.File(value=f"FILE:{sha256_obs}").save()
+        file_cs.md5 = md5_obs.value
+        file_cs.sha1 = sha1_obs.value
+        cs_malware.link_to(sha256_obs, "file", "sha256")
+        cs_malware.link_to(sha1_obs, "file", "sha1")
+        cs_malware.link_to(md5_obs, "file", "md5")
+        cs_malware.link_to(file_cs, "file", "file")
+        file_cs.link_to(sha256_obs, "file", "sha256")
+        file_cs.link_to(sha1_obs, "file", "sha1")
+        file_cs.link_to(md5_obs, "file", "md5")
+
+        invest.link_to(
+            cs_malware, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+        )
+        asn  = self.attr_misp_to_yeti(invest, object_cs_beaconing['asn'])
+        cs_malware.link_to(asn, "part_of", "asn")
+
+        geo = object_cs_beaconing.get("geo")
+        country = None
+        if geo:
+            country = entity.Location(name=geo, country=geo)
+            country.set_country_code_by_name(country.name)
+            country.save()
+            invest.link_to(country, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing")
+
+        c2_url = filter(lambda x: x["type"] == "c2", object_cs_beaconing["Attribute"])
+        for url in c2_url:
+            obs_yeti = self.attr_misp_to_yeti(invest, url, description=f"misp {self.misp_event['Orgc']['name']}")
+            obs_yeti.link_to(asn, "part_of", "asn")
+            cs_malware.link_to(obs_yeti, "downloaded", "c2")
+           
+        ips  = filter(lambda x: x["type"] == "ip", object_cs_beaconing["Attribute"])
+        for ip_value in ips:
+            ip = self.attr_misp_to_yeti(invest, ip_value, description=f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing") 
+            ip.link_to(asn, "part_of", "asn")
+            if country:
+                ip.link_to(country, "located_at", "location")
+            cs_malware.link_to(ip, "communicate_with", "ip")
+
+        city = object_cs_beaconing.get("city")
+        if city:
+            location = entity.Location(name=city,city=city).save()
+            ip.link_to(location, "located_at", "location")
+            invest.link_to(location, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing")
         
+        jar_md5= object_cs_beaconing["jar-md5"]
+        app_c2 = self.attr_misp_to_yeti(invest, jar_md5, description=f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing")
+        cs_malware.link_to(app_c2, "jar-md5", "MD5 of adversary cobaltstrike.jar file")
+
+        watermark = object_cs_beaconing.get("watermark")
+        watermark_yeti = None
+        if watermark:
+            watermark_yeti = self.attr_misp_to_yeti(invest, watermark, description=f"misp {self.misp_event['Orgc']['name']} Cobalstrike Beaconing")
+            watermark_yeti.link_to(app_c2, "watermarked", "watermark")           
+            cs_malware.link_to(watermark_yeti, "watermarked", "watermark")
+        
+       
+
+        
+
+
