@@ -59,10 +59,10 @@ class MispToYeti:
             return obs_yeti
 
     def add_context_by_misp(
-        self, attribute_misp: dict, event: dict, obs_yeti: observable.Observable
+        self, attribute_misp: dict, obs_yeti: observable.Observable
     ):
         context = {}
-        context["Org"] = event["Org"]["name"]
+        context["Org"] = self.misp_event["Org"]["name"]
 
         if attribute_misp.get("comment"):
             context["comment"] = attribute_misp.get("comment")
@@ -73,7 +73,7 @@ class MispToYeti:
             obs_yeti = self.attr_misp_to_yeti(invest, attr)
 
             if obs_yeti:
-                self.add_context_by_misp(attr, obs_misp, obs_yeti)
+                self.add_context_by_misp(attr, obs_yeti)
                 yield obs_yeti
             else:
                 print(f"Attribute {attr} not imported")
@@ -103,7 +103,7 @@ class MispToYeti:
         for attribute_misp in self.misp_event["Attribute"]:
             obs_yeti = self.attr_misp_to_yeti(invest, attribute_misp)
             if obs_yeti:
-                self.add_context_by_misp(attribute_misp, self.misp_event, obs_yeti)
+                self.add_context_by_misp(attribute_misp, obs_yeti)
             else:
                 print(f"Attribute {attribute_misp} not imported")
         invest.save()
