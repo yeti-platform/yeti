@@ -13,9 +13,9 @@ class ThreatviewC2(task.FeedTask):
         "description": "This feed contains Cobalt Strike C2 IPs and Hostnames",
     }
 
-    _SOURCE: ClassVar[
-        "str"
-    ] = "https://threatview.io/Downloads/High-Confidence-CobaltstrikeC2_IP_feed.txt"
+    _SOURCE: ClassVar["str"] = (
+        "https://threatview.io/Downloads/High-Confidence-CobaltstrikeC2_IP_feed.txt"
+    )
 
     def run(self):
         response = self._make_request(self._SOURCE, sort=False)
