@@ -241,6 +241,7 @@ class MispToYeti:
         country_code = object_crowdsec_ip.get("country_code")
 
         if city or country or country_code:
+            location = None
             if city:
                 location = entity.Location(name=city, city=city).save()
 
@@ -293,19 +294,26 @@ class MispToYeti:
             ip.link_to(hostname, "resolved_to", "hostname")
 
     def __import_commande_line(
-        self, invest: entity.Investigation, object_command_line: dict
+        self, invest: entity.Investigation, object_command_line: MISPObject
     ):
-        cmd_line = object_command_line["value"]
-        cmd_line = observable.command_line.CommandLine(value=cmd_line).save()
-
-        description = object_command_line.get("description")
+        cmd_line = object_command_line.get_attributes_by_relation("value")[0]
+        description_misp = object_command_line.get_attributes_by_relation(
+            "description"
+        )[0]
+        description = description_misp["value"] if description_misp else ""
+        cmd_line_obs = observable.command_line.CommandLine(
+            value=cmd_line["value"]
+        ).save()
         context = {}
+
         if description:
             context["description"] = description
+
         if context:
-            cmd_line.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
+            cmd_line_obs.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
+
         invest.link_to(
-            cmd_line, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+            cmd_line_obs, "imported by misp", f"misp {self.misp_event['Orgc']['name']}"
         )
 
     def __import_cookie(self, invest: entity.Investigation, object_cookie: dict):
