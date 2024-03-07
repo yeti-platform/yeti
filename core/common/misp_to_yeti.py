@@ -26,7 +26,7 @@ MISP_Attribute_TO_IMPORT = {
     "email": observable.ObservableType.email,
     "filename": observable.ObservableType.file,
     "regkey": observable.ObservableType.registry_key,
-    "asn": observable.ObservableType.asn,
+    "AS": observable.ObservableType.asn,
     "cookie": observable.ObservableType.cookie,
     "other": observable.ObservableType.generic,
 }
@@ -209,47 +209,56 @@ class MispToYeti:
             obs_yeti.add_context("misp", {"port": port})
 
     def __import_crowdsec_ip_context(
-        self, invest: entity.Investigation, object_crowdsec_ip: dict
+        self, invest: entity.Investigation, object_crowdsec_ip: MISPObject
     ):
+        ip_attr = object_crowdsec_ip.get_attributes_by_relation("ip")[0]
         ip = self.attr_misp_to_yeti(
-            invest,
-            object_crowdsec_ip["ip"],
-            description=f"misp {self.misp_event['Orgc']['name']} CrowdSec",
+            invest, ip_attr, description=f"misp {self.misp_event['Orgc']['name']}"
         )
 
-        as_num = object_crowdsec_ip.get("as_num")
+        as_num = object_crowdsec_ip.get_attributes_by_relation("as-num")
+        as_name = object_crowdsec_ip.get_attributes_by_relation("as-name")
+        as_obj = None
         if as_num:
-            asn = self.attr_misp_to_yeti(invest, as_num)
-            ip.link_to(asn, "part_of", "asn")
+            as_obj = observable.asn.ASN(value=as_num[0].value).save()
+            ip.link_to(as_obj, "part_of", "asn")
+        if as_obj and as_name:
+            as_obj.name = as_name[0].value
 
         context = {}
-        attack_details = object_crowdsec_ip.get("attack-details")
+        attack_details = object_crowdsec_ip.get_attributes_by_relation("attack-details")
 
         if attack_details:
-            context["attack-details"] = attack_details
+            context["attack-details"] = attack_details[0].value
 
         background_noise = object_crowdsec_ip.get("background-noise")
         if background_noise:
-            context["background-noise"] = background_noise
+            context["background-noise"] = background_noise[0].value
 
         behaviors = object_crowdsec_ip.get("behaviors")
         if behaviors:
-            context["behaviors"] = behaviors
+            context["behaviors"] = behaviors[0].value
 
-        city = object_crowdsec_ip.get("city")
-        country = object_crowdsec_ip.get("country")
-        country_code = object_crowdsec_ip.get("country_code")
+        city = object_crowdsec_ip.get_attributes_by_relation("city")
+        country = object_crowdsec_ip.get_attributes_by_relation("country")
+        country_code = object_crowdsec_ip.get_attributes_by_relation("country_code")
 
         if city or country or country_code:
             location = None
             if city:
-                location = entity.Location(name=city, city=city).save()
+                location = entity.Location(
+                    name=city[0].value, city=city[0].value
+                ).save()
 
             if country:
-                location = entity.Location(name=country, country=country).save()
-                location.set_country_code_by_name(country)
+                location = entity.Location(
+                    name=country[0].value, country=country[0].value
+                ).save()
+                location.set_country_code_by_name(country[0].value)
             if country_code:
-                country_name = pycountry.countries.get(alpha_2=country_code).name
+                country_name = pycountry.countries.get(
+                    alpha_2=country_code[0].value
+                ).name
                 location = entity.Location(
                     name=country_name, country=country_name
                 ).save()
@@ -260,35 +269,35 @@ class MispToYeti:
                     "imported_by_misp",
                     f"misp {self.misp_event['Orgc']['name']} CrowdSec",
                 )
-        dst_port = object_crowdsec_ip.get("dst-port")
+        dst_port = object_crowdsec_ip.get_attributes_by_relation("dst-port")
         if dst_port:
-            context["dst_port"] = dst_port
+            context["dst_port"] = dst_port[0].value
 
-        ip_range_scope = object_crowdsec_ip.get("ip-range-scope")
+        ip_range_scope = object_crowdsec_ip.get_attributes_by_relation("ip-range-scope")
         if ip_range_scope:
-            context["ip-range-scope"] = ip_range_scope
+            context["ip-range-scope"] = ip_range_scope[0].value
 
-        trust = object_crowdsec_ip.get("trust")
+        trust = object_crowdsec_ip.get_attributes_by_relation("trust")
         if trust:
-            context["trust"] = trust
+            context["trust"] = trust[0].value
 
-        ip_range = object_crowdsec_ip.get("ip-range")
+        ip_range = object_crowdsec_ip.get_attributes_by_relation("ip-range")
         if ip_range:
-            cidr_obs = observable.cidr.CIDR(value=ip_range).save()  # type: ignore
+            cidr_obs = observable.cidr.CIDR(value=ip_range[0].value).save()  # type: ignore
             ip.link_to(cidr_obs, "part_of", "subnet")
             invest.link_to(
                 cidr_obs,
                 "imported_by_misp",
                 f"misp {self.misp_event['Orgc']['name']} CrowdSec",
             )
+        if context:
+            ip.add_context(f"misp {self.misp_event['Orgc']['name']} CrowdSec", context)
 
-        ip.add_context(f"misp {self.misp_event['Orgc']['name']} CrowdSec", context)
-
-        reverse_dns = object_crowdsec_ip.get("reverse_dns")
+        reverse_dns = object_crowdsec_ip.get_attributes_by_relation("reverse_dns")
         if reverse_dns:
             hostname = self.attr_misp_to_yeti(
                 invest,
-                reverse_dns,
+                reverse_dns[0],
                 description=f"misp {self.misp_event['Orgc']['name']} CrowdSec",
             )
             ip.link_to(hostname, "resolved_to", "hostname")
