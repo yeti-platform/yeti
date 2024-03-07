@@ -316,10 +316,10 @@ class MispToYeti:
             cmd_line_obs, "imported by misp", f"misp {self.misp_event['Orgc']['name']}"
         )
 
-    def __import_cookie(self, invest: entity.Investigation, object_cookie: dict):
-        name = object_cookie["name"]
+    def __import_cookie(self, invest: entity.Investigation, object_cookie: MISPObject):
+        name = object_cookie.get_attributes_by_relation("cookie-name")[0]["value"]
 
-        cookie_attr = object_cookie["cookie"]
+        cookie_attr = object_cookie.get_attributes_by_relation("cookie")[0]
         cookie = self.attr_misp_to_yeti(
             invest, cookie_attr, description=f"misp {self.misp_event['Orgc']['name']}"
         )
