@@ -396,7 +396,19 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_path(self) -> None:
         """Tests creating a path."""
-        observable = path.Path(value="/var/test").save()
+        observable = path.Path(value="/var/test")
+        observable.creation_time = datetime.datetime(
+            2023, 1, 1, tzinfo=datetime.timezone.utc
+        )
+        observable.modification_time = datetime.datetime(
+            2023, 1, 1, tzinfo=datetime.timezone.utc
+        )
+        observable.access_time = datetime.datetime(
+            2023, 1, 1, tzinfo=datetime.timezone.utc
+        )
+        observable.path_encoding = "utf-8"
+        observable.save()
+
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "/var/test")
         self.assertIsInstance(observable, path.Path)
