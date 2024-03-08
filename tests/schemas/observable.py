@@ -407,7 +407,7 @@ class ObservableTest(unittest.TestCase):
             2023, 1, 1, tzinfo=datetime.timezone.utc
         )
         observable.path_encoding = "utf-8"
-        observable.save()
+        observable=observable.save()
 
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "/var/test")
