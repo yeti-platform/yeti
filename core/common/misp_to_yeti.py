@@ -45,6 +45,7 @@ class MispToYeti:
             "command-line": self.__import_commande_line,
             "cookie": self.__import_cookie,
             "cs-beacon-config": self.__import_cs_beaconing,
+            "domain-ip": self.__import_domain_ip,
         }
 
     def attr_misp_to_yeti(
@@ -479,3 +480,61 @@ class MispToYeti:
             )
             watermark_yeti.link_to(app_c2, "watermarked", "watermark")
             cs_malware.link_to(watermark_yeti, "watermarked", "watermark")
+
+    def __import_domain_ip(
+        self, invest: entity.Investigation, object_domain_ip: MISPObject
+    ):
+        domain_attr = object_domain_ip.get_attributes_by_relation("domain")
+        ip_attr = object_domain_ip.get_attributes_by_relation("ip")
+        hostname_attr = object_domain_ip.get_attributes_by_relation("hostname")
+        ip_obj = None
+        domain_obj = None
+        hostname_obj = None
+
+        if domain_attr:
+            domain_obj = self.attr_misp_to_yeti(
+                invest,
+                domain_attr[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+        if ip_attr:
+            ip_obj = self.attr_misp_to_yeti(
+                invest,
+                ip_attr[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+        if hostname_attr:
+            hostname_obj = self.attr_misp_to_yeti(
+                invest,
+                hostname_attr[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+        if hostname_obj and domain_obj and ip_obj:
+            domain_obj.link_to(hostname_obj, "resolved_to", "hostname")
+            domain_obj.link_to(ip_obj, "resolved_to", "ip")
+            hostname_obj.link_to(ip_obj, "resolved_to", "ip")
+
+        elif domain_obj and ip_obj and not hostname_obj:
+            domain_obj.link_to(ip_obj, "resolved_to", "ip")
+        elif not domain_obj and ip_obj and hostname_obj:
+            hostname_obj.link_to(ip_obj, "resolved_to", "ip")
+
+        context = {}
+        last_seen = object_domain_ip.get("last-seen")
+        if last_seen:
+            context["last-seen"] = last_seen
+
+        first_seen = object_domain_ip.get("first-seen")
+        if first_seen:
+            context["first-seen"] = first_seen
+
+        description = object_domain_ip.get("text")
+        if description:
+            context["description"] = description
+
+        if hostname_obj:
+            hostname_obj.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
+        if domain_obj:
+            domain_obj.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
+        if ip_obj:
+            ip_obj.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
