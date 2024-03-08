@@ -538,3 +538,145 @@ class MispToYeti:
             domain_obj.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
         if ip_obj:
             ip_obj.add_context(f"misp {self.misp_event['Orgc']['name']}", context)
+
+    def __import_dns_record(
+        self, invest: entity.Investigation, object_dns_record: MISPObject
+    ):
+        queried_domain = object_dns_record.get_attributes_by_relation("queried-domain")[
+            0
+        ]
+        queried_obj = self.attr_misp_to_yeti(
+            invest,
+            queried_domain,
+            description=f"misp {self.misp_event['Orgc']['name']}",
+        )
+
+        a_record = object_dns_record.get_attributes_by_relation("a-record")
+        aaaa_record = object_dns_record.get_attributes_by_relation("aaaa-record")
+        cname_record = object_dns_record.get_attributes_by_relation("cname-record")
+        mx_record = object_dns_record.get_attributes_by_relation("mx-record")
+        ns_record = object_dns_record.get_attributes_by_relation("ns-record")
+        soa_record = object_dns_record.get_attributes_by_relation("soa-record")
+        txt_record = object_dns_record.get_attributes_by_relation("txt-record")
+        spf_record = object_dns_record.get_attributes_by_relation("spf-record")
+        ptr_record = object_dns_record.get_attributes_by_relation("ptr-record")
+        srv_record = object_dns_record.get_attributes_by_relation("srv-record")
+        description = object_dns_record.get_attributes_by_relation("Text")
+
+        context = {}
+        if description:
+            context["description"] = description[0]["value"]
+
+        if a_record:
+            a_red_obj = self.attr_misp_to_yeti(
+                invest,
+                a_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            if context:
+                a_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+            queried_obj.link_to(a_red_obj, "resolved_to", "ip")
+        if aaaa_record:
+            aaaa_red_obj = self.attr_misp_to_yeti(
+                invest,
+                aaaa_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            if context:
+                aaaa_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+
+            queried_obj.link_to(aaaa_red_obj, "resolved_to", "ip")
+        if cname_record:
+            cname_red_obj = self.attr_misp_to_yeti(
+                invest,
+                cname_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            if context:
+                cname_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+            queried_obj.link_to(cname_red_obj, "cname", "hostname")
+        if mx_record:
+            mx_red_obj = self.attr_misp_to_yeti(
+                invest,
+                mx_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            if context:
+                mx_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+            queried_obj.link_to(mx_red_obj, "mx", "hostname")
+        if ns_record:
+            ns_red_obj = self.attr_misp_to_yeti(
+                invest,
+                ns_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            if context:
+                ns_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+
+            queried_obj.link_to(ns_red_obj, "ns", "hostname")
+        if soa_record:
+            soa_red_obj = self.attr_misp_to_yeti(
+                invest,
+                soa_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            queried_obj.link_to(soa_red_obj, "soa", "hostname")
+            if context:
+                soa_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+
+        if txt_record:
+            txt_red_obj = self.attr_misp_to_yeti(
+                invest,
+                txt_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            queried_obj.link_to(txt_red_obj, "txt", "hostname")
+            if context:
+                txt_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+        if spf_record:
+            spf_red_obj = self.attr_misp_to_yeti(
+                invest,
+                spf_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            queried_obj.link_to(spf_red_obj, "spf", "hostname")
+            if context:
+                spf_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+        if ptr_record:
+            ptr_red_obj = self.attr_misp_to_yeti(
+                invest,
+                ptr_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            queried_obj.link_to(ptr_red_obj, "ptr", "hostname")
+            if context:
+                ptr_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
+        if srv_record:
+            srv_red_obj = self.attr_misp_to_yeti(
+                invest,
+                srv_record[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            queried_obj.link_to(srv_red_obj, "srv", "hostname")
+            if context:
+                srv_red_obj.add_context(
+                    f"misp {self.misp_event['Orgc']['name']}", context
+                )
