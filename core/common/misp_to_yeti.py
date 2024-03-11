@@ -29,6 +29,7 @@ MISP_Attribute_TO_IMPORT = {
     "AS": observable.ObservableType.asn,
     "cookie": observable.ObservableType.cookie,
     "other": observable.ObservableType.generic,
+    "path": observable.ObservableType.path,
 }
 
 
@@ -46,6 +47,8 @@ class MispToYeti:
             "cookie": self.__import_cookie,
             "cs-beacon-config": self.__import_cs_beaconing,
             "domain-ip": self.__import_domain_ip,
+            "dns-record": self.__import_dns_record,
+            "directory": self.__import_directory,
         }
 
     def attr_misp_to_yeti(
@@ -680,3 +683,26 @@ class MispToYeti:
                 srv_red_obj.add_context(
                     f"misp {self.misp_event['Orgc']['name']}", context
                 )
+
+    def __import_directory(self, invest: entity.Investigation, obj_path: MISPObject):
+        path_attr = obj_path.get_attributes_by_relation("path")[0]
+        path = observable.path.Path(value=path_attr["value"])
+
+        creation_time = obj_path.get_attributes_by_relation("creation-time")
+        if creation_time:
+            path.creation_time = creation_time[0]["value"]
+
+        modification_time = obj_path.get_attributes_by_relation("modification-time")
+        if modification_time:
+            path.modification_time = modification_time[0]["value"]
+        access_time = obj_path.get_attributes_by_relation("access-time")
+        if access_time:
+            path.access_time = access_time[0]["value"]
+
+        path_encoding = obj_path.get_attributes_by_relation("path-encoding")
+        if path_encoding:
+            path.path_encoding = path_encoding[0]["value"]
+        path=path.save()
+        invest.link_to(
+            path, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+        )
