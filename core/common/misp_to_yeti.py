@@ -702,7 +702,7 @@ class MispToYeti:
         path_encoding = obj_path.get_attributes_by_relation("path-encoding")
         if path_encoding:
             path.path_encoding = path_encoding[0]["value"]
-        path=path.save()
+        path = path.save()
         invest.link_to(
             path, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
         )
