@@ -706,3 +706,72 @@ class MispToYeti:
         invest.link_to(
             path, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
         )
+
+    def __import_email(self, invest: entity.Investigation, object_email: MISPObject):
+        email_attr = object_email.get_attributes_by_relation("email")[0]
+        email = observable.email.Email(value=email_attr["value"]).save()
+        invest.link_to(
+            email, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
+        )
+        bbc_email = object_email.get_attributes_by_relation("bcc-email")
+        if bbc_email:
+            for email_bcc in bbc_email:
+                email_bcc = self.attr_misp_to_yeti(
+                    invest,
+                    email_bcc,
+                    description=f"misp {self.misp_event['Orgc']['name']}",
+                )
+                email.link_to(email_bcc, "bcc", "email")
+
+        cc_attr = object_email.get_attributes_by_relation("cc-email")
+        if cc_attr:
+            for email_cc in cc_attr:
+                email_cc = self.attr_misp_to_yeti(
+                    invest,
+                    email_cc,
+                    description=f"misp {self.misp_event['Orgc']['name']}",
+                )
+                email.link_to(email_cc, "cc", "email")
+
+        from_attr = object_email.get_attributes_by_relation("from")
+        if from_attr:
+            from_email = self.attr_misp_to_yeti(
+                invest,
+                from_attr[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            email.link_to(from_email, "from", "email")
+
+        to_attr = object_email.get_attributes_by_relation("to")
+        if to_attr:
+            for to in to_attr:
+                email_to = self.attr_misp_to_yeti(
+                    invest,
+                    to,
+                    description=f"misp {self.misp_event['Orgc']['name']}",
+                )
+                email.link_to(email_to, "to", "email")
+
+        from_domain_attrs = object_email.get_attributes_by_relation("from-domain")
+        if from_domain_attrs:
+            from_domain = self.attr_misp_to_yeti(
+                invest,
+                from_domain_attrs[0],
+                description=f"misp {self.misp_event['Orgc']['name']}",
+            )
+            email.link_to(from_domain, "from", "domain")
+
+        ips_src_attr = object_email.get_attributes_by_relation("ip-src")
+        if ips_src_attr:
+            for ip_attr in ips_src_attr:
+                ip_src = self.attr_misp_to_yeti(
+                    invest,
+                    ip_attr,
+                    description=f"misp {self.misp_event['Orgc']['name']}",
+                )
+                email.link_to(ip_src, "sent_from", "ip")
+
+        subject_attr = object_email.get_attributes_by_relation("subject")
+        if subject_attr:
+            for index, subject in enumerate(subject_attr):
+                email.add_context("misp", {f"subject {index}": subject["value"]})
