@@ -129,7 +129,8 @@ class IndicatorTest(unittest.TestCase):
             "%%environ_systemdrive%%\\$Extend\\$UsnJrnl",
         )
         self.assertEqual(
-            vertices[indicators[4].extended_id].pattern, r".*\\\$Extend\\\$UsnJrnl"
+            vertices[indicators[4].extended_id].pattern,
+            r".*[\|/]\$Extend[\|/]\$UsnJrnl",
         )
         self.assertEqual(vertices[indicators[4].extended_id].type, "regex")
         self.assertEqual(vertices[indicators[4].extended_id].location, "filesystem")
