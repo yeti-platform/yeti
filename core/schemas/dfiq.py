@@ -69,6 +69,11 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
 
         return yaml_data
 
+    @classmethod
+    def from_yaml(cls, yaml_string: str) -> "DFIQBase":
+        yaml_data = yaml.safe_load(yaml_string)
+        return TYPE_MAPPING[yaml_data["type"]].from_yaml(yaml_string)
+
     def to_yaml(self) -> str:
         dump = self.model_dump(
             exclude={"created", "modified", "id", "root_type", "dfiq_yaml"}
