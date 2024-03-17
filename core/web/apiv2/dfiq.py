@@ -97,7 +97,10 @@ async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     if not db_dfiq:
         raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
 
-    update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
+    try:
+        update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     if db_dfiq.type != update_data.type:
         raise HTTPException(
