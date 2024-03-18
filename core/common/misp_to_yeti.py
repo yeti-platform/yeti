@@ -903,3 +903,96 @@ class MispToYeti:
         for email_bcc in list_bbc_emails:
             for email_to in list_to_emails:
                 email_bcc.link_to(email_to, "sent_to", "email")
+
+    ## to detail the use case
+    def __import_exploit_poc(
+        self, invest: entity.Investigation, object_exploit_poc: MISPObject
+    ):
+        poc_attr = object_exploit_poc.get_attributes_by_relation("poc")
+
+    def __import_exploit(
+        self, invest: entity.Investigation, object_exploit: MISPObject
+    ):
+        exploit_attr = object_exploit.get_attributes_by_relation("exploit")
+        filename_attr = object_exploit.get_attributes_by_relation("filename")
+        exploit_as_attachment = object_exploit.get_attributes_by_relation(
+            "exploit-as-attachment"
+        )
+
+        exploit_obj = None
+        if exploit_attr:
+            exploit_obj = entity.Exploit(name=exploit_attr[0]["value"]).save()
+            for file_attr in filename_attr:
+                file_obj = observable.file.File(value=filename_attr[0]["value"]).save()
+                exploit_obj.link_to(file_obj, "exploit", "file")
+            if exploit_as_attachment:
+                exploit_as_att_obj = observable.generic_observable.GenericObservable(
+                    value=exploit_as_attachment[0]["value"]
+                ).save()
+                exploit_obj.link_to(exploit_as_att_obj, "exploit", "file")
+
+        elif not exploit_obj and filename_attr:
+            exploit_obj = entity.Exploit(name=filename_attr[0]["value"]).save()
+            for file_attr in filename_attr[1:]:
+                file_obj = observable.file.File(value=file_attr["value"]).save()
+                exploit_obj.link_to(file_obj, "exploit", "file")
+            if exploit_as_attachment:
+                exploit_as_att_obj = observable.generic_observable.GenericObservable(
+                    value=exploit_as_attachment[0]["value"]
+                ).save()
+                exploit_obj.link_to(exploit_as_att_obj, "exploit", "file")
+
+        elif not exploit_obj and exploit_as_attachment:
+            exploit_obj = entity.Exploit(name=exploit_as_attachment[0]["value"])
+            for file_attr in filename_attr:
+                file_obj = observable.file.File(value=file_attr["value"]).save()
+                exploit_obj.link_to(file_obj, "exploit", "file")
+
+        description = object_exploit.get_attributes_by_relation("description")
+
+        if description:
+            exploit_obj.description = description[0]["value"]
+
+        accessibility = object_exploit.get_attributes_by_relation("accessibility")
+        if accessibility:
+            exploit_obj.accessibility = accessibility[0]["value"]
+
+        software_attr = object_exploit.get_attributes_by_relation("software")
+        if software_attr:
+            exploit_obj.software = software_attr[0]["value"]
+
+        level_attr = object_exploit.get_attributes_by_relation("level")
+        if level_attr:
+            exploit_obj.level = level_attr[0]["value"]
+
+        reference_attr = object_exploit.get_attributes_by_relation("reference")
+        if reference_attr:
+            exploit_obj.reference = reference_attr[0]["value"]
+
+        cve_id = object_exploit.get_attributes_by_relation("cve-id")
+
+        if cve_id:
+            vulnerability = entity.Vulnerability(name=cve_id[0]["value"]).save()
+            exploit_obj.link_to(vulnerability, "exploit", "vulnerability")  # type: ignore
+
+        context = {}
+
+        zero_day_today = object_exploit.get_attributes_by_relation("0day-today-id")
+        if zero_day_today:
+            context["0day-today-id"] = zero_day_today[0]["value"]
+
+        credit = object_exploit.get_attributes_by_relation("credit")
+        if credit:
+            context["credit"] = credit[0]["value"]
+
+        comment = object_exploit.get_attributes_by_relation("comment")
+        if comment:
+            context["comment"] = comment[0]["value"]
+
+        exploitdb_id = object_exploit.get_attributes_by_relation("exploitdb-id")
+
+        for index, exploit in enumerate(exploitdb_id):
+            context[f"exploitdb-id {index}"] = exploit["value"]
+        title = object_exploit.get_attributes_by_relation("title")
+        if title:
+            context["title"] = title[0]["value"]
