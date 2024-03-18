@@ -742,8 +742,6 @@ class MispToYeti:
                 )
                 email.link_to(email_cc, "cc", "email")
 
-            email.link_to(from_email, "from", "email")
-
         to_attr = object_email.get_attributes_by_relation("to")
         if to_attr:
             for to in to_attr:
