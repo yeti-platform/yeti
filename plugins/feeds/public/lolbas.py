@@ -41,7 +41,7 @@ class LoLBAS(task.FeedTask):
             name=entry["Name"], description=description, created=created
         ).save()
         entity_slug = entry["Name"].lower().replace(".exe", "")
-        tool.tag([entity_slug])
+        tool.tag([entity_slug, "lolbas"])
 
         tags = set([cmd["Category"].lower() for cmd in entry["Commands"]])
         tags.add("lolbas")

@@ -247,6 +247,8 @@ class ForensicArtifact(Indicator):
                     # TODO: consider using https://github.com/log2timeline/dfvfs/blob/main/dfvfs/lib/glob2regex.py
                     pattern = ARTIFACT_INTERPOLATION_RE.sub("*", path)
                     pattern = re.escape(pattern).replace("\\*", ".*")
+                    # Account for different path separators
+                    pattern = re.sub(r"\\\\", r"[\\|/]", pattern)
                     indicator = Regex.find(name=path)
                     if not indicator:
                         try:

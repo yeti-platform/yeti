@@ -1,6 +1,7 @@
 import datetime
+import re
 from enum import Enum
-from typing import ClassVar, Literal, Type
+from typing import Any, ClassVar, Literal, Type
 
 import yaml
 from pydantic import BaseModel, Field, computed_field
@@ -45,17 +46,32 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
     @classmethod
-    def from_yaml(cls, yaml_string: str) -> "DFIQBase":
+    def parse_yaml(cls, yaml_string: str) -> dict[str, Any]:
         try:
             yaml_data = yaml.safe_load(yaml_string)
         except yaml.YAMLError as e:
             raise ValueError(f"Invalid YAML: {e}")
+        if not isinstance(yaml_data, dict):
+            raise ValueError(
+                f"Invalid DFIQ YAML (unable to parse into object): {yaml_data}"
+            )
         if "type" not in yaml_data:
             raise ValueError(
                 f"Invalid DIFQ YAML (missing 'type' attribute): {yaml_data}"
             )
         if yaml_data["type"] not in TYPE_MAPPING:
             raise ValueError(f"Invalid type for DFIQ: {yaml_data['type']}")
+        if "id" not in yaml_data:
+            raise ValueError(f"Invalid DIFQ YAML (missing 'id' attribute): {yaml_data}")
+
+        if not re.match("^\d+\.\d+\.\d+$", str(yaml_data.get("dfiq_version", ""))):
+            raise ValueError(f"Invalid DFIQ version: {yaml_data['dfiq_version']}")
+
+        return yaml_data
+
+    @classmethod
+    def from_yaml(cls, yaml_string: str) -> "DFIQBase":
+        yaml_data = yaml.safe_load(yaml_string)
         return TYPE_MAPPING[yaml_data["type"]].from_yaml(yaml_string)
 
     def to_yaml(self) -> str:
@@ -110,13 +126,14 @@ class DFIQScenario(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQScenario"], yaml_string: str) -> "DFIQScenario":
-        try:
-            yaml_data = yaml.safe_load(yaml_string)
-        except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML: {e}")
+        yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "scenario":
             raise ValueError(f"Invalid type for DFIQ scenario: {yaml_data['type']}")
-
+        # use re.match to check that DFIQ Ids for scenarios start with S[0-1]\d+
+        if not re.match(r"^S[0-1]\d+$", yaml_data["id"] or ""):
+            raise ValueError(
+                f"Invalid DFIQ ID for scenario: {yaml_data['id']}. Must be in the format S[0-1]\d+"
+            )
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data["description"],
@@ -138,12 +155,13 @@ class DFIQFacet(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQFacet"], yaml_string: str) -> "DFIQFacet":
-        try:
-            yaml_data = yaml.safe_load(yaml_string)
-        except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML: {e}")
+        yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "facet":
             raise ValueError(f"Invalid type for DFIQ facet: {yaml_data['type']}")
+        if not re.match(r"^F[0-1]\d+$", yaml_data["id"] or ""):
+            raise ValueError(
+                f"Invalid DFIQ ID for facet: {yaml_data['id']}. Must be in the format F[0-1]\d+"
+            )
 
         return cls(
             name=yaml_data["display_name"],
@@ -166,12 +184,13 @@ class DFIQQuestion(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQQuestion"], yaml_string: str) -> "DFIQQuestion":
-        try:
-            yaml_data = yaml.safe_load(yaml_string)
-        except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML: {e}")
+        yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "question":
             raise ValueError(f"Invalid type for DFIQ question: {yaml_data['type']}")
+        if not re.match(r"^Q[0-1]\d+$", yaml_data["id"] or ""):
+            raise ValueError(
+                f"Invalid DFIQ ID for question: {yaml_data['id']}. Must be in the format Q[0-1]\d+"
+            )
 
         return cls(
             name=yaml_data["display_name"],
@@ -239,12 +258,22 @@ class DFIQApproach(DFIQBase):
 
     @classmethod
     def from_yaml(cls: Type["DFIQApproach"], yaml_string: str) -> "DFIQApproach":
-        try:
-            yaml_data = yaml.safe_load(yaml_string)
-        except yaml.YAMLError as e:
-            raise ValueError(f"Invalid YAML: {e}")
+        yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "approach":
             raise ValueError(f"Invalid type for DFIQ approach: {yaml_data['type']}")
+        if not re.match(r"^Q[0-1]\d+\.\d+$", yaml_data["id"]):
+            raise ValueError(
+                f"Invalid DFIQ ID for approach: {yaml_data['id']}. Must be in the format Q[0-1]\d+.\d+"
+            )
+        if not isinstance(yaml_data["description"], dict):
+            raise ValueError(
+                f"Invalid DFIQ description for approach (has to be an object): {yaml_data['description']}"
+            )
+        if not isinstance(yaml_data["view"], dict):
+            raise ValueError(
+                f"Invalid DFIQ view for approach (has to be an object): {yaml_data['view']}"
+            )
+
         return cls(
             name=yaml_data["display_name"],
             description=DFIQApproachDescription(**yaml_data["description"]),
