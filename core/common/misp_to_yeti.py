@@ -776,15 +776,14 @@ class MispToYeti:
         if to_display_name_attr:
             list_to_display_names = [
                 observable.generic_observable.GenericObservable(
-                    value=display_name['value']
-
+                    value=display_name["value"]
                 ).save()
                 for display_name in to_display_name_attr
             ]
         for email in list_to_emails:
             for display_name in list_to_display_names:
                 email.link_to(display_name, "display_name", "display_name")
-  
+
         from_domain_attrs = object_email.get_attributes_by_relation("from-domain")
         if from_domain_attrs:
             from_domains_list = [
@@ -807,7 +806,6 @@ class MispToYeti:
                 for ip_src in ips_src_attr
             ]
 
-        
         subject_attr = object_email.get_attributes_by_relation("subject")
         ## Add subjects for all emails
         if subject_attr:
@@ -820,7 +818,7 @@ class MispToYeti:
                     email.add_context("misp", {"fsubject {index}": subject["value"]})
                 for email in list_bbc_emails:
                     email.add_context("misp", {f"subject {index}": subject["value"]})
-        
+
         ## Add send date to all emails
         send_date = object_email.get_attributes_by_relation("send-date")
         if send_date:
@@ -834,7 +832,7 @@ class MispToYeti:
                 email.add_context("misp", {"send-date": send_date[0]["value"]})
 
         received_date = object_email.get_attributes_by_relation("received-date")
-        
+
         ## add receive date to all emails
         if received_date:
             for email in from_email_list:
@@ -881,12 +879,12 @@ class MispToYeti:
                 email.link_to(attachment, "sent_to", "attachment")
             for email in from_email_list:
                 email.link_to(attachment, "sent_by", "attachment")
-        
+
         ## add IP src to ips_src
         for email in from_email_list:
             for ip in list_ips_src:
                 email.link_to(ip, "sent_by", "ip")
-        
+
         # Create Link between emails
         for email_from in from_email_list:
             for email_to in list_to_emails:
@@ -894,11 +892,11 @@ class MispToYeti:
         for email_cc in list_cc_emails:
             for email_to in list_to_emails:
                 email_cc.link_to(email_to, "sent_to", "email")
-        
+
         for email_bcc in list_bbc_emails:
             for email_to in list_to_emails:
                 email_bcc.link_to(email_to, "sent_to", "email")
-        
+
         for email_bcc in list_bbc_emails:
             for email_to in list_to_emails:
                 email_bcc.link_to(email_to, "sent_to", "email")
