@@ -149,7 +149,7 @@ class EntityTest(unittest.TestCase):
         exploit.accessibility = "public"
         exploit.reference = "https://example.com"
         exploit.description = "This is a test"
-        exploit.platform = "Windows"
+        exploit.software = "Windows"
         exploit.level = "high"
         exploit = exploit.save()
         self.assertEqual(exploit.name, "Exploit CVE-1337-4242")
