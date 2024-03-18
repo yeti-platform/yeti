@@ -49,6 +49,7 @@ class MispToYeti:
             "domain-ip": self.__import_domain_ip,
             "dns-record": self.__import_dns_record,
             "directory": self.__import_directory,
+            "email": self.__import_email,
         }
 
     def attr_misp_to_yeti(
@@ -57,21 +58,27 @@ class MispToYeti:
         attribute: MISPAttribute,
         description: str = "",
     ) -> observable.Observable:  # type: ignore
+        obs_yeti = None
         if attribute.get("type") in MISP_Attribute_TO_IMPORT:
             obs_yeti = observable.TYPE_MAPPING[
                 MISP_Attribute_TO_IMPORT[attribute.get("type")]  # type: ignore
             ](value=attribute.get("value")).save()
+        else:
+            try:
+                obs_yeti = observable.generic_observable.GenericObservable(
+                    value=attribute.get("value")
+                ).save()  # type: ignore
+            except ValueError:
+                logging.error(f"Invalid value: {attribute.get('value')}")
+
+        if obs_yeti:
             tags = attribute.get("Tag")
             if tags:
                 obs_yeti.tag([t["name"] for t in tags])
             invest.link_to(obs_yeti, "imported_by_misp", description)
-            print(f"Attribute {attribute.get('value')} imported")
+            logging.info(f"Attribute {attribute.get('value')} imported")
 
-        else:
-            obs_yeti = observable.generic_observable.GenericObservable(
-                value=attribute.get("value")
-            ).save()  # type: ignore
-        return obs_yeti
+        return obs_yeti  # type: ignore
 
     def add_context_by_misp(
         self, attribute_misp: MISPAttribute, obs_yeti: observable.Observable
@@ -91,7 +98,7 @@ class MispToYeti:
                 self.add_context_by_misp(attr, obs_yeti)
                 yield obs_yeti
             else:
-                print(f"Attribute {attr} not imported")
+                logging.info(f"Attribute {attr} not imported")
 
     def obs_misp_to_yeti(self, invest: entity.Investigation, object_misp: MISPObject):
         if object_misp["name"] in self.func_by_type:
@@ -120,7 +127,7 @@ class MispToYeti:
             if obs_yeti:
                 self.add_context_by_misp(attribute_misp, obs_yeti)
             else:
-                print(f"Attribute {attribute_misp} not imported")
+                logging.info(f"Attribute {attribute_misp} not imported")
         invest.save()
 
     def __import_av_signature(
@@ -645,11 +652,13 @@ class MispToYeti:
                 txt_record[0],
                 description=f"misp {self.misp_event['Orgc']['name']}",
             )
-            queried_obj.link_to(txt_red_obj, "txt", "hostname")
-            if context:
-                txt_red_obj.add_context(
-                    f"misp {self.misp_event['Orgc']['name']}", context
-                )
+
+            if txt_red_obj:
+                queried_obj.link_to(txt_red_obj, "txt", "hostname")
+                if context:
+                    txt_red_obj.add_context(
+                        f"misp {self.misp_event['Orgc']['name']}", context
+                    )
         if spf_record:
             spf_red_obj = self.attr_misp_to_yeti(
                 invest,
@@ -708,7 +717,7 @@ class MispToYeti:
         )
 
     def __import_email(self, invest: entity.Investigation, object_email: MISPObject):
-        email_attr = object_email.get_attributes_by_relation("email")[0]
+        email_attr = object_email.get_attributes_by_relation("from")[0]
         email = observable.email.Email(value=email_attr["value"]).save()
         invest.link_to(
             email, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
@@ -733,13 +742,6 @@ class MispToYeti:
                 )
                 email.link_to(email_cc, "cc", "email")
 
-        from_attr = object_email.get_attributes_by_relation("from")
-        if from_attr:
-            from_email = self.attr_misp_to_yeti(
-                invest,
-                from_attr[0],
-                description=f"misp {self.misp_event['Orgc']['name']}",
-            )
             email.link_to(from_email, "from", "email")
 
         to_attr = object_email.get_attributes_by_relation("to")
@@ -775,3 +777,23 @@ class MispToYeti:
         if subject_attr:
             for index, subject in enumerate(subject_attr):
                 email.add_context("misp", {f"subject {index}": subject["value"]})
+
+        send_date = object_email.get_attributes_by_relation("send-date")
+        if send_date:
+            email.add_context("misp", {"send-date": send_date[0]["value"]})
+
+        received_date = object_email.get_attributes_by_relation("received-date")
+        if received_date:
+            email.add_context("misp", {"received-date": received_date[0]["value"]})
+
+        user_agent_attr = object_email.get_attributes_by_relation("user-agent")
+        if user_agent_attr:
+            user_agent_obs = observable.user_agent.UserAgent(
+                value=user_agent_attr[0]["value"]
+            ).save()
+            invest.link_to(
+                user_agent_obs,
+                "imported_by_misp",
+                f"misp {self.misp_event['Orgc']['name']}",
+            )
+            email.link_to(user_agent_obs, "user-agent", "user-agent")
