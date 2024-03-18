@@ -717,72 +717,134 @@ class MispToYeti:
         )
 
     def __import_email(self, invest: entity.Investigation, object_email: MISPObject):
-        email_attr = object_email.get_attributes_by_relation("from")[0]
-        email = observable.email.Email(value=email_attr["value"]).save()
-        invest.link_to(
-            email, "imported_by_misp", f"misp {self.misp_event['Orgc']['name']}"
-        )
+        from_email_list = []
+        list_to_emails = []
+        list_cc_emails = []
+        list_bbc_emails = []
+        from_domains_list = []
+        list_ips_src = []
+        list_to_display_names = []
+        attachment_list = []
+        from_attr = object_email.get_attributes_by_relation("from")
+
+        if from_attr:
+            from_email_list = [
+                self.attr_misp_to_yeti(
+                    invest,
+                    email_from,
+                    description=f"misp {self.misp_event['Orgc']['name']}",
+                )
+                for email_from in from_attr
+            ]
+
         bbc_email = object_email.get_attributes_by_relation("bcc-email")
+
         if bbc_email:
-            for email_bcc in bbc_email:
-                email_bcc = self.attr_misp_to_yeti(
+            list_bbc_emails = [
+                self.attr_misp_to_yeti(
                     invest,
                     email_bcc,
                     description=f"misp {self.misp_event['Orgc']['name']}",
                 )
-                email.link_to(email_bcc, "bcc", "email")
+                for email_bcc in bbc_email
+            ]
 
         cc_attr = object_email.get_attributes_by_relation("cc-email")
         if cc_attr:
-            for email_cc in cc_attr:
-                email_cc = self.attr_misp_to_yeti(
+            list_cc_emails = [
+                self.attr_misp_to_yeti(
                     invest,
                     email_cc,
                     description=f"misp {self.misp_event['Orgc']['name']}",
                 )
-                email.link_to(email_cc, "cc", "email")
+                for email_cc in cc_attr
+            ]
 
         to_attr = object_email.get_attributes_by_relation("to")
         if to_attr:
-            for to in to_attr:
-                email_to = self.attr_misp_to_yeti(
+            list_to_emails = [
+                self.attr_misp_to_yeti(
                     invest,
-                    to,
+                    email_to,
                     description=f"misp {self.misp_event['Orgc']['name']}",
                 )
-                email.link_to(email_to, "to", "email")
+                for email_to in to_attr
+            ]
+        to_display_name_attr = object_email.get_attributes_by_relation(
+            "to-display-name"
+        )
+        if to_display_name_attr:
+            list_to_display_names = [
+                observable.generic_observable.GenericObservable(
+                    value=display_name['value']
 
+                ).save()
+                for display_name in to_display_name_attr
+            ]
+        for email in list_to_emails:
+            for display_name in list_to_display_names:
+                email.link_to(display_name, "display_name", "display_name")
+  
         from_domain_attrs = object_email.get_attributes_by_relation("from-domain")
         if from_domain_attrs:
-            from_domain = self.attr_misp_to_yeti(
-                invest,
-                from_domain_attrs[0],
-                description=f"misp {self.misp_event['Orgc']['name']}",
-            )
-            email.link_to(from_domain, "from", "domain")
+            from_domains_list = [
+                self.attr_misp_to_yeti(
+                    invest,
+                    domain,
+                    description=f"misp {self.misp_event['Orgc']['name']}",
+                )
+                for domain in from_domain_attrs
+            ]
 
         ips_src_attr = object_email.get_attributes_by_relation("ip-src")
         if ips_src_attr:
-            for ip_attr in ips_src_attr:
-                ip_src = self.attr_misp_to_yeti(
+            list_ips_src = [
+                self.attr_misp_to_yeti(
                     invest,
-                    ip_attr,
+                    ip_src,
                     description=f"misp {self.misp_event['Orgc']['name']}",
                 )
-                email.link_to(ip_src, "sent_from", "ip")
+                for ip_src in ips_src_attr
+            ]
 
+        
         subject_attr = object_email.get_attributes_by_relation("subject")
+        ## Add subjects for all emails
         if subject_attr:
             for index, subject in enumerate(subject_attr):
-                email.add_context("misp", {f"subject {index}": subject["value"]})
-
+                for email in from_email_list:
+                    email.add_context("misp", {f"subject {index}": subject["value"]})
+                for email in list_to_emails:
+                    email.add_context("misp", {f"subject {index}": subject["value"]})
+                for email in list_cc_emails:
+                    email.add_context("misp", {"fsubject {index}": subject["value"]})
+                for email in list_bbc_emails:
+                    email.add_context("misp", {f"subject {index}": subject["value"]})
+        
+        ## Add send date to all emails
         send_date = object_email.get_attributes_by_relation("send-date")
         if send_date:
-            email.add_context("misp", {"send-date": send_date[0]["value"]})
+            for email in from_email_list:
+                email.add_context("misp", {"send-date": send_date[0]["value"]})
+            for email in list_to_emails:
+                email.add_context("misp", {"send-date": send_date[0]["value"]})
+            for email in list_cc_emails:
+                email.add_context("misp", {"send-date": send_date[0]["value"]})
+            for email in list_bbc_emails:
+                email.add_context("misp", {"send-date": send_date[0]["value"]})
 
         received_date = object_email.get_attributes_by_relation("received-date")
+        
+        ## add receive date to all emails
         if received_date:
-            email.add_context("misp", {"received-date": received_date[0]["value"]})
+            for email in from_email_list:
+                email.add_context("misp", {"received-date": received_date[0]["value"]})
+            for email in list_to_emails:
+                email.add_context("misp", {"received-date": received_date[0]["value"]})
+            for email in list_cc_emails:
+                email.add_context("misp", {"received-date": received_date[0]["value"]})
+            for email in list_bbc_emails:
+                email.add_context("misp", {"received-date": received_date[0]["value"]})
 
         user_agent_attr = object_email.get_attributes_by_relation("user-agent")
         if user_agent_attr:
@@ -794,4 +856,49 @@ class MispToYeti:
                 "imported_by_misp",
                 f"misp {self.misp_event['Orgc']['name']}",
             )
-            email.link_to(user_agent_obs, "user-agent", "user-agent")
+
+        attachment_attr = object_email.get_attributes_by_relation("attachment")
+        if attachment_attr:
+            attachment_list = [
+                self.attr_misp_to_yeti(
+                    invest,
+                    attachment,
+                    description=f"misp {self.misp_event['Orgc']['name']}",
+                )
+                for attachment in attachment_attr
+            ]
+
+        for email in from_email_list:
+            email.link_to(user_agent_obs, "sent_by", "user_agent")
+
+        ## add attachement at all emails
+        for attachment in attachment_list:
+            for email in list_to_emails:
+                email.link_to(attachment, "sent_to", "attachment")
+            for email in list_cc_emails:
+                email.link_to(attachment, "sent_to", "attachment")
+            for email in list_bbc_emails:
+                email.link_to(attachment, "sent_to", "attachment")
+            for email in from_email_list:
+                email.link_to(attachment, "sent_by", "attachment")
+        
+        ## add IP src to ips_src
+        for email in from_email_list:
+            for ip in list_ips_src:
+                email.link_to(ip, "sent_by", "ip")
+        
+        # Create Link between emails
+        for email_from in from_email_list:
+            for email_to in list_to_emails:
+                email_from.link_to(email_to, "sent_to", "email")
+        for email_cc in list_cc_emails:
+            for email_to in list_to_emails:
+                email_cc.link_to(email_to, "sent_to", "email")
+        
+        for email_bcc in list_bbc_emails:
+            for email_to in list_to_emails:
+                email_bcc.link_to(email_to, "sent_to", "email")
+        
+        for email_bcc in list_bbc_emails:
+            for email_to in list_to_emails:
+                email_bcc.link_to(email_to, "sent_to", "email")
