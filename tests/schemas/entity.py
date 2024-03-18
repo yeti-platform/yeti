@@ -156,5 +156,5 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(exploit.accessibility, "public")
         self.assertEqual(exploit.reference, "https://example.com")
         self.assertEqual(exploit.description, "This is a test")
-        self.assertEqual(exploit.platform, "Windows")
+        self.assertEqual(exploit.software, "Windows")
         self.assertEqual(exploit.level, "high")

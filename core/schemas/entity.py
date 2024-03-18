@@ -198,7 +198,7 @@ class Exploit(Entity):
     reference: str = ""
     description: str = ""
     level: str = ""
-    platform: str = ""
+    software: str = ""
     accessibility: str = ""
 
 
