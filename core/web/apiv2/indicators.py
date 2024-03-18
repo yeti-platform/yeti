@@ -1,27 +1,33 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from core.schemas import graph, indicator
+from core.schemas import graph
+from core.schemas.indicator import (
+    ForensicArtifact,
+    Indicator,
+    IndicatorType,
+    IndicatorTypes,
+)
 
 
 # Request schemas
 class NewIndicatorRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    indicator: indicator.IndicatorTypes
+    indicator: IndicatorTypes = Field(discriminator="type")
 
 
 class PatchIndicatorRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    indicator: indicator.IndicatorTypes
+    indicator: IndicatorTypes = Field(discriminator="type")
 
 
 class IndicatorSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: dict[str, str | int | list] = {}
-    type: indicator.IndicatorType | None = None
+    type: IndicatorType | None = None
     sorting: list[tuple[str, bool]] = []
     filter_aliases: list[tuple[str, str]] = []
     count: int = 50
@@ -31,7 +37,7 @@ class IndicatorSearchRequest(BaseModel):
 class IndicatorSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    indicators: list[indicator.IndicatorTypes]
+    indicators: list[IndicatorTypes]
     total: int
 
 
@@ -55,34 +61,30 @@ router = APIRouter()
 
 
 @router.post("/")
-async def new(request: NewIndicatorRequest) -> indicator.IndicatorTypes:
+async def new(request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
     new = request.indicator.save()
     return new
 
 
 @router.patch("/{indicator_id}")
-async def patch(
-    request: PatchIndicatorRequest, indicator_id
-) -> indicator.IndicatorTypes:
+async def patch(request: PatchIndicatorRequest, indicator_id) -> IndicatorTypes:
     """Modifies an indicator in the database."""
-    db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
+    db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
         raise HTTPException(
             status_code=404, detail=f"Indicator {indicator_id} not found"
         )
 
-    if db_indicator.type == indicator.IndicatorType.forensicartifact:
+    if db_indicator.type == IndicatorType.forensicartifact:
         if db_indicator.pattern != request.indicator.pattern:
-            return indicator.ForensicArtifact.from_yaml_string(
-                request.indicator.pattern
-            )[0]
+            return ForensicArtifact.from_yaml_string(request.indicator.pattern)[0]
 
     update_data = request.indicator.model_dump(exclude_unset=True)
     updated_indicator = db_indicator.model_copy(update=update_data)
     new = updated_indicator.save()
 
-    if new.type == indicator.IndicatorType.forensicartifact:
+    if new.type == IndicatorType.forensicartifact:
         new.update_yaml()
         new = new.save()
 
@@ -90,9 +92,9 @@ async def patch(
 
 
 @router.get("/{indicator_id}")
-async def details(indicator_id) -> indicator.IndicatorTypes:
+async def details(indicator_id) -> IndicatorTypes:
     """Returns details about an indicator."""
-    db_indicator: indicator.IndicatorTypes = indicator.Indicator.get(indicator_id)  # type: ignore
+    db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
     db_indicator.get_tags()
@@ -102,7 +104,7 @@ async def details(indicator_id) -> indicator.IndicatorTypes:
 @router.delete("/{indicator_id}")
 async def delete(indicator_id: str) -> None:
     """Deletes an indicator."""
-    db_indicator = indicator.Indicator.get(indicator_id)
+    db_indicator = Indicator.get(indicator_id)
     if not db_indicator:
         raise HTTPException(
             status_code=404, detail="Indicator ID {indicator_id} not found"
@@ -117,7 +119,7 @@ async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
     tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
-    indicators, total = indicator.Indicator.filter(
+    indicators, total = Indicator.filter(
         query_args=query,
         tag_filter=tags,
         offset=request.page * request.count,
@@ -134,7 +136,7 @@ async def tag(request: IndicatorTagRequest) -> IndicatorTagResponse:
     """Tags entities."""
     indicators = []
     for indicator_id in request.ids:
-        db_indicator = indicator.Indicator.get(indicator_id)
+        db_indicator = Indicator.get(indicator_id)
         if not db_indicator:
             raise HTTPException(
                 status_code=404,

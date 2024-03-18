@@ -1,7 +1,7 @@
 from typing import Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from core.schemas import graph
 from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
@@ -41,13 +41,13 @@ class NewObservableRequest(TagRequestMixin):
 class NewExtendedObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes
+    observable: ObservableTypes = Field(discriminant="type")
 
 
 class PatchObservableRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes
+    observable: ObservableTypes = Field(discriminant="type")
 
 
 class NewBulkObservableAddRequest(BaseModel):

@@ -1,28 +1,29 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
-from core.schemas import entity, graph
+from core.schemas import graph
+from core.schemas.entity import Entity, EntityType, EntityTypes
 
 
 # Request schemas
 class NewEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entity: entity.EntityTypes
+    entity: EntityTypes = Field(discriminator="type")
     tags: list[str] = []
 
 
 class PatchEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entity: entity.EntityTypes
+    entity: EntityTypes = Field(discriminator="type")
 
 
 class EntitySearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: dict[str, str | int | list] = {}
-    type: entity.EntityType | None = None
+    type: EntityType | None = None
     sorting: list[tuple[str, bool]] = []
     filter_aliases: list[tuple[str, str]] = []
     count: int = 50
@@ -32,7 +33,7 @@ class EntitySearchRequest(BaseModel):
 class EntitySearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entities: list[entity.EntityTypes]
+    entities: list[EntityTypes]
     total: int
 
 
@@ -56,7 +57,7 @@ router = APIRouter()
 
 
 @router.post("/")
-async def new(request: NewEntityRequest) -> entity.EntityTypes:
+async def new(request: NewEntityRequest) -> EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
     if request.tags:
@@ -65,9 +66,9 @@ async def new(request: NewEntityRequest) -> entity.EntityTypes:
 
 
 @router.patch("/{entity_id}")
-async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
+async def patch(request: PatchEntityRequest, entity_id) -> EntityTypes:
     """Modifies entity in the database."""
-    db_entity: entity.EntityTypes = entity.Entity.get(entity_id)
+    db_entity: EntityTypes = Entity.get(entity_id)
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"Entity {entity_id} not found")
     if db_entity.type != request.entity.type:
@@ -82,9 +83,9 @@ async def patch(request: PatchEntityRequest, entity_id) -> entity.EntityTypes:
 
 
 @router.get("/{entity_id}")
-async def details(entity_id) -> entity.EntityTypes:
+async def details(entity_id) -> EntityTypes:
     """Returns details about an observable."""
-    db_entity: entity.EntityTypes = entity.Entity.get(entity_id)  # type: ignore
+    db_entity: EntityTypes = Entity.get(entity_id)  # type: ignore
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"Entity {entity_id}  not found")
     db_entity.get_tags()
@@ -94,7 +95,7 @@ async def details(entity_id) -> entity.EntityTypes:
 @router.delete("/{entity_id}")
 async def delete(entity_id: str) -> None:
     """Deletes an Entity."""
-    db_entity = entity.Entity.get(entity_id)
+    db_entity = Entity.get(entity_id)
     if not db_entity:
         raise HTTPException(status_code=404, detail="Entity ID {entity_id} not found")
     db_entity.delete()
@@ -107,7 +108,7 @@ async def search(request: EntitySearchRequest) -> EntitySearchResponse:
     tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
-    entities, total = entity.Entity.filter(
+    entities, total = Entity.filter(
         query_args=query,
         tag_filter=tags,
         offset=request.page * request.count,
@@ -124,7 +125,7 @@ async def tag(request: EntityTagRequest) -> EntityTagResponse:
     """Tags entities."""
     entities = []
     for entity_id in request.ids:
-        db_entity = entity.Entity.get(entity_id)
+        db_entity = Entity.get(entity_id)
         if not db_entity:
             raise HTTPException(
                 status_code=404,

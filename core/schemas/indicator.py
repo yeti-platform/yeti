@@ -58,8 +58,8 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
     valid_from: datetime.datetime = Field(default_factory=now)
     valid_until: datetime.datetime = Field(default_factory=future)
 
-    pattern: str
-    location: str
+    pattern: str = Field(min_length=1)
+    location: str = ""
     diamond: DiamondModel
     kill_chain_phases: list[str] = []
     relevant_tags: list[str] = []
