@@ -6,6 +6,7 @@ from core.schemas import tag
 from core.schemas.entity import (
     AttackPattern,
     Entity,
+    Exploit,
     Location,
     Malware,
     ThreatActor,
@@ -142,3 +143,18 @@ class EntityTest(unittest.TestCase):
         location.set_country_code_by_name(location.name)
         self.assertEqual(location.name, "France")
         self.assertEqual(location.country_code, 250)
+
+    def test_exploit(self):
+        exploit = Exploit(name="Exploit CVE-1337-4242").save()
+        exploit.accessibility = "public"
+        exploit.reference = "https://example.com"
+        exploit.description = "This is a test"
+        exploit.platform = "Windows"
+        exploit.level = "high"
+        exploit = exploit.save()
+        self.assertEqual(exploit.name, "Exploit CVE-1337-4242")
+        self.assertEqual(exploit.accessibility, "public")
+        self.assertEqual(exploit.reference, "https://example.com")
+        self.assertEqual(exploit.description, "This is a test")
+        self.assertEqual(exploit.platform, "Windows")
+        self.assertEqual(exploit.level, "high")

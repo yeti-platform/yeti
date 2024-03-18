@@ -25,6 +25,7 @@ class EntityType(str, Enum):
     vulnerability = "vulnerability"
     course_of_action = "course-of-action"
     location = "location"
+    exploit = "exploit"
 
 
 class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -190,6 +191,17 @@ class Vulnerability(Entity):
     reference: str = ""
 
 
+class Exploit(Entity):
+    _type_filter: ClassVar[str] = EntityType.exploit
+    type: Literal[EntityType.exploit] = EntityType.exploit
+
+    reference: str = ""
+    description: str = ""
+    level: str = ""
+    platform: str = ""
+    accessibility: str = ""
+
+
 class CourseOfAction(Entity):
     _type_filter: ClassVar[str] = EntityType.course_of_action
     type: Literal[EntityType.course_of_action] = EntityType.course_of_action
@@ -211,6 +223,7 @@ TYPE_MAPPING = {
     EntityType.threat_actor: ThreatActor,
     EntityType.tool: Tool,
     EntityType.vulnerability: Vulnerability,
+    EntityType.exploit: Exploit,
 }
 
 TYPE_VALIDATOR_MAP = {}
@@ -249,6 +262,7 @@ EntityTypes = (
     | ThreatActor
     | Tool
     | Vulnerability
+    | Exploit
 )
 
 
@@ -266,4 +280,5 @@ EntityClasses = (
     | Type[ThreatActor]
     | Type[Tool]
     | Type[Vulnerability]
+    | Type[Exploit]
 )
