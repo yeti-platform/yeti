@@ -805,6 +805,9 @@ class MispToYeti:
                 )
                 for ip_src in ips_src_attr
             ]
+        for domain in from_domains_list:
+            for ip in list_ips_src:
+                domain.link_to(ip, "misp", "ip")
 
         subject_attr = object_email.get_attributes_by_relation("subject")
         ## Add subjects for all emails
