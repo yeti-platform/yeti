@@ -121,7 +121,8 @@ class FeedTask(Task):
         data: dict = {},
         verify: bool = True,
         sort: bool = True,
-    ) -> requests.Response:
+        no_cache: bool = False,
+    ) -> requests.Response | None:
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
         Args:
@@ -131,6 +132,7 @@ class FeedTask(Task):
             params: Optional param to be added to the HTTP GET request.
             data: Optional param to be added to the HTTP POST request.
             verify: Enforce (True) or skip (False) SSL verification.
+            no_cache: Return the requests content even if they're older than the last run.
 
         Returns:
             requests object.
@@ -150,6 +152,9 @@ class FeedTask(Task):
             raise RuntimeError(f"{url} returned code: {response.status_code}")
 
         if not sort:
+            return response
+
+        if no_cache:
             return response
 
         last_modified_header = response.headers.get("Last-Modified")

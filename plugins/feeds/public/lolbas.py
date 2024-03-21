@@ -87,7 +87,6 @@ class LoLBAS(task.FeedTask):
             logging.error("Error parsing Sigma rule at %s: %s", url, e)
             return
 
-        # extract title from yaml
         title = sigma_data["title"]
         description = sigma_data["description"]
         date = sigma_data["date"]
@@ -102,6 +101,8 @@ class LoLBAS(task.FeedTask):
             kill_chain_phases=["payload-delivery"],
             diamond=indicator.DiamondModel.capability,
         ).save()
+        tags = set(sigma_data.get("tags", [])) | {"lolbas"}
+        sigma.tag(tags)
         sigma.link_to(
             tool,
             relationship_type="detects",
