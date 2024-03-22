@@ -1,9 +1,10 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from core import database_arango
 from core.schemas.observable import ObservableType
-from tests.helpers import YetiTestCase
 from core.schemas.observables import ipv4
 from plugins.feeds.public.tor_exit_nodes import TorExitNodes
+from tests.helpers import YetiTestCase
 
 
 class TorExitNodesTest(YetiTestCase):

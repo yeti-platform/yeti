@@ -1,7 +1,8 @@
-from typing import Any, Optional
-from core.schemas import observable
 import unittest
+from typing import Any, Optional
+
 from core.database_arango import ArangoYetiConnector
+from core.schemas import observable
 
 
 class YetiTestCase(unittest.TestCase):
