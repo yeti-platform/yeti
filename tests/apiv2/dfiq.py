@@ -305,3 +305,64 @@ class DFIQTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 400, data)
         self.assertEqual(data, {"detail": "Missing parent(s) ['Q1020'] for Q1020.10"})
+
+    def test_valid_dfiq_yaml(self) -> None:
+        with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/validate",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.scenario,
+                "check_id": True,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["valid"], True)
+
+        with open("tests/dfiq_test_data/F1005.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/validate",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.facet,
+                "check_id": True,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["valid"], True)
+
+        with open("tests/dfiq_test_data/Q1020.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/validate",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.question,
+                "check_id": True,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["valid"], True)
+
+        with open("tests/dfiq_test_data/Q1020.10.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/validate",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.approach,
+                "check_id": True,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["valid"], True)

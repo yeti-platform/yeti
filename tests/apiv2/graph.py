@@ -223,6 +223,16 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(data["type"], "uses")
         self.assertEqual(data["description"], "c2 infrastructure")
 
+    def test_swap_relationship(self):
+        self.relationship = self.observable1.link_to(
+            self.observable2, "resolves", "DNS resolution"
+        )
+        response = client.post(f"/api/v2/graph/{self.relationship.id}/swap")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["source"], self.observable2.extended_id)
+        self.assertEqual(data["target"], self.observable1.extended_id)
+
     def test_delete_link(self):
         """Tests that a relationship can be deleted."""
         self.relationship = self.observable1.link_to(

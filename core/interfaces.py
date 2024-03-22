@@ -83,7 +83,9 @@ class AbstractYetiConnector(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def link_to(self, target, relationship_type=None) -> "Relationship":
+    def link_to(
+        self, target, relationship_type: str, description: str
+    ) -> "Relationship":
         """Creates a link from an existing object to a target object.
 
         Args:
