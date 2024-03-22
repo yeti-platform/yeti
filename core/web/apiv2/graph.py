@@ -183,6 +183,18 @@ async def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relati
     return relationship.save()
 
 
+@router.post("/{relationship_id}/swap")
+async def swap(relationship_id: str) -> graph.Relationship:
+    """Swaps the source and target of a relationship."""
+    relationship = graph.Relationship.get(relationship_id)
+    if relationship is None:
+        raise HTTPException(
+            status_code=404, detail=f"Relationship {relationship_id} not found"
+        )
+    relationship.swap_link()
+    return relationship
+
+
 @router.delete("/{relationship_id}")
 async def delete(relationship_id: str) -> None:
     """Deletes a link from the graph."""

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from core.schemas import dfiq
 
@@ -10,6 +10,18 @@ class NewDFIQRequest(BaseModel):
 
     dfiq_yaml: str
     dfiq_type: dfiq.DFIQType
+
+
+class DFIQValidateRequest(NewDFIQRequest):
+    model_config = ConfigDict(extra="forbid")
+    check_id: bool = False
+
+
+class DFIQValidateResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    valid: bool
+    error: str
 
 
 class PatchDFIQRequest(BaseModel):
@@ -58,6 +70,26 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     return new
 
 
+@router.post("/validate")
+async def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
+    """Validates a DFIQ YAML string."""
+    try:
+        obj = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
+    except ValidationError as error:
+        return DFIQValidateResponse(valid=False, error=str(error.errors()))
+    except ValueError as error:
+        return DFIQValidateResponse(valid=False, error=str(error))
+    except KeyError as error:
+        return DFIQValidateResponse(valid=False, error=f"Invalid DFIQ type: {error}")
+
+    if request.check_id and dfiq.DFIQBase.find(dfiq_id=obj.dfiq_id):
+        return DFIQValidateResponse(
+            valid=False, error=f"DFIQ with id {obj.dfiq_id} already exists"
+        )
+
+    return DFIQValidateResponse(valid=True, error="")
+
+
 @router.patch("/{dfiq_id}")
 async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     """Modifies an DFIQ object in the database."""
@@ -65,7 +97,10 @@ async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     if not db_dfiq:
         raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
 
-    update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
+    try:
+        update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
+    except ValueError as error:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     if db_dfiq.type != update_data.type:
         raise HTTPException(

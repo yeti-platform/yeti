@@ -1,4 +1,5 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
+
 import datetime
 import json
 import logging
@@ -438,7 +439,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             graph.edge_collection("tagged").delete(edge["_id"])
 
     def link_to(
-        self, target: TYetiObject, relationship_type: str, description: str
+        self, target, relationship_type: str, description: str
     ) -> "Relationship":
         """Creates a link between two YetiObjects.
 
@@ -491,6 +492,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
         )["new"]
         result["__id"] = result.pop("_key")
         return Relationship.load(result)
+
+    def swap_link(self):
+        """Swaps the source and target of a relationship."""
+        # Avoid circular dependency
+        self.target, self.source = self.source, self.target
+        edge = json.loads(self.model_dump_json())
+        edge["_from"] = self.source
+        edge["_to"] = self.target
+        edge["_id"] = f"links/{self.id}"
+        graph = self._db.graph("threat_graph")
+        graph.update_edge(edge)
+        self.save()
 
     # TODO: Consider extracting this to its own class, given it's only meant
     # to be called by Observables.

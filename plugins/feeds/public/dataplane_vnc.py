@@ -1,6 +1,7 @@
 """
-    Feed of Dataplane SSH bruteforce IPs and ASNs
+Feed of Dataplane SSH bruteforce IPs and ASNs
 """
+
 from datetime import timedelta
 from typing import ClassVar
 
