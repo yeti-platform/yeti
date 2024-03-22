@@ -12,10 +12,10 @@ from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
 from plugins.analytics.public import censys, expire_tags, shodan
-from tests.helpers import TestHelpers
+from tests.helpers import YetiTestCase
 
 
-class CensysAnalyticsTest(TestHelpers):
+class CensysAnalyticsTest(YetiTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
@@ -81,7 +81,7 @@ class CensysAnalyticsTest(TestHelpers):
         self.check_neighbors(censys_query, expected_neighbor_values)
 
 
-class ShodanAnalyticsTest(TestHelpers):
+class ShodanAnalyticsTest(YetiTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")

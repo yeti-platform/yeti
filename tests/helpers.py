@@ -4,7 +4,7 @@ import unittest
 from core.database_arango import ArangoYetiConnector
 
 
-class TestHelpers(unittest.TestCase):
+class YetiTestCase(unittest.TestCase):
     def check_observables(self, expected_values: list[dict[str, Any]]):
         """Checks observables against a list of expected values.
 

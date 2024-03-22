@@ -1,12 +1,12 @@
 from unittest.mock import patch, MagicMock
 from core import database_arango
 from core.schemas.observable import ObservableType
-from tests.helpers import TestHelpers
+from tests.helpers import YetiTestCase
 from core.schemas.observables import ipv4
 from plugins.feeds.public.tor_exit_nodes import TorExitNodes
 
 
-class TorExitNodesTest(TestHelpers):
+class TorExitNodesTest(YetiTestCase):
     @classmethod
     def setUpClass(cls):
         database_arango.db.connect(database="yeti_test")
