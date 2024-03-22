@@ -22,7 +22,7 @@ def normalize_name(tag_name: str) -> str:
     tag_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
     tag_name = tag_name.strip().lower()
     tag_name = re.sub(r"\s+", "_", tag_name)
-    tag_name = re.sub(r"[^a-zA-Z0-9_.:-_]", "", tag_name)
+    tag_name = re.sub(r"[^a-zA-Z0-9_.:-]", "", tag_name)
     return tag_name
 
 
