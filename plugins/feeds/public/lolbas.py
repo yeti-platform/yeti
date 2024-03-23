@@ -13,7 +13,7 @@ class LoLBAS(task.FeedTask):
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "LoLBAS",
-        "description": "Gets list of o paths, sigma rules, and Tools",
+        "description": "Gets list of of paths, sigma rules, and Tools",
         "source": "https://lolbas-project.github.io/",
     }
 
