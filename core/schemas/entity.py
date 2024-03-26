@@ -24,6 +24,8 @@ class EntityType(str, Enum):
     tool = "tool"
     vulnerability = "vulnerability"
     course_of_action = "course-of-action"
+    location = "location"
+    exploit = "exploit"
 
 
 class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -137,6 +139,29 @@ class Investigation(Entity):
     reference: str = ""
 
 
+class Location(Entity):
+    _type_filter: ClassVar[str] = EntityType.location
+    type: Literal[EntityType.location] = EntityType.location
+
+    location: str = ""
+    reference: str = ""
+    lat: float = 0.0
+    lon: float = 0.0
+    country: str = ""
+    city: str = ""
+    country_code: int = 0
+
+    def set_country_name_by_code(self, code: int):
+        import pycountry
+
+        self.country = pycountry.countries.get(numeric=str(code)).name
+
+    def set_country_code_by_name(self, name: str):
+        import pycountry
+
+        self.country_code = int(pycountry.countries.get(name=name).numeric)
+
+
 class SeverityType(str, Enum):
     none = "none"
     low = "low"
@@ -166,6 +191,17 @@ class Vulnerability(Entity):
     reference: str = ""
 
 
+class Exploit(Entity):
+    _type_filter: ClassVar[str] = EntityType.exploit
+    type: Literal[EntityType.exploit] = EntityType.exploit
+
+    reference: str = ""
+    description: str = ""
+    level: str = ""
+    software: str = ""
+    accessibility: str = ""
+
+
 class CourseOfAction(Entity):
     _type_filter: ClassVar[str] = EntityType.course_of_action
     type: Literal[EntityType.course_of_action] = EntityType.course_of_action
@@ -187,6 +223,7 @@ TYPE_MAPPING = {
     EntityType.threat_actor: ThreatActor,
     EntityType.tool: Tool,
     EntityType.vulnerability: Vulnerability,
+    EntityType.exploit: Exploit,
 }
 
 TYPE_VALIDATOR_MAP = {}
@@ -225,6 +262,7 @@ EntityTypes = (
     | ThreatActor
     | Tool
     | Vulnerability
+    | Exploit
 )
 
 
@@ -242,4 +280,5 @@ EntityClasses = (
     | Type[ThreatActor]
     | Type[Tool]
     | Type[Vulnerability]
+    | Type[Exploit]
 )
