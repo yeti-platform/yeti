@@ -7,7 +7,7 @@ on:
 
 jobs:
   testfeeds-cron:
-    if: ${{ github.event.label.name == 'tasks:feed' or github.event_type == 'schedule' }}
+    if: ${{ github.event.label.name == 'tasks:feed' || github.event_type == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
