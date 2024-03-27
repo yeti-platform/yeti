@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  testfeeds-cron:
-    if: ${{ github.event.label.name == 'tasks:feed' || github.event_type == 'schedule' }}
+  testfeeds:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'tasks:feed') || github.event_type == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
