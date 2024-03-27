@@ -3,9 +3,11 @@ name: Test feeds
 on:
   schedule:
     - cron: '0 6 * * 3' # Run every Wednesday at 06:00 UTC
+  pull_request:
 
 jobs:
-  testfeeds:
+  testfeeds-cron:
+    if: ${{ github.event.label.name == 'tasks:feed' or github.event_type == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
