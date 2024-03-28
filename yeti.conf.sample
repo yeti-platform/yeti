@@ -116,7 +116,7 @@ https =
 
 [otx]
 key = YourOTXKey
-pages = 1
+days = 1
 
 [abuseIPDB]
 key = YourKey
