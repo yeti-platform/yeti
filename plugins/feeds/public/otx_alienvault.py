@@ -64,7 +64,7 @@ class OTXAlienvault(task.FeedTask):
         context["description"] = item["description"]
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]
         investigation = entity.Investigation(
-            name=item["title"], description=item["description"]
+            name=item["name"], description=item["description"]
         ).save()
         tags = item["tags"]
         for otx_indic in item["indicators"]:
@@ -84,13 +84,13 @@ class OTXAlienvault(task.FeedTask):
 
                 obs.tag(tags)
                 obs.add_context(self.name, context)
-                investigation.link_to(obs, "Contains")
+                investigation.link_to(obs, "Observed", "OTXAlienVault")
             elif type_ind in entity.EntityType:
                 ent = entity.Entity(
                     name=otx_indic["indicator"],
                     type=self._TYPE_MAPPING.get(otx_indic["type"]),
                 ).save()
-                investigation.link_to(ent, "Contains")
+                investigation.link_to(ent, "Observed", "OTXAlienVault")
             elif type_ind in indicator.IndicatorType:
                 if type_ind == indicator.IndicatorType.yara:
                     ind_obj = indicator.Indicator(
@@ -104,7 +104,7 @@ class OTXAlienvault(task.FeedTask):
                     if otx_indic["content"]:
                         ind_obj.pattern = otx_indic["content"]
                         ind_obj.save()
-                        investigation.link_to(ind_obj, "Contains")
+                        investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
 
 
 taskmanager.TaskManager.register_task(OTXAlienvault)
