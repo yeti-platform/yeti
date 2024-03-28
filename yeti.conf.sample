@@ -98,6 +98,7 @@ enabled = True
 # key = MISP_AUTH_KEY
 # galaxy_filter = filtering_galaxy_to_drop
 # days = days_history_to_change_by_default_60_days
+# verifycert = true_or_false
 
 [proxy]
 
@@ -115,7 +116,7 @@ https =
 
 [otx]
 key = YourOTXKey
-pages = 1
+days = 1
 
 [abuseIPDB]
 key = YourKey
