@@ -104,10 +104,11 @@ class OTXAlienvault(task.FeedTask):
                         diamond=indicator.DiamondModel.capability,
                     )
                     # sometimes the content is empty
-                    if otx_indic["content"]:
-                        ind_obj.pattern = otx_indic["content"]
-                        ind_obj.save()
-                        investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
+                    if not otx_indic["content"]:
+                        continue
+                    ind_obj.pattern = otx_indic["content"]
+                    ind_obj.save()
+                    investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
 
 
 taskmanager.TaskManager.register_task(OTXAlienvault)
