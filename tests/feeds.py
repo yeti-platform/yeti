@@ -11,6 +11,7 @@ from plugins.feeds.public import (
     lolbas,
     openphish,
     timesketch,
+    tor_exit_nodes,
 )
 
 
@@ -63,4 +64,9 @@ class FeedTest(unittest.TestCase):
     def test_forensic_artifacts(self):
         defaults = artifacts.ForensicArtifacts._defaults.copy()
         feed = artifacts.ForensicArtifacts(**defaults)
+        feed.run()
+
+    def test_tor_exit_nodes(self):
+        defaults = tor_exit_nodes.TorExitNodes._defaults.copy()
+        feed = tor_exit_nodes.TorExitNodes(**defaults)
         feed.run()
