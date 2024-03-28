@@ -31,16 +31,11 @@ class OTXAlienvault(task.FeedTask):
 
     def run(self):
         otx_key = yeti_config.get("otx", "key")
-        limit = yeti_config.get("otx", "limit")
         days = yeti_config.get("otx", "days")
-
         assert otx_key, "OTX key not configured in yeti.conf"
 
-        if not limit:
-            limit = 50
-
         if not days:
-            last_day = 60
+            days = 60
 
         client_otx = OTXv2(otx_key)
         if not client_otx:
@@ -48,10 +43,10 @@ class OTXAlienvault(task.FeedTask):
             raise Exception("Error to connect to OTX")
 
         if self.last_run:
+            logging.debug("Getting OTX data since %s" % self.last_run)
             data = client_otx.getsince(timestamp=self.last_run)
 
-        else:
-            delta_time = datetime.now() - timedelta(days=last_day)
+            delta_time = datetime.now() - timedelta(days=days)
             logging.debug("Getting OTX data since %s" % delta_time)
             data = client_otx.getsince(timestamp=delta_time)
 
@@ -68,14 +63,15 @@ class OTXAlienvault(task.FeedTask):
         context["references"] = "\r\n".join(item["references"])
         context["description"] = item["description"]
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]
-
+        investigation = entity.Investigation(
+            name=item["title"], description=item["description"]
+        ).save()
         tags = item["tags"]
         for otx_indic in item["indicators"]:
             type_ind = self._TYPE_MAPPING.get(otx_indic["type"])
             if not type_ind:
                 continue
 
-            context["title"] = otx_indic["title"]
             context["infos"] = otx_indic["description"]
             context["created"] = datetime.strptime(
                 otx_indic["created"], "%Y-%m-%dT%H:%M:%S"
@@ -88,22 +84,27 @@ class OTXAlienvault(task.FeedTask):
 
                 obs.tag(tags)
                 obs.add_context(self.name, context)
-
+                investigation.link_to(obs, "Contains")
             elif type_ind in entity.EntityType:
-                entity.Entity(
+                ent = entity.Entity(
                     name=otx_indic["indicator"],
                     type=self._TYPE_MAPPING.get(otx_indic["type"]),
                 ).save()
-
+                investigation.link_to(ent, "Contains")
             elif type_ind in indicator.IndicatorType:
                 if type_ind == indicator.IndicatorType.yara:
-                    indicator.Indicator(
+                    ind_obj = indicator.Indicator(
                         name=f"YARA_{otx_indic['indicator']}",
-                        pattern=otx_indic["content"],
+                        pattern="OTX",
                         type=indicator.IndicatorType.yara,
                         location="OTX",
                         diamond=indicator.DiamondModel.capability,
-                    ).save()
+                    )
+                    # sometimes the content is empty
+                    if otx_indic["content"]:
+                        ind_obj.pattern = otx_indic["content"]
+                        ind_obj.save()
+                        investigation.link_to(ind_obj, "Contains")
 
 
 taskmanager.TaskManager.register_task(OTXAlienvault)
