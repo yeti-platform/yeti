@@ -187,9 +187,8 @@ class MitreAttack(task.FeedTask):
                         if item.get("revoked"):
                             continue
                         object_temp = TYPE_FUNCTIONS[subdir](item)
-                        if hasattr(object_temp, "tag"):
-                            tags = item.get("aliases", [item["name"]])
-                            object_temp.tag(tags)
+                        tags = item.get("aliases", [item["name"]])
+                        object_temp.tag(tags)
                         object_cache[item["id"]] = TYPE_FUNCTIONS[item["type"]](item)
                         obj_count += 1
             logging.info("Processed %s %s objects", obj_count, subdir)
