@@ -64,7 +64,9 @@ class OTXAlienvault(task.FeedTask):
         context["description"] = item["description"]
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]
         investigation = entity.Investigation(
-            name=item["name"], description=item["description"], reference=f"https://otx.alienvault.com/pulse/{item['id']}")
+            name=item["name"],
+            description=item["description"],
+            reference=f"https://otx.alienvault.com/pulse/{item['id']}",
         ).save()
         tags = item["tags"]
         for otx_indic in item["indicators"]:
