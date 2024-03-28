@@ -85,7 +85,7 @@ class AuthTest(unittest.TestCase):
         token = data["access_token"]
 
         response = client.post(
-            '/api/v2/auth/logout', headers={"cookie": "yeti_session=" + token}
+            "/api/v2/auth/logout", headers={"cookie": "yeti_session=" + token}
         )
 
         response = client.get(

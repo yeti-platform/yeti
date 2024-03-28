@@ -42,8 +42,6 @@ cookie_scheme = APIKeyCookie(name="yeti_session", auto_error=False)
 api_key_header = APIKeyHeader(name="x-yeti-apikey")
 
 
-
-
 def get_oauth_client() -> OAuth:
     client_id = yeti_config.get("auth", "oidc_client_id")
     client_secret = yeti_config.get("auth", "oidc_client_secret")
