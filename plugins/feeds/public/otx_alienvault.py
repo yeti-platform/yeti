@@ -4,12 +4,12 @@ from datetime import datetime, timedelta
 from io import StringIO
 
 import pandas as pd
+import yara
 from OTXv2 import OTXv2
 
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import entity, indicator, observable, task
-import yara
 
 
 class OTXAlienvault(task.FeedTask):
