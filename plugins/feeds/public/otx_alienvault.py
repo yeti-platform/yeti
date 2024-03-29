@@ -9,6 +9,7 @@ from OTXv2 import OTXv2
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import entity, indicator, observable, task
+import yara
 
 
 class OTXAlienvault(task.FeedTask):
@@ -106,6 +107,19 @@ class OTXAlienvault(task.FeedTask):
                     # sometimes the content is empty
                     if not otx_indic["content"]:
                         continue
+                    r = None
+                    try:
+                        r = yara.compile(source=otx_indic["content"])
+
+                    except Exception as e:
+                        logging.error(f"Error compiling YARA rule: {e}")
+                        continue
+
+                    for t in r:
+                        ind_obj.name = t.identifier
+                        if "description" in t.meta:
+                            ind_obj.description = t.meta["description"]
+
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
                     investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
