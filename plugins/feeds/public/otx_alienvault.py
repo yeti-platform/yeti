@@ -114,11 +114,10 @@ class OTXAlienvault(task.FeedTask):
                     except Exception as e:
                         logging.error(f"Error compiling YARA rule: {e}")
                         continue
-
-                    for t in r:
-                        ind_obj.name = t.identifier
-                        if "description" in t.meta:
-                            ind_obj.description = t.meta["description"]
+                    t = list(r)[0]
+                    ind_obj.name = t.identifier
+                    if "description" in t.meta:
+                        ind_obj.description = t.meta["description"]
 
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
