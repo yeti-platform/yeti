@@ -24,6 +24,9 @@ YETI_AUTH = yeti_config.get("auth", "enabled")
 YETI_WEBROOT = yeti_config.get("system", "webroot")
 
 AUTH_MODULE = yeti_config.get("auth", "module")
+
+SESSION_STORE = set()
+
 if AUTH_MODULE == "oidc":
     if (
         not yeti_config.get("auth", "oidc_client_id")
@@ -80,6 +83,10 @@ async def get_current_user(
     )
     request.state.username = None
     if not token and not cookie:
+        raise credentials_exception
+
+    # When dealing with cookies, check that we haven't logged out the user.
+    if cookie and cookie not in SESSION_STORE:
         raise credentials_exception
 
     token = token or cookie
@@ -169,6 +176,7 @@ if AUTH_MODULE == "oidc":
         )
         response = RedirectResponse(url="/")
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
+        SESSION_STORE.add(access_token)
         return response
 
 
@@ -205,6 +213,7 @@ if AUTH_MODULE == "local":
             expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
         )
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
+        SESSION_STORE.add(access_token)
         return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -238,6 +247,7 @@ async def me(current_user: User = Depends(get_current_user)) -> User:
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(response: Response, cookie: str = Security(cookie_scheme)):
     response.delete_cookie(key="yeti_session")
+    SESSION_STORE.remove(cookie)
     return {"message": "Logged out"}
