@@ -34,5 +34,6 @@ class Template(YetiModel, database_arango.ArangoYetiConnector):
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
             with open(output_file, "w+") as fd:
                 fd.write(result)
+            return None
         else:
             return result
