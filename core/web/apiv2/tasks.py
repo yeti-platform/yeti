@@ -109,15 +109,13 @@ async def patch_export(request: PatchExportRequest) -> ExportTask:
     return new
 
 
-@router.get("/export/{export_name}/content")
-async def export_content(export_name: str):
+@router.get("/export/{export_id}/content")
+async def export_content(export_id: str):
     """Downloads the latest contents of a given ExportTask."""
-    export = ExportTask.find(name=export_name)
+    export = ExportTask.get(export_id)
     if not export:
-        raise HTTPException(
-            status_code=404, detail=f"ExportTask {export_name} not found"
-        )
-    return FileResponse(export.output_file)
+        raise HTTPException(status_code=404, detail=f"ExportTask {export_id} not found")
+    return FileResponse(export.output_file, headers={"Cache-Control": "no-cache"})
 
 
 @router.delete("/export/{export_name}")
