@@ -103,7 +103,6 @@ class OTXAlienvault(task.FeedTask):
                     r = None
                     try:
                         r = yara.compile(source=otx_indic["content"])
-
                     except Exception as e:
                         logging.error(f"Error compiling YARA rule: {e}")
                         continue
