@@ -110,7 +110,7 @@ class OTXAlienvault(task.FeedTask):
 
                     t = list(r)[0]
                     ind_obj = indicator.Indicator(
-                        name=f"{t.identifer}",
+                        name=f"{t.identifier}",
                         pattern=otx_indic["content"],
                         type=indicator.IndicatorType.yara,
                         location="OTX",
