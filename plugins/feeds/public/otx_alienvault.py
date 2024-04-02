@@ -107,7 +107,7 @@ class OTXAlienvault(task.FeedTask):
                     except Exception as e:
                         logging.error(f"Error compiling YARA rule: {e}")
                         continue
-                    
+
                     t = list(r)[0]
                     ind_obj = indicator.Indicator(
                         name=f"{t.identifer}",
@@ -115,7 +115,7 @@ class OTXAlienvault(task.FeedTask):
                         type=indicator.IndicatorType.yara,
                         location="OTX",
                         diamond=indicator.DiamondModel.capability,
-                        description=t.meta['description'],
+                        description=t.meta["description"],
                     ).save()
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
