@@ -152,7 +152,7 @@ TYPE_FUNCTIONS = {
 class MitreAttack(task.FeedTask):
     _defaults = {
         "name": "MitreAttack",
-        "frequency": timedelta(hours=1),
+        "frequency": timedelta(days=10),
         "type": "feed",
         "description": "This feed ingests the MITRE ATT&CK data.",
     }
@@ -160,7 +160,7 @@ class MitreAttack(task.FeedTask):
     def run(self):
         response = self._make_request(
             "https://github.com/mitre/cti/archive/refs/tags/ATT&CK-v14.0.zip"
-        )
+        )  # url is fixed because the code works with this version only
         if not response:
             logging.info("No response: skipping MitreAttack update")
             return
@@ -186,6 +186,9 @@ class MitreAttack(task.FeedTask):
                     for item in data["objects"]:
                         if item.get("revoked"):
                             continue
+                        object_temp = TYPE_FUNCTIONS[subdir](item)
+                        tags = item.get("aliases", [item["name"]])
+                        object_temp.tag(tags)
                         object_cache[item["id"]] = TYPE_FUNCTIONS[item["type"]](item)
                         obj_count += 1
             logging.info("Processed %s %s objects", obj_count, subdir)
