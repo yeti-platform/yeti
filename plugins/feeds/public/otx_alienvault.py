@@ -97,13 +97,6 @@ class OTXAlienvault(task.FeedTask):
                 investigation.link_to(ent, "Observed", "OTXAlienVault")
             elif type_ind in indicator.IndicatorType:
                 if type_ind == indicator.IndicatorType.yara:
-                    ind_obj = indicator.Indicator(
-                        name=f"YARA_{otx_indic['indicator']}",
-                        pattern="OTX",
-                        type=indicator.IndicatorType.yara,
-                        location="OTX",
-                        diamond=indicator.DiamondModel.capability,
-                    )
                     # sometimes the content is empty
                     if not otx_indic["content"]:
                         continue
@@ -114,11 +107,16 @@ class OTXAlienvault(task.FeedTask):
                     except Exception as e:
                         logging.error(f"Error compiling YARA rule: {e}")
                         continue
+                    
                     t = list(r)[0]
-                    ind_obj.name = t.identifier
-                    if "description" in t.meta:
-                        ind_obj.description = t.meta["description"]
-
+                    ind_obj = indicator.Indicator(
+                        name=f"{t.identifer}",
+                        pattern=otx_indic["content"],
+                        type=indicator.IndicatorType.yara,
+                        location="OTX",
+                        diamond=indicator.DiamondModel.capability,
+                        description=t.meta['description'],
+                    ).save()
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
                     investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
