@@ -19,7 +19,7 @@ class TweetLive(task.FeedTask):
     _defaults = {
         "frequency": timedelta(days=1),
         "name": "TweetLive",
-        "description": "This feed contains IOCs in tweets of the list https://twitter.com/i/lists/1423693426437001224 ",
+        "description": "This feed contains IOCs parsed out of Tweets in https://twitter.com/i/lists/1423693426437001224",
     }
     _SOURCE: ClassVar["str"] = "https://api.tweetfeed.live/v1/today"
 
