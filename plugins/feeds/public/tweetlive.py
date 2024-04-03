@@ -28,9 +28,6 @@ class TweetLive(task.FeedTask):
         if not r:
             raise ValueError("Error fetching data")
 
-        if r.status_code != 200:
-            raise ValueError(f"Error fetching data: {r.status_code}")
-
         data = r.json()
 
         if not data:
