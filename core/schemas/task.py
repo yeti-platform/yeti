@@ -59,7 +59,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     # only used for cron tasks
     frequency: datetime.timedelta | None = None
 
-    def run(self, params: "TaskParams"):
+    def run(self, params: dict):
         """Runs the task"""
         raise NotImplementedError("run() must be implemented in subclass")
 
