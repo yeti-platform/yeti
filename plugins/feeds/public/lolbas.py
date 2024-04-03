@@ -1,7 +1,8 @@
 import logging
-import re
 from datetime import datetime, timedelta
 from typing import ClassVar
+
+import yaml
 
 from core import taskmanager
 from core.schemas import entity, indicator, task
@@ -12,7 +13,7 @@ class LoLBAS(task.FeedTask):
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "LoLBAS",
-        "description": "Gets list of o paths, sigma rules, and Tools",
+        "description": "Gets list of paths, sigma rules, and Tools",
         "source": "https://lolbas-project.github.io/",
     }
 
@@ -23,6 +24,13 @@ class LoLBAS(task.FeedTask):
         if not response:
             return
         lolbas_json = response.json()
+        self._lolbas_attackpattern = entity.AttackPattern(name="LOLBAS usage").save()
+        if not self._lolbas_attackpattern.description:
+            self._lolbas_attackpattern.description = (
+                "Usage of living-off-the-land binaries and scripts"
+            )
+            self._lolbas_attackpattern.save()
+
         for entry in lolbas_json:
             self.analyze_entry(entry)
 
@@ -64,7 +72,7 @@ class LoLBAS(task.FeedTask):
                         "Error processing sigma rule for %s: %s", entry["Name"], error
                     )
 
-    def process_sigma_rule(self, tool, detection):
+    def process_sigma_rule(self, tool: entity.Tool, detection: dict) -> None:
         """Processes a Sigma rule as specified in the lolbas json."""
         url = detection["Sigma"]
         if not url:
@@ -72,11 +80,16 @@ class LoLBAS(task.FeedTask):
         url = url.replace("github.com", "raw.githubusercontent.com").replace(
             "blob/", ""
         )
-        sigma_yaml = self._make_request(url).text
-        # extract title from yaml
-        title = re.search(r"title: (.*)", sigma_yaml).group(1)
-        description = re.search(r"description: (.*)", sigma_yaml).group(1)
-        date = re.search(r"date: (.*)", sigma_yaml).group(1)
+        try:
+            sigma_yaml = self._make_request(url).text
+            sigma_data = yaml.safe_load(sigma_yaml)
+        except yaml.YAMLError as e:
+            logging.error("Error parsing Sigma rule at %s: %s", url, e)
+            return
+
+        title = sigma_data["title"]
+        description = sigma_data["description"]
+        date = sigma_data["date"]
         date = datetime.strptime(date.strip(), "%Y/%m/%d")
         # create sigma indicator
         sigma = indicator.Sigma(
@@ -88,10 +101,17 @@ class LoLBAS(task.FeedTask):
             kill_chain_phases=["payload-delivery"],
             diamond=indicator.DiamondModel.capability,
         ).save()
+        tags = set(sigma_data.get("tags", [])) | {"lolbas"}
+        sigma.tag(tags)
         sigma.link_to(
             tool,
             relationship_type="detects",
             description=f"Detects usage of {tool.name}",
+        )
+        sigma.link_to(
+            self._lolbas_attackpattern,
+            relationship_type="detects",
+            description=f"Detects potentially malicious usage of {tool.name}",
         )
 
     def format_commands(self, commands: list[dict[str, str]]) -> str:

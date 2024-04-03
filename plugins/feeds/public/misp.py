@@ -31,12 +31,15 @@ class MispFeed(task.FeedTask):
 
             config["url"] = yeti_config.get(instance, "url")
             config["key"] = yeti_config.get(instance, "key")
+            config["verifycert"] = yeti_config.get(instance, "verifycert")
             instances[instance] = config
 
         return instances
 
     def get_organisations(self, instance: dict):
-        misp_client = PyMISP(url=instance["url"], key=instance["key"])
+        misp_client = PyMISP(
+            url=instance["url"], key=instance["key"], ssl=instance["verifycert"]
+        )
 
         if not misp_client:
             logging.error("Issue on misp client")
@@ -72,7 +75,9 @@ class MispFeed(task.FeedTask):
             self.analyze(event, instance)
 
     def get_event(self, instance: dict, from_date: str, to_date: str = None):
-        misp_client = PyMISP(url=instance["url"], key=instance["key"])
+        misp_client = PyMISP(
+            url=instance["url"], key=instance["key"], ssl=instance["verifycert"]
+        )
         from_date = from_date.strftime("%Y-%m-%d")
         if to_date:
             to_date = to_date.strftime("%Y-%m-%d")
