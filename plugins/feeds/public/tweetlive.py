@@ -7,11 +7,11 @@ from core import taskmanager
 from core.schemas import observable, task
 
 MAPPING = {
-    "domain": observable.ObservableType.hostname,
-    "ip": observable.ObservableType.ipv4,
-    "sha256": observable.ObservableType.sha256,
-    "url": observable.ObservableType.url,
-    "md5": observable.ObservableType.md5,
+    "domain": observable.hostname.Hostname,
+    "ip": observable.ipv4.IPv4,
+    "sha256": observable.sha256.SHA256,
+    "url": observable.url.Url,
+    "md5": observable.md5.MD5,
 }
 
 
@@ -48,7 +48,7 @@ class TweetLive(task.FeedTask):
         if not obs_type:
             raise ValueError(f"Observable type {item['type']} not supported")
 
-        obs = observable.Observable(value=item["value"], type=obs_type).save()
+        obs = obs_type(value=item["value"]).save()
 
         context = {}
 
