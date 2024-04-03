@@ -909,6 +909,7 @@ class MispToYeti:
         self, invest: entity.Investigation, object_exploit_poc: MISPObject
     ):
         poc_attr = object_exploit_poc.get_attributes_by_relation("poc")
+        print(poc_attr)
 
     def __import_exploit(
         self, invest: entity.Investigation, object_exploit: MISPObject
