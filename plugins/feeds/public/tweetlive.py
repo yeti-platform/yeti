@@ -17,7 +17,7 @@ MAPPING = {
 
 class TweetLive(task.FeedTask):
     _defaults = {
-        "frequency": timedelta(hours=1),
+        "frequency": timedelta(days=1),
         "name": "TweetLive",
         "description": "This feed contains tweets",
     }
@@ -66,3 +66,6 @@ class TweetLive(task.FeedTask):
 
         if context:
             obs.add_context(self.name, context)
+
+
+taskmanager.TaskManager.register_task(TweetLive)
