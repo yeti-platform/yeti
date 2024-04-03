@@ -12,6 +12,7 @@ from plugins.feeds.public import (
     openphish,
     timesketch,
     tor_exit_nodes,
+    tweetlive,
 )
 
 
@@ -69,4 +70,9 @@ class FeedTest(unittest.TestCase):
     def test_tor_exit_nodes(self):
         defaults = tor_exit_nodes.TorExitNodes._defaults.copy()
         feed = tor_exit_nodes.TorExitNodes(**defaults)
+        feed.run()
+
+    def test_tweetlive(self):
+        defaults = tweetlive.TweetLive._defaults.copy()
+        feed = tweetlive.TweetLive(**defaults)
         feed.run()
