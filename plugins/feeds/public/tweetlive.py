@@ -56,7 +56,6 @@ class TweetLive(task.FeedTask):
             context["tweet"] = item["tweet"]
         if item["user"]:
             context["user"] = item["user"]
-
         if item["tags"]:
             obs.tag(item["tags"])
 
