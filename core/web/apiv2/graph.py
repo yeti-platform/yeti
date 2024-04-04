@@ -104,10 +104,10 @@ class GraphSearchResponse(BaseModel):
     vertices: dict[
         str,
         observable.Observable
-        | entity.Entity
-        | indicator.Indicator
+        | entity.EntityTypes
+        | indicator.IndicatorTypes
         | tag.Tag
-        | dfiq.DFIQBase,
+        | dfiq.DFIQTypes,
     ]
     paths: list[list[graph.Relationship | graph.TagRelationship]]
     total: int

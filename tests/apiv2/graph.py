@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from core import database_arango
 from core.schemas.entity import AttackPattern, ThreatActor
 from core.schemas.graph import Relationship
-from core.schemas.indicator import ForensicArtifact, Regex
+from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -28,6 +28,13 @@ class SimpleGraphTest(unittest.TestCase):
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.entity1 = ThreatActor(name="actor0").save()
+        self.indicator1 = Query(
+            name="query1",
+            query_type="opensearch",
+            target_systems=["system1"],
+            pattern="blah",
+            diamond=DiamondModel.victim,
+        ).save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -186,6 +193,27 @@ class SimpleGraphTest(unittest.TestCase):
         neighbor = data["vertices"][self.observable2.extended_id]
         self.assertEqual(neighbor["value"], "127.0.0.1")
         self.assertEqual(neighbor["id"], self.observable2.id)
+
+    def test_neighbors_strongly_typed(self):
+        self.entity1.link_to(
+            self.indicator1, relationship_type="asd", description="asd"
+        )
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        neighbor = data["vertices"][self.indicator1.extended_id]
+        self.assertEqual(neighbor["query_type"], "opensearch")
+        self.assertEqual(neighbor["target_systems"], ["system1"])
 
     def test_add_link(self):
         response = client.post(
