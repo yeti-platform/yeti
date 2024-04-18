@@ -546,7 +546,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         count: int = 0,
     ) -> tuple[
         dict[
-            str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"
+            str,
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
         ],
         List[List["Relationship | TagRelationship"]],
         int,
