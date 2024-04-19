@@ -546,7 +546,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         count: int = 0,
     ) -> tuple[
         dict[
-            str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"
+            str,
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
         ],
         List[List["Relationship | TagRelationship"]],
         int,
@@ -582,7 +583,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             query_filter = "FILTER e.type IN @link_types"
         if target_types:
             args["target_types"] = target_types
-            query_filter = "FILTER v.type IN @target_types"
+            query_filter = (
+                "FILTER (v.type IN @target_types OR v.root_type IN @target_types)"
+            )
 
         limit = ""
         if count != 0:
