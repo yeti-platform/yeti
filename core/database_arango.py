@@ -583,7 +583,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             query_filter = "FILTER e.type IN @link_types"
         if target_types:
             args["target_types"] = target_types
-            query_filter = "FILTER v.type IN @target_types"
+            query_filter = (
+                "FILTER (v.type IN @target_types OR v.root_type IN @target_types)"
+            )
 
         limit = ""
         if count != 0:
@@ -618,6 +620,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._build_vertices(vertices, path["vertices"])
         if not include_original:
             vertices.pop(self.extended_id, None)
+        print(vertices, paths, total)
         return vertices, paths, total or 0
 
     def _dedup_edges(self, edges):
