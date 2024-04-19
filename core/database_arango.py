@@ -620,7 +620,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._build_vertices(vertices, path["vertices"])
         if not include_original:
             vertices.pop(self.extended_id, None)
-        print(vertices, paths, total)
         return vertices, paths, total or 0
 
     def _dedup_edges(self, edges):
