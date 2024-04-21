@@ -215,6 +215,51 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(neighbor["query_type"], "opensearch")
         self.assertEqual(neighbor["target_systems"], ["system1"])
 
+    def test_neighbors_target_types(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        self.entity1.link_to(self.observable2, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "target_types": ["hostname"],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 1)
+        self.assertEqual(
+            data["vertices"][self.observable1.extended_id]["value"], "tomchop.me"
+        )
+
+    def test_neighbors_target_types_root_type(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        self.entity1.link_to(self.observable2, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "target_types": ["observable"],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 2)
+        self.assertEqual(
+            data["vertices"][self.observable1.extended_id]["value"], "tomchop.me"
+        )
+        self.assertEqual(
+            data["vertices"][self.observable2.extended_id]["value"], "127.0.0.1"
+        )
+
     def test_add_link(self):
         response = client.post(
             "/api/v2/graph/add",
