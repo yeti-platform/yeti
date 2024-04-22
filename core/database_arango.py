@@ -517,19 +517,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
         from core.schemas.graph import TagRelationship
         from core.schemas.tag import Tag
 
-        traversed = self._db.graph("tags").traverse(
-            self.extended_id, direction="any", max_depth=1
+        tag_aql = """
+            for v, e, p IN 1..1 OUTBOUND @extended_id GRAPH tags
+            OPTIONS {uniqueVertices: "path"}
+            RETURN p
+        """
+        tag_paths = list(
+            self._db.aql.execute(tag_aql, bind_vars={"extended_id": self.extended_id})
         )
+        if not tag_paths:
+            return []
         relationships = []
-        for path in traversed["paths"]:
-            if path["edges"]:
-                tag_data = Tag.load(path["vertices"][1])
-                edge_data = path["edges"][0]
-                # edge_data["id"] = edge_data.pop("_id")
-                edge_data["__id"] = edge_data.pop("_id")
-                tag_relationship = TagRelationship.load(edge_data)
-                relationships.append((tag_relationship, tag_data))
-                self._tags[tag_data.name] = tag_relationship
+        for path in tag_paths:
+            tag_data = Tag.load(path["vertices"][1])
+            edge_data = path["edges"][0]
+            edge_data["__id"] = edge_data.pop("_id")
+            tag_relationship = TagRelationship.load(edge_data)
+            relationships.append((tag_relationship, tag_data))
+            self._tags[tag_data.name] = tag_relationship
         return relationships
 
     # pylint: disable=too-many-arguments
