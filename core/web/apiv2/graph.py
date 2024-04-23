@@ -37,6 +37,7 @@ class GraphSearchRequest(BaseModel):
     include_original: bool
     count: int = 50
     page: int = 0
+    sorting: list[tuple[str, bool]] = []
 
     @model_validator(mode="before")
     @classmethod
@@ -140,6 +141,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         max_hops=request.max_hops or request.hops,
         count=request.count,
         offset=request.page * request.count,
+        sorting=request.sorting,
     )
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 
