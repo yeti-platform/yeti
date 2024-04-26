@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, Ty
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable
-    from core.schemas.graph import Relationship, RelationshipTypes, TagRelationship
+    from core.schemas.graph import (
+        GraphFilter,
+        Relationship,
+        RelationshipTypes,
+        TagRelationship,
+    )
     from core.schemas.tag import Tag
 
 import requests
@@ -544,6 +549,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         target_types: List[str] = [],
         direction: str = "any",
         graph: str = "links",
+        filter: List["GraphFilter"] = [],
         include_original: bool = False,
         min_hops: int = 1,
         max_hops: int = 1,
@@ -597,6 +603,15 @@ class ArangoYetiConnector(AbstractYetiConnector):
             query_filter = (
                 "FILTER (v.type IN @target_types OR v.root_type IN @target_types)"
             )
+        if filter:
+            filters = []
+            for i, f in enumerate(filter):
+                filters.append(
+                    f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                )
+                args[f"filter_key{i}"] = f.key
+                args[f"filter_value{i}"] = f.value
+            query_filter += f"FILTER {' OR '.join(filters)}"
 
         limit = ""
         if count != 0:

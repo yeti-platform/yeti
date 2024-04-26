@@ -5,8 +5,15 @@ from pydantic import BaseModel, computed_field
 
 from core import database_arango
 
-
 # Database model
+
+
+class GraphFilter(BaseModel):
+    key: str
+    value: str
+    operator: str
+
+
 # Relationship and TagRelationship do not inherit from YetiModel
 # because they represent and id in the form of collection_name/id
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
