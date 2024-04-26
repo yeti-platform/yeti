@@ -26,12 +26,24 @@ class ImportData(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
-        cls.path_json = "tests/misp_test_data/misp_event.json"
+        cls.misp_json_files = [
+            "tests/misp_test_data/misp_event.json",
+            "tests/misp_test_data/misp_event_objects.json",
+        ]
 
     def test_import_misp(self):
         logging.info("Test import misp")
-        with open(self.path_json, "rb") as fichier:
-            files = {"misp_file_json": (self.path_json, fichier)}
+        test_file_json = self.misp_json_files[0]
+        with open(test_file_json, "rb") as fichier:
+            files = {"misp_file_json": (self.misp_json_files[0], fichier)}
+            r = client.post("/api/v2/import_data/import_misp_json", files=files)
+            self.assertEqual(r.status_code, 200)
+
+    def test_misp_object(self):
+        logging.info("Test misp object")
+        test_file_json = self.misp_json_files[1]
+        with open(test_file_json, "rb") as fichier:
+            files = {"misp_file_json": (test_file_json, fichier)}
             r = client.post("/api/v2/import_data/import_misp_json", files=files)
             self.assertEqual(r.status_code, 200)
 

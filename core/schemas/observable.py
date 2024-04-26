@@ -20,6 +20,7 @@ class ObservableType(str, Enum):
     certificate = "certificate"
     cidr = "cidr"
     command_line = "command_line"
+    cookie = "cookie"
     docker_image = "docker_image"
     email = "email"
     file = "file"
@@ -29,6 +30,7 @@ class ObservableType(str, Enum):
     imphash = "imphash"
     ipv4 = "ipv4"
     ipv6 = "ipv6"
+    jarm = "jarm"
     mac_address = "mac_address"
     md5 = "md5"
     generic = "generic"
@@ -194,6 +196,7 @@ from core.schemas.observables import (  # noqa: E402
     certificate,  # noqa: F401
     cidr,  # noqa: F401
     command_line,  # noqa: E402, F401
+    cookie,  # noqa: F401
     docker_image,  # noqa: F401
     email,  # noqa: F401
     file,  # noqa: F401
@@ -203,6 +206,7 @@ from core.schemas.observables import (  # noqa: E402
     imphash,  # noqa: F401
     ipv4,  # noqa: F401
     ipv6,  # noqa: F401
+    jarm,  # noqa: F401
     mac_address,  # noqa: F401
     md5,  # noqa: F401
     path,  # noqa: F401

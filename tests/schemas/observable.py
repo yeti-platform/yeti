@@ -10,6 +10,7 @@ from core.schemas.observables import (
     certificate,
     cidr,
     command_line,
+    cookie,
     docker_image,
     email,
     file,
@@ -19,6 +20,7 @@ from core.schemas.observables import (
     imphash,
     ipv4,
     ipv6,
+    jarm,
     mac_address,
     md5,
     mutex,
@@ -394,7 +396,19 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_path(self) -> None:
         """Tests creating a path."""
-        observable = path.Path(value="/var/test").save()
+        observable = path.Path(value="/var/test")
+        observable.creation_time = datetime.datetime(
+            2023, 1, 1, tzinfo=datetime.timezone.utc
+        )
+        observable.modification_time = datetime.datetime(
+            2023, 1, 1, tzinfo=datetime.timezone.utc
+        )
+        observable.access_time = datetime.datetime(
+            2023, 1, 1, tzinfo=datetime.timezone.utc
+        )
+        observable.path_encoding = "utf-8"
+        observable = observable.save()
+
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "/var/test")
         self.assertIsInstance(observable, path.Path)
@@ -530,3 +544,23 @@ class ObservableTest(unittest.TestCase):
                     2023, 1, 1, tzinfo=datetime.timezone.utc
                 ),
             ).save()
+
+    def test_cookie(self):
+        """Tests creating a cookie."""
+        cookie_obs = cookie.Cookie(value="test_cookie")
+        cookie_obs.http_only = True
+        cookie_obs.secure = True
+        cookie_obs.type_cookie = "Session management"
+        cookie_obs.expires = datetime.datetime.now(datetime.timezone.utc)
+        cookie_obs.save()
+        self.assertEqual(cookie_obs.type, "cookie")
+        self.assertEqual(cookie_obs.http_only, True)
+        self.assertEqual(cookie_obs.secure, True)
+        self.assertEqual(cookie_obs.type_cookie, "Session management")
+        self.assertIsNotNone(cookie_obs.expires)
+
+    def test_jarm(self):
+        """Tests creating a JARM."""
+        jarm_obs = jarm.Jarm(value="1234567890")
+        jarm_obs.save()
+        self.assertEqual(jarm_obs.type, "jarm")
