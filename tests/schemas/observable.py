@@ -364,12 +364,14 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "::1")
         self.assertIsInstance(observable, ipv6.IPv6)
+
     def test_create_ja3(self) -> None:
         """Tests creating a JA3."""
         observable = ja3.JA3(value="1234567890").save()
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "1234567890")
         self.assertEqual(observable.type, "ja3")
+
     def test_create_mac_address(self) -> None:
         """Tests creating a MAC address."""
         observable = mac_address.MacAddress(value="00:00:00:00:00:00").save()

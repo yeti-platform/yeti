@@ -44,14 +44,14 @@ class SSLBlacklist_JA3(task.FeedTask):
 
         ja3_obs = ja3.JA3(value=ja3_md5).save()
 
-        context  = {}
+        context = {}
         context["first_seen"] = first_seen
         context["last_seen"] = last_seen
 
-        ja3_obs.add_context(self.name,context)
+        ja3_obs.add_context(self.name, context)
 
         if threat:
             ja3_obs.tag([threat])
 
-taskmanager.TaskManager.register_task(SSLBlacklist_JA3)
 
+taskmanager.TaskManager.register_task(SSLBlacklist_JA3)
