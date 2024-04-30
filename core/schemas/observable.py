@@ -29,6 +29,8 @@ class ObservableType(str, Enum):
     imphash = "imphash"
     ipv4 = "ipv4"
     ipv6 = "ipv6"
+    ja3 = "ja3"
+    jarm = "jarm"
     mac_address = "mac_address"
     md5 = "md5"
     generic = "generic"
@@ -203,6 +205,7 @@ from core.schemas.observables import (  # noqa: E402
     imphash,  # noqa: F401
     ipv4,  # noqa: F401
     ipv6,  # noqa: F401
+    ja3,  # noqa: F401
     mac_address,  # noqa: F401
     md5,  # noqa: F401
     path,  # noqa: F401
