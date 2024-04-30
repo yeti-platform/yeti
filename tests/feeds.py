@@ -4,6 +4,7 @@ from core import database_arango
 from core.config.config import yeti_config
 from plugins.feeds.public import (
     artifacts,
+    absusech_ja3,
     attack,
     dfiq,
     feodo_tracker_ip_blocklist,
@@ -76,3 +77,9 @@ class FeedTest(unittest.TestCase):
         defaults = tweetlive.TweetLive._defaults.copy()
         feed = tweetlive.TweetLive(**defaults)
         feed.run()
+
+    def test_abusech_ja3(self):
+        defaults = absusech_ja3.AbuseCH_JA3._defaults.copy()
+        feed = absusech_ja3.AbuseCH_JA3(**defaults)
+        feed.run()
+        
