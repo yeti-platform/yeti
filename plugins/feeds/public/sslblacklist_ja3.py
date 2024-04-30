@@ -1,4 +1,3 @@
-import logging
 from datetime import timedelta
 from io import StringIO
 from typing import ClassVar
@@ -10,11 +9,11 @@ from core.schemas import task
 from core.schemas.observables import ja3
 
 
-class AbuseCH_JA3(task.FeedTask):
+class SSLBlacklist_JA3(task.FeedTask):
     _defaults = {
         "frequency": timedelta(hours=1),
-        "name": "AbuseCH_JA3",
-        "description": "This feed contains JA3 hashes",
+        "name": "SSLBlacklist_JA3",
+        "description": "This feed contains JA3 hashes of SSL by AbuseCH",
     }
 
     _SOURCE: ClassVar["str"] = "https://sslbl.abuse.ch/blacklist/ja3_fingerprints.csv"
@@ -54,5 +53,5 @@ class AbuseCH_JA3(task.FeedTask):
         if threat:
             ja3_obs.tag([threat])
 
-taskmanager.TaskManager.register_task(AbuseCH_JA3)
+taskmanager.TaskManager.register_task(SSLBlacklist_JA3)
 
