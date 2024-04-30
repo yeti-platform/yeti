@@ -10,6 +10,9 @@
     "python.testing.unittestEnabled": true,
     "python.analysis.typeCheckingMode": "basic",
     "editor.defaultFormatter": "charliermarsh.ruff",
-    "mypy-type-checker.importStrategy": "fromEnvironment"
+    "mypy-type-checker.importStrategy": "fromEnvironment",
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    }
 
 }

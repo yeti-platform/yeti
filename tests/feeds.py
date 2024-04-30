@@ -10,6 +10,7 @@ from plugins.feeds.public import (
     hybrid_analysis,
     lolbas,
     openphish,
+    sslblacklist_ja3,
     timesketch,
     tor_exit_nodes,
     tweetlive,
@@ -75,4 +76,9 @@ class FeedTest(unittest.TestCase):
     def test_tweetlive(self):
         defaults = tweetlive.TweetLive._defaults.copy()
         feed = tweetlive.TweetLive(**defaults)
+        feed.run()
+
+    def test_sslblacklist_ja3(self):
+        defaults = sslblacklist_ja3.SSLBlacklistJA3._defaults.copy()
+        feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
         feed.run()
