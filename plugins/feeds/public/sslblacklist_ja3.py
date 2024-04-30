@@ -9,7 +9,7 @@ from core.schemas import task
 from core.schemas.observables import ja3
 
 
-class SSLBlacklist_JA3(task.FeedTask):
+class SSLBlacklistJA3(task.FeedTask):
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "SSLBlacklist_JA3",
