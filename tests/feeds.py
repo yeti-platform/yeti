@@ -79,6 +79,6 @@ class FeedTest(unittest.TestCase):
         feed.run()
 
     def test_sslblacklist_ja3(self):
-        defaults = sslblacklist_ja3.SSLBlacklist_JA3._defaults.copy()
-        feed = sslblacklist_ja3.SSLBlacklist_JA3(**defaults)
+        defaults = sslblacklist_ja3.SSLBlacklistJA3._defaults.copy()
+        feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
         feed.run()

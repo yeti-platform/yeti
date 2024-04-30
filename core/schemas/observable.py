@@ -206,6 +206,7 @@ from core.schemas.observables import (  # noqa: E402
     ipv4,  # noqa: F401
     ipv6,  # noqa: F401
     ja3,  # noqa: F401
+    jarm,  # noqa: F401
     mac_address,  # noqa: F401
     md5,  # noqa: F401
     path,  # noqa: F401

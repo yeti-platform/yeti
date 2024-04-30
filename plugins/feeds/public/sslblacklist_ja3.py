@@ -28,7 +28,7 @@ class SSLBlacklistJA3(task.FeedTask):
                 data,
                 delimiter=",",
                 comment="#",
-                names=["ja3_md5", "first_seen", "last_seen", "threat"],
+                names=self._NAMES,
                 parse_dates=["first_seen"],
             )
             df = self._filter_observables_by_time(df, "last_seen")
@@ -54,4 +54,4 @@ class SSLBlacklistJA3(task.FeedTask):
             ja3_obs.tag([threat])
 
 
-taskmanager.TaskManager.register_task(SSLBlacklist_JA3)
+taskmanager.TaskManager.register_task(SSLBlacklistJA3)
