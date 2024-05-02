@@ -202,7 +202,7 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddRes
                 observable = cls(value=new_observable.value).save()
                 if new_observable.tags:
                     observable = observable.tag(new_observable.tags)
-            except ValueError:
+            except (ValueError, RuntimeError):
                 response.failed.append(new_observable.value)
                 continue
         response.added.append(observable)

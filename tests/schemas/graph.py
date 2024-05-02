@@ -4,14 +4,14 @@ from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas.entity import Malware
-from core.schemas.graph import Relationship
+from core.schemas.graph import GraphFilter, Relationship
 from core.schemas.observables import hostname, ipv4
 from core.web import webapp
 
 client = TestClient(webapp.app)
 
 
-class ObservableTest(unittest.TestCase):
+class GraphTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
@@ -130,3 +130,76 @@ class ObservableTest(unittest.TestCase):
         vertices, edges, edge_count = self.observable1.neighbors()
         self.assertEqual(len(vertices), 2)
         self.assertEqual(edge_count, 2)
+
+    def test_neighbors_filter(self):
+        """Tests that a link between two nodes is bidirectional."""
+        self.observable1.link_to(self.observable2, "a", "description_aaaa")
+        self.observable1.link_to(self.observable3, "c", "description_ccc")
+
+        # filter on edge description
+        vertices, edges, edge_count = self.observable1.neighbors(
+            filter=[GraphFilter(key="description", value="_ccc", operator="=~")]
+        )
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(edge_count, 1)
+        self.assertEqual(
+            vertices[self.observable3.extended_id].value, self.observable3.value
+        )
+
+        # filter on vertice value
+        vertices, edges, edge_count = self.observable1.neighbors(
+            filter=[GraphFilter(key="value", value="8.8", operator="=~")]
+        )
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(edge_count, 1)
+        self.assertEqual(
+            vertices[self.observable3.extended_id].value, self.observable3.value
+        )
+
+        vertices, edges, edge_count = self.observable1.neighbors()
+        self.assertEqual(len(vertices), 2)
+        self.assertEqual(edge_count, 2)
+
+    def test_neighbors_filter_two_hops(self):
+        """Tests that a link between two nodes is bidirectional."""
+        self.observable1.link_to(self.observable2, "a", "description_aaaa_to_b")
+        self.observable2.link_to(self.observable3, "b", "description_bbbb_to_c")
+        observable4 = ipv4.IPv4(value="1.1.1.1").save()
+        self.observable2.link_to(observable4, "c", "description_bbbb_to_d")
+
+        vertices, edges, edge_count = self.observable1.neighbors(min_hops=1, max_hops=2)
+        self.assertEqual(len(vertices), 3)
+        self.assertEqual(len(edges), 3)
+        self.assertEqual(len(edges[0]), 1)  # First hop counts as a path
+        self.assertEqual(len(edges[1]), 2)  # First two-hop path
+        self.assertEqual(len(edges[2]), 2)  # Second two-hop path
+
+        vertices, edges, edge_count = self.observable1.neighbors(
+            min_hops=1,
+            max_hops=2,
+            filter=[GraphFilter(key="description", value="bbbb_to_d", operator="=~")],
+        )
+        self.assertEqual(len(vertices), 2)
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(len(edges[0]), 2)
+        self.assertEqual(edges[0][0].source, self.observable1.extended_id)
+        self.assertEqual(edges[0][0].target, self.observable2.extended_id)
+        self.assertEqual(edges[0][1].source, self.observable2.extended_id)
+        self.assertEqual(edges[0][1].target, observable4.extended_id)
+        self.assertEqual(edges[0][0].description, "description_aaaa_to_b")
+        self.assertEqual(edges[0][1].description, "description_bbbb_to_d")
+
+        vertices, edges, edge_count = self.observable1.neighbors(
+            min_hops=1,
+            max_hops=3,
+            filter=[GraphFilter(key="value", value="1.1.1.1", operator="=~")],
+        )
+        self.assertEqual(len(vertices), 2)
+        self.assertEqual(len(edges), 1)  # Only one path, two-hops
+        self.assertEqual(len(edges[0]), 2)
+        self.assertEqual(edges[0][0].source, self.observable1.extended_id)
+        self.assertEqual(edges[0][0].target, self.observable2.extended_id)
+        self.assertEqual(edges[0][1].source, self.observable2.extended_id)
+        self.assertEqual(edges[0][1].target, observable4.extended_id)
+        self.assertEqual(edges[0][0].description, "description_aaaa_to_b")
+        self.assertEqual(edges[0][1].description, "description_bbbb_to_d")

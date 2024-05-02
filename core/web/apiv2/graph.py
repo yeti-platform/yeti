@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, ValidationInfo, model_validator
 from pydantic.functional_validators import field_validator
 
 from core.schemas import dfiq, entity, graph, indicator, observable, tag
+from core.schemas.graph import GraphFilter
 from core.schemas.observable import ObservableType
 
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
@@ -34,9 +35,11 @@ class GraphSearchRequest(BaseModel):
     max_hops: int | None = None
     graph: str
     direction: GraphDirection
+    filter: list[GraphFilter] = []
     include_original: bool
     count: int = 50
     page: int = 0
+    sorting: list[tuple[str, bool]] = []
 
     @model_validator(mode="before")
     @classmethod
@@ -134,12 +137,14 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         link_types=request.link_types,
         target_types=request.target_types,
         direction=request.direction,
+        filter=request.filter,
         include_original=request.include_original,
         graph=request.graph,
         min_hops=request.min_hops or request.hops,
         max_hops=request.max_hops or request.hops,
         count=request.count,
         offset=request.page * request.count,
+        sorting=request.sorting,
     )
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 

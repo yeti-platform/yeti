@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, List, Type, TypeVar
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable, tag
-    from core.schemas.graph import Relationship, TagRelationship
+    from core.schemas.graph import GraphFilter, Relationship, TagRelationship
 
 TYetiObject = TypeVar("TYetiObject")
 
@@ -103,6 +103,7 @@ class AbstractYetiConnector(ABC):
         target_types: List[str] = [],
         direction: str = "any",
         graph: str = "links",
+        filter: List["GraphFilter"] = [],
         include_original: bool = False,
         min_hops: int = 1,
         max_hops: int = 1,

@@ -9,7 +9,12 @@ from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, Ty
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable
-    from core.schemas.graph import Relationship, RelationshipTypes, TagRelationship
+    from core.schemas.graph import (
+        GraphFilter,
+        Relationship,
+        RelationshipTypes,
+        TagRelationship,
+    )
     from core.schemas.tag import Tag
 
 import requests
@@ -211,7 +216,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._get_collection().update_match(filters, document)
 
             logging.debug(f"filters: {filters}")
-            newdoc = list(self._get_collection().find(filters, limit=1))[0]
+            try:
+                newdoc = list(self._get_collection().find(filters, limit=1))[0]
+            except IndexError as exception:
+                msg = f"Update failed when adding {document_json}: {exception}"
+                logging.error(msg)
+                raise RuntimeError(msg)
 
         newdoc["__id"] = newdoc.pop("_key")
         return newdoc
@@ -544,11 +554,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         target_types: List[str] = [],
         direction: str = "any",
         graph: str = "links",
+        filter: List["GraphFilter"] = [],
         include_original: bool = False,
         min_hops: int = 1,
         max_hops: int = 1,
         offset: int = 0,
         count: int = 0,
+        sorting: List[tuple[str, bool]] = [],
     ) -> tuple[
         dict[
             str,
@@ -583,6 +595,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "extended_id": self.extended_id,
             "@graph": graph,
         }
+        sorts = []
+        for field, asc in sorting:
+            sorts.append(f'p.edges[0].{field} {"ASC" if asc else "DESC"}')
+        sorting_aql = f"SORT {', '.join(sorts)}" if sorts else ""
+
         if link_types:
             args["link_types"] = link_types
             query_filter = "FILTER e.type IN @link_types"
@@ -591,6 +608,15 @@ class ArangoYetiConnector(AbstractYetiConnector):
             query_filter = (
                 "FILTER (v.type IN @target_types OR v.root_type IN @target_types)"
             )
+        if filter:
+            filters = []
+            for i, f in enumerate(filter):
+                filters.append(
+                    f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                )
+                args[f"filter_key{i}"] = f.key
+                args[f"filter_value{i}"] = f.value
+            query_filter += f"FILTER {' OR '.join(filters)}"
 
         limit = ""
         if count != 0:
@@ -613,6 +639,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
               RETURN MERGE(observable, {{tags: MERGE(innertags)}})
           )
           {limit}
+          {sorting_aql}
           RETURN {{ vertices: v_with_tags, g: p }}
         """
         cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
