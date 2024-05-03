@@ -236,7 +236,11 @@ class ForensicArtifact(Indicator):
                 add_tags = set(self.relevant_tags + [self.name])
                 child.relevant_tags = list(add_tags | set(child.relevant_tags))
                 child.save()
-                self.link_to(child, "includes", "Uses ForensicArtifact child")
+                child.link_to(
+                    self,
+                    "included in",
+                    f"Included in ForensicArtifact definition for {self.name}",
+                )
 
     def save_indicators(self, create_links: bool = False):
         indicators = []
@@ -310,7 +314,7 @@ class ForensicArtifact(Indicator):
                     indicator.save()
         if create_links:
             for indicator in indicators:
-                self.link_to(indicator, "uses", f"Uses regex {indicator.name}")
+                indicator.link_to(self, "indicates", f"Indicates {indicator.name}")
         return indicators
 
 
