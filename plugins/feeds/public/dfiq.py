@@ -61,11 +61,12 @@ class DFIQFeed(task.FeedTask):
                     if "spec" in file or "template" in file:
                         # Don't process DIFQ specification files
                         continue
+                    logging.debug("Processing %s/%s", root, file)
                     with open(os.path.join(root, file), "r") as f:
                         try:
                             dfiq_object = dfiq.DFIQBase.from_yaml(f.read()).save()
-                        except ValueError as e:
-                            logging.error("Error processing %s: %s", file, e)
+                        except (ValueError, KeyError) as e:
+                            logging.warning("Error processing %s: %s", file, e)
                             continue
 
                     self._dfiq_kb[dfiq_object.dfiq_id] = dfiq_object
