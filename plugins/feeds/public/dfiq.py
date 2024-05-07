@@ -92,7 +92,7 @@ class DFIQFeed(task.FeedTask):
         if not extra_dirs:
             return
         for directory in extra_dirs.split(","):
-            print(f"Processing extra directory {directory}")
+            logging.info(f"Processing extra directory {directory}")
             self.read_from_data_directory(directory)
 
 
