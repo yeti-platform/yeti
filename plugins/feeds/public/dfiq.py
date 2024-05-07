@@ -20,7 +20,7 @@ def extract_indicators(approach) -> None:
                 query = indicator.Query.find(pattern=step.value)
                 if not query:
                     query = indicator.Query(
-                        name=step.description,
+                        name=f"{step.description} ({step.type})",
                         pattern=step.value,
                         relevant_tags=approach.dfiq_tags or [],
                         query_type=step.type,
