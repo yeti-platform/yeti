@@ -33,7 +33,7 @@ class OTXAlienvault(task.FeedTask):
     def run(self):
         otx_key = yeti_config.get("otx", "key")
         days = yeti_config.get("otx", "days")
-        data  = None
+        data = None
         assert otx_key, "OTX key not configured in yeti.conf"
 
         if not days:
