@@ -33,6 +33,7 @@ class OTXAlienvault(task.FeedTask):
     def run(self):
         otx_key = yeti_config.get("otx", "key")
         days = yeti_config.get("otx", "days")
+        data  = None
         assert otx_key, "OTX key not configured in yeti.conf"
 
         if not days:
@@ -46,11 +47,13 @@ class OTXAlienvault(task.FeedTask):
         if self.last_run:
             logging.debug("Getting OTX data since %s" % self.last_run)
             data = client_otx.getsince(timestamp=self.last_run)
-
+        else:
             delta_time = datetime.now() - timedelta(days=days)
             logging.debug("Getting OTX data since %s" % delta_time)
             data = client_otx.getsince(timestamp=delta_time)
-
+        if not data:
+            logging.debug("No data from OTX")
+            return
         df = pd.read_json(
             StringIO(json.dumps(data)), orient="values", convert_dates=["created"]
         )
@@ -76,7 +79,6 @@ class OTXAlienvault(task.FeedTask):
                 continue
 
             context["infos"] = otx_indic["description"]
-            context["title"] = otx_indic["name"]
             context["created"] = datetime.strptime(
                 otx_indic["created"], "%Y-%m-%dT%H:%M:%S"
             )
@@ -113,8 +115,11 @@ class OTXAlienvault(task.FeedTask):
                         pattern=otx_indic["content"],
                         type=indicator.IndicatorType.yara,
                         diamond=indicator.DiamondModel.capability,
-                        description=t.meta["description"],
                     ).save()
+                    if "description" in t.meta:
+                        ind_obj.description = t.meta["description"]
+                    if "threat_name" in t.meta:
+                        ind_obj.description = t.meta["threat_name"]
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
                     investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
