@@ -20,7 +20,7 @@ def extract_indicators(approach) -> None:
                 query = indicator.Query.find(pattern=step.value)
                 if not query:
                     query = indicator.Query(
-                        name=step.description,
+                        name=f"{step.description} ({step.type})",
                         pattern=step.value,
                         relevant_tags=approach.dfiq_tags or [],
                         query_type=step.type,
@@ -61,11 +61,12 @@ class DFIQFeed(task.FeedTask):
                     if "spec" in file or "template" in file:
                         # Don't process DIFQ specification files
                         continue
+                    logging.debug("Processing %s/%s", root, file)
                     with open(os.path.join(root, file), "r") as f:
                         try:
                             dfiq_object = dfiq.DFIQBase.from_yaml(f.read()).save()
-                        except ValueError as e:
-                            logging.error("Error processing %s: %s", file, e)
+                        except (ValueError, KeyError) as e:
+                            logging.warning("Error processing %s: %s", file, e)
                             continue
 
                     self._dfiq_kb[dfiq_object.dfiq_id] = dfiq_object
@@ -91,7 +92,7 @@ class DFIQFeed(task.FeedTask):
         if not extra_dirs:
             return
         for directory in extra_dirs.split(","):
-            print(f"Processing extra directory {directory}")
+            logging.info("Processing extra directory %s", directory)
             self.read_from_data_directory(directory)
 
 
