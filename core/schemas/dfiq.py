@@ -1,4 +1,6 @@
 import datetime
+import logging
+import os
 import re
 from enum import Enum
 from typing import Any, ClassVar, Literal, Type
@@ -8,7 +10,69 @@ from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
+from core.schemas import indicator
 from core.schemas.model import YetiModel
+
+
+def read_from_data_directory(directory: str) -> int:
+    dfiq_kb = {}
+    total_added = 0
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if not file.endswith(".yaml"):
+                continue
+            if "spec" in file or "template" in file:
+                # Don't process DIFQ specification files
+                continue
+            logging.debug("Processing %s/%s", root, file)
+            with open(os.path.join(root, file), "r") as f:
+                try:
+                    dfiq_object = DFIQBase.from_yaml(f.read()).save()
+                    total_added += 1
+                except (ValueError, KeyError) as e:
+                    logging.warning("Error processing %s: %s", file, e)
+                    continue
+
+            dfiq_kb[dfiq_object.dfiq_id] = dfiq_object
+
+    for dfiq_id, dfiq_object in dfiq_kb.items():
+        dfiq_object.update_parents()
+        if dfiq_object.type == DFIQType.approach:
+            extract_indicators(dfiq_object)
+
+    return total_added
+
+
+def extract_indicators(approach) -> None:
+    for processor in approach.view.processors:
+        for analysis in processor.analysis:
+            for step in analysis.steps:
+                if step.type == "manual":
+                    continue
+
+                query = indicator.Query.find(pattern=step.value)
+                if not query:
+                    query = indicator.Query(
+                        name=f"{step.description} ({step.type})",
+                        pattern=step.value,
+                        relevant_tags=approach.dfiq_tags or [],
+                        query_type=step.type,
+                        location=step.type,
+                        diamond=indicator.DiamondModel.victim,
+                    ).save()
+                approach.link_to(query, "query", "Uses query")
+
+    for data in approach.view.data:
+        if data.type == "ForensicArtifact":
+            artifact = indicator.ForensicArtifact.find(name=data.value)
+            if not artifact:
+                logging.warning(
+                    "Missing artifact %s in %s", data.value, approach.dfiq_id
+                )
+                continue
+            approach.link_to(artifact, "artifact", "Uses artifact")
+        else:
+            logging.warning("Unknown data type %s in %s", data.type, approach.dfiq_id)
 
 
 class DFIQType(str, Enum):
