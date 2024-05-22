@@ -7,7 +7,7 @@ on:
 
 jobs:
   testfeeds:
-    if: ${{ fromJson(github.event.pull_request.labels.*.name).includes('tasks:feed') || github.event_type == 'schedule' }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'tasks:feed') || github.event_type == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
