@@ -119,7 +119,7 @@ class OTXAlienvault(task.FeedTask):
                     if "description" in t.meta:
                         ind_obj.description = f"description: {t.meta["description"]}\n"
                     if "threat_name" in t.meta:
-                        ind_obj.description = f"threatname: {t.meta["threat_name"]}\n"
+                        ind_obj.description += f"threatname: {t.meta["threat_name"]}\n"
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
                     investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
