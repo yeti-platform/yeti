@@ -117,7 +117,9 @@ class OTXAlienvault(task.FeedTask):
                         diamond=indicator.DiamondModel.capability,
                     ).save()
                     description = f"Threat name: {t.meta.get('threat_name', 'N/A')}"
-                    description += f"\n\nDescription: {t.meta.get('description', 'N/A')}"
+                    description += (
+                        f"\n\nDescription: {t.meta.get('description', 'N/A')}"
+                    )
                     ind_obj.description = description
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
