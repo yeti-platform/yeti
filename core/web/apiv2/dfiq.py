@@ -1,4 +1,8 @@
-from fastapi import APIRouter, HTTPException, status
+import tempfile
+from io import BytesIO
+from zipfile import ZipFile
+
+from fastapi import APIRouter, HTTPException, UploadFile, status
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from core.schemas import dfiq
@@ -51,6 +55,16 @@ class DFIQSearchResponse(BaseModel):
 
 # API endpoints
 router = APIRouter()
+
+
+@router.post("/from_archive")
+async def from_archive(archive: UploadFile) -> dict[str, int]:
+    """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
+    tempdir = tempfile.TemporaryDirectory()
+    contents = await archive.read()
+    ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
+    total_added = dfiq.read_from_data_directory(tempdir.name)
+    return {"total_added": total_added}
 
 
 @router.post("/from_yaml")

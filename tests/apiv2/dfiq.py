@@ -366,3 +366,13 @@ class DFIQTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["valid"], True)
+
+    def test_upload_dfiq_archive(self):
+        zip_archive = open("tests/dfiq_test_data/dfiq_test_data.zip", "rb")
+        response = client.post(
+            "/api/v2/dfiq/from_archive",
+            files={"archive": ("test_archive.zip", zip_archive, "application/zip")},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data, {"total_added": 4})
