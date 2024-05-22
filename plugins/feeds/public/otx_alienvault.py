@@ -116,10 +116,9 @@ class OTXAlienvault(task.FeedTask):
                         type=indicator.IndicatorType.yara,
                         diamond=indicator.DiamondModel.capability,
                     ).save()
-                    if "description" in t.meta:
-                        ind_obj.description = f"description: {t.meta["description"]}\n"
-                    if "threat_name" in t.meta:
-                        ind_obj.description += f"threatname: {t.meta["threat_name"]}\n"
+                    description = f"Threat name: {t.meta.get('threat_name', 'N/A')}"
+                    description += f"\n\nDescription: {t.meta.get('description', 'N/A')}"
+                    ind_obj.description = description
                     ind_obj.pattern = otx_indic["content"]
                     ind_obj.save()
                     investigation.link_to(ind_obj, "Observed", "OTXAlienVault")
