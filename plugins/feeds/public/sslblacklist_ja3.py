@@ -17,7 +17,7 @@ class SSLBlacklistJA3(task.FeedTask):
     }
 
     _SOURCE: ClassVar["str"] = "https://sslbl.abuse.ch/blacklist/ja3_fingerprints.csv"
-    _NAMES = ["ja3", "first_seen", "last_seen", "threat"]
+    _NAMES = ["ja3_md5", "first_seen", "last_seen", "threat"]
 
     def run(self):
         response = self._make_request(self._SOURCE, auth=None, verify=True)
