@@ -6,7 +6,7 @@ from zipfile import ZipFile
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas import dfiq, task
+from core.schemas import dfiq, indicator, task
 
 
 class DFIQFeed(task.FeedTask):
