@@ -81,6 +81,9 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
+    if new.type == dfiq.DFIQType.approach:
+        dfiq.extract_indicators(new)
+
     return new
 
 
@@ -124,6 +127,10 @@ async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     updated_dfiq = db_dfiq.model_copy(update=update_data.model_dump())
     new = updated_dfiq.save()
     new.update_parents()
+
+    if new.type == dfiq.DFIQType.approach:
+        dfiq.extract_indicators(new)
+
     return new
 
 
