@@ -338,6 +338,7 @@ class DFIQApproach(DFIQBase):
                 f"Invalid DFIQ view for approach (has to be an object): {yaml_data['view']}"
             )
 
+        internal = bool(re.match(r"^Q[0-1]\d+\.0\d+$", yaml_data["id"]))
         return cls(
             name=yaml_data["display_name"],
             description=DFIQApproachDescription(**yaml_data["description"]),
@@ -347,7 +348,7 @@ class DFIQApproach(DFIQBase):
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             dfiq_yaml=yaml_string,
-            internal=yaml_data["id"][1] == "0",
+            internal=internal,
         )
 
 
