@@ -257,7 +257,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(vertices[f"dfiq/{question1.id}"].dfiq_id, "Q1020")
         self.assertEqual(edges[0][0].type, "approach")
         self.assertEqual(edges[0][0].description, "Uses DFIQ approach")
-        self.assertEqual(total, 1)
+        self.assertEqual(total, 4)
 
         approach.dfiq_id = "Q1022.10"
         response = client.patch(
@@ -275,6 +275,134 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(edges[0][0].type, "approach")
         self.assertEqual(edges[0][0].description, "Uses DFIQ approach")
         self.assertEqual(total, 1)
+
+    def test_dfiq_patch_approach_updates_indicators(self) -> None:
+        dfiq.DFIQScenario(
+            name="mock_scenario",
+            dfiq_id="S1003",
+            dfiq_version="1.0.0",
+            description="desc",
+            dfiq_yaml="mock",
+        ).save()
+
+        dfiq.DFIQFacet(
+            name="mock_facet",
+            dfiq_id="F1005",
+            dfiq_version="1.0.0",
+            description="desc",
+            parent_ids=["S1003"],
+            dfiq_yaml="mock",
+        ).save()
+
+        dfiq.DFIQQuestion(
+            name="mock_question",
+            dfiq_id="Q1020",
+            dfiq_version="1.0.0",
+            description="desc",
+            parent_ids=["F1005"],
+            dfiq_yaml="mock",
+        ).save()
+
+        with open("tests/dfiq_test_data/Q1020.10_no_indicators.yaml", "r") as f:
+            yaml_string = f.read()
+        approach = dfiq.DFIQApproach.from_yaml(yaml_string).save()
+        approach.update_parents()
+
+        vertices, edges, total = approach.neighbors()
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(total, 1)
+
+        with open("tests/dfiq_test_data/Q1020.10.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.patch(
+            f"/api/v2/dfiq/{approach.id}",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": approach.type,
+                "update_indicators": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        vertices, edges, total = approach.neighbors()
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(total, 1)
+
+        response = client.patch(
+            f"/api/v2/dfiq/{approach.id}",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": approach.type,
+                "update_indicators": True,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        vertices, edges, total = approach.neighbors()
+        self.assertEqual(len(vertices), 4)
+        self.assertEqual(total, 4)
+
+    def test_dfiq_post_approach(self):
+        dfiq.DFIQScenario(
+            name="mock_scenario",
+            dfiq_id="S1003",
+            dfiq_version="1.0.0",
+            description="desc",
+            dfiq_yaml="mock",
+        ).save()
+
+        dfiq.DFIQFacet(
+            name="mock_facet",
+            dfiq_id="F1005",
+            dfiq_version="1.0.0",
+            description="desc",
+            parent_ids=["S1003"],
+            dfiq_yaml="mock",
+        ).save()
+
+        dfiq.DFIQQuestion(
+            name="mock_question",
+            dfiq_id="Q1020",
+            dfiq_version="1.0.0",
+            description="desc",
+            parent_ids=["F1005"],
+            dfiq_yaml="mock",
+        ).save()
+
+        with open("tests/dfiq_test_data/Q1020.10.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/from_yaml",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.approach,
+                "update_indicators": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+
+        approach = dfiq.DFIQApproach.get(id=data["id"])
+        vertices, edges, total = approach.neighbors()
+        self.assertEqual(len(vertices), 1)
+        approach.delete()
+
+        response = client.post(
+            "/api/v2/dfiq/from_yaml",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.approach,
+                "update_indicators": True,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+
+        approach = dfiq.DFIQApproach.get(id=data["id"])
+        vertices, edges, total = approach.neighbors()
+        self.assertEqual(len(vertices), 4)
 
     def test_wrong_parent(self) -> None:
         with open("tests/dfiq_test_data/F1005.yaml", "r") as f:

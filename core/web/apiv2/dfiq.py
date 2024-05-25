@@ -14,6 +14,7 @@ class NewDFIQRequest(BaseModel):
 
     dfiq_yaml: str
     dfiq_type: dfiq.DFIQType
+    update_indicators: bool = False
 
 
 class DFIQValidateRequest(NewDFIQRequest):
@@ -33,6 +34,7 @@ class PatchDFIQRequest(BaseModel):
 
     dfiq_yaml: str
     dfiq_type: dfiq.DFIQType
+    update_indicators: bool = False
 
 
 class DFIQSearchRequest(BaseModel):
@@ -81,7 +83,7 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
-    if new.type == dfiq.DFIQType.approach:
+    if request.update_indicators and new.type == dfiq.DFIQType.approach:
         dfiq.extract_indicators(new)
 
     return new
@@ -128,7 +130,7 @@ async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     new = updated_dfiq.save()
     new.update_parents()
 
-    if new.type == dfiq.DFIQType.approach:
+    if request.update_indicators and new.type == dfiq.DFIQType.approach:
         dfiq.extract_indicators(new)
 
     return new
