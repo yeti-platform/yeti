@@ -257,12 +257,16 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(vertices[f"dfiq/{question1.id}"].dfiq_id, "Q1020")
         self.assertEqual(edges[0][0].type, "approach")
         self.assertEqual(edges[0][0].description, "Uses DFIQ approach")
-        self.assertEqual(total, 4)
+        self.assertEqual(total, 1)
 
         approach.dfiq_id = "Q1022.10"
         response = client.patch(
             f"/api/v2/dfiq/{approach.id}",
-            json={"dfiq_yaml": approach.to_yaml(), "dfiq_type": approach.type},
+            json={
+                "dfiq_yaml": approach.to_yaml(),
+                "dfiq_type": approach.type,
+                "update_indicators": False,
+            },
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
