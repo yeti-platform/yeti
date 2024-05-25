@@ -1,0 +1,31 @@
+---
+display_name: Approach1
+type: approach
+id: Q1020.10
+dfiq_version: 1.0.0
+tags:
+  - Lots
+  - Of
+  - Tags
+description:
+  summary: Description for approach
+  details: >
+    Details for approach
+  references:
+    - "ref1"
+    - "ref2"
+  references_internal: null
+view:
+  data:
+    - type: artifact
+      value: RandomArtifact
+    - type: description
+      value: Random description
+  notes:
+    covered:
+      - Covered1
+      - Covered2
+      - Covered3
+    not_covered:
+      - Not covered1
+      - Not covered2
