@@ -40,7 +40,11 @@ class ArangoHandler(logging.Handler):
             status = "failed"
 
         if "body" in record.__dict__ and record.__dict__["body"]:
-            content = json.loads(record.__dict__["body"].decode("utf-8"))
+            try:
+                content = json.loads(record.__dict__["body"].decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                # We don't want to log binary or non-JSON content.
+                content = {}
         else:
             content = {}
         AuditLog(
