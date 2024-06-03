@@ -14,7 +14,13 @@ from core.schemas import indicator
 from core.schemas.model import YetiModel
 
 
-def read_from_data_directory(directory: str) -> int:
+def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
+    """Read DFIQ files from a directory and add them to the database.
+
+    Args:
+        directory: Directory to read DFIQ files from.
+        overwrite: Whether to overwrite existing DFIQs with the same ID.
+    """
     dfiq_kb = {}
     total_added = 0
     for root, _, files in os.walk(directory):
@@ -27,7 +33,15 @@ def read_from_data_directory(directory: str) -> int:
             logging.debug("Processing %s/%s", root, file)
             with open(os.path.join(root, file), "r") as f:
                 try:
-                    dfiq_object = DFIQBase.from_yaml(f.read()).save()
+                    dfiq_object = DFIQBase.from_yaml(f.read())
+                    if not overwrite:
+                        db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
+                        if db_dfiq:
+                            logging.info(
+                                "DFIQ %s already exists, skipping", dfiq_object.dfiq_id
+                            )
+                            continue
+                    dfiq_object = dfiq_object.save()
                     total_added += 1
                 except (ValueError, KeyError) as e:
                     logging.warning("Error processing %s: %s", file, e)
