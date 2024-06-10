@@ -29,7 +29,7 @@ class SSLBlacklistJA3(task.FeedTask):
                 delimiter=",",
                 comment="#",
                 names=self._NAMES,
-                parse_dates=["first_seen"],
+                parse_dates=["first_seen","last_seen"],
             )
             df = self._filter_observables_by_time(df, "last_seen")
             df = df.fillna("")
