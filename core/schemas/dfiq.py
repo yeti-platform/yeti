@@ -101,12 +101,12 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["dfiq"] = "dfiq"
 
-    name: str
-    dfiq_id: str
-    dfiq_version: str
+    name: str = Field(min_length=1)
+    dfiq_id: str = Field(min_length=1)
+    dfiq_version: str = Field(min_length=1)
     dfiq_tags: list[str] | None = None
     contributors: list[str] | None = None
-    dfiq_yaml: str
+    dfiq_yaml: str = Field(min_length=1)
     internal: bool = False
 
     created: datetime.datetime = Field(default_factory=now)
@@ -284,35 +284,35 @@ class DFIQQuestion(DFIQBase):
 
 
 class DFIQData(BaseModel):
-    type: str
-    value: str
+    type: str = Field(min_length=1)
+    value: str = Field(min_length=1)
 
 
 class DFIQProcessorOption(BaseModel):
-    type: str
-    value: str
+    type: str = Field(min_length=1)
+    value: str = Field(min_length=1)
 
 
 class DFIQAnalysisStep(BaseModel):
-    description: str
-    type: str
-    value: str
+    description: str = Field(min_length=1)
+    type: str = Field(min_length=1)
+    value: str = Field(min_length=1)
 
 
 class DFIQAnalysis(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
     steps: list[DFIQAnalysisStep] = []
 
 
 class DFIQProcessors(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
     options: list[DFIQProcessorOption] = []
     analysis: list[DFIQAnalysis] = []
 
 
 class DFIQApproachDescription(BaseModel):
-    summary: str
-    details: str
+    summary: str = Field(min_length=1)
+    details: str = Field(min_length=1)
     references: list[str] = []
     references_internal: list[str] | None = None
 
