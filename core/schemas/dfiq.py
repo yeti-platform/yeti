@@ -77,7 +77,7 @@ def extract_indicators(approach) -> None:
                 approach.link_to(query, "query", "Uses query")
 
     for data in approach.view.data:
-        if data.type == "ForensicArtifact":
+        if data.type in ("ForensicArtifact", "artifact"):
             artifact = indicator.ForensicArtifact.find(name=data.value)
             if not artifact:
                 logging.warning(
