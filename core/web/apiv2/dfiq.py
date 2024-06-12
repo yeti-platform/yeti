@@ -76,6 +76,14 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
         new = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+
+    # Ensure there is not an object with the same ID:
+    if dfiq.DFIQBase.find(dfiq_id=new.dfiq_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"DFIQ with id {new.dfiq_id} already exists",
+        )
+
     new = new.save()
 
     try:
