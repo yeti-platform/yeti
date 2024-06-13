@@ -78,7 +78,7 @@ class FeedTest(unittest.TestCase):
         defaults = sslblacklist_ja3.SSLBlacklistJA3._defaults.copy()
         feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
         feed.run()
-    
+
     def test_malpedia_malware(self):
         defaults = malpedia_malware.Malpedia_Malware._defaults.copy()
         feed = malpedia_malware.Malpedia_Malware(**defaults)
