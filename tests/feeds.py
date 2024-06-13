@@ -9,11 +9,12 @@ from plugins.feeds.public import (
     feodo_tracker_ip_blocklist,
     hybrid_analysis,
     lolbas,
+    malpedia_actors,
+    malpedia_malware,
     openphish,
     sslblacklist_ja3,
     timesketch,
     tor_exit_nodes,
-    tweetlive,
 )
 
 
@@ -73,12 +74,17 @@ class FeedTest(unittest.TestCase):
         feed = tor_exit_nodes.TorExitNodes(**defaults)
         feed.run()
 
-    def test_tweetlive(self):
-        defaults = tweetlive.TweetLive._defaults.copy()
-        feed = tweetlive.TweetLive(**defaults)
-        feed.run()
-
     def test_sslblacklist_ja3(self):
         defaults = sslblacklist_ja3.SSLBlacklistJA3._defaults.copy()
         feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
+        feed.run()
+    
+    def test_malpedia_malware(self):
+        defaults = malpedia_malware.Malpedia_Malware._defaults.copy()
+        feed = malpedia_malware.Malpedia_Malware(**defaults)
+        feed.run()
+
+    def test_malpedia_actor(self):
+        defaults = malpedia_actors.Malpedia_Actors._defaults.copy()
+        feed = malpedia_actors.Malpedia_Actors(**defaults)
         feed.run()
