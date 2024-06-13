@@ -35,15 +35,15 @@ class Malpedia_Actors(task.FeedTask):
             else:
                 intrusion_set.description = "## Malpedia \n\n"
             intrusion_set.description += entry["description"]
-        
+
         if entry.get("meta") and entry["meta"].get("refs"):
             intrusion_set.description += "\n\n"
             intrusion_set.description += "## Malpedia External references\n\n"
             for ref in entry["meta"]["refs"]:
                 intrusion_set.description += f"* {ref}\n"
-        
+
         synonyms = entry.get("meta", {}).get("synonyms", [])
-        
+
         if synonyms:
             intrusion_set.aliases = synonyms
 
