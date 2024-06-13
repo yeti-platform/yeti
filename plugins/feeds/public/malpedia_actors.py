@@ -9,7 +9,7 @@ from core.schemas import entity, task
 class Malpedia_Actors(task.FeedTask):
     _defaults = {
         "frequency": timedelta(days=1),
-        "name": "Malpedia",
+        "name": "Malpedia Actors",
         "description": "Gets list of malpedia actors",
         "source": "https://malpedia.caad.fkie.fraunhofer.de/",
     }
