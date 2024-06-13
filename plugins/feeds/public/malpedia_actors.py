@@ -26,23 +26,22 @@ class Malpedia_Actors(task.FeedTask):
 
     def analyze_entry_actor(self, name_actor, entry: dict):
         intrusion_set = entity.IntrusionSet(name=entry["value"])
-
+        context = {"source": self.name}
         if entry.get("description"):
-            if intrusion_set.description:
-                intrusion_set.description += "## Malpedia\n\n"
-            else:
-                intrusion_set.description = "## Malpedia \n\n"
-            intrusion_set.description += entry["description"]
+            
+                 context['description']= entry["description"]
+            
         if entry.get("meta") and entry["meta"].get("refs"):
-            intrusion_set.description += "\n\n"
-            intrusion_set.description += "## Malpedia External references\n\n"
+            context['description'] += "\n\n"
+            context['description'] += "External references\n\n"
             for ref in entry["meta"]["refs"]:
-                intrusion_set.description += f"* {ref}\n"
+                context['description'] += f"* {ref}\n"
+        
         if entry.get("meta") and entry["meta"].get("synonyms"):
             intrusion_set.aliases = entry["meta"]["synonyms"]
 
         intrusion_set = intrusion_set.save()
-
+        intrusion_set.add_context(self.name, context)
         tags = []
 
         if intrusion_set.aliases:
