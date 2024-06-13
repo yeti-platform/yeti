@@ -25,12 +25,15 @@ class Malpedia_Actors(task.FeedTask):
             self.analyze_entry_actor(actor, entry)
 
     def analyze_entry_actor(self, name_actor, entry: dict):
-        intrusion_set = entity.IntrusionSet(name=entry["value"])
+
+        intrusion_set = entity.IntrusionSet.find(name=entry["value"])
+        if not intrusion_set:
+            intrusion_set = entity.IntrusionSet(name=entry["value"])
+
         context = {"source": self.name}
         context["description"] = ""
+        context["description"] += entry.get("description", "")
 
-        if entry.get("description"):
-            context["description"] += entry["description"]
         if entry.get("meta") and entry["meta"].get("refs"):
             context["description"] += "\n\n"
             context["description"] += "External references\n\n"
