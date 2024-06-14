@@ -1,7 +1,13 @@
 import unittest
 
 from core import database_arango
-from core.schemas.indicator import DiamondModel, ForensicArtifact, Indicator, Regex
+from core.schemas.indicator import (
+    DiamondModel,
+    ForensicArtifact,
+    Indicator,
+    Query,
+    Regex,
+)
 
 
 class IndicatorTest(unittest.TestCase):
@@ -12,7 +18,7 @@ class IndicatorTest(unittest.TestCase):
     def tearDown(self) -> None:
         database_arango.db.clear()
 
-    def test_create_entity(self) -> None:
+    def test_create_indicator(self) -> None:
         result = Regex(
             name="regex1",
             pattern="asd",
@@ -38,6 +44,25 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(len(all_entities), 1)
         self.assertEqual(len(regex_entities), 1)
         self.assertEqual(regex_entities[0].model_dump_json(), regex.model_dump_json())
+
+    def test_create_indicator_same_name_diff_types(self) -> None:
+        regex = Regex(
+            name="persistence1",
+            pattern="asd",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+        regex2 = Query(
+            name="persistence1",
+            pattern="asd",
+            location="any",
+            query_type="query",
+            diamond=DiamondModel.capability,
+        ).save()
+        self.assertNotEqual(regex.id, regex2.id)
+        r = Regex.find(name="persistence1")
+        q = Query.find(name="persistence1")
+        self.assertNotEqual(r.id, q.id)
 
     def test_regex_match(self) -> None:
         regex = Regex(

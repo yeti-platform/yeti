@@ -44,6 +44,15 @@ class EntityTest(unittest.TestCase):
         self.assertIsInstance(result, ThreatActor)
         self.assertEqual(result.type, "threat-actor")
 
+    def test_entity_dupe_name_type(self) -> None:
+        oldm = Malware(name="APT123").save()
+        ta = ThreatActor.find(name="APT123")
+        m = Malware.find(name="APT123")
+        self.assertEqual(ta.id, self.ta1.id)
+        self.assertEqual(m.id, oldm.id)
+        self.assertIsInstance(m, Malware)
+        self.assertIsInstance(ta, ThreatActor)
+
     def test_list_entities(self) -> None:
         all_entities = list(Entity.list())
         threat_actor_entities = list(ThreatActor.list())
