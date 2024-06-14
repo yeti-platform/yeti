@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from enum import Enum
-from typing import Any, ClassVar, Literal, Type
+from typing import Annotated, Any, ClassVar, Literal, Type, Union
 
 import yaml
 from pydantic import BaseModel, Field, computed_field
@@ -198,8 +198,9 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
 
 
 class DFIQScenario(DFIQBase):
-    description: str
+    _type_filter: ClassVar[str] = DFIQType.scenario
 
+    description: str
     type: Literal[DFIQType.scenario] = DFIQType.scenario
 
     @classmethod
@@ -225,10 +226,10 @@ class DFIQScenario(DFIQBase):
 
 
 class DFIQFacet(DFIQBase):
+    _type_filter: ClassVar[str] = DFIQType.facet
+
     description: str | None
-
     parent_ids: list[str]
-
     type: Literal[DFIQType.facet] = DFIQType.facet
 
     @classmethod
@@ -255,9 +256,10 @@ class DFIQFacet(DFIQBase):
 
 
 class DFIQQuestion(DFIQBase):
+    _type_filter: ClassVar[str] = DFIQType.question
+
     description: str | None
     parent_ids: list[str]
-
     type: Literal[DFIQType.question] = DFIQType.question
 
     @classmethod
@@ -329,9 +331,10 @@ class DFIQApproachView(BaseModel):
 
 
 class DFIQApproach(DFIQBase):
+    _type_filter: ClassVar[str] = DFIQType.approach
+
     description: DFIQApproachDescription
     view: DFIQApproachView
-
     type: Literal[DFIQType.approach] = DFIQType.approach
 
     @classmethod
@@ -375,7 +378,10 @@ TYPE_MAPPING = {
 }
 
 
-DFIQTypes = DFIQScenario | DFIQFacet | DFIQQuestion | DFIQApproach
+DFIQTypes = Annotated[
+    Union[DFIQScenario, DFIQFacet, DFIQQuestion, DFIQApproach],
+    Field(discriminator="type"),
+]
 DFIQClasses = (
     Type[DFIQScenario] | Type[DFIQFacet] | Type[DFIQQuestion] | Type[DFIQApproach]
 )
