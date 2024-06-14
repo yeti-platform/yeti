@@ -3,7 +3,7 @@ import io
 import logging
 import re
 from enum import Enum
-from typing import ClassVar, Literal, Type
+from typing import Annotated, ClassVar, Literal, Type, Union
 
 import yaml
 from artifacts import definitions, reader, writer
@@ -69,10 +69,14 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
         return self._root_type
 
     @classmethod
-    def load(cls, object: dict):
-        if object["type"] in TYPE_MAPPING:
-            return TYPE_MAPPING[object["type"]](**object)
-        return cls(**object)
+    def load(cls, object: dict) -> "IndicatorTypes":
+        if cls._type_filter:
+            loader = TYPE_MAPPING[cls._type_filter]
+        elif object["type"] in TYPE_MAPPING:
+            loader = TYPE_MAPPING[object["type"]]
+        else:
+            raise ValueError("Attempted to instantiate an undefined indicator type.")
+        return loader(**object)
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
@@ -331,7 +335,9 @@ TYPE_MAPPING = {
     "indicators": Indicator,
 }
 
-IndicatorTypes = Regex | Yara | Sigma | Query | ForensicArtifact
+IndicatorTypes = Annotated[
+    Union[Regex, Yara, Sigma, Query, ForensicArtifact], Field(discriminator="type")
+]
 IndicatorClasses = (
     Type[Regex] | Type[Yara] | Type[Sigma] | Type[Query] | Type[ForensicArtifact]
 )

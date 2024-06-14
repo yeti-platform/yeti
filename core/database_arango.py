@@ -303,6 +303,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           A Yeti object.
         """
+        if "type" not in kwargs and getattr(cls, "_type_filter", None):
+            kwargs["type"] = cls._type_filter
+
         documents = list(cls._get_collection().find(kwargs, limit=1))
         if not documents:
             return None
