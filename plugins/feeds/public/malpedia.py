@@ -28,14 +28,14 @@ class Malpedia_Malware(task.FeedTask):
 
     def analyze_entry_malware(self, name_malware, entry: dict):
         """Analyzes an entry as specified in the malpedia json."""
-        
+
         if not entry.get("common_name"):
             return
 
         m = entity.Malware.find(name=entry["common_name"])
         if not m:
             m = entity.Malware(name=entry["common_name"])
-    
+
         m.aliases = entry.get("aliases", [])
         if entry.get("description"):
             if m.description:
@@ -63,6 +63,7 @@ class Malpedia_Malware(task.FeedTask):
         tags.append(m.name)
         tags.append(name_malware)
         m.tag(tags)
+
 
 class Malpedia_Actors(task.FeedTask):
     _defaults = {
