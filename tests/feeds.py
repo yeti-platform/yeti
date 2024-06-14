@@ -10,7 +10,6 @@ from plugins.feeds.public import (
     hybrid_analysis,
     lolbas,
     malpedia,
-    malpedia_actors,
     openphish,
     sslblacklist_ja3,
     timesketch,
@@ -85,6 +84,6 @@ class FeedTest(unittest.TestCase):
         feed.run()
 
     def test_malpedia_actor(self):
-        defaults = malpedia_actors.Malpedia_Actors._defaults.copy()
-        feed = malpedia_actors.Malpedia_Actors(**defaults)
+        defaults = malpedia.Malpedia_Actors._defaults.copy()
+        feed = malpedia.Malpedia_Actors(**defaults)
         feed.run()
