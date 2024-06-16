@@ -79,11 +79,11 @@ class FeedTest(unittest.TestCase):
         feed.run()
 
     def test_malpedia_malware(self):
-        defaults = malpedia.Malpedia_Malware._defaults.copy()
-        feed = malpedia.Malpedia_Malware(**defaults)
+        defaults = malpedia.MalpediaMalware._defaults.copy()
+        feed = malpedia.MalpediaMalware(**defaults)
         feed.run()
 
     def test_malpedia_actor(self):
-        defaults = malpedia.Malpedia_Actors._defaults.copy()
-        feed = malpedia.Malpedia_Actors(**defaults)
+        defaults = malpedia.MalpediaActors._defaults.copy()
+        feed = malpedia.MalpediaActors(**defaults)
         feed.run()
