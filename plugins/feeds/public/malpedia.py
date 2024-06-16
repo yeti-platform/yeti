@@ -49,7 +49,7 @@ class MalpediaMalware(task.FeedTask):
             if not intrusion_set:
                 intrusion_set = entity.IntrusionSet(name=attribution).save()
             intrusion_set.link_to(m, "uses", "Malpedia")
-        
+
         tags = []
         if m.aliases:
             tags += m.aliases
@@ -83,8 +83,10 @@ class MalpediaActors(task.FeedTask):
 
         context = {"source": self.name}
         context["description"] = entry.get("description", "")
-        context["External references"] = "\n".join(entry.get("meta", {}).get("refs", []))
-        
+        context["External references"] = "\n".join(
+            entry.get("meta", {}).get("refs", [])
+        )
+
         synonyms = entry.get("meta", {}).get("synonyms", [])
 
         if synonyms:
