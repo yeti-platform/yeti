@@ -37,26 +37,19 @@ class MalpediaMalware(task.FeedTask):
             m = entity.Malware(name=entry["common_name"])
 
         m.aliases = entry.get("aliases", [])
-        if entry.get("description"):
-            if m.description:
-                m.description += "\n\n## Malpedia\n\n"
-            else:
-                m.description = "## Malpedia\n\n"
-            m.description += entry["description"]
-            if entry.get("urls"):
-                m.description += "\n\n## Malpedia External references\n\n"
-                for url in entry["urls"]:
-                    m.description += f"* {url}\n"
-
+        context = {"source": self.name}
+        context["description"] = entry.get("description", "")
+        context["External references"] = "\n".join(entry.get("urls", []))
         m.family = entry.get("type", "")
         m = m.save()
+        m.add_context(self.name, context)
         attributions = entry.get("attribution", [])
         for attribution in attributions:
             intrusion_set = entity.IntrusionSet.find(name=attribution)
             if not intrusion_set:
                 intrusion_set = entity.IntrusionSet(name=attribution).save()
             intrusion_set.link_to(m, "uses", "Malpedia")
-
+        
         tags = []
         if m.aliases:
             tags += m.aliases
@@ -88,25 +81,17 @@ class MalpediaActors(task.FeedTask):
         if not intrusion_set:
             intrusion_set = entity.IntrusionSet(name=entry["value"])
 
-        if entry.get("description"):
-            if intrusion_set.description:
-                intrusion_set.description += "## Malpedia\n\n"
-            else:
-                intrusion_set.description = "## Malpedia\n\n"
-            intrusion_set.description += entry["description"]
-
-        if entry.get("meta") and entry["meta"].get("refs"):
-            intrusion_set.description += "\n\n## Malpedia External references\n\n"
-            for ref in entry["meta"]["refs"]:
-                intrusion_set.description += f"* {ref}\n"
-
+        context = {"source": self.name}
+        context["description"] = entry.get("description", "")
+        context["External references"] = "\n".join(entry.get("meta", {}).get("refs", []))
+        
         synonyms = entry.get("meta", {}).get("synonyms", [])
 
         if synonyms:
             intrusion_set.aliases = synonyms
 
         intrusion_set = intrusion_set.save()
-
+        intrusion_set.add_context(self.name, context)
         tags = []
 
         if intrusion_set.aliases:
