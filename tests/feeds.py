@@ -9,8 +9,7 @@ from plugins.feeds.public import (
     feodo_tracker_ip_blocklist,
     hybrid_analysis,
     lolbas,
-    malpedia_actors,
-    malpedia_malware,
+    malpedia,
     openphish,
     sslblacklist_ja3,
     timesketch,
@@ -80,11 +79,11 @@ class FeedTest(unittest.TestCase):
         feed.run()
 
     def test_malpedia_malware(self):
-        defaults = malpedia_malware.Malpedia_Malware._defaults.copy()
-        feed = malpedia_malware.Malpedia_Malware(**defaults)
+        defaults = malpedia.MalpediaMalware._defaults.copy()
+        feed = malpedia.MalpediaMalware(**defaults)
         feed.run()
 
     def test_malpedia_actor(self):
-        defaults = malpedia_actors.Malpedia_Actors._defaults.copy()
-        feed = malpedia_actors.Malpedia_Actors(**defaults)
+        defaults = malpedia.MalpediaActors._defaults.copy()
+        feed = malpedia.MalpediaActors(**defaults)
         feed.run()

@@ -1,7 +1,7 @@
 import datetime
 import re
 from enum import Enum
-from typing import ClassVar, Literal, Type
+from typing import Annotated, ClassVar, Literal, Type, Union
 
 from pydantic import Field, computed_field
 
@@ -45,9 +45,13 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
 
     @classmethod
     def load(cls, object: dict) -> "EntityTypes":
-        if object["type"] in TYPE_MAPPING:
-            return TYPE_MAPPING[object["type"]](**object)
-        raise ValueError("Attempted to instantiate an undefined entity type.")
+        if cls._type_filter:
+            loader = TYPE_MAPPING[cls._type_filter]
+        elif object["type"] in TYPE_MAPPING:
+            loader = TYPE_MAPPING[object["type"]]
+        else:
+            raise ValueError("Attempted to instantiate an undefined entity type.")
+        return loader(**object)
 
     @classmethod
     def is_valid(cls, object: dict) -> bool:
@@ -233,21 +237,24 @@ def validate_entity(ent: Entity) -> bool:
     return True
 
 
-EntityTypes = (
-    AttackPattern
-    | Campaign
-    | Company
-    | CourseOfAction
-    | Identity
-    | IntrusionSet
-    | Investigation
-    | Malware
-    | Note
-    | Phone
-    | ThreatActor
-    | Tool
-    | Vulnerability
-)
+EntityTypes = Annotated[
+    Union[
+        AttackPattern,
+        Campaign,
+        Company,
+        CourseOfAction,
+        Identity,
+        IntrusionSet,
+        Investigation,
+        Malware,
+        Note,
+        Phone,
+        ThreatActor,
+        Tool,
+        Vulnerability,
+    ],
+    Field(discriminator="type"),
+]
 
 
 EntityClasses = (
