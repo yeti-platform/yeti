@@ -6,11 +6,11 @@ from core import taskmanager
 from core.schemas import entity, task
 
 
-class Malpedia_Malware(task.FeedTask):
+class MalpediaMalware(task.FeedTask):
     _defaults = {
         "frequency": timedelta(days=1),
         "name": "Malpedia Malware",
-        "description": "Gets list of malpedia malwares",
+        "description": "Gets list of Malpedia malware",
         "source": "https://malpedia.caad.fkie.fraunhofer.de/",
     }
 
@@ -24,9 +24,9 @@ class Malpedia_Malware(task.FeedTask):
             return
         families_json = response.json()
         for sign_mal, entry in families_json.items():
-            self.analyze_entry_malware(sign_mal, entry)
+            self.analyze_entry(sign_mal, entry)
 
-    def analyze_entry_malware(self, name_malware, entry: dict):
+    def analyze_entry(self, name_malware, entry: dict):
         """Analyzes an entry as specified in the malpedia json."""
 
         if not entry.get("common_name"):
@@ -65,11 +65,11 @@ class Malpedia_Malware(task.FeedTask):
         m.tag(tags)
 
 
-class Malpedia_Actors(task.FeedTask):
+class MalpediaActors(task.FeedTask):
     _defaults = {
         "frequency": timedelta(days=1),
         "name": "Malpedia Actors",
-        "description": "Gets list of malpedia actors",
+        "description": "Gets list of Malpedia actors",
         "source": "https://malpedia.caad.fkie.fraunhofer.de/",
     }
 
@@ -81,9 +81,9 @@ class Malpedia_Actors(task.FeedTask):
             return
         actors_json = response.json()
         for actor, entry in actors_json.items():
-            self.analyze_entry_actor(actor, entry)
+            self.analyze_entry(actor, entry)
 
-    def analyze_entry_actor(self, name_actor, entry: dict):
+    def analyze_entry(self, name_actor, entry: dict):
         intrusion_set = entity.IntrusionSet.find(name=entry["value"])
         if not intrusion_set:
             intrusion_set = entity.IntrusionSet(name=entry["value"])
@@ -92,12 +92,11 @@ class Malpedia_Actors(task.FeedTask):
             if intrusion_set.description:
                 intrusion_set.description += "## Malpedia\n\n"
             else:
-                intrusion_set.description = "## Malpedia \n\n"
+                intrusion_set.description = "## Malpedia\n\n"
             intrusion_set.description += entry["description"]
 
         if entry.get("meta") and entry["meta"].get("refs"):
-            intrusion_set.description += "\n\n"
-            intrusion_set.description += "## Malpedia External references\n\n"
+            intrusion_set.description += "\n\n## Malpedia External references\n\n"
             for ref in entry["meta"]["refs"]:
                 intrusion_set.description += f"* {ref}\n"
 
@@ -120,6 +119,5 @@ class Malpedia_Actors(task.FeedTask):
             logging.error(f"Error tagging actor {name_actor}: {e}")
 
 
-taskmanager.TaskManager.register_task(Malpedia_Actors)
-
-taskmanager.TaskManager.register_task(Malpedia_Malware)
+taskmanager.TaskManager.register_task(MalpediaActors)
+taskmanager.TaskManager.register_task(MalpediaMalware)
