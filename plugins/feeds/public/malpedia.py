@@ -23,10 +23,10 @@ class MalpediaMalware(task.FeedTask):
         if not response:
             return
         families_json = response.json()
-        for sign_mal, entry in families_json.items():
-            self.analyze_entry(sign_mal, entry)
+        for malware_name, entry in families_json.items():
+            self.analyze_entry(malware_name, entry)
 
-    def analyze_entry(self, name_malware, entry: dict):
+    def analyze_entry(self, malware_name: str, entry: dict):
         """Analyzes an entry as specified in the malpedia json."""
 
         if not entry.get("common_name"):
@@ -37,9 +37,11 @@ class MalpediaMalware(task.FeedTask):
             m = entity.Malware(name=entry["common_name"])
 
         m.aliases = entry.get("aliases", [])
-        context = {"source": "Malpedia", "description": "", "External references": "* "}
-        context["description"] += entry.get("description", "")
-        context["External references"] += "\n* ".join(entry.get("urls", []))
+        context = {
+            "source": "Malpedia",
+            "description": entry.get("description", ""),
+            "external_references": "\n* ".join(entry.get("urls", [])),
+        }
         m.family = entry.get("type", "")
         m = m.save()
         m.add_context(context["source"], context)
@@ -54,7 +56,7 @@ class MalpediaMalware(task.FeedTask):
         if m.aliases:
             tags += m.aliases
         tags.append(m.name)
-        tags.append(name_malware)
+        tags.append(malware_name)
         m.tag(tags)
 
 
@@ -73,19 +75,19 @@ class MalpediaActors(task.FeedTask):
         if not response:
             return
         actors_json = response.json()
-        for actor, entry in actors_json.items():
-            self.analyze_entry(actor, entry)
+        for actor_name, entry in actors_json.items():
+            self.analyze_entry(actor_name, entry)
 
-    def analyze_entry(self, name_actor, entry: dict):
+    def analyze_entry(self, actor_name: str, entry: dict):
         intrusion_set = entity.IntrusionSet.find(name=entry["value"])
         if not intrusion_set:
             intrusion_set = entity.IntrusionSet(name=entry["value"])
 
-        context = {"source": "Malpedia", "description": "", "External references": "* "}
-        context["description"] += entry.get("description", "")
-        context["External references"] += "\n* ".join(
-            entry.get("meta", {}).get("refs", [])
-        )
+        context = {
+            "source": "Malpedia",
+            "description": entry.get("description", ""),
+            "External references": "\n* ".join(entry.get("meta", {}).get("refs", [])),
+        }
 
         synonyms = entry.get("meta", {}).get("synonyms", [])
 
@@ -99,11 +101,11 @@ class MalpediaActors(task.FeedTask):
         if intrusion_set.aliases:
             tags += intrusion_set.aliases
         tags.append(intrusion_set.name)
-        tags.append(name_actor)
+        tags.append(actor_name)
         try:
             intrusion_set.tag(tags)
         except Exception as e:
-            logging.error(f"Error tagging actor {name_actor}: {e}")
+            logging.error(f"Error tagging IntrusionSet {intrusion_set.name}: {e}")
 
 
 taskmanager.TaskManager.register_task(MalpediaActors)
