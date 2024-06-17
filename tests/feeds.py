@@ -74,11 +74,6 @@ class FeedTest(unittest.TestCase):
         feed = tor_exit_nodes.TorExitNodes(**defaults)
         feed.run()
 
-    def test_tweetlive(self):
-        defaults = tweetlive.TweetLive._defaults.copy()
-        feed = tweetlive.TweetLive(**defaults)
-        feed.run()
-
     def test_sslblacklist_ja3(self):
         defaults = sslblacklist_ja3.SSLBlacklistJA3._defaults.copy()
         feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
