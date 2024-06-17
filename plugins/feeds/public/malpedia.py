@@ -37,12 +37,12 @@ class MalpediaMalware(task.FeedTask):
             m = entity.Malware(name=entry["common_name"])
 
         m.aliases = entry.get("aliases", [])
-        context = {"source": "Malpedia","description":"" ,"External references":"* "}
+        context = {"source": "Malpedia", "description": "", "External references": "* "}
         context["description"] += entry.get("description", "")
         context["External references"] += "\n* ".join(entry.get("urls", []))
         m.family = entry.get("type", "")
         m = m.save()
-        m.add_context(self.name, context)
+        m.add_context(context["source"], context)
         attributions = entry.get("attribution", [])
         for attribution in attributions:
             intrusion_set = entity.IntrusionSet.find(name=attribution)
@@ -81,7 +81,7 @@ class MalpediaActors(task.FeedTask):
         if not intrusion_set:
             intrusion_set = entity.IntrusionSet(name=entry["value"])
 
-        context = {"source": "Malpedia","description":"", "External references":"* "}
+        context = {"source": "Malpedia", "description": "", "External references": "* "}
         context["description"] += entry.get("description", "")
         context["External references"] += "\n* ".join(
             entry.get("meta", {}).get("refs", [])
@@ -93,7 +93,7 @@ class MalpediaActors(task.FeedTask):
             intrusion_set.aliases = synonyms
 
         intrusion_set = intrusion_set.save()
-        intrusion_set.add_context(self.name, context)
+        intrusion_set.add_context(context["source"], context)
         tags = []
 
         if intrusion_set.aliases:
