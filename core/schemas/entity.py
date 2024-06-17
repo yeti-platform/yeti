@@ -60,7 +60,7 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     def add_context(
         self, source: str, context: dict, skip_compare: set = set()
     ) -> "Entity":  # noqa: F821
-        """Adds context to an observable."""
+        """Adds context to an entity."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
