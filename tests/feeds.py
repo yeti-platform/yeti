@@ -13,7 +13,6 @@ from plugins.feeds.public import (
     sslblacklist_ja3,
     timesketch,
     tor_exit_nodes,
-    tweetlive,
     yaraify,
 )
 
