@@ -83,7 +83,7 @@ class FeedTest(unittest.TestCase):
         defaults = sslblacklist_ja3.SSLBlacklistJA3._defaults.copy()
         feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
         feed.run()
-    
+
     def test_yaraify(self):
         defaults = yaraify.YARAify._defaults.copy()
         feed = yaraify.YARAify(**defaults)
