@@ -10,10 +10,10 @@ from core import taskmanager
 from core.schemas import indicator, task
 
 
-class Yaraify(task.FeedTask):
+class YARAify(task.FeedTask):
     _defaults = {
         "frequency": timedelta(days=1),
-        "name": "Yaraify",
+        "name": "YARAify",
         "description": "This feed contains yara rules",
         "source": "",
     }
@@ -40,16 +40,16 @@ class Yaraify(task.FeedTask):
             logging.error(f"Error compiling yara rule: {e}")
             return
         for r in yara_rules:
-            ind_obj = indicator.Indicator(
+            ind_obj = indicator.Yara(
                 name=f"{r.identifier}",
                 pattern=entry,
-                type=indicator.IndicatorType.yara,
                 diamond=indicator.DiamondModel.capability,
+                description=f"{r.meta.get('description', 'N/A')}"
             )
 
-            ind_obj.description = f"{r.meta.get('description', 'N/A')}"
-
+            
             ind_obj.save()
 
 
-taskmanager.TaskManager.register_task(Yaraify)
+taskmanager.TaskManager.register_task(YARAify)
+taskmanager.TaskManager.register_task(YARAify)
