@@ -40,7 +40,7 @@ class MalpediaMalware(task.FeedTask):
         context = {
             "source": "Malpedia",
             "description": entry.get("description", ""),
-            "external_references": "\n* ".join(entry.get("urls", [])),
+            "external_references": "\n* " + "\n* ".join(entry.get("urls", [])),
         }
         m.family = entry.get("type", "")
         m = m.save()
@@ -86,7 +86,8 @@ class MalpediaActors(task.FeedTask):
         context = {
             "source": "Malpedia",
             "description": entry.get("description", ""),
-            "External references": "\n* ".join(entry.get("meta", {}).get("refs", [])),
+            "External references": "\n* "
+            + "\n* ".join(entry.get("meta", {}).get("refs", [])),
         }
 
         synonyms = entry.get("meta", {}).get("synonyms", [])
