@@ -44,10 +44,9 @@ class YARAify(task.FeedTask):
                 name=f"{r.identifier}",
                 pattern=entry,
                 diamond=indicator.DiamondModel.capability,
-                description=f"{r.meta.get('description', 'N/A')}"
+                description=f"{r.meta.get('description', 'N/A')}",
             )
 
-            
             ind_obj.save()
 
 
