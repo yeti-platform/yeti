@@ -51,4 +51,3 @@ class YARAify(task.FeedTask):
 
 
 taskmanager.TaskManager.register_task(YARAify)
-taskmanager.TaskManager.register_task(YARAify)
