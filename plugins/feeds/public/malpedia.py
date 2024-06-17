@@ -86,7 +86,7 @@ class MalpediaActors(task.FeedTask):
         context = {
             "source": "Malpedia",
             "description": entry.get("description", ""),
-            "External references": "\n* "
+            "external_references": "\n* "
             + "\n* ".join(entry.get("meta", {}).get("refs", [])),
         }
 
