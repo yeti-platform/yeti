@@ -81,7 +81,7 @@ class MalpediaActors(task.FeedTask):
         if not intrusion_set:
             intrusion_set = entity.IntrusionSet(name=entry["value"])
 
-        context = {"source": self.name}
+        context = {"source":"Malpedia"}
         context["description"] = entry.get("description", "")
         context["External references"] = "\n".join(
             entry.get("meta", {}).get("refs", [])
