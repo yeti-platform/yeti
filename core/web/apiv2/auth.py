@@ -23,7 +23,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
     minutes=yeti_config.get("auth", "access_token_expire_minutes")
 )
 BROWSER_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
-    days=yeti_config.get("auth", "browser_token_expire_minutes")
+    minutes=yeti_config.get("auth", "browser_token_expire_minutes", default=43200)
 )
 SECRET_KEY = yeti_config.get("auth", "secret_key")
 ALGORITHM = yeti_config.get("auth", "algorithm")
