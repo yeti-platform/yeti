@@ -20,7 +20,7 @@ from core.config.config import yeti_config
 from core.schemas.user import User, UserSensitive
 
 ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
-    minutes=yeti_config.get("auth", "access_token_expire_minutes")
+    minutes=yeti_config.get("auth", "access_token_expire_minutes", default=30)
 )
 BROWSER_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
     minutes=yeti_config.get("auth", "browser_token_expire_minutes", default=43200)
