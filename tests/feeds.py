@@ -9,11 +9,12 @@ from plugins.feeds.public import (
     feodo_tracker_ip_blocklist,
     hybrid_analysis,
     lolbas,
+    malpedia,
     openphish,
     sslblacklist_ja3,
     timesketch,
     tor_exit_nodes,
-    yaraify,
+    Yarify
 )
 
 
@@ -81,4 +82,14 @@ class FeedTest(unittest.TestCase):
     def test_yaraify(self):
         defaults = yaraify.YARAify._defaults.copy()
         feed = yaraify.YARAify(**defaults)
+        feed.run()
+            
+    def test_malpedia_malware(self):
+        defaults = malpedia.MalpediaMalware._defaults.copy()
+        feed = malpedia.MalpediaMalware(**defaults)
+        feed.run()
+
+    def test_malpedia_actor(self):
+        defaults = malpedia.MalpediaActors._defaults.copy()
+        feed = malpedia.MalpediaActors(**defaults)
         feed.run()
