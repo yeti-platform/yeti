@@ -148,7 +148,7 @@ TYPE_FUNCTIONS = {
     "vulnerability": _process_vulnerability,
 }
 
-
+_VERSION = "v15.1" 
 class MitreAttack(task.FeedTask):
     _defaults = {
         "name": "MitreAttack",
@@ -159,7 +159,7 @@ class MitreAttack(task.FeedTask):
 
     def run(self):
         response = self._make_request(
-            "https://github.com/mitre/cti/archive/refs/tags/ATT&CK-v14.0.zip"
+            f"https://github.com/mitre/cti/archive/refs/tags/ATT&CK-{_VERSION}.zip"
         )  # url is fixed because the code works with this version only
         if not response:
             logging.info("No response: skipping MitreAttack update")
@@ -168,7 +168,7 @@ class MitreAttack(task.FeedTask):
         tempdir = tempfile.TemporaryDirectory()
         ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
         enterprise_attack = os.path.join(
-            tempdir.name, "cti-ATT-CK-v14.0", "enterprise-attack"
+            tempdir.name, f"cti-ATT-CK-{_VERSION}", "enterprise-attack"
         )
 
         object_cache = {}
