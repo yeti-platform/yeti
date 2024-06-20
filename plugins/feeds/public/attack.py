@@ -148,7 +148,9 @@ TYPE_FUNCTIONS = {
     "vulnerability": _process_vulnerability,
 }
 
-_VERSION = "v15.1" 
+_VERSION = "v15.1"
+
+
 class MitreAttack(task.FeedTask):
     _defaults = {
         "name": "MitreAttack",
