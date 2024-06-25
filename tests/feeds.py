@@ -14,6 +14,7 @@ from plugins.feeds.public import (
     sslblacklist_ja3,
     timesketch,
     tor_exit_nodes,
+    yaraify,
 )
 
 
@@ -76,6 +77,11 @@ class FeedTest(unittest.TestCase):
     def test_sslblacklist_ja3(self):
         defaults = sslblacklist_ja3.SSLBlacklistJA3._defaults.copy()
         feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
+        feed.run()
+
+    def test_yaraify(self):
+        defaults = yaraify.YARAify._defaults.copy()
+        feed = yaraify.YARAify(**defaults)
         feed.run()
 
     def test_malpedia_malware(self):
