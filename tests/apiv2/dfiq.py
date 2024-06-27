@@ -531,7 +531,7 @@ class DFIQTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertIsNotNone(data["id"])
-        self.assertEquals(data["parent_ids"], [])
+        self.assertEqual(data["parent_ids"], [])
 
     def test_standalone_approach_creation(self):
         with open("tests/dfiq_test_data/Q1020.10_no_parent.yaml", "r") as f:
