@@ -3,7 +3,7 @@ display_name: Approach1
 type: approach
 id: Q1020.10
 uuid: 292500f7-9d54-40ca-8254-34821e9b5c4e
-parent_id: bd46ce6e-c933-46e5-960c-36945aaef401
+parent_id:
 internal: false
 dfiq_version: 1.1.0
 tags:

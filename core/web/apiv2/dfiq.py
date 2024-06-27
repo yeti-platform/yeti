@@ -77,11 +77,18 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
-    # Ensure there is not an object with the same ID:
-    if dfiq.DFIQBase.find(dfiq_id=new.dfiq_id):
+    # Ensure there is not an object with the same ID or UUID
+
+    if new.dfiq_id and dfiq.DFIQBase.find(dfiq_id=new.dfiq_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"DFIQ with id {new.dfiq_id} already exists",
+        )
+
+    if dfiq.DFIQBase.find(uuid=new.uuid):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"DFIQ with uuid {new.uuid} already exists",
         )
 
     new = new.save()
@@ -109,7 +116,7 @@ async def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateRespon
     except KeyError as error:
         return DFIQValidateResponse(valid=False, error=f"Invalid DFIQ type: {error}")
 
-    if request.check_id and dfiq.DFIQBase.find(dfiq_id=obj.dfiq_id):
+    if request.check_id and obj.dfiq_id and dfiq.DFIQBase.find(dfiq_id=obj.dfiq_id):
         return DFIQValidateResponse(
             valid=False, error=f"DFIQ with id {obj.dfiq_id} already exists"
         )

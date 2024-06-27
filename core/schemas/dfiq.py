@@ -102,7 +102,8 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["dfiq"] = "dfiq"
 
     name: str = Field(min_length=1)
-    dfiq_id: str = Field(min_length=1)
+    uuid: str  # = Field(default_factory=lambda: str(uuid.uuid4()))
+    dfiq_id: str | None = None
     dfiq_version: str = Field(min_length=1)
     dfiq_tags: list[str] | None = None
     contributors: list[str] | None = None
@@ -142,7 +143,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         if "id" not in yaml_data:
             raise ValueError(f"Invalid DIFQ YAML (missing 'id' attribute): {yaml_data}")
 
-        if not re.match("^\d+\.\d+\.\d+$", str(yaml_data.get("dfiq_version", ""))):
+        if not re.match(r"^\d+\.\d+\.\d+$", str(yaml_data.get("dfiq_version", ""))):
             raise ValueError(f"Invalid DFIQ version: {yaml_data['dfiq_version']}")
 
         return yaml_data
@@ -156,27 +157,31 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         dump = self.model_dump(
             exclude={"created", "modified", "id", "root_type", "dfiq_yaml"}
         )
-        dump.pop("internal")
         dump["type"] = dump["type"].removeprefix("DFIQType.")
         dump["display_name"] = dump.pop("name")
         dump["tags"] = dump.pop("dfiq_tags")
         dump["id"] = dump.pop("dfiq_id")
+        dump["uuid"] = dump.pop("uuid")
         if dump["contributors"] is None:
             dump.pop("contributors")
         return yaml.dump(dump)
 
     def update_parents(self) -> None:
         intended_parent_ids = None
-        if hasattr(self, "parent_ids"):
+        if getattr(self, "parent_ids", []):
             intended_parent_ids = self.parent_ids
-        elif self.type == DFIQType.approach:
-            intended_parent_ids = [self.dfiq_id.split(".")[0]]
+        elif self.type == DFIQType.approach and self.parent_id:
+            intended_parent_ids = [self.parent_id]
         else:
             return
 
-        intended_parents = [
-            DFIQBase.find(dfiq_id=parent_id) for parent_id in intended_parent_ids
-        ]
+        intended_parents = []
+        for parent_id in intended_parent_ids:
+            parent = DFIQBase.find(dfiq_id=parent_id)
+            if not parent:
+                parent = DFIQBase.find(uuid=parent_id)
+            intended_parents.append(parent)
+
         if not all(intended_parents):
             raise ValueError(
                 f"Missing parent(s) {intended_parent_ids} for {self.dfiq_id}"
@@ -190,7 +195,9 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
                     continue
                 if rel.target != self.extended_id:
                     continue
-                if vertices[rel.source].dfiq_id not in intended_parent_ids:
+                if (
+                    vertices[rel.source].dfiq_id and vertices[rel.source].uuid
+                ) not in intended_parent_ids:
                     rel.delete()
 
         for parent in intended_parents:
@@ -209,19 +216,20 @@ class DFIQScenario(DFIQBase):
         if yaml_data["type"] != "scenario":
             raise ValueError(f"Invalid type for DFIQ scenario: {yaml_data['type']}")
         # use re.match to check that DFIQ Ids for scenarios start with S[0-1]\d+
-        if not re.match(r"^S[0-1]\d+$", yaml_data["id"] or ""):
+        if yaml_data.get("id") and not re.match(r"^S[0-1]\d+$", yaml_data["id"] or ""):
             raise ValueError(
                 f"Invalid DFIQ ID for scenario: {yaml_data['id']}. Must be in the format S[0-1]\d+"
             )
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data["description"],
+            uuid=yaml_data["uuid"],
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             dfiq_yaml=yaml_string,
-            internal=yaml_data["id"][1] == "0",
+            internal=yaml_data.get("internal", True),
         )
 
 
@@ -237,7 +245,7 @@ class DFIQFacet(DFIQBase):
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "facet":
             raise ValueError(f"Invalid type for DFIQ facet: {yaml_data['type']}")
-        if not re.match(r"^F[0-1]\d+$", yaml_data["id"] or ""):
+        if yaml_data.get("id") and not re.match(r"^F[0-1]\d+$", yaml_data["id"] or ""):
             raise ValueError(
                 f"Invalid DFIQ ID for facet: {yaml_data['id']}. Must be in the format F[0-1]\d+"
             )
@@ -245,13 +253,14 @@ class DFIQFacet(DFIQBase):
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data.get("description"),
+            uuid=yaml_data["uuid"],
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
             dfiq_yaml=yaml_string,
-            internal=yaml_data["id"][1] == "0",
+            internal=yaml_data.get("internal", True),
         )
 
 
@@ -267,7 +276,7 @@ class DFIQQuestion(DFIQBase):
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "question":
             raise ValueError(f"Invalid type for DFIQ question: {yaml_data['type']}")
-        if not re.match(r"^Q[0-1]\d+$", yaml_data["id"] or ""):
+        if yaml_data.get("id") and not re.match(r"^Q[0-1]\d+$", yaml_data["id"] or ""):
             raise ValueError(
                 f"Invalid DFIQ ID for question: {yaml_data['id']}. Must be in the format Q[0-1]\d+"
             )
@@ -275,13 +284,14 @@ class DFIQQuestion(DFIQBase):
         return cls(
             name=yaml_data["display_name"],
             description=yaml_data.get("description"),
+            uuid=yaml_data["uuid"],
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
             dfiq_yaml=yaml_string,
-            internal=yaml_data["id"][1] == "0",
+            internal=yaml_data.get("internal", True),
         )
 
 
@@ -336,13 +346,14 @@ class DFIQApproach(DFIQBase):
     description: DFIQApproachDescription
     view: DFIQApproachView
     type: Literal[DFIQType.approach] = DFIQType.approach
+    parent_id: str | None = None
 
     @classmethod
     def from_yaml(cls: Type["DFIQApproach"], yaml_string: str) -> "DFIQApproach":
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "approach":
             raise ValueError(f"Invalid type for DFIQ approach: {yaml_data['type']}")
-        if not re.match(r"^Q[0-1]\d+\.\d+$", yaml_data["id"]):
+        if yaml_data.get("id") and not re.match(r"^Q[0-1]\d+\.\d+$", yaml_data["id"]):
             raise ValueError(
                 f"Invalid DFIQ ID for approach: {yaml_data['id']}. Must be in the format Q[0-1]\d+.\d+"
             )
@@ -355,17 +366,18 @@ class DFIQApproach(DFIQBase):
                 f"Invalid DFIQ view for approach (has to be an object): {yaml_data['view']}"
             )
 
-        internal = bool(re.match(r"^Q[0-1]\d+\.0\d+$", yaml_data["id"]))
         return cls(
             name=yaml_data["display_name"],
             description=DFIQApproachDescription(**yaml_data["description"]),
             view=DFIQApproachView(**yaml_data["view"]),
+            uuid=yaml_data["uuid"],
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
+            parent_id=yaml_data.get("parent_id"),
             contributors=yaml_data.get("contributors"),
             dfiq_yaml=yaml_string,
-            internal=internal,
+            internal=yaml_data.get("internal", True),
         )
 
 

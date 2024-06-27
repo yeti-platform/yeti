@@ -2,13 +2,16 @@
 display_name: Approach1
 type: approach
 id: Q1020.10
-dfiq_version: 1.0.0
+uuid: fcbdb313-424a-436e-a877-130aeba3f134
+parent_id: bd46ce6e-c933-46e5-960c-36945aaef401
+internal: false
+dfiq_version: 1.1.0
 tags:
   - Lots
   - Of
   - Tags
 description:
-  summary: Description for approach
+  summary: Descripion for approach
   details: >
     Details for approach
   references:
