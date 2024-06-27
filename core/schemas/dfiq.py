@@ -323,8 +323,7 @@ class DFIQProcessors(BaseModel):
 
 
 class DFIQApproachDescription(BaseModel):
-    summary: str = Field(min_length=1)
-    details: str = Field(min_length=1)
+    details: str = ""
     references: list[str] = []
     references_internal: list[str] | None = None
 

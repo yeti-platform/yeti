@@ -89,11 +89,10 @@ class DFIQTest(unittest.TestCase):
         result = DFIQApproach.from_yaml(yaml_string).save()
 
         self.assertIsNotNone(result.id)
-        self.assertEquals(result.uuid, "292500f7-9d54-40ca-8254-34821e9b5c4e")
-        self.assertEquals(result.parent_id, "bd46ce6e-c933-46e5-960c-36945aaef401")
+        self.assertEqual(result.uuid, "292500f7-9d54-40ca-8254-34821e9b5c4e")
+        self.assertEqual(result.parent_id, "bd46ce6e-c933-46e5-960c-36945aaef401")
         self.assertIsNotNone(result.created)
         self.assertEqual(result.name, "Approach1")
-        self.assertEqual(result.description.summary, "Description for approach")
         self.assertEqual(result.description.details, "Details for approach\n")
         self.assertEqual(result.description.references, ["ref1", "ref2"])
 
