@@ -49,7 +49,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
         self.assertIn("tag1", data["tags"])
         self.assertIn("tag2", data["tags"])
-    
+
     def test_delete_observable(self):
         obs = hostname.Hostname(value="tomchop.me").save()
         response = client.delete(f"/api/v2/observables/{obs.id}")

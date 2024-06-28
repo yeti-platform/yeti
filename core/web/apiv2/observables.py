@@ -304,6 +304,7 @@ async def tag_observable(request: ObservableTagRequest) -> ObservableTagResponse
 
     return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
 
+
 @router.delete("/{observable_id}")
 async def delete(observable_id):
     """Deletes an observable."""
@@ -311,4 +312,3 @@ async def delete(observable_id):
     if not observable:
         raise HTTPException(status_code=404, detail="Observable not found")
     observable.delete()
-    
