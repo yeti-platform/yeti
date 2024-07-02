@@ -10,7 +10,7 @@ from core import taskmanager
 from core.schemas import entity, task
 
 
-def _extract_technique_id(external_references):
+def _extract_technique_id(external_references: list) -> list:
     for ref in external_references:
         if ref["source_name"] == "mitre-attack":
             return [ref["external_id"]]
