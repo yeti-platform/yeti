@@ -67,12 +67,12 @@ def _process_attack_pattern(obj):
             f'{phase["kill_chain_name"]}:{phase["phase_name"]}'
             for phase in obj["kill_chain_phases"]
         ],
-        aliases=list(
+        aliases=[list(
             filter(
                 lambda x: x["source_name"] == "mitre-attack",
-                obj.get("external_references", []),
+                obj['external_references'],
             )
-        )[0]["external_id"],
+        )[0]["external_id"]],
     ).save()
     context = _format_context_from_obj(obj)
     attack_pattern.add_context(context["source"], context)
