@@ -29,6 +29,7 @@ class IndicatorType(str, Enum):
     yara = "yara"
     sigma = "sigma"
     query = "query"
+    suricata = "suricata"
     forensicartifact = "forensicartifact"
 
 
@@ -147,7 +148,21 @@ class Yara(Indicator):
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
 
+class Suricata(Indicator):
+    """Represents a Suricata rule.
 
+    Parsing and matching is yet TODO.
+    """
+
+    _type_filter: ClassVar[str] = IndicatorType.suricata
+    type: Literal["suricata"] = IndicatorType.suricata
+
+    def match(self, value: str) -> IndicatorMatch | None:
+        raise NotImplementedError
+    
+    @classmethod
+    def validate_rules(cls, value) -> str:
+        pass
 class Sigma(Indicator):
     """Represents a Sigma rule.
 
