@@ -10,13 +10,6 @@ from core import taskmanager
 from core.schemas import entity, task
 
 
-def _extract_technique_id(external_references: list) -> list:
-    for ref in external_references:
-        if ref["source_name"] == "mitre-attack":
-            return [ref["external_id"]]
-    return []
-
-
 def _format_context_from_obj(obj):
     context = {"source": "MITRE-ATT&CK", "description": ""}
 
@@ -66,15 +59,21 @@ def _process_malware(obj):
 
 
 def _process_attack_pattern(obj):
+    aliases = set()
+    for ref in obj.get("external_references", []):
+        if ref["source_name"] == "mitre-attack":
+            aliases.add(ref["external_id"])
+
+    kill_chain_phases = set()
+    for phase in obj["kill_chain_phases"]:
+        kill_chain_phases.add(f'{phase["kill_chain_name"]}:{phase["phase_name"]}')
+
     attack_pattern = entity.AttackPattern(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
-        kill_chain_phases=[
-            f'{phase["kill_chain_name"]}:{phase["phase_name"]}'
-            for phase in obj["kill_chain_phases"]
-        ],
-        aliases=_extract_technique_id(obj.get("external_references", [])),
+        kill_chain_phases=list(kill_chain_phases),
+        aliases=list(aliases),
     ).save()
     context = _format_context_from_obj(obj)
     attack_pattern.add_context(context["source"], context)
