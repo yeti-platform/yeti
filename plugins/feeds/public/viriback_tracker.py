@@ -3,7 +3,6 @@ from io import StringIO
 from typing import ClassVar
 
 import pandas as pd
-
 from core import taskmanager
 from core.schemas import task
 from core.schemas.observables import ipv4, url
@@ -25,6 +24,7 @@ class ViriBackTracker(task.FeedTask):
             df = pd.read_csv(
                 StringIO(data),
                 parse_dates=["FirstSeen"],
+                date_format="%d-%m-%Y"
             )
             df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "FirstSeen")
