@@ -23,8 +23,7 @@ class ViriBackTracker(task.FeedTask):
         if response:
             data = response.text
             df = pd.read_csv(
-                StringIO(data),
-                parse_dates=["FirstSeen"],
+                StringIO(data), parse_dates=["FirstSeen"], date_format="%d-%m-%Y"
             )
             df.ffill(inplace=True)
             df = self._filter_observables_by_time(df, "FirstSeen")
