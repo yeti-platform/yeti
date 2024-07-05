@@ -150,6 +150,7 @@ class Yara(Indicator):
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
 
+
 class Suricata(Indicator):
     """Represents a Suricata rule.
 
@@ -161,7 +162,8 @@ class Suricata(Indicator):
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
-    
+
+    @field_validator("pattern")
     @classmethod
     def validate_rules(cls) -> bool:
         try:
@@ -170,13 +172,14 @@ class Suricata(Indicator):
         except Exception as e:
             logging.error(f"invalid {cls.pattern} {e}")
             return False
-    
+
     def parse(self) -> rule.Rule | None:
         try:
             return rule.parse(self.pattern)
         except Exception as e:
             logging.error(f" Error parsing {self.pattern} {e}")
-        
+
+
 class Sigma(Indicator):
     """Represents a Sigma rule.
 
