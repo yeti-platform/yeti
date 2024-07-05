@@ -14,6 +14,8 @@ from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiTagModel
 
+from idstools import rule
+
 
 def future():
     return datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
@@ -161,8 +163,20 @@ class Suricata(Indicator):
         raise NotImplementedError
     
     @classmethod
-    def validate_rules(cls, value) -> str:
-        pass
+    def validate_rules(cls) -> bool:
+        try:
+            rule.parse(cls.pattern)
+            return True
+        except Exception as e:
+            logging.error(f"invalid {cls.pattern} {e}")
+            return False
+    
+    def parse(self) -> rule.Rule | None:
+        try:
+            return rule.parse(self.pattern)
+        except Exception as e:
+            logging.error(f" Error parsing {self.pattern} {e}")
+        
 class Sigma(Indicator):
     """Represents a Sigma rule.
 
