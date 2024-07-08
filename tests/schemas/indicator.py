@@ -7,6 +7,7 @@ from core.schemas.indicator import (
     Indicator,
     Query,
     Regex,
+    Suricata,
 )
 
 
@@ -256,3 +257,14 @@ sources:
 
         self.assertEqual(vertices[artifacts[1].extended_id].name, "Artifact2")
         self.assertEqual(vertices[artifacts[2].extended_id].name, "Artifact3")
+    
+    def test_suricata_rule(self):
+        rule = Suricata(
+            name="rule1",
+            pattern="alert tcp any any -> any any (msg:\"test\"; content:\"test\"; sid:1;)",
+            diamond=DiamondModel.capability,
+        ).save()
+        self.assertIsNotNone(rule.id)
+        self.assertIsNotNone(rule.created)
+        self.assertEqual(rule.name, "rule1")
+        self.assertEqual(rule.type, "suricata")
