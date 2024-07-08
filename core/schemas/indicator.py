@@ -165,13 +165,12 @@ class Suricata(Indicator):
 
     @field_validator("pattern")
     @classmethod
-    def validate_rules(cls) -> bool:
+    def validate_rules(cls, value) -> str:
         try:
-            rule.parse(cls.pattern)
-            return True
+            rule.parse(value)
         except Exception as e:
-            logging.error(f"invalid {cls.pattern} {e}")
-            return False
+            raise ValueError(f"invalid {cls.pattern} {e}")
+        return value
 
     def parse(self) -> rule.Rule | None:
         try:
@@ -361,6 +360,7 @@ TYPE_MAPPING = {
     "regex": Regex,
     "yara": Yara,
     "sigma": Sigma,
+    "suricata": Suricata,
     "query": Query,
     "forensicartifact": ForensicArtifact,
     "indicator": Indicator,
@@ -368,8 +368,14 @@ TYPE_MAPPING = {
 }
 
 IndicatorTypes = Annotated[
-    Union[Regex, Yara, Sigma, Query, ForensicArtifact], Field(discriminator="type")
+    Union[Regex, Yara, Suricata, Sigma, Query, ForensicArtifact],
+    Field(discriminator="type"),
 ]
 IndicatorClasses = (
-    Type[Regex] | Type[Yara] | Type[Sigma] | Type[Query] | Type[ForensicArtifact]
+    Type[Regex]
+    | Type[Yara]
+    | Type[Suricata]
+    | Type[Sigma]
+    | Type[Query]
+    | Type[ForensicArtifact]
 )
