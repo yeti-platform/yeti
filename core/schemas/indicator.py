@@ -8,13 +8,12 @@ from typing import Annotated, ClassVar, Literal, Type, Union
 import yaml
 from artifacts import definitions, reader, writer
 from artifacts import errors as artifacts_errors
+from idstools import rule
 from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_validator
 
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiTagModel
-
-from idstools import rule
 
 
 def future():
