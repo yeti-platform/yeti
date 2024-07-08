@@ -3,7 +3,7 @@ import io
 import logging
 import re
 from enum import Enum
-from typing import Annotated, ClassVar, Literal, Type, Union
+from typing import Annotated, ClassVar, Literal, Type, Union,List
 
 import yaml
 from artifacts import definitions, reader, writer
@@ -155,10 +155,12 @@ class Suricata(Indicator):
 
     Parsing and matching is yet TODO.
     """
-
     _type_filter: ClassVar[str] = IndicatorType.suricata
     type: Literal["suricata"] = IndicatorType.suricata
-
+    sid: int = 0
+    metadata: List[str] = []
+    references: List[str] = []
+    
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
 
