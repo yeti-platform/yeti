@@ -1,4 +1,5 @@
 import datetime
+import logging
 from datetime import timedelta
 from io import StringIO
 
@@ -106,19 +107,18 @@ class ETOpen(task.FeedTask):
                     yield ind_mitre_attack[0]
 
     def __filter_rule(self, metadata):
-        if not self.last_run:
-            return False
         for meta in metadata:
             if "updated_at" in meta:
                 _, date_update = meta.split(" ")
                 return self.last_run < datetime.datetime.strptime(
                     date_update, "%Y_%m_%d"
                 )
-            if "created_at" in metadata:
+            if "created_at" in metadata and not self.last_run:
                 _, date_create = meta.split(" ")
                 start_time = yeti_config.get("etopen", "start_time")
                 try:
                     d_start_time = datetime.datetime.strptime(start_time, "%Y")
+                    logging.debug(f"start_time: {d_start_time}")
                     return d_start_time < datetime.datetime.strptime(
                         date_create, "%Y_%m_%d"
                     )
