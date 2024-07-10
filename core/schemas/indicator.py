@@ -155,12 +155,13 @@ class Suricata(Indicator):
 
     Parsing and matching is yet TODO.
     """
+
     _type_filter: ClassVar[str] = IndicatorType.suricata
     type: Literal["suricata"] = IndicatorType.suricata
     sid: int = 0
     metadata: List[str] = []
     references: List[str] = []
-    
+
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
 
