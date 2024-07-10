@@ -110,7 +110,9 @@ class ETOpen(task.FeedTask):
             for meta in metadata:
                 if "created_at" in meta:
                     _, date_create = meta.split(" ")
-                    start_time = yeti_config.get("etopen", "start_year")
+                    start_time = yeti_config.get("etopen", "start_time")
+                    if not start_time:
+                        return True
                     try:
                         d_start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d")
                         logging.debug(f"start_time: {d_start_time}")
