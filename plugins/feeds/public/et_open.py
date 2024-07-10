@@ -38,34 +38,33 @@ class ETOpen(task.FeedTask):
         if not rule_suricata:
             return
 
-        if not self.__filter_rule(rule_suricata.metadata):
-            return
+        if self.__filter_rule(rule_suricata.metadata):
+       
+            ind_suricator = indicator.Suricata(
+                name=rule_suricata["msg"],
+                pattern=line,
+                metadata=rule_suricata.metadata,
+                diamond=indicator.DiamondModel.infrastructure,
+                sid=rule_suricata["sid"],
+            ).save()
 
-        ind_suricator = indicator.Suricata(
-            name=rule_suricata["msg"],
-            pattern=line,
-            metadata=rule_suricata.metadata,
-            diamond=indicator.DiamondModel.infrastructure,
-            sid=rule_suricata["sid"],
-        ).save()
+            if "cve" in ",".join(rule_suricata.metadata):
+                for ind_cve in self.__extract_cve(rule_suricata.metadata):
+                    ind_suricator.link_to(ind_cve, "affect", "ETOpen")
 
-        if "cve" in ",".join(rule_suricata.metadata):
-            for ind_cve in self.__extract_cve(rule_suricata.metadata):
-                ind_suricator.link_to(ind_cve, "affect", "ETOpen")
+            if "malware family" in ",".join(rule_suricata.metadata):
+                for in_malware_family in self.__extract_malware_family(
+                    rule_suricata.metadata
+                ):
+                    ind_suricator.link_to(in_malware_family, "affect", "ETOpen")
 
-        if "malware family" in ",".join(rule_suricata.metadata):
-            for in_malware_family in self.__extract_malware_family(
-                rule_suricata.metadata
-            ):
-                ind_suricator.link_to(in_malware_family, "affect", "ETOpen")
-
-        tags = self.__extract_tags(rule_suricata.metadata)
-        if tags:
-            ind_suricator.tag(tags)
-        if "mitre_tactic_id" in ",".join(rule_suricata.metadata):
-            for ind_mitre_attack in self.__extract_mitre_attack(rule_suricata.metadata):
-                if ind_mitre_attack:
-                    ind_suricator.link_to(ind_mitre_attack, "affect", "ETOpen")
+            tags = self.__extract_tags(rule_suricata.metadata)
+            if tags:
+                ind_suricator.tag(tags)
+            if "mitre_tactic_id" in ",".join(rule_suricata.metadata):
+                for ind_mitre_attack in self.__extract_mitre_attack(rule_suricata.metadata):
+                    if ind_mitre_attack:
+                        ind_suricator.link_to(ind_mitre_attack, "affect", "ETOpen")
 
     def __extract_cve(self, metadata: list):
         for meta in metadata:
@@ -107,8 +106,8 @@ class ETOpen(task.FeedTask):
                     yield ind_mitre_attack[0]
 
     def __filter_rule(self, metadata):
-        for meta in metadata:
-            if not self.last_run:
+        if not self.last_run:
+            for meta in metadata:
                 if "created_at" in metadata:
                     _, date_create = meta.split(" ")
                     start_time = yeti_config.get("etopen", "start_time")
@@ -120,12 +119,13 @@ class ETOpen(task.FeedTask):
                         )
                     except ValueError:
                         return False
-            else:
+        else:
+            for meta in metadata:
                 if "updated_at" in meta:
                     _, date_update = meta.split(" ")
                     return self.last_run < datetime.datetime.strptime(
                         date_update, "%Y_%m_%d"
-                    )
+                        )
         return False
 
 
