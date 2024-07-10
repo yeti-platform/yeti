@@ -3,7 +3,7 @@ import io
 import logging
 import re
 from enum import Enum
-from typing import Annotated, ClassVar, Literal, Type, Union,List
+from typing import Annotated, ClassVar, List, Literal, Type, Union
 
 import yaml
 from artifacts import definitions, reader, writer
