@@ -1,6 +1,6 @@
 import datetime
 import logging
-from datetime import timedelta
+from datetime import timedelta, timezone
 from io import StringIO
 
 from idstools import rule
@@ -23,7 +23,7 @@ class ETOpen(task.FeedTask):
     }
 
     def run(self):
-        response = self._make_request(self.__SOURCE)
+        response = self._make_request(self.__SOURCE, no_cache=True)
 
         if not response:
             return
@@ -123,9 +123,10 @@ class ETOpen(task.FeedTask):
             for meta in metadata:
                 if "updated_at" in meta:
                     _, date_update = meta.split(" ")
-                    return self.last_run < datetime.datetime.strptime(
+                    date_filtering = datetime.datetime.strptime(
                         date_update, "%Y_%m_%d"
-                        )
+                        ).replace(tzinfo=timezone.utc)
+                    return self.last_run <  date_filtering
         return False
 
 
