@@ -108,11 +108,11 @@ class ETOpen(task.FeedTask):
     def __filter_rule(self, metadata):
         if not self.last_run:
             for meta in metadata:
-                if "created_at" in metadata:
+                if "created_at" in meta:
                     _, date_create = meta.split(" ")
-                    start_time = yeti_config.get("etopen", "start_time")
+                    start_time = yeti_config.get("etopen", "start_year")
                     try:
-                        d_start_time = datetime.datetime.strptime(start_time, "%Y")
+                        d_start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d")
                         logging.debug(f"start_time: {d_start_time}")
                         return d_start_time < datetime.datetime.strptime(
                             date_create, "%Y_%m_%d"
