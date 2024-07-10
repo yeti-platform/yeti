@@ -39,7 +39,6 @@ class ETOpen(task.FeedTask):
             return
 
         if self.__filter_rule(rule_suricata.metadata):
-       
             ind_suricator = indicator.Suricata(
                 name=rule_suricata["msg"],
                 pattern=line,
@@ -62,7 +61,9 @@ class ETOpen(task.FeedTask):
             if tags:
                 ind_suricator.tag(tags)
             if "mitre_tactic_id" in ",".join(rule_suricata.metadata):
-                for ind_mitre_attack in self.__extract_mitre_attack(rule_suricata.metadata):
+                for ind_mitre_attack in self.__extract_mitre_attack(
+                    rule_suricata.metadata
+                ):
                     if ind_mitre_attack:
                         ind_suricator.link_to(ind_mitre_attack, "affect", "ETOpen")
 
@@ -114,7 +115,9 @@ class ETOpen(task.FeedTask):
                     if not start_time:
                         return True
                     try:
-                        d_start_time = datetime.datetime.strptime(start_time, "%Y-%m-%d")
+                        d_start_time = datetime.datetime.strptime(
+                            start_time, "%Y-%m-%d"
+                        )
                         logging.debug(f"start_time: {d_start_time}")
                         return d_start_time < datetime.datetime.strptime(
                             date_create, "%Y_%m_%d"
@@ -127,8 +130,8 @@ class ETOpen(task.FeedTask):
                     _, date_update = meta.split(" ")
                     date_filtering = datetime.datetime.strptime(
                         date_update, "%Y_%m_%d"
-                        ).replace(tzinfo=timezone.utc)
-                    return self.last_run <  date_filtering
+                    ).replace(tzinfo=timezone.utc)
+                    return self.last_run < date_filtering
         return False
 
 
