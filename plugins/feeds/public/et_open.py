@@ -92,8 +92,11 @@ class ETOpen(task.FeedTask):
         )
         if nb_ent != 0:
             return ind_mitre_attack[0]
-
+    '''
+    This function is used to filter the rules based on the last run date or the start time of the feed.
+    '''
     def _filter_rule(self, metadata):
+        ## Add the first run of the feed, creates_date of metadata is used to filter the rules. 
         if not self.last_run:
             for meta in metadata:
                 if "created_at" in meta:
@@ -112,6 +115,7 @@ class ETOpen(task.FeedTask):
                             f"Invalid start_time format {start_time}, please use the format %Y-%m-%d"
                         )
         else:
+            ## Add the last run of the feed, updated_at of metadata is used to filter the rules.
             for meta in metadata:
                 if "updated_at" in meta:
                     _, date_update = meta.split(" ")
