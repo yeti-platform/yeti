@@ -34,7 +34,7 @@ class ETOpen(task.FeedTask):
                 continue
             self.analyze(rule_suricata)
 
-    def analyze(self, rule_suricata:idstools.rule.Rule):
+    def analyze(self, rule_suricata:rule.Rule):
         if not self._filter_rule(rule_suricata.metadata):
             return
         ind_suricata_rule = indicator.Suricata(
