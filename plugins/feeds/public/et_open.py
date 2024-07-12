@@ -34,7 +34,7 @@ class ETOpen(task.FeedTask):
                 continue
             self.analyze(rule_suricata)
 
-    def analyze(self, rule_suricata:rule.Rule):
+    def analyze(self, rule_suricata: rule.Rule):
         if not self._filter_rule(rule_suricata.metadata):
             return
         ind_suricata_rule = indicator.Suricata(
@@ -77,7 +77,7 @@ class ETOpen(task.FeedTask):
             ind_malware_family = entity.Malware(name=malware_family).save()
         return ind_malware_family
 
-    def _extract_tags(self, metadata: list) -> list[str]:
+    def _extract_tags(self, metadata: list[str]) -> list[str]:
         tags = []
         for meta in metadata:
             if meta.startswith("tag"):
@@ -98,7 +98,7 @@ class ETOpen(task.FeedTask):
     This function is used to filter the rules based on the last run date or the start time of the feed.
     """
 
-    def _filter_rule(self, metadata):
+    def _filter_rule(self, metadata: list[str]):
         ## Add the first run of the feed, creates_date of metadata is used to filter the rules.
         if not self.last_run:
             for meta in metadata:
