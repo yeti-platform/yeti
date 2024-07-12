@@ -35,7 +35,7 @@ class ETOpen(task.FeedTask):
             self.analyze(rule_suricata)
 
     def analyze(self, rule_suricata):
-        if not self.__filter_rule(rule_suricata.metadata):
+        if not self._filter_rule(rule_suricata.metadata):
             return
         ind_suricata_rule = indicator.Suricata(
             name=rule_suricata["msg"],
@@ -46,21 +46,21 @@ class ETOpen(task.FeedTask):
         ).save()
         for meta in rule_suricata.metadata:
             if "cve" in meta:
-                ind_cve = self.__extract_cve(rule_suricata.metadata)
+                ind_cve = self._extract_cve(rule_suricata.metadata)
                 ind_suricata_rule.link_to(ind_cve, "affect", "ETOpen")
 
             if "malware family" in meta:
-                in_malware_family = self.__extract_malware_family(meta)
+                in_malware_family = self._extract_malware_family(meta)
                 ind_suricata_rule.link_to(in_malware_family, "affect", "ETOpen")
 
             if "mitre_tactic_id" in meta:
-                ind_mitre_attack = self.__extract_mitre_attack(rule_suricata.metadata)
+                ind_mitre_attack = self._extract_mitre_attack(rule_suricata.metadata)
                 ind_suricata_rule.link_to(ind_mitre_attack, "affect", "ETOpen")
-        tags = self.__extract_tags(rule_suricata.metadata)
+        tags = self._extract_tags(rule_suricata.metadata)
         if tags:
             ind_suricata_rule.tag(tags)
 
-    def __extract_cve(self, meta: str):
+    def _extract_cve(self, meta: str):
         _, cve = meta.split(" ")
         if "_" in cve:
             cve = cve.replace("_", "-")
@@ -69,14 +69,14 @@ class ETOpen(task.FeedTask):
             ind_cve = entity.Vulnerability(name=cve).save()
         return ind_cve
 
-    def __extract_malware_family(self, meta: str):
+    def _extract_malware_family(self, meta: str):
         _, malware_family = meta.split(" ")
         ind_malware_family = entity.Malware.find(name=malware_family)
         if not ind_malware_family:
             ind_malware_family = entity.Malware(name=malware_family).save()
         return ind_malware_family
 
-    def __extract_tags(self, metadata: list):
+    def _extract_tags(self, metadata: list):
         tags = []
         for meta in metadata:
             if meta.startswith("tag"):
@@ -84,7 +84,7 @@ class ETOpen(task.FeedTask):
                 tags.append(tag)
         return tags
 
-    def __extract_mitre_attack(self, meta: str):
+    def _extract_mitre_attack(self, meta: str):
         _, mitre_id = meta.split(" ")
         ind_mitre_attack, nb_ent = entity.Entity.filter(
             query_args={"type": entity.EntityType.attack_pattern},
@@ -93,7 +93,7 @@ class ETOpen(task.FeedTask):
         if nb_ent != 0:
             return ind_mitre_attack[0]
 
-    def __filter_rule(self, metadata):
+    def _filter_rule(self, metadata):
         if not self.last_run:
             for meta in metadata:
                 if "created_at" in meta:
