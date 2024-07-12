@@ -39,14 +39,14 @@ class ETOpen(task.FeedTask):
             return
         ind_suricata_rule = indicator.Suricata(
             name=rule_suricata["msg"],
-            pattern=rule["raw"],
+            pattern=rule_suricata["raw"],
             metadata=rule_suricata.metadata,
             diamond=indicator.DiamondModel.infrastructure,
             sid=rule_suricata["sid"],
         ).save()
         for meta in rule_suricata.metadata:
             if "cve" in meta:
-                ind_cve = self._extract_cve(rule_suricata.metadata)
+                ind_cve = self._extract_cve(meta)
                 ind_suricata_rule.link_to(ind_cve, "affect", "ETOpen")
 
             if "malware family" in meta:
@@ -54,7 +54,7 @@ class ETOpen(task.FeedTask):
                 ind_suricata_rule.link_to(in_malware_family, "affect", "ETOpen")
 
             if "mitre_tactic_id" in meta:
-                ind_mitre_attack = self._extract_mitre_attack(rule_suricata.metadata)
+                ind_mitre_attack = self._extract_mitre_attack(meta)
                 if ind_mitre_attack:
                     ind_suricata_rule.link_to(ind_mitre_attack, "affect", "ETOpen")
         tags = self._extract_tags(rule_suricata.metadata)
