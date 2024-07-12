@@ -60,7 +60,7 @@ class ETOpen(task.FeedTask):
         if tags:
             ind_suricata_rule.tag(tags)
 
-    def _extract_cve(self, meta: str):
+    def _extract_cve(self, meta: str) -> entity.Vulnerability:
         _, cve = meta.split(" ")
         if "_" in cve:
             cve = cve.replace("_", "-")
@@ -76,7 +76,7 @@ class ETOpen(task.FeedTask):
             ind_malware_family = entity.Malware(name=malware_family).save()
         return ind_malware_family
 
-    def _extract_tags(self, metadata: list):
+    def _extract_tags(self, metadata: list) -> list[str]:
         tags = []
         for meta in metadata:
             if meta.startswith("tag"):
@@ -84,7 +84,7 @@ class ETOpen(task.FeedTask):
                 tags.append(tag)
         return tags
 
-    def _extract_mitre_attack(self, meta: str):
+    def _extract_mitre_attack(self, meta: str) -> entity.AttackPattern | None:
         _, mitre_id = meta.split(" ")
         ind_mitre_attack, nb_ent = entity.Entity.filter(
             query_args={"type": entity.EntityType.attack_pattern},
