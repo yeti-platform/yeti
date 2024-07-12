@@ -34,7 +34,7 @@ class ETOpen(task.FeedTask):
                 continue
             self.analyze(rule_suricata)
 
-    def analyze(self, rule_suricata):
+    def analyze(self, rule_suricata:idstools.rule.Rule):
         if not self._filter_rule(rule_suricata.metadata):
             return
         ind_suricata_rule = indicator.Suricata(
@@ -55,7 +55,8 @@ class ETOpen(task.FeedTask):
 
             if "mitre_tactic_id" in meta:
                 ind_mitre_attack = self._extract_mitre_attack(rule_suricata.metadata)
-                ind_suricata_rule.link_to(ind_mitre_attack, "affect", "ETOpen")
+                if ind_mitre_attack:
+                    ind_suricata_rule.link_to(ind_mitre_attack, "affect", "ETOpen")
         tags = self._extract_tags(rule_suricata.metadata)
         if tags:
             ind_suricata_rule.tag(tags)
