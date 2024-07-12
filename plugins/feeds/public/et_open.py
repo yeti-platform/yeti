@@ -94,11 +94,13 @@ class ETOpen(task.FeedTask):
         if nb_ent != 0:
             return ind_mitre_attack[0]
 
-    """
-    This function is used to filter the rules based on the last run date or the start time of the feed.
-    """
+    
 
     def _filter_rule(self, metadata: list[str]):
+        """
+        This function is used to filter the rules based on the last run date or the start time of the feed.
+        param metadata: list of metadata of the rule
+        """
         ## Add the first run of the feed, creates_date of metadata is used to filter the rules.
         if not self.last_run:
             for meta in metadata:
