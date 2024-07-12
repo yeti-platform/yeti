@@ -99,7 +99,9 @@ class ETOpen(task.FeedTask):
     def _filter_rule(self, metadata: list[str]):
         """
         This function is used to filter the rules based on the last run date or the start time of the feed.
-        param metadata: list of metadata of the rule
+        
+        Args:
+          metadata: list of rule metadata as provided by the feed.
         """
         ## Add the first run of the feed, creates_date of metadata is used to filter the rules.
         if not self.last_run:
