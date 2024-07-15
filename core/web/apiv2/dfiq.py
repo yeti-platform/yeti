@@ -100,7 +100,13 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
 
 @router.post("/to_archive")
 async def to_archive(request: DFIQSearchRequest) -> FileResponse:
-    """Compresses DFIQ objects into a ZIP archive."""
+    """Compresses DFIQ objects into a ZIP archive.
+
+    The structure of the archive is as follows:
+    - {public, internal}/
+      - type/
+        - dfiq_id.yaml
+    """
     dfiq_objects, _ = dfiq.DFIQBase.filter(
         query_args=request.query,
         offset=request.page * request.count,
