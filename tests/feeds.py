@@ -6,6 +6,7 @@ from plugins.feeds.public import (
     artifacts,
     attack,
     dfiq,
+    et_open,
     feodo_tracker_ip_blocklist,
     hybrid_analysis,
     lolbas,
@@ -14,6 +15,7 @@ from plugins.feeds.public import (
     sslblacklist_ja3,
     timesketch,
     tor_exit_nodes,
+    yaraify,
 )
 
 
@@ -78,6 +80,11 @@ class FeedTest(unittest.TestCase):
         feed = sslblacklist_ja3.SSLBlacklistJA3(**defaults)
         feed.run()
 
+    def test_yaraify(self):
+        defaults = yaraify.YARAify._defaults.copy()
+        feed = yaraify.YARAify(**defaults)
+        feed.run()
+
     def test_malpedia_malware(self):
         defaults = malpedia.MalpediaMalware._defaults.copy()
         feed = malpedia.MalpediaMalware(**defaults)
@@ -86,4 +93,9 @@ class FeedTest(unittest.TestCase):
     def test_malpedia_actor(self):
         defaults = malpedia.MalpediaActors._defaults.copy()
         feed = malpedia.MalpediaActors(**defaults)
+        feed.run()
+
+    def test_et_open(self):
+        defaults = et_open.ETOpen._defaults.copy()
+        feed = et_open.ETOpen(**defaults)
         feed.run()
