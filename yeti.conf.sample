@@ -29,6 +29,7 @@ module = local
 # SECRET_KEY = SECRET
 # ALGORITHM = HS256
 # ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# BROWSER_TOKEN_EXPIRE_MINUTES = 43200
 enabled = True
 
 # OIDC
@@ -113,6 +114,10 @@ https =
 # no token - limit 60 r/h
 # w/ token - limit 5k r/h
 # token =
+
+[etopen]
+## time of filtering rule suricata for the first run of feed ETOpen
+start_time = 2000-01-01
 
 [otx]
 key = YourOTXKey

@@ -20,7 +20,10 @@ from core.config.config import yeti_config
 from core.schemas.user import User, UserSensitive
 
 ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
-    minutes=yeti_config.get("auth", "access_token_expire_minutes")
+    minutes=yeti_config.get("auth", "access_token_expire_minutes", default=30)
+)
+BROWSER_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
+    minutes=yeti_config.get("auth", "browser_token_expire_minutes", default=43200)
 )
 SECRET_KEY = yeti_config.get("auth", "secret_key")
 ALGORITHM = yeti_config.get("auth", "algorithm")
@@ -176,7 +179,7 @@ if AUTH_MODULE == "oidc":
 
         access_token = create_access_token(
             data={"sub": db_user.username, "enabled": db_user.enabled},
-            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
+            expires_delta=BROWSER_TOKEN_EXPIRE_MINUTES,
         )
         response = RedirectResponse(url="/")
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
@@ -262,7 +265,7 @@ if AUTH_MODULE == "local":
 
         access_token = create_access_token(
             data={"sub": user.username, "enabled": user.enabled},
-            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
+            expires_delta=BROWSER_TOKEN_EXPIRE_MINUTES,
         )
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
         SESSION_STORE.add(access_token)

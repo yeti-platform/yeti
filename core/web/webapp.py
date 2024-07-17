@@ -102,12 +102,22 @@ api_router.include_router(
 
 app.include_router(api_router, prefix="/api/v2")
 
+LOGGING_EXCLUDELIST = [
+    "/auth/",
+]
+LOG_BODY_SIZE_LIMIT = 2000
+CONTENT_TOO_LARGE_MESSAGE = f"[Request body > {LOG_BODY_SIZE_LIMIT} bytes, not logged]"
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     req_body = await request.body()
 
     response = await call_next(request)
+    # Do not log auth-related requests
+    for path in LOGGING_EXCLUDELIST:
+        if path in request.url.path:
+            return response
     try:
         extra = {
             "type": "audit.log",
@@ -124,7 +134,10 @@ async def log_requests(request: Request, call_next):
         if getattr(request.state, "username", None):
             extra["username"] = request.state.username
         if req_body:
-            extra["body"] = req_body
+            if len(req_body) > LOG_BODY_SIZE_LIMIT:
+                extra["body"] = CONTENT_TOO_LARGE_MESSAGE.encode("utf-8")
+            else:
+                extra["body"] = req_body
         if response.status_code == 200:
             logger.info("Authorized request", extra=extra)
         elif response.status_code == 401:

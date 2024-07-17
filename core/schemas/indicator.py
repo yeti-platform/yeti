@@ -3,11 +3,12 @@ import io
 import logging
 import re
 from enum import Enum
-from typing import ClassVar, Literal, Type
+from typing import Annotated, ClassVar, List, Literal, Type, Union
 
 import yaml
 from artifacts import definitions, reader, writer
 from artifacts import errors as artifacts_errors
+from idstools import rule
 from pydantic import BaseModel, Field, PrivateAttr, computed_field, field_validator
 
 from core import database_arango
@@ -29,6 +30,7 @@ class IndicatorType(str, Enum):
     yara = "yara"
     sigma = "sigma"
     query = "query"
+    suricata = "suricata"
     forensicartifact = "forensicartifact"
 
 
@@ -69,10 +71,14 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
         return self._root_type
 
     @classmethod
-    def load(cls, object: dict):
-        if object["type"] in TYPE_MAPPING:
-            return TYPE_MAPPING[object["type"]](**object)
-        return cls(**object)
+    def load(cls, object: dict) -> "IndicatorTypes":
+        if cls._type_filter:
+            loader = TYPE_MAPPING[cls._type_filter]
+        elif object["type"] in TYPE_MAPPING:
+            loader = TYPE_MAPPING[object["type"]]
+        else:
+            raise ValueError("Attempted to instantiate an undefined indicator type.")
+        return loader(**object)
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
@@ -142,6 +148,37 @@ class Yara(Indicator):
 
     def match(self, value: str) -> IndicatorMatch | None:
         raise NotImplementedError
+
+
+class Suricata(Indicator):
+    """Represents a Suricata rule.
+
+    Parsing and matching is yet TODO.
+    """
+
+    _type_filter: ClassVar[str] = IndicatorType.suricata
+    type: Literal["suricata"] = IndicatorType.suricata
+    sid: int = 0
+    metadata: List[str] = []
+    references: List[str] = []
+
+    def match(self, value: str) -> IndicatorMatch | None:
+        raise NotImplementedError
+
+    @field_validator("pattern")
+    @classmethod
+    def validate_rules(cls, value) -> str:
+        try:
+            rule.parse(value)
+        except Exception as e:
+            raise ValueError(f"invalid {cls.pattern} {e}")
+        return value
+
+    def parse(self) -> rule.Rule | None:
+        try:
+            return rule.parse(self.pattern)
+        except Exception as e:
+            logging.error(f" Error parsing {self.pattern} {e}")
 
 
 class Sigma(Indicator):
@@ -325,13 +362,22 @@ TYPE_MAPPING = {
     "regex": Regex,
     "yara": Yara,
     "sigma": Sigma,
+    "suricata": Suricata,
     "query": Query,
     "forensicartifact": ForensicArtifact,
     "indicator": Indicator,
     "indicators": Indicator,
 }
 
-IndicatorTypes = Regex | Yara | Sigma | Query | ForensicArtifact
+IndicatorTypes = Annotated[
+    Union[Regex, Yara, Suricata, Sigma, Query, ForensicArtifact],
+    Field(discriminator="type"),
+]
 IndicatorClasses = (
-    Type[Regex] | Type[Yara] | Type[Sigma] | Type[Query] | Type[ForensicArtifact]
+    Type[Regex]
+    | Type[Yara]
+    | Type[Suricata]
+    | Type[Sigma]
+    | Type[Query]
+    | Type[ForensicArtifact]
 )
