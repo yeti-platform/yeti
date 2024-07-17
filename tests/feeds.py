@@ -6,6 +6,7 @@ from plugins.feeds.public import (
     artifacts,
     attack,
     dfiq,
+    et_open,
     feodo_tracker_ip_blocklist,
     hybrid_analysis,
     lolbas,
@@ -92,4 +93,9 @@ class FeedTest(unittest.TestCase):
     def test_malpedia_actor(self):
         defaults = malpedia.MalpediaActors._defaults.copy()
         feed = malpedia.MalpediaActors(**defaults)
+        feed.run()
+
+    def test_et_open(self):
+        defaults = et_open.ETOpen._defaults.copy()
+        feed = et_open.ETOpen(**defaults)
         feed.run()
