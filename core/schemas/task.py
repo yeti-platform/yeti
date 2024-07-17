@@ -119,6 +119,7 @@ class FeedTask(Task):
         auth: tuple = (),
         params: dict = {},
         data: dict = {},
+        json_data: dict = {},
         verify: bool = True,
         sort: bool = True,
         no_cache: bool = False,
@@ -137,16 +138,28 @@ class FeedTask(Task):
         Returns:
             requests object.
         """
-        response = getattr(requests, method.lower())(
-            url,
-            headers=headers,
-            auth=auth,
-            proxies=yeti_config.get("proxy"),
-            params=params,
-            data=data,
-            verify=verify,
-            stream=True,
-        )
+        if json_data:
+            response = getattr(requests, method.lower())(
+                url,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.get("proxy"),
+                params=params,
+                json=json_data,
+                verify=verify,
+                stream=True,
+            )
+        else:
+            response = getattr(requests, method.lower())(
+                url,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.get("proxy"),
+                params=params,
+                data=data,
+                verify=verify,
+                stream=True,
+            )
 
         if response.status_code != 200:
             raise RuntimeError(f"{url} returned code: {response.status_code}")

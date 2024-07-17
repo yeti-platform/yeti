@@ -106,20 +106,25 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     ) -> "ObservableTypes":  # noqa: F821
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
+
+        found_idx = -1
+        temp_context = {key: context.get(key) for key in compare_fields}
+
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
                 continue
-            for field in compare_fields:
-                if db_context.get(field) != context.get(field):
-                    context["source"] = source
-                    self.context[idx] = context
-                    break
-            else:
-                db_context.update(context)
+            temp_db = {key: db_context.get(key) for key in compare_fields}
+
+            if temp_db == temp_context:
+                found_idx = idx
                 break
+
+        context["source"] = source
+        if found_idx != -1:
+            self.context[found_idx] = context
         else:
-            context["source"] = source
             self.context.append(context)
+
         return self.save()
 
     def delete_context(

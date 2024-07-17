@@ -3,7 +3,7 @@ import logging
 import os
 import re
 from enum import Enum
-from typing import Any, ClassVar, Literal, Type
+from typing import Annotated, Any, ClassVar, Literal, Type, Union
 
 import yaml
 from pydantic import BaseModel, Field, computed_field
@@ -14,7 +14,13 @@ from core.schemas import indicator
 from core.schemas.model import YetiModel
 
 
-def read_from_data_directory(directory: str) -> int:
+def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
+    """Read DFIQ files from a directory and add them to the database.
+
+    Args:
+        directory: Directory to read DFIQ files from.
+        overwrite: Whether to overwrite existing DFIQs with the same ID.
+    """
     dfiq_kb = {}
     total_added = 0
     for root, _, files in os.walk(directory):
@@ -27,7 +33,15 @@ def read_from_data_directory(directory: str) -> int:
             logging.debug("Processing %s/%s", root, file)
             with open(os.path.join(root, file), "r") as f:
                 try:
-                    dfiq_object = DFIQBase.from_yaml(f.read()).save()
+                    dfiq_object = DFIQBase.from_yaml(f.read())
+                    if not overwrite:
+                        db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
+                        if db_dfiq:
+                            logging.info(
+                                "DFIQ %s already exists, skipping", dfiq_object.dfiq_id
+                            )
+                            continue
+                    dfiq_object = dfiq_object.save()
                     total_added += 1
                 except (ValueError, KeyError) as e:
                     logging.warning("Error processing %s: %s", file, e)
@@ -63,7 +77,7 @@ def extract_indicators(approach) -> None:
                 approach.link_to(query, "query", "Uses query")
 
     for data in approach.view.data:
-        if data.type == "ForensicArtifact":
+        if data.type in ("ForensicArtifact", "artifact"):
             artifact = indicator.ForensicArtifact.find(name=data.value)
             if not artifact:
                 logging.warning(
@@ -87,12 +101,12 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["dfiq"] = "dfiq"
 
-    name: str
-    dfiq_id: str
-    dfiq_version: str
+    name: str = Field(min_length=1)
+    dfiq_id: str = Field(min_length=1)
+    dfiq_version: str = Field(min_length=1)
     dfiq_tags: list[str] | None = None
     contributors: list[str] | None = None
-    dfiq_yaml: str
+    dfiq_yaml: str = Field(min_length=1)
     internal: bool = False
 
     created: datetime.datetime = Field(default_factory=now)
@@ -184,8 +198,9 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
 
 
 class DFIQScenario(DFIQBase):
-    description: str
+    _type_filter: ClassVar[str] = DFIQType.scenario
 
+    description: str
     type: Literal[DFIQType.scenario] = DFIQType.scenario
 
     @classmethod
@@ -211,10 +226,10 @@ class DFIQScenario(DFIQBase):
 
 
 class DFIQFacet(DFIQBase):
+    _type_filter: ClassVar[str] = DFIQType.facet
+
     description: str | None
-
     parent_ids: list[str]
-
     type: Literal[DFIQType.facet] = DFIQType.facet
 
     @classmethod
@@ -241,9 +256,10 @@ class DFIQFacet(DFIQBase):
 
 
 class DFIQQuestion(DFIQBase):
+    _type_filter: ClassVar[str] = DFIQType.question
+
     description: str | None
     parent_ids: list[str]
-
     type: Literal[DFIQType.question] = DFIQType.question
 
     @classmethod
@@ -270,35 +286,35 @@ class DFIQQuestion(DFIQBase):
 
 
 class DFIQData(BaseModel):
-    type: str
-    value: str
+    type: str = Field(min_length=1)
+    value: str = Field(min_length=1)
 
 
 class DFIQProcessorOption(BaseModel):
-    type: str
-    value: str
+    type: str = Field(min_length=1)
+    value: str = Field(min_length=1)
 
 
 class DFIQAnalysisStep(BaseModel):
-    description: str
-    type: str
-    value: str
+    description: str = Field(min_length=1)
+    type: str = Field(min_length=1)
+    value: str = Field(min_length=1)
 
 
 class DFIQAnalysis(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
     steps: list[DFIQAnalysisStep] = []
 
 
 class DFIQProcessors(BaseModel):
-    name: str
+    name: str = Field(min_length=1)
     options: list[DFIQProcessorOption] = []
     analysis: list[DFIQAnalysis] = []
 
 
 class DFIQApproachDescription(BaseModel):
-    summary: str
-    details: str
+    summary: str = Field(min_length=1)
+    details: str = Field(min_length=1)
     references: list[str] = []
     references_internal: list[str] | None = None
 
@@ -315,9 +331,10 @@ class DFIQApproachView(BaseModel):
 
 
 class DFIQApproach(DFIQBase):
+    _type_filter: ClassVar[str] = DFIQType.approach
+
     description: DFIQApproachDescription
     view: DFIQApproachView
-
     type: Literal[DFIQType.approach] = DFIQType.approach
 
     @classmethod
@@ -361,7 +378,10 @@ TYPE_MAPPING = {
 }
 
 
-DFIQTypes = DFIQScenario | DFIQFacet | DFIQQuestion | DFIQApproach
+DFIQTypes = Annotated[
+    Union[DFIQScenario, DFIQFacet, DFIQQuestion, DFIQApproach],
+    Field(discriminator="type"),
+]
 DFIQClasses = (
     Type[DFIQScenario] | Type[DFIQFacet] | Type[DFIQQuestion] | Type[DFIQApproach]
 )

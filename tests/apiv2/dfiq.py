@@ -1,6 +1,8 @@
+import io
 import logging
 import sys
 import unittest
+from zipfile import ZipFile
 
 from fastapi.testclient import TestClient
 
@@ -508,3 +510,55 @@ class DFIQTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data, {"total_added": 4})
+
+    def test_to_archive(self):
+        dfiq.DFIQScenario(
+            name="public_scenario",
+            dfiq_id="S1003",
+            dfiq_version="1.0.0",
+            description="desc",
+            dfiq_yaml="mock",
+            internal=False,
+        ).save()
+
+        dfiq.DFIQScenario(
+            name="private_scenario",
+            dfiq_id="S0003",
+            dfiq_version="1.0.0",
+            description="desc",
+            dfiq_yaml="mock",
+            internal=True,
+        ).save()
+
+        dfiq.DFIQQuestion(
+            name="mock_question",
+            dfiq_id="Q1020",
+            dfiq_version="1.0.0",
+            description="desc",
+            parent_ids=["F1005"],
+            dfiq_yaml="mock",
+        ).save()
+
+        response = client.post("/api/v2/dfiq/to_archive", json={})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["content-type"], "application/zip")
+        self.assertEqual(
+            response.headers["content-disposition"], 'attachment; filename="dfiq.zip"'
+        )
+
+        with ZipFile(io.BytesIO(response.content)) as archive:
+            files = archive.namelist()
+            self.assertEqual(len(files), 3)
+            self.assertIn("public/scenario/S1003.yaml", files)
+            self.assertIn("internal/scenario/S0003.yaml", files)
+            self.assertIn("public/question/Q1020.yaml", files)
+
+            with archive.open("public/scenario/S1003.yaml") as f:
+                content = f.read().decode("utf-8")
+                self.assertIn("public_scenario", content)
+            with archive.open("internal/scenario/S0003.yaml") as f:
+                content = f.read().decode("utf-8")
+                self.assertIn("private_scenario", content)
+            with archive.open("public/question/Q1020.yaml") as f:
+                content = f.read().decode("utf-8")
+                self.assertIn("mock_question", content)

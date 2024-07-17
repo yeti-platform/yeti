@@ -1,7 +1,7 @@
 import datetime
 import re
 from enum import Enum
-from typing import ClassVar, Literal, Type
+from typing import Annotated, ClassVar, Literal, Type, Union
 
 from pydantic import Field, computed_field
 
@@ -34,6 +34,7 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     type: str
     name: str = Field(min_length=1)
     description: str = ""
+    context: list[dict] = []
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
 
@@ -44,13 +45,38 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
 
     @classmethod
     def load(cls, object: dict) -> "EntityTypes":
-        if object["type"] in TYPE_MAPPING:
-            return TYPE_MAPPING[object["type"]](**object)
-        raise ValueError("Attempted to instantiate an undefined entity type.")
+        if cls._type_filter:
+            loader = TYPE_MAPPING[cls._type_filter]
+        elif object["type"] in TYPE_MAPPING:
+            loader = TYPE_MAPPING[object["type"]]
+        else:
+            raise ValueError("Attempted to instantiate an undefined entity type.")
+        return loader(**object)
 
     @classmethod
     def is_valid(cls, object: dict) -> bool:
         return validate_entity(object)
+
+    def add_context(
+        self, source: str, context: dict, skip_compare: set = set()
+    ) -> "Entity":  # noqa: F821
+        """Adds context to an entity."""
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
+        for idx, db_context in enumerate(list(self.context)):
+            if db_context["source"] != source:
+                continue
+            for field in compare_fields:
+                if db_context.get(field) != context.get(field):
+                    context["source"] = source
+                    self.context[idx] = context
+                    break
+            else:
+                db_context.update(context)
+                break
+        else:
+            context["source"] = source
+            self.context.append(context)
+        return self.save()
 
 
 class Note(Entity):
@@ -99,7 +125,7 @@ class Tool(Entity):
 class AttackPattern(Entity):
     _type_filter: ClassVar[str] = EntityType.attack_pattern
     type: Literal[EntityType.attack_pattern] = EntityType.attack_pattern
-
+    aliases: list[str] = []
     kill_chain_phases: list[str] = []
 
 
@@ -211,21 +237,24 @@ def validate_entity(ent: Entity) -> bool:
     return True
 
 
-EntityTypes = (
-    AttackPattern
-    | Campaign
-    | Company
-    | CourseOfAction
-    | Identity
-    | IntrusionSet
-    | Investigation
-    | Malware
-    | Note
-    | Phone
-    | ThreatActor
-    | Tool
-    | Vulnerability
-)
+EntityTypes = Annotated[
+    Union[
+        AttackPattern,
+        Campaign,
+        Company,
+        CourseOfAction,
+        Identity,
+        IntrusionSet,
+        Investigation,
+        Malware,
+        Note,
+        Phone,
+        ThreatActor,
+        Tool,
+        Vulnerability,
+    ],
+    Field(discriminator="type"),
+]
 
 
 EntityClasses = (
