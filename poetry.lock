@@ -859,6 +859,16 @@ files = [
 ]
 
 [[package]]
+name = "idstools"
+version = "0.6.5"
+description = "IDS Utility Library"
+optional = false
+python-versions = "*"
+files = [
+    {file = "idstools-0.6.5.tar.gz", hash = "sha256:f158dc82cbbf7a8ec1a8ba17f2aa6a971fe6546a0c6c9354d4af2070d6c79f8a"},
+]
+
+[[package]]
 name = "importlib-metadata"
 version = "7.0.1"
 description = "Read metadata from Python packages"
@@ -2627,4 +2637,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "57a08bd352325126a13a2843a05f06edd75bf97be48f5a54714349dc006853b4"
+content-hash = "7a472a7478d75d13eb083cf8ccf89a1c4fb8db3693082e3322642241259614af"
