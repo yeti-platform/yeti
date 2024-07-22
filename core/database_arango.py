@@ -851,8 +851,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
-        print(aql_string)
-        print(aql_args)
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )
