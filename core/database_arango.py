@@ -759,6 +759,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key[:-4]
                 sorts.append(f"o.@arg{i}_key")
+            elif key.endswith("__in~"):
+                aql_args[f"arg{i}_key"] = key[:-5]
+                del aql_args[f"arg{i}_value"]
+                for j, v in enumerate(value):
+                    or_conditions = []
+                    or_conditions.append(
+                        f"REGEX_TEST(o.@arg{i}_key, @arg{i}{j}_value, true)"
+                    )
+                    aql_args[f"arg{i}{j}_value"] = v.strip()
+                    sorts.append(f"o.@arg{i}_key")
+                conditions.append(f"({' OR '.join(or_conditions)})")
             elif key in ["labels", "relevant_tags"]:
                 conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
                 aql_args[f"arg{i}_key"] = key
