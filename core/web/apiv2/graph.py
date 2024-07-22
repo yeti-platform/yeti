@@ -232,6 +232,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
     entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]
+    seen_entities = set()
     observables = []  # type: list[tuple[graph.Relationship, observable.Observable]]
 
     unknown = set(request.observables)
@@ -271,7 +272,10 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
                     other = vertices[edge.target]
 
                 if isinstance(other, entity.Entity):
+                    if other.extended_id in seen_entities:
+                        continue
                     entities.append((edge, other))
+                    seen_entities.add(other.extended_id)
                 if isinstance(other, observable.Observable):
                     observables.append((edge, other))
 
