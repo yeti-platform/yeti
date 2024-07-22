@@ -105,20 +105,6 @@ class ArangoDatabase:
                 ],
             },
         )
-
-        for collection_name in [
-            "observables",
-            "entities",
-            "tags",
-            "indicators",
-            "dfiq",
-        ]:
-            for index in self.db.collection(collection_name).indexes():
-                try:
-                    self.db.collection(collection_name).delete_index(index["id"])
-                except Exception:
-                    pass
-
         self.db.collection("observables").add_persistent_index(
             fields=["value", "type"], unique=True
         )
