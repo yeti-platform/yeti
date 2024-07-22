@@ -774,8 +774,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 aql_args[f"arg{i}_key"] = key[:-4]
                 sorts.append(f"o.@arg{i}_key")
             elif key.endswith("__in~"):
-                aql_args[f"arg{i}_key"] = key[:-5]
                 del aql_args[f"arg{i}_value"]
+                if not value:
+                    continue
+                aql_args[f"arg{i}_key"] = key[:-5]
                 or_conditions = []
                 for j, v in enumerate(value):
                     or_conditions.append(
