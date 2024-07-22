@@ -214,6 +214,7 @@ async def delete(relationship_id: str) -> None:
 class AnalysisRequest(BaseModel):
     observables: list[str]
     add_tags: list[str] = []
+    regex_match: bool = False
     add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True
     add_unknown: bool = False
@@ -250,8 +251,11 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
 
             unknown.discard(value)
 
+    operator = "value__in"
+    if request.regex_match:
+        operator = "value__in~"
     db_observables, _ = observable.Observable.filter(
-        query_args={"value__in~": request.observables},
+        query_args={operator: request.observables},
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     for db_observable in db_observables:
