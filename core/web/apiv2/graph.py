@@ -250,7 +250,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
             unknown.discard(value)
 
     db_observables, _ = observable.Observable.filter(
-        query_args={"value__in": request.observables},
+        query_args={"value__in~": request.observables},
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     for db_observable in db_observables:
