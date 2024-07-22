@@ -105,6 +105,20 @@ class ArangoDatabase:
                 ],
             },
         )
+
+        for collection_name in [
+            "observables",
+            "entities",
+            "tags",
+            "indicators",
+            "dfiq",
+        ]:
+            for index in self.db.collection(collection_name).indexes():
+                try:
+                    self.db.collection(collection_name).delete_index(index["id"])
+                except Exception:
+                    pass
+
         self.db.collection("observables").add_persistent_index(
             fields=["value", "type"], unique=True
         )
@@ -762,8 +776,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             elif key.endswith("__in~"):
                 aql_args[f"arg{i}_key"] = key[:-5]
                 del aql_args[f"arg{i}_value"]
+                or_conditions = []
                 for j, v in enumerate(value):
-                    or_conditions = []
                     or_conditions.append(
                         f"REGEX_TEST(o.@arg{i}_key, @arg{i}{j}_value, true)"
                     )
@@ -849,6 +863,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
+        print(aql_string)
+        print(aql_args)
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )
