@@ -366,6 +366,28 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(entity["type"], "threat-actor")
         self.assertEqual(entity["name"], "tester")
 
+    def test_match(self):
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["test1.com"]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(data["known"][0]["value"], "test1.com")
+
+    def test_match_regex(self):
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["tes.[0-9]+.com"], "regex_match": True},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 3)
+        self.assertEqual(data["known"][0]["value"], "http://test1.com/admin")
+        self.assertEqual(data["known"][1]["value"], "test1.com")
+        self.assertEqual(data["known"][2]["value"], "test2.com")
+
     def test_matches_exist(self):
         """Tests that indicator matches will surface."""
         response = client.post(
