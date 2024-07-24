@@ -614,9 +614,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if filter:
             filters = []
             for i, f in enumerate(filter):
-                filters.append(
-                    f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
-                )
+                if f.operator not in {"=~", "=", "in"}:
+                    f.operator = "="
+
+                if f.operator in {"=~", "="}:
+                    filters.append(
+                        f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                    )
+                if f.operator == "in":
+                    filters.append(
+                        f"""COUNT(
+                              FOR arr IN p.vertices[*].@filter_key{i}
+                              FILTER COUNT(
+                                FOR item in arr || []
+                                FILTER REGEX_TEST(item, @filter_value{i}, true) RETURN arr
+                              ) > 0
+                              RETURN arr
+                            ) > 0"""
+                    )
                 args[f"filter_key{i}"] = f.key
                 args[f"filter_value{i}"] = f.value
             query_filter += f"FILTER {' OR '.join(filters)}"
