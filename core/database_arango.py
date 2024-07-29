@@ -827,10 +827,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             elif key in {"pattern", "pattern~"}:
                 if key == "pattern~":
                     conditions.append(f"REGEX_TEST(o.pattern, @arg{i}_value, true)")
-                    aql_args[f"arg{i}_value"] = value
                 else:
                     conditions.append(f"o.pattern == @arg{i}_value")
-                    aql_args[f"arg{i}_value"] = value
+                aql_args[f"arg{i}_value"] = value
                 sorts.append("o.pattern")
             else:
                 conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
