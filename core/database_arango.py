@@ -824,15 +824,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"({key_condition})")
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
-            elif key in {"pattern", "pattern~"}:
-                if key == "pattern~":
-                    conditions.append(f"REGEX_TEST(o.pattern, @arg{i}_value, true)")
-                else:
-                    conditions.append(f"o.pattern == @arg{i}_value")
-                aql_args[f"arg{i}_value"] = value
-                sorts.append("o.pattern")
             else:
-                conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+                if key.endswith("~"):
+                    key = key[:-1]
+                    conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+                else:
+                    conditions.append(
+                        f"CONTAINS(LOWER(o.@arg{i}_key), LOWER(@arg{i}_value))"
+                    )
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
 
