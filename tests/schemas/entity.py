@@ -88,10 +88,22 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(entities[0], self.ta1)
 
     def test_filter_entities_regex(self):
-        entities, total = Entity.filter({"name": "CVE", "title": "Elite .xploit"})
+        entities, total = Entity.filter({"name": "CVE", "title~": "Elite .xploit"})
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.vuln1)
+
+    def test_filter_entities_contain_lowercase(self):
+        entities, total = Entity.filter({"name": "apt"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.ta1)
+
+    def test_filter_entities_by_regex(self):
+        entities, total = Entity.filter({"name~": "APT[0-9]+"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.ta1)
 
     def test_filter_entities_time(self):
         entities, total = Entity.filter({"created": "2020-01-01"})
