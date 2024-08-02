@@ -56,3 +56,5 @@ build-backend = "poetry.core.masonry.api"
 lint.extend-select = ["I"]
 # exclude files in the /deprecated/ directories
 exclude = ["deprecated"]
+ignore = ["E402"]
+
