@@ -19,10 +19,10 @@ from starlette.requests import Request
 from core.config.config import yeti_config
 from core.schemas.user import User, UserSensitive
 
-ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
+ACCESS_TOKEN_EXPIRE_DELTA = datetime.timedelta(
     minutes=yeti_config.get("auth", "access_token_expire_minutes", default=30)
 )
-BROWSER_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
+BROWSER_TOKEN_EXPIRE_DELTA = datetime.timedelta(
     minutes=yeti_config.get("auth", "browser_token_expire_minutes", default=43200)
 )
 SECRET_KEY = yeti_config.get("auth", "secret_key")
@@ -179,10 +179,16 @@ if AUTH_MODULE == "oidc":
 
         access_token = create_access_token(
             data={"sub": db_user.username, "enabled": db_user.enabled},
-            expires_delta=BROWSER_TOKEN_EXPIRE_MINUTES,
+            expires_delta=BROWSER_TOKEN_EXPIRE_DELTA,
         )
         response = RedirectResponse(url="/")
-        response.set_cookie(key="yeti_session", value=access_token, httponly=True)
+        response.set_cookie(
+            key="yeti_session",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            max_age=int(BROWSER_TOKEN_EXPIRE_DELTA.total_seconds()),
+        )
         SESSION_STORE.add(access_token)
         return response
 
@@ -230,7 +236,7 @@ if AUTH_MODULE == "oidc":
 
         access_token = create_access_token(
             data={"sub": user.username, "enabled": user.enabled},
-            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
+            expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
         )
         return {"access_token": access_token, "token_type": "bearer"}
 
@@ -265,7 +271,7 @@ if AUTH_MODULE == "local":
 
         access_token = create_access_token(
             data={"sub": user.username, "enabled": user.enabled},
-            expires_delta=BROWSER_TOKEN_EXPIRE_MINUTES,
+            expires_delta=BROWSER_TOKEN_EXPIRE_DELTA,
         )
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
         SESSION_STORE.add(access_token)
@@ -291,7 +297,7 @@ async def login_api(x_yeti_api_key: str = Security(api_key_header)):
 
     access_token = create_access_token(
         data={"sub": user.username, "enabled": user.enabled},
-        expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
+        expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
