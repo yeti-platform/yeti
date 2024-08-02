@@ -34,6 +34,8 @@ class GithubMonitor(task.AnalyticsTask):
         "frequency": timedelta(hours=24),
     }
 
+    _SUPPORTED_QUERY_TYPES = ["code", "repositories"]
+
     def _get_or_create_observable(self, obs_type, value):
         cls = observable.TYPE_MAPPING[obs_type]
         obs = cls.find(value=value)
@@ -142,7 +144,7 @@ class GithubMonitor(task.AnalyticsTask):
                 f"Invalid format for {indicator.name}. Must be a list[dict]."
             )
         for pattern in patterns:
-            if pattern["type"] not in ["code", "repositories"]:
+            if pattern["type"] not in self._SUPPORTED_QUERY_TYPES:
                 logging.warning(f"Skipping query of unsupported type {pattern['type']}")
                 continue
             if "query" not in pattern:
