@@ -113,7 +113,7 @@ class GithubMonitor(task.AnalyticsTask):
 
     def handle_code_search(self, indicator, query, tags):
         logging.info(f"[+] Searching code with {query}")
-        for code in self.__github_api.search_code(query):
+        for code in self._github_api.search_code(query):
             code_obs = self.create_code_observable(code, query, tags)
             repository_obs = self.create_repository_observable(
                 code.repository, query, tags
@@ -126,7 +126,7 @@ class GithubMonitor(task.AnalyticsTask):
 
     def handle_repositories_search(self, indicator, query, tags):
         logging.info(f"[+] Searching repositories with {query}")
-        for repository in self.__github_api.search_repositories(query):
+        for repository in self._github_api.search_repositories(query):
             repository_obs = self.create_repository_observable(repository, query, tags)
             owner_obs = self.create_user_observable(repository.owner, tags)
             owner_obs.link_to(repository_obs, "owns", "")
@@ -140,7 +140,7 @@ class GithubMonitor(task.AnalyticsTask):
             )
             return
         auth = Auth.Token(github_token)
-        self.__github_api = Github(auth=auth)
+        self._github_api = Github(auth=auth)
 
         github_queries, _ = indicator.Query.filter({"query_type": "github"})
         logging.info(
@@ -157,7 +157,7 @@ class GithubMonitor(task.AnalyticsTask):
                     handler(queries, query["query"], list(queries.relevant_tags))
                 except Exception as e:
                     logging.warning(f"Error while processing query {query}: {e}")
-        self.__github_api.close()
+        self._github_api.close()
 
 
 taskmanager.TaskManager.register_task(GithubMonitor)
