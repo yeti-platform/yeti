@@ -111,8 +111,9 @@ class GithubMonitor(task.AnalyticsTask):
         user_obs.add_context(self.name, context)
         return user_obs.save()
 
-    def handle_code_search(self, indicator, query, tags):
+    def handle_code_search(self, indicator, query):
         logging.info(f"[+] Searching code with {query}")
+        tags = list(indicator.relevant_tags)
         for code in self._github_api.search_code(query):
             code_obs = self.create_code_observable(code, query, tags)
             repository_obs = self.create_repository_observable(
@@ -124,13 +125,31 @@ class GithubMonitor(task.AnalyticsTask):
             indicator.link_to(code_obs, "matches", f"matches {query}")
             indicator.link_to(repository_obs, "contains", f"matched file {query}")
 
-    def handle_repositories_search(self, indicator, query, tags):
+    def handle_repositories_search(self, indicator, query):
         logging.info(f"[+] Searching repositories with {query}")
+        tags = list(indicator.relevant_tags)
         for repository in self._github_api.search_repositories(query):
             repository_obs = self.create_repository_observable(repository, query, tags)
             owner_obs = self.create_user_observable(repository.owner, tags)
             owner_obs.link_to(repository_obs, "owns", "")
             indicator.link_to(repository_obs, "matches", f"matches {query}")
+
+    def load_queries(self, indicator) -> list[dict]:
+        valid_patterns = []
+        patterns = json.loads(indicator.pattern)
+        if not isinstance(patterns, list):
+            raise ValueError(
+                f"Invalid format for {indicator.name}. Must be a list[dict]."
+            )
+        for pattern in patterns:
+            if pattern["type"] not in ["code", "repositories"]:
+                logging.warning(f"Skipping query of unsupported type {pattern['type']}")
+                continue
+            if "query" not in pattern:
+                logging.warning(f"Skipping query without query field {pattern}")
+                continue
+            valid_patterns.append(pattern)
+        return valid_patterns
 
     def run(self):
         github_token = yeti_config.get("github", "token")
@@ -142,19 +161,24 @@ class GithubMonitor(task.AnalyticsTask):
         auth = Auth.Token(github_token)
         self._github_api = Github(auth=auth)
 
-        github_queries, _ = indicator.Query.filter({"query_type": "github"})
+        github_query_indicators, _ = indicator.Query.filter({"query_type": "github"})
         logging.info(
-            f"[+] Found {len(github_queries)} Github queries: {github_queries}"
+            f"[+] Found {len(github_query_indicators)} Github queries: {github_query_indicators}"
         )
 
-        for queries in github_queries:
-            for query in json.loads(queries.pattern):
+        for github_query_indicator in github_query_indicators:
+            try:
+                queries = self.load_queries(github_query_indicator)
+            except Exception as e:
+                logging.error(f"Error while loading {github_query_indicator.name}: {e}")
+                continue
+            for query in queries:
                 handler = getattr(self, f"handle_{query['type']}_search")
                 if not handler:
                     logging.error(f"Unknown query type {query['type']}")
                     continue
                 try:
-                    handler(queries, query["query"], list(queries.relevant_tags))
+                    handler(github_query_indicator, query["query"])
                 except Exception as e:
                     logging.warning(f"Error while processing query {query}: {e}")
         self._github_api.close()
