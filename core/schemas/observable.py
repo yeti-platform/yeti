@@ -201,32 +201,36 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-
+# noqa: F401, E402
 from core.schemas.observables import (
-    asn,  # noqa: F401, E402
-    bic,  # noqa: F401, E402
-    certificate,  # noqa: F401, E402
-    cidr,  # noqa: F401, E402
-    command_line,  # noqa: E402, F401, E402
-    docker_image,  # noqa: F401, E402
-    email,  # noqa: F401, E402
-    file,  # noqa: F401, E402
-    generic_observable,  # noqa: F401, E402
-    hostname,  # noqa: F401, E402
-    iban,  # noqa: F401, E402
-    imphash,  # noqa: F401, E402
-    ipv4,  # noqa: F401, E402
-    ipv6,  # noqa: F401, E402
-    ja3,  # noqa: F401, E402
-    jarm,  # noqa: F401, E402
-    mac_address,  # noqa: F401, E402
-    md5,  # noqa: F401, E402
-    path,  # noqa: F401, E402
-    registry_key,  # noqa: F401, E402
-    sha1,  # noqa: F401, E402
-    sha256,  # noqa: F401, E402
-    ssdeep,  # noqa: F401, E402
-    tlsh,  # noqa: F401, E402
-    url,  # noqa: F401, E402
-    user_account,  # noqa: F401, E402
+    asn,
+    bic,
+    certificate,
+    cidr,
+    command_line,
+    docker_image,
+    email,
+    file,
+    generic_observable,
+    hostname,
+    iban,
+    imphash,
+    ipv4,
+    ipv6,
+    ja3,
+    jarm,
+    mac_address,
+    md5,
+    mutex,
+    named_pipe,
+    path,
+    registry_key,
+    sha1,
+    sha256,
+    ssdeep,
+    tlsh,
+    url,
+    user_account,
+    user_agent,
+    wallet,
 )
