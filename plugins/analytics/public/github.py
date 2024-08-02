@@ -59,7 +59,7 @@ class GithubMonitor(task.AnalyticsTask):
         code_obs.sha256 = sha256
         code_obs.size = code.size
         code_obs.tag(tags + ["github-code"])
-        code_obs.add_context(self.name, context)
+        code_obs.add_context(self.name, context, overwrite=True)
         code_obs.save()
         md5_obs = self._get_or_create_observable(ObservableType.md5, md5)
         sha1_obs = self._get_or_create_observable(ObservableType.sha1, sha1)
@@ -92,7 +92,7 @@ class GithubMonitor(task.AnalyticsTask):
             "watchers": repository.watchers_count,
             "matching query": query,
         }
-        repository_obs.add_context(self.name, context)
+        repository_obs.add_context(self.name, context, overwrite=True)
         return repository_obs.save()
 
     def create_user_observable(self, owner, tags):
@@ -108,7 +108,7 @@ class GithubMonitor(task.AnalyticsTask):
         user_obs.tag(tags + ["github-user"])
         user_obs.created = owner.created_at
         context = {"bio": owner.bio, "email": owner.email, "url": owner.html_url}
-        user_obs.add_context(self.name, context)
+        user_obs.add_context(self.name, context, overwrite=True)
         return user_obs.save()
 
     def handle_code_search(self, indicator, query):
