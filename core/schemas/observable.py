@@ -102,7 +102,11 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return observable
 
     def add_context(
-        self, source: str, context: dict, skip_compare: set = set()
+        self,
+        source: str,
+        context: dict,
+        skip_compare: set = set(),
+        overwrite: bool = False,
     ) -> "ObservableTypes":  # noqa: F821
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
@@ -113,6 +117,9 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
                 continue
+            if overwrite:
+                found_idx = idx
+                break
             temp_db = {key: db_context.get(key) for key in compare_fields}
 
             if temp_db == temp_context:
@@ -195,33 +202,31 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
 
-from core.schemas.observables import (  # noqa: E402
-    asn,  # noqa: F401
-    bic,  # noqa: F401
-    certificate,  # noqa: F401
-    cidr,  # noqa: F401
-    command_line,  # noqa: E402, F401
-    docker_image,  # noqa: F401
-    email,  # noqa: F401
-    file,  # noqa: F401
-    generic_observable,  # noqa: F401
-    hostname,  # noqa: F401
-    iban,  # noqa: F401
-    imphash,  # noqa: F401
-    ipv4,  # noqa: F401
-    ipv6,  # noqa: F401
-    ja3,  # noqa: F401
-    jarm,  # noqa: F401
-    mac_address,  # noqa: F401
-    md5,  # noqa: F401
-    path,  # noqa: F401
-    registry_key,  # noqa: F401
-    sha1,  # noqa: F401
-    sha256,  # noqa: F401
-    ssdeep,  # noqa: F401
-    tlsh,  # noqa: F401
-    url,  # noqa: F401
-    user_account,  # noqa: F401
-    user_agent,  # noqa: F401
-    wallet,  # noqa: F401
+from core.schemas.observables import (
+    asn,  # noqa: F401, E402
+    bic,  # noqa: F401, E402
+    certificate,  # noqa: F401, E402
+    cidr,  # noqa: F401, E402
+    command_line,  # noqa: E402, F401, E402
+    docker_image,  # noqa: F401, E402
+    email,  # noqa: F401, E402
+    file,  # noqa: F401, E402
+    generic_observable,  # noqa: F401, E402
+    hostname,  # noqa: F401, E402
+    iban,  # noqa: F401, E402
+    imphash,  # noqa: F401, E402
+    ipv4,  # noqa: F401, E402
+    ipv6,  # noqa: F401, E402
+    ja3,  # noqa: F401, E402
+    jarm,  # noqa: F401, E402
+    mac_address,  # noqa: F401, E402
+    md5,  # noqa: F401, E402
+    path,  # noqa: F401, E402
+    registry_key,  # noqa: F401, E402
+    sha1,  # noqa: F401, E402
+    sha256,  # noqa: F401, E402
+    ssdeep,  # noqa: F401, E402
+    tlsh,  # noqa: F401, E402
+    url,  # noqa: F401, E402
+    user_account,  # noqa: F401, E402
 )
