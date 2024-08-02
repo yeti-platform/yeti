@@ -242,6 +242,19 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable.context[0]["def"], 666)
         self.assertEqual(observable.context[1]["abc"], 999)
 
+    def test_overwrite_context(self) -> None:
+        """Tests that one or more contexts is added and persisted in the DB."""
+        observable = hostname.Hostname(value="tomchop.me").save()
+        observable.add_context("test_source", {"abc": 123, "def": 456})
+        observable.add_context("test_source", {"abc": 456, "def": 123}, overwrite=True)
+
+        assert observable.id is not None
+        observable = Observable.get(observable.id)
+        self.assertEqual(len(observable.context), 1)
+        self.assertEqual(observable.context[0]["abc"], 456)
+        self.assertEqual(observable.context[0]["def"], 123)
+        self.assertEqual(observable.context[0]["source"], "test_source")
+
     def test_delete_context(self) -> None:
         """Tests that a context is deleted if contents fully match."""
         observable = hostname.Hostname(value="tomchop.me").save()
