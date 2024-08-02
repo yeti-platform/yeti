@@ -134,7 +134,11 @@ class GithubMonitor(task.AnalyticsTask):
 
     def run(self):
         github_token = yeti_config.get("github", "token")
-
+        if not github_token:
+            logging.warning(
+                "Github token not configured. Only repositories search will return results."
+            )
+            return
         auth = Auth.Token(github_token)
         self.__github_api = Github(auth=auth)
 
@@ -143,16 +147,17 @@ class GithubMonitor(task.AnalyticsTask):
             f"[+] Found {len(github_queries)} Github queries: {github_queries}"
         )
 
-        try:
-            for queries in github_queries:
-                for query in json.loads(queries.pattern):
-                    handler = getattr(self, f"handle_{query['type']}_search")
-                    if not handler:
-                        logging.error(f"Unknown query type {query['type']}")
-                        continue
+        for queries in github_queries:
+            for query in json.loads(queries.pattern):
+                handler = getattr(self, f"handle_{query['type']}_search")
+                if not handler:
+                    logging.error(f"Unknown query type {query['type']}")
+                    continue
+                try:
                     handler(queries, query["query"], list(queries.relevant_tags))
-        finally:
-            self.__github_api.close()
+                except Exception as e:
+                    logging.warning(f"Error while processing query {query}: {e}")
+        self.__github_api.close()
 
 
 taskmanager.TaskManager.register_task(GithubMonitor)
