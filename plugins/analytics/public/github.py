@@ -31,7 +31,7 @@ class GithubMonitor(task.AnalyticsTask):
     _defaults = {
         "name": "GithubMonitor",
         "description": "Executes Github queries (stored as indicators) and create relevant observables.",
-        "frequency": timedelta(hours=24),
+        "frequency": timedelta(hours=6),
     }
 
     _SUPPORTED_QUERY_TYPES = ["code", "repositories"]
