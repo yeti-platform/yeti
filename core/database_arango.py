@@ -612,9 +612,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if filter:
             filters = []
             for i, f in enumerate(filter):
-                filters.append(
-                    f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
-                )
+                if f.operator not in {"=~", "=", "in"}:
+                    f.operator = "="
+
+                if f.operator in {"=~", "="}:
+                    filters.append(
+                        f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                    )
+                if f.operator == "in":
+                    filters.append(
+                        f"""COUNT(
+                              FOR arr IN p.vertices[*].@filter_key{i}
+                              FILTER COUNT(
+                                FOR item in arr || []
+                                FILTER REGEX_TEST(item, @filter_value{i}, true) RETURN arr
+                              ) > 0
+                              RETURN arr
+                            ) > 0"""
+                    )
                 args[f"filter_key{i}"] = f.key
                 args[f"filter_value{i}"] = f.value
             query_filter += f"FILTER {' OR '.join(filters)}"
@@ -757,7 +772,20 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key[:-4]
                 sorts.append(f"o.@arg{i}_key")
-            elif key in ["labels", "relevant_tags"]:
+            elif key.endswith("__in~"):
+                del aql_args[f"arg{i}_value"]
+                if not value:
+                    continue
+                aql_args[f"arg{i}_key"] = key[:-5]
+                or_conditions = []
+                for j, v in enumerate(value):
+                    or_conditions.append(
+                        f"REGEX_TEST(o.@arg{i}_key, @arg{i}{j}_value, true)"
+                    )
+                    aql_args[f"arg{i}{j}_value"] = v.strip()
+                    sorts.append(f"o.@arg{i}_key")
+                conditions.append(f"({' OR '.join(or_conditions)})")
+            elif key in {"labels", "relevant_tags"}:
                 conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
@@ -795,7 +823,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
             else:
-                conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+                if key.endswith("~"):
+                    key = key[:-1]
+                    conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+                else:
+                    conditions.append(
+                        f"CONTAINS(LOWER(o.@arg{i}_key), LOWER(@arg{i}_value))"
+                    )
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
 

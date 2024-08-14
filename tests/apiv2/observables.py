@@ -50,6 +50,13 @@ class ObservableTest(unittest.TestCase):
         self.assertIn("tag1", data["tags"])
         self.assertIn("tag2", data["tags"])
 
+    def test_delete_observable(self):
+        obs = hostname.Hostname(value="tomchop.me").save()
+        response = client.delete(f"/api/v2/observables/{obs.id}")
+        self.assertEqual(response.status_code, 200)
+        response = client.get(f"/api/v2/observables/{obs.id}")
+        self.assertEqual(response.status_code, 404)
+
     def test_post_existing_observable(self):
         obs = hostname.Hostname(value="tomchop.me").save()
         obs.tag(["tag1"])

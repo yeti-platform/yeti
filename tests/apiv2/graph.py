@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.entity import AttackPattern, ThreatActor
+from core.schemas.entity import AttackPattern, Malware, ThreatActor
 from core.schemas.graph import Relationship
 from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
 from core.schemas.observables import hostname, ipv4, url
@@ -260,6 +260,47 @@ class SimpleGraphTest(unittest.TestCase):
             data["vertices"][self.observable2.extended_id]["value"], "127.0.0.1"
         )
 
+    def test_neighbors_filter(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        self.entity1.link_to(self.observable2, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "filter": [{"key": "value", "value": "tomch", "operator": "=~"}],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 1)
+        self.assertEqual(
+            data["vertices"][self.observable1.extended_id]["value"], "tomchop.me"
+        )
+
+    def test_neighbor_filter_in(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        malware = Malware(name="malware1", aliases=["blah"]).save()
+        self.entity1.link_to(malware, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "filter": [{"key": "aliases", "value": "bl", "operator": "in"}],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 1)
+        self.assertEqual(data["vertices"][malware.extended_id]["name"], "malware1")
+
     def test_add_link(self):
         response = client.post(
             "/api/v2/graph/add",
@@ -365,6 +406,28 @@ class ComplexGraphTest(unittest.TestCase):
 
         self.assertEqual(entity["type"], "threat-actor")
         self.assertEqual(entity["name"], "tester")
+
+    def test_match(self):
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["test1.com"]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(data["known"][0]["value"], "test1.com")
+
+    def test_match_regex(self):
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["tes.[0-9]+.com"], "regex_match": True},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 3)
+        self.assertEqual(data["known"][0]["value"], "http://test1.com/admin")
+        self.assertEqual(data["known"][1]["value"], "test1.com")
+        self.assertEqual(data["known"][2]["value"], "test2.com")
 
     def test_matches_exist(self):
         """Tests that indicator matches will surface."""

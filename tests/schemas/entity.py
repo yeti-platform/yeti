@@ -44,6 +44,18 @@ class EntityTest(unittest.TestCase):
         self.assertIsInstance(result, ThreatActor)
         self.assertEqual(result.type, "threat-actor")
 
+    def test_attack_pattern(self) -> None:
+        result = AttackPattern(
+            name="Abuse Elevation Control Mechanism",
+            aliases=["T1548"],
+            kill_chain_phases=["mitre-attack:Privilege Escalation"],
+        ).save()
+        self.assertIsNotNone(result.id)
+        self.assertIsNotNone(result.created)
+        self.assertEqual(result.name, "Abuse Elevation Control Mechanism")
+        self.assertEqual(result.type, "attack-pattern")
+        self.assertIn("T1548", result.aliases)
+
     def test_entity_dupe_name_type(self) -> None:
         oldm = Malware(name="APT123").save()
         ta = ThreatActor.find(name="APT123")
@@ -76,10 +88,22 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(entities[0], self.ta1)
 
     def test_filter_entities_regex(self):
-        entities, total = Entity.filter({"name": "CVE", "title": "Elite .xploit"})
+        entities, total = Entity.filter({"name": "CVE", "title~": "Elite .xploit"})
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.vuln1)
+
+    def test_filter_entities_contain_lowercase(self):
+        entities, total = Entity.filter({"name": "apt"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.ta1)
+
+    def test_filter_entities_by_regex(self):
+        entities, total = Entity.filter({"name~": "APT[0-9]+"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.ta1)
 
     def test_filter_entities_time(self):
         entities, total = Entity.filter({"created": "2020-01-01"})

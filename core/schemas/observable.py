@@ -102,24 +102,36 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return observable
 
     def add_context(
-        self, source: str, context: dict, skip_compare: set = set()
+        self,
+        source: str,
+        context: dict,
+        skip_compare: set = set(),
+        overwrite: bool = False,
     ) -> "ObservableTypes":  # noqa: F821
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
+
+        found_idx = -1
+        temp_context = {key: context.get(key) for key in compare_fields}
+
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
                 continue
-            for field in compare_fields:
-                if db_context.get(field) != context.get(field):
-                    context["source"] = source
-                    self.context[idx] = context
-                    break
-            else:
-                db_context.update(context)
+            if overwrite:
+                found_idx = idx
                 break
+            temp_db = {key: db_context.get(key) for key in compare_fields}
+
+            if temp_db == temp_context:
+                found_idx = idx
+                break
+
+        context["source"] = source
+        if found_idx != -1:
+            self.context[found_idx] = context
         else:
-            context["source"] = source
             self.context.append(context)
+
         return self.save()
 
     def delete_context(
@@ -189,34 +201,36 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
-
-from core.schemas.observables import (  # noqa: E402
-    asn,  # noqa: F401
-    bic,  # noqa: F401
-    certificate,  # noqa: F401
-    cidr,  # noqa: F401
-    command_line,  # noqa: E402, F401
-    docker_image,  # noqa: F401
-    email,  # noqa: F401
-    file,  # noqa: F401
-    generic_observable,  # noqa: F401
-    hostname,  # noqa: F401
-    iban,  # noqa: F401
-    imphash,  # noqa: F401
-    ipv4,  # noqa: F401
-    ipv6,  # noqa: F401
-    ja3,  # noqa: F401
-    jarm,  # noqa: F401
-    mac_address,  # noqa: F401
-    md5,  # noqa: F401
-    path,  # noqa: F401
-    registry_key,  # noqa: F401
-    sha1,  # noqa: F401
-    sha256,  # noqa: F401
-    ssdeep,  # noqa: F401
-    tlsh,  # noqa: F401
-    url,  # noqa: F401
-    user_account,  # noqa: F401
-    user_agent,  # noqa: F401
-    wallet,  # noqa: F401
+# noqa: F401, E402
+from core.schemas.observables import (
+    asn,
+    bic,
+    certificate,
+    cidr,
+    command_line,
+    docker_image,
+    email,
+    file,
+    generic_observable,
+    hostname,
+    iban,
+    imphash,
+    ipv4,
+    ipv6,
+    ja3,
+    jarm,
+    mac_address,
+    md5,
+    mutex,
+    named_pipe,
+    path,
+    registry_key,
+    sha1,
+    sha256,
+    ssdeep,
+    tlsh,
+    url,
+    user_account,
+    user_agent,
+    wallet,
 )

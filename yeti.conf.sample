@@ -115,6 +115,10 @@ https =
 # w/ token - limit 5k r/h
 # token =
 
+[etopen]
+## time of filtering rule suricata for the first run of feed ETOpen
+start_time = 2000-01-01
+
 [otx]
 key = YourOTXKey
 days = 1

@@ -125,7 +125,7 @@ class Tool(Entity):
 class AttackPattern(Entity):
     _type_filter: ClassVar[str] = EntityType.attack_pattern
     type: Literal[EntityType.attack_pattern] = EntityType.attack_pattern
-
+    aliases: list[str] = []
     kill_chain_phases: list[str] = []
 
 

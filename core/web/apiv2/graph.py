@@ -214,6 +214,7 @@ async def delete(relationship_id: str) -> None:
 class AnalysisRequest(BaseModel):
     observables: list[str]
     add_tags: list[str] = []
+    regex_match: bool = False
     add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True
     add_unknown: bool = False
@@ -232,6 +233,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
     entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]
+    seen_entities = set()
     observables = []  # type: list[tuple[graph.Relationship, observable.Observable]]
 
     unknown = set(request.observables)
@@ -249,8 +251,11 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
 
             unknown.discard(value)
 
+    operator = "value__in"
+    if request.regex_match:
+        operator = "value__in~"
     db_observables, _ = observable.Observable.filter(
-        query_args={"value__in": request.observables},
+        query_args={operator: request.observables},
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     for db_observable in db_observables:
@@ -271,7 +276,10 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
                     other = vertices[edge.target]
 
                 if isinstance(other, entity.Entity):
+                    if other.extended_id in seen_entities:
+                        continue
                     entities.append((edge, other))
+                    seen_entities.add(other.extended_id)
                 if isinstance(other, observable.Observable):
                     observables.append((edge, other))
 

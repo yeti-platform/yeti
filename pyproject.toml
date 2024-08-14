@@ -25,6 +25,7 @@ itsdangerous = "^2.1.2"
 pyyaml = "^6.0.1"
 parameterized = "^0.9.0"
 yara-python = "^4.5.0"
+idstools = "^0.6.5"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
@@ -45,6 +46,7 @@ ipwhois = "^1.2.0"
 maclookup = "^1.0.3"
 censys = "^2.2.10"
 artifacts = {git = "https://github.com/forensicartifacts/artifacts.git", rev = "main"}
+pygithub = "^2.3.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -55,3 +57,5 @@ build-backend = "poetry.core.masonry.api"
 lint.extend-select = ["I"]
 # exclude files in the /deprecated/ directories
 exclude = ["deprecated"]
+lint.ignore = ["E402", "F401"]
+
