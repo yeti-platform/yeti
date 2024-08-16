@@ -2,16 +2,47 @@ import datetime
 import logging
 import os
 import re
+import uuid
 from enum import Enum
 from typing import Annotated, Any, ClassVar, Literal, Type, Union
 
 import yaml
+from packaging.version import Version
 from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
 from core.schemas import indicator
 from core.schemas.model import YetiModel
+
+LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
+
+
+def upgrade_dfiq_schema(existing, new=None):
+    if Version("1.0.0") <= Version(existing.dfiq_version) < Version("1.1.0"):
+        if new:
+            existing.uuid = new.uuid
+            existing.internal = new.internal
+            if existing.type == DFIQType.approach:
+                existing.parent_id = new.parent_id
+                existing.description.details = new.description.details
+        else:
+            dfiq_yaml = yaml.safe_load(existing.dfiq_yaml)
+            existing.uuid = str(uuid.uuid4())
+            if existing.type == DFIQType.approach:
+                question_id, approach_id = existing.dfiq_id.split(".")
+                existing.internal = approach_id[0] == "0"
+                summary = dfiq_yaml["description"]["summary"]
+                details = dfiq_yaml["description"]["details"]
+                existing.description.details = f"{summary}\n\n{details}"
+                existing.parent_id = question_id
+            else:
+                existing.internal = existing.dfiq_id[1] == "0"
+
+        existing.dfiq_version = "1.1.0"
+
+    existing.dfiq_yaml = existing.to_yaml()
+    return existing.save()
 
 
 def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
@@ -35,11 +66,31 @@ def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
                 try:
                     dfiq_object = DFIQBase.from_yaml(f.read())
                     if not overwrite:
-                        db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
+                        if dfiq_object.uuid:
+                            db_dfiq = DFIQBase.find(uuid=dfiq_object.uuid)
+                        if not db_dfiq and dfiq_object.dfiq_id:
+                            db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
                         if db_dfiq:
-                            logging.info(
-                                "DFIQ %s already exists, skipping", dfiq_object.dfiq_id
-                            )
+                            incoming_v = Version(dfiq_object.dfiq_version)
+                            if incoming_v > Version(LATEST_SUPPORTED_DFIQ_VERSION):
+                                logging.warning(
+                                    "DFIQ %s has unsupported version %s, skipping",
+                                    dfiq_object.dfiq_id,
+                                    dfiq_object.dfiq_version,
+                                )
+                                continue
+                            db_v = Version(db_dfiq.dfiq_version)
+                            if incoming_v <= db_v:
+                                logging.info(
+                                    "DFIQ %s already exists, skipping",
+                                    dfiq_object.dfiq_id,
+                                )
+                            else:
+                                logging.info(
+                                    "DFIQ %s already exists, but version is newer, updating",
+                                    dfiq_object.dfiq_id,
+                                )
+                                upgrade_dfiq_schema(db_dfiq, new=dfiq_object)
                             continue
                     dfiq_object = dfiq_object.save()
                     total_added += 1
@@ -102,7 +153,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["dfiq"] = "dfiq"
 
     name: str = Field(min_length=1)
-    uuid: str  # = Field(default_factory=lambda: str(uuid.uuid4()))
+    uuid: str | None = None
     dfiq_id: str | None = None
     dfiq_version: str = Field(min_length=1)
     dfiq_tags: list[str] | None = None
