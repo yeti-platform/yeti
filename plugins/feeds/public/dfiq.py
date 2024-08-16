@@ -19,15 +19,15 @@ class DFIQFeed(task.FeedTask):
 
     def run(self):
         response = self._make_request(
-            "https://github.com/google/dfiq/archive/refs/heads/main.zip"
+            "https://github.com/tomchop/dfiq/archive/refs/heads/dfiq1.1.zip"
         )
         if not response:
             logging.info("No response: skipping DFIQ update")
             return
 
-        tempdir = tempfile.TemporaryDirectory()
-        ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
-        dfiq.read_from_data_directory(tempdir.name)
+        with tempfile.TemporaryDirectory() as tempdir:
+            ZipFile(BytesIO(response.content)).extractall(path=tempdir)
+            dfiq.read_from_data_directory(tempdir)
 
         extra_dirs = yeti_config.get("dfiq", "extra_dirs")
         if not extra_dirs:

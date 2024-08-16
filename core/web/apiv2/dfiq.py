@@ -56,17 +56,43 @@ class DFIQSearchResponse(BaseModel):
     total: int
 
 
+class DFIQConfigResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approach_data_sources: list[str]
+    approach_analysis_step_types: list[str]
+
+
 # API endpoints
 router = APIRouter()
+
+
+@router.get("/config")
+async def config() -> DFIQConfigResponse:
+    all_approaches = dfiq.DFIQApproach.list()
+
+    data_sources = set()
+    analysis_step_types = set()
+
+    for approach in all_approaches:
+        data_sources.update({data.type for data in approach.view.data})
+        for processor in approach.view.processors:
+            for analysis in processor.analysis:
+                analysis_step_types.update({step.type for step in analysis.steps})
+
+    return DFIQConfigResponse(
+        approach_data_sources=sorted(list(data_sources)),
+        approach_analysis_step_types=sorted(list(analysis_step_types)),
+    )
 
 
 @router.post("/from_archive")
 async def from_archive(archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
-    tempdir = tempfile.TemporaryDirectory()
-    contents = await archive.read()
-    ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
-    total_added = dfiq.read_from_data_directory(tempdir.name)
+    with tempfile.TemporaryDirectory() as tempdir:
+        contents = await archive.read()
+        ZipFile(BytesIO(contents)).extractall(path=tempdir)
+        total_added = dfiq.read_from_data_directory(tempdir)
     return {"total_added": total_added}
 
 
@@ -78,11 +104,18 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
-    # Ensure there is not an object with the same ID:
-    if dfiq.DFIQBase.find(dfiq_id=new.dfiq_id):
+    # Ensure there is not an object with the same ID or UUID
+
+    if new.dfiq_id and dfiq.DFIQBase.find(dfiq_id=new.dfiq_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"DFIQ with id {new.dfiq_id} already exists",
+        )
+
+    if dfiq.DFIQBase.find(uuid=new.uuid):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"DFIQ with uuid {new.uuid} already exists",
         )
 
     new = new.save()
@@ -115,19 +148,19 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
         aliases=request.filter_aliases,
     )
 
-    tempdir = tempfile.TemporaryDirectory()
-    for obj in dfiq_objects:
-        with open(f"{tempdir.name}/{obj.dfiq_id}.yaml", "w") as f:
-            f.write(obj.to_yaml())
+    with tempfile.TemporaryDirectory() as tempdir:
+        for obj in dfiq_objects:
+            with open(f"{tempdir}/{obj.dfiq_id}.yaml", "w") as f:
+                f.write(obj.to_yaml())
 
-    with tempfile.NamedTemporaryFile(delete=False) as archive:
-        with ZipFile(archive, "w") as zipf:
-            for obj in dfiq_objects:
-                subdir = "internal" if obj.internal else "public"
-                zipf.write(
-                    f"{tempdir.name}/{obj.dfiq_id}.yaml",
-                    f"{subdir}/{obj.type}/{obj.dfiq_id}.yaml",
-                )
+        with tempfile.NamedTemporaryFile(delete=False) as archive:
+            with ZipFile(archive, "w") as zipf:
+                for obj in dfiq_objects:
+                    subdir = "internal" if obj.internal else "public"
+                    zipf.write(
+                        f"{tempdir}/{obj.dfiq_id}.yaml",
+                        f"{subdir}/{obj.type}/{obj.dfiq_id}.yaml",
+                    )
 
     return FileResponse(archive.name, media_type="application/zip", filename="dfiq.zip")
 
@@ -144,7 +177,7 @@ async def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateRespon
     except KeyError as error:
         return DFIQValidateResponse(valid=False, error=f"Invalid DFIQ type: {error}")
 
-    if request.check_id and dfiq.DFIQBase.find(dfiq_id=obj.dfiq_id):
+    if request.check_id and obj.dfiq_id and dfiq.DFIQBase.find(dfiq_id=obj.dfiq_id):
         return DFIQValidateResponse(
             valid=False, error=f"DFIQ with id {obj.dfiq_id} already exists"
         )

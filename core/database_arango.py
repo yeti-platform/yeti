@@ -115,9 +115,7 @@ class ArangoDatabase:
         self.db.collection("indicators").add_persistent_index(
             fields=["name", "type"], unique=True
         )
-        self.db.collection("dfiq").add_persistent_index(
-            fields=["dfiq_id", "type"], unique=True
-        )
+        self.db.collection("dfiq").add_persistent_index(fields=["uuid"], unique=True)
 
     def clear(self, truncate=True):
         if not self.db:
