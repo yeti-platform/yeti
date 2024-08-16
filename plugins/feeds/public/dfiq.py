@@ -19,7 +19,7 @@ class DFIQFeed(task.FeedTask):
 
     def run(self):
         response = self._make_request(
-            "https://github.com/google/dfiq/archive/refs/heads/main.zip"
+            "https://github.com/tomchop/dfiq/archive/refs/heads/dfiq1.1.zip"
         )
         if not response:
             logging.info("No response: skipping DFIQ update")
