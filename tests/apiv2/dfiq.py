@@ -162,7 +162,7 @@ class DFIQTest(unittest.TestCase):
         question = dfiq.DFIQQuestion(
             name="mock_question",
             dfiq_id="Q1020",
-            uuid="fake_question_uuid",
+            uuid="bd46ce6e-c933-46e5-960c-36945aaef401",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["F1005"],
@@ -186,7 +186,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(data["name"], "Approach1")
         self.assertEqual(data["dfiq_id"], "Q1020.10")
         self.assertEqual(data["dfiq_version"], "1.1.0")
-        self.assertEqual(data["description"]["summary"], "Description for approach")
+        self.assertEqual(data["description"]["details"], "Details for approach\n")
         self.assertEqual(data["type"], dfiq.DFIQType.approach)
         self.assertEqual(data["dfiq_tags"], ["Lots", "Of", "Tags"])
 
@@ -596,6 +596,7 @@ class DFIQTest(unittest.TestCase):
     def test_to_archive(self):
         dfiq.DFIQScenario(
             name="public_scenario",
+            uuid="test_scenario_uuid",
             dfiq_id="S1003",
             dfiq_version="1.0.0",
             description="desc",
@@ -605,6 +606,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQScenario(
             name="private_scenario",
+            uuid="test_private_scenario_uuid",
             dfiq_id="S0003",
             dfiq_version="1.0.0",
             description="desc",
@@ -614,6 +616,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQQuestion(
             name="mock_question",
+            uuid="test_question_uuid",
             dfiq_id="Q1020",
             dfiq_version="1.0.0",
             description="desc",
