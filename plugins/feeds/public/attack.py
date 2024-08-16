@@ -193,11 +193,11 @@ class MitreAttack(task.FeedTask):
             logging.info("No response: skipping MitreAttack update")
             return
 
-        tempdir = tempfile.TemporaryDirectory()
-        ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
-        enterprise_attack = os.path.join(
-            tempdir.name, f"cti-ATT-CK-{_VERSION}", "enterprise-attack"
-        )
+        with tempfile.TemporaryDirectory() as tempdir:
+            ZipFile(BytesIO(response.content)).extractall(path=tempdir)
+            enterprise_attack = os.path.join(
+                tempdir, f"cti-ATT-CK-{_VERSION}", "enterprise-attack"
+            )
 
         object_cache = {}
 

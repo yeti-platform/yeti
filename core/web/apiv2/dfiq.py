@@ -89,10 +89,10 @@ async def config() -> DFIQConfigResponse:
 @router.post("/from_archive")
 async def from_archive(archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
-    tempdir = tempfile.TemporaryDirectory()
-    contents = await archive.read()
-    ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
-    total_added = dfiq.read_from_data_directory(tempdir.name)
+    with tempfile.TemporaryDirectory() as tempdir:
+        contents = await archive.read()
+        ZipFile(BytesIO(contents)).extractall(path=tempdir)
+        total_added = dfiq.read_from_data_directory(tempdir)
     return {"total_added": total_added}
 
 
@@ -148,19 +148,19 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
         aliases=request.filter_aliases,
     )
 
-    tempdir = tempfile.TemporaryDirectory()
-    for obj in dfiq_objects:
-        with open(f"{tempdir.name}/{obj.dfiq_id}.yaml", "w") as f:
-            f.write(obj.to_yaml())
+    with tempfile.TemporaryDirectory() as tempdir:
+        for obj in dfiq_objects:
+            with open(f"{tempdir}/{obj.dfiq_id}.yaml", "w") as f:
+                f.write(obj.to_yaml())
 
-    with tempfile.NamedTemporaryFile(delete=False) as archive:
-        with ZipFile(archive, "w") as zipf:
-            for obj in dfiq_objects:
-                subdir = "internal" if obj.internal else "public"
-                zipf.write(
-                    f"{tempdir.name}/{obj.dfiq_id}.yaml",
-                    f"{subdir}/{obj.type}/{obj.dfiq_id}.yaml",
-                )
+        with tempfile.NamedTemporaryFile(delete=False) as archive:
+            with ZipFile(archive, "w") as zipf:
+                for obj in dfiq_objects:
+                    subdir = "internal" if obj.internal else "public"
+                    zipf.write(
+                        f"{tempdir}/{obj.dfiq_id}.yaml",
+                        f"{subdir}/{obj.type}/{obj.dfiq_id}.yaml",
+                    )
 
     return FileResponse(archive.name, media_type="application/zip", filename="dfiq.zip")
 
