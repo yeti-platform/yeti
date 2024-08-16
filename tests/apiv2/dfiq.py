@@ -25,6 +25,38 @@ class DFIQTest(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
+    def test_config(self) -> None:
+        dfiq.DFIQQuestion(
+            name="mock_question",
+            dfiq_id="Q1020",
+            uuid="bd46ce6e-c933-46e5-960c-36945aaef401",
+            dfiq_version="1.1.0",
+            description="desc",
+            parent_ids=["F1005"],
+            dfiq_yaml="mock",
+        ).save()
+
+        with open("tests/dfiq_test_data/Q1020.10.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/from_yaml",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.approach,
+            },
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+
+        response = client.get("/api/v2/dfiq/config")
+        data = response.json()
+
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["approach_data_sources"], ["artifact", "description"])
+        self.assertEqual(
+            data["approach_analysis_step_types"], ["opensearch-query", "pandas"]
+        )
+
     def test_new_dfiq_scenario(self) -> None:
         with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
             yaml_string = f.read()

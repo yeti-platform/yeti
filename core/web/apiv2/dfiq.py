@@ -56,8 +56,34 @@ class DFIQSearchResponse(BaseModel):
     total: int
 
 
+class DFIQConfigResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approach_data_sources: list[str]
+    approach_analysis_step_types: list[str]
+
+
 # API endpoints
 router = APIRouter()
+
+
+@router.get("/config")
+async def config() -> DFIQConfigResponse:
+    all_approaches = dfiq.DFIQApproach.list()
+
+    data_sources = set()
+    analysis_step_types = set()
+
+    for approach in all_approaches:
+        data_sources.update({data.type for data in approach.view.data})
+        for processor in approach.view.processors:
+            for analysis in processor.analysis:
+                analysis_step_types.update({step.type for step in analysis.steps})
+
+    return DFIQConfigResponse(
+        approach_data_sources=sorted(list(data_sources)),
+        approach_analysis_step_types=sorted(list(analysis_step_types)),
+    )
 
 
 @router.post("/from_archive")
