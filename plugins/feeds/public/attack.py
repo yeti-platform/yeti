@@ -193,11 +193,11 @@ class MitreAttack(task.FeedTask):
             logging.info("No response: skipping MitreAttack update")
             return
 
-        with tempfile.TemporaryDirectory() as tempdir:
-            ZipFile(BytesIO(response.content)).extractall(path=tempdir)
-            enterprise_attack = os.path.join(
-                tempdir, f"cti-ATT-CK-{_VERSION}", "enterprise-attack"
-            )
+        tempdir = tempfile.TemporaryDirectory()
+        ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
+        enterprise_attack = os.path.join(
+            tempdir.name, f"cti-ATT-CK-{_VERSION}", "enterprise-attack"
+        )
 
         object_cache = {}
 
@@ -255,6 +255,7 @@ class MitreAttack(task.FeedTask):
                         )
                         rel_count += 1
         logging.info("Processed %s relationships", rel_count)
+        tempdir.cleanup()
 
 
 taskmanager.TaskManager.register_task(MitreAttack)
