@@ -1,8 +1,7 @@
 import datetime
+import glob
 import logging
-import os
 import re
-import uuid
 from enum import Enum
 from typing import Annotated, Any, ClassVar, Literal, Type, Union
 
@@ -18,31 +17,20 @@ from core.schemas.model import YetiModel
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
 
 
-def upgrade_dfiq_schema(existing, new=None):
-    if Version("1.0.0") <= Version(existing.dfiq_version) < Version("1.1.0"):
-        if new:
-            existing.uuid = new.uuid
-            existing.internal = new.internal
-            if existing.type == DFIQType.approach:
-                existing.parent_id = new.parent_id
-                existing.description.details = new.description.details
-        else:
-            dfiq_yaml = yaml.safe_load(existing.dfiq_yaml)
-            existing.uuid = str(uuid.uuid4())
-            if existing.type == DFIQType.approach:
-                question_id, approach_id = existing.dfiq_id.split(".")
-                existing.internal = approach_id[0] == "0"
-                summary = dfiq_yaml["description"]["summary"]
-                details = dfiq_yaml["description"]["details"]
-                existing.description.details = f"{summary}\n\n{details}"
-                existing.parent_id = question_id
-            else:
-                existing.internal = existing.dfiq_id[1] == "0"
+def long_text_representer(dumper, data):
+    if "1. " in data or "\n" in data:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data, style=">")
+    else:
+        return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
-        existing.dfiq_version = "1.1.0"
 
-    existing.dfiq_yaml = existing.to_yaml()
-    return existing.save()
+def custom_null_representer(dumper, data):
+    # Represent 'None' as an empty string
+    return dumper.represent_scalar("tag:yaml.org,2002:null", "")
+
+
+yaml.add_representer(str, long_text_representer)
+yaml.add_representer(type(None), custom_null_representer)
 
 
 def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
@@ -54,97 +42,90 @@ def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
     """
     dfiq_kb = {}
     total_added = 0
-    for root, _, files in os.walk(directory):
-        for file in files:
-            if not file.endswith(".yaml"):
-                continue
-            if "spec" in file or "template" in file:
-                # Don't process DIFQ specification files
-                continue
-            logging.debug("Processing %s/%s", root, file)
-            with open(os.path.join(root, file), "r") as f:
-                try:
-                    dfiq_object = DFIQBase.from_yaml(f.read())
-                    if not overwrite:
-                        if dfiq_object.uuid:
-                            db_dfiq = DFIQBase.find(uuid=dfiq_object.uuid)
-                        if not db_dfiq and dfiq_object.dfiq_id:
-                            db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
-                        if db_dfiq:
-                            incoming_v = Version(dfiq_object.dfiq_version)
-                            if incoming_v > Version(LATEST_SUPPORTED_DFIQ_VERSION):
-                                logging.warning(
-                                    "DFIQ %s has unsupported version %s, skipping",
-                                    dfiq_object.dfiq_id,
-                                    dfiq_object.dfiq_version,
-                                )
-                                continue
-                            db_v = Version(db_dfiq.dfiq_version)
-                            if incoming_v <= db_v:
-                                logging.info(
-                                    "DFIQ %s already exists, skipping",
-                                    dfiq_object.dfiq_id,
-                                )
-                            else:
-                                logging.info(
-                                    "DFIQ %s already exists, but version is newer, updating",
-                                    dfiq_object.dfiq_id,
-                                )
-                                upgrade_dfiq_schema(db_dfiq, new=dfiq_object)
+    for file in glob.glob(directory):
+        if not file.endswith(".yaml"):
+            continue
+        logging.debug("Processing %s", file)
+        with open(file, "r") as f:
+            try:
+                dfiq_object = DFIQBase.from_yaml(f.read())
+                if not overwrite:
+                    if dfiq_object.uuid:
+                        db_dfiq = DFIQBase.find(uuid=dfiq_object.uuid)
+                    if not db_dfiq and dfiq_object.dfiq_id:
+                        db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
+                    if db_dfiq:
+                        incoming_v = Version(dfiq_object.dfiq_version)
+                        if incoming_v > Version(LATEST_SUPPORTED_DFIQ_VERSION):
+                            logging.warning(
+                                "DFIQ %s has unsupported version %s, skipping",
+                                dfiq_object.dfiq_id,
+                                dfiq_object.dfiq_version,
+                            )
                             continue
-                    dfiq_object = dfiq_object.save()
-                    total_added += 1
-                except (ValueError, KeyError) as e:
-                    logging.warning("Error processing %s: %s", file, e)
-                    continue
+                        db_v = Version(db_dfiq.dfiq_version)
+                        if incoming_v <= db_v:
+                            logging.info(
+                                "DFIQ %s already exists, skipping",
+                                dfiq_object.dfiq_id,
+                            )
+                        continue
+                dfiq_object = dfiq_object.save()
+                total_added += 1
+            except (ValueError, KeyError) as e:
+                logging.warning("Error processing %s: %s", file, e)
+                raise e
 
-            dfiq_kb[dfiq_object.dfiq_id] = dfiq_object
+        dfiq_kb[dfiq_object.dfiq_id] = dfiq_object
 
     for dfiq_id, dfiq_object in dfiq_kb.items():
         dfiq_object.update_parents()
-        if dfiq_object.type == DFIQType.approach:
+        if dfiq_object.type == DFIQType.question:
             extract_indicators(dfiq_object)
 
     return total_added
 
 
-def extract_indicators(approach) -> None:
-    for processor in approach.view.processors:
-        for analysis in processor.analysis:
-            for step in analysis.steps:
-                if step.type == "manual":
-                    continue
+def extract_indicators(question: "DFIQQuestion") -> None:
+    for approach in question.approaches:
+        for step in approach.steps:
+            if step.type == "manual":
+                continue
 
+            if step.type in ("ForensicArtifact", "artifact"):
+                artifact = indicator.ForensicArtifact.find(name=step.value)
+                if not artifact:
+                    logging.warning(
+                        "Missing artifact %s in %s", step.value, question.dfiq_id
+                    )
+                    continue
+                question.link_to(artifact, "artifact", "Uses artifact")
+                continue
+
+            elif "query" in step.type:
                 query = indicator.Query.find(pattern=step.value)
                 if not query:
                     query = indicator.Query(
-                        name=f"{step.description} ({step.type})",
+                        name=f"{step.name} ({step.type})",
+                        description=step.description or "",
                         pattern=step.value,
-                        relevant_tags=approach.dfiq_tags or [],
+                        relevant_tags=[t.lower() for t in approach.tags] or [],
                         query_type=step.type,
                         location=step.type,
                         diamond=indicator.DiamondModel.victim,
                     ).save()
-                approach.link_to(query, "query", "Uses query")
+                question.link_to(query, "query", "Uses query")
 
-    for data in approach.view.data:
-        if data.type in ("ForensicArtifact", "artifact"):
-            artifact = indicator.ForensicArtifact.find(name=data.value)
-            if not artifact:
+            else:
                 logging.warning(
-                    "Missing artifact %s in %s", data.value, approach.dfiq_id
+                    "Unknown step type %s in %s", step.type, question.dfiq_id
                 )
-                continue
-            approach.link_to(artifact, "artifact", "Uses artifact")
-        else:
-            logging.warning("Unknown data type %s in %s", data.type, approach.dfiq_id)
 
 
 class DFIQType(str, Enum):
     scenario = "scenario"
     facet = "facet"
     question = "question"
-    approach = "approach"
 
 
 class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
@@ -159,7 +140,6 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     dfiq_tags: list[str] | None = None
     contributors: list[str] | None = None
     dfiq_yaml: str = Field(min_length=1)
-    internal: bool = False
 
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
@@ -204,25 +184,30 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
         yaml_data = yaml.safe_load(yaml_string)
         return TYPE_MAPPING[yaml_data["type"]].from_yaml(yaml_string)
 
-    def to_yaml(self) -> str:
+    def to_yaml(self, sort_keys=False) -> str:
         dump = self.model_dump(
             exclude={"created", "modified", "id", "root_type", "dfiq_yaml"}
         )
         dump["type"] = dump["type"].removeprefix("DFIQType.")
-        dump["display_name"] = dump.pop("name")
-        dump["tags"] = dump.pop("dfiq_tags")
+        dump["name"] = dump.pop("name")
         dump["id"] = dump.pop("dfiq_id")
         dump["uuid"] = dump.pop("uuid")
+        dump["description"] = dump.pop("description")
+        dump["tags"] = dump.pop("dfiq_tags")
         if dump["contributors"] is None:
             dump.pop("contributors")
-        return yaml.dump(dump)
+        return yaml.dump(
+            dump,
+            default_flow_style=False,
+            sort_keys=sort_keys,
+            explicit_start=True,
+            indent=2,
+        )
 
     def update_parents(self) -> None:
         intended_parent_ids = None
         if getattr(self, "parent_ids", []):
             intended_parent_ids = self.parent_ids
-        elif self.type == DFIQType.approach and self.parent_id:
-            intended_parent_ids = [self.parent_id]
         else:
             return
 
@@ -272,7 +257,7 @@ class DFIQScenario(DFIQBase):
                 f"Invalid DFIQ ID for scenario: {yaml_data['id']}. Must be in the format S[0-1]\d+"
             )
         return cls(
-            name=yaml_data["display_name"],
+            name=yaml_data["name"],
             description=yaml_data["description"],
             uuid=yaml_data["uuid"],
             dfiq_id=yaml_data["id"],
@@ -280,7 +265,6 @@ class DFIQScenario(DFIQBase):
             dfiq_tags=yaml_data.get("tags"),
             contributors=yaml_data.get("contributors"),
             dfiq_yaml=yaml_string,
-            internal=yaml_data.get("internal", True),
         )
 
 
@@ -302,7 +286,7 @@ class DFIQFacet(DFIQBase):
             )
 
         return cls(
-            name=yaml_data["display_name"],
+            name=yaml_data["name"],
             description=yaml_data.get("description"),
             uuid=yaml_data["uuid"],
             dfiq_id=yaml_data["id"],
@@ -311,7 +295,6 @@ class DFIQFacet(DFIQBase):
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
             dfiq_yaml=yaml_string,
-            internal=yaml_data.get("internal", True),
         )
 
 
@@ -321,6 +304,7 @@ class DFIQQuestion(DFIQBase):
     description: str | None
     parent_ids: list[str]
     type: Literal[DFIQType.question] = DFIQType.question
+    approaches: list["DFIQApproach"] = []
 
     @classmethod
     def from_yaml(cls: Type["DFIQQuestion"], yaml_string: str) -> "DFIQQuestion":
@@ -333,7 +317,7 @@ class DFIQQuestion(DFIQBase):
             )
 
         return cls(
-            name=yaml_data["display_name"],
+            name=yaml_data["name"],
             description=yaml_data.get("description"),
             uuid=yaml_data["uuid"],
             dfiq_id=yaml_data["id"],
@@ -342,41 +326,18 @@ class DFIQQuestion(DFIQBase):
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
             dfiq_yaml=yaml_string,
-            internal=yaml_data.get("internal", True),
+            approaches=[
+                DFIQApproach(**approach) for approach in yaml_data.get("approaches", [])
+            ],
         )
 
 
-class DFIQData(BaseModel):
-    type: str = Field(min_length=1)
-    value: str = Field(min_length=1)
-
-
-class DFIQProcessorOption(BaseModel):
-    type: str = Field(min_length=1)
-    value: str = Field(min_length=1)
-
-
-class DFIQAnalysisStep(BaseModel):
-    description: str = Field(min_length=1)
-    type: str = Field(min_length=1)
-    value: str = Field(min_length=1)
-
-
-class DFIQAnalysis(BaseModel):
+class DFIQApproachStep(BaseModel):
     name: str = Field(min_length=1)
-    steps: list[DFIQAnalysisStep] = []
-
-
-class DFIQProcessors(BaseModel):
-    name: str = Field(min_length=1)
-    options: list[DFIQProcessorOption] = []
-    analysis: list[DFIQAnalysis] = []
-
-
-class DFIQApproachDescription(BaseModel):
-    details: str = ""
-    references: list[str] = []
-    references_internal: list[str] | None = None
+    description: str | None
+    stage: str = Field(min_length=1)
+    type: str = Field(min_length=1)
+    value: str = Field(min_length=1)
 
 
 class DFIQApproachNotes(BaseModel):
@@ -384,66 +345,25 @@ class DFIQApproachNotes(BaseModel):
     not_covered: list[str] = []
 
 
-class DFIQApproachView(BaseModel):
-    data: list[DFIQData] = []
-    notes: DFIQApproachNotes
-    processors: list[DFIQProcessors] = []
-
-
-class DFIQApproach(DFIQBase):
-    _type_filter: ClassVar[str] = DFIQType.approach
-
-    description: DFIQApproachDescription
-    view: DFIQApproachView
-    type: Literal[DFIQType.approach] = DFIQType.approach
-    parent_id: str | None = None
-
-    @classmethod
-    def from_yaml(cls: Type["DFIQApproach"], yaml_string: str) -> "DFIQApproach":
-        yaml_data = cls.parse_yaml(yaml_string)
-        if yaml_data["type"] != "approach":
-            raise ValueError(f"Invalid type for DFIQ approach: {yaml_data['type']}")
-        if yaml_data.get("id") and not re.match(r"^Q[0-1]\d+\.\d+$", yaml_data["id"]):
-            raise ValueError(
-                f"Invalid DFIQ ID for approach: {yaml_data['id']}. Must be in the format Q[0-1]\d+.\d+"
-            )
-        if not isinstance(yaml_data["description"], dict):
-            raise ValueError(
-                f"Invalid DFIQ description for approach (has to be an object): {yaml_data['description']}"
-            )
-        if not isinstance(yaml_data["view"], dict):
-            raise ValueError(
-                f"Invalid DFIQ view for approach (has to be an object): {yaml_data['view']}"
-            )
-
-        return cls(
-            name=yaml_data["display_name"],
-            description=DFIQApproachDescription(**yaml_data["description"]),
-            view=DFIQApproachView(**yaml_data["view"]),
-            uuid=yaml_data["uuid"],
-            dfiq_id=yaml_data["id"],
-            dfiq_version=yaml_data["dfiq_version"],
-            dfiq_tags=yaml_data.get("tags"),
-            parent_id=yaml_data.get("parent_id"),
-            contributors=yaml_data.get("contributors"),
-            dfiq_yaml=yaml_string,
-            internal=yaml_data.get("internal", True),
-        )
+class DFIQApproach(BaseModel):
+    name: str = Field(min_length=1)
+    description: str
+    tags: list[str] = []
+    references: list[str] = []
+    notes: DFIQApproachNotes | None = None
+    steps: list[DFIQApproachStep] = []
 
 
 TYPE_MAPPING = {
     "scenario": DFIQScenario,
     "facet": DFIQFacet,
     "question": DFIQQuestion,
-    "approach": DFIQApproach,
     "dfiq": DFIQBase,
 }
 
 
 DFIQTypes = Annotated[
-    Union[DFIQScenario, DFIQFacet, DFIQQuestion, DFIQApproach],
+    Union[DFIQScenario, DFIQFacet, DFIQQuestion],
     Field(discriminator="type"),
 ]
-DFIQClasses = (
-    Type[DFIQScenario] | Type[DFIQFacet] | Type[DFIQQuestion] | Type[DFIQApproach]
-)
+DFIQClasses = Type[DFIQScenario] | Type[DFIQFacet] | Type[DFIQQuestion]

@@ -1,3 +1,4 @@
+import os
 import tempfile
 from io import BytesIO
 from zipfile import ZipFile
@@ -59,8 +60,8 @@ class DFIQSearchResponse(BaseModel):
 class DFIQConfigResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    approach_data_sources: list[str]
-    approach_analysis_step_types: list[str]
+    stage_types: list[str]
+    step_types: list[str]
 
 
 # API endpoints
@@ -69,20 +70,20 @@ router = APIRouter()
 
 @router.get("/config")
 async def config() -> DFIQConfigResponse:
-    all_approaches = dfiq.DFIQApproach.list()
+    all_questions = dfiq.DFIQQuestion.list()
 
-    data_sources = set()
-    analysis_step_types = set()
+    stage_types = set()
+    step_types = set()
 
-    for approach in all_approaches:
-        data_sources.update({data.type for data in approach.view.data})
-        for processor in approach.view.processors:
-            for analysis in processor.analysis:
-                analysis_step_types.update({step.type for step in analysis.steps})
+    for question in all_questions:
+        for approach in question.approaches:
+            for step in approach.steps:
+                stage_types.add(step.stage)
+                step_types.add(step.type)
 
     return DFIQConfigResponse(
-        approach_data_sources=sorted(list(data_sources)),
-        approach_analysis_step_types=sorted(list(analysis_step_types)),
+        stage_types=sorted(list(stage_types)),
+        step_types=sorted(list(step_types)),
     )
 
 
@@ -92,7 +93,7 @@ async def from_archive(archive: UploadFile) -> dict[str, int]:
     tempdir = tempfile.TemporaryDirectory()
     contents = await archive.read()
     ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
-    total_added = dfiq.read_from_data_directory(tempdir.name)
+    total_added = dfiq.read_from_data_directory(f"{tempdir.name}/*/*.yaml")
     return {"total_added": total_added}
 
 
@@ -149,17 +150,52 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
     )
 
     tempdir = tempfile.TemporaryDirectory()
+    public_objs = []
+    internal_objs = []
     for obj in dfiq_objects:
-        with open(f"{tempdir.name}/{obj.dfiq_id}.yaml", "w") as f:
+        if obj.dfiq_tags and "internal" in obj.dfiq_tags:
+            internal_objs.append(obj)
+        else:
+            if obj.type == dfiq.DFIQType.question:
+                public_version = obj.model_copy()
+                internal_approaches = False
+                for approach in obj.approaches:
+                    if "internal" in approach.tags:
+                        internal_approaches = True
+                        break
+                if internal_approaches:
+                    public_version.approaches = [
+                        a for a in obj.approaches if "internal" not in a.tags
+                    ]
+                    public_objs.append(public_version)
+                    internal_objs.append(obj)
+                else:
+                    public_objs.append(obj)
+            else:
+                public_objs.append(obj)
+
+    for dir_name in ["public", "internal"]:
+        os.makedirs(f"{tempdir.name}/{dir_name}")
+
+    for obj in public_objs:
+        with open(f"{tempdir.name}/public/{obj.dfiq_id}.yaml", "w") as f:
+            f.write(obj.to_yaml())
+
+    for obj in internal_objs:
+        with open(f"{tempdir.name}/internal/{obj.dfiq_id}.yaml", "w") as f:
             f.write(obj.to_yaml())
 
     with tempfile.NamedTemporaryFile(delete=False) as archive:
         with ZipFile(archive, "w") as zipf:
-            for obj in dfiq_objects:
-                subdir = "internal" if obj.internal else "public"
+            for obj in public_objs:
                 zipf.write(
-                    f"{tempdir.name}/{obj.dfiq_id}.yaml",
-                    f"{subdir}/{obj.type}/{obj.dfiq_id}.yaml",
+                    f"{tempdir.name}/public/{obj.dfiq_id}.yaml",
+                    f"public/{obj.type}/{obj.dfiq_id}.yaml",
+                )
+            for obj in internal_objs:
+                zipf.write(
+                    f"{tempdir.name}/internal/{obj.dfiq_id}.yaml",
+                    f"internal/{obj.type}/{obj.dfiq_id}.yaml",
                 )
 
     return FileResponse(archive.name, media_type="application/zip", filename="dfiq.zip")
@@ -206,7 +242,7 @@ async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     new = updated_dfiq.save()
     new.update_parents()
 
-    if request.update_indicators and new.type == dfiq.DFIQType.approach:
+    if request.update_indicators and new.type == dfiq.DFIQType.question:
         dfiq.extract_indicators(new)
 
     return new
