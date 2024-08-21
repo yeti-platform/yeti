@@ -423,23 +423,23 @@ class DFIQTest(unittest.TestCase):
         with ZipFile(io.BytesIO(response.content)) as archive:
             files = archive.namelist()
             self.assertEqual(len(files), 4)
-            self.assertIn("public/scenario/S1003.yaml", files)
-            self.assertIn("internal/scenario/S0003.yaml", files)
-            self.assertIn("public/question/Q1020.yaml", files)
-            self.assertIn("internal/question/Q1020.yaml", files)
+            self.assertIn("public/scenarios/S1003.yaml", files)
+            self.assertIn("internal/scenarios/S0003.yaml", files)
+            self.assertIn("public/questions/Q1020.yaml", files)
+            self.assertIn("internal/questions/Q1020.yaml", files)
 
-            with archive.open("public/scenario/S1003.yaml") as f:
+            with archive.open("public/scenarios/S1003.yaml") as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("public_scenario", content)
-            with archive.open("internal/scenario/S0003.yaml") as f:
+            with archive.open("internal/scenarios/S0003.yaml") as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("private_scenario", content)
-            with archive.open("public/question/Q1020.yaml") as f:
+            with archive.open("public/questions/Q1020.yaml") as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
                 self.assertNotIn("internal_approach", content)
-            with archive.open("internal/question/Q1020.yaml") as f:
+            with archive.open("internal/questions/Q1020.yaml") as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)

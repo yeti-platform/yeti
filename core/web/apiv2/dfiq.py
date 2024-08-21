@@ -149,6 +149,12 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
         aliases=request.filter_aliases,
     )
 
+    _TYPE_TO_DUMP_DIR = {
+        dfiq.DFIQType.scenario: "scenarios",
+        dfiq.DFIQType.facet: "facets",
+        dfiq.DFIQType.question: "questions",
+    }
+
     tempdir = tempfile.TemporaryDirectory()
     public_objs = []
     internal_objs = []
@@ -190,12 +196,12 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
             for obj in public_objs:
                 zipf.write(
                     f"{tempdir.name}/public/{obj.dfiq_id}.yaml",
-                    f"public/{obj.type}/{obj.dfiq_id}.yaml",
+                    f"public/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.dfiq_id}.yaml",
                 )
             for obj in internal_objs:
                 zipf.write(
                     f"{tempdir.name}/internal/{obj.dfiq_id}.yaml",
-                    f"internal/{obj.type}/{obj.dfiq_id}.yaml",
+                    f"internal/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.dfiq_id}.yaml",
                 )
 
     return FileResponse(archive.name, media_type="application/zip", filename="dfiq.zip")
