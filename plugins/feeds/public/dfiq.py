@@ -18,10 +18,6 @@ class DFIQFeed(task.FeedTask):
         "description": "DFIQ feed",
     }
 
-    def upgrade_existing_dfiq_schema(self):
-        for dfiq_object in dfiq.DFIQBase.list():
-            dfiq.upgrade_dfiq_schema(dfiq_object)
-
     def run(self):
         # move back to "https://github.com/google/dfiq/archive/refs/heads/main.zip"
         # once the changes have been merged.
@@ -45,9 +41,6 @@ class DFIQFeed(task.FeedTask):
         for directory in extra_dirs.split(","):
             logging.info("Processing extra directory %s", directory)
             dfiq.read_from_data_directory(directory)
-
-        logging.info("Upgrading schema of remaining DFIQ objects")
-        self.upgrade_existing_dfiq_schema()
 
 
 taskmanager.TaskManager.register_task(DFIQFeed)
