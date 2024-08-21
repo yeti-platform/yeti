@@ -1,4 +1,5 @@
 import logging
+import os
 import tempfile
 from datetime import timedelta
 from io import BytesIO
@@ -33,7 +34,10 @@ class DFIQFeed(task.FeedTask):
 
         tempdir = tempfile.TemporaryDirectory()
         ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
-        dfiq.read_from_data_directory(tempdir.name)
+        dfiq.read_from_data_directory(
+            os.path.join(tempdir.name, "*", "dfiq", "data", "*", "*.yaml"),
+            overwrite=True,
+        )
 
         extra_dirs = yeti_config.get("dfiq", "extra_dirs")
         if not extra_dirs:
