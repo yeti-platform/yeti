@@ -82,67 +82,12 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(result.parent_ids, ["F1005"])
         self.assertEqual(result.type, DFIQType.question)
 
-    def test_dfiq_approach(self) -> None:
-        with open("tests/dfiq_test_data/Q1020.10.yaml", "r") as f:
-            yaml_string = f.read()
-
-        result = DFIQApproach.from_yaml(yaml_string).save()
-
-        self.assertIsNotNone(result.id)
-        self.assertEqual(result.uuid, "292500f7-9d54-40ca-8254-34821e9b5c4e")
-        self.assertEqual(result.parent_id, "bd46ce6e-c933-46e5-960c-36945aaef401")
-        self.assertIsNotNone(result.created)
-        self.assertEqual(result.name, "Approach1")
-        self.assertEqual(result.description.details, "Details for approach\n")
-        self.assertEqual(result.description.references, ["ref1", "ref2"])
-
-        self.assertEqual(result.view.data[0].type, "artifact")
-        self.assertEqual(result.view.data[0].value, "RandomArtifact")
-        self.assertEqual(result.view.data[1].type, "description")
-        self.assertEqual(result.view.data[1].value, "Random description")
-        self.assertEqual(
-            result.view.notes.covered, ["Covered1", "Covered2", "Covered3"]
-        )
-        self.assertEqual(
-            result.view.notes.not_covered, ["Not covered1", "Not covered2"]
-        )
-        self.assertEqual(result.view.processors[0].name, "processor1")
-        self.assertEqual(result.view.processors[0].options[0].type, "parsers")
-        self.assertEqual(result.view.processors[0].options[0].value, "parser1option")
-        self.assertEqual(result.view.processors[0].analysis[0].name, "OpenSearch")
-        self.assertEqual(
-            result.view.processors[0].analysis[0].steps[0].description,
-            "random parser description",
-        )
-        self.assertEqual(
-            result.view.processors[0].analysis[0].steps[0].type, "opensearch-query"
-        )
-        self.assertEqual(
-            result.view.processors[0].analysis[0].steps[0].value,
-            'data_type:("fs:stat")',
-        )
-        self.assertEqual(
-            result.view.processors[0].analysis[1].steps[0].description,
-            "random step description",
-        )
-        self.assertEqual(result.view.processors[0].analysis[1].steps[0].type, "pandas")
-        self.assertEqual(
-            result.view.processors[0].analysis[1].steps[0].value,
-            """query('data_type in ("fs:stat")')""",
-        )
-
-        self.assertEqual(
-            result.view.processors[1].analysis[0].steps[0].description,
-            "something else\n",
-        )
-
     def test_dfiq_conversion_to_yaml(self) -> None:
         self.maxDiff = None
         type_map = [
             (DFIQScenario, "tests/dfiq_test_data/S1003.yaml"),
             (DFIQFacet, "tests/dfiq_test_data/F1005.yaml"),
             (DFIQQuestion, "tests/dfiq_test_data/Q1020.yaml"),
-            (DFIQApproach, "tests/dfiq_test_data/Q1020.10.yaml"),
         ]
 
         for type_, file_path in type_map:
@@ -151,6 +96,12 @@ class DFIQTest(unittest.TestCase):
 
             result = type_.from_yaml(yaml_string).save()
 
-            expected_yaml_string = yaml.dump(yaml.safe_load(yaml_string))
-            result_yaml_string = result.to_yaml()
+            expected_yaml_string = yaml.dump(
+                yaml.safe_load(yaml_string),
+                default_flow_style=False,
+                sort_keys=True,
+                explicit_start=True,
+                indent=2,
+            )
+            result_yaml_string = result.to_yaml(sort_keys=True)
             self.assertEqual(expected_yaml_string, result_yaml_string)
