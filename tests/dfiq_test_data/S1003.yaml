@@ -1,11 +1,10 @@
 ---
-display_name: scenario1
+name: scenario1
 type: scenario
 description: >
   Long description 1
 id: S1003
 uuid: 2ee16263-56f8-49a5-9b33-d1a2dd8b829c
-internal: false
 dfiq_version: 1.1.0
 tags:
  - Tag1

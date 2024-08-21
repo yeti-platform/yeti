@@ -1,12 +1,34 @@
 ---
-display_name: What is a question?
+name: What is a question?
+
 type: question
 description:
 id: Q1020
 uuid: bd46ce6e-c933-46e5-960c-36945aaef401
-internal: false
 dfiq_version: 1.1.0
 tags:
  - Web Browser
 parent_ids:
  - F1005
+approaches:
+  - name: Approach 1
+    description: blah
+    notes:
+    references: []
+    tags: []
+    steps:
+    - name: step1
+      description: step1 description
+      stage: collection
+      type: ForensicArtifact
+      value: NTFSUSNJournal
+    - name: Run a query
+      description: null
+      stage: analysis
+      type: opensearch-query
+      value: data_type:"fs:ntfs:usn_change" RANDOM_QUERY
+    - name: Run another query
+      description: null
+      stage: analysis
+      type: opensearch-query-second
+      value: data_type:"fs:ntfs:usn_change" ANOTHER_QUERY

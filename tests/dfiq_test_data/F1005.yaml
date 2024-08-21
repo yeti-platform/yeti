@@ -1,11 +1,10 @@
 ---
-display_name: facet1
+name: facet1
 type: facet
 description: >
   Long description of facet1
 id: F1005
 uuid: b2bab31f-1670-4297-8cb1-685747a13468
-internal: false
 dfiq_version: 1.1.0
 tags:
  - Web Browser
