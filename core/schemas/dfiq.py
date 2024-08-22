@@ -2,6 +2,7 @@ import datetime
 import glob
 import logging
 import re
+import uuid
 from enum import Enum
 from typing import Annotated, Any, ClassVar, Literal, Type, Union
 
@@ -10,6 +11,7 @@ from packaging.version import Version
 from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
+from core.config.config import yeti_config
 from core.helpers import now
 from core.schemas import indicator
 from core.schemas.model import YetiModel
@@ -33,16 +35,16 @@ yaml.add_representer(str, long_text_representer)
 yaml.add_representer(type(None), custom_null_representer)
 
 
-def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
+def read_from_data_directory(globpath: str, overwrite: bool = False) -> int:
     """Read DFIQ files from a directory and add them to the database.
 
     Args:
-        directory: Directory to read DFIQ files from.
+        globpath: Glob path to search for DFIQ files (supports recursion).
         overwrite: Whether to overwrite existing DFIQs with the same ID.
     """
     dfiq_kb = {}
     total_added = 0
-    for file in glob.glob(directory):
+    for file in glob.glob(globpath, recursive=True):
         if not file.endswith(".yaml"):
             continue
         logging.debug("Processing %s", file)
@@ -50,6 +52,7 @@ def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
             try:
                 dfiq_object = DFIQBase.from_yaml(f.read())
                 if not overwrite:
+                    db_dfiq = None
                     if dfiq_object.uuid:
                         db_dfiq = DFIQBase.find(uuid=dfiq_object.uuid)
                     if not db_dfiq and dfiq_object.dfiq_id:
@@ -70,6 +73,8 @@ def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
                                 dfiq_object.dfiq_id,
                             )
                         continue
+                if not dfiq_object.uuid:
+                    dfiq_object.uuid = str(uuid.uuid4())
                 dfiq_object = dfiq_object.save()
                 total_added += 1
             except (ValueError, KeyError) as e:
@@ -79,7 +84,7 @@ def read_from_data_directory(directory: str, overwrite: bool = False) -> int:
         dfiq_kb[dfiq_object.dfiq_id] = dfiq_object
 
     for dfiq_id, dfiq_object in dfiq_kb.items():
-        dfiq_object.update_parents()
+        dfiq_object.update_parents(soft_fail=True)
         if dfiq_object.type == DFIQType.question:
             extract_indicators(dfiq_object)
 
@@ -102,7 +107,7 @@ def extract_indicators(question: "DFIQQuestion") -> None:
                 question.link_to(artifact, "artifact", "Uses artifact")
                 continue
 
-            elif "query" in step.type:
+            elif step.type and step.value and "query" in step.type:
                 query = indicator.Query.find(pattern=step.value)
                 if not query:
                     query = indicator.Query(
@@ -204,7 +209,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             indent=2,
         )
 
-    def update_parents(self) -> None:
+    def update_parents(self, soft_fail=False) -> None:
         intended_parent_ids = None
         if getattr(self, "parent_ids", []):
             intended_parent_ids = self.parent_ids
@@ -219,9 +224,18 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             intended_parents.append(parent)
 
         if not all(intended_parents):
-            raise ValueError(
-                f"Missing parent(s) {intended_parent_ids} for {self.dfiq_id}"
-            )
+            actual_parents = {
+                intended_parent.dfiq_id
+                for intended_parent in intended_parents
+                if intended_parent
+            }
+            missing_parents = set(intended_parent_ids) - actual_parents
+            if soft_fail:
+                logging.warning(
+                    "Missing parent(s) %s for %s", missing_parents, self.dfiq_id
+                )
+                return
+            raise ValueError(f"Missing parent(s) {missing_parents} for {self.dfiq_id}")
 
         # remove all links:
         vertices, relationships, total = self.neighbors()
@@ -259,7 +273,7 @@ class DFIQScenario(DFIQBase):
         return cls(
             name=yaml_data["name"],
             description=yaml_data["description"],
-            uuid=yaml_data["uuid"],
+            uuid=yaml_data.get("uuid"),
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
@@ -288,7 +302,7 @@ class DFIQFacet(DFIQBase):
         return cls(
             name=yaml_data["name"],
             description=yaml_data.get("description"),
-            uuid=yaml_data["uuid"],
+            uuid=yaml_data.get("uuid"),
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
@@ -319,7 +333,7 @@ class DFIQQuestion(DFIQBase):
         return cls(
             name=yaml_data["name"],
             description=yaml_data.get("description"),
-            uuid=yaml_data["uuid"],
+            uuid=yaml_data.get("uuid"),
             dfiq_id=yaml_data["id"],
             dfiq_version=yaml_data["dfiq_version"],
             dfiq_tags=yaml_data.get("tags"),
@@ -334,10 +348,10 @@ class DFIQQuestion(DFIQBase):
 
 class DFIQApproachStep(BaseModel):
     name: str = Field(min_length=1)
-    description: str | None
+    description: str | None = None
     stage: str = Field(min_length=1)
-    type: str = Field(min_length=1)
-    value: str = Field(min_length=1)
+    type: str | None = None
+    value: str | None = None
 
 
 class DFIQApproachNotes(BaseModel):
