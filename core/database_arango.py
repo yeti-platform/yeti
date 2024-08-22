@@ -105,6 +105,15 @@ class ArangoDatabase:
                 ],
             },
         )
+
+        for collection_data in self.db.collections():
+            if collection_data["system"]:
+                continue
+            collection = self.db.collection(collection_data["name"])
+            for index in collection.indexes():
+                if index["type"] == "persistent":
+                    collection.delete_index(index["id"])
+
         self.db.collection("observables").add_persistent_index(
             fields=["value", "type"], unique=True
         )
@@ -116,7 +125,7 @@ class ArangoDatabase:
             fields=["name", "type"], unique=True
         )
         self.db.collection("dfiq").add_persistent_index(
-            fields=["dfiq_id", "type"], unique=True
+            fields=["uuid"], unique=True, sparse=True
         )
 
     def clear(self, truncate=True):

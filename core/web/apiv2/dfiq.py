@@ -1,3 +1,4 @@
+import os
 import tempfile
 from io import BytesIO
 from zipfile import ZipFile
@@ -56,8 +57,39 @@ class DFIQSearchResponse(BaseModel):
     total: int
 
 
+class DFIQConfigResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    stage_types: list[str]
+    step_types: list[str]
+
+
 # API endpoints
 router = APIRouter()
+
+
+@router.get("/config")
+async def config() -> DFIQConfigResponse:
+    all_questions = dfiq.DFIQQuestion.list()
+
+    stage_types = set()
+    step_types = set()
+
+    for question in all_questions:
+        for approach in question.approaches:
+            for step in approach.steps:
+                stage_types.add(step.stage)
+                step_types.add(step.type)
+
+    if None in stage_types:
+        stage_types.remove(None)
+    if None in step_types:
+        step_types.remove(None)
+
+    return DFIQConfigResponse(
+        stage_types=sorted(list(stage_types)),
+        step_types=sorted(list(step_types)),
+    )
 
 
 @router.post("/from_archive")
@@ -66,7 +98,7 @@ async def from_archive(archive: UploadFile) -> dict[str, int]:
     tempdir = tempfile.TemporaryDirectory()
     contents = await archive.read()
     ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
-    total_added = dfiq.read_from_data_directory(tempdir.name)
+    total_added = dfiq.read_from_data_directory(f"{tempdir.name}/*/*.yaml")
     return {"total_added": total_added}
 
 
@@ -78,11 +110,18 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
-    # Ensure there is not an object with the same ID:
-    if dfiq.DFIQBase.find(dfiq_id=new.dfiq_id):
+    # Ensure there is not an object with the same ID or UUID
+
+    if new.dfiq_id and dfiq.DFIQBase.find(dfiq_id=new.dfiq_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"DFIQ with id {new.dfiq_id} already exists",
+        )
+
+    if dfiq.DFIQBase.find(uuid=new.uuid):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"DFIQ with uuid {new.uuid} already exists",
         )
 
     new = new.save()
@@ -115,18 +154,59 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
         aliases=request.filter_aliases,
     )
 
+    _TYPE_TO_DUMP_DIR = {
+        dfiq.DFIQType.scenario: "scenarios",
+        dfiq.DFIQType.facet: "facets",
+        dfiq.DFIQType.question: "questions",
+    }
+
     tempdir = tempfile.TemporaryDirectory()
+    public_objs = []
+    internal_objs = []
     for obj in dfiq_objects:
-        with open(f"{tempdir.name}/{obj.dfiq_id}.yaml", "w") as f:
+        if obj.dfiq_tags and "internal" in obj.dfiq_tags:
+            internal_objs.append(obj)
+        else:
+            if obj.type == dfiq.DFIQType.question:
+                public_version = obj.model_copy()
+                internal_approaches = False
+                for approach in obj.approaches:
+                    if "internal" in approach.tags:
+                        internal_approaches = True
+                        break
+                if internal_approaches:
+                    public_version.approaches = [
+                        a for a in obj.approaches if "internal" not in a.tags
+                    ]
+                    public_objs.append(public_version)
+                    internal_objs.append(obj)
+                else:
+                    public_objs.append(obj)
+            else:
+                public_objs.append(obj)
+
+    for dir_name in ["public", "internal"]:
+        os.makedirs(f"{tempdir.name}/{dir_name}")
+
+    for obj in public_objs:
+        with open(f"{tempdir.name}/public/{obj.dfiq_id}.yaml", "w") as f:
+            f.write(obj.to_yaml())
+
+    for obj in internal_objs:
+        with open(f"{tempdir.name}/internal/{obj.dfiq_id}.yaml", "w") as f:
             f.write(obj.to_yaml())
 
     with tempfile.NamedTemporaryFile(delete=False) as archive:
         with ZipFile(archive, "w") as zipf:
-            for obj in dfiq_objects:
-                subdir = "internal" if obj.internal else "public"
+            for obj in public_objs:
                 zipf.write(
-                    f"{tempdir.name}/{obj.dfiq_id}.yaml",
-                    f"{subdir}/{obj.type}/{obj.dfiq_id}.yaml",
+                    f"{tempdir.name}/public/{obj.dfiq_id}.yaml",
+                    f"public/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.dfiq_id}.yaml",
+                )
+            for obj in internal_objs:
+                zipf.write(
+                    f"{tempdir.name}/internal/{obj.dfiq_id}.yaml",
+                    f"internal/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.dfiq_id}.yaml",
                 )
 
     return FileResponse(archive.name, media_type="application/zip", filename="dfiq.zip")
@@ -144,7 +224,7 @@ async def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateRespon
     except KeyError as error:
         return DFIQValidateResponse(valid=False, error=f"Invalid DFIQ type: {error}")
 
-    if request.check_id and dfiq.DFIQBase.find(dfiq_id=obj.dfiq_id):
+    if request.check_id and obj.dfiq_id and dfiq.DFIQBase.find(dfiq_id=obj.dfiq_id):
         return DFIQValidateResponse(
             valid=False, error=f"DFIQ with id {obj.dfiq_id} already exists"
         )
@@ -173,7 +253,7 @@ async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     new = updated_dfiq.save()
     new.update_parents()
 
-    if request.update_indicators and new.type == dfiq.DFIQType.approach:
+    if request.update_indicators and new.type == dfiq.DFIQType.question:
         dfiq.extract_indicators(new)
 
     return new
@@ -194,6 +274,18 @@ async def delete(dfiq_id: str) -> None:
     db_dfiq = dfiq.DFIQBase.get(dfiq_id)
     if not db_dfiq:
         raise HTTPException(status_code=404, detail="DFIQ object {dfiq_id} not found")
+
+    all_children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.uuid})
+    if db_dfiq.dfiq_id:
+        children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.dfiq_id})
+    all_children.extend(children)
+    for child in all_children:
+        if db_dfiq.dfiq_id in child.parent_ids:
+            child.parent_ids.remove(db_dfiq.dfiq_id)
+        if db_dfiq.uuid in child.parent_ids:
+            child.parent_ids.remove(db_dfiq.uuid)
+        child.save()
+
     db_dfiq.delete()
 
 
