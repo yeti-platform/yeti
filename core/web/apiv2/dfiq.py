@@ -81,6 +81,11 @@ async def config() -> DFIQConfigResponse:
                 stage_types.add(step.stage)
                 step_types.add(step.type)
 
+    if None in stage_types:
+        stage_types.remove(None)
+    if None in step_types:
+        step_types.remove(None)
+
     return DFIQConfigResponse(
         stage_types=sorted(list(stage_types)),
         step_types=sorted(list(step_types)),
@@ -269,6 +274,18 @@ async def delete(dfiq_id: str) -> None:
     db_dfiq = dfiq.DFIQBase.get(dfiq_id)
     if not db_dfiq:
         raise HTTPException(status_code=404, detail="DFIQ object {dfiq_id} not found")
+
+    all_children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.uuid})
+    if db_dfiq.dfiq_id:
+        children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.dfiq_id})
+    all_children.extend(children)
+    for child in all_children:
+        if db_dfiq.dfiq_id in child.parent_ids:
+            child.parent_ids.remove(db_dfiq.dfiq_id)
+        if db_dfiq.uuid in child.parent_ids:
+            child.parent_ids.remove(db_dfiq.uuid)
+        child.save()
+
     db_dfiq.delete()
 
 
