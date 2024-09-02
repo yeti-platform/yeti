@@ -278,7 +278,8 @@ async def delete(dfiq_id: str) -> None:
     all_children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.uuid})
     if db_dfiq.dfiq_id:
         children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.dfiq_id})
-    all_children.extend(children)
+        if children:
+            all_children.extend(children)
     for child in all_children:
         if db_dfiq.dfiq_id in child.parent_ids:
             child.parent_ids.remove(db_dfiq.dfiq_id)
