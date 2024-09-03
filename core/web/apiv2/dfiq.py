@@ -189,24 +189,24 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
         os.makedirs(f"{tempdir.name}/{dir_name}")
 
     for obj in public_objs:
-        with open(f"{tempdir.name}/public/{obj.dfiq_id}.yaml", "w") as f:
+        with open(f"{tempdir.name}/public/{obj.uuid}.yaml", "w") as f:
             f.write(obj.to_yaml())
 
     for obj in internal_objs:
-        with open(f"{tempdir.name}/internal/{obj.dfiq_id}.yaml", "w") as f:
+        with open(f"{tempdir.name}/internal/{obj.uuid}.yaml", "w") as f:
             f.write(obj.to_yaml())
 
     with tempfile.NamedTemporaryFile(delete=False) as archive:
         with ZipFile(archive, "w") as zipf:
             for obj in public_objs:
                 zipf.write(
-                    f"{tempdir.name}/public/{obj.dfiq_id}.yaml",
-                    f"public/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.dfiq_id}.yaml",
+                    f"{tempdir.name}/public/{obj.uuid}.yaml",
+                    f"public/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.uuid}.yaml",
                 )
             for obj in internal_objs:
                 zipf.write(
-                    f"{tempdir.name}/internal/{obj.dfiq_id}.yaml",
-                    f"internal/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.dfiq_id}.yaml",
+                    f"{tempdir.name}/internal/{obj.uuid}.yaml",
+                    f"internal/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.uuid}.yaml",
                 )
 
     return FileResponse(archive.name, media_type="application/zip", filename="dfiq.zip")
@@ -278,7 +278,8 @@ async def delete(dfiq_id: str) -> None:
     all_children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.uuid})
     if db_dfiq.dfiq_id:
         children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.dfiq_id})
-    all_children.extend(children)
+        if children:
+            all_children.extend(children)
     for child in all_children:
         if db_dfiq.dfiq_id in child.parent_ids:
             child.parent_ids.remove(db_dfiq.dfiq_id)
