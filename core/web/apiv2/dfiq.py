@@ -125,7 +125,10 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
         )
 
     intended_parents = []
-    for parent_id in new.parent_ids:
+
+    # Scenarios don't have parent IDs
+    parent_ids = [] if new.type == dfiq.DFIQType.scenario else new.parent_ids
+    for parent_id in parent_ids:
         parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
         if not parent:
             parent = dfiq.DFIQBase.find(uuid=parent_id)
