@@ -272,6 +272,61 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(edges[0][0].description, "Uses DFIQ facet")
         self.assertEqual(total, 1)
 
+    def test_dfiq_patch_prunes_parents(self) -> None:
+        scenario1 = dfiq.DFIQScenario(
+            name="mock_scenario",
+            dfiq_id="S1003",
+            uuid="fake_scenario_uuid1",
+            dfiq_version="1.1.0",
+            description="desc",
+            dfiq_yaml="mock",
+        ).save()
+
+        scenario2 = dfiq.DFIQScenario(
+            name="mock_scenario2",
+            dfiq_id="S1222",
+            uuid="fake_scenario_uuid2",
+            dfiq_version="1.1.0",
+            description="desc",
+            dfiq_yaml="mock",
+        ).save()
+
+        facet = dfiq.DFIQFacet(
+            name="mock_facet",
+            dfiq_id="F1005",
+            uuid="fake_facet_uuid",
+            dfiq_version="1.1.0",
+            description="desc",
+            parent_ids=["S1003"],
+            dfiq_yaml="mock",
+        ).save()
+
+        facet.update_parents()
+
+        facet.parent_ids = []
+
+        vertices, edges, total = scenario1.neighbors()
+        self.assertEqual(len(vertices), 1)
+        self.assertEqual(total, 1)
+
+        response = client.patch(
+            f"/api/v2/dfiq/{facet.id}",
+            json={"dfiq_yaml": facet.to_yaml(), "dfiq_type": facet.type},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["parent_ids"], [])
+        self.assertEqual(data["dfiq_id"], facet.dfiq_id)
+        self.assertEqual(data["id"], facet.id)
+
+        vertices, edges, total = scenario1.neighbors()
+        self.assertEqual(len(vertices), 0)
+        self.assertEqual(total, 0)
+
+        vertices, edges, total = scenario2.neighbors()
+        self.assertEqual(len(vertices), 0)
+        self.assertEqual(total, 0)
+
     def test_dfiq_patch_question_updates_indicators(self) -> None:
         dfiq.DFIQScenario(
             name="mock_scenario",
