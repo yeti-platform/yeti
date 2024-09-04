@@ -340,9 +340,7 @@ class DFIQQuestion(DFIQBase):
             contributors=yaml_data.get("contributors"),
             parent_ids=yaml_data["parent_ids"],
             dfiq_yaml=yaml_string,
-            approaches=[
-                DFIQApproach(**approach) for approach in yaml_data.get("approaches", [])
-            ],
+            approaches=yaml_data.get("approaches", []),
         )
 
 

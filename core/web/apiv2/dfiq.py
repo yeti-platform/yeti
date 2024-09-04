@@ -28,7 +28,8 @@ class DFIQValidateResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     valid: bool
-    error: str
+    error: str | list[dict] = ""
+    error_type: str = "message"
 
 
 class PatchDFIQRequest(BaseModel):
@@ -233,7 +234,21 @@ async def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateRespon
     try:
         obj = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
     except ValidationError as error:
-        return DFIQValidateResponse(valid=False, error=str(error.errors()))
+        error_objs: list[dict] = []
+        for pydantic_error in error.errors():
+            error_objs.append(
+                {
+                    "model": error.title,
+                    "field": ".".join(
+                        [str(locerr) for locerr in pydantic_error["loc"]]
+                    ),
+                    "error": pydantic_error["msg"],
+                    "input": pydantic_error["input"],
+                }
+            )
+        return DFIQValidateResponse(
+            valid=False, error=error_objs, error_type="pydantic"
+        )
     except ValueError as error:
         return DFIQValidateResponse(valid=False, error=str(error))
     except KeyError as error:
