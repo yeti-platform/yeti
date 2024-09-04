@@ -355,7 +355,9 @@ class DFIQTest(unittest.TestCase):
         )
         data = response.json()
         self.assertEqual(response.status_code, 400, data)
-        self.assertEqual(data, {"detail": "Missing parent(s) {'S1003'} for F1005"})
+        self.assertEqual(data, {"detail": "Missing parent(s), provided ['S1003']"})
+        existing = dfiq.DFIQFacet.find(dfiq_id="F1005")
+        self.assertIsNone(existing)
 
     def test_valid_dfiq_yaml(self) -> None:
         with open("tests/dfiq_test_data/S1003.yaml", "r") as f:

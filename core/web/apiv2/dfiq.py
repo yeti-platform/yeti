@@ -124,6 +124,21 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
             detail=f"DFIQ with uuid {new.uuid} already exists",
         )
 
+    intended_parents = []
+
+    # Scenarios don't have parent IDs
+    parent_ids = [] if new.type == dfiq.DFIQType.scenario else new.parent_ids
+    for parent_id in parent_ids:
+        parent = dfiq.DFIQBase.find(dfiq_id=parent_id)
+        if not parent:
+            parent = dfiq.DFIQBase.find(uuid=parent_id)
+        intended_parents.append(parent)
+    if not all(intended_parents):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Missing parent(s), provided {new.parent_ids}",
+        )
+
     new = new.save()
 
     try:
@@ -131,7 +146,7 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
-    if request.update_indicators and new.type == dfiq.DFIQType.approach:
+    if request.update_indicators and new.type == dfiq.DFIQType.question:
         dfiq.extract_indicators(new)
 
     return new
