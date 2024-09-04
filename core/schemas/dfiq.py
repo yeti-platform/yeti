@@ -211,7 +211,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
 
     def update_parents(self, soft_fail=False) -> None:
         intended_parent_ids = None
-        if getattr(self, "parent_ids", []):
+        if hasattr(self, "parent_ids"):
             intended_parent_ids = self.parent_ids
         else:
             return
