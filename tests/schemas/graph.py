@@ -3,7 +3,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.entity import Campaign, Malware
+from core.schemas.entity import Campaign, Entity, Malware
 from core.schemas.graph import GraphFilter, Relationship
 from core.schemas.observables import hostname, ipv4, user_agent
 from core.web import webapp
@@ -21,6 +21,7 @@ class GraphTest(unittest.TestCase):
         self.observable4 = user_agent.UserAgent(value="Mozilla/5.0").save()
         self.entity1 = Malware(name="plugx").save()
         self.entity2 = Campaign(name="campaign1").save()
+        self.entity3 = Campaign(name="campaign2").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -221,3 +222,33 @@ class GraphTest(unittest.TestCase):
         self.assertEqual(edges[0][1].target, observable4.extended_id)
         self.assertEqual(edges[0][0].description, "description_aaaa_to_b")
         self.assertEqual(edges[0][1].description, "description_bbbb_to_d")
+
+    def test_filter_sorted_by_related_obserables_count(self):
+        """Tests entities sorted by number of related observables."""
+        self.entity2.link_to(self.observable2, "a", "description_aaaa")
+        self.entity2.link_to(self.observable3, "c", "description_ccc")
+        self.entity2.link_to(self.observable4, "d", "description_ddd")
+
+        self.entity3.link_to(self.observable2, "a", "description_aaaa")
+        self.entity3.link_to(self.observable3, "c", "description_ccc")
+
+        assert self.entity2.related_observables_count == 3
+        assert self.entity3.related_observables_count == 2
+
+        query = {"type": "campaign"}
+
+        sorting = [["related_observables_count", True]]
+        entities, total = Entity.filter(
+            query_args=query, offset=0, count=20, sorting=sorting
+        )
+        assert total == 2
+        assert entities[0].name == "campaign2"
+        assert entities[1].name == "campaign1"
+
+        sorting = [["related_observables_count", False]]
+        entities, total = Entity.filter(
+            query_args=query, offset=0, count=20, sorting=sorting
+        )
+        assert total == 2
+        assert entities[0].name == "campaign1"
+        assert entities[1].name == "campaign2"

@@ -43,6 +43,15 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     def root_type(self):
         return self._root_type
 
+    @computed_field(return_type=int)
+    def related_observables_count(self):
+        if self.id:
+            vertices, path, total = self.neighbors(
+                min_hops=1, max_hops=1, target_types=["observable"]
+            )
+            return total
+        return 0
+
     @classmethod
     def load(cls, object: dict) -> "EntityTypes":
         if cls._type_filter:

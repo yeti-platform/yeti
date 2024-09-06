@@ -767,8 +767,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         sorts = []
 
         # We want user-defined sorts to take precedence.
+        related_observables_count = ""
         for field, asc in sorting:
-            sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
+            if field == "related_observables_count":
+                related_observables_count = 'LET related_observables_count = LENGTH(FOR v, e IN 1..1 ANY o links FILTER v.root_type == "observable" RETURN v)'
+                sorts.append(f'related_observables_count {"ASC" if asc else "DESC"}')
+            else:
+                sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
@@ -873,6 +878,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         aql_string = f"""
             FOR o IN @@collection
+                {related_observables_count}
                 {graph_query_string}
                 {aql_filter}
                 {aql_sort}
@@ -883,6 +889,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
+        logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )
