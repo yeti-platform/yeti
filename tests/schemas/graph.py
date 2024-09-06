@@ -3,9 +3,9 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.entity import Malware
+from core.schemas.entity import Campaign, Malware
 from core.schemas.graph import GraphFilter, Relationship
-from core.schemas.observables import hostname, ipv4
+from core.schemas.observables import hostname, ipv4, user_agent
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -18,7 +18,9 @@ class GraphTest(unittest.TestCase):
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.observable3 = ipv4.IPv4(value="8.8.8.8").save()
+        self.observable4 = user_agent.UserAgent(value="Mozilla/5.0").save()
         self.entity1 = Malware(name="plugx").save()
+        self.entity2 = Campaign(name="campaign1").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -52,6 +54,14 @@ class GraphTest(unittest.TestCase):
         self.assertEqual(paths[0], [self.relationship])
         self.assertEqual(vertices[self.observable2.extended_id].value, "127.0.0.1")
 
+    def test_observable_to_observable_link_count(self) -> None:
+        """Tests the update of link count between two observables."""
+        for i in range(10):
+            self.relationship = self.observable2.link_to(
+                self.observable4, "uses", "User agent"
+            )
+        self.assertEqual(self.relationship.count, 10)
+
     def test_observable_to_entity_link(self) -> None:
         """Tests that a link between an observable and an entity can be created."""
         self.relationship = self.observable1.link_to(
@@ -66,6 +76,14 @@ class GraphTest(unittest.TestCase):
         self.assertEqual(len(vertices), 1)
         self.assertEqual(count, 1)
         self.assertEqual(vertices[self.observable1.extended_id].value, "tomchop.me")
+
+    def test_entity_to_observable_link_count(self) -> None:
+        """Tests the update of link count between an observable and an entity."""
+        for i in range(10):
+            self.relationship = self.entity2.link_to(
+                self.observable2, "observes", "Observes network traffic"
+            )
+        self.assertEqual(self.relationship.count, 10)
 
     def test_no_neighbors(self):
         """Tests that a node with no neighbors returns an empty list."""

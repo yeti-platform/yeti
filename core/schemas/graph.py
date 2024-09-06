@@ -24,6 +24,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     source: str
     target: str
     type: str
+    count: int = 1
     description: str
     created: datetime.datetime
     modified: datetime.datetime
