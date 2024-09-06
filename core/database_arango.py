@@ -493,6 +493,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             relationship = Relationship.load(neighbors[0])
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
             relationship.description = description
+            relationship.count += 1
             edge = json.loads(relationship.model_dump_json())
             edge["_id"] = neighbors[0]["_id"]
             graph.update_edge(edge)
@@ -502,6 +503,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             type=relationship_type,
             source=self.extended_id,
             target=target.extended_id,
+            count=1,
             description=description,
             created=datetime.datetime.now(datetime.timezone.utc),
             modified=datetime.datetime.now(datetime.timezone.utc),
