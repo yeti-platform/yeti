@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from core.schemas import graph
 from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
+from core.schemas.tag import MAX_TAG_LENGTH
 
 ObservableTypes = ()
 
@@ -25,8 +26,10 @@ class TagRequestMixin(BaseModel):
     @classmethod
     def validate_tags(cls, value) -> list[str]:
         for tag in value:
-            if not tag:
+            if not tag or not tag.strip():
                 raise ValueError("Tags cannot be empty")
+            if len(tag) > MAX_TAG_LENGTH:
+                raise ValueError(f"Tag {tag} exceeds max length ({MAX_TAG_LENGTH})")
         return value
 
 
