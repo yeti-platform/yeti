@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, conlist
 
 from core.schemas import graph
 from core.schemas.entity import Entity, EntityType, EntityTypes
+from core.schemas.tag import MAX_TAGS_REQUEST
 
 
 # Request schemas
@@ -10,7 +11,7 @@ class NewEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     entity: EntityTypes = Field(discriminator="type")
-    tags: list[str] = []
+    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
 
 
 class PatchEntityRequest(BaseModel):
@@ -41,7 +42,7 @@ class EntityTagRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     ids: list[str]
-    tags: list[str]
+    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
     strict: bool = False
 
 

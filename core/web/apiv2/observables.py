@@ -1,11 +1,11 @@
-from typing import Iterable
+from typing import Annotated, Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.schemas import graph
 from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
-from core.schemas.tag import MAX_TAG_LENGTH
+from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
 
 ObservableTypes = ()
 
@@ -20,7 +20,7 @@ for key in TYPE_MAPPING:
 
 
 class TagRequestMixin(BaseModel):
-    tags: list[str] = []
+    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
 
     @field_validator("tags")
     @classmethod

@@ -12,6 +12,7 @@ from core.schemas.model import YetiModel
 DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
 
 MAX_TAG_LENGTH = 50
+MAX_TAGS_REQUEST = 50
 
 
 def future():
