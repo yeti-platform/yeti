@@ -243,6 +243,20 @@ class ObservableTest(unittest.TestCase):
             data,
         )
 
+    def test_create_observable_toomany_tags(self):
+        many_tags = [str(i) for i in range(200)]
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": many_tags},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertEqual(
+            data["detail"][0]["msg"],
+            "List should have at most 50 items after validation, not 200",
+            data,
+        )
+
     def test_create_extended_observable(self):
         response = client.post(
             "/api/v2/observables/extended",

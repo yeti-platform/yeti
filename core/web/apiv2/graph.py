@@ -3,12 +3,13 @@ from enum import Enum
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, ValidationInfo, model_validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, conlist, model_validator
 from pydantic.functional_validators import field_validator
 
 from core.schemas import dfiq, entity, graph, indicator, observable, tag
 from core.schemas.graph import GraphFilter
 from core.schemas.observable import ObservableType
+from core.schemas.tag import MAX_TAGS_REQUEST
 
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
@@ -213,7 +214,7 @@ async def delete(relationship_id: str) -> None:
 
 class AnalysisRequest(BaseModel):
     observables: list[str]
-    add_tags: list[str] = []
+    add_tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
     regex_match: bool = False
     add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, conlist
 
 from core.schemas import graph
 from core.schemas.indicator import (
@@ -8,6 +8,7 @@ from core.schemas.indicator import (
     IndicatorType,
     IndicatorTypes,
 )
+from core.schemas.tag import MAX_TAGS_REQUEST
 
 
 # Request schemas
@@ -45,7 +46,7 @@ class IndicatorTagRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     ids: list[str]
-    tags: list[str]
+    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
     strict: bool = False
 
 
