@@ -11,6 +11,8 @@ from core.schemas.model import YetiModel
 
 DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
 
+MAX_TAG_LENGTH = 50
+
 
 def future():
     return DEFAULT_EXPIRATION
@@ -30,7 +32,7 @@ class Tag(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tags"
     _type_filter: ClassVar[str | None] = None
 
-    name: str
+    name: str = Field(max_length=MAX_TAG_LENGTH)
     count: int = 0
     created: datetime.datetime = Field(default_factory=now)
     default_expiration: datetime.timedelta = DEFAULT_EXPIRATION

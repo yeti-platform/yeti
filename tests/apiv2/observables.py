@@ -220,6 +220,29 @@ class ObservableTest(unittest.TestCase):
             data["detail"][0]["msg"], "Value error, Tags cannot be empty", data
         )
 
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": [" "]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertEqual(
+            data["detail"][0]["msg"], "Value error, Tags cannot be empty", data
+        )
+
+    def test_create_observable_toolong_tag(self):
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "a" * 200]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertEqual(
+            data["detail"][0]["msg"],
+            f"Value error, Tag {'a'*200} exceeds max length (50)",
+            data,
+        )
+
     def test_create_extended_observable(self):
         response = client.post(
             "/api/v2/observables/extended",
