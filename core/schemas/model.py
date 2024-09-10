@@ -4,6 +4,7 @@ from core.schemas.graph import TagRelationship
 
 
 class YetiModel(BaseModel):
+    _exclude_overwrite: list[str] = list()
     __id: str | None = None
 
     def __init__(self, **data):
