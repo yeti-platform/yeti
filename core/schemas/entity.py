@@ -27,6 +27,7 @@ class EntityType(str, Enum):
 
 
 class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
+    _exclude_overwrite: list[str] = ["related_observables_count"]
     _collection_name: ClassVar[str] = "entities"
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["entity"] = "entity"

@@ -17,6 +17,7 @@ class GraphFilter(BaseModel):
 # Relationship and TagRelationship do not inherit from YetiModel
 # because they represent and id in the form of collection_name/id
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
+    _exclude_overwrite: list[str] = list()
     _collection_name: ClassVar[str] = "links"
     _type_filter: ClassVar[str | None] = None
     __id: str | None = None
@@ -44,6 +45,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
 
 
 class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
+    _exclude_overwrite: list[str] = list()
     _collection_name: ClassVar[str] = "tagged"
     _type_filter: None = None
     __id: str | None = None

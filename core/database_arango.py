@@ -250,25 +250,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           The created Yeti object.
         """
-        doc_dict = self.model_dump(
-            exclude_unset=True, exclude=["tags", "related_observables_count"]
-        )
+        exclude = ["tags"] + self._exclude_overwrite
+        doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
         if doc_dict.get("id") is not None:
-            result = self._update(
-                self.model_dump_json(exclude=["tags", "related_observables_count"])
-            )
+            exclude = ["tags"] + self._exclude_overwrite
+            result = self._update(self.model_dump_json(exclude=exclude))
         else:
-            result = self._insert(
-                self.model_dump_json(
-                    exclude=["tags", "id", "related_observables_count"]
-                )
-            )
+            exclude = ["tags", "id"] + self._exclude_overwrite
+            result = self._insert(self.model_dump_json(exclude=exclude))
             if not result:
-                result = self._update(
-                    self.model_dump_json(
-                        exclude=exclude_overwrite + ["related_observables_count"]
-                    )
-                )
+                exclude = exclude_overwrite + self._exclude_overwrite
+                result = self._update(self.model_dump_json(exclude=exclude))
         yeti_object = self.__class__(**result)
         # TODO: Override this if we decide to implement YetiTagModel
         if hasattr(self, "tags"):
