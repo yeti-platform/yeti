@@ -16,7 +16,9 @@ for observable_file in Path(__file__).parent.glob("observables/**/*.py"):
         module_name = f"core.schemas.observables.{observable_file.stem}"
     elif observable_file.parent.stem == "private":
         module_name = f"core.schemas.observables.private.{observable_file.stem}"
-    aenum.extend_enum(observable.ObservableType, observable_file.stem, observable_file.stem)
+    aenum.extend_enum(
+        observable.ObservableType, observable_file.stem, observable_file.stem
+    )
     module = importlib.import_module(module_name)
     for _, obj in inspect.getmembers(module, inspect.isclass):
         if issubclass(obj, observable.Observable):

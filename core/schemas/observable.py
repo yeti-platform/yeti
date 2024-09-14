@@ -3,7 +3,7 @@
 import datetime
 import re
 
-#from enum import Enum, EnumMeta
+# from enum import Enum, EnumMeta
 from typing import ClassVar, Literal
 
 # Data Schema
@@ -19,6 +19,7 @@ from core.schemas.model import YetiTagModel
 
 class ObservableType(str, aenum.Enum):
     pass
+
 
 TYPE_MAPPING = {}
 
@@ -124,6 +125,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
                 del self.context[idx]
                 break
         return self.save()
+
 
 TYPE_MAPPING.update({"observable": Observable, "observables": Observable})
 
