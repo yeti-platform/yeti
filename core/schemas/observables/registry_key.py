@@ -26,13 +26,8 @@ class RegistryKey(observable.Observable):
         path_file: The filesystem path to the file that contains the registry key value.
     """
 
-    type: Literal[observable.ObservableType.registry_key] = (
-        observable.ObservableType.registry_key
-    )
+    type: observable.ObservableType = observable.ObservableType.registry_key
     key: str
     data: bytes
     hive: RegistryHive
     path_file: str | None = None
-
-
-observable.TYPE_MAPPING[observable.ObservableType.registry_key] = RegistryKey

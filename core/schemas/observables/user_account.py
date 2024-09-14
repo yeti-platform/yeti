@@ -14,9 +14,7 @@ class UserAccount(observable.Observable):
     Value should to be in the form <ACCOUNT_TYPE>:<ACCOUNT_LOGIN>.
     """
 
-    type: Literal[observable.ObservableType.user_account] = (
-        observable.ObservableType.user_account
-    )
+    type: observable.ObservableType = observable.ObservableType.user_account
     user_id: str | None = None
     credential: str | None = None
     account_login: str | None = None
@@ -40,6 +38,3 @@ class UserAccount(observable.Observable):
                     "Account created date is after account expiration date."
                 )
         return self
-
-
-observable.TYPE_MAPPING[observable.ObservableType.user_account] = UserAccount

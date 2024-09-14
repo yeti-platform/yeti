@@ -2,9 +2,13 @@
 
 import datetime
 import re
-from enum import Enum
+
+#from enum import Enum, EnumMeta
 from typing import ClassVar, Literal
 
+# Data Schema
+# Dynamically register all observable types
+import aenum
 import validators
 from pydantic import Field, computed_field
 
@@ -13,39 +17,10 @@ from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
 
 
-# Data Schema
-class ObservableType(str, Enum):
-    asn = "asn"
-    bic = "bic"
-    certificate = "certificate"
-    cidr = "cidr"
-    command_line = "command_line"
-    docker_image = "docker_image"
-    email = "email"
-    file = "file"
-    guess = "guess"
-    hostname = "hostname"
-    iban = "iban"
-    imphash = "imphash"
-    ipv4 = "ipv4"
-    ipv6 = "ipv6"
-    ja3 = "ja3"
-    jarm = "jarm"
-    mac_address = "mac_address"
-    md5 = "md5"
-    generic = "generic"
-    path = "path"
-    registry_key = "registry_key"
-    sha1 = "sha1"
-    sha256 = "sha256"
-    ssdeep = "ssdeep"
-    tlsh = "tlsh"
-    url = "url"
-    user_agent = "user_agent"
-    user_account = "user_account"
-    wallet = "wallet"
-    mutex = "mutex"
-    named_pipe = "named_pipe"
+class ObservableType(str, aenum.Enum):
+    pass
+
+TYPE_MAPPING = {}
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -150,6 +125,11 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
                 break
         return self.save()
 
+TYPE_MAPPING.update({"observable": Observable, "observables": Observable})
+
+
+TYPE_VALIDATOR_MAP = {}
+
 
 TYPE_VALIDATOR_MAP = {
     ObservableType.ipv4: validators.ipv4,
@@ -202,35 +182,35 @@ TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 # Import all observable types, as these register themselves in the TYPE_MAPPING
 # disable: pylint=wrong-import-position
 # noqa: F401, E402
-from core.schemas.observables import (
-    asn,
-    bic,
-    certificate,
-    cidr,
-    command_line,
-    docker_image,
-    email,
-    file,
-    generic_observable,
-    hostname,
-    iban,
-    imphash,
-    ipv4,
-    ipv6,
-    ja3,
-    jarm,
-    mac_address,
-    md5,
-    mutex,
-    named_pipe,
-    path,
-    registry_key,
-    sha1,
-    sha256,
-    ssdeep,
-    tlsh,
-    url,
-    user_account,
-    user_agent,
-    wallet,
-)
+# from core.schemas.observables import (
+#     asn,
+#     bic,
+#     certificate,
+#     cidr,
+#     command_line,
+#     docker_image,
+#     email,
+#     file,
+#     generic_observable,
+#     hostname,
+#     iban,
+#     imphash,
+#     ipv4,
+#     ipv6,
+#     ja3,
+#     jarm,
+#     mac_address,
+#     md5,
+#     mutex,
+#     named_pipe,
+#     path,
+#     registry_key,
+#     sha1,
+#     sha256,
+#     ssdeep,
+#     tlsh,
+#     url,
+#     user_account,
+#     user_agent,
+#     wallet,
+# )
