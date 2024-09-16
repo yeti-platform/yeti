@@ -13,7 +13,7 @@ from core.schemas.observables import (
     docker_image,
     email,
     file,
-    generic_observable,
+    generic,
     hostname,
     iban,
     imphash,
@@ -74,7 +74,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
 
     def test_create_generic_observable(self):
-        result = generic_observable.GenericObservable(value="Some_String").save()
+        result = generic.Generic(value="Some_String").save()
         self.assertIsNotNone(result.id)
         self.assertEqual(result.value, "Some_String")
         self.assertEqual(result.type, "generic")
@@ -465,10 +465,10 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_ssdeep(self) -> None:
         """Tests creating an ssdeep."""
-        observable = ssdeep.SsdeepHash(value="1234567890").save()
+        observable = ssdeep.Ssdeep(value="1234567890").save()
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "1234567890")
-        self.assertIsInstance(observable, ssdeep.SsdeepHash)
+        self.assertIsInstance(observable, ssdeep.Ssdeep)
 
     def test_create_tlsh(self) -> None:
         """Tests creating a TLSH."""
