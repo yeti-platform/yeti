@@ -4,12 +4,11 @@ import datetime
 import re
 
 # from enum import Enum, EnumMeta
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
 # Data Schema
 # Dynamically register all observable types
 import aenum
-import validators
 from pydantic import Field, computed_field
 
 from core import database_arango
@@ -20,9 +19,7 @@ from core.schemas.model import YetiTagModel
 class ObservableType(str, aenum.Enum):
     pass
 
-
 TYPE_MAPPING = {}
-
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "observables"
@@ -46,9 +43,9 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
 
-    @classmethod
-    def is_valid(cls, object: dict) -> bool:
-        return validate_observable(object)
+    @staticmethod
+    def is_valid(value: Any) -> bool:
+        return False
 
     @classmethod
     def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":  # noqa: F821
@@ -129,53 +126,8 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
 
 TYPE_MAPPING.update({"observable": Observable, "observables": Observable})
 
-
-TYPE_VALIDATOR_MAP = {}
-
-
-TYPE_VALIDATOR_MAP = {
-    ObservableType.ipv4: validators.ipv4,
-    ObservableType.ipv6: validators.ipv6,
-    ObservableType.sha256: validators.sha256,
-    ObservableType.sha1: validators.sha1,
-    ObservableType.md5: validators.md5,
-    ObservableType.hostname: validators.domain,
-    ObservableType.url: validators.url,
-    ObservableType.email: validators.email,
-    ObservableType.iban: validators.iban,
-}
-
-REGEXES_OBSERVABLES = {
-    # Unix
-    ObservableType.path: [
-        re.compile(r"^(\/[^\/\0]+)+$"),
-        re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
-    ],
-    ObservableType.bic: [re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")],
-}
-
-
-def validate_observable(obs: Observable) -> bool:
-    if obs.type in TYPE_VALIDATOR_MAP:
-        return TYPE_VALIDATOR_MAP[obs.type](obs.value) is True
-    elif obs.type in dict(REGEXES_OBSERVABLES):
-        for regex in REGEXES_OBSERVABLES[obs.type]:
-            if regex.match(obs.value):
-                return True
-        return False
-    else:
-        return False
-
-
 def find_type(value: str) -> ObservableType | None:
-    for obs_type, validator in TYPE_VALIDATOR_MAP.items():
-        if validator(value):
+    for obs_type, obj in TYPE_MAPPING.items():
+        if obj.is_valid(value):
             return obs_type
-    for obs_type, regexes in REGEXES_OBSERVABLES.items():
-        for regex in regexes:
-            if regex.match(value):
-                return obs_type
     return None
-
-
-TYPE_MAPPING = {"observable": Observable, "observables": Observable}
