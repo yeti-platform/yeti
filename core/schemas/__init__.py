@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 logger.info("Registering observable types")
 
+
 def load_observables():
     for observable_file in Path(__file__).parent.glob("observables/**/*.py"):
         if observable_file.stem == "__init__":
@@ -28,5 +29,6 @@ def load_observables():
             if issubclass(obj, observable.Observable):
                 observable.TYPE_MAPPING[observable_file.stem] = obj
     aenum.extend_enum(observable.ObservableType, "guess", "guess")
+
 
 load_observables()

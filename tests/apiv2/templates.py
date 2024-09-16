@@ -90,9 +90,9 @@ class TemplateTest(unittest.TestCase):
             },
         )
         data = response.text
-        response.headers["Content-Disposition"] = (
-            "attachment; filename=FakeTemplate.txt"
-        )
+        response.headers[
+            "Content-Disposition"
+        ] = "attachment; filename=FakeTemplate.txt"
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data, "<blah>\n1.1.1.1\n2.2.2.2\n3.3.3.3\n\n</blah>\n")
 
@@ -106,8 +106,8 @@ class TemplateTest(unittest.TestCase):
             json={"template_id": self.template.id, "search_query": "yeti"},
         )
         data = response.text
-        response.headers["Content-Disposition"] = (
-            "attachment; filename=FakeTemplate.txt"
-        )
+        response.headers[
+            "Content-Disposition"
+        ] = "attachment; filename=FakeTemplate.txt"
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data, "<blah>\nyeti1.com\nyeti2.com\nyeti3.com\n\n</blah>\n")
