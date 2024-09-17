@@ -18,13 +18,14 @@ def future():
 
 DEFAULT_INDICATOR_VALIDITY_DAYS = 30
 
+
 # forward declarations
 class IndicatorType(str, Enum):
     ...
 
+
 IndicatorTypes = ()
 TYPE_MAPPING = {}
-
 
 
 class IndicatorMatch(BaseModel):

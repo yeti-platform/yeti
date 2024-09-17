@@ -9,6 +9,7 @@ from core.schemas import entity, indicator, observable
 
 logger = logging.getLogger(__name__)
 
+
 def load_entities():
     logger.info("Registering entities")
     modules = dict()
@@ -55,7 +56,10 @@ def load_indicators():
         if indicator_file.stem not in indicator.IndicatorType.__members__:
             aenum.extend_enum(indicator.IndicatorType, indicator_file.stem, enum_value)
         modules[module_name] = enum_value
-    indicator.TYPE_MAPPING = {"indicator": indicator.Indicator, "indicators": indicator.Indicator}
+    indicator.TYPE_MAPPING = {
+        "indicator": indicator.Indicator,
+        "indicators": indicator.Indicator,
+    }
     for module_name, enum_value in modules.items():
         module = importlib.import_module(module_name)
         for _, obj in inspect.getmembers(module, inspect.isclass):
@@ -69,6 +73,7 @@ def load_indicators():
             indicator.IndicatorTypes = cls
         else:
             indicator.IndicatorTypes |= cls
+
 
 def load_observables():
     logger.info("Registering observables")
@@ -88,7 +93,10 @@ def load_observables():
         modules[module_name] = observable_file.stem
     if "guess" not in observable.ObservableType.__members__:
         aenum.extend_enum(observable.ObservableType, "guess", "guess")
-    observable.TYPE_MAPPING = {"observable": observable.Observable, "observables": observable.Observable}
+    observable.TYPE_MAPPING = {
+        "observable": observable.Observable,
+        "observables": observable.Observable,
+    }
     for module_name, enum_value in modules.items():
         module = importlib.import_module(module_name)
         for _, obj in inspect.getmembers(module, inspect.isclass):
@@ -102,6 +110,7 @@ def load_observables():
             observable.ObservableTypes = cls
         else:
             observable.ObservableTypes |= cls
+
 
 load_observables()
 load_entities()

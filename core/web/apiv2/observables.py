@@ -46,6 +46,7 @@ class PatchObservableRequest(BaseModel):
 
     observable: ObservableTypes = Field(discriminator="type")
 
+
 class NewBulkObservableAddRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

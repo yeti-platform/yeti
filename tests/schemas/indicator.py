@@ -38,7 +38,9 @@ class IndicatorTest(unittest.TestCase):
 
         self.assertEqual(len(all_entities), 1)
         self.assertEqual(len(regex_indicators), 1)
-        self.assertEqual(regex_indicators[0].model_dump_json(), regex_indicator.model_dump_json())
+        self.assertEqual(
+            regex_indicators[0].model_dump_json(), regex_indicator.model_dump_json()
+        )
 
     def test_create_indicator_same_name_diff_types(self) -> None:
         regex1 = regex.Regex(
@@ -242,7 +244,9 @@ sources:
     - blah3
 """
 
-        artifacts = forensicartifact.ForensicArtifact.from_yaml_string(pattern, update_parents=True)
+        artifacts = forensicartifact.ForensicArtifact.from_yaml_string(
+            pattern, update_parents=True
+        )
         self.assertEqual(len(artifacts), 3)
 
         vertices, _, total = artifacts[0].neighbors()

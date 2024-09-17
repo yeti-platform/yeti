@@ -19,7 +19,9 @@ class ForensicArtifact(indicator.Indicator):
     """
 
     _type_filter: ClassVar[str] = indicator.IndicatorType.forensicartifact
-    type: Literal[indicator.IndicatorType.forensicartifact] = indicator.IndicatorType.forensicartifact
+    type: Literal[
+        indicator.IndicatorType.forensicartifact
+    ] = indicator.IndicatorType.forensicartifact
 
     sources: list[dict] = []
     aliases: list[str] = []
@@ -169,7 +171,9 @@ class ForensicArtifact(indicator.Indicator):
                     regex_indicator.save()
         if create_links:
             for indicator_obj in indicators:
-                indicator_obj.link_to(self, "indicates", f"Indicates {indicator_obj.name}")
+                indicator_obj.link_to(
+                    self, "indicates", f"Indicates {indicator_obj.name}"
+                )
         return indicators
 
 
