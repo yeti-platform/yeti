@@ -1,10 +1,12 @@
+from typing import Literal
+
 import validators
 
 from core.schemas import observable
 
 
 class Hostname(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.hostname
+    type: Literal[observable.ObservableType.hostname] = observable.ObservableType.hostname
 
     @staticmethod
     def is_valid(value: str) -> bool:

@@ -4,19 +4,13 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.schemas import graph
-from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
+from core.schemas.observable import (
+    TYPE_MAPPING,
+    Observable,
+    ObservableType,
+    ObservableTypes,
+)
 from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
-
-ObservableTypes = ()
-
-for key in TYPE_MAPPING:
-    if key in ["observable", "observables"]:
-        continue
-    cls = TYPE_MAPPING[key]
-    if not ObservableTypes:
-        ObservableTypes = cls
-    else:
-        ObservableTypes |= cls
 
 
 class TagRequestMixin(BaseModel):
@@ -44,14 +38,13 @@ class NewObservableRequest(TagRequestMixin):
 class NewExtendedObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminant="type")
+    observable: ObservableTypes = Field(discriminator="type")
 
 
 class PatchObservableRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminant="type")
-
+    observable: ObservableTypes = Field(discriminator="type")
 
 class NewBulkObservableAddRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")

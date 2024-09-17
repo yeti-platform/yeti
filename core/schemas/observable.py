@@ -21,7 +21,7 @@ from core.schemas.model import YetiTagModel
 class ObservableType(str, Enum):
     ...
 
-
+ObservableTypes = ()
 TYPE_MAPPING = {}
 
 
@@ -126,10 +126,6 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
                 del self.context[idx]
                 break
         return self.save()
-
-
-TYPE_MAPPING.update({"observable": Observable, "observables": Observable})
-
 
 def find_type(value: str) -> ObservableType | None:
     for obs_type, obj in TYPE_MAPPING.items():

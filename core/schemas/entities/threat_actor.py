@@ -1,5 +1,5 @@
 import datetime
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import Field
 
@@ -9,7 +9,7 @@ from core.schemas import entity
 
 class ThreatActor(entity.Entity):
     _type_filter: ClassVar[str] = entity.EntityType.threat_actor
-    type: entity.EntityType = entity.EntityType.threat_actor
+    type: Literal[entity.EntityType.threat_actor] = entity.EntityType.threat_actor
 
     threat_actor_types: list[str] = []
     aliases: list[str] = []

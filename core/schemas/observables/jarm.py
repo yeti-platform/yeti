@@ -1,5 +1,7 @@
+from typing import Literal
+
 from core.schemas import observable
 
 
 class JARM(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.jarm
+    type: Literal[observable.ObservableType.jarm] = observable.ObservableType.jarm

@@ -3,11 +3,11 @@ from pydantic import BaseModel, ConfigDict, Field, conlist
 
 from core.schemas import graph
 from core.schemas.indicator import (
-    ForensicArtifact,
     Indicator,
     IndicatorType,
     IndicatorTypes,
 )
+from core.schemas.indicators import forensicartifact
 from core.schemas.tag import MAX_TAGS_REQUEST
 
 
@@ -79,7 +79,7 @@ async def patch(request: PatchIndicatorRequest, indicator_id) -> IndicatorTypes:
 
     if db_indicator.type == IndicatorType.forensicartifact:
         if db_indicator.pattern != request.indicator.pattern:
-            return ForensicArtifact.from_yaml_string(request.indicator.pattern)[0]
+            return forensicartifact.ForensicArtifact.from_yaml_string(request.indicator.pattern)[0]
 
     update_data = request.indicator.model_dump(exclude_unset=True)
     updated_indicator = db_indicator.model_copy(update=update_data)

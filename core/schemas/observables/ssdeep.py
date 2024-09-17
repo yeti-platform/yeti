@@ -1,5 +1,7 @@
+from typing import Literal
+
 from core.schemas import observable
 
 
 class Ssdeep(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.ssdeep
+    type: Literal[observable.ObservableType.ssdeep] = observable.ObservableType.ssdeep

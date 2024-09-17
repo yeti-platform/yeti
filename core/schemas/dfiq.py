@@ -14,6 +14,7 @@ from core import database_arango
 from core.config.config import yeti_config
 from core.helpers import now
 from core.schemas import indicator
+from core.schemas.indicators import forensicartifact, query
 from core.schemas.model import YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
@@ -98,7 +99,7 @@ def extract_indicators(question: "DFIQQuestion") -> None:
                 continue
 
             if step.type in ("ForensicArtifact", "artifact"):
-                artifact = indicator.ForensicArtifact.find(name=step.value)
+                artifact = forensicartifact.ForensicArtifact.find(name=step.value)
                 if not artifact:
                     logging.warning(
                         "Missing artifact %s in %s", step.value, question.dfiq_id
@@ -108,9 +109,9 @@ def extract_indicators(question: "DFIQQuestion") -> None:
                 continue
 
             elif step.type and step.value and "query" in step.type:
-                query = indicator.Query.find(pattern=step.value)
-                if not query:
-                    query = indicator.Query(
+                query_indicator = query.Query.find(pattern=step.value)
+                if not query_indicator:
+                    query_indicator = query.Query(
                         name=f"{step.name} ({step.type})",
                         description=step.description or "",
                         pattern=step.value,
@@ -119,7 +120,7 @@ def extract_indicators(question: "DFIQQuestion") -> None:
                         location=step.type,
                         diamond=indicator.DiamondModel.victim,
                     ).save()
-                question.link_to(query, "query", "Uses query")
+                question.link_to(query_indicator, "query", "Uses query")
 
             else:
                 logging.warning(

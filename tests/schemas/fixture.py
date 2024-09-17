@@ -2,7 +2,8 @@ import unittest
 
 from core import database_arango
 from core.schemas.entities import investigation, malware, threat_actor
-from core.schemas.indicator import DiamondModel, Query, Regex
+from core.schemas.indicator import DiamondModel
+from core.schemas.indicators import query, regex
 from core.schemas.observables import (
     bic,
     generic,
@@ -61,18 +62,18 @@ class FixtureTest(unittest.TestCase):
         ta.tag(["Hack!ré T@ëst"])
         ta.link_to(hacker, "uses", "Uses domain")
 
-        regex = Regex(
+        regex_indicator = regex.Regex(
             name="hex",
             pattern="/tmp/[0-9a-f]",
             location="bodyfile",
             diamond=DiamondModel.capability,
         ).save()
-        regex.link_to(hacker, "indicates", "Domain dropped by this regex")
+        regex_indicator.link_to(hacker, "indicates", "Domain dropped by this regex")
         xmrig = malware.Malware(name="xmrig").save()
         xmrig.tag(["xmrig"])
-        regex.link_to(xmrig, "indicates", "Usual name for dropped binary")
+        regex_indicator.link_to(xmrig, "indicates", "Usual name for dropped binary")
 
-        Query(
+        query.Query(
             name="ssh succesful logins",
             location="syslogs",
             diamond=DiamondModel.capability,

@@ -1,5 +1,7 @@
+from typing import Literal
+
 from core.schemas import observable
 
 
 class Mutex(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.mutex
+    type: Literal[observable.ObservableType.mutex] = observable.ObservableType.mutex

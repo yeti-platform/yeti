@@ -1,4 +1,5 @@
 import re
+from typing import Literal
 
 from core.schemas import observable
 
@@ -13,7 +14,7 @@ def path_validator(value):
 
 
 class Path(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.path
+    type: Literal[observable.ObservableType.path] = observable.ObservableType.path
 
     @staticmethod
     def is_valid(value: str) -> bool:

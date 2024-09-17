@@ -111,7 +111,7 @@ class GraphSearchResponse(BaseModel):
         | entity.EntityTypes
         | indicator.IndicatorTypes
         | tag.Tag
-        | dfiq.DFIQTypes,
+        | dfiq.DFIQTypes
     ]
     paths: list[list[graph.Relationship | graph.TagRelationship]]
     total: int

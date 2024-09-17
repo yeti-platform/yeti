@@ -1,10 +1,12 @@
+from typing import Literal
+
 import validators
 
 from core.schemas import observable
 
 
 class MD5(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.md5
+    type: Literal[observable.ObservableType.md5] = observable.ObservableType.md5
 
     @staticmethod
     def is_valid(value: str) -> bool:

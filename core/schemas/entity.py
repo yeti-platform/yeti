@@ -79,6 +79,3 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
             context["source"] = source
             self.context.append(context)
         return self.save()
-
-
-TYPE_MAPPING.update({"entities": Entity, "entity": Entity})

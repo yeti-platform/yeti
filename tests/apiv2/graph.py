@@ -7,7 +7,8 @@ from fastapi.testclient import TestClient
 from core import database_arango
 from core.schemas.entities import attack_pattern, malware, threat_actor
 from core.schemas.graph import Relationship
-from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
+from core.schemas.indicator import DiamondModel
+from core.schemas.indicators import forensicartifact, query, regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -28,7 +29,7 @@ class SimpleGraphTest(unittest.TestCase):
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.entity1 = threat_actor.ThreatActor(name="actor0").save()
-        self.indicator1 = Query(
+        self.indicator1 = query.Query(
             name="query1",
             query_type="opensearch",
             target_systems=["system1"],
@@ -378,7 +379,7 @@ class ComplexGraphTest(unittest.TestCase):
         self.observable2 = hostname.Hostname(value="test2.com").save()
         self.observable3 = url.Url(value="http://test1.com/admin").save()
         self.entity1 = threat_actor.ThreatActor(name="tester").save()
-        self.indicator1 = Regex(
+        self.indicator1 = regex.Regex(
             name="test c2",
             pattern="test[0-9].com",
             location="network",
@@ -580,7 +581,7 @@ class GraphTraversalTest(unittest.TestCase):
 
         self.persistence = attack_pattern.AttackPattern(name="persistence").save()
         self.persistence.tag(["triage"])
-        self.persistence_artifact = ForensicArtifact.from_yaml_string(
+        self.persistence_artifact = forensicartifact.ForensicArtifact.from_yaml_string(
             """doc: Crontab files.
 name: LinuxCronTabs
 sources:

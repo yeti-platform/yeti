@@ -1,13 +1,8 @@
 import unittest
 
 from core import database_arango
-from core.schemas.indicator import (
-    DiamondModel,
-    ForensicArtifact,
-    Indicator,
-    Query,
-    Regex,
-)
+from core.schemas.indicator import DiamondModel, Indicator
+from core.schemas.indicators import forensicartifact, query, regex
 
 
 class IndicatorTest(unittest.TestCase):
@@ -19,7 +14,7 @@ class IndicatorTest(unittest.TestCase):
         database_arango.db.clear()
 
     def test_create_indicator(self) -> None:
-        result = Regex(
+        result = regex.Regex(
             name="regex1",
             pattern="asd",
             location="any",
@@ -31,7 +26,7 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(result.type, "regex")
 
     def test_filter_entities_different_types(self) -> None:
-        regex = Regex(
+        regex_indicator = regex.Regex(
             name="regex1",
             pattern="asd",
             location="any",
@@ -39,53 +34,53 @@ class IndicatorTest(unittest.TestCase):
         ).save()
 
         all_entities = list(Indicator.list())
-        regex_entities = list(Regex.list())
+        regex_indicators = list(regex.Regex.list())
 
         self.assertEqual(len(all_entities), 1)
-        self.assertEqual(len(regex_entities), 1)
-        self.assertEqual(regex_entities[0].model_dump_json(), regex.model_dump_json())
+        self.assertEqual(len(regex_indicators), 1)
+        self.assertEqual(regex_indicators[0].model_dump_json(), regex_indicator.model_dump_json())
 
     def test_create_indicator_same_name_diff_types(self) -> None:
-        regex = Regex(
+        regex1 = regex.Regex(
             name="persistence1",
             pattern="asd",
             location="any",
             diamond=DiamondModel.capability,
         ).save()
-        regex2 = Query(
+        regex2 = query.Query(
             name="persistence1",
             pattern="asd",
             location="any",
             query_type="query",
             diamond=DiamondModel.capability,
         ).save()
-        self.assertNotEqual(regex.id, regex2.id)
-        r = Regex.find(name="persistence1")
-        q = Query.find(name="persistence1")
+        self.assertNotEqual(regex1.id, regex2.id)
+        r = regex.Regex.find(name="persistence1")
+        q = query.Query.find(name="persistence1")
         self.assertNotEqual(r.id, q.id)
 
     def test_regex_match(self) -> None:
-        regex = Regex(
+        regex_indicator = regex.Regex(
             name="regex1",
             pattern="Ba+dString",
             location="any",
             diamond=DiamondModel.capability,
         ).save()
 
-        result = regex.match("ThisIsAReallyBaaaadStringIsntIt")
+        result = regex_indicator.match("ThisIsAReallyBaaaadStringIsntIt")
         assert result is not None
         self.assertIsNotNone(result)
         self.assertEqual(result.name, "regex1")
         self.assertEqual(result.match, "BaaaadString")
 
     def test_regex_nomatch(self) -> None:
-        regex = Regex(
+        regex_indicator = regex.Regex(
             name="regex1",
             pattern="Blah",
             location="any",
             diamond=DiamondModel.capability,
         ).save()
-        result = regex.match("ThisIsAReallyBaaaadStringIsntIt")
+        result = regex_indicator.match("ThisIsAReallyBaaaadStringIsntIt")
         self.assertIsNone(result)
 
     def test_forensics_artifacts_indicator_extraction_file(self) -> None:
@@ -108,7 +103,7 @@ class IndicatorTest(unittest.TestCase):
         - Darwin
         - Linux"""
 
-        artifacts = ForensicArtifact.from_yaml_string(pattern)
+        artifacts = forensicartifact.ForensicArtifact.from_yaml_string(pattern)
         db_artifact = artifacts[0]
         self.assertIsNotNone(db_artifact.id)
         self.assertIsNotNone(db_artifact.created)
@@ -173,7 +168,7 @@ sources:
 supported_os:
 - Windows"""
 
-        artifacts = ForensicArtifact.from_yaml_string(pattern)
+        artifacts = forensicartifact.ForensicArtifact.from_yaml_string(pattern)
         db_artifact = artifacts[0]
         self.assertIsNotNone(db_artifact.id)
         self.assertIsNotNone(db_artifact.created)
@@ -247,7 +242,7 @@ sources:
     - blah3
 """
 
-        artifacts = ForensicArtifact.from_yaml_string(pattern, update_parents=True)
+        artifacts = forensicartifact.ForensicArtifact.from_yaml_string(pattern, update_parents=True)
         self.assertEqual(len(artifacts), 3)
 
         vertices, _, total = artifacts[0].neighbors()

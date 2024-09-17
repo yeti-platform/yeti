@@ -1,5 +1,5 @@
 import datetime
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import Field
 
@@ -9,7 +9,7 @@ from core.schemas import entity
 
 class IntrusionSet(entity.Entity):
     _type_filter: ClassVar[str] = entity.EntityType.intrusion_set
-    type: entity.EntityType = entity.EntityType.intrusion_set
+    type: Literal[entity.EntityType.intrusion_set] = entity.EntityType.intrusion_set
 
     aliases: list[str] = []
     first_seen: datetime.datetime = Field(default_factory=now)

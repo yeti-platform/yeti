@@ -1,10 +1,12 @@
+from typing import Literal
+
 import validators
 
 from core.schemas import observable
 
 
 class SHA1(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.sha1
+    type: Literal[observable.ObservableType.sha1] = observable.ObservableType.sha1
 
     @staticmethod
     def is_valid(value: str) -> bool:

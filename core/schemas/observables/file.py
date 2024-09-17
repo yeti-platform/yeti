@@ -1,3 +1,5 @@
+from typing import Literal
+
 from core.schemas import observable
 
 
@@ -8,7 +10,7 @@ class File(observable.Observable):
     Value should to be in the form FILE:<HASH>.
     """
 
-    type: observable.ObservableType = observable.ObservableType.file
+    type: Literal[observable.ObservableType.file] = observable.ObservableType.file
     name: str | None = None
     size: int | None = None
     sha256: str | None = None

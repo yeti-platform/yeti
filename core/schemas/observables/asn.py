@@ -1,7 +1,9 @@
+from typing import Literal
+
 from core.schemas import observable
 
 
 class ASN(observable.Observable):
-    type: observable.ObservableType = observable.ObservableType.asn
+    type: Literal[observable.ObservableType.asn] = observable.ObservableType.asn
     country: str | None = None
     description: str | None = None
