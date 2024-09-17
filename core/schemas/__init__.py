@@ -27,7 +27,8 @@ def load_observables():
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, observable.Observable):
                 observable.TYPE_MAPPING[observable_file.stem] = obj
-    aenum.extend_enum(observable.ObservableType, "guess", "guess")
+    if "guess" not in observable.ObservableType.__members__:
+        aenum.extend_enum(observable.ObservableType, "guess", "guess")
 
 
 def load_entities():
