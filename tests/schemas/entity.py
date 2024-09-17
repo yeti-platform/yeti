@@ -3,14 +3,14 @@ import unittest
 
 from core import database_arango
 from core.schemas import tag
-from core.schemas.entity import (
-    AttackPattern,
-    Entity,
-    Malware,
-    ThreatActor,
-    Tool,
-    Vulnerability,
+from core.schemas.entities import (
+    attack_pattern,
+    malware,
+    threat_actor,
+    tool,
+    vulnerability,
 )
+from core.schemas.entity import Entity
 from core.schemas.observables import hostname
 
 
@@ -18,18 +18,18 @@ class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
-        self.ta1 = ThreatActor(name="APT123", aliases=["CrazyFrog"]).save()
-        self.vuln1 = Vulnerability(name="CVE-2018-1337", title="elite exploit").save()
-        self.malware1 = Malware(
+        self.ta1 = threat_actor.ThreatActor(name="APT123", aliases=["CrazyFrog"]).save()
+        self.vuln1 = vulnerability.Vulnerability(name="CVE-2018-1337", title="elite exploit").save()
+        self.malware1 = malware.Malware(
             name="zeus", created=datetime.datetime(2020, 1, 1)
         ).save()
-        self.tool1 = Tool(name="mimikatz").save()
+        self.tool1 = tool.Tool(name="mimikatz").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
 
     def test_create_entity(self) -> None:
-        result = ThreatActor(name="APT0").save()
+        result = threat_actor.ThreatActor(name="APT0").save()
         self.assertIsNotNone(result.id)
         self.assertIsNotNone(result.created)
         self.assertEqual(result.name, "APT0")
@@ -41,11 +41,11 @@ class EntityTest(unittest.TestCase):
         result = Entity.get(self.ta1.id)
         assert result is not None
         self.assertIsNotNone(result)
-        self.assertIsInstance(result, ThreatActor)
+        self.assertIsInstance(result, threat_actor.ThreatActor)
         self.assertEqual(result.type, "threat-actor")
 
     def test_attack_pattern(self) -> None:
-        result = AttackPattern(
+        result = attack_pattern.AttackPattern(
             name="Abuse Elevation Control Mechanism",
             aliases=["T1548"],
             kill_chain_phases=["mitre-attack:Privilege Escalation"],
@@ -57,19 +57,19 @@ class EntityTest(unittest.TestCase):
         self.assertIn("T1548", result.aliases)
 
     def test_entity_dupe_name_type(self) -> None:
-        oldm = Malware(name="APT123").save()
-        ta = ThreatActor.find(name="APT123")
-        m = Malware.find(name="APT123")
+        oldm = malware.Malware(name="APT123").save()
+        ta = threat_actor.ThreatActor.find(name="APT123")
+        m = malware.Malware.find(name="APT123")
         self.assertEqual(ta.id, self.ta1.id)
         self.assertEqual(m.id, oldm.id)
-        self.assertIsInstance(m, Malware)
-        self.assertIsInstance(ta, ThreatActor)
+        self.assertIsInstance(m, malware.Malware)
+        self.assertIsInstance(ta, threat_actor.ThreatActor)
 
     def test_list_entities(self) -> None:
         all_entities = list(Entity.list())
-        threat_actor_entities = list(ThreatActor.list())
-        tool_entities = list(Tool.list())
-        malware_entities = list(Malware.list())
+        threat_actor_entities = list(threat_actor.ThreatActor.list())
+        tool_entities = list(tool.Tool.list())
+        malware_entities = list(malware.Malware.list())
 
         self.assertEqual(len(all_entities), 4)
 
@@ -122,7 +122,7 @@ class EntityTest(unittest.TestCase):
         self.assertNotIn(self.malware1, entities)
 
     def test_entity_with_tags(self):
-        entity = ThreatActor(name="APT0").save()
+        entity = threat_actor.ThreatActor(name="APT0").save()
         entity.tag(["tag1", "tag2"])
         observable = hostname.Hostname(value="doman.com").save()
 
@@ -145,13 +145,13 @@ class EntityTest(unittest.TestCase):
 
     def test_duplicate_name(self):
         """Tests that saving an entity with an existing name will return the existing entity."""
-        ta = ThreatActor(name="APT123").save()
+        ta = threat_actor.ThreatActor(name="APT123").save()
         self.assertEqual(ta.id, self.ta1.id)
 
     def test_entity_duplicate_name(self):
         """Tests that two entities of different types can have the same name."""
-        psexec_tool = Tool(name="psexec").save()
-        psexec_ap = AttackPattern(name="psexec").save()
+        psexec_tool = tool.Tool(name="psexec").save()
+        psexec_ap = attack_pattern.AttackPattern(name="psexec").save()
         self.assertNotEqual(psexec_tool.id, psexec_ap.id)
         self.assertEqual(psexec_tool.type, "tool")
         self.assertEqual(psexec_ap.type, "attack-pattern")
@@ -159,12 +159,12 @@ class EntityTest(unittest.TestCase):
     def test_no_empty_name(self):
         """Tests that an entity with an empty name cannot be saved."""
         with self.assertRaises(ValueError):
-            ThreatActor(name="").save()
+            threat_actor.ThreatActor(name="").save()
 
     def test_bad_cve_name(self):
-        vulnerability = Vulnerability(name="1337-4242").save()
-        self.assertEqual(Vulnerability.is_valid(vulnerability), False)
+        vuln = vulnerability.Vulnerability(name="1337-4242").save()
+        self.assertEqual(vulnerability.Vulnerability.is_valid(vuln), False)
 
     def test_correct_cve_name(self):
-        vulnerability = Vulnerability(name="CVE-1337-4242").save()
-        self.assertEqual(Vulnerability.is_valid(vulnerability), True)
+        vuln = vulnerability.Vulnerability(name="CVE-1337-4242").save()
+        self.assertEqual(vulnerability.Vulnerability.is_valid(vuln), True)

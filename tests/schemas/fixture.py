@@ -1,7 +1,7 @@
 import unittest
 
 from core import database_arango
-from core.schemas.entity import Investigation, Malware, ThreatActor
+from core.schemas.entities import investigation, malware, threat_actor
 from core.schemas.indicator import DiamondModel, Query, Regex
 from core.schemas.observables import (
     bic,
@@ -57,7 +57,7 @@ class FixtureTest(unittest.TestCase):
         ibantest.link_to(bictest, "bic", "BIC")
         ibantest.tag(["example"])
 
-        ta = ThreatActor(name="HackerActor").save()
+        ta = threat_actor.ThreatActor(name="HackerActor").save()
         ta.tag(["Hack!ré T@ëst"])
         ta.link_to(hacker, "uses", "Uses domain")
 
@@ -68,7 +68,7 @@ class FixtureTest(unittest.TestCase):
             diamond=DiamondModel.capability,
         ).save()
         regex.link_to(hacker, "indicates", "Domain dropped by this regex")
-        xmrig = Malware(name="xmrig").save()
+        xmrig = malware.Malware(name="xmrig").save()
         xmrig.tag(["xmrig"])
         regex.link_to(xmrig, "indicates", "Usual name for dropped binary")
 
@@ -81,7 +81,7 @@ class FixtureTest(unittest.TestCase):
             target_systems=["timesketch", "plaso"],
             relevant_tags=["ssh", "login"],
         ).save()
-        i = Investigation(
+        i = investigation.Investigation(
             name="coin mining case",
             reference="http://timesketch-server/sketch/12345",
             relevant_tags=["coin", "mining"],
