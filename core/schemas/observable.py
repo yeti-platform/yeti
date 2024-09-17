@@ -3,12 +3,13 @@
 import datetime
 import re
 
+# Data Schema
+# Dynamically register all observable types
+from enum import Enum
+
 # from enum import Enum, EnumMeta
 from typing import Any, ClassVar, Literal
 
-# Data Schema
-# Dynamically register all observable types
-import aenum
 from pydantic import Field, computed_field
 
 from core import database_arango
@@ -16,12 +17,9 @@ from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
 
 
-class ObservableType(str, aenum.Enum):
-    pass
-
-
+# forward declarations
+class ObservableType(str, Enum): ...
 TYPE_MAPPING = {}
-
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "observables"
