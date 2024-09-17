@@ -1,3 +1,4 @@
 *
 !.gitignore
 !README.md
+!__init__.py
