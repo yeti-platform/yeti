@@ -1,7 +1,6 @@
 import datetime
-import re
 from enum import Enum
-from typing import Annotated, ClassVar, Literal, Type, Union
+from typing import ClassVar, Literal
 
 from pydantic import Field, computed_field
 
@@ -10,50 +9,10 @@ from core.helpers import now
 from core.schemas.model import YetiTagModel
 
 
-class EntityType(str, Enum):
-    pass
-
-TYPE_MAPPING = {}
-
+# forward declarations
+class EntityType(str, Enum): ...
 EntityTypes = ()
-
-# EntityTypes = Annotated[
-#     Union[
-#         AttackPattern,
-#         Campaign,
-#         Company,
-#         CourseOfAction,
-#         Identity,
-#         IntrusionSet,
-#         Investigation,
-#         Malware,
-#         Note,
-#         Phone,
-#         ThreatActor,
-#         Tool,
-#         Vulnerability,
-#     ],
-#     Field(discriminator="type"),
-# ]
-
-
-EntityClasses = (
-    # Type[AttackPattern]
-    # | Type[Campaign]
-    # | Type[Company]
-    # | Type[CourseOfAction]
-    # | Type[Identity]
-    # | Type[IntrusionSet]
-    # | Type[Investigation]
-    # | Type[Malware]
-    # | Type[Note]
-    # | Type[Phone]
-    # | Type[ThreatActor]
-    # | Type[Tool]
-    # | Type[Vulnerability]
-)
-
-
+TYPE_MAPPING = {}
 
 class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     _exclude_overwrite: list[str] = ["related_observables_count"]
