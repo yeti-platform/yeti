@@ -6,7 +6,7 @@ from timesketch_api_client import client
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import observable, task
-from core.schemas.entity import Investigation
+from core.schemas.entities.investigation import Investigation
 from core.schemas.observables import hostname, ipv4, md5, path, sha1, sha256, url
 
 TIMESKETCH_TYPE_MAPPING = {

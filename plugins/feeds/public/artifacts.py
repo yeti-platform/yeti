@@ -9,7 +9,8 @@ from zipfile import ZipFile
 from artifacts.scripts import validator
 
 from core import taskmanager
-from core.schemas import indicator, task
+from core.schemas import task
+from core.schemas.indicators.forensicartifact import ForensicArtifact
 
 
 class ForensicArtifacts(task.FeedTask):
@@ -47,7 +48,7 @@ class ForensicArtifacts(task.FeedTask):
             with open(file, "r") as f:
                 yaml_string = f.read()
 
-            forensic_indicators = indicator.ForensicArtifact.from_yaml_string(
+            forensic_indicators = ForensicArtifact.from_yaml_string(
                 yaml_string, update_parents=False
             )
             for fi in forensic_indicators:

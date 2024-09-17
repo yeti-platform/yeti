@@ -3,7 +3,9 @@ from datetime import timedelta
 from typing import ClassVar
 
 from core import taskmanager
-from core.schemas import entity, task
+from core.schemas import task
+from core.schemas.entities.intrusion_set import IntrusionSet
+from core.schemas.entities.malware import Malware
 
 
 class MalpediaMalware(task.FeedTask):
@@ -14,9 +16,9 @@ class MalpediaMalware(task.FeedTask):
         "source": "https://malpedia.caad.fkie.fraunhofer.de/",
     }
 
-    _SOURCE: ClassVar["str"] = (
-        "https://malpedia.caad.fkie.fraunhofer.de/api/get/families"
-    )
+    _SOURCE: ClassVar[
+        "str"
+    ] = "https://malpedia.caad.fkie.fraunhofer.de/api/get/families"
 
     def run(self):
         response = self._make_request(self._SOURCE)
@@ -32,9 +34,9 @@ class MalpediaMalware(task.FeedTask):
         if not entry.get("common_name"):
             return
 
-        m = entity.Malware.find(name=entry["common_name"])
+        m = Malware.find(name=entry["common_name"])
         if not m:
-            m = entity.Malware(name=entry["common_name"])
+            m = Malware(name=entry["common_name"])
 
         m.aliases = entry.get("aliases", [])
         refs = entry.get("urls", [])
@@ -48,9 +50,9 @@ class MalpediaMalware(task.FeedTask):
         m.add_context(context["source"], context)
         attributions = entry.get("attribution", [])
         for attribution in attributions:
-            intrusion_set = entity.IntrusionSet.find(name=attribution)
+            intrusion_set = IntrusionSet.find(name=attribution)
             if not intrusion_set:
-                intrusion_set = entity.IntrusionSet(name=attribution).save()
+                intrusion_set = IntrusionSet(name=attribution).save()
             intrusion_set.link_to(m, "uses", "Malpedia")
 
         tags = []
@@ -80,9 +82,9 @@ class MalpediaActors(task.FeedTask):
             self.analyze_entry(actor_name, entry)
 
     def analyze_entry(self, actor_name: str, entry: dict):
-        intrusion_set = entity.IntrusionSet.find(name=entry["value"])
+        intrusion_set = IntrusionSet.find(name=entry["value"])
         if not intrusion_set:
-            intrusion_set = entity.IntrusionSet(name=entry["value"])
+            intrusion_set = IntrusionSet(name=entry["value"])
 
         refs = entry.get("meta", {}).get("refs", [])
         context = {

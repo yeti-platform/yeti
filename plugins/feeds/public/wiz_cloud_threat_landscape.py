@@ -7,7 +7,10 @@ import requests
 
 from core import taskmanager
 from core.schemas import task
-from core.schemas.entity import AttackPattern, Campaign, IntrusionSet, Tool
+from core.schemas.entities.attack_pattern import AttackPattern
+from core.schemas.entities.campaign import Campaign
+from core.schemas.entities.intrusion_set import IntrusionSet
+from core.schemas.entities.tool import Tool
 
 VALUE_PROPERTIES = [
     "tags",

@@ -8,6 +8,7 @@ import yara
 
 from core import taskmanager
 from core.schemas import indicator, task
+from core.schemas.indicators.yara import Yara
 
 
 class YARAify(task.FeedTask):
@@ -18,9 +19,9 @@ class YARAify(task.FeedTask):
         "source": "",
     }
 
-    _SOURCE_ALL_RULES: ClassVar["str"] = (
-        "https://yaraify.abuse.ch/yarahub/yaraify-rules.zip"
-    )
+    _SOURCE_ALL_RULES: ClassVar[
+        "str"
+    ] = "https://yaraify.abuse.ch/yarahub/yaraify-rules.zip"
 
     def run(self):
         response = self._make_request(self._SOURCE_ALL_RULES)
@@ -40,7 +41,7 @@ class YARAify(task.FeedTask):
             logging.error(f"Error compiling yara rule: {e}")
             return
         for r in yara_rules:
-            ind_obj = indicator.Yara(
+            ind_obj = Yara(
                 name=f"{r.identifier}",
                 pattern=entry,
                 diamond=indicator.DiamondModel.capability,
