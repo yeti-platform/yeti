@@ -10,14 +10,14 @@ from core.schemas.tag import MAX_TAGS_REQUEST
 class NewEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entity: EntityTypes = Field(discriminator="type")
+    entity: EntityTypes
     tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
 
 
 class PatchEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entity: EntityTypes = Field(discriminator="type")
+    entity: EntityTypes
 
 
 class EntitySearchRequest(BaseModel):
