@@ -18,8 +18,12 @@ from core.schemas.model import YetiTagModel
 
 
 # forward declarations
-class ObservableType(str, Enum): ...
+class ObservableType(str, Enum):
+    ...
+
+
 TYPE_MAPPING = {}
+
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "observables"

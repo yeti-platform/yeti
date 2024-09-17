@@ -19,7 +19,9 @@ class EntityTest(unittest.TestCase):
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
         self.ta1 = threat_actor.ThreatActor(name="APT123", aliases=["CrazyFrog"]).save()
-        self.vuln1 = vulnerability.Vulnerability(name="CVE-2018-1337", title="elite exploit").save()
+        self.vuln1 = vulnerability.Vulnerability(
+            name="CVE-2018-1337", title="elite exploit"
+        ).save()
         self.malware1 = malware.Malware(
             name="zeus", created=datetime.datetime(2020, 1, 1)
         ).save()

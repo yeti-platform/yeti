@@ -9,6 +9,7 @@ from core.schemas import entity, observable
 
 logger = logging.getLogger(__name__)
 
+
 def load_observables():
     logger.info("Registering observable types")
     for observable_file in Path(__file__).parent.glob("observables/**/*.py"):
@@ -43,9 +44,7 @@ def load_entities():
             module_name = f"core.schemas.entities.private.{entity_file.stem}"
         enum_value = entity_file.stem.replace("_", "-")
         if entity_file.stem not in entity.EntityType.__members__:
-            aenum.extend_enum(
-                entity.EntityType, entity_file.stem, enum_value
-            )
+            aenum.extend_enum(entity.EntityType, entity_file.stem, enum_value)
         module = importlib.import_module(module_name)
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, entity.Entity):

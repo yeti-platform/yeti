@@ -10,9 +10,13 @@ from core.schemas.model import YetiTagModel
 
 
 # forward declarations
-class EntityType(str, Enum): ...
+class EntityType(str, Enum):
+    ...
+
+
 EntityTypes = ()
 TYPE_MAPPING = {}
+
 
 class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     _exclude_overwrite: list[str] = ["related_observables_count"]

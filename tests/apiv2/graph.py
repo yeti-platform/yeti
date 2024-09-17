@@ -299,7 +299,9 @@ class SimpleGraphTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["vertices"]), 1)
-        self.assertEqual(data["vertices"][malware_entity.extended_id]["name"], "malware1")
+        self.assertEqual(
+            data["vertices"][malware_entity.extended_id]["name"], "malware1"
+        )
 
     def test_add_link(self):
         response = client.post(
