@@ -9,13 +9,9 @@ WINDOWS_PATH_REGEX = re.compile(
 )
 
 
-def path_validator(value):
-    return LINUX_PATH_REGEX.match(value) or WINDOWS_PATH_REGEX.match(value)
-
-
 class Path(observable.Observable):
     type: Literal[observable.ObservableType.path] = observable.ObservableType.path
 
     @staticmethod
     def is_valid(value: str) -> bool:
-        return path_validator(value)
+        return LINUX_PATH_REGEX.match(value) or WINDOWS_PATH_REGEX.match(value)
