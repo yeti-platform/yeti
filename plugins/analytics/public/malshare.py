@@ -95,7 +95,7 @@ class MalshareQuery(task.OneShotTask, MalshareAPI):
             new_hash.add_context("malshare.com", context)
 
         if json_result["SSDEEP"]:
-            ssdeep_data = ssdeep.Ssdeep(value=json_result["SSDEEP"]).save()
+            ssdeep_data = ssdeep.SsdeepHash(value=json_result["SSDEEP"]).save()
             ssdeep_data.add_context("malshare.com", context)
             ssdeep_data.link_to(observable, "ssdeep", "malshare_query")
 

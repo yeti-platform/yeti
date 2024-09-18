@@ -7,8 +7,7 @@ from github import Auth, Github
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas import observable, task
-from core.schemas.indicators.query import Query
+from core.schemas import indicator, observable, task
 from core.schemas.observable import ObservableType
 
 
@@ -164,7 +163,7 @@ class GithubMonitor(task.AnalyticsTask):
         auth = Auth.Token(github_token)
         self._github_api = Github(auth=auth)
 
-        github_query_indicators, _ = Query.filter({"query_type": "github"})
+        github_query_indicators, _ = indicator.Query.filter({"query_type": "github"})
         logging.info(
             f"[+] Found {len(github_query_indicators)} Github queries: {github_query_indicators}"
         )

@@ -9,7 +9,7 @@ from maclookup import exceptions as maclookup_exceptions
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import task
-from core.schemas.entities.company import Company
+from core.schemas.entity import Company
 from core.schemas.observable import ObservableType
 from core.schemas.observables.mac_address import MacAddress
 

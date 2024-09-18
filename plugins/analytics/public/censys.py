@@ -5,8 +5,7 @@ from censys.search import CensysHosts
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas import task
-from core.schemas.indicators.query import Query
+from core.schemas import indicator, task
 from core.schemas.observable import Observable
 
 
@@ -32,7 +31,7 @@ class CensysApiQuery(task.AnalyticsTask):
             api_secret=api_secret,
         )
 
-        censys_queries, _ = Query.filter({"query_type": "censys"})
+        censys_queries, _ = indicator.Query.filter({"query_type": "censys"})
 
         for query in censys_queries:
             ip_addresses = query_censys(hosts_api, query.pattern)

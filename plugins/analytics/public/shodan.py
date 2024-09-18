@@ -5,8 +5,7 @@ from shodan import Shodan
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas import task
-from core.schemas.indicators.query import Query
+from core.schemas import indicator, task
 from core.schemas.observable import Observable
 
 
@@ -29,7 +28,7 @@ class ShodanApiQuery(task.AnalyticsTask):
 
         shodan_api = Shodan(api_key)
 
-        shodan_queries, _ = Query.filter({"query_type": "shodan"})
+        shodan_queries, _ = indicator.Query.filter({"query_type": "shodan"})
 
         for query in shodan_queries:
             ip_addresses = query_shodan(shodan_api, query.pattern, result_limit)
