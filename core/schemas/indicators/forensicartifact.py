@@ -9,7 +9,6 @@ from artifacts import errors as artifacts_errors
 from pydantic import field_validator
 
 from core.schemas import indicator
-from core.schemas.indicators import regex
 
 
 class ForensicArtifact(indicator.Indicator):
@@ -19,9 +18,7 @@ class ForensicArtifact(indicator.Indicator):
     """
 
     _type_filter: ClassVar[str] = indicator.IndicatorType.forensicartifact
-    type: Literal[indicator.IndicatorType.forensicartifact] = (
-        indicator.IndicatorType.forensicartifact
-    )
+    type: Literal[indicator.IndicatorType.forensicartifact] = indicator.IndicatorType.forensicartifact
 
     sources: list[dict] = []
     aliases: list[str] = []
@@ -109,17 +106,17 @@ class ForensicArtifact(indicator.Indicator):
                     pattern = re.escape(pattern).replace("\\*", ".*")
                     # Account for different path separators
                     pattern = re.sub(r"\\\\", r"[\\|/]", pattern)
-                    regex_indicator = regex.Regex.find(name=path)
-                    if not regex_indicator:
+                    regex = indicator.Regex.find(name=path)
+                    if not regex:
                         try:
-                            regex_indicator = regex.Regex(
+                            regex = indicator.Regex(
                                 name=path,
                                 pattern=pattern,
                                 location="filesystem",
                                 diamond=indicator.DiamondModel.victim,
                                 relevant_tags=self.relevant_tags,
                             ).save()
-                            indicators.append(regex_indicator)
+                            indicators.append(regex)
                         except Exception as error:
                             logging.error(
                                 f"Failed to create indicator for {path} (was: {source['attributes']['paths']}): {error}"
@@ -127,10 +124,10 @@ class ForensicArtifact(indicator.Indicator):
                             continue
 
                     else:
-                        regex_indicator.relevant_tags = list(
-                            set(regex_indicator.relevant_tags + self.relevant_tags)
+                        regex.relevant_tags = list(
+                            set(regex.relevant_tags + self.relevant_tags)
                         )
-                        regex_indicator.save()
+                        regex.save()
         if source["type"] == definitions.TYPE_INDICATOR_WINDOWS_REGISTRY_KEY:
             for key in source["attributes"]["keys"]:
                 pattern = re.sub(r"\\\*$", "", key)
@@ -147,33 +144,31 @@ class ForensicArtifact(indicator.Indicator):
                     )
                     pattern = pattern.replace("HKEY_LOCAL_MACHINE\\\\System\\\\", "")
 
-                regex_indicator = regex.Regex.find(name=key)
+                regex = indicator.Regex.find(name=key)
 
-                if not regex_indicator:
+                if not regex:
                     try:
-                        regex_indicator = regex.Regex(
+                        regex = indicator.Regex(
                             name=key,
                             pattern=pattern,
                             location="registry",
                             diamond=indicator.DiamondModel.victim,
                             relevant_tags=self.relevant_tags,
                         ).save()
-                        indicators.append(regex_indicator)
+                        indicators.append(regex)
                     except Exception as error:
                         logging.error(
                             f"Failed to create indicator for {key} (was: {source['attributes']['keys']}): {error}"
                         )
                         continue
                 else:
-                    regex_indicator.relevant_tags = list(
-                        set(regex_indicator.relevant_tags + self.relevant_tags)
+                    regex.relevant_tags = list(
+                        set(regex.relevant_tags + self.relevant_tags)
                     )
-                    regex_indicator.save()
+                    regex.save()
         if create_links:
             for indicator_obj in indicators:
-                indicator_obj.link_to(
-                    self, "indicates", f"Indicates {indicator_obj.name}"
-                )
+                indicator_obj.link_to(self, "indicates", f"Indicates {indicator_obj.name}")
         return indicators
 
 
