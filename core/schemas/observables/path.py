@@ -3,14 +3,14 @@ from typing import Literal
 
 from core.schemas import observable
 
-linux_path_matcher = re.compile(r"^(\/[^\/\0]+)+$")
-windows_path_matcher = re.compile(
+LINUX_PATH_REGEX = re.compile(r"^(\/[^\/\0]+)+$")
+WINDOWS_PATH_REGEX = re.compile(
     r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"
 )
 
 
 def path_validator(value):
-    return linux_path_matcher.match(value) or windows_path_matcher.match(value)
+    return LINUX_PATH_REGEX.match(value) or WINDOWS_PATH_REGEX.match(value)
 
 
 class Path(observable.Observable):

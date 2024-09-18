@@ -3,7 +3,7 @@ from typing import Literal
 
 from core.schemas import observable
 
-bic_matcher = re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")
+BIC_MATCHER_REGEX = re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")
 
 
 class BIC(observable.Observable):
@@ -11,4 +11,4 @@ class BIC(observable.Observable):
 
     @staticmethod
     def is_valid(value: str) -> bool:
-        return bic_matcher.match(value)
+        return BIC_MATCHER_REGEX.match(value)
