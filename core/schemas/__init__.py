@@ -31,6 +31,7 @@ def load_entities():
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, entity.Entity):
                 entity.TYPE_MAPPING[enum_value] = obj
+                setattr(entity, obj.__name__, obj)
     for key in entity.TYPE_MAPPING:
         if key in ["entity", "entities"]:
             continue
@@ -65,6 +66,7 @@ def load_indicators():
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, indicator.Indicator):
                 indicator.TYPE_MAPPING[enum_value] = obj
+                setattr(indicator, obj.__name__, obj)
     for key in indicator.TYPE_MAPPING:
         if key in ["indicator", "indicators"]:
             continue
@@ -102,6 +104,7 @@ def load_observables():
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, observable.Observable):
                 observable.TYPE_MAPPING[enum_value] = obj
+                setattr(observable, obj.__name__, obj)
     for key in observable.TYPE_MAPPING:
         if key in ["observable", "observables"]:
             continue
