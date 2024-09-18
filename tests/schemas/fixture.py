@@ -1,9 +1,8 @@
 import unittest
 
 from core import database_arango
-from core.schemas.entities import investigation, malware, threat_actor
-from core.schemas.indicator import DiamondModel
-from core.schemas.indicators import query, regex
+from core.schemas.entity import Investigation, Malware, ThreatActor
+from core.schemas.indicator import DiamondModel, Query, Regex
 from core.schemas.observables import (
     bic,
     generic,
@@ -41,7 +40,9 @@ class FixtureTest(unittest.TestCase):
         hacker = hostname.Hostname(value="hacker.com").save()
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
         mac_address.MacAddress(value="00:11:22:33:44:55").save()
-        generic_obs = generic.Generic(value="SomeInterestingString").save()
+        generic_obs = generic.Generic(
+            value="SomeInterestingString"
+        ).save()
         generic_obs.add_context("test_source", {"test": "test"})
 
         hacker.link_to(www_hacker, "domain", "Domain")
@@ -58,22 +59,22 @@ class FixtureTest(unittest.TestCase):
         ibantest.link_to(bictest, "bic", "BIC")
         ibantest.tag(["example"])
 
-        ta = threat_actor.ThreatActor(name="HackerActor").save()
+        ta = ThreatActor(name="HackerActor").save()
         ta.tag(["Hack!ré T@ëst"])
         ta.link_to(hacker, "uses", "Uses domain")
 
-        regex_indicator = regex.Regex(
+        regex = Regex(
             name="hex",
             pattern="/tmp/[0-9a-f]",
             location="bodyfile",
             diamond=DiamondModel.capability,
         ).save()
-        regex_indicator.link_to(hacker, "indicates", "Domain dropped by this regex")
-        xmrig = malware.Malware(name="xmrig").save()
+        regex.link_to(hacker, "indicates", "Domain dropped by this regex")
+        xmrig = Malware(name="xmrig").save()
         xmrig.tag(["xmrig"])
-        regex_indicator.link_to(xmrig, "indicates", "Usual name for dropped binary")
+        regex.link_to(xmrig, "indicates", "Usual name for dropped binary")
 
-        query.Query(
+        Query(
             name="ssh succesful logins",
             location="syslogs",
             diamond=DiamondModel.capability,
@@ -82,7 +83,7 @@ class FixtureTest(unittest.TestCase):
             target_systems=["timesketch", "plaso"],
             relevant_tags=["ssh", "login"],
         ).save()
-        i = investigation.Investigation(
+        i = Investigation(
             name="coin mining case",
             reference="http://timesketch-server/sketch/12345",
             relevant_tags=["coin", "mining"],

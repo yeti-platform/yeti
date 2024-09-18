@@ -5,10 +5,9 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.entities import attack_pattern, malware, threat_actor
+from core.schemas.entity import AttackPattern, Malware, ThreatActor
 from core.schemas.graph import Relationship
-from core.schemas.indicator import DiamondModel
-from core.schemas.indicators import forensicartifact, query, regex
+from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -28,8 +27,8 @@ class SimpleGraphTest(unittest.TestCase):
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
-        self.entity1 = threat_actor.ThreatActor(name="actor0").save()
-        self.indicator1 = query.Query(
+        self.entity1 = ThreatActor(name="actor0").save()
+        self.indicator1 = Query(
             name="query1",
             query_type="opensearch",
             target_systems=["system1"],
@@ -284,8 +283,8 @@ class SimpleGraphTest(unittest.TestCase):
 
     def test_neighbor_filter_in(self):
         self.entity1.link_to(self.observable1, "uses", "asd")
-        malware_entity = malware.Malware(name="malware1", aliases=["blah"]).save()
-        self.entity1.link_to(malware_entity, "uses", "asd")
+        malware = Malware(name="malware1", aliases=["blah"]).save()
+        self.entity1.link_to(malware, "uses", "asd")
         response = client.post(
             "/api/v2/graph/search",
             json={
@@ -300,9 +299,7 @@ class SimpleGraphTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["vertices"]), 1)
-        self.assertEqual(
-            data["vertices"][malware_entity.extended_id]["name"], "malware1"
-        )
+        self.assertEqual(data["vertices"][malware.extended_id]["name"], "malware1")
 
     def test_add_link(self):
         response = client.post(
@@ -378,8 +375,8 @@ class ComplexGraphTest(unittest.TestCase):
         self.observable1.tag(["tag1", "tag2"])
         self.observable2 = hostname.Hostname(value="test2.com").save()
         self.observable3 = url.Url(value="http://test1.com/admin").save()
-        self.entity1 = threat_actor.ThreatActor(name="tester").save()
-        self.indicator1 = regex.Regex(
+        self.entity1 = ThreatActor(name="tester").save()
+        self.indicator1 = Regex(
             name="test c2",
             pattern="test[0-9].com",
             location="network",
@@ -579,9 +576,9 @@ class GraphTraversalTest(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
-        self.persistence = attack_pattern.AttackPattern(name="persistence").save()
+        self.persistence = AttackPattern(name="persistence").save()
         self.persistence.tag(["triage"])
-        self.persistence_artifact = forensicartifact.ForensicArtifact.from_yaml_string(
+        self.persistence_artifact = ForensicArtifact.from_yaml_string(
             """doc: Crontab files.
 name: LinuxCronTabs
 sources:

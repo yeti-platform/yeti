@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas import indicator
-from core.schemas.indicators import query, regex
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -24,14 +23,14 @@ class IndicatorTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
-        self.indicator1 = regex.Regex(
+        self.indicator1 = indicator.Regex(
             name="hex",
             pattern="[0-9a-f]",
             location="filesystem",
             diamond=indicator.DiamondModel.capability,
         ).save()
         self.indicator1.tag(["hextag"])
-        self.indicator2 = regex.Regex(
+        self.indicator2 = indicator.Regex(
             name="localhost",
             pattern="127.0.0.1",
             location="network",
@@ -102,7 +101,7 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(data["indicators"][0]["type"], "regex")
 
     def test_search_indicators_by_alias(self):
-        query.Query(
+        indicator.Query(
             name="query1",
             pattern="SELECT * FROM table",
             location="database",

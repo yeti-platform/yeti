@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas import entity
-from core.schemas.entities import attack_pattern, malware, threat_actor
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -24,11 +23,11 @@ class EntityTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
-        self.entity1 = threat_actor.ThreatActor(
+        self.entity1 = entity.ThreatActor(
             name="ta1", aliases=["badactor"], created=datetime.datetime(2020, 1, 1)
         ).save()
         self.entity1.tag(["ta1"])
-        self.entity2 = threat_actor.ThreatActor(name="bears").save()
+        self.entity2 = entity.ThreatActor(name="bears").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -92,8 +91,8 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(data["entities"][0]["type"], "threat-actor")
 
     def test_search_entities_multiple_types(self):
-        attack_pattern.AttackPattern(name="ttp1").save()
-        malware.Malware(name="malware1").save()  # this won't show up
+        entity.AttackPattern(name="ttp1").save()
+        entity.Malware(name="malware1").save()  # this won't show up
         response = client.post(
             "/api/v2/entities/search",
             json={"query": {"type__in": ["threat-actor", "attack-pattern"]}},

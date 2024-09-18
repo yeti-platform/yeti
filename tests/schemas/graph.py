@@ -3,8 +3,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.entities import campaign, malware
-from core.schemas.entity import Entity
+from core.schemas.entity import Campaign, Entity, Malware
 from core.schemas.graph import GraphFilter, Relationship
 from core.schemas.observables import hostname, ipv4, user_agent
 from core.web import webapp
@@ -20,9 +19,9 @@ class GraphTest(unittest.TestCase):
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.observable3 = ipv4.IPv4(value="8.8.8.8").save()
         self.observable4 = user_agent.UserAgent(value="Mozilla/5.0").save()
-        self.entity1 = malware.Malware(name="plugx").save()
-        self.entity2 = campaign.Campaign(name="campaign1").save()
-        self.entity3 = campaign.Campaign(name="campaign2").save()
+        self.entity1 = Malware(name="plugx").save()
+        self.entity2 = Campaign(name="campaign1").save()
+        self.entity3 = Campaign(name="campaign2").save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
