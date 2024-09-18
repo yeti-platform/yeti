@@ -7,16 +7,7 @@ from io import BytesIO
 from zipfile import ZipFile
 
 from core import taskmanager
-from core.schemas import task
-from core.schemas.entities.attack_pattern import AttackPattern
-from core.schemas.entities.campaign import Campaign
-from core.schemas.entities.course_of_action import CourseOfAction
-from core.schemas.entities.identity import Identity
-from core.schemas.entities.intrusion_set import IntrusionSet
-from core.schemas.entities.malware import Malware
-from core.schemas.entities.threat_actor import ThreatActor
-from core.schemas.entities.tool import Tool
-from core.schemas.entities.vulnerability import Vulnerability
+from core.schemas import entity, task
 
 
 def _format_context_from_obj(obj):
@@ -44,7 +35,7 @@ def _format_context_from_obj(obj):
 
 
 def _process_intrusion_set(obj):
-    intrusion_set = IntrusionSet(
+    intrusion_set = entity.IntrusionSet(
         name=obj["name"],
         aliases=obj.get("aliases", []) + obj.get("x_mitre_aliases", []),
         created=obj["created"],
@@ -56,7 +47,7 @@ def _process_intrusion_set(obj):
 
 
 def _process_malware(obj):
-    malware = Malware(
+    malware = entity.Malware(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
@@ -77,7 +68,7 @@ def _process_attack_pattern(obj):
     for phase in obj["kill_chain_phases"]:
         kill_chain_phases.add(f'{phase["kill_chain_name"]}:{phase["phase_name"]}')
 
-    attack_pattern = AttackPattern(
+    attack_pattern = entity.AttackPattern(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
@@ -90,7 +81,7 @@ def _process_attack_pattern(obj):
 
 
 def _process_course_of_action(obj):
-    course_of_action = CourseOfAction(
+    course_of_action = entity.CourseOfAction(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
@@ -101,7 +92,7 @@ def _process_course_of_action(obj):
 
 
 def _process_identity(obj):
-    identity = Identity(
+    identity = entity.Identity(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
@@ -115,7 +106,7 @@ def _process_identity(obj):
 
 
 def _process_threat_actor(obj):
-    threat_actor = ThreatActor(
+    threat_actor = entity.ThreatActor(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
@@ -130,7 +121,7 @@ def _process_threat_actor(obj):
 
 
 def _process_campaign(obj):
-    campaign = Campaign(
+    campaign = entity.Campaign(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
@@ -144,7 +135,7 @@ def _process_campaign(obj):
 
 
 def _process_tool(obj):
-    tool = Tool(
+    tool = entity.Tool(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],
@@ -161,7 +152,7 @@ def _process_tool(obj):
 
 
 def _process_vulnerability(obj):
-    vulnerabilty = Vulnerability(
+    vulnerabilty = entity.Vulnerability(
         name=obj["name"],
         created=obj["created"],
         modified=obj["modified"],

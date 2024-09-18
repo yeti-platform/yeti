@@ -6,9 +6,6 @@ import yaml
 
 from core import taskmanager
 from core.schemas import entity, indicator, task
-from core.schemas.entities.attack_pattern import AttackPattern
-from core.schemas.entities.tool import Tool
-from core.schemas.indicators.sigma import Sigma
 from core.schemas.observables import path
 
 
@@ -27,7 +24,7 @@ class LoLBAS(task.FeedTask):
         if not response:
             return
         lolbas_json = response.json()
-        self._lolbas_attackpattern = AttackPattern(name="LOLBAS usage").save()
+        self._lolbas_attackpattern = entity.AttackPattern(name="LOLBAS usage").save()
         if not self._lolbas_attackpattern.description:
             self._lolbas_attackpattern.description = (
                 "Usage of living-off-the-land binaries and scripts"
@@ -75,7 +72,7 @@ class LoLBAS(task.FeedTask):
                         "Error processing sigma rule for %s: %s", entry["Name"], error
                     )
 
-    def process_sigma_rule(self, tool: Tool, detection: dict) -> None:
+    def process_sigma_rule(self, tool: entity.Tool, detection: dict) -> None:
         """Processes a Sigma rule as specified in the lolbas json."""
         url = detection["Sigma"]
         if not url:
@@ -95,7 +92,7 @@ class LoLBAS(task.FeedTask):
         date = sigma_data["date"]
         date = datetime.strptime(date.strip(), "%Y/%m/%d")
         # create sigma indicator
-        sigma = Sigma(
+        sigma = indicator.Sigma(
             name=title,
             description=description,
             created=date,

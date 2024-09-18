@@ -8,7 +8,6 @@ import yara
 
 from core import taskmanager
 from core.schemas import indicator, task
-from core.schemas.indicators.yara import Yara
 
 
 class YARAify(task.FeedTask):
@@ -41,7 +40,7 @@ class YARAify(task.FeedTask):
             logging.error(f"Error compiling yara rule: {e}")
             return
         for r in yara_rules:
-            ind_obj = Yara(
+            ind_obj = indicator.Yara(
                 name=f"{r.identifier}",
                 pattern=entry,
                 diamond=indicator.DiamondModel.capability,

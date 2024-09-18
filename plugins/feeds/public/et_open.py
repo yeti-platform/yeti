@@ -8,10 +8,6 @@ from idstools import rule
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import entity, indicator, task
-from core.schemas.entities.attack_pattern import AttackPattern
-from core.schemas.entities.malware import Malware
-from core.schemas.entities.vulnerability import Vulnerability
-from core.schemas.indicators.suricata import Suricata
 
 
 class ETOpen(task.FeedTask):
@@ -41,7 +37,7 @@ class ETOpen(task.FeedTask):
     def analyze(self, rule_suricata: rule.Rule):
         if not self._filter_rule(rule_suricata.metadata):
             return
-        ind_suricata_rule = Suricata(
+        ind_suricata_rule = indicator.Suricata(
             name=rule_suricata["msg"],
             pattern=rule_suricata["raw"],
             metadata=rule_suricata.metadata,
@@ -65,20 +61,20 @@ class ETOpen(task.FeedTask):
         if tags:
             ind_suricata_rule.tag(tags)
 
-    def _extract_cve(self, meta: str) -> Vulnerability:
+    def _extract_cve(self, meta: str) -> entity.Vulnerability:
         _, cve = meta.split(" ")
         if "_" in cve:
             cve = cve.replace("_", "-")
-        ind_cve = Vulnerability.find(name=cve)
+        ind_cve = entity.Vulnerability.find(name=cve)
         if not ind_cve:
-            ind_cve = Vulnerability(name=cve).save()
+            ind_cve = entity.Vulnerability(name=cve).save()
         return ind_cve
 
     def _extract_malware_family(self, meta: str):
         _, malware_family = meta.split(" ")
-        ind_malware_family = Malware.find(name=malware_family)
+        ind_malware_family = entity.Malware.find(name=malware_family)
         if not ind_malware_family:
-            ind_malware_family = Malware(name=malware_family).save()
+            ind_malware_family = entity.Malware(name=malware_family).save()
         return ind_malware_family
 
     def _extract_tags(self, metadata: list[str]) -> list[str]:
@@ -89,7 +85,7 @@ class ETOpen(task.FeedTask):
                 tags.append(tag)
         return tags
 
-    def _extract_mitre_attack(self, meta: str) -> AttackPattern | None:
+    def _extract_mitre_attack(self, meta: str) -> entity.AttackPattern | None:
         _, mitre_id = meta.split(" ")
         ind_mitre_attack, nb_ent = entity.Entity.filter(
             query_args={"type": entity.EntityType.attack_pattern},

@@ -10,7 +10,6 @@ from OTXv2 import OTXv2
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import entity, indicator, observable, task
-from core.schemas.entities.investigation import Investigation
 
 
 class OTXAlienvault(task.FeedTask):
@@ -68,7 +67,7 @@ class OTXAlienvault(task.FeedTask):
         context["references"] = "\r\n".join(item["references"])
         context["description"] = item["description"]
         context["link"] = "https://otx.alienvault.com/pulse/%s" % item["id"]
-        investigation = Investigation(
+        investigation = entity.Investigation(
             name=item["name"],
             description=item["description"],
             reference=f"https://otx.alienvault.com/pulse/{item['id']}",

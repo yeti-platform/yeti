@@ -3,8 +3,7 @@ from datetime import datetime, timedelta
 from typing import ClassVar
 
 from core import taskmanager
-from core.schemas import task
-from core.schemas.entities.vulnerability import Vulnerability
+from core.schemas import entity, task
 
 
 def _cves_as_dict(data):
@@ -152,7 +151,7 @@ class CisaKEV(task.FeedTask):
 
         name = f"{cve_id}"
         title = entry.get("vulnerabilityName", "")
-        vulnerability = Vulnerability(
+        vulnerability = entity.Vulnerability(
             name=name,
             title=title,
             description=description,
