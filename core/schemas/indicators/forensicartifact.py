@@ -19,9 +19,9 @@ class ForensicArtifact(indicator.Indicator):
     """
 
     _type_filter: ClassVar[str] = indicator.IndicatorType.forensicartifact
-    type: Literal[
+    type: Literal[indicator.IndicatorType.forensicartifact] = (
         indicator.IndicatorType.forensicartifact
-    ] = indicator.IndicatorType.forensicartifact
+    )
 
     sources: list[dict] = []
     aliases: list[str] = []

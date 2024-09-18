@@ -10,8 +10,7 @@ from core.schemas.model import YetiTagModel
 
 
 # forward declarations
-class EntityType(str, Enum):
-    ...
+class EntityType(str, Enum): ...
 
 
 EntityTypes = ()

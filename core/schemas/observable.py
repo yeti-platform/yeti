@@ -18,8 +18,7 @@ from core.schemas.model import YetiTagModel
 
 
 # forward declarations
-class ObservableType(str, Enum):
-    ...
+class ObservableType(str, Enum): ...
 
 
 ObservableTypes = ()

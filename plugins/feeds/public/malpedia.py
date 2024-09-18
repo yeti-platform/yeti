@@ -16,9 +16,9 @@ class MalpediaMalware(task.FeedTask):
         "source": "https://malpedia.caad.fkie.fraunhofer.de/",
     }
 
-    _SOURCE: ClassVar[
-        "str"
-    ] = "https://malpedia.caad.fkie.fraunhofer.de/api/get/families"
+    _SOURCE: ClassVar["str"] = (
+        "https://malpedia.caad.fkie.fraunhofer.de/api/get/families"
+    )
 
     def run(self):
         response = self._make_request(self._SOURCE)

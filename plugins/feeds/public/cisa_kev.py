@@ -42,12 +42,12 @@ class CisaKEV(task.FeedTask):
         "source": "https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
     }
 
-    CISA_SOURCE: ClassVar[
-        "str"
-    ] = "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
-    NVD_SOURCE: ClassVar[
-        "str"
-    ] = "https://services.nvd.nist.gov/rest/json/cves/2.0?hasKev"
+    CISA_SOURCE: ClassVar["str"] = (
+        "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
+    )
+    NVD_SOURCE: ClassVar["str"] = (
+        "https://services.nvd.nist.gov/rest/json/cves/2.0?hasKev"
+    )
 
     def run(self):
         response = self._make_request(self.CISA_SOURCE, sort=False)

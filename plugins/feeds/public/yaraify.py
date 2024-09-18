@@ -19,9 +19,9 @@ class YARAify(task.FeedTask):
         "source": "",
     }
 
-    _SOURCE_ALL_RULES: ClassVar[
-        "str"
-    ] = "https://yaraify.abuse.ch/yarahub/yaraify-rules.zip"
+    _SOURCE_ALL_RULES: ClassVar["str"] = (
+        "https://yaraify.abuse.ch/yarahub/yaraify-rules.zip"
+    )
 
     def run(self):
         response = self._make_request(self._SOURCE_ALL_RULES)

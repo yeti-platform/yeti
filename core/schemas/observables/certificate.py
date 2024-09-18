@@ -22,9 +22,9 @@ class Certificate(observable.Observable):
         fingerprint: the certificate fingerprint.
     """
 
-    type: Literal[
+    type: Literal[observable.ObservableType.certificate] = (
         observable.ObservableType.certificate
-    ] = observable.ObservableType.certificate
+    )
     last_seen: datetime.datetime = Field(default_factory=now)
     first_seen: datetime.datetime = Field(default_factory=now)
     issuer: str | None = None
