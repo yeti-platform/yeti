@@ -7,12 +7,12 @@ from io import BytesIO
 from typing import ClassVar, Literal
 from zipfile import ZipFile
 
+import boto3
 import numpy as np
 import pandas as pd
 import requests
 from dateutil import parser
 from pydantic import BaseModel, Field
-import boto3
 
 from core import database_arango
 from core.config.config import yeti_config
