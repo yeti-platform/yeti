@@ -17,7 +17,8 @@ from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
 
 
-# forward declarations
+# Forward declarations
+# They are then populated by the load_observables function in __init__.py
 class ObservableType(str, Enum): ...
 
 

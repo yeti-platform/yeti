@@ -19,7 +19,8 @@ def future():
 DEFAULT_INDICATOR_VALIDITY_DAYS = 30
 
 
-# forward declarations
+# Forward declarations
+# They are then populated by the load_indicators function in __init__.py
 class IndicatorType(str, Enum): ...
 
 

@@ -9,7 +9,8 @@ from core.helpers import now
 from core.schemas.model import YetiTagModel
 
 
-# forward declarations
+# Forward declarations
+# They are then populated by the load_entities function in __init__.py
 class EntityType(str, Enum): ...
 
 
