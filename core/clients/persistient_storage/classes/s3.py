@@ -2,7 +2,7 @@ import os
 
 from core.clients.persistient_storage.classes.main import PersistientStorageClient
 
-class PersistientStorageClient(PersistientStorageClient):
+class S3Client(PersistientStorageClient):
     PREFIX = "s3://"
 
     def __init__(self, path: str):
