@@ -1,13 +1,10 @@
 import datetime
 import logging
-import os
-import pathlib
 from enum import Enum
 from io import BytesIO
 from typing import ClassVar, Literal
 from zipfile import ZipFile
 
-import boto3
 import numpy as np
 import pandas as pd
 import requests
@@ -19,9 +16,9 @@ from core.config.config import yeti_config
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
+from core.clients.persistient_storage import get_client
 
-if yeti_config.get("system", "export_path", "/opt/yeti/exports").startswith("s3://"):
-    s3_client = boto3.client("s3")
+persistient_storage_client = get_client(yeti_config.get("system", "export_path", "/opt/yeti/exports"))
 
 
 def now():
@@ -267,15 +264,9 @@ class ExportTask(Task):
     sha256: str | None = None
 
     @property
-    def file_path(self) -> str:
+    def file_name(self) -> str:
         """Returns the output file for the export."""
-        export_path = yeti_config.get("system", "export_path", "/opt/yeti/exports")
-        name_slug = self.name.replace(" ", "_").lower()
-        path = os.path.join(export_path, name_slug)
-
-        if path.startswith("s3://"):
-            return path
-        return os.path.abspath(path)
+        return self.name.replace(" ", "_").lower()
 
     def run(self) -> None:
         """Runs the export asynchronously."""
@@ -286,35 +277,19 @@ class ExportTask(Task):
             ignore_tags=self.ignore_tags,
             fresh_tags=self.fresh_tags,
         )
-        config_path = yeti_config.get("system", "export_path", "/opt/yeti/exports")
-        if not config_path.startswith("s3://"):
-            export_path = pathlib.Path(config_path)
-            export_path.mkdir(parents=True, exist_ok=True)
 
         template = Template.find(name=self.template_name)
         assert template is not None
-        logging.info(f"Rendering template {template.name} to {self.file_path}")
+        logging.info(f"Rendering template {template.name} to {persistient_storage_client.file_path(self.file_name)}")
 
-        if self.file_path.startswith("s3://"):
-            bucket_name = self.file_path.removeprefix("s3://").split("/")[0]
-            key = self.file_path.removeprefix(f"s3://{bucket_name}").removeprefix("/")
-            s3_client.put_object(
-                Bucket=bucket_name, Key=key, Body=template.render(export_data, None)
-            )
-            logging.info(f"Succesfully uploaded {self.file_path}")
-        else:
-            template.render(export_data, self.file_path)
-        # hash output file and store result
+        persistient_storage_client.put_file(
+            self.file_name,
+            template.render(export_data, None),
+        )
 
     @property
-    def file_contents(self) -> bytes:
-        if self.file_path.startswith("s3://"):
-            bucket_name = self.file_path.removeprefix("s3://").split("/")[0]
-            key = self.file_path.removeprefix(f"s3://{bucket_name}").removeprefix("/")
-            response = s3_client.get_object(Bucket=bucket_name, Key=key)
-            return response["Body"].read()
-        with open(self.file_path, "rb") as f:
-            return f.read()
+    def file_contents(self) -> str:
+        return persistient_storage_client.get_file(self.file_name)
 
     def get_tagged_data(
         self,
