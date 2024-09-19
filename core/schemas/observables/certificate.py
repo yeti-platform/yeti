@@ -38,6 +38,3 @@ class Certificate(observable.Observable):
     def from_data(cls, data: bytes):
         hash_256 = hashlib.sha256(data).hexdigest()
         return cls(value=f"CERT:{hash_256}")
-
-
-observable.TYPE_MAPPING[observable.ObservableType.certificate] = Certificate

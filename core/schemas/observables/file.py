@@ -17,6 +17,3 @@ class File(observable.Observable):
     md5: str | None = None
     sha1: str | None = None
     mime_type: str | None = None
-
-
-observable.TYPE_MAPPING[observable.ObservableType.file] = File

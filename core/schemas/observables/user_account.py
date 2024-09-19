@@ -40,6 +40,3 @@ class UserAccount(observable.Observable):
                     "Account created date is after account expiration date."
                 )
         return self
-
-
-observable.TYPE_MAPPING[observable.ObservableType.user_account] = UserAccount

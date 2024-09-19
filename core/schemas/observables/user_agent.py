@@ -7,6 +7,3 @@ class UserAgent(observable.Observable):
     type: Literal[observable.ObservableType.user_agent] = (
         observable.ObservableType.user_agent
     )
-
-
-observable.TYPE_MAPPING[observable.ObservableType.user_agent] = UserAgent

@@ -1,5 +1,7 @@
 from typing import Literal
 
+import validators
+
 from core.schemas import observable
 
 
@@ -8,5 +10,6 @@ class Hostname(observable.Observable):
         observable.ObservableType.hostname
     )
 
-
-observable.TYPE_MAPPING[observable.ObservableType.hostname] = Hostname
+    @staticmethod
+    def is_valid(value: str) -> bool:
+        return validators.domain(value)

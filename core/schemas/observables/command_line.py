@@ -7,6 +7,3 @@ class CommandLine(observable.Observable):
     type: Literal[observable.ObservableType.command_line] = (
         observable.ObservableType.command_line
     )
-
-
-observable.TYPE_MAPPING[observable.ObservableType.command_line] = CommandLine

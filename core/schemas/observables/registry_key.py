@@ -33,6 +33,3 @@ class RegistryKey(observable.Observable):
     data: bytes
     hive: RegistryHive
     path_file: str | None = None
-
-
-observable.TYPE_MAPPING[observable.ObservableType.registry_key] = RegistryKey
