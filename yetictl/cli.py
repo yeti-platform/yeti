@@ -1,6 +1,14 @@
+import json
+import logging
+import sys
+import traceback
+
 import click
 
+from core.schemas.task import Task, TaskParams, TaskType
 from core.schemas.user import User, UserSensitive
+from core.taskmanager import TaskManager
+from core.taskscheduler import get_plugins_list
 
 
 @click.group()
@@ -90,6 +98,55 @@ def reset_password(username: str, new_password: str) -> None:
     click.echo(
         f"Password for {username} succesfully reset. New API key: {user.api_key}"
     )
+
+
+@cli.command()
+def list_task_types() -> None:
+    """Lists all task types."""
+    for task_type in TaskType:
+        click.echo(f"{task_type}")
+
+
+@cli.command()
+@click.argument("task_type", required=False)
+def list_tasks(task_type="") -> None:
+    """Lists all tasks of a certain type."""
+    # Load all tasks. Take into account new tasks that have not been registered
+    get_plugins_list()
+    tasks = list()
+    for task in Task.list():
+        if task_type and task.type != task_type:
+            continue
+        tasks.append(task)
+    for task in sorted(tasks, key=lambda x: x.name):
+        click.echo(f"{task.name}")
+
+
+@cli.command()
+@click.argument("task_name")
+@click.argument("task_params", required=False)
+def run_task(task_name: str, task_params: dict = None) -> None:
+    """Runs a task."""
+    # Load all tasks. Take into account new tasks that have not been registered
+    logging.getLogger().setLevel(logging.INFO)
+    get_plugins_list()
+    task = TaskManager.load_task(task_name)
+    if not task:
+        click.echo("Task {task_name} not found.")
+    if task_params:
+        try:
+            task_params = TaskParams(params=json.loads(task_params))
+        except json.JSONDecodeError:
+            click.echo("Could not parse task_params")
+    try:
+        if task_params:
+            task.run(params=task_params.params)
+        else:
+            task.run()
+    except Exception as error:  # pylint: disable=broad-except
+        # We want to catch and report all errors
+        click.echo(f"Error running task {task_name}: {error}")
+        click.echo(traceback.format_exc())
 
 
 if __name__ == "__main__":
