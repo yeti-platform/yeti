@@ -1,5 +1,4 @@
 import io
-import os
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
@@ -122,7 +121,7 @@ async def export_content(export_id: str):
         io.BytesIO(export.file_contents),
         headers={
             "Cache-Control": "no-cache",
-            "Content-Disposition": f"attachment; filename={os.path.basename(export.file_path)}",
+            "Content-Disposition": f"attachment; filename={export.file_name}",
         },
     )
 
