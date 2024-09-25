@@ -43,12 +43,13 @@ class RenderTemplateRequest(BaseModel):
 # API endpoints
 router = APIRouter()
 
+
 @router.post("/search")
 async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
     """Searches for observables."""
     glob = "*"
     if request.name:
-        glob = f'*{request.name}*'
+        glob = f"*{request.name}*"
 
     template_dir = yeti_config.get("system", "template_dir", "/opt/yeti/templates")
     files = []
@@ -59,7 +60,9 @@ async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
 
     files = sorted(files)
     templates = []
-    for file in files[(request.page*request.count):((request.page+1)*request.count)]:
+    for file in files[
+        (request.page * request.count) : ((request.page + 1) * request.count)
+    ]:
         template = Template(name=file.stem, template=file.read_text())
         templates.append(template)
 

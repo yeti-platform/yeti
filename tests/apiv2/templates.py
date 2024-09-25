@@ -41,12 +41,12 @@ class TemplateTest(unittest.TestCase):
             Template(name=f"template_blah_{i:02}", template=f"fake_template_{i}").save()
 
     def tearDown(self) -> None:
-        for file in Path(self.temp_template_path).rglob('*.jinja2'):
+        for file in Path(self.temp_template_path).rglob("*.jinja2"):
             file.unlink()
         database_arango.db.clear()
 
     def test_search_template(self):
-        response = client.post("/api/v2/templates/search", json={'name': 'Fake'})
+        response = client.post("/api/v2/templates/search", json={"name": "Fake"})
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["templates"][0]["name"], "FakeTemplate")
@@ -62,7 +62,9 @@ class TemplateTest(unittest.TestCase):
         self.assertEqual(data["templates"][49]["name"], "template_blah_49")
         self.assertEqual(data["total"], 100)
 
-        response = client.post("/api/v2/templates/search", json={"name": "blah", 'page': 3, 'count': 5})
+        response = client.post(
+            "/api/v2/templates/search", json={"name": "blah", "page": 3, "count": 5}
+        )
         data = response.json()
         self.assertEqual(len(data["templates"]), 5)
         self.assertEqual(data["templates"][0]["name"], "template_blah_15")
@@ -81,7 +83,10 @@ class TemplateTest(unittest.TestCase):
         )
         data = response.text
         self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(response.headers['Content-Disposition'], "attachment; filename=FakeTemplate.txt")
+        self.assertEqual(
+            response.headers["Content-Disposition"],
+            "attachment; filename=FakeTemplate.txt",
+        )
         self.assertEqual(data, "<blah>\n1.1.1.1\n2.2.2.2\n3.3.3.3\n\n</blah>\n")
 
     def test_render_template_by_search(self):
@@ -95,7 +100,10 @@ class TemplateTest(unittest.TestCase):
         )
         data = response.text
         self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(response.headers['Content-Disposition'], "attachment; filename=FakeTemplate.txt")
+        self.assertEqual(
+            response.headers["Content-Disposition"],
+            "attachment; filename=FakeTemplate.txt",
+        )
         self.assertEqual(data, "<blah>\nyeti1.com\nyeti2.com\nyeti3.com\n\n</blah>\n")
 
     def test_render_nonexistent(self):

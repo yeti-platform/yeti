@@ -32,9 +32,11 @@ class Template(BaseModel):
             return result
 
     def save(self) -> "Template":
-        directory = Path(yeti_config.get("system", "template_dir", "/opt/yeti/templates"))
+        directory = Path(
+            yeti_config.get("system", "template_dir", "/opt/yeti/templates")
+        )
         Path.mkdir(directory, parents=True, exist_ok=True)
-        file = directory / f'{self.name}.jinja2'
+        file = directory / f"{self.name}.jinja2"
         file.write_text(self.template)
         return self
 
@@ -47,8 +49,10 @@ class Template(BaseModel):
 
     @classmethod
     def find(cls, name: str) -> Optional["Template"]:
-        directory = Path(yeti_config.get("system", "template_dir", "/opt/yeti/templates"))
-        file = directory / f'{name}.jinja2'
+        directory = Path(
+            yeti_config.get("system", "template_dir", "/opt/yeti/templates")
+        )
+        file = directory / f"{name}.jinja2"
         if file.exists():
             return Template(name=name, template=file.read_text())
         return None
