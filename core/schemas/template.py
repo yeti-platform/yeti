@@ -1,28 +1,21 @@
 import os
-from typing import TYPE_CHECKING, ClassVar
+from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 import jinja2
+from pydantic import BaseModel
 
-from core import database_arango
-from core.schemas.model import YetiModel
+from core.config.config import yeti_config
 
 if TYPE_CHECKING:
     from core.schemas.observable import Observable
 
-# TODO: Import Jinja functions to render templates
 
-
-class Template(YetiModel, database_arango.ArangoYetiConnector):
+class Template(BaseModel):
     """A template for exporting data to an external system."""
-
-    _collection_name: ClassVar[str] = "templates"
 
     name: str
     template: str
-
-    @classmethod
-    def load(cls, object: dict) -> "Template":
-        return cls(**object)
 
     def render(self, data: list["Observable"], output_file: str | None) -> None | str:
         """Renders the template with the given data to the output file."""
@@ -37,3 +30,17 @@ class Template(YetiModel, database_arango.ArangoYetiConnector):
             return None
         else:
             return result
+
+    def save(self) -> "Template":
+        directory = Path(yeti_config.get("system", "template_dir", "/opt/yeti/templates"))
+        file = directory / f'{self.name}.jinja2'
+        file.write_text(self.template)
+        return self
+
+    @classmethod
+    def find(cls, name: str) -> Optional["Template"]:
+        directory = Path(yeti_config.get("system", "template_dir", "/opt/yeti/templates"))
+        file = directory / f'{name}.jinja2'
+        if file.exists():
+            return Template(name=name, template=file.read_text())
+        return None
