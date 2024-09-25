@@ -33,9 +33,17 @@ class Template(BaseModel):
 
     def save(self) -> "Template":
         directory = Path(yeti_config.get("system", "template_dir", "/opt/yeti/templates"))
+        Path.mkdir(directory, parents=True, exist_ok=True)
         file = directory / f'{self.name}.jinja2'
         file.write_text(self.template)
         return self
+
+    def delete(self) -> None:
+        directory = Path(
+            yeti_config.get("system", "template_dir", "/opt/yeti/templates")
+        )
+        file = directory / f"{self.name}.jinja2"
+        file.unlink()
 
     @classmethod
     def find(cls, name: str) -> Optional["Template"]:
