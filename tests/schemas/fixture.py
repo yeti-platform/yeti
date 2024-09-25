@@ -21,7 +21,7 @@ class FixtureTest(unittest.TestCase):
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
-    def test_something(self):
+    def general_fixture_test(self):
         user = UserSensitive(username="yeti", admin=True, enabled=True)
         user.set_password("yeti")
         user.save()
