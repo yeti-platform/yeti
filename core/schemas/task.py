@@ -284,7 +284,7 @@ class ExportTask(Task):
 
         persistient_storage_client.put_file(
             self.file_name,
-            template.render(export_data, None),
+            template.render(export_data, None).encode(),
         )
 
     @property

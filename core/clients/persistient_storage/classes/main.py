@@ -14,11 +14,11 @@ class PersistientStorageClient(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_file(self, file_name: str) -> str:
+    def get_file(self, file_name: str) -> bytes:
         raise NotImplementedError
 
     @abstractmethod
-    def put_file(self, file_name: str, contents: str) -> None:
+    def put_file(self, file_name: str, contents: bytes) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -38,12 +38,12 @@ class LocalStorageClient(PersistientStorageClient):
         file_path = self.path / file_name
         return str(file_path)
 
-    def get_file(self, file_name: str) -> str:
-        with open(self.file_path(file_name), "r") as file:
+    def get_file(self, file_name: str) -> bytes:
+        with open(self.file_path(file_name), "rb") as file:
             return file.read()
 
-    def put_file(self, file_name: str, contents: str) -> None:
-        with open(self.file_path(file_name), "w") as file:
+    def put_file(self, file_name: str, contents: bytes) -> None:
+        with open(self.file_path(file_name), "wb") as file:
             file.write(contents)
 
     def delete_file(self, file_name: str) -> None:

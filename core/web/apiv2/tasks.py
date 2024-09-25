@@ -118,7 +118,7 @@ async def export_content(export_id: str):
     if not export:
         raise HTTPException(status_code=404, detail=f"ExportTask {export_id} not found")
     return StreamingResponse(
-        io.StringIO(export.file_contents),
+        io.BytesIO(export.file_contents),
         headers={
             "Cache-Control": "no-cache",
             "Content-Disposition": f"attachment; filename={export.file_name}",

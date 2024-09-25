@@ -19,11 +19,11 @@ class S3Client(PersistientStorageClient):
     def file_path(self, file_name: str) -> str:
         return os.path.join(self.prefix, file_name)
     
-    def get_file(self, file_name: str) -> str:
+    def get_file(self, file_name: str) -> bytes:
         response = self.s3.get_object(Bucket=self.bucket, Key=self.file_path(file_name))
         return response["Body"].read()
 
-    def put_file(self, file_name: str, contents: str) -> None:
+    def put_file(self, file_name: str, contents: bytes) -> None:
         self.s3.put_object(Bucket=self.bucket, Key=self.file_path(file_name), Body=contents)
 
     def delete_file(self, file_name: str) -> None:
