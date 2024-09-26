@@ -16,9 +16,9 @@ from core.config.config import yeti_config
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
-from core.clients.persistient_storage import get_client
+from core.clients.file_storage import get_client
 
-persistient_storage_client = get_client(yeti_config.get("system", "export_path", "/opt/yeti/exports"))
+file_storage_client = get_client(yeti_config.get("system", "export_path", "/opt/yeti/exports"))
 
 
 def now():
@@ -280,16 +280,16 @@ class ExportTask(Task):
 
         template = Template.find(name=self.template_name)
         assert template is not None
-        logging.info(f"Rendering template {template.name} to {persistient_storage_client.file_path(self.file_name)}")
+        logging.info(f"Rendering template {template.name} to {file_storage_client.file_path(self.file_name)}")
 
-        persistient_storage_client.put_file(
+        file_storage_client.put_file(
             self.file_name,
             template.render(export_data, None).encode(),
         )
 
     @property
     def file_contents(self) -> str:
-        return persistient_storage_client.get_file(self.file_name)
+        return file_storage_client.get_file(self.file_name)
 
     def get_tagged_data(
         self,

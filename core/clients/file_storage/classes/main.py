@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import pathlib
 import os
 
-class PersistientStorageClient(ABC):
+class FileStorageClient(ABC):
     PREFIX: str
 
     @abstractmethod
@@ -25,7 +25,7 @@ class PersistientStorageClient(ABC):
     def delete_file(self, file_name: str) -> None:
         raise NotImplementedError
 
-class LocalStorageClient(PersistientStorageClient):
+class LocalStorageClient(FileStorageClient):
     PREFIX = ""
 
     def __init__(self, path: str):
