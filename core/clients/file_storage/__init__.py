@@ -3,9 +3,10 @@ import importlib
 import inspect
 from typing import Type
 
-from core.clients.file_storage.classes.main import FileStorageClient, LocalStorageClient
+from dev.yeti.core.clients.file_storage.classes.interface import FileStorageClient
+from dev.yeti.core.clients.file_storage.classes.local_storage import LocalStorageClient
 
-ignored_files = ["main.py"]
+ignored_files = ["interface.py", "local_storage.py"]
 
 def load_client_classes():
     classes: list[Type[FileStorageClient]] = []

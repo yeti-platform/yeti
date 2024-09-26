@@ -1,6 +1,6 @@
 import os
 
-from core.clients.file_storage.classes.main import FileStorageClient
+from dev.yeti.core.clients.file_storage.classes.interface import FileStorageClient
 
 class S3Client(FileStorageClient):
     PREFIX = "s3://"
