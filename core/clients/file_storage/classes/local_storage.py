@@ -1,3 +1,4 @@
+import logging
 import pathlib
 import os
 
@@ -10,7 +11,7 @@ class LocalStorageClient(FileStorageClient):
         self.path = pathlib.Path(path)
         self.path.mkdir(parents=True, exist_ok=True)
 
-        print(f"Initialized local storage client with path {self.path}")
+        logging.info(f"Initialized local storage client with path {self.path}")
     
     def file_path(self, file_name: str) -> str:
         file_path = self.path / file_name

@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dev.yeti.core.clients.file_storage.classes.interface import FileStorageClient
@@ -14,7 +15,7 @@ class S3Client(FileStorageClient):
         import boto3
         self.s3 = boto3.client("s3")
 
-        print(f"Initialized S3 client with bucket \"{self.bucket}\" and prefix \"{self.prefix}\"")
+        logging.info(f"Initialized S3 client with bucket \"{self.bucket}\" and prefix \"{self.prefix}\"")
 
     def file_path(self, file_name: str) -> str:
         return os.path.join(self.prefix, file_name)
