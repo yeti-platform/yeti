@@ -12,18 +12,18 @@ class LocalStorageClient(FileStorageClient):
         self.path.mkdir(parents=True, exist_ok=True)
 
         logging.info(f"Initialized local storage client with path {self.path}")
+
+    def __file_path(self, file_name: str) -> pathlib.Path:
+        return self.path.joinpath(file_name)
     
     def file_path(self, file_name: str) -> str:
-        file_path = self.path / file_name
-        return str(file_path)
+        return str(self.__file_path(file_name))
 
     def get_file(self, file_name: str) -> bytes:
-        with open(self.file_path(file_name), "rb") as file:
-            return file.read()
+        return self.__file_path(file_name).read_bytes()        
 
     def put_file(self, file_name: str, contents: bytes) -> None:
-        with open(self.file_path(file_name), "wb") as file:
-            file.write(contents)
+        self.__file_path(file_name).write_bytes(contents)
 
     def delete_file(self, file_name: str) -> None:
         os.remove(self.file_path(file_name))
