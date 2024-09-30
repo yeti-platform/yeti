@@ -18,7 +18,7 @@ from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
 from core.clients import file_storage
 
-file_storage_client = file_storage.get_client(yeti_config.get("system", "export_path", "/opt/yeti/exports"))
+FILE_STORAGE_CLIENT = file_storage.get_client(yeti_config.get("system", "export_path", "/opt/yeti/exports"))
 
 
 def now():
@@ -280,16 +280,16 @@ class ExportTask(Task):
 
         template = Template.find(name=self.template_name)
         assert template is not None
-        logging.info(f"Rendering template {template.name} to {file_storage_client.file_path(self.file_name)}")
+        logging.info(f"Rendering template {template.name} to {FILE_STORAGE_CLIENT.file_path(self.file_name)}")
 
-        file_storage_client.put_file(
+        FILE_STORAGE_CLIENT.put_file(
             self.file_name,
             template.render(export_data, None).encode(),
         )
 
     @property
     def file_contents(self) -> str:
-        return file_storage_client.get_file(self.file_name)
+        return FILE_STORAGE_CLIENT.get_file(self.file_name)
 
     def get_tagged_data(
         self,
