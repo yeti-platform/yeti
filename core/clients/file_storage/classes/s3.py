@@ -3,16 +3,25 @@ import os
 
 from dev.yeti.core.clients.file_storage.classes.interface import FileStorageClient
 
+try:
+    import boto3
+except ImportError:
+    boto3 = None
+    logging.warning('boto3 is not imported, if you wish to use s3 file storage please install with `poetry install --extras s3`')
+
 class S3Client(FileStorageClient):
     PREFIX = "s3://"
 
     def __init__(self, path: str):
+        if boto3 is None:
+            logging.warning("Attempting to use `S3Client` without `boto3` installed; install with `poetry install --extras s3`")
+            raise ImportError("boto3 is not installed")
+
         bucket, *prefix = path.removeprefix(self.PREFIX).split("/")
 
         self.bucket = bucket
         self.prefix = "/".join(prefix)
 
-        import boto3
         self.s3 = boto3.client("s3")
 
         logging.info(f"Initialized S3 client with bucket \"{self.bucket}\" and prefix \"{self.prefix}\"")
