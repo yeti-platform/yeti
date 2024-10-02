@@ -12,11 +12,11 @@ from dateutil import parser
 from pydantic import BaseModel, Field
 
 from core import database_arango
+from core.clients import file_storage
 from core.config.config import yeti_config
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
-from core.clients import file_storage
 
 FILE_STORAGE_CLIENT = file_storage.get_client(yeti_config.get("system", "export_path", "/opt/yeti/exports"))
 

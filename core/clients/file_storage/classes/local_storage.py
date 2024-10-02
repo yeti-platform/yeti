@@ -1,8 +1,9 @@
 import logging
-import pathlib
 import os
+import pathlib
 
 from dev.yeti.core.clients.file_storage.classes.interface import FileStorageClient
+
 
 class LocalStorageClient(FileStorageClient):
     PREFIX = ""
