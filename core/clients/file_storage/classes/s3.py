@@ -1,7 +1,7 @@
 import logging
 import os
 
-from dev.yeti.core.clients.file_storage.classes.interface import FileStorageClient
+from core.clients.file_storage.classes.interface import FileStorageClient
 
 try:
     import boto3

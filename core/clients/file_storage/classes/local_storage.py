@@ -2,7 +2,7 @@ import logging
 import os
 import pathlib
 
-from dev.yeti.core.clients.file_storage.classes.interface import FileStorageClient
+from core.clients.file_storage.classes.interface import FileStorageClient
 
 
 class LocalStorageClient(FileStorageClient):
