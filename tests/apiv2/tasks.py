@@ -183,3 +183,4 @@ class ExportTaskTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         database_arango.db.clear()
+        self.template.delete()

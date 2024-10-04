@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import APIRouter, Depends, FastAPI, Request
 from starlette.middleware.sessions import SessionMiddleware
@@ -21,6 +22,8 @@ from core.web.apiv2 import (
 )
 
 SECRET_KEY = yeti_config.get("auth", "secret_key")
+if not SECRET_KEY:
+    SECRET_KEY = str(os.urandom(64))
 
 app = FastAPI()
 
