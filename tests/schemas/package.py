@@ -5,9 +5,6 @@ from pydantic import ValidationError
 
 from core import database_arango
 from core.schemas import entity, indicator, observable, package
-
-# from core.schemas.indicator import Indicator
-# from core.schemas.observable import Observable
 from core.schemas.observables import hostname, ipv4
 
 
@@ -197,7 +194,7 @@ class YetiPackageTest(unittest.TestCase):
         json_string = """
         {"timestamp": "2024-04-10T10:00:00Z",
         "source": "SuperSecretSource",
-        "tags": [],
+        "tags": {},
         "observables": [
            {"value": "192.168.1.1", "type": "ipv4"},
            {"value": "toto.com", "type": "hostname"}
@@ -259,21 +256,69 @@ class YetiPackageTest(unittest.TestCase):
         self.assertEqual("type:new_observable_type", tags[0][1].name)
 
     def test_package_creation_with_tags(self) -> None:
+        tags = {
+            "toto.com": ["tag1"],
+            "Fresh campaign": ["tag2"],
+            "global": ["tag3"],
+        }
+
         yeti_package = package.YetiPackage(
-            timestamp="2024-04-10T10:00:00Z",
-            source="SecretSource",
-            tags=["tag1", "tag2"],
+            timestamp="2024-04-10T10:00:00Z", source="SecretSource", tags=tags
         )
         yeti_package.add_observable("toto.com", "hostname")
         yeti_package.add_entity("Fresh campaign", "campaign")
         yeti_package.save()
         obs1 = observable.Observable.find(value="toto.com", type="hostname")
-        for tag in obs1.get_tags():
-            self.assertIn(tag[1].name, ["tag1", "tag2"])
+        tags = obs1.get_tags()
+        self.assertEqual(len(tags), 2)
+        for tag in tags:
+            self.assertIn(tag[1].name, ["tag1", "tag3"])
 
         campaign = entity.Entity.find(name="Fresh campaign", type="campaign")
-        for tag in campaign.get_tags():
-            self.assertIn(tag[1].name, ["tag1", "tag2"])
+        tags = campaign.get_tags()
+        self.assertEqual(len(tags), 2)
+        for tag in tags:
+            self.assertIn(tag[1].name, ["tag2", "tag3"])
+
+    def test_package_creation_from_json_with_tags(self) -> None:
+        json_string = """
+        {"timestamp": "2024-04-10T10:00:00Z",
+        "source": "SuperSecretSource",
+        "tags": {"toto.com": ["tag1"], "Fresh campaign": ["tag2"], "global": ["tag3"]},
+        "observables": [
+           {"value": "192.168.1.1", "type": "ipv4"},
+           {"value": "toto.com", "type": "new_type"}
+        ],
+        "entities": [{"type": "campaign", "name": "Fresh campaign"}],
+        "indicators": [{"type": "regex", "name": "awesome_regexp", "pattern": ".*", "diamond": "adversary"}],
+        "relationships": {
+           "Fresh campaign": [
+              {"target": "192.168.1.1", "link_type": "communicates_with"},
+              {"target": "toto.com", "link_type": "contacts"}
+            ]
+          }
+        }
+        """
+        yeti_package = package.YetiPackage.from_json(json_string)
+        yeti_package.save()
+
+        obs1 = observable.Observable.find(value="192.168.1.1", type="ipv4")
+        tags = obs1.get_tags()
+        self.assertEqual(len(tags), 1)
+        for tag in tags:
+            self.assertEqual(tag[1].name, "tag3")
+
+        obs2 = observable.Observable.find(value="toto.com", type="generic")
+        tags = obs2.get_tags()
+        self.assertEqual(len(tags), 3)
+        for tag in tags:
+            self.assertIn(tag[1].name, ["tag1", "type:new_type", "tag3"])
+
+        campaign = entity.Entity.find(name="Fresh campaign", type="campaign")
+        tags = campaign.get_tags()
+        self.assertEqual(len(tags), 2)
+        for tag in tags:
+            self.assertIn(tag[1].name, ["tag2", "tag3"])
 
     def test_empty_package_creation(self) -> None:
         yeti_package = package.YetiPackage(

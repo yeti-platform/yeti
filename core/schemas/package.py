@@ -17,17 +17,15 @@ class YetiPackageRelationship(BaseModel):
 class YetiPackage(BaseModel):
     timestamp: str | int  # add validator
     source: str = Field(min_length=3)
-    tags: Optional[List[str]] = []
+    tags: Optional[Dict[str, List[str]]] = {}
     observables: Optional[List[observable.ObservableTypes]] = []
     entities: Optional[List[entity.EntityTypes]] = []
     indicators: Optional[List[indicator.Indicator]] = []
     relationships: Optional[Dict[str, List[YetiPackageRelationship]]] = {}
 
-    _observables_generic_tags: ClassVar[Dict[str, str]] = {}
-    _objects: ClassVar[Dict[str, Any]] = {}
-
     def __init__(self, **data: Any):
         super().__init__(**data)
+        self._objects: Dict[str, Any] = {}
         for observable_element in self.observables:
             self._objects[observable_element.value] = observable_element
         for entity_element in self.entities:
@@ -40,8 +38,6 @@ class YetiPackage(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def handle_generic_observable_types(cls, data: Any) -> Any:
-        YetiPackage._observables_generic_tags = {}
-        YetiPackage._objects = {}
         if (
             isinstance(data, dict)
             and "observables" in data
@@ -50,12 +46,13 @@ class YetiPackage(BaseModel):
             for observable_element in data["observables"]:
                 if "type" in observable_element:
                     observable_type = observable_element["type"]
+                    observable_value = observable_element["value"]
                     if observable_type in observable.TYPE_MAPPING:
                         continue
                     observable_element["type"] = "generic"
-                    cls._observables_generic_tags[observable_element["value"]] = (
-                        f"type:{observable_type}"
-                    )
+                    if observable_value not in data["tags"]:
+                        data["tags"][observable_value] = []
+                    data["tags"][observable_value].append(f"type:{observable_type}")
         return data
 
     @classmethod
@@ -83,12 +80,16 @@ class YetiPackage(BaseModel):
 
     def add_observable(self, value, type, **kwargs) -> Self:
         if value in self._objects:
+            print(self._objects)
             raise ValueError(f'"{value}" already exists')
         if type in observable.TYPE_MAPPING:
             cls = observable.TYPE_MAPPING[type]
         else:
             cls = observable.TYPE_MAPPING["generic"]
-            self._observables_generic_tags[value] = f"type:{type}"
+            if value not in self.tags:
+                self.tags[value] = []
+            self.tags[value].append(f"type:{type}")
+
         kwargs["value"] = value
         instance = cls(**kwargs, exclude="type")
         self.observables.append(instance)
@@ -185,8 +186,13 @@ class YetiPackage(BaseModel):
                 else yeti_entity.last_seen
             )
             yeti_entity = yeti_entity.save()
-        if self.tags:
-            yeti_entity.tag(self.tags)
+        tags = list()
+        if yeti_entity.name in self.tags:
+            tags.extend(self.tags[yeti_entity.name])
+        if "global" in self.tags:
+            tags.extend(self.tags["global"])
+        if tags:
+            yeti_entity.tag(set(tags))
         yeti_entity = self._update_entity_context(yeti_entity)
         self._objects[element.name] = yeti_entity.save()
 
@@ -194,22 +200,29 @@ class YetiPackage(BaseModel):
         yeti_indicator = indicator.Indicator.find(name=element.name, type=element.type)
         if not yeti_indicator:
             yeti_indicator = element.save()
-        if self.tags:
-            yeti_indicator.tag(self.tags)
+        tags = list()
+        if yeti_indicator.name in self.tags:
+            tags.extend(self.tags[yeti_indicator.name])
+        if "global" in self.tags:
+            tags.extend(self.tags["global"])
+        if tags:
+            yeti_indicator.tag(set(tags))
         self._objects[element.name] = yeti_indicator.save()
 
     def _save_observable(self, element: observable.ObservableTypes) -> None:
         yeti_observable = observable.Observable.find(
             value=element.value, type=element.type
         )
-        tags = set(self.tags)
         if not yeti_observable:
             # support unknown observable type with generic and adds type as tag: type:<obs_type>
             yeti_observable = element.save()
-        if element.value in self._observables_generic_tags:
-            tags.add(self._observables_generic_tags[element.value])
+        tags = list()
+        if yeti_observable.value in self.tags:
+            tags.extend(self.tags[yeti_observable.value])
+        if "global" in self.tags:
+            tags.extend(self.tags["global"])
         if tags:
-            yeti_observable.tag(tags)
+            yeti_observable.tag(set(tags))
         yeti_observable = self._update_observable_context(yeti_observable)
         self._objects[element.value] = yeti_observable.save()
 
