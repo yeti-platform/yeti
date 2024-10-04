@@ -65,7 +65,7 @@ class YetiPackageTest(unittest.TestCase):
         neighbor = vertices[obs2.extended_id]
         self.assertEqual(neighbor.id, obs2.id)
 
-    def test_package_creation_from_dict(self) -> None:
+    def test_package_creation_from_dict_objects(self) -> None:
         observables = [
             {"value": "toto.com", "type": "hostname"},
             {"value": "192.168.1.1", "type": "ipv4"},

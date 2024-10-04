@@ -122,7 +122,7 @@ class YetiPackage(BaseModel):
 
     # relationships validation is done at save time
     def add_relationship(
-        self, source: str, target: str, link_type: str = "observes"
+        self, source: str, target: str, link_type: str = "related-to"
     ) -> Self:
         if source not in self.relationships:
             self.relationships[source] = []

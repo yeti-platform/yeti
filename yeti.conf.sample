@@ -9,6 +9,7 @@ export_path = /opt/yeti/exports
 logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
 audit_logfile = /var/log/yeti_audit.log
+templates_dir = /opt/yeti/templates
 
 # Public scheme + hostname + port for Yeti. Use it if you want to specify an
 # OIDC callback
