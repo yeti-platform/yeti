@@ -260,7 +260,9 @@ class ExportTaskTest(unittest.TestCase):
         ).save()
         taskmanager.TaskManager.register_task(ExportTask, task_name="RandomExport")
 
-    @mock.patch("core.clients.file_storage.classes.local_storage.LocalStorageClient.put_file")
+    @mock.patch(
+        "core.clients.file_storage.classes.local_storage.LocalStorageClient.put_file"
+    )
     @mock.patch("core.schemas.template.Template.render")
     def test_run_export_task(self, mock_render, mock_put_file):
         """Tests that the each function is called for each filtered observable."""
@@ -278,7 +280,9 @@ class ExportTaskTest(unittest.TestCase):
 
         self.assertIsNotNone(task.last_run)
 
-    @mock.patch("core.clients.file_storage.classes.local_storage.LocalStorageClient.put_file")
+    @mock.patch(
+        "core.clients.file_storage.classes.local_storage.LocalStorageClient.put_file"
+    )
     def test_run_export_task_with_config_path(self, mock_put_file):
         """Tests that the each function is called for each filtered observable."""
         previous = yeti_config.get("system", "export_path")
