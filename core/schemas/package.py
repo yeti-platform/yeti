@@ -21,7 +21,9 @@ class YetiPackage(BaseModel):
     source: str: source of the data that will be added. This is used to build context
     tags: Dict[str, List[str]]: tags to be added to the elements. Key is the element name,
     value is a list of tags to associate with. If the key is "global", the tags will be added to all elements.
-    observables: List[ObservableTypes]: list of observables to be added
+    observables: List[ObservableTypes]: list of observables to be added. When adding an unknown observable type,
+    the type will be automatically reset to "generic" observable type and a tag will be added with the type following
+    this format: type:<obs_type>.
     entities: List[EntityTypes]: list of entities to be added
     indicators: List[Indicator]: list of indicators to be added
     relationships: Dict[str, List[YetiPackageRelationship]]: relationships between elements.
