@@ -1,81 +1,157 @@
 import json
 from datetime import datetime, timezone
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 
 from core.schemas import entity, indicator, observable
+from core.schemas.observable import ObservableTypes
 
 
-class YetiPackageElement(BaseModel):
-    model_config = ConfigDict(extra='allow')
-    type: str
-    context: Optional[Dict[str, Any]] = {}
-    link_to: Optional[List[str]] = []
-    link_type: Optional[str] = "observes"
+class YetiPackageRelationship(BaseModel):
+    target: str
+    link_type: str = "observes"
 
 
 class YetiPackage(BaseModel):
     timestamp: str | int  # add validator
-    source: str
+    source: str = Field(min_length=3)
     tags: Optional[List[str]] = []
-    observables: Optional[Dict[str, YetiPackageElement]] = {}
-    entities: Optional[Dict[str, YetiPackageElement]] = {}
-    indicators: Optional[Dict[str, YetiPackageElement]] = {}
-    
-    _exclude_from_model_dump: ClassVar[List[str]] = ["type", "context", "link_to", "link_type"]
-    _yeti_objects: ClassVar[Dict[str, observable.Observable | entity.Entity | indicator.Indicator]] = {}
-    _relationship_types = ClassVar[Dict[str, str]]
+    observables: Optional[List[observable.ObservableTypes]] = []
+    entities: Optional[List[entity.EntityTypes]] = []
+    indicators: Optional[List[indicator.Indicator]] = []
+    relationships: Optional[Dict[str, List[YetiPackageRelationship]]] = {}
+
+    _observables_generic_tags: ClassVar[Dict[str, str]] = {}
+    _objects: ClassVar[Dict[str, Any]] = {}
 
     def __init__(self, **data: Any):
         super().__init__(**data)
+        for observable_element in self.observables:
+            self._objects[observable_element.value] = observable_element
+        for entity_element in self.entities:
+            self._objects[entity_element.name] = entity_element
+        for indicator_element in self.indicators:
+            self._objects[indicator_element.name] = indicator_element
         self._timestamp_dt: datetime = self._convert_timestamp(self.timestamp)
 
+    # Use model validator to convert unknown observable types to generic and add type as tag
+    @model_validator(mode="before")
+    @classmethod
+    def handle_generic_observable_types(cls, data: Any) -> Any:
+        YetiPackage._observables_generic_tags = {}
+        YetiPackage._objects = {}
+        if (
+            isinstance(data, dict)
+            and "observables" in data
+            and isinstance(data["observables"], list)
+        ):
+            for observable_element in data["observables"]:
+                if "type" in observable_element:
+                    observable_type = observable_element["type"]
+                    if observable_type in observable.TYPE_MAPPING:
+                        continue
+                    observable_element["type"] = "generic"
+                    cls._observables_generic_tags[observable_element["value"]] = (
+                        f"type:{observable_type}"
+                    )
+        return data
 
     @classmethod
-    def from_json(cls: Self, json_input: str) -> Self:
-        return cls(**json.loads(json_input))
+    def from_json(cls: Self, json_package: str) -> Self:
+        package = json.loads(json_package)
+        instance = cls(
+            timestamp=package["timestamp"],
+            source=package["source"],
+            tags=package.get("tags", []),
+        )
+        if "observables" in package:
+            for observable_element in package["observables"]:
+                instance.add_observable(**observable_element)
+        if "entities" in package:
+            for entity_element in package["entities"]:
+                instance.add_entity(**entity_element)
+        if "indicators" in package:
+            for indicator_element in package["indicators"]:
+                instance.add_indicator(**indicator_element)
+        if "relationships" in package:
+            for source, relationships in package["relationships"].items():
+                for relationship in relationships:
+                    instance.add_relationship(source, **relationship)
+        return instance
 
-    # We only need to validate relationships.
-    @model_validator(mode="after")
-    def validate_elements(self) -> Self:
-        self._relationship_types = {}
-        # Should we thinkg about key collision between entities, observables and indicators?
-        element_keys = set(self.observables) | set(self.entities) | set(self.indicators)
-        for element_type in ["observables", "entities", "indicators"]:
-            for element_key, element in getattr(self, element_type).items():
-                model = element.model_dump(exclude=self._exclude_from_model_dump)
-                if element_type == "entities":
-                    model["name"] = element_key
-                    cls = entity.TYPE_MAPPING[element.type]
-                elif element_type == "indicators":
-                    model["name"] = element_key
-                    cls = indicator.TYPE_MAPPING[element.type]
-                else:
-                    model["value"] = element_key
-                    cls = observable.TYPE_MAPPING[element.type]
-                cls(**model)
-                # validate relationships
-                for targeted_element in element.link_to:
-                    if targeted_element not in element_keys:
-                        error = f"Relationship with <{targeted_element}> defined for {element_type} {element_key} does not exist"
-                        raise ValueError(error)
-                self._relationship_types[element_key] = element.link_type
+    def add_observable(self, value, type, **kwargs) -> Self:
+        if value in self._objects:
+            raise ValueError(f'"{value}" already exists')
+        if type in observable.TYPE_MAPPING:
+            cls = observable.TYPE_MAPPING[type]
+        else:
+            cls = observable.TYPE_MAPPING["generic"]
+            self._observables_generic_tags[value] = f"type:{type}"
+        kwargs["value"] = value
+        instance = cls(**kwargs, exclude="type")
+        self.observables.append(instance)
+        self._objects[value] = instance
+        return self
+
+    def add_entity(self, name, type, **kwargs) -> Self:
+        if name in self._objects:
+            raise ValueError(f'Entity "{name}" already exists')
+        if type not in entity.TYPE_MAPPING:
+            raise ValueError(f"Invalid entity type {type}")
+        cls = entity.TYPE_MAPPING[type]
+        kwargs["name"] = name
+        instance = cls(**kwargs, exclude="type")
+        self.entities.append(instance)
+        self._objects[name] = instance
+        return self
+
+    def add_indicator(self, name, type, **kwargs) -> Self:
+        if name in self._objects:
+            raise ValueError(f'Indicator "{name}" already exists')
+        if type not in indicator.TYPE_MAPPING:
+            raise ValueError(f"Invalid indicator type: {type}")
+        cls = indicator.TYPE_MAPPING[type]
+        kwargs["name"] = name
+        instance = cls(**kwargs, exclude="type")
+        self.indicators.append(instance)
+        self._objects[name] = instance
+        return self
+
+    # relationships validation is done at save time
+    def add_relationship(
+        self, source: str, target: str, link_type: str = "observes"
+    ) -> Self:
+        if source not in self.relationships:
+            self.relationships[source] = []
+        for relationship in self.relationships[source]:
+            if relationship.target == target:
+                raise ValueError(
+                    f"Relationship between {source} and {target} already exists"
+                )
+        relationship = YetiPackageRelationship(target=target, link_type=link_type)
+        self.relationships[source].append(relationship)
         return self
 
     def save(self) -> None:
-        if self.observables:
-            for observable_key, observable_element in self.observables.items():
-                print("Saving observable ", observable_key)
-                self._save_observable(observable_key, observable_element)
-        if self.entities:
-            for entity_key, entity_element in self.entities.items():
-                #print("Saving entity ", entity_key)
-                self._save_entity(entity_key, entity_element)
-        if self.indicators:
-            for indicator_key, indicator_element in self.indicators.items():
-                self._save_indicator(indicator_key, indicator_element)
+        if not self.observables and not self.entities and not self.indicators:
+            raise ValueError("No elements to save")
+        # before saving, let's check that relationships are valid
+        for source, relationships in self.relationships.items():
+            if source not in self._objects:
+                raise ValueError(f'Relationship source "{source}" does not exist')
+            for relationship in relationships:
+                if relationship.target not in self._objects:
+                    raise ValueError(
+                        f'Relationship target "{relationship.target}" does not exist'
+                    )
+        for observable_element in self.observables:
+            self._save_observable(observable_element)
+        for entity_element in self.entities:
+            self._save_entity(entity_element)
+        for indicator_element in self.indicators:
+            self._save_indicator(indicator_element)
         self._save_relationships()
 
     def _convert_timestamp(self, timestamp: str | int) -> datetime:
@@ -93,19 +169,11 @@ class YetiPackage(BaseModel):
         else:
             raise ValueError("Invalid timestamp format")
 
-    def _save_entity(self, name: str, element: YetiPackageElement) -> None:
-        # Create or get honeypot
-        yeti_entity = entity.Entity.find(name=name, type=element.type)
+    def _save_entity(self, element: entity.EntityTypes) -> None:
+        yeti_entity = entity.Entity.find(name=element.name, type=element.type)
         if not yeti_entity:
-            model = element.model_dump(exclude=self._exclude_from_model_dump)
-            model["name"] = name
-            cls = entity.TYPE_MAPPING[element.type]
-            if "first_seen" not in model:
-                model["first_seen"] = self.timestamp
-            if "last_seen" not in model:
-                model["last_seen"] = self.timestamp
-            yeti_entity = cls(**model).save()
-        else:
+            yeti_entity = element.save()
+        if hasattr(yeti_entity, "first_seen") and hasattr(yeti_entity, "last_seen"):
             yeti_entity.first_seen = (
                 self._timestamp_dt
                 if yeti_entity.first_seen > self._timestamp_dt
@@ -119,50 +187,38 @@ class YetiPackage(BaseModel):
             yeti_entity = yeti_entity.save()
         if self.tags:
             yeti_entity.tag(self.tags)
-        yeti_entity = yeti_entity.save()
-        self._yeti_objects[name] = self._update_entity_context(yeti_entity)
+        yeti_entity = self._update_entity_context(yeti_entity)
+        self._objects[element.name] = yeti_entity.save()
 
-
-    def _save_indicator(self, name: str, element: YetiPackageElement) -> None:
-        yeti_indicator = indicator.Indicator.find(name=name, type=element.type)
+    def _save_indicator(self, element: indicator.IndicatorTypes) -> None:
+        yeti_indicator = indicator.Indicator.find(name=element.name, type=element.type)
         if not yeti_indicator:
-            model = element.model_dump(exclude=self._exclude_from_model_dump)
-            model["name"] = name
-            cls = indicator.TYPE_MAPPING[element.type]
-            yeti_indicator = cls(**model).save()
+            yeti_indicator = element.save()
         if self.tags:
             yeti_indicator.tag(self.tags)
-        self._yeti_objects[name] = yeti_indicator.save()
+        self._objects[element.name] = yeti_indicator.save()
 
-
-    def _save_observable(self, value: str, element: YetiPackageElement) -> None:
-        yeti_observable = observable.Observable.find(value=value, type=element.type)
-        tags = self.tags
+    def _save_observable(self, element: observable.ObservableTypes) -> None:
+        yeti_observable = observable.Observable.find(
+            value=element.value, type=element.type
+        )
+        tags = set(self.tags)
         if not yeti_observable:
             # support unknown observable type with generic and adds type as tag: type:<obs_type>
-            if element.type not in observable.TYPE_MAPPING:
-                cls = observable.Generic
-                tags.append(f"type:{element.type}")
-            else:
-                cls = observable.TYPE_MAPPING[element.type]
-            model = element.model_dump(exclude=self._exclude_from_model_dump)
-            model["value"] = value
-            yeti_observable = cls(**model).save()
+            yeti_observable = element.save()
+        if element.value in self._observables_generic_tags:
+            tags.add(self._observables_generic_tags[element.value])
         if tags:
             yeti_observable.tag(tags)
-        yeti_observable = yeti_observable.save()
-        self._yeti_objects[value] = self._update_observable_context(yeti_observable)
+        yeti_observable = self._update_observable_context(yeti_observable)
+        self._objects[element.value] = yeti_observable.save()
 
     def _save_relationships(self) -> None:
-        for element_type in ["observables", "entities", "indicators"]:
-            for element_key, element in getattr(self, element_type).items():
-                if not element.link_to:
-                    continue
-                for targeted_element in element.link_to:
-                    source = self._yeti_objects[element_key]
-                    target = self._yeti_objects[targeted_element]
-                    link_type = self._relationship_types[targeted_element]
-                    source.link_to(target, link_type, "")
+        for source, relationships in self.relationships.items():
+            source_object = self._objects[source]
+            for relationship in relationships:
+                target_object = self._objects[relationship.target]
+                source_object.link_to(target_object, relationship.link_type, "")
 
     def _update_entity_context(self, yeti_entity: entity.Entity) -> entity.Entity:
         found_idx = -1
@@ -183,7 +239,9 @@ class YetiPackage(BaseModel):
         else:
             return yeti_entity.add_context(self.source, updated_context)
 
-    def _update_observable_context(self, yeti_observable: observable.Observable) -> observable.Observable:
+    def _update_observable_context(
+        self, yeti_observable: observable.Observable
+    ) -> observable.Observable:
         found_idx = -1
         updated_context = {
             "source": self.source,
