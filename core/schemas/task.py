@@ -18,7 +18,9 @@ from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
 
-FILE_STORAGE_CLIENT = file_storage.get_client(yeti_config.get("system", "export_path", "/opt/yeti/exports"))
+FILE_STORAGE_CLIENT = file_storage.get_client(
+    yeti_config.get("system", "export_path", "/opt/yeti/exports")
+)
 
 
 def now():
@@ -280,7 +282,9 @@ class ExportTask(Task):
 
         template = Template.find(name=self.template_name)
         assert template is not None
-        logging.info(f"Rendering template {template.name} to {FILE_STORAGE_CLIENT.file_path(self.file_name)}")
+        logging.info(
+            f"Rendering template {template.name} to {FILE_STORAGE_CLIENT.file_path(self.file_name)}"
+        )
 
         FILE_STORAGE_CLIENT.put_file(
             self.file_name,

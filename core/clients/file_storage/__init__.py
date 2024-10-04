@@ -8,6 +8,7 @@ from core.clients.file_storage.classes.local_storage import LocalStorageClient
 
 ignored_files = ["interface.py", "local_storage.py"]
 
+
 def load_client_classes():
     classes: list[Type[FileStorageClient]] = []
 
@@ -16,12 +17,15 @@ def load_client_classes():
         if filename.endswith(".py") and filename not in ignored_files:
             module_name = filename.removesuffix(".py")
 
-            module = importlib.import_module(f"core.clients.file_storage.classes.{module_name}")
+            module = importlib.import_module(
+                f"core.clients.file_storage.classes.{module_name}"
+            )
             for _, obj in inspect.getmembers(module, inspect.isclass):
                 if issubclass(obj, FileStorageClient) and obj != FileStorageClient:
                     classes.append(obj)
 
     return classes
+
 
 def get_client(path: str) -> FileStorageClient:
     for client_class in load_client_classes():

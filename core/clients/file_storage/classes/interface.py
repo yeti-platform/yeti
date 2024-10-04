@@ -7,7 +7,7 @@ class FileStorageClient(ABC):
     @abstractmethod
     def __init__(self, path: str):
         raise NotImplementedError
-    
+
     @abstractmethod
     def file_path(self, file_name: str) -> str:
         raise NotImplementedError

@@ -16,12 +16,12 @@ class LocalStorageClient(FileStorageClient):
 
     def _file_path(self, file_name: str) -> pathlib.Path:
         return self.path.joinpath(file_name)
-    
+
     def file_path(self, file_name: str) -> str:
         return str(self._file_path(file_name))
 
     def get_file(self, file_name: str) -> bytes:
-        return self._file_path(file_name).read_bytes()        
+        return self._file_path(file_name).read_bytes()
 
     def put_file(self, file_name: str, contents: bytes) -> None:
         self._file_path(file_name).write_bytes(contents)
