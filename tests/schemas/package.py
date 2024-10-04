@@ -310,6 +310,4 @@ class YetiPackageTest(unittest.TestCase):
 
     def test_package_creation_with_small_source_string(self) -> None:
         with self.assertRaises(ValidationError):
-            yeti_package = package.YetiPackage(
-                timestamp="2024-04-10T10:00:00Z", source="a"
-            )
+            package.YetiPackage(timestamp="2024-04-10T10:00:00Z", source="a")
