@@ -15,6 +15,18 @@ class YetiPackageRelationship(BaseModel):
 
 
 class YetiPackage(BaseModel):
+    """YetiPackage is a generic package that can contain observables, entities, indicators and relationships.
+
+    timestamp: str | int: timestamp of the package
+    source: str: source of the data that will be added. This is used to build context
+    tags: Dict[str, List[str]]: tags to be added to the elements. Key is the element name,
+    value is a list of tags to associate with. If the key is "global", the tags will be added to all elements.
+    observables: List[ObservableTypes]: list of observables to be added
+    entities: List[EntityTypes]: list of entities to be added
+    indicators: List[Indicator]: list of indicators to be added
+    relationships: Dict[str, List[YetiPackageRelationship]]: relationships between elements.
+    """
+
     timestamp: str | int  # add validator
     source: str = Field(min_length=3)
     tags: Optional[Dict[str, List[str]]] = {}
