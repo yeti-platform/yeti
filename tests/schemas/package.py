@@ -245,6 +245,25 @@ class YetiPackageTest(unittest.TestCase):
         neighbor = vertices[obs2.extended_id]
         self.assertEqual(neighbor.id, obs2.id)
 
+    def test_package_creation_timestamps(self) -> None:
+        package.YetiPackage(timestamp="2024-04-10", source="SecretSource")
+        package.YetiPackage(timestamp="2024-04-10T00:00:00", source="SecretSource")
+        package.YetiPackage(timestamp="2024-04-10T10:00:00Z", source="SecretSource")
+        package.YetiPackage(timestamp="2024-04-10T10:00:00.400+00:00", source="Secret")
+        package.YetiPackage(
+            timestamp=datetime.datetime(2024, 4, 10, 10, 0, 0), source="SecretSource"
+        )
+        package.YetiPackage(timestamp=1704067200, source="SecretSource")
+        package.YetiPackage(timestamp=1704067200.0, source="SecretSource")
+
+    def test_package_creation_bad_timestamps(self) -> None:
+        with self.assertRaises(ValidationError):
+            package.YetiPackage(timestamp="2024-04-10T10", source="SecretSource")
+        with self.assertRaises(ValidationError):
+            package.YetiPackage(timestamp="10-04-2024", source="SecretSource")
+        with self.assertRaises(ValidationError):
+            package.YetiPackage(timestamp=-99999999999999999, source="SecretSource")
+
     def test_generic_observable_creation(self) -> None:
         yeti_package = package.YetiPackage(
             timestamp="2024-04-10T10:00:00Z", source="SecretSource"

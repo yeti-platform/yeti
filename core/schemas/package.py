@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from typing import Any, ClassVar, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
@@ -17,7 +17,7 @@ class YetiPackageRelationship(BaseModel):
 class YetiPackage(BaseModel):
     """YetiPackage is a generic package that can contain observables, entities, indicators and relationships.
 
-    timestamp: str | int: timestamp of the package
+    timestamp: datetime: timestamp of the event. Can be any of https://docs.pydantic.dev/dev/api/standard_library_types/#datetime-types
     source: str: source of the data that will be added. This is used to build context
     tags: Dict[str, List[str]]: tags to be added to the elements. Key is the element name,
     value is a list of tags to associate with. If the key is "global", the tags will be added to all elements.
@@ -27,7 +27,7 @@ class YetiPackage(BaseModel):
     relationships: Dict[str, List[YetiPackageRelationship]]: relationships between elements.
     """
 
-    timestamp: str | int  # add validator
+    timestamp: datetime = datetime.now()
     source: str = Field(min_length=3)
     tags: Optional[Dict[str, List[str]]] = {}
     observables: Optional[List[observable.ObservableTypes]] = []
@@ -44,7 +44,6 @@ class YetiPackage(BaseModel):
             self._objects[entity_element.name] = entity_element
         for indicator_element in self.indicators:
             self._objects[indicator_element.name] = indicator_element
-        self._timestamp_dt: datetime = self._convert_timestamp(self.timestamp)
 
     # Use model validator to convert unknown observable types to generic and add type as tag
     @model_validator(mode="before")
@@ -188,13 +187,13 @@ class YetiPackage(BaseModel):
             yeti_entity = element.save()
         if hasattr(yeti_entity, "first_seen") and hasattr(yeti_entity, "last_seen"):
             yeti_entity.first_seen = (
-                self._timestamp_dt
-                if yeti_entity.first_seen > self._timestamp_dt
+                self.timestamp
+                if yeti_entity.first_seen > self.timestamp
                 else yeti_entity.first_seen
             )
             yeti_entity.last_seen = (
-                self._timestamp_dt
-                if yeti_entity.last_seen < self._timestamp_dt
+                self.timestamp
+                if yeti_entity.last_seen < self.timestamp
                 else yeti_entity.last_seen
             )
             yeti_entity = yeti_entity.save()
@@ -271,8 +270,8 @@ class YetiPackage(BaseModel):
         updated_context = {
             "source": self.source,
             "total_seen": 1,
-            "first_seen": self._timestamp_dt,
-            "last_seen": self._timestamp_dt,
+            "first_seen": self.timestamp,
+            "last_seen": self.timestamp,
         }
         for idx, context in enumerate(list(yeti_observable.context)):
             if context["source"] == self.source:
@@ -286,13 +285,13 @@ class YetiPackage(BaseModel):
             else:
                 first_seen = self._convert_timestamp(current_context["first_seen"])
             # keep previous first_seen
-            if first_seen < self._timestamp_dt:
+            if first_seen < self.timestamp:
                 updated_context["first_seen"] = first_seen
             if not current_context.get("last_seen"):
                 last_seen = self.timestamp
             else:
                 last_seen = self._convert_timestamp(current_context["last_seen"])
-            if last_seen > self._timestamp_dt:
+            if last_seen > self.timestamp:
                 updated_context["last_seen"] = last_seen
             updated_context["total_seen"] = current_context.get("total_seen", 0) + 1
             yeti_observable.context[found_idx] = updated_context
