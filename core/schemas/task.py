@@ -37,6 +37,9 @@ class TaskType(str, Enum):
     export = "export"
     oneshot = "oneshot"
     inline = "inline"
+    eventlog = "eventlog"
+    eventmetric = "eventmetric"
+    eventforward = "eventforward"
 
 
 class TaskParams(BaseModel):
@@ -309,12 +312,82 @@ class ExportTask(Task):
         return results
 
 
+class InlineTask(Task):
+    """A task that is triggered for each matched event."""
+
+    type: Literal[TaskType.inline] = TaskType.inline
+    acts_on: list[str] = []  # By default act on everything
+
+    def run(self, params: dict):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
+class EventLogTask(Task):
+    """A task that logs events."""
+
+    type: Literal[TaskType.eventlog] = TaskType.eventlog
+
+    def run(self, params: dict):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
+class EventMetricTask(Task):
+    """A task that generates metrics from events."""
+
+    type: Literal[TaskType.eventmetric] = TaskType.eventmetric
+
+    def run(self, params: dict):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
+class EventForwardTask(Task):
+    """Task to forward events to another system."""
+
+    type: Literal[TaskType.eventforward] = TaskType.eventforward
+
+    def run(self, params: dict):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
 TYPE_MAPPING = {
     "feed": FeedTask,
     "analytics": AnalyticsTask,
     "oneshot": OneShotTask,
     "export": ExportTask,
+    "inline": InlineTask,
+    "eventlog": EventLogTask,
+    "eventmetric": EventMetricTask,
+    "eventforward": EventForwardTask,
 }
 
 
-TaskTypes = FeedTask | AnalyticsTask | OneShotTask | ExportTask
+TaskTypes = (
+    FeedTask
+    | AnalyticsTask
+    | OneShotTask
+    | ExportTask
+    | InlineTask
+    | EventLogTask
+    | EventMetricTask
+    | EventForwardTask
+)
