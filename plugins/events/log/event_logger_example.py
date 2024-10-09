@@ -14,5 +14,6 @@ class EventLoggerExample(task.EventLogTask):
     def run(self, params: dict) -> None:
         logging.info(f"Received event: {json.dumps(params)}")
         return
-    
+
+
 taskmanager.TaskManager.register_task(EventLoggerExample)

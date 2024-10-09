@@ -21,5 +21,6 @@ class DomainExtract(task.InlineTask):
             hostname = observable.Hostname(value=o.hostname).save()
             url.link_to(hostname, "hostname", "Extracted hostname from URL")
         return
-    
+
+
 taskmanager.TaskManager.register_task(DomainExtract)
