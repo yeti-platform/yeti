@@ -5,6 +5,7 @@ import json
 import logging
 import sys
 import time
+import traceback
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
 
 if TYPE_CHECKING:
@@ -21,6 +22,7 @@ import requests
 from arango import ArangoClient
 from arango.exceptions import DocumentInsertError, GraphCreateError
 
+from core import events
 from core.config.config import yeti_config
 
 from .interfaces import AbstractYetiConnector
@@ -205,7 +207,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not err.error_code == 1210:  # Unique constraint violation
                 raise
             return None
-
+        try:
+            id = newdoc["_id"]
+            root_type, _ = id.split("/")
+            if root_type in ["entities", "observables", "indicators"]:
+                msg = f"new.{root_type}.{newdoc['type']}:{id}"
+            else:
+                msg = f"new.{root_type}:{id}"
+            events.publish_event(msg)
+        except Exception:
+            logging.exception("Error while publishing event")
         newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
@@ -231,7 +242,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 msg = f"Update failed when adding {document_json}: {exception}"
                 logging.error(msg)
                 raise RuntimeError(msg)
-
+        try:
+            id = newdoc["_id"]
+            root_type, _ = id.split("/")
+            if root_type != "tasks":  # Avoid infinite recursion
+                if root_type in ["entities", "observables", "indicators"]:
+                    msg = f"update.{root_type}.{newdoc['type']}:{id}"
+                else:
+                    msg = f"update.{root_type}:{id}"
+                events.publish_event(msg)
+        except Exception:
+            logging.exception("Error while publishing event")
         newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
