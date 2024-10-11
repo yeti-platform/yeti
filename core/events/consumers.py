@@ -39,7 +39,7 @@ class Worker(ConsumerMixin):
                 continue
             if task.type == TaskType.log:
                 params = json.dumps({"params": {"log": data.log}})
-                run_task.apply_async(args=[task.name, params], queue="eventlog")
+                run_task.apply_async(args=[task.name, params], queue="log")
 
     def on_message(self, body, received_message):
         try:
