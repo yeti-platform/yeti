@@ -22,8 +22,8 @@ import requests
 from arango import ArangoClient
 from arango.exceptions import DocumentInsertError, GraphCreateError
 
-from core import events
 from core.config.config import yeti_config
+from core.events.producer import producer
 
 from .interfaces import AbstractYetiConnector
 
@@ -211,10 +211,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             id = newdoc["_id"]
             root_type, _ = id.split("/")
             if root_type in ["entities", "observables", "indicators"]:
-                msg = f"new.{root_type}.{newdoc['type']}:{id}"
+                msg = f"new.{root_type}.{newdoc['type']}"
             else:
-                msg = f"new.{root_type}:{id}"
-            events.publish_event(msg)
+                msg = f"new.{root_type}"
+            producer.publish_event(msg, id)
         except Exception:
             logging.exception("Error while publishing event")
         newdoc["__id"] = newdoc.pop("_key")
@@ -247,10 +247,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             root_type, _ = id.split("/")
             if root_type != "tasks":  # Avoid infinite recursion
                 if root_type in ["entities", "observables", "indicators"]:
-                    msg = f"update.{root_type}.{newdoc['type']}:{id}"
+                    msg = f"update.{root_type}.{newdoc['type']}"
                 else:
-                    msg = f"update.{root_type}:{id}"
-                events.publish_event(msg)
+                    msg = f"update.{root_type}"
+                producer.publish_event(msg, id)
         except Exception:
             logging.exception("Error while publishing event")
         newdoc["__id"] = newdoc.pop("_key")

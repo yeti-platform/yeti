@@ -70,25 +70,3 @@ def run_task(task_name: str, params: str):
     """
     task_params = TaskParams(**json.loads(params))
     TaskManager.run_task(task_name, task_params)
-
-
-@app.task
-def publish_event(event: str):
-    """Publishes an event to the events buses.
-
-    Args:
-        event: A string representing an event.
-    """
-    for task in Task.list():
-        if task.type == "export" or task.enabled is False:
-            continue
-        params = json.dumps({"params": {"event": event}})
-        if task.type == "inline":
-            run_task.apply_async(args=[task.name, params], queue="inline")
-        if task.type == "eventlog":
-            print(f"{task.name}: type:{task.type} enabled:{task.enabled}")
-            run_task.apply_async(args=[task.name, params], queue="eventlog")
-        if task.type == "eventmetric":
-            run_task.apply_async(args=[task.name, params], queue="eventmetric")
-        if task.type == "eventforwarder":
-            run_task.apply_async(args=[task.name, params], queue="eventforwarder")
