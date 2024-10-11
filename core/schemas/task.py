@@ -345,6 +345,8 @@ class MetricTask(Task):
     """A task that generates metrics from events."""
 
     type: Literal[TaskType.metric] = TaskType.metric
+    acts_on: list[str] = []  # By default act on everything
+
 
     def run(self, params: dict):
         """Runs the task.
@@ -359,6 +361,8 @@ class ForwardTask(Task):
     """Task to forward events to another system."""
 
     type: Literal[TaskType.forward] = TaskType.forward
+    acts_on: list[str] = []  # By default act on everything
+
 
     def run(self, params: dict):
         """Runs the task.
