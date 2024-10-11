@@ -207,6 +207,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not err.error_code == 1210:  # Unique constraint violation
                 raise
             return None
+        newdoc["__id"] = newdoc.pop("_key")
         try:
             id = newdoc["_id"]
             root_type, _ = id.split("/")
@@ -217,7 +218,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             producer.publish_event(msg, id)
         except Exception:
             logging.exception("Error while publishing event")
-        newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
     def _update(self, document_json):
@@ -242,6 +242,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 msg = f"Update failed when adding {document_json}: {exception}"
                 logging.error(msg)
                 raise RuntimeError(msg)
+        newdoc["__id"] = newdoc.pop("_key")
         try:
             id = newdoc["_id"]
             root_type, _ = id.split("/")
@@ -253,7 +254,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 producer.publish_event(msg, id)
         except Exception:
             logging.exception("Error while publishing event")
-        newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
     def save(
