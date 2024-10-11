@@ -5,7 +5,7 @@ from core import taskmanager
 from core.schemas import task
 
 
-class EventLoggerExample(task.EventLogTask):
+class LoggerExample(task.LogTask):
     _defaults = {
         "name": "EventLoggerExample",
         "description": "Logs events from eventlog bus",
@@ -16,4 +16,4 @@ class EventLoggerExample(task.EventLogTask):
         return
 
 
-taskmanager.TaskManager.register_task(EventLoggerExample)
+taskmanager.TaskManager.register_task(LoggerExample)
