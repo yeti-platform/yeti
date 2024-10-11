@@ -37,9 +37,9 @@ class TaskType(str, Enum):
     export = "export"
     oneshot = "oneshot"
     inline = "inline"
-    eventlog = "eventlog"
-    eventmetric = "eventmetric"
-    eventforward = "eventforward"
+    log = "log"
+    metric = "metric"
+    forward = "forward"
 
 
 class TaskParams(BaseModel):
@@ -327,10 +327,10 @@ class InlineTask(Task):
         raise NotImplementedError
 
 
-class EventLogTask(Task):
+class LogTask(Task):
     """A task that logs events."""
 
-    type: Literal[TaskType.eventlog] = TaskType.eventlog
+    type: Literal[TaskType.log] = TaskType.log
 
     def run(self, params: dict):
         """Runs the task.
@@ -341,10 +341,10 @@ class EventLogTask(Task):
         raise NotImplementedError
 
 
-class EventMetricTask(Task):
+class MetricTask(Task):
     """A task that generates metrics from events."""
 
-    type: Literal[TaskType.eventmetric] = TaskType.eventmetric
+    type: Literal[TaskType.metric] = TaskType.metric
 
     def run(self, params: dict):
         """Runs the task.
@@ -355,10 +355,10 @@ class EventMetricTask(Task):
         raise NotImplementedError
 
 
-class EventForwardTask(Task):
+class ForwardTask(Task):
     """Task to forward events to another system."""
 
-    type: Literal[TaskType.eventforward] = TaskType.eventforward
+    type: Literal[TaskType.forward] = TaskType.forward
 
     def run(self, params: dict):
         """Runs the task.
@@ -375,9 +375,9 @@ TYPE_MAPPING = {
     "oneshot": OneShotTask,
     "export": ExportTask,
     "inline": InlineTask,
-    "eventlog": EventLogTask,
-    "eventmetric": EventMetricTask,
-    "eventforward": EventForwardTask,
+    "log": LogTask,
+    "metric": MetricTask,
+    "forward": ForwardTask,
 }
 
 
@@ -387,7 +387,7 @@ TaskTypes = (
     | OneShotTask
     | ExportTask
     | InlineTask
-    | EventLogTask
-    | EventMetricTask
-    | EventForwardTask
+    | LogTask
+    | MetricTask
+    | ForwardTask
 )
