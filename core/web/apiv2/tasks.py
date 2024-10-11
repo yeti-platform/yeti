@@ -90,9 +90,9 @@ async def new_export(request: NewExportRequest) -> ExportTask:
 
 
 @router.patch("/export/{export_name}")
-async def patch_export(request: PatchExportRequest) -> ExportTask:
+async def patch_export(export_name: str, request: PatchExportRequest) -> ExportTask:
     """Pathes an existing ExportTask in the database."""
-    db_export = ExportTask.find(name=request.export.name)
+    db_export = ExportTask.find(name=export_name)
     if not db_export:
         raise HTTPException(
             status_code=404, detail=f"ExportTask {request.export.name} not found"
