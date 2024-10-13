@@ -441,6 +441,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return_new=True,
         )["new"]
         result["__id"] = result.pop("_key")
+        try:
+            producer.publish_event(f"new.tag_link.{tag_obj.name}", self.extended_id)
+        except Exception:
+            logging.exception("Error while publishing event")
         return TagRelationship.load(result)
 
     def expire_tag(self, tag_name: str) -> "TagRelationship":
