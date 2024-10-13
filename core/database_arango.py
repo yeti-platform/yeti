@@ -208,16 +208,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 raise
             return None
         newdoc["__id"] = newdoc.pop("_key")
-        try:
-            id = newdoc["_id"]
-            root_type, _ = id.split("/")
-            if root_type in ["entities", "observables", "indicators"]:
-                msg = f"new.{root_type}.{newdoc['type']}"
-            else:
-                msg = f"new.{root_type}"
-            producer.publish_event(msg, id)
-        except Exception:
-            logging.exception("Error while publishing event")
         return newdoc
 
     def _update(self, document_json):
@@ -243,17 +233,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.error(msg)
                 raise RuntimeError(msg)
         newdoc["__id"] = newdoc.pop("_key")
-        try:
-            id = newdoc["_id"]
-            root_type, _ = id.split("/")
-            if root_type != "tasks":  # Avoid infinite recursion
-                if root_type in ["entities", "observables", "indicators"]:
-                    msg = f"update.{root_type}.{newdoc['type']}"
-                else:
-                    msg = f"update.{root_type}"
-                producer.publish_event(msg, id)
-        except Exception:
-            logging.exception("Error while publishing event")
         return newdoc
 
     def save(
@@ -276,16 +255,29 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if doc_dict.get("id") is not None:
             exclude = ["tags"] + self._exclude_overwrite
             result = self._update(self.model_dump_json(exclude=exclude))
+            event = "update."
         else:
             exclude = ["tags", "id"] + self._exclude_overwrite
             result = self._insert(self.model_dump_json(exclude=exclude))
+            event = "new."
             if not result:
                 exclude = exclude_overwrite + self._exclude_overwrite
                 result = self._update(self.model_dump_json(exclude=exclude))
+                event = "update."
         yeti_object = self.__class__(**result)
         # TODO: Override this if we decide to implement YetiTagModel
         if hasattr(self, "tags"):
             yeti_object.get_tags()
+        # Don't publish events for task updates to avoid infinite message loops
+        if not (event == "update." and self._collection_name == "tasks"):
+            if self._collection_name in ["entities", "observables", "indicators"]:
+                event += f"{self._collection_name}.{yeti_object.type}"
+            else:
+                event += f"{self._collection_name}"
+            try:
+                producer.publish_event(event, yeti_object.id)
+            except Exception:
+                logging.exception("Error while publishing event")
         return yeti_object
 
     @classmethod
