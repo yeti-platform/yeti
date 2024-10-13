@@ -1,4 +1,5 @@
 import json
+import re
 import threading
 import traceback
 
@@ -23,13 +24,19 @@ class Worker(ConsumerMixin):
             consumer(queues=self.queues, callbacks=[self.on_message], accept=["json"])
         ]
 
+    def _match_event(self, task: Task, event: str):
+        if not task.acts_on:
+            return True
+        for acts_on in task.acts_on:
+            if re.match(acts_on, event):
+                return True
+        return False
+
     def _handle_event(self, data: EventData):
         for task in Task.list():
-            if task.enabled is False:
+            if task.enabled is False or task.type not in Worker.EVENT_TASKS:
                 continue
-            if task.type in Worker.EVENT_TASKS and (
-                data.event in task.acts_on or not task.acts_on
-            ):
+            if self._match_event(task, data.event):
                 params = json.dumps({"params": {"id": data.object_id}})
                 run_task.apply_async(args=[task.name, params], queue=task.type)
 
