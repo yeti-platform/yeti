@@ -1,5 +1,7 @@
+import io
+
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
 from core import taskscheduler
@@ -88,9 +90,9 @@ async def new_export(request: NewExportRequest) -> ExportTask:
 
 
 @router.patch("/export/{export_name}")
-async def patch_export(request: PatchExportRequest) -> ExportTask:
+async def patch_export(export_name: str, request: PatchExportRequest) -> ExportTask:
     """Pathes an existing ExportTask in the database."""
-    db_export = ExportTask.find(name=request.export.name)
+    db_export = ExportTask.find(name=export_name)
     if not db_export:
         raise HTTPException(
             status_code=404, detail=f"ExportTask {request.export.name} not found"
@@ -115,7 +117,13 @@ async def export_content(export_id: str):
     export = ExportTask.get(export_id)
     if not export:
         raise HTTPException(status_code=404, detail=f"ExportTask {export_id} not found")
-    return FileResponse(export.output_file, headers={"Cache-Control": "no-cache"})
+    return StreamingResponse(
+        io.BytesIO(export.file_contents),
+        headers={
+            "Cache-Control": "no-cache",
+            "Content-Disposition": f"attachment; filename={export.file_name}",
+        },
+    )
 
 
 @router.delete("/export/{export_name}")

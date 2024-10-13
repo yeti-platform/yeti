@@ -1,7 +1,5 @@
 import datetime
 import logging
-import os
-import pathlib
 from enum import Enum
 from io import BytesIO
 from typing import ClassVar, Literal
@@ -14,10 +12,15 @@ from dateutil import parser
 from pydantic import BaseModel, Field
 
 from core import database_arango
+from core.clients import file_storage
 from core.config.config import yeti_config
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.template import Template
+
+FILE_STORAGE_CLIENT = file_storage.get_client(
+    yeti_config.get("system", "export_path", "/opt/yeti/exports")
+)
 
 
 def now():
@@ -266,11 +269,9 @@ class ExportTask(Task):
     sha256: str | None = None
 
     @property
-    def output_file(self) -> str:
+    def file_name(self) -> str:
         """Returns the output file for the export."""
-        export_path = yeti_config.get("system", "export_path", "/opt/yeti/exports")
-        name_slug = self.name.replace(" ", "_").lower()
-        return os.path.abspath(os.path.join(export_path, name_slug))
+        return self.name.replace(" ", "_").lower()
 
     def run(self) -> None:
         """Runs the export asynchronously."""
@@ -282,15 +283,20 @@ class ExportTask(Task):
             fresh_tags=self.fresh_tags,
         )
 
-        export_path = pathlib.Path(
-            yeti_config.get("system", "export_path", "/opt/yeti/exports")
-        )
-        export_path.mkdir(parents=True, exist_ok=True)
         template = Template.find(name=self.template_name)
         assert template is not None
-        logging.info(f"Rendering template {template.name} to {self.output_file}")
-        template.render(export_data, self.output_file)
-        # hash output file and store result
+        logging.info(
+            f"Rendering template {template.name} to {FILE_STORAGE_CLIENT.file_path(self.file_name)}"
+        )
+
+        FILE_STORAGE_CLIENT.put_file(
+            self.file_name,
+            template.render(export_data, None).encode(),
+        )
+
+    @property
+    def file_contents(self) -> str:
+        return FILE_STORAGE_CLIENT.get_file(self.file_name)
 
     def get_tagged_data(
         self,
