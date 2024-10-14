@@ -11,7 +11,11 @@ from core.helpers import now
 from core.schemas.model import YetiModel
 
 DEFAULT_EXPIRATION = datetime.timedelta(
-    days=yeti_config.get("tag", "default_tag_expiration", default=30) # Completely arbitrary
+    days=yeti_config.get(
+        "tag",
+        "default_tag_expiration",
+        default=30,  # Completely arbitrary
+    )
 )
 
 MAX_TAG_LENGTH = 50
