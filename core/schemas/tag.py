@@ -6,10 +6,17 @@ from typing import ClassVar
 from pydantic import Field
 
 from core import database_arango
+from core.config.config import yeti_config
 from core.helpers import now
 from core.schemas.model import YetiModel
 
-DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
+DEFAULT_EXPIRATION = datetime.timedelta(
+    days=yeti_config.get(
+        "tag",
+        "default_tag_expiration",
+        default=90,  # Completely arbitrary
+    )
+)
 
 MAX_TAG_LENGTH = 50
 MAX_TAGS_REQUEST = 50
