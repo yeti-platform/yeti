@@ -14,7 +14,7 @@ DEFAULT_EXPIRATION = datetime.timedelta(
     days=yeti_config.get(
         "tag",
         "default_tag_expiration",
-        default=30,  # Completely arbitrary
+        default=90,  # Completely arbitrary
     )
 )
 
