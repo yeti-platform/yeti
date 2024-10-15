@@ -1,5 +1,11 @@
 changelog:
   categories:
+    - title: Breaking changes 🧨
+      labels:
+        - breaking
+    - title: Security 🚨
+      labels: 
+        - security-impact
     - title: Enhancements 📈
       labels:
         - enhancement
