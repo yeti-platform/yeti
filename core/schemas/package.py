@@ -1,8 +1,8 @@
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, computed_field, model_validator
 from typing_extensions import Self
 
 from core.schemas import entity, indicator, observable
@@ -34,8 +34,15 @@ class YetiPackage(BaseModel):
     tags: Optional[Dict[str, List[str]]] = {}
     observables: Optional[List[observable.ObservableTypes]] = []
     entities: Optional[List[entity.EntityTypes]] = []
-    indicators: Optional[List[indicator.Indicator]] = []
+    indicators: Optional[List[indicator.IndicatorTypes]] = []
     relationships: Optional[Dict[str, List[YetiPackageRelationship]]] = {}
+
+    _root_type: Literal["package"] = "package"
+
+    @computed_field(return_type=Literal["indicator"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     def __init__(self, **data: Any):
         super().__init__(**data)
@@ -93,7 +100,6 @@ class YetiPackage(BaseModel):
 
     def add_observable(self, value, type, **kwargs) -> Self:
         if value in self._objects:
-            print(self._objects)
             raise ValueError(f'"{value}" already exists')
         if type in observable.TYPE_MAPPING:
             cls = observable.TYPE_MAPPING[type]
@@ -104,7 +110,7 @@ class YetiPackage(BaseModel):
             self.tags[value].append(f"type:{type}")
 
         kwargs["value"] = value
-        instance = cls(**kwargs, exclude="type")
+        instance = cls(**kwargs)
         self.observables.append(instance)
         self._objects[value] = instance
         return self
@@ -116,7 +122,7 @@ class YetiPackage(BaseModel):
             raise ValueError(f"Invalid entity type {type}")
         cls = entity.TYPE_MAPPING[type]
         kwargs["name"] = name
-        instance = cls(**kwargs, exclude="type")
+        instance = cls(**kwargs)
         self.entities.append(instance)
         self._objects[name] = instance
         return self
@@ -128,7 +134,7 @@ class YetiPackage(BaseModel):
             raise ValueError(f"Invalid indicator type: {type}")
         cls = indicator.TYPE_MAPPING[type]
         kwargs["name"] = name
-        instance = cls(**kwargs, exclude="type")
+        instance = cls(**kwargs)
         self.indicators.append(instance)
         self._objects[name] = instance
         return self
