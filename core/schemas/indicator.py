@@ -46,7 +46,6 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["indicator"] = "indicator"
 
     name: str
-    type: str
     description: str = ""
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
