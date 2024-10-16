@@ -24,7 +24,6 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["entity"] = "entity"
 
-    type: str
     name: str = Field(min_length=1)
     description: str = ""
     context: list[dict] = []
