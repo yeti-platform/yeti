@@ -11,12 +11,12 @@ import numpy as np
 import pandas as pd
 import requests
 from dateutil import parser
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
 from core.schemas.model import YetiModel
-from core.schemas.observable import Observable, ObservableType
+from core.schemas.observable import Observable, ObservableTypes
 from core.schemas.template import Template
 
 
@@ -50,6 +50,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tasks"
     _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}
+    _root_type: Literal["task"] = "task"
 
     # id: str | None = None
     name: str
@@ -61,6 +62,11 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
 
     # only used for cron tasks
     frequency: datetime.timedelta | None = None
+
+    @computed_field(return_type=Literal["task"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     def run(self, params: dict):
         """Runs the task"""
@@ -261,7 +267,7 @@ class ExportTask(Task):
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
-    acts_on: list[ObservableType] = []
+    acts_on: list[ObservableTypes] = []
     template_name: str
     sha256: str | None = None
 
