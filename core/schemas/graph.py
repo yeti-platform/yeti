@@ -1,5 +1,5 @@
 import datetime
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, computed_field
 
@@ -20,6 +20,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
     _exclude_overwrite: list[str] = list()
     _collection_name: ClassVar[str] = "links"
     _type_filter: ClassVar[str | None] = None
+    _root_type: Literal["relationship"] = "relationship"
     __id: str | None = None
 
     source: str
@@ -34,6 +35,11 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
         super().__init__(**data)
         self.__id = data.get("__id", None)
 
+    @computed_field(return_type=Literal["relationship"])
+    @property
+    def root_type(self):
+        return self._root_type
+
     @computed_field(return_type=str)
     @property
     def id(self):
@@ -47,6 +53,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
 class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
     _exclude_overwrite: list[str] = list()
     _collection_name: ClassVar[str] = "tagged"
+    _root_type: Literal["tag_relationship"] = "tag_relationship"
     _type_filter: None = None
     __id: str | None = None
 
@@ -59,6 +66,11 @@ class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
     def __init__(self, **data):
         super().__init__(**data)
         self.__id = data.get("__id", None)
+
+    @computed_field(return_type=Literal["tag_relationship"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @computed_field(return_type=str)
     @property
