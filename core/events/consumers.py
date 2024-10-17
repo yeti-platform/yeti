@@ -4,7 +4,6 @@ import json
 import logging
 import multiprocessing
 import os
-import re
 
 from kombu import Connection, Exchange, Queue
 from kombu.mixins import ConsumerMixin
@@ -27,12 +26,17 @@ logger.addHandler(handler)
 
 
 class Consumer(ConsumerMixin):
-    def __init__(self, task_class: EventTask | LogTask, connection, queues):
+    def __init__(self, task_class: EventTask | LogTask, stop_event, connection, queues):
         self.task_class = task_class
+        self._stop_event = stop_event
         self.connection = connection
         self.queues = queues
         self._logger = None
         get_plugins_list(task_class)
+
+    @property
+    def should_stop(self):
+        return self._stop_event.is_set()
 
     @property
     def logger(self):
@@ -55,8 +59,8 @@ class Consumer(ConsumerMixin):
 
 
 class EventConsumer(Consumer):
-    def __init__(self, connection, queues):
-        super().__init__(EventTask, connection, queues)
+    def __init__(self, stop_event, connection, queues):
+        super().__init__(EventTask, stop_event, connection, queues)
 
     def on_message(self, body, received_message):
         try:
@@ -77,8 +81,8 @@ class EventConsumer(Consumer):
 
 
 class LogConsumer(Consumer):
-    def __init__(self, connection, queues):
-        super().__init__(LogTask, connection, queues)
+    def __init__(self, stop_event, connection, queues):
+        super().__init__(LogTask, stop_event, connection, queues)
 
     def on_message(self, body, received_message):
         try:
@@ -92,22 +96,28 @@ class LogConsumer(Consumer):
         received_message.ack()
 
 
-def event_worker():
-    exchange = Exchange("events", type="direct")
-    queues = [Queue("events", exchange, routing_key="events")]
-    broker = f"redis://{yeti_config.get('redis', 'host')}/"
-    with Connection(broker, heartbeat=4) as conn:
-        worker = EventConsumer(conn, queues)
-        worker.run()
+class Worker(multiprocessing.Process):
+    def __init__(self, queue, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.stop_event = multiprocessing.Event()
+        exchange = Exchange(queue, type="direct")
+        queues = [Queue(queue, exchange, routing_key=queue)]
+        broker = f"redis://{yeti_config.get('redis', 'host')}/"
+        self._connection = Connection(broker, heartbeat=4)
+        self._connection.connect()
+        self._worker = EventConsumer(self.stop_event, self._connection, queues)
 
-
-def log_worker():
-    exchange = Exchange("logs", type="direct")
-    queues = [Queue("logs", exchange, routing_key="logs")]
-    broker = f"redis://{yeti_config.get('redis', 'host')}/"
-    with Connection(broker, heartbeat=4) as conn:
-        worker = LogConsumer(conn, queues)
-        worker.run()
+    def run(self):
+        logger.info(f"Worker {self.name} started")
+        while not self.stop_event.is_set():
+            try:
+                self._worker.run()
+            except Exception:
+                logger.exception("Consumer failed, restarting")
+            except KeyboardInterrupt:
+                logger.info(f"Worker {self.name} exiting...")
+        self._connection.release()
+        return
 
 
 if __name__ == "__main__":
@@ -123,31 +133,32 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     args = parser.parse_args()
     logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
-    if args.type == "events":
-        worker = event_worker
-    elif args.type == "logs":
-        worker = log_worker
     if not args.concurrency:
         concurrency = multiprocessing.cpu_count()
     else:
         concurrency = args.concurrency
-    if concurrency > 1:
-        logger.info(f"Starting {concurrency} {args.type} workers")
-        processes = []
-        for i in range(concurrency):
-            name = f"{args.type}-worker-{i}"
-            p = multiprocessing.Process(target=worker, name=name)
-            p.start()
-            logger.info(f"Started {p.name} pid={p.pid}")
-            processes.append(p)
-        try:
-            for p in processes:
-                p.join()
-        except KeyboardInterrupt:
-            logger.info("Shutdown requested, exiting...")
-            for p in processes:
-                logger.info(f"Terminating worker {p.name} pid={p.pid}")
-                p.terminate()
-    else:
-        logger.info(f"Starting {args.type} worker")
-        worker()
+    logger.info(f"Starting {concurrency} {args.type} workers")
+    processes = []
+    stop_event = multiprocessing.Event()
+    for i in range(concurrency):
+        name = f"{args.type}-worker-{i+1}"
+        p = Worker(queue=args.type, name=name)
+        p.start()
+        logger.info(f"Starting {p.name} pid={p.pid}")
+        processes.append(p)
+    try:
+        for p in processes:
+            p.join()
+    except KeyboardInterrupt:
+        logger.info("Shutdown requested, exiting gracefully...")
+    try:
+        logger.info(f"Terminating worker {p.name} pid={p.pid}")
+        for p in processes:
+            p.stop_event.set()
+            p.join()
+            logger.info(f"Worker {p.name} pid={p.pid} exited")
+    except KeyboardInterrupt:
+        logger.info("Forcefully killing remaining workers")
+        for p in processes:
+            p.kill()
+            logger.info(f"Worker {p.name} pid={p.pid} killed")
