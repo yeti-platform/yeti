@@ -557,11 +557,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             created=datetime.datetime.now(datetime.timezone.utc),
             modified=datetime.datetime.now(datetime.timezone.utc),
         )
-        print(
-            relationship.source,
-            relationship.target,
-            json.loads(relationship.model_dump_json()),
-        )
         result = graph.edge_collection("links").link(
             relationship.source,
             relationship.target,
