@@ -66,7 +66,7 @@ class EventWorker(Worker):
             for task in TaskManager.tasks():
                 if task.enabled is False or task.type != TaskType.event:
                     continue
-                if message.event.match(task.acts_on):
+                if message.event.match(task.compiled_acts_on):
                     self.logger.info(f"Running task {task.name}")
                     task.run(message.event)
         except Exception:

@@ -1,8 +1,9 @@
 import datetime
 import logging
+import re
 from enum import Enum
 from io import BytesIO
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal, Pattern
 from zipfile import ZipFile
 
 import numpy as np
@@ -344,6 +345,13 @@ class EventTask(Task):
 
     type: Literal[TaskType.event] = TaskType.event
     acts_on: str = ""  # By default act on everything
+    _compiled_acts_on: Pattern = None
+
+    @property
+    def compiled_acts_on(self):
+        if self._compiled_acts_on is None:
+            self._compiled_acts_on = re.compile(self.acts_on)
+        return self._compiled_acts_on
 
     def run(self, event: EventTypes):
         """Runs the task.

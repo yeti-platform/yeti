@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import re
 from enum import Enum
-from typing import TYPE_CHECKING, Annotated, Type, Union
+from typing import TYPE_CHECKING, Annotated, Pattern, Union
 
 from pydantic import BaseModel, Discriminator, Field
 from pydantic import Tag as PydanticTag
@@ -70,7 +70,7 @@ YetiObjectTypes = Annotated[
 
 
 class AbstractEvent(BaseModel, abc.ABC):
-    def match(self, acts_on: str) -> bool:
+    def match(self, acts_on: Pattern) -> bool:
         raise NotImplementedError
 
 
@@ -78,8 +78,8 @@ class ObjectEvent(AbstractEvent):
     type: EventType
     yeti_object: YetiObjectTypes
 
-    def match(self, acts_on: str) -> bool:
-        return re.match(acts_on, self.event_message)
+    def match(self, acts_on: Pattern) -> bool:
+        return acts_on.match(self.event_message)
 
     @property
     def event_message(self) -> str:
@@ -95,9 +95,9 @@ class LinkEvent(AbstractEvent):
     target_object: YetiObjectTypes
     relationship: "graph.Relationship"
 
-    def match(self, acts_on: str) -> bool:
-        return re.match(acts_on, self.link_source_event) or re.match(
-            acts_on, self.link_target_event
+    def match(self, acts_on: Pattern) -> bool:
+        return acts_on.match(self.link_source_event) or acts_on.match(
+            self.link_target_event
         )
 
     @property
@@ -120,8 +120,8 @@ class TagEvent(AbstractEvent):
     tagged_object: YetiObjectTypes
     tag_object: "tag.Tag"
 
-    def match(self, acts_on: str) -> bool:
-        return re.match(acts_on, self.tag_message)
+    def match(self, acts_on: Pattern) -> bool:
+        return acts_on.match(self.tag_message)
 
     @property
     def tag_message(self) -> str:
