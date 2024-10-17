@@ -130,4 +130,4 @@ load_observables()
 load_entities()
 load_indicators()
 
-message.Message.model_rebuild()
+message.EventMessage.model_rebuild()

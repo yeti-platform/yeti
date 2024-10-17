@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from enum import Enum, IntEnum, auto
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Type, Union
+import abc
+import re
+from enum import Enum
+from typing import TYPE_CHECKING, Annotated, Type, Union
 
 from pydantic import BaseModel, Discriminator, Field
 from pydantic import Tag as PydanticTag
@@ -21,11 +23,11 @@ if TYPE_CHECKING:
 
 
 class MessageType(str, Enum):
-    event = "event"
     log = "log"
+    event = "event"
 
 
-class EventMessage(str, Enum):
+class EventType(str, Enum):
     new = "new"
     update = "update"
     delete = "delete"
@@ -67,31 +69,73 @@ YetiObjectTypes = Annotated[
 ]
 
 
-class ObjectEvent(BaseModel):
-    type: EventMessage
+class AbstractEvent(BaseModel, abc.ABC):
+    def match(self, acts_on: str) -> bool:
+        raise NotImplementedError
+
+
+class ObjectEvent(AbstractEvent):
+    type: EventType
     yeti_object: YetiObjectTypes
 
+    def match(self, acts_on: str) -> bool:
+        return re.match(acts_on, self.event_message)
 
-class LinkEvent(BaseModel):
-    type: EventMessage
+    @property
+    def event_message(self) -> str:
+        event_message = f"{self.type}:{self.yeti_object.root_type}"
+        if hasattr(self.yeti_object, "type"):
+            event_message += f":{self.yeti_object.type}"
+        return event_message
+
+
+class LinkEvent(AbstractEvent):
+    type: EventType
     source_object: YetiObjectTypes
     target_object: YetiObjectTypes
     relationship: "graph.Relationship"
 
+    def match(self, acts_on: str) -> bool:
+        return re.match(acts_on, self.link_source_event) or re.match(
+            acts_on, self.link_target_event
+        )
 
-class TagLinkEvent(BaseModel):
-    type: EventMessage
+    @property
+    def link_source_event(self) -> str:
+        link_source_event = f"{self.type}:link:source:{self.source_object.root_type}"
+        if hasattr(self.source_object, "type"):
+            link_source_event += f":{self.source_object.type}"
+        return link_source_event
+
+    @property
+    def link_target_event(self) -> str:
+        link_target_event = f"{self.type}:link:target:{self.target_object.root_type}"
+        if hasattr(self.target_object, "type"):
+            link_target_event += f":{self.target_object.type}"
+        return link_target_event
+
+
+class TagEvent(AbstractEvent):
+    type: EventType
     tagged_object: YetiObjectTypes
     tag_object: "tag.Tag"
 
+    def match(self, acts_on: str) -> bool:
+        return re.match(acts_on, self.tag_message)
+
+    @property
+    def tag_message(self) -> str:
+        return f"{self.type}:tagged:{self.tag_object.name}"
+
 
 class LogMessage(BaseModel):
+    type: MessageType = MessageType.log
     log: str | dict
 
 
-EventMessageTypes = Union[ObjectEvent, LinkEvent, TagLinkEvent]
+EventTypes = Union[ObjectEvent, LinkEvent, TagEvent]
 
 
-class Message(BaseModel):
-    type: MessageType
-    data: LogMessage | EventMessageTypes
+class EventMessage(BaseModel):
+    type: MessageType = MessageType.event
+    event: EventTypes
