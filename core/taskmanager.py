@@ -1,6 +1,5 @@
 import datetime
 import logging
-import traceback
 from typing import Type
 
 from core.schemas.task import ExportTask, Task, TaskParams, TaskStatus, TaskType
@@ -29,6 +28,14 @@ class TaskManager:
             task_dict["name"] = task_name
             task = task_class(**task_dict).save()
         cls._store[task_name] = task
+
+    @classmethod
+    def tasks(cls):
+        return cls._store.values()
+
+    @classmethod
+    def task_names(cls):
+        return cls._store.keys()
 
     @classmethod
     def get_task(cls, task_name):
