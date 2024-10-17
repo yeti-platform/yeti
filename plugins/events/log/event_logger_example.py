@@ -11,8 +11,11 @@ class LoggerExample(task.LogTask):
         "description": "Logs events from eventlog bus",
     }
 
-    def run(self, params: dict) -> None:
-        logging.info(f"Received event: {json.dumps(params)}")
+    def run(self, log: str | dict) -> None:
+        if isinstance(log, dict):
+            logging.info(f"Received event: {json.dumps(log)}")
+        else:
+            logging.info(f"Received event: {log}")
         return
 
 
