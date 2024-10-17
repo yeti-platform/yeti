@@ -260,14 +260,18 @@ class ExportTaskTest(unittest.TestCase):
         ).save()
         taskmanager.TaskManager.register_task(ExportTask, task_name="RandomExport")
 
+    @mock.patch(
+        "core.clients.file_storage.classes.local_storage.LocalStorageClient.put_file"
+    )
     @mock.patch("core.schemas.template.Template.render")
-    def test_run_export_task(self, mock_render):
+    def test_run_export_task(self, mock_render, mock_put_file):
         """Tests that the each function is called for each filtered observable."""
         taskmanager.TaskManager.run_task("RandomExport", TaskParams())
         task = ExportTask.find(name="RandomExport")
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed, task.status_message)
-        observable_list, filename = mock_render.call_args[0]
+        observable_list, _ = mock_render.call_args[0]
+        filename, _ = mock_put_file.call_args[0]
         self.assertTrue(filename.endswith("randomexport"))
         self.assertEqual(len(observable_list), 4)
 
@@ -276,8 +280,10 @@ class ExportTaskTest(unittest.TestCase):
 
         self.assertIsNotNone(task.last_run)
 
-    @mock.patch("core.schemas.template.Template.render")
-    def test_run_export_task_with_config_path(self, mock_render):
+    @mock.patch(
+        "core.clients.file_storage.classes.local_storage.LocalStorageClient.put_file"
+    )
+    def test_run_export_task_with_config_path(self, mock_put_file):
         """Tests that the each function is called for each filtered observable."""
         previous = yeti_config.get("system", "export_path")
         yeti_config.system.export_path = "/tmp"
@@ -285,8 +291,8 @@ class ExportTaskTest(unittest.TestCase):
         task = ExportTask.find(name="RandomExport")
         assert task is not None
         self.assertEqual(task.status, TaskStatus.completed, task.status_message)
-        _, filename = mock_render.call_args[0]
-        self.assertEqual(filename, "/tmp/randomexport")
+        filename, _ = mock_put_file.call_args[0]
+        self.assertEqual(filename, "randomexport")
         yeti_config.system.export_path = previous
 
     def test_tag_filtering(self):
