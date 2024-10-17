@@ -10,15 +10,7 @@ from kombu import Connection, Exchange, Queue
 from kombu.mixins import ConsumerMixin
 
 from core.config.config import yeti_config
-from core.events.message import (
-    EventMessageTypes,
-    LinkEvent,
-    LogMessage,
-    Message,
-    MessageType,
-    ObjectEvent,
-    TagLinkEvent,
-)
+from core.events.message import EventMessage, LogMessage
 from core.schemas.task import EventTask, LogTask, TaskType
 from core.taskmanager import TaskManager
 from core.taskscheduler import get_plugins_list
@@ -66,54 +58,17 @@ class EventWorker(Worker):
     def __init__(self, connection, queues):
         super().__init__(EventTask, connection, queues)
 
-    def _match_event(self, acts_on: str, event: EventMessageTypes):
-        if acts_on == "":
-            return True
-        if isinstance(event, ObjectEvent):
-            object_message = f"{event.type}:{event.yeti_object.root_type}"
-            if hasattr(event.yeti_object, "type"):
-                object_message += f":{event.yeti_object.type}"
-            self.logger.debug(f"Matching {acts_on} against {object_message}")
-            return re.match(acts_on, object_message)
-        elif isinstance(event, LinkEvent):
-            link_source_message = (
-                f"{event.type}:link:source:{event.source_object.root_type}"
-            )
-            if hasattr(event.source_object, "type"):
-                link_source_message += f":{event.source_object.type}"
-            link_target_message = (
-                f"{event.type}:link:target:{event.target_object.root_type}"
-            )
-            if hasattr(event.target_object, "type"):
-                link_target_message += f":{event.target_object.type}"
-            self.logger.debug(
-                f"Matching {acts_on} against {link_source_message} and {link_target_message}"
-            )
-            return re.match(acts_on, link_source_message) or re.match(
-                acts_on, link_target_message
-            )
-        elif isinstance(event, TagLinkEvent):
-            tag_message = f"{event.type}:tagged:{event.tag_object.name}"
-            self.logger.debug(f"Matching {acts_on} against {tag_message}")
-            return re.match(acts_on, tag_message)
-        return False
-
     def on_message(self, body, received_message):
         try:
-            message = Message(**json.loads(body))
-            if message.type == MessageType.event:
-                message_digest = hashlib.sha256(body.encode()).hexdigest()
-                self.logger.debug(f"Message digest: {message_digest}")
-                for task in TaskManager.tasks():
-                    if task.enabled is False or task.type != TaskType.event:
-                        continue
-                    if self._match_event(task.acts_on, message.data):
-                        self.logger.info(f"Running task {task.name}")
-                        task.run(message)
-            else:
-                self.logger.warning(
-                    f"Ignoring Message type <{message.type}> in events queue."
-                )
+            message = EventMessage(**json.loads(body))
+            message_digest = hashlib.sha256(body.encode()).hexdigest()
+            self.logger.debug(f"Message digest: {message_digest}")
+            for task in TaskManager.tasks():
+                if task.enabled is False or task.type != TaskType.event:
+                    continue
+                if message.event.match(task.acts_on):
+                    self.logger.info(f"Running task {task.name}")
+                    task.run(message.event)
         except Exception:
             self.logger.exception(
                 f"[PID:{os.getpid()}] - Error processing message in events queue with {body}"
@@ -127,21 +82,13 @@ class LogWorker(Worker):
 
     def on_message(self, body, received_message):
         try:
-            message = Message(**json.loads(body))
-            if message.type == MessageType.event:
-                for task in TaskManager.tasks():
-                    if task.enabled is False or task.type != TaskType.log:
-                        continue
-                    if self._match_event(task.acts_on, message.data):
-                        pass
-            else:
-                self.logger.warning(
-                    f"Ignoring Message type <{message.type}> in events queue."
-                )
+            message = LogMessage(**json.loads(body))
+            for task in TaskManager.tasks():
+                if task.enabled is False or task.type != TaskType.log:
+                    continue
+                task.run(message.log)
         except Exception:
-            self.logger.exception(
-                f"Error processing message in events queue with {body}"
-            )
+            self.logger.exception(f"Error processing message in logs queue with {body}")
         received_message.ack()
 
 
