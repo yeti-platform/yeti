@@ -4,7 +4,7 @@ import os
 import pathlib
 from enum import Enum
 from io import BytesIO
-from typing import ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 from zipfile import ZipFile
 
 import numpy as np
@@ -15,6 +15,9 @@ from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
+
+# if TYPE_CHECKING:
+from core.events.message import EventMessageTypes
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableTypes
 from core.schemas.template import Template
@@ -36,10 +39,8 @@ class TaskType(str, Enum):
     analytics = "analytics"
     export = "export"
     oneshot = "oneshot"
-    inline = "inline"
+    event = "event"
     log = "log"
-    metric = "metric"
-    forward = "forward"
 
 
 class TaskParams(BaseModel):
@@ -51,6 +52,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}
     _root_type: Literal["task"] = "task"
+    _logger = None
 
     # id: str | None = None
     name: str
@@ -62,6 +64,19 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
 
     # only used for cron tasks
     frequency: datetime.timedelta | None = None
+
+    @property
+    def logger(self):
+        if self._logger is None:
+            self._logger = logging.getLogger(f"task.{self.type}.{self.name}")
+            self._logger.propagate = False
+            formatter = logging.Formatter(
+                "[%(asctime)s: %(levelname)s/%(processName)s/%(name)s] %(message)s"
+            )
+            handler = logging.StreamHandler()
+            handler.setFormatter(formatter)
+            self._logger.addHandler(handler)
+        return self._logger
 
     @computed_field(return_type=Literal["task"])
     @property
@@ -318,13 +333,13 @@ class ExportTask(Task):
         return results
 
 
-class InlineTask(Task):
+class EventTask(Task):
     """A task that is triggered for each matched event."""
 
-    type: Literal[TaskType.inline] = TaskType.inline
-    acts_on: list[str] = []  # By default act on everything
+    type: Literal[TaskType.event] = TaskType.event
+    acts_on: str = ""  # By default act on everything
 
-    def run(self, params: dict):
+    def run(self, params: EventMessageTypes):
         """Runs the task.
 
         Args:
@@ -334,41 +349,12 @@ class InlineTask(Task):
 
 
 class LogTask(Task):
-    """A task that logs events."""
+    """A task that is triggered for each matched event."""
 
     type: Literal[TaskType.log] = TaskType.log
+    acts_on: str = ""  # By default act on everything
 
-    def run(self, params: dict):
-        """Runs the task.
-
-        Args:
-            params: Parameters to run the task with.
-        """
-        raise NotImplementedError
-
-
-class MetricTask(Task):
-    """A task that generates metrics from events."""
-
-    type: Literal[TaskType.metric] = TaskType.metric
-    acts_on: list[str] = []  # By default act on everything
-
-    def run(self, params: dict):
-        """Runs the task.
-
-        Args:
-            params: Parameters to run the task with.
-        """
-        raise NotImplementedError
-
-
-class ForwardTask(Task):
-    """Task to forward events to another system."""
-
-    type: Literal[TaskType.forward] = TaskType.forward
-    acts_on: list[str] = []  # By default act on everything
-
-    def run(self, params: dict):
+    def run(self, params: EventMessageTypes):
         """Runs the task.
 
         Args:
@@ -382,20 +368,9 @@ TYPE_MAPPING = {
     "analytics": AnalyticsTask,
     "oneshot": OneShotTask,
     "export": ExportTask,
-    "inline": InlineTask,
+    "event": EventTask,
     "log": LogTask,
-    "metric": MetricTask,
-    "forward": ForwardTask,
 }
 
 
-TaskTypes = (
-    FeedTask
-    | AnalyticsTask
-    | OneShotTask
-    | ExportTask
-    | InlineTask
-    | LogTask
-    | MetricTask
-    | ForwardTask
-)
+TaskTypes = FeedTask | AnalyticsTask | OneShotTask | ExportTask | EventTask | LogTask
