@@ -16,7 +16,7 @@ from core.clients import file_storage
 from core.config.config import yeti_config
 
 # if TYPE_CHECKING:
-from core.events.message import EventMessageTypes
+from core.events.message import EventTypes
 from core.schemas.model import YetiModel
 from core.schemas.observable import Observable, ObservableTypes
 from core.schemas.template import Template
@@ -345,7 +345,7 @@ class EventTask(Task):
     type: Literal[TaskType.event] = TaskType.event
     acts_on: str = ""  # By default act on everything
 
-    def run(self, params: EventMessageTypes):
+    def run(self, event: EventTypes):
         """Runs the task.
 
         Args:
@@ -360,7 +360,7 @@ class LogTask(Task):
     type: Literal[TaskType.log] = TaskType.log
     acts_on: str = ""  # By default act on everything
 
-    def run(self, params: EventMessageTypes):
+    def run(self, log: str | dict):
         """Runs the task.
 
         Args:
