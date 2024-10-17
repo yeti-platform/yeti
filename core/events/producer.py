@@ -3,7 +3,7 @@ import logging
 from kombu import Connection, Exchange, Producer, Queue
 
 from core.config.config import yeti_config
-from core.events.message import EventMessageTypes, Message, MessageType
+from core.events.message import EventMessage, EventTypes, LogMessage
 
 
 class EventProducer:
@@ -47,11 +47,11 @@ class EventProducer:
         self.log_queue.declare()
 
     # Message is validated on consumer end
-    def publish_event(self, event: EventMessageTypes):
+    def publish_event(self, event: EventTypes):
         if not self.event_producer:
             return
         try:
-            message = Message(type=MessageType.event, data=event)
+            message = EventMessage(event=event)
             self.event_producer.publish(message.model_dump_json())
         except Exception:
             logging.exception("Error publishing event")
@@ -61,7 +61,7 @@ class EventProducer:
         if not self.log_producer:
             return
         try:
-            message = Message(type=MessageType.log, data={"log": log})
+            message = LogMessage(log=log)
             self.log_producer.publish(message.model_dump_json())
         except Exception:
             logging.exception("Error publishing log")
