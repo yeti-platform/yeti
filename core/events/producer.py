@@ -1,46 +1,70 @@
+import logging
+
 from kombu import Connection, Exchange, Producer, Queue
 
 from core.config.config import yeti_config
-from core.events.message import Message, MessageType
+from core.events.message import EventMessageTypes, Message, MessageType
 
 
 class EventProducer:
     def __init__(self):
+        self.event_producer = None
+        self.log_producer = None
         try:
             self.conn = Connection(f"redis://{yeti_config.get('redis', 'host')}/")
             self.channel = self.conn.channel()
-            self.exchange = Exchange("events", type="direct")
-            self.producer = Producer(
-                exchange=self.exchange,
-                channel=self.channel,
-                routing_key="events",
-                serializer="json",
-            )
-            self.queue = Queue(
-                name="events", exchange=self.exchange, routing_key="events"
-            )
-            self.queue.maybe_bind(self.conn)
-            self.queue.declare()
+            self.create_event_producer()
+            self.create_log_producer()
         except Exception as e:
-            print(f"Error creating message producer: {e}")
-            self.producer = None
+            logging.exception(f"Error creating producers: {e}")
+
+    def create_event_producer(self):
+        self.event_exchange = Exchange("events", type="direct")
+        self.event_producer = Producer(
+            exchange=self.event_exchange,
+            channel=self.channel,
+            routing_key="events",
+            serializer="json",
+        )
+        self.event_queue = Queue(
+            name="events", exchange=self.event_exchange, routing_key="events"
+        )
+        self.event_queue.maybe_bind(self.conn)
+        self.event_queue.declare()
+
+    def create_log_producer(self):
+        self.log_exchange = Exchange("logs", type="direct")
+        self.log_producer = Producer(
+            exchange=self.log_exchange,
+            channel=self.channel,
+            routing_key="logs",
+            serializer="json",
+        )
+        self.log_queue = Queue(
+            name="logs", exchange=self.log_exchange, routing_key="logs"
+        )
+        self.log_queue.maybe_bind(self.conn)
+        self.log_queue.declare()
 
     # Message is validated on consumer end
-    def publish_event(self, event: str, object_id: str):
-        if not self.producer:
+    def publish_event(self, event: EventMessageTypes):
+        if not self.event_producer:
             return
-        message = {
-            "type": MessageType.event,
-            "data": {"event": event, "object_id": object_id},
-        }
-        self.producer.publish(message)
-        self.publish_log(f"New event published: {event}:{object_id}")
+        try:
+            message = Message(type=MessageType.event, data=event)
+            self.event_producer.publish(message.model_dump_json())
+        except Exception:
+            logging.exception("Error publishing event")
+        self.publish_log(f"New event published: {event}")
 
     def publish_log(self, log: str | dict):
-        if not self.producer:
+        if not self.log_producer:
             return
-        message = {"type": MessageType.log, "data": {"log": log}}
-        self.producer.publish(message)
+        try:
+            message = Message(type=MessageType.log, data={"log": log})
+            self.log_producer.publish(message.model_dump_json())
+        except Exception:
+            logging.exception("Error publishing log")
 
 
 producer = EventProducer()
