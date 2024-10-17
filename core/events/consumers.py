@@ -26,7 +26,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
-class Worker(ConsumerMixin):
+class Consumer(ConsumerMixin):
     def __init__(self, task_class: EventTask | LogTask, connection, queues):
         self.task_class = task_class
         self.connection = connection
@@ -54,7 +54,7 @@ class Worker(ConsumerMixin):
         ]
 
 
-class EventWorker(Worker):
+class EventConsumer(Consumer):
     def __init__(self, connection, queues):
         super().__init__(EventTask, connection, queues)
 
@@ -76,7 +76,7 @@ class EventWorker(Worker):
         received_message.ack()
 
 
-class LogWorker(Worker):
+class LogConsumer(Consumer):
     def __init__(self, connection, queues):
         super().__init__(LogTask, connection, queues)
 
@@ -97,7 +97,7 @@ def event_worker():
     queues = [Queue("events", exchange, routing_key="events")]
     broker = f"redis://{yeti_config.get('redis', 'host')}/"
     with Connection(broker, heartbeat=4) as conn:
-        worker = EventWorker(conn, queues)
+        worker = EventConsumer(conn, queues)
         worker.run()
 
 
@@ -106,7 +106,7 @@ def log_worker():
     queues = [Queue("logs", exchange, routing_key="logs")]
     broker = f"redis://{yeti_config.get('redis', 'host')}/"
     with Connection(broker, heartbeat=4) as conn:
-        worker = LogWorker(conn, queues)
+        worker = LogConsumer(conn, queues)
         worker.run()
 
 
@@ -133,14 +133,14 @@ if __name__ == "__main__":
         concurrency = args.concurrency
     if concurrency > 1:
         logger.info(f"Starting {concurrency} {args.type} workers")
+        processes = []
+        for i in range(concurrency):
+            name = f"{args.type}-worker-{i}"
+            p = multiprocessing.Process(target=worker, name=name)
+            p.start()
+            logger.info(f"Started {p.name} pid={p.pid}")
+            processes.append(p)
         try:
-            processes = []
-            for i in range(concurrency):
-                name = f"{args.type}-worker-{i}"
-                p = multiprocessing.Process(target=worker, name=name)
-                p.start()
-                logger.info(f"Started {p.name} pid={p.pid}")
-                processes.append(p)
             for p in processes:
                 p.join()
         except KeyboardInterrupt:
