@@ -1,21 +1,25 @@
 import datetime
 import logging
+import re
 from enum import Enum
 from io import BytesIO
-from typing import ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal, Pattern
 from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
 import requests
 from dateutil import parser
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
 from core.clients import file_storage
 from core.config.config import yeti_config
+
+# if TYPE_CHECKING:
+from core.events.message import EventMessage, LogMessage
 from core.schemas.model import YetiModel
-from core.schemas.observable import Observable, ObservableType
+from core.schemas.observable import Observable, ObservableTypes
 from core.schemas.template import Template
 
 FILE_STORAGE_CLIENT = file_storage.get_client(
@@ -39,7 +43,8 @@ class TaskType(str, Enum):
     analytics = "analytics"
     export = "export"
     oneshot = "oneshot"
-    inline = "inline"
+    event = "event"
+    log = "log"
 
 
 class TaskParams(BaseModel):
@@ -50,6 +55,8 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tasks"
     _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}
+    _root_type: Literal["task"] = "task"
+    _logger = None
 
     # id: str | None = None
     name: str
@@ -61,6 +68,24 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
 
     # only used for cron tasks
     frequency: datetime.timedelta | None = None
+
+    @property
+    def logger(self):
+        if self._logger is None:
+            self._logger = logging.getLogger(f"task.{self.type}.{self.name}")
+            self._logger.propagate = False
+            formatter = logging.Formatter(
+                "[%(asctime)s: %(levelname)s/%(processName)s/%(name)s] %(message)s"
+            )
+            handler = logging.StreamHandler()
+            handler.setFormatter(formatter)
+            self._logger.addHandler(handler)
+        return self._logger
+
+    @computed_field(return_type=Literal["task"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     def run(self, params: dict):
         """Runs the task"""
@@ -261,7 +286,7 @@ class ExportTask(Task):
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
-    acts_on: list[ObservableType] = []
+    acts_on: list[ObservableTypes] = []
     template_name: str
     sha256: str | None = None
 
@@ -315,12 +340,51 @@ class ExportTask(Task):
         return results
 
 
+class EventTask(Task):
+    """A task that is triggered for each matched event."""
+
+    type: Literal[TaskType.event] = TaskType.event
+    acts_on: str = ""  # By default act on everything
+    _compiled_acts_on: Pattern = None
+
+    @property
+    def compiled_acts_on(self):
+        if self._compiled_acts_on is None:
+            self._compiled_acts_on = re.compile(self.acts_on)
+        return self._compiled_acts_on
+
+    def run(self, message: EventMessage):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
+class LogTask(Task):
+    """A task that is triggered for each matched event."""
+
+    type: Literal[TaskType.log] = TaskType.log
+    acts_on: str = ""  # By default act on everything
+
+    def run(self, message: LogMessage):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
 TYPE_MAPPING = {
     "feed": FeedTask,
     "analytics": AnalyticsTask,
     "oneshot": OneShotTask,
     "export": ExportTask,
+    "event": EventTask,
+    "log": LogTask,
 }
 
 
-TaskTypes = FeedTask | AnalyticsTask | OneShotTask | ExportTask
+TaskTypes = FeedTask | AnalyticsTask | OneShotTask | ExportTask | EventTask | LogTask

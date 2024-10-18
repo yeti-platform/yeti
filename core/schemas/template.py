@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 import jinja2
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 from core.config.config import yeti_config
 
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 class Template(BaseModel):
     """A template for exporting data to an external system."""
 
+    _root_type: Literal["template"] = "template"
     name: str
     template: str
 
@@ -30,6 +31,11 @@ class Template(BaseModel):
             return None
         else:
             return result
+
+    @computed_field(return_type=Literal["template"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     def save(self) -> "Template":
         directory = Path(

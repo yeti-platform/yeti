@@ -32,7 +32,6 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["observable"] = "observable"
 
     value: str = Field(min_length=1)
-    type: ObservableType
     created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
     last_analysis: dict[str, datetime.datetime] = {}
