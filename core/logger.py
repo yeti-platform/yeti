@@ -87,6 +87,7 @@ class JsonFormatter(Formatter):
             json_record["err"] = self.formatException(record.exc_info)
         return json.dumps(json_record)
 
+
 class LogFilter(logging.Filter):
     no_log_endpoints = {
         "/api/v2/system/config",
