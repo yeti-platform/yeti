@@ -88,23 +88,63 @@ class JsonFormatter(Formatter):
         return json.dumps(json_record)
 
 
+class LogFilter(logging.Filter):
+    no_log_endpoints = {
+        "/api/v2/system/config",
+    }
+
+    sensitive_endpoint_prefixes = (
+        "/api/v2/auth",
+        "/api/v2/users",
+    )
+
+    sensitive_field_substrings = ("password",)
+
+    def filter_on_path(self, record) -> bool:
+        if hasattr(record, "path") and record.path in self.no_log_endpoints:
+            return False
+        return True
+
+    def redact_sensitive_fields(self, record):
+        if hasattr(record, "path") and hasattr(record, "body"):
+            if record.path.startswith(self.sensitive_endpoint_prefixes):
+                try:
+                    json_body = json.loads(record.body)
+                    for sensitive_field in self.sensitive_field_substrings:
+                        for key in json_body:
+                            if sensitive_field in key:
+                                json_body[key] = "REDACTED"
+                    record.body = json.dumps(json_body)
+                except Exception:
+                    pass
+        return
+
+    def filter(self, record):
+        if not self.filter_on_path(record):
+            return False
+
+        self.redact_sensitive_fields(record)
+
+        return True
+
+
+# Base logging config
 logger = logging.getLogger("yeti.audit.log")
 logger.setLevel(logging.INFO)
 logger.propagate = False
 
+# Queue handler
 log_queue = queue.Queue(-1)
 queue_handler = QueueHandler(log_queue)
 logger.addHandler(queue_handler)
-
-json_formatter = JsonFormatter()
-console_formatter = logging.Formatter(
-    "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(username)s - %(path)s - %(method)s - %(body)s - %(client)s - %(status_code)s"
-)
-
 handlers = list()
 
+# Console handler
+log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(username)s - %(path)s - %(method)s - %(body)s - %(client)s - %(status_code)s"
+
 console_handler = logging.StreamHandler()
-console_handler.setFormatter(console_formatter)
+console_handler.addFilter(LogFilter())
+console_handler.setFormatter(logging.Formatter(log_format))
 handlers.append(console_handler)
 
 audit_logfile = yeti_config.get("system", "audit_logfile")
@@ -112,15 +152,20 @@ audit_logfile = yeti_config.get("system", "audit_logfile")
 if audit_logfile:
     if os.access(audit_logfile, os.W_OK):
         file_handler = logging.FileHandler(audit_logfile)
-        file_handler.setFormatter(json_formatter)
+        file_handler.addFilter(LogFilter())
+        file_handler.setFormatter(JsonFormatter())
         handlers.append(file_handler)
     else:
         logging.getLogger().warning("Audit log file not writable, using console only")
 else:
     logging.getLogger().warning("Audit log file not configured, using console only")
 
+
+# Arango Handler
 arango_handler = ArangoHandler()
+arango_handler.addFilter(LogFilter())
 handlers.append(arango_handler)
 
+# Listen for Logs
 listener = QueueListener(log_queue, *handlers)
 listener.start()
