@@ -481,6 +481,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         # Check if a relationship with the same link_type already exists
         aql = """
+        WITH observables
+
         FOR v, e, p IN 1..1 OUTBOUND @extended_id
         links
           FILTER e.type == @relationship_type
@@ -663,6 +665,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             direction = "any"
 
         aql = f"""
+        WITH tags, observables, entities, dfiq, indicators
+
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
           OPTIONS {{ uniqueVertices: "path" }}
           {query_filter}
@@ -889,7 +893,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 {limit}
             """
         if graph_queries:
-            aql_string += f'\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
+            aql_string = f'WITH {name}\n\n{aql_string}\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
@@ -947,6 +951,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
 def tagged_observables_export(cls, args):
     aql = """
+        WITH tags 
+
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
         LET tags = MERGE(
