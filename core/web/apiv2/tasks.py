@@ -95,7 +95,7 @@ async def patch_export(export_name: str, request: PatchExportRequest) -> ExportT
     db_export = ExportTask.find(name=export_name)
     if not db_export:
         raise HTTPException(
-            status_code=404, detail=f"ExportTask {request.export.name} not found"
+            status_code=404, detail=f"ExportTask {export_name} not found"
         )
 
     template = Template.find(name=request.export.template_name)
