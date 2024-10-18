@@ -73,7 +73,7 @@ class EventConsumer(Consumer):
                     continue
                 if message.event.match(task.compiled_acts_on):
                     self.logger.info(f"Running task {task.name}")
-                    task.run(message.event)
+                    task.run(message)
         except Exception:
             self.logger.exception(
                 f"[PID:{os.getpid()}] - Error processing message in events queue with {body}"
@@ -91,7 +91,7 @@ class LogConsumer(Consumer):
             for task in TaskManager.tasks():
                 if task.enabled is False or task.type != TaskType.log:
                     continue
-                task.run(message.log)
+                task.run(message)
         except Exception:
             self.logger.exception(f"Error processing message in logs queue with {body}")
         received_message.ack()

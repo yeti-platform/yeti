@@ -1,7 +1,7 @@
 from urllib.parse import urlparse
 
 from core import taskmanager
-from core.events.message import ObjectEvent
+from core.events.message import EventMessage
 from core.schemas import observable, task
 
 
@@ -12,8 +12,8 @@ class HostnameExtract(task.EventTask):
         "acts_on": "(new|update):observable:url",
     }
 
-    def run(self, event: ObjectEvent) -> None:
-        url = event.yeti_object
+    def run(self, message: EventMessage) -> None:
+        url = message.event.yeti_object
         self.logger.info(f"Extracting hostname from: {url.value}")
         o = urlparse(url.value)
         if observable.IPv4.is_valid(o.hostname):
