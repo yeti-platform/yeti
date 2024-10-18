@@ -66,7 +66,8 @@ class EventConsumer(Consumer):
         try:
             message = EventMessage(**json.loads(body))
             message_digest = hashlib.sha256(body.encode()).hexdigest()
-            self.logger.debug(f"Message digest: {message_digest}")
+            ts = int(message.timestamp.timestamp())
+            self.logger.debug(f"Message received at {ts} - digest: {message_digest}")
             for task in TaskManager.tasks():
                 if task.enabled is False or task.type != TaskType.event:
                     continue
