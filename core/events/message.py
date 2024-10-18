@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import abc
-import re
+import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Annotated, Pattern, Union
 
 from pydantic import BaseModel, Discriminator, Field
 from pydantic import Tag as PydanticTag
+
+from core.helpers import now
 
 if TYPE_CHECKING:
     from core.schemas import (
@@ -128,7 +130,12 @@ class TagEvent(AbstractEvent):
         return f"{self.type}:tagged:{self.tag_object.name}"
 
 
-class LogMessage(BaseModel):
+class AbstractMessage(BaseModel, abc.ABC):
+    type: MessageType
+    timestamp: datetime.datetime = Field(default_factory=now)
+
+
+class LogMessage(AbstractMessage):
     type: MessageType = MessageType.log
     log: str | dict
 
@@ -136,6 +143,6 @@ class LogMessage(BaseModel):
 EventTypes = Union[ObjectEvent, LinkEvent, TagEvent]
 
 
-class EventMessage(BaseModel):
+class EventMessage(AbstractMessage):
     type: MessageType = MessageType.event
     event: EventTypes
