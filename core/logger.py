@@ -4,7 +4,6 @@ import logging
 import os
 import queue
 from logging import Formatter
-import json
 from logging.handlers import QueueHandler, QueueListener
 
 from core.config.config import yeti_config

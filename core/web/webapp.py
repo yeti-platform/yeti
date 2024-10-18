@@ -1,6 +1,6 @@
+import json
 import logging
 import os
-import json
 
 from fastapi import APIRouter, Depends, FastAPI, Request
 from starlette.middleware.sessions import SessionMiddleware
@@ -143,7 +143,7 @@ async def log_requests(request: Request, call_next):
                         out[key] = value
 
                     extra["body"] = json.dumps(out)
-                except:
+                except Exception:
                     # If parsing fails, just log the request body as is
                     pass
             else:
@@ -151,7 +151,7 @@ async def log_requests(request: Request, call_next):
                     # Try to parse the request body as JSON
                     json_body = await request.json()
                     extra["body"] = json.dumps(json_body)
-                except:
+                except Exception:
                     # If parsing fails, just log the request body as is
                     pass
 
