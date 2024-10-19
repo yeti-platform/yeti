@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -105,22 +106,11 @@ api_router.include_router(
 
 app.include_router(api_router, prefix="/api/v2")
 
-LOGGING_EXCLUDELIST = ["/auth/"]
-LOGGING_SENSITIVE_BODY = [
-    "/users/",
-]
-LOG_BODY_SIZE_LIMIT = 2000
-CONTENT_TOO_LARGE_MESSAGE = f"[Request body > {LOG_BODY_SIZE_LIMIT} bytes, not logged]"
-
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     req_body = await request.body()
     response = await call_next(request)
-    # Do not log auth-related requests
-    for path in LOGGING_EXCLUDELIST:
-        if path in request.url.path:
-            return response
     try:
         extra = {
             "type": "audit.log",
@@ -137,14 +127,33 @@ async def log_requests(request: Request, call_next):
         if getattr(request.state, "username", None):
             extra["username"] = request.state.username
         if req_body:
-            if len(req_body) > LOG_BODY_SIZE_LIMIT:
-                extra["body"] = CONTENT_TOO_LARGE_MESSAGE.encode("utf-8")
-            else:
-                extra["body"] = req_body
+            extra["body"] = req_body
 
-        for path in LOGGING_SENSITIVE_BODY:
-            if path in request.url.path:
-                extra["body"] = b""
+            # Check if the request body is JSON or form data
+            if request.headers.get("content-type", "").startswith(
+                "multipart/form-data"
+            ):
+                try:
+                    # Try to parse the request body as form data
+                    form_data = await request.form()
+                    out = {}
+
+                    # Redact sensitive fields
+                    for key, value in form_data.items():
+                        out[key] = value
+
+                    extra["body"] = json.dumps(out)
+                except Exception:
+                    # If parsing fails, just log the request body as is
+                    pass
+            else:
+                try:
+                    # Try to parse the request body as JSON
+                    json_body = await request.json()
+                    extra["body"] = json.dumps(json_body)
+                except Exception:
+                    # If parsing fails, just log the request body as is
+                    pass
 
         if response.status_code == 200:
             logger.info("Authorized request", extra=extra)
