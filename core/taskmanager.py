@@ -1,9 +1,8 @@
 import datetime
 import logging
-import traceback
 from typing import Type
 
-from core.schemas.task import ExportTask, Task, TaskParams, TaskStatus
+from core.schemas.task import ExportTask, Task, TaskParams, TaskStatus, TaskType
 
 
 class TaskManager:
@@ -31,6 +30,14 @@ class TaskManager:
         cls._store[task_name] = task
 
     @classmethod
+    def tasks(cls):
+        return cls._store.values()
+
+    @classmethod
+    def task_names(cls):
+        return cls._store.keys()
+
+    @classmethod
     def get_task(cls, task_name):
         """Retreives task from cache."""
         return cls._store[task_name]
@@ -56,16 +63,24 @@ class TaskManager:
 
     @classmethod
     def run_task(cls, task_name: str, task_params: TaskParams):
+        logging.debug(f"Loading task {task_name}...")
         task = TaskManager.load_task(task_name)
+        logging.debug(f"Task {task_name} loaded.")
         logging.info("Running task %s (%s)", task.name, task.type)
 
         if not task.enabled:
+            logging.info(f"Task {task_name} is disabled. Won't run")
             task.status_message = "Task is disabled."
             task.status = TaskStatus.failed
             task.save()
             return
 
-        if task.status == TaskStatus.running:
+        # We don't want to run feed or export tasks if they are already running
+        if (
+            task.type not in [TaskType.export, TaskType.feed, TaskType.analytics]
+            and task.status == TaskStatus.running
+        ):
+            logging.info(f"Task {task_name} is already running. Won't run")
             task.save()
             return
 
@@ -73,13 +88,18 @@ class TaskManager:
         task.save()
 
         try:
+            logging.info(f"Running task {task_name}")
             if task_params.params:
+                logging.debug(
+                    f"Running task {task_name} with params {task_params.params}"
+                )
                 task.run(params=task_params.params)
             else:
+                logging.debug(f"Running task {task_name} without params")
                 task.run()
         except Exception as error:  # pylint: disable=broad-except
             # We want to catch and report all errors
-            logging.error(traceback.format_exc())
+            logging.exception(f"Error running task {task_name}")
             task.status = TaskStatus.failed
             task.status_message = str(error)
             task.save()

@@ -149,7 +149,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
 
-    @computed_field(return_type=Literal["root_type"])
+    @computed_field(return_type=Literal["dfiq"])
     @property
     def root_type(self):
         return self._root_type
@@ -261,7 +261,7 @@ class DFIQScenario(DFIQBase):
     type: Literal[DFIQType.scenario] = DFIQType.scenario
 
     @classmethod
-    def from_yaml(cls: Type["DFIQScenario"], yaml_string: str) -> "DFIQScenario":
+    def from_yaml(cls: "DFIQScenario", yaml_string: str) -> "DFIQScenario":
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "scenario":
             raise ValueError(f"Invalid type for DFIQ scenario: {yaml_data['type']}")
@@ -290,7 +290,7 @@ class DFIQFacet(DFIQBase):
     type: Literal[DFIQType.facet] = DFIQType.facet
 
     @classmethod
-    def from_yaml(cls: Type["DFIQFacet"], yaml_string: str) -> "DFIQFacet":
+    def from_yaml(cls: "DFIQFacet", yaml_string: str) -> "DFIQFacet":
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "facet":
             raise ValueError(f"Invalid type for DFIQ facet: {yaml_data['type']}")
@@ -321,7 +321,7 @@ class DFIQQuestion(DFIQBase):
     approaches: list["DFIQApproach"] = []
 
     @classmethod
-    def from_yaml(cls: Type["DFIQQuestion"], yaml_string: str) -> "DFIQQuestion":
+    def from_yaml(cls: "DFIQQuestion", yaml_string: str) -> "DFIQQuestion":
         yaml_data = cls.parse_yaml(yaml_string)
         if yaml_data["type"] != "question":
             raise ValueError(f"Invalid type for DFIQ question: {yaml_data['type']}")

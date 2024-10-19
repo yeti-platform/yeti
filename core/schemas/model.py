@@ -9,7 +9,7 @@ class YetiModel(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        self.__id = data.get("__id", None)
+        self.__id = data.get("__id", data.get("id", None))
 
     @computed_field(return_type=str)
     @property

@@ -5,7 +5,18 @@ from pathlib import Path
 
 import aenum
 
-from core.schemas import entity, indicator, observable
+from core.events import message
+from core.schemas import (
+    dfiq,
+    entity,
+    graph,
+    indicator,
+    observable,
+    tag,
+    task,
+    template,
+    user,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,3 +129,5 @@ def load_observables():
 load_observables()
 load_entities()
 load_indicators()
+
+message.EventMessage.model_rebuild()
