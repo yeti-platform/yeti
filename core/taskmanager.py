@@ -77,7 +77,7 @@ class TaskManager:
 
         # We don't want to run feed or export tasks if they are already running
         if (
-            task.type in [TaskType.export, TaskType.feed]
+            task.type not in [TaskType.export, TaskType.feed, TaskType.analytics]
             and task.status == TaskStatus.running
         ):
             logging.info(f"Task {task_name} is already running. Won't run")
