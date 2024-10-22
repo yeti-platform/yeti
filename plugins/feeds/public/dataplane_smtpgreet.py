@@ -1,6 +1,7 @@
 """
-    Feed of SMTP greetings from dataplane with IPs and ASN
+Feed of SMTP greetings from dataplane with IPs and ASN
 """
+
 from datetime import timedelta
 from typing import ClassVar
 

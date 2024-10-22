@@ -4,11 +4,12 @@ from core.schemas.graph import TagRelationship
 
 
 class YetiModel(BaseModel):
+    _exclude_overwrite: list[str] = list()
     __id: str | None = None
 
     def __init__(self, **data):
         super().__init__(**data)
-        self.__id = data.get("__id", None)
+        self.__id = data.get("__id", data.get("id", None))
 
     @computed_field(return_type=str)
     @property

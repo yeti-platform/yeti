@@ -9,9 +9,9 @@ from core.schemas.observables import ipv4
 
 
 class AbuseIPDB(task.FeedTask):
-    _SOURCE: ClassVar[
-        "str"
-    ] = "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
+    _SOURCE: ClassVar["str"] = (
+        "https://api.abuseipdb.com/api/v2/blacklist?&key=%s&plaintext&limit=10000"
+    )
     _defaults = {
         "frequency": timedelta(hours=5),
         "name": "AbuseIPDB",

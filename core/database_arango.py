@@ -1,14 +1,21 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
+
 import datetime
 import json
 import logging
 import sys
 import time
+import traceback
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
 
 if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable
-    from core.schemas.graph import Relationship, RelationshipTypes, TagRelationship
+    from core.schemas.graph import (
+        GraphFilter,
+        Relationship,
+        RelationshipTypes,
+        TagRelationship,
+    )
     from core.schemas.tag import Tag
 
 import requests
@@ -16,6 +23,8 @@ from arango import ArangoClient
 from arango.exceptions import DocumentInsertError, GraphCreateError
 
 from core.config.config import yeti_config
+from core.events import message
+from core.events.producer import producer
 
 from .interfaces import AbstractYetiConnector
 
@@ -99,6 +108,15 @@ class ArangoDatabase:
                 ],
             },
         )
+
+        for collection_data in self.db.collections():
+            if collection_data["system"]:
+                continue
+            collection = self.db.collection(collection_data["name"])
+            for index in collection.indexes():
+                if index["type"] == "persistent":
+                    collection.delete_index(index["id"])
+
         self.db.collection("observables").add_persistent_index(
             fields=["value", "type"], unique=True
         )
@@ -110,7 +128,7 @@ class ArangoDatabase:
             fields=["name", "type"], unique=True
         )
         self.db.collection("dfiq").add_persistent_index(
-            fields=["name", "type"], unique=True
+            fields=["uuid"], unique=True, sparse=True
         )
 
     def clear(self, truncate=True):
@@ -190,7 +208,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if not err.error_code == 1210:  # Unique constraint violation
                 raise
             return None
-
         newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
@@ -210,8 +227,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._get_collection().update_match(filters, document)
 
             logging.debug(f"filters: {filters}")
-            newdoc = list(self._get_collection().find(filters, limit=1))[0]
-
+            try:
+                newdoc = list(self._get_collection().find(filters, limit=1))[0]
+            except IndexError as exception:
+                msg = f"Update failed when adding {document_json}: {exception}"
+                logging.error(msg)
+                raise RuntimeError(msg)
         newdoc["__id"] = newdoc.pop("_key")
         return newdoc
 
@@ -230,17 +251,29 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           The created Yeti object.
         """
-        doc_dict = self.model_dump(exclude_unset=True, exclude=["tags"])
+        exclude = ["tags"] + self._exclude_overwrite
+        doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
         if doc_dict.get("id") is not None:
-            result = self._update(self.model_dump_json(exclude=["tags"]))
+            exclude = ["tags"] + self._exclude_overwrite
+            result = self._update(self.model_dump_json(exclude=exclude))
+            event_type = message.EventType.update
         else:
-            result = self._insert(self.model_dump_json(exclude=["tags", "id"]))
+            exclude = ["tags", "id"] + self._exclude_overwrite
+            result = self._insert(self.model_dump_json(exclude=exclude))
+            event_type = message.EventType.new
             if not result:
-                result = self._update(self.model_dump_json(exclude=exclude_overwrite))
+                exclude = exclude_overwrite + self._exclude_overwrite
+                result = self._update(self.model_dump_json(exclude=exclude))
+                event_type = message.EventType.update
         yeti_object = self.__class__(**result)
         # TODO: Override this if we decide to implement YetiTagModel
         if hasattr(self, "tags"):
             yeti_object.get_tags()
+        try:
+            event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
+            producer.publish_event(event)
+        except Exception:
+            logging.exception("Error while publishing event")
         return yeti_object
 
     @classmethod
@@ -292,6 +325,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           A Yeti object.
         """
+        if "type" not in kwargs and getattr(cls, "_type_filter", None):
+            kwargs["type"] = cls._type_filter
+
         documents = list(cls._get_collection().find(kwargs, limit=1))
         if not documents:
             return None
@@ -377,6 +413,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge = json.loads(tag_relationship.model_dump_json())
             edge["_id"] = tag_relationship.id
             graph.update_edge(edge)
+            try:
+                event = message.TagEvent(
+                    type=message.EventType.update, tagged_object=self, tag_object=tag
+                )
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
             return tag_relationship
 
         # Relationship doesn't exist, check if tag is already in the db
@@ -401,6 +444,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return_new=True,
         )["new"]
         result["__id"] = result.pop("_key")
+        try:
+            event = message.TagEvent(
+                type=message.EventType.new, tagged_object=self, tag_object=tag_obj
+            )
+            producer.publish_event(event)
+        except Exception:
+            logging.exception("Error while publishing event")
         return TagRelationship.load(result)
 
     def expire_tag(self, tag_name: str) -> "TagRelationship":
@@ -435,10 +485,22 @@ class ArangoYetiConnector(AbstractYetiConnector):
         self.get_tags()
         results = graph.edge_collection("tagged").edges(self.extended_id)
         for edge in results["edges"]:
+            try:
+                tag_relationship = self._db.collection("tagged").get(edge["_id"])
+                tag_collection, tag_id = tag_relationship["target"].split("/")
+                tag_obj = self._db.collection(tag_collection).get(tag_id)
+                event = message.TagEvent(
+                    type=message.EventType.delete,
+                    tagged_object=self,
+                    tag_object=tag_obj,
+                )
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
             graph.edge_collection("tagged").delete(edge["_id"])
 
     def link_to(
-        self, target: TYetiObject, relationship_type: str, description: str
+        self, target, relationship_type: str, description: str
     ) -> "Relationship":
         """Creates a link between two YetiObjects.
 
@@ -454,6 +516,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         # Check if a relationship with the same link_type already exists
         aql = """
+        WITH observables
+
         FOR v, e, p IN 1..1 OUTBOUND @extended_id
         links
           FILTER e.type == @relationship_type
@@ -470,15 +534,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
             relationship = Relationship.load(neighbors[0])
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
             relationship.description = description
+            relationship.count += 1
             edge = json.loads(relationship.model_dump_json())
             edge["_id"] = neighbors[0]["_id"]
             graph.update_edge(edge)
+            try:
+                event = message.LinkEvent(
+                    type=message.EventType.update,
+                    source_object=self,
+                    target_object=target,
+                    relationship=relationship,
+                )
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
             return relationship
 
         relationship = Relationship(
             type=relationship_type,
             source=self.extended_id,
             target=target.extended_id,
+            count=1,
             description=description,
             created=datetime.datetime.now(datetime.timezone.utc),
             modified=datetime.datetime.now(datetime.timezone.utc),
@@ -490,7 +566,30 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return_new=True,
         )["new"]
         result["__id"] = result.pop("_key")
-        return Relationship.load(result)
+        relationship = Relationship.load(result)
+        try:
+            event = message.LinkEvent(
+                type=message.EventType.new,
+                source_object=self,
+                target_object=target,
+                relationship=relationship,
+            )
+            producer.publish_event(event)
+        except Exception:
+            logging.exception("Error while publishing event")
+        return relationship
+
+    def swap_link(self):
+        """Swaps the source and target of a relationship."""
+        # Avoid circular dependency
+        self.target, self.source = self.source, self.target
+        edge = json.loads(self.model_dump_json())
+        edge["_from"] = self.source
+        edge["_to"] = self.target
+        edge["_id"] = f"links/{self.id}"
+        graph = self._db.graph("threat_graph")
+        graph.update_edge(edge)
+        self.save()
 
     # TODO: Consider extracting this to its own class, given it's only meant
     # to be called by Observables.
@@ -504,19 +603,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
         from core.schemas.graph import TagRelationship
         from core.schemas.tag import Tag
 
-        traversed = self._db.graph("tags").traverse(
-            self.extended_id, direction="any", max_depth=1
+        tag_aql = """
+            for v, e, p IN 1..1 OUTBOUND @extended_id GRAPH tags
+            OPTIONS {uniqueVertices: "path"}
+            RETURN p
+        """
+        tag_paths = list(
+            self._db.aql.execute(tag_aql, bind_vars={"extended_id": self.extended_id})
         )
+        if not tag_paths:
+            return []
         relationships = []
-        for path in traversed["paths"]:
-            if path["edges"]:
-                tag_data = Tag.load(path["vertices"][1])
-                edge_data = path["edges"][0]
-                # edge_data["id"] = edge_data.pop("_id")
-                edge_data["__id"] = edge_data.pop("_id")
-                tag_relationship = TagRelationship.load(edge_data)
-                relationships.append((tag_relationship, tag_data))
-                self._tags[tag_data.name] = tag_relationship
+        for path in tag_paths:
+            tag_data = Tag.load(path["vertices"][1])
+            edge_data = path["edges"][0]
+            edge_data["__id"] = edge_data.pop("_id")
+            tag_relationship = TagRelationship.load(edge_data)
+            relationships.append((tag_relationship, tag_data))
+            self._tags[tag_data.name] = tag_relationship
         return relationships
 
     # pylint: disable=too-many-arguments
@@ -526,14 +630,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
         target_types: List[str] = [],
         direction: str = "any",
         graph: str = "links",
+        filter: List["GraphFilter"] = [],
         include_original: bool = False,
         min_hops: int = 1,
         max_hops: int = 1,
         offset: int = 0,
         count: int = 0,
+        sorting: List[tuple[str, bool]] = [],
     ) -> tuple[
         dict[
-            str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"
+            str,
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
         ],
         List[List["Relationship | TagRelationship"]],
         int,
@@ -564,12 +671,43 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "extended_id": self.extended_id,
             "@graph": graph,
         }
+        sorts = []
+        for field, asc in sorting:
+            sorts.append(f'p.edges[0].{field} {"ASC" if asc else "DESC"}')
+        sorting_aql = f"SORT {', '.join(sorts)}" if sorts else ""
+
         if link_types:
             args["link_types"] = link_types
             query_filter = "FILTER e.type IN @link_types"
         if target_types:
             args["target_types"] = target_types
-            query_filter = "FILTER v.type IN @target_types"
+            query_filter = (
+                "FILTER (v.type IN @target_types OR v.root_type IN @target_types)"
+            )
+        if filter:
+            filters = []
+            for i, f in enumerate(filter):
+                if f.operator not in {"=~", "=", "in"}:
+                    f.operator = "="
+
+                if f.operator in {"=~", "="}:
+                    filters.append(
+                        f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                    )
+                if f.operator == "in":
+                    filters.append(
+                        f"""COUNT(
+                              FOR arr IN p.vertices[*].@filter_key{i}
+                              FILTER COUNT(
+                                FOR item in arr || []
+                                FILTER REGEX_TEST(item, @filter_value{i}, true) RETURN arr
+                              ) > 0
+                              RETURN arr
+                            ) > 0"""
+                    )
+                args[f"filter_key{i}"] = f.key
+                args[f"filter_value{i}"] = f.value
+            query_filter += f"FILTER {' OR '.join(filters)}"
 
         limit = ""
         if count != 0:
@@ -583,6 +721,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             direction = "any"
 
         aql = f"""
+        WITH tags, observables, entities, dfiq, indicators
+
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
           OPTIONS {{ uniqueVertices: "path" }}
           {query_filter}
@@ -592,6 +732,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
               RETURN MERGE(observable, {{tags: MERGE(innertags)}})
           )
           {limit}
+          {sorting_aql}
           RETURN {{ vertices: v_with_tags, g: p }}
         """
         cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
@@ -663,6 +804,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
+        aliases: List[tuple[str, str]] = [],
         graph_queries: List[tuple[str, str, str, str]] = [],
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
@@ -689,8 +831,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         sorts = []
 
         # We want user-defined sorts to take precedence.
+        related_observables_count = ""
         for field, asc in sorting:
-            sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
+            if field == "related_observables_count":
+                related_observables_count = 'LET related_observables_count = LENGTH(FOR v, e IN 1..1 ANY o links FILTER v.root_type == "observable" RETURN v)'
+                sorts.append(f'related_observables_count {"ASC" if asc else "DESC"}')
+            else:
+                sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
@@ -707,14 +854,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key[:-4]
                 sorts.append(f"o.@arg{i}_key")
-            elif key in ["labels", "relevant_tags"]:
+            elif key.endswith("__in~"):
+                del aql_args[f"arg{i}_value"]
+                if not value:
+                    continue
+                aql_args[f"arg{i}_key"] = key[:-5]
+                or_conditions = []
+                for j, v in enumerate(value):
+                    or_conditions.append(
+                        f"REGEX_TEST(o.@arg{i}_key, @arg{i}{j}_value, true)"
+                    )
+                    aql_args[f"arg{i}{j}_value"] = v.strip()
+                    sorts.append(f"o.@arg{i}_key")
+                conditions.append(f"({' OR '.join(or_conditions)})")
+            elif key in {"labels", "relevant_tags"}:
                 conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
             elif key.startswith("context."):
                 context_field = key[8:]
                 conditions.append(
-                    f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value) RETURN c) > 0"
+                    f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value, true) RETURN c) > 0"
                 )
                 aql_args[f"arg{i}_key"] = context_field
                 sorts.append(f"o.context[*].@arg{i}_key")
@@ -728,8 +888,30 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
                 )
                 sorts.append(f"o.{key}")
+            elif key in ("name"):
+                key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
+                for alias, alias_type in aliases:
+                    if alias_type in {"text", "option"}:
+                        key_conditions.append(
+                            f"REGEX_TEST(o.{alias}, @arg{i}_value, true)"
+                        )
+                    if alias_type == "list":
+                        key_conditions.append(
+                            f"COUNT(FOR i IN o.{alias} || [] FILTER REGEX_TEST(i, @arg{i}_value, true) RETURN i) > 0"
+                        )
+                    sorts.append(f"o.{alias}")
+                key_condition = " OR ".join(key_conditions)
+                conditions.append(f"({key_condition})")
+                aql_args[f"arg{i}_key"] = key
+                sorts.append(f"o.@arg{i}_key")
             else:
-                conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+                if key.endswith("~"):
+                    key = key[:-1]
+                    conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+                else:
+                    conditions.append(
+                        f"CONTAINS(LOWER(o.@arg{i}_key), LOWER(@arg{i}_value))"
+                    )
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
 
@@ -760,16 +942,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         aql_string = f"""
             FOR o IN @@collection
+                {related_observables_count}
                 {graph_query_string}
                 {aql_filter}
                 {aql_sort}
                 {limit}
             """
         if graph_queries:
-            aql_string += f'\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
+            aql_string = f'WITH {name}\n\n{aql_string}\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
+        logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )
@@ -808,6 +992,32 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             col = self._db.collection(self._collection_name)
         col.delete(self.id)
+        try:
+            event_type = message.EventType.delete
+            if self._collection_name == "tagged":
+                source_collection, source_id = self.source.split("/")
+                tag_collection, tag_id = self.target.split("/")
+                source_obj = self._db.collection(source_collection).get(source_id)
+                tag_obj = self._db.collection(tag_collection).get(tag_id)
+                event = message.TagEvent(
+                    type=event_type, tagged_object=source_obj, tag_object=tag_obj
+                )
+            elif self._collection_name == "links":
+                source_collection, source_id = self.source.split("/")
+                target_collection, target_id = self.target.split("/")
+                source_obj = self._db.collection(source_collection).get(source_id)
+                target_obj = self._db.collection(target_collection).get(target_id)
+                event = message.LinkEvent(
+                    type=event_type,
+                    source_object=source_obj,
+                    target_object=target_obj,
+                    relationship=self,
+                )
+            else:
+                event = message.ObjectEvent(type=event_type, yeti_object=self)
+            producer.publish_event(event)
+        except Exception:
+            logging.exception("Error while publishing event")
 
     @classmethod
     def _get_collection(cls):
@@ -823,6 +1033,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
 def tagged_observables_export(cls, args):
     aql = """
+        WITH tags 
+
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
         LET tags = MERGE(

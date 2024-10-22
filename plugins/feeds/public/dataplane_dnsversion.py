@@ -1,6 +1,7 @@
 """
-    Feed DNS Version IPs with ASN
+Feed DNS Version IPs with ASN
 """
+
 import logging
 from datetime import timedelta
 from typing import ClassVar

@@ -1,6 +1,7 @@
 """
-       Feed of SIP registr with IPs and ASNs
+Feed of SIP registr with IPs and ASNs
 """
+
 import logging
 from datetime import timedelta
 from typing import ClassVar

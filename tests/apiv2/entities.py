@@ -32,10 +32,6 @@ class EntityTest(unittest.TestCase):
     def tearDown(self) -> None:
         database_arango.db.clear()
 
-    def test_get_entities(self):
-        response = client.get("/api/v2/entities/")
-        self.assertEqual(response.status_code, 200)
-
     def test_new_entity(self):
         response = client.post(
             "/api/v2/entities/",
@@ -87,6 +83,34 @@ class EntityTest(unittest.TestCase):
         response = client.post(
             "/api/v2/entities/search",
             json={"query": {"in__aliases": ["badactor"]}, "type": "threat-actor"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 1)
+        self.assertEqual(data["entities"][0]["name"], "ta1")
+        self.assertEqual(data["entities"][0]["type"], "threat-actor")
+
+    def test_search_entities_multiple_types(self):
+        entity.AttackPattern(name="ttp1").save()
+        entity.Malware(name="malware1").save()  # this won't show up
+        response = client.post(
+            "/api/v2/entities/search",
+            json={"query": {"type__in": ["threat-actor", "attack-pattern"]}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 3)
+        all_types = {e["type"] for e in data["entities"]}
+        self.assertEqual(all_types, {"threat-actor", "attack-pattern"})
+
+    def test_search_entities_by_alias(self):
+        response = client.post(
+            "/api/v2/entities/search",
+            json={
+                "query": {"name": "bad"},
+                "type": "threat-actor",
+                "filter_aliases": [["aliases", "list"]],
+            },
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)

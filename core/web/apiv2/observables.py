@@ -1,10 +1,11 @@
-from typing import Iterable
+from typing import Annotated, Iterable
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.schemas import graph
 from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
+from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
 
 ObservableTypes = ()
 
@@ -19,14 +20,16 @@ for key in TYPE_MAPPING:
 
 
 class TagRequestMixin(BaseModel):
-    tags: list[str] = []
+    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
 
     @field_validator("tags")
     @classmethod
     def validate_tags(cls, value) -> list[str]:
         for tag in value:
-            if not tag:
+            if not tag or not tag.strip():
                 raise ValueError("Tags cannot be empty")
+            if len(tag) > MAX_TAG_LENGTH:
+                raise ValueError(f"Tag {tag} exceeds max length ({MAX_TAG_LENGTH})")
         return value
 
 
@@ -41,13 +44,13 @@ class NewObservableRequest(TagRequestMixin):
 class NewExtendedObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes
+    observable: ObservableTypes = Field(discriminant="type")
 
 
 class PatchObservableRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes
+    observable: ObservableTypes = Field(discriminant="type")
 
 
 class NewBulkObservableAddRequest(BaseModel):
@@ -202,7 +205,7 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddRes
                 observable = cls(value=new_observable.value).save()
                 if new_observable.tags:
                     observable = observable.tag(new_observable.tags)
-            except ValueError:
+            except (ValueError, RuntimeError):
                 response.failed.append(new_observable.value)
                 continue
         response.added.append(observable)
@@ -303,3 +306,12 @@ async def tag_observable(request: ObservableTagRequest) -> ObservableTagResponse
         observable_tags[observable.extended_id] = observable.tags
 
     return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
+
+
+@router.delete("/{observable_id}")
+async def delete(observable_id: str) -> None:
+    """Deletes an observable."""
+    observable = Observable.get(observable_id)
+    if not observable:
+        raise HTTPException(status_code=404, detail="Observable not found")
+    observable.delete()

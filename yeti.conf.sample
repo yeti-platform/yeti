@@ -9,6 +9,7 @@ export_path = /opt/yeti/exports
 logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
 audit_logfile = /var/log/yeti_audit.log
+templates_dir = /opt/yeti/templates
 
 # Public scheme + hostname + port for Yeti. Use it if you want to specify an
 # OIDC callback
@@ -29,6 +30,7 @@ module = local
 # SECRET_KEY = SECRET
 # ALGORITHM = HS256
 # ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# BROWSER_TOKEN_EXPIRE_MINUTES = 43200
 enabled = True
 
 # OIDC
@@ -45,10 +47,10 @@ enabled = True
 ##
 ## Use these settings to configure Yeti tags.
 ## If you specify default_tag_expiration = 7776000, then the tag will expire for 90 days.
-## Value must be in seconds (7776000 seconds is 90 days).
+## Value must be in days.
 ##
 
-# default_tag_expiration = 7776000
+# default_tag_expiration = 90
 
 [arangodb]
 
@@ -98,6 +100,7 @@ enabled = True
 # key = MISP_AUTH_KEY
 # galaxy_filter = filtering_galaxy_to_drop
 # days = days_history_to_change_by_default_60_days
+# verifycert = true_or_false
 
 [proxy]
 
@@ -113,9 +116,13 @@ https =
 # w/ token - limit 5k r/h
 # token =
 
+[etopen]
+## time of filtering rule suricata for the first run of feed ETOpen
+start_time = 2000-01-01
+
 [otx]
 key = YourOTXKey
-pages = 1
+days = 1
 
 [abuseIPDB]
 key = YourKey

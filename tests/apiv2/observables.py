@@ -33,7 +33,7 @@ class ObservableTest(unittest.TestCase):
             md5="d41d8cd98f00b204e9800998ecf8427e",
             mime_type="inode/x-empty; charset=binary",
         ).save()
-        obs.tag(["tag1"])
+        obs.tag(["tag1", "tag2"])
         response = client.get(f"/api/v2/observables/{obs.id}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -48,6 +48,14 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
         self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
         self.assertIn("tag1", data["tags"])
+        self.assertIn("tag2", data["tags"])
+
+    def test_delete_observable(self):
+        obs = hostname.Hostname(value="tomchop.me").save()
+        response = client.delete(f"/api/v2/observables/{obs.id}")
+        self.assertEqual(response.status_code, 200)
+        response = client.get(f"/api/v2/observables/{obs.id}")
+        self.assertEqual(response.status_code, 404)
 
     def test_post_existing_observable(self):
         obs = hostname.Hostname(value="tomchop.me").save()
@@ -210,6 +218,43 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 422, data)
         self.assertEqual(
             data["detail"][0]["msg"], "Value error, Tags cannot be empty", data
+        )
+
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": [" "]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertEqual(
+            data["detail"][0]["msg"], "Value error, Tags cannot be empty", data
+        )
+
+    def test_create_observable_toolong_tag(self):
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "a" * 200]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertEqual(
+            data["detail"][0]["msg"],
+            f"Value error, Tag {'a'*200} exceeds max length (50)",
+            data,
+        )
+
+    def test_create_observable_toomany_tags(self):
+        many_tags = [str(i) for i in range(200)]
+        response = client.post(
+            "/api/v2/observables/",
+            json={"value": "toto.com", "type": "hostname", "tags": many_tags},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 422, data)
+        self.assertEqual(
+            data["detail"][0]["msg"],
+            "List should have at most 50 items after validation, not 200",
+            data,
         )
 
     def test_create_extended_observable(self):

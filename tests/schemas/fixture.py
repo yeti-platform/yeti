@@ -5,7 +5,7 @@ from core.schemas.entity import Investigation, Malware, ThreatActor
 from core.schemas.indicator import DiamondModel, Query, Regex
 from core.schemas.observables import (
     bic,
-    generic_observable,
+    generic,
     hostname,
     iban,
     ipv4,
@@ -21,7 +21,7 @@ class FixtureTest(unittest.TestCase):
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
 
-    def test_something(self):
+    def general_fixture_test(self):
         user = UserSensitive(username="yeti", admin=True, enabled=True)
         user.set_password("yeti")
         user.save()
@@ -40,10 +40,8 @@ class FixtureTest(unittest.TestCase):
         hacker = hostname.Hostname(value="hacker.com").save()
         sus_hacker = hostname.Hostname(value="sus.hacker.com").save()
         mac_address.MacAddress(value="00:11:22:33:44:55").save()
-        generic = generic_observable.GenericObservable(
-            value="SomeInterestingString"
-        ).save()
-        generic.add_context("test_source", {"test": "test"})
+        generic_obs = generic.Generic(value="SomeInterestingString").save()
+        generic_obs.add_context("test_source", {"test": "test"})
 
         hacker.link_to(www_hacker, "domain", "Domain")
         hacker.link_to(c2_hacker, "domain", "Domain")

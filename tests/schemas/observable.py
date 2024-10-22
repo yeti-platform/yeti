@@ -13,12 +13,13 @@ from core.schemas.observables import (
     docker_image,
     email,
     file,
-    generic_observable,
+    generic,
     hostname,
     iban,
     imphash,
     ipv4,
     ipv6,
+    ja3,
     mac_address,
     md5,
     mutex,
@@ -73,7 +74,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
 
     def test_create_generic_observable(self):
-        result = generic_observable.GenericObservable(value="Some_String").save()
+        result = generic.Generic(value="Some_String").save()
         self.assertIsNotNone(result.id)
         self.assertEqual(result.value, "Some_String")
         self.assertEqual(result.type, "generic")
@@ -213,16 +214,46 @@ class ObservableTest(unittest.TestCase):
         observable.add_context("test_source", {"abc": 123, "def": 666})
         self.assertEqual(len(observable.context), 2)
 
+    def test_add_multiple_contexts_with_same_source(self) -> None:
+        """Tests that two different contexts can be added from the same source."""
+        observable = hostname.Hostname(value="tomchop.me").save()
+        observable.add_context("test_source", {"abc": 123, "def": 456})
+        observable.add_context("test_source", {"abc": 123, "def": 666})
+        observable.add_context("test_source", {"abc": 123, "def": 456})
+        observable.add_context("test_source", {"abc": 123, "def": 666})
+        self.assertEqual(len(observable.context), 2)
+        self.assertEqual(
+            observable.context[0], {"source": "test_source", "abc": 123, "def": 456}
+        )
+        self.assertEqual(
+            observable.context[1], {"source": "test_source", "abc": 123, "def": 666}
+        )
+
     def test_add_new_context_with_same_source_and_ignore_field(self) -> None:
         """Tests that the context is updated if the difference is not being
         compared."""
         observable = hostname.Hostname(value="tomchop.me").save()
         observable.add_context("test_source", {"abc": 123, "def": 456})
+        observable.add_context("test_source", {"abc": 999, "def": 456})
         observable.add_context(
             "test_source", {"abc": 123, "def": 666}, skip_compare={"def"}
         )
-        self.assertEqual(len(observable.context), 1)
+        self.assertEqual(len(observable.context), 2)
         self.assertEqual(observable.context[0]["def"], 666)
+        self.assertEqual(observable.context[1]["abc"], 999)
+
+    def test_overwrite_context(self) -> None:
+        """Tests that one or more contexts is added and persisted in the DB."""
+        observable = hostname.Hostname(value="tomchop.me").save()
+        observable.add_context("test_source", {"abc": 123, "def": 456})
+        observable.add_context("test_source", {"abc": 456, "def": 123}, overwrite=True)
+
+        assert observable.id is not None
+        observable = Observable.get(observable.id)
+        self.assertEqual(len(observable.context), 1)
+        self.assertEqual(observable.context[0]["abc"], 456)
+        self.assertEqual(observable.context[0]["def"], 123)
+        self.assertEqual(observable.context[0]["source"], "test_source")
 
     def test_delete_context(self) -> None:
         """Tests that a context is deleted if contents fully match."""
@@ -364,6 +395,13 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable.value, "::1")
         self.assertIsInstance(observable, ipv6.IPv6)
 
+    def test_create_ja3(self) -> None:
+        """Tests creating a JA3."""
+        observable = ja3.JA3(value="1234567890").save()
+        self.assertIsNotNone(observable.id)
+        self.assertEqual(observable.value, "1234567890")
+        self.assertEqual(observable.type, "ja3")
+
     def test_create_mac_address(self) -> None:
         """Tests creating a MAC address."""
         observable = mac_address.MacAddress(value="00:00:00:00:00:00").save()
@@ -427,10 +465,10 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_ssdeep(self) -> None:
         """Tests creating an ssdeep."""
-        observable = ssdeep.SsdeepHash(value="1234567890").save()
+        observable = ssdeep.Ssdeep(value="1234567890").save()
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "1234567890")
-        self.assertIsInstance(observable, ssdeep.SsdeepHash)
+        self.assertIsInstance(observable, ssdeep.Ssdeep)
 
     def test_create_tlsh(self) -> None:
         """Tests creating a TLSH."""

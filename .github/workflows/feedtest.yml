@@ -3,9 +3,11 @@ name: Test feeds
 on:
   schedule:
     - cron: '0 6 * * 3' # Run every Wednesday at 06:00 UTC
+  pull_request:
 
 jobs:
   testfeeds:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'tasks:feed') || github.event_type == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
@@ -19,6 +21,7 @@ jobs:
       YETI_AUTH_SECRET_KEY: SECRET
       YETI_AUTH_ALGORITHM: HS256
       YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      YETI_AUTH_BROWSER_TOKEN_EXPIRE_MINUTES: 43200
       YETI_AUTH_ENABLED: False
       YETI_SYSTEM_PLUGINS_PATH: ./plugins
     strategy:
@@ -26,7 +29,7 @@ jobs:
         os: [ubuntu-latest]
         python-version: ["3.10"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run:
         sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install poetry
     - name: Set up Python ${{ matrix.python-version }}

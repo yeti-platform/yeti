@@ -22,9 +22,9 @@ class Certificate(observable.Observable):
         fingerprint: the certificate fingerprint.
     """
 
-    type: Literal[
+    type: Literal[observable.ObservableType.certificate] = (
         observable.ObservableType.certificate
-    ] = observable.ObservableType.certificate
+    )
     last_seen: datetime.datetime = Field(default_factory=now)
     first_seen: datetime.datetime = Field(default_factory=now)
     issuer: str | None = None
@@ -38,6 +38,3 @@ class Certificate(observable.Observable):
     def from_data(cls, data: bytes):
         hash_256 = hashlib.sha256(data).hexdigest()
         return cls(value=f"CERT:{hash_256}")
-
-
-observable.TYPE_MAPPING[observable.ObservableType.certificate] = Certificate

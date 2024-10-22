@@ -5,9 +5,9 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas.entity import AttackPattern, ThreatActor
+from core.schemas.entity import AttackPattern, Malware, ThreatActor
 from core.schemas.graph import Relationship
-from core.schemas.indicator import ForensicArtifact, Regex
+from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
@@ -28,6 +28,13 @@ class SimpleGraphTest(unittest.TestCase):
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.entity1 = ThreatActor(name="actor0").save()
+        self.indicator1 = Query(
+            name="query1",
+            query_type="opensearch",
+            target_systems=["system1"],
+            pattern="blah",
+            diamond=DiamondModel.victim,
+        ).save()
 
     def tearDown(self) -> None:
         database_arango.db.clear()
@@ -187,6 +194,113 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(neighbor["value"], "127.0.0.1")
         self.assertEqual(neighbor["id"], self.observable2.id)
 
+    def test_neighbors_strongly_typed(self):
+        self.entity1.link_to(
+            self.indicator1, relationship_type="asd", description="asd"
+        )
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        neighbor = data["vertices"][self.indicator1.extended_id]
+        self.assertEqual(neighbor["query_type"], "opensearch")
+        self.assertEqual(neighbor["target_systems"], ["system1"])
+
+    def test_neighbors_target_types(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        self.entity1.link_to(self.observable2, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "target_types": ["hostname"],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 1)
+        self.assertEqual(
+            data["vertices"][self.observable1.extended_id]["value"], "tomchop.me"
+        )
+
+    def test_neighbors_target_types_root_type(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        self.entity1.link_to(self.observable2, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "target_types": ["observable"],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 2)
+        self.assertEqual(
+            data["vertices"][self.observable1.extended_id]["value"], "tomchop.me"
+        )
+        self.assertEqual(
+            data["vertices"][self.observable2.extended_id]["value"], "127.0.0.1"
+        )
+
+    def test_neighbors_filter(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        self.entity1.link_to(self.observable2, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "filter": [{"key": "value", "value": "tomch", "operator": "=~"}],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 1)
+        self.assertEqual(
+            data["vertices"][self.observable1.extended_id]["value"], "tomchop.me"
+        )
+
+    def test_neighbor_filter_in(self):
+        self.entity1.link_to(self.observable1, "uses", "asd")
+        malware = Malware(name="malware1", aliases=["blah"]).save()
+        self.entity1.link_to(malware, "uses", "asd")
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.entity1.extended_id,
+                "hops": 1,
+                "graph": "links",
+                "direction": "any",
+                "filter": [{"key": "aliases", "value": "bl", "operator": "in"}],
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 1)
+        self.assertEqual(data["vertices"][malware.extended_id]["name"], "malware1")
+
     def test_add_link(self):
         response = client.post(
             "/api/v2/graph/add",
@@ -222,6 +336,16 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(data["target"], self.entity1.extended_id)
         self.assertEqual(data["type"], "uses")
         self.assertEqual(data["description"], "c2 infrastructure")
+
+    def test_swap_relationship(self):
+        self.relationship = self.observable1.link_to(
+            self.observable2, "resolves", "DNS resolution"
+        )
+        response = client.post(f"/api/v2/graph/{self.relationship.id}/swap")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["source"], self.observable2.extended_id)
+        self.assertEqual(data["target"], self.observable1.extended_id)
 
     def test_delete_link(self):
         """Tests that a relationship can be deleted."""
@@ -282,6 +406,28 @@ class ComplexGraphTest(unittest.TestCase):
 
         self.assertEqual(entity["type"], "threat-actor")
         self.assertEqual(entity["name"], "tester")
+
+    def test_match(self):
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["test1.com"]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 1)
+        self.assertEqual(data["known"][0]["value"], "test1.com")
+
+    def test_match_regex(self):
+        response = client.post(
+            "/api/v2/graph/match",
+            json={"observables": ["tes.[0-9]+.com"], "regex_match": True},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["known"]), 3)
+        self.assertEqual(data["known"][0]["value"], "http://test1.com/admin")
+        self.assertEqual(data["known"][1]["value"], "test1.com")
+        self.assertEqual(data["known"][2]["value"], "test2.com")
 
     def test_matches_exist(self):
         """Tests that indicator matches will surface."""

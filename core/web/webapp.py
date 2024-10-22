@@ -1,4 +1,6 @@
+import json
 import logging
+import os
 
 from fastapi import APIRouter, Depends, FastAPI, Request
 from starlette.middleware.sessions import SessionMiddleware
@@ -21,6 +23,8 @@ from core.web.apiv2 import (
 )
 
 SECRET_KEY = yeti_config.get("auth", "secret_key")
+if not SECRET_KEY:
+    SECRET_KEY = str(os.urandom(64))
 
 app = FastAPI()
 
@@ -106,7 +110,6 @@ app.include_router(api_router, prefix="/api/v2")
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     req_body = await request.body()
-
     response = await call_next(request)
     try:
         extra = {
@@ -125,6 +128,33 @@ async def log_requests(request: Request, call_next):
             extra["username"] = request.state.username
         if req_body:
             extra["body"] = req_body
+
+            # Check if the request body is JSON or form data
+            if request.headers.get("content-type", "").startswith(
+                "multipart/form-data"
+            ):
+                try:
+                    # Try to parse the request body as form data
+                    form_data = await request.form()
+                    out = {}
+
+                    # Redact sensitive fields
+                    for key, value in form_data.items():
+                        out[key] = value
+
+                    extra["body"] = json.dumps(out)
+                except Exception:
+                    # If parsing fails, just log the request body as is
+                    pass
+            else:
+                try:
+                    # Try to parse the request body as JSON
+                    json_body = await request.json()
+                    extra["body"] = json.dumps(json_body)
+                except Exception:
+                    # If parsing fails, just log the request body as is
+                    pass
+
         if response.status_code == 200:
             logger.info("Authorized request", extra=extra)
         elif response.status_code == 401:

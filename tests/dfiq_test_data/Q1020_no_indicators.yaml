@@ -1,0 +1,12 @@
+---
+approaches: []
+name: What is a question?
+type: question
+description: desc
+id: Q1020
+uuid: bd46ce6e-c933-46e5-960c-36945aaef401
+dfiq_version: 1.1.0
+tags:
+ - Web Browser
+parent_ids:
+ - F1005

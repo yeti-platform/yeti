@@ -1,4 +1,5 @@
 import datetime
+import json
 
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
@@ -9,14 +10,20 @@ from fastapi.security import (
     OAuth2PasswordBearer,
     OAuth2PasswordRequestForm,
 )
+from google.auth import exceptions as google_exceptions
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_oauth_id_token
 from jose import JWTError, jwt
 from starlette.requests import Request
 
 from core.config.config import yeti_config
 from core.schemas.user import User, UserSensitive
 
-ACCESS_TOKEN_EXPIRE_MINUTES = datetime.timedelta(
-    minutes=yeti_config.get("auth", "access_token_expire_minutes")
+ACCESS_TOKEN_EXPIRE_DELTA = datetime.timedelta(
+    minutes=yeti_config.get("auth", "access_token_expire_minutes", default=30)
+)
+BROWSER_TOKEN_EXPIRE_DELTA = datetime.timedelta(
+    minutes=yeti_config.get("auth", "browser_token_expire_minutes", default=43200)
 )
 SECRET_KEY = yeti_config.get("auth", "secret_key")
 ALGORITHM = yeti_config.get("auth", "algorithm")
@@ -24,6 +31,7 @@ YETI_AUTH = yeti_config.get("auth", "enabled")
 YETI_WEBROOT = yeti_config.get("system", "webroot")
 
 AUTH_MODULE = yeti_config.get("auth", "module")
+
 if AUTH_MODULE == "oidc":
     if (
         not yeti_config.get("auth", "oidc_client_id")
@@ -165,11 +173,65 @@ if AUTH_MODULE == "oidc":
 
         access_token = create_access_token(
             data={"sub": db_user.username, "enabled": db_user.enabled},
-            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
+            expires_delta=BROWSER_TOKEN_EXPIRE_DELTA,
         )
         response = RedirectResponse(url="/")
-        response.set_cookie(key="yeti_session", value=access_token, httponly=True)
+        response.set_cookie(
+            key="yeti_session",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            max_age=int(BROWSER_TOKEN_EXPIRE_DELTA.total_seconds()),
+        )
         return response
+
+    @router.post("/oidc-callback-token")
+    async def oidc_api_callback(request: Request):
+        try:
+            req_body = await request.body()
+            id_token = json.loads(req_body)["id_token"]
+            idinfo = google_oauth_id_token.verify_oauth2_token(
+                id_token, google_requests.Request()
+            )
+        except (google_exceptions.GoogleAuthError, ValueError, KeyError) as error:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid token provided: {error}",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        audience_client_ids = set(
+            yeti_config.get("auth", "oidc_extra_client_audiences", "").split(",")
+        )
+        audience_client_ids.add(yeti_config.get("auth", "oidc_client_id"))
+
+        if idinfo["aud"] not in audience_client_ids:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token is not intended for this application (audience mismatch)",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user = UserSensitive.find(username=idinfo["email"])
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid user. Please contact your server admin.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.enabled:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account disabled. Please contact your server admin.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        access_token = create_access_token(
+            data={"sub": user.username, "enabled": user.enabled},
+            expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
+        )
+        return {"access_token": access_token, "token_type": "bearer"}
 
 
 # We only want certain endpoints to be defined depending on the auth module.
@@ -202,7 +264,7 @@ if AUTH_MODULE == "local":
 
         access_token = create_access_token(
             data={"sub": user.username, "enabled": user.enabled},
-            expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
+            expires_delta=BROWSER_TOKEN_EXPIRE_DELTA,
         )
         response.set_cookie(key="yeti_session", value=access_token, httponly=True)
         return {"access_token": access_token, "token_type": "bearer"}
@@ -227,7 +289,7 @@ async def login_api(x_yeti_api_key: str = Security(api_key_header)):
 
     access_token = create_access_token(
         data={"sub": user.username, "enabled": user.enabled},
-        expires_delta=ACCESS_TOKEN_EXPIRE_MINUTES,
+        expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
     )
     return {"access_token": access_token, "token_type": "bearer"}
 

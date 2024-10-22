@@ -77,6 +77,23 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["username"], "tomchop")
 
+    def test_logout(self) -> None:
+        response = client.post(
+            "/api/v2/auth/token", data={"username": "tomchop", "password": "test"}
+        )
+        data = response.json()
+        token = data["access_token"]
+
+        response = client.post(
+            "/api/v2/auth/logout", headers={"cookie": "yeti_session=" + token}
+        )
+
+        response = client.get(
+            "/api/v2/auth/me", headers={"cookie": "yeti_session=" + token}
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 401)
+
     def test_api_not_auth(self) -> None:
         response = client.get("/api/v2/auth/me")
         self.assertEqual(response.status_code, 401)

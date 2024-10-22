@@ -1,23 +1,30 @@
 import datetime
 import logging
-import os
-import pathlib
+import re
 from enum import Enum
 from io import BytesIO
-from typing import ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal, Pattern
 from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
 import requests
 from dateutil import parser
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
+from core.clients import file_storage
 from core.config.config import yeti_config
+
+# if TYPE_CHECKING:
+from core.events.message import EventMessage, LogMessage
 from core.schemas.model import YetiModel
-from core.schemas.observable import Observable, ObservableType
+from core.schemas.observable import Observable, ObservableTypes
 from core.schemas.template import Template
+
+FILE_STORAGE_CLIENT = file_storage.get_client(
+    yeti_config.get("system", "export_path", "/opt/yeti/exports")
+)
 
 
 def now():
@@ -36,7 +43,8 @@ class TaskType(str, Enum):
     analytics = "analytics"
     export = "export"
     oneshot = "oneshot"
-    inline = "inline"
+    event = "event"
+    log = "log"
 
 
 class TaskParams(BaseModel):
@@ -47,6 +55,8 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tasks"
     _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}
+    _root_type: Literal["task"] = "task"
+    _logger = None
 
     # id: str | None = None
     name: str
@@ -59,7 +69,25 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     # only used for cron tasks
     frequency: datetime.timedelta | None = None
 
-    def run(self, params: "TaskParams"):
+    @property
+    def logger(self):
+        if self._logger is None:
+            self._logger = logging.getLogger(f"task.{self.type}.{self.name}")
+            self._logger.propagate = False
+            formatter = logging.Formatter(
+                "[%(asctime)s: %(levelname)s/%(processName)s/%(name)s] %(message)s"
+            )
+            handler = logging.StreamHandler()
+            handler.setFormatter(formatter)
+            self._logger.addHandler(handler)
+        return self._logger
+
+    @computed_field(return_type=Literal["task"])
+    @property
+    def root_type(self):
+        return self._root_type
+
+    def run(self, params: dict):
         """Runs the task"""
         raise NotImplementedError("run() must be implemented in subclass")
 
@@ -119,9 +147,11 @@ class FeedTask(Task):
         auth: tuple = (),
         params: dict = {},
         data: dict = {},
+        json_data: dict = {},
         verify: bool = True,
         sort: bool = True,
-    ) -> requests.Response:
+        no_cache: bool = False,
+    ) -> requests.Response | None:
         """Helper function. Performs an HTTP request on ``source`` and returns request object.
 
         Args:
@@ -131,25 +161,41 @@ class FeedTask(Task):
             params: Optional param to be added to the HTTP GET request.
             data: Optional param to be added to the HTTP POST request.
             verify: Enforce (True) or skip (False) SSL verification.
+            no_cache: Return the requests content even if they're older than the last run.
 
         Returns:
             requests object.
         """
-        response = getattr(requests, method.lower())(
-            url,
-            headers=headers,
-            auth=auth,
-            proxies=yeti_config.get("proxy"),
-            params=params,
-            data=data,
-            verify=verify,
-            stream=True,
-        )
+        if json_data:
+            response = getattr(requests, method.lower())(
+                url,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.get("proxy"),
+                params=params,
+                json=json_data,
+                verify=verify,
+                stream=True,
+            )
+        else:
+            response = getattr(requests, method.lower())(
+                url,
+                headers=headers,
+                auth=auth,
+                proxies=yeti_config.get("proxy"),
+                params=params,
+                data=data,
+                verify=verify,
+                stream=True,
+            )
 
         if response.status_code != 200:
             raise RuntimeError(f"{url} returned code: {response.status_code}")
 
         if not sort:
+            return response
+
+        if no_cache:
             return response
 
         last_modified_header = response.headers.get("Last-Modified")
@@ -240,16 +286,14 @@ class ExportTask(Task):
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
-    acts_on: list[ObservableType] = []
+    acts_on: list[ObservableTypes] = []
     template_name: str
     sha256: str | None = None
 
     @property
-    def output_file(self) -> str:
+    def file_name(self) -> str:
         """Returns the output file for the export."""
-        export_path = yeti_config.get("system", "export_path", "/opt/yeti/exports")
-        name_slug = self.name.replace(" ", "_").lower()
-        return os.path.abspath(os.path.join(export_path, name_slug))
+        return self.name.replace(" ", "_").lower()
 
     def run(self) -> None:
         """Runs the export asynchronously."""
@@ -261,15 +305,20 @@ class ExportTask(Task):
             fresh_tags=self.fresh_tags,
         )
 
-        export_path = pathlib.Path(
-            yeti_config.get("system", "export_path", "/opt/yeti/exports")
-        )
-        export_path.mkdir(parents=True, exist_ok=True)
         template = Template.find(name=self.template_name)
         assert template is not None
-        logging.info(f"Rendering template {template.name} to {self.output_file}")
-        template.render(export_data, self.output_file)
-        # hash output file and store result
+        logging.info(
+            f"Rendering template {template.name} to {FILE_STORAGE_CLIENT.file_path(self.file_name)}"
+        )
+
+        FILE_STORAGE_CLIENT.put_file(
+            self.file_name,
+            template.render(export_data, None).encode(),
+        )
+
+    @property
+    def file_contents(self) -> str:
+        return FILE_STORAGE_CLIENT.get_file(self.file_name)
 
     def get_tagged_data(
         self,
@@ -291,12 +340,51 @@ class ExportTask(Task):
         return results
 
 
+class EventTask(Task):
+    """A task that is triggered for each matched event."""
+
+    type: Literal[TaskType.event] = TaskType.event
+    acts_on: str = ""  # By default act on everything
+    _compiled_acts_on: Pattern = None
+
+    @property
+    def compiled_acts_on(self):
+        if self._compiled_acts_on is None:
+            self._compiled_acts_on = re.compile(self.acts_on)
+        return self._compiled_acts_on
+
+    def run(self, message: EventMessage):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
+class LogTask(Task):
+    """A task that is triggered for each matched event."""
+
+    type: Literal[TaskType.log] = TaskType.log
+    acts_on: str = ""  # By default act on everything
+
+    def run(self, message: LogMessage):
+        """Runs the task.
+
+        Args:
+            params: Parameters to run the task with.
+        """
+        raise NotImplementedError
+
+
 TYPE_MAPPING = {
     "feed": FeedTask,
     "analytics": AnalyticsTask,
     "oneshot": OneShotTask,
     "export": ExportTask,
+    "event": EventTask,
+    "log": LogTask,
 }
 
 
-TaskTypes = FeedTask | AnalyticsTask | OneShotTask | ExportTask
+TaskTypes = FeedTask | AnalyticsTask | OneShotTask | ExportTask | EventTask | LogTask

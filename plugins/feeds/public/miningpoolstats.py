@@ -19,9 +19,9 @@ class MiningPoolStats(task.FeedTask):
     }
 
     _SOURCE: ClassVar["str"] = "https://miningpoolstats.stream"
-    _USER_AGENT: ClassVar[
-        "str"
-    ] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    _USER_AGENT: ClassVar["str"] = (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
 
     def run(self):
         self._session = requests.Session()

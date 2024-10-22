@@ -3,11 +3,13 @@ from enum import Enum
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, ValidationInfo, model_validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, conlist, model_validator
 from pydantic.functional_validators import field_validator
 
 from core.schemas import dfiq, entity, graph, indicator, observable, tag
+from core.schemas.graph import GraphFilter
 from core.schemas.observable import ObservableType
+from core.schemas.tag import MAX_TAGS_REQUEST
 
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
@@ -34,9 +36,11 @@ class GraphSearchRequest(BaseModel):
     max_hops: int | None = None
     graph: str
     direction: GraphDirection
+    filter: list[GraphFilter] = []
     include_original: bool
     count: int = 50
     page: int = 0
+    sorting: list[tuple[str, bool]] = []
 
     @model_validator(mode="before")
     @classmethod
@@ -103,11 +107,11 @@ class GraphSearchResponse(BaseModel):
 
     vertices: dict[
         str,
-        observable.Observable
-        | entity.Entity
-        | indicator.Indicator
+        observable.ObservableTypes
+        | entity.EntityTypes
+        | indicator.IndicatorTypes
         | tag.Tag
-        | dfiq.DFIQBase,
+        | dfiq.DFIQTypes,
     ]
     paths: list[list[graph.Relationship | graph.TagRelationship]]
     total: int
@@ -134,12 +138,14 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
         link_types=request.link_types,
         target_types=request.target_types,
         direction=request.direction,
+        filter=request.filter,
         include_original=request.include_original,
         graph=request.graph,
         min_hops=request.min_hops or request.hops,
         max_hops=request.max_hops or request.hops,
         count=request.count,
         offset=request.page * request.count,
+        sorting=request.sorting,
     )
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 
@@ -183,6 +189,18 @@ async def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relati
     return relationship.save()
 
 
+@router.post("/{relationship_id}/swap")
+async def swap(relationship_id: str) -> graph.Relationship:
+    """Swaps the source and target of a relationship."""
+    relationship = graph.Relationship.get(relationship_id)
+    if relationship is None:
+        raise HTTPException(
+            status_code=404, detail=f"Relationship {relationship_id} not found"
+        )
+    relationship.swap_link()
+    return relationship
+
+
 @router.delete("/{relationship_id}")
 async def delete(relationship_id: str) -> None:
     """Deletes a link from the graph."""
@@ -196,17 +214,18 @@ async def delete(relationship_id: str) -> None:
 
 class AnalysisRequest(BaseModel):
     observables: list[str]
-    add_tags: list[str] = []
+    add_tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
+    regex_match: bool = False
     add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True
     add_unknown: bool = False
 
 
 class AnalysisResponse(BaseModel):
-    entities: list[tuple[graph.Relationship, entity.Entity]]
-    observables: list[tuple[graph.Relationship, observable.Observable]]
-    known: list[observable.Observable]
-    matches: list[tuple[str, indicator.Indicator]]  # IndicatorMatch?
+    entities: list[tuple[graph.Relationship, entity.EntityTypes]]
+    observables: list[tuple[graph.Relationship, observable.ObservableTypes]]
+    known: list[observable.ObservableTypes]
+    matches: list[tuple[str, indicator.IndicatorTypes]]  # IndicatorMatch?
     unknown: set[str]
 
 
@@ -215,6 +234,7 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
     entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]
+    seen_entities = set()
     observables = []  # type: list[tuple[graph.Relationship, observable.Observable]]
 
     unknown = set(request.observables)
@@ -232,8 +252,11 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
 
             unknown.discard(value)
 
+    operator = "value__in"
+    if request.regex_match:
+        operator = "value__in~"
     db_observables, _ = observable.Observable.filter(
-        query_args={"value__in": request.observables},
+        query_args={operator: request.observables},
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
     for db_observable in db_observables:
@@ -254,7 +277,10 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
                     other = vertices[edge.target]
 
                 if isinstance(other, entity.Entity):
+                    if other.extended_id in seen_entities:
+                        continue
                     entities.append((edge, other))
+                    seen_entities.add(other.extended_id)
                 if isinstance(other, observable.Observable):
                     observables.append((edge, other))
 

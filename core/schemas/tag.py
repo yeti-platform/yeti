@@ -1,15 +1,25 @@
 import datetime
 import re
 import unicodedata
-from typing import ClassVar
+from typing import ClassVar, Literal
 
-from pydantic import Field
+from pydantic import Field, computed_field
 
 from core import database_arango
+from core.config.config import yeti_config
 from core.helpers import now
 from core.schemas.model import YetiModel
 
-DEFAULT_EXPIRATION = datetime.timedelta(days=30)  # Completely arbitrary
+DEFAULT_EXPIRATION = datetime.timedelta(
+    days=yeti_config.get(
+        "tag",
+        "default_tag_expiration",
+        default=90,  # Completely arbitrary
+    )
+)
+
+MAX_TAG_LENGTH = 50
+MAX_TAGS_REQUEST = 50
 
 
 def future():
@@ -22,20 +32,26 @@ def normalize_name(tag_name: str) -> str:
     tag_name = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
     tag_name = tag_name.strip().lower()
     tag_name = re.sub(r"\s+", "_", tag_name)
-    tag_name = re.sub(r"[^a-zA-Z0-9_:-]", "", tag_name)
+    tag_name = re.sub(r"[^a-zA-Z0-9_.:-]", "", tag_name)
     return tag_name
 
 
 class Tag(YetiModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "tags"
+    _root_type: Literal["tags"] = "tag"
     _type_filter: ClassVar[str | None] = None
 
-    name: str
+    name: str = Field(max_length=MAX_TAG_LENGTH)
     count: int = 0
     created: datetime.datetime = Field(default_factory=now)
     default_expiration: datetime.timedelta = DEFAULT_EXPIRATION
     produces: list[str] = []
     replaces: list[str] = []
+
+    @computed_field(return_type=Literal["tag"])
+    @property
+    def root_type(self):
+        return self._root_type
 
     @classmethod
     def load(cls, object: dict) -> "Tag":

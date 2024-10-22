@@ -2,10 +2,14 @@
 
 import datetime
 import re
-from enum import Enum
-from typing import ClassVar, Literal
 
-import validators
+# Data Schema
+# Dynamically register all observable types
+from enum import Enum
+
+# from enum import Enum, EnumMeta
+from typing import Any, ClassVar, Literal
+
 from pydantic import Field, computed_field
 
 from core import database_arango
@@ -13,37 +17,13 @@ from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
 
 
-# Data Schema
-class ObservableType(str, Enum):
-    asn = "asn"
-    bic = "bic"
-    certificate = "certificate"
-    cidr = "cidr"
-    command_line = "command_line"
-    docker_image = "docker_image"
-    email = "email"
-    file = "file"
-    guess = "guess"
-    hostname = "hostname"
-    iban = "iban"
-    imphash = "imphash"
-    ipv4 = "ipv4"
-    ipv6 = "ipv6"
-    mac_address = "mac_address"
-    md5 = "md5"
-    generic = "generic"
-    path = "path"
-    registry_key = "registry_key"
-    sha1 = "sha1"
-    sha256 = "sha256"
-    ssdeep = "ssdeep"
-    tlsh = "tlsh"
-    url = "url"
-    user_agent = "user_agent"
-    user_account = "user_account"
-    wallet = "wallet"
-    mutex = "mutex"
-    named_pipe = "named_pipe"
+# Forward declarations
+# They are then populated by the load_observables function in __init__.py
+class ObservableType(str, Enum): ...
+
+
+ObservableTypes = ()
+TYPE_MAPPING = {}
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -52,7 +32,6 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["observable"] = "observable"
 
     value: str = Field(min_length=1)
-    type: ObservableType
     created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
     last_analysis: dict[str, datetime.datetime] = {}
@@ -68,9 +47,9 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
 
-    @classmethod
-    def is_valid(cls, object: dict) -> bool:
-        return validate_observable(object)
+    @staticmethod
+    def is_valid(value: Any) -> bool:
+        return False
 
     @classmethod
     def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":  # noqa: F821
@@ -94,29 +73,42 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
                 value=refanged,
                 created=datetime.datetime.now(datetime.timezone.utc),
             ).save()
+        observable.get_tags()
         if tags:
             observable = observable.tag(tags)
         return observable
 
     def add_context(
-        self, source: str, context: dict, skip_compare: set = set()
+        self,
+        source: str,
+        context: dict,
+        skip_compare: set = set(),
+        overwrite: bool = False,
     ) -> "ObservableTypes":  # noqa: F821
         """Adds context to an observable."""
         compare_fields = set(context.keys()) - skip_compare - {"source"}
+
+        found_idx = -1
+        temp_context = {key: context.get(key) for key in compare_fields}
+
         for idx, db_context in enumerate(list(self.context)):
             if db_context["source"] != source:
                 continue
-            for field in compare_fields:
-                if db_context.get(field) != context.get(field):
-                    context["source"] = source
-                    self.context[idx] = context
-                    break
-            else:
-                db_context.update(context)
+            if overwrite:
+                found_idx = idx
                 break
+            temp_db = {key: db_context.get(key) for key in compare_fields}
+
+            if temp_db == temp_context:
+                found_idx = idx
+                break
+
+        context["source"] = source
+        if found_idx != -1:
+            self.context[found_idx] = context
         else:
-            context["source"] = source
             self.context.append(context)
+
         return self.save()
 
     def delete_context(
@@ -136,82 +128,8 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return self.save()
 
 
-TYPE_VALIDATOR_MAP = {
-    ObservableType.ipv4: validators.ipv4,
-    ObservableType.ipv6: validators.ipv6,
-    ObservableType.sha256: validators.sha256,
-    ObservableType.sha1: validators.sha1,
-    ObservableType.md5: validators.md5,
-    ObservableType.hostname: validators.domain,
-    ObservableType.url: validators.url,
-    ObservableType.email: validators.email,
-    ObservableType.iban: validators.iban,
-}
-
-REGEXES_OBSERVABLES = {
-    # Unix
-    ObservableType.path: [
-        re.compile(r"^(\/[^\/\0]+)+$"),
-        re.compile(r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"),
-    ],
-    ObservableType.bic: [re.compile("^[A-Z]{6}[A-Z0-9]{2}[A-Z0-9]{3}?")],
-}
-
-
-def validate_observable(obs: Observable) -> bool:
-    if obs.type in TYPE_VALIDATOR_MAP:
-        return TYPE_VALIDATOR_MAP[obs.type](obs.value) is True
-    elif obs.type in dict(REGEXES_OBSERVABLES):
-        for regex in REGEXES_OBSERVABLES[obs.type]:
-            if regex.match(obs.value):
-                return True
-        return False
-    else:
-        return False
-
-
 def find_type(value: str) -> ObservableType | None:
-    for obs_type, validator in TYPE_VALIDATOR_MAP.items():
-        if validator(value):
+    for obs_type, obj in TYPE_MAPPING.items():
+        if obj.is_valid(value):
             return obs_type
-    for obs_type, regexes in REGEXES_OBSERVABLES.items():
-        for regex in regexes:
-            if regex.match(value):
-                return obs_type
     return None
-
-
-TYPE_MAPPING = {"observable": Observable, "observables": Observable}
-
-
-# Import all observable types, as these register themselves in the TYPE_MAPPING
-# disable: pylint=wrong-import-position
-
-from core.schemas.observables import (  # noqa: E402
-    asn,  # noqa: F401
-    bic,  # noqa: F401
-    certificate,  # noqa: F401
-    cidr,  # noqa: F401
-    command_line,  # noqa: E402, F401
-    docker_image,  # noqa: F401
-    email,  # noqa: F401
-    file,  # noqa: F401
-    generic_observable,  # noqa: F401
-    hostname,  # noqa: F401
-    iban,  # noqa: F401
-    imphash,  # noqa: F401
-    ipv4,  # noqa: F401
-    ipv6,  # noqa: F401
-    mac_address,  # noqa: F401
-    md5,  # noqa: F401
-    path,  # noqa: F401
-    registry_key,  # noqa: F401
-    sha1,  # noqa: F401
-    sha256,  # noqa: F401
-    ssdeep,  # noqa: F401
-    tlsh,  # noqa: F401
-    url,  # noqa: F401
-    user_account,  # noqa: F401
-    user_agent,  # noqa: F401
-    wallet,  # noqa: F401
-)

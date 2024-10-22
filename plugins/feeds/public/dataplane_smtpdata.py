@@ -1,6 +1,7 @@
 """
-       Feeds SMTP data from Dataplane with IPs and ASNs
+Feeds SMTP data from Dataplane with IPs and ASNs
 """
+
 from datetime import timedelta
 from typing import ClassVar
 

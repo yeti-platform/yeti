@@ -15,7 +15,7 @@ from core.taskmanager import TaskManager
 logger = get_task_logger(__name__)
 
 
-def get_plugins_list():
+def get_plugins_list(task_class: Task = Task) -> set[str]:
     plugins_list = set()
     plugins_path = pathlib.Path(yeti_config.get("system", "plugins_path"))
     if not plugins_path.exists():
@@ -28,7 +28,7 @@ def get_plugins_list():
             try:
                 module = importlib.import_module(module_info.name)
                 for _, obj in inspect.getmembers(module, inspect.isclass):
-                    if issubclass(obj, Task):
+                    if issubclass(obj, task_class):
                         plugins_list.add(module_info.name)
             except Exception as error:
                 logging.warning(f"Cannot import plugin {module_info.name}\n{error}")

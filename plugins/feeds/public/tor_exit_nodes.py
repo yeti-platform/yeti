@@ -1,66 +1,87 @@
-import logging
 from datetime import timedelta
 from typing import ClassVar
 
 from core import taskmanager
 from core.schemas import task
-from core.schemas.observables import ipv4
+from core.schemas.observables import hostname, ipv4
 
 
 class TorExitNodes(task.FeedTask):
     _defaults = {
-        "frequency": timedelta(hours=1),
+        "frequency": timedelta(hours=24),
         "name": "TorExitNodes",
         "description": "Tor exit nodes",
     }
-    _SOURCE: ClassVar["str"] = "https://www.dan.me.uk/tornodes"
+    _SOURCE: ClassVar[str] = "https://onionoo.torproject.org/summary"
 
     def run(self):
-        feed = self._make_request(self._SOURCE).text
-
-        start = feed.find("<!-- __BEGIN_TOR_NODE_LIST__ //-->") + len(
-            "<!-- __BEGIN_TOR_NODE_LIST__ //-->"
-        )
-        end = feed.find("<!-- __END_TOR_NODE_LIST__ //-->")
-        logging.debug(f"start: {start}, end: {end}")
-
-        feed_raw = (
-            feed[start:end]
-            .replace("\n", "")
-            .replace("<br />", "\n")
-            .replace("&gt;", ">")
-            .replace("&lt;", "<")
-        )
-
-        feed = feed_raw.split("\n")
-        if len(feed) > 10:
-            self.status = "OK"
-
-        for line in feed:
-            self.analyze(line)
-
+        self._get_relays()
         return True
 
-    def analyze(self, line):
-        fields = line.split("|")
+    def _get_relays(self):
+        offset = 0
+        remaining_relays = 1
+        while remaining_relays > 0:
+            summary_data = self._get_relay_summary(offset)  # request 1
+            if not summary_data or "relays" not in summary_data:
+                break
 
-        if len(fields) < 8:
+            fingerprints = ",".join(
+                [relay.get("f") for relay in summary_data.get("relays", [])]
+            )
+            details_data = self._get_relay_details(fingerprints)  # request 2
+            if not details_data or "relays" not in details_data:
+                break
+
+            offset += len(details_data.get("relays", []))
+            remaining_relays = summary_data.get("relays_truncated", 0)
+            for relay in details_data.get("relays", []):
+                self.analyze(relay)
+
+    def _get_relay_summary(self, offset: int) -> dict:
+        url = f"https://onionoo.torproject.org/summary?limit=150&offset={offset}&running=true"
+        response = self._make_request(url, sort=False)
+        if response:
+            data = response.json()
+            return data
+        return {}
+
+    def _get_relay_details(self, fingerprints: str) -> dict:
+        url = f"https://onionoo.torproject.org/details?lookup={fingerprints}"
+        response = self._make_request(url, sort=False)
+        if response:
+            return response.json()
+        return {}
+
+    def analyze(self, relay):
+        if "Exit" not in relay.get("flags", []):
             return
 
         context = {
-            "name": fields[1],
-            "router-port": fields[2],
-            "directory-port": fields[3],
-            "flags": fields[4],
-            "version": fields[6],
-            "contactinfo": fields[7],
+            "name": relay.get("nickname"),
+            "fingerprint": relay.get("fingerprint"),
+            "last_seen": relay.get("last_seen"),
+            "country": relay.get("country"),
+            "country_name": relay.get("country_name"),
+            "as": relay.get("as"),
+            "as_name": relay.get("as_name"),
+            "contact": relay.get("contact"),
             "source": self.name,
-            "description": f"Tor exit node: {fields[1]} {fields[0]}",
+            "description": f"Tor exit node: {relay.get('nickname')} ",
+            "hostname": relay.get("verified_host_names", []),
         }
 
-        ip_obs = ipv4.IPv4(value=fields[0]).save()
-        ip_obs.add_context(self.name, context)
-        ip_obs.tag(["tor", "exitnode"])
+        for address in relay.get("exit_addresses", []):
+            ip_obs = ipv4.IPv4(value=address).save()
+            ip_obs.add_context(self.name, context)
+            ip_obs.tag(["tor", "exit_node"])
+
+            for verified_hostname in relay.get("verified_host_names", []):
+                host = hostname.Hostname(value=verified_hostname).save()
+                host.tag(["tor", "exit_node"])
+                host.link_to(
+                    ip_obs, "resolves to", "Resolution provided by Tor exit node feed."
+                )
 
 
 taskmanager.TaskManager.register_task(TorExitNodes)

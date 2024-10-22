@@ -18,15 +18,16 @@ class PhishingDatabase(task.FeedTask):
         "description": "PhishingDatabase is a community feed of phishing URLs which are updated every 24 hours.",
     }
 
-    _SOURCE: ClassVar[
-        "str"
-    ] = "https://phishing.army/download/phishing_army_blocklist_extended.txt"
+    _SOURCE: ClassVar["str"] = (
+        "https://phishing.army/download/phishing_army_blocklist_extended.txt"
+    )
 
     def run(self):
         response = self._make_request(self._SOURCE)
         if response:
             for line in response.text.split("\n"):
-                self.analyze(line.strip())
+                if not line.startswith("#"):
+                    self.analyze(line.strip())
 
     def analyze(self, domain):
         if domain:
