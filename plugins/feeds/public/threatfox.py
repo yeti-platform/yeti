@@ -13,7 +13,7 @@ class ThreatFox(task.FeedTask):
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "ThreatFox",
-        "description": "This feed contains malware hashes",
+        "description": "This feed contains malware hashes and network IOCs",
     }
     _SOURCE: ClassVar["str"] = "https://threatfox.abuse.ch/export/json/recent/"
 
