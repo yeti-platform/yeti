@@ -905,7 +905,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 aql_args[f"arg{i}_key"] = key
                 sorts.append(f"o.@arg{i}_key")
             else:
-                if key.endswith("~"):
+                if key.endswith("~") or not value:
                     key = key[:-1]
                     conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
                 else:
@@ -953,7 +953,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
-        logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
+        print(f"aql_string: {aql_string}, aql_args: {aql_args}")
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )
@@ -1033,7 +1033,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
 def tagged_observables_export(cls, args):
     aql = """
-        WITH tags 
+        WITH tags
 
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
