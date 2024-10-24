@@ -953,7 +953,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
-        print(f"aql_string: {aql_string}, aql_args: {aql_args}")
+        logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
         documents = cls._db.aql.execute(
             aql_string, bind_vars=aql_args, count=True, full_count=True
         )
