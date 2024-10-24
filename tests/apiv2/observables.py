@@ -231,15 +231,16 @@ class ObservableTest(unittest.TestCase):
         )
 
     def test_create_observable_toolong_tag(self):
+        longtag = "a" * 300
         response = client.post(
             "/api/v2/observables/",
-            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "a" * 300]},
+            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", longtag]},
         )
         data = response.json()
         self.assertEqual(response.status_code, 422, data)
         self.assertEqual(
             data["detail"][0]["msg"],
-            f"Value error, Tag {'a'*200} exceeds max length (250)",
+            f"Value error, Tag {longtag} exceeds max length (250)",
             data,
         )
 
