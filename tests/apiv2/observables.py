@@ -239,7 +239,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 422, data)
         self.assertEqual(
             data["detail"][0]["msg"],
-            f"Value error, Tag {'a'*200} exceeds max length (50)",
+            f"Value error, Tag {'a'*200} exceeds max length (250)",
             data,
         )
 
