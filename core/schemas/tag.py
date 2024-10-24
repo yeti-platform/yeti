@@ -18,7 +18,7 @@ DEFAULT_EXPIRATION = datetime.timedelta(
     )
 )
 
-MAX_TAG_LENGTH = 50
+MAX_TAG_LENGTH = 250
 MAX_TAGS_REQUEST = 50
 
 
