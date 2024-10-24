@@ -233,7 +233,7 @@ class ObservableTest(unittest.TestCase):
     def test_create_observable_toolong_tag(self):
         response = client.post(
             "/api/v2/observables/",
-            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "a" * 200]},
+            json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "a" * 300]},
         )
         data = response.json()
         self.assertEqual(response.status_code, 422, data)
