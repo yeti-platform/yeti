@@ -6,7 +6,7 @@ from core.schemas import observable
 
 
 class Url(observable.Observable):
-    type: Literal[observable.ObservableType.url] = observable.ObservableType.url
+    type: Literal["url"] = "url"
 
     @staticmethod
     def is_valid(value: str) -> bool:
