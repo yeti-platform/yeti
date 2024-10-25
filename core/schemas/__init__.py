@@ -63,7 +63,7 @@ def register_schemas_types(
     return modules
 
 
-def _register_classes(module_name, base_module):
+def register_module(module_name, base_module):
     """
     Register the classes for the schema implementation files
 
