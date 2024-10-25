@@ -17,10 +17,8 @@ class ForensicArtifact(indicator.Indicator):
     As defined in https://github.com/ForensicArtifacts/artifacts
     """
 
-    _type_filter: ClassVar[str] = indicator.IndicatorType.forensicartifact
-    type: Literal[indicator.IndicatorType.forensicartifact] = (
-        indicator.IndicatorType.forensicartifact
-    )
+    _type_filter: ClassVar[str] = "forensicartifact"
+    type: Literal["forensicartifact"] = "forensicartifact"
 
     sources: list[dict] = []
     aliases: list[str] = []

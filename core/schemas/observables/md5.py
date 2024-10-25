@@ -6,7 +6,7 @@ from core.schemas import observable
 
 
 class MD5(observable.Observable):
-    type: Literal[observable.ObservableType.md5] = observable.ObservableType.md5
+    type: Literal["md5"] = "md5"
 
     @staticmethod
     def is_valid(value: str) -> bool:

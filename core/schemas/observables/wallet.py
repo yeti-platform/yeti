@@ -10,6 +10,6 @@ class Wallet(observable.Observable):
     Value should be in the form <COIN>:<ADDRESS>.
     """
 
-    type: Literal[observable.ObservableType.wallet] = observable.ObservableType.wallet
+    type: Literal["wallet"] = "wallet"
     coin: str | None = None
     address: str | None = None

@@ -6,7 +6,7 @@ from core.schemas import observable
 
 
 class SHA1(observable.Observable):
-    type: Literal[observable.ObservableType.sha1] = observable.ObservableType.sha1
+    type: Literal["sha1"] = "sha1"
 
     @staticmethod
     def is_valid(value: str) -> bool:

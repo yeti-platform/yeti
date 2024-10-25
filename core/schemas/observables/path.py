@@ -10,7 +10,7 @@ WINDOWS_PATH_REGEX = re.compile(
 
 
 class Path(observable.Observable):
-    type: Literal[observable.ObservableType.path] = observable.ObservableType.path
+    type: Literal["path"] = "path"
 
     @staticmethod
     def is_valid(value: str) -> bool:

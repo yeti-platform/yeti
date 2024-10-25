@@ -6,7 +6,7 @@ from core.schemas import observable
 
 
 class IBAN(observable.Observable):
-    type: Literal[observable.ObservableType.iban] = observable.ObservableType.iban
+    type: Literal["iban"] = "iban"
 
     @staticmethod
     def is_valid(value: str) -> bool:

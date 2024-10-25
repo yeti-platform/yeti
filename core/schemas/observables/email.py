@@ -6,7 +6,7 @@ from core.schemas import observable
 
 
 class Email(observable.Observable):
-    type: Literal[observable.ObservableType.email] = observable.ObservableType.email
+    type: Literal["email"] = "email"
 
     @staticmethod
     def is_valid(value: str) -> bool:
