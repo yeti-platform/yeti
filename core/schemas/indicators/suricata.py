@@ -13,8 +13,8 @@ class Suricata(indicator.Indicator):
     Parsing and matching is yet TODO.
     """
 
-    _type_filter: ClassVar[str] = indicator.IndicatorType.suricata
-    type: Literal[indicator.IndicatorType.suricata] = indicator.IndicatorType.suricata
+    _type_filter: ClassVar[str] = "suricata"
+    type: Literal["suricata"] = "suricata"
     sid: int = 0
     metadata: List[str] = []
     references: List[str] = []

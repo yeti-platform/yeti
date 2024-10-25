@@ -9,8 +9,8 @@ class Yara(indicator.Indicator):
     Parsing and matching is yet TODO.
     """
 
-    _type_filter: ClassVar[str] = indicator.IndicatorType.yara
-    type: Literal[indicator.IndicatorType.yara] = indicator.IndicatorType.yara
+    _type_filter: ClassVar[str] = "yara"
+    type: Literal["yara"] = "yara"
 
     def match(self, value: str) -> indicator.IndicatorMatch | None:
         raise NotImplementedError
