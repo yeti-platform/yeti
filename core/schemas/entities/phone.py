@@ -4,5 +4,5 @@ from core.schemas import entity
 
 
 class Phone(entity.Entity):
-    type: Literal[entity.EntityType.phone] = entity.EntityType.phone
-    _type_filter: ClassVar[str] = entity.EntityType.phone
+    type: Literal["phone"] = "phone"
+    _type_filter: ClassVar[str] = "phone"
