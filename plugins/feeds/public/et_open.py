@@ -88,7 +88,7 @@ class ETOpen(task.FeedTask):
     def _extract_mitre_attack(self, meta: str) -> entity.AttackPattern | None:
         _, mitre_id = meta.split(" ")
         ind_mitre_attack, nb_ent = entity.Entity.filter(
-            query_args={"type": entity.EntityType.attack_pattern},
+            query_args={"type": "attack_pattern"},
             aliases=[("text", mitre_id)],
         )
         if nb_ent != 0:
