@@ -23,46 +23,6 @@ logger = logging.getLogger(__name__)
 logging.getLogger().setLevel(logging.INFO)
 
 
-def register_schemas_types(
-    schema_root_type: str, schema_enum: aenum, type_pattern: re.Pattern
-) -> set:
-    """
-    Register the types of schemas from implementation files
-    :param schema_root_type: The schema root type to work with
-    :param schema_enum: The schema enum to extend
-    :param type_pattern: The pattern to match the types in the schema implementation files
-    """
-    logger.info(f"Loading {schema_root_type} types")
-    modules = set()
-    pattern_matcher = re.compile(type_pattern)
-    for schema_file in Path(__file__).parent.glob(f"{schema_root_type}/**/*.py"):
-        if schema_file.stem == "__init__":
-            continue
-        if schema_file.parent.stem == schema_root_type:
-            module_name = f"core.schemas.{schema_root_type}.{schema_file.stem}"
-        elif schema_file.parent.stem == "private":
-            module_name = f"core.schemas.{schema_root_type}.private.{schema_file.stem}"
-        with open(schema_file, "r") as f:
-            content = f.read()
-        for schema_type in pattern_matcher.findall(content):
-            if schema_type not in schema_enum.__members__:
-                logger.debug(
-                    f"Adding observable type <{schema_type}> to {schema_enum.__name__} enum"
-                )
-                if schema_root_type == "entities":
-                    aenum.extend_enum(
-                        schema_enum, schema_type, schema_type.replace("_", "-")
-                    )
-                else:
-                    aenum.extend_enum(schema_enum, schema_type, schema_type)
-                modules.add(module_name)
-            else:
-                logger.warning(
-                    f"Observable type {schema_type} defined in <{module_name}> already exists"
-                )
-    return modules
-
-
 def register_module(module_name, base_module):
     """
     Register the classes for the schema implementation files
@@ -107,7 +67,7 @@ def register_classes(schema_root_type, base_module):
         elif schema_file.parent.stem == "private":
             module_name = f"core.schemas.{schema_root_type}.private.{schema_file.stem}"
         try:
-            _register_classes(module_name, base_module)
+            register_module(module_name, base_module)
         except Exception:
             logger.exception(f"Failed to register classes from {module_name}")
 
