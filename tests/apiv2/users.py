@@ -42,6 +42,17 @@ class userTest(unittest.TestCase):
         self.assertEqual(data["total"], 1)
         self.assertEqual(data["users"][0]["username"], "tomchop")
 
+    def test_search_empty_username(self):
+        response = client.post(
+            "/api/v2/users/search",
+            json={"username": ""},
+            headers={"Authorization": f"Bearer {self.user_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["total"], 2)
+
     def test_toggle_user_admin(self):
         response = client.post(
             "/api/v2/users/toggle",
