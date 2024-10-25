@@ -5,8 +5,7 @@ import pandas as pd
 
 from core import taskmanager
 from core.schemas import task
-from core.schemas.observables import url, ipv4, hostname
-
+from core.schemas.observables import hostname, ipv4, url
 
 
 class ThreatFox(task.FeedTask):
