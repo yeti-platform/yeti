@@ -7,9 +7,9 @@ from core.schemas import indicator
 
 
 class Regex(indicator.Indicator):
-    _type_filter: ClassVar[str] = indicator.IndicatorType.regex
+    _type_filter: ClassVar[str] = "regex"
     _compiled_pattern: re.Pattern | None = PrivateAttr(None)
-    type: Literal[indicator.IndicatorType.regex] = indicator.IndicatorType.regex
+    type: Literal["regex"] = "regex"
 
     @property
     def compiled_pattern(self):

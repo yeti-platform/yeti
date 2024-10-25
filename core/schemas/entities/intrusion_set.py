@@ -8,8 +8,8 @@ from core.schemas import entity
 
 
 class IntrusionSet(entity.Entity):
-    _type_filter: ClassVar[str] = entity.EntityType.intrusion_set
-    type: Literal[entity.EntityType.intrusion_set] = entity.EntityType.intrusion_set
+    _type_filter: ClassVar[str] = "intrusion-set"
+    type: Literal["intrusion-set"] = "intrusion-set"
 
     aliases: list[str] = []
     first_seen: datetime.datetime = Field(default_factory=now)

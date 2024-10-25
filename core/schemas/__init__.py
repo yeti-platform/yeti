@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import logging
+import re
 from pathlib import Path
 
 import aenum
@@ -19,111 +20,79 @@ from core.schemas import (
 )
 
 logger = logging.getLogger(__name__)
+logging.getLogger().setLevel(logging.INFO)
+
+
+def register_module(module_name, base_module):
+    """
+    Register the classes for the schema implementation files
+
+    module_name: The module name to load
+    base_module: The base module to register the classes in (entity, indicator, observable)
+    """
+    module = importlib.import_module(module_name)
+    module_base_name = base_module.__name__.split(".")[-1]
+    schema_base_class = getattr(base_module, module_base_name.capitalize())
+    schema_type_mapping = getattr(base_module, "TYPE_MAPPING")
+    schema_types = getattr(base_module, f"{module_base_name.capitalize()}Types", None)
+    schema_enum = getattr(base_module, f"{module_base_name.capitalize()}Type")
+    for _, obj in inspect.getmembers(module, inspect.isclass):
+        if issubclass(obj, schema_base_class) and "type" in obj.model_fields:
+            obs_type = obj.model_fields["type"].default
+            logger.info(f"Registering class {obj.__name__} defining type <{obs_type}>")
+            aenum.extend_enum(schema_enum, obs_type, obs_type)
+            schema_type_mapping[obs_type] = obj
+            setattr(base_module, obj.__name__, obj)
+            if not schema_types:
+                schema_types = obj
+            else:
+                schema_types |= obj
+            setattr(base_module, f"{module_base_name.capitalize()}Types", schema_types)
+
+
+def register_classes(schema_root_type, base_module):
+    """
+    Register the classes for the schema root type
+
+    schema_root_type: The schema root type to work with (entities, indicators, observables)
+    base_module: The base module to register the classes in (entity, indicator, observable)
+    """
+    module_base_name = base_module.__name__.split(".")[-1]
+    logger.info(f"Registering {module_base_name} classes")
+    for schema_file in Path(__file__).parent.glob(f"{schema_root_type}/**/*.py"):
+        if schema_file.stem == "__init__":
+            continue
+        if schema_file.parent.stem == schema_root_type:
+            module_name = f"core.schemas.{schema_root_type}.{schema_file.stem}"
+        elif schema_file.parent.stem == "private":
+            module_name = f"core.schemas.{schema_root_type}.private.{schema_file.stem}"
+        try:
+            register_module(module_name, base_module)
+        except Exception:
+            logger.exception(f"Failed to register classes from {module_name}")
 
 
 def load_entities():
-    logger.info("Registering entities")
-    modules = dict()
-    for entity_file in Path(__file__).parent.glob("entities/**/*.py"):
-        if entity_file.stem == "__init__":
-            continue
-        logger.info(f"Registering entity type {entity_file.stem}")
-        if entity_file.parent.stem == "entities":
-            module_name = f"core.schemas.entities.{entity_file.stem}"
-        elif entity_file.parent.stem == "private":
-            module_name = f"core.schemas.entities.private.{entity_file.stem}"
-        enum_value = entity_file.stem.replace("_", "-")
-        if entity_file.stem not in entity.EntityType.__members__:
-            aenum.extend_enum(entity.EntityType, entity_file.stem, enum_value)
-        modules[module_name] = enum_value
     entity.TYPE_MAPPING = {"entity": entity.Entity, "entities": entity.Entity}
-    for module_name, enum_value in modules.items():
-        module = importlib.import_module(module_name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, entity.Entity):
-                entity.TYPE_MAPPING[enum_value] = obj
-                setattr(entity, obj.__name__, obj)
-    for key in entity.TYPE_MAPPING:
-        if key in ["entity", "entities"]:
-            continue
-        cls = entity.TYPE_MAPPING[key]
-        if not entity.EntityTypes:
-            entity.EntityTypes = cls
-        else:
-            entity.EntityTypes |= cls
+    register_classes("entities", entity)
 
 
 def load_indicators():
-    logger.info("Registering indicators")
-    modules = dict()
-    for indicator_file in Path(__file__).parent.glob("indicators/**/*.py"):
-        if indicator_file.stem == "__init__":
-            continue
-        logger.info(f"Registering indicator type {indicator_file.stem}")
-        if indicator_file.parent.stem == "indicators":
-            module_name = f"core.schemas.indicators.{indicator_file.stem}"
-        elif indicator_file.parent.stem == "private":
-            module_name = f"core.schemas.indicators.private.{indicator_file.stem}"
-        enum_value = indicator_file.stem
-        if indicator_file.stem not in indicator.IndicatorType.__members__:
-            aenum.extend_enum(indicator.IndicatorType, indicator_file.stem, enum_value)
-        modules[module_name] = enum_value
     indicator.TYPE_MAPPING = {
         "indicator": indicator.Indicator,
         "indicators": indicator.Indicator,
     }
-    for module_name, enum_value in modules.items():
-        module = importlib.import_module(module_name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, indicator.Indicator):
-                indicator.TYPE_MAPPING[enum_value] = obj
-                setattr(indicator, obj.__name__, obj)
-    for key in indicator.TYPE_MAPPING:
-        if key in ["indicator", "indicators"]:
-            continue
-        cls = indicator.TYPE_MAPPING[key]
-        if not indicator.IndicatorTypes:
-            indicator.IndicatorTypes = cls
-        else:
-            indicator.IndicatorTypes |= cls
+    register_classes("indicators", indicator)
 
 
 def load_observables():
-    logger.info("Registering observables")
-    modules = dict()
-    for observable_file in Path(__file__).parent.glob("observables/**/*.py"):
-        if observable_file.stem == "__init__":
-            continue
-        logger.info(f"Registering observable type {observable_file.stem}")
-        if observable_file.parent.stem == "observables":
-            module_name = f"core.schemas.observables.{observable_file.stem}"
-        elif observable_file.parent.stem == "private":
-            module_name = f"core.schemas.observables.private.{observable_file.stem}"
-        if observable_file.stem not in observable.ObservableType.__members__:
-            aenum.extend_enum(
-                observable.ObservableType, observable_file.stem, observable_file.stem
-            )
-        modules[module_name] = observable_file.stem
-    if "guess" not in observable.ObservableType.__members__:
-        aenum.extend_enum(observable.ObservableType, "guess", "guess")
     observable.TYPE_MAPPING = {
         "observable": observable.Observable,
         "observables": observable.Observable,
     }
-    for module_name, enum_value in modules.items():
-        module = importlib.import_module(module_name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, observable.Observable):
-                observable.TYPE_MAPPING[enum_value] = obj
-                setattr(observable, obj.__name__, obj)
-    for key in observable.TYPE_MAPPING:
-        if key in ["observable", "observables"]:
-            continue
-        cls = observable.TYPE_MAPPING[key]
-        if not observable.ObservableTypes:
-            observable.ObservableTypes = cls
-        else:
-            observable.ObservableTypes |= cls
+    if "guess" not in observable.ObservableType.__members__:
+        aenum.extend_enum(observable.ObservableType, "guess", "guess")
+    register_classes("observables", observable)
 
 
 load_observables()

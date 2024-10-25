@@ -10,7 +10,7 @@ from core.schemas.observables import (
     certificate,
     cidr,
     command_line,
-    docker_image,
+    container_image,
     email,
     file,
     generic,
@@ -336,10 +336,12 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_docker_image(self) -> None:
         """Tests creating a docker image."""
-        observable = docker_image.DockerImage(value="yetiplatform/yeti:latest").save()
+        observable = container_image.DockerImage(
+            value="yetiplatform/yeti:latest"
+        ).save()
         self.assertIsNotNone(observable.id)
         self.assertEqual(observable.value, "yetiplatform/yeti:latest")
-        self.assertIsInstance(observable, docker_image.DockerImage)
+        self.assertIsInstance(observable, container_image.DockerImage)
 
     def test_create_email(self) -> None:
         """Tests creating an email."""

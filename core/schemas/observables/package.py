@@ -4,6 +4,6 @@ from core.schemas import observable
 
 
 class Package(observable.Observable):
-    type: Literal[observable.ObservableType.package] = observable.ObservableType.package
+    type: Literal["package"] = "package"
     version: str = None
     regitry_type: str = None

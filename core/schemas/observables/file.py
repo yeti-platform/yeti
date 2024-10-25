@@ -10,7 +10,7 @@ class File(observable.Observable):
     Value should to be in the form FILE:<HASH>.
     """
 
-    type: Literal[observable.ObservableType.file] = observable.ObservableType.file
+    type: Literal["file"] = "file"
     name: str | None = None
     size: int | None = None
     sha256: str | None = None
