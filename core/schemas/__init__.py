@@ -63,41 +63,58 @@ def register_schemas_types(
     return modules
 
 
-def register_schema_classes(base_module, base_class, modules: set, type_mapping: dict):
+def _register_classes(module_name, base_module):
     """
-    Register the schemas from the implementation files
-    :param base_module: The schema root type to work with
-    :param base_class: base class that the schema class should inherit from
-    :param modules: The modules to register
-    :param type_mapping: schema type mapping to update
+    Register the classes for the schema implementation files
+
+    module_name: The module name to load
+    base_module: The base module to register the classes in (entity, indicator, observable)
     """
-    logger.info(f"Registering {base_module.__name__} classes")
-    for module_name in modules:
-        module = importlib.import_module(module_name)
-        for _, obj in inspect.getmembers(module, inspect.isclass):
-            if issubclass(obj, base_class):
-                if "type" in obj.model_fields:
-                    obs_type = obj.model_fields["type"].default.value
-                    logger.debug(
-                        f"Registering class {obj.__name__} defining type <{obs_type}>"
-                    )
-                    type_mapping[obs_type] = obj
-                    setattr(base_module, obj.__name__, obj)
+    module = importlib.import_module(module_name)
+    module_base_name = base_module.__name__.split(".")[-1]
+    schema_base_class = getattr(base_module, module_base_name.capitalize())
+    schema_type_mapping = getattr(base_module, "TYPE_MAPPING")
+    schema_types = getattr(base_module, f"{module_base_name.capitalize()}Types", None)
+    schema_enum = getattr(base_module, f"{module_base_name.capitalize()}Type")
+    for _, obj in inspect.getmembers(module, inspect.isclass):
+        if issubclass(obj, schema_base_class) and "type" in obj.model_fields:
+            obs_type = obj.model_fields["type"].default
+            logger.info(f"Registering class {obj.__name__} defining type <{obs_type}>")
+            aenum.extend_enum(schema_enum, obs_type, obs_type)
+            schema_type_mapping[obs_type] = obj
+            setattr(base_module, obj.__name__, obj)
+            if not schema_types:
+                schema_types = obj
+            else:
+                schema_types |= obj
+            setattr(base_module, f"{module_base_name.capitalize()}Types", schema_types)
+
+
+def register_classes(schema_root_type, base_module):
+    """
+    Register the classes for the schema root type
+
+    schema_root_type: The schema root type to work with (entities, indicators, observables)
+    base_module: The base module to register the classes in (entity, indicator, observable)
+    """
+    module_base_name = base_module.__name__.split(".")[-1]
+    logger.info(f"Registering {module_base_name} classes")
+    for schema_file in Path(__file__).parent.glob(f"{schema_root_type}/**/*.py"):
+        if schema_file.stem == "__init__":
+            continue
+        if schema_file.parent.stem == schema_root_type:
+            module_name = f"core.schemas.{schema_root_type}.{schema_file.stem}"
+        elif schema_file.parent.stem == "private":
+            module_name = f"core.schemas.{schema_root_type}.private.{schema_file.stem}"
+        try:
+            _register_classes(module_name, base_module)
+        except Exception:
+            logger.exception(f"Failed to register classes from {module_name}")
 
 
 def load_entities():
     entity.TYPE_MAPPING = {"entity": entity.Entity, "entities": entity.Entity}
-    types_pattern = r"Literal\[entity.EntityType.(.+?(?=\]))"
-    modules = register_schemas_types("entities", entity.EntityType, types_pattern)
-    register_schema_classes(entity, entity.Entity, modules, entity.TYPE_MAPPING)
-    for key in entity.TYPE_MAPPING:
-        if key in ["entity", "entities"]:
-            continue
-        cls = entity.TYPE_MAPPING[key]
-        if not entity.EntityTypes:
-            entity.EntityTypes = cls
-        else:
-            entity.EntityTypes |= cls
+    register_classes("entities", entity)
 
 
 def load_indicators():
@@ -105,21 +122,7 @@ def load_indicators():
         "indicator": indicator.Indicator,
         "indicators": indicator.Indicator,
     }
-    types_pattern = r"Literal\[indicator.IndicatorType.(.+?(?=\]))"
-    modules = register_schemas_types(
-        "indicators", indicator.IndicatorType, types_pattern
-    )
-    register_schema_classes(
-        indicator, indicator.Indicator, modules, indicator.TYPE_MAPPING
-    )
-    for key in indicator.TYPE_MAPPING:
-        if key in ["indicator", "indicators"]:
-            continue
-        cls = indicator.TYPE_MAPPING[key]
-        if not indicator.IndicatorTypes:
-            indicator.IndicatorTypes = cls
-        else:
-            indicator.IndicatorTypes |= cls
+    register_classes("indicators", indicator)
 
 
 def load_observables():
@@ -129,21 +132,7 @@ def load_observables():
     }
     if "guess" not in observable.ObservableType.__members__:
         aenum.extend_enum(observable.ObservableType, "guess", "guess")
-    type_pattern = r"Literal\[observable.ObservableType.(.+?(?=\]))"
-    modules = register_schemas_types(
-        "observables", observable.ObservableType, type_pattern
-    )
-    register_schema_classes(
-        observable, observable.Observable, modules, observable.TYPE_MAPPING
-    )
-    for key in observable.TYPE_MAPPING:
-        if key in ["observable", "observables"]:
-            continue
-        cls = observable.TYPE_MAPPING[key]
-        if not observable.ObservableTypes:
-            observable.ObservableTypes = cls
-        else:
-            observable.ObservableTypes |= cls
+    register_classes("observables", observable)
 
 
 load_observables()
