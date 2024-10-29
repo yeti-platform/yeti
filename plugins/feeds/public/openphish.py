@@ -1,9 +1,9 @@
+import logging
 from datetime import timedelta
 from typing import ClassVar
 
 from core import taskmanager
-from core.schemas import task
-from core.schemas.observables import url
+from core.schemas import observable, task
 
 
 class OpenPhish(task.FeedTask):
@@ -35,9 +35,11 @@ class OpenPhish(task.FeedTask):
         # if it isn't, then we need to add it
         if not url_str:
             return
-        obs = url.Url(value=url_str).save()
-        obs.add_context(self.name, context)
-        obs.tag(["phish"])
+        try:
+            obs = observable.save(type="url", value=url_str, tags=["phish"])
+            obs.add_context(self.name, context)
+        except Exception:
+            self.logger.exception(f"Failed to save URL: {url_str}")
 
 
 taskmanager.TaskManager.register_task(OpenPhish)

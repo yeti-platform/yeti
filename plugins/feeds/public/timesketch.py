@@ -63,7 +63,7 @@ class Timesketch(task.FeedTask):
                     obs = observable_type(value=intel["ioc"]).save()
                 else:
                     try:
-                        obs = observable.Observable.add_text(intel["ioc"])
+                        obs = observable.save(value=intel["ioc"], tags=intel["tags"])
                     except ValueError as error:
                         logging.error(
                             "Error adding observable %s from Timesketch: %s",
@@ -71,8 +71,6 @@ class Timesketch(task.FeedTask):
                             error,
                         )
                         continue
-
-                obs.tag(intel["tags"])
                 obs.add_context(
                     "timesketch",
                     {

@@ -23,7 +23,7 @@ class Random(task.FeedTask):
     def run(self):
         for item in DATA:
             print(item)
-            observable.Observable.add_text(item)
+            observable.save(value=item)
 
 
 taskmanager.TaskManager.register_task(Random)
