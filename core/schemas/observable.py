@@ -8,13 +8,12 @@ import re
 from enum import Enum
 
 # from enum import Enum, EnumMeta
-from typing import Any, ClassVar, Literal
-
-from pydantic import Field, computed_field
+from typing import Any, ClassVar, List, Literal
 
 from core import database_arango
 from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
+from pydantic import Field, computed_field
 
 
 # Forward declarations
@@ -46,37 +45,6 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
-
-    @staticmethod
-    def is_valid(value: Any) -> bool:
-        return False
-
-    @classmethod
-    def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":  # noqa: F821
-        """Adds and returns an observable for a given string.
-
-        Args:
-            text: the text that will be used to add an Observable from.
-            tags: a list of tags to add to the Observable.
-
-        Returns:
-            A saved Observable instance.
-        """
-        refanged = refang(text)
-        observable_type = find_type(refanged)
-        if not observable_type:
-            raise ValueError(f"Invalid type for observable '{text}'")
-
-        observable = Observable.find(value=refanged)
-        if not observable:
-            observable = TYPE_MAPPING[observable_type](
-                value=refanged,
-                created=datetime.datetime.now(datetime.timezone.utc),
-            ).save()
-        observable.get_tags()
-        if tags:
-            observable = observable.tag(tags)
-        return observable
 
     def add_context(
         self,
@@ -128,8 +96,63 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return self.save()
 
 
-def find_type(value: str) -> ObservableType | None:
+def guess_type(value: str) -> str | None:
+    """
+    Guess the type of an observable based on its value.
+
+    Returns the type if it can be guessed, otherwise None.
+    """
     for obs_type, obj in TYPE_MAPPING.items():
-        if obj.is_valid(value):
-            return obs_type
+        if not hasattr(obj, "validate_value"):
+            continue
+        try:
+            if obj.validate_value(value):
+                return obs_type
+        except ValueError:
+            continue
     return None
+
+
+def create(type: str | None = None, **kwargs) -> ObservableTypes:
+    """
+    Create an observable object without saving it to the database.
+
+    kwargs must contain a "value" field representing the value of the observable.
+
+    if kwargs does not contain a "type" field, type will be automatically
+    determined based on the value. If the type is not recognized, an observable
+    of type generic will be created.
+    """
+    if "value" not in kwargs:
+        raise ValueError("name is a required field for an observable")
+    value = kwargs["value"]
+    if not type or type == "guess":
+        type = guess_type(value)
+        if not type:
+            raise ValueError(f"Invalid type for observable '{value}'")
+    elif type not in TYPE_MAPPING:
+        raise ValueError(f"{type} is not a valid observable type")
+    return TYPE_MAPPING[type](**kwargs)
+
+
+def save(tags: List[str] = None, **kwargs) -> ObservableTypes:
+    """
+    Save an observable object. If the object is already in the database, it will be updated.
+
+    kwargs must contain a "value" field representing the of the observable.
+
+    if kwargs does not contain a "type" field, type will be automatically
+    determined based on the value. If the type is not recognized, a ValueError will be raised.
+
+    tags is an optional list of tags to add to the observable.
+    """
+    observable_obj = create(**kwargs).save()
+    if tags:
+        observable_obj.tag(tags)
+    return observable_obj
+
+
+def get(**kwargs) -> ObservableTypes:
+    if "value" not in kwargs:
+        raise ValueError("value is a required field for an observable")
+    return Observable.find(**kwargs)
