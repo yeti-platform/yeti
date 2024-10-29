@@ -1,12 +1,11 @@
 import datetime
 from enum import Enum
-from typing import ClassVar, Literal
-
-from pydantic import Field, computed_field
+from typing import ClassVar, List, Literal
 
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiTagModel
+from pydantic import Field, computed_field
 
 
 # Forward declarations
@@ -78,3 +77,31 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
             context["source"] = source
             self.context.append(context)
         return self.save()
+
+
+def create(type: str, **kwargs) -> "EntityTypes":
+    """
+    Create an entity of the given type without saving it to the database.
+
+    type is a string representing the type of entity to create.
+    If the type is not valid, a ValueError is raised.
+
+    kwargs must contain "name" fields and will be handled by
+    pydantic.
+    """
+    if type not in TYPE_MAPPING:
+        raise ValueError(f"{type} is not a valid entity type")
+    return TYPE_MAPPING[type](**kwargs)
+
+
+def save(type: str, tags: List[str] = None, **kwargs):
+    indicator_obj = create(type, **kwargs).save()
+    if tags:
+        indicator_obj.tag(tags)
+    return indicator_obj
+
+
+def get(**kwargs) -> "EntityTypes":
+    if "name" not in kwargs:
+        raise ValueError("value is a required field for an entity")
+    return Entity.find(**kwargs)
