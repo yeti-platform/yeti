@@ -1,13 +1,12 @@
 import datetime
 import logging
 from enum import Enum
-from typing import ClassVar, Literal
-
-from pydantic import BaseModel, Field, computed_field
+from typing import ClassVar, List, Literal
 
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiTagModel
+from pydantic import BaseModel, Field, computed_field
 
 
 def future():
@@ -88,3 +87,31 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
                     logging.error(
                         f"Indicator type {indicator.type} has not implemented match(): {error}"
                     )
+
+
+def create(type: str, **kwargs) -> "IndicatorTypes":
+    """
+    Create an indicator of the given type without saving it to the database.
+
+    type is a string representing the type of indicator to create.
+    If the type is not valid, a ValueError is raised.
+
+    kwargs must contain "name" and "diamond" fields and will be handled by
+    pydantic.
+    """
+    if type not in TYPE_MAPPING:
+        raise ValueError(f"{type} is not a valid indicator type")
+    return TYPE_MAPPING[type](**kwargs)
+
+
+def save(type: str, tags: List[str] = None, **kwargs):
+    indicator_obj = create(type, **kwargs).save()
+    if tags:
+        indicator_obj.tag(tags)
+    return indicator_obj
+
+
+def get(**kwargs) -> "IndicatorTypes":
+    if "name" not in kwargs:
+        raise ValueError("value is a required field for an indicator")
+    return Indicator.find(**kwargs)
