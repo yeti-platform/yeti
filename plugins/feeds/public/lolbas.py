@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from typing import ClassVar
 
 import yaml
-
 from core import taskmanager
 from core.schemas import entity, indicator, task
 from core.schemas.observables import path
@@ -90,7 +89,8 @@ class LoLBAS(task.FeedTask):
         title = sigma_data["title"]
         description = sigma_data["description"]
         date = sigma_data["date"]
-        date = datetime.strptime(date.strip(), "%Y/%m/%d")
+        if isinstance(date, str):
+            date = datetime.strptime(date.strip(), "%Y/%m/%d")
         # create sigma indicator
         sigma = indicator.Sigma(
             name=title,
