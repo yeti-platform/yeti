@@ -239,6 +239,6 @@ class TagTest(unittest.TestCase):
         ]
 
         for cmp, (tag_non_norm, tag_norm) in enumerate(cases):
-            obs = observable.save(value=f"test_{cmp}.com")
+            obs = observable.save(value=f"test-{cmp}.com")
             obs.tag([tag_non_norm])
             self.assertIn(tag_norm, obs.tags)
