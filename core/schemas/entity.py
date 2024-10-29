@@ -2,10 +2,11 @@ import datetime
 from enum import Enum
 from typing import ClassVar, List, Literal
 
+from pydantic import Field, computed_field
+
 from core import database_arango
 from core.helpers import now
 from core.schemas.model import YetiTagModel
-from pydantic import Field, computed_field
 
 
 # Forward declarations

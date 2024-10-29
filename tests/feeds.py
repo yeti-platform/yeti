@@ -2,12 +2,24 @@ import unittest
 
 from core import database_arango
 from core.config.config import yeti_config
-from plugins.feeds.public import (abusech_malwarebazaar, artifacts, attack,
-                                  dfiq, et_open, feodo_tracker_ip_blocklist,
-                                  hybrid_analysis, lolbas, malpedia,
-                                  miningpoolstats, openphish, sslblacklist_ja3,
-                                  threatfox, timesketch, tor_exit_nodes,
-                                  yaraify)
+from plugins.feeds.public import (
+    abusech_malwarebazaar,
+    artifacts,
+    attack,
+    dfiq,
+    et_open,
+    feodo_tracker_ip_blocklist,
+    hybrid_analysis,
+    lolbas,
+    malpedia,
+    miningpoolstats,
+    openphish,
+    sslblacklist_ja3,
+    threatfox,
+    timesketch,
+    tor_exit_nodes,
+    yaraify,
+)
 
 
 class FeedTest(unittest.TestCase):

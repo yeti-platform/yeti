@@ -10,10 +10,11 @@ from enum import Enum
 # from enum import Enum, EnumMeta
 from typing import Any, ClassVar, List, Literal
 
+from pydantic import Field, computed_field
+
 from core import database_arango
 from core.helpers import now, refang
 from core.schemas.model import YetiTagModel
-from pydantic import Field, computed_field
 
 
 # Forward declarations

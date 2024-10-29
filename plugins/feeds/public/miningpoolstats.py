@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import ClassVar, Generator
 
 import requests
+
 from core import taskmanager
 from core.schemas import observable, task
 from core.schemas.observables import url

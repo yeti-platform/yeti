@@ -1,8 +1,9 @@
 import re
 from typing import Literal
 
-from core.schemas import observable
 from pydantic import field_validator
+
+from core.schemas import observable
 
 # Regex generated with https://chatgpt.com/share/6720b845-1cb8-8006-9005-1837e2654525
 

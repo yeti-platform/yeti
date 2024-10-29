@@ -1,8 +1,9 @@
 from typing import Literal
 
 import validators
-from core.schemas import observable
 from pydantic import field_validator
+
+from core.schemas import observable
 
 
 class Url(observable.Observable):

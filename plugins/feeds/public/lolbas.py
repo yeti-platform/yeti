@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import ClassVar
 
 import yaml
+
 from core import taskmanager
 from core.schemas import entity, indicator, task
 from core.schemas.observables import path
