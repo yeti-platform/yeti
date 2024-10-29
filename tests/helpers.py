@@ -17,6 +17,8 @@ class YetiTestCase(unittest.TestCase):
             {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
         )
         observable_obj, _ = observables
+        observable_obj = sorted(observable_obj, key=lambda x: x.value)
+        expected_values = sorted(expected_values, key=lambda x: x["value"])
 
         self.assertEqual(len(observable_obj), len(expected_values))
 
