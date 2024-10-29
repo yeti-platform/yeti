@@ -1,12 +1,10 @@
 import logging
 from datetime import timedelta
 
-from shodan import Shodan
-
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas import indicator, task
-from core.schemas.observable import Observable
+from core.schemas import indicator, observable, task
+from shodan import Shodan
 
 
 class ShodanApiQuery(task.AnalyticsTask):
@@ -21,6 +19,8 @@ class ShodanApiQuery(task.AnalyticsTask):
         result_limit = yeti_config.get("shodan", "result_limit")
         if not result_limit:
             result_limit = 100
+        else:
+            result_limit = int(result_limit)
 
         if not api_key:
             logging.error("Error: please configure an api_key to use Shodan analytics")
@@ -33,7 +33,7 @@ class ShodanApiQuery(task.AnalyticsTask):
         for query in shodan_queries:
             ip_addresses = query_shodan(shodan_api, query.pattern, result_limit)
             for ip in ip_addresses:
-                ip_object = Observable.add_text(ip)
+                ip_object = observable.save(value=ip)
                 ip_object.tag(query.relevant_tags)
                 query.link_to(
                     ip_object, "shodan", f"IP found with Shodan query: {query.pattern}"

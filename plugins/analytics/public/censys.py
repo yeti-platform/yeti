@@ -6,7 +6,7 @@ from censys.search import CensysHosts
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import indicator, task
-from core.schemas.observable import Observable
+from core.schemas import observable as observable
 
 
 class CensysApiQuery(task.AnalyticsTask):
@@ -36,7 +36,7 @@ class CensysApiQuery(task.AnalyticsTask):
         for query in censys_queries:
             ip_addresses = query_censys(hosts_api, query.pattern)
             for ip in ip_addresses:
-                ip_object = Observable.add_text(ip)
+                ip_object = observable.save(value=ip)
                 ip_object.tag(query.relevant_tags)
                 query.link_to(
                     ip_object, "censys", f"IP found with Censys query: {query.pattern}"

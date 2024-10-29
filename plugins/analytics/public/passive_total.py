@@ -6,6 +6,7 @@ from dateutil import parser
 
 from core import taskmanager
 from core.config.config import yeti_config
+from core.schemas import observable as _observable
 from core.schemas import task
 from core.schemas.entity import Company, Phone
 from core.schemas.observable import Observable, ObservableType
@@ -101,7 +102,7 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
             context["last_seen"] = last_seen
             context["resolve"] = record["resolve"]
             try:
-                new = Observable.add_text(record["resolve"]).save()
+                new = _observable.save(value=record["resolve"])
             except ValueError:
                 logging.error(f"Could not add text observable for {record}")
 
