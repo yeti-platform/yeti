@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import unittest
 
 from core import database_arango
@@ -427,9 +428,10 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_md5(self) -> None:
         """Tests creating an MD5."""
-        observable = md5.MD5(value="1234567890").save()
+        md5_hash = hashlib.md5(b"1234567890").hexdigest()
+        observable = md5.MD5(value=md5_hash).save()
         self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1234567890")
+        self.assertEqual(observable.value, md5_hash)
         self.assertIsInstance(observable, md5.MD5)
 
     def test_create_path(self) -> None:
@@ -453,16 +455,18 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_sha1(self) -> None:
         """Tests creating a SHA1."""
-        observable = sha1.SHA1(value="1234567890").save()
+        sha1_hash = hashlib.sha1(b"1234567890").hexdigest()
+        observable = sha1.SHA1(value=sha1_hash).save()
         self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1234567890")
+        self.assertEqual(observable.value, sha1_hash)
         self.assertIsInstance(observable, sha1.SHA1)
 
     def test_create_sha256(self) -> None:
         """Tests creating a SHA256."""
-        observable = sha256.SHA256(value="1234567890").save()
+        sha256_hash = hashlib.sha256(b"1234567890").hexdigest()
+        observable = sha256.SHA256(value=sha256_hash).save()
         self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1234567890")
+        self.assertEqual(observable.value, sha256_hash)
         self.assertIsInstance(observable, sha256.SHA256)
 
     def test_create_ssdeep(self) -> None:
