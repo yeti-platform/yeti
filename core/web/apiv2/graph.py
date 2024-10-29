@@ -241,15 +241,12 @@ async def match(request: AnalysisRequest) -> AnalysisResponse:
     known = {}  # type: dict[str, observable.Observable]
     if request.add_unknown:
         for value in request.observables:
-            if request.add_type == ObservableType.guess or not request.add_type:
-                try:
-                    observable.Observable.add_text(value, tags=request.add_tags)
-                except ValueError:
-                    continue
-            elif request.add_type:
-                obs = observable.TYPE_MAPPING[request.add_type](value=value).save()
-                obs.tag(request.add_tags)
-
+            try:
+                observable.save(
+                    tags=request.add_tags, value=value, type=request.add_type
+                )
+            except ValueError:
+                continue
             unknown.discard(value)
 
     operator = "value__in"

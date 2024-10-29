@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.schemas import graph
+from core.schemas import observable as _observable
 from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
 from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
 
@@ -191,23 +192,15 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddRes
     """Bulk-creates new observables in the database."""
     response = BulkObservableAddResponse()
     for new_observable in request.observables:
-        if new_observable.type == ObservableType.guess:
-            try:
-                observable = Observable.add_text(
-                    new_observable.value, tags=new_observable.tags
-                )
-            except ValueError:
-                response.failed.append(new_observable.value)
-                continue
-        else:
-            cls = TYPE_MAPPING[new_observable.type]
-            try:
-                observable = cls(value=new_observable.value).save()
-                if new_observable.tags:
-                    observable = observable.tag(new_observable.tags)
-            except (ValueError, RuntimeError):
-                response.failed.append(new_observable.value)
-                continue
+        try:
+            observable = _observable.save(
+                type=new_observable.type,
+                value=new_observable.value,
+                tags=new_observable.tags,
+            )
+        except (ValueError, RuntimeError):
+            response.failed.append(new_observable.value)
+            continue
         response.added.append(observable)
     if not response.added:
         raise HTTPException(
@@ -282,7 +275,7 @@ async def add_text(request: AddTextRequest) -> ObservableTypes:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
-        return Observable.add_text(request.text, request.tags)
+        return _observable.save(value=request.text, tags=request.tags)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
