@@ -90,7 +90,9 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
                     )
 
 
-def create(type: str, **kwargs) -> "IndicatorTypes":
+def create(
+    *, name: str, type: str, pattern: str, diamond: DiamondModel, **kwargs
+) -> "IndicatorTypes":
     """
     Create an indicator of the given type without saving it to the database.
 
@@ -102,17 +104,25 @@ def create(type: str, **kwargs) -> "IndicatorTypes":
     """
     if type not in TYPE_MAPPING:
         raise ValueError(f"{type} is not a valid indicator type")
-    return TYPE_MAPPING[type](**kwargs)
+    return TYPE_MAPPING[type](name=name, pattern=pattern, diamond=diamond, **kwargs)
 
 
-def save(type: str, tags: List[str] = None, **kwargs):
-    indicator_obj = create(type, **kwargs).save()
+def save(
+    *,
+    name: str,
+    type: str,
+    pattern: str,
+    diamond: DiamondModel,
+    tags: List[str] = None,
+    **kwargs,
+):
+    indicator_obj = create(
+        name=name, type=type, pattern=pattern, diamond=diamond, **kwargs
+    ).save()
     if tags:
         indicator_obj.tag(tags)
     return indicator_obj
 
 
-def get(**kwargs) -> "IndicatorTypes":
-    if "name" not in kwargs:
-        raise ValueError("value is a required field for an indicator")
-    return Indicator.find(**kwargs)
+def find(*, name: str, **kwargs) -> "IndicatorTypes":
+    return Indicator.find(name=name, **kwargs)
