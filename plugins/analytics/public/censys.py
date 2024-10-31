@@ -5,8 +5,7 @@ from censys.search import CensysHosts
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas import indicator, task
-from core.schemas import observable as observable
+from core.schemas import indicator, observable, task
 
 
 class CensysApiQuery(task.AnalyticsTask):
