@@ -1,3 +1,4 @@
+import io
 import logging
 import sys
 import unittest
@@ -13,6 +14,20 @@ client = TestClient(webapp.app)
 
 
 class ObservableTest(unittest.TestCase):
+    OBSERVABLE_TEST_DATA_CASES = [
+        ("1.1.1.1", "ipv4"),
+        ("8.8.8.8", "ipv4"),
+        ("tomchop.me", "hostname"),
+        ("google.com", "hostname"),
+        ("http://google.com/", "url"),
+        ("http://tomchop.me/", "url"),
+        ("d41d8cd98f00b204e9800998ecf8427e", "md5"),
+        ("da39a3ee5e6b4b0d3255bfef95601890afd80709", "sha1"),
+        ("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "sha256"),
+    ]
+
+    OBSERVABLE_TEST_DATA_FILE = "tests/observable_test_data/iocs.txt"
+
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
@@ -355,6 +370,56 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["tags"]["tag1"]["fresh"], True)
         self.assertEqual(data["tags"]["tag2"]["fresh"], True)
 
+    def test_import_text(self):
+        with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
+            text = f.read()
+        response = client.post(
+            "/api/v2/observables/import/text",
+            json={"text": text, "tags": ["tag1", "tag2"]},
+        )
+        data = response.json()
+        observables = data["added"]
+        unknown = data["failed"]
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_type) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertEqual(response.status_code, 200)
+            self.assertIsNotNone(observables[i]["id"])
+            self.assertEqual(observables[i]["value"], expected_value)
+            self.assertEqual(observables[i]["type"], expected_type)
+            self.assertEqual(len(observables[i]["tags"]), 2)
+            self.assertEqual(observables[i]["tags"]["tag1"]["fresh"], True)
+            self.assertEqual(observables[i]["tags"]["tag2"]["fresh"], True)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_import_file(self):
+        with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "rb") as file:
+            response = client.post(
+                "/api/v2/observables/import/file",
+                files={"file": file},
+                data={"tags": ["tag1", "tag2"]},
+            )
+        data = response.json()
+        observables = data["added"]
+        unknown = data["failed"]
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_type) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertEqual(response.status_code, 200)
+            self.assertIsNotNone(observables[i]["id"])
+            self.assertEqual(observables[i]["value"], expected_value)
+            self.assertEqual(observables[i]["type"], expected_type)
+            self.assertEqual(len(observables[i]["tags"]), 2)
+            self.assertEqual(observables[i]["tags"]["tag1"]["fresh"], True)
+            self.assertEqual(observables[i]["tags"]["tag2"]["fresh"], True)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
     def test_tag_observable(self):
         response = client.post(
             "/api/v2/observables/", json={"value": "toto.com", "type": "hostname"}
@@ -446,4 +511,5 @@ class ObservableContextTest(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    unittest.main()
     unittest.main()

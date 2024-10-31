@@ -1,8 +1,11 @@
 import datetime
 import hashlib
+import io
+import pathlib
 import unittest
 
 from core import database_arango
+from core.schemas import observable
 from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
 from core.schemas.observables import (
@@ -39,6 +42,23 @@ from core.schemas.observables import (
 
 
 class ObservableTest(unittest.TestCase):
+    OBSERVABLE_TEST_DATA_CASES = [
+        ("1.1.1.1", ipv4.IPv4),
+        ("8.8.8.8", ipv4.IPv4),
+        ("tomchop.me", hostname.Hostname),
+        ("google.com", hostname.Hostname),
+        ("http://google.com/", url.Url),
+        ("http://tomchop.me/", url.Url),
+        ("d41d8cd98f00b204e9800998ecf8427e", md5.MD5),
+        ("da39a3ee5e6b4b0d3255bfef95601890afd80709", sha1.SHA1),
+        (
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            sha256.SHA256,
+        ),
+    ]
+
+    OBSERVABLE_TEST_DATA_FILE = "tests/observable_test_data/iocs.txt"
+
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
         database_arango.db.clear()
@@ -100,21 +120,21 @@ class ObservableTest(unittest.TestCase):
 
     def test_observable_find(self) -> None:
         hostname.Hostname(value="toto.com").save()
-        observable = Observable.find(value="toto.com")
-        self.assertIsNotNone(observable)
-        assert observable is not None
-        self.assertEqual(observable.value, "toto.com")  #
+        observable_obj = observable.find(value="toto.com")
+        self.assertIsNotNone(observable_obj)
+        assert observable_obj is not None
+        self.assertEqual(observable_obj.value, "toto.com")  #
 
-        observable = Observable.find(value="tata.com")
-        self.assertIsNone(observable)
+        observable_obj = Observable.find(value="tata.com")
+        self.assertIsNone(observable_obj)
 
     def test_observable_get(self) -> None:
         result = hostname.Hostname(value="toto.com").save()
         assert result.id is not None
-        observable = Observable.get(result.id)
-        assert observable is not None
-        self.assertIsNotNone(observable)
-        self.assertEqual(observable.value, "toto.com")
+        observable_obj = Observable.get(result.id)
+        assert observable_obj is not None
+        self.assertIsNotNone(observable_obj)
+        self.assertEqual(observable_obj.value, "toto.com")
 
     def test_observable_filter(self):
         obs1 = hostname.Hostname(value="test1.com").save()
@@ -189,101 +209,113 @@ class ObservableTest(unittest.TestCase):
 
     def test_add_context(self) -> None:
         """Tests that one or more contexts is added and persisted in the DB."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable.add_context("test_source2", {"abc": 123, "def": 456})
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        observable_obj.add_context("test_source2", {"abc": 123, "def": 456})
 
-        assert observable.id is not None
-        observable = Observable.get(observable.id)
-        self.assertEqual(len(observable.context), 2)
-        self.assertEqual(observable.context[0]["abc"], 123)
-        self.assertEqual(observable.context[0]["source"], "test_source")
-        self.assertEqual(observable.context[1]["abc"], 123)
-        self.assertEqual(observable.context[1]["source"], "test_source2")
+        assert observable_obj.id is not None
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(len(observable_obj.context), 2)
+        self.assertEqual(observable_obj.context[0]["abc"], 123)
+        self.assertEqual(observable_obj.context[0]["source"], "test_source")
+        self.assertEqual(observable_obj.context[1]["abc"], 123)
+        self.assertEqual(observable_obj.context[1]["source"], "test_source2")
 
     def test_add_dupe_context(self) -> None:
         """Tests that identical contexts aren't added twice."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        self.assertEqual(len(observable.context), 1)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        self.assertEqual(len(observable_obj.context), 1)
 
     def test_add_new_context_with_same_source(self) -> None:
         """Tests that diff contexts with same source are added separately."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable.add_context("test_source", {"abc": 123, "def": 666})
-        self.assertEqual(len(observable.context), 2)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        observable_obj.add_context("test_source", {"abc": 123, "def": 666})
+        self.assertEqual(len(observable_obj.context), 2)
 
     def test_add_multiple_contexts_with_same_source(self) -> None:
         """Tests that two different contexts can be added from the same source."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable.add_context("test_source", {"abc": 123, "def": 666})
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable.add_context("test_source", {"abc": 123, "def": 666})
-        self.assertEqual(len(observable.context), 2)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        observable_obj.add_context("test_source", {"abc": 123, "def": 666})
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        observable_obj.add_context("test_source", {"abc": 123, "def": 666})
+        self.assertEqual(len(observable_obj.context), 2)
         self.assertEqual(
-            observable.context[0], {"source": "test_source", "abc": 123, "def": 456}
+            observable_obj.context[0], {"source": "test_source", "abc": 123, "def": 456}
         )
         self.assertEqual(
-            observable.context[1], {"source": "test_source", "abc": 123, "def": 666}
+            observable_obj.context[1], {"source": "test_source", "abc": 123, "def": 666}
         )
 
     def test_add_new_context_with_same_source_and_ignore_field(self) -> None:
         """Tests that the context is updated if the difference is not being
         compared."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable.add_context("test_source", {"abc": 999, "def": 456})
-        observable.add_context(
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        observable_obj.add_context("test_source", {"abc": 999, "def": 456})
+        observable_obj.add_context(
             "test_source", {"abc": 123, "def": 666}, skip_compare={"def"}
         )
-        self.assertEqual(len(observable.context), 2)
-        self.assertEqual(observable.context[0]["def"], 666)
-        self.assertEqual(observable.context[1]["abc"], 999)
+        self.assertEqual(len(observable_obj.context), 2)
+        self.assertEqual(observable_obj.context[0]["def"], 666)
+        self.assertEqual(observable_obj.context[1]["abc"], 999)
 
     def test_overwrite_context(self) -> None:
         """Tests that one or more contexts is added and persisted in the DB."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable.add_context("test_source", {"abc": 456, "def": 123}, overwrite=True)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj.add_context("test_source", {"abc": 123, "def": 456})
+        observable_obj.add_context(
+            "test_source", {"abc": 456, "def": 123}, overwrite=True
+        )
 
-        assert observable.id is not None
-        observable = Observable.get(observable.id)
-        self.assertEqual(len(observable.context), 1)
-        self.assertEqual(observable.context[0]["abc"], 456)
-        self.assertEqual(observable.context[0]["def"], 123)
-        self.assertEqual(observable.context[0]["source"], "test_source")
+        assert observable_obj.id is not None
+        observable_obj = Observable.get(observable_obj.id)
+        self.assertEqual(len(observable_obj.context), 1)
+        self.assertEqual(observable_obj.context[0]["abc"], 456)
+        self.assertEqual(observable_obj.context[0]["def"], 123)
+        self.assertEqual(observable_obj.context[0]["source"], "test_source")
 
     def test_delete_context(self) -> None:
         """Tests that a context is deleted if contents fully match."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable = observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable = observable.delete_context("test_source", {"def": 456, "abc": 123})
-        assert observable.id is not None
-        observable = Observable.get(observable.id)  # type: ignore
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj = observable_obj.add_context(
+            "test_source", {"abc": 123, "def": 456}
+        )
+        observable_obj = observable_obj.delete_context(
+            "test_source", {"def": 456, "abc": 123}
+        )
+        assert observable_obj.id is not None
+        observable_obj = observable_obj.get(observable_obj.id)  # type: ignore
 
-        self.assertEqual(len(observable.context), 0)
+        self.assertEqual(len(observable_obj.context), 0)
 
     def test_delete_context_diff(self) -> None:
         """Tests that a context is not deleted if contents don't match."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable = observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable = observable.delete_context("test_source", {"def": 456, "abc": 000})
-        observable = Observable.get(observable.id)  # type: ignore
-        self.assertEqual(len(observable.context), 1)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj = observable_obj.add_context(
+            "test_source", {"abc": 123, "def": 456}
+        )
+        observable_obj = observable_obj.delete_context(
+            "test_source", {"def": 456, "abc": 000}
+        )
+        observable_obj = observable_obj.get(observable_obj.id)  # type: ignore
+        self.assertEqual(len(observable_obj.context), 1)
 
     def tests_delete_context_skip_compare(self) -> None:
         """Tests that a context is deleted if the difference is not being
         compared."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        observable = observable.add_context("test_source", {"abc": 123, "def": 456})
-        observable = observable.delete_context(
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        observable_obj = observable_obj.add_context(
+            "test_source", {"abc": 123, "def": 456}
+        )
+        observable_obj = observable_obj.delete_context(
             "test_source", {"abc": 000, "def": 456}, skip_compare={"abc"}
         )
-        observable = Observable.get(observable.id)  # type: ignore
-        self.assertEqual(len(observable.context), 0)
+        observable_obj = Observable.get(observable_obj.id)  # type: ignore
+        self.assertEqual(len(observable_obj.context), 0)
 
     def test_duplicate_value(self) -> None:
         """Tests saving two observables with the same value return the same observable."""
@@ -293,84 +325,84 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_asn(self) -> None:
         """Tests creating an ASN."""
-        observable = asn.ASN(value="AS123").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "AS123")
-        self.assertIsInstance(observable, asn.ASN)
+        observable_obj = asn.ASN(value="AS123").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "AS123")
+        self.assertIsInstance(observable_obj, asn.ASN)
 
     def test_create_wallet(self) -> None:
         """Tests creating a wallet."""
-        observable = wallet.Wallet(
+        observable_obj = wallet.Wallet(
             value="btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
             coin="btc",
             address="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa",
         ).save()
-        self.assertIsInstance(observable, wallet.Wallet)
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        self.assertEqual(observable.address, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
-        self.assertEqual(observable.coin, "btc")
+        self.assertIsInstance(observable_obj, wallet.Wallet)
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "btc/1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+        self.assertEqual(observable_obj.address, "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa")
+        self.assertEqual(observable_obj.coin, "btc")
 
     def test_create_certificate(self) -> None:
         """Tests creating a certificate."""
-        observable = certificate.Certificate.from_data(b"1234").save()
-        self.assertIsNotNone(observable.id)
+        observable_obj = certificate.Certificate.from_data(b"1234").save()
+        self.assertIsNotNone(observable_obj.id)
         self.assertEqual(
-            observable.value,
+            observable_obj.value,
             "CERT:03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
         )
-        self.assertIsInstance(observable, certificate.Certificate)
+        self.assertIsInstance(observable_obj, certificate.Certificate)
 
     def test_create_cidr(self) -> None:
         """Tests creating a CIDR."""
-        observable = cidr.CIDR(value="0.0.0.0/0").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "0.0.0.0/0")
-        self.assertIsInstance(observable, cidr.CIDR)
+        observable_obj = cidr.CIDR(value="0.0.0.0/0").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "0.0.0.0/0")
+        self.assertIsInstance(observable_obj, cidr.CIDR)
 
     def test_create_command_line(self) -> None:
         """Tests creating a command line."""
-        observable = command_line.CommandLine(value="ls -la").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "ls -la")
-        self.assertIsInstance(observable, command_line.CommandLine)
+        observable_obj = command_line.CommandLine(value="ls -la").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "ls -la")
+        self.assertIsInstance(observable_obj, command_line.CommandLine)
 
     def test_create_docker_image(self) -> None:
         """Tests creating a docker image."""
-        observable = container_image.DockerImage(
+        observable_obj = container_image.DockerImage(
             value="yetiplatform/yeti:latest"
         ).save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "yetiplatform/yeti:latest")
-        self.assertIsInstance(observable, container_image.DockerImage)
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "yetiplatform/yeti:latest")
+        self.assertIsInstance(observable_obj, container_image.DockerImage)
 
     def test_create_email(self) -> None:
         """Tests creating an email."""
-        observable = email.Email(value="example@gmail.com").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "example@gmail.com")
-        self.assertIsInstance(observable, email.Email)
+        observable_obj = email.Email(value="example@gmail.com").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "example@gmail.com")
+        self.assertIsInstance(observable_obj, email.Email)
 
     def test_create_file(self) -> None:
         """Tests creating a file."""
-        observable = file.File(value="FILE:HASH").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "FILE:HASH")
-        self.assertIsInstance(observable, file.File)
+        observable_obj = file.File(value="FILE:HASH").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "FILE:HASH")
+        self.assertIsInstance(observable_obj, file.File)
 
     def test_create_hostname(self) -> None:
         """Tests creating a hostname."""
-        observable = hostname.Hostname(value="tomchop.me").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "tomchop.me")
-        self.assertIsInstance(observable, hostname.Hostname)
+        observable_obj = hostname.Hostname(value="tomchop.me").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "tomchop.me")
+        self.assertIsInstance(observable_obj, hostname.Hostname)
 
     def test_create_imphash(self) -> None:
         """Tests creating an imphash."""
-        observable = imphash.Imphash(value="1234567890").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1234567890")
-        self.assertIsInstance(observable, imphash.Imphash)
+        observable_obj = imphash.Imphash(value="1234567890").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "1234567890")
+        self.assertIsInstance(observable_obj, imphash.Imphash)
 
     def test_create_mutex(self) -> None:
         """Tests creating a mutex."""
@@ -380,131 +412,131 @@ class ObservableTest(unittest.TestCase):
 
     def test_create_named_pipe(self) -> None:
         """Tests creating a name pipe."""
-        observable = named_pipe.NamedPipe(value="\\\\.\\pipe\\test").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "\\\\.\\pipe\\test")
+        observable_obj = named_pipe.NamedPipe(value="\\\\.\\pipe\\test").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "\\\\.\\pipe\\test")
 
     def test_create_ipv4(self) -> None:
         """Tests creating an IPv4."""
-        observable = ipv4.IPv4(value="127.0.0.1").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "127.0.0.1")
-        self.assertIsInstance(observable, ipv4.IPv4)
+        observable_obj = ipv4.IPv4(value="127.0.0.1").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "127.0.0.1")
+        self.assertIsInstance(observable_obj, ipv4.IPv4)
 
     def test_create_ipv6(self) -> None:
         """Tests creating an IPv6."""
-        observable = ipv6.IPv6(value="::1").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "::1")
-        self.assertIsInstance(observable, ipv6.IPv6)
+        observable_obj = ipv6.IPv6(value="::1").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "::1")
+        self.assertIsInstance(observable_obj, ipv6.IPv6)
 
     def test_create_ja3(self) -> None:
         """Tests creating a JA3."""
-        observable = ja3.JA3(value="1234567890").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1234567890")
-        self.assertEqual(observable.type, "ja3")
+        observable_obj = ja3.JA3(value="1234567890").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "1234567890")
+        self.assertEqual(observable_obj.type, "ja3")
 
     def test_create_mac_address(self) -> None:
         """Tests creating a MAC address."""
-        observable = mac_address.MacAddress(value="00:00:00:00:00:00").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "00:00:00:00:00:00")
-        self.assertIsInstance(observable, mac_address.MacAddress)
+        observable_obj = mac_address.MacAddress(value="00:00:00:00:00:00").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "00:00:00:00:00:00")
+        self.assertIsInstance(observable_obj, mac_address.MacAddress)
 
     def test_create_iban(self) -> None:
         """Tests creating an IBAN."""
-        observable = iban.IBAN(value="GB33BUKB20201555555555").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "GB33BUKB20201555555555")
-        self.assertIsInstance(observable, iban.IBAN)
+        observable_obj = iban.IBAN(value="GB33BUKB20201555555555").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "GB33BUKB20201555555555")
+        self.assertIsInstance(observable_obj, iban.IBAN)
 
     def test_create_bic(self) -> None:
         """Tests creating a BIC."""
-        observable = bic.BIC(value="BUKBGB22XXX").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "BUKBGB22XXX")
-        self.assertIsInstance(observable, bic.BIC)
+        observable_obj = bic.BIC(value="BUKBGB22XXX").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "BUKBGB22XXX")
+        self.assertIsInstance(observable_obj, bic.BIC)
 
     def test_create_md5(self) -> None:
         """Tests creating an MD5."""
         md5_hash = hashlib.md5(b"1234567890").hexdigest()
-        observable = md5.MD5(value=md5_hash).save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, md5_hash)
-        self.assertIsInstance(observable, md5.MD5)
+        observable_obj = md5.MD5(value=md5_hash).save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, md5_hash)
+        self.assertIsInstance(observable_obj, md5.MD5)
 
     def test_create_path(self) -> None:
         """Tests creating a path."""
-        observable = path.Path(value="/var/test").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "/var/test")
-        self.assertIsInstance(observable, path.Path)
+        observable_obj = path.Path(value="/var/test").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "/var/test")
+        self.assertIsInstance(observable_obj, path.Path)
 
     def test_create_registry_key(self) -> None:
         """Tests creating a registry key."""
-        observable = registry_key.RegistryKey(
+        observable_obj = registry_key.RegistryKey(
             key="Microsoft\\Windows\\CurrentVersion\\Run",
             value="persist",
             data=b"cmd.exe",
             hive=registry_key.RegistryHive.HKEY_LOCAL_MACHINE_Software,
         ).save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "persist")
-        self.assertIsInstance(observable, registry_key.RegistryKey)
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "persist")
+        self.assertIsInstance(observable_obj, registry_key.RegistryKey)
 
     def test_create_sha1(self) -> None:
         """Tests creating a SHA1."""
         sha1_hash = hashlib.sha1(b"1234567890").hexdigest()
-        observable = sha1.SHA1(value=sha1_hash).save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, sha1_hash)
-        self.assertIsInstance(observable, sha1.SHA1)
+        observable_obj = sha1.SHA1(value=sha1_hash).save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, sha1_hash)
+        self.assertIsInstance(observable_obj, sha1.SHA1)
 
     def test_create_sha256(self) -> None:
         """Tests creating a SHA256."""
         sha256_hash = hashlib.sha256(b"1234567890").hexdigest()
-        observable = sha256.SHA256(value=sha256_hash).save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, sha256_hash)
-        self.assertIsInstance(observable, sha256.SHA256)
+        observable_obj = sha256.SHA256(value=sha256_hash).save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, sha256_hash)
+        self.assertIsInstance(observable_obj, sha256.SHA256)
 
     def test_create_ssdeep(self) -> None:
         """Tests creating an ssdeep."""
-        observable = ssdeep.Ssdeep(value="1234567890").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1234567890")
-        self.assertIsInstance(observable, ssdeep.Ssdeep)
+        observable_obj = ssdeep.Ssdeep(value="1234567890").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "1234567890")
+        self.assertIsInstance(observable_obj, ssdeep.Ssdeep)
 
     def test_create_tlsh(self) -> None:
         """Tests creating a TLSH."""
-        observable = tlsh.TLSH(value="1234567890").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "1234567890")
-        self.assertIsInstance(observable, tlsh.TLSH)
+        observable_obj = tlsh.TLSH(value="1234567890").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "1234567890")
+        self.assertIsInstance(observable_obj, tlsh.TLSH)
 
     def test_create_url(self) -> None:
         """Tests creating a URL."""
-        observable = url.Url(value="https://www.google.com").save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "https://www.google.com")
-        self.assertIsInstance(observable, url.Url)
+        observable_obj = url.Url(value="https://www.google.com").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "https://www.google.com")
+        self.assertIsInstance(observable_obj, url.Url)
 
     def test_create_user_agent(self) -> None:
         """Tests creating a user agent."""
-        observable = user_agent.UserAgent(
+        observable_obj = user_agent.UserAgent(
             value="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
         ).save()  # noqa: E501
-        self.assertIsNotNone(observable.id)
+        self.assertIsNotNone(observable_obj.id)
         self.assertEqual(
-            observable.value,
+            observable_obj.value,
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
         )  # noqa: E501
-        self.assertIsInstance(observable, user_agent.UserAgent)
+        self.assertIsInstance(observable_obj, user_agent.UserAgent)
 
     def test_create_user_account(self) -> None:
         """Tests creating a user account."""
-        observable = user_account.UserAccount(
+        observable_obj = user_account.UserAccount(
             value="test_account",
             user_id="test_user_id",
             credential="test_credential",
@@ -529,36 +561,36 @@ class ObservableTest(unittest.TestCase):
                 2023, 12, 15, tzinfo=datetime.timezone.utc
             ),
         ).save()
-        self.assertIsNotNone(observable.id)
-        self.assertEqual(observable.value, "test_account")
-        self.assertIsInstance(observable, user_account.UserAccount)
-        self.assertEqual(observable.user_id, "test_user_id")
-        self.assertEqual(observable.credential, "test_credential")
-        self.assertEqual(observable.account_login, "test_account_login")
-        self.assertEqual(observable.account_type, "test_account_type")
-        self.assertEqual(observable.display_name, "test_display_name")
-        self.assertEqual(observable.is_service_account, True)
-        self.assertEqual(observable.is_privileged, True)
-        self.assertEqual(observable.can_escalate_privs, True)
-        self.assertEqual(observable.is_disabled, True)
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "test_account")
+        self.assertIsInstance(observable_obj, user_account.UserAccount)
+        self.assertEqual(observable_obj.user_id, "test_user_id")
+        self.assertEqual(observable_obj.credential, "test_credential")
+        self.assertEqual(observable_obj.account_login, "test_account_login")
+        self.assertEqual(observable_obj.account_type, "test_account_type")
+        self.assertEqual(observable_obj.display_name, "test_display_name")
+        self.assertEqual(observable_obj.is_service_account, True)
+        self.assertEqual(observable_obj.is_privileged, True)
+        self.assertEqual(observable_obj.can_escalate_privs, True)
+        self.assertEqual(observable_obj.is_disabled, True)
         self.assertEqual(
-            observable.account_created,
+            observable_obj.account_created,
             datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
         )
         self.assertEqual(
-            observable.account_expires,
+            observable_obj.account_expires,
             datetime.datetime(2023, 12, 31, tzinfo=datetime.timezone.utc),
         )
         self.assertEqual(
-            observable.credential_last_changed,
+            observable_obj.credential_last_changed,
             datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
         )
         self.assertEqual(
-            observable.account_first_login,
+            observable_obj.account_first_login,
             datetime.datetime(2023, 1, 1, tzinfo=datetime.timezone.utc),
         )
         self.assertEqual(
-            observable.account_last_login,
+            observable_obj.account_last_login,
             datetime.datetime(2023, 12, 15, tzinfo=datetime.timezone.utc),
         )
 
@@ -574,3 +606,216 @@ class ObservableTest(unittest.TestCase):
                     2023, 1, 1, tzinfo=datetime.timezone.utc
                 ),
             ).save()
+
+    def test_create_observable_with_type(self) -> None:
+        """Tests creating an observable."""
+        observable_obj = observable.create(value="1.1.1[.]1", type="ipv4")
+        self.assertNotIn("id", observable_obj)
+        self.assertEqual(observable_obj.value, "1.1.1.1")
+        self.assertIsInstance(observable_obj, ipv4.IPv4)
+
+    def test_create_obsersable_without_type(self) -> None:
+        """Tests creating an observable without specifying a type."""
+        observable_obj = observable.create(value="1.1.1[.]1")
+        self.assertNotIn("id", observable_obj)
+        self.assertEqual(observable_obj.value, "1.1.1.1")
+        self.assertIsInstance(observable_obj, ipv4.IPv4)
+
+    def test_save_observable_with_type(self) -> None:
+        """Tests saving an observable."""
+        observable_obj = observable.save(value="1.1.1[.]1", type="ipv4")
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "1.1.1.1")
+        observable_obj = Observable.find(value="1.1.1.1")
+        self.assertIsNotNone(observable_obj)
+        self.assertIsInstance(observable_obj, ipv4.IPv4)
+        self.assertEqual(observable_obj.value, "1.1.1.1")
+
+    def test_save_observable_without_type(self) -> None:
+        """Tests saving an observable without specifying a type."""
+        observable_obj = observable.save(value="1.1.1[.]1")
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "1.1.1.1")
+        observable_obj = Observable.find(value="1.1.1.1")
+        self.assertIsNotNone(observable_obj)
+        self.assertIsInstance(observable_obj, ipv4.IPv4)
+        self.assertEqual(observable_obj.value, "1.1.1.1")
+
+    def test_find_observable(self) -> None:
+        """Tests finding an observable."""
+        observable.save(value="1.1.1[.]1")
+        observable_obj = observable.find(value="1.1.1.1")
+        self.assertIsNotNone(observable_obj)
+        self.assertIsInstance(observable_obj, ipv4.IPv4)
+        self.assertEqual(observable_obj.value, "1.1.1.1")
+
+    def test_create_observables_from_text(self) -> None:
+        with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
+            text = f.read()
+        observables, unknown = observable.create_from_text(text)
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 0)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_save_observables_from_text(self) -> None:
+        """Tests saving observables from text."""
+        with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
+            text = f.read()
+        observables, unknown = observable.save_from_text(text, tags=["tag1", "tag2"])
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNotNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 2)
+            self.assertEqual(observables[i].tags["tag1"].fresh, True)
+            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_create_observables_from_str_file_path(self) -> None:
+        """Tests creating observables string from file path."""
+        filepath = ObservableTest.OBSERVABLE_TEST_DATA_FILE
+        observables, unknown = observable.create_from_file(file=filepath)
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 0)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def save_observables_from_str_file_path(self) -> None:
+        """Tests saving observables from string file path."""
+        filepath = ObservableTest.OBSERVABLE_TEST_DATA_FILE
+        observables, unknown = observable.save_from_file(
+            filepath, tags=["tag1", "tag2"]
+        )
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNotNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 2)
+            self.assertEqual(observables[i].tags["tag1"].fresh, True)
+            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_create_observables_from_pathlib(self) -> None:
+        path = pathlib.Path(ObservableTest.OBSERVABLE_TEST_DATA_FILE)
+        observables, unknown = observable.create_from_file(path)
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 0)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_save_observables_from_pathlib(self) -> None:
+        path = pathlib.Path(ObservableTest.OBSERVABLE_TEST_DATA_FILE)
+        observables, unknown = observable.save_from_file(path, tags=["tag1", "tag2"])
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNotNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 2)
+            self.assertEqual(observables[i].tags["tag1"].fresh, True)
+            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_create_observable_from_file_object(self) -> None:
+        file = open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r")
+        observables, unknown = observable.create_from_file(file)
+        file.close()
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 0)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def save_observables_from_file_object(self) -> None:
+        file = open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r")
+        observables, unknown = observable.save_from_file(file, tags=["tag1", "tag2"])
+        file.close()
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNotNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 2)
+            self.assertEqual(observables[i].tags["tag1"].fresh, True)
+            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_create_observables_from_string_io(self) -> None:
+        with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
+            file_io = io.StringIO(f.read())
+        observables, unknown = observable.create_from_file(file_io)
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 0)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")
+
+    def test_save_observables_from_string_io(self) -> None:
+        with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
+            file_io = io.StringIO(f.read())
+        observables, unknown = observable.save_from_file(file_io, tags=["tag1", "tag2"])
+        self.assertEqual(len(observables), 9)
+        self.assertEqual(len(unknown), 2)
+        for i, (expected_value, expected_class) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsInstance(observables[i], expected_class)
+            self.assertIsNotNone(observables[i].id)
+            self.assertEqual(observables[i].value, expected_value)
+            self.assertEqual(len(observables[i].tags), 2)
+            self.assertEqual(observables[i].tags["tag1"].fresh, True)
+            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+        self.assertEqual(unknown[0], "junk")
+        self.assertEqual(unknown[1], "tom_chop.me")

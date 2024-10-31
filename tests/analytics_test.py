@@ -7,8 +7,6 @@ from censys.search import CensysHosts
 from parameterized import parameterized
 
 from core import database_arango
-
-# from core.config.config import yeti_config
 from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType

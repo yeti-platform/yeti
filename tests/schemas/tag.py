@@ -27,7 +27,7 @@ class TagTest(unittest.TestCase):
     def test_tags_persist(self) -> None:
         """Test that ObservableTags persist in the database."""
         self.obs1.tag(["test"])
-        obs = observable.get(value="test1.com")
+        obs = observable.find(value="test1.com")
         assert obs is not None
         tags = obs.get_tags()
         self.assertEqual(len(tags), 1)
