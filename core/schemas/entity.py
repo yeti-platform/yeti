@@ -80,7 +80,7 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
         return self.save()
 
 
-def create(type: str, **kwargs) -> "EntityTypes":
+def create(*, name: str, type: str, **kwargs) -> "EntityTypes":
     """
     Create an entity of the given type without saving it to the database.
 
@@ -92,17 +92,15 @@ def create(type: str, **kwargs) -> "EntityTypes":
     """
     if type not in TYPE_MAPPING:
         raise ValueError(f"{type} is not a valid entity type")
-    return TYPE_MAPPING[type](**kwargs)
+    return TYPE_MAPPING[type](name=name, **kwargs)
 
 
-def save(type: str, tags: List[str] = None, **kwargs):
-    indicator_obj = create(type, **kwargs).save()
+def save(*, name: str, type: str, tags: List[str] = None, **kwargs):
+    indicator_obj = create(name=name, type=type, **kwargs).save()
     if tags:
         indicator_obj.tag(tags)
     return indicator_obj
 
 
-def get(**kwargs) -> "EntityTypes":
-    if "name" not in kwargs:
-        raise ValueError("value is a required field for an entity")
-    return Entity.find(**kwargs)
+def find(*, name: str, **kwargs) -> "EntityTypes":
+    return Entity.find(name=name, **kwargs)
