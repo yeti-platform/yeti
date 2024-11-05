@@ -1,5 +1,6 @@
 import logging
 
+import redis
 from kombu import Connection, Exchange, Producer, Queue
 
 from core.config.config import yeti_config
@@ -13,6 +14,10 @@ class EventProducer:
         try:
             self.conn = Connection(f"redis://{yeti_config.get('redis', 'host')}/")
             self.channel = self.conn.channel()
+            self._redis_client = redis.from_url(
+                f"redis://{yeti_config.get('redis', 'host')}/"
+            )
+            self._max_queue_size = yeti_config.get("events", "max_queue_size", 30000)
             self.create_event_producer()
             self.create_log_producer()
         except Exception as e:
@@ -46,6 +51,16 @@ class EventProducer:
         self.log_queue.maybe_bind(self.conn)
         self.log_queue.declare()
 
+    def _trim_queue_size(self, key: str) -> bool:
+        if message_count := self._redis_client.llen(key) > self._max_queue_size:
+            start_index = message_count - self._max_queue_size
+            logging.warning(
+                f"Removing {start_index} events from {key} queue because it exceeds max size"
+            )
+            self._redis_client.ltrim(key, start_index, -1)
+            return True
+        return False
+
     # Message is validated on consumer end
     def publish_event(self, event: EventTypes):
         if not self.event_producer:
@@ -53,9 +68,9 @@ class EventProducer:
         try:
             message = EventMessage(event=event)
             self.event_producer.publish(message.model_dump_json())
+            self._trim_queue_size("events")
         except Exception:
             logging.exception("Error publishing event")
-        self.publish_log(f"New event published: {event}")
 
     def publish_log(self, log: str | dict):
         if not self.log_producer:
@@ -63,6 +78,7 @@ class EventProducer:
         try:
             message = LogMessage(log=log)
             self.log_producer.publish(message.model_dump_json())
+            self._trim_queue_size("logs")
         except Exception:
             logging.exception("Error publishing log")
 

@@ -78,6 +78,9 @@ enabled = True
 # database = 0
 # tls = ok
 
+[events]
+max_queue_size = 30000
+
 [misp]
 
 ##
