@@ -54,6 +54,9 @@ class EventProducer:
     def _trim_queue_size(self, key: str) -> bool:
         if message_count := self._redis_client.llen(key) > self._max_queue_size:
             start_index = message_count - self._max_queue_size
+            logging.warning(
+                f"Removing {start_index} events from {key} queue because it exceeds max size"
+            )
             self._redis_client.ltrim(key, start_index, -1)
             return True
         return False
