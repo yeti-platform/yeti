@@ -217,9 +217,8 @@ def create_from_file(file: FileLikeObject) -> Tuple[List["ObservableTypes"], Lis
     unknown = list()
     for line in f.readlines():
         if isinstance(line, bytes):
-            line = line.decode("utf-8").strip()
-        else:
-            line = line.strip()
+            line = line.decode("utf-8")
+        line = line.strip()
         if not line:
             continue
         try:
