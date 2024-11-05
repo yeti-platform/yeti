@@ -99,7 +99,7 @@ class ShodanAnalyticsTest(YetiTestCase):
         if limit:
             os.environ["YETI_SHODAN_RESULT_LIMIT"] = str(limit)
         else:
-            os.environ["YETI_SHODAN_RESULT_LIMIT"] = ""
+            del os.environ["YETI_SHODAN_RESULT_LIMIT"]
 
         indicator.Query(
             name="Shodan test query name",
