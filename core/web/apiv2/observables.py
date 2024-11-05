@@ -275,7 +275,7 @@ async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     return ObservableSearchResponse(observables=observables, total=total)
 
 
-@router.post("/add_text")
+@router.post("/add_text", deprecated=True)
 async def add_text(request: AddTextRequest) -> ObservableTypes:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
