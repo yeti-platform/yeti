@@ -126,8 +126,8 @@ def create(*, value: str, type: str | None = None, **kwargs) -> ObservableTypes:
     value argument representing the value of the observable.
 
     if kwargs does not contain a "type" field, type will be automatically
-    determined based on the value. If the type is not recognized, an observable
-    of type generic will be created.
+    determined based on the value. If the type is not recognized, a ValueError
+    will be raised.
     """
     if not type or type == "guess":
         type = guess_type(value)
