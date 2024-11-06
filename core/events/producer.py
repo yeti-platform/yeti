@@ -7,30 +7,36 @@ from kombu import Connection, Exchange, Producer, Queue
 from core.config.config import yeti_config
 from core.events.message import EventMessage, EventTypes, LogMessage
 
+MEMORY_LIMIT_MB = yeti_config.get("events", "memory_limit", 64)
+KEEP_RATIO = yeti_config.get("events", "keep_ratio", 0.9)
+
 
 class EventProducer:
     def __init__(self):
+        global MEMORY_LIMIT_MB, KEEP_RATIO
         self.event_producer = None
         self.log_producer = None
         self._messages_sizes = []
-        memory_limit = yeti_config.get("events", "memory_limit", 64)
-        if isinstance(memory_limit, str):
-            memory_limit = int(memory_limit)
-        if memory_limit < 64:
+        if isinstance(MEMORY_LIMIT_MB, str):
+            self._memory_limit = int(MEMORY_LIMIT_MB)
+        else:
+            self._memory_limit = MEMORY_LIMIT_MB
+        if self._memory_limit < 64:
             logging.warning(
-                f"events.memory_limit <{memory_limit}> is invalid. Must be >= 64 fallback to 64"
+                f"events.memory_limit <{self._memory_limit}> is invalid. Must be >= 64 fallback to 64"
             )
-            memory_limit = 64
-        self._memory_limit = memory_limit * 1024 * 1024
-        keep_ratio = yeti_config.get("events", "keep_ratio", 0.9)
-        if isinstance(keep_ratio, str):
-            keep_ratio = float(keep_ratio)
-        if keep_ratio > 0 and keep_ratio < 1:
-            self._keep_ratio = keep_ratio
+            self._memory_limit = 64
+        self._memory_limit = self._memory_limit * 1024 * 1024
+        if isinstance(KEEP_RATIO, str):
+            self._keep_ratio = float(KEEP_RATIO)
+        else:
+            self._keep_ratio = KEEP_RATIO
+        if self._keep_ratio > 0 and self._keep_ratio < 1:
+            self._keep_ratio = self._keep_ratio
         else:
             self._keep_ratio = 0.9
             logging.warning(
-                f"events.keep_ratio <{keep_ratio}> is invalid. Must be > 0 and < 1 fallback to 0.9"
+                f"events.keep_ratio <{self._keep_ratio}> is invalid. Must be > 0 and < 1 fallback to 0.9"
             )
         try:
             self.conn = Connection(f"redis://{yeti_config.get('redis', 'host')}/")
@@ -105,7 +111,5 @@ class EventProducer:
         except Exception:
             logging.exception("Error publishing log")
 
-
-producer = EventProducer()
 
 producer = EventProducer()
