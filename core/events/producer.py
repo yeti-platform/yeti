@@ -13,14 +13,30 @@ class EventProducer:
         self.event_producer = None
         self.log_producer = None
         self._messages_sizes = []
+        memory_limit = yeti_config.get("events", "memory_limit", 64)
+        if isinstance(memory_limit, str):
+            memory_limit = int(memory_limit)
+        if memory_limit < 64:
+            logging.warning(
+                f"events.memory_limit <{memory_limit}> is invalid. Must be >= 64 fallback to 64"
+            )
+            memory_limit = 64
+        self._memory_limit = memory_limit * 1024 * 1024
+        keep_ratio = yeti_config.get("events", "keep_ratio", 0.9)
+        if isinstance(keep_ratio, str):
+            keep_ratio = float(keep_ratio)
+        if keep_ratio > 0 and keep_ratio < 1:
+            self._keep_ratio = keep_ratio
+        else:
+            self._keep_ratio = 0.9
+            logging.warning(
+                f"events.keep_ratio <{keep_ratio}> is invalid. Must be > 0 and < 1 fallback to 0.9"
+            )
         try:
             self.conn = Connection(f"redis://{yeti_config.get('redis', 'host')}/")
             self.channel = self.conn.channel()
             self._redis_client = redis.from_url(
                 f"redis://{yeti_config.get('redis', 'host')}/"
-            )
-            self._memory_limit = (
-                yeti_config.get("events", "memory_limit", 128) * 1024 * 1024
             )
             self.create_event_producer()
             self.create_log_producer()
@@ -56,14 +72,15 @@ class EventProducer:
         self.log_queue.declare()
 
     def _trim_queue_size(self, key: str) -> bool:
-        if self._redis_client.memory_usage(key) > self._memory_limit:
+        memory_usage = self._redis_client.memory_usage(key) or 0
+        if memory_usage > self._memory_limit:
             queue_size = self._redis_client.llen(key)
-            trim_index = int(queue_size / 2)
-            trimmed_events = queue_size - trim_index
+            end_index = int(queue_size * self._keep_ratio)
+            trimmed_events = queue_size - end_index
             logging.warning(
                 f"Removing {trimmed_events} oldest elements from queue <{key}>"
             )
-            self._redis_client.ltrim(key, 0, trim_index)
+            self._redis_client.ltrim(key, 0, end_index)
             return True
         return False
 
