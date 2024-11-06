@@ -5,6 +5,8 @@ if [[ "$1" = 'webserver' ]]; then
     poetry run uvicorn core.web.webapp:app --reload --host 0.0.0.0
 elif [[ "$1" = 'tasks' ]]; then
     poetry run celery -A core.taskscheduler worker --loglevel=INFO --purge -B -P threads
+elif [[ "$1" = 'events-tasks' ]]; then
+    poetry run python -m core.events.consumers events
 elif [[ "$1" = 'create-user' ]]; then
     poetry run python yetictl/cli.py create-user "${@:2}"
 elif [[ "$1" = 'reset-password' ]]; then
