@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import unittest
 
 import redis
@@ -94,11 +95,37 @@ class EventsTest(unittest.TestCase):
         self.assertEqual(event.event.tagged_object.value, "test1.com")
         self.assertEqual(event.event.tag_object.name, "test")
 
-    def test_max_queue_size(self) -> None:
-        producer.producer._max_queue_size = 500
-        obs1 = observable.Hostname(value="test1.com").save()
-        self.redis_client.lpop("events")
-        for i in range(1000):
-            evt = message.ObjectEvent(type=message.EventType.new, yeti_object=obs1)
-            producer.producer.publish_event(evt)
-        self.assertEqual(self.redis_client.llen("events"), 500)
+    def test_invalid_keep_ratio(self) -> None:
+        os.environ["YETI_CONFIG_EVENTS_KEEP_RATIO"] = "-0.1"
+        producer_instance = producer.EventProducer()
+        self.assertEqual(producer_instance._keep_ratio, 0.9)
+        os.environ["YETI_CONFIG_EVENTS_KEEP_RATIO"] = "1"
+        producer_instance = producer.EventProducer()
+        self.assertEqual(producer_instance._keep_ratio, 0.9)
+
+    def test_low_memory_limit(self) -> None:
+        os.environ["YETI_CONFIG_EVENTS_MEMORY_LIMIT"] = "32"
+        producer_instance = producer.EventProducer()
+        self.assertEqual(producer_instance._memory_limit, 64 * 1024 * 1024)
+
+    def test_queue_memory_limit(self) -> None:
+        # override the memory limit to 10KB for testing
+        producer.producer._memory_limit = 10 * 1024
+        i = 0
+        trimmed = False
+        while not trimmed:
+            i += 1
+            obs = observable.Hostname(value=f"test{i}.com").save()
+            evt = message.ObjectEvent(type=message.EventType.new, yeti_object=obs)
+            msg = message.EventMessage(event=evt)
+            producer.producer.event_producer.publish(msg.model_dump_json())
+            if producer.producer._trim_queue_size("events"):
+                trimmed = True
+        self.assertLess(
+            self.redis_client.memory_usage("events"), producer.producer._memory_limit
+        )
+        redis_payload = self.redis_client.lpop("events")
+        body_payload = json.loads(redis_payload).get("body")
+        body = json.loads(base64.b64decode(body_payload))
+        event = message.EventMessage(**json.loads(body))
+        self.assertEqual(event.event.yeti_object.value, f"test{i}.com")
