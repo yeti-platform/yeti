@@ -79,7 +79,8 @@ enabled = True
 # tls = ok
 
 [events]
-max_queue_size = 30000
+# Define in MiB the maximum allocated memory for events queue
+memory_limit = 128
 
 [misp]
 

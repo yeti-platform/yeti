@@ -1,4 +1,5 @@
 import logging
+import statistics
 
 import redis
 from kombu import Connection, Exchange, Producer, Queue
@@ -11,13 +12,16 @@ class EventProducer:
     def __init__(self):
         self.event_producer = None
         self.log_producer = None
+        self._messages_sizes = []
         try:
             self.conn = Connection(f"redis://{yeti_config.get('redis', 'host')}/")
             self.channel = self.conn.channel()
             self._redis_client = redis.from_url(
                 f"redis://{yeti_config.get('redis', 'host')}/"
             )
-            self._max_queue_size = yeti_config.get("events", "max_queue_size", 30000)
+            self._memory_limit = (
+                yeti_config.get("events", "memory_limit", 128) * 1024 * 1024
+            )
             self.create_event_producer()
             self.create_log_producer()
         except Exception as e:
@@ -52,12 +56,14 @@ class EventProducer:
         self.log_queue.declare()
 
     def _trim_queue_size(self, key: str) -> bool:
-        if message_count := self._redis_client.llen(key) > self._max_queue_size:
-            start_index = message_count - self._max_queue_size
+        if self._redis_client.memory_usage(key) > self._memory_limit:
+            queue_size = self._redis_client.llen(key)
+            trim_index = int(queue_size / 2)
+            trimmed_events = queue_size - trim_index
             logging.warning(
-                f"Removing {start_index} events from {key} queue because it exceeds max size"
+                f"Removing {trimmed_events} oldest elements from queue <{key}>"
             )
-            self._redis_client.ltrim(key, start_index, -1)
+            self._redis_client.ltrim(key, 0, trim_index)
             return True
         return False
 
@@ -82,5 +88,7 @@ class EventProducer:
         except Exception:
             logging.exception("Error publishing log")
 
+
+producer = EventProducer()
 
 producer = EventProducer()
