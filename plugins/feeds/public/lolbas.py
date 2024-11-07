@@ -19,7 +19,7 @@ class LoLBAS(task.FeedTask):
         "source": "https://lolbas-project.github.io/",
     }
 
-    _PATH_PATTERN: ClassVar = re.compile(r"<username>|<version>|<version_packageid>")
+    _PATH_PATTERN: ClassVar = re.compile(r"<\w+>")
     _SOURCE: ClassVar["str"] = "https://lolbas-project.github.io/api/lolbas.json"
 
     def run(self):
