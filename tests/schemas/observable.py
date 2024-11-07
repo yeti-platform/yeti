@@ -55,6 +55,7 @@ class ObservableTest(unittest.TestCase):
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
             sha256.SHA256,
         ),
+        ("tom_chop.me", hostname.Hostname),
     ]
 
     OBSERVABLE_TEST_DATA_FILE = "tests/observable_test_data/iocs.txt"
@@ -397,6 +398,13 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(observable_obj.value, "tomchop.me")
         self.assertIsInstance(observable_obj, hostname.Hostname)
 
+    def test_create_hostname_with_underscore(self) -> None:
+        """Tests creating a hostname."""
+        observable_obj = hostname.Hostname(value="tom_chop.me").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "tom_chop.me")
+        self.assertIsInstance(observable_obj, hostname.Hostname)
+
     def test_create_imphash(self) -> None:
         """Tests creating an imphash."""
         observable_obj = imphash.Imphash(value="1234567890").save()
@@ -520,6 +528,13 @@ class ObservableTest(unittest.TestCase):
         observable_obj = url.Url(value="https://www.google.com").save()
         self.assertIsNotNone(observable_obj.id)
         self.assertEqual(observable_obj.value, "https://www.google.com")
+        self.assertIsInstance(observable_obj, url.Url)
+
+    def test_create_url_with_underscore(self) -> None:
+        """Tests creating a URL."""
+        observable_obj = url.Url(value="https://www.goo_gle.com").save()
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, "https://www.goo_gle.com")
         self.assertIsInstance(observable_obj, url.Url)
 
     def test_create_user_agent(self) -> None:
@@ -653,8 +668,8 @@ class ObservableTest(unittest.TestCase):
         with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
             text = f.read()
         observables, unknown = observable.create_from_text(text)
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -663,15 +678,14 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 0)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_save_observables_from_text(self) -> None:
         """Tests saving observables from text."""
         with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
             text = f.read()
         observables, unknown = observable.save_from_text(text, tags=["tag1", "tag2"])
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -682,14 +696,13 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].tags["tag1"].fresh, True)
             self.assertEqual(observables[i].tags["tag2"].fresh, True)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_create_observables_from_str_file_path(self) -> None:
         """Tests creating observables string from file path."""
         filepath = ObservableTest.OBSERVABLE_TEST_DATA_FILE
         observables, unknown = observable.create_from_file(file=filepath)
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -698,7 +711,6 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 0)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def save_observables_from_str_file_path(self) -> None:
         """Tests saving observables from string file path."""
@@ -706,8 +718,8 @@ class ObservableTest(unittest.TestCase):
         observables, unknown = observable.save_from_file(
             filepath, tags=["tag1", "tag2"]
         )
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -718,13 +730,12 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].tags["tag1"].fresh, True)
             self.assertEqual(observables[i].tags["tag2"].fresh, True)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_create_observables_from_pathlib(self) -> None:
         path = pathlib.Path(ObservableTest.OBSERVABLE_TEST_DATA_FILE)
         observables, unknown = observable.create_from_file(path)
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -733,13 +744,12 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 0)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_save_observables_from_pathlib(self) -> None:
         path = pathlib.Path(ObservableTest.OBSERVABLE_TEST_DATA_FILE)
         observables, unknown = observable.save_from_file(path, tags=["tag1", "tag2"])
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -750,14 +760,13 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].tags["tag1"].fresh, True)
             self.assertEqual(observables[i].tags["tag2"].fresh, True)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_create_observable_from_file_object(self) -> None:
         file = open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r")
         observables, unknown = observable.create_from_file(file)
         file.close()
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -766,14 +775,13 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 0)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def save_observables_from_file_object(self) -> None:
         file = open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r")
         observables, unknown = observable.save_from_file(file, tags=["tag1", "tag2"])
         file.close()
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -784,14 +792,13 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].tags["tag1"].fresh, True)
             self.assertEqual(observables[i].tags["tag2"].fresh, True)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_create_observables_from_string_io(self) -> None:
         with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
             file_io = io.StringIO(f.read())
         observables, unknown = observable.create_from_file(file_io)
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -800,14 +807,13 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 0)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_save_observables_from_string_io(self) -> None:
         with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
             file_io = io.StringIO(f.read())
         observables, unknown = observable.save_from_file(file_io, tags=["tag1", "tag2"])
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_class) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -818,4 +824,3 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i].tags["tag1"].fresh, True)
             self.assertEqual(observables[i].tags["tag2"].fresh, True)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")

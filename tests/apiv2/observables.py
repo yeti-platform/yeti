@@ -380,8 +380,8 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         observables = data["added"]
         unknown = data["failed"]
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_type) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -393,7 +393,6 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i]["tags"]["tag1"]["fresh"], True)
             self.assertEqual(observables[i]["tags"]["tag2"]["fresh"], True)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_import_file(self):
         with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "rb") as file:
@@ -405,8 +404,8 @@ class ObservableTest(unittest.TestCase):
         data = response.json()
         observables = data["added"]
         unknown = data["failed"]
-        self.assertEqual(len(observables), 9)
-        self.assertEqual(len(unknown), 2)
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
         for i, (expected_value, expected_type) in enumerate(
             ObservableTest.OBSERVABLE_TEST_DATA_CASES
         ):
@@ -418,7 +417,6 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i]["tags"]["tag1"]["fresh"], True)
             self.assertEqual(observables[i]["tags"]["tag2"]["fresh"], True)
         self.assertEqual(unknown[0], "junk")
-        self.assertEqual(unknown[1], "tom_chop.me")
 
     def test_tag_observable(self):
         response = client.post(
