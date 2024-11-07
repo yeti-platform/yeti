@@ -1,6 +1,5 @@
 import logging
 import re
-import typing
 from datetime import datetime, timedelta
 from typing import ClassVar
 
@@ -8,7 +7,6 @@ import yaml
 
 from core import taskmanager
 from core.schemas import entity, indicator, observable, task
-from core.schemas.observables import path
 
 
 class LoLBAS(task.FeedTask):
@@ -162,6 +160,4 @@ class LoLBAS(task.FeedTask):
         return formatted_command
 
 
-taskmanager.TaskManager.register_task(LoLBAS)
-taskmanager.TaskManager.register_task(LoLBAS)
 taskmanager.TaskManager.register_task(LoLBAS)
