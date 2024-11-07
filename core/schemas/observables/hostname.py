@@ -13,6 +13,9 @@ class Hostname(observable.Observable):
     @classmethod
     def validate_value(cls, value: str) -> str:
         value = observable.refang(value)
-        if not validators.domain(value):
+        # Replace underscores with hyphens in the domain
+        # https://stackoverflow.com/a/14622263
+        temp_value = value.replace("_", "-")
+        if not validators.domain(temp_value):
             raise ValueError("Invalid hostname")
         return value
