@@ -1,4 +1,6 @@
 import logging
+import re
+import typing
 from datetime import datetime, timedelta
 from typing import ClassVar
 
@@ -17,6 +19,7 @@ class LoLBAS(task.FeedTask):
         "source": "https://lolbas-project.github.io/",
     }
 
+    _PATH_PATTERN: ClassVar = re.compile(r"<username>|<version>|<version_packageid>")
     _SOURCE: ClassVar["str"] = "https://lolbas-project.github.io/api/lolbas.json"
 
     def run(self):
@@ -56,17 +59,45 @@ class LoLBAS(task.FeedTask):
         tags.add(entity_slug)
 
         for filepath in entry["Full_Path"]:
-            try:
-                path_obj = observable.save(
-                    value=filepath["Path"], type="path", tags=list(tags)
-                )
-            except Exception:
-                logging.exception(f"Failed to save path: {filepath['Path']}")
+            if filepath["Path"] in ("", "no default"):
                 continue
-            self.add_feed_context(path_obj, {"reference": entry["url"]})
-            tool.link_to(
-                path_obj, relationship_type="located_at", description=description
-            )
+            if patterns := LoLBAS._PATH_PATTERN.findall(filepath["Path"]):
+                logging.info(
+                    f"{filepath['Path']} contains {patterns}, switch to regex indicator"
+                )
+                indicator_name = f"LoLBAS - {entry['Name']}"
+                fpath_pattern = (
+                    filepath["Path"].replace("\\", "\\\\").replace(":", "\:")
+                )
+                for pattern in patterns:
+                    fpath_pattern = fpath_pattern.replace(pattern, ".+?(?=\\\)")
+                try:
+                    indicator_obj = indicator.save(
+                        name=indicator_name,
+                        type="regex",
+                        pattern=fpath_pattern,
+                        diamond="capability",
+                    )
+                except Exception:
+                    logging.exception(f"Failed to save indicator: {indicator_name}")
+                    continue
+                tool.link_to(
+                    indicator_obj,
+                    relationship_type="located_at",
+                    description=description,
+                )
+            else:
+                try:
+                    path_obj = observable.save(
+                        value=filepath["Path"], type="path", tags=list(tags)
+                    )
+                except Exception:
+                    logging.exception(f"Failed to save path: {filepath['Path']}")
+                    continue
+                self.add_feed_context(path_obj, {"reference": entry["url"]})
+                tool.link_to(
+                    path_obj, relationship_type="located_at", description=description
+                )
 
         for detection in entry["Detection"] or []:
             if "Sigma" in detection:
@@ -131,4 +162,6 @@ class LoLBAS(task.FeedTask):
         return formatted_command
 
 
+taskmanager.TaskManager.register_task(LoLBAS)
+taskmanager.TaskManager.register_task(LoLBAS)
 taskmanager.TaskManager.register_task(LoLBAS)
