@@ -152,7 +152,7 @@ class MispFeed(task.FeedTask):
 
             context["comment"] = attribute["comment"]
 
-            obs = observable.Observable.add_text(attribute["value"])
+            obs = observable.save(value=attribute["value"])
             self._add_tag(obs, instance, attribute)
             if attribute["category"]:
                 tags.append(attribute["category"])

@@ -6,8 +6,7 @@ from typing import ClassVar, Generator
 import requests
 
 from core import taskmanager
-from core.schemas import task
-from core.schemas.observable import Observable
+from core.schemas import observable, task
 from core.schemas.observables import url
 
 
@@ -47,7 +46,7 @@ class MiningPoolStats(task.FeedTask):
                 if pool_id:
                     # some pool_id are not valid ipv4 or hostname, ex: superblockchain
                     try:
-                        obs = Observable.add_text(pool_id, tags)
+                        obs = observable.save(value=pool_id, tags=tags)
                         obs.add_context(self.name, {"source": self.name})
                     except Exception as err:
                         logging.error(f"Can't add {pool_id} as observable - {err}")

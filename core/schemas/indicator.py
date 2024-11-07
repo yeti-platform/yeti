@@ -1,7 +1,7 @@
 import datetime
 import logging
 from enum import Enum
-from typing import ClassVar, Literal
+from typing import ClassVar, List, Literal
 
 from pydantic import BaseModel, Field, computed_field
 
@@ -88,3 +88,41 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
                     logging.error(
                         f"Indicator type {indicator.type} has not implemented match(): {error}"
                     )
+
+
+def create(
+    *, name: str, type: str, pattern: str, diamond: DiamondModel, **kwargs
+) -> "IndicatorTypes":
+    """
+    Create an indicator of the given type without saving it to the database.
+
+    type is a string representing the type of indicator to create.
+    If the type is not valid, a ValueError is raised.
+
+    kwargs must contain "name" and "diamond" fields and will be handled by
+    pydantic.
+    """
+    if type not in TYPE_MAPPING:
+        raise ValueError(f"{type} is not a valid indicator type")
+    return TYPE_MAPPING[type](name=name, pattern=pattern, diamond=diamond, **kwargs)
+
+
+def save(
+    *,
+    name: str,
+    type: str,
+    pattern: str,
+    diamond: DiamondModel,
+    tags: List[str] = None,
+    **kwargs,
+):
+    indicator_obj = create(
+        name=name, type=type, pattern=pattern, diamond=diamond, **kwargs
+    ).save()
+    if tags:
+        indicator_obj.tag(tags)
+    return indicator_obj
+
+
+def find(*, name: str, **kwargs) -> "IndicatorTypes":
+    return Indicator.find(name=name, **kwargs)

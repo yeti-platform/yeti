@@ -6,13 +6,13 @@ from dateutil import parser
 
 from core import taskmanager
 from core.config.config import yeti_config
-from core.schemas import task
+from core.schemas import observable, task
 from core.schemas.entity import Company, Phone
 from core.schemas.observable import Observable, ObservableType
 from core.schemas.observables import email, hostname, sha256
 
 
-def whois_links(observable: Observable, whois):
+def whois_links(observable_obj: Observable, whois):
     to_extract = [
         {
             "field": "organization",
@@ -46,17 +46,17 @@ def whois_links(observable: Observable, whois):
         if field["field"] in whois and whois[field["field"]] != "N/A":
             if field["Type"] == email.Email:
                 obs = field["type"](value=whois[field["field"]]).save()
-                observable.link_to(obs, field["label"], "PassiveTotal")
+                observable_obj.link_to(obs, field["label"], "PassiveTotal")
             else:
                 ent = field["type"].get_or_create(name=whois[field["field"]])
-                observable.link_to(ent, field["label"], "PassiveTotal")
+                observable_obj.link_to(ent, field["label"], "PassiveTotal")
 
     if "nameServers" in whois:
         for ns in whois["nameServers"]:
             if ns not in ["No nameserver", "not.defined"]:
                 try:
                     ns_obs = hostname.Hostname(value=ns).save()
-                    observable.link_to(ns_obs, "NS record", "PassiveTotal")
+                    observable_obj.link_to(ns_obs, "NS record", "PassiveTotal")
                 except Exception as e:
                     logging.error(e.with_traceback())
 
@@ -89,8 +89,8 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
 
     acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
-    def each(self, observable: Observable):
-        params = {"query": observable.value}
+    def each(self, observable_obj: Observable):
+        params = {"query": observable_obj.value}
 
         data = PassiveTotalApi.get("/dns/passive", params)
         context = {"source": "PassiveTotal Passive DNS"}
@@ -101,18 +101,18 @@ class PassiveTotalPassiveDNS(task.OneShotTask, PassiveTotalApi):
             context["last_seen"] = last_seen
             context["resolve"] = record["resolve"]
             try:
-                new = Observable.add_text(record["resolve"]).save()
+                new = observable.save(value=record["resolve"])
             except ValueError:
                 logging.error(f"Could not add text observable for {record}")
 
-            if observable.type is ObservableType.hostname:
-                observable.link_to(
+            if observable_obj.type is ObservableType.hostname:
+                observable_obj.link_to(
                     new, "{} record".format(record["recordType"]), "PassiveTotal"
                 )
 
             else:
                 new.link_to(
-                    observable,
+                    observable_obj,
                     "{} record".format(record["recordType"]),
                     "PassiveTotal",
                 )
@@ -128,8 +128,8 @@ class PassiveTotalMalware(task.OneShotTask, PassiveTotalApi):
 
     acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
-    def each(self, observable: Observable):
-        params = {"query": observable.value}
+    def each(self, observable_obj: Observable):
+        params = {"query": observable_obj.value}
 
         data = PassiveTotalApi.get("/enrichment/malware", params)
 
@@ -138,7 +138,7 @@ class PassiveTotalMalware(task.OneShotTask, PassiveTotalApi):
 
             malware_obs = sha256.SHA256(value=record["sample"]).save()
 
-            malware_obs.link_to(observable, "Contact to", "PassiveTotal")
+            malware_obs.link_to(observable_obj, "Contact to", "PassiveTotal")
             malware_obs.add_context(
                 "PassiveTotal", {"collection_date": collection_date}
             )
@@ -153,15 +153,17 @@ class PassiveTotalSubdomains(task.OneShotTask, PassiveTotalApi):
 
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
-    def each(self, observable: Observable):
-        params = {"query": f"*.{observable.value}"}
+    def each(self, observable_obj: Observable):
+        params = {"query": f"*.{observable_obj.value}"}
 
         data = PassiveTotalApi.get("/enrichment/subdomains", params)
 
         for record in data["subdomains"]:
-            subdomain = hostname.Hostname(value=f"{record}.{observable.value}").save()
+            subdomain = hostname.Hostname(
+                value=f"{record}.{observable_obj.value}"
+            ).save()
 
-            observable.link_to(subdomain, "Subdomain", "PassiveTotal")
+            observable_obj.link_to(subdomain, "Subdomain", "PassiveTotal")
 
 
 class PassiveTotalWhois(task.OneShotTask, PassiveTotalApi):
@@ -173,17 +175,17 @@ class PassiveTotalWhois(task.OneShotTask, PassiveTotalApi):
 
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
-    def each(self, observable: Observable):
+    def each(self, observable_obj: Observable):
         params = {
-            "query": observable.value,
+            "query": observable_obj.value,
         }
 
         data = PassiveTotalApi.get("/whois", params)
 
         context = {"source": "PassiveTotal Whois", "raw": data}
-        observable.add_context(context)
+        observable_obj.add_context(context)
 
-        whois_links(observable, data)
+        whois_links(observable_obj, data)
 
 
 class PassiveTotalReverseWhois(task.OneShotTask, PassiveTotalApi):
@@ -195,15 +197,15 @@ class PassiveTotalReverseWhois(task.OneShotTask, PassiveTotalApi):
 
     acts_on: list[ObservableType] = [ObservableType.email]
 
-    def each(self, observable: Observable):
-        if observable.type is ObservableType.email:
+    def each(self, observable_obj: Observable):
+        if observable_obj.type is ObservableType.email:
             field = "email"
-        elif observable.type:
-            field = observable.type
+        elif observable_obj.type:
+            field = observable_obj.type
         else:
             raise ValueError("Could not determine field for this observable")
 
-        params = {"query": observable.value, "field": field}
+        params = {"query": observable_obj.value, "field": field}
 
         data = PassiveTotalApi.get("/whois/search", params)
 
@@ -221,8 +223,8 @@ class PassiveTotalReverseNS(task.OneShotTask, PassiveTotalApi):
 
     acts_on: list[ObservableType] = [ObservableType.hostname]
 
-    def each(self, observable):
-        params = {"query": observable.value, "field": "nameserver"}
+    def each(self, observable_obj):
+        params = {"query": observable_obj.value, "field": "nameserver"}
 
         data = PassiveTotalApi.get("/whois/search", params)
 

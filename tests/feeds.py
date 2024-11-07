@@ -3,6 +3,7 @@ import unittest
 from core import database_arango
 from core.config.config import yeti_config
 from plugins.feeds.public import (
+    abusech_malwarebazaar,
     artifacts,
     attack,
     dfiq,
@@ -11,8 +12,10 @@ from plugins.feeds.public import (
     hybrid_analysis,
     lolbas,
     malpedia,
+    miningpoolstats,
     openphish,
     sslblacklist_ja3,
+    threatfox,
     timesketch,
     tor_exit_nodes,
     yaraify,
@@ -37,9 +40,20 @@ class FeedTest(unittest.TestCase):
         feed = openphish.OpenPhish(**defaults)
         feed.run()
 
+    def test_malwarebazaar(self):
+        defaults = abusech_malwarebazaar.AbuseCHMalwareBazaaar._defaults.copy()
+        defaults["name"] = "AbuseCHMalwareBazaaar"
+        feed = abusech_malwarebazaar.AbuseCHMalwareBazaaar(**defaults)
+        feed.run()
+
     def test_lolbas(self):
         defaults = lolbas.LoLBAS._defaults.copy()
         feed = lolbas.LoLBAS(**defaults)
+        feed.run()
+
+    def test_threatfox(self):
+        defaults = threatfox.ThreatFox._defaults.copy()
+        feed = threatfox.ThreatFox(**defaults)
         feed.run()
 
     @unittest.skipIf(
@@ -48,6 +62,11 @@ class FeedTest(unittest.TestCase):
     def test_timesketch(self):
         defaults = timesketch.Timesketch._defaults.copy()
         feed = timesketch.Timesketch(**defaults)
+        feed.run()
+
+    def test_miningpoolstats(self):
+        defaults = miningpoolstats.MiningPoolStats._defaults.copy()
+        feed = miningpoolstats.MiningPoolStats(**defaults)
         feed.run()
 
     def test_attack(self):

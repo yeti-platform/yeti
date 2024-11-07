@@ -3,7 +3,7 @@ import unittest
 from typing import Optional
 
 from core import database_arango
-from core.schemas.observable import Observable
+from core.schemas import observable
 from core.schemas.observables import hostname
 from core.schemas.tag import Tag
 
@@ -27,7 +27,7 @@ class TagTest(unittest.TestCase):
     def test_tags_persist(self) -> None:
         """Test that ObservableTags persist in the database."""
         self.obs1.tag(["test"])
-        obs = Observable.find(value="test1.com")
+        obs = observable.find(value="test1.com")
         assert obs is not None
         tags = obs.get_tags()
         self.assertEqual(len(tags), 1)
@@ -239,6 +239,6 @@ class TagTest(unittest.TestCase):
         ]
 
         for cmp, (tag_non_norm, tag_norm) in enumerate(cases):
-            obs = Observable.add_text(f"test_{cmp}.com")
+            obs = observable.save(value=f"test-{cmp}.com")
             obs.tag([tag_non_norm])
             self.assertIn(tag_norm, obs.tags)

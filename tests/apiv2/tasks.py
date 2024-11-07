@@ -7,7 +7,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from core import database_arango, taskmanager
-from core.schemas.observable import Observable
+from core.schemas import observable
 from core.schemas.task import ExportTask, FeedTask
 from core.schemas.template import Template
 from core.schemas.user import UserSensitive
@@ -102,9 +102,9 @@ class ExportTaskTest(unittest.TestCase):
             ignore_tags=["ignore"],
             template_name="RandomTemplate",
         ).save()
-        self.observable1 = Observable.add_text("export1.com", tags=["c2", "legit"])
-        self.observable2 = Observable.add_text("export2.com", tags=["c2"])
-        self.observable3 = Observable.add_text("export3.com", tags=["c2", "exclude"])
+        self.observable1 = observable.save(value="export1.com", tags=["c2", "legit"])
+        self.observable2 = observable.save(value="export2.com", tags=["c2"])
+        self.observable3 = observable.save(value="export3.com", tags=["c2", "exclude"])
         taskmanager.TaskManager.register_task(ExportTask, task_name="RandomExport")
 
     def test_new_export(self):

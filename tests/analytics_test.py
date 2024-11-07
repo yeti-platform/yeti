@@ -7,7 +7,6 @@ from censys.search import CensysHosts
 from parameterized import parameterized
 
 from core import database_arango
-from core.config.config import yeti_config
 from core.schemas import indicator, observable
 from core.schemas.indicator import DiamondModel
 from core.schemas.observable import ObservableType
@@ -97,6 +96,10 @@ class ShodanAnalyticsTest(YetiTestCase):
         mock_shodan.return_value = mock_shodan_api
 
         os.environ["YETI_SHODAN_API_KEY"] = "test_api_key"
+        if limit:
+            os.environ["YETI_SHODAN_RESULT_LIMIT"] = str(limit)
+        else:
+            del os.environ["YETI_SHODAN_RESULT_LIMIT"]
 
         indicator.Query(
             name="Shodan test query name",
@@ -124,18 +127,16 @@ class ShodanAnalyticsTest(YetiTestCase):
         defaults = shodan.ShodanApiQuery._defaults.copy()
         analytics = shodan.ShodanApiQuery(**defaults)
 
-        with patch.object(yeti_config.shodan, "result_limit", limit):
-            analytics.run()
+        analytics.run()
 
-            mock_shodan_api.search_cursor.assert_called_with("shodan_test_query")
+        mock_shodan_api.search_cursor.assert_called_with("shodan_test_query")
 
-            observables = observable.Observable.filter(
-                {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
-            )
-            observable_obj, _ = observables
-
-            observables_added = [o.value for o in observable_obj]
-            self.assertEqual(len(observables_added), expected_count)
+        observables = observable.Observable.filter(
+            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
+        )
+        observable_obj, _ = observables
+        observables_added = [o.value for o in observable_obj]
+        self.assertEqual(len(observables_added), expected_count)
 
     @patch("plugins.analytics.public.shodan.Shodan")
     def test_shodan_observables_and_neighbors(self, mock_shodan):
@@ -210,7 +211,7 @@ class ShodanAnalyticsTest(YetiTestCase):
         self.check_neighbors(shodan_query, expected_neighbor_values)
 
     def test_expire_tags(self) -> None:
-        o = observable.Observable.add_text("google.com")
+        o = observable.save(value="google.com")
         o.tag(["test_tag"], expiration=datetime.timedelta(seconds=-10))
 
         defaults = expire_tags.ExpireTags._defaults.copy()
