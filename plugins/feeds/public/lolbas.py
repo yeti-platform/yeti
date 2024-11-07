@@ -5,7 +5,7 @@ from typing import ClassVar
 import yaml
 
 from core import taskmanager
-from core.schemas import entity, indicator, task
+from core.schemas import entity, indicator, observable, task
 from core.schemas.observables import path
 
 
@@ -56,8 +56,13 @@ class LoLBAS(task.FeedTask):
         tags.add(entity_slug)
 
         for filepath in entry["Full_Path"]:
-            path_obj = path.Path(value=filepath["Path"]).save()
-            path_obj.tag(list(tags))
+            try:
+                path_obj = observable.save(
+                    value=filepath["Path"], type="path", tags=list(tags)
+                )
+            except Exception:
+                logging.exception(f"Failed to save path: {filepath['Path']}")
+                continue
             self.add_feed_context(path_obj, {"reference": entry["url"]})
             tool.link_to(
                 path_obj, relationship_type="located_at", description=description
