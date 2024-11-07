@@ -10,7 +10,7 @@ import tempfile
 from enum import Enum
 
 # from enum import Enum, EnumMeta
-from typing import IO, ClassVar, List, Literal, Tuple, Union
+from typing import IO, ClassVar, List, Literal, Tuple
 
 import requests
 from bs4 import BeautifulSoup
@@ -28,7 +28,7 @@ class ObservableType(str, Enum): ...
 
 ObservableTypes = ()
 TYPE_MAPPING = {}
-FileLikeObject = Union[str, os.PathLike, IO, tempfile.SpooledTemporaryFile]
+FileLikeObject = str | os.PathLike | IO | tempfile.SpooledTemporaryFile
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
