@@ -188,9 +188,9 @@ if AUTH_MODULE == "oidc":
     @router.post("/oidc-callback-token")
     async def oidc_api_callback(request: Request):
         try:
-            req_body = request.body()
+            req_body = await request.body()
             id_token = json.loads(req_body)["id_token"]
-            idinfo = await google_oauth_id_token.verify_oauth2_token(
+            idinfo = google_oauth_id_token.verify_oauth2_token(
                 id_token, google_requests.Request()
             )
         except (google_exceptions.GoogleAuthError, ValueError, KeyError) as error:
