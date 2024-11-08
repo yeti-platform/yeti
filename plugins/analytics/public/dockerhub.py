@@ -1,8 +1,10 @@
+import datetime
 import re
 
 import requests
 
 from core import taskmanager
+from core.events.message import EventMessage
 from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType
 
@@ -77,40 +79,11 @@ class DockerHubApi:
         return image_metadata
 
 
-class DockerImageInspect(task.OneShotTask):
-    """DockerImageInspect analytics queries docker hub to get more
-    details related to docker_image observable.
-
-    This analytics adds several information as context to docker_image:
-    * Image stats: provide details about pulls, registered, updated
-    * Image details: provide information related to image tags including layers information and instructions
-    * User details: provides details about the user owning the image.
-
-    This analytics also creates new observables:
-    * generic observable with tag type:user_account to link to a user
-    * sha256 including image's digest, layers' digests and added files' digests
-    """
-
-    _defaults = {
-        "name": "DockerImageMetadata",
-        "description": "Fetch metadata from docker hub for a docker image",
-    }
-
-    acts_on: list[ObservableType] = [
-        ObservableType.docker_image,
-    ]
-
+class DockerHubObservables:
     FILE_REGEX: re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*", re.IGNORECASE)
     DIGEST_REGEX: re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$", re.IGNORECASE)
 
-    def _get_or_create_observable(self, obs_type, value):
-        cls = observable.TYPE_MAPPING[obs_type]
-        obs = cls.find(value=value)
-        if not obs:
-            obs = cls(value=value).save()
-        return obs
-
-    def _get_context(self, metadata):
+    def _get_image_context(self, metadata):
         context = {"source": "hub.docker.com"}
         if metadata:
             context["Analysis"] = "Image found"
@@ -137,22 +110,21 @@ class DockerImageInspect(task.OneShotTask):
         return context
 
     def _create_digest_observable(self, image_obs, digest, context, link_type):
-        sha_obs = self._get_or_create_observable(
-            observable.ObservableType.sha256, value=digest
-        )
+        sha_obs = observable.save(value=digest, tags=["dockerhub"])
         if context:
             sha_obs.add_context("hub.docker.com", context)
-            sha_obs.tag({"dockerhub"})
         image_obs.link_to(sha_obs, link_type, "")
         return sha_obs
 
     def _make_relationships(self, image_obs, metadata):
         username = metadata.get("user", {}).get("username", "")
         if username:
-            user_obs = self._get_or_create_observable(
-                observable.ObservableType.generic, value=username
+            user_obs = observable.save(
+                value=username,
+                type="user_account",
+                tags=["dockerhub"],
+                account_type="dockerhub",
             )
-            user_obs.tag({"type:user_account", "dockerhub"})
             user_obs.link_to(image_obs, "owns", "")
         for tag_name, image_tags in metadata.get("tags", {}).items():
             for image_tag in image_tags:
@@ -174,15 +146,90 @@ class DockerImageInspect(task.OneShotTask):
                             image_obs, file_digest.group(1), context, "adds"
                         )
 
-    def each(self, observable: Observable):
-        metadata = DockerHubApi.image_full_details(observable.value)
+
+class DockerHubImageAnalytics(task.OneShotTask, DockerHubObservables):
+    """DockerHubImageAnalytics queries docker hub to get more details related to
+    docker_image observable.
+
+    This analytics adds several information as context to docker_image:
+    * Image stats: provide details about pulls, registered, updated
+    * Image details: provide information related to image tags including
+      layers information and instructions
+    * User details: provides details about the user owning the image.
+
+    This analytics also creates new observables:
+    * user_account observable with account_type being dockerhub to link to a docker hub user
+    * sha256 including image's digest, layers' digests and added files' digests
+    """
+
+    _defaults = {
+        "name": "DockerHubImageAnalytics",
+        "description": "Fetch metadata from docker hub for a docker image",
+    }
+
+    acts_on: list[ObservableType] = [
+        ObservableType.container_image,
+        ObservableType.docker_image,
+    ]
+
+    def each(self, observable_obj: Observable):
+        if observable_obj.type != "docker_image" or (
+            observable_obj.type == "container_image"
+            and observable_obj.registry != "docker.io"
+        ):
+            return []
+        metadata = DockerHubApi.image_full_details(observable_obj.value)
 
         if metadata is None:
             return []
 
-        context = self._get_context(metadata)
-        observable.add_context("hub.docker.com", context)
-        self._make_relationships(observable, metadata)
+        context = self._get_image_context(metadata)
+        observable_obj.add_context("hub.docker.com", context)
+        self._make_relationships(observable_obj, metadata)
 
 
-taskmanager.TaskManager.register_task(DockerImageInspect)
+class DockerHubUserAnalytics(task.OneShotTask, DockerHubObservables):
+    """DockerHubUserAnalytics queries docker hub to get more details related to
+    user_account observable of dockerhub type and fetch all their images.
+
+    This analytics creates new container_image observables with registry set to docker.io:
+    """
+
+    _defaults = {
+        "name": "DockerHubUserAnalytics",
+        "description": "Fetch metadata from docker hub for a dockerhub user account",
+    }
+
+    acts_on: list[ObservableType] = [ObservableType.user_account]
+
+    def each(self, user_obj: Observable):
+        if (
+            not isinstance(user_obj, observable.UserAccount)
+            or user_obj.account_type != "dockerhub"
+        ):
+            return []
+        metadata = DockerHubApi.inspect_user(user_obj.value)
+        if metadata is None:
+            return []
+        if date_joined := metadata.get("date_joined"):
+            date_joined = datetime.datetime.strptime(
+                date_joined, "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
+            if (
+                user_obj.account_created is None
+                or user_obj.account_created > date_joined
+            ):
+                user_obj.created = date_joined
+                user_obj = user_obj.save()
+        del metadata["date_joined"]
+        user_obj.add_context("hub.docker.com", metadata)
+        for image in DockerHubApi.user_images(user_obj.value):
+            image_name = f'{image["namespace"]}/{image["name"]}'
+            image_obs = observable.save(
+                value=image_name, type="container_image", registry="docker.io"
+            )
+            user_obj.link_to(image_obs, "owns", "")
+
+
+taskmanager.TaskManager.register_task(DockerHubImageAnalytics)
+taskmanager.TaskManager.register_task(DockerHubUserAnalytics)
