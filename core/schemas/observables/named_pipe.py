@@ -4,6 +4,4 @@ from core.schemas import observable
 
 
 class NamedPipe(observable.Observable):
-    type: Literal[observable.ObservableType.named_pipe] = (
-        observable.ObservableType.named_pipe
-    )
+    type: Literal["named_pipe"] = "named_pipe"

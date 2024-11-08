@@ -1,6 +1,7 @@
 import unittest
 
 from core import database_arango
+from core.schemas import indicator
 from core.schemas.indicator import (
     DiamondModel,
     ForensicArtifact,
@@ -26,6 +27,30 @@ class IndicatorTest(unittest.TestCase):
         self.assertIsNotNone(result.created)
         self.assertEqual(result.name, "regex1")
         self.assertEqual(result.type, "regex")
+
+    def test_indicator_create(self) -> None:
+        indicator_obj = indicator.create(
+            name="regex1", type="regex", pattern="asd", diamond="capability"
+        )
+        self.assertIsInstance(indicator_obj, Regex)
+        self.assertIsNone(indicator_obj.id)
+        self.assertEqual(indicator_obj.name, "regex1")
+        self.assertEqual(indicator_obj.type, "regex")
+        self.assertEqual(indicator_obj.pattern, "asd")
+        self.assertIsInstance(indicator_obj.diamond, DiamondModel)
+        self.assertEqual(indicator_obj.diamond, DiamondModel.capability)
+
+    def test_indicator_save(self) -> None:
+        indicator_obj = indicator.save(
+            name="regex1", type="regex", pattern="asd", diamond="capability"
+        )
+        self.assertIsInstance(indicator_obj, Regex)
+        self.assertIsNotNone(indicator_obj.id)
+        self.assertEqual(indicator_obj.name, "regex1")
+        self.assertEqual(indicator_obj.type, "regex")
+        self.assertEqual(indicator_obj.pattern, "asd")
+        self.assertIsInstance(indicator_obj.diamond, DiamondModel)
+        self.assertEqual(indicator_obj.diamond, DiamondModel.capability)
 
     def test_filter_entities_different_types(self) -> None:
         regex = Regex(

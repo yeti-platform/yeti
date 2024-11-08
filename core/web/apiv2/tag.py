@@ -59,7 +59,7 @@ router = APIRouter()
 
 
 @router.post("/")
-async def new(request: NewRequest) -> Tag:
+def new(request: NewRequest) -> Tag:
     """Creates a new observable in the database."""
     tag = Tag(
         name=request.name,
@@ -73,7 +73,7 @@ async def new(request: NewRequest) -> Tag:
 
 
 @router.get("/{tag_id}")
-async def details(tag_id: str) -> Tag:
+def details(tag_id: str) -> Tag:
     """Returns details about a Tag."""
     tag = Tag.get(tag_id)
     if not tag:
@@ -82,7 +82,7 @@ async def details(tag_id: str) -> Tag:
 
 
 @router.put("/{tag_id}")
-async def update(tag_id: str, request: UpdateRequest) -> Tag:
+def update(tag_id: str, request: UpdateRequest) -> Tag:
     """Updates an observable."""
     tag = Tag.get(tag_id)
     if not tag:
@@ -97,7 +97,7 @@ async def update(tag_id: str, request: UpdateRequest) -> Tag:
 
 
 @router.post("/search")
-async def search(request: TagSearchRequest) -> TagSearchResponse:
+def search(request: TagSearchRequest) -> TagSearchResponse:
     """Searches for Tags."""
     request_args = request.model_dump(exclude_unset=True)
     count = request_args.pop("count")
@@ -107,7 +107,7 @@ async def search(request: TagSearchRequest) -> TagSearchResponse:
 
 
 @router.delete("/{tag_id}")
-async def delete(tag_id: str) -> None:
+def delete(tag_id: str) -> None:
     """Deletes a Tag."""
     tag = Tag.get(tag_id)
     if not tag:
@@ -116,7 +116,7 @@ async def delete(tag_id: str) -> None:
 
 
 @router.post("/merge")
-async def merge(request: MergeTagRequest) -> MergeTagResult:
+def merge(request: MergeTagRequest) -> MergeTagResult:
     target_tag = Tag.find(name=request.merge_into)
     if not target_tag:
         raise HTTPException(

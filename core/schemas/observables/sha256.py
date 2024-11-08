@@ -1,13 +1,17 @@
 from typing import Literal
 
 import validators
+from pydantic import field_validator
 
 from core.schemas import observable
 
 
 class SHA256(observable.Observable):
-    type: Literal[observable.ObservableType.sha256] = observable.ObservableType.sha256
+    type: Literal["sha256"] = "sha256"
 
-    @staticmethod
-    def is_valid(value: str) -> bool:
-        return validators.sha256(value)
+    @field_validator("value")
+    @classmethod
+    def validate_value(cls, value: str) -> str:
+        if not validators.sha256(value):
+            raise ValueError("Invalid sha256 hash")
+        return value

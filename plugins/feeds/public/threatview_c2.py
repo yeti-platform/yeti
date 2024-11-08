@@ -31,9 +31,8 @@ class ThreatviewC2(task.FeedTask):
         tags = ["c2", "cobaltstrike"]
 
         try:
-            obs = observable.Observable.add_text(item)
+            obs = observable.save(value=item, tags=tags)
             obs.add_context(self.name, context)
-            obs.tag(tags)
         except ValueError as error:
             return logging.error(error)
 

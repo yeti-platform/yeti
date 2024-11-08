@@ -8,8 +8,8 @@ from core.schemas import entity
 
 
 class ThreatActor(entity.Entity):
-    _type_filter: ClassVar[str] = entity.EntityType.threat_actor
-    type: Literal[entity.EntityType.threat_actor] = entity.EntityType.threat_actor
+    _type_filter: ClassVar[str] = "threat-actor"
+    type: Literal["threat-actor"] = "threat-actor"
 
     threat_actor_types: list[str] = []
     aliases: list[str] = []

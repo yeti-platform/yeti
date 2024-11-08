@@ -70,7 +70,7 @@ router = APIRouter()
 
 
 @router.get("/config")
-async def config() -> DFIQConfigResponse:
+def config() -> DFIQConfigResponse:
     all_questions = dfiq.DFIQQuestion.list()
 
     stage_types = set()
@@ -94,17 +94,17 @@ async def config() -> DFIQConfigResponse:
 
 
 @router.post("/from_archive")
-async def from_archive(archive: UploadFile) -> dict[str, int]:
+def from_archive(archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
     tempdir = tempfile.TemporaryDirectory()
-    contents = await archive.read()
+    contents = archive.file.read()
     ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
     total_added = dfiq.read_from_data_directory(f"{tempdir.name}/*/*.yaml")
     return {"total_added": total_added}
 
 
 @router.post("/from_yaml")
-async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
+def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
     """Creates a new DFIQ object in the database."""
     try:
         new = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
@@ -154,7 +154,7 @@ async def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
 
 
 @router.post("/to_archive")
-async def to_archive(request: DFIQSearchRequest) -> FileResponse:
+def to_archive(request: DFIQSearchRequest) -> FileResponse:
     """Compresses DFIQ objects into a ZIP archive.
 
     The structure of the archive is as follows:
@@ -229,7 +229,7 @@ async def to_archive(request: DFIQSearchRequest) -> FileResponse:
 
 
 @router.post("/validate")
-async def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
+def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
     """Validates a DFIQ YAML string."""
     try:
         obj = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
@@ -263,7 +263,7 @@ async def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateRespon
 
 
 @router.patch("/{dfiq_id}")
-async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
+def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     """Modifies an DFIQ object in the database."""
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
     if not db_dfiq:
@@ -290,7 +290,7 @@ async def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
 
 
 @router.get("/{dfiq_id}")
-async def details(dfiq_id) -> dfiq.DFIQTypes:
+def details(dfiq_id) -> dfiq.DFIQTypes:
     """Returns details about a DFIQ object."""
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
     if not db_dfiq:
@@ -299,7 +299,7 @@ async def details(dfiq_id) -> dfiq.DFIQTypes:
 
 
 @router.delete("/{dfiq_id}")
-async def delete(dfiq_id: str) -> None:
+def delete(dfiq_id: str) -> None:
     """Deletes a DFIQ object."""
     db_dfiq = dfiq.DFIQBase.get(dfiq_id)
     if not db_dfiq:
@@ -325,7 +325,7 @@ async def delete(dfiq_id: str) -> None:
 
 
 @router.post("/search")
-async def search(request: DFIQSearchRequest) -> DFIQSearchResponse:
+def search(request: DFIQSearchRequest) -> DFIQSearchResponse:
     """Searches for DFIQ objects."""
     query = request.query
     if request.type:

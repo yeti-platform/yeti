@@ -9,8 +9,8 @@ class Sigma(indicator.Indicator):
     Parsing and matching is yet TODO.
     """
 
-    _type_filter: ClassVar[str] = indicator.IndicatorType.sigma
-    type: Literal[indicator.IndicatorType.sigma] = indicator.IndicatorType.sigma
+    _type_filter: ClassVar[str] = "sigma"
+    type: Literal["sigma"] = "sigma"
 
     def match(self, value: str) -> indicator.IndicatorMatch | None:
         raise NotImplementedError

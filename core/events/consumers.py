@@ -126,7 +126,10 @@ if __name__ == "__main__":
         prog="yeti-consumer", description="Consume events and logs from the event bus"
     )
     parser.add_argument(
-        "--concurrency", type=int, default=None, help="Number of consumers to start"
+        "--concurrency",
+        type=int,
+        help="Number of consumers to start",
+        default=yeti_config.get("events", "consumers_concurrency", None),
     )
     parser.add_argument(
         "type", choices=["events", "logs"], help="Type of consumer to start"

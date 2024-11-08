@@ -5,6 +5,7 @@ from unittest import mock
 
 from core import database_arango, taskmanager
 from core.config.config import yeti_config
+from core.schemas import observable as _observable
 from core.schemas.observable import Observable
 from core.schemas.task import (
     AnalyticsTask,
@@ -33,7 +34,7 @@ class TaskTest(unittest.TestCase):
 
             def run(self):
                 for item in self._DATA:
-                    Observable.add_text(item)
+                    _observable.save(value=item)
 
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
@@ -108,10 +109,10 @@ class AnalyticsTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
-        self.observable1 = Observable.add_text("asd1.com")
-        self.observable2 = Observable.add_text("asd2.com")
-        self.observable3 = Observable.add_text("asd3.com")
-        self.observable4 = Observable.add_text("8.8.8.8")
+        self.observable1 = _observable.save(value="asd1.com")
+        self.observable2 = _observable.save(value="asd2.com")
+        self.observable3 = _observable.save(value="asd3.com")
+        self.observable4 = _observable.save(value="8.8.8.8")
 
     def test_run_analytics_task(self):
         """Tests that the each function is called for each filtered observable."""
@@ -192,7 +193,7 @@ class OneShotTaskTest(unittest.TestCase):
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
         self.fake_oneshot_task_class = FakeOneShotTask
-        observable = Observable.add_text("asd1.com")
+        observable = _observable.save(value="asd1.com")
         observable.tag(["c2", "legit"])
         observable.save()
 
@@ -240,12 +241,12 @@ class ExportTaskTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
-        self.observable1 = Observable.add_text("asd1.com", tags=["c2", "legit"])
-        self.observable2 = Observable.add_text("asd2.com", tags=["c2"])
-        self.observable3 = Observable.add_text("asd3.com", tags=["c2", "exclude"])
-        self.observable4 = Observable.add_text("asd4.com", tags=["legit"])
-        self.observable5 = Observable.add_text("asd5.com")
-        self.observable6 = Observable.add_text("127.0.0.1")
+        self.observable1 = _observable.save(value="asd1.com", tags=["c2", "legit"])
+        self.observable2 = _observable.save(value="asd2.com", tags=["c2"])
+        self.observable3 = _observable.save(value="asd3.com", tags=["c2", "exclude"])
+        self.observable4 = _observable.save(value="asd4.com", tags=["legit"])
+        self.observable5 = _observable.save(value="asd5.com")
+        self.observable6 = _observable.save(value="127.0.0.1")
         self.template = Template(name="RandomTemplate", template="<BLAH>").save()
         self.export_task = ExportTask(
             name="RandomExport",

@@ -1,15 +1,19 @@
 # TODO Observable value normalization
 
 import datetime
-import re
+import io
+import os
+import tempfile
 
 # Data Schema
 # Dynamically register all observable types
 from enum import Enum
 
 # from enum import Enum, EnumMeta
-from typing import Any, ClassVar, Literal
+from typing import IO, ClassVar, List, Literal, Tuple
 
+import requests
+from bs4 import BeautifulSoup
 from pydantic import Field, computed_field
 
 from core import database_arango
@@ -24,6 +28,7 @@ class ObservableType(str, Enum): ...
 
 ObservableTypes = ()
 TYPE_MAPPING = {}
+FileLikeObject = str | os.PathLike | IO | tempfile.SpooledTemporaryFile
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
@@ -46,37 +51,6 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
-
-    @staticmethod
-    def is_valid(value: Any) -> bool:
-        return False
-
-    @classmethod
-    def add_text(cls, text: str, tags: list[str] = []) -> "ObservableTypes":  # noqa: F821
-        """Adds and returns an observable for a given string.
-
-        Args:
-            text: the text that will be used to add an Observable from.
-            tags: a list of tags to add to the Observable.
-
-        Returns:
-            A saved Observable instance.
-        """
-        refanged = refang(text)
-        observable_type = find_type(refanged)
-        if not observable_type:
-            raise ValueError(f"Invalid type for observable '{text}'")
-
-        observable = Observable.find(value=refanged)
-        if not observable:
-            observable = TYPE_MAPPING[observable_type](
-                value=refanged,
-                created=datetime.datetime.now(datetime.timezone.utc),
-            ).save()
-        observable.get_tags()
-        if tags:
-            observable = observable.tag(tags)
-        return observable
 
     def add_context(
         self,
@@ -128,8 +102,178 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         return self.save()
 
 
-def find_type(value: str) -> ObservableType | None:
+def guess_type(value: str) -> str | None:
+    """
+    Guess the type of an observable based on its value.
+
+    Returns the type if it can be guessed, otherwise None.
+    """
     for obs_type, obj in TYPE_MAPPING.items():
-        if obj.is_valid(value):
-            return obs_type
+        if not hasattr(obj, "validate_value"):
+            continue
+        try:
+            if obj.validate_value(value):
+                return obs_type
+        except ValueError:
+            continue
     return None
+
+
+def create(*, value: str, type: str | None = None, **kwargs) -> ObservableTypes:
+    """
+    Create an observable object without saving it to the database.
+
+    value argument representing the value of the observable.
+
+    if kwargs does not contain a "type" field, type will be automatically
+    determined based on the value. If the type is not recognized, a ValueError
+    will be raised.
+    """
+    if not type or type == "guess":
+        type = guess_type(value)
+        if not type:
+            raise ValueError(f"Invalid type for observable '{value}'")
+    elif type not in TYPE_MAPPING:
+        raise ValueError(f"{type} is not a valid observable type")
+    return TYPE_MAPPING[type](value=value, **kwargs)
+
+
+def save(
+    *, value: str, type: str | None = None, tags: List[str] = None, **kwargs
+) -> ObservableTypes:
+    """
+    Save an observable object. If the object is already in the database, it will be updated.
+
+    kwargs must contain a "value" field representing the of the observable.
+
+    if kwargs does not contain a "type" field, type will be automatically
+    determined based on the value. If the type is not recognized, a ValueError will be raised.
+
+    tags is an optional list of tags to add to the observable.
+    """
+    observable_obj = create(value=value, type=type, **kwargs).save()
+    if tags:
+        observable_obj.tag(tags)
+    return observable_obj
+
+
+def find(*, value, **kwargs) -> ObservableTypes:
+    return Observable.find(value=refang(value), **kwargs)
+
+
+def create_from_text(text: str) -> Tuple[List["ObservableTypes"], List[str]]:
+    """
+    Create a list of observables from a block of text.
+
+    The text is split into lines and each line is used to create an observable.
+    """
+    unknown = list()
+    observables = list()
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obs = create(value=line)
+            observables.append(obs)
+        except ValueError:
+            unknown.append(line)
+    return observables, unknown
+
+
+def save_from_text(
+    text: str, tags: List[str] = None
+) -> Tuple[List["ObservableTypes"], List[str]]:
+    """
+    Save a list of observables from a block of text.
+
+    The text is split into lines and each line is used to create and save an observable.
+    """
+    saved_observables = []
+    observables, unknown = create_from_text(text)
+    for obs in observables:
+        obs = obs.save()
+        if tags:
+            obs.tag(tags)
+        saved_observables.append(obs)
+    return saved_observables, unknown
+
+
+def create_from_file(file: FileLikeObject) -> Tuple[List["ObservableTypes"], List[str]]:
+    """
+    Create a list of observables from a block of text.
+
+    The text is split into lines and each line is used to create an observable.
+    """
+    opened = False
+    if isinstance(file, (str, bytes, os.PathLike)):
+        f = open(file, "r", encoding="utf-8")
+        opened = True
+    elif isinstance(file, (io.IOBase, tempfile.SpooledTemporaryFile)):
+        f = file
+    else:
+        raise ValueError("Invalid file type")
+    observables = list()
+    unknown = list()
+    for line in f.readlines():
+        if isinstance(line, bytes):
+            line = line.decode("utf-8")
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            obs = create(value=line)
+            observables.append(obs)
+        except ValueError:
+            unknown.append(line)
+    if opened:
+        f.close()
+    return observables, unknown
+
+
+def save_from_file(
+    file: FileLikeObject, tags: List[str] = None
+) -> Tuple[List["ObservableTypes"], List[str]]:
+    """
+    Save a list of observables from a block of text.
+
+    The text is split into lines and each line is used to create and save an observable.
+    """
+    observables, unknown = create_from_file(file)
+    saved_observables = list()
+    for obs in observables:
+        obs = obs.save()
+        if tags:
+            obs.tag(tags)
+        saved_observables.append(obs)
+    return saved_observables, unknown
+
+
+def create_from_url(url: str) -> Tuple[List["ObservableTypes"], List[str]]:
+    """
+    Create a list of observables from a URL.
+
+    The URL is fetched and the content is split into lines. Each line is used to create an observable.
+    """
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, "html.parser")
+    return create_from_text(soup.get_text())
+
+
+def save_from_url(
+    url: str, tags: List[str] = None
+) -> Tuple[List["ObservableTypes"], List[str]]:
+    """
+    Save a list of observables from a URL.
+
+    The URL is fetched and the content is split into lines. Each line is used to create and save an observable.
+    """
+    saved_observables = []
+    observables, unknown = create_from_url(url)
+    for obs in observables:
+        obs = obs.save()
+        if tags:
+            obs.tag(tags)
+        saved_observables.append(obs)
+    return saved_observables, unknown

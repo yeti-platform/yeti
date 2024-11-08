@@ -3,9 +3,10 @@ import time
 import unittest
 
 from core import database_arango
-from core.schemas import tag
+from core.schemas import entity, tag
 from core.schemas.entity import (
     AttackPattern,
+    Campaign,
     Entity,
     Malware,
     ThreatActor,
@@ -123,23 +124,25 @@ class EntityTest(unittest.TestCase):
         self.assertNotIn(self.malware1, entities)
 
     def test_entity_with_tags(self):
-        entity = ThreatActor(name="APT0").save()
-        entity.tag(["tag1", "tag2"])
-        observable = hostname.Hostname(value="doman.com").save()
+        entity_obj = ThreatActor(name="APT0").save()
+        entity_obj.tag(["tag1", "tag2"])
+        observable_obj = hostname.Hostname(value="doman.com").save()
 
-        observable.tag(["tag1"])
-        vertices, paths, count = observable.neighbors(
+        observable_obj.tag(["tag1"])
+        vertices, paths, count = observable_obj.neighbors(
             graph="tagged", min_hops=2, max_hops=2
         )
 
         new_tag = tag.Tag.find(name="tag1")
 
         self.assertEqual(len(vertices), 2)
-        self.assertEqual(vertices[entity.extended_id].extended_id, entity.extended_id)
-        self.assertEqual(paths[0][0].source, observable.extended_id)
+        self.assertEqual(
+            vertices[entity_obj.extended_id].extended_id, entity_obj.extended_id
+        )
+        self.assertEqual(paths[0][0].source, observable_obj.extended_id)
         self.assertEqual(paths[0][0].target, new_tag.extended_id)
 
-        self.assertEqual(paths[0][1].source, entity.extended_id)
+        self.assertEqual(paths[0][1].source, entity_obj.extended_id)
         self.assertEqual(paths[0][1].target, new_tag.extended_id)
 
         self.assertEqual(count, 1)
@@ -169,3 +172,24 @@ class EntityTest(unittest.TestCase):
     def test_correct_cve_name(self):
         vulnerability = Vulnerability(name="CVE-1337-4242").save()
         self.assertEqual(Vulnerability.is_valid(vulnerability), True)
+        vulnerability = Vulnerability(name="1337-4242").save()
+        self.assertEqual(Vulnerability.is_valid(vulnerability), False)
+
+    def test_entity_create(self):
+        campaign = entity.create(name="Test Campaign", type="campaign")
+        self.assertIsInstance(campaign, Campaign)
+        self.assertIsNone(campaign.id)
+        self.assertEqual(campaign.name, "Test Campaign")
+        self.assertEqual(campaign.type, "campaign")
+
+    def test_entity_save(self):
+        campaign = entity.save(
+            name="Test Campaign", type="campaign", tags=["tag1", "tag2"]
+        )
+        self.assertIsInstance(campaign, Campaign)
+        self.assertIsNotNone(campaign.id)
+        self.assertEqual(campaign.name, "Test Campaign")
+        self.assertEqual(campaign.type, "campaign")
+        self.assertEqual(len(campaign.tags), 2)
+        self.assertEqual(campaign.tags["tag1"].fresh, True)
+        self.assertEqual(campaign.tags["tag2"].fresh, True)

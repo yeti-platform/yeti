@@ -1,22 +1,16 @@
-from typing import Annotated, Iterable
+from typing import Annotated, Iterable, List
 
-from fastapi import APIRouter, HTTPException
+import validators
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
-from core.schemas import graph
-from core.schemas.observable import TYPE_MAPPING, Observable, ObservableType
+from core.config.config import yeti_config
+from core.schemas import graph, observable
+from core.schemas.observable import Observable, ObservableType, ObservableTypes
 from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
 
-ObservableTypes = ()
-
-for key in TYPE_MAPPING:
-    if key in ["observable", "observables"]:
-        continue
-    cls = TYPE_MAPPING[key]
-    if not ObservableTypes:
-        ObservableTypes = cls
-    else:
-        ObservableTypes |= cls
+# defaults to 10MiB if not defined
+MAX_FILE_UPLOAD = yeti_config.get("web", "max_file_upload", 10 * 1024 * 1024)
 
 
 class TagRequestMixin(BaseModel):
@@ -66,10 +60,19 @@ class BulkObservableAddResponse(BaseModel):
     failed: list[str] = []
 
 
-class AddTextRequest(TagRequestMixin):
+class ImportTextRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
     text: str
+
+
+AddTextRequest = ImportTextRequest
+
+
+class ImportUrlRequest(TagRequestMixin):
+    model_config = ConfigDict(extra="forbid")
+
+    url: str
 
 
 class AddContextRequest(BaseModel):
@@ -120,55 +123,58 @@ router = APIRouter()
 
 
 @router.get("/")
-async def observables_root() -> Iterable[Observable]:
+def observables_root() -> Iterable[Observable]:
     return Observable.list()
 
 
 @router.post("/")
-async def new(request: NewObservableRequest) -> ObservableTypes:
+def new(request: NewObservableRequest) -> ObservableTypes:
     """Creates a new observable in the database.
 
     Raises:
         HTTPException(400) if observable already exists.
     """
-    observable = Observable.find(value=request.value)
-    if observable:
+    if observable.find(value=request.value, type=request.type):
         raise HTTPException(
             status_code=400,
             detail=f"Observable with value {request.value} already exists",
         )
-    cls = TYPE_MAPPING[request.type]
-    observable = cls(value=request.value).save()
-    new = observable.save()
-    if request.tags:
-        new.tag(request.tags)
-    return new
+    try:
+        return observable.save(
+            type=request.type, value=request.value, tags=request.tags
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to add observable",
+        )
 
 
 @router.post("/extended")
-async def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes:
+def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes:
     """Creates a new observable in the database with extended properties.
 
     Raises:
         HTTPException(400) if observable already exists.
     """
-    observable = Observable.find(
-        value=request.observable.value, type=request.observable.type
-    )
-    if observable:
+    if observable.find(value=request.observable.value, type=request.observable.type):
         raise HTTPException(
             status_code=400,
             detail=f"Observable with value {request.observable.value} already exists",
         )
-    cls = TYPE_MAPPING[request.observable.type]
-    new = cls(**request.observable.model_dump()).save()
-    if request.tags:
-        new.tag(request.tags)
-    return new
+    try:
+        return observable.save(
+            **request.observable.model_dump(exclude={"tags"}), tags=request.tags
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Failed to add observable",
+        )
 
 
 @router.patch("/{observable_id}")
-async def patch(request: PatchObservableRequest, observable_id) -> ObservableTypes:
+def patch(request: PatchObservableRequest, observable_id) -> ObservableTypes:
     """Modifies observable in the database."""
     db_observable = Observable.get(observable_id)
     if not db_observable:
@@ -187,28 +193,20 @@ async def patch(request: PatchObservableRequest, observable_id) -> ObservableTyp
 
 
 @router.post("/bulk")
-async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddResponse:
+def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddResponse:
     """Bulk-creates new observables in the database."""
     response = BulkObservableAddResponse()
     for new_observable in request.observables:
-        if new_observable.type == ObservableType.guess:
-            try:
-                observable = Observable.add_text(
-                    new_observable.value, tags=new_observable.tags
-                )
-            except ValueError:
-                response.failed.append(new_observable.value)
-                continue
-        else:
-            cls = TYPE_MAPPING[new_observable.type]
-            try:
-                observable = cls(value=new_observable.value).save()
-                if new_observable.tags:
-                    observable = observable.tag(new_observable.tags)
-            except (ValueError, RuntimeError):
-                response.failed.append(new_observable.value)
-                continue
-        response.added.append(observable)
+        try:
+            observable_obj = observable.save(
+                type=new_observable.type,
+                value=new_observable.value,
+                tags=new_observable.tags,
+            )
+        except (ValueError, RuntimeError):
+            response.failed.append(new_observable.value)
+            continue
+        response.added.append(observable_obj)
     if not response.added:
         raise HTTPException(
             status_code=400,
@@ -218,49 +216,47 @@ async def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddRes
 
 
 @router.get("/{observable_id}")
-async def details(observable_id) -> ObservableTypes:
+def details(observable_id) -> ObservableTypes:
     """Returns details about an observable."""
-    observable = Observable.get(observable_id)
-    if not observable:
+    observable_obj = Observable.get(observable_id)
+    if not observable_obj:
         raise HTTPException(status_code=404, detail="Observable not found")
-    observable.get_tags()
-    return observable
+    observable_obj.get_tags()
+    return observable_obj
 
 
 @router.post("/{observable_id}/context")
-async def add_context(observable_id, request: AddContextRequest) -> ObservableTypes:
+def add_context(observable_id, request: AddContextRequest) -> ObservableTypes:
     """Adds context to an observable."""
-    observable = Observable.get(observable_id)
-    if not observable:
+    observable_obj = Observable.get(observable_id)
+    if not observable_obj:
         raise HTTPException(
             status_code=404, detail=f"Observable {observable_id} not found"
         )
 
-    observable = observable.add_context(
+    observable_obj = observable_obj.add_context(
         request.source, request.context, skip_compare=request.skip_compare
     )
-    return observable
+    return observable_obj
 
 
 @router.post("/{observable_id}/context/delete")
-async def delete_context(
-    observable_id, request: DeleteContextRequest
-) -> ObservableTypes:
+def delete_context(observable_id, request: DeleteContextRequest) -> ObservableTypes:
     """Removes context to an observable."""
-    observable = Observable.get(observable_id)
-    if not observable:
+    observable_obj = Observable.get(observable_id)
+    if not observable_obj:
         raise HTTPException(
             status_code=404, detail=f"Observable {observable_id} not found"
         )
 
-    observable = observable.delete_context(
+    observable_obj = observable_obj.delete_context(
         request.source, request.context, skip_compare=request.skip_compare
     )
-    return observable
+    return observable_obj
 
 
 @router.post("/search")
-async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
+def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     """Searches for observables."""
     query = request.query
     tags = query.pop("tags", [])
@@ -277,41 +273,88 @@ async def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
     return ObservableSearchResponse(observables=observables, total=total)
 
 
-@router.post("/add_text")
-async def add_text(request: AddTextRequest) -> ObservableTypes:
+@router.post("/add_text", deprecated=True)
+def add_text(request: AddTextRequest) -> ObservableTypes:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
-        return Observable.add_text(request.text, request.tags)
+        return observable.save(value=request.text, tags=request.tags)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
 
+@router.post("/import/text")
+def import_from_text(request: ImportTextRequest) -> BulkObservableAddResponse:
+    """Adds and returns an observable for a given string, attempting to guess
+    its type."""
+    try:
+        observables, unknown = observable.save_from_text(
+            text=request.text, tags=request.tags
+        )
+        response = BulkObservableAddResponse(added=observables, failed=unknown)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    return response
+
+
+@router.post("/import/url")
+def import_from_url(request: ImportUrlRequest) -> BulkObservableAddResponse:
+    """Adds and returns observables from a given url, attempting to guess
+    their types."""
+    if not validators.url(request.text):
+        raise HTTPException(status_code=400, detail="Invalid URL")
+    try:
+        observables, unknown = observable.save_from_url(
+            value=request.url, tags=request.tags
+        )
+        response = BulkObservableAddResponse(added=observables, failed=unknown)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    return response
+
+
+@router.post("/import/file")
+def import_from_file(
+    file: Annotated[UploadFile, File()], tags: Annotated[list[str], Form()]
+) -> BulkObservableAddResponse:
+    """Adds and returns observables from a given url, attempting to guess
+    their types."""
+    if file.size > MAX_FILE_UPLOAD:
+        raise HTTPException(status_code=400, detail="File too large")
+    try:
+        # we can't use request.file object because it's not async
+        observables, unknown = observable.save_from_file(file=file.file, tags=tags)
+        response = BulkObservableAddResponse(added=observables, failed=unknown)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+    return response
+
+
 @router.post("/tag")
-async def tag_observable(request: ObservableTagRequest) -> ObservableTagResponse:
+def tag_observable(request: ObservableTagRequest) -> ObservableTagResponse:
     """Tags a set of observables, individually or in bulk."""
     observables = []
     for observable_id in request.ids:
-        observable = Observable.get(observable_id)
-        if not observable:
+        observable_obj = Observable.get(observable_id)
+        if not observable_obj:
             raise HTTPException(
                 status_code=400,
                 detail="Tagging request contained an unknown observable: ID:{observable_id}",
             )
-        observables.append(observable)
+        observables.append(observable_obj)
 
     observable_tags = {}
-    for observable in observables:
-        observable.tag(request.tags, strict=request.strict)
-        observable_tags[observable.extended_id] = observable.tags
+    for observable_obj in observables:
+        observable_obj.tag(request.tags, strict=request.strict)
+        observable_tags[observable_obj.extended_id] = observable_obj.tags
 
     return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
 
 
 @router.delete("/{observable_id}")
-async def delete(observable_id: str) -> None:
+def delete(observable_id: str) -> None:
     """Deletes an observable."""
-    observable = Observable.get(observable_id)
-    if not observable:
+    observable_obj = Observable.get(observable_id)
+    if not observable_obj:
         raise HTTPException(status_code=404, detail="Observable not found")
-    observable.delete()
+    observable_obj.delete()

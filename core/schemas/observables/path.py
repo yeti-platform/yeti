@@ -1,17 +1,55 @@
 import re
 from typing import Literal
 
+from pydantic import field_validator
+
 from core.schemas import observable
 
-LINUX_PATH_REGEX = re.compile(r"^(\/[^\/\0]+)+$")
+# Regex generated with https://chatgpt.com/share/6720b845-1cb8-8006-9005-1837e2654525
+
+LINUX_PATH_REGEX = re.compile(
+    r"""
+^
+(
+    # Absolute path (e.g., /usr/local/bin/file)
+    /(?:[^/\0]+/)+[^/\0]* |
+    
+    # Home directory path (e.g., ~/Documents/file)
+    ~(?:/[^/\0]+)+ |
+    
+    # Relative path (e.g., bin/file or ../folder/file)
+    (?:\./|\.\./|[^/\0]+/)+[^/\0]*
+)
+$
+""",
+    re.VERBOSE,
+)
+
 WINDOWS_PATH_REGEX = re.compile(
-    r"^(?:[a-zA-Z]\:|\\\\[\w\.]+\\[\w.$]+)\\(?:[\w]+\\)*\w([\w.])+"
+    r"""
+^
+(
+    # Drive letter path (e.g., C:\path\to\file)
+    [a-zA-Z]:[\\/](?:[^<>:"|?*\\/\r\n]+[\\/])+[^<>:"|?*\\/\r\n]* |
+    
+    # UNC path (e.g., \\server\share\path\to\file)
+    \\\\[a-zA-Z0-9._-]+\\[a-zA-Z0-9$_.-]+(?:\\[^<>:"|?*\\/\r\n]+)+ |
+    
+    # Relative path (e.g., folder\file or ..\folder\file)
+    (?:\.\.?(?:[\\/]|$))+[\\/](?:[^<>:"|?*\\/\r\n]+[\\/])+[^<>:"|?*\\/\r\n]*
+)
+$
+""",
+    re.VERBOSE,
 )
 
 
 class Path(observable.Observable):
-    type: Literal[observable.ObservableType.path] = observable.ObservableType.path
+    type: Literal["path"] = "path"
 
-    @staticmethod
-    def is_valid(value: str) -> bool:
-        return LINUX_PATH_REGEX.match(value) or WINDOWS_PATH_REGEX.match(value)
+    @field_validator("value")
+    @classmethod
+    def validate_value(cls, value: str) -> str:
+        if not (LINUX_PATH_REGEX.match(value) or WINDOWS_PATH_REGEX.match(value)):
+            raise ValueError("Invalid path")
+        return value

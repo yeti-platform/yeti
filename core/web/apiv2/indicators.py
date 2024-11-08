@@ -62,14 +62,14 @@ router = APIRouter()
 
 
 @router.post("/")
-async def new(request: NewIndicatorRequest) -> IndicatorTypes:
+def new(request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
     new = request.indicator.save()
     return new
 
 
 @router.patch("/{indicator_id}")
-async def patch(request: PatchIndicatorRequest, indicator_id) -> IndicatorTypes:
+def patch(request: PatchIndicatorRequest, indicator_id) -> IndicatorTypes:
     """Modifies an indicator in the database."""
     db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
@@ -93,7 +93,7 @@ async def patch(request: PatchIndicatorRequest, indicator_id) -> IndicatorTypes:
 
 
 @router.get("/{indicator_id}")
-async def details(indicator_id) -> IndicatorTypes:
+def details(indicator_id) -> IndicatorTypes:
     """Returns details about an indicator."""
     db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
@@ -103,7 +103,7 @@ async def details(indicator_id) -> IndicatorTypes:
 
 
 @router.delete("/{indicator_id}")
-async def delete(indicator_id: str) -> None:
+def delete(indicator_id: str) -> None:
     """Deletes an indicator."""
     db_indicator = Indicator.get(indicator_id)
     if not db_indicator:
@@ -114,7 +114,7 @@ async def delete(indicator_id: str) -> None:
 
 
 @router.post("/search")
-async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
+def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
     """Searches for indicators."""
     query = request.query
     tags = query.pop("tags", [])
@@ -133,7 +133,7 @@ async def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
 
 
 @router.post("/tag")
-async def tag(request: IndicatorTagRequest) -> IndicatorTagResponse:
+def tag(request: IndicatorTagRequest) -> IndicatorTagResponse:
     """Tags entities."""
     indicators = []
     for indicator_id in request.ids:

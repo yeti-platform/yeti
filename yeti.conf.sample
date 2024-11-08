@@ -78,6 +78,15 @@ enabled = True
 # database = 0
 # tls = ok
 
+[events]
+# Define in MiB the maximum allocated memory for events queue
+memory_limit = 64
+# When memory limit is reached, the oldest events will be dropped
+# and will keep <keep_ratio> events.
+keep_ratio = 0.9
+# if concurrency is not defined, defaults to multiprocessing.cpu_count
+consumers_concurrency = 2
+
 [misp]
 
 ##

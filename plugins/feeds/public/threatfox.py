@@ -4,22 +4,17 @@ from typing import ClassVar
 import pandas as pd
 
 from core import taskmanager
-from core.schemas import observable, task
+from core.schemas import task
+from core.schemas.observables import hostname, ipv4, url
 
 
 class ThreatFox(task.FeedTask):
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "ThreatFox",
-        "description": "This feed contains malware hashes",
+        "description": "This feed contains malware hashes and network IOCs",
     }
     _SOURCE: ClassVar["str"] = "https://threatfox.abuse.ch/export/json/recent/"
-
-    _MAPPING = {
-        "ip": observable.ObservableType.ipv4,
-        "domain": observable.ObservableType.hostname,
-        "url": observable.ObservableType.url,
-    }
 
     def run(self):
         r = self._make_request(self._SOURCE, sort=False)
@@ -86,15 +81,17 @@ class ThreatFox(task.FeedTask):
         value = None
         obs = None
 
-        if ioc_type in self._MAPPING:
+        if ioc_type in ["url", "ip", "domain"]:
             if ioc_type == "ip":
                 value, port = ioc_value.split(":")
                 context["port"] = port
+                obs = ipv4.IPv4(value=value).save()
+            elif ioc_type == "domain":
+                value = ioc_value
+                obs = hostname.Hostname(value=value).save()
             else:
                 value = ioc_value
-            obs = observable.Observable(
-                value=value, type=self._MAPPING[ioc_type]
-            ).save()
+                obs = url.Url(value=value).save()
             obs.add_context(self.name, context)
             if malware_alias:
                 tags.extend(malware_alias.split(","))

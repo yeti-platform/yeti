@@ -1,13 +1,18 @@
 from typing import Literal
 
 import validators
+from pydantic import field_validator
 
 from core.schemas import observable
 
 
 class Email(observable.Observable):
-    type: Literal[observable.ObservableType.email] = observable.ObservableType.email
+    type: Literal["email"] = "email"
 
-    @staticmethod
-    def is_valid(value: str) -> bool:
-        return validators.email(value)
+    @field_validator("value")
+    @classmethod
+    def validate_value(cls, value: str) -> str:
+        value = observable.refang(value)
+        if not validators.email(value):
+            raise ValueError("Invalid email address")
+        return value
