@@ -10,6 +10,7 @@ from core.schemas.graph import Relationship
 from core.schemas.observable import Observable
 from core.schemas.observables import (
     asn,
+    auth_secret,
     bic,
     certificate,
     cidr,
@@ -330,6 +331,18 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(observable_obj.id)
         self.assertEqual(observable_obj.value, "AS123")
         self.assertIsInstance(observable_obj, asn.ASN)
+
+    def test_create_auth_secret(self) -> None:
+        """Tests creating an AuthSecret."""
+        pub_key = """MEgCQQCo9+BpMRYQ/dL3DS2CyJxRF+j6ctbT3/Qp84+KeFhnii7NT7fELilKUSnx
+S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
+        observable_obj = auth_secret.AuthSecret(
+            value=pub_key, auth_type="pubkey"
+        ).save()
+        self.assertIsInstance(observable_obj, auth_secret.AuthSecret)
+        self.assertIsNotNone(observable_obj.id)
+        self.assertEqual(observable_obj.value, pub_key)
+        self.assertEqual(observable_obj.auth_type, "pubkey")
 
     def test_create_wallet(self) -> None:
         """Tests creating a wallet."""
