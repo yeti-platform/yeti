@@ -76,7 +76,7 @@ def create_access_token(data: dict, expires_delta: datetime.timedelta | None = N
     return encoded_jwt
 
 
-async def get_current_user(
+def get_current_user(
     request: Request,
     token: str = Depends(oauth2_scheme),
     cookie: str = Security(cookie_scheme),
@@ -107,7 +107,7 @@ async def get_current_user(
     return user
 
 
-async def get_current_active_user(current_user: User = Security(get_current_user)):
+def get_current_active_user(current_user: User = Security(get_current_user)):
     if not current_user.enabled:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -127,7 +127,7 @@ class GetCurrentUserWithPermissions:
     def __init__(self, admin: bool):
         self.admin = admin
 
-    async def __call__(self, user: User = Depends(get_current_user)) -> User:
+    def __call__(self, user: User = Depends(get_current_user)) -> User:
         if not user.admin:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -238,9 +238,9 @@ if AUTH_MODULE == "oidc":
 if AUTH_MODULE == "local":
 
     @router.post("/token")
-    async def login(
+    def login(
         response: Response, form_data: OAuth2PasswordRequestForm = Depends()
-    ):
+    ) -> dict[str, str]:
         if not YETI_AUTH:
             user = UserSensitive.find(username="yeti")
             if not user:
@@ -271,7 +271,7 @@ if AUTH_MODULE == "local":
 
 
 @router.post("/api-token")
-async def login_api(x_yeti_api_key: str = Security(api_key_header)):
+def login_api(x_yeti_api_key: str = Security(api_key_header)) -> dict[str, str]:
     user = UserSensitive.find(api_key=x_yeti_api_key)
     if not user:
         raise HTTPException(
@@ -295,11 +295,11 @@ async def login_api(x_yeti_api_key: str = Security(api_key_header)):
 
 
 @router.get("/me")
-async def me(current_user: User = Depends(get_current_user)) -> User:
+def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(response: Response) -> dict[str, str]:
     response.delete_cookie(key="yeti_session")
     return {"message": "Logged out"}

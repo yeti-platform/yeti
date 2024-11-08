@@ -60,7 +60,7 @@ router = APIRouter()
 
 
 @router.get("/{user_id}")
-async def get(user_id: str) -> User:
+def get(user_id: str) -> User:
     """Gets a user by ID."""
     user = UserSensitive.get(user_id)
     if not user:
@@ -69,7 +69,7 @@ async def get(user_id: str) -> User:
 
 
 @router.post("/search")
-async def search(request: SearchUserRequest) -> SearchUserResponse:
+def search(request: SearchUserRequest) -> SearchUserResponse:
     """Searches for users."""
     request_args = request.model_dump(exclude={"count", "page"})
     users, total = UserSensitive.filter(
@@ -79,7 +79,7 @@ async def search(request: SearchUserRequest) -> SearchUserResponse:
 
 
 @router.post("/toggle")
-async def toggle(
+def toggle(
     request: ToggleUserRequest,
     current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
 ) -> User:
@@ -100,7 +100,7 @@ async def toggle(
 
 
 @router.post("/reset-api-key")
-async def reset_api_key(
+def reset_api_key(
     request: ResetApiKeyRequest, current_user: UserSensitive = Depends(get_current_user)
 ) -> User:
     """Resets a user's API key."""
@@ -118,7 +118,7 @@ async def reset_api_key(
 
 
 @router.post("/reset-password")
-async def reset_password(
+def reset_password(
     request: ResetPasswordRequest,
     current_user: UserSensitive = Depends(get_current_user),
 ) -> User:
@@ -138,7 +138,7 @@ async def reset_password(
 
 
 @router.delete("/{user_id}")
-async def delete(
+def delete(
     user_id: str,
     current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
 ) -> None:
@@ -150,7 +150,7 @@ async def delete(
 
 
 @router.post("/")
-async def create(
+def create(
     request: NewUserRequest,
     current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
 ) -> User:

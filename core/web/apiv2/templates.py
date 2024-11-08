@@ -45,7 +45,7 @@ router = APIRouter()
 
 
 @router.post("/search")
-async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
+def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
     """Searches for observables."""
     glob = "*"
     if request.name:
@@ -70,7 +70,7 @@ async def search(request: TemplateSearchRequest) -> TemplateSearchResponse:
 
 
 @router.post("/render")
-async def render(request: RenderTemplateRequest) -> StreamingResponse:
+def render(request: RenderTemplateRequest) -> StreamingResponse:
     """Renders a template."""
     if not request.search_query and not request.observable_ids:
         raise HTTPException(

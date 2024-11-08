@@ -33,7 +33,7 @@ class SystemConfigResponse(BaseModel):
 
 
 @router.get("/config")
-async def get_config() -> SystemConfigResponse:
+def get_config() -> SystemConfigResponse:
     """Gets the system config."""
     config = SystemConfigResponse(
         auth={
@@ -46,7 +46,7 @@ async def get_config() -> SystemConfigResponse:
 
 
 @router.get("/workers", dependencies=[Depends(get_current_active_user)])
-async def get_worker_status() -> WorkerStatusResponse:
+def get_worker_status() -> WorkerStatusResponse:
     inspect = app.control.inspect(timeout=5, destination=None)
 
     registered = {}
@@ -68,7 +68,7 @@ async def get_worker_status() -> WorkerStatusResponse:
 @router.post(
     "/restartworker/{worker_name}", dependencies=[Depends(get_current_active_user)]
 )
-async def restart_worker(worker_name: str) -> WorkerRestartResponse:
+def restart_worker(worker_name: str) -> WorkerRestartResponse:
     """Restarts a single or all Celery workers."""
     destination = [worker_name] if worker_name != "all" else None
     response = app.control.broadcast(
