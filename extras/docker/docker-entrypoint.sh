@@ -4,7 +4,7 @@ set -euo pipefail
 if [[ "$1" = 'webserver' ]]; then
     poetry run uvicorn core.web.webapp:app --reload --host 0.0.0.0 --log-level=debug
 elif [[ "$1" = 'webserver-prod' ]]; then
-    poetry run uvicorn core.web.webapp:app --host 0.0.0.0 --workers $(nproc --all) --log-level=info
+    poetry run uvicorn core.web.webapp:app --host 0.0.0.0 --workers $(nproc --all || echo 4) --log-level=info
 elif [[ "$1" = 'tasks' ]]; then
     poetry run celery -A core.taskscheduler worker --loglevel=INFO --purge -B -P threads
 elif [[ "$1" = 'events-tasks' ]]; then
