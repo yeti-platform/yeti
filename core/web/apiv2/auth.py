@@ -238,7 +238,9 @@ if AUTH_MODULE == "oidc":
 if AUTH_MODULE == "local":
 
     @router.post("/token")
-    def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
+    def login(
+        response: Response, form_data: OAuth2PasswordRequestForm = Depends()
+    ) -> dict[str, str]:
         if not YETI_AUTH:
             user = UserSensitive.find(username="yeti")
             if not user:
@@ -269,7 +271,7 @@ if AUTH_MODULE == "local":
 
 
 @router.post("/api-token")
-def login_api(x_yeti_api_key: str = Security(api_key_header)):
+def login_api(x_yeti_api_key: str = Security(api_key_header)) -> dict[str, str]:
     user = UserSensitive.find(api_key=x_yeti_api_key)
     if not user:
         raise HTTPException(
@@ -298,6 +300,6 @@ def me(current_user: User = Depends(get_current_user)) -> User:
 
 
 @router.post("/logout")
-async def logout(response: Response):
+async def logout(response: Response) -> dict[str, str]:
     response.delete_cookie(key="yeti_session")
     return {"message": "Logged out"}

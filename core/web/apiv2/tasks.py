@@ -44,7 +44,7 @@ router = APIRouter()
 
 
 @router.post("/{task_name}/run")
-def run(task_name, params: TaskParams | None = None) -> dict:
+def run(task_name, params: TaskParams | None = None) -> dict[str, str]:
     """Runs a task asynchronously."""
     if params is None:
         params = TaskParams()
@@ -112,7 +112,7 @@ def patch_export(export_name: str, request: PatchExportRequest) -> ExportTask:
 
 
 @router.get("/export/{export_id}/content")
-def export_content(export_id: str):
+def export_content(export_id: str) -> StreamingResponse:
     """Downloads the latest contents of a given ExportTask."""
     export = ExportTask.get(export_id)
     if not export:
@@ -127,7 +127,7 @@ def export_content(export_id: str):
 
 
 @router.delete("/export/{export_name}")
-def delete_export(export_name: str):
+def delete_export(export_name: str) -> dict[str, str]:
     """Deletes an ExportTask."""
     export = ExportTask.find(name=export_name)
     if not export:
