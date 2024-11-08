@@ -63,6 +63,9 @@ class ArangoDatabase:
         password = password or yeti_config.get("arangodb", "password")
         database = database or yeti_config.get("arangodb", "database")
 
+        if TESTING:
+            database = "yeti_test"
+
         host_string = f"http://{host}:{port}"
         client = ArangoClient(hosts=host_string, request_timeout=None)
 
@@ -965,26 +968,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 )
                 sorts.append(f"o.{key}")
             elif key in ("name", "value"):
-                if using_regex:
-                    key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
-                else:
+                if using_view and not using_regex:
                     aql_args[f"arg{i}_value"] = f"%{value}%"
                     key_conditions = [
                         f"ANALYZER(LIKE(o.@arg{i}_key, LOWER(@arg{i}_value)), 'norm')"
                     ]
+                else:
+                    key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
+
                 for alias, alias_type in aliases:
                     if (
                         alias_type in {"text", "option"}
                         or alias_type == "list"
                         and using_view
                     ):
-                        if using_regex:
+                        if using_view and not using_regex:
                             key_conditions.append(
-                                f"REGEX_TEST(o.{alias}, @arg{i}_value, true)"
+                                f"ANALYZER(LIKE(o.{alias}, LOWER(@arg{i}_value)), 'norm')"
                             )
                         else:
                             key_conditions.append(
-                                f"ANALYZER(LIKE(o.{alias}, LOWER(@arg{i}_value)), 'norm')"
+                                f"REGEX_TEST(o.{alias}, @arg{i}_value, true)"
                             )
                     elif alias_type == "list":
                         if using_regex:
