@@ -97,7 +97,7 @@ def config() -> DFIQConfigResponse:
 def from_archive(archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
     tempdir = tempfile.TemporaryDirectory()
-    contents = archive.read()
+    contents = archive.file.read()
     ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
     total_added = dfiq.read_from_data_directory(f"{tempdir.name}/*/*.yaml")
     return {"total_added": total_added}
