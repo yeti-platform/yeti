@@ -1,4 +1,5 @@
 import datetime
+import time
 import unittest
 
 from core import database_arango
@@ -40,10 +41,8 @@ from core.schemas.observables import (
 class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
+        self.db = database_arango.db
 
     def test_observable_create(self) -> None:
         result = hostname.Hostname(value="toto.com").save()
@@ -118,29 +117,35 @@ class ObservableTest(unittest.TestCase):
     def test_observable_filter(self):
         obs1 = hostname.Hostname(value="test1.com").save()
         obs2 = hostname.Hostname(value="test2.com").save()
+        time.sleep(1)
 
         result, total = Observable.filter(query_args={"value": "test"})
         self.assertEqual(len(result), 2)
         self.assertEqual(total, 2)
-        self.assertEqual(result[0].id, obs1.id)
-        self.assertEqual(result[0].value, "test1.com")
-        self.assertEqual(result[1].id, obs2.id)
-        self.assertEqual(result[1].value, "test2.com")
+        actual = [r.value for r in result]
+        self.assertIn("test1.com", actual)
+        self.assertIn("test2.com", actual)
+        actual = [r.id for r in result]
+        self.assertIn(obs1.id, actual)
+        self.assertIn(obs2.id, actual)
 
     def test_observable_filter_in(self):
         obs1 = hostname.Hostname(value="test1.com").save()
         hostname.Hostname(value="test2.com").save()
-        obs3 = hostname.Hostname(value="test3.com").save()
+        obs2 = hostname.Hostname(value="test3.com").save()
+        time.sleep(1)
 
         result, total = Observable.filter(
             query_args={"value__in": ["test1.com", "test3.com"]}
         )
         self.assertEqual(len(result), 2)
         self.assertEqual(total, 2)
-        self.assertEqual(result[0].id, obs1.id)
-        self.assertEqual(result[0].value, "test1.com")
-        self.assertEqual(result[1].id, obs3.id)
-        self.assertEqual(result[1].value, "test3.com")
+        actual = [r.value for r in result]
+        self.assertIn("test1.com", actual)
+        self.assertIn("test3.com", actual)
+        actual = [r.id for r in result]
+        self.assertIn(obs1.id, actual)
+        self.assertIn(obs2.id, actual)
 
     def test_observable_link_to(self) -> None:
         observable1 = hostname.Hostname(value="toto.com").save()

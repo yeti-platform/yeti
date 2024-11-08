@@ -23,7 +23,7 @@ class FeedTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_feodo_tracker_ip_blocklist(self):
         defaults = feodo_tracker_ip_blocklist.FeodoTrackerIPBlockList._defaults.copy()

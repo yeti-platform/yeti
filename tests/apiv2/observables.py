@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 import unittest
 
 from fastapi.testclient import TestClient
@@ -16,7 +17,7 @@ class ObservableTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
@@ -121,6 +122,7 @@ class ObservableTest(unittest.TestCase):
             md5="d41d8cd98f00b204e9800998ecf8427e",
             mime_type="inode/x-empty; charset=binary",
         ).save()
+        time.sleep(1)
         response = client.post(
             "/api/v2/observables/search",
             json={"query": {"value": "empty"}, "page": 0, "count": 10},
@@ -175,6 +177,7 @@ class ObservableTest(unittest.TestCase):
             "/api/v2/observables/",
             json={"value": "toto.com", "type": "hostname", "tags": ["tag1", "tag2"]},
         )
+        time.sleep(1)
         self.assertEqual(response.status_code, 200)
         response = client.post(
             "/api/v2/observables/search",
@@ -395,7 +398,8 @@ class ObservableContextTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
@@ -408,7 +412,7 @@ class ObservableContextTest(unittest.TestCase):
         )
 
     def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_add_context(self) -> None:
         response = client.post(
@@ -419,8 +423,9 @@ class ObservableContextTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["context"], [{"key": "value", "source": "test_source"}])
 
-    def test_sarch_context(self) -> None:
+    def test_search_context(self) -> None:
         """Tests that we can filter observables based on context subfields."""
+        time.sleep(1)
         response = client.post(
             "/api/v2/observables/search",
             json={"query": {"context.source": "tests:"}, "page": 0, "count": 10},

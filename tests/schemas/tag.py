@@ -11,12 +11,9 @@ from core.schemas.tag import Tag
 class TagTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.obs1 = hostname.Hostname(value="test1.com").save()
         self.obs2 = hostname.Hostname(value="test2.com").save()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_tag_create(self) -> None:
         """Test that a tag can be created"""

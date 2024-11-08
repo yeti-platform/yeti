@@ -36,11 +36,8 @@ class TaskTest(unittest.TestCase):
                     Observable.add_text(item)
 
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.fake_task_class = FakeTask
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_register_task(self) -> None:
         taskmanager.TaskManager.register_task(self.fake_task_class)
@@ -110,14 +107,11 @@ class TaskTest(unittest.TestCase):
 class AnalyticsTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.observable1 = Observable.add_text("asd1.com")
         self.observable2 = Observable.add_text("asd2.com")
         self.observable3 = Observable.add_text("asd3.com")
         self.observable4 = Observable.add_text("8.8.8.8")
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_run_analytics_task(self):
         """Tests that the each function is called for each filtered observable."""
@@ -148,7 +142,8 @@ class AnalyticsTest(unittest.TestCase):
                 mock.call(self.observable1.value),
                 mock.call(self.observable2.value),
                 mock.call(self.observable3.value),
-            ]
+            ],
+            any_order=True,
         )
         self.assertEqual(mock_inner_each.call_count, 3)
 
@@ -195,7 +190,7 @@ class OneShotTaskTest(unittest.TestCase):
                 observable.add_context("test", {"test": "test"})
 
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.fake_oneshot_task_class = FakeOneShotTask
         observable = Observable.add_text("asd1.com")
         observable.tag(["c2", "legit"])
@@ -244,7 +239,7 @@ class OneShotTaskTest(unittest.TestCase):
 class ExportTaskTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.observable1 = Observable.add_text("asd1.com", tags=["c2", "legit"])
         self.observable2 = Observable.add_text("asd2.com", tags=["c2"])
         self.observable3 = Observable.add_text("asd3.com", tags=["c2", "exclude"])

@@ -1,3 +1,4 @@
+import time
 import unittest
 
 from fastapi.testclient import TestClient
@@ -14,7 +15,7 @@ client = TestClient(webapp.app)
 class GraphTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.observable3 = ipv4.IPv4(value="8.8.8.8").save()
@@ -22,9 +23,6 @@ class GraphTest(unittest.TestCase):
         self.entity1 = Malware(name="plugx").save()
         self.entity2 = Campaign(name="campaign1").save()
         self.entity3 = Campaign(name="campaign2").save()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_node_deletion_affects_link(self) -> None:
         """Tests that deleting a node also deletes assocaited relationships."""
@@ -238,6 +236,7 @@ class GraphTest(unittest.TestCase):
         query = {"type": "campaign"}
 
         sorting = [["related_observables_count", True]]
+        time.sleep(1)
         entities, total = Entity.filter(
             query_args=query, offset=0, count=20, sorting=sorting
         )

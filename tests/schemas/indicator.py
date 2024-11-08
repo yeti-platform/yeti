@@ -13,10 +13,7 @@ from core.schemas.indicator import (
 class IndicatorTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_create_indicator(self) -> None:
         result = Regex(

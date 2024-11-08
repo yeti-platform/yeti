@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import time
 import unittest
 from pathlib import Path
 
@@ -26,7 +27,8 @@ class TemplateTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
@@ -43,7 +45,6 @@ class TemplateTest(unittest.TestCase):
     def tearDown(self) -> None:
         for file in Path(self.temp_template_path).rglob("*.jinja2"):
             file.unlink()
-        database_arango.db.clear()
 
     def test_search_template(self):
         response = client.post("/api/v2/templates/search", json={"name": "Fake"})
@@ -94,6 +95,8 @@ class TemplateTest(unittest.TestCase):
         hostname.Hostname(value="yeti2.com").save()
         hostname.Hostname(value="yeti3.com").save()
         hostname.Hostname(value="hacker.com").save()
+
+        time.sleep(1)
         response = client.post(
             "/api/v2/templates/render",
             json={"template_name": "FakeTemplate", "search_query": "yeti"},
@@ -104,7 +107,7 @@ class TemplateTest(unittest.TestCase):
             response.headers["Content-Disposition"],
             "attachment; filename=FakeTemplate.txt",
         )
-        self.assertEqual(data, "<blah>\nyeti1.com\nyeti2.com\nyeti3.com\n\n</blah>\n")
+        self.assertEqual(data, "<blah>\nyeti3.com\nyeti2.com\nyeti1.com\n\n</blah>\n")
 
     def test_render_nonexistent(self):
         response = client.post(

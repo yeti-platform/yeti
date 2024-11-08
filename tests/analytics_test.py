@@ -19,10 +19,7 @@ class CensysAnalyticsTest(YetiTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     @patch("plugins.analytics.public.censys.CensysHosts")
     def test_censys_query(self, mock_censys_hosts):
@@ -85,10 +82,10 @@ class ShodanAnalyticsTest(YetiTestCase):
     @classmethod
     def setUpClass(cls) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     @parameterized.expand([(-1, 5), (500, 5), (3, 3), (None, 5)])
     @patch("plugins.analytics.public.shodan.Shodan")
