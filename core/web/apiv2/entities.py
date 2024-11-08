@@ -58,7 +58,7 @@ router = APIRouter()
 
 
 @router.post("/")
-async def new(request: NewEntityRequest) -> EntityTypes:
+def new(request: NewEntityRequest) -> EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
     if request.tags:
@@ -67,7 +67,7 @@ async def new(request: NewEntityRequest) -> EntityTypes:
 
 
 @router.patch("/{entity_id}")
-async def patch(request: PatchEntityRequest, entity_id) -> EntityTypes:
+def patch(request: PatchEntityRequest, entity_id) -> EntityTypes:
     """Modifies entity in the database."""
     db_entity: EntityTypes = Entity.get(entity_id)
     if not db_entity:
@@ -84,7 +84,7 @@ async def patch(request: PatchEntityRequest, entity_id) -> EntityTypes:
 
 
 @router.get("/{entity_id}")
-async def details(entity_id) -> EntityTypes:
+def details(entity_id) -> EntityTypes:
     """Returns details about an observable."""
     db_entity: EntityTypes = Entity.get(entity_id)  # type: ignore
     if not db_entity:
@@ -94,7 +94,7 @@ async def details(entity_id) -> EntityTypes:
 
 
 @router.delete("/{entity_id}")
-async def delete(entity_id: str) -> None:
+def delete(entity_id: str) -> None:
     """Deletes an Entity."""
     db_entity = Entity.get(entity_id)
     if not db_entity:
@@ -103,7 +103,7 @@ async def delete(entity_id: str) -> None:
 
 
 @router.post("/search")
-async def search(request: EntitySearchRequest) -> EntitySearchResponse:
+def search(request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
     query = request.query
     tags = query.pop("tags", [])
@@ -122,7 +122,7 @@ async def search(request: EntitySearchRequest) -> EntitySearchResponse:
 
 
 @router.post("/tag")
-async def tag(request: EntityTagRequest) -> EntityTagResponse:
+def tag(request: EntityTagRequest) -> EntityTagResponse:
     """Tags entities."""
     entities = []
     for entity_id in request.ids:

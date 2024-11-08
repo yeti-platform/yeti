@@ -122,7 +122,7 @@ router = APIRouter()
 
 
 @router.post("/search")
-async def search(request: GraphSearchRequest) -> GraphSearchResponse:
+def search(request: GraphSearchRequest) -> GraphSearchResponse:
     """Fetches neighbros for a given Yeti Object."""
     object_type, object_id = request.source.split("/")
     if object_type not in GRAPH_TYPE_MAPPINGS:
@@ -151,7 +151,7 @@ async def search(request: GraphSearchRequest) -> GraphSearchResponse:
 
 
 @router.post("/add")
-async def add(request: GraphAddRequest) -> graph.Relationship:
+def add(request: GraphAddRequest) -> graph.Relationship:
     """Adds a link to the graph."""
     source_type, source_id = request.source.split("/")
     target_type, target_id = request.target.split("/")
@@ -174,7 +174,7 @@ async def add(request: GraphAddRequest) -> graph.Relationship:
 
 
 @router.patch("/{relationship_id}")
-async def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relationship:
+def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relationship:
     """Edits a Relationship in the graph."""
     relationship = graph.Relationship.get(relationship_id)
     if relationship is None:
@@ -190,7 +190,7 @@ async def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relati
 
 
 @router.post("/{relationship_id}/swap")
-async def swap(relationship_id: str) -> graph.Relationship:
+def swap(relationship_id: str) -> graph.Relationship:
     """Swaps the source and target of a relationship."""
     relationship = graph.Relationship.get(relationship_id)
     if relationship is None:
@@ -202,7 +202,7 @@ async def swap(relationship_id: str) -> graph.Relationship:
 
 
 @router.delete("/{relationship_id}")
-async def delete(relationship_id: str) -> None:
+def delete(relationship_id: str) -> None:
     """Deletes a link from the graph."""
     relationship = graph.Relationship.get(relationship_id)
     if relationship is None:
@@ -230,7 +230,7 @@ class AnalysisResponse(BaseModel):
 
 
 @router.post("/match")
-async def match(request: AnalysisRequest) -> AnalysisResponse:
+def match(request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
     entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]

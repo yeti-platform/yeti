@@ -4,7 +4,7 @@ router = APIRouter()
 
 
 @router.post("/import_misp_json", tags=["import_misp_json"])
-async def import_misp_json(misp_file_json: UploadFile = File(...)):
+def import_misp_json(misp_file_json: UploadFile = File(...)):
     # contents = await misp_file_json.read()
     # data_json = json.loads(contents)
 

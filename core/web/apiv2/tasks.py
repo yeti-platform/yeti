@@ -44,7 +44,7 @@ router = APIRouter()
 
 
 @router.post("/{task_name}/run")
-async def run(task_name, params: TaskParams | None = None) -> dict:
+def run(task_name, params: TaskParams | None = None) -> dict:
     """Runs a task asynchronously."""
     if params is None:
         params = TaskParams()
@@ -53,7 +53,7 @@ async def run(task_name, params: TaskParams | None = None) -> dict:
 
 
 @router.post("/{task_name}/toggle")
-async def toggle(task_name) -> TaskTypes:
+def toggle(task_name) -> TaskTypes:
     """Toggles the enabled status on a task."""
     db_task: Task = Task.find(name=task_name)  # type: ignore
     db_task.enabled = not db_task.enabled
@@ -62,7 +62,7 @@ async def toggle(task_name) -> TaskTypes:
 
 
 @router.post("/search")
-async def search(request: TaskSearchRequest) -> TaskSearchResponse:
+def search(request: TaskSearchRequest) -> TaskSearchResponse:
     """Searches for tasks."""
     query = request.query
     if request.type:
@@ -77,7 +77,7 @@ async def search(request: TaskSearchRequest) -> TaskSearchResponse:
 
 
 @router.post("/export/new")
-async def new_export(request: NewExportRequest) -> ExportTask:
+def new_export(request: NewExportRequest) -> ExportTask:
     """Creates a new ExportTask in the database."""
     template = Template.find(name=request.export.template_name)
     if not template:
@@ -90,7 +90,7 @@ async def new_export(request: NewExportRequest) -> ExportTask:
 
 
 @router.patch("/export/{export_name}")
-async def patch_export(export_name: str, request: PatchExportRequest) -> ExportTask:
+def patch_export(export_name: str, request: PatchExportRequest) -> ExportTask:
     """Pathes an existing ExportTask in the database."""
     db_export = ExportTask.find(name=export_name)
     if not db_export:
@@ -112,7 +112,7 @@ async def patch_export(export_name: str, request: PatchExportRequest) -> ExportT
 
 
 @router.get("/export/{export_id}/content")
-async def export_content(export_id: str):
+def export_content(export_id: str):
     """Downloads the latest contents of a given ExportTask."""
     export = ExportTask.get(export_id)
     if not export:
@@ -127,7 +127,7 @@ async def export_content(export_id: str):
 
 
 @router.delete("/export/{export_name}")
-async def delete_export(export_name: str):
+def delete_export(export_name: str):
     """Deletes an ExportTask."""
     export = ExportTask.find(name=export_name)
     if not export:
