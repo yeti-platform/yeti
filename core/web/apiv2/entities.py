@@ -119,11 +119,7 @@ def search(request: EntitySearchRequest) -> EntitySearchResponse:
         links_count=True,
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
-    import time
-
-    stime = time.time()
     response = EntitySearchResponse(entities=entities, total=total)
-    print("Time taken: ", time.time() - stime)
     return response
 
 
