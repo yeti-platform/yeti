@@ -887,6 +887,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         sorting: List[tuple[str, bool]] = [],
         aliases: List[tuple[str, str]] = [],
         graph_queries: List[tuple[str, str, str, str]] = [],
+        links_count: bool = False,
         wildcard: bool = True,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
@@ -925,11 +926,21 @@ class ArangoYetiConnector(AbstractYetiConnector):
             colname += "_view"
 
         # We want user-defined sorts to take precedence.
-        related_observables_count = ""
+        links_count_query = ""
+        if links_count:
+            links_count_query = """
+            LET aggregated_links = (
+                FOR v, e IN 1..1 ANY o links COLLECT root_type = v.root_type INTO vtypes = {'type': v.type}
+                LET sub_types = MERGE(FOR vt IN vtypes COLLECT vtype = vt.type WITH COUNT INTO type_count RETURN {[vtype]: type_count})
+                LET root_type_count = SUM(VALUES(sub_types))
+                RETURN {[root_type]: sub_types, 'total': root_type_count}
+            )
+            LET total_links = SUM(aggregated_links[*].total)
+            """
+
         for field, asc in sorting:
-            if field == "related_observables_count":
-                related_observables_count = 'LET related_observables_count = LENGTH(FOR v, e IN 1..1 ANY o links FILTER v.root_type == "observable" RETURN v)'
-                sorts.append(f'related_observables_count {"ASC" if asc else "DESC"}')
+            if field == "total_links" and links_count:
+                sorts.append(f'total_links {"ASC" if asc else "DESC"}')
             else:
                 sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
@@ -1050,15 +1061,28 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
-                {related_observables_count}
+                {links_count_query}
                 {graph_query_string}
                 {tag_filter_query}
                 {filter_string}
                 {aql_sort}
                 {limit}
             """
+        merged_list = ""
         if graph_queries:
-            aql_string = f'WITH {name}\n\n{aql_string}\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
+            merged_list = ", ".join(
+                [f"{name}: MERGE({name})" for name, _, _, _ in graph_queries]
+            )
+        if links_count:
+            merged_list += (
+                ", aggregated_links, total_links"
+                if merged_list
+                else "aggregated_links, total_links"
+            )
+        if merged_list:
+            aql_string = (
+                f"WITH {name}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})"
+            )
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
