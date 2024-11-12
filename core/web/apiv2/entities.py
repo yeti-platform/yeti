@@ -116,9 +116,15 @@ def search(request: EntitySearchRequest) -> EntitySearchResponse:
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
+        links_count=True,
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
-    return EntitySearchResponse(entities=entities, total=total)
+    import time
+
+    stime = time.time()
+    response = EntitySearchResponse(entities=entities, total=total)
+    print("Time taken: ", time.time() - stime)
+    return response
 
 
 @router.post("/tag")
