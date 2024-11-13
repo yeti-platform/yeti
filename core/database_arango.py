@@ -929,13 +929,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         links_count_query = ""
         if links_count:
             links_count_query = """
-            LET aggregated_links = (
+            LET aggregated_links = MERGE(
                 FOR v, e IN 1..1 ANY o links COLLECT root_type = v.root_type INTO vtypes = {'type': v.type}
                 LET sub_types = MERGE(FOR vt IN vtypes COLLECT vtype = vt.type WITH COUNT INTO type_count RETURN {[vtype]: type_count})
-                LET root_type_count = SUM(VALUES(sub_types))
-                RETURN {[root_type]: sub_types, 'total': root_type_count}
+                LET details = MERGE(sub_types, {'total': SUM(VALUES(sub_types))})
+                RETURN {[root_type]: details}
             )
-            LET total_links = SUM(aggregated_links[*].total)
+            LET total_links = SUM(FOR k IN ATTRIBUTES(aggregated_links) RETURN aggregated_links[k].total)
             """
 
         for field, asc in sorting:
@@ -1069,10 +1069,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 {limit}
             """
         merged_list = ""
+        prologue = ""
         if graph_queries:
             merged_list = ", ".join(
                 [f"{name}: MERGE({name})" for name, _, _, _ in graph_queries]
             )
+            prologue = "WITH " + ", ".join([name for name, _, _, _ in graph_queries])
         if links_count:
             merged_list += (
                 ", aggregated_links, total_links"
@@ -1081,7 +1083,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             )
         if merged_list:
             aql_string = (
-                f"WITH {name}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})"
+                f"{prologue}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})"
             )
         else:
             aql_string += "\nRETURN o"
