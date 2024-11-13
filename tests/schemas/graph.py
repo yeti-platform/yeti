@@ -230,23 +230,20 @@ class GraphTest(unittest.TestCase):
         self.entity3.link_to(self.observable2, "a", "description_aaaa")
         self.entity3.link_to(self.observable3, "c", "description_ccc")
 
-        assert self.entity2.related_observables_count == 3
-        assert self.entity3.related_observables_count == 2
-
         query = {"type": "campaign"}
 
-        sorting = [["related_observables_count", True]]
+        sorting = [["total_links", True]]
         time.sleep(1)
         entities, total = Entity.filter(
-            query_args=query, offset=0, count=20, sorting=sorting
+            query_args=query, offset=0, count=20, sorting=sorting, links_count=True
         )
         assert total == 2
         assert entities[0].name == "campaign2"
         assert entities[1].name == "campaign1"
 
-        sorting = [["related_observables_count", False]]
+        sorting = [["total_links", False]]
         entities, total = Entity.filter(
-            query_args=query, offset=0, count=20, sorting=sorting
+            query_args=query, offset=0, count=20, sorting=sorting, links_count=True
         )
         assert total == 2
         assert entities[0].name == "campaign1"
