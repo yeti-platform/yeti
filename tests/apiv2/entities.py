@@ -32,7 +32,7 @@ class EntityTest(unittest.TestCase):
         self.entity2 = entity.ThreatActor(name="bears").save()
 
         # allow for views to catch up
-        time.sleep(1)
+        time.sleep(0.5)
 
     def tearDown(self) -> None:
         database_arango.db.truncate()
