@@ -1,5 +1,6 @@
 import datetime
 import os
+import time
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -37,6 +38,9 @@ class CensysAnalyticsTest(YetiTestCase):
             relevant_tags=["censys_query_tag"],
             query_type="censys",
         ).save()
+
+        # allow for views to catch up
+        time.sleep(0.5)
 
         mock_search_result = [
             {"ip": "192.0.2.1"},
@@ -108,6 +112,9 @@ class ShodanAnalyticsTest(YetiTestCase):
             query_type="shodan",
         ).save()
 
+        # allow for views to catch up
+        time.sleep(0.5)
+
         def mock_search_cursor(query):
             records = [
                 {"ip_str": "192.0.2.1"},
@@ -125,6 +132,9 @@ class ShodanAnalyticsTest(YetiTestCase):
         analytics = shodan.ShodanApiQuery(**defaults)
 
         analytics.run()
+
+        # allow for views to catch up
+        time.sleep(0.5)
 
         mock_shodan_api.search_cursor.assert_called_with("shodan_test_query")
 
@@ -152,6 +162,9 @@ class ShodanAnalyticsTest(YetiTestCase):
             query_type="shodan",
         ).save()
 
+        # allow for views to catch up
+        time.sleep(0.5)
+
         def mock_search_cursor(query):
             records = [
                 {"ip_str": "192.0.2.1"},
@@ -167,6 +180,8 @@ class ShodanAnalyticsTest(YetiTestCase):
         analytics = shodan.ShodanApiQuery(**shodan.ShodanApiQuery._defaults.copy())
         analytics.run()
 
+        # allow for views to catch up
+        time.sleep(0.5)
         expected_observable_values = [
             {
                 "value": "192.0.2.1",
