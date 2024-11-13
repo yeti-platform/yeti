@@ -1,4 +1,5 @@
 import datetime
+import time
 import unittest
 from typing import ClassVar
 from unittest import mock
@@ -62,6 +63,7 @@ class TaskTest(unittest.TestCase):
     def test_task_types(self) -> None:
         taskmanager.TaskManager.register_task(self.fake_task_class)
         task = taskmanager.TaskManager.get_task("FakeTask")
+        time.sleep(0.5)
         tasks, total = Task.filter({"type": "feed"})
         self.assertEqual(len(tasks), 1)
         self.assertEqual(tasks[0].name, "FakeTask")
@@ -133,6 +135,7 @@ class AnalyticsTest(unittest.TestCase):
                 mock_inner_each(observable.value)
 
         taskmanager.TaskManager.register_task(FakeTask)
+        time.sleep(0.5)
         taskmanager.TaskManager.run_task("FakeTask", TaskParams())
         task = FakeTask.find(name="FakeTask")
         assert task is not None
@@ -167,6 +170,7 @@ class AnalyticsTest(unittest.TestCase):
                 pass
 
         taskmanager.TaskManager.register_task(FakeTask)
+        time.sleep(0.5)
         taskmanager.TaskManager.run_task("FakeTask", TaskParams())
         db_observable = Observable.get(self.observable4.id)
         assert db_observable is not None
