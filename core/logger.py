@@ -41,7 +41,10 @@ class ArangoHandler(logging.Handler):
 
         if "body" in record.__dict__ and record.__dict__["body"]:
             try:
-                content = json.loads(record.__dict__["body"].decode("utf-8"))
+                content = record.__dict__["body"]
+                if isinstance(content, bytes):
+                    content = content.decode("utf-8")
+                content = json.loads(content)
             except (UnicodeDecodeError, json.JSONDecodeError):
                 # We don't want to log binary or non-JSON content.
                 content = {}
