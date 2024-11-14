@@ -16,16 +16,14 @@ class tagTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.tag = Tag(name="tag1").save()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_create_tag(self):
         response = client.post("/api/v2/tags/", json={"name": "tag2"})

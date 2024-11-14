@@ -14,7 +14,7 @@ class userTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_get_config(self) -> None:
         response = client.get("/api/v2/system/config")

@@ -1,3 +1,4 @@
+import time
 import unittest
 
 from fastapi.testclient import TestClient
@@ -14,7 +15,7 @@ client = TestClient(webapp.app)
 class GraphTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.observable1 = hostname.Hostname(value="tomchop.me").save()
         self.observable2 = ipv4.IPv4(value="127.0.0.1").save()
         self.observable3 = ipv4.IPv4(value="8.8.8.8").save()
@@ -22,9 +23,6 @@ class GraphTest(unittest.TestCase):
         self.entity1 = Malware(name="plugx").save()
         self.entity2 = Campaign(name="campaign1").save()
         self.entity3 = Campaign(name="campaign2").save()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_node_deletion_affects_link(self) -> None:
         """Tests that deleting a node also deletes assocaited relationships."""
@@ -232,22 +230,20 @@ class GraphTest(unittest.TestCase):
         self.entity3.link_to(self.observable2, "a", "description_aaaa")
         self.entity3.link_to(self.observable3, "c", "description_ccc")
 
-        assert self.entity2.related_observables_count == 3
-        assert self.entity3.related_observables_count == 2
-
         query = {"type": "campaign"}
 
-        sorting = [["related_observables_count", True]]
+        sorting = [["total_links", True]]
+        time.sleep(1)
         entities, total = Entity.filter(
-            query_args=query, offset=0, count=20, sorting=sorting
+            query_args=query, offset=0, count=20, sorting=sorting, links_count=True
         )
         assert total == 2
         assert entities[0].name == "campaign2"
         assert entities[1].name == "campaign1"
 
-        sorting = [["related_observables_count", False]]
+        sorting = [["total_links", False]]
         entities, total = Entity.filter(
-            query_args=query, offset=0, count=20, sorting=sorting
+            query_args=query, offset=0, count=20, sorting=sorting, links_count=True
         )
         assert total == 2
         assert entities[0].name == "campaign1"

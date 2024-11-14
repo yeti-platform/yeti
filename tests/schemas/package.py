@@ -11,10 +11,7 @@ from core.schemas.observables import hostname, ipv4
 class YetiPackageTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_package_creation_from_methods(self) -> None:
         yeti_package = package.YetiPackage(

@@ -116,9 +116,11 @@ def search(request: EntitySearchRequest) -> EntitySearchResponse:
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
+        links_count=True,
         graph_queries=[("tags", "tagged", "outbound", "name")],
     )
-    return EntitySearchResponse(entities=entities, total=total)
+    response = EntitySearchResponse(entities=entities, total=total)
+    return response
 
 
 @router.post("/tag")

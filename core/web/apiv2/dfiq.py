@@ -305,9 +305,13 @@ def delete(dfiq_id: str) -> None:
     if not db_dfiq:
         raise HTTPException(status_code=404, detail="DFIQ object {dfiq_id} not found")
 
-    all_children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.uuid})
+    all_children, _ = dfiq.DFIQBase.filter(
+        query_args={"parent_ids": db_dfiq.uuid}, wildcard=False
+    )
     if db_dfiq.dfiq_id:
-        children, _ = dfiq.DFIQBase.filter(query_args={"parent_ids": db_dfiq.dfiq_id})
+        children, _ = dfiq.DFIQBase.filter(
+            query_args={"parent_ids": db_dfiq.dfiq_id}, wildcard=False
+        )
         if children:
             all_children.extend(children)
     for child in all_children:
