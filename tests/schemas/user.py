@@ -7,11 +7,8 @@ from core.schemas.user import UserSensitive
 class UserTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
         self.user1 = UserSensitive(username="tomchop").save()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_has_api_key(self) -> None:
         self.assertRegex(self.user1.api_key, r"[a-f0-9]{32}")

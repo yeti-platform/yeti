@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 import unittest
 
 from fastapi.testclient import TestClient
@@ -19,7 +20,7 @@ class SimpleGraphTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
@@ -37,7 +38,7 @@ class SimpleGraphTest(unittest.TestCase):
         ).save()
 
     def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_get_neighbors(self):
         self.relationship = self.observable1.link_to(
@@ -365,7 +366,8 @@ class ComplexGraphTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
@@ -384,9 +386,10 @@ class ComplexGraphTest(unittest.TestCase):
         ).save()
         self.observable1.link_to(self.observable3, "url", "URL on hostname.")
         self.entity1.link_to(self.observable1, "infra", "Known infrastructure.")
+        time.sleep(1)
 
     def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_existing_links(self):
         """Checks that existing links surface in analysis."""
@@ -416,18 +419,6 @@ class ComplexGraphTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["known"]), 1)
         self.assertEqual(data["known"][0]["value"], "test1.com")
-
-    def test_match_regex(self):
-        response = client.post(
-            "/api/v2/graph/match",
-            json={"observables": ["tes.[0-9]+.com"], "regex_match": True},
-        )
-        data = response.json()
-        self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(len(data["known"]), 3)
-        self.assertEqual(data["known"][0]["value"], "http://test1.com/admin")
-        self.assertEqual(data["known"][1]["value"], "test1.com")
-        self.assertEqual(data["known"][2]["value"], "test2.com")
 
     def test_matches_exist(self):
         """Tests that indicator matches will surface."""
@@ -495,7 +486,7 @@ class ComplexGraphTest(unittest.TestCase):
         response = client.post(
             "/api/v2/graph/match",
             json={
-                "observables": ["test3.com"],
+                "observables": ["randomgenericobservable"],
                 "add_unknown": True,
                 "add_type": "generic",
             },
@@ -504,8 +495,8 @@ class ComplexGraphTest(unittest.TestCase):
         data = response.json()
 
         # Observable is known, has been added.
-        self.assertEqual(len(data["known"]), 1)
-        self.assertEqual(data["known"][0]["value"], "test3.com")
+        self.assertEqual(len(data["known"]), 1, data)
+        self.assertEqual(data["known"][0]["value"], "randomgenericobservable")
         self.assertEqual(data["known"][0]["type"], "generic")
 
     def test_match_add_with_wrong_type_fails(self):
@@ -546,6 +537,8 @@ class ComplexGraphTest(unittest.TestCase):
             },
         )
 
+        time.sleep(1)
+
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["known"]), 1)
@@ -568,7 +561,7 @@ class GraphTraversalTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(

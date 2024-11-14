@@ -191,7 +191,15 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
 
     def to_yaml(self, sort_keys=False) -> str:
         dump = self.model_dump(
-            exclude={"created", "modified", "id", "root_type", "dfiq_yaml"}
+            exclude={
+                "created",
+                "modified",
+                "id",
+                "root_type",
+                "dfiq_yaml",
+                "aggregated_links",
+                "total_links",
+            }
         )
         dump["type"] = dump["type"].removeprefix("DFIQType.")
         dump["name"] = dump.pop("name")

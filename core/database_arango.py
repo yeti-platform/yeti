@@ -33,6 +33,8 @@ LINK_TYPE_TO_GRAPH = {
     "stix": "stix",
 }
 
+TESTING = "unittest" in sys.modules.keys()
+
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
 
 
@@ -61,8 +63,11 @@ class ArangoDatabase:
         password = password or yeti_config.get("arangodb", "password")
         database = database or yeti_config.get("arangodb", "database")
 
+        if TESTING:
+            database = "yeti_test"
+
         host_string = f"http://{host}:{port}"
-        client = ArangoClient(hosts=host_string)
+        client = ArangoClient(hosts=host_string, request_timeout=None)
 
         sys_db = client.db("_system", username=username, password=password)
         for _ in range(0, 4):
@@ -109,27 +114,103 @@ class ArangoDatabase:
             },
         )
 
+        self.create_indexes()
+        self.create_analyzers()
+        self.create_views()
+
+    def create_analyzers(self):
+        self.db.create_analyzer(
+            name="norm",
+            analyzer_type="norm",
+            properties={"locale": "en", "accent": False, "case": "lower"},
+            features=[],
+        )
+
+    def refresh_views(self):
+        for view in self.db.views():
+            self.db.update_view(
+                name=view["name"],
+                properties={"consolidationIntervalMsec": 0, "commitIntervalMsec": 0},
+            )
+
+    def create_indexes(self):
+        self.db.collection("observables").add_persistent_index(
+            fields=["value", "type"], unique=True, in_background=True, name="obs_index"
+        )
+        self.db.collection("observables").add_persistent_index(
+            fields=["created"], in_background=True, name="obs_created_index"
+        )
+
+        self.db.collection("entities").add_persistent_index(
+            fields=["name", "type"], unique=True, in_background=True, name="ent_index"
+        )
+        self.db.collection("entities").add_persistent_index(
+            fields=["created"], in_background=True, name="ent_created_index"
+        )
+
+        self.db.collection("tags").add_persistent_index(
+            fields=["name"], unique=True, in_background=True, name="tag_index"
+        )
+        self.db.collection("indicators").add_persistent_index(
+            fields=["name", "type"], unique=True, in_background=True, name="ind_index"
+        )
+        self.db.collection("indicators").add_persistent_index(
+            fields=["created"], in_background=True, name="ind_created_index"
+        )
+        self.db.collection("dfiq").add_persistent_index(
+            fields=["uuid"],
+            unique=True,
+            sparse=True,
+            in_background=True,
+            name="dfiq_index",
+        )
+        self.db.collection("dfiq").add_persistent_index(
+            fields=["created"], in_background=True, name="dfiq_created_index"
+        )
+
+    def create_views(self):
+        for view_target in ("observables", "entities", "indicators", "dfiq"):
+            try:
+                if TESTING:
+                    self.db.delete_view(f"{view_target}_view")
+                else:
+                    self.db.view(f"{view_target}_view")
+                    continue
+            except Exception:
+                pass
+
+            self.db.create_arangosearch_view(
+                name=f"{view_target}_view",
+                properties={
+                    "consolidationIntervalMsec": 1 if TESTING else 1000,
+                    "commitIntervalMsec": 1 if TESTING else 1000,
+                    "links": {
+                        view_target: {
+                            "analyzers": ["identity", "norm"],
+                            "fields": {},
+                            "includeAllFields": True,
+                            "storeValues": "none",
+                            "trackListPositions": False,
+                        }
+                    },
+                    "primarySort": [
+                        {"field": "created", "direction": "desc"},
+                        {"field": "value", "direction": "asc"},
+                        {"field": "name", "direction": "asc"},
+                    ],
+                },
+            )
+
+    def truncate(self, collection_name=None):
+        if collection_name:
+            collection = self.db.collection(collection_name)
+            collection.truncate()
+            return
         for collection_data in self.db.collections():
             if collection_data["system"]:
                 continue
             collection = self.db.collection(collection_data["name"])
-            for index in collection.indexes():
-                if index["type"] == "persistent":
-                    collection.delete_index(index["id"])
-
-        self.db.collection("observables").add_persistent_index(
-            fields=["value", "type"], unique=True
-        )
-        self.db.collection("entities").add_persistent_index(
-            fields=["name", "type"], unique=True
-        )
-        self.db.collection("tags").add_persistent_index(fields=["name"], unique=True)
-        self.db.collection("indicators").add_persistent_index(
-            fields=["name", "type"], unique=True
-        )
-        self.db.collection("dfiq").add_persistent_index(
-            fields=["uuid"], unique=True, sparse=True
-        )
+            collection.truncate()
 
     def clear(self, truncate=True):
         if not self.db:
@@ -806,6 +887,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         sorting: List[tuple[str, bool]] = [],
         aliases: List[tuple[str, str]] = [],
         graph_queries: List[tuple[str, str, str, str]] = [],
+        links_count: bool = False,
+        wildcard: bool = True,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
@@ -821,6 +904,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             sorting: A list of (order, ascending) fields to sort by.
             graph_queries: A list of (name, graph, direction, field) tuples to
                 query the graph with.
+            wildcard: whether all values should be interpreted as wildcard searches.
 
         Returns:
             A List of Yeti objects, and the total object count.
@@ -828,92 +912,119 @@ class ArangoYetiConnector(AbstractYetiConnector):
         cls._get_collection()
         colname = cls._collection_name
         conditions = []
+        filter_conditions = []  # used for clauses that are not supported by arangosearch
         sorts = []
 
+        using_view = False
+        if (
+            query_args
+            and colname in ("observables", "entities", "indicators", "dfiq")
+            and wildcard
+            # and not any([key.endswith("~") for key in query_args])
+        ):
+            using_view = True
+            colname += "_view"
+
         # We want user-defined sorts to take precedence.
-        related_observables_count = ""
+        links_count_query = ""
+        if links_count:
+            links_count_query = """
+            LET aggregated_links = MERGE(
+                FOR v, e IN 1..1 ANY o links COLLECT root_type = v.root_type INTO vtypes = {'type': v.type}
+                LET sub_types = MERGE(FOR vt IN vtypes COLLECT vtype = vt.type WITH COUNT INTO type_count RETURN {[vtype]: type_count})
+                LET details = MERGE(sub_types, {'total': SUM(VALUES(sub_types))})
+                RETURN {[root_type]: details}
+            )
+            LET total_links = SUM(FOR k IN ATTRIBUTES(aggregated_links) RETURN aggregated_links[k].total)
+            """
+
         for field, asc in sorting:
-            if field == "related_observables_count":
-                related_observables_count = 'LET related_observables_count = LENGTH(FOR v, e IN 1..1 ANY o links FILTER v.root_type == "observable" RETURN v)'
-                sorts.append(f'related_observables_count {"ASC" if asc else "DESC"}')
+            if field == "total_links" and links_count:
+                sorts.append(f'total_links {"ASC" if asc else "DESC"}')
             else:
                 sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
+            if key.endswith("~"):
+                using_regex = True
+                key = key[:-1]
+            else:
+                using_regex = False
             if isinstance(value, str):
                 aql_args[f"arg{i}_value"] = value
             elif isinstance(value, list):
                 aql_args[f"arg{i}_value"] = [v.strip() for v in value]
 
             if key.startswith("in__"):
-                conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
+                if using_view:
+                    conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
+                else:
+                    conditions.append(f"o.@arg{i}_key IN [@arg{i}_value]")
                 aql_args[f"arg{i}_key"] = key[4:]
-                sorts.append(f"o.@arg{i}_key")
-            elif key.endswith("__in"):
+            elif key.endswith("__in"):  # o.value is in [1, 2, 3]
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key[:-4]
-                sorts.append(f"o.@arg{i}_key")
-            elif key.endswith("__in~"):
-                del aql_args[f"arg{i}_value"]
-                if not value:
-                    continue
-                aql_args[f"arg{i}_key"] = key[:-5]
-                or_conditions = []
-                for j, v in enumerate(value):
-                    or_conditions.append(
-                        f"REGEX_TEST(o.@arg{i}_key, @arg{i}{j}_value, true)"
-                    )
-                    aql_args[f"arg{i}{j}_value"] = v.strip()
-                    sorts.append(f"o.@arg{i}_key")
-                conditions.append(f"({' OR '.join(or_conditions)})")
             elif key in {"labels", "relevant_tags"}:
-                conditions.append(f"@arg{i}_value ALL IN o.@arg{i}_key")
+                conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key
-                sorts.append(f"o.@arg{i}_key")
-            elif key.startswith("context."):
-                context_field = key[8:]
-                conditions.append(
-                    f"COUNT(FOR c IN o.context[*] FILTER REGEX_TEST(c.@arg{i}_key, @arg{i}_value, true) RETURN c) > 0"
-                )
-                aql_args[f"arg{i}_key"] = context_field
-                sorts.append(f"o.context[*].@arg{i}_key")
             elif key in ("created", "expires"):
                 operator = value[0]
                 if operator not in ["<", ">"]:
                     operator = "="
                 else:
                     aql_args[f"arg{i}_value"] = value[1:]
-                conditions.append(
+                filter_conditions.append(
                     f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
                 )
                 sorts.append(f"o.{key}")
-            elif key in ("name"):
-                key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
-                for alias, alias_type in aliases:
-                    if alias_type in {"text", "option"}:
-                        key_conditions.append(
-                            f"REGEX_TEST(o.{alias}, @arg{i}_value, true)"
-                        )
-                    if alias_type == "list":
-                        key_conditions.append(
-                            f"COUNT(FOR i IN o.{alias} || [] FILTER REGEX_TEST(i, @arg{i}_value, true) RETURN i) > 0"
-                        )
-                    sorts.append(f"o.{alias}")
-                key_condition = " OR ".join(key_conditions)
-                conditions.append(f"({key_condition})")
-                aql_args[f"arg{i}_key"] = key
-                sorts.append(f"o.@arg{i}_key")
-            else:
-                if key.endswith("~") or not value:
-                    key = key[:-1]
-                    conditions.append(f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)")
+            elif key in ("name", "value"):
+                if using_view and not using_regex:
+                    aql_args[f"arg{i}_value"] = f"%{value}%"
+                    key_conditions = [
+                        f"ANALYZER(LIKE(o.@arg{i}_key, LOWER(@arg{i}_value)), 'norm')"
+                    ]
                 else:
-                    conditions.append(
-                        f"CONTAINS(LOWER(o.@arg{i}_key), LOWER(@arg{i}_value))"
-                    )
+                    key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
+
+                for alias, alias_type in aliases:
+                    if (
+                        alias_type in {"text", "option"}
+                        or alias_type == "list"
+                        and using_view
+                    ):
+                        if using_view and not using_regex:
+                            key_conditions.append(
+                                f"ANALYZER(LIKE(o.{alias}, LOWER(@arg{i}_value)), 'norm')"
+                            )
+                        else:
+                            key_conditions.append(
+                                f"REGEX_TEST(o.{alias}, @arg{i}_value, true)"
+                            )
+                    elif alias_type == "list":
+                        if using_regex:
+                            key_conditions.append(
+                                f"COUNT(FOR i IN o.{alias} || [] FILTER REGEX_TEST(i, @arg{i}_value, true) RETURN i) > 0"
+                            )
+                        else:
+                            key_conditions.append(
+                                f"COUNT(FOR i IN o.{alias} || [] FILTER LIKE(i, @arg{i}_value) RETURN i) > 0"
+                            )
+                key_condition = " OR ".join(key_conditions)
+                if using_regex:
+                    filter_conditions.append(f"({key_condition})")
+                else:
+                    conditions.append(f"({key_condition})")
                 aql_args[f"arg{i}_key"] = key
-                sorts.append(f"o.@arg{i}_key")
+            else:
+                aql_args[f"arg{i}_key"] = key
+                if using_regex:
+                    filter_conditions.append(
+                        f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"
+                    )
+                else:
+                    aql_args[f"arg{i}_value"] = f"%{value}%"
+                    conditions.append(f"LIKE(o.@arg{i}_key, @arg{i}_value)")
 
         limit = ""
         if count != 0:
@@ -926,15 +1037,22 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for name, graph, direction, field in graph_queries:
             graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
 
+        tag_filter_query = ""
         if tag_filter:
-            conditions.append(
-                "COUNT(INTERSECTION(ATTRIBUTES(MERGE(tags)), @tag_names)) > 0"
+            tag_filter_query = (
+                " FILTER COUNT(INTERSECTION(ATTRIBUTES(MERGE(tags)), @tag_names)) > 0"
             )
             aql_args["tag_names"] = tag_filter
 
-        aql_filter = ""
+        filter_string = ""
+        if filter_conditions:
+            filter_string = f"FILTER {' AND '.join(filter_conditions)}"
+
+        aql_search = ""
         if conditions:
-            aql_filter = f"FILTER {' AND '.join(conditions)}"
+            aql_search = (
+                f"{'SEARCH' if using_view else 'FILTER'} {' AND '.join(conditions)}"
+            )
 
         aql_sort = ""
         if sorts:
@@ -942,26 +1060,44 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         aql_string = f"""
             FOR o IN @@collection
-                {related_observables_count}
+                {aql_search}
+                {links_count_query}
                 {graph_query_string}
-                {aql_filter}
+                {tag_filter_query}
+                {filter_string}
                 {aql_sort}
                 {limit}
             """
+        merged_list = ""
+        prologue = ""
         if graph_queries:
-            aql_string = f'WITH {name}\n\n{aql_string}\nRETURN MERGE(o, {{ {", ".join([f"{name}: MERGE({name})" for name, _, _, _ in graph_queries])} }})'
+            merged_list = ", ".join(
+                [f"{name}: MERGE({name})" for name, _, _, _ in graph_queries]
+            )
+            prologue = "WITH " + ", ".join([name for name, _, _, _ in graph_queries])
+        if links_count:
+            merged_list += (
+                ", aggregated_links, total_links"
+                if merged_list
+                else "aggregated_links, total_links"
+            )
+        if merged_list:
+            aql_string = (
+                f"{prologue}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})"
+            )
         else:
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
         logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
         documents = cls._db.aql.execute(
-            aql_string, bind_vars=aql_args, count=True, full_count=True
+            aql_string, bind_vars=aql_args, count=True, full_count=using_view
         )
+        stats = documents.statistics()
         results = []
-        total = documents.statistics().get("fullCount", count)
         for doc in documents:
             doc["__id"] = doc.pop("_key")
             results.append(cls.load(doc))
+        total = stats.get("fullCount", len(results))
         return results, total or 0
 
     @classmethod

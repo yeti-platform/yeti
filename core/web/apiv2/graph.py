@@ -255,6 +255,7 @@ def match(request: AnalysisRequest) -> AnalysisResponse:
     db_observables, _ = observable.Observable.filter(
         query_args={operator: request.observables},
         graph_queries=[("tags", "tagged", "outbound", "name")],
+        wildcard=False,
     )
     for db_observable in db_observables:
         known[db_observable.value] = db_observable

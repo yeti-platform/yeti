@@ -15,10 +15,7 @@ from core.schemas.dfiq import (
 class DFIQTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_dfiq_scenario(self) -> None:
         with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
