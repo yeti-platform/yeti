@@ -350,11 +350,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # TODO: Override this if we decide to implement YetiTagModel
         if hasattr(self, "tags"):
             yeti_object.get_tags()
-        try:
-            event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
-            producer.publish_event(event)
-        except Exception:
-            logging.exception("Error while publishing event")
+        if self._collection_name != "auditlog":
+            try:
+                event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
         return yeti_object
 
     @classmethod
@@ -494,13 +495,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge = json.loads(tag_relationship.model_dump_json())
             edge["_id"] = tag_relationship.id
             graph.update_edge(edge)
-            try:
-                event = message.TagEvent(
-                    type=message.EventType.update, tagged_object=self, tag_object=tag
-                )
-                producer.publish_event(event)
-            except Exception:
-                logging.exception("Error while publishing event")
+            if self._collection_name != "auditlog":
+                try:
+                    event = message.TagEvent(
+                        type=message.EventType.update,
+                        tagged_object=self,
+                        tag_object=tag,
+                    )
+                    producer.publish_event(event)
+                except Exception:
+                    logging.exception("Error while publishing event")
             return tag_relationship
 
         # Relationship doesn't exist, check if tag is already in the db
@@ -525,13 +529,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return_new=True,
         )["new"]
         result["__id"] = result.pop("_key")
-        try:
-            event = message.TagEvent(
-                type=message.EventType.new, tagged_object=self, tag_object=tag_obj
-            )
-            producer.publish_event(event)
-        except Exception:
-            logging.exception("Error while publishing event")
+        if self._collection_name != "auditlog":
+            try:
+                event = message.TagEvent(
+                    type=message.EventType.new, tagged_object=self, tag_object=tag_obj
+                )
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
         return TagRelationship.load(result)
 
     def expire_tag(self, tag_name: str) -> "TagRelationship":
@@ -566,18 +571,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
         self.get_tags()
         results = graph.edge_collection("tagged").edges(self.extended_id)
         for edge in results["edges"]:
-            try:
-                tag_relationship = self._db.collection("tagged").get(edge["_id"])
-                tag_collection, tag_id = tag_relationship["target"].split("/")
-                tag_obj = self._db.collection(tag_collection).get(tag_id)
-                event = message.TagEvent(
-                    type=message.EventType.delete,
-                    tagged_object=self,
-                    tag_object=tag_obj,
-                )
-                producer.publish_event(event)
-            except Exception:
-                logging.exception("Error while publishing event")
+            if self._collection_name != "auditlog":
+                try:
+                    tag_relationship = self._db.collection("tagged").get(edge["_id"])
+                    tag_collection, tag_id = tag_relationship["target"].split("/")
+                    tag_obj = self._db.collection(tag_collection).get(tag_id)
+                    event = message.TagEvent(
+                        type=message.EventType.delete,
+                        tagged_object=self,
+                        tag_object=tag_obj,
+                    )
+                    producer.publish_event(event)
+                except Exception:
+                    logging.exception("Error while publishing event")
             graph.edge_collection("tagged").delete(edge["_id"])
 
     def link_to(
@@ -619,16 +625,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge = json.loads(relationship.model_dump_json())
             edge["_id"] = neighbors[0]["_id"]
             graph.update_edge(edge)
-            try:
-                event = message.LinkEvent(
-                    type=message.EventType.update,
-                    source_object=self,
-                    target_object=target,
-                    relationship=relationship,
-                )
-                producer.publish_event(event)
-            except Exception:
-                logging.exception("Error while publishing event")
+            if self._collection_name != "auditlog":
+                try:
+                    event = message.LinkEvent(
+                        type=message.EventType.update,
+                        source_object=self,
+                        target_object=target,
+                        relationship=relationship,
+                    )
+                    producer.publish_event(event)
+                except Exception:
+                    logging.exception("Error while publishing event")
             return relationship
 
         relationship = Relationship(
@@ -648,16 +655,17 @@ class ArangoYetiConnector(AbstractYetiConnector):
         )["new"]
         result["__id"] = result.pop("_key")
         relationship = Relationship.load(result)
-        try:
-            event = message.LinkEvent(
-                type=message.EventType.new,
-                source_object=self,
-                target_object=target,
-                relationship=relationship,
-            )
-            producer.publish_event(event)
-        except Exception:
-            logging.exception("Error while publishing event")
+        if self._collection_name != "auditlog":
+            try:
+                event = message.LinkEvent(
+                    type=message.EventType.new,
+                    source_object=self,
+                    target_object=target,
+                    relationship=relationship,
+                )
+                producer.publish_event(event)
+            except Exception:
+                logging.exception("Error while publishing event")
         return relationship
 
     def swap_link(self):
@@ -1128,6 +1136,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             col = self._db.collection(self._collection_name)
         col.delete(self.id)
+        if self._collection_name == "auditlog":
+            return
         try:
             event_type = message.EventType.delete
             if self._collection_name == "tagged":
