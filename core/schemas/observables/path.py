@@ -47,9 +47,9 @@ $
 class Path(observable.Observable):
     type: Literal["path"] = "path"
 
-    @field_validator("value")
     @classmethod
-    def validate_value(cls, value: str) -> str:
-        if not (LINUX_PATH_REGEX.match(value) or WINDOWS_PATH_REGEX.match(value)):
-            raise ValueError("Invalid path")
-        return value
+    def validator(cls, value: str) -> bool:
+        if LINUX_PATH_REGEX.match(value) or WINDOWS_PATH_REGEX.match(value):
+            return True
+        else:
+            return False

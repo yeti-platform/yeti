@@ -1,13 +1,15 @@
 import datetime
 from typing import ClassVar, Literal
 
-from pydantic import computed_field
+from pydantic import ConfigDict, computed_field
 
 from core import database_arango
 from core.schemas.model import YetiModel
 
 
 class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     _collection_name: ClassVar[str] = "auditlog"
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["auditlog"] = "auditlog"

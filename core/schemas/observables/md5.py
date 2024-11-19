@@ -9,9 +9,6 @@ from core.schemas import observable
 class MD5(observable.Observable):
     type: Literal["md5"] = "md5"
 
-    @field_validator("value")
     @classmethod
-    def validate_value(cls, value: str) -> str:
-        if not validators.md5(value):
-            raise ValueError("Invalid md5 hash")
-        return value
+    def validator(cls, value: str) -> bool:
+        return validators.md5(value) or False
