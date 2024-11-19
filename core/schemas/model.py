@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from core.schemas.graph import TagRelationship
 
@@ -10,6 +10,8 @@ class YetiModel(BaseModel):
     __id: str | None = None
     total_links: int | None = None
     aggregated_links: dict[str, dict[str, int]] | None = None
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     def __init__(self, **data):
         super().__init__(**data)
