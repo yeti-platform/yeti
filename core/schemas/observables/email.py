@@ -9,10 +9,10 @@ from core.schemas import observable
 class Email(observable.Observable):
     type: Literal["email"] = "email"
 
-    @field_validator("value")
+    @field_validator("value", mode="before")
+    def refang(cls, v) -> str:
+        return observable.refang(v)
+
     @classmethod
-    def validate_value(cls, value: str) -> str:
-        value = observable.refang(value)
-        if not validators.email(value):
-            raise ValueError("Invalid email address")
-        return value
+    def validator(cls, value: str) -> bool:
+        return validators.email(value) or False
