@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from typing_extensions import Self
 
 from core.schemas import entity, indicator, observable
@@ -10,6 +10,7 @@ from core.schemas.observable import ObservableTypes
 
 
 class YetiPackageRelationship(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     target: str
     link_type: str = "observes"
 
@@ -28,6 +29,8 @@ class YetiPackage(BaseModel):
     indicators: List[Indicator]: list of indicators to be added
     relationships: Dict[str, List[YetiPackageRelationship]]: relationships between elements.
     """
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     timestamp: datetime = datetime.now()
     source: str = Field(min_length=3)

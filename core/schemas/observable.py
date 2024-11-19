@@ -14,7 +14,7 @@ from typing import IO, ClassVar, List, Literal, Tuple
 
 import requests
 from bs4 import BeautifulSoup
-from pydantic import Field, computed_field
+from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now, refang
@@ -32,6 +32,7 @@ FileLikeObject = str | os.PathLike | IO | tempfile.SpooledTemporaryFile
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["observable"] = "observable"
