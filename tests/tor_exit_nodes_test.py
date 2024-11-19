@@ -9,12 +9,11 @@ from tests.helpers import YetiTestCase
 
 class TorExitNodesTest(YetiTestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
 
     def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     @patch("plugins.feeds.public.tor_exit_nodes.TorExitNodes._make_request")
     def test_tor_exit_node_parsing(self, mock_request):

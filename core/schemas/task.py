@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import requests
 from dateutil import parser
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.clients import file_storage
@@ -52,6 +52,7 @@ class TaskParams(BaseModel):
 
 
 class Task(YetiModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "tasks"
     _type_filter: ClassVar[str] = ""
     _defaults: ClassVar[dict] = {}

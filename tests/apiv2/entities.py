@@ -1,6 +1,7 @@
 import datetime
 import logging
 import sys
+import time
 import unittest
 
 from fastapi.testclient import TestClient
@@ -17,7 +18,8 @@ class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
@@ -29,8 +31,11 @@ class EntityTest(unittest.TestCase):
         self.entity1.tag(["ta1"])
         self.entity2 = entity.ThreatActor(name="bears").save()
 
+        # allow for views to catch up
+        time.sleep(0.5)
+
     def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_new_entity(self):
         response = client.post(
@@ -93,10 +98,12 @@ class EntityTest(unittest.TestCase):
     def test_search_entities_multiple_types(self):
         entity.AttackPattern(name="ttp1").save()
         entity.Malware(name="malware1").save()  # this won't show up
+        time.sleep(1)
         response = client.post(
             "/api/v2/entities/search",
             json={"query": {"type__in": ["threat-actor", "attack-pattern"]}},
         )
+
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["entities"]), 3)

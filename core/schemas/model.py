@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, computed_field
 
 from core.schemas.graph import TagRelationship
@@ -6,6 +8,8 @@ from core.schemas.graph import TagRelationship
 class YetiModel(BaseModel):
     _exclude_overwrite: list[str] = list()
     __id: str | None = None
+    total_links: int | None = None
+    aggregated_links: dict[str, dict[str, int]] | None = None
 
     def __init__(self, **data):
         super().__init__(**data)

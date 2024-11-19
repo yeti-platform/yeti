@@ -19,7 +19,7 @@ from core.schemas.user import UserSensitive
 class FixtureTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def general_fixture_test(self):
         user = UserSensitive(username="yeti", admin=True, enabled=True)

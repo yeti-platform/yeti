@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import io
 import pathlib
+import time
 import unittest
 
 from core import database_arango
@@ -63,10 +64,8 @@ class ObservableTest(unittest.TestCase):
 
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
+        self.db = database_arango.db
 
     def test_observable_create(self) -> None:
         result = hostname.Hostname(value="toto.com").save()
@@ -141,29 +140,35 @@ class ObservableTest(unittest.TestCase):
     def test_observable_filter(self):
         obs1 = hostname.Hostname(value="test1.com").save()
         obs2 = hostname.Hostname(value="test2.com").save()
+        time.sleep(1)
 
         result, total = Observable.filter(query_args={"value": "test"})
         self.assertEqual(len(result), 2)
         self.assertEqual(total, 2)
-        self.assertEqual(result[0].id, obs1.id)
-        self.assertEqual(result[0].value, "test1.com")
-        self.assertEqual(result[1].id, obs2.id)
-        self.assertEqual(result[1].value, "test2.com")
+        actual = [r.value for r in result]
+        self.assertIn("test1.com", actual)
+        self.assertIn("test2.com", actual)
+        actual = [r.id for r in result]
+        self.assertIn(obs1.id, actual)
+        self.assertIn(obs2.id, actual)
 
     def test_observable_filter_in(self):
         obs1 = hostname.Hostname(value="test1.com").save()
         hostname.Hostname(value="test2.com").save()
-        obs3 = hostname.Hostname(value="test3.com").save()
+        obs2 = hostname.Hostname(value="test3.com").save()
+        time.sleep(1)
 
         result, total = Observable.filter(
             query_args={"value__in": ["test1.com", "test3.com"]}
         )
         self.assertEqual(len(result), 2)
         self.assertEqual(total, 2)
-        self.assertEqual(result[0].id, obs1.id)
-        self.assertEqual(result[0].value, "test1.com")
-        self.assertEqual(result[1].id, obs3.id)
-        self.assertEqual(result[1].value, "test3.com")
+        actual = [r.value for r in result]
+        self.assertIn("test1.com", actual)
+        self.assertIn("test3.com", actual)
+        actual = [r.id for r in result]
+        self.assertIn(obs1.id, actual)
+        self.assertIn(obs2.id, actual)
 
     def test_observable_link_to(self) -> None:
         observable1 = hostname.Hostname(value="toto.com").save()
@@ -837,3 +842,51 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
             self.assertEqual(observables[i].tags["tag1"].fresh, True)
             self.assertEqual(observables[i].tags["tag2"].fresh, True)
         self.assertEqual(unknown[0], "junk")
+
+    def test_refang_ipv4_observable(self) -> None:
+        """Tests refanging an ipv4 observable."""
+        obs = observable.save(value="1.1.1[.]1")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "1.1.1.1")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_refang_hostname_observable(self) -> None:
+        """Tests refanging an hostname observable."""
+        obs = observable.save(value="tomchop[.]me")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "tomchop.me")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_refang_email_observable(self) -> None:
+        """Tests refanging an email observable."""
+        obs = observable.save(value="tom@chop[.]me")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "tom@chop.me")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_refang_url_observable(self) -> None:
+        """Tests refanging an url observable."""
+        obs = observable.save(value="http://www[.]google[.]com")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "http://www.google.com")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_create_not_stripped_observable(self) -> None:
+        """Tests creating an observable that is not stripped."""
+        obs = observable.save(value=" hostname.com ")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.is_valid, True)
+        self.assertEqual(obs.value, "hostname.com")
+
+    def test_create_invalid_observable(self) -> None:
+        """Tests creating an invalid observable."""
+        obs = observable.IPv4(value="192.168.1.258").save()
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.is_valid, False)
+        self.assertEqual(obs.value, "192.168.1.258")

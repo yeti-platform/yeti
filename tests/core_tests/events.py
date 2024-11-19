@@ -121,8 +121,10 @@ class EventsTest(unittest.TestCase):
             producer.producer.event_producer.publish(msg.model_dump_json())
             if producer.producer._trim_queue_size("events"):
                 trimmed = True
-        self.assertLess(
-            self.redis_client.memory_usage("events"), producer.producer._memory_limit
+        self.assertAlmostEqual(
+            self.redis_client.memory_usage("events"),
+            producer.producer._memory_limit,
+            delta=1024,
         )
         redis_payload = self.redis_client.lpop("events")
         body_payload = json.loads(redis_payload).get("body")

@@ -2,7 +2,7 @@ import datetime
 from enum import Enum
 from typing import ClassVar, List, Literal
 
-from pydantic import Field, computed_field
+from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
@@ -19,6 +19,7 @@ TYPE_MAPPING = {}
 
 
 class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = ["related_observables_count"]
     _collection_name: ClassVar[str] = "entities"
     _type_filter: ClassVar[str] = ""
@@ -34,15 +35,6 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
     @property
     def root_type(self):
         return self._root_type
-
-    @computed_field(return_type=int)
-    def related_observables_count(self):
-        if self.id:
-            vertices, path, total = self.neighbors(
-                min_hops=1, max_hops=1, target_types=["observable"]
-            )
-            return total
-        return 0
 
     @classmethod
     def load(cls, object: dict) -> "EntityTypes":

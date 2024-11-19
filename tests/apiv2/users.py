@@ -15,7 +15,8 @@ class userTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         self.admin = UserSensitive(username="admin", admin=True).save()
         self.user = UserSensitive(username="tomchop", admin=False).save()
         token_data = client.post(
@@ -26,9 +27,6 @@ class userTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user.api_key}
         ).json()
         self.user_token = user_token_data["access_token"]
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_search_users(self):
         response = client.post(

@@ -1,4 +1,5 @@
 import datetime
+import time
 import unittest
 
 from core import database_arango
@@ -18,16 +19,14 @@ from core.schemas.observables import hostname
 class EntityTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         self.ta1 = ThreatActor(name="APT123", aliases=["CrazyFrog"]).save()
         self.vuln1 = Vulnerability(name="CVE-2018-1337", title="elite exploit").save()
         self.malware1 = Malware(
             name="zeus", created=datetime.datetime(2020, 1, 1)
         ).save()
         self.tool1 = Tool(name="mimikatz").save()
-
-    def tearDown(self) -> None:
-        database_arango.db.clear()
 
     def test_create_entity(self) -> None:
         result = ThreatActor(name="APT0").save()
@@ -83,30 +82,35 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(malware_entities[0], self.malware1)
 
     def test_filter_entities(self):
+        time.sleep(0.5)  # wait for views to catch up
         entities, total = Entity.filter({"name": "APT123"})
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.ta1)
 
     def test_filter_entities_regex(self):
+        time.sleep(0.5)  # wait for views to catch up
         entities, total = Entity.filter({"name": "CVE", "title~": "Elite .xploit"})
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.vuln1)
 
-    def test_filter_entities_contain_lowercase(self):
-        entities, total = Entity.filter({"name": "apt"})
-        self.assertEqual(len(entities), 1)
-        self.assertEqual(total, 1)
-        self.assertEqual(entities[0], self.ta1)
-
     def test_filter_entities_by_regex(self):
+        time.sleep(0.5)  # wait for views to catch up
         entities, total = Entity.filter({"name~": "APT[0-9]+"})
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
         self.assertEqual(entities[0], self.ta1)
 
+    def test_filter_entities_contain_lowercase(self):
+        time.sleep(0.5)  # wait for views to catch up
+        entities, total = Entity.filter({"name": "apt"})
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+        self.assertEqual(entities[0], self.ta1)
+
     def test_filter_entities_time(self):
+        time.sleep(0.5)  # wait for views to catch up
         entities, total = Entity.filter({"created": "2020-01-01"})
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)

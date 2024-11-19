@@ -20,7 +20,6 @@ class AuthTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
         cls.user1 = UserSensitive(username="tomchop")
         cls.user1.set_password("test")
         cls.user1.save()
@@ -31,7 +30,7 @@ class AuthTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls) -> None:
-        database_arango.db.clear()
+        database_arango.db.truncate()
 
     def test_login(self) -> None:
         response = client.post(

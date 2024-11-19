@@ -16,7 +16,8 @@ class ImportData(unittest.TestCase):
     def setUpClass(cls) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+
         user = UserSensitive(username="test")
         user.set_password("test")
         user.save()

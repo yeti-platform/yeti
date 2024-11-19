@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import time
 import unittest
 
 from fastapi.testclient import TestClient
@@ -17,7 +18,9 @@ class IndicatorTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
-        database_arango.db.clear()
+        database_arango.db.truncate()
+        # database_arango.db.create_views(testing=True)
+
         user = UserSensitive(username="test", password="test", enabled=True).save()
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
@@ -37,8 +40,8 @@ class IndicatorTest(unittest.TestCase):
             diamond=indicator.DiamondModel.infrastructure,
         ).save()
 
-    def tearDown(self) -> None:
-        database_arango.db.clear()
+        # allow for views to catch up
+        time.sleep(1)
 
     def test_new_indicator(self):
         indicator_dict = {
@@ -109,6 +112,7 @@ class IndicatorTest(unittest.TestCase):
             query_type="sql",
             diamond=indicator.DiamondModel.capability,
         ).save()
+        time.sleep(1)
         response = client.post(
             "/api/v2/indicators/search",
             json={
