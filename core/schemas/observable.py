@@ -58,7 +58,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         valid = True
         if hasattr(self, "validator"):
             try:
-                valid = self.__class__.validator(self.value)
+                valid = self.validator(self.value)
             except ValueError:
                 return False
         return valid
