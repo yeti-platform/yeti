@@ -842,3 +842,51 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
             self.assertEqual(observables[i].tags["tag1"].fresh, True)
             self.assertEqual(observables[i].tags["tag2"].fresh, True)
         self.assertEqual(unknown[0], "junk")
+
+    def test_refang_ipv4_observable(self) -> None:
+        """Tests refanging an ipv4 observable."""
+        obs = observable.save(value="1.1.1[.]1")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "1.1.1.1")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_refang_hostname_observable(self) -> None:
+        """Tests refanging an hostname observable."""
+        obs = observable.save(value="tomchop[.]me")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "tomchop.me")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_refang_email_observable(self) -> None:
+        """Tests refanging an email observable."""
+        obs = observable.save(value="tom@chop[.]me")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "tom@chop.me")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_refang_url_observable(self) -> None:
+        """Tests refanging an url observable."""
+        obs = observable.save(value="http://www[.]google[.]com")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.value, "http://www.google.com")
+        self.assertEqual(obs.is_valid, True)
+
+    def test_create_not_stripped_observable(self) -> None:
+        """Tests creating an observable that is not stripped."""
+        obs = observable.save(value=" hostname.com ")
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.is_valid, True)
+        self.assertEqual(obs.value, "hostname.com")
+
+    def test_create_invalid_observable(self) -> None:
+        """Tests creating an invalid observable."""
+        obs = observable.IPv4(value="192.168.1.258").save()
+        self.assertIsNotNone(obs)
+        self.assertIsNotNone(obs.id)
+        self.assertEqual(obs.is_valid, False)
+        self.assertEqual(obs.value, "192.168.1.258")
