@@ -22,19 +22,25 @@ class DockerHubImageEvent(task.EventTask, DockerHubObservables):
     _defaults = {
         "name": "DockerImageAnalyticsOnEvent",
         "description": "Fetch metadata from docker hub for a docker image",
-        "acts_on": "(new|update):observable:(docker_image|container_image)",
+        "acts_on": "new:observable:(docker_image|container_image)",
     }
 
     def run(self, message: EventMessage) -> None:
-        container_image: Observable = message.event.yeti_object
+        container_image = message.event.yeti_object
         self.logger.info(f"Analysing container image {container_image.value}")
-        if container_image.type != "docker_image" or (
-            container_image.type == "container_image"
-            and container_image.registry != "docker.io"
+        if not (
+            container_image.type == "docker_image"
+            or (
+                container_image.type == "container_image"
+                and container_image.registry == "docker.io"
+            )
         ):
-            return
+            self.logger.info(
+                f"Skipping {container_image.type} {container_image.value} not from docker.io"
+            )
         metadata = DockerHubApi.image_full_details(container_image.value)
         if not metadata:
+            self.logger.info(f"Image metadata for {container_image.value} not found")
             return
         context = self._get_image_context(metadata)
         container_image.add_context("hub.docker.com", context)

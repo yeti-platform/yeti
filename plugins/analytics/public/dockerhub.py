@@ -1,4 +1,5 @@
 import datetime
+import logging
 import re
 
 import requests
@@ -110,7 +111,8 @@ class DockerHubObservables:
         return context
 
     def _create_digest_observable(self, image_obs, digest, context, link_type):
-        sha_obs = observable.save(value=digest, tags=["dockerhub"])
+        logging.info(f"Add {image_obs.value}'s digest: {digest}")
+        sha_obs = observable.save(value=digest, type="sha256", tags=["dockerhub"])
         if context:
             sha_obs.add_context("hub.docker.com", context)
         image_obs.link_to(sha_obs, link_type, "")
@@ -119,6 +121,7 @@ class DockerHubObservables:
     def _make_relationships(self, image_obs, metadata):
         username = metadata.get("user", {}).get("username", "")
         if username:
+            logging.info(f"Add dockerhub user_account: {username}")
             user_obs = observable.save(
                 value=username,
                 type="user_account",
@@ -173,14 +176,21 @@ class DockerHubImageAnalytics(task.OneShotTask, DockerHubObservables):
     ]
 
     def each(self, observable_obj: Observable):
-        if observable_obj.type != "docker_image" or (
-            observable_obj.type == "container_image"
-            and observable_obj.registry != "docker.io"
+        if not (
+            observable_obj.type == "docker_image"
+            or (
+                observable_obj.type == "container_image"
+                and observable_obj.registry == "docker.io"
+            )
         ):
+            self.logger.info(
+                f"Skipping {observable_obj.type} {observable_obj.value} not from docker.io"
+            )
             return []
         metadata = DockerHubApi.image_full_details(observable_obj.value)
 
         if metadata is None:
+            self.logger.info(f"Image metadata for {observable_obj.value} not found")
             return []
 
         context = self._get_image_context(metadata)
@@ -192,7 +202,8 @@ class DockerHubUserAnalytics(task.OneShotTask, DockerHubObservables):
     """DockerHubUserAnalytics queries docker hub to get more details related to
     user_account observable of dockerhub type and fetch all their images.
 
-    This analytics creates new container_image observables with registry set to docker.io:
+    This analytics creates a new user_account observable with account type set to dockerhub.
+    It also creates new container_image observables for each image owned by the user.
     """
 
     _defaults = {
@@ -225,6 +236,7 @@ class DockerHubUserAnalytics(task.OneShotTask, DockerHubObservables):
         user_obj.add_context("hub.docker.com", metadata)
         for image in DockerHubApi.user_images(user_obj.value):
             image_name = f'{image["namespace"]}/{image["name"]}'
+            self.logger.info(f"Save new image {image_name}")
             image_obs = observable.save(
                 value=image_name, type="container_image", registry="docker.io"
             )
