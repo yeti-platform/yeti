@@ -2,10 +2,14 @@ from core import taskmanager
 from core.events.message import EventMessage
 from core.schemas import task
 from core.schemas.observable import Observable
-from plugins.analytics.public.dockerhub import DockerHubApi, DockerHubObservables
+from plugins.analytics.public.dockerhub import (
+    DockerHubApi,
+    get_image_context,
+    make_relationships,
+)
 
 
-class DockerHubImageEvent(task.EventTask, DockerHubObservables):
+class DockerHubImageEvent(task.EventTask):
     """DockerHubImageEvent is triggered for (new|update):observable:(docker_image|container_image).
     It queries docker hub to get more details related to docker_image / container_image observable.
 
@@ -43,9 +47,9 @@ class DockerHubImageEvent(task.EventTask, DockerHubObservables):
         if not metadata:
             self.logger.info(f"Image metadata for {container_image.value} not found")
             return
-        context = self._get_image_context(metadata)
+        context = get_image_context(metadata)
         container_image.add_context("hub.docker.com", context)
-        self._make_relationships(container_image, metadata)
+        make_relationships(container_image, metadata)
         return
 
 

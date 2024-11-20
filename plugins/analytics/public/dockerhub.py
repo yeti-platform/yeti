@@ -5,7 +5,6 @@ import re
 import requests
 
 from core import taskmanager
-from core.events.message import EventMessage
 from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType
 
@@ -80,77 +79,80 @@ class DockerHubApi:
         return image_metadata
 
 
-class DockerHubObservables:
-    FILE_REGEX: re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*", re.IGNORECASE)
-    DIGEST_REGEX: re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$", re.IGNORECASE)
+FILE_REGEX: re.Pattern = re.compile(r"^\w+ file:([0-9a-f]{64}) .*", re.IGNORECASE)
+DIGEST_REGEX: re.Pattern = re.compile(r"sha256:([0-9a-f]{64})$", re.IGNORECASE)
 
-    def _get_image_context(self, metadata):
-        context = {"source": "hub.docker.com"}
-        if metadata:
-            context["Analysis"] = "Image found"
-            context["Image stats"] = {
-                "Pulls": metadata.get("pull_count", "N/A"),
-                "Last updated": metadata.get("last_updated", "N/A"),
-                "Registered": metadata.get("date_registered", "N/A"),
-                "Stars": metadata.get("star_count", "N/A"),
-            }
-            context["Image details"] = metadata.get("tags", "N/A")
-            context["User details"] = metadata.get("user", "Unknown")
-        else:
-            context["Analysis"] = "Image not found"
-        return context
 
-    def _create_digest_context(self, image_obs, tag_name, image_tag):
-        if not image_tag:
-            return {}
-        fullname = f"{image_obs.value}:{tag_name}"
-        arch = image_tag.get("arch", "N/A")
-        os = image_tag.get("os", "N/A")
-        pushed = image_tag.get("last_pushed", "N/A")
-        context = {"image name": fullname, "arch": f"{os}/{arch}", "pushed": pushed}
-        return context
+def get_image_context(metadata):
+    context = {"source": "hub.docker.com"}
+    if metadata:
+        context["Analysis"] = "Image found"
+        context["Image stats"] = {
+            "Pulls": metadata.get("pull_count", "N/A"),
+            "Last updated": metadata.get("last_updated", "N/A"),
+            "Registered": metadata.get("date_registered", "N/A"),
+            "Stars": metadata.get("star_count", "N/A"),
+        }
+        context["Image details"] = metadata.get("tags", "N/A")
+        context["User details"] = metadata.get("user", "Unknown")
+    else:
+        context["Analysis"] = "Image not found"
+    return context
 
-    def _create_digest_observable(self, image_obs, digest, context, link_type):
-        logging.info(f"Add {image_obs.value}'s digest: {digest}")
-        sha_obs = observable.save(value=digest, type="sha256", tags=["dockerhub"])
-        if context:
-            sha_obs.add_context("hub.docker.com", context)
-        image_obs.link_to(sha_obs, link_type, "")
-        return sha_obs
 
-    def _make_relationships(self, image_obs, metadata):
-        username = metadata.get("user", {}).get("username", "")
-        if username:
-            logging.info(f"Add dockerhub user_account: {username}")
-            user_obs = observable.save(
-                value=username,
-                type="user_account",
-                tags=["dockerhub"],
-                account_type="dockerhub",
-            )
-            user_obs.link_to(image_obs, "owns", "")
-        for tag_name, image_tags in metadata.get("tags", {}).items():
-            for image_tag in image_tags:
-                context = self._create_digest_context(image_obs, tag_name, image_tag)
-                digest = self.DIGEST_REGEX.match(image_tag.get("digest", ""))
-                if digest:
-                    self._create_digest_observable(
-                        image_obs, digest.group(1), context, "generates"
+def create_digest_context(image_obs, tag_name, image_tag):
+    if not image_tag:
+        return {}
+    fullname = f"{image_obs.value}:{tag_name}"
+    arch = image_tag.get("arch", "N/A")
+    os = image_tag.get("os", "N/A")
+    pushed = image_tag.get("last_pushed", "N/A")
+    context = {"image name": fullname, "arch": f"{os}/{arch}", "pushed": pushed}
+    return context
+
+
+def create_digest_observable(image_obs, digest, context, link_type):
+    logging.info(f"Add {image_obs.value}'s digest: {digest}")
+    sha_obs = observable.save(value=digest, type="sha256", tags=["dockerhub"])
+    if context:
+        sha_obs.add_context("hub.docker.com", context)
+    image_obs.link_to(sha_obs, link_type, "")
+    return sha_obs
+
+
+def make_relationships(image_obs, metadata):
+    username = metadata.get("user", {}).get("username", "")
+    if username:
+        logging.info(f"Add dockerhub user_account: {username}")
+        user_obs = observable.save(
+            value=username,
+            type="user_account",
+            tags=["dockerhub"],
+            account_type="dockerhub",
+        )
+        user_obs.link_to(image_obs, "owns", "")
+    for tag_name, image_tags in metadata.get("tags", {}).items():
+        for image_tag in image_tags:
+            context = create_digest_context(image_obs, tag_name, image_tag)
+            digest = DIGEST_REGEX.match(image_tag.get("digest", ""))
+            if digest:
+                create_digest_observable(
+                    image_obs, digest.group(1), context, "generates"
+                )
+            for layer in image_tag.get("layers", []):
+                layer_digest = DIGEST_REGEX.match(layer.get("digest", ""))
+                if layer_digest:
+                    create_digest_observable(
+                        image_obs, layer_digest.group(1), context, "embeds"
                     )
-                for layer in image_tag.get("layers", []):
-                    layer_digest = self.DIGEST_REGEX.match(layer.get("digest", ""))
-                    if layer_digest:
-                        self._create_digest_observable(
-                            image_obs, layer_digest.group(1), context, "embeds"
-                        )
-                    file_digest = self.FILE_REGEX.match(layer.get("instruction", ""))
-                    if file_digest:
-                        self._create_digest_observable(
-                            image_obs, file_digest.group(1), context, "adds"
-                        )
+                file_digest = FILE_REGEX.match(layer.get("instruction", ""))
+                if file_digest:
+                    create_digest_observable(
+                        image_obs, file_digest.group(1), context, "adds"
+                    )
 
 
-class DockerHubImageAnalytics(task.OneShotTask, DockerHubObservables):
+class DockerHubImageAnalytics(task.OneShotTask):
     """DockerHubImageAnalytics queries docker hub to get more details related to
     docker_image observable.
 
@@ -193,12 +195,12 @@ class DockerHubImageAnalytics(task.OneShotTask, DockerHubObservables):
             self.logger.info(f"Image metadata for {observable_obj.value} not found")
             return []
 
-        context = self._get_image_context(metadata)
+        context = get_image_context(metadata)
         observable_obj.add_context("hub.docker.com", context)
-        self._make_relationships(observable_obj, metadata)
+        make_relationships(observable_obj, metadata)
 
 
-class DockerHubUserAnalytics(task.OneShotTask, DockerHubObservables):
+class DockerHubUserAnalytics(task.OneShotTask):
     """DockerHubUserAnalytics queries docker hub to get more details related to
     user_account observable of dockerhub type and fetch all their images.
 
