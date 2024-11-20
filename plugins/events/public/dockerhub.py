@@ -38,6 +38,7 @@ class DockerHubImageEvent(task.EventTask, DockerHubObservables):
             self.logger.info(
                 f"Skipping {container_image.type} {container_image.value} not from docker.io"
             )
+            return
         metadata = DockerHubApi.image_full_details(container_image.value)
         if not metadata:
             self.logger.info(f"Image metadata for {container_image.value} not found")
