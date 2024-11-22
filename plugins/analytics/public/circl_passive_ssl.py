@@ -38,7 +38,7 @@ class CirclPassiveSSLApi:
             return r.json()
 
     @staticmethod
-    def fetch_cert(cert_sha1: str, settings: dict):
+    def fetch_cert(cert_sha1: str):
         auth = (
             yeti_config["circl_passivessl"]["username"],
             yeti_config["circl_passivessl"]["password"],
