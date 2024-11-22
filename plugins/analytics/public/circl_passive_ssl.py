@@ -86,7 +86,7 @@ class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
 
                         cert.issuer = _info.get("issuer", "")
 
-                        cert.save()
+                        cert = cert.save()
 
                         ip.link_to(cert, "ip-certificate", "CirlPassiveSSL")
 
