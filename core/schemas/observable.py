@@ -148,7 +148,12 @@ def create(*, value: str, type: str | None = None, **kwargs) -> ObservableTypes:
 
 
 def save(
-    *, value: str, type: str | None = None, tags: List[str] = None, **kwargs
+    *,
+    value: str,
+    type: str | None = None,
+    tags: List[str] = None,
+    overwrite=False,
+    **kwargs,
 ) -> ObservableTypes:
     """
     Save an observable object. If the object is already in the database, it will be updated.
@@ -160,14 +165,26 @@ def save(
 
     tags is an optional list of tags to add to the observable.
     """
-    observable_obj = create(value=value, type=type, **kwargs).save()
+    observable_obj = create(value=value, type=type, **kwargs)
+    db_obs = find(value=observable_obj.value, type=observable_obj.type, **kwargs)
+    if db_obs:
+        if overwrite:
+            observable_obj = observable_obj.save()
+        else:
+            observable_obj = db_obs
+    else:
+        observable_obj = observable_obj.save()
     if tags:
         observable_obj.tag(tags)
     return observable_obj
 
 
 def find(*, value, **kwargs) -> ObservableTypes:
-    return Observable.find(value=refang(value), **kwargs)
+    if "type" in kwargs:
+        obs = Observable.find(value=refang(value), type=kwargs["type"])
+    else:
+        obs = Observable.find(value=refang(value))
+    return obs
 
 
 def create_from_text(text: str) -> Tuple[List["ObservableTypes"], List[str]]:
