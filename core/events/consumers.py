@@ -9,7 +9,13 @@ from kombu import Connection, Exchange, Queue
 from kombu.mixins import ConsumerMixin
 
 from core.config.config import yeti_config
-from core.events.message import EventMessage, LogMessage
+from core.events.message import (
+    EventMessage,
+    LinkEvent,
+    LogMessage,
+    ObjectEvent,
+    TagEvent,
+)
 from core.schemas.task import EventTask, LogTask, TaskType
 from core.taskmanager import TaskManager
 from core.taskscheduler import get_plugins_list
@@ -62,22 +68,40 @@ class EventConsumer(Consumer):
     def __init__(self, stop_event, connection, queues):
         super().__init__(EventTask, stop_event, connection, queues)
 
-    def on_message(self, body, received_message):
-        try:
-            message = EventMessage(**json.loads(body))
-            message_digest = hashlib.sha256(body.encode()).hexdigest()
-            ts = int(message.timestamp.timestamp())
-            self.logger.debug(f"Message received at {ts} - digest: {message_digest}")
-            for task in TaskManager.tasks():
-                if task.enabled is False or task.type != TaskType.event:
-                    continue
-                if message.event.match(task.compiled_acts_on):
-                    self.logger.info(f"Running task {task.name}")
-                    task.run(message)
-        except Exception:
-            self.logger.exception(
-                f"[PID:{os.getpid()}] - Error processing message in events queue with {body}"
+    def debug(self, message, body):
+        message_digest = hashlib.sha256(body.encode()).hexdigest()
+        ts = int(message.timestamp.timestamp())
+        if isinstance(message.event, ObjectEvent):
+            self.logger.debug(
+                f"Message received at {ts} - digest: {message_digest} | {message.event.event_message}"
             )
+        if isinstance(message.event, LinkEvent):
+            source = message.event.link_source_event
+            target = message.event.link_target_event
+            self.logger.debug(
+                f"Message received at {ts} - digest: {message_digest} | {source} --> {target}"
+            )
+        if isinstance(message.event, TagEvent):
+            self.logger.debug(
+                f"Message received at {ts} - digest: {message_digest} | {message.event.tag_message}"
+            )
+
+    def on_message(self, body, received_message):
+        message = EventMessage(**json.loads(body))
+        self.debug(message, body)
+        for task in TaskManager.tasks():
+            if task.enabled is False or task.type != TaskType.event:
+                continue
+            if message.event.match(task.compiled_acts_on):
+                self.logger.info(
+                    f"Running task {task.name} on {message.event.event_message}"
+                )
+                try:
+                    task.run(message)
+                except Exception:
+                    self.logger.exception(
+                        f"[PID:{os.getpid()}] - Error processing message in events queue with {body}"
+                    )
         received_message.ack()
 
 
@@ -91,10 +115,12 @@ class LogConsumer(Consumer):
             for task in TaskManager.tasks():
                 if task.enabled is False or task.type != TaskType.log:
                     continue
+                self.logger.info(f"Running task {task.name} on {message}")
                 task.run(message)
         except Exception:
             self.logger.exception(f"Error processing message in logs queue with {body}")
-        received_message.ack()
+        finally:
+            received_message.ack()
 
 
 class Worker(multiprocessing.Process):
@@ -110,6 +136,9 @@ class Worker(multiprocessing.Process):
 
     def run(self):
         logger.info(f"Worker {self.name} started")
+        from core.database_arango import db
+
+        db.set_lock(lock)
         while not self.stop_event.is_set():
             try:
                 self._worker.run()
@@ -122,6 +151,7 @@ class Worker(multiprocessing.Process):
 
 
 if __name__ == "__main__":
+    lock = multiprocessing.Lock()
     parser = argparse.ArgumentParser(
         prog="yeti-consumer", description="Consume events and logs from the event bus"
     )
