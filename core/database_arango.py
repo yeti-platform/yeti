@@ -37,6 +37,86 @@ TESTING = "unittest" in sys.modules.keys()
 
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
 
+from arango.http import HTTPClient
+from arango.response import Response
+from requests import Session
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
+
+
+class LogAndRetryHTTPClient(HTTPClient):
+    def __init__(self, retries=0):
+        self._logger = logging.getLogger()
+        self._lock = None
+        self._retries = retries
+
+    @property
+    def lock(self):
+        if not self._lock:
+            self._lock = MockLock()
+        return self._lock
+
+    def set_lock(self, lock):
+        self._lock = lock
+
+    def create_session(self, host):
+        session = Session()
+        if self._retries:
+            retry_strategy = Retry(
+                total=3,
+                backoff_factor=1,
+                status_forcelist=[429, 500, 502, 503, 504],
+                allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
+            )
+            http_adapter = HTTPAdapter(max_retries=retry_strategy)
+            session.mount("https://", http_adapter)
+            session.mount("http://", http_adapter)
+        return session
+
+    def send_request(
+        self, session, method, url, params=None, data=None, headers=None, auth=None
+    ):
+        # Acquire multiprocessing lock
+        # Mandatory with events consumers
+        self.lock.acquire()
+        response = None
+        try:
+            response = session.request(
+                method=method,
+                url=url,
+                params=params,
+                data=data,
+                headers=headers,
+                auth=auth,
+                verify=False,  # Disable SSL verification
+                timeout=5,  # Use timeout of 5 seconds
+            )
+            # Return an instance of arango.response.Response.
+            response = Response(
+                method=response.request.method,
+                url=response.url,
+                headers=response.headers,
+                status_code=response.status_code,
+                status_text=response.reason,
+                raw_body=response.text,
+            )
+        except Exception:
+            self._logger.error(f"Error while sending request to {url}")
+        finally:
+            self.lock.release()
+        return response
+
+
+class MockLock:
+    def __init__(self):
+        pass
+
+    def acquire(self):
+        pass
+
+    def release(self):
+        pass
+
 
 class ArangoDatabase:
     """Class that contains the base class for the database.
@@ -48,6 +128,7 @@ class ArangoDatabase:
         self.db = None
         self.collections = dict()
         self.graphs = dict()
+        self._http_client = LogAndRetryHTTPClient()
 
     def connect(
         self,
@@ -67,7 +148,9 @@ class ArangoDatabase:
             database = "yeti_test"
 
         host_string = f"http://{host}:{port}"
-        client = ArangoClient(hosts=host_string, request_timeout=None)
+        client = ArangoClient(
+            hosts=host_string, request_timeout=None, http_client=self._http_client
+        )
 
         sys_db = client.db("_system", username=username, password=password)
         for _ in range(0, 4):
@@ -229,13 +312,98 @@ class ArangoDatabase:
         if self.db is None:
             self.connect()
 
+        async_db = self.db.begin_async_execution(return_result=True)
         if name not in self.collections:
-            if self.db.has_collection(name):
-                self.collections[name] = self.db.collection(name)
+            job = async_db.has_collection(name)
+            while job.status() != "done":
+                time.sleep(0.1)
+            data = job.result()
+            if data:
+                col = async_db.collection(name)
+                self.collections[name] = col
             else:
-                self.collections[name] = self.db.create_collection(name)
-
+                job = async_db.create_collection(name)
+                while job.status() != "done":
+                    time.sleep(0.1)
+                col = job.result()
+                self.collections[name] = col
         return self.collections[name]
+
+    def insert(self, collection, document_json):
+        if self.db is None:
+            self.connect()
+        document: dict = json.loads(document_json)
+        try:
+            async_db = self.db.begin_async_execution(return_result=True)
+            async_col = async_db.collection(collection)
+            job = async_col.insert(document, return_new=True)
+            while job.status() != "done":
+                time.sleep(0.1)
+            newdoc = job.result()
+        except DocumentInsertError as err:
+            if not err.error_code == 1210:  # Unique constraint violation
+                raise
+            return None
+        return newdoc
+
+    def update(self, collection, document_json):
+        document = json.loads(document_json)
+        doc_id = document.pop("id")
+        async_db = self.db.begin_async_execution(return_result=True)
+        async_col = async_db.collection(collection)
+        if doc_id:
+            document["_key"] = doc_id
+            job = async_col.update(document, return_new=True)
+            while job.status() != "done":
+                time.sleep(0.1)
+            newdoc = job.result()
+        else:
+            if "value" in document:
+                filters = {"value": document["value"]}
+            else:
+                filters = {"name": document["name"]}
+            if "type" in document:
+                filters["type"] = document["type"]
+            logging.debug(f"filters: {filters}")
+            job = async_col.update_match(filters, document)
+            while job.status() != "done":
+                time.sleep(0.1)
+            newdoc = job.result()
+            if newdoc != 1:
+                return None
+            try:
+                job = async_col.find(filters, limit=1)
+                while job.status() != "done":
+                    time.sleep(0.1)
+                result = job.result()
+                newdoc = list(result)[0]
+            except IndexError as exception:
+                msg = f"Update failed when adding {document_json}: {exception}"
+                logging.error(msg)
+                raise RuntimeError(msg)
+        return newdoc
+
+    def get(self, collection, id):
+        if self.db is None:
+            self.connect()
+        async_db = self.db.begin_async_execution(return_result=True)
+        async_col = async_db.collection(collection)
+        job = async_col.get(id)
+        while job.status() != "done":
+            time.sleep(0.1)
+        result = job.result()
+        return result
+
+    def find(self, collection, kwargs, limit):
+        if self.db is None:
+            self.connect()
+        async_db = self.db.begin_async_execution(return_result=True)
+        async_col = async_db.collection(collection)
+        job = async_col.find(kwargs, limit=limit)
+        while job.status() != "done":
+            time.sleep(0.1)
+        result = job.result()
+        return result
 
     def graph(self, name):
         if self.db is None:
@@ -265,6 +433,9 @@ class ArangoDatabase:
             self.connect()
         return getattr(self.db, key)
 
+    def set_lock(self, lock):
+        self._http_client.set_lock(lock)
+
 
 db = ArangoDatabase()
 
@@ -282,40 +453,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return self._collection_name + "/" + self.id
 
     def _insert(self, document_json: str):
-        document: dict = json.loads(document_json)
-        try:
-            newdoc = self._get_collection().insert(document, return_new=True)["new"]
-        except DocumentInsertError as err:
-            if not err.error_code == 1210:  # Unique constraint violation
-                raise
+        document = self._db.insert(self._collection_name, document_json)
+        if not document:
             return None
-        newdoc["__id"] = newdoc.pop("_key")
-        return newdoc
+        document = document["new"]
+        document["__id"] = document.pop("_key")
+        return document
 
     def _update(self, document_json):
-        document = json.loads(document_json)
-        doc_id = document.pop("id")
-        if doc_id:
-            document["_key"] = doc_id
-            newdoc = self._get_collection().update(document, return_new=True)["new"]
-        else:
-            if "value" in document:
-                filters = {"value": document["value"]}
-            else:
-                filters = {"name": document["name"]}
-            if "type" in document:
-                filters["type"] = document["type"]
-            self._get_collection().update_match(filters, document)
-
-            logging.debug(f"filters: {filters}")
-            try:
-                newdoc = list(self._get_collection().find(filters, limit=1))[0]
-            except IndexError as exception:
-                msg = f"Update failed when adding {document_json}: {exception}"
-                logging.error(msg)
-                raise RuntimeError(msg)
-        newdoc["__id"] = newdoc.pop("_key")
-        return newdoc
+        document = self._db.update(self._collection_name, document_json)
+        if not document:
+            return None
+        try:
+            if "new" in document:
+                document = document["new"]
+            document["__id"] = document.pop("_key")
+            return document
+        except Exception:
+            return None
 
     def save(
         self: TYetiObject, exclude_overwrite: list[str] = ["created", "tags", "context"]
@@ -391,7 +546,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         Returns:
           A Yeti object."""
-        document = cls._get_collection().get(id)
+        document = cls._db.get(cls._collection_name, id)
         if not document:
             return None
         document["__id"] = document.pop("_key")
@@ -410,10 +565,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if "type" not in kwargs and getattr(cls, "_type_filter", None):
             kwargs["type"] = cls._type_filter
 
-        documents = list(cls._get_collection().find(kwargs, limit=1))
+        documents = cls._db.find(cls._collection_name, kwargs, limit=1)
+        # documents = list(cls._get_collection().find(kwargs, limit=1))
         if not documents:
             return None
-        document = documents[0]
+        document = documents.pop()
         document["__id"] = document.pop("_key")
         return cls.load(document)
 
@@ -599,7 +755,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Avoid circular dependency
         from core.schemas.graph import Relationship
 
-        graph = self._db.graph("threat_graph")
+        async_db = self._db.begin_async_execution(return_result=True)
+        async_graph = async_db.graph("threat_graph")
 
         # Check if a relationship with the same link_type already exists
         aql = """
@@ -624,7 +781,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             relationship.count += 1
             edge = json.loads(relationship.model_dump_json())
             edge["_id"] = neighbors[0]["_id"]
-            graph.update_edge(edge)
+            job = async_graph.update_edge(edge)
+            while job.status() != "done":
+                time.sleep(0.1)
+            #            graph.update_edge(edge)
             if self._collection_name != "auditlog":
                 try:
                     event = message.LinkEvent(
@@ -647,12 +807,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
             created=datetime.datetime.now(datetime.timezone.utc),
             modified=datetime.datetime.now(datetime.timezone.utc),
         )
-        result = graph.edge_collection("links").link(
-            relationship.source,
-            relationship.target,
+        col = async_graph.edge_collection("links")
+        job = col.link(
+            self.extended_id,
+            target.extended_id,
             data=json.loads(relationship.model_dump_json()),
             return_new=True,
-        )["new"]
+        )
+        while job.status() != "done":
+            time.sleep(0.1)
+        result = job.result()["new"]
         result["__id"] = result.pop("_key")
         relationship = Relationship.load(result)
         if self._collection_name != "auditlog":
