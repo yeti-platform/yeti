@@ -35,6 +35,8 @@ LINK_TYPE_TO_GRAPH = {
 
 TESTING = "unittest" in sys.modules.keys()
 
+ASYNC_JOB_WAIT_TIME = 0.01
+
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
 
 from arango.http import HTTPClient
@@ -311,120 +313,55 @@ class ArangoDatabase:
     def collection(self, name):
         if self.db is None:
             self.connect()
-
-        async_db = self.db.begin_async_execution(return_result=True)
         if name not in self.collections:
+            async_db = self.db.begin_async_execution(return_result=True)
             job = async_db.has_collection(name)
             while job.status() != "done":
-                time.sleep(0.1)
+                time.sleep(ASYNC_JOB_WAIT_TIME)
             data = job.result()
             if data:
-                col = async_db.collection(name)
-                self.collections[name] = col
+                self.collections[name] = async_db.collection(name)
             else:
                 job = async_db.create_collection(name)
                 while job.status() != "done":
-                    time.sleep(0.1)
-                col = job.result()
-                self.collections[name] = col
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                self.collections[name] = job.result()
         return self.collections[name]
-
-    def insert(self, collection, document_json):
-        if self.db is None:
-            self.connect()
-        document: dict = json.loads(document_json)
-        try:
-            async_db = self.db.begin_async_execution(return_result=True)
-            async_col = async_db.collection(collection)
-            job = async_col.insert(document, return_new=True)
-            while job.status() != "done":
-                time.sleep(0.1)
-            newdoc = job.result()
-        except DocumentInsertError as err:
-            if not err.error_code == 1210:  # Unique constraint violation
-                raise
-            return None
-        return newdoc
-
-    def update(self, collection, document_json):
-        document = json.loads(document_json)
-        doc_id = document.pop("id")
-        async_db = self.db.begin_async_execution(return_result=True)
-        async_col = async_db.collection(collection)
-        if doc_id:
-            document["_key"] = doc_id
-            job = async_col.update(document, return_new=True)
-            while job.status() != "done":
-                time.sleep(0.1)
-            newdoc = job.result()
-        else:
-            if "value" in document:
-                filters = {"value": document["value"]}
-            else:
-                filters = {"name": document["name"]}
-            if "type" in document:
-                filters["type"] = document["type"]
-            logging.debug(f"filters: {filters}")
-            job = async_col.update_match(filters, document)
-            while job.status() != "done":
-                time.sleep(0.1)
-            newdoc = job.result()
-            if newdoc != 1:
-                return None
-            try:
-                job = async_col.find(filters, limit=1)
-                while job.status() != "done":
-                    time.sleep(0.1)
-                result = job.result()
-                newdoc = list(result)[0]
-            except IndexError as exception:
-                msg = f"Update failed when adding {document_json}: {exception}"
-                logging.error(msg)
-                raise RuntimeError(msg)
-        return newdoc
-
-    def get(self, collection, id):
-        if self.db is None:
-            self.connect()
-        async_db = self.db.begin_async_execution(return_result=True)
-        async_col = async_db.collection(collection)
-        job = async_col.get(id)
-        while job.status() != "done":
-            time.sleep(0.1)
-        result = job.result()
-        return result
-
-    def find(self, collection, kwargs, limit):
-        if self.db is None:
-            self.connect()
-        async_db = self.db.begin_async_execution(return_result=True)
-        async_col = async_db.collection(collection)
-        job = async_col.find(kwargs, limit=limit)
-        while job.status() != "done":
-            time.sleep(0.1)
-        result = job.result()
-        return result
 
     def graph(self, name):
         if self.db is None:
             self.connect()
+        if name not in self.graphs:
+            async_db = self.db.begin_async_execution(return_result=True)
+            job = async_db.has_graph(name)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            data = job.result()
+            if data:
+                graph = async_db.graph(name)
+                self.graphs[name] = graph
+            else:
+                job = async_db.create_graph(name)
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                self.graphs[name] = job.result()
+        return self.graphs[name]
 
-        try:
-            return self.db.create_graph(name)
-        except GraphCreateError as err:
-            if err.error_code in [1207, 1925]:
-                return self.db.graph(name)
-            raise
-
+    # graph is in async context
     def create_edge_definition(self, graph, definition):
         if self.db is None:
             self.connect()
 
         if not self.db.has_collection(definition["edge_collection"]):
-            collection = graph.create_edge_definition(**definition)
+            job = graph.create_edge_definition(**definition)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            collection = job.result()
         else:
-            collection = graph.replace_edge_definition(**definition)
-
+            job = graph.replace_edge_definition(**definition)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            collection = job.result()
         self.collections[definition["edge_collection"]] = collection
         return collection
 
@@ -453,24 +390,62 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return self._collection_name + "/" + self.id
 
     def _insert(self, document_json: str):
-        document = self._db.insert(self._collection_name, document_json)
-        if not document:
+        newdoc = None
+        try:
+            async_col = self._db.collection(self._collection_name)
+            job = async_col.insert(json.loads(document_json), return_new=True)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            newdoc = job.result()
+            newdoc = newdoc["new"]
+        except DocumentInsertError as err:
+            if not err.error_code == 1210:  # Unique constraint violation
+                raise
             return None
-        document = document["new"]
-        document["__id"] = document.pop("_key")
-        return document
+        if not newdoc:
+            return None
+        newdoc["__id"] = newdoc.pop("_key")
+        return newdoc
 
     def _update(self, document_json):
-        document = self._db.update(self._collection_name, document_json)
-        if not document:
+        #        document = self._db.update(self._collection_name, document_json)
+        document = json.loads(document_json)
+        doc_id = document.pop("id")
+        async_col = self._db.collection(self._collection_name)
+        newdoc = None
+        if doc_id:
+            document["_key"] = doc_id
+            job = async_col.update(document, return_new=True)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            newdoc = job.result()
+            newdoc = newdoc["new"]
+        else:
+            if "value" in document:
+                filters = {"value": document["value"]}
+            else:
+                filters = {"name": document["name"]}
+            if "type" in document:
+                filters["type"] = document["type"]
+            logging.debug(f"filters: {filters}")
+            job = async_col.update_match(filters, document)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            try:
+                job = async_col.find(filters, limit=1)
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                result = job.result()
+                newdoc = list(result)[0]
+            except IndexError as exception:
+                msg = f"Update failed when adding {document_json}: {exception}"
+                logging.error(msg)
+                raise RuntimeError(msg)
+
+        if not newdoc:
             return None
-        try:
-            if "new" in document:
-                document = document["new"]
-            document["__id"] = document.pop("_key")
-            return document
-        except Exception:
-            return None
+        newdoc["__id"] = newdoc.pop("_key")
+        return newdoc
 
     def save(
         self: TYetiObject, exclude_overwrite: list[str] = ["created", "tags", "context"]
@@ -546,7 +521,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         Returns:
           A Yeti object."""
-        document = cls._db.get(cls._collection_name, id)
+        async_col = cls._db.collection(cls._collection_name)
+        job = async_col.get(id)
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        document = job.result()
         if not document:
             return None
         document["__id"] = document.pop("_key")
@@ -565,8 +544,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if "type" not in kwargs and getattr(cls, "_type_filter", None):
             kwargs["type"] = cls._type_filter
 
-        documents = cls._db.find(cls._collection_name, kwargs, limit=1)
-        # documents = list(cls._get_collection().find(kwargs, limit=1))
+        async_col = cls._db.collection(cls._collection_name)
+        job = async_col.find(kwargs, limit=1)
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        documents = job.result()
         if not documents:
             return None
         document = documents.pop()
@@ -678,12 +660,15 @@ class ArangoYetiConnector(AbstractYetiConnector):
             fresh=True,
         )
 
-        result = graph.edge_collection("tagged").link(
+        job = graph.edge_collection("tagged").link(
             self.extended_id,
             tag_obj.extended_id,
             data=json.loads(tag_relationship.model_dump_json()),
             return_new=True,
-        )["new"]
+        )
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        result = job.result()["new"]
         result["__id"] = result.pop("_key")
         if self._collection_name != "auditlog":
             try:
@@ -725,13 +710,22 @@ class ArangoYetiConnector(AbstractYetiConnector):
         graph = self._db.graph("tags")
 
         self.get_tags()
-        results = graph.edge_collection("tagged").edges(self.extended_id)
+        job = graph.edge_collection("tagged").edges(self.extended_id)
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        results = job.result()
         for edge in results["edges"]:
             if self._collection_name != "auditlog":
                 try:
-                    tag_relationship = self._db.collection("tagged").get(edge["_id"])
+                    job = self._db.collection("tagged").get(edge["_id"])
+                    while job.status() != "done":
+                        time.sleep(ASYNC_JOB_WAIT_TIME)
+                    tag_relationship = job.result()
                     tag_collection, tag_id = tag_relationship["target"].split("/")
-                    tag_obj = self._db.collection(tag_collection).get(tag_id)
+                    job = self._db.collection(tag_collection).get(tag_id)
+                    while job.status() != "done":
+                        time.sleep(ASYNC_JOB_WAIT_TIME)
+                    tag_obj = job.result()
                     event = message.TagEvent(
                         type=message.EventType.delete,
                         tagged_object=self,
@@ -740,7 +734,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     producer.publish_event(event)
                 except Exception:
                     logging.exception("Error while publishing event")
-            graph.edge_collection("tagged").delete(edge["_id"])
+            job = graph.edge_collection("tagged").delete(edge["_id"])
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
 
     def link_to(
         self, target, relationship_type: str, description: str
@@ -755,8 +751,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Avoid circular dependency
         from core.schemas.graph import Relationship
 
-        async_db = self._db.begin_async_execution(return_result=True)
-        async_graph = async_db.graph("threat_graph")
+        async_graph = self._db.graph("threat_graph")
 
         # Check if a relationship with the same link_type already exists
         aql = """
@@ -783,8 +778,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge["_id"] = neighbors[0]["_id"]
             job = async_graph.update_edge(edge)
             while job.status() != "done":
-                time.sleep(0.1)
-            #            graph.update_edge(edge)
+                time.sleep(ASYNC_JOB_WAIT_TIME)
             if self._collection_name != "auditlog":
                 try:
                     event = message.LinkEvent(
@@ -815,7 +809,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return_new=True,
         )
         while job.status() != "done":
-            time.sleep(0.1)
+            time.sleep(ASYNC_JOB_WAIT_TIME)
         result = job.result()["new"]
         result["__id"] = result.pop("_key")
         relationship = Relationship.load(result)
@@ -841,7 +835,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         edge["_to"] = self.target
         edge["_id"] = f"links/{self.id}"
         graph = self._db.graph("threat_graph")
-        graph.update_edge(edge)
+        job = graph.update_edge(edge)
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
         self.save()
 
     # TODO: Consider extracting this to its own class, given it's only meant
@@ -1293,13 +1289,20 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def delete(self, all_versions=True):
         """Deletes an object from the database."""
-        if self._db.graph("threat_graph").has_vertex_collection(self._collection_name):
+        job = self._db.graph("threat_graph").has_vertex_collection(
+            self._collection_name
+        )
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        if job.result():
             col = self._db.graph("threat_graph").vertex_collection(
                 self._collection_name
             )
         else:
             col = self._db.collection(self._collection_name)
-        col.delete(self.id)
+        job = col.delete(self.id)
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
         if self._collection_name == "auditlog":
             return
         try:
@@ -1307,16 +1310,28 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if self._collection_name == "tagged":
                 source_collection, source_id = self.source.split("/")
                 tag_collection, tag_id = self.target.split("/")
-                source_obj = self._db.collection(source_collection).get(source_id)
-                tag_obj = self._db.collection(tag_collection).get(tag_id)
+                job = self._db.collection(source_collection).get(source_id)
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                source_obj = job.result()
+                job = self._db.collection(tag_collection).get(tag_id)
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                tag_obj = job.result()
                 event = message.TagEvent(
                     type=event_type, tagged_object=source_obj, tag_object=tag_obj
                 )
             elif self._collection_name == "links":
                 source_collection, source_id = self.source.split("/")
                 target_collection, target_id = self.target.split("/")
-                source_obj = self._db.collection(source_collection).get(source_id)
-                target_obj = self._db.collection(target_collection).get(target_id)
+                job = self._db.collection(source_collection).get(source_id)
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                source_obj = job.result()
+                job = self._db.collection(target_collection).get(target_id)
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                target_obj = job.result()
                 event = message.LinkEvent(
                     type=event_type,
                     source_object=source_obj,
