@@ -1098,7 +1098,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_args["@collection"] = colname
         logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
         documents = cls._db.aql.execute(
-            aql_string, bind_vars=aql_args, count=True, full_count=using_view
+            aql_string, bind_vars=aql_args, count=True, full_count=True
         )
         stats = documents.statistics()
         results = []

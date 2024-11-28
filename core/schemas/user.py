@@ -3,7 +3,7 @@ import secrets
 from typing import ClassVar, Literal
 
 from passlib.context import CryptContext
-from pydantic import Field, computed_field
+from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.schemas.model import YetiModel
@@ -16,6 +16,7 @@ def generate_api_key():
 
 
 class User(YetiModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "users"
     _root_type: Literal["user"] = "user"
     _type_filter: ClassVar[None] = None

@@ -1,7 +1,7 @@
 import datetime
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from core import database_arango
 
@@ -9,6 +9,7 @@ from core import database_arango
 
 
 class GraphFilter(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
     key: str
     value: str
     operator: str
@@ -17,6 +18,7 @@ class GraphFilter(BaseModel):
 # Relationship and TagRelationship do not inherit from YetiModel
 # because they represent and id in the form of collection_name/id
 class Relationship(BaseModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = list()
     _collection_name: ClassVar[str] = "links"
     _type_filter: ClassVar[str | None] = None
@@ -51,6 +53,7 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
 
 
 class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = list()
     _collection_name: ClassVar[str] = "tagged"
     _root_type: Literal["tag_relationship"] = "tag_relationship"

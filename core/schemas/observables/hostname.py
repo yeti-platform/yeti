@@ -9,13 +9,13 @@ from core.schemas import observable
 class Hostname(observable.Observable):
     type: Literal["hostname"] = "hostname"
 
-    @field_validator("value")
+    @field_validator("value", mode="before")
+    def refang(cls, v) -> str:
+        return observable.refang(v)
+
     @classmethod
-    def validate_value(cls, value: str) -> str:
-        value = observable.refang(value)
+    def validator(cls, value: str) -> bool:
         # Replace underscores with hyphens in the domain
         # https://stackoverflow.com/a/14622263
-        temp_value = value.replace("_", "-")
-        if not validators.domain(temp_value):
-            raise ValueError("Invalid hostname")
-        return value
+        value = value.replace("_", "-")
+        return validators.domain(value) or False

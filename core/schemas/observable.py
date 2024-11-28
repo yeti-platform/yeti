@@ -14,7 +14,7 @@ from typing import IO, ClassVar, List, Literal, Tuple
 
 import requests
 from bs4 import BeautifulSoup
-from pydantic import Field, computed_field
+from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now, refang
@@ -32,6 +32,7 @@ FileLikeObject = str | os.PathLike | IO | tempfile.SpooledTemporaryFile
 
 
 class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["observable"] = "observable"
@@ -51,6 +52,16 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
+
+    @computed_field
+    def is_valid(self) -> bool:
+        valid = True
+        if hasattr(self, "validator"):
+            try:
+                valid = self.validator(self.value)
+            except ValueError:
+                return False
+        return valid
 
     def add_context(
         self,
@@ -108,14 +119,12 @@ def guess_type(value: str) -> str | None:
 
     Returns the type if it can be guessed, otherwise None.
     """
+    value = refang(value.strip())
     for obs_type, obj in TYPE_MAPPING.items():
-        if not hasattr(obj, "validate_value"):
+        if not hasattr(obj, "validator"):
             continue
-        try:
-            if obj.validate_value(value):
-                return obs_type
-        except ValueError:
-            continue
+        if obj.validator(value):
+            return obs_type
     return None
 
 

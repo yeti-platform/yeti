@@ -3,7 +3,7 @@ import logging
 from enum import Enum
 from typing import ClassVar, List, Literal
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
@@ -41,6 +41,7 @@ class DiamondModel(Enum):
 
 
 class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "indicators"
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["indicator"] = "indicator"

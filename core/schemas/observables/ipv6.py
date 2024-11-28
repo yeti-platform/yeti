@@ -9,10 +9,6 @@ from core.schemas import observable
 class IPv6(observable.Observable):
     type: Literal["ipv6"] = "ipv6"
 
-    @field_validator("value")
     @classmethod
-    def validate_value(cls, value: str) -> str:
-        value = observable.refang(value)
-        if not validators.ipv6(value):
-            raise ValueError("Invalid ipv6 address")
-        return value
+    def validator(cls, value: str) -> bool:
+        return validators.ipv6(value) or False
