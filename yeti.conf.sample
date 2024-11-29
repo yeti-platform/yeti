@@ -172,6 +172,7 @@ password =
 [censys]
 api_key =
 secret =
+max_results = 100
 
 [shodan]
 
