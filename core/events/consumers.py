@@ -87,15 +87,20 @@ class EventConsumer(Consumer):
             )
 
     def on_message(self, body, received_message):
-        message = EventMessage(**json.loads(body))
+        try:
+            message = EventMessage(**json.loads(body))
+        except Exception:
+            self.logger.exception(
+                "Error parsing message in events queue. Discarding message"
+            )
+            received_message.ack()
+            return
         self.debug(message, body)
         for task in TaskManager.tasks():
             if task.enabled is False or task.type != TaskType.event:
                 continue
             if message.event.match(task.compiled_acts_on):
-                self.logger.info(
-                    f"Running task {task.name} on {message.event.event_message}"
-                )
+                self.logger.info(f"Running task {task.name}")
                 try:
                     task.run(message)
                 except Exception:
