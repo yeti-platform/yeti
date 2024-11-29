@@ -123,7 +123,9 @@ class ArangoDatabase:
         self.create_analyzers()
         self.create_views()
 
-    def check_database_version(self):
+    def check_database_version(self, skip_if_testing: bool = True):
+        if TESTING and skip_if_testing:
+            return
         system = list(self.db.collection("system").all())
         if not system:
             raise RuntimeError("Database version not found, please run migrations.")
