@@ -138,7 +138,6 @@ class Worker(multiprocessing.Process):
         logger.info(f"Worker {self.name} started")
         from core.database_arango import db
 
-        db.set_lock(lock)
         while not self.stop_event.is_set():
             try:
                 self._worker.run()
@@ -151,7 +150,7 @@ class Worker(multiprocessing.Process):
 
 
 if __name__ == "__main__":
-    lock = multiprocessing.Lock()
+    multiprocessing.set_start_method("spawn")
     parser = argparse.ArgumentParser(
         prog="yeti-consumer", description="Consume events and logs from the event bus"
     )
