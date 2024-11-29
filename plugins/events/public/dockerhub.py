@@ -43,10 +43,12 @@ class DockerHubImageEvent(task.EventTask):
                 f"Skipping {container_image.type} {container_image.value} not from docker.io"
             )
             return
+        self.logger.info(f"Fetching metadata for {container_image.value}")
         metadata = DockerHubApi.image_full_details(container_image.value)
         if not metadata:
             self.logger.info(f"Image metadata for {container_image.value} not found")
             return
+        self.logger.info(f"Adding context for {container_image.value}")
         context = get_image_context(metadata)
         container_image.add_context("hub.docker.com", context)
         make_relationships(container_image, metadata)
