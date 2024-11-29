@@ -28,6 +28,8 @@ from core.events.producer import producer
 
 from .interfaces import AbstractYetiConnector
 
+CODE_DB_VERSION = 2
+
 LINK_TYPE_TO_GRAPH = {
     "tagged": "tags",
     "stix": "stix",
@@ -58,6 +60,7 @@ class ArangoDatabase:
         username: str = None,
         password: str = None,
         database: str = None,
+        check_db_sync: bool = False,
     ):
         host = host or yeti_config.get("arangodb", "host")
         port = port or yeti_config.get("arangodb", "port")
@@ -88,6 +91,8 @@ class ArangoDatabase:
             sys_db.create_database(database)
 
         self.db = client.db(database, username=username, password=password)
+        if check_db_sync:
+            self.check_database_version()
 
         self.create_edge_definition(
             self.graph("tags"),
@@ -119,6 +124,17 @@ class ArangoDatabase:
         self.create_indexes()
         self.create_analyzers()
         self.create_views()
+
+    def check_database_version(self, skip_if_testing: bool = True):
+        if TESTING and skip_if_testing:
+            return
+        system = list(self.db.collection("system").all())
+        if not system:
+            raise RuntimeError("Database version not found, please run migrations.")
+        if system[0]["db_version"] != CODE_DB_VERSION:
+            raise RuntimeError(
+                f"Database version mismatch. Expected {CODE_DB_VERSION}, got {system[0]['db_version']}"
+            )
 
     def create_analyzers(self):
         self.db.create_analyzer(

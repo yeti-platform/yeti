@@ -17,6 +17,8 @@ elif [[ "$1" = 'toggle-user' ]]; then
     poetry run python yetictl/cli.py toggle-user "${@:2}"
 elif [[ "$1" = 'toggle-admin' ]]; then
     poetry run python yetictl/cli.py toggle-admin "${@:2}"
+elif [[ "$1" = 'migrate-arangodb' ]]; then
+    poetry run python yetictl/cli.py migrate-arangodb "${@:2}"
 elif [[ "$1" = 'envshell' ]]; then
     poetry shell
 else
