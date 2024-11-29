@@ -179,9 +179,9 @@ def save(
     return observable_obj
 
 
-def find(*, value, **kwargs) -> ObservableTypes:
-    if "type" in kwargs:
-        obs = Observable.find(value=refang(value), type=kwargs["type"])
+def find(value: str, type: str = None) -> ObservableTypes:
+    if type:
+        obs = Observable.find(value=refang(value), type=type)
     else:
         obs = Observable.find(value=refang(value))
     return obs
