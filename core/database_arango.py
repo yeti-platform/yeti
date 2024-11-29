@@ -39,86 +39,6 @@ ASYNC_JOB_WAIT_TIME = 0.01
 
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
 
-from arango.http import HTTPClient
-from arango.response import Response
-from requests import Session
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
-
-
-class LogAndRetryHTTPClient(HTTPClient):
-    def __init__(self, retries=0):
-        self._logger = logging.getLogger()
-        self._lock = None
-        self._retries = retries
-
-    @property
-    def lock(self):
-        if not self._lock:
-            self._lock = MockLock()
-        return self._lock
-
-    def set_lock(self, lock):
-        self._lock = lock
-
-    def create_session(self, host):
-        session = Session()
-        if self._retries:
-            retry_strategy = Retry(
-                total=3,
-                backoff_factor=1,
-                status_forcelist=[429, 500, 502, 503, 504],
-                allowed_methods=["HEAD", "GET", "OPTIONS", "POST"],
-            )
-            http_adapter = HTTPAdapter(max_retries=retry_strategy)
-            session.mount("https://", http_adapter)
-            session.mount("http://", http_adapter)
-        return session
-
-    def send_request(
-        self, session, method, url, params=None, data=None, headers=None, auth=None
-    ):
-        # Acquire multiprocessing lock
-        # Mandatory with events consumers
-        self.lock.acquire()
-        response = None
-        try:
-            response = session.request(
-                method=method,
-                url=url,
-                params=params,
-                data=data,
-                headers=headers,
-                auth=auth,
-                verify=False,  # Disable SSL verification
-                timeout=5,  # Use timeout of 5 seconds
-            )
-            # Return an instance of arango.response.Response.
-            response = Response(
-                method=response.request.method,
-                url=response.url,
-                headers=response.headers,
-                status_code=response.status_code,
-                status_text=response.reason,
-                raw_body=response.text,
-            )
-        except Exception:
-            self._logger.error(f"Error while sending request to {url}")
-        finally:
-            self.lock.release()
-        return response
-
-
-class MockLock:
-    def __init__(self):
-        pass
-
-    def acquire(self):
-        pass
-
-    def release(self):
-        pass
-
 
 class ArangoDatabase:
     """Class that contains the base class for the database.
@@ -130,7 +50,6 @@ class ArangoDatabase:
         self.db = None
         self.collections = dict()
         self.graphs = dict()
-        self._http_client = LogAndRetryHTTPClient()
 
     def connect(
         self,
@@ -150,9 +69,7 @@ class ArangoDatabase:
             database = "yeti_test"
 
         host_string = f"http://{host}:{port}"
-        client = ArangoClient(
-            hosts=host_string, request_timeout=None, http_client=self._http_client
-        )
+        client = ArangoClient(hosts=host_string, request_timeout=None)
 
         sys_db = client.db("_system", username=username, password=password)
         for _ in range(0, 4):
@@ -369,9 +286,6 @@ class ArangoDatabase:
         if self.db is None and not key.startswith("__"):
             self.connect()
         return getattr(self.db, key)
-
-    def set_lock(self, lock):
-        self._http_client.set_lock(lock)
 
 
 db = ArangoDatabase()
