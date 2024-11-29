@@ -186,3 +186,8 @@ result_limit =
 
 # Comma-separated list of additional directories to load DFIQ objects from.
 extra_dirs = /dfiq
+
+[datadog]
+api_key = 
+app_key = 
+env = dev
