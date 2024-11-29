@@ -1,3 +1,4 @@
+import time
 import unittest
 
 from core.migrations import arangodb
@@ -9,17 +10,14 @@ class ArangoMigrationTest(unittest.TestCase):
         self.migration_manager.update_db_version(0)
 
     def test_migration_init(self):
-        migration_manager = arangodb.ArangoMigrationManager()
-        self.assertEqual(migration_manager.db_version, 0)
+        self.assertEqual(self.migration_manager.db_version, 0)
 
     def test_migration_0(self):
-        migration_manager = arangodb.ArangoMigrationManager()
-        migration_manager.migrate_to_latest(stop_at=1)
-        self.assertEqual(migration_manager.db_version, 1)
+        self.migration_manager.migrate_to_latest(stop_at=1)
+        self.assertEqual(self.migration_manager.db_version, 1)
 
     def test_migration_1(self):
-        migration_manager = arangodb.ArangoMigrationManager()
-        observable_col = migration_manager.db.collection("observables")
+        observable_col = self.migration_manager.db.collection("observables")
         observable_col.truncate()
         observable_col.insert(
             {
@@ -37,9 +35,12 @@ class ArangoMigrationTest(unittest.TestCase):
                 "created": "2024-11-14T11:58:49.757379Z",
             }
         )
-        migration_manager.migrate_to_latest(stop_at=2)
-        self.assertEqual(migration_manager.db_version, 2)
-        obs = list(observable_col.all())
+        self.migration_manager.migrate_to_latest(stop_at=2)
+        self.assertEqual(self.migration_manager.db_version, 2)
+        job = observable_col.all()
+        while job.status() != "done":
+            time.sleep(0.1)
+        obs = list(job.result())
         self.assertEqual(len(obs), 2)
         self.assertEqual(obs[0]["value"], "test.com")
         self.assertEqual(obs[0]["is_valid"], True)
