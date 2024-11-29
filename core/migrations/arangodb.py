@@ -1,4 +1,6 @@
-from core.database_arango import ArangoDatabase
+import time
+
+from core.database_arango import ASYNC_JOB_WAIT_TIME, ArangoDatabase
 from core.migrations import migration
 
 
@@ -10,11 +12,16 @@ class ArangoMigrationManager(migration.MigrationManager):
         self.db.connect()
 
         system_coll = self.db.collection("system")
-        migrations = list(system_coll.all())
+        job = system_coll.all()
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        migrations = list(job.result())
         if not migrations:
-            system_coll.insert(
+            job = system_coll.insert(
                 {"db_version": 0, "db_type": self.DB_TYPE},
             )
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
             migrations = list(system_coll.all())
 
         db_version = migrations[0]["db_version"]
@@ -24,10 +31,12 @@ class ArangoMigrationManager(migration.MigrationManager):
         self.db_type = db_type
 
     def update_db_version(self, version: int):
-        self.db.collection("system").update_match(
+        job = self.db.collection("system").update_match(
             {"db_version": self.db_version, "db_type": self.DB_TYPE},
             {"db_version": version},
         )
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
         self.db_version = version
 
 
