@@ -1,7 +1,5 @@
 from typing import Callable
 
-CODE_DB_VERSION = 2
-
 
 class MigrationManager:
     MIGRATIONS: list[Callable] = []
