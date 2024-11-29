@@ -166,7 +166,7 @@ def save(
     tags is an optional list of tags to add to the observable.
     """
     observable_obj = create(value=value, type=type, **kwargs)
-    db_obs = find(value=observable_obj.value, type=observable_obj.type, **kwargs)
+    db_obs = find(value=observable_obj.value, type=observable_obj.type)
     if db_obs:
         if overwrite:
             observable_obj = observable_obj.save()
