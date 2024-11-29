@@ -125,7 +125,7 @@ def list_tasks(task_type="") -> None:
 @cli.command()
 @click.argument("task_name")
 @click.argument("task_params", required=False)
-def run_task(task_name: str, task_params: dict = None) -> None:
+def run_task(task_name: str, task_params: dict | None = None) -> None:
     """Runs a task."""
     # Load all tasks. Take into account new tasks that have not been registered
     logging.getLogger().setLevel(logging.INFO)
@@ -147,6 +147,16 @@ def run_task(task_name: str, task_params: dict = None) -> None:
         # We want to catch and report all errors
         click.echo(f"Error running task {task_name}: {error}")
         click.echo(traceback.format_exc())
+
+
+@cli.command()
+@click.argument("stop_at", required=False)
+def migrate_arangodb(stop_at: int | None = None) -> None:
+    """Runs the database migrations."""
+    from core.migrations.arangodb import ArangoMigrationManager
+
+    migration_manager = ArangoMigrationManager()
+    migration_manager.migrate_to_latest(stop_at=stop_at)
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ class MigrationManager:
     def update_db_version(self, version: int):
         raise NotImplementedError
 
-    def migrate_to_latest(self, stop_at: int = None):
+    def migrate_to_latest(self, stop_at: int | None = None):
         for idx, migration in enumerate(self.MIGRATIONS):
             if stop_at is not None and idx >= stop_at:
                 print(f"Stopping at migration {idx}")
