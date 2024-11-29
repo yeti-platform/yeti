@@ -9,7 +9,7 @@ class ArangoMigrationManager(migration.MigrationManager):
 
     def connect_to_db(self):
         self.db = ArangoDatabase()
-        self.db.connect()
+        self.db.connect(check_db_sync=False)
 
         system_coll = self.db.collection("system")
         job = system_coll.all()
@@ -22,7 +22,11 @@ class ArangoMigrationManager(migration.MigrationManager):
             )
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
-            migrations = list(system_coll.all())
+
+            job = system_coll.all()
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            migrations = list(job.result())
 
         db_version = migrations[0]["db_version"]
         db_type = migrations[0]["db_type"]

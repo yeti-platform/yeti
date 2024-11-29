@@ -60,6 +60,7 @@ class ArangoDatabase:
         username: str = None,
         password: str = None,
         database: str = None,
+        check_db_sync: bool = False,
     ):
         host = host or yeti_config.get("arangodb", "host")
         port = port or yeti_config.get("arangodb", "port")
@@ -90,7 +91,8 @@ class ArangoDatabase:
             sys_db.create_database(database)
 
         self.db = client.db(database, username=username, password=password)
-        self.check_database_version()
+        if check_db_sync:
+            self.check_database_version()
 
         self.create_edge_definition(
             self.graph("tags"),
