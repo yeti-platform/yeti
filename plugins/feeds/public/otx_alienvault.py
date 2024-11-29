@@ -83,19 +83,12 @@ class OTXAlienvault(task.FeedTask):
                 otx_indic["created"], "%Y-%m-%dT%H:%M:%S"
             )
             if type_ind in observable.ObservableType:
-                obs = observable.Observable(
-                    value=otx_indic["indicator"],
-                    type=self._TYPE_MAPPING.get(otx_indic["type"]),
-                ).save()
-
+                obs = observable.save(value=otx_indic["indicator"], type=type_ind)
                 obs.tag(tags)
                 obs.add_context(self.name, context)
                 investigation.link_to(obs, "Observed", "OTXAlienVault")
             elif type_ind in entity.EntityType:
-                ent = entity.Entity(
-                    name=otx_indic["indicator"],
-                    type=self._TYPE_MAPPING.get(otx_indic["type"]),
-                ).save()
+                ent = entity.save(name=otx_indic["indicator"], type=type_ind)
                 investigation.link_to(ent, "Observed", "OTXAlienVault")
             elif type_ind in indicator.IndicatorType:
                 if type_ind == indicator.IndicatorType.yara:
@@ -110,12 +103,12 @@ class OTXAlienvault(task.FeedTask):
                         continue
 
                     t = list(r)[0]
-                    ind_obj = indicator.Indicator(
+                    ind_obj = indicator.save(
                         name=f"{t.identifier}",
                         pattern=otx_indic["content"],
                         type=indicator.IndicatorType.yara,
                         diamond=indicator.DiamondModel.capability,
-                    ).save()
+                    )
                     description = f"Threat name: {t.meta.get('threat_name', 'N/A')}"
                     description += (
                         f"\n\nDescription: {t.meta.get('description', 'N/A')}"

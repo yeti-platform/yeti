@@ -234,7 +234,7 @@ class DockerHubUserAnalytics(task.OneShotTask):
             ):
                 user_obj.created = date_joined
                 user_obj = user_obj.save()
-        del metadata["date_joined"]
+        metadata.pop("date_joined", None)
         user_obj.add_context("hub.docker.com", metadata)
         for image in DockerHubApi.user_images(user_obj.value):
             image_name = f'{image["namespace"]}/{image["name"]}'

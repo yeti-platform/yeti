@@ -1985,13 +1985,13 @@ test = ["flaky", "pretend", "pytest (>=3.0.1)"]
 
 [[package]]
 name = "python-arango"
-version = "7.9.1"
+version = "8.1.2"
 description = "Python Driver for ArangoDB"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "python-arango-7.9.1.tar.gz", hash = "sha256:18f7d365fb6cf45778fa73b559e3865d0a1c00081de65ef00ba238db52e374ab"},
-    {file = "python_arango-7.9.1-py3-none-any.whl", hash = "sha256:23ec7b3aad774db5f99df20f6a1036385c85eb5c9864e47628bc622ea812f2f8"},
+    {file = "python_arango-8.1.2-py3-none-any.whl", hash = "sha256:2b9f604b0f4eaf5209893cdb7a2f96448aa27d540300939b0a854ded75c031cb"},
+    {file = "python_arango-8.1.2.tar.gz", hash = "sha256:4a39525ed426b23d7ae031e071f786ac35e6aa571d158ec54c59b74d6ae7a27f"},
 ]
 
 [package.dependencies]
@@ -2004,7 +2004,7 @@ setuptools = ">=42"
 urllib3 = ">=1.26.0"
 
 [package.extras]
-dev = ["black (>=22.3.0)", "flake8 (>=4.0.1)", "isort (>=5.10.1)", "mock", "mypy (>=0.942)", "pre-commit (>=2.17.0)", "pytest (>=7.1.1)", "pytest-cov (>=3.0.0)", "sphinx", "sphinx-rtd-theme", "types-pkg-resources", "types-requests", "types-setuptools"]
+dev = ["black (>=22.3.0)", "flake8 (>=4.0.1)", "isort (>=5.10.1)", "mock", "mypy (>=0.942)", "pre-commit (>=2.17.0)", "pytest (>=7.1.1)", "pytest-cov (>=3.0.0)", "sphinx", "sphinx-rtd-theme", "types-requests", "types-setuptools"]
 
 [[package]]
 name = "python-dateutil"
@@ -2883,4 +2883,4 @@ s3 = ["boto3"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "136fff7a12b53a9850aea529fccacb9d45e9d576e4c5620df7632bd25e54bfec"
+content-hash = "248a01002d6f5561f9502092e66dfec66fcd3fa27d7430c53b1d62e856682383"

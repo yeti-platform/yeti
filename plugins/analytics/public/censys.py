@@ -1,4 +1,5 @@
 import logging
+import math
 from datetime import timedelta
 
 from censys.search import CensysHosts
@@ -18,6 +19,7 @@ class CensysApiQuery(task.AnalyticsTask):
     def run(self):
         api_key = yeti_config.get("censys", "api_key")
         api_secret = yeti_config.get("censys", "secret")
+        max_results = yeti_config.get("censys", "max_results", 1000)
 
         if not (api_key and api_secret):
             logging.error(
@@ -33,7 +35,7 @@ class CensysApiQuery(task.AnalyticsTask):
         censys_queries, _ = indicator.Query.filter({"query_type": "censys"})
 
         for query in censys_queries:
-            ip_addresses = query_censys(hosts_api, query.pattern)
+            ip_addresses = query_censys(hosts_api, query.pattern, max_results)
             for ip in ip_addresses:
                 ip_object = observable.save(value=ip)
                 ip_object.tag(query.relevant_tags)
@@ -42,10 +44,16 @@ class CensysApiQuery(task.AnalyticsTask):
                 )
 
 
-def query_censys(api: CensysHosts, query: str) -> set[str]:
+def query_censys(api: CensysHosts, query: str, max_results=1000) -> set[str]:
     """Queries Censys and returns all identified IP addresses."""
     ip_addresses: set[str] = set()
-    results = api.search(query, fields=["ip"], pages=-1)
+    if max_results <= 0:
+        results = api.search(query, fields=["ip"], pages=-1)
+    elif max_results < 100:
+        results = api.search(query, fields=["ip"], per_page=max_results, pages=1)
+    else:
+        pages = math.ceil(max_results / 100)
+        results = api.search(query, fields=["ip"], per_page=100, pages=pages)
 
     for result in results:
         for record in result:
