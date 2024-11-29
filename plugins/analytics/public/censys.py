@@ -3,6 +3,7 @@ import math
 from datetime import timedelta
 
 from censys.search import CensysHosts
+
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import indicator, observable, task
