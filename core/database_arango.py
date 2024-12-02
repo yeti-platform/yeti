@@ -985,6 +985,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
             vertices[vertex["_id"]] = neighbor_schema.load(vertex)
 
     @classmethod
+    def count(cls: Type[TYetiObject]):
+        """Counts the number of objects in the collection.
+
+        Returns:
+          The number of objects in the collection.
+        """
+        async_col = cls._db.collection(cls._collection_name)
+        job = async_col.count()
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        return job.result()
+
+    @classmethod
     def filter(
         cls: Type[TYetiObject],
         query_args: dict[str, Any],
