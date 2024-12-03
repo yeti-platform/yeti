@@ -1,10 +1,15 @@
 import datetime
-from typing import ClassVar, Literal
+from functools import wraps
+from typing import Any, ClassVar, Literal
 
-from pydantic import ConfigDict, computed_field
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from core import database_arango
+from core.schemas.dfiq import DFIQTypes
+from core.schemas.entity import EntityTypes
+from core.schemas.indicator import IndicatorTypes
 from core.schemas.model import YetiModel
+from core.schemas.observable import ObservableTypes
 
 
 class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
@@ -31,3 +36,60 @@ class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "AuditLog":
         return cls(**object)
+
+
+AllObjectTypes = EntityTypes | ObservableTypes | IndicatorTypes | DFIQTypes
+
+
+class TimelineLog(BaseModel, database_arango.ArangoYetiConnector):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    _exclude_overwrite: list[str] = []
+
+    _collection_name: ClassVar[str] = "timeline"
+    _type_filter = None
+    _root_type: Literal["timeline"] = "timeline"
+
+    timestamp: datetime.datetime
+    origin_username: str
+    target_id: str
+    action: str
+    details: dict
+
+    @classmethod
+    def load(cls, object: dict) -> "TimelineLog":
+        return cls(**object)
+
+
+def log_timeline(username: str, new: AllObjectTypes, old: AllObjectTypes = None):
+    if old:
+        old_dump = old.model_dump()
+        new_dump = new.model_dump()
+        # only retain fields that are different
+        for key in old_dump:
+            if old_dump[key] == new_dump[key]:
+                del new_dump[key]
+        details = new_dump
+    else:
+        details = new.model_dump()
+    TimelineLog(
+        timestamp=datetime.datetime.now(),
+        origin_username=username,
+        target_id=new.extended_id,
+        action="update" if old else "create",
+        details=details,
+    ).save()
+
+
+def log_timeline_tags(username: str, obj, old_tags):
+    new_tags = obj.tags
+    details = {
+        "removed": set(old_tags) - set(new_tags),
+        "added": set(new_tags) - set(old_tags),
+    }
+    TimelineLog(
+        timestamp=datetime.datetime.now(),
+        origin_username=username,
+        target_id=obj.extended_id,
+        action="tag",
+        details=details,
+    ).save()
