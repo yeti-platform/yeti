@@ -5,11 +5,15 @@ from typing import Any, ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, computed_field
 
 from core import database_arango
-from core.schemas.dfiq import DFIQTypes
-from core.schemas.entity import EntityTypes
-from core.schemas.indicator import IndicatorTypes
 from core.schemas.model import YetiModel
-from core.schemas.observable import ObservableTypes
+
+if TYPE_CHECKING:
+    from core.schemas.dfiq import DFIQTypes
+    from core.schemas.entity import EntityTypes
+    from core.schemas.indicator import IndicatorTypes
+    from core.schemas.observable import ObservableTypes
+
+    AllObjectTypes = EntityTypes | ObservableTypes | IndicatorTypes | DFIQTypes
 
 
 class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
@@ -38,9 +42,6 @@ class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 
-AllObjectTypes = EntityTypes | ObservableTypes | IndicatorTypes | DFIQTypes
-
-
 class TimelineLog(BaseModel, database_arango.ArangoYetiConnector):
     model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = []
@@ -60,7 +61,12 @@ class TimelineLog(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 
-def log_timeline(username: str, new: AllObjectTypes, old: AllObjectTypes = None):
+def log_timeline(
+    username: str,
+    new: "AllObjectTypes",
+    old: "AllObjectTypes" = None,
+    action: str | None = None,
+):
     if old:
         old_dump = old.model_dump()
         new_dump = new.model_dump()
