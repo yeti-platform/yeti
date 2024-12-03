@@ -1233,7 +1233,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         job = col.delete(self.id)
         while job.status() != "done":
             time.sleep(ASYNC_JOB_WAIT_TIME)
-        if self._collection_name == "auditlog":
+        if self._collection_name in ("auditlog", "timeline"):
             return
         try:
             event_type = message.EventType.delete
