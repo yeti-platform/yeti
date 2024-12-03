@@ -1,6 +1,6 @@
 import datetime
 from functools import wraps
-from typing import Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, computed_field
 
@@ -67,6 +67,8 @@ def log_timeline(
     old: "AllObjectTypes" = None,
     action: str | None = None,
 ):
+    if not action:
+        action = "update" if old else "create"
     if old:
         old_dump = old.model_dump()
         new_dump = new.model_dump()
@@ -81,7 +83,7 @@ def log_timeline(
         timestamp=datetime.datetime.now(),
         origin_username=username,
         target_id=new.extended_id,
-        action="update" if old else "create",
+        action=action,
         details=details,
     ).save()
 
