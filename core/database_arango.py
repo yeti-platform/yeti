@@ -668,6 +668,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
 
+        self._tags = {}
+
     def link_to(
         self, target, relationship_type: str, description: str
     ) -> "Relationship":
