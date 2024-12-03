@@ -793,6 +793,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if not tag_paths:
             return []
         relationships = []
+        self._tags = {}
         for path in tag_paths:
             tag_data = Tag.load(path["vertices"][1])
             edge_data = path["edges"][0]
