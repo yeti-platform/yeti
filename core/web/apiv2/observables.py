@@ -1,11 +1,11 @@
 from typing import Annotated, Iterable, List
 
 import validators
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.config.config import yeti_config
-from core.schemas import graph, observable
+from core.schemas import audit, graph, observable
 from core.schemas.observable import Observable, ObservableType, ObservableTypes
 from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
 
@@ -128,7 +128,7 @@ def observables_root() -> Iterable[Observable]:
 
 
 @router.post("/")
-def new(request: NewObservableRequest) -> ObservableTypes:
+def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
     """Creates a new observable in the database.
 
     Raises:
@@ -140,9 +140,9 @@ def new(request: NewObservableRequest) -> ObservableTypes:
             detail=f"Observable with value {request.value} already exists",
         )
     try:
-        return observable.save(
-            type=request.type, value=request.value, tags=request.tags
-        )
+        new = observable.save(type=request.type, value=request.value, tags=request.tags)
+        audit.log_timeline(httpreq.state.username, new)
+        return new
     except Exception:
         raise HTTPException(
             status_code=400,
@@ -151,7 +151,9 @@ def new(request: NewObservableRequest) -> ObservableTypes:
 
 
 @router.post("/extended")
-def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes:
+def new_extended(
+    httpreq: Request, request: NewExtendedObservableRequest
+) -> ObservableTypes:
     """Creates a new observable in the database with extended properties.
 
     Raises:
@@ -163,9 +165,11 @@ def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes:
             detail=f"Observable with value {request.observable.value} already exists",
         )
     try:
-        return observable.save(
+        new = observable.save(
             **request.observable.model_dump(exclude={"tags"}), tags=request.tags
         )
+        audit.log_timeline(httpreq.state.username, new)
+        return new
     except Exception:
         raise HTTPException(
             status_code=400,
@@ -174,7 +178,9 @@ def new_extended(request: NewExtendedObservableRequest) -> ObservableTypes:
 
 
 @router.patch("/{observable_id}")
-def patch(request: PatchObservableRequest, observable_id) -> ObservableTypes:
+def patch(
+    httpreq: Request, request: PatchObservableRequest, observable_id
+) -> ObservableTypes:
     """Modifies observable in the database."""
     db_observable = Observable.get(observable_id)
     if not db_observable:
@@ -189,11 +195,14 @@ def patch(request: PatchObservableRequest, observable_id) -> ObservableTypes:
     update_data = request.observable.model_dump(exclude_unset=True)
     updated_observable = db_observable.model_copy(update=update_data)
     new = updated_observable.save()
+    audit.log_timeline(httpreq.state.username, new, old=db_observable)
     return new
 
 
 @router.post("/bulk")
-def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddResponse:
+def bulk_add(
+    httpreq: Request, request: NewBulkObservableAddRequest
+) -> BulkObservableAddResponse:
     """Bulk-creates new observables in the database."""
     response = BulkObservableAddResponse()
     for new_observable in request.observables:
@@ -203,6 +212,7 @@ def bulk_add(request: NewBulkObservableAddRequest) -> BulkObservableAddResponse:
                 value=new_observable.value,
                 tags=new_observable.tags,
             )
+            audit.log_timeline(httpreq.state.username, observable_obj)
         except (ValueError, RuntimeError):
             response.failed.append(new_observable.value)
             continue
@@ -226,7 +236,9 @@ def details(observable_id) -> ObservableTypes:
 
 
 @router.post("/{observable_id}/context")
-def add_context(observable_id, request: AddContextRequest) -> ObservableTypes:
+def add_context(
+    httpreq: Request, observable_id, request: AddContextRequest
+) -> ObservableTypes:
     """Adds context to an observable."""
     observable_obj = Observable.get(observable_id)
     if not observable_obj:
@@ -234,14 +246,17 @@ def add_context(observable_id, request: AddContextRequest) -> ObservableTypes:
             status_code=404, detail=f"Observable {observable_id} not found"
         )
 
-    observable_obj = observable_obj.add_context(
+    refreshed_obj = observable_obj.add_context(
         request.source, request.context, skip_compare=request.skip_compare
     )
-    return observable_obj
+    audit.log_timeline(httpreq.state.username, refreshed_obj, old=observable_obj)
+    return refreshed_obj
 
 
 @router.post("/{observable_id}/context/delete")
-def delete_context(observable_id, request: DeleteContextRequest) -> ObservableTypes:
+def delete_context(
+    httpreq: Request, observable_id, request: DeleteContextRequest
+) -> ObservableTypes:
     """Removes context to an observable."""
     observable_obj = Observable.get(observable_id)
     if not observable_obj:
@@ -249,10 +264,11 @@ def delete_context(observable_id, request: DeleteContextRequest) -> ObservableTy
             status_code=404, detail=f"Observable {observable_id} not found"
         )
 
-    observable_obj = observable_obj.delete_context(
+    refreshed_obj = observable_obj.delete_context(
         request.source, request.context, skip_compare=request.skip_compare
     )
-    return observable_obj
+    audit.log_timeline(httpreq.state.username, refreshed_obj, old=observable_obj)
+    return refreshed_obj
 
 
 @router.post("/search")
@@ -274,31 +290,40 @@ def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
 
 
 @router.post("/add_text", deprecated=True)
-def add_text(request: AddTextRequest) -> ObservableTypes:
+def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypes:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
-        return observable.save(value=request.text, tags=request.tags)
+        new = observable.save(value=request.text, tags=request.tags)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
+    audit.log_timeline(httpreq.state.username, new)
+    return new
 
 
 @router.post("/import/text")
-def import_from_text(request: ImportTextRequest) -> BulkObservableAddResponse:
+def import_from_text(
+    httpreq: Request, request: ImportTextRequest
+) -> BulkObservableAddResponse:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:
         observables, unknown = observable.save_from_text(
             text=request.text, tags=request.tags
         )
-        response = BulkObservableAddResponse(added=observables, failed=unknown)
+
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
-    return response
+
+    for obs in observables:
+        audit.log_timeline(httpreq.state.username, obs, action="import-text")
+    return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
 @router.post("/import/url")
-def import_from_url(request: ImportUrlRequest) -> BulkObservableAddResponse:
+def import_from_url(
+    httpreq: Request, request: ImportUrlRequest
+) -> BulkObservableAddResponse:
     """Adds and returns observables from a given url, attempting to guess
     their types."""
     if not validators.url(request.text):
@@ -307,15 +332,19 @@ def import_from_url(request: ImportUrlRequest) -> BulkObservableAddResponse:
         observables, unknown = observable.save_from_url(
             value=request.url, tags=request.tags
         )
-        response = BulkObservableAddResponse(added=observables, failed=unknown)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
-    return response
+
+    for obs in observables:
+        audit.log_timeline(httpreq.state.username, obs, action="import-url")
+    return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
 @router.post("/import/file")
 def import_from_file(
-    file: Annotated[UploadFile, File()], tags: Annotated[list[str], Form()]
+    httpreq: Request,
+    file: Annotated[UploadFile, File()],
+    tags: Annotated[list[str], Form()],
 ) -> BulkObservableAddResponse:
     """Adds and returns observables from a given url, attempting to guess
     their types."""
@@ -324,14 +353,19 @@ def import_from_file(
     try:
         # we can't use request.file object because it's not async
         observables, unknown = observable.save_from_file(file=file.file, tags=tags)
-        response = BulkObservableAddResponse(added=observables, failed=unknown)
+
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
-    return response
+
+    for obs in observables:
+        audit.log_timeline(httpreq.state.username, obs, action="import-file")
+    return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
 @router.post("/tag")
-def tag_observable(request: ObservableTagRequest) -> ObservableTagResponse:
+def tag_observable(
+    httpreq: Request, request: ObservableTagRequest
+) -> ObservableTagResponse:
     """Tags a set of observables, individually or in bulk."""
     observables = []
     for observable_id in request.ids:
@@ -345,7 +379,10 @@ def tag_observable(request: ObservableTagRequest) -> ObservableTagResponse:
 
     observable_tags = {}
     for observable_obj in observables:
-        observable_obj.tag(request.tags, strict=request.strict)
+        observable_obj.get_tags()
+        old_tags = observable_obj.tags
+        observable_obj = observable_obj.tag(request.tags, strict=request.strict)
+        audit.log_timeline_tags(httpreq.state.username, observable_obj, old_tags)
         observable_tags[observable_obj.extended_id] = observable_obj.tags
 
     return ObservableTagResponse(tagged=len(observables), tags=observable_tags)

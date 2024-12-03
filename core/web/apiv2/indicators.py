@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.schemas import graph
+from core.schemas import audit, graph
 from core.schemas.indicator import (
     ForensicArtifact,
     Indicator,
@@ -62,14 +62,17 @@ router = APIRouter()
 
 
 @router.post("/")
-def new(request: NewIndicatorRequest) -> IndicatorTypes:
+def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
     new = request.indicator.save()
+    audit.log_timeline(httpreq.state.username, new)
     return new
 
 
 @router.patch("/{indicator_id}")
-def patch(request: PatchIndicatorRequest, indicator_id) -> IndicatorTypes:
+def patch(
+    httpreq: Request, request: PatchIndicatorRequest, indicator_id
+) -> IndicatorTypes:
     """Modifies an indicator in the database."""
     db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
@@ -89,6 +92,7 @@ def patch(request: PatchIndicatorRequest, indicator_id) -> IndicatorTypes:
         new.update_yaml()
         new = new.save()
 
+    audit.log_timeline(httpreq.state.username, new, old=db_indicator)
     return new
 
 
@@ -133,7 +137,7 @@ def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
 
 
 @router.post("/tag")
-def tag(request: IndicatorTagRequest) -> IndicatorTagResponse:
+def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
     """Tags entities."""
     indicators = []
     for indicator_id in request.ids:
@@ -147,7 +151,10 @@ def tag(request: IndicatorTagRequest) -> IndicatorTagResponse:
 
     indicator_tags = {}
     for db_indicator in indicators:
-        db_indicator.tag(request.tags, strict=request.strict)
+        db_indicator.get_tags()
+        old_tags = db_indicator.tags
+        db_indicator = db_indicator.tag(request.tags, strict=request.strict)
+        audit.log_timeline_tags(httpreq.state.username, db_indicator, old_tags)
         indicator_tags[db_indicator.extended_id] = db_indicator.tags
 
     return IndicatorTagResponse(tagged=len(indicators), tags=indicator_tags)
