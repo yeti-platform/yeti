@@ -29,6 +29,7 @@ from core.events.producer import producer
 from .interfaces import AbstractYetiConnector
 
 CODE_DB_VERSION = 2
+AQL_QUERY_MAX_TTL = 3600 * 12
 
 LINK_TYPE_TO_GRAPH = {
     "tagged": "tags",
@@ -435,10 +436,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
             objects = cls._db.aql.execute(
                 "FOR o IN @@collection FILTER o.type IN @type RETURN o",
                 bind_vars={"type": [type_filter], "@collection": coll},
+                ttl=AQL_QUERY_MAX_TTL,
             )
         else:
             objects = cls._db.aql.execute(
-                "FOR o IN @@collection RETURN o", bind_vars={"@collection": coll}
+                "FOR o IN @@collection RETURN o",
+                bind_vars={"@collection": coll},
+                ttl=AQL_QUERY_MAX_TTL,
             )
 
         for object in objects:
