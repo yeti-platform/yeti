@@ -32,6 +32,7 @@ class DFIQFeed(task.FeedTask):
         ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
         dfiq.read_from_data_directory(
             os.path.join(tempdir.name, "*", "dfiq", "data", "*", "*.yaml"),
+            "DFIQFeed",
             overwrite=True,
         )
 
