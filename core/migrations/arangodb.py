@@ -1,4 +1,7 @@
+import logging
 import time
+
+import tqdm
 
 from core.database_arango import ASYNC_JOB_WAIT_TIME, ArangoDatabase
 from core.migrations import migration
@@ -51,8 +54,12 @@ def migration_0():
 def migration_1():
     from core.schemas import observable
 
-    for obs in observable.Observable.list():
-        obs.save()
+    total_observables = observable.Observable.count()
+    logging.info(f"Migrating {total_observables} observables. This may take a while...")
+    with tqdm.tqdm(total=total_observables, desc="Migrating observables") as pbar:
+        for obs in observable.Observable.list():
+            obs.save()
+            pbar.update(1)
 
 
 ArangoMigrationManager.register_migration(migration_0)
@@ -60,4 +67,6 @@ ArangoMigrationManager.register_migration(migration_1)
 
 if __name__ == "__main__":
     migration_manager = ArangoMigrationManager()
+    migration_manager.migrate_to_latest()
+    migration_manager.migrate_to_latest()
     migration_manager.migrate_to_latest()
