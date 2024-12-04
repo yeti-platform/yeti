@@ -51,7 +51,7 @@ class TimelineLog(BaseModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["timeline"] = "timeline"
 
     timestamp: datetime.datetime
-    origin_username: str
+    actor: str
     target_id: str
     action: str
     details: dict
@@ -81,14 +81,14 @@ def log_timeline(
         details = new.model_dump()
     TimelineLog(
         timestamp=datetime.datetime.now(),
-        origin_username=username,
+        actor=username,
         target_id=new.extended_id,
         action=action,
         details=details,
     ).save()
 
 
-def log_timeline_tags(username: str, obj, old_tags):
+def log_timeline_tags(actor: str, obj: "AllObjectTypes", old_tags: list[str]):
     new_tags = obj.tags
     details = {
         "removed": set(old_tags) - set(new_tags),
@@ -96,7 +96,7 @@ def log_timeline_tags(username: str, obj, old_tags):
     }
     TimelineLog(
         timestamp=datetime.datetime.now(),
-        origin_username=username,
+        actor=actor,
         target_id=obj.extended_id,
         action="tag",
         details=details,
