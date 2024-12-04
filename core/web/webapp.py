@@ -8,6 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from core.config.config import yeti_config
 from core.logger import logger
 from core.web.apiv2 import (
+    audit,
     auth,
     dfiq,
     entities,
@@ -33,6 +34,8 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 api_router = APIRouter()
 
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+
+api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 
 api_router.include_router(
     observables.router,

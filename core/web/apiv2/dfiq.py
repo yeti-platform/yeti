@@ -3,11 +3,11 @@ import tempfile
 from io import BytesIO
 from zipfile import ZipFile
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from core.schemas import dfiq
+from core.schemas import audit, dfiq
 
 
 # Request schemas
@@ -94,17 +94,19 @@ def config() -> DFIQConfigResponse:
 
 
 @router.post("/from_archive")
-def from_archive(archive: UploadFile) -> dict[str, int]:
+def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
     tempdir = tempfile.TemporaryDirectory()
     contents = archive.file.read()
     ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
-    total_added = dfiq.read_from_data_directory(f"{tempdir.name}/*/*.yaml")
+    total_added = dfiq.read_from_data_directory(
+        f"{tempdir.name}/*/*.yaml", username=httpreq.state.username
+    )
     return {"total_added": total_added}
 
 
 @router.post("/from_yaml")
-def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
+def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     """Creates a new DFIQ object in the database."""
     try:
         new = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
@@ -141,6 +143,7 @@ def new_from_yaml(request: NewDFIQRequest) -> dfiq.DFIQTypes:
         )
 
     new = new.save()
+    audit.log_timeline(httpreq.state.username, new)
 
     try:
         new.update_parents()
@@ -263,7 +266,7 @@ def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
 
 
 @router.patch("/{dfiq_id}")
-def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
+def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
     """Modifies an DFIQ object in the database."""
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
     if not db_dfiq:
@@ -279,8 +282,10 @@ def patch(request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
             status_code=400,
             detail=f"DFIQ type mismatch: {db_dfiq.type} != {update_data.type}",
         )
+    db_dfiq.get_tags()
     updated_dfiq = db_dfiq.model_copy(update=update_data.model_dump())
     new = updated_dfiq.save()
+    audit.log_timeline(httpreq.state.username, new, old=db_dfiq)
     new.update_parents()
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
@@ -299,7 +304,7 @@ def details(dfiq_id) -> dfiq.DFIQTypes:
 
 
 @router.delete("/{dfiq_id}")
-def delete(dfiq_id: str) -> None:
+def delete(httpreq: Request, dfiq_id: str) -> None:
     """Deletes a DFIQ object."""
     db_dfiq = dfiq.DFIQBase.get(dfiq_id)
     if not db_dfiq:
@@ -319,8 +324,15 @@ def delete(dfiq_id: str) -> None:
             child.parent_ids.remove(db_dfiq.dfiq_id)
         if db_dfiq.uuid in child.parent_ids:
             child.parent_ids.remove(db_dfiq.uuid)
+        audit.log_timeline(
+            httpreq.state.username,
+            child,
+            action="delete-parent",
+            details={"parent": db_dfiq.id},
+        )
         child.save()
 
+    audit.log_timeline(httpreq.state.username, db_dfiq, action="delete")
     db_dfiq.delete()
 
 

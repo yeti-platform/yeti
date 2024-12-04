@@ -679,6 +679,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
 
+        self._tags = {}
+
     def link_to(
         self, target, relationship_type: str, description: str
     ) -> "Relationship":
@@ -805,6 +807,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if tag_paths.empty():
             return []
         relationships = []
+        self._tags = {}
         for path in tag_paths:
             tag_data = Tag.load(path["vertices"][1])
             edge_data = path["edges"][0]
@@ -1259,7 +1262,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         job = col.delete(self.id)
         while job.status() != "done":
             time.sleep(ASYNC_JOB_WAIT_TIME)
-        if self._collection_name == "auditlog":
+        if self._collection_name in ("auditlog", "timeline"):
             return
         try:
             event_type = message.EventType.delete

@@ -7,7 +7,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas import entity
+from core.schemas import audit, entity
 from core.schemas.user import UserSensitive
 from core.web import webapp
 

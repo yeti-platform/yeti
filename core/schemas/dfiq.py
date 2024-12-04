@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, computed_field
 from core import database_arango
 from core.config.config import yeti_config
 from core.helpers import now
-from core.schemas import indicator
+from core.schemas import audit, indicator
 from core.schemas.model import YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
@@ -35,11 +35,14 @@ yaml.add_representer(str, long_text_representer)
 yaml.add_representer(type(None), custom_null_representer)
 
 
-def read_from_data_directory(globpath: str, overwrite: bool = False) -> int:
+def read_from_data_directory(
+    globpath: str, username: str, overwrite: bool = False
+) -> int:
     """Read DFIQ files from a directory and add them to the database.
 
     Args:
         globpath: Glob path to search for DFIQ files (supports recursion).
+        username: Username to attribute the changes to.
         overwrite: Whether to overwrite existing DFIQs with the same ID.
     """
     dfiq_kb = {}
@@ -76,6 +79,7 @@ def read_from_data_directory(globpath: str, overwrite: bool = False) -> int:
                 if not dfiq_object.uuid:
                     dfiq_object.uuid = str(uuid.uuid4())
                 dfiq_object = dfiq_object.save()
+                audit.log_timeline(username, dfiq_object, old=db_dfiq)
                 total_added += 1
             except (ValueError, KeyError) as e:
                 logging.warning("Error processing %s: %s", file, e)
@@ -119,6 +123,7 @@ def extract_indicators(question: "DFIQQuestion") -> None:
                         location=step.type,
                         diamond=indicator.DiamondModel.victim,
                     ).save()
+                    audit.log_timeline("dfiq-indicator-extract", query)
                 question.link_to(query, "query", "Uses query")
 
             else:
