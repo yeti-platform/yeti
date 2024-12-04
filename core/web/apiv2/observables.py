@@ -192,6 +192,7 @@ def patch(
             status_code=400,
             detail=f"Observable {observable_id} type mismatch. Provided '{request.observable.type}'. Expected '{db_observable.type}'",
         )
+    db_observable.get_tags()
     update_data = request.observable.model_dump(exclude_unset=True)
     updated_observable = db_observable.model_copy(update=update_data)
     new = updated_observable.save()

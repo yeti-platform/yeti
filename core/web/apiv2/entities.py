@@ -78,6 +78,7 @@ def patch(httpreq: Request, request: PatchEntityRequest, entity_id) -> EntityTyp
             status_code=400,
             detail=f"Entity {entity_id} type mismatch. Provided '{request.entity.type}'. Expected '{db_entity.type}'",
         )
+    db_entity.get_tags()
     update_data = request.entity.model_dump(exclude_unset=True)
     updated_entity = db_entity.model_copy(update=update_data)
     new = updated_entity.save()

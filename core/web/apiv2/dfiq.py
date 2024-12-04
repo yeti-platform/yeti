@@ -282,6 +282,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQType
             status_code=400,
             detail=f"DFIQ type mismatch: {db_dfiq.type} != {update_data.type}",
         )
+    db_dfiq.get_tags()
     updated_dfiq = db_dfiq.model_copy(update=update_data.model_dump())
     new = updated_dfiq.save()
     audit.log_timeline(httpreq.state.username, new, old=db_dfiq)

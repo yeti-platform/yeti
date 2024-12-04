@@ -79,6 +79,7 @@ def patch(
         raise HTTPException(
             status_code=404, detail=f"Indicator {indicator_id} not found"
         )
+    db_indicator.get_tags()
 
     if db_indicator.type == IndicatorType.forensicartifact:
         if db_indicator.pattern != request.indicator.pattern:
