@@ -203,10 +203,8 @@ class TimelineLogTest(unittest.TestCase):
         response = client.post(
             "/api/v2/observables/",
             json={
-                "observable": {
-                    "type": "hostname",
-                    "value": "tomchop.me",
-                }
+                "type": "hostname",
+                "value": "tomchop.me",
             },
         )
         data = response.json()
