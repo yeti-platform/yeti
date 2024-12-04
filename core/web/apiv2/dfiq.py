@@ -303,7 +303,7 @@ def details(dfiq_id) -> dfiq.DFIQTypes:
 
 
 @router.delete("/{dfiq_id}")
-def delete(dfiq_id: str) -> None:
+def delete(httpreq: Request, dfiq_id: str) -> None:
     """Deletes a DFIQ object."""
     db_dfiq = dfiq.DFIQBase.get(dfiq_id)
     if not db_dfiq:
@@ -323,8 +323,15 @@ def delete(dfiq_id: str) -> None:
             child.parent_ids.remove(db_dfiq.dfiq_id)
         if db_dfiq.uuid in child.parent_ids:
             child.parent_ids.remove(db_dfiq.uuid)
+        audit.log_timeline(
+            httpreq.state.username,
+            child,
+            action="delete-parent",
+            details={"parent": db_dfiq.id},
+        )
         child.save()
 
+    audit.log_timeline(httpreq.state.username, db_dfiq, action="delete")
     db_dfiq.delete()
 
 

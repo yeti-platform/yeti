@@ -352,3 +352,119 @@ class TimelineLogTest(unittest.TestCase):
         self.assertEqual(len(data[0]), 1)
         self.assertEqual(data[0][0]["actor"], "dfiq-indicator-extract")
         self.assertEqual(data[0][0]["action"], "create")
+
+    def test_delete_observable_makes_timeline_log(self):
+        response = client.post(
+            "/api/v2/observables/",
+            json={
+                "type": "hostname",
+                "value": "tomchop.me",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        observable_id = data["id"]
+
+        response = client.delete(f"/api/v2/observables/{observable_id}")
+        self.assertEqual(response.status_code, 200)
+        response = client.get(f"/api/v2/audit/timeline/observables/{observable_id}")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data[0]), 2, data)
+        self.assertEqual(data[0][1]["action"], "delete", data)
+
+    def test_delete_entity_makes_timeline_log(self):
+        response = client.post(
+            "/api/v2/entities/",
+            json={"entity": {"name": "ta2", "type": "threat-actor"}},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        entity_id = data["id"]
+
+        response = client.delete(f"/api/v2/entities/{entity_id}")
+        self.assertEqual(response.status_code, 200)
+        response = client.get(f"/api/v2/audit/timeline/entities/{entity_id}")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data[0]), 2, data)
+        self.assertEqual(data[0][1]["action"], "delete", data)
+
+    def test_delete_indicator_makes_timeline_log(self):
+        response = client.post(
+            "/api/v2/indicators/",
+            json={
+                "indicator": {
+                    "name": "ind1",
+                    "type": "regex",
+                    "pattern": "test",
+                    "diamond": "adversary",
+                }
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        indicator_id = data["id"]
+
+        response = client.delete(f"/api/v2/indicators/{indicator_id}")
+        self.assertEqual(response.status_code, 200)
+        response = client.get(f"/api/v2/audit/timeline/indicators/{indicator_id}")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data[0]), 2, data)
+        self.assertEqual(data[0][1]["action"], "delete", data)
+
+    def test_delete_dfiq_makes_timeline_log(self):
+        dfiq.DFIQScenario(
+            name="mock_scenario",
+            dfiq_id="S1003",
+            uuid="fake_scenario_uuid",
+            dfiq_version="1.1.0",
+            description="desc",
+            dfiq_yaml="mock",
+        ).save()
+
+        with open("tests/dfiq_test_data/F1005.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/from_yaml",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": "facet",
+            },
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        facet_id = data["id"]
+
+        with open("tests/dfiq_test_data/Q1020.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/from_yaml",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": "question",
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        question_id = data["id"]
+
+        response = client.delete(f"/api/v2/dfiq/{facet_id}")
+        self.assertEqual(response.status_code, 200)
+
+        response = client.get(f"/api/v2/audit/timeline/dfiq/{facet_id}")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data[0]), 2, data)
+        self.assertEqual(data[0][1]["action"], "delete", data)
+
+        response = client.get(f"/api/v2/audit/timeline/dfiq/{question_id}")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data[0]), 2, data)
+        self.assertEqual(data[0][1]["action"], "delete-parent", data)
+        self.assertEqual(data[0][1]["details"], {"parent": facet_id})

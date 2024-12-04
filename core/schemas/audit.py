@@ -66,19 +66,21 @@ def log_timeline(
     new: "AllObjectTypes",
     old: "AllObjectTypes" = None,
     action: str | None = None,
+    details: dict | None = None,
 ):
-    if not action:
-        action = "update" if old else "create"
-    if old:
-        old_dump = old.model_dump()
-        new_dump = new.model_dump()
-        # only retain fields that are different
-        for key in old_dump:
-            if old_dump[key] == new_dump[key]:
-                del new_dump[key]
-        details = new_dump
-    else:
-        details = new.model_dump()
+    if details is None:
+        if not action:
+            action = "update" if old else "create"
+        if old:
+            old_dump = old.model_dump()
+            new_dump = new.model_dump()
+            # only retain fields that are different
+            for key in old_dump:
+                if old_dump[key] == new_dump[key]:
+                    del new_dump[key]
+            details = new_dump
+        else:
+            details = new.model_dump()
     TimelineLog(
         timestamp=datetime.datetime.now(),
         actor=username,

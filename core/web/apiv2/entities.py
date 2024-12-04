@@ -96,11 +96,12 @@ def details(entity_id) -> EntityTypes:
 
 
 @router.delete("/{entity_id}")
-def delete(entity_id: str) -> None:
+def delete(httpreq: Request, entity_id: str) -> None:
     """Deletes an Entity."""
     db_entity = Entity.get(entity_id)
     if not db_entity:
         raise HTTPException(status_code=404, detail="Entity ID {entity_id} not found")
+    audit.log_timeline(httpreq.state.username, db_entity, action="delete")
     db_entity.delete()
 
 

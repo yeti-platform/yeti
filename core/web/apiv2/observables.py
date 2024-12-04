@@ -392,9 +392,10 @@ def tag_observable(
 
 
 @router.delete("/{observable_id}")
-def delete(observable_id: str) -> None:
+def delete(httpreq: Request, observable_id: str) -> None:
     """Deletes an observable."""
     observable_obj = Observable.get(observable_id)
     if not observable_obj:
         raise HTTPException(status_code=404, detail="Observable not found")
+    audit.log_timeline(httpreq.state.username, observable_obj, action="delete")
     observable_obj.delete()

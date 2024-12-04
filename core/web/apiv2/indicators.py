@@ -107,13 +107,14 @@ def details(indicator_id) -> IndicatorTypes:
 
 
 @router.delete("/{indicator_id}")
-def delete(indicator_id: str) -> None:
+def delete(httpreq: Request, indicator_id: str) -> None:
     """Deletes an indicator."""
     db_indicator = Indicator.get(indicator_id)
     if not db_indicator:
         raise HTTPException(
             status_code=404, detail="Indicator ID {indicator_id} not found"
         )
+    audit.log_timeline(httpreq.state.username, db_indicator, action="delete")
     db_indicator.delete()
 
 
