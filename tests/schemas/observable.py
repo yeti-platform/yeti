@@ -890,3 +890,10 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
         self.assertIsNotNone(obs.id)
         self.assertEqual(obs.is_valid, False)
         self.assertEqual(obs.value, "192.168.1.258")
+
+    def test_count_observables(sefl) -> None:
+        """Tests counting observables."""
+        observable.save(value="192.168.1.1")
+        observable.save(value="tomchop.me")
+        observable.save(value="https://www.google.com")
+        assert observable.Observable.count() == 3

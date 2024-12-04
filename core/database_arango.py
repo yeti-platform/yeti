@@ -29,6 +29,7 @@ from core.events.producer import producer
 from .interfaces import AbstractYetiConnector
 
 CODE_DB_VERSION = 2
+AQL_QUERY_MAX_TTL = 3600 * 12
 
 LINK_TYPE_TO_GRAPH = {
     "tagged": "tags",
@@ -128,12 +129,15 @@ class ArangoDatabase:
     def check_database_version(self, skip_if_testing: bool = True):
         if TESTING and skip_if_testing:
             return
-        system = list(self.db.collection("system").all())
-        if not system:
+        system = self.db.collection("system").all()
+        if system.empty():
             raise RuntimeError("Database version not found, please run migrations.")
-        if system[0]["db_version"] != CODE_DB_VERSION:
+        entry = system.pop()
+        if "db_version" not in entry:
+            raise RuntimeError("Database version not found, please run migrations.")
+        if entry["db_version"] != CODE_DB_VERSION:
             raise RuntimeError(
-                f"Database version mismatch. Expected {CODE_DB_VERSION}, got {system[0]['db_version']}"
+                f"Database version mismatch. Expected {CODE_DB_VERSION}, got {entry['db_version']}"
             )
 
     def create_analyzers(self):
@@ -366,7 +370,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 while job.status() != "done":
                     time.sleep(ASYNC_JOB_WAIT_TIME)
                 result = job.result()
-                newdoc = list(result)[0]
+                newdoc = result.pop()
             except IndexError as exception:
                 msg = f"Update failed when adding {document_json}: {exception}"
                 logging.error(msg)
@@ -432,15 +436,22 @@ class ArangoYetiConnector(AbstractYetiConnector):
             objects = cls._db.aql.execute(
                 "FOR o IN @@collection FILTER o.type IN @type RETURN o",
                 bind_vars={"type": [type_filter], "@collection": coll},
+                ttl=AQL_QUERY_MAX_TTL,
             )
         else:
             objects = cls._db.aql.execute(
-                "FOR o IN @@collection RETURN o", bind_vars={"@collection": coll}
+                "FOR o IN @@collection RETURN o",
+                bind_vars={"@collection": coll},
+                ttl=AQL_QUERY_MAX_TTL,
             )
 
-        for object in list(objects):
-            object["__id"] = object.pop("_key")
-            yield cls.load(object)
+        for object in objects:
+            try:
+                object["__id"] = object.pop("_key")
+                instance = cls.load(object)
+                yield instance
+            except Exception:
+                logging.exception(f"Can't load object {object}")
 
     @classmethod
     def get(cls: Type[TYetiObject], id: str) -> TYetiObject | None:
@@ -699,15 +710,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "target_extended_id": target.extended_id,
             "relationship_type": relationship_type,
         }
-        neighbors = list(self._db.aql.execute(aql, bind_vars=args))
-        if neighbors:
-            neighbors[0]["__id"] = neighbors[0].pop("_key")
-            relationship = Relationship.load(neighbors[0])
+        neighbors = self._db.aql.execute(aql, bind_vars=args)
+        if not neighbors.empty():
+            neighbor = neighbors.pop()
+            neighbor["__id"] = neighbor.pop("_key")
+            relationship = Relationship.load(neighbor)
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
             relationship.description = description
             relationship.count += 1
             edge = json.loads(relationship.model_dump_json())
-            edge["_id"] = neighbors[0]["_id"]
+            edge["_id"] = neighbor["_id"]
             job = async_graph.update_edge(edge)
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
@@ -789,10 +801,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             OPTIONS {uniqueVertices: "path"}
             RETURN p
         """
-        tag_paths = list(
-            self._db.aql.execute(tag_aql, bind_vars={"extended_id": self.extended_id})
+        tag_paths = self._db.aql.execute(
+            tag_aql, bind_vars={"extended_id": self.extended_id}
         )
-        if not tag_paths:
+        if tag_paths.empty():
             return []
         relationships = []
         self._tags = {}
@@ -917,11 +929,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
           {sorting_aql}
           RETURN {{ vertices: v_with_tags, g: p }}
         """
-        cursor = self._db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
-        total = cursor.statistics().get("fullCount", count)
+        neighbors = self._db.aql.execute(
+            aql, bind_vars=args, count=True, full_count=True
+        )
+        total = neighbors.statistics().get("fullCount", count)
         paths = []  # type: list[list[Relationship]]
         vertices = {}  # type: dict[str, ArangoYetiConnector]
-        neighbors = list(cursor)
         for path in neighbors:
             paths.append(self._build_edges(path["g"]["edges"]))
             self._build_vertices(vertices, path["vertices"])
@@ -977,6 +990,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
             vertex["__id"] = vertex.pop("_key")
             # We want the "extended ID" here, e.g. observables/12345
             vertices[vertex["_id"]] = neighbor_schema.load(vertex)
+
+    @classmethod
+    def count(cls: Type[TYetiObject]):
+        """Counts the number of objects in the collection.
+
+        Returns:
+          The number of objects in the collection.
+        """
+        async_col = cls._db.collection(cls._collection_name)
+        job = async_col.count()
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        return job.result()
 
     @classmethod
     def filter(
