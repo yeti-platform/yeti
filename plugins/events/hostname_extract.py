@@ -16,7 +16,7 @@ class HostnameExtract(task.EventTask):
         url = message.event.yeti_object
         self.logger.info(f"Extracting hostname from: {url.value}")
         o = urlparse(url.value)
-        if observable.IPv4.is_valid(o.hostname):
+        if observable.IPv4.validator(o.hostname):
             extracted_obs = observable.IPv4(value=o.hostname).save()
         else:
             extracted_obs = observable.Hostname(value=o.hostname).save()
