@@ -68,5 +68,3 @@ ArangoMigrationManager.register_migration(migration_1)
 if __name__ == "__main__":
     migration_manager = ArangoMigrationManager()
     migration_manager.migrate_to_latest()
-    migration_manager.migrate_to_latest()
-    migration_manager.migrate_to_latest()
