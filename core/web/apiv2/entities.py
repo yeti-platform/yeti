@@ -140,8 +140,7 @@ def tag(httpreq: Request, request: EntityTagRequest) -> EntityTagResponse:
 
     entity_tags = {}
     for db_entity in entities:
-        db_entity.get_tags()
-        old_tags = db_entity.tags
+        old_tags = [tag[1].name for tag in db_entity.get_tags()]
         db_entity = db_entity.tag(request.tags, strict=request.strict)
         audit.log_timeline_tags(httpreq.state.username, db_entity, old_tags)
         entity_tags[db_entity.extended_id] = db_entity.tags

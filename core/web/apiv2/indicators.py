@@ -151,8 +151,7 @@ def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
 
     indicator_tags = {}
     for db_indicator in indicators:
-        db_indicator.get_tags()
-        old_tags = db_indicator.tags
+        old_tags = [tag[1].name for tag in db_indicator.get_tags()]
         db_indicator = db_indicator.tag(request.tags, strict=request.strict)
         audit.log_timeline_tags(httpreq.state.username, db_indicator, old_tags)
         indicator_tags[db_indicator.extended_id] = db_indicator.tags

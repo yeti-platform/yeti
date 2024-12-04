@@ -246,9 +246,11 @@ def add_context(
             status_code=404, detail=f"Observable {observable_id} not found"
         )
 
+    old_context = observable_obj.context.copy()
     refreshed_obj = observable_obj.add_context(
         request.source, request.context, skip_compare=request.skip_compare
     )
+    observable_obj.context = old_context
     audit.log_timeline(httpreq.state.username, refreshed_obj, old=observable_obj)
     return refreshed_obj
 
@@ -264,9 +266,11 @@ def delete_context(
             status_code=404, detail=f"Observable {observable_id} not found"
         )
 
+    old_context = observable_obj.context.copy()
     refreshed_obj = observable_obj.delete_context(
         request.source, request.context, skip_compare=request.skip_compare
     )
+    observable_obj.context = old_context
     audit.log_timeline(httpreq.state.username, refreshed_obj, old=observable_obj)
     return refreshed_obj
 
@@ -379,8 +383,7 @@ def tag_observable(
 
     observable_tags = {}
     for observable_obj in observables:
-        observable_obj.get_tags()
-        old_tags = observable_obj.tags
+        old_tags = [tag[1].name for tag in observable_obj.get_tags()]
         observable_obj = observable_obj.tag(request.tags, strict=request.strict)
         audit.log_timeline_tags(httpreq.state.username, observable_obj, old_tags)
         observable_tags[observable_obj.extended_id] = observable_obj.tags
