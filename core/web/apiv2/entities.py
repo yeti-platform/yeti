@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.schemas import graph
+from core.schemas import audit, graph
 from core.schemas.entity import Entity, EntityType, EntityTypes
 from core.schemas.tag import MAX_TAGS_REQUEST
 
@@ -58,16 +58,17 @@ router = APIRouter()
 
 
 @router.post("/")
-def new(request: NewEntityRequest) -> EntityTypes:
+def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
+    audit.log_timeline(httpreq.state.username, new)
     if request.tags:
         new.tag(request.tags)
     return new
 
 
 @router.patch("/{entity_id}")
-def patch(request: PatchEntityRequest, entity_id) -> EntityTypes:
+def patch(httpreq: Request, request: PatchEntityRequest, entity_id) -> EntityTypes:
     """Modifies entity in the database."""
     db_entity: EntityTypes = Entity.get(entity_id)
     if not db_entity:
@@ -77,9 +78,11 @@ def patch(request: PatchEntityRequest, entity_id) -> EntityTypes:
             status_code=400,
             detail=f"Entity {entity_id} type mismatch. Provided '{request.entity.type}'. Expected '{db_entity.type}'",
         )
+    db_entity.get_tags()
     update_data = request.entity.model_dump(exclude_unset=True)
     updated_entity = db_entity.model_copy(update=update_data)
     new = updated_entity.save()
+    audit.log_timeline(httpreq.state.username, new, old=db_entity)
     return new
 
 
@@ -94,11 +97,12 @@ def details(entity_id) -> EntityTypes:
 
 
 @router.delete("/{entity_id}")
-def delete(entity_id: str) -> None:
+def delete(httpreq: Request, entity_id: str) -> None:
     """Deletes an Entity."""
     db_entity = Entity.get(entity_id)
     if not db_entity:
         raise HTTPException(status_code=404, detail="Entity ID {entity_id} not found")
+    audit.log_timeline(httpreq.state.username, db_entity, action="delete")
     db_entity.delete()
 
 
@@ -124,7 +128,7 @@ def search(request: EntitySearchRequest) -> EntitySearchResponse:
 
 
 @router.post("/tag")
-def tag(request: EntityTagRequest) -> EntityTagResponse:
+def tag(httpreq: Request, request: EntityTagRequest) -> EntityTagResponse:
     """Tags entities."""
     entities = []
     for entity_id in request.ids:
@@ -138,7 +142,9 @@ def tag(request: EntityTagRequest) -> EntityTagResponse:
 
     entity_tags = {}
     for db_entity in entities:
-        db_entity.tag(request.tags, strict=request.strict)
+        old_tags = [tag[1].name for tag in db_entity.get_tags()]
+        db_entity = db_entity.tag(request.tags, strict=request.strict)
+        audit.log_timeline_tags(httpreq.state.username, db_entity, old_tags)
         entity_tags[db_entity.extended_id] = db_entity.tags
 
     return EntityTagResponse(tagged=len(entities), tags=entity_tags)

@@ -43,7 +43,7 @@ class CirclPDNSApiQuery(task.AnalyticsTask, CirclPDNSApi):
     acts_on: list[ObservableType] = [ObservableType.hostname, ObservableType.ipv4]
 
     def each(self, observable: Observable):
-        json_result = CirclPDNSApi.fetch(observable, CirclPDNSApi.settings)
+        json_result = CirclPDNSApi.fetch(observable)
 
         result = {}
         result["source"] = "circl_pdns_query"
