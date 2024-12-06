@@ -38,7 +38,7 @@ class CirclPassiveSSLApi:
             return r.json()
 
     @staticmethod
-    def fetch_cert(cert_sha1: str, settings: dict):
+    def fetch_cert(cert_sha1: str):
         auth = (
             yeti_config["circl_passivessl"]["username"],
             yeti_config["circl_passivessl"]["password"],
@@ -86,7 +86,7 @@ class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
 
                         cert.issuer = _info.get("issuer", "")
 
-                        cert.save()
+                        cert = cert.save()
 
                         ip.link_to(cert, "ip-certificate", "CirlPassiveSSL")
 
