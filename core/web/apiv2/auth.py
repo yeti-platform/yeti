@@ -1,7 +1,11 @@
 import datetime
 import json
 
-from authlib.integrations.starlette_client import OAuth, OAuthError
+from authlib.integrations.starlette_client import (
+    MismatchingStateError,
+    OAuth,
+    OAuthError,
+)
 from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import (
@@ -160,7 +164,11 @@ if AUTH_MODULE == "oidc":
 
     @router.get("/oidc-callback", response_class=RedirectResponse)
     async def oidc_callback(request: Request) -> RedirectResponse:
-        token = await get_oauth_client().oidc.authorize_access_token(request)
+        try:
+            token = await get_oauth_client().oidc.authorize_access_token(request)
+        except MismatchingStateError:
+            return RedirectResponse(url="/")
+
         username = token["userinfo"]["email"]
         db_user = User.find(username=username)
         if not db_user:
