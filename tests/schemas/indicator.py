@@ -8,6 +8,7 @@ from core.schemas.indicator import (
     Indicator,
     Query,
     Regex,
+    Yara,
 )
 
 
@@ -278,3 +279,31 @@ sources:
 
         self.assertEqual(vertices[artifacts[1].extended_id].name, "Artifact2")
         self.assertEqual(vertices[artifacts[2].extended_id].name, "Artifact3")
+
+    def test_yara_creation(self):
+        yara = Yara(
+            name="yara1",
+            pattern='rule test { strings: $a = "test" condition: $a }',
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        self.assertIsNotNone(yara.id)
+        self.assertIsNotNone(yara.created)
+        self.assertEqual(yara.name, "yara1")
+        self.assertEqual(yara.type, "yara")
+
+    def test_yara_match(self):
+        rule = Yara(
+            name="yara1",
+            pattern='rule test_rule { strings: $a = "Ba" condition: $a }',
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        result = rule.match("ThisIsAReallyBaaaadStringIsntIt")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.matches[0].rule, "test_rule")
+        self.assertEqual(result.matches[0].strings[0].identifier, "$a")
+        self.assertEqual(result.matches[0].strings[0].instances[0].offset, 13)
+        self.assertEqual(result.matches[0].strings[0].instances[0].matched_data, b"Ba")
