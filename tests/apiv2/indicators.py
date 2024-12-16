@@ -143,3 +143,52 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["pattern"], "blah")
         self.assertEqual(data["type"], "regex")
+
+    def test_bad_regex(self):
+        indicator_dict = {
+            "name": "badRegex",
+            "type": "regex",
+            "pattern": "[0-9a-f",
+            "location": "filesystem",
+            "diamond": "capability",
+        }
+        response = client.post(
+            "/api/v2/indicators/",
+            json={"indicator": indicator_dict},
+        )
+        self.assertEqual(response.status_code, 422)
+        data = response.json()
+        self.assertIn("Value error, Invalid regex pattern", data["detail"][0]["msg"])
+
+    def test_bad_yara(self):
+        indicator_dict = {
+            "name": "badYara",
+            "type": "yara",
+            "pattern": "rule test {",
+            "location": "filesystem",
+            "diamond": "capability",
+        }
+        response = client.post(
+            "/api/v2/indicators/",
+            json={"indicator": indicator_dict},
+        )
+        self.assertEqual(response.status_code, 422)
+        data = response.json()
+        self.assertIn("Value error, Invalid Yara rule", data["detail"][0]["msg"])
+
+    def test_new_yara(self):
+        indicator_dict = {
+            "name": "yara",
+            "type": "yara",
+            "pattern": 'rule test { strings: $a = "test" condition: $a }',
+            "location": "filesystem",
+            "diamond": "capability",
+        }
+        response = client.post(
+            "/api/v2/indicators/",
+            json={"indicator": indicator_dict},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["name"], "yara")
+        self.assertEqual(data["type"], "yara")
