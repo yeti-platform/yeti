@@ -160,7 +160,11 @@ if AUTH_MODULE == "oidc":
 
     @router.get("/oidc-callback", response_class=RedirectResponse)
     async def oidc_callback(request: Request) -> RedirectResponse:
-        token = await get_oauth_client().oidc.authorize_access_token(request)
+        try:
+            token = await get_oauth_client().oidc.authorize_access_token(request)
+        except OAuthError:
+            return RedirectResponse(url="/")
+
         username = token["userinfo"]["email"]
         db_user = User.find(username=username)
         if not db_user:
