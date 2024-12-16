@@ -1,6 +1,6 @@
 import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, ValidationInfo, conlist, model_validator
@@ -16,6 +16,22 @@ GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(entity.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(indicator.TYPE_MAPPING)
 GRAPH_TYPE_MAPPINGS.update(dfiq.TYPE_MAPPING)
+
+
+def check_id_descriptor(value: str, info: ValidationInfo) -> str:
+    if value.count("/") != 1:
+        raise ValueError(
+            f'{info.field_name} must describe the entity using using the "<type>/<id>" schema'
+        )
+
+    entity_type, _ = value.split("/")
+
+    if entity_type not in GRAPH_TYPE_MAPPINGS:
+        raise ValueError(
+            f"{info.field_name} uses an invalid object type: {entity_type}"
+        )
+
+    return value
 
 
 # Requequest schemas
@@ -41,6 +57,11 @@ class GraphSearchRequest(BaseModel):
     count: int = 50
     page: int = 0
     sorting: list[tuple[str, bool]] = []
+
+    @field_validator("source")
+    @classmethod
+    def check_id_descriptor(cls, value: str, info: ValidationInfo) -> str:
+        return check_id_descriptor(value, info)
 
     @model_validator(mode="before")
     @classmethod
@@ -82,19 +103,7 @@ class GraphAddRequest(BaseModel):
     @field_validator("source", "target")
     @classmethod
     def check_entity_descriptor(cls, value: str, info: ValidationInfo) -> str:
-        if value.count("/") != 1:
-            raise ValueError(
-                f'{info.field_name} must describe the entity using using the "<type>/<id>" schema'
-            )
-
-        entity_type, _ = value.split("/")
-
-        if entity_type not in GRAPH_TYPE_MAPPINGS:
-            raise ValueError(
-                f"{info.field_name} uses an invalid object type: {entity_type}"
-            )
-
-        return value
+        return check_id_descriptor(value, info)
 
 
 class GraphPatchRequest(BaseModel):
