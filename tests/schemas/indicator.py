@@ -99,7 +99,7 @@ class IndicatorTest(unittest.TestCase):
         assert result is not None
         self.assertIsNotNone(result)
         self.assertEqual(result.name, "regex1")
-        self.assertEqual(result.match, "BaaaadString")
+        self.assertEqual(result.matched_string, "BaaaadString")
 
     def test_regex_nomatch(self) -> None:
         regex = Regex(
