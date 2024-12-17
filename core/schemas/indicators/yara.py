@@ -120,7 +120,7 @@ class Yara(indicator.Indicator):
             self._compiled_pattern = yara.compile(source=self.pattern)
         return self._compiled_pattern
 
-    def match(self, value: str) -> YaraMatch | None:
+    def match(self, value: str | bytes) -> YaraMatch | None:
         result = self.compiled_pattern.match(data=value)
         yaramatch = native_yara_to_yara_match(result)
         if result:

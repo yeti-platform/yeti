@@ -307,3 +307,10 @@ sources:
         self.assertEqual(result.matches[0].strings[0].identifier, "$a")
         self.assertEqual(result.matches[0].strings[0].instances[0].offset, 13)
         self.assertEqual(result.matches[0].strings[0].instances[0].matched_data, b"Ba")
+
+        result = rule.match(b"ThisIsAReallyBaaaadStringIsntIt")
+        self.assertIsNotNone(result)
+        self.assertEqual(result.matches[0].rule, "test_rule")
+        self.assertEqual(result.matches[0].strings[0].identifier, "$a")
+        self.assertEqual(result.matches[0].strings[0].instances[0].offset, 13)
+        self.assertEqual(result.matches[0].strings[0].instances[0].matched_data, b"Ba")
