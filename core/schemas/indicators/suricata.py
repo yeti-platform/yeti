@@ -19,9 +19,6 @@ class Suricata(indicator.Indicator):
     metadata: List[str] = []
     references: List[str] = []
 
-    def match(self, value: str) -> indicator.IndicatorMatch | None:
-        raise NotImplementedError
-
     @field_validator("pattern")
     @classmethod
     def validate_rules(cls, value) -> str:

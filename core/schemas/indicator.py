@@ -1,9 +1,9 @@
 import datetime
 import logging
 from enum import Enum
-from typing import ClassVar, List, Literal
+from typing import Any, ClassVar, List, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
@@ -26,11 +26,6 @@ class IndicatorType(str, Enum): ...
 
 IndicatorTypes = ()
 TYPE_MAPPING = {}
-
-
-class IndicatorMatch(BaseModel):
-    name: str
-    match: str
 
 
 class DiamondModel(Enum):
@@ -74,7 +69,7 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
             raise ValueError("Attempted to instantiate an undefined indicator type.")
         return loader(**object)
 
-    def match(self, value: str) -> IndicatorMatch | None:
+    def match(self, value: str) -> Any | None:
         raise NotImplementedError
 
     @classmethod

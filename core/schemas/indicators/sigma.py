@@ -11,6 +11,3 @@ class Sigma(indicator.Indicator):
 
     _type_filter: ClassVar[str] = "sigma"
     type: Literal["sigma"] = "sigma"
-
-    def match(self, value: str) -> indicator.IndicatorMatch | None:
-        raise NotImplementedError

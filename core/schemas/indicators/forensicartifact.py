@@ -24,16 +24,13 @@ class ForensicArtifact(indicator.Indicator):
     aliases: list[str] = []
     supported_os: list[str] = []
 
-    def match(self, value: str) -> indicator.IndicatorMatch | None:
-        raise NotImplementedError
-
     @field_validator("pattern")
     @classmethod
     def validate_artifact(cls, value) -> str:
         artifact_reader = reader.YamlArtifactsReader()
         try:
             list(artifact_reader.ReadFileObject(io.StringIO(value)))
-        except artifacts_errors.FormatError as error:
+        except (artifacts_errors.FormatError, yaml.scanner.ScannerError) as error:
             raise ValueError(f"Invalid ForensicArtifact YAML: {error}")
         return value
 

@@ -11,6 +11,3 @@ class Query(indicator.Indicator):
 
     query_type: str
     target_systems: list[str] = []
-
-    def match(self, value: str) -> indicator.IndicatorMatch | None:
-        return None

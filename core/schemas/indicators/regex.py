@@ -1,9 +1,14 @@
 import re
 from typing import ClassVar, Literal
 
-from pydantic import PrivateAttr, field_validator
+from pydantic import BaseModel, PrivateAttr, field_validator
 
 from core.schemas import indicator
+
+
+class RegexMatch(BaseModel):
+    name: str
+    matched_string: str
 
 
 class Regex(indicator.Indicator):
@@ -26,8 +31,8 @@ class Regex(indicator.Indicator):
             raise ValueError(f"Invalid regex pattern: {error}")
         return value
 
-    def match(self, value: str) -> indicator.IndicatorMatch | None:
+    def match(self, value: str) -> RegexMatch | None:
         result = self.compiled_pattern.search(value)
         if result:
-            return indicator.IndicatorMatch(name=self.name, match=result.group())
+            return RegexMatch(name=self.name, matched_string=result.group())
         return None
