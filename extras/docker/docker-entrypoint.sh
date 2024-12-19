@@ -6,7 +6,9 @@ if [[ "$1" = 'webserver' ]]; then
 elif [[ "$1" = 'webserver-prod' ]]; then
     poetry run uvicorn core.web.webapp:app --host 0.0.0.0 --workers $(nproc --all || echo 4) --log-level=info
 elif [[ "$1" = 'tasks' ]]; then
-    poetry run celery -A core.taskscheduler worker --loglevel=INFO --purge -B -P threads
+    poetry run celery -A core.taskscheduler worker --loglevel=INFO --purge -P threads
+elif [[ "$1" = 'tasks-beat' ]]; then
+    rm -f celerybeat-schedule.db && poetry run celery -A core.taskscheduler beat
 elif [[ "$1" = 'events-tasks' ]]; then
     poetry run python -m core.events.consumers events
 elif [[ "$1" = 'create-user' ]]; then
