@@ -5,6 +5,14 @@ from pydantic import BaseModel, PrivateAttr, field_validator
 
 from core.schemas import indicator
 
+ALLOWED_EXTERNALS = {
+    "filename": "",
+    "filepath": "",
+    "extension": "",
+    "filetype": "",
+    "owner": "",
+}
+
 
 class MatchInstance(BaseModel):
     """
@@ -109,7 +117,7 @@ class Yara(indicator.Indicator):
     @classmethod
     def validate_yara(cls, value) -> str:
         try:
-            yara.compile(source=value)
+            yara.compile(source=value, externals=ALLOWED_EXTERNALS)
         except yara.SyntaxError as error:
             raise ValueError(f"Invalid Yara rule: {error}")
         return value
