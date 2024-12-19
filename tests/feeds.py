@@ -14,6 +14,7 @@ from plugins.feeds.public import (
     malpedia,
     miningpoolstats,
     openphish,
+    signaturebase,
     sslblacklist_ja3,
     threatfox,
     timesketch,
@@ -117,4 +118,9 @@ class FeedTest(unittest.TestCase):
     def test_et_open(self):
         defaults = et_open.ETOpen._defaults.copy()
         feed = et_open.ETOpen(**defaults)
+        feed.run()
+
+    def test_neo23_signaturebase(self):
+        defaults = signaturebase.Neo23x0SignatureBase._defaults.copy()
+        feed = signaturebase.Neo23x0SignatureBase(**defaults)
         feed.run()
