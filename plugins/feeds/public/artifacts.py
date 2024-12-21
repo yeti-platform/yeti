@@ -31,9 +31,9 @@ class ForensicArtifacts(task.FeedTask):
             return
 
         with tempfile.TemporaryDirectory() as tempdir:
-            ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
+            ZipFile(BytesIO(response.content)).extractall(path=tempdir)
             artifacts_datadir = os.path.join(
-                tempdir.name, "artifacts-main", "artifacts", "data"
+                tempdir, "artifacts-main", "artifacts", "data"
             )
 
         data_files_glob = glob.glob(os.path.join(artifacts_datadir, "*.yaml"))
