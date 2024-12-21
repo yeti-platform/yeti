@@ -6,8 +6,11 @@ on:
   pull_request:
 
 jobs:
+  debug:
+    - name: Debug
+      run: echo "${{ toJson(github) }}"
   testfeeds:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'tasks:feed') || github.event_type == 'schedule' }}
+    if: ${{ github.event_type == 'schedule' || contains(github.event.pull_request.labels.*.name, 'tasks:feed') }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
