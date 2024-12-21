@@ -54,12 +54,12 @@ def read_from_data_directory(
         with open(file, "r") as f:
             try:
                 dfiq_object = DFIQBase.from_yaml(f.read())
+                db_dfiq = None
+                if dfiq_object.uuid:
+                    db_dfiq = DFIQBase.find(uuid=dfiq_object.uuid)
+                if not db_dfiq and dfiq_object.dfiq_id:
+                    db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
                 if not overwrite:
-                    db_dfiq = None
-                    if dfiq_object.uuid:
-                        db_dfiq = DFIQBase.find(uuid=dfiq_object.uuid)
-                    if not db_dfiq and dfiq_object.dfiq_id:
-                        db_dfiq = DFIQBase.find(dfiq_id=dfiq_object.dfiq_id)
                     if db_dfiq:
                         incoming_v = Version(dfiq_object.dfiq_version)
                         if incoming_v > Version(LATEST_SUPPORTED_DFIQ_VERSION):
