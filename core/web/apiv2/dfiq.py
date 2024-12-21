@@ -96,12 +96,12 @@ def config() -> DFIQConfigResponse:
 @router.post("/from_archive")
 def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
-    tempdir = tempfile.TemporaryDirectory()
-    contents = archive.file.read()
-    ZipFile(BytesIO(contents)).extractall(path=tempdir.name)
-    total_added = dfiq.read_from_data_directory(
-        f"{tempdir.name}/*/*.yaml", username=httpreq.state.username
-    )
+    with tempfile.TemporaryDirectory() as tempdir:
+        contents = archive.file.read()
+        ZipFile(BytesIO(contents)).extractall(path=tempdir)
+        total_added = dfiq.read_from_data_directory(
+            f"{tempdir}/*/*.yaml", username=httpreq.state.username
+        )
     return {"total_added": total_added}
 
 
@@ -179,54 +179,54 @@ def to_archive(request: DFIQSearchRequest) -> FileResponse:
         dfiq.DFIQType.question: "questions",
     }
 
-    tempdir = tempfile.TemporaryDirectory()
-    public_objs = []
-    internal_objs = []
-    for obj in dfiq_objects:
-        if obj.dfiq_tags and "internal" in obj.dfiq_tags:
-            internal_objs.append(obj)
-        else:
-            if obj.type == dfiq.DFIQType.question:
-                public_version = obj.model_copy()
-                internal_approaches = False
-                for approach in obj.approaches:
-                    if "internal" in approach.tags:
-                        internal_approaches = True
-                        break
-                if internal_approaches:
-                    public_version.approaches = [
-                        a for a in obj.approaches if "internal" not in a.tags
-                    ]
-                    public_objs.append(public_version)
-                    internal_objs.append(obj)
+    with tempfile.TemporaryDirectory() as tempdir:
+        public_objs = []
+        internal_objs = []
+        for obj in dfiq_objects:
+            if obj.dfiq_tags and "internal" in obj.dfiq_tags:
+                internal_objs.append(obj)
+            else:
+                if obj.type == dfiq.DFIQType.question:
+                    public_version = obj.model_copy()
+                    internal_approaches = False
+                    for approach in obj.approaches:
+                        if "internal" in approach.tags:
+                            internal_approaches = True
+                            break
+                    if internal_approaches:
+                        public_version.approaches = [
+                            a for a in obj.approaches if "internal" not in a.tags
+                        ]
+                        public_objs.append(public_version)
+                        internal_objs.append(obj)
+                    else:
+                        public_objs.append(obj)
                 else:
                     public_objs.append(obj)
-            else:
-                public_objs.append(obj)
 
-    for dir_name in ["public", "internal"]:
-        os.makedirs(f"{tempdir.name}/{dir_name}")
+        for dir_name in ["public", "internal"]:
+            os.makedirs(f"{tempdir}/{dir_name}")
 
-    for obj in public_objs:
-        with open(f"{tempdir.name}/public/{obj.uuid}.yaml", "w") as f:
-            f.write(obj.to_yaml())
+        for obj in public_objs:
+            with open(f"{tempdir}/public/{obj.uuid}.yaml", "w") as f:
+                f.write(obj.to_yaml())
 
-    for obj in internal_objs:
-        with open(f"{tempdir.name}/internal/{obj.uuid}.yaml", "w") as f:
-            f.write(obj.to_yaml())
+        for obj in internal_objs:
+            with open(f"{tempdir}/internal/{obj.uuid}.yaml", "w") as f:
+                f.write(obj.to_yaml())
 
-    with tempfile.NamedTemporaryFile(delete=False) as archive:
-        with ZipFile(archive, "w") as zipf:
-            for obj in public_objs:
-                zipf.write(
-                    f"{tempdir.name}/public/{obj.uuid}.yaml",
-                    f"public/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.uuid}.yaml",
-                )
-            for obj in internal_objs:
-                zipf.write(
-                    f"{tempdir.name}/internal/{obj.uuid}.yaml",
-                    f"internal/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.uuid}.yaml",
-                )
+        with tempfile.NamedTemporaryFile(delete=False) as archive:
+            with ZipFile(archive, "w") as zipf:
+                for obj in public_objs:
+                    zipf.write(
+                        f"{tempdir}/public/{obj.uuid}.yaml",
+                        f"public/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.uuid}.yaml",
+                    )
+                for obj in internal_objs:
+                    zipf.write(
+                        f"{tempdir}/internal/{obj.uuid}.yaml",
+                        f"internal/{_TYPE_TO_DUMP_DIR[obj.type]}/{obj.uuid}.yaml",
+                    )
 
     return FileResponse(archive.name, media_type="application/zip", filename="dfiq.zip")
 
