@@ -414,7 +414,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # TODO: Override this if we decide to implement YetiTagModel
         if hasattr(self, "tags"):
             yeti_object.get_tags()
-        if self._collection_name != "auditlog":
+        if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
                 producer.publish_event(event)
