@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
+from core.helpers import now
 from core.schemas import audit, graph
 from core.schemas.entity import Entity, EntityType, EntityTypes
 from core.schemas.tag import MAX_TAGS_REQUEST
@@ -81,6 +82,7 @@ def patch(httpreq: Request, request: PatchEntityRequest, entity_id) -> EntityTyp
     db_entity.get_tags()
     update_data = request.entity.model_dump(exclude_unset=True)
     updated_entity = db_entity.model_copy(update=update_data)
+    updated_entity.modified = now()
     new = updated_entity.save()
     audit.log_timeline(httpreq.state.username, new, old=db_entity)
     return new
