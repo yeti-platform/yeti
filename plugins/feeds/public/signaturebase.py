@@ -37,9 +37,9 @@ class Neo23x0SignatureBase(task.FeedTask):
             logging.info("No response: skipping Neo23x0 Signature base update")
             return
 
-        tempdir = tempfile.TemporaryDirectory()
-        ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
-        rules_path = os.path.join(tempdir.name, "signature-base-master", "yara")
+        with tempfile.TemporaryDirectory() as tempdir:
+            ZipFile(BytesIO(response.content)).extractall(path=tempdir)
+            rules_path = os.path.join(tempdir, "signature-base-master", "yara")
 
         for file in glob.glob(f"{rules_path}/*.yar"):
             with open(file, "r") as f:
@@ -58,7 +58,7 @@ class Neo23x0SignatureBase(task.FeedTask):
                 location="filesystem",
             ).save()
 
-        yara_object.tag(["Neo23x0", "signature-base"])
+            yara_object.tag(["Neo23x0", "signature-base"])
 
 
 taskmanager.TaskManager.register_task(Neo23x0SignatureBase)

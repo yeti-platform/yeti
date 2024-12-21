@@ -28,13 +28,13 @@ class DFIQFeed(task.FeedTask):
             logging.info("No response: skipping DFIQ update")
             return
 
-        tempdir = tempfile.TemporaryDirectory()
-        ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
-        dfiq.read_from_data_directory(
-            os.path.join(tempdir.name, "*", "dfiq", "data", "*", "*.yaml"),
-            "DFIQFeed",
-            overwrite=True,
-        )
+        with tempfile.TemporaryDirectory() as tempdir:
+            ZipFile(BytesIO(response.content)).extractall(path=tempdir)
+            dfiq.read_from_data_directory(
+                os.path.join(tempdir, "*", "dfiq", "data", "*", "*.yaml"),
+                "DFIQFeed",
+                overwrite=True,
+            )
 
         extra_dirs = yeti_config.get("dfiq", "extra_dirs")
         if not extra_dirs:
