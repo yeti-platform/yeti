@@ -5,6 +5,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.config.config import yeti_config
+from core.helpers import now
 from core.schemas import audit, graph, observable
 from core.schemas.observable import Observable, ObservableType, ObservableTypes
 from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
@@ -195,6 +196,7 @@ def patch(
     db_observable.get_tags()
     update_data = request.observable.model_dump(exclude_unset=True)
     updated_observable = db_observable.model_copy(update=update_data)
+    updated_observable.modified = now()
     new = updated_observable.save()
     audit.log_timeline(httpreq.state.username, new, old=db_observable)
     return new
