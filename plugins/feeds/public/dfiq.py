@@ -41,7 +41,7 @@ class DFIQFeed(task.FeedTask):
             return
         for directory in extra_dirs.split(","):
             logging.info("Processing extra directory %s", directory)
-            dfiq.read_from_data_directory(directory)
+            dfiq.read_from_data_directory(directory, "DFIQFeed")
 
 
 taskmanager.TaskManager.register_task(DFIQFeed)
