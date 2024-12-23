@@ -255,6 +255,7 @@ class MitreAttack(task.FeedTask):
                         )
                         rel_count += 1
         logging.info("Processed %s relationships", rel_count)
+        tempdir.cleanup()
 
 
 taskmanager.TaskManager.register_task(MitreAttack)

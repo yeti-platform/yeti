@@ -30,11 +30,11 @@ class ForensicArtifacts(task.FeedTask):
             logging.info("No response: skipping ForensicArtifact update")
             return
 
-        tempdir = tempfile.TemporaryDirectory()
-        ZipFile(BytesIO(response.content)).extractall(path=tempdir.name)
-        artifacts_datadir = os.path.join(
-            tempdir.name, "artifacts-main", "artifacts", "data"
-        )
+        with tempfile.TemporaryDirectory() as tempdir:
+            ZipFile(BytesIO(response.content)).extractall(path=tempdir)
+            artifacts_datadir = os.path.join(
+                tempdir, "artifacts-main", "artifacts", "data"
+            )
 
         data_files_glob = glob.glob(os.path.join(artifacts_datadir, "*.yaml"))
         artifacts_dict = {}
