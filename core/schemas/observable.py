@@ -1,5 +1,3 @@
-# TODO Observable value normalization
-
 import datetime
 import io
 import os
@@ -55,6 +53,10 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
 
+    def save(self, *args, **kwargs) -> "Observable":
+        self.modified = now()
+        return super().save(*args, **kwargs)
+
     @computed_field
     def is_valid(self) -> bool:
         valid = True
@@ -96,7 +98,6 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         else:
             self.context.append(context)
 
-        self.modified = now()
         return self.save()
 
     def delete_context(
@@ -114,7 +115,6 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
                 del self.context[idx]
                 break
 
-        self.modified = now()
         return self.save()
 
 

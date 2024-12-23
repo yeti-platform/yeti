@@ -7,7 +7,6 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from core.helpers import now
 from core.schemas import audit, dfiq
 
 
@@ -287,7 +286,6 @@ def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQType
     updated_dfiq = db_dfiq.model_copy(
         update=update_data.model_dump(exclude=["created"])
     )
-    updated_dfiq.modified = now()
     new = updated_dfiq.save()
     audit.log_timeline(httpreq.state.username, new, old=db_dfiq)
     new.update_parents()

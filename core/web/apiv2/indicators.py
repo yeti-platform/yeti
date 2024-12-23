@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.helpers import now
 from core.schemas import audit, graph
 from core.schemas.indicator import (
     ForensicArtifact,
@@ -88,7 +87,6 @@ def patch(
 
     update_data = request.indicator.model_dump(exclude_unset=True)
     updated_indicator = db_indicator.model_copy(update=update_data)
-    updated_indicator.modified = now()
     new = updated_indicator.save()
 
     if new.type == IndicatorType.forensicartifact:
