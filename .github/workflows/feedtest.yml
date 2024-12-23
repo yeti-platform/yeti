@@ -6,8 +6,13 @@ on:
   pull_request:
 
 jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Debug
+      run: echo "${{ toJson(github) }}"
   testfeeds:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'tasks:feed') || github.event_type == 'schedule' }}
+    if: ${{ github.event_type == 'schedule' || contains(github.event.pull_request.labels.*.name, 'tasks:feed') }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
@@ -43,6 +48,8 @@ jobs:
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
       run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
+    - name: Start event consumer
+      run: poetry run python -m core.events.consumers events & sleep 5
     - name: Run test feeds
       run: |
         poetry run python -m unittest discover -s tests/ -p 'feeds.py'
