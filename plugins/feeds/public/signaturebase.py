@@ -41,24 +41,24 @@ class Neo23x0SignatureBase(task.FeedTask):
             ZipFile(BytesIO(response.content)).extractall(path=tempdir)
             rules_path = os.path.join(tempdir, "signature-base-master", "yara")
 
-        for file in glob.glob(f"{rules_path}/*.yar"):
-            with open(file, "r") as f:
-                rule = f.read()
+            for file in glob.glob(f"{rules_path}/*.yar"):
+                with open(file, "r") as f:
+                    rule = f.read()
 
-            try:
-                yara.compile(source=rule, externals=ALLOWED_EXTERNALS)
-            except Exception as e:
-                logging.warning(f"Error compiling rule {file}: {e}")
-                raise
+                try:
+                    yara.compile(source=rule, externals=ALLOWED_EXTERNALS)
+                except Exception as e:
+                    logging.warning(f"Error compiling rule {file}: {e}")
+                    raise
 
-            yara_object = indicator.Yara(
-                name=f"Neo23x0: {os.path.basename(file)}",
-                pattern=rule,
-                diamond=indicator.DiamondModel.capability,
-                location="filesystem",
-            ).save()
+                yara_object = indicator.Yara(
+                    name=f"Neo23x0: {os.path.basename(file)}",
+                    pattern=rule,
+                    diamond=indicator.DiamondModel.capability,
+                    location="filesystem",
+                ).save()
 
-            yara_object.tag(["Neo23x0", "signature-base"])
+                yara_object.tag(["Neo23x0", "signature-base"])
 
 
 taskmanager.TaskManager.register_task(Neo23x0SignatureBase)
