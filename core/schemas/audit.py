@@ -72,8 +72,8 @@ def log_timeline(
         if not action:
             action = "update" if old else "create"
         if old:
-            old_dump = old.model_dump()
-            new_dump = new.model_dump()
+            old_dump = old.model_dump(exclude=["modified"])
+            new_dump = new.model_dump(exclude=["modified"])
             # only retain fields that are different
             for key in old_dump:
                 if old_dump[key] == new_dump[key]:
@@ -81,13 +81,14 @@ def log_timeline(
             details = new_dump
         else:
             details = new.model_dump()
-    TimelineLog(
-        timestamp=datetime.datetime.now(),
-        actor=username,
-        target_id=new.extended_id,
-        action=action,
-        details=details,
-    ).save()
+    if details:
+        TimelineLog(
+            timestamp=datetime.datetime.now(),
+            actor=username,
+            target_id=new.extended_id,
+            action=action,
+            details=details,
+        ).save()
 
 
 def log_timeline_tags(actor: str, obj: "AllObjectTypes", old_tags: list[str]):

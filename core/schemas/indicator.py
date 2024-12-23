@@ -69,6 +69,10 @@ class Indicator(YetiTagModel, database_arango.ArangoYetiConnector):
             raise ValueError("Attempted to instantiate an undefined indicator type.")
         return loader(**object)
 
+    def save(self, *args, **kwargs) -> "Indicator":
+        self.modified = now()
+        return super().save(*args, **kwargs)
+
     def match(self, value: str) -> Any | None:
         raise NotImplementedError
 

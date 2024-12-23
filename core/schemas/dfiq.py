@@ -165,6 +165,10 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         return cls(**object)
 
+    def save(self, *args, **kwargs) -> "DFIQBase":
+        self.modified = now()
+        return super().save(*args, **kwargs)
+
     @classmethod
     def parse_yaml(cls, yaml_string: str) -> dict[str, Any]:
         try:
