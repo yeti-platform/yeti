@@ -82,13 +82,14 @@ def log_timeline(
             details = new_dump
         else:
             details = new.model_dump()
-    TimelineLog(
-        timestamp=datetime.datetime.now(),
-        actor=username,
-        target_id=new.extended_id,
-        action=action,
-        details=details,
-    ).save()
+    if details:
+        TimelineLog(
+            timestamp=datetime.datetime.now(),
+            actor=username,
+            target_id=new.extended_id,
+            action=action,
+            details=details,
+        ).save()
 
 
 def log_timeline_tags(actor: str, obj: "AllObjectTypes", old_tags: list[str]):
