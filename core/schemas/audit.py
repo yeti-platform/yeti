@@ -74,6 +74,7 @@ def log_timeline(
         if old:
             old_dump = old.model_dump()
             new_dump = new.model_dump()
+            new_dump.pop("modified", None)
             # only retain fields that are different
             for key in old_dump:
                 if old_dump[key] == new_dump[key]:
