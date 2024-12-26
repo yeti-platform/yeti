@@ -114,9 +114,10 @@ class Yara(indicator.Indicator):
 
     _type_filter: ClassVar[str] = "yara"
     _compiled_pattern: yara.Match | None = PrivateAttr(None)
+
+    name: str = ""  # gets overridden during validation
     type: Literal["yara"] = "yara"
     dependencies: list[str] = []
-    name: str = ""  # gets overridden during validation
 
     @model_validator(mode="before")
     @classmethod
@@ -133,6 +134,25 @@ class Yara(indicator.Indicator):
         data["name"] = parsed_rule["rule_name"]
 
         return data
+
+    def save(self):
+        self = super().save()
+        nodes, relationships, _ = self.neighbors(
+            link_types=["depends"], direction="outbound", max_hops=1
+        )
+
+        for edge in relationships:
+            for rel in edge:
+                if nodes[rel.target].name not in self.dependencies:
+                    rel.delete()
+
+        for dependency in self.dependencies:
+            dep = Yara.find(name=dependency)
+            if not dep:
+                raise ValueError(f"Rule depends on unknown dependency '{dependency}'")
+            self.link_to(dep, "depends", "Depends on")
+
+        return self
 
     @property
     def compiled_pattern(self):

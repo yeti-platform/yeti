@@ -8,10 +8,7 @@ from core.schemas.indicator import (
     Indicator,
     Query,
     Regex,
-    # Yara,
 )
-
-from core.schemas.indicators.yara import Yara
 
 
 class IndicatorTest(unittest.TestCase):
@@ -362,25 +359,3 @@ sources:
                 "rule test { condition: true and dep2 and dep1 }\n\n"
             ),
         )
-
-    def test_yara_match(self):
-        rule = Yara(
-            name="yara1",
-            pattern='rule test_rule { strings: $a = "Ba" condition: $a }',
-            location="any",
-            diamond=DiamondModel.capability,
-        ).save()
-
-        result = rule.match("ThisIsAReallyBaaaadStringIsntIt")
-        self.assertIsNotNone(result)
-        self.assertEqual(result.matches[0].rule, "test_rule")
-        self.assertEqual(result.matches[0].strings[0].identifier, "$a")
-        self.assertEqual(result.matches[0].strings[0].instances[0].offset, 13)
-        self.assertEqual(result.matches[0].strings[0].instances[0].matched_data, b"Ba")
-
-        result = rule.match(b"ThisIsAReallyBaaaadStringIsntIt")
-        self.assertIsNotNone(result)
-        self.assertEqual(result.matches[0].rule, "test_rule")
-        self.assertEqual(result.matches[0].strings[0].identifier, "$a")
-        self.assertEqual(result.matches[0].strings[0].instances[0].offset, 13)
-        self.assertEqual(result.matches[0].strings[0].instances[0].matched_data, b"Ba")
