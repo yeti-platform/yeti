@@ -1,7 +1,10 @@
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
+import plyara
+import plyara.exceptions
+import plyara.utils
 import yara
-from pydantic import BaseModel, PrivateAttr, field_validator
+from pydantic import BaseModel, PrivateAttr, model_validator
 
 from core.schemas import indicator
 
@@ -112,15 +115,24 @@ class Yara(indicator.Indicator):
     _type_filter: ClassVar[str] = "yara"
     _compiled_pattern: yara.Match | None = PrivateAttr(None)
     type: Literal["yara"] = "yara"
+    dependencies: list[str] = []
+    name: str = ""  # gets overridden during validation
 
-    @field_validator("pattern")
+    @model_validator(mode="before")
     @classmethod
-    def validate_yara(cls, value) -> str:
+    def validate_yara(cls, data: Any):
+        rule = data.get("pattern")
         try:
-            yara.compile(source=value, externals=ALLOWED_EXTERNALS)
-        except yara.SyntaxError as error:
-            raise ValueError(f"Invalid Yara rule: {error}")
-        return value
+            rules = plyara.Plyara().parse_string(rule)
+        except plyara.exceptions.ParseTypeError as error:
+            raise ValueError(str(error)) from error
+        if len(rules) > 1:
+            raise ValueError("Only one Yara rule is allowed in the rule body.")
+        parsed_rule = rules[0]
+        data["dependencies"] = plyara.utils.detect_dependencies(parsed_rule)
+        data["name"] = parsed_rule["rule_name"]
+
+        return data
 
     @property
     def compiled_pattern(self):
@@ -134,3 +146,41 @@ class Yara(indicator.Indicator):
         if result:
             return YaraMatch(matches=yaramatch.matches)
         return None
+
+    def rule_with_dependencies(
+        self, resolved: set[str] | None = None, seen: set[str] | None = None
+    ) -> str:
+        """
+        Find dependencies in a Yara rule.
+
+        Returns:
+            A string containing the original rule text with dependencies added.
+        """
+        if resolved is None:
+            resolved = set()
+        if seen is None:
+            seen = set()
+
+        if self.name in seen:
+            raise ValueError(f"Circular dependency detected: {self.name}")
+
+        seen.add(self.name)
+
+        concatenated_rules = ""
+
+        parsed_rule = plyara.Plyara().parse_string(self.pattern)[0]
+        dependencies = plyara.utils.detect_dependencies(parsed_rule)
+
+        for dependency in dependencies:
+            dep_rule = Yara.find(name=dependency)
+            if not dep_rule:
+                raise ValueError(f"Rule depends on unknown dependency '{dependency}'")
+            if dep_rule.name not in resolved:
+                concatenated_rules += dep_rule.rule_with_dependencies(resolved, seen)
+
+        if self.name not in resolved:
+            concatenated_rules += self.pattern + "\n\n"
+            resolved.add(self.name)
+
+        seen.remove(self.name)
+        return concatenated_rules

@@ -8,8 +8,10 @@ from core.schemas.indicator import (
     Indicator,
     Query,
     Regex,
-    Yara,
+    # Yara,
 )
+
+from core.schemas.indicators.yara import Yara
 
 
 class IndicatorTest(unittest.TestCase):
@@ -282,7 +284,6 @@ sources:
 
     def test_yara_creation(self):
         yara = Yara(
-            name="yara1",
             pattern='rule test { strings: $a = "test" condition: $a }',
             location="any",
             diamond=DiamondModel.capability,
@@ -290,8 +291,77 @@ sources:
 
         self.assertIsNotNone(yara.id)
         self.assertIsNotNone(yara.created)
-        self.assertEqual(yara.name, "yara1")
+        self.assertEqual(yara.name, "test")
         self.assertEqual(yara.type, "yara")
+
+    def test_yara_name_and_deps(self):
+        yara = Yara(
+            name="blah",
+            pattern='rule test { strings: $a = "test" condition: $a and dep }',
+            location="any",
+            diamond=DiamondModel.capability,
+        )
+
+        self.assertEqual(yara.name, "test")
+        self.assertEqual(yara.dependencies, ["dep"])
+
+    def test_invalid_yara_rule(self):
+        with self.assertRaises(ValueError) as error:
+            Yara(
+                pattern='rule test { wooo: $a = "test" fooo: $a and dep }',
+                location="any",
+                diamond=DiamondModel.capability,
+            ).save()
+
+        self.assertIn("Unknown text wooo", str(error.exception))
+
+    def test_fail_on_more_than_one_rule(self):
+        with self.assertRaises(ValueError) as error:
+            Yara(
+                pattern="rule test { condition: true } rule test2 { condition: true }",
+                location="any",
+                diamond=DiamondModel.capability,
+            ).save()
+
+        self.assertIn(
+            "Only one Yara rule is allowed in the rule body.", str(error.exception)
+        )
+
+    def test_dependency_calculation(self):
+        Yara(
+            pattern="rule dep0 { condition: true }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        Yara(
+            pattern="rule dep1 { condition: true and dep0 }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        Yara(
+            pattern="rule dep2 { condition: true and dep1 }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        yara_rule = Yara(
+            pattern="rule test { condition: true and dep2 and dep1 }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        deps = yara_rule.rule_with_dependencies()
+        self.assertEqual(
+            deps,
+            (
+                "rule dep0 { condition: true }\n\n"
+                "rule dep1 { condition: true and dep0 }\n\n"
+                "rule dep2 { condition: true and dep1 }\n\n"
+                "rule test { condition: true and dep2 and dep1 }\n\n"
+            ),
+        )
 
     def test_yara_match(self):
         rule = Yara(
