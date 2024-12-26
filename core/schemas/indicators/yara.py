@@ -147,6 +147,45 @@ class Yara(indicator.Indicator):
             return YaraMatch(matches=yaramatch.matches)
         return None
 
+    @classmethod
+    def import_bulk_rules(cls, bulk_rule_text: str, tags: list[str] | None = None):
+        """Import bulk rules from a rule body.
+
+        Args:
+            bulk_rule_text: The text containing the bulk rules.
+            tags: A list of tags to apply to the imported rules.
+        """
+        if not tags:
+            tags = []
+
+        try:
+            yara.compile(source=bulk_rule_text, externals=ALLOWED_EXTERNALS)
+        except yara.SyntaxError as error:
+            raise ValueError(str(error)) from error
+
+        parsed_rules = plyara.Plyara().parse_string(bulk_rule_text)
+        # all_rule_names = {rule["rule_name"] for rule in parsed_rules}
+
+        for rule in parsed_rules:
+            raw_rule = plyara.utils.rebuild_yara_rule(rule)
+            print(f'Processing {rule["rule_name"]}')
+            yara_object = Yara(
+                name=rule["rule_name"],
+                pattern=raw_rule,
+                diamond=indicator.DiamondModel.capability,
+                location=rule.get("scan_context", "N/A"),
+            ).save()
+
+            rule_tags = rule.get("tags", [])
+            try:
+                if rule_tags and isinstance(rule_tags, str):
+                    rule_tags = rule_tags.split(",")
+            except ValueError:
+                rule_tags = []
+
+            if tags + rule_tags:
+                yara_object.tag(tags + rule_tags)
+
     def rule_with_dependencies(
         self, resolved: set[str] | None = None, seen: set[str] | None = None
     ) -> str:
