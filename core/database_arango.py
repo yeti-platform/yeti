@@ -515,7 +515,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if not isinstance(tags, (list, set, tuple)):
             raise ValueError("Tags must be of type list, set or tuple.")
 
-        tags = [t.strip() for t in tags if t.strip()]
+        tags = list({t.strip() for t in tags if t.strip()})
         if strict:
             self.clear_tags()
 
