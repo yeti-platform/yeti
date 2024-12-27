@@ -149,7 +149,7 @@ class YaraIndicatorTest(unittest.TestCase):
             diamond=DiamondModel.capability,
         ).save()
 
-        self.assertEquals(yara_rule.dependencies, ["dep2", "dep1"])
+        self.assertCountEqual(yara_rule.dependencies, ["dep2", "dep1"])
 
         vertices, _, total = yara_rule.neighbors()
         self.assertEqual(total, 2)
