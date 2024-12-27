@@ -118,6 +118,7 @@ class Yara(indicator.Indicator):
     name: str = ""  # gets overridden during validation
     type: Literal["yara"] = "yara"
     dependencies: list[str] = []
+    private: bool = False
 
     @model_validator(mode="before")
     @classmethod
@@ -137,6 +138,7 @@ class Yara(indicator.Indicator):
         rule_deps = set(plyara.utils.detect_dependencies(parsed_rule))
         data["dependencies"] = rule_deps - ALLOWED_EXTERNALS.keys()
         data["name"] = parsed_rule["rule_name"]
+        data["private"] = "private" in parsed_rule.get("scopes", [])
 
         return data
 
