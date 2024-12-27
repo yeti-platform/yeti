@@ -1,5 +1,4 @@
 import glob
-import json
 import logging
 import os
 import tempfile
@@ -7,18 +6,8 @@ from datetime import timedelta
 from io import BytesIO
 from zipfile import ZipFile
 
-import yara
-
 from core import taskmanager
-from core.schemas import entity, indicator, task
-
-ALLOWED_EXTERNALS = {
-    "filename": "",
-    "filepath": "",
-    "extension": "",
-    "filetype": "",
-    "owner": "",
-}
+from core.schemas import indicator, task
 
 
 class Neo23x0SignatureBase(task.FeedTask):
@@ -45,20 +34,9 @@ class Neo23x0SignatureBase(task.FeedTask):
                 with open(file, "r") as f:
                     rule = f.read()
 
-                try:
-                    yara.compile(source=rule, externals=ALLOWED_EXTERNALS)
-                except Exception as e:
-                    logging.warning(f"Error compiling rule {file}: {e}")
-                    raise
-
-                yara_object = indicator.Yara(
-                    name=f"Neo23x0: {os.path.basename(file)}",
-                    pattern=rule,
-                    diamond=indicator.DiamondModel.capability,
-                    location="filesystem",
-                ).save()
-
-                yara_object.tag(["Neo23x0", "signature-base"])
+                indicator.Yara.import_bulk_rules(
+                    rule, tags=["Neo23x0", "signature-base"]
+                )
 
 
 taskmanager.TaskManager.register_task(Neo23x0SignatureBase)
