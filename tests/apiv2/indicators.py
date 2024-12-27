@@ -162,7 +162,6 @@ class IndicatorTest(unittest.TestCase):
 
     def test_bad_yara(self):
         indicator_dict = {
-            "name": "badYara",
             "type": "yara",
             "pattern": "rule test {",
             "location": "filesystem",
@@ -174,11 +173,12 @@ class IndicatorTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 422)
         data = response.json()
-        self.assertIn("Value error, Invalid Yara rule", data["detail"][0]["msg"])
+        self.assertIn(
+            "No valid Yara rules found in the rule body", data["detail"][0]["msg"]
+        )
 
     def test_new_yara(self):
         indicator_dict = {
-            "name": "yara",
             "type": "yara",
             "pattern": 'rule test { strings: $a = "test" condition: $a }',
             "location": "filesystem",
@@ -190,5 +190,5 @@ class IndicatorTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["name"], "yara")
+        self.assertEqual(data["name"], "test")
         self.assertEqual(data["type"], "yara")

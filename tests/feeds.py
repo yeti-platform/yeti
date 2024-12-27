@@ -19,6 +19,7 @@ from plugins.feeds.public import (
     threatfox,
     timesketch,
     tor_exit_nodes,
+    yaraforge,
     yaraify,
 )
 
@@ -123,4 +124,9 @@ class FeedTest(unittest.TestCase):
     def test_neo23_signaturebase(self):
         defaults = signaturebase.Neo23x0SignatureBase._defaults.copy()
         feed = signaturebase.Neo23x0SignatureBase(**defaults)
+        feed.run()
+
+    def test_yara_forge(self):
+        defaults = yaraforge.YaraForge._defaults.copy()
+        feed = yaraforge.YaraForge(**defaults)
         feed.run()

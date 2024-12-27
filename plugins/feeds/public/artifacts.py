@@ -36,22 +36,22 @@ class ForensicArtifacts(task.FeedTask):
                 tempdir, "artifacts-main", "artifacts", "data"
             )
 
-        data_files_glob = glob.glob(os.path.join(artifacts_datadir, "*.yaml"))
-        artifacts_dict = {}
-        for file in data_files_glob:
-            result = validator_object.CheckFile(file)
-            if not result:
-                logging.error("Failed to validate %s, skipping", file)
-                continue
-            logging.info("Processing %s", file)
-            with open(file, "r") as f:
-                yaml_string = f.read()
+            data_files_glob = glob.glob(os.path.join(artifacts_datadir, "*.yaml"))
+            artifacts_dict = {}
+            for file in data_files_glob:
+                result = validator_object.CheckFile(file)
+                if not result:
+                    logging.error("Failed to validate %s, skipping", file)
+                    continue
+                logging.info("Processing %s", file)
+                with open(file, "r") as f:
+                    yaml_string = f.read()
 
-            forensic_indicators = indicator.ForensicArtifact.from_yaml_string(
-                yaml_string, update_parents=False
-            )
-            for fi in forensic_indicators:
-                artifacts_dict[fi.name] = fi
+                forensic_indicators = indicator.ForensicArtifact.from_yaml_string(
+                    yaml_string, update_parents=False
+                )
+                for fi in forensic_indicators:
+                    artifacts_dict[fi.name] = fi
 
         for artifact in artifacts_dict.values():
             artifact.update_parents(artifacts_dict)

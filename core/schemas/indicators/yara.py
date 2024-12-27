@@ -1,7 +1,10 @@
-from typing import ClassVar, Literal
+from typing import Any, ClassVar, Literal
 
+import plyara
+import plyara.exceptions
+import plyara.utils
 import yara
-from pydantic import BaseModel, PrivateAttr, field_validator
+from pydantic import BaseModel, PrivateAttr, model_validator
 
 from core.schemas import indicator
 
@@ -111,16 +114,52 @@ class Yara(indicator.Indicator):
 
     _type_filter: ClassVar[str] = "yara"
     _compiled_pattern: yara.Match | None = PrivateAttr(None)
-    type: Literal["yara"] = "yara"
 
-    @field_validator("pattern")
+    name: str = ""  # gets overridden during validation
+    type: Literal["yara"] = "yara"
+    dependencies: list[str] = []
+    private: bool = False
+
+    @model_validator(mode="before")
     @classmethod
-    def validate_yara(cls, value) -> str:
+    def validate_yara(cls, data: Any):
+        rule = data.get("pattern")
+        if not rule:
+            raise ValueError("Yara rule body is required.")
         try:
-            yara.compile(source=value, externals=ALLOWED_EXTERNALS)
-        except yara.SyntaxError as error:
-            raise ValueError(f"Invalid Yara rule: {error}")
-        return value
+            rules = plyara.Plyara().parse_string(rule)
+        except plyara.exceptions.ParseTypeError as error:
+            raise ValueError(str(error)) from error
+        if len(rules) > 1:
+            raise ValueError("Only one Yara rule is allowed in the rule body.")
+        if not rules:
+            raise ValueError("No valid Yara rules found in the rule body.")
+        parsed_rule = rules[0]
+        rule_deps = set(plyara.utils.detect_dependencies(parsed_rule))
+        data["dependencies"] = rule_deps - ALLOWED_EXTERNALS.keys()
+        data["name"] = parsed_rule["rule_name"]
+        data["private"] = "private" in parsed_rule.get("scopes", [])
+
+        return data
+
+    def save(self):
+        self = super().save()
+        nodes, relationships, _ = self.neighbors(
+            link_types=["depends"], direction="outbound", max_hops=1
+        )
+
+        for edge in relationships:
+            for rel in edge:
+                if nodes[rel.target].name not in self.dependencies:
+                    rel.delete()
+
+        for dependency in self.dependencies:
+            dep = Yara.find(name=dependency)
+            if not dep:
+                raise ValueError(f"Rule depends on unknown dependency '{dependency}'")
+            self.link_to(dep, "depends", "Depends on")
+
+        return self
 
     @property
     def compiled_pattern(self):
@@ -134,3 +173,80 @@ class Yara(indicator.Indicator):
         if result:
             return YaraMatch(matches=yaramatch.matches)
         return None
+
+    @classmethod
+    def import_bulk_rules(cls, bulk_rule_text: str, tags: list[str] | None = None):
+        """Import bulk rules from a rule body.
+
+        Args:
+            bulk_rule_text: The text containing the bulk rules.
+            tags: A list of tags to apply to the imported rules.
+        """
+        if not tags:
+            tags = []
+
+        try:
+            yara.compile(source=bulk_rule_text, externals=ALLOWED_EXTERNALS)
+        except yara.SyntaxError as error:
+            raise ValueError(str(error)) from error
+
+        parsed_rules = plyara.Plyara().parse_string(bulk_rule_text)
+        # all_rule_names = {rule["rule_name"] for rule in parsed_rules}
+
+        for rule in parsed_rules:
+            raw_rule = plyara.utils.rebuild_yara_rule(rule)
+            print(f'Processing {rule["rule_name"]}')
+            yara_object = Yara(
+                name=rule["rule_name"],
+                pattern=raw_rule,
+                diamond=indicator.DiamondModel.capability,
+                location=rule.get("scan_context", "N/A"),
+            ).save()
+
+            rule_tags = rule.get("tags", [])
+            try:
+                if rule_tags and isinstance(rule_tags, str):
+                    rule_tags = rule_tags.split(",")
+            except ValueError:
+                rule_tags = []
+
+            if tags + rule_tags:
+                yara_object.tag(tags + rule_tags)
+
+    def rule_with_dependencies(
+        self, resolved: set[str] | None = None, seen: set[str] | None = None
+    ) -> str:
+        """
+        Find dependencies in a Yara rule.
+
+        Returns:
+            A string containing the original rule text with dependencies added.
+        """
+        if resolved is None:
+            resolved = set()
+        if seen is None:
+            seen = set()
+
+        if self.name in seen:
+            raise ValueError(f"Circular dependency detected: {self.name}")
+
+        seen.add(self.name)
+
+        concatenated_rules = ""
+
+        parsed_rule = plyara.Plyara().parse_string(self.pattern)[0]
+        dependencies = plyara.utils.detect_dependencies(parsed_rule)
+
+        for dependency in dependencies:
+            dep_rule = Yara.find(name=dependency)
+            if not dep_rule:
+                raise ValueError(f"Rule depends on unknown dependency '{dependency}'")
+            if dep_rule.name not in resolved:
+                concatenated_rules += dep_rule.rule_with_dependencies(resolved, seen)
+
+        if self.name not in resolved:
+            concatenated_rules += self.pattern + "\n\n"
+            resolved.add(self.name)
+
+        seen.remove(self.name)
+        return concatenated_rules
