@@ -1,5 +1,3 @@
-# TODO Observable value normalization
-
 import datetime
 import io
 import os
@@ -38,9 +36,11 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["observable"] = "observable"
 
     value: str = Field(min_length=1)
-    created: datetime.datetime = Field(default_factory=now)
     context: list[dict] = []
     last_analysis: dict[str, datetime.datetime] = {}
+
+    created: datetime.datetime = Field(default_factory=now)
+    modified: datetime.datetime = Field(default_factory=now)
 
     @computed_field(return_type=Literal["observable"])
     @property
@@ -52,6 +52,10 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
         if object["type"] in TYPE_MAPPING:
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
+
+    def save(self, *args, **kwargs) -> "Observable":
+        self.modified = now()
+        return super().save(*args, **kwargs)
 
     @computed_field
     def is_valid(self) -> bool:
@@ -110,6 +114,7 @@ class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
             else:
                 del self.context[idx]
                 break
+
         return self.save()
 
 

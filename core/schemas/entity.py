@@ -46,6 +46,10 @@ class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
             raise ValueError("Attempted to instantiate an undefined entity type.")
         return loader(**object)
 
+    def save(self, *args, **kwargs) -> "Entity":
+        self.modified = now()
+        return super().save(*args, **kwargs)
+
     @classmethod
     def is_valid(cls, object: "Entity") -> bool:
         return False
