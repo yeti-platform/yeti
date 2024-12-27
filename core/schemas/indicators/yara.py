@@ -123,12 +123,16 @@ class Yara(indicator.Indicator):
     @classmethod
     def validate_yara(cls, data: Any):
         rule = data.get("pattern")
+        if not rule:
+            raise ValueError("Yara rule body is required.")
         try:
             rules = plyara.Plyara().parse_string(rule)
         except plyara.exceptions.ParseTypeError as error:
             raise ValueError(str(error)) from error
         if len(rules) > 1:
             raise ValueError("Only one Yara rule is allowed in the rule body.")
+        if not rules:
+            raise ValueError("No valid Yara rules found in the rule body.")
         parsed_rule = rules[0]
         data["dependencies"] = plyara.utils.detect_dependencies(parsed_rule)
         data["name"] = parsed_rule["rule_name"]
