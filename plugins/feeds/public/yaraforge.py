@@ -14,14 +14,6 @@ from core.schemas import indicator, task
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-ALLOWED_EXTERNALS = {
-    "filename": "",
-    "filepath": "",
-    "extension": "",
-    "filetype": "",
-    "owner": "",
-}
-
 
 class YaraForge(task.FeedTask):
     _defaults = {
