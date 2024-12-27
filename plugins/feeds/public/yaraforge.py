@@ -7,7 +7,6 @@ from datetime import timedelta
 from io import BytesIO
 from zipfile import ZipFile
 
-
 from core import taskmanager
 from core.schemas import indicator, task
 
