@@ -134,7 +134,8 @@ class Yara(indicator.Indicator):
         if not rules:
             raise ValueError("No valid Yara rules found in the rule body.")
         parsed_rule = rules[0]
-        data["dependencies"] = plyara.utils.detect_dependencies(parsed_rule)
+        rule_deps = set(plyara.utils.detect_dependencies(parsed_rule))
+        data["dependencies"] = rule_deps - ALLOWED_EXTERNALS.keys()
         data["name"] = parsed_rule["rule_name"]
 
         return data
