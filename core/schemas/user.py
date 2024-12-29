@@ -6,6 +6,7 @@ from passlib.context import CryptContext
 from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
+from core.schemas import graph
 from core.schemas.model import YetiModel
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -21,11 +22,12 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["user"] = "user"
     _type_filter: ClassVar[None] = None
 
-    # id: str | None = None
     username: str
     enabled: bool = True
     admin: bool = False
     api_key: str = Field(default_factory=generate_api_key)
+
+    global_role: graph.Permission = graph.Role.READER
 
     @computed_field(return_type=Literal["user"])
     @property
@@ -43,6 +45,9 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             self.api_key = api_key
         else:
             self.api_key = secrets.token_hex(32)
+
+    def has_role(self, target: str, role: graph.Permission) -> bool:
+        return graph.RoleRelationship.has_role(self, target, role)
 
 
 class UserSensitive(User):
