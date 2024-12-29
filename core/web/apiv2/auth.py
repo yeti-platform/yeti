@@ -104,6 +104,7 @@ def get_current_user(
     if user is None:
         raise credentials_exception
     request.state.username = user.username
+    request.state.user = user
     return user
 
 
