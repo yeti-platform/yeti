@@ -770,6 +770,64 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.exception("Error while publishing event")
         return relationship
 
+    def link_to_acl(self, target, role: int) -> "RoleRelationship":
+        """Creates a link between two YetiObjects.
+
+        Args:
+          target: The YetiObject to link to.
+          role: The role to assign to the target.
+        """
+        # Avoid circular dependency
+        from core.schemas.graph import RoleRelationship
+
+        async_graph = self._db.graph("systemroles")
+
+        aql = """
+        WITH users, groups
+
+        FOR v, e, p IN 1..1 OUTBOUND @extended_id
+        acls
+          FILTER e.role == @role
+          FILTER v._id == @target_extended_id
+        RETURN e"""
+        args = {
+            "extended_id": self.extended_id,
+            "target_extended_id": target.extended_id,
+            "role": role,
+        }
+        neighbors = self._db.aql.execute(aql, bind_vars=args)
+        if not neighbors.empty():
+            neighbor = neighbors.pop()
+            neighbor["__id"] = neighbor.pop("_key")
+            relationship = RoleRelationship.load(neighbor)
+            relationship.modified = datetime.datetime.now(datetime.timezone.utc)
+            edge = json.loads(relationship.model_dump_json())
+            edge["_id"] = neighbor["_id"]
+            job = async_graph.update_edge(edge)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            return relationship
+
+        relationship = RoleRelationship(
+            role=role,
+            source=self.extended_id,
+            target=target.extended_id,
+            created=datetime.datetime.now(datetime.timezone.utc),
+            modified=datetime.datetime.now(datetime.timezone.utc),
+        )
+        col = async_graph.edge_collection("acls")
+        job = col.link(
+            self.extended_id,
+            target.extended_id,
+            data=json.loads(relationship.model_dump_json()),
+            return_new=True,
+        )
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        result = job.result()["new"]
+        result["__id"] = result.pop("_key")
+        return RoleRelationship.load(result)
+
     def swap_link(self):
         """Swaps the source and target of a relationship."""
         # Avoid circular dependency
@@ -967,26 +1025,32 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge["target"] = edge.pop("_to")
             if "tagged" in edge["_id"]:
                 relationships.append(graph.TagRelationship.load(edge))
+            elif "acls" in edge["_id"]:
+                relationships.append(graph.RoleRelationship.load(edge))
             else:
                 relationships.append(graph.Relationship.load(edge))
         return relationships
 
     def _build_vertices(self, vertices, arango_vertices):
         # Import happens here to avoid circular dependency
-        from core.schemas import dfiq, entity, indicator, observable, tag
+        from core.schemas import dfiq, entity, indicator, observable, rbac, tag, user
 
         type_mapping = {
             "tag": tag.Tag,
+            "user": user.User,
+            "rbacgroup": rbac.Group,
         }
         type_mapping.update(observable.TYPE_MAPPING)
         type_mapping.update(entity.TYPE_MAPPING)
         type_mapping.update(indicator.TYPE_MAPPING)
         type_mapping.update(dfiq.TYPE_MAPPING)
 
+
         for vertex in arango_vertices:
             if vertex["_key"] in vertices:
                 continue
-            neighbor_schema = type_mapping[vertex.get("type", "tag")]
+            vertex_type = vertex.get("type") or vertex.get("root_type") or "tag"
+            neighbor_schema = type_mapping[vertex_type]
             vertex["__id"] = vertex.pop("_key")
             # We want the "extended ID" here, e.g. observables/12345
             vertices[vertex["_id"]] = neighbor_schema.load(vertex)
