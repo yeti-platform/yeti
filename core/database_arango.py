@@ -14,6 +14,7 @@ if TYPE_CHECKING:
         GraphFilter,
         Relationship,
         RelationshipTypes,
+        RoleRelationship,
         TagRelationship,
     )
     from core.schemas.tag import Tag
@@ -114,6 +115,21 @@ class ArangoDatabase:
                     "dfiq",
                 ],
                 "to_vertex_collections": [
+                    "observables",
+                    "entities",
+                    "indicators",
+                    "dfiq",
+                ],
+            },
+        )
+
+        self.create_edge_definition(
+            self.graph("systemroles"),
+            {
+                "edge_collection": "acls",
+                "from_vertex_collections": ["users", "groups"],
+                "to_vertex_collections": [
+                    "groups",
                     "observables",
                     "entities",
                     "indicators",
