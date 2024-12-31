@@ -905,12 +905,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
+        username_filter: str = "",
     ) -> tuple[
         dict[
             str,
             "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
         ],
-        List[List["Relationship | TagRelationship"]],
+        List[List["RelationshipTypes"]],
         int,
     ]:
         """Fetches neighbors of the YetiObject.
@@ -988,6 +989,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if direction not in {"any", "inbound", "outbound"}:
             direction = "any"
 
+        acl_query = ""
+        if username_filter:
+            acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
+            args["username"] = username_filter
+
         aql = f"""
         WITH tags, observables, entities, dfiq, indicators
 
@@ -999,6 +1005,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
               let innertags = (FOR tag, edge in 1..1 OUTBOUND observable tagged RETURN {{ [tag.name]: edge }})
               RETURN MERGE(observable, {{tags: MERGE(innertags)}})
           )
+          {acl_query}
           {limit}
           {sorting_aql}
           RETURN {{ vertices: v_with_tags, g: p }}
@@ -1096,6 +1103,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         graph_queries: List[tuple[str, str, str, str]] = [],
         links_count: bool = False,
         wildcard: bool = True,
+        username_filter: str = None,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
@@ -1112,6 +1120,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             graph_queries: A list of (name, graph, direction, field) tuples to
                 query the graph with.
             wildcard: whether all values should be interpreted as wildcard searches.
+            username_filter: A username for which to query ACLs.
 
         Returns:
             A List of Yeti objects, and the total object count.
@@ -1244,6 +1253,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for name, graph, direction, field in graph_queries:
             graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
 
+        acl_query = ""
+        if username_filter:
+            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
+            aql_args["username"] = username_filter
+
         tag_filter_query = ""
         if tag_filter:
             tag_filter_query = (
@@ -1265,13 +1279,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if sorts:
             aql_sort = f"SORT {', '.join(sorts)}"
 
+        acl_filter = ""
+        if acl_query:
+            acl_filter = "FILTER acl"
+
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
                 {links_count_query}
                 {graph_query_string}
+                {acl_query}
                 {tag_filter_query}
                 {filter_string}
+                {acl_filter}
                 {aql_sort}
                 {limit}
             """

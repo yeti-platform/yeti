@@ -1,37 +1,43 @@
 import unittest
 
 from core import database_arango
-from core.schemas import entity, graph, rbac, user
+from core.schemas import entity, graph, observable, rbac, user
 
 
 class TagTest(unittest.TestCase):
     def setUp(self) -> None:
-        database_arango.db.connect(database="yeti_test")
+        database_arango.db.connect(database="yeti")
         database_arango.db.truncate()
-        self.user1 = user.User(username="test1").save()
+        self.user1 = user.User(username="yeti").save()
         self.user2 = user.User(username="test2").save()
         self.group1 = rbac.Group(name="test1").save()
         self.group2 = rbac.Group(name="test2").save()
         self.entity1 = entity.Malware(name="test1").save()
         self.entity2 = entity.Malware(name="test2").save()
+        self.observable1 = observable.Hostname(value="test.com").save()
+        self.observable1.link_to(self.entity1, "test", description="test")
 
     def test_user_group_role_association(self) -> None:
         """Test that a role can be created"""
         role = self.user1.link_to_acl(self.group1, graph.Role.OWNER)
         self.assertIsNotNone(role.id)
-        self.assertEquals(role.role, "owner")
+        self.assertEquals(role.role, graph.Role.OWNER)
+        self.assertEquals(
+            role.role,
+            graph.Permission.READ | graph.Permission.WRITE | graph.Permission.DELETE,
+        )
 
     def test_group_group_role_association(self) -> None:
         """Test that a role can be created"""
         role = self.group1.link_to_acl(self.group2, graph.Role.OWNER)
         self.assertIsNotNone(role.id)
-        self.assertEqual(role.role, "owner")
+        self.assertEqual(role.role, graph.Role.OWNER)
 
     def test_user_entity_role_association(self) -> None:
         """Test that a role can be created"""
         role = self.user1.link_to_acl(self.entity1, graph.Role.OWNER)
         self.assertIsNotNone(role.id)
-        self.assertEquals(role.role, "owner")
+        self.assertEquals(role.role, graph.Role.OWNER)
 
     def test_user_has_role(self) -> None:
         """Test that a user has a role"""
@@ -57,3 +63,37 @@ class TagTest(unittest.TestCase):
         self.assertTrue(has_role)
         has_role = self.user1.has_role(self.entity2.extended_id, graph.Role.OWNER)
         self.assertFalse(has_role)
+
+    def test_filter_entities_with_username_user_acl(self):
+        """Test that filter() takes user ACLs into account"""
+        entities, total = entity.Entity.filter({}, username="yeti")
+        self.assertEqual(len(entities), 0)
+        self.assertEqual(total, 0)
+
+        self.user1.link_to_acl(self.entity1, graph.Role.READER)
+        entities, total = entity.Entity.filter({}, username="yeti")
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+
+    def test_filter_entities_with_username_group_acl(self):
+        """Test that filter() takes group ACLs into account"""
+        entities, total = entity.Entity.filter({}, username="yeti")
+        self.assertEqual(len(entities), 0)
+        self.assertEqual(total, 0)
+
+        self.user1.link_to_acl(self.group1, graph.Role.READER)
+        self.group1.link_to_acl(self.entity1, graph.Role.READER)
+        entities, total = entity.Entity.filter({}, username="yeti")
+        self.assertEqual(len(entities), 1)
+        self.assertEqual(total, 1)
+
+    def test_neighbors_filter_when_passing_username(self):
+        """Test that neighbors() takes user ACLs into account"""
+        vertices, edges, total = self.observable1.neighbors(username_filter="yeti")
+        self.assertEqual(total, 0)
+        self.assertEqual(len(vertices), 0)
+
+        self.user1.link_to_acl(self.entity1, graph.Role.READER)
+        vertices, edges, total = self.observable1.neighbors(username_filter="yeti")
+        self.assertEqual(total, 1)
+        self.assertEqual(len(vertices), 1)
