@@ -12,10 +12,12 @@ client = TestClient(webapp.app)
 
 
 class rbacTest(unittest.TestCase):
+    # mock patch the RBAC_ENABLED global of entities.py
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
+        rbac.RBAC_ENABLED = True
 
         self.group1 = rbac.Group(name="test1").save()
         self.group2 = rbac.Group(name="test2").save()
@@ -35,6 +37,9 @@ class rbacTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2.api_key}
         ).json()
         self.user2_token = user_token_data["access_token"]
+
+    def tearDown(self) -> None:
+        rbac.RBAC_ENABLED = False
 
     def test_role_update_unlocks_resource_user(self) -> None:
         """Test that a user can access a resource"""
