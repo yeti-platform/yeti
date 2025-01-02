@@ -41,6 +41,8 @@ TESTING = "unittest" in sys.modules.keys()
 
 ASYNC_JOB_WAIT_TIME = 0.01
 
+RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
+
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
 
 
@@ -990,7 +992,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             direction = "any"
 
         acl_query = ""
-        if username_filter:
+        if username_filter and RBAC_ENABLED:
             acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
             args["username"] = username_filter
 
@@ -1254,7 +1256,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
 
         acl_query = ""
-        if username_filter:
+        if username_filter and RBAC_ENABLED:
             acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
             aql_args["username"] = username_filter
 
