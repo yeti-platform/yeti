@@ -42,6 +42,15 @@ enabled = True
 # OIDC_CLIENT_SECRET = BLABLA-BLABLABLA
 # OIDC_DISCOVERY_URL = https://accounts.google.com/.well-known/openid-configuration
 
+
+[rbac]
+
+# If RBAC is disabled, all users will have read / write / delete access to all objects.
+enabled = False
+
+# This is the default role with which new users will be created in the system.
+default_role = none  # could be any of "none", "reader", "writer", "owner"
+
 [tag]
 
 ##
@@ -188,6 +197,6 @@ result_limit =
 extra_dirs = /dfiq
 
 [datadog]
-api_key = 
-app_key = 
+api_key =
+app_key =
 env = dev

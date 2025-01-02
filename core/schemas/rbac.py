@@ -8,7 +8,10 @@ from fastapi import HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, computed_field
 
 from core import database_arango
+from core.config.config import yeti_config
 from core.schemas.model import YetiBaseModel
+
+RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
 
 
 class Group(YetiBaseModel, database_arango.ArangoYetiConnector):
@@ -31,8 +34,11 @@ def permission_on_target(permission: int):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
+            if not RBAC_ENABLED:
+                return func(*args, httpreq=httpreq, **kwargs)
             if httpreq.state.user.global_role & permission == permission:
                 return func(*args, httpreq=httpreq, **kwargs)
+
             if extended_id := re.search(
                 f'/api/v2/(\\w+/{kwargs["id"]})', httpreq.scope["path"]
             ):
@@ -53,8 +59,11 @@ def permission_on_ids(permission: int):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
             ids: list[str] = kwargs["request"].ids
+            if not RBAC_ENABLED:
+                return func(*args, httpreq=httpreq, **kwargs)
             if httpreq.state.user.global_role & permission == permission:
                 return func(*args, httpreq=httpreq, **kwargs)
+
             prefix = re.search(r"/api/v2/(\w+)", httpreq.scope["path"]).group(1)
             for id in ids:
                 extended_id = f"{prefix}/{id}"
@@ -73,11 +82,14 @@ def global_permission(permission: int):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
-            if not httpreq.state.user.global_role & permission == permission:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
-                )
-            return func(*args, httpreq=httpreq, **kwargs)
+            if not RBAC_ENABLED:
+                return func(*args, httpreq=httpreq, **kwargs)
+            if httpreq.state.user.global_role & permission == permission:
+                return func(*args, httpreq=httpreq, **kwargs)
+
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+            )
 
         return wrapper
 
