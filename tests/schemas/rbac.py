@@ -21,8 +21,8 @@ class TagTest(unittest.TestCase):
         """Test that a role can be created"""
         role = self.user1.link_to_acl(self.group1, graph.Role.OWNER)
         self.assertIsNotNone(role.id)
-        self.assertEquals(role.role, graph.Role.OWNER)
-        self.assertEquals(
+        self.assertEqual(role.role, graph.Role.OWNER)
+        self.assertEqual(
             role.role,
             graph.Permission.READ | graph.Permission.WRITE | graph.Permission.DELETE,
         )
@@ -37,15 +37,15 @@ class TagTest(unittest.TestCase):
         """Test that a role can be created"""
         role = self.user1.link_to_acl(self.entity1, graph.Role.OWNER)
         self.assertIsNotNone(role.id)
-        self.assertEquals(role.role, graph.Role.OWNER)
+        self.assertEqual(role.role, graph.Role.OWNER)
 
     def test_user_has_role(self) -> None:
         """Test that a user has a role"""
         self.user1.link_to_acl(self.group1, graph.Role.OWNER)
         has_role = self.user1.has_role(self.group1.extended_id, graph.Role.OWNER)
         self.assertTrue(has_role)
-        has_role = self.user1.has_role(self.group1.extended_id, graph.Role.READ)
-        self.assertFalse(has_role)
+        has_role = self.user1.has_role(self.group1.extended_id, graph.Role.READER)
+        self.assertTrue(has_role)
 
     def test_user_has_role_on_object(self):
         """Test that a user has a role on an object"""
@@ -66,24 +66,24 @@ class TagTest(unittest.TestCase):
 
     def test_filter_entities_with_username_user_acl(self):
         """Test that filter() takes user ACLs into account"""
-        entities, total = entity.Entity.filter({}, username="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="yeti")
         self.assertEqual(len(entities), 0)
         self.assertEqual(total, 0)
 
         self.user1.link_to_acl(self.entity1, graph.Role.READER)
-        entities, total = entity.Entity.filter({}, username="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="yeti")
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
 
     def test_filter_entities_with_username_group_acl(self):
         """Test that filter() takes group ACLs into account"""
-        entities, total = entity.Entity.filter({}, username="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="yeti")
         self.assertEqual(len(entities), 0)
         self.assertEqual(total, 0)
 
         self.user1.link_to_acl(self.group1, graph.Role.READER)
         self.group1.link_to_acl(self.entity1, graph.Role.READER)
-        entities, total = entity.Entity.filter({}, username="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="yeti")
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
 
