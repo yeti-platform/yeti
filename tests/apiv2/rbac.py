@@ -120,3 +120,23 @@ class rbacTest(unittest.TestCase):
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_global_writer(self):
+        """Test that a user can create a new entity"""
+        response = client.post(
+            "/api/v2/entities",
+            json={"entity": {"name": "test", "type": "malware"}},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 403, data)
+
+        self.user1.global_role = graph.Role.WRITER
+        self.user1.save()
+
+        response = client.post(
+            "/api/v2/entities",
+            json={"entity": {"name": "test", "type": "malware"}},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200)
