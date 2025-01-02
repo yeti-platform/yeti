@@ -43,7 +43,7 @@ def permission_on_target(permission: int):
                 f'/api/v2/(\\w+/{kwargs["id"]})', httpreq.scope["path"]
             ):
                 extended_id = extended_id.group(1)
-            if not httpreq.state.user.has_role(extended_id, permission):
+            if not httpreq.state.user.has_permissions(extended_id, permission):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
                 )
@@ -67,10 +67,11 @@ def permission_on_ids(permission: int):
             prefix = re.search(r"/api/v2/(\w+)", httpreq.scope["path"]).group(1)
             for id in ids:
                 extended_id = f"{prefix}/{id}"
-                if not httpreq.state.user.has_role(extended_id, permission):
+                if not httpreq.state.user.has_permissions(extended_id, permission):
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
                     )
+
             return func(*args, httpreq=httpreq, **kwargs)
 
         return wrapper

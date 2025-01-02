@@ -40,6 +40,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     ]
 
     @computed_field(return_type=Literal["user"])
+    @property
     def root_type(self):
         return self._root_type
 
@@ -55,10 +56,10 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
         else:
             self.api_key = secrets.token_hex(32)
 
-    def has_role(self, target: str, role: graph.Permission) -> bool:
-        if self.global_role & role:
+    def has_permissions(self, target: str, permissions: graph.Permission) -> bool:
+        if self.global_role & permissions:
             return True
-        return graph.RoleRelationship.has_role(self, target, role)
+        return graph.RoleRelationship.has_permissions(self, target, permissions)
 
 
 class UserSensitive(User):

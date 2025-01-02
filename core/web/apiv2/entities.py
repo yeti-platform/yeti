@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, conlist
 
 from core.schemas import audit, graph
 from core.schemas.entity import Entity, EntityType, EntityTypes
-from core.schemas.rbac import permission_on_ids, permission_on_target
+from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAGS_REQUEST
 
 
@@ -114,7 +114,7 @@ def delete(httpreq: Request, id: str) -> None:
 
 
 @router.post("/search")
-def search(request: EntitySearchRequest) -> EntitySearchResponse:
+def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
     query = request.query
     tags = query.pop("tags", [])
@@ -129,6 +129,7 @@ def search(request: EntitySearchRequest) -> EntitySearchResponse:
         aliases=request.filter_aliases,
         links_count=True,
         graph_queries=[("tags", "tagged", "outbound", "name")],
+        username_filter=httpreq.state.username,
     )
     response = EntitySearchResponse(entities=entities, total=total)
     return response

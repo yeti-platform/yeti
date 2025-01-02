@@ -132,11 +132,11 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
     @classmethod
-    def has_role(cls, src, target_id: str, permission: Permission) -> bool:
-        vertices, edges, total = src.neighbors(
+    def has_permissions(cls, src, target_id: str, permission: Permission) -> bool:
+        vertices, paths, total = src.neighbors(
             graph="acls", direction="outbound", max_hops=2
         )
-        for path in edges:
+        for path in paths:
             for edge in path:
                 if edge.role & permission == permission and edge.target == target_id:
                     return True

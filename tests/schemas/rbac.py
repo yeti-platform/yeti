@@ -39,30 +39,42 @@ class TagTest(unittest.TestCase):
         self.assertIsNotNone(role.id)
         self.assertEqual(role.role, graph.Role.OWNER)
 
-    def test_user_has_role(self) -> None:
+    def test_user_has_permissions(self) -> None:
         """Test that a user has a role"""
         self.user1.link_to_acl(self.group1, graph.Role.OWNER)
-        has_role = self.user1.has_role(self.group1.extended_id, graph.Role.OWNER)
-        self.assertTrue(has_role)
-        has_role = self.user1.has_role(self.group1.extended_id, graph.Role.READER)
-        self.assertTrue(has_role)
+        has_permissions = self.user1.has_permissions(
+            self.group1.extended_id, graph.Role.OWNER
+        )
+        self.assertTrue(has_permissions)
+        has_permissions = self.user1.has_permissions(
+            self.group1.extended_id, graph.Role.READER
+        )
+        self.assertTrue(has_permissions)
 
-    def test_user_has_role_on_object(self):
+    def test_user_has_permissions_on_object(self):
         """Test that a user has a role on an object"""
         self.user1.link_to_acl(self.entity1, graph.Role.OWNER)
-        has_role = self.user1.has_role(self.entity1.extended_id, graph.Role.OWNER)
-        self.assertTrue(has_role)
-        has_role = self.user1.has_role(self.entity2.extended_id, graph.Role.OWNER)
-        self.assertFalse(has_role)
+        has_permissions = self.user1.has_permissions(
+            self.entity1.extended_id, graph.Role.OWNER
+        )
+        self.assertTrue(has_permissions)
+        has_permissions = self.user1.has_permissions(
+            self.entity2.extended_id, graph.Role.OWNER
+        )
+        self.assertFalse(has_permissions)
 
-    def test_user_has_role_on_object_via_group(self):
+    def test_user_has_permissions_on_object_via_group(self):
         """Test that a user has a role on an object via a group"""
         self.user1.link_to_acl(self.group1, graph.Role.OWNER)
         self.group1.link_to_acl(self.entity1, graph.Role.OWNER)
-        has_role = self.user1.has_role(self.entity1.extended_id, graph.Role.OWNER)
-        self.assertTrue(has_role)
-        has_role = self.user1.has_role(self.entity2.extended_id, graph.Role.OWNER)
-        self.assertFalse(has_role)
+        has_permissions = self.user1.has_permissions(
+            self.entity1.extended_id, graph.Role.OWNER
+        )
+        self.assertTrue(has_permissions)
+        has_permissions = self.user1.has_permissions(
+            self.entity2.extended_id, graph.Role.OWNER
+        )
+        self.assertFalse(has_permissions)
 
     def test_filter_entities_with_username_user_acl(self):
         """Test that filter() takes user ACLs into account"""
