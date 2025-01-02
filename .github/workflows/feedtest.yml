@@ -11,7 +11,7 @@ jobs:
     - name: Debug
       run: echo "${{ toJson(github) }}"
   testfeeds:
-    if: ${{ github.event_type == 'schedule' || contains(github.event.pull_request.labels.*.name, 'tasks:feed') }}
+    if: ${{ github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'tasks:feed') }}
     runs-on: ubuntu-latest
     env:
       YETI_REDIS_HOST: localhost
