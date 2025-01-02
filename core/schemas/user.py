@@ -27,10 +27,10 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     admin: bool = False
     api_key: str = Field(default_factory=generate_api_key)
 
-    global_role: graph.Permission = graph.Role.READER
+    global_role: graph.Permission = graph.Role.NONE
 
-    @computed_field(return_type=Literal["user"])
     @property
+    @computed_field(return_type=Literal["user"])
     def root_type(self):
         return self._root_type
 
@@ -47,6 +47,8 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             self.api_key = secrets.token_hex(32)
 
     def has_role(self, target: str, role: graph.Permission) -> bool:
+        if self.global_role & role:
+            return True
         return graph.RoleRelationship.has_role(self, target, role)
 
 

@@ -93,10 +93,10 @@ class Permission(IntFlag):
 
 
 class Role:
-    OWNER = Permission.READ | Permission.WRITE | Permission.DELETE
-    WRITE = Permission.READ | Permission.WRITE
+    NONE = Permission(0)
     READER = Permission.READ
-    DELETE = Permission.DELETE
+    WRITER = Permission.READ | Permission.WRITE
+    OWNER = Permission.READ | Permission.WRITE | Permission.DELETE
 
 
 class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):

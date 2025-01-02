@@ -24,6 +24,7 @@ class rbacTest(unittest.TestCase):
 
         self.user1 = user.UserSensitive(username="user1").save()
         self.user2 = user.UserSensitive(username="user2").save()
+        self.admin = user.UserSensitive(username="yeti", admin=True).save()
 
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1.api_key}
@@ -90,6 +91,32 @@ class rbacTest(unittest.TestCase):
         response = client.post(
             "/api/v2/entities/tag",
             json={"ids": [self.entity1.id], "tags": ["test"]},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+        self.user1.link_to_acl(self.entity1, graph.Role.WRITER)
+
+        response = client.post(
+            "/api/v2/entities/tag",
+            json={"ids": [self.entity1.id], "tags": ["test"]},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_global_reader(self):
+        """Test that a user can access a resource"""
+        response = client.get(
+            f"/api/v2/entities/{self.entity1.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+        self.user1.global_role = graph.Role.READER
+        self.user1.save()
+
+        response = client.get(
+            f"/api/v2/entities/{self.entity1.id}",
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         self.assertEqual(response.status_code, 200)
