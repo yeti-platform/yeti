@@ -88,7 +88,7 @@ class rbacTest(unittest.TestCase):
         self.user1.link_to_acl(self.entity1, graph.Role.READER)
 
         response = client.post(
-            f"/api/v2/entities/tag",
+            "/api/v2/entities/tag",
             json={"ids": [self.entity1.id], "tags": ["test"]},
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )

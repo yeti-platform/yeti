@@ -17,11 +17,11 @@ if TYPE_CHECKING:
         graph,
         indicator,
         observable,
+        rbac,
         tag,
         task,
         template,
         user,
-        rbac,
     )
 
 
