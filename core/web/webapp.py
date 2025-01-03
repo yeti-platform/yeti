@@ -13,6 +13,7 @@ from core.web.apiv2 import (
     dfiq,
     entities,
     graph,
+    groups,
     import_data,
     indicators,
     observables,
@@ -93,6 +94,14 @@ api_router.include_router(
     tags=["users"],
     dependencies=[Depends(auth.get_current_active_user)],
 )
+
+api_router.include_router(
+    groups.router,
+    prefix="/groups",
+    tags=["groups"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
+
 # Dependencies are set in system endpoints
 api_router.include_router(
     system.router,
