@@ -9,7 +9,7 @@ import traceback
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, indicator, observable
+    from core.schemas import entity, indicator, observable, user
     from core.schemas.graph import (
         GraphFilter,
         Relationship,
@@ -907,7 +907,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
-        username_filter: str = "",
+        user: "user.User" = None,
     ) -> tuple[
         dict[
             str,
@@ -992,9 +992,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             direction = "any"
 
         acl_query = ""
-        if username_filter and RBAC_ENABLED:
+        if user and RBAC_ENABLED and not user.admin:
             acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
-            args["username"] = username_filter
+            args["username"] = user.username
 
         aql = f"""
         WITH tags, observables, entities, dfiq, indicators
@@ -1105,7 +1105,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         graph_queries: List[tuple[str, str, str, str]] = [],
         links_count: bool = False,
         wildcard: bool = True,
-        username_filter: str = None,
+        user: "user.User" = None,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
@@ -1122,7 +1122,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             graph_queries: A list of (name, graph, direction, field) tuples to
                 query the graph with.
             wildcard: whether all values should be interpreted as wildcard searches.
-            username_filter: A username for which to query ACLs.
+            user: A user to perform the query for.
 
         Returns:
             A List of Yeti objects, and the total object count.
@@ -1256,9 +1256,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
             graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
 
         acl_query = ""
-        if username_filter and RBAC_ENABLED:
+        if user and RBAC_ENABLED and not user.admin:
             acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
-            aql_args["username"] = username_filter
+            aql_args["username"] = user.username
 
         tag_filter_query = ""
         if tag_filter:
