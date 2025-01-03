@@ -34,7 +34,7 @@ def permission_on_target(permission: int):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
-            if not RBAC_ENABLED:
+            if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
             if httpreq.state.user.global_role & permission == permission:
                 return func(*args, httpreq=httpreq, **kwargs)
@@ -59,7 +59,7 @@ def permission_on_ids(permission: int):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
             ids: list[str] = kwargs["request"].ids
-            if not RBAC_ENABLED:
+            if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
             if httpreq.state.user.global_role & permission == permission:
                 return func(*args, httpreq=httpreq, **kwargs)
@@ -83,7 +83,7 @@ def global_permission(permission: int):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
-            if not RBAC_ENABLED:
+            if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
             if httpreq.state.user.global_role & permission == permission:
                 return func(*args, httpreq=httpreq, **kwargs)
