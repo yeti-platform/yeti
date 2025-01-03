@@ -5,6 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
+from core.schemas import graph, rbac
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -27,6 +28,22 @@ class userTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user.api_key}
         ).json()
         self.user_token = user_token_data["access_token"]
+
+        self.group1 = rbac.Group(name="testGroup").save()
+
+        self.user.link_to_acl(self.group1, graph.Role.OWNER)
+
+    def test_get_user_details(self):
+        response = client.get(
+            f"/api/v2/users/{self.user.id}",
+            headers={"Authorization": f"Bearer {self.user_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["user"]["username"], "tomchop")
+        self.assertEqual(data["groups"][0][0]["name"], "testGroup")
+        self.assertEqual(data["groups"][0][1], 7)
 
     def test_search_users(self):
         response = client.post(

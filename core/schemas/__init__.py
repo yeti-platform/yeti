@@ -13,6 +13,7 @@ from core.schemas import (
     graph,
     indicator,
     observable,
+    rbac,
     tag,
     task,
     template,

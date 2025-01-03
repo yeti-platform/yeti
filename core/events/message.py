@@ -17,6 +17,7 @@ if TYPE_CHECKING:
         graph,
         indicator,
         observable,
+        rbac,
         tag,
         task,
         template,
@@ -66,6 +67,7 @@ YetiObjectTypes = Annotated[
         Annotated["template.Template", PydanticTag("template")],
         Annotated["graph.Relationship", PydanticTag("relationship")],
         Annotated["graph.TagRelationship", PydanticTag("tag_relationship")],
+        Annotated["rbac.Group", PydanticTag("rbacgroup")],
     ],
     Field(discriminator=Discriminator(yeti_object_discriminator)),
 ]
