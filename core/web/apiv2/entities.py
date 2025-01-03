@@ -65,6 +65,7 @@ router = APIRouter()
 def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
+    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
     if request.tags:
         new.tag(request.tags)
@@ -129,7 +130,7 @@ def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchRespon
         aliases=request.filter_aliases,
         links_count=True,
         graph_queries=[("tags", "tagged", "outbound", "name")],
-        username_filter=httpreq.state.username,
+        user=httpreq.state.user,
     )
     response = EntitySearchResponse(entities=entities, total=total)
     return response
