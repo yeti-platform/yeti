@@ -1,8 +1,9 @@
 from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
+from core.schemas import graph, rbac
 from core.schemas.user import User, UserSensitive
 from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
@@ -13,6 +14,11 @@ class SearchUserRequest(BaseModel):
     username: str
     count: int = 50
     page: int = 0
+
+
+class UserDetailsResponse(BaseModel):
+    user: User
+    groups: list[tuple[rbac.Group, graph.Permission]]
 
 
 class SearchUserResponse(BaseModel):
@@ -60,12 +66,18 @@ router = APIRouter()
 
 
 @router.get("/{user_id}")
-def get(user_id: str) -> User:
+def get(httpreq: Request, user_id: str) -> UserDetailsResponse:
     """Gets a user by ID."""
+    if httpreq.state.user.id != user_id and not httpreq.state.user.admin:
+        raise HTTPException(
+            status_code=403, detail="cannot view details for other users"
+        )
     user = UserSensitive.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"user {user_id} not found")
-    return user
+
+    groups = user.get_groups()
+    return UserDetailsResponse(user=user, groups=list(groups.values()))
 
 
 @router.post("/search")
