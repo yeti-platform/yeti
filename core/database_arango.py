@@ -1348,19 +1348,30 @@ class ArangoYetiConnector(AbstractYetiConnector):
             yeti_objects.append(cls.load(document, strict=True))
         return yeti_objects
 
+    def _delete_vertex_refs_in_graphs(self, vertex_id):
+        for graph_name in {"tags", "systemroles", "threat_graph"}:
+            graph = self._db.graph(graph_name)
+            job = graph.edge_definitions()
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            definitions = job.result()
+
+            for edge_collection in [d["edge_collection"] for d in definitions]:
+                job = graph.edge_collection(edge_collection).delete_match(
+                    {"_from": vertex_id}
+                )
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                job = graph.edge_collection(edge_collection).delete_match(
+                    {"_to": vertex_id}
+                )
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+
     def delete(self, all_versions=True):
         """Deletes an object from the database."""
-        job = self._db.graph("threat_graph").has_vertex_collection(
-            self._collection_name
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        if job.result():
-            col = self._db.graph("threat_graph").vertex_collection(
-                self._collection_name
-            )
-        else:
-            col = self._db.collection(self._collection_name)
+        col = self._db.collection(self._collection_name)
+        self._delete_vertex_refs_in_graphs(self.extended_id)
         job = col.delete(self.id)
         while job.status() != "done":
             time.sleep(ASYNC_JOB_WAIT_TIME)
