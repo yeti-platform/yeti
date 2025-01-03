@@ -7,7 +7,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
-from core.schemas import graph
+from core.schemas import graph, rbac
 from core.schemas.model import YetiModel
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -60,6 +60,19 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
         if self.global_role & permissions:
             return True
         return graph.RoleRelationship.has_permissions(self, target, permissions)
+
+    def get_groups(self) -> dict[str, tuple[rbac.Group, graph.Permission]]:
+        """Get the groups this user is a member of."""
+        groups, paths, total = self.neighbors(
+            graph="acls", direction="outbound", max_hops=1, target_types=["rbacgroup"]
+        )
+        groups_permission_map = {}
+        for path in paths:
+            for edge in path:
+                assert isinstance(edge, graph.RoleRelationship)
+                group = groups[edge.target]
+                groups_permission_map[group.name] = (group, edge.role)
+        return groups_permission_map
 
 
 class UserSensitive(User):
