@@ -87,9 +87,9 @@ class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
 
 
 class Permission(IntFlag):
-    READ = 0b0001
-    WRITE = 0b0010
-    DELETE = 0b0100
+    READ = 0b0001  # 1
+    WRITE = 0b0010  # 2
+    DELETE = 0b0100  # 4
 
 
 class Role:

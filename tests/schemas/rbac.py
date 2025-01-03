@@ -8,7 +8,8 @@ class TagTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti")
         database_arango.db.truncate()
-        self.user1 = user.User(username="yeti").save()
+        self.yeti_user = user.User(username="yeti", admin=True).save()
+        self.user1 = user.User(username="test1").save()
         self.user2 = user.User(username="test2").save()
         self.group1 = rbac.Group(name="test1").save()
         self.group2 = rbac.Group(name="test2").save()
@@ -78,34 +79,34 @@ class TagTest(unittest.TestCase):
 
     def test_filter_entities_with_username_user_acl(self):
         """Test that filter() takes user ACLs into account"""
-        entities, total = entity.Entity.filter({}, username_filter="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="test1")
         self.assertEqual(len(entities), 0)
         self.assertEqual(total, 0)
 
         self.user1.link_to_acl(self.entity1, graph.Role.READER)
-        entities, total = entity.Entity.filter({}, username_filter="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="test1")
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
 
     def test_filter_entities_with_username_group_acl(self):
         """Test that filter() takes group ACLs into account"""
-        entities, total = entity.Entity.filter({}, username_filter="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="test1")
         self.assertEqual(len(entities), 0)
         self.assertEqual(total, 0)
 
         self.user1.link_to_acl(self.group1, graph.Role.READER)
         self.group1.link_to_acl(self.entity1, graph.Role.READER)
-        entities, total = entity.Entity.filter({}, username_filter="yeti")
+        entities, total = entity.Entity.filter({}, username_filter="test1")
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
 
     def test_neighbors_filter_when_passing_username(self):
         """Test that neighbors() takes user ACLs into account"""
-        vertices, edges, total = self.observable1.neighbors(username_filter="yeti")
+        vertices, edges, total = self.observable1.neighbors(username_filter="test1")
         self.assertEqual(total, 0)
         self.assertEqual(len(vertices), 0)
 
         self.user1.link_to_acl(self.entity1, graph.Role.READER)
-        vertices, edges, total = self.observable1.neighbors(username_filter="yeti")
+        vertices, edges, total = self.observable1.neighbors(username_filter="test1")
         self.assertEqual(total, 1)
         self.assertEqual(len(vertices), 1)

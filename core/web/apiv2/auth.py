@@ -131,7 +131,7 @@ class GetCurrentUserWithPermissions:
     def __call__(self, user: User = Depends(get_current_user)) -> User:
         if not user.admin:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"user {user.username} is not an admin",
             )
         return user
