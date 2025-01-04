@@ -24,12 +24,43 @@ class PatchGroupRequest(BaseModel):
     rbacgroup: rbac.Group
 
 
+class GroupSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = ""
+    permissions: graph.Permission | None = None
+    count: int = 50
+    page: int = 0
+
+
+class GroupSearchResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    groups: list[rbac.Group]
+    total: int
+
+
 @router.post("")
+@global_permission(graph.Permission.WRITE)
 def new(httpreq: Request, request: NewGroupRequest):
     group = rbac.Group(name=request.name, description=request.description).save()
-    # link to user
     httpreq.state.user.link_to_acl(group, graph.Role.OWNER)
     return group
+
+
+@router.post("/search")
+def search(httpreq: Request, request: GroupSearchRequest):
+    query = {
+        "name": request.name,
+    }
+    groups, total = rbac.Group.filter(
+        query_args=query,
+        offset=request.page * request.count,
+        count=request.count,
+        user=httpreq.state.user,
+        graph_queries=[("acls", "acls", "inbound", "username")],
+    )
+    return GroupSearchResponse(groups=groups, total=total)
 
 
 @router.patch("/{id}")
@@ -46,6 +77,7 @@ def patch(httpreq: Request, id: str, request: PatchGroupRequest):
 
 
 @router.delete("/{group_id}")
+@permission_on_target(graph.Permission.DELETE)
 def delete(httpreq: Request, group_id: str):
     if not (
         httpreq.state.user.has_permissions(
