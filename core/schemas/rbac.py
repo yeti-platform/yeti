@@ -57,7 +57,8 @@ def permission_on_target(permission: int):
                 extended_id = extended_id.group(1)
             if not httpreq.state.user.has_permissions(extended_id, permission):
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Forbidden: missing privileges {permission} on target",
                 )
             return func(*args, httpreq=httpreq, **kwargs)
 
@@ -81,7 +82,8 @@ def permission_on_ids(permission: int):
                 extended_id = f"{prefix}/{id}"
                 if not httpreq.state.user.has_permissions(extended_id, permission):
                     raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Forbidden: missing privileges {permission} on target {extended_id}",
                     )
 
             return func(*args, httpreq=httpreq, **kwargs)
@@ -101,7 +103,8 @@ def global_permission(permission: int):
                 return func(*args, httpreq=httpreq, **kwargs)
 
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Forbidden: missing global permission {permission}",
             )
 
         return wrapper

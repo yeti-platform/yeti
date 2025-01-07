@@ -101,7 +101,7 @@ class userTest(unittest.TestCase):
         )
 
         data = response.json()
-        self.assertEqual(response.status_code, 401, data)
+        self.assertEqual(response.status_code, 403, data)
         self.assertIsNotNone(data)
         self.assertEqual(data["detail"], "user tomchop is not an admin")
 
@@ -189,7 +189,7 @@ class userTest(unittest.TestCase):
             headers={"Authorization": f"Bearer {self.user_token}"},
         )
         data = response.json()
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403, data)
         self.assertIsNotNone(data)
         self.assertEqual(data["detail"], "user tomchop is not an admin")
 

@@ -53,8 +53,20 @@ class rbacTest(unittest.TestCase):
             json={"name": "testGroup"},
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
-        self.assertEqual(response.status_code, 200)
         data = response.json()
+        self.assertEqual(response.status_code, 403, data)
+        self.assertEqual(data["detail"], "Forbidden: missing global permission 2")
+
+        self.user1.global_role = graph.Role.WRITER
+        self.user1.save()
+
+        response = client.post(
+            "/api/v2/groups",
+            json={"name": "testGroup"},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "testGroup")
 
     def test_delete_group(self):
