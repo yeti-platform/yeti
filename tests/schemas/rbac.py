@@ -102,11 +102,11 @@ class TagTest(unittest.TestCase):
 
     def test_neighbors_filter_when_passing_username(self):
         """Test that neighbors() takes user ACLs into account"""
-        vertices, edges, total = self.observable1.neighbors(user=self.user1))
+        vertices, edges, total = self.observable1.neighbors(user=self.user1)
         self.assertEqual(total, 0)
         self.assertEqual(len(vertices), 0)
 
         self.user1.link_to_acl(self.entity1, graph.Role.READER)
-        vertices, edges, total = self.observable1.neighbors(user=self.user1))
+        vertices, edges, total = self.observable1.neighbors(user=self.user1)
         self.assertEqual(total, 1)
         self.assertEqual(len(vertices), 1)
