@@ -26,6 +26,7 @@ class rbacTest(unittest.TestCase):
         self.user1 = user.UserSensitive(username="user1").save()
         self.user1.link_to_acl(self.group1, graph.Role.OWNER)
         self.user2 = user.UserSensitive(username="user2").save()
+        self.user2.link_to_acl(self.group2, graph.Role.OWNER)
         self.admin = user.UserSensitive(username="yeti", admin=True).save()
 
         token_data = client.post(
@@ -37,6 +38,11 @@ class rbacTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2.api_key}
         ).json()
         self.user2_token = user_token_data["access_token"]
+
+        admin_token_data = client.post(
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.admin.api_key}
+        ).json()
+        self.admin_token = admin_token_data["access_token"]
 
     def tearDown(self) -> None:
         rbac.RBAC_ENABLED = False
@@ -76,3 +82,78 @@ class rbacTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["description"], "test")
         self.assertEqual(data["name"], "test11")
+
+    def test_group_search_has_acl(self):
+        response = client.post(
+            "/api/v2/groups/search",
+            json={"name": "test1"},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["total"], 1)
+        self.assertEqual(data["groups"][0]["name"], "test1")
+        acls = data["groups"][0]["acls"]
+        self.assertIn("user1", acls)
+        self.assertEqual(acls["user1"]["role"], 7)
+        self.assertEqual(acls["user1"]["source"], self.user1.extended_id)
+        self.assertEqual(acls["user1"]["target"], self.group1.extended_id)
+
+    def test_group_get_details(self):
+        response = client.get(
+            f"/api/v2/groups/{self.group1.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["name"], "test1")
+        members = list(data["acls"].keys())
+        self.assertEqual(members, ["user1"])
+
+        response = client.get(
+            f"/api/v2/groups/{self.group2.id}",
+            headers={"Authorization": f"Bearer {self.user2_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["name"], "test2")
+        members = list(data["acls"].keys())
+        self.assertEqual(members, ["user2"])
+
+    def test_admin_has_access_to_all_groups(self):
+        response = client.get(
+            f"/api/v2/groups/{self.group1.id}",
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["name"], "test1")
+        members = list(data["acls"].keys())
+        self.assertEqual(members, ["user1"])
+
+    def test_group_get_details_not_acld(self):
+        response = client.get(
+            f"/api/v2/groups/{self.group2.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_update_members(self):
+        response = client.post(
+            f"/api/v2/groups/{self.group1.id}/update-members",
+            json={"ids": [self.user2.id, self.admin.id], "role": 4},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["updated"], 2)
+        self.assertEqual(data["failed"], 0)
+
+        response = client.get(
+            f"/api/v2/groups/{self.group1.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        members = list(data["acls"].keys())
+        self.assertCountEqual(members, ["user1", "user2", "yeti"])
