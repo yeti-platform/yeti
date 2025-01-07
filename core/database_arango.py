@@ -593,7 +593,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge = json.loads(tag_relationship.model_dump_json())
             edge["_id"] = tag_relationship.id
             graph.update_edge(edge)
-            if self._collection_name != "auditlog":
+            if self._collection_name not in ("auditlog", "timeline"):
                 try:
                     event = message.TagEvent(
                         type=message.EventType.update,
@@ -630,7 +630,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             time.sleep(ASYNC_JOB_WAIT_TIME)
         result = job.result()["new"]
         result["__id"] = result.pop("_key")
-        if self._collection_name != "auditlog":
+        if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.TagEvent(
                     type=message.EventType.new, tagged_object=self, tag_object=tag_obj
@@ -675,7 +675,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             time.sleep(ASYNC_JOB_WAIT_TIME)
         results = job.result()
         for edge in results["edges"]:
-            if self._collection_name != "auditlog":
+            if self._collection_name not in ("auditlog", "timeline"):
                 try:
                     job = self._db.collection("tagged").get(edge["_id"])
                     while job.status() != "done":
@@ -742,7 +742,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             job = async_graph.update_edge(edge)
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
-            if self._collection_name != "auditlog":
+            if self._collection_name not in ("auditlog", "timeline"):
                 try:
                     event = message.LinkEvent(
                         type=message.EventType.update,
@@ -776,7 +776,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         result = job.result()["new"]
         result["__id"] = result.pop("_key")
         relationship = Relationship.load(result)
-        if self._collection_name != "auditlog":
+        if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.LinkEvent(
                     type=message.EventType.new,
@@ -1069,7 +1069,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         type_mapping.update(entity.TYPE_MAPPING)
         type_mapping.update(indicator.TYPE_MAPPING)
         type_mapping.update(dfiq.TYPE_MAPPING)
-
 
         for vertex in arango_vertices:
             if vertex["_key"] in vertices:
