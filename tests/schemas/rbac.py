@@ -79,34 +79,34 @@ class TagTest(unittest.TestCase):
 
     def test_filter_entities_with_username_user_acl(self):
         """Test that filter() takes user ACLs into account"""
-        entities, total = entity.Entity.filter({}, username_filter="test1")
+        entities, total = entity.Entity.filter({}, user=self.user1)
         self.assertEqual(len(entities), 0)
         self.assertEqual(total, 0)
 
         self.user1.link_to_acl(self.entity1, graph.Role.READER)
-        entities, total = entity.Entity.filter({}, username_filter="test1")
+        entities, total = entity.Entity.filter({}, user=self.user1)
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
 
     def test_filter_entities_with_username_group_acl(self):
         """Test that filter() takes group ACLs into account"""
-        entities, total = entity.Entity.filter({}, username_filter="test1")
+        entities, total = entity.Entity.filter({}, user=self.user1)
         self.assertEqual(len(entities), 0)
         self.assertEqual(total, 0)
 
         self.user1.link_to_acl(self.group1, graph.Role.READER)
         self.group1.link_to_acl(self.entity1, graph.Role.READER)
-        entities, total = entity.Entity.filter({}, username_filter="test1")
+        entities, total = entity.Entity.filter({}, user=self.user1)
         self.assertEqual(len(entities), 1)
         self.assertEqual(total, 1)
 
     def test_neighbors_filter_when_passing_username(self):
         """Test that neighbors() takes user ACLs into account"""
-        vertices, edges, total = self.observable1.neighbors(username_filter="test1")
+        vertices, edges, total = self.observable1.neighbors(user=self.user1))
         self.assertEqual(total, 0)
         self.assertEqual(len(vertices), 0)
 
         self.user1.link_to_acl(self.entity1, graph.Role.READER)
-        vertices, edges, total = self.observable1.neighbors(username_filter="test1")
+        vertices, edges, total = self.observable1.neighbors(user=self.user1))
         self.assertEqual(total, 1)
         self.assertEqual(len(vertices), 1)
