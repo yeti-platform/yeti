@@ -42,8 +42,9 @@ class userTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(data)
         self.assertEqual(data["user"]["username"], "tomchop")
-        self.assertEqual(data["groups"][0][0]["name"], "testGroup")
-        self.assertEqual(data["groups"][0][1], 7)
+        self.assertEqual(data["groups"][0]["name"], "testGroup")
+        self.assertIn("tomchop", data["groups"][0]["acls"], "testGroup")
+        self.assertEqual(data["groups"][0]["acls"]["tomchop"]["role"], 7)
 
     def test_search_users(self):
         response = client.post(

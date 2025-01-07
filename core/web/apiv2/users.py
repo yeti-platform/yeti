@@ -18,7 +18,7 @@ class SearchUserRequest(BaseModel):
 
 class UserDetailsResponse(BaseModel):
     user: User
-    groups: list[tuple[rbac.Group, graph.Permission]]
+    groups: list[rbac.Group]
 
 
 class SearchUserResponse(BaseModel):
@@ -77,7 +77,7 @@ def get(httpreq: Request, user_id: str) -> UserDetailsResponse:
         raise HTTPException(status_code=404, detail=f"user {user_id} not found")
 
     groups = user.get_groups()
-    return UserDetailsResponse(user=user, groups=list(groups.values()))
+    return UserDetailsResponse(user=user, groups=groups)
 
 
 @router.post("/search")

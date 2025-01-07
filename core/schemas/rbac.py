@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
+from core.schemas import graph
 from core.schemas.model import YetiBaseModel
 
 RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
@@ -19,6 +20,17 @@ class Group(YetiBaseModel, database_arango.ArangoYetiConnector):
     name: str
     description: str | None = None
     _root_type: Literal["rbacgroup"] = "rbacgroup"
+    _acls: dict[str, graph.RoleRelationship] = {}
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        for name, value in data.get("acls", {}).items():
+            self._acls[name] = graph.RoleRelationship(**value)
+
+    @computed_field(return_type=dict[str, graph.RoleRelationship])
+    @property
+    def acls(self):
+        return self._acls
 
     @classmethod
     def load(cls, object: dict) -> "Group":

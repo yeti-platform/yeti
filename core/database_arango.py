@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from core.schemas import entity, indicator, observable, user
     from core.schemas.graph import (
         GraphFilter,
+        Permission,
         Relationship,
         RelationshipTypes,
         RoleRelationship,
@@ -788,7 +789,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.exception("Error while publishing event")
         return relationship
 
-    def link_to_acl(self, target, role: int) -> "RoleRelationship":
+    def link_to_acl(self, target, role: "Permission") -> "RoleRelationship":
         """Creates a link between two YetiObjects.
 
         Args:
@@ -805,13 +806,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         FOR v, e, p IN 1..1 OUTBOUND @extended_id
         acls
-          FILTER e.role == @role
           FILTER v._id == @target_extended_id
         RETURN e"""
         args = {
             "extended_id": self.extended_id,
             "target_extended_id": target.extended_id,
-            "role": role,
         }
         neighbors = self._db.aql.execute(aql, bind_vars=args)
         if not neighbors.empty():
@@ -819,6 +818,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             neighbor["__id"] = neighbor.pop("_key")
             relationship = RoleRelationship.load(neighbor)
             relationship.modified = datetime.datetime.now(datetime.timezone.utc)
+            relationship.role = role
             edge = json.loads(relationship.model_dump_json())
             edge["_id"] = neighbor["_id"]
             job = async_graph.update_edge(edge)

@@ -61,18 +61,23 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             return True
         return graph.RoleRelationship.has_permissions(self, target, permissions)
 
-    def get_groups(self) -> dict[str, tuple[rbac.Group, graph.Permission]]:
+    def get_groups(self) -> list[rbac.Group]:
         """Get the groups this user is a member of."""
         groups, paths, total = self.neighbors(
-            graph="acls", direction="outbound", max_hops=1, target_types=["rbacgroup"]
+            graph="acls",
+            direction="outbound",
+            max_hops=1,
+            target_types=["rbacgroup"],
+            user=self,
         )
-        groups_permission_map = {}
+        all_groups = {}
         for path in paths:
             for edge in path:
                 assert isinstance(edge, graph.RoleRelationship)
                 group = groups[edge.target]
-                groups_permission_map[group.name] = (group, edge.role)
-        return groups_permission_map
+                group._acls[self.username] = edge
+                all_groups[group.name] = group
+        return list(groups.values())
 
 
 class UserSensitive(User):
