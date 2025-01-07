@@ -4,10 +4,12 @@ from core import database_arango
 from core.schemas import entity, graph, observable, rbac, user
 
 
-class TagTest(unittest.TestCase):
+class RBACTest(unittest.TestCase):
     def setUp(self) -> None:
-        database_arango.db.connect(database="yeti")
+        database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
+        rbac.RBAC_ENABLED = True
+
         self.yeti_user = user.User(username="yeti", admin=True).save()
         self.user1 = user.User(username="test1").save()
         self.user2 = user.User(username="test2").save()
@@ -17,6 +19,9 @@ class TagTest(unittest.TestCase):
         self.entity2 = entity.Malware(name="test2").save()
         self.observable1 = observable.Hostname(value="test.com").save()
         self.observable1.link_to(self.entity1, "test", description="test")
+
+    def tearDown(self) -> None:
+        rbac.RBAC_ENABLED = False
 
     def test_user_group_role_association(self) -> None:
         """Test that a role can be created"""
