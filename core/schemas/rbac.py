@@ -1,16 +1,13 @@
-import datetime
 import re
-from enum import Enum
 from functools import wraps
-from typing import ClassVar, List, Literal, Optional
+from typing import ClassVar, Literal
 
 from fastapi import HTTPException, Request, status
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
-from core.schemas import graph
-from core.schemas.model import YetiBaseModel, YetiAclModel
+from core.schemas.model import YetiAclModel
 
 RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
 

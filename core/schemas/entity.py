@@ -6,7 +6,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
-from core.schemas.model import YetiTagModel, YetiAclModel
+from core.schemas.model import YetiAclModel, YetiTagModel
 
 
 # Forward declarations
