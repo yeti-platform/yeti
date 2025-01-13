@@ -6,7 +6,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
-from core.schemas.model import YetiTagModel
+from core.schemas.model import YetiTagModel, YetiAclModel
 
 
 # Forward declarations
@@ -18,7 +18,7 @@ EntityTypes = ()
 TYPE_MAPPING = {}
 
 
-class Entity(YetiTagModel, database_arango.ArangoYetiConnector):
+class Entity(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector):
     model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = ["related_observables_count"]
     _collection_name: ClassVar[str] = "entities"

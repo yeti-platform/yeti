@@ -1,8 +1,7 @@
-from typing import Any
 
 from pydantic import BaseModel, computed_field
 
-from core.schemas.graph import TagRelationship
+from core.schemas.graph import TagRelationship, RoleRelationship
 
 
 class YetiBaseModel(BaseModel):
@@ -17,6 +16,19 @@ class YetiBaseModel(BaseModel):
     @property
     def id(self):
         return self.__id
+
+class YetiAclModel(YetiBaseModel):
+    _acls: dict[str, RoleRelationship] = {}
+
+    def __init__(self, **data):
+        super().__init__(**data)
+        for name, value in data.get("acls", {}).items():
+            self._acls[name] = RoleRelationship(**value)
+
+    @computed_field(return_type=dict[str, RoleRelationship])
+    @property
+    def acls(self):
+        return self._acls
 
 
 class YetiModel(YetiBaseModel):
