@@ -5,7 +5,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.config.config import yeti_config
-from core.schemas import audit, graph, observable
+from core.schemas import audit, graph, observable, roles
 from core.schemas.observable import Observable, ObservableType, ObservableTypes
 from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
 
@@ -142,7 +142,7 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
     try:
         new = observable.save(type=request.type, value=request.value, tags=request.tags)
         audit.log_timeline(httpreq.state.username, new)
-        httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
+        httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
 
         return new
     except Exception:
@@ -171,7 +171,7 @@ def new_extended(
             **request.observable.model_dump(exclude={"tags"}), tags=request.tags
         )
         audit.log_timeline(httpreq.state.username, new)
-        httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
+        httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
         return new
     except Exception:
         raise HTTPException(
@@ -218,7 +218,7 @@ def bulk_add(
                 tags=new_observable.tags,
             )
             audit.log_timeline(httpreq.state.username, observable_obj)
-            httpreq.state.user.link_to_acl(observable_obj, graph.Role.OWNER)
+            httpreq.state.user.link_to_acl(observable_obj, roles.Role.OWNER)
         except (ValueError, RuntimeError):
             response.failed.append(new_observable.value)
             continue
@@ -313,7 +313,7 @@ def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypes:
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
     audit.log_timeline(httpreq.state.username, new)
-    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
+    httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
     return new
 
 
@@ -333,7 +333,7 @@ def import_from_text(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-text")
-        httpreq.state.user.link_to_acl(obs, graph.Role.OWNER)
+        httpreq.state.user.link_to_acl(obs, roles.Role.OWNER)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
@@ -354,7 +354,7 @@ def import_from_url(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-url")
-        httpreq.state.user.link_to_acl(obs, graph.Role.OWNER)
+        httpreq.state.user.link_to_acl(obs, roles.Role.OWNER)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
@@ -377,7 +377,7 @@ def import_from_file(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-file")
-        httpreq.state.user.link_to_acl(obs, graph.Role.OWNER)
+        httpreq.state.user.link_to_acl(obs, roles.Role.OWNER)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 

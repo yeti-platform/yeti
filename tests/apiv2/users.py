@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas import graph, rbac
+from core.schemas import rbac, roles
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -31,7 +31,7 @@ class userTest(unittest.TestCase):
 
         self.group1 = rbac.Group(name="testGroup").save()
 
-        self.user.link_to_acl(self.group1, graph.Role.OWNER)
+        self.user.link_to_acl(self.group1, roles.Role.OWNER)
 
     def test_get_user_details(self):
         response = client.get(

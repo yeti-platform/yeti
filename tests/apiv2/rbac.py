@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas import entity, graph, rbac, user
+from core.schemas import entity, rbac, roles, user
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -49,7 +49,7 @@ class rbacTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-        self.user1.link_to_acl(self.entity1, graph.Role.OWNER)
+        self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
         response = client.get(
             f"/api/v2/entities/{self.entity1.id}",
             headers={"Authorization": f"Bearer {self.user1_token}"},
@@ -64,8 +64,8 @@ class rbacTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-        self.user1.link_to_acl(self.group1, graph.Role.OWNER)
-        self.group1.link_to_acl(self.entity1, graph.Role.OWNER)
+        self.user1.link_to_acl(self.group1, roles.Role.OWNER)
+        self.group1.link_to_acl(self.entity1, roles.Role.OWNER)
 
         response = client.get(
             f"/api/v2/entities/{self.entity1.id}",
@@ -75,7 +75,7 @@ class rbacTest(unittest.TestCase):
 
     def test_different_user_doesnt_have_access(self):
         """Test that a user can access a resource"""
-        self.user1.link_to_acl(self.entity1, graph.Role.OWNER)
+        self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
 
         response = client.get(
             f"/api/v2/entities/{self.entity1.id}",
@@ -91,7 +91,7 @@ class rbacTest(unittest.TestCase):
 
     def test_user_can_tag_entity(self):
         """Test that a user can tag an entity"""
-        self.user1.link_to_acl(self.entity1, graph.Role.READER)
+        self.user1.link_to_acl(self.entity1, roles.Role.READER)
 
         response = client.post(
             "/api/v2/entities/tag",
@@ -100,7 +100,7 @@ class rbacTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-        self.user1.link_to_acl(self.entity1, graph.Role.WRITER)
+        self.user1.link_to_acl(self.entity1, roles.Role.WRITER)
 
         response = client.post(
             "/api/v2/entities/tag",
@@ -117,7 +117,7 @@ class rbacTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
-        self.user1.global_role = graph.Role.READER
+        self.user1.global_role = roles.Role.READER
         self.user1.save()
 
         response = client.get(
@@ -136,7 +136,7 @@ class rbacTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 403, data)
 
-        self.user1.global_role = graph.Role.WRITER
+        self.user1.global_role = roles.Role.WRITER
         self.user1.save()
 
         response = client.post(

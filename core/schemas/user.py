@@ -7,16 +7,16 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
-from core.schemas import graph, rbac
+from core.schemas import graph, rbac, roles
 from core.schemas.model import YetiModel
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 RBAC_DEFAULT_ROLES = {
-    "none": graph.Role.NONE,
-    "reader": graph.Role.READER,
-    "writer": graph.Role.WRITER,
-    "owner": graph.Role.OWNER,
+    "none": roles.Role.NONE,
+    "reader": roles.Role.READER,
+    "writer": roles.Role.WRITER,
+    "owner": roles.Role.OWNER,
 }
 
 
@@ -35,7 +35,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     admin: bool = False
     api_key: str = Field(default_factory=generate_api_key)
 
-    global_role: graph.Permission = RBAC_DEFAULT_ROLES[
+    global_role: roles.Permission = RBAC_DEFAULT_ROLES[
         str(yeti_config.get("rbac", "default_role", default="none"))
     ]
 
@@ -56,7 +56,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
         else:
             self.api_key = secrets.token_hex(32)
 
-    def has_permissions(self, target: str, permissions: graph.Permission) -> bool:
+    def has_permissions(self, target: str, permissions: roles.Permission) -> bool:
         if self.global_role & permissions:
             return True
         return graph.RoleRelationship.has_permissions(self, target, permissions)

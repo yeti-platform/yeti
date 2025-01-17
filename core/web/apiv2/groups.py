@@ -3,7 +3,7 @@ from enum import Enum
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
-from core.schemas import audit, graph, rbac
+from core.schemas import audit, rbac, roles
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.user import User, UserSensitive
 from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
@@ -28,7 +28,7 @@ class GroupSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = ""
-    permissions: graph.Permission | None = None
+    permissions: roles.Permission | None = None
     count: int = 50
     page: int = 0
 
@@ -44,7 +44,7 @@ class UpdateMembersRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     ids: list[str]
-    role: graph.Permission = graph.Role.READER
+    role: roles.Permission = roles.Role.READER
 
 
 class UpdateMembersResponse(BaseModel):
@@ -53,7 +53,7 @@ class UpdateMembersResponse(BaseModel):
 
 
 @router.get("/{id}")
-@permission_on_target(graph.Permission.READ)
+@permission_on_target(roles.Permission.READ)
 def get(httpreq: Request, id: str) -> rbac.Group:
     # We use filter because we want the ACL graph query
     groups, total = rbac.Group.filter(
@@ -69,7 +69,7 @@ def get(httpreq: Request, id: str) -> rbac.Group:
 
 
 @router.post("")
-@global_permission(graph.Permission.WRITE)
+@global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewGroupRequest) -> rbac.Group:
     existing = rbac.Group.find(name=request.name)
     if existing:
@@ -77,7 +77,7 @@ def new(httpreq: Request, request: NewGroupRequest) -> rbac.Group:
             status_code=409, detail=f"Group {request.name} already exists"
         )
     group = rbac.Group(name=request.name, description=request.description).save()
-    httpreq.state.user.link_to_acl(group, graph.Role.OWNER)
+    httpreq.state.user.link_to_acl(group, roles.Role.OWNER)
     audit.log_timeline(httpreq.state.username, group)
     return group
 
@@ -98,7 +98,7 @@ def search(httpreq: Request, request: GroupSearchRequest) -> GroupSearchResponse
 
 
 @router.patch("/{id}")
-@permission_on_target(graph.Permission.WRITE)
+@permission_on_target(roles.Permission.WRITE)
 def patch(httpreq: Request, id: str, request: PatchGroupRequest) -> rbac.Group:
     db_group = rbac.Group.get(id)
     if db_group is None:
@@ -111,10 +111,10 @@ def patch(httpreq: Request, id: str, request: PatchGroupRequest) -> rbac.Group:
 
 
 @router.delete("/{id}")
-@permission_on_target(graph.Permission.DELETE)
+@permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     if not (
-        httpreq.state.user.has_permissions(f"groups/{id}", graph.Permission.DELETE)
+        httpreq.state.user.has_permissions(f"groups/{id}", roles.Permission.DELETE)
         or httpreq.state.user.admin
     ):
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -126,7 +126,7 @@ def delete(httpreq: Request, id: str) -> None:
 
 
 @router.post("/{id}/update-members")
-@permission_on_target(graph.Permission.WRITE)
+@permission_on_target(roles.Permission.WRITE)
 def update_members(
     httpreq: Request, id: str, request: UpdateMembersRequest
 ) -> UpdateMembersResponse:
@@ -137,7 +137,7 @@ def update_members(
     failed = 0
     for user_id in request.ids:
         # avoid footguns
-        if user_id == httpreq.state.user.id and request.role != graph.Role.OWNER:
+        if user_id == httpreq.state.user.id and request.role != roles.Role.OWNER:
             failed += 1
             continue
         user = UserSensitive.get(user_id)

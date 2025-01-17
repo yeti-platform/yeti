@@ -5,7 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
-from core.schemas import entity, graph, rbac, user
+from core.schemas import entity, rbac, roles, user
 from core.web import webapp
 
 client = TestClient(webapp.app)
@@ -24,9 +24,9 @@ class rbacTest(unittest.TestCase):
         self.entity2 = entity.Malware(name="test2").save()
 
         self.user1 = user.UserSensitive(username="user1").save()
-        self.user1.link_to_acl(self.group1, graph.Role.OWNER)
+        self.user1.link_to_acl(self.group1, roles.Role.OWNER)
         self.user2 = user.UserSensitive(username="user2").save()
-        self.user2.link_to_acl(self.group2, graph.Role.OWNER)
+        self.user2.link_to_acl(self.group2, roles.Role.OWNER)
         self.admin = user.UserSensitive(username="yeti", admin=True).save()
 
         token_data = client.post(
@@ -57,7 +57,7 @@ class rbacTest(unittest.TestCase):
         self.assertEqual(response.status_code, 403, data)
         self.assertEqual(data["detail"], "Forbidden: missing global permission 2")
 
-        self.user1.global_role = graph.Role.WRITER
+        self.user1.global_role = roles.Role.WRITER
         self.user1.save()
 
         response = client.post(

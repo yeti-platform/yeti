@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from core.schemas import audit, dfiq, graph
+from core.schemas import audit, dfiq, roles
 
 
 # Request schemas
@@ -143,7 +143,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         )
 
     new = new.save()
-    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
+    httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
 
     try:

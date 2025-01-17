@@ -3,7 +3,7 @@ from functools import wraps
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.schemas import audit, graph
+from core.schemas import audit, graph, roles
 from core.schemas.entity import Entity, EntityType, EntityTypes
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAGS_REQUEST
@@ -61,11 +61,11 @@ router = APIRouter()
 
 
 @router.post("/")
-@global_permission(graph.Permission.WRITE)
+@global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
-    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
+    httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
     if request.tags:
         new.tag(request.tags)
@@ -73,7 +73,7 @@ def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
 
 
 @router.patch("/{id}")
-@permission_on_target(graph.Permission.WRITE)
+@permission_on_target(roles.Permission.WRITE)
 def patch(httpreq: Request, request: PatchEntityRequest, id) -> EntityTypes:
     """Modifies entity in the database."""
     db_entity: EntityTypes = Entity.get(id)
@@ -94,7 +94,7 @@ def patch(httpreq: Request, request: PatchEntityRequest, id) -> EntityTypes:
 
 
 @router.get("/{id}")
-@permission_on_target(graph.Permission.READ)
+@permission_on_target(roles.Permission.READ)
 def details(id, httpreq: Request) -> EntityTypes:
     """Returns details about an observable."""
     db_entity: EntityTypes = Entity.get(id)  # type: ignore
@@ -106,7 +106,7 @@ def details(id, httpreq: Request) -> EntityTypes:
 
 
 @router.delete("/{id}")
-@permission_on_target(graph.Permission.DELETE)
+@permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     """Deletes an Entity."""
     db_entity = Entity.get(id)
@@ -139,7 +139,7 @@ def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchRespon
 
 
 @router.post("/tag")
-@permission_on_ids(graph.Permission.WRITE)
+@permission_on_ids(roles.Permission.WRITE)
 def tag(httpreq: Request, request: EntityTagRequest) -> EntityTagResponse:
     """Tags entities."""
     entities = []

@@ -5,6 +5,7 @@ from typing import ClassVar, Literal
 from pydantic import BaseModel, ConfigDict, computed_field
 
 from core import database_arango
+from core.schemas import roles
 
 # Database model
 
@@ -86,19 +87,6 @@ class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 
-class Permission(IntFlag):
-    READ = 0b0001  # 1
-    WRITE = 0b0010  # 2
-    DELETE = 0b0100  # 4
-
-
-class Role:
-    NONE = Permission(0)
-    READER = Permission.READ
-    WRITER = Permission.READ | Permission.WRITE
-    OWNER = Permission.READ | Permission.WRITE | Permission.DELETE
-
-
 class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
     model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = list()
@@ -109,7 +97,7 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
 
     source: str
     target: str
-    role: Permission
+    role: roles.Permission
     created: datetime.datetime
     modified: datetime.datetime
 
@@ -132,7 +120,7 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
     @classmethod
-    def has_permissions(cls, src, target_id: str, permission: Permission) -> bool:
+    def has_permissions(cls, src, target_id: str, permission: roles.Permission) -> bool:
         vertices, paths, total = src.neighbors(
             graph="acls", direction="outbound", max_hops=2
         )

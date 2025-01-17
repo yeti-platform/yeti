@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.schemas import audit, graph
+from core.schemas import audit, graph, roles
 from core.schemas.indicator import (
     ForensicArtifact,
     Indicator,
@@ -65,7 +65,7 @@ router = APIRouter()
 def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
     new = request.indicator.save()
-    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
+    httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
     return new
 
