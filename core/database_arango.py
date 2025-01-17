@@ -893,20 +893,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._tags[tag_data.name] = tag_relationship
         return relationships
 
-    def get_acls(self, user) -> None:
-        """Returns the permissions assigned to a user.
-
-        Args:
-            user: The user to check permissions for.
-        """
-        vertices, paths, total = user.neighbors(
-            graph="acls", direction="outbound", max_hops=2
-        )
-        for path in paths:
-            for edge in path:
-                if edge.target == self.extended_id:
-                    self._acls[user.username] = edge
-
     # pylint: disable=too-many-arguments
     def neighbors(
         self,

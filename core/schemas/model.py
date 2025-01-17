@@ -30,6 +30,20 @@ class YetiAclModel(YetiBaseModel):
     def acls(self):
         return self._acls
 
+    def get_acls(self, user) -> None:
+        """Returns the permissions assigned to a user.
+
+        Args:
+            user: The user to check permissions for.
+        """
+        vertices, paths, total = user.neighbors(
+            graph="acls", direction="outbound", max_hops=2
+        )
+        for path in paths:
+            for edge in path:
+                if edge.target == self.extended_id:
+                    self._acls[user.username] = edge
+
 
 class YetiModel(YetiBaseModel):
     total_links: int | None = None
