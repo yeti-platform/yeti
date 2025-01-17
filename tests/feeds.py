@@ -130,3 +130,7 @@ class FeedTest(unittest.TestCase):
         defaults = yaraforge.YaraForge._defaults.copy()
         feed = yaraforge.YaraForge(**defaults)
         feed.run()
+
+
+if __name__ == "__main__":
+    unittest.main()

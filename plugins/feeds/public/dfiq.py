@@ -19,10 +19,8 @@ class DFIQFeed(task.FeedTask):
     }
 
     def run(self):
-        # move back to "https://github.com/google/dfiq/archive/refs/heads/main.zip"
-        # once the changes have been merged.
         response = self._make_request(
-            "https://github.com/tomchop/dfiq/archive/refs/heads/dfiq1.1.zip"
+            "https://github.com/google/dfiq/archive/refs/heads/main.zip"
         )
         if not response:
             logging.info("No response: skipping DFIQ update")
