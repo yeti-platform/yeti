@@ -91,7 +91,7 @@ def read_from_data_directory(
     for dfiq_id, dfiq_object in dfiq_kb.items():
         dfiq_object.update_parents(soft_fail=True)
         if dfiq_object.type == DFIQType.question:
-            extract_indicators(dfiq_object)
+            extract_indicators(dfiq_object, user=user)
 
     return total_added
 
@@ -210,6 +210,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
                 "dfiq_yaml",
                 "aggregated_links",
                 "total_links",
+                "acls",
             }
         )
         dump["type"] = dump["type"].removeprefix("DFIQType.")
