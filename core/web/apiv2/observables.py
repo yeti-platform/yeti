@@ -143,6 +143,7 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
         new = observable.save(type=request.type, value=request.value, tags=request.tags)
         audit.log_timeline(httpreq.state.username, new)
         httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
+
         return new
     except Exception:
         raise HTTPException(

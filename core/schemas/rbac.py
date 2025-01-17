@@ -17,6 +17,7 @@ class Group(YetiAclModel, database_arango.ArangoYetiConnector):
     name: str
     description: str | None = None
     _root_type: Literal["rbacgroup"] = "rbacgroup"
+
     @classmethod
     def load(cls, object: dict) -> "Group":
         return cls(**object)
