@@ -39,7 +39,7 @@ def permission_on_target(permission: roles.Permission):
                 return func(*args, httpreq=httpreq, **kwargs)
 
             if extended_id := re.search(
-                f'/api/v2/(\\w+/{kwargs["id"]})', httpreq.scope["path"]
+                f"/api/v2/(\\w+/{kwargs['id']})", httpreq.scope["path"]
             ):
                 extended_id = extended_id.group(1)
             if not httpreq.state.user.has_permissions(extended_id, permission):

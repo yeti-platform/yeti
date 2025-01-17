@@ -944,7 +944,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         sorts = []
         for field, asc in sorting:
-            sorts.append(f'p.edges[0].{field} {"ASC" if asc else "DESC"}')
+            sorts.append(f"p.edges[0].{field} {'ASC' if asc else 'DESC'}")
         sorting_aql = f"SORT {', '.join(sorts)}" if sorts else ""
 
         if link_types:
@@ -1157,9 +1157,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         for field, asc in sorting:
             if field == "total_links" and links_count:
-                sorts.append(f'total_links {"ASC" if asc else "DESC"}')
+                sorts.append(f"total_links {'ASC' if asc else 'DESC'}")
             else:
-                sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
+                sorts.append(f"o.{field} {'ASC' if asc else 'DESC'}")
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):

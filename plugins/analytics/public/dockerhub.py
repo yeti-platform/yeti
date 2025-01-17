@@ -237,7 +237,7 @@ class DockerHubUserAnalytics(task.OneShotTask):
         metadata.pop("date_joined", None)
         user_obj.add_context("hub.docker.com", metadata)
         for image in DockerHubApi.user_images(user_obj.value):
-            image_name = f'{image["namespace"]}/{image["name"]}'
+            image_name = f"{image['namespace']}/{image['name']}"
             self.logger.info(f"Save new image {image_name}")
             image_obs = observable.save(
                 value=image_name, type="container_image", registry="docker.io"

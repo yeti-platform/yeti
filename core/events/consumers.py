@@ -179,7 +179,7 @@ if __name__ == "__main__":
     processes = []
     stop_event = multiprocessing.Event()
     for i in range(concurrency):
-        name = f"{args.type}-worker-{i+1}"
+        name = f"{args.type}-worker-{i + 1}"
         p = Worker(queue=args.type, name=name)
         p.start()
         logger.info(f"Starting {p.name} pid={p.pid}")

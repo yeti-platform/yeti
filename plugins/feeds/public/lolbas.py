@@ -44,7 +44,7 @@ class LoLBAS(task.FeedTask):
             created = datetime.strptime(entry["Created"], "%Y-%d-%m")
 
         description = (
-            f'{entry["Description"]}\n\n{self.format_commands(entry["Commands"])}'
+            f"{entry['Description']}\n\n{self.format_commands(entry['Commands'])}"
         )
         tool = entity.Tool(
             name=entry["Name"], description=description, created=created
