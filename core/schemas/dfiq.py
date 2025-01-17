@@ -14,7 +14,7 @@ from core import database_arango
 from core.config.config import yeti_config
 from core.helpers import now
 from core.schemas import audit, indicator
-from core.schemas.model import YetiModel
+from core.schemas.model import YetiAclModel, YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
 
@@ -138,7 +138,7 @@ class DFIQType(str, Enum):
     question = "question"
 
 
-class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
+class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "dfiq"
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["dfiq"] = "dfiq"
