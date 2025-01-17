@@ -74,7 +74,7 @@ def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
 
 @router.patch("/{id}")
 @permission_on_target(roles.Permission.WRITE)
-def patch(httpreq: Request, request: PatchEntityRequest, id) -> EntityTypes:
+def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes:
     """Modifies entity in the database."""
     db_entity: EntityTypes = Entity.get(id)
     if not db_entity:
@@ -95,7 +95,7 @@ def patch(httpreq: Request, request: PatchEntityRequest, id) -> EntityTypes:
 
 @router.get("/{id}")
 @permission_on_target(roles.Permission.READ)
-def details(id, httpreq: Request) -> EntityTypes:
+def details(httpreq: Request, id: str) -> EntityTypes:
     """Returns details about an observable."""
     db_entity: EntityTypes = Entity.get(id)  # type: ignore
     if not db_entity:

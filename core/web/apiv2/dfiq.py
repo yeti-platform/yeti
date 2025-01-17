@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from core.schemas import audit, dfiq, roles
+from core.schemas.rbac import global_permission, permission_on_target
 
 
 # Request schemas
@@ -94,6 +95,7 @@ def config() -> DFIQConfigResponse:
 
 
 @router.post("/from_archive")
+@global_permission(roles.Permission.WRITE)
 def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
     with tempfile.TemporaryDirectory() as tempdir:
@@ -106,6 +108,7 @@ def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
 
 
 @router.post("/from_yaml")
+@global_permission(roles.Permission.WRITE)
 def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     """Creates a new DFIQ object in the database."""
     try:
@@ -158,7 +161,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
 
 
 @router.post("/to_archive")
-def to_archive(request: DFIQSearchRequest) -> FileResponse:
+def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
     """Compresses DFIQ objects into a ZIP archive.
 
     The structure of the archive is as follows:
@@ -172,6 +175,7 @@ def to_archive(request: DFIQSearchRequest) -> FileResponse:
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
+        user=httpreq.state.user,
     )
 
     _TYPE_TO_DUMP_DIR = {
@@ -266,12 +270,13 @@ def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
     return DFIQValidateResponse(valid=True, error="")
 
 
-@router.patch("/{dfiq_id}")
-def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
+@router.patch("/{id}")
+@permission_on_target(roles.Permission.WRITE)
+def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQTypes:
     """Modifies an DFIQ object in the database."""
-    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
+    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(id)  # type: ignore
     if not db_dfiq:
-        raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
+        raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
 
     try:
         update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
@@ -298,22 +303,24 @@ def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQType
     return new
 
 
-@router.get("/{dfiq_id}")
-def details(httpreq: Request, dfiq_id: str) -> dfiq.DFIQTypes:
+@router.get("/{id}")
+@permission_on_target(roles.Permission.READ)
+def details(httpreq: Request, id: str) -> dfiq.DFIQTypes:
     """Returns details about a DFIQ object."""
-    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
+    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(id)  # type: ignore
     db_dfiq.get_acls(httpreq.state.user)
     if not db_dfiq:
-        raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
+        raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
     return db_dfiq
 
 
-@router.delete("/{dfiq_id}")
-def delete(httpreq: Request, dfiq_id: str) -> None:
+@router.delete("/{id}")
+@permission_on_target(roles.Permission.DELETE)
+def delete(httpreq: Request, id: str) -> None:
     """Deletes a DFIQ object."""
-    db_dfiq = dfiq.DFIQBase.get(dfiq_id)
+    db_dfiq = dfiq.DFIQBase.get(id)
     if not db_dfiq:
-        raise HTTPException(status_code=404, detail="DFIQ object {dfiq_id} not found")
+        raise HTTPException(status_code=404, detail="DFIQ object {id} not found")
 
     all_children, _ = dfiq.DFIQBase.filter(
         query_args={"parent_ids": db_dfiq.uuid}, wildcard=False

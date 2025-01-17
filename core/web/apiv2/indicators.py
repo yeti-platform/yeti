@@ -8,6 +8,7 @@ from core.schemas.indicator import (
     IndicatorType,
     IndicatorTypes,
 )
+from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAGS_REQUEST
 
 
@@ -62,6 +63,7 @@ router = APIRouter()
 
 
 @router.post("/")
+@global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
     new = request.indicator.save()
@@ -70,16 +72,13 @@ def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
     return new
 
 
-@router.patch("/{indicator_id}")
-def patch(
-    httpreq: Request, request: PatchIndicatorRequest, indicator_id
-) -> IndicatorTypes:
+@router.patch("/{id}")
+@permission_on_target(roles.Permission.WRITE)
+def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> IndicatorTypes:
     """Modifies an indicator in the database."""
-    db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
+    db_indicator: IndicatorTypes = Indicator.get(id)
     if not db_indicator:
-        raise HTTPException(
-            status_code=404, detail=f"Indicator {indicator_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Indicator {id} not found")
     db_indicator.get_tags()
     db_indicator.get_acls(httpreq.state.user)
     if db_indicator.type == IndicatorType.forensicartifact:
@@ -98,10 +97,11 @@ def patch(
     return new
 
 
-@router.get("/{indicator_id}")
-def details(httpreq: Request, indicator_id) -> IndicatorTypes:
+@router.get("/{id}")
+@permission_on_target(roles.Permission.READ)
+def details(httpreq: Request, id: str) -> IndicatorTypes:
     """Returns details about an indicator."""
-    db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
+    db_indicator: IndicatorTypes = Indicator.get(id)  # type: ignore
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
     db_indicator.get_tags()
@@ -109,20 +109,21 @@ def details(httpreq: Request, indicator_id) -> IndicatorTypes:
     return db_indicator
 
 
-@router.delete("/{indicator_id}")
-def delete(httpreq: Request, indicator_id: str) -> None:
+@router.delete("/{id}")
+@permission_on_target(roles.Permission.DELETE)
+def delete(httpreq: Request, id: str) -> None:
     """Deletes an indicator."""
-    db_indicator = Indicator.get(indicator_id)
+    db_indicator = Indicator.get(id)
     if not db_indicator:
-        raise HTTPException(
-            status_code=404, detail="Indicator ID {indicator_id} not found"
-        )
+        raise HTTPException(status_code=404, detail="Indicator ID {id} not found")
     audit.log_timeline(httpreq.state.username, db_indicator, action="delete")
     db_indicator.delete()
 
 
 @router.post("/search")
-def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
+def search(
+    httpreq: Request, request: IndicatorSearchRequest
+) -> IndicatorSearchResponse:
     """Searches for indicators."""
     query = request.query
     tags = query.pop("tags", [])
@@ -136,11 +137,13 @@ def search(request: IndicatorSearchRequest) -> IndicatorSearchResponse:
         sorting=request.sorting,
         aliases=request.filter_aliases,
         graph_queries=[("tags", "tagged", "outbound", "name")],
+        user=httpreq.state.user,
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)
 
 
 @router.post("/tag")
+@permission_on_ids(roles.Permission.WRITE)
 def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
     """Tags entities."""
     indicators = []
