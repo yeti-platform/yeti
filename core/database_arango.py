@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     )
     from core.schemas.tag import Tag
 
+
 import requests
 from arango import ArangoClient
 from arango.exceptions import DocumentInsertError, GraphCreateError
@@ -26,7 +27,6 @@ from arango.exceptions import DocumentInsertError, GraphCreateError
 from core.config.config import yeti_config
 from core.events import message
 from core.events.producer import producer
-from core.schemas import roles
 
 from .interfaces import AbstractYetiConnector
 
@@ -789,7 +789,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.exception("Error while publishing event")
         return relationship
 
-    def link_to_acl(self, target, role: roles.Permission) -> "RoleRelationship":
+    def link_to_acl(self, target, role: "roles.Permission") -> "RoleRelationship":
         """Creates a link between two YetiObjects.
 
         Args:
