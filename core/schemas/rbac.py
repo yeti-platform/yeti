@@ -7,6 +7,7 @@ from pydantic import computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
+from core.schemas import roles
 from core.schemas.model import YetiAclModel
 
 RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
@@ -28,7 +29,7 @@ class Group(YetiAclModel, database_arango.ArangoYetiConnector):
         return self._root_type
 
 
-def permission_on_target(permission: int):
+def permission_on_target(permission: roles.Permission):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
@@ -53,7 +54,7 @@ def permission_on_target(permission: int):
     return decorator
 
 
-def permission_on_ids(permission: int):
+def permission_on_ids(permission: roles.Permission):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
@@ -79,7 +80,7 @@ def permission_on_ids(permission: int):
     return decorator
 
 
-def global_permission(permission: int):
+def global_permission(permission: roles.Permission):
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):

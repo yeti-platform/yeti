@@ -9,10 +9,9 @@ import traceback
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, indicator, observable, user
+    from core.schemas import entity, indicator, observable, roles, user
     from core.schemas.graph import (
         GraphFilter,
-        Permission,
         Relationship,
         RelationshipTypes,
         RoleRelationship,
@@ -27,6 +26,7 @@ from arango.exceptions import DocumentInsertError, GraphCreateError
 from core.config.config import yeti_config
 from core.events import message
 from core.events.producer import producer
+from core.schemas import roles
 
 from .interfaces import AbstractYetiConnector
 
@@ -789,7 +789,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.exception("Error while publishing event")
         return relationship
 
-    def link_to_acl(self, target, role: "Permission") -> "RoleRelationship":
+    def link_to_acl(self, target, role: roles.Permission) -> "RoleRelationship":
         """Creates a link between two YetiObjects.
 
         Args:
