@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, computed_field
 from core import database_arango
 from core.config.config import yeti_config
 from core.helpers import now
-from core.schemas import audit, indicator
+from core.schemas import audit, graph, indicator, user
 from core.schemas.model import YetiAclModel, YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
@@ -36,13 +36,13 @@ yaml.add_representer(type(None), custom_null_representer)
 
 
 def read_from_data_directory(
-    globpath: str, username: str, overwrite: bool = False
+    globpath: str, user: "user.User", overwrite: bool = False
 ) -> int:
     """Read DFIQ files from a directory and add them to the database.
 
     Args:
         globpath: Glob path to search for DFIQ files (supports recursion).
-        username: Username to attribute the changes to.
+        user: User to attribute the changes to.
         overwrite: Whether to overwrite existing DFIQs with the same ID.
     """
     dfiq_kb = {}
@@ -79,7 +79,8 @@ def read_from_data_directory(
                 if not dfiq_object.uuid:
                     dfiq_object.uuid = str(uuid.uuid4())
                 dfiq_object = dfiq_object.save()
-                audit.log_timeline(username, dfiq_object, old=db_dfiq)
+                audit.log_timeline(user.username, dfiq_object, old=db_dfiq)
+                user.link_to_acl(dfiq_object, graph.Role.OWNER)
                 total_added += 1
             except (ValueError, KeyError) as e:
                 logging.warning("Error processing %s: %s", file, e)
@@ -95,7 +96,7 @@ def read_from_data_directory(
     return total_added
 
 
-def extract_indicators(question: "DFIQQuestion") -> None:
+def extract_indicators(question: "DFIQQuestion", user: user.User) -> None:
     for approach in question.approaches:
         for step in approach.steps:
             if step.type == "manual":
@@ -124,6 +125,7 @@ def extract_indicators(question: "DFIQQuestion") -> None:
                         diamond=indicator.DiamondModel.victim,
                     ).save()
                     audit.log_timeline("dfiq-indicator-extract", query)
+                user.link_to_acl(query, graph.Role.OWNER)
                 question.link_to(query, "query", "Uses query")
 
             else:

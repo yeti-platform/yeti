@@ -142,6 +142,7 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
     try:
         new = observable.save(type=request.type, value=request.value, tags=request.tags)
         audit.log_timeline(httpreq.state.username, new)
+        httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
         return new
     except Exception:
         raise HTTPException(
@@ -169,6 +170,7 @@ def new_extended(
             **request.observable.model_dump(exclude={"tags"}), tags=request.tags
         )
         audit.log_timeline(httpreq.state.username, new)
+        httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
         return new
     except Exception:
         raise HTTPException(
@@ -196,6 +198,7 @@ def patch(
     update_data = request.observable.model_dump(exclude_unset=True)
     updated_observable = db_observable.model_copy(update=update_data)
     new = updated_observable.save()
+    new.get_acls(httpreq.state.user)
     audit.log_timeline(httpreq.state.username, new, old=db_observable)
     return new
 
@@ -214,6 +217,7 @@ def bulk_add(
                 tags=new_observable.tags,
             )
             audit.log_timeline(httpreq.state.username, observable_obj)
+            httpreq.state.user.link_to_acl(observable_obj, graph.Role.OWNER)
         except (ValueError, RuntimeError):
             response.failed.append(new_observable.value)
             continue
@@ -227,18 +231,20 @@ def bulk_add(
 
 
 @router.get("/{observable_id}")
-def details(observable_id) -> ObservableTypes:
+def details(httpreq: Request, observable_id: str) -> ObservableTypes:
     """Returns details about an observable."""
     observable_obj = Observable.get(observable_id)
+
     if not observable_obj:
         raise HTTPException(status_code=404, detail="Observable not found")
     observable_obj.get_tags()
+    observable_obj.get_acls(httpreq.state.user)
     return observable_obj
 
 
 @router.post("/{observable_id}/context")
 def add_context(
-    httpreq: Request, observable_id, request: AddContextRequest
+    httpreq: Request, observable_id: str, request: AddContextRequest
 ) -> ObservableTypes:
     """Adds context to an observable."""
     observable_obj = Observable.get(observable_id)
@@ -277,7 +283,9 @@ def delete_context(
 
 
 @router.post("/search")
-def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
+def search(
+    httpreq: Request, request: ObservableSearchRequest
+) -> ObservableSearchResponse:
     """Searches for observables."""
     query = request.query
     tags = query.pop("tags", [])
@@ -290,6 +298,7 @@ def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
         count=request.count,
         sorting=request.sorting,
         graph_queries=[("tags", "tagged", "outbound", "name")],
+        user=httpreq.state.user,
     )
     return ObservableSearchResponse(observables=observables, total=total)
 
@@ -303,6 +312,7 @@ def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypes:
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
     audit.log_timeline(httpreq.state.username, new)
+    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
     return new
 
 
@@ -322,6 +332,7 @@ def import_from_text(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-text")
+        httpreq.state.user.link_to_acl(obs, graph.Role.OWNER)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
@@ -342,6 +353,7 @@ def import_from_url(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-url")
+        httpreq.state.user.link_to_acl(obs, graph.Role.OWNER)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
@@ -364,6 +376,7 @@ def import_from_file(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-file")
+        httpreq.state.user.link_to_acl(obs, graph.Role.OWNER)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 

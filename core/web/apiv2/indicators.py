@@ -65,6 +65,7 @@ router = APIRouter()
 def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
     new = request.indicator.save()
+    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
     return new
 
@@ -80,7 +81,7 @@ def patch(
             status_code=404, detail=f"Indicator {indicator_id} not found"
         )
     db_indicator.get_tags()
-
+    db_indicator.get_acls(httpreq.state.user)
     if db_indicator.type == IndicatorType.forensicartifact:
         if db_indicator.pattern != request.indicator.pattern:
             return ForensicArtifact.from_yaml_string(request.indicator.pattern)[0]
@@ -98,12 +99,13 @@ def patch(
 
 
 @router.get("/{indicator_id}")
-def details(indicator_id) -> IndicatorTypes:
+def details(httpreq: Request, indicator_id) -> IndicatorTypes:
     """Returns details about an indicator."""
     db_indicator: IndicatorTypes = Indicator.get(indicator_id)  # type: ignore
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
     db_indicator.get_tags()
+    db_indicator.get_acls(httpreq.state.user)
     return db_indicator
 
 

@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from core.schemas import audit, dfiq
+from core.schemas import audit, dfiq, graph
 
 
 # Request schemas
@@ -100,7 +100,7 @@ def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
         contents = archive.file.read()
         ZipFile(BytesIO(contents)).extractall(path=tempdir)
         total_added = dfiq.read_from_data_directory(
-            f"{tempdir}/*/*.yaml", username=httpreq.state.username
+            f"{tempdir}/*/*.yaml", user=httpreq.state.user
         )
     return {"total_added": total_added}
 
@@ -143,6 +143,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         )
 
     new = new.save()
+    httpreq.state.user.link_to_acl(new, graph.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
 
     try:
@@ -151,7 +152,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new)
+        dfiq.extract_indicators(new, user=httpreq.state.user)
 
     return new
 
@@ -283,6 +284,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQType
             detail=f"DFIQ type mismatch: {db_dfiq.type} != {update_data.type}",
         )
     db_dfiq.get_tags()
+    db_dfiq.get_acls(httpreq.state.user)
     updated_dfiq = db_dfiq.model_copy(
         update=update_data.model_dump(exclude=["created"])
     )
@@ -291,15 +293,16 @@ def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQType
     new.update_parents()
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new)
+        dfiq.extract_indicators(new, user=httpreq.state.user)
 
     return new
 
 
 @router.get("/{dfiq_id}")
-def details(dfiq_id) -> dfiq.DFIQTypes:
+def details(httpreq: Request, dfiq_id: str) -> dfiq.DFIQTypes:
     """Returns details about a DFIQ object."""
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
+    db_dfiq.get_acls(httpreq.state.user)
     if not db_dfiq:
         raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
     return db_dfiq
@@ -339,7 +342,7 @@ def delete(httpreq: Request, dfiq_id: str) -> None:
 
 
 @router.post("/search")
-def search(request: DFIQSearchRequest) -> DFIQSearchResponse:
+def search(httpreq: Request, request: DFIQSearchRequest) -> DFIQSearchResponse:
     """Searches for DFIQ objects."""
     query = request.query
     if request.type:
@@ -350,5 +353,6 @@ def search(request: DFIQSearchRequest) -> DFIQSearchResponse:
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
+        user=httpreq.state.user,
     )
     return DFIQSearchResponse(dfiq=dfiq_objects, total=total)
