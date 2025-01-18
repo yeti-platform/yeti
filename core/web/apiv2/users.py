@@ -3,7 +3,7 @@ from enum import Enum
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
-from core.schemas import graph, rbac
+from core.schemas import rbac
 from core.schemas.user import User, UserSensitive
 from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
@@ -61,6 +61,12 @@ class NewUserRequest(BaseModel):
     admin: bool
 
 
+class UpdateUserRoleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: str
+
+
 # API endpoints
 router = APIRouter()
 
@@ -108,6 +114,19 @@ def toggle(
         user.admin = not user.admin
     elif request.field == ToggleableField.enabled:
         user.enabled = not user.enabled
+    return user.save()
+
+
+@router.post("/")
+def update_user_profile(
+    target_user: User,
+    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
+) -> User:
+    """Updates a user's profile - only the role for now."""
+    user = UserSensitive.get(target_user.id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"user {target_user.id} not found")
+    user.global_role = target_user.global_role
     return user.save()
 
 

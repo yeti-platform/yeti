@@ -35,7 +35,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     admin: bool = False
     api_key: str = Field(default_factory=generate_api_key)
 
-    global_role: roles.Permission = RBAC_DEFAULT_ROLES[
+    global_role: int = RBAC_DEFAULT_ROLES[
         str(yeti_config.get("rbac", "default_role", default="none"))
     ]
 
