@@ -87,6 +87,7 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     request.state.username = None
+    request.state.user = None
     if not token and not cookie:
         raise credentials_exception
 

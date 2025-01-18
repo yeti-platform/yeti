@@ -31,12 +31,12 @@ class rbacTest(unittest.TestCase):
         token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1.api_key}
         ).json()
-
         self.user1_token = token_data["access_token"]
-        user_token_data = client.post(
+
+        token_data = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2.api_key}
         ).json()
-        self.user2_token = user_token_data["access_token"]
+        self.user2_token = token_data["access_token"]
 
     def tearDown(self) -> None:
         rbac.RBAC_ENABLED = False
@@ -126,7 +126,7 @@ class rbacTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    def test_global_writer(self):
+    def test_global_writer_entity(self):
         """Test that a user can create a new entity"""
         response = client.post(
             "/api/v2/entities",
@@ -142,6 +142,59 @@ class rbacTest(unittest.TestCase):
         response = client.post(
             "/api/v2/entities",
             json={"entity": {"name": "test", "type": "malware"}},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_global_writer_indicator(self):
+        """Test that a user can create a new indicator"""
+        payload = {
+            "indicator": {
+                "pattern": "test",
+                "type": "regex",
+                "name": "test",
+                "diamond": "victim",
+            }
+        }
+        response = client.post(
+            "/api/v2/indicators",
+            json=payload,
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 403, data)
+
+        self.user1.global_role = roles.Role.WRITER
+        self.user1.save()
+
+        response = client.post(
+            "/api/v2/indicators",
+            json=payload,
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_global_writer_observable(self):
+        """Test that a user can create a new observable"""
+        payload = {
+            "type": "generic",
+            "value": "test",
+        }
+
+        response = client.post(
+            "/api/v2/observables",
+            json=payload,
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 403, data)
+
+        self.user1.global_role = roles.Role.WRITER
+        self.user1.save()
+
+        response = client.post(
+            "/api/v2/observables",
+            json=payload,
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         self.assertEqual(response.status_code, 200)
