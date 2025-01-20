@@ -867,7 +867,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         sorts = []
         for field, asc in sorting:
-            sorts.append(f'p.edges[0].{field} {"ASC" if asc else "DESC"}')
+            sorts.append(f"p.edges[0].{field} {'ASC' if asc else 'DESC'}")
         sorting_aql = f"SORT {', '.join(sorts)}" if sorts else ""
 
         if link_types:
@@ -984,6 +984,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         type_mapping.update(dfiq.TYPE_MAPPING)
 
         for vertex in arango_vertices:
+            if vertex is None:
+                logging.warning(f"Found None vertex from {self.extended_id}")
+                continue
             if vertex["_key"] in vertices:
                 continue
             neighbor_schema = type_mapping[vertex.get("type", "tag")]
@@ -1067,9 +1070,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         for field, asc in sorting:
             if field == "total_links" and links_count:
-                sorts.append(f'total_links {"ASC" if asc else "DESC"}')
+                sorts.append(f"total_links {'ASC' if asc else 'DESC'}")
             else:
-                sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
+                sorts.append(f"o.{field} {'ASC' if asc else 'DESC'}")
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
