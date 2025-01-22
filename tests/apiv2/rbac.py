@@ -18,6 +18,7 @@ class rbacTest(unittest.TestCase):
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
         rbac.RBAC_ENABLED = True
+        database_arango.RBAC_ENABLED = True
 
         self.group1 = rbac.Group(name="test1").save()
         self.group2 = rbac.Group(name="test2").save()
@@ -40,6 +41,7 @@ class rbacTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         rbac.RBAC_ENABLED = False
+        database_arango.RBAC_ENABLED = False
 
     def test_role_update_unlocks_resource_user(self) -> None:
         """Test that a user can access a resource"""
@@ -181,3 +183,45 @@ class rbacTest(unittest.TestCase):
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_delete_relationship(self):
+        """Test that a user can delete a relationship"""
+        relationship = self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
+
+        # # assert we can get the entity
+        response = client.get(
+            f"/api/v2/entities/{self.entity1.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # assert entity shows up in search
+        response = client.post(
+            "/api/v2/entities/search",
+            json={"query": {"name": "test1"}, "type": "malware"},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["entities"][0]["name"], "test1")
+
+        response = client.delete(
+            f"/api/v2/rbac/{relationship.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        response = client.post(
+            "/api/v2/entities/search",
+            json={"query": {"name": "test1"}, "type": "malware"},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["entities"], [])
+
+        response = client.get(
+            f"/api/v2/entities/{self.entity1.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 403)
