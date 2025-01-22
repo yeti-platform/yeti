@@ -1,5 +1,4 @@
 import datetime
-from enum import Enum, IntFlag
 from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, computed_field
@@ -103,14 +102,14 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
 
     def __init__(self, **data):
         super().__init__(**data)
-        self.__id = data.get("__id", None)
+        self.__id = data.get("__id", data.get("_key", None))
 
-    # @computed_field(return_type=Literal["acl"])
+    @computed_field(return_type=Literal["acl"])
     @property
     def root_type(self):
         return self._root_type
 
-    # @computed_field(return_type=str)
+    @computed_field(return_type=str)
     @property
     def id(self):
         return self.__id
