@@ -1,12 +1,7 @@
-from enum import Enum
-
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 from core.schemas import audit, rbac, roles
-from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
-from core.schemas.user import User, UserSensitive
-from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
 router = APIRouter()
 
@@ -40,20 +35,8 @@ class GroupSearchResponse(BaseModel):
     total: int
 
 
-class UpdateMembersRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    ids: list[str]
-    role: roles.Permission = roles.Role.READER
-
-
-class UpdateMembersResponse(BaseModel):
-    updated: int
-    failed: int
-
-
 @router.get("/{id}")
-@permission_on_target(roles.Permission.READ)
+@rbac.permission_on_target(roles.Permission.READ)
 def get(httpreq: Request, id: str) -> rbac.Group:
     # We use filter because we want the ACL graph query
     groups, total = rbac.Group.filter(
@@ -69,7 +52,7 @@ def get(httpreq: Request, id: str) -> rbac.Group:
 
 
 @router.post("")
-@global_permission(roles.Permission.WRITE)
+@rbac.global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewGroupRequest) -> rbac.Group:
     existing = rbac.Group.find(name=request.name)
     if existing:
@@ -98,7 +81,7 @@ def search(httpreq: Request, request: GroupSearchRequest) -> GroupSearchResponse
 
 
 @router.patch("/{id}")
-@permission_on_target(roles.Permission.WRITE)
+@rbac.permission_on_target(roles.Permission.WRITE)
 def patch(httpreq: Request, id: str, request: PatchGroupRequest) -> rbac.Group:
     db_group = rbac.Group.get(id)
     if db_group is None:
@@ -111,7 +94,7 @@ def patch(httpreq: Request, id: str, request: PatchGroupRequest) -> rbac.Group:
 
 
 @router.delete("/{id}")
-@permission_on_target(roles.Permission.DELETE)
+@rbac.permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     if not (
         httpreq.state.user.has_permissions(f"groups/{id}", roles.Permission.DELETE)
@@ -123,27 +106,3 @@ def delete(httpreq: Request, id: str) -> None:
         raise HTTPException(status_code=404, detail="Group not found")
     db_group.delete()
     audit.log_timeline(httpreq.state.username, db_group, action="delete")
-
-
-@router.post("/{id}/update-members")
-@permission_on_target(roles.Permission.WRITE)
-def update_members(
-    httpreq: Request, id: str, request: UpdateMembersRequest
-) -> UpdateMembersResponse:
-    db_group = rbac.Group.get(id)
-    if db_group is None:
-        raise HTTPException(status_code=404, detail="Group not found")
-    updated = 0
-    failed = 0
-    for user_id in request.ids:
-        # avoid footguns
-        if user_id == httpreq.state.user.id and request.role != roles.Role.OWNER:
-            failed += 1
-            continue
-        user = UserSensitive.get(user_id)
-        if user is None:
-            failed += 1
-            continue
-        user.link_to_acl(db_group, request.role)
-        updated += 1
-    return UpdateMembersResponse(updated=updated, failed=failed)
