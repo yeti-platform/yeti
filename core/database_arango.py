@@ -418,11 +418,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         exclude = ["tags"] + self._exclude_overwrite
         doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
         if doc_dict.get("id") is not None:
-            exclude = ["tags"] + self._exclude_overwrite
+            exclude = ["tags", "acls"] + self._exclude_overwrite
             result = self._update(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.update
         else:
-            exclude = ["tags", "id"] + self._exclude_overwrite
+            exclude = ["tags", "acls", "id"] + self._exclude_overwrite
             result = self._insert(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.new
             if not result:
