@@ -198,3 +198,13 @@ class rbacTest(unittest.TestCase):
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_default_access_to_non_acld_object(self):
+        self.user1.global_role = roles.Role.READER
+        self.user1.save()
+
+        response = client.get(
+            f"/api/v2/entities/{self.entity1.id}",
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        self.assertEqual(response.status_code, 200)

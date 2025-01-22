@@ -17,6 +17,7 @@ from core.web.apiv2 import (
     import_data,
     indicators,
     observables,
+    rbac,
     system,
     tag,
     tasks,
@@ -99,6 +100,13 @@ api_router.include_router(
     groups.router,
     prefix="/groups",
     tags=["groups"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
+
+api_router.include_router(
+    rbac.router,
+    prefix="/rbac",
+    tags=["rbac"],
     dependencies=[Depends(auth.get_current_active_user)],
 )
 
