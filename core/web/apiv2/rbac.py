@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
-from core.schemas import dfiq, entity, indicator, observable, rbac, roles, user
+from core.schemas import dfiq, entity, graph, indicator, observable, rbac, roles, user
 
 router = APIRouter()
 
@@ -25,7 +25,7 @@ class UpdateMembersResponse(BaseModel):
 
 TYPE_TO_MODEL_MAPPING = {
     "entity": entity.Entity,
-    "group": rbac.Group,
+    "rbacgroup": rbac.Group,
     "indicator": indicator.Indicator,
     "user": user.User,
     "dfiq": dfiq.DFIQBase,
@@ -34,7 +34,7 @@ TYPE_TO_MODEL_MAPPING = {
 
 EXTENDED_ID_MAPPING = {
     "entity": "entities",
-    "group": "groups",
+    "rbacgroup": "groups",
     "indicator": "indicators",
     "user": "users",
     "dfiq": "dfiq",
@@ -104,3 +104,12 @@ def update_member(
         db_identity.link_to_acl(db_entity, request.role)
         updated += 1
     return UpdateMembersResponse(updated=updated, failed=failed)
+
+
+@router.delete("/{id}")
+def delete(httpreq: Request, id: str) -> None:
+    """Deletes an Entity."""
+    relationship = graph.RoleRelationship.get(id)
+    if not relationship:
+        raise HTTPException(status_code=404, detail=f"Relationship ID {id} not found")
+    relationship.delete()
