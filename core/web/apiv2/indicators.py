@@ -79,8 +79,7 @@ def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> Indicato
     db_indicator: IndicatorTypes = Indicator.get(id)
     if not db_indicator:
         raise HTTPException(status_code=404, detail=f"Indicator {id} not found")
-    db_indicator.get_tags()
-    db_indicator.get_acls(httpreq.state.user)
+
     if db_indicator.type == IndicatorType.forensicartifact:
         if db_indicator.pattern != request.indicator.pattern:
             return ForensicArtifact.from_yaml_string(request.indicator.pattern)[0]
@@ -94,6 +93,7 @@ def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> Indicato
         new = new.save()
 
     audit.log_timeline(httpreq.state.username, new, old=db_indicator)
+    new.get_acls()
     return new
 
 
@@ -105,7 +105,7 @@ def details(httpreq: Request, id: str) -> IndicatorTypes:
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
     db_indicator.get_tags()
-    db_indicator.get_acls(httpreq.state.user)
+    db_indicator.get_acls()
     return db_indicator
 
 

@@ -30,7 +30,7 @@ class YetiAclModel(YetiBaseModel):
     def acls(self):
         return self._acls
 
-    def get_acls(self, user) -> None:
+    def get_acls(self) -> None:
         """Returns the permissions assigned to a user.
 
         Args:
@@ -42,8 +42,11 @@ class YetiAclModel(YetiBaseModel):
         for path in paths:
             for edge in path:
                 if edge.target == self.extended_id:
-                    identity = vertices[edge.source].username
-                    self._acls[identity] = edge
+                    identity = vertices[edge.source]
+                    if identity.root_type == "rbacgroup":
+                        self._acls[identity.name] = edge
+                    if identity.root_type == "user":
+                        self._acls[identity.username] = edge
 
 
 class YetiModel(YetiBaseModel):

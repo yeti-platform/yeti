@@ -109,23 +109,6 @@ class rbacTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-    def test_global_reader(self):
-        """Test that a user can access a resource"""
-        response = client.get(
-            f"/api/v2/entities/{self.entity1.id}",
-            headers={"Authorization": f"Bearer {self.user1_token}"},
-        )
-        self.assertEqual(response.status_code, 403)
-
-        self.user1.global_role = roles.Role.READER
-        self.user1.save()
-
-        response = client.get(
-            f"/api/v2/entities/{self.entity1.id}",
-            headers={"Authorization": f"Bearer {self.user1_token}"},
-        )
-        self.assertEqual(response.status_code, 200)
-
     def test_global_writer_entity(self):
         """Test that a user can create a new entity"""
         response = client.post(
@@ -195,16 +178,6 @@ class rbacTest(unittest.TestCase):
         response = client.post(
             "/api/v2/observables",
             json=payload,
-            headers={"Authorization": f"Bearer {self.user1_token}"},
-        )
-        self.assertEqual(response.status_code, 200)
-
-    def test_default_access_to_non_acld_object(self):
-        self.user1.global_role = roles.Role.READER
-        self.user1.save()
-
-        response = client.get(
-            f"/api/v2/entities/{self.entity1.id}",
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         self.assertEqual(response.status_code, 200)

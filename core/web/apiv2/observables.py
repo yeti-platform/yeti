@@ -236,7 +236,7 @@ def details(httpreq: Request, id: str) -> ObservableTypes:
     if not observable_obj:
         raise HTTPException(status_code=404, detail="Observable not found")
     observable_obj.get_tags()
-    observable_obj.get_acls(httpreq.state.user)
+    observable_obj.get_acls()
     return observable_obj
 
 

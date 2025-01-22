@@ -3,7 +3,7 @@ from functools import wraps
 from typing import ClassVar, Literal
 
 from fastapi import HTTPException, Request, status
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import computed_field
 
 from core import database_arango
 from core.config.config import yeti_config

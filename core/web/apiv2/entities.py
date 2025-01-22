@@ -1,11 +1,8 @@
-from functools import wraps
-
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.schemas import audit, graph, roles
+from core.schemas import audit, graph, rbac, roles, user
 from core.schemas.entity import Entity, EntityType, EntityTypes
-from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAGS_REQUEST
 
 
@@ -61,7 +58,7 @@ router = APIRouter()
 
 
 @router.post("/")
-@global_permission(roles.Permission.WRITE)
+@rbac.global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
@@ -73,7 +70,7 @@ def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
 
 
 @router.patch("/{id}")
-@permission_on_target(roles.Permission.WRITE)
+@rbac.permission_on_target(roles.Permission.WRITE)
 def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes:
     """Modifies entity in the database."""
     db_entity: EntityTypes = Entity.get(id)
@@ -85,7 +82,6 @@ def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes
             detail=f"Entity {id} type mismatch. Provided '{request.entity.type}'. Expected '{db_entity.type}'",
         )
     db_entity.get_tags()
-    db_entity.get_acls(httpreq.state.user)
     update_data = request.entity.model_dump(exclude_unset=True)
     updated_entity = db_entity.model_copy(update=update_data)
     new = updated_entity.save()
@@ -94,19 +90,19 @@ def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes
 
 
 @router.get("/{id}")
-@permission_on_target(roles.Permission.READ)
+@rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> EntityTypes:
     """Returns details about an observable."""
     db_entity: EntityTypes = Entity.get(id)  # type: ignore
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"Entity {id} not found")
     db_entity.get_tags()
-    db_entity.get_acls(httpreq.state.user)
+    db_entity.get_acls()
     return db_entity
 
 
 @router.delete("/{id}")
-@permission_on_target(roles.Permission.DELETE)
+@rbac.permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     """Deletes an Entity."""
     db_entity = Entity.get(id)
@@ -139,7 +135,7 @@ def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchRespon
 
 
 @router.post("/tag")
-@permission_on_ids(roles.Permission.WRITE)
+@rbac.permission_on_ids(roles.Permission.WRITE)
 def tag(httpreq: Request, request: EntityTagRequest) -> EntityTagResponse:
     """Tags entities."""
     entities = []
