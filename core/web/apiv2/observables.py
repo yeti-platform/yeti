@@ -194,7 +194,7 @@ def patch(httpreq: Request, request: PatchObservableRequest, id) -> ObservableTy
     update_data = request.observable.model_dump(exclude_unset=True)
     updated_observable = db_observable.model_copy(update=update_data)
     new = updated_observable.save()
-    new.get_acls(httpreq.state.user)
+    new.get_acls()
     audit.log_timeline(httpreq.state.username, new, old=db_observable)
     return new
 
