@@ -36,13 +36,14 @@ class YetiAclModel(YetiBaseModel):
         Args:
             user: The user to check permissions for.
         """
-        vertices, paths, total = user.neighbors(
-            graph="acls", direction="outbound", max_hops=2
+        vertices, paths, total = self.neighbors(
+            graph="acls", direction="inbound", max_hops=2
         )
         for path in paths:
             for edge in path:
                 if edge.target == self.extended_id:
-                    self._acls[user.username] = edge
+                    identity = vertices[edge.source].username
+                    self._acls[identity] = edge
 
 
 class YetiModel(YetiBaseModel):
