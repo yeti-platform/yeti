@@ -208,3 +208,18 @@ class userTest(unittest.TestCase):
         user = UserSensitive.get(data["id"])
         self.assertIsNotNone(user)
         self.assertEqual(user.username, "newuser")
+
+    def test_patch_user(self):
+        response = client.patch(
+            "/api/v2/users/role",
+            json={"user_id": self.user.id, "role": roles.Role.OWNER},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["global_role"], roles.Role.OWNER)
+
+        user = UserSensitive.get(self.user.id)
+        self.assertIsNotNone(user)
+        self.assertEqual(user.global_role, roles.Role.OWNER)
