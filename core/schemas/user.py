@@ -57,8 +57,6 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             self.api_key = secrets.token_hex(32)
 
     def has_permissions(self, target: str, permissions: roles.Permission) -> bool:
-        if self.global_role & permissions:
-            return True
         return graph.RoleRelationship.has_permissions(self, target, permissions)
 
     def get_groups(self) -> list[rbac.Group]:

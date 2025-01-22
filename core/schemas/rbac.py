@@ -3,7 +3,7 @@ from functools import wraps
 from typing import ClassVar, Literal
 
 from fastapi import HTTPException, Request, status
-from pydantic import computed_field
+from pydantic import BaseModel, ConfigDict, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
@@ -34,8 +34,6 @@ def permission_on_target(permission: roles.Permission):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
             if not RBAC_ENABLED or httpreq.state.user.admin:
-                return func(*args, httpreq=httpreq, **kwargs)
-            if httpreq.state.user.global_role & permission == permission:
                 return func(*args, httpreq=httpreq, **kwargs)
 
             if extended_id := re.search(
