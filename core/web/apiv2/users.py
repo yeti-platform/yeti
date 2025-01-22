@@ -187,7 +187,7 @@ def delete(
     user.delete()
 
 
-@router.post("/{user_id}")
+@router.post("/")
 def create(
     request: NewUserRequest,
     current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),

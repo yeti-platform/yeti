@@ -152,8 +152,14 @@ class rbacTest(unittest.TestCase):
 
     def test_update_members(self):
         response = client.post(
-            f"/api/v2/groups/{self.group1.id}/update-members",
-            json={"ids": [self.user2.id, self.admin.id], "role": 4},
+            f"/api/v2/rbac/group/{self.group1.id}/update-members",
+            json={
+                "ids": [
+                    {"id": self.user2.id, "type": "user"},
+                    {"id": self.admin.id, "type": "user"},
+                ],
+                "role": 4,
+            },
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         data = response.json()
