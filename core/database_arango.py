@@ -401,7 +401,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return newdoc
 
     def save(
-        self: TYetiObject, exclude_overwrite: list[str] = ["created", "tags", "context"]
+        self: TYetiObject,
+        exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
     ) -> TYetiObject:
         """Inserts or updates a Yeti object into the database.
 
