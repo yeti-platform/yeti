@@ -208,6 +208,12 @@ class ArangoDatabase:
         self.db.collection("dfiq").add_persistent_index(
             fields=["created"], in_background=True, name="dfiq_created_index"
         )
+        self.db.collection("groups").add_persistent_index(
+            fields=["name"], unique=True, in_background=True, name="group_name_index"
+        )
+        self.db.collection("users").add_persistent_index(
+            fields=["username"], unique=True, in_background=True, name="user_name_index"
+        )
 
     def create_views(self):
         for view_target in ("observables", "entities", "indicators", "dfiq"):

@@ -13,10 +13,8 @@ from core.schemas.model import YetiModel
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 RBAC_DEFAULT_ROLES = {
-    "none": roles.Role.NONE,
     "reader": roles.Role.READER,
     "writer": roles.Role.WRITER,
-    "owner": roles.Role.OWNER,
 }
 
 
@@ -36,7 +34,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     api_key: str = Field(default_factory=generate_api_key)
 
     global_role: int = RBAC_DEFAULT_ROLES[
-        str(yeti_config.get("rbac", "default_role", default="none"))
+        str(yeti_config.get("rbac", "default_role", default="writer"))
     ]
 
     @computed_field(return_type=Literal["user"])
