@@ -380,8 +380,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             newdoc = job.result()
             newdoc = newdoc["new"]
         else:
-            if "value" in document:
+            if self._collection_name == "observables":
                 filters = {"value": document["value"]}
+            elif self._collection_name in ("users"):
+                filters = {"username": document["username"]}
             else:
                 filters = {"name": document["name"]}
             if "type" in document:

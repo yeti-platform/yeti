@@ -34,7 +34,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     api_key: str = Field(default_factory=generate_api_key)
 
     global_role: int = RBAC_DEFAULT_ROLES[
-        str(yeti_config.get("rbac", "default_role", default="writer"))
+        str(yeti_config.get("rbac", "default_global_role", default="writer"))
     ]
 
     @computed_field(return_type=Literal["user"])

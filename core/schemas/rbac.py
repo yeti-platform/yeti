@@ -1,6 +1,7 @@
+import logging
 import re
 from functools import wraps
-from typing import ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from fastapi import HTTPException, Request, status
 from pydantic import computed_field
@@ -9,6 +10,12 @@ from core import database_arango
 from core.config.config import yeti_config
 from core.schemas import roles
 from core.schemas.model import YetiAclModel
+
+logger = logging.getLogger(__name__)
+
+
+if TYPE_CHECKING:
+    from core.schemas import user
 
 RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
 
@@ -59,8 +66,6 @@ def permission_on_ids(permission: roles.Permission):
             ids: list[str] = kwargs["request"].ids
             if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
-            if httpreq.state.user.global_role & permission == permission:
-                return func(*args, httpreq=httpreq, **kwargs)
 
             prefix = re.search(r"/api/v2/(\w+)", httpreq.scope["path"]).group(1)
             for id in ids:
@@ -95,3 +100,34 @@ def global_permission(permission: roles.Permission):
         return wrapper
 
     return decorator
+
+
+def set_acls(yeti_object: Any, user: "user.User | None" = None):
+    """Sets the ACLs for a given object taking system defaults into account.
+
+    Args:
+        user: The user to set the default ACLs for.
+        yeti_object: The object to set the default ACLs for.
+    """
+    access = False
+    if user:
+        user.link_to_acl(yeti_object, roles.Role.OWNER)
+        access = True
+    default_acls = yeti_config.get("rbac", "default_acls", default="none")
+    if default_acls == "none":
+        logger.warning("No default ACLs set, setting to user only.")
+        return
+    for identity in default_acls.split(","):
+        group = Group.find(name=identity)
+        if group:
+            group.link_to_acl(yeti_object, roles.Role.OWNER)
+            access = True
+        else:
+            logger.warning(f"Default ACL group {identity} not found.")
+
+    if not access:
+        logger.warning(
+            "No default ACLs set, object is not accessible, creating default group 'All users'"
+        )
+        allusers = Group(name="All users").save()
+        allusers.link_to_acl(yeti_object, roles.Role.OWNER)

@@ -48,6 +48,9 @@ class rbacTest(unittest.TestCase):
         rbac.RBAC_ENABLED = False
 
     def test_create_group(self):
+        self.user1.global_role = roles.Role.READER
+        self.user1.save()
+
         response = client.post(
             "/api/v2/groups",
             json={"name": "testGroup"},
@@ -152,7 +155,7 @@ class rbacTest(unittest.TestCase):
 
     def test_update_members(self):
         response = client.post(
-            f"/api/v2/rbac/group/{self.group1.id}/update-members",
+            f"/api/v2/rbac/rbacgroup/{self.group1.id}/update-members",
             json={
                 "ids": [
                     {"id": self.user2.id, "type": "user"},

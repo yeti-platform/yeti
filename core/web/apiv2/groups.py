@@ -60,7 +60,7 @@ def new(httpreq: Request, request: NewGroupRequest) -> rbac.Group:
             status_code=409, detail=f"Group {request.name} already exists"
         )
     group = rbac.Group(name=request.name, description=request.description).save()
-    httpreq.state.user.link_to_acl(group, roles.Role.OWNER)
+    rbac.set_acls(group, user=httpreq.state.user)
     audit.log_timeline(httpreq.state.username, group)
     return group
 

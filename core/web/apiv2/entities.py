@@ -62,7 +62,7 @@ router = APIRouter()
 def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
     """Creates a new entity in the database."""
     new = request.entity.save()
-    httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
+    rbac.set_acls(new, user=httpreq.state.user)
     audit.log_timeline(httpreq.state.username, new)
     if request.tags:
         new.tag(request.tags)

@@ -49,8 +49,16 @@ enabled = True
 enabled = False
 
 # This is the default role with which new users will be created in the system.
-# Can be any of "none", "reader", "writer", "owner".
-default_role = none
+# Can be any of "writer", "reader". "writer" can create new objects, "readers"
+# can't and are limited to editing objects that already exist, if they have the
+# rights to them.
+default_global_role = writer
+
+# Default sharing settings for objects that are created.
+# `all_users` will share with all users on the platform
+# (this can be revoked later on)
+# `none` will add no additional sharing by default
+default_acls = All users
 
 [tag]
 

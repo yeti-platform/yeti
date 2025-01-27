@@ -113,6 +113,9 @@ class rbacTest(unittest.TestCase):
 
     def test_global_writer_entity(self):
         """Test that a user can create a new entity"""
+        self.user1.global_role = roles.Role.READER
+        self.user1.save()
+
         response = client.post(
             "/api/v2/entities",
             json={"entity": {"name": "test", "type": "malware"}},
@@ -133,6 +136,9 @@ class rbacTest(unittest.TestCase):
 
     def test_global_writer_indicator(self):
         """Test that a user can create a new indicator"""
+        self.user1.global_role = roles.Role.READER
+        self.user1.save()
+
         payload = {
             "indicator": {
                 "pattern": "test",
@@ -161,6 +167,9 @@ class rbacTest(unittest.TestCase):
 
     def test_global_writer_observable(self):
         """Test that a user can create a new observable"""
+        self.user1.global_role = roles.Role.READER
+        self.user1.save()
+
         payload = {
             "type": "generic",
             "value": "test",
@@ -225,3 +234,22 @@ class rbacTest(unittest.TestCase):
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
         self.assertEqual(response.status_code, 403)
+
+    def test_default_acls(self):
+        """Test that a user can create a new entity"""
+        self.user1.global_role = roles.Role.WRITER
+        self.user1.save()
+
+        rbac.Group(name="All users").save()
+
+        response = client.post(
+            "/api/v2/entities",
+            json={"entity": {"name": "test", "type": "malware"}},
+            headers={"Authorization": f"Bearer {self.user1_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+
+        test_malware = entity.Malware.find(name="test")
+        test_malware.get_acls()
+        self.assertCountEqual(test_malware.acls.keys(), ["All users", "user1"])
