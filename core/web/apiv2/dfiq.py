@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from core.schemas import audit, dfiq, roles
+from core.schemas import audit, dfiq, rbac, roles
 from core.schemas.rbac import global_permission, permission_on_target
 
 
@@ -101,10 +101,15 @@ def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
     with tempfile.TemporaryDirectory() as tempdir:
         contents = archive.file.read()
         ZipFile(BytesIO(contents)).extractall(path=tempdir)
-        total_added = dfiq.read_from_data_directory(
-            f"{tempdir}/*/*.yaml", user=httpreq.state.user
+        dfiq_addition = dfiq.read_from_data_directory(
+            f"{tempdir}/*/*.yaml", user=httpreq.state.user.username
         )
-    return {"total_added": total_added}
+        for indicator in dfiq_addition.indicators:
+            rbac.set_acls(indicator, httpreq.state.user)
+        for dfiq_object in dfiq_addition.dfiq:
+            rbac.set_acls(dfiq_object, httpreq.state.user)
+
+    return {"total_added": len(dfiq_addition.dfiq) + len(dfiq_addition.indicators)}
 
 
 @router.post("/from_yaml")
@@ -155,7 +160,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new, user=httpreq.state.user)
+        dfiq.extract_indicators(new, user=httpreq.state.user.username)
 
     return new
 
@@ -289,7 +294,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
             detail=f"DFIQ type mismatch: {db_dfiq.type} != {update_data.type}",
         )
     db_dfiq.get_tags()
-    db_dfiq.get_acls(httpreq.state.user)
+    db_dfiq.get_acls()
     updated_dfiq = db_dfiq.model_copy(
         update=update_data.model_dump(exclude=["created"])
     )
@@ -298,7 +303,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
     new.update_parents()
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new, user=httpreq.state.user)
+        dfiq.extract_indicators(new, user=httpreq.state.user.username)
 
     return new
 
@@ -308,7 +313,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
 def details(httpreq: Request, id: str) -> dfiq.DFIQTypes:
     """Returns details about a DFIQ object."""
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(id)  # type: ignore
-    db_dfiq.get_acls(httpreq.state.user)
+    db_dfiq.get_acls()
     if not db_dfiq:
         raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
     return db_dfiq

@@ -9,6 +9,7 @@ from core.schemas.dfiq import (
     DFIQQuestion,
     DFIQScenario,
     DFIQType,
+    read_from_data_directory,
 )
 
 
@@ -102,3 +103,25 @@ class DFIQTest(unittest.TestCase):
             )
             result_yaml_string = result.to_yaml(sort_keys=True)
             self.assertEqual(expected_yaml_string, result_yaml_string)
+
+    def test_read_from_data_directory(self) -> None:
+        dfiq_addition = read_from_data_directory("tests/dfiq_test_data/*", "test")
+
+        scenarios = DFIQScenario.list()
+        self.assertEqual(len(list(scenarios)), 1)
+
+        facets = DFIQFacet.list()
+        self.assertEqual(len(list(facets)), 1)
+
+        questions = DFIQQuestion.list()
+        self.assertEqual(len(list(questions)), 1)
+
+        self.assertEqual(len(dfiq_addition.dfiq), 3)
+
+    def test_read_from_data_dir_indicators(self) -> None:
+        dfiq_addition = read_from_data_directory(
+            "tests/dfiq_test_data/Q1020.yaml", "test"
+        )
+
+        self.assertEqual(len(dfiq_addition.indicators), 2)
+        self.assertEqual(len(dfiq_addition.dfiq), 1)
