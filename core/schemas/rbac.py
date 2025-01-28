@@ -102,32 +102,31 @@ def global_permission(permission: roles.Permission):
     return decorator
 
 
-def set_acls(yeti_object: Any, user: "user.User | None" = None):
+def set_acls(yeti_object: Any, user: "user.User | None" = None, set_default=True):
     """Sets the ACLs for a given object taking system defaults into account.
 
     Args:
         user: The user to set the default ACLs for.
         yeti_object: The object to set the default ACLs for.
+        set_default: If True, set the default ACLs.
     """
     access = False
     if user:
         user.link_to_acl(yeti_object, roles.Role.OWNER)
         access = True
-    default_acls = yeti_config.get("rbac", "default_acls", default="none")
-    if default_acls == "none":
-        logger.warning("No default ACLs set, setting to user only.")
-        return
-    for identity in default_acls.split(","):
-        group = Group.find(name=identity)
-        if group:
-            group.link_to_acl(yeti_object, roles.Role.OWNER)
-            access = True
-        else:
-            logger.warning(f"Default ACL group {identity} not found.")
+
+    if set_default:
+        default_acls = yeti_config.get("rbac", "default_acls", default="none")
+        if default_acls == "none":
+            logger.warning("No default ACLs set, setting to user only.")
+            return
+        for identity in default_acls.split(","):
+            group = Group.find(name=identity)
+            if group:
+                group.link_to_acl(yeti_object, roles.Role.OWNER)
+                access = True
+            else:
+                logger.warning(f"Default ACL group {identity} not found.")
 
     if not access:
-        logger.warning(
-            "No default ACLs set, object is not accessible, creating default group 'All users'"
-        )
-        allusers = Group(name="All users").save()
-        allusers.link_to_acl(yeti_object, roles.Role.OWNER)
+        logger.warning("No default ACLs set, object is only accessible by admin!")
