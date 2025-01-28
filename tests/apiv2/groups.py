@@ -109,7 +109,7 @@ class rbacTest(unittest.TestCase):
         self.assertEqual(data["total"], 1)
         self.assertEqual(data["groups"][0]["name"], "test1")
         acls = data["groups"][0]["acls"]
-        self.assertIn("user1", acls)
+        self.assertCountEqual(acls, ["user1"])
         self.assertEqual(acls["user1"]["role"], 7)
         self.assertEqual(acls["user1"]["source"], self.user1.extended_id)
         self.assertEqual(acls["user1"]["target"], self.group1.extended_id)

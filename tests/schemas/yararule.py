@@ -160,7 +160,7 @@ class YaraIndicatorTest(unittest.TestCase):
 
         yara_rule.pattern = "rule test { condition: true and dep1 }"
         yara_rule = yara_rule.save()
-        self.assertEquals(yara_rule.dependencies, ["dep1"])
+        self.assertEqual(yara_rule.dependencies, ["dep1"])
 
         vertices, _, total = yara_rule.neighbors()
         self.assertEqual(total, 1)
