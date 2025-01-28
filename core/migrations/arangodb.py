@@ -62,8 +62,46 @@ def migration_1():
             pbar.update(1)
 
 
+def migration_2():
+    from core.schemas import dfiq, entity, indicator, observable, rbac, roles, user
+
+    OBJECT_TYPES = [
+        entity.Entity,
+        indicator.Indicator,
+        dfiq.DFIQBase,
+        observable.Observable,
+    ]
+
+    all_users = rbac.Group(
+        name="All users", description="Default group for all users"
+    ).save()
+    admins = rbac.Group(
+        name="Admins", description="Default group for all admins"
+    ).save()
+    for db_user in user.User.list():
+        if db_user.admin:
+            db_user.link_to_acl(all_users, roles.Role.OWNER)
+            db_user.link_to_acl(admins, roles.Role.OWNER)
+        else:
+            db_user.link_to_acl(all_users, roles.Role.READER)
+
+    for ObjectType in OBJECT_TYPES:
+        total_objects = ObjectType.count()
+        logging.info(
+            f"Updating ACLs for {total_objects} {ObjectType.__name__}. This may take a while..."
+        )
+        with tqdm.tqdm(
+            total=total_objects, desc=f"Updating ACLs for {ObjectType.__name__}"
+        ) as pbar:
+            for obj in ObjectType.list():
+                all_users.link_to_acl(obj, roles.Role.WRITER)
+                admins.link_to_acl(obj, roles.Role.OWNER)
+                pbar.update(1)
+
+
 ArangoMigrationManager.register_migration(migration_0)
 ArangoMigrationManager.register_migration(migration_1)
+ArangoMigrationManager.register_migration(migration_2)
 
 if __name__ == "__main__":
     migration_manager = ArangoMigrationManager()
