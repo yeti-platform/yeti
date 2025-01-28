@@ -194,16 +194,19 @@ class userTest(unittest.TestCase):
         self.assertEqual(data["detail"], "user tomchop is not an admin")
 
     def test_create_user(self):
+        rbac.Group(name="All users").save()
+        rbac.Group(name="Admins").save()
+
         response = client.post(
             "/api/v2/users/",
-            json={"username": "newuser", "password": "password", "admin": False},
+            json={"username": "newuser", "password": "password", "admin": True},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(data)
         self.assertEqual(data["username"], "newuser")
-        self.assertEqual(data["admin"], False)
+        self.assertEqual(data["admin"], True)
 
         user = UserSensitive.get(data["id"])
         self.assertIsNotNone(user)

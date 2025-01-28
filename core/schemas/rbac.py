@@ -22,9 +22,10 @@ RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
 
 class Group(YetiAclModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "groups"
+    _root_type: Literal["rbacgroup"] = "rbacgroup"
+
     name: str
     description: str | None = None
-    _root_type: Literal["rbacgroup"] = "rbacgroup"
 
     @classmethod
     def load(cls, object: dict) -> "Group":

@@ -195,4 +195,14 @@ def create(
     """Creates a new user."""
     user = UserSensitive(username=request.username, admin=request.admin)
     user.set_password(request.password)
-    return user.save()
+    user = user.save()
+
+    all_users = rbac.Group.find(name="All users")
+    if not request.admin:
+        user.link_to_acl(all_users, roles.Role.READER)
+    else:
+        admins = rbac.Group.find(name="Admins")
+        user.link_to_acl(admins, roles.Role.OWNER)
+        user.link_to_acl(all_users, roles.Role.OWNER)
+
+    return user
