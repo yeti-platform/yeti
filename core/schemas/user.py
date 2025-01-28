@@ -57,6 +57,9 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     def has_permissions(self, target: str, permissions: roles.Permission) -> bool:
         return graph.RoleRelationship.has_permissions(self, target, permissions)
 
+    def has_global_role(self, role: roles.Permission) -> bool:
+        return self.global_role & role == role
+
     def get_groups(self) -> list[rbac.Group]:
         """Get the groups this user is a member of."""
         groups, paths, total = self.neighbors(
