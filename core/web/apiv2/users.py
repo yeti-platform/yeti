@@ -125,7 +125,7 @@ def toggle(
 
 
 @router.patch("/role")
-def update_user_rol(
+def update_user_role(
     request: PatchRoleRequest,
     current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
 ) -> User:
