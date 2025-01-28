@@ -30,6 +30,7 @@ class SystemConfigResponse(BaseModel):
 
     auth: dict
     system: dict
+    rbac_enabled: bool
 
 
 @router.get("/config")
@@ -41,6 +42,7 @@ def get_config() -> SystemConfigResponse:
             "enabled": yeti_config.get("auth", "enabled"),
         },
         system=yeti_config.get("system"),
+        rbac_enabled=yeti_config.get("rbac", "enabled"),
     )
     return config
 
