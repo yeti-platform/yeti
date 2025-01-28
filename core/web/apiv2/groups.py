@@ -60,7 +60,7 @@ def new(httpreq: Request, request: NewGroupRequest) -> rbac.Group:
             status_code=409, detail=f"Group {request.name} already exists"
         )
     group = rbac.Group(name=request.name, description=request.description).save()
-    rbac.set_acls(group, user=httpreq.state.user)
+    rbac.set_acls(group, user=httpreq.state.user, set_default=False)
     audit.log_timeline(httpreq.state.username, group)
     return group
 
@@ -75,7 +75,7 @@ def search(httpreq: Request, request: GroupSearchRequest) -> GroupSearchResponse
         offset=request.page * request.count,
         count=request.count,
         user=httpreq.state.user,
-        graph_queries=[("acls", "acls", "inbound", "username")],
+        graph_queries=[("acls", "acls", "inbound", "username|name")],
     )
     return GroupSearchResponse(groups=groups, total=total)
 

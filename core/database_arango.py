@@ -1261,7 +1261,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # TODO: Interpolate this query
         graph_query_string = ""
         for name, graph, direction, field in graph_queries:
-            graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
+            field_aggregation = "||".join([f"v.{field}" for field in field.split("|")])
+            graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [{field_aggregation}]: e }})"
 
         acl_query = ""
         if user and RBAC_ENABLED and not user.admin:
