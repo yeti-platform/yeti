@@ -1080,6 +1080,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
         type_mapping.update(dfiq.TYPE_MAPPING)
 
         for vertex in arango_vertices:
+            if vertex is None:
+                logging.warning(f"Found None vertex from {self.extended_id}")
+                continue
             if vertex["_key"] in vertices:
                 continue
             vertex_type = vertex.get("type") or vertex.get("root_type") or "tag"
