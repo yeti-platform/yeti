@@ -195,7 +195,7 @@ class Yara(indicator.Indicator):
 
         for rule in parsed_rules:
             raw_rule = plyara.utils.rebuild_yara_rule(rule)
-            print(f'Processing {rule["rule_name"]}')
+            print(f"Processing {rule['rule_name']}")
             yara_object = Yara(
                 name=rule["rule_name"],
                 pattern=raw_rule,

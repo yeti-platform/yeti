@@ -9,14 +9,16 @@ import traceback
 from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, indicator, observable
+    from core.schemas import entity, indicator, observable, roles, user
     from core.schemas.graph import (
         GraphFilter,
         Relationship,
         RelationshipTypes,
+        RoleRelationship,
         TagRelationship,
     )
     from core.schemas.tag import Tag
+
 
 import requests
 from arango import ArangoClient
@@ -39,6 +41,8 @@ LINK_TYPE_TO_GRAPH = {
 TESTING = "unittest" in sys.modules.keys()
 
 ASYNC_JOB_WAIT_TIME = 0.01
+
+RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
 
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
 
@@ -122,6 +126,21 @@ class ArangoDatabase:
             },
         )
 
+        self.create_edge_definition(
+            self.graph("systemroles"),
+            {
+                "edge_collection": "acls",
+                "from_vertex_collections": ["users", "groups"],
+                "to_vertex_collections": [
+                    "groups",
+                    "observables",
+                    "entities",
+                    "indicators",
+                    "dfiq",
+                ],
+            },
+        )
+
         self.create_indexes()
         self.create_analyzers()
         self.create_views()
@@ -188,6 +207,12 @@ class ArangoDatabase:
         )
         self.db.collection("dfiq").add_persistent_index(
             fields=["created"], in_background=True, name="dfiq_created_index"
+        )
+        self.db.collection("groups").add_persistent_index(
+            fields=["name"], unique=True, in_background=True, name="group_name_index"
+        )
+        self.db.collection("users").add_persistent_index(
+            fields=["username"], unique=True, in_background=True, name="user_name_index"
         )
 
     def create_views(self):
@@ -355,8 +380,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
             newdoc = job.result()
             newdoc = newdoc["new"]
         else:
-            if "value" in document:
+            if self._collection_name == "observables":
                 filters = {"value": document["value"]}
+            elif self._collection_name in ("users"):
+                filters = {"username": document["username"]}
             else:
                 filters = {"name": document["name"]}
             if "type" in document:
@@ -382,7 +409,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return newdoc
 
     def save(
-        self: TYetiObject, exclude_overwrite: list[str] = ["created", "tags", "context"]
+        self: TYetiObject,
+        exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
     ) -> TYetiObject:
         """Inserts or updates a Yeti object into the database.
 
@@ -399,11 +427,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         exclude = ["tags"] + self._exclude_overwrite
         doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
         if doc_dict.get("id") is not None:
-            exclude = ["tags"] + self._exclude_overwrite
+            exclude = ["tags", "acls"] + self._exclude_overwrite
             result = self._update(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.update
         else:
-            exclude = ["tags", "id"] + self._exclude_overwrite
+            exclude = ["tags", "acls", "id"] + self._exclude_overwrite
             result = self._insert(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.new
             if not result:
@@ -574,7 +602,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge = json.loads(tag_relationship.model_dump_json())
             edge["_id"] = tag_relationship.id
             graph.update_edge(edge)
-            if self._collection_name != "auditlog":
+            if self._collection_name not in ("auditlog", "timeline"):
                 try:
                     event = message.TagEvent(
                         type=message.EventType.update,
@@ -611,7 +639,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             time.sleep(ASYNC_JOB_WAIT_TIME)
         result = job.result()["new"]
         result["__id"] = result.pop("_key")
-        if self._collection_name != "auditlog":
+        if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.TagEvent(
                     type=message.EventType.new, tagged_object=self, tag_object=tag_obj
@@ -656,7 +684,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             time.sleep(ASYNC_JOB_WAIT_TIME)
         results = job.result()
         for edge in results["edges"]:
-            if self._collection_name != "auditlog":
+            if self._collection_name not in ("auditlog", "timeline"):
                 try:
                     job = self._db.collection("tagged").get(edge["_id"])
                     while job.status() != "done":
@@ -723,7 +751,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             job = async_graph.update_edge(edge)
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
-            if self._collection_name != "auditlog":
+            if self._collection_name not in ("auditlog", "timeline"):
                 try:
                     event = message.LinkEvent(
                         type=message.EventType.update,
@@ -757,7 +785,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         result = job.result()["new"]
         result["__id"] = result.pop("_key")
         relationship = Relationship.load(result)
-        if self._collection_name != "auditlog":
+        if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.LinkEvent(
                     type=message.EventType.new,
@@ -769,6 +797,63 @@ class ArangoYetiConnector(AbstractYetiConnector):
             except Exception:
                 logging.exception("Error while publishing event")
         return relationship
+
+    def link_to_acl(self, target, role: "roles.Permission") -> "RoleRelationship":
+        """Creates a link between two YetiObjects.
+
+        Args:
+          target: The YetiObject to link to.
+          role: The role to assign to the target.
+        """
+        # Avoid circular dependency
+        from core.schemas.graph import RoleRelationship
+
+        async_graph = self._db.graph("systemroles")
+
+        aql = """
+        WITH users, groups
+
+        FOR v, e, p IN 1..1 OUTBOUND @extended_id
+        acls
+          FILTER v._id == @target_extended_id
+        RETURN e"""
+        args = {
+            "extended_id": self.extended_id,
+            "target_extended_id": target.extended_id,
+        }
+        neighbors = self._db.aql.execute(aql, bind_vars=args)
+        if not neighbors.empty():
+            neighbor = neighbors.pop()
+            neighbor["__id"] = neighbor.pop("_key")
+            relationship = RoleRelationship.load(neighbor)
+            relationship.modified = datetime.datetime.now(datetime.timezone.utc)
+            relationship.role = role
+            edge = json.loads(relationship.model_dump_json())
+            edge["_id"] = neighbor["_id"]
+            job = async_graph.update_edge(edge)
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            return relationship
+
+        relationship = RoleRelationship(
+            role=role,
+            source=self.extended_id,
+            target=target.extended_id,
+            created=datetime.datetime.now(datetime.timezone.utc),
+            modified=datetime.datetime.now(datetime.timezone.utc),
+        )
+        col = async_graph.edge_collection("acls")
+        job = col.link(
+            self.extended_id,
+            target.extended_id,
+            data=json.loads(relationship.model_dump_json()),
+            return_new=True,
+        )
+        while job.status() != "done":
+            time.sleep(ASYNC_JOB_WAIT_TIME)
+        result = job.result()["new"]
+        result["__id"] = result.pop("_key")
+        return RoleRelationship.load(result)
 
     def swap_link(self):
         """Swaps the source and target of a relationship."""
@@ -831,12 +916,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
+        user: "user.User" = None,
     ) -> tuple[
         dict[
             str,
             "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
         ],
-        List[List["Relationship | TagRelationship"]],
+        List[List["RelationshipTypes"]],
         int,
     ]:
         """Fetches neighbors of the YetiObject.
@@ -867,7 +953,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         sorts = []
         for field, asc in sorting:
-            sorts.append(f'p.edges[0].{field} {"ASC" if asc else "DESC"}')
+            sorts.append(f"p.edges[0].{field} {'ASC' if asc else 'DESC'}")
         sorting_aql = f"SORT {', '.join(sorts)}" if sorts else ""
 
         if link_types:
@@ -914,6 +1000,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if direction not in {"any", "inbound", "outbound"}:
             direction = "any"
 
+        acl_query = ""
+        if user and RBAC_ENABLED and not user.admin:
+            acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
+            args["username"] = user.username
+
         aql = f"""
         WITH tags, observables, entities, dfiq, indicators
 
@@ -925,6 +1016,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
               let innertags = (FOR tag, edge in 1..1 OUTBOUND observable tagged RETURN {{ [tag.name]: edge }})
               RETURN MERGE(observable, {{tags: MERGE(innertags)}})
           )
+          {acl_query}
           {limit}
           {sorting_aql}
           RETURN {{ vertices: v_with_tags, g: p }}
@@ -967,16 +1059,20 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge["target"] = edge.pop("_to")
             if "tagged" in edge["_id"]:
                 relationships.append(graph.TagRelationship.load(edge))
+            elif "acls" in edge["_id"]:
+                relationships.append(graph.RoleRelationship.load(edge))
             else:
                 relationships.append(graph.Relationship.load(edge))
         return relationships
 
     def _build_vertices(self, vertices, arango_vertices):
         # Import happens here to avoid circular dependency
-        from core.schemas import dfiq, entity, indicator, observable, tag
+        from core.schemas import dfiq, entity, indicator, observable, rbac, tag, user
 
         type_mapping = {
             "tag": tag.Tag,
+            "user": user.User,
+            "rbacgroup": rbac.Group,
         }
         type_mapping.update(observable.TYPE_MAPPING)
         type_mapping.update(entity.TYPE_MAPPING)
@@ -986,7 +1082,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         for vertex in arango_vertices:
             if vertex["_key"] in vertices:
                 continue
-            neighbor_schema = type_mapping[vertex.get("type", "tag")]
+            vertex_type = vertex.get("type") or vertex.get("root_type") or "tag"
+            neighbor_schema = type_mapping[vertex_type]
             vertex["__id"] = vertex.pop("_key")
             # We want the "extended ID" here, e.g. observables/12345
             vertices[vertex["_id"]] = neighbor_schema.load(vertex)
@@ -1016,6 +1113,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         graph_queries: List[tuple[str, str, str, str]] = [],
         links_count: bool = False,
         wildcard: bool = True,
+        user: "user.User" = None,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
@@ -1032,6 +1130,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             graph_queries: A list of (name, graph, direction, field) tuples to
                 query the graph with.
             wildcard: whether all values should be interpreted as wildcard searches.
+            user: A user to perform the query for.
 
         Returns:
             A List of Yeti objects, and the total object count.
@@ -1067,9 +1166,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         for field, asc in sorting:
             if field == "total_links" and links_count:
-                sorts.append(f'total_links {"ASC" if asc else "DESC"}')
+                sorts.append(f"total_links {'ASC' if asc else 'DESC'}")
             else:
-                sorts.append(f'o.{field} {"ASC" if asc else "DESC"}')
+                sorts.append(f"o.{field} {'ASC' if asc else 'DESC'}")
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
@@ -1162,7 +1261,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # TODO: Interpolate this query
         graph_query_string = ""
         for name, graph, direction, field in graph_queries:
-            graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [v.{field}]: e }})"
+            field_aggregation = "||".join([f"v.{field}" for field in field.split("|")])
+            graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [{field_aggregation}]: e }})"
+
+        acl_query = ""
+        if user and RBAC_ENABLED and not user.admin:
+            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
+            aql_args["username"] = user.username
 
         tag_filter_query = ""
         if tag_filter:
@@ -1185,32 +1290,44 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if sorts:
             aql_sort = f"SORT {', '.join(sorts)}"
 
+        acl_filter = ""
+        if acl_query:
+            acl_filter = "FILTER acl"
+
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
                 {links_count_query}
                 {graph_query_string}
+                {acl_query}
                 {tag_filter_query}
                 {filter_string}
+                {acl_filter}
                 {aql_sort}
                 {limit}
             """
         merged_list = ""
-        prologue = ""
+        with_statements = []
         if graph_queries:
             merged_list = ", ".join(
                 [f"{name}: MERGE({name})" for name, _, _, _ in graph_queries]
             )
-            prologue = "WITH " + ", ".join([name for name, _, _, _ in graph_queries])
+            with_statements.extend([name for name, _, _, _ in graph_queries])
+        if acl_query:
+            with_statements.append("acls")
         if links_count:
             merged_list += (
                 ", aggregated_links, total_links"
                 if merged_list
                 else "aggregated_links, total_links"
             )
+
+        prologue = ""
+        if with_statements:
+            prologue = f"WITH {', '.join(with_statements)}"
         if merged_list:
             aql_string = (
-                f"{prologue}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})"
+                f"{prologue}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})\n"
             )
         else:
             aql_string += "\nRETURN o"
@@ -1246,19 +1363,30 @@ class ArangoYetiConnector(AbstractYetiConnector):
             yeti_objects.append(cls.load(document, strict=True))
         return yeti_objects
 
+    def _delete_vertex_refs_in_graphs(self, vertex_id):
+        for graph_name in {"tags", "systemroles", "threat_graph"}:
+            graph = self._db.graph(graph_name)
+            job = graph.edge_definitions()
+            while job.status() != "done":
+                time.sleep(ASYNC_JOB_WAIT_TIME)
+            definitions = job.result()
+
+            for edge_collection in [d["edge_collection"] for d in definitions]:
+                job = graph.edge_collection(edge_collection).delete_match(
+                    {"_from": vertex_id}
+                )
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+                job = graph.edge_collection(edge_collection).delete_match(
+                    {"_to": vertex_id}
+                )
+                while job.status() != "done":
+                    time.sleep(ASYNC_JOB_WAIT_TIME)
+
     def delete(self, all_versions=True):
         """Deletes an object from the database."""
-        job = self._db.graph("threat_graph").has_vertex_collection(
-            self._collection_name
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        if job.result():
-            col = self._db.graph("threat_graph").vertex_collection(
-                self._collection_name
-            )
-        else:
-            col = self._db.collection(self._collection_name)
+        col = self._db.collection(self._collection_name)
+        self._delete_vertex_refs_in_graphs(self.extended_id)
         job = col.delete(self.id)
         while job.status() != "done":
             time.sleep(ASYNC_JOB_WAIT_TIME)

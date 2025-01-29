@@ -7,7 +7,8 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from core.schemas import audit, dfiq
+from core.schemas import audit, dfiq, rbac, roles
+from core.schemas.rbac import global_permission, permission_on_target
 
 
 # Request schemas
@@ -94,18 +95,25 @@ def config() -> DFIQConfigResponse:
 
 
 @router.post("/from_archive")
+@global_permission(roles.Permission.WRITE)
 def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
     """Uncompresses a ZIP archive and processes the DFIQ content inside it."""
     with tempfile.TemporaryDirectory() as tempdir:
         contents = archive.file.read()
         ZipFile(BytesIO(contents)).extractall(path=tempdir)
-        total_added = dfiq.read_from_data_directory(
-            f"{tempdir}/*/*.yaml", username=httpreq.state.username
+        dfiq_addition = dfiq.read_from_data_directory(
+            f"{tempdir}/*/*.yaml", user=httpreq.state.user.username
         )
-    return {"total_added": total_added}
+        for indicator in dfiq_addition.indicators:
+            rbac.set_acls(indicator, httpreq.state.user)
+        for dfiq_object in dfiq_addition.dfiq:
+            rbac.set_acls(dfiq_object, httpreq.state.user)
+
+    return {"total_added": len(dfiq_addition.dfiq) + len(dfiq_addition.indicators)}
 
 
 @router.post("/from_yaml")
+@global_permission(roles.Permission.WRITE)
 def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     """Creates a new DFIQ object in the database."""
     try:
@@ -143,6 +151,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         )
 
     new = new.save()
+    httpreq.state.user.link_to_acl(new, roles.Role.OWNER)
     audit.log_timeline(httpreq.state.username, new)
 
     try:
@@ -151,13 +160,13 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new)
+        dfiq.extract_indicators(new, user=httpreq.state.user.username)
 
     return new
 
 
 @router.post("/to_archive")
-def to_archive(request: DFIQSearchRequest) -> FileResponse:
+def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
     """Compresses DFIQ objects into a ZIP archive.
 
     The structure of the archive is as follows:
@@ -171,6 +180,7 @@ def to_archive(request: DFIQSearchRequest) -> FileResponse:
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
+        user=httpreq.state.user,
     )
 
     _TYPE_TO_DUMP_DIR = {
@@ -265,12 +275,13 @@ def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
     return DFIQValidateResponse(valid=True, error="")
 
 
-@router.patch("/{dfiq_id}")
-def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQTypes:
+@router.patch("/{id}")
+@permission_on_target(roles.Permission.WRITE)
+def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQTypes:
     """Modifies an DFIQ object in the database."""
-    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
+    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(id)  # type: ignore
     if not db_dfiq:
-        raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
+        raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
 
     try:
         update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
@@ -283,6 +294,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQType
             detail=f"DFIQ type mismatch: {db_dfiq.type} != {update_data.type}",
         )
     db_dfiq.get_tags()
+    db_dfiq.get_acls()
     updated_dfiq = db_dfiq.model_copy(
         update=update_data.model_dump(exclude=["created"])
     )
@@ -291,26 +303,29 @@ def patch(httpreq: Request, request: PatchDFIQRequest, dfiq_id) -> dfiq.DFIQType
     new.update_parents()
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new)
+        dfiq.extract_indicators(new, user=httpreq.state.user.username)
 
     return new
 
 
-@router.get("/{dfiq_id}")
-def details(dfiq_id) -> dfiq.DFIQTypes:
+@router.get("/{id}")
+@permission_on_target(roles.Permission.READ)
+def details(httpreq: Request, id: str) -> dfiq.DFIQTypes:
     """Returns details about a DFIQ object."""
-    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(dfiq_id)  # type: ignore
+    db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(id)  # type: ignore
+    db_dfiq.get_acls()
     if not db_dfiq:
-        raise HTTPException(status_code=404, detail=f"DFIQ object {dfiq_id} not found")
+        raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
     return db_dfiq
 
 
-@router.delete("/{dfiq_id}")
-def delete(httpreq: Request, dfiq_id: str) -> None:
+@router.delete("/{id}")
+@permission_on_target(roles.Permission.DELETE)
+def delete(httpreq: Request, id: str) -> None:
     """Deletes a DFIQ object."""
-    db_dfiq = dfiq.DFIQBase.get(dfiq_id)
+    db_dfiq = dfiq.DFIQBase.get(id)
     if not db_dfiq:
-        raise HTTPException(status_code=404, detail="DFIQ object {dfiq_id} not found")
+        raise HTTPException(status_code=404, detail="DFIQ object {id} not found")
 
     all_children, _ = dfiq.DFIQBase.filter(
         query_args={"parent_ids": db_dfiq.uuid}, wildcard=False
@@ -339,7 +354,7 @@ def delete(httpreq: Request, dfiq_id: str) -> None:
 
 
 @router.post("/search")
-def search(request: DFIQSearchRequest) -> DFIQSearchResponse:
+def search(httpreq: Request, request: DFIQSearchRequest) -> DFIQSearchResponse:
     """Searches for DFIQ objects."""
     query = request.query
     if request.type:
@@ -350,5 +365,6 @@ def search(request: DFIQSearchRequest) -> DFIQSearchResponse:
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
+        user=httpreq.state.user,
     )
     return DFIQSearchResponse(dfiq=dfiq_objects, total=total)

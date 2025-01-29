@@ -5,6 +5,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
+from core.schemas import rbac, roles
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -27,6 +28,23 @@ class userTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user.api_key}
         ).json()
         self.user_token = user_token_data["access_token"]
+
+        self.group1 = rbac.Group(name="testGroup").save()
+
+        self.user.link_to_acl(self.group1, roles.Role.OWNER)
+
+    def test_get_user_details(self):
+        response = client.get(
+            f"/api/v2/users/{self.user.id}",
+            headers={"Authorization": f"Bearer {self.user_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["user"]["username"], "tomchop")
+        self.assertEqual(data["groups"][0]["name"], "testGroup")
+        self.assertIn("tomchop", data["groups"][0]["acls"], "testGroup")
+        self.assertEqual(data["groups"][0]["acls"]["tomchop"]["role"], 7)
 
     def test_search_users(self):
         response = client.post(
@@ -83,7 +101,7 @@ class userTest(unittest.TestCase):
         )
 
         data = response.json()
-        self.assertEqual(response.status_code, 401, data)
+        self.assertEqual(response.status_code, 403, data)
         self.assertIsNotNone(data)
         self.assertEqual(data["detail"], "user tomchop is not an admin")
 
@@ -171,22 +189,40 @@ class userTest(unittest.TestCase):
             headers={"Authorization": f"Bearer {self.user_token}"},
         )
         data = response.json()
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403, data)
         self.assertIsNotNone(data)
         self.assertEqual(data["detail"], "user tomchop is not an admin")
 
     def test_create_user(self):
+        rbac.Group(name="All users").save()
+        rbac.Group(name="Admins").save()
+
         response = client.post(
             "/api/v2/users/",
-            json={"username": "newuser", "password": "password", "admin": False},
+            json={"username": "newuser", "password": "password", "admin": True},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(data)
         self.assertEqual(data["username"], "newuser")
-        self.assertEqual(data["admin"], False)
+        self.assertEqual(data["admin"], True)
 
         user = UserSensitive.get(data["id"])
         self.assertIsNotNone(user)
         self.assertEqual(user.username, "newuser")
+
+    def test_patch_user(self):
+        response = client.patch(
+            "/api/v2/users/role",
+            json={"user_id": self.user.id, "role": roles.Role.OWNER},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["global_role"], roles.Role.OWNER)
+
+        user = UserSensitive.get(self.user.id)
+        self.assertIsNotNone(user)
+        self.assertEqual(user.global_role, roles.Role.OWNER)

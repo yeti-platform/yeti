@@ -1,14 +1,13 @@
 import datetime
 from enum import Enum
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, ValidationInfo, conlist, model_validator
 from pydantic.functional_validators import field_validator
 
-from core.schemas import dfiq, entity, graph, indicator, observable, tag
+from core.schemas import dfiq, entity, graph, indicator, observable, rbac, roles, tag
 from core.schemas.graph import GraphFilter
-from core.schemas.observable import ObservableType
 from core.schemas.tag import MAX_TAGS_REQUEST
 
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
@@ -131,7 +130,7 @@ router = APIRouter()
 
 
 @router.post("/search")
-def search(request: GraphSearchRequest) -> GraphSearchResponse:
+def search(httpreq: Request, request: GraphSearchRequest) -> GraphSearchResponse:
     """Fetches neighbros for a given Yeti Object."""
     object_type, object_id = request.source.split("/")
     if object_type not in GRAPH_TYPE_MAPPINGS:
@@ -155,12 +154,14 @@ def search(request: GraphSearchRequest) -> GraphSearchResponse:
         count=request.count,
         offset=request.page * request.count,
         sorting=request.sorting,
+        user=httpreq.state.user,
     )
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 
 
 @router.post("/add")
-def add(request: GraphAddRequest) -> graph.Relationship:
+@rbac.global_permission(roles.Permission.WRITE)
+def add(httpreq: Request, request: GraphAddRequest) -> graph.Relationship:
     """Adds a link to the graph."""
     source_type, source_id = request.source.split("/")
     target_type, target_id = request.target.split("/")
@@ -183,7 +184,10 @@ def add(request: GraphAddRequest) -> graph.Relationship:
 
 
 @router.patch("/{relationship_id}")
-def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relationship:
+@rbac.global_permission(roles.Permission.WRITE)
+def edit(
+    httpreq: Request, relationship_id: str, request: GraphPatchRequest
+) -> graph.Relationship:
     """Edits a Relationship in the graph."""
     relationship = graph.Relationship.get(relationship_id)
     if relationship is None:
@@ -199,7 +203,8 @@ def edit(relationship_id: str, request: GraphPatchRequest) -> graph.Relationship
 
 
 @router.post("/{relationship_id}/swap")
-def swap(relationship_id: str) -> graph.Relationship:
+@rbac.global_permission(roles.Permission.WRITE)
+def swap(httpreq: Request, relationship_id: str) -> graph.Relationship:
     """Swaps the source and target of a relationship."""
     relationship = graph.Relationship.get(relationship_id)
     if relationship is None:
@@ -211,7 +216,8 @@ def swap(relationship_id: str) -> graph.Relationship:
 
 
 @router.delete("/{relationship_id}")
-def delete(relationship_id: str) -> None:
+@rbac.global_permission(roles.Permission.WRITE)
+def delete(httpreq: Request, relationship_id: str) -> None:
     """Deletes a link from the graph."""
     relationship = graph.Relationship.get(relationship_id)
     if relationship is None:
@@ -239,7 +245,7 @@ class AnalysisResponse(BaseModel):
 
 
 @router.post("/match")
-def match(request: AnalysisRequest) -> AnalysisResponse:
+def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
     """Fetches neighbors for a given Yeti Object."""
 
     entities = []  # type: list[tuple[graph.Relationship, entity.Entity]]
@@ -248,7 +254,9 @@ def match(request: AnalysisRequest) -> AnalysisResponse:
 
     unknown = set(request.observables)
     known = {}  # type: dict[str, observable.Observable]
-    if request.add_unknown:
+    if request.add_unknown and httpreq.state.user.has_global_role(
+        roles.Permission.WRITE
+    ):
         for value in request.observables:
             try:
                 observable.save(
@@ -265,6 +273,7 @@ def match(request: AnalysisRequest) -> AnalysisResponse:
         query_args={operator: request.observables},
         graph_queries=[("tags", "tagged", "outbound", "name")],
         wildcard=False,
+        user=httpreq.state.user,
     )
     for db_observable in db_observables:
         known[db_observable.value] = db_observable
@@ -272,7 +281,7 @@ def match(request: AnalysisRequest) -> AnalysisResponse:
         processed_relationships = set()
 
         if request.fetch_neighbors:
-            vertices, paths, _ = db_observable.neighbors()
+            vertices, paths, _ = db_observable.neighbors(user=httpreq.state.user)
             for path in paths:
                 edge = path[0]  # neighbors only returns 1 hop max by default
                 if edge.id in processed_relationships:

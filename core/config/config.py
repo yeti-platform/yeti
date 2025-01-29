@@ -62,7 +62,11 @@ class Config:
         env_var = self.find_env_variable(section, key)
         if env_var is not None:
             return env_var
-        if hasattr(self, section) and key in self[section] and self[section][key]:
+        if (
+            hasattr(self, section)
+            and key in self[section]
+            and self[section][key] is not None
+        ):
             return self[section][key]
         return default
 
