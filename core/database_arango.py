@@ -1307,25 +1307,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 {limit}
             """
         merged_list = ""
-        prologue = ""
+        with_statements = []
         if graph_queries:
             merged_list = ", ".join(
                 [f"{name}: MERGE({name})" for name, _, _, _ in graph_queries]
             )
-            prologue = (
-                "WITH " + ", ".join([name for name, _, _, _ in graph_queries]) + "\n"
-            )
+            with_statements.extend([name for name, _, _, _ in graph_queries])
         if acl_query:
-            prologue += "WITH acls\n"
+            with_statements.append("acls")
         if links_count:
             merged_list += (
                 ", aggregated_links, total_links"
                 if merged_list
                 else "aggregated_links, total_links"
             )
+
+        prologue = ""
+        if with_statements:
+            prologue = f"WITH {', '.join(with_statements)}"
         if merged_list:
             aql_string = (
-                f"{prologue}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})"
+                f"{prologue}\n\n{aql_string}\nRETURN MERGE(o, {{ {merged_list} }})\n"
             )
         else:
             aql_string += "\nRETURN o"
