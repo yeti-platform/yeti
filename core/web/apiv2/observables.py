@@ -5,8 +5,9 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.config.config import yeti_config
-from core.schemas import audit, graph, observable
+from core.schemas import audit, graph, observable, rbac, roles
 from core.schemas.observable import Observable, ObservableType, ObservableTypes
+from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
 
 # defaults to 10MiB if not defined
@@ -122,12 +123,8 @@ class ObservableTagResponse(BaseModel):
 router = APIRouter()
 
 
-@router.get("/")
-def observables_root() -> Iterable[Observable]:
-    return Observable.list()
-
-
 @router.post("/")
+@global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
     """Creates a new observable in the database.
 
@@ -142,6 +139,8 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
     try:
         new = observable.save(type=request.type, value=request.value, tags=request.tags)
         audit.log_timeline(httpreq.state.username, new)
+        rbac.set_acls(new, user=httpreq.state.user)
+
         return new
     except Exception:
         raise HTTPException(
@@ -151,6 +150,7 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
 
 
 @router.post("/extended")
+@global_permission(roles.Permission.WRITE)
 def new_extended(
     httpreq: Request, request: NewExtendedObservableRequest
 ) -> ObservableTypes:
@@ -169,6 +169,7 @@ def new_extended(
             **request.observable.model_dump(exclude={"tags"}), tags=request.tags
         )
         audit.log_timeline(httpreq.state.username, new)
+        rbac.set_acls(new, user=httpreq.state.user)
         return new
     except Exception:
         raise HTTPException(
@@ -177,30 +178,29 @@ def new_extended(
         )
 
 
-@router.patch("/{observable_id}")
-def patch(
-    httpreq: Request, request: PatchObservableRequest, observable_id
-) -> ObservableTypes:
+@router.patch("/{id}")
+@permission_on_target(roles.Permission.WRITE)
+def patch(httpreq: Request, request: PatchObservableRequest, id) -> ObservableTypes:
     """Modifies observable in the database."""
-    db_observable = Observable.get(observable_id)
+    db_observable = Observable.get(id)
     if not db_observable:
-        raise HTTPException(
-            status_code=404, detail=f"Observable {observable_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Observable {id} not found")
     if db_observable.type != request.observable.type:
         raise HTTPException(
             status_code=400,
-            detail=f"Observable {observable_id} type mismatch. Provided '{request.observable.type}'. Expected '{db_observable.type}'",
+            detail=f"Observable {id} type mismatch. Provided '{request.observable.type}'. Expected '{db_observable.type}'",
         )
     db_observable.get_tags()
     update_data = request.observable.model_dump(exclude_unset=True)
     updated_observable = db_observable.model_copy(update=update_data)
     new = updated_observable.save()
+    new.get_acls()
     audit.log_timeline(httpreq.state.username, new, old=db_observable)
     return new
 
 
 @router.post("/bulk")
+@global_permission(roles.Permission.WRITE)
 def bulk_add(
     httpreq: Request, request: NewBulkObservableAddRequest
 ) -> BulkObservableAddResponse:
@@ -214,6 +214,7 @@ def bulk_add(
                 tags=new_observable.tags,
             )
             audit.log_timeline(httpreq.state.username, observable_obj)
+            rbac.set_acls(observable_obj, user=httpreq.state.user)
         except (ValueError, RuntimeError):
             response.failed.append(new_observable.value)
             continue
@@ -226,26 +227,28 @@ def bulk_add(
     return response
 
 
-@router.get("/{observable_id}")
-def details(observable_id) -> ObservableTypes:
+@router.get("/{id}")
+@permission_on_target(roles.Permission.READ)
+def details(httpreq: Request, id: str) -> ObservableTypes:
     """Returns details about an observable."""
-    observable_obj = Observable.get(observable_id)
+    observable_obj = Observable.get(id)
+
     if not observable_obj:
         raise HTTPException(status_code=404, detail="Observable not found")
     observable_obj.get_tags()
+    observable_obj.get_acls()
     return observable_obj
 
 
-@router.post("/{observable_id}/context")
+@router.post("/{id}/context")
+@permission_on_target(roles.Permission.WRITE)
 def add_context(
-    httpreq: Request, observable_id, request: AddContextRequest
+    httpreq: Request, id: str, request: AddContextRequest
 ) -> ObservableTypes:
     """Adds context to an observable."""
-    observable_obj = Observable.get(observable_id)
+    observable_obj = Observable.get(id)
     if not observable_obj:
-        raise HTTPException(
-            status_code=404, detail=f"Observable {observable_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Observable {id} not found")
 
     old_context = observable_obj.context.copy()
     refreshed_obj = observable_obj.add_context(
@@ -256,16 +259,15 @@ def add_context(
     return refreshed_obj
 
 
-@router.post("/{observable_id}/context/delete")
+@router.post("/{id}/context/delete")
+@permission_on_target(roles.Permission.WRITE)
 def delete_context(
-    httpreq: Request, observable_id, request: DeleteContextRequest
+    httpreq: Request, id, request: DeleteContextRequest
 ) -> ObservableTypes:
     """Removes context to an observable."""
-    observable_obj = Observable.get(observable_id)
+    observable_obj = Observable.get(id)
     if not observable_obj:
-        raise HTTPException(
-            status_code=404, detail=f"Observable {observable_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Observable {id} not found")
 
     old_context = observable_obj.context.copy()
     refreshed_obj = observable_obj.delete_context(
@@ -277,7 +279,9 @@ def delete_context(
 
 
 @router.post("/search")
-def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
+def search(
+    httpreq: Request, request: ObservableSearchRequest
+) -> ObservableSearchResponse:
     """Searches for observables."""
     query = request.query
     tags = query.pop("tags", [])
@@ -290,11 +294,13 @@ def search(request: ObservableSearchRequest) -> ObservableSearchResponse:
         count=request.count,
         sorting=request.sorting,
         graph_queries=[("tags", "tagged", "outbound", "name")],
+        user=httpreq.state.user,
     )
     return ObservableSearchResponse(observables=observables, total=total)
 
 
 @router.post("/add_text", deprecated=True)
+@global_permission(roles.Permission.WRITE)
 def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypes:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
@@ -303,10 +309,12 @@ def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypes:
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
     audit.log_timeline(httpreq.state.username, new)
+    rbac.set_acls(new, user=httpreq.state.user)
     return new
 
 
 @router.post("/import/text")
+@global_permission(roles.Permission.WRITE)
 def import_from_text(
     httpreq: Request, request: ImportTextRequest
 ) -> BulkObservableAddResponse:
@@ -322,10 +330,12 @@ def import_from_text(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-text")
+        rbac.set_acls(obs, user=httpreq.state.user)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
 @router.post("/import/url")
+@global_permission(roles.Permission.WRITE)
 def import_from_url(
     httpreq: Request, request: ImportUrlRequest
 ) -> BulkObservableAddResponse:
@@ -342,10 +352,12 @@ def import_from_url(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-url")
+        rbac.set_acls(obs, user=httpreq.state.user)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
 @router.post("/import/file")
+@global_permission(roles.Permission.WRITE)
 def import_from_file(
     httpreq: Request,
     file: Annotated[UploadFile, File()],
@@ -364,10 +376,12 @@ def import_from_file(
 
     for obs in observables:
         audit.log_timeline(httpreq.state.username, obs, action="import-file")
+        rbac.set_acls(obs, user=httpreq.state.user)
     return BulkObservableAddResponse(added=observables, failed=unknown)
 
 
 @router.post("/tag")
+@permission_on_ids(roles.Permission.WRITE)
 def tag_observable(
     httpreq: Request, request: ObservableTagRequest
 ) -> ObservableTagResponse:
@@ -392,10 +406,11 @@ def tag_observable(
     return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
 
 
-@router.delete("/{observable_id}")
-def delete(httpreq: Request, observable_id: str) -> None:
+@router.delete("/{id}")
+@permission_on_target(roles.Permission.DELETE)
+def delete(httpreq: Request, id: str) -> None:
     """Deletes an observable."""
-    observable_obj = Observable.get(observable_id)
+    observable_obj = Observable.get(id)
     if not observable_obj:
         raise HTTPException(status_code=404, detail="Observable not found")
     audit.log_timeline(httpreq.state.username, observable_obj, action="delete")

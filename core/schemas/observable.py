@@ -16,7 +16,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now, refang
-from core.schemas.model import YetiTagModel
+from core.schemas.model import YetiAclModel, YetiTagModel
 
 
 # Forward declarations
@@ -29,7 +29,7 @@ TYPE_MAPPING = {}
 FileLikeObject = str | os.PathLike | IO | tempfile.SpooledTemporaryFile
 
 
-class Observable(YetiTagModel, database_arango.ArangoYetiConnector):
+class Observable(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector):
     model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None

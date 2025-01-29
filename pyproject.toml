@@ -35,7 +35,7 @@ plyara = "2.2.1"  # while https://github.com/plyara/plyara/issues/143 is address
 pylint = "^2.16.1"
 mypy = "^1.0.0"
 httpx = "^0.23.3"
-ruff = "^0.3.0"
+ruff = "^0.9.0"
 
 [tool.poetry.scripts]
 yetictl = 'yetictl.cli:cli'

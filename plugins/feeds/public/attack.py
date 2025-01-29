@@ -25,11 +25,11 @@ def _format_context_from_obj(obj):
     context["external_references"] = ""
     for ref in obj["external_references"]:
         if ref.get("url"):
-            context["external_references"] += f'* [{ref["source_name"]}]({ref["url"]})'
+            context["external_references"] += f"* [{ref['source_name']}]({ref['url']})"
         else:
-            context["external_references"] += f'* {ref["source_name"]}'
+            context["external_references"] += f"* {ref['source_name']}"
         if ref.get("description"):
-            context["external_references"] += f': {ref["description"]}'
+            context["external_references"] += f": {ref['description']}"
         context["external_references"] += "\n"
     return context
 
@@ -66,7 +66,7 @@ def _process_attack_pattern(obj):
 
     kill_chain_phases = set()
     for phase in obj["kill_chain_phases"]:
-        kill_chain_phases.add(f'{phase["kill_chain_name"]}:{phase["phase_name"]}')
+        kill_chain_phases.add(f"{phase['kill_chain_name']}:{phase['phase_name']}")
 
     attack_pattern = entity.AttackPattern(
         name=obj["name"],
@@ -142,7 +142,7 @@ def _process_tool(obj):
         tool_version=obj.get("tool_version", ""),
         aliases=obj.get("aliases", []) + obj.get("x_mitre_aliases", []),
         kill_chain_phases=[
-            f'{phase["kill_chain_name"]}:{phase["phase_name"]}'
+            f"{phase['kill_chain_name']}:{phase['phase_name']}"
             for phase in obj.get("kill_chain_phases", [])
         ],
     ).save()

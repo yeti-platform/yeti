@@ -3,6 +3,7 @@ import glob
 import logging
 import re
 import uuid
+from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated, Any, ClassVar, Literal, Type, Union
 
@@ -11,10 +12,9 @@ from packaging.version import Version
 from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
-from core.config.config import yeti_config
 from core.helpers import now
 from core.schemas import audit, indicator
-from core.schemas.model import YetiModel
+from core.schemas.model import YetiAclModel, YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
 
@@ -35,18 +35,27 @@ yaml.add_representer(str, long_text_representer)
 yaml.add_representer(type(None), custom_null_representer)
 
 
+# dataclass to store dfiq objects and indicators that were added
+@dataclass
+class DFIQAddition:
+    dfiq: list["DFIQBase"]
+    indicators: list[indicator.Indicator]
+
+
 def read_from_data_directory(
-    globpath: str, username: str, overwrite: bool = False
-) -> int:
+    globpath: str, user: str, overwrite: bool = False
+) -> DFIQAddition:
     """Read DFIQ files from a directory and add them to the database.
 
     Args:
         globpath: Glob path to search for DFIQ files (supports recursion).
-        username: Username to attribute the changes to.
+        user: User to attribute the changes to.
         overwrite: Whether to overwrite existing DFIQs with the same ID.
     """
     dfiq_kb = {}
     total_added = 0
+    dfiq_addition = DFIQAddition(dfiq=[], indicators=[])
+
     for file in glob.glob(globpath, recursive=True):
         if not file.endswith(".yaml"):
             continue
@@ -79,7 +88,8 @@ def read_from_data_directory(
                 if not dfiq_object.uuid:
                     dfiq_object.uuid = str(uuid.uuid4())
                 dfiq_object = dfiq_object.save()
-                audit.log_timeline(username, dfiq_object, old=db_dfiq)
+                dfiq_addition.dfiq.append(dfiq_object)
+                audit.log_timeline(user, dfiq_object, old=db_dfiq)
                 total_added += 1
             except (ValueError, KeyError) as e:
                 logging.warning("Error processing %s: %s", file, e)
@@ -90,12 +100,16 @@ def read_from_data_directory(
     for dfiq_id, dfiq_object in dfiq_kb.items():
         dfiq_object.update_parents(soft_fail=True)
         if dfiq_object.type == DFIQType.question:
-            extract_indicators(dfiq_object)
+            added_indicators = extract_indicators(dfiq_object, user=user)
+            dfiq_addition.indicators = added_indicators
 
-    return total_added
+    return dfiq_addition
 
 
-def extract_indicators(question: "DFIQQuestion") -> None:
+def extract_indicators(
+    question: "DFIQQuestion", user: str
+) -> list[indicator.Indicator]:
+    added_indicators = []
     for approach in question.approaches:
         for step in approach.steps:
             if step.type == "manual":
@@ -123,13 +137,14 @@ def extract_indicators(question: "DFIQQuestion") -> None:
                         location=step.type,
                         diamond=indicator.DiamondModel.victim,
                     ).save()
-                    audit.log_timeline("dfiq-indicator-extract", query)
+                    audit.log_timeline(user, query)
                 question.link_to(query, "query", "Uses query")
-
+                added_indicators.append(query)
             else:
                 logging.warning(
                     "Unknown step type %s in %s", step.type, question.dfiq_id
                 )
+    return added_indicators
 
 
 class DFIQType(str, Enum):
@@ -138,7 +153,7 @@ class DFIQType(str, Enum):
     question = "question"
 
 
-class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
+class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
     _collection_name: ClassVar[str] = "dfiq"
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["dfiq"] = "dfiq"
@@ -208,6 +223,7 @@ class DFIQBase(YetiModel, database_arango.ArangoYetiConnector):
                 "dfiq_yaml",
                 "aggregated_links",
                 "total_links",
+                "acls",
             }
         )
         dump["type"] = dump["type"].removeprefix("DFIQType.")

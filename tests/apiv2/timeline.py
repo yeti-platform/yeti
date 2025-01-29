@@ -348,7 +348,7 @@ class TimelineLogTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 1)
-        self.assertEqual(data[0][0]["actor"], "dfiq-indicator-extract")
+        self.assertEqual(data[0][0]["actor"], "test")
         self.assertEqual(data[0][0]["action"], "create")
 
     def test_delete_observable_makes_timeline_log(self):

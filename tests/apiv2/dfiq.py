@@ -116,7 +116,7 @@ class DFIQTest(unittest.TestCase):
 
         vertices, edges, total = scenario.neighbors()
         self.assertEqual(len(vertices), 1)
-        self.assertEqual(vertices[f'dfiq/{data["id"]}'].dfiq_id, "F1005")
+        self.assertEqual(vertices[f"dfiq/{data['id']}"].dfiq_id, "F1005")
         self.assertEqual(edges[0][0].type, "facet")
         self.assertEqual(edges[0][0].description, "Uses DFIQ facet")
         self.assertEqual(total, 1)
@@ -156,7 +156,7 @@ class DFIQTest(unittest.TestCase):
 
         vertices, edges, total = facet.neighbors()
         self.assertEqual(len(vertices), 1)
-        self.assertEqual(vertices[f'dfiq/{data["id"]}'].dfiq_id, "Q1020")
+        self.assertEqual(vertices[f"dfiq/{data['id']}"].dfiq_id, "Q1020")
         self.assertEqual(edges[0][0].type, "question")
         self.assertEqual(edges[0][0].description, "Uses DFIQ question")
         self.assertEqual(total, 1)

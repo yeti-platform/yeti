@@ -1,8 +1,9 @@
 from enum import Enum
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
+from core.schemas import rbac, roles
 from core.schemas.user import User, UserSensitive
 from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
@@ -13,6 +14,11 @@ class SearchUserRequest(BaseModel):
     username: str
     count: int = 50
     page: int = 0
+
+
+class UserDetailsResponse(BaseModel):
+    user: User
+    groups: list[rbac.Group]
 
 
 class SearchUserResponse(BaseModel):
@@ -32,6 +38,13 @@ class ToggleUserRequest(BaseModel):
 
     user_id: str
     field: ToggleableField
+
+
+class PatchRoleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str
+    role: roles.Permission
 
 
 class ResetApiKeyRequest(BaseModel):
@@ -55,17 +68,29 @@ class NewUserRequest(BaseModel):
     admin: bool
 
 
+class UpdateUserRoleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role: str
+
+
 # API endpoints
 router = APIRouter()
 
 
 @router.get("/{user_id}")
-def get(user_id: str) -> User:
+def get(httpreq: Request, user_id: str) -> UserDetailsResponse:
     """Gets a user by ID."""
+    if httpreq.state.user.id != user_id and not httpreq.state.user.admin:
+        raise HTTPException(
+            status_code=403, detail="cannot view details for other users"
+        )
     user = UserSensitive.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"user {user_id} not found")
-    return user
+
+    groups = user.get_groups()
+    return UserDetailsResponse(user=user, groups=groups)
 
 
 @router.post("/search")
@@ -96,6 +121,19 @@ def toggle(
         user.admin = not user.admin
     elif request.field == ToggleableField.enabled:
         user.enabled = not user.enabled
+    return user.save()
+
+
+@router.patch("/role")
+def update_user_role(
+    request: PatchRoleRequest,
+    current_user: User = Depends(GetCurrentUserWithPermissions(admin=True)),
+) -> User:
+    """Updates a user's profile - only the role for now."""
+    user = UserSensitive.get(request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"user {request.user_id} not found")
+    user.global_role = request.role
     return user.save()
 
 
@@ -157,4 +195,14 @@ def create(
     """Creates a new user."""
     user = UserSensitive(username=request.username, admin=request.admin)
     user.set_password(request.password)
-    return user.save()
+    user = user.save()
+
+    all_users = rbac.Group.find(name="All users")
+    if not request.admin:
+        user.link_to_acl(all_users, roles.Role.READER)
+    else:
+        admins = rbac.Group.find(name="Admins")
+        user.link_to_acl(admins, roles.Role.OWNER)
+        user.link_to_acl(all_users, roles.Role.OWNER)
+
+    return user

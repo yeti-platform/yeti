@@ -22,3 +22,4 @@ class userTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertIn("auth", data)
         self.assertIn("system", data)
+        self.assertIn("rbac_enabled", data)

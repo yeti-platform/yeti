@@ -621,3 +621,7 @@ supported_os:
                 "/var/spool/cron/**",
             },
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
