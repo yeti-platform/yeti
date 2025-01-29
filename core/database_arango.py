@@ -1312,7 +1312,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             merged_list = ", ".join(
                 [f"{name}: MERGE({name})" for name, _, _, _ in graph_queries]
             )
-            prologue = "WITH " + ", ".join([name for name, _, _, _ in graph_queries])
+            prologue = (
+                "WITH " + ", ".join([name for name, _, _, _ in graph_queries]) + "\n"
+            )
+        if acl_query:
+            prologue += "WITH acls\n"
         if links_count:
             merged_list += (
                 ", aggregated_links, total_links"
