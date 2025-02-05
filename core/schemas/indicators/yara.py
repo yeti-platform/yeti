@@ -144,6 +144,20 @@ class Yara(indicator.Indicator):
         return data
 
     def save(self):
+        missing_deps = []
+        existing_deps = []
+        for dependency in self.dependencies:
+            dep = Yara.find(name=dependency)
+            if dep:
+                existing_deps.append(dep)
+            else:
+                missing_deps.append(dependency)
+        if missing_deps:
+            raise errors.ObjectCreationError(
+                "Missing dependency when creating Yara rule",
+                meta={"missing_dependencies": missing_deps},
+            )
+
         self = super().save()
         nodes, relationships, _ = self.neighbors(
             link_types=["depends"], direction="outbound", max_hops=1
@@ -154,13 +168,8 @@ class Yara(indicator.Indicator):
                 if nodes[rel.target].name not in self.dependencies:
                     rel.delete()
 
-        for dependency in self.dependencies:
+        for dependency in existing_deps:
             dep = Yara.find(name=dependency)
-            if not dep:
-                raise errors.ObjectCreationError(
-                    "Missing dependency when creating Yara rule",
-                    meta={"missing_dependency": dependency},
-                )
             self.link_to(dep, "depends", "Depends on")
 
         return self
