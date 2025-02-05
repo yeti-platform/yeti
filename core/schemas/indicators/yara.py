@@ -145,13 +145,10 @@ class Yara(indicator.Indicator):
 
     def save(self):
         missing_deps = []
-        existing_deps = []
-        for dependency in self.dependencies:
-            dep = Yara.find(name=dependency)
-            if dep:
-                existing_deps.append(dep)
-            else:
-                missing_deps.append(dependency)
+        for dep_name in self.dependencies:
+            dep = Yara.find(name=dep_name)
+            if not dep:
+                missing_deps.append(dep_name)
         if missing_deps:
             raise errors.ObjectCreationError(
                 "Missing dependency when creating Yara rule",
@@ -168,7 +165,7 @@ class Yara(indicator.Indicator):
                 if nodes[rel.target].name not in self.dependencies:
                     rel.delete()
 
-        for dependency in existing_deps:
+        for dependency in self.dependencies:
             dep = Yara.find(name=dependency)
             self.link_to(dep, "depends", "Depends on")
 
