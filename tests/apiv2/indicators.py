@@ -177,6 +177,25 @@ class IndicatorTest(unittest.TestCase):
             "No valid Yara rules found in the rule body", data["detail"][0]["msg"]
         )
 
+    def test_invalid_yara(self):
+        indicator_dict = {
+            "type": "yara",
+            "pattern": 'rule test { strings: $a = "test" condition: $a and MissingRule }',
+            "location": "filesystem",
+            "diamond": "victim",
+        }
+        response = client.post(
+            "/api/v2/indicators/",
+            json={"indicator": indicator_dict},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertEqual(data["detail"]["meta"]["missing_dependency"], "MissingRule")
+        self.assertEqual(
+            data["detail"]["description"],
+            "Missing dependency when creating Yara rule",
+        )
+
     def test_new_yara(self):
         indicator_dict = {
             "type": "yara",
