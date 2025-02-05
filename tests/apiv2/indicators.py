@@ -177,7 +177,7 @@ class IndicatorTest(unittest.TestCase):
             "No valid Yara rules found in the rule body", data["detail"][0]["msg"]
         )
 
-    def test_invalid_yara(self):
+    def test_bad_yara_graceful_failure(self):
         indicator_dict = {
             "type": "yara",
             "pattern": 'rule test { strings: $a = "test" condition: $a and MissingRule }',
