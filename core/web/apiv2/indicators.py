@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
+from core import errors
 from core.schemas import audit, graph, rbac, roles
 from core.schemas.indicator import (
     ForensicArtifact,
@@ -66,7 +67,13 @@ router = APIRouter()
 @global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
-    new = request.indicator.save()
+    try:
+        new = request.indicator.save()
+    except errors.ObjectCreationError as error:
+        raise HTTPException(
+            status_code=400, detail={"meta": error.meta, "description": str(error)}
+        )
+
     rbac.set_acls(new, user=httpreq.state.user)
     audit.log_timeline(httpreq.state.username, new)
     return new

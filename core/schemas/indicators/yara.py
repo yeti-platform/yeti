@@ -6,6 +6,7 @@ import plyara.utils
 import yara
 from pydantic import BaseModel, PrivateAttr, model_validator
 
+from core import errors
 from core.schemas import indicator
 
 ALLOWED_EXTERNALS = {
@@ -143,6 +144,17 @@ class Yara(indicator.Indicator):
         return data
 
     def save(self):
+        missing_deps = []
+        for dep_name in self.dependencies:
+            dep = Yara.find(name=dep_name)
+            if not dep:
+                missing_deps.append(dep_name)
+        if missing_deps:
+            raise errors.ObjectCreationError(
+                "Missing dependency when creating Yara rule",
+                meta={"missing_dependencies": missing_deps},
+            )
+
         self = super().save()
         nodes, relationships, _ = self.neighbors(
             link_types=["depends"], direction="outbound", max_hops=1
@@ -155,8 +167,6 @@ class Yara(indicator.Indicator):
 
         for dependency in self.dependencies:
             dep = Yara.find(name=dependency)
-            if not dep:
-                raise ValueError(f"Rule depends on unknown dependency '{dependency}'")
             self.link_to(dep, "depends", "Depends on")
 
         return self
