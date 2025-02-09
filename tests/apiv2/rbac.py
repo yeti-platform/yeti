@@ -26,16 +26,18 @@ class rbacTest(unittest.TestCase):
         self.entity2 = entity.Malware(name="test2").save()
 
         self.user1 = user.UserSensitive(username="user1").save()
+        user1_apikey = self.user1.create_api_key("default")
         self.user2 = user.UserSensitive(username="user2").save()
+        user2_apikey = self.user2.create_api_key("default")
         self.admin = user.UserSensitive(username="yeti", admin=True).save()
 
         token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user1_apikey}
         ).json()
         self.user1_token = token_data["access_token"]
 
         token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user2_apikey}
         ).json()
         self.user2_token = token_data["access_token"]
 

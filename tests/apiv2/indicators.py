@@ -22,8 +22,9 @@ class IndicatorTest(unittest.TestCase):
         # database_arango.db.create_views(testing=True)
 
         user = UserSensitive(username="test", password="test", enabled=True).save()
+        apikey = user.create_api_key("default")
         token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
         self.indicator1 = indicator.Regex(

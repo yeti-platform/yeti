@@ -20,12 +20,18 @@ class userTest(unittest.TestCase):
 
         self.admin = UserSensitive(username="admin", admin=True).save()
         self.user = UserSensitive(username="tomchop", admin=False).save()
+        admin_token = self.admin.create_api_key("default")
+
         token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.admin.api_key}
+            "/api/v2/auth/api-token",
+            headers={"x-yeti-apikey": admin_token},
         ).json()
         self.admin_token = token_data["access_token"]
+
+        user_token = self.user.create_api_key("default")
         user_token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user.api_key}
+            "/api/v2/auth/api-token",
+            headers={"x-yeti-apikey": user_token},
         ).json()
         self.user_token = user_token_data["access_token"]
 
@@ -117,18 +123,18 @@ class userTest(unittest.TestCase):
         self.assertIsNotNone(data)
         self.assertEqual(data["detail"], "cannot toggle own user (admin)")
 
-    def test_reset_api_key(self):
+    def test_new_api_key(self):
         response = client.post(
-            "/api/v2/users/reset-api-key",
-            json={"user_id": self.user.id},
+            "/api/v2/users/new-api-key",
+            json={"user_id": self.user.id, "name": "my API key"},
             headers={"Authorization": f"Bearer {self.admin_token}"},
         )
 
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertIsNotNone(data)
-        self.assertNotEqual(data["api_key"], self.user.api_key)
-        self.assertEqual(data["username"], "tomchop")
+        self.assertEqual(data["name"], "my API key")
+        self.assertTrue(len(data["token"]) > 32)
 
     def test_reset_own_password(self):
         response = client.post(
