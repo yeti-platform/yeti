@@ -1,3 +1,4 @@
+import datetime
 from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -45,6 +46,27 @@ class PatchRoleRequest(BaseModel):
 
     user_id: str
     role: roles.Permission
+
+class NewApiKeyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str
+    name: str
+    scopes: list[str] = []
+    expiration: datetime.timedelta | None = None
+
+
+class NewAPIKeyResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    token: str
+
+
+class DeleteApiKeyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
 
 
 class ResetApiKeyRequest(BaseModel):
@@ -136,6 +158,25 @@ def update_user_role(
     user.global_role = request.role
     return user.save()
 
+@router.post("/new-api-key")
+def new_api_key(
+    request: NewApiKeyRequest, current_user: UserSensitive = Depends(get_current_user)
+) -> NewAPIKeyResponse:
+    if not current_user.admin and current_user.id != request.user_id:
+        raise HTTPException(
+            status_code=401, detail="cannot create API keys for other users"
+        )
+
+    user = UserSensitive.get(request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="user {user_id} not found")
+
+    token = user.create_api_key(
+        request.name, scopes=request.scopes, expiration_delta=request.expiration
+    )
+    user.save()
+    return NewAPIKeyResponse(name=request.name, token=token)
+
 
 @router.post("/reset-api-key")
 def reset_api_key(
@@ -198,10 +239,14 @@ def create(
     user = user.save()
 
     all_users = rbac.Group.find(name="All users")
+    if not all_users:
+        all_users = rbac.Group(name="All users").save()
     if not request.admin:
         user.link_to_acl(all_users, roles.Role.READER)
     else:
         admins = rbac.Group.find(name="Admins")
+        if not admins:
+            admins = rbac.Group(name="Admins").save()
         user.link_to_acl(admins, roles.Role.OWNER)
         user.link_to_acl(all_users, roles.Role.OWNER)
 

@@ -20,9 +20,7 @@ def cli():
 def list_users():
     users = User.list()
     for user in users:
-        click.echo(
-            f"Username: {user.username} | API key: {user.api_key} | Admin: {user.admin}"
-        )
+        click.echo(f"Username: {user.username} | Admin: {user.admin}")
 
 
 @cli.command()
@@ -42,9 +40,8 @@ def create_user(
     if api_key:
         user.reset_api_key(api_key=api_key)
     user.save()
-    click.echo(
-        f"User {username} succesfully created! API key: {username}:{user.api_key}"
-    )
+    token = user.create_api_key("default")
+    click.echo(f"User {username} succesfully created! API key: {username}:{token}")
 
 
 @cli.command()
@@ -93,11 +90,8 @@ def reset_password(username: str, new_password: str) -> None:
     if not user:
         raise RuntimeError(f"User with username {username} could not be found")
     user.set_password(new_password)
-    user.reset_api_key()
     user.save()
-    click.echo(
-        f"Password for {username} succesfully reset. New API key: {user.api_key}"
-    )
+    click.echo(f"Password for {username} succesfully reset.")
 
 
 @cli.command()
