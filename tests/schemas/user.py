@@ -20,7 +20,7 @@ class UserTest(unittest.TestCase):
         self.assertTrue(user.verify_password("test"))
         self.assertFalse(user.verify_password("password"))
 
-    def test_reset_api_key(self) -> None:
+    def test_create_api_key(self) -> None:
         self.user1.create_api_key("apikey")
         old_api_key = self.user1.api_keys["apikey"]
         self.user1.create_api_key("apikey")
@@ -30,3 +30,18 @@ class UserTest(unittest.TestCase):
         new_api_key = user.api_keys["apikey"]
         self.assertNotEqual(old_api_key.created, new_api_key.created)
         self.assertEqual(old_api_key.sub, new_api_key.sub)
+
+    def test_delete_api_key(self) -> None:
+        user = UserSensitive.find(username="tomchop")
+        self.assertEqual(len(user.api_keys), 0)
+
+        self.user1.create_api_key("apikey")
+        self.user1.save()
+
+        user = UserSensitive.find(username="tomchop")
+        self.assertEqual(len(user.api_keys), 1)
+
+        user.delete_api_key("apikey")
+        user.save()
+        user = UserSensitive.find(username="tomchop")
+        self.assertEqual(len(user.api_keys), 0)

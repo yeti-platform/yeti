@@ -136,6 +136,62 @@ class userTest(unittest.TestCase):
         self.assertEqual(data["name"], "my API key")
         self.assertTrue(len(data["token"]) > 32)
 
+    def test_toggle_api_key(self):
+        response = client.post(
+            "/api/v2/users/new-api-key",
+            json={"user_id": self.user.id, "name": "my API key"},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["name"], "my API key")
+        self.assertTrue(len(data["token"]) > 32)
+
+        response = client.post(
+            "/api/v2/users/toggle-api-key",
+            json={"user_id": self.user.id, "name": "my API key"},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["enabled"], False)
+
+        response = client.get(
+            f"/api/v2/users/{self.user.id}",
+            headers={"Authorization": f"Bearer {self.user_token}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["user"]["api_keys"]["my API key"]["enabled"], False, data)
+
+    def test_delete_api_key(self):
+        response = client.post(
+            "/api/v2/users/new-api-key",
+            json={"user_id": self.user.id, "name": "my API key"},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertEqual(data["name"], "my API key")
+        self.assertTrue(len(data["token"]) > 32)
+
+        response = client.post(
+            "/api/v2/users/delete-api-key",
+            json={"user_id": self.user.id, "name": "my API key"},
+            headers={"Authorization": f"Bearer {self.admin_token}"},
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIsNotNone(data)
+        self.assertNotIn("my API key", data["api_keys"])
+
     def test_reset_own_password(self):
         response = client.post(
             "/api/v2/users/reset-password",

@@ -60,7 +60,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     username: str
     enabled: bool = True
     admin: bool = False
-    api_keys: dict[str, RegisteredApiKey] = {}
+    api_keys: dict[str, RegisteredApiKey] | None = {}
 
     global_role: int = RBAC_DEFAULT_ROLES[
         str(yeti_config.get("rbac", "default_global_role", default="writer"))
@@ -109,7 +109,11 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
         return key
 
     def delete_api_key(self, api_key_name) -> None:
-        del self.api_keys[api_key_name]
+        api_keys = self.api_keys
+        del api_keys[api_key_name]
+        self.api_keys = None
+        self.save()
+        self.api_keys = api_keys
         self.save()
 
     def has_permissions(self, target: str, permissions: roles.Permission) -> bool:
