@@ -47,6 +47,7 @@ class PatchRoleRequest(BaseModel):
     user_id: str
     role: roles.Permission
 
+
 class NewApiKeyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -70,6 +71,7 @@ class DeleteApiKeyRequest(BaseModel):
     user_id: str
     name: str
 
+
 class DeleteApiKeyResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -81,6 +83,7 @@ class ToggleApiKeyRequest(BaseModel):
 
     user_id: str
     name: str
+
 
 class ResetPasswordRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -164,6 +167,7 @@ def update_user_role(
         raise HTTPException(status_code=404, detail=f"user {request.user_id} not found")
     user.global_role = request.role
     return user.save()
+
 
 @router.post("/new-api-key")
 def new_api_key(

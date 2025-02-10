@@ -64,6 +64,7 @@ def get_oauth_client() -> OAuth:
     )
     return client
 
+
 def get_current_user(
     request: Request,
     token: str = Depends(oauth2_scheme),
