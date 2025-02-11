@@ -15,6 +15,7 @@ ALLOWED_EXTERNALS = {
     "extension": "",
     "filetype": "",
     "owner": "",
+    "vt": "",
 }
 
 
@@ -174,7 +175,9 @@ class Yara(indicator.Indicator):
     @property
     def compiled_pattern(self):
         if not self._compiled_pattern:
-            self._compiled_pattern = yara.compile(source=self.pattern)
+            self._compiled_pattern = yara.compile(
+                source=self.pattern, externals=ALLOWED_EXTERNALS
+            )
         return self._compiled_pattern
 
     def match(self, value: str | bytes) -> YaraMatch | None:
