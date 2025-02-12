@@ -22,8 +22,9 @@ class ImportData(unittest.TestCase):
         user.set_password("test")
         user.save()
 
+        apikey = user.create_api_key("default")
         token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 

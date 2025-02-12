@@ -17,7 +17,7 @@ from jose import JWTError, jwt
 from starlette.requests import Request
 
 from core.config.config import yeti_config
-from core.schemas.user import User, UserSensitive
+from core.schemas.user import User, UserSensitive, create_access_token
 
 ACCESS_TOKEN_EXPIRE_DELTA = datetime.timedelta(
     minutes=yeti_config.get("auth", "access_token_expire_minutes", default=30)
@@ -63,17 +63,6 @@ def get_oauth_client() -> OAuth:
         client_secret=client_secret,
     )
     return client
-
-
-def create_access_token(data: dict, expires_delta: datetime.timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
 
 
 def get_current_user(
@@ -277,25 +266,49 @@ if AUTH_MODULE == "local":
 
 
 @router.post("/api-token")
-def login_api(x_yeti_api_key: str = Security(api_key_header)) -> dict[str, str]:
-    user = UserSensitive.find(api_key=x_yeti_api_key)
+def login_api(x_yeti_api_key_token: str = Security(api_key_header)) -> dict[str, str]:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "x-yeti-apikey"},
+    )
+
+    try:
+        payload = jwt.decode(
+            x_yeti_api_key_token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM],
+            options={"verify_exp": False, "requires_exp": False},
+        )
+    except JWTError:
+        raise credentials_exception
+
+    user = UserSensitive.find(username=payload.get("sub"))
     if not user:
+        raise credentials_exception
+
+    try:
+        user.validate_api_key_payload(payload)
+    except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API key",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail=str(error),
+            headers={"WWW-Authenticate": "x-yeti-apikey"},
         )
 
     if not user.enabled:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account disabled. Please contact your server admin.",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers={"WWW-Authenticate": "x-yeti-apikey"},
         )
 
     access_token = create_access_token(
         data={"sub": user.username, "enabled": user.enabled},
         expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
+    )
+    user.api_keys[payload["name"]].last_used = datetime.datetime.now(
+        tz=datetime.timezone.utc
     )
     return {"access_token": access_token, "token_type": "bearer"}
 

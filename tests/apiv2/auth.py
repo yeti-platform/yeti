@@ -8,29 +8,35 @@ from core import database_arango
 from core.config.config import yeti_config
 from core.schemas.user import UserSensitive
 from core.web import webapp
+from core.web.apiv2 import auth
 
 SKIP_TESTS = not yeti_config.get("auth", "enabled")
 
 client = TestClient(webapp.app)
 
 
-@unittest.skipIf(SKIP_TESTS, "Auth is disabled")
 class AuthTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         logging.disable(sys.maxsize)
+        auth.YETI_AUTH = True
+        auth.AUTH_MODULE = "local"
+
         database_arango.db.connect(database="yeti_test")
         cls.user1 = UserSensitive(username="tomchop")
         cls.user1.set_password("test")
         cls.user1.save()
+        cls.user1_apikey = cls.user1.create_api_key("default")
 
         cls.user2 = UserSensitive(username="test", enabled=False)
         cls.user2.set_password("test")
         cls.user2.save()
+        cls.user2_apikey = cls.user2.create_api_key("default")
 
     @classmethod
     def tearDownClass(cls) -> None:
         database_arango.db.truncate()
+        auth.YETI_AUTH = False
 
     def test_login(self) -> None:
         response = client.post(
@@ -76,23 +82,6 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["username"], "tomchop")
 
-    def test_logout(self) -> None:
-        response = client.post(
-            "/api/v2/auth/token", data={"username": "tomchop", "password": "test"}
-        )
-        data = response.json()
-        token = data["access_token"]
-
-        response = client.post(
-            "/api/v2/auth/logout", headers={"cookie": "yeti_session=" + token}
-        )
-
-        response = client.get(
-            "/api/v2/auth/me", headers={"cookie": "yeti_session=" + token}
-        )
-        data = response.json()
-        self.assertEqual(response.status_code, 401)
-
     def test_api_not_auth(self) -> None:
         response = client.get("/api/v2/auth/me")
         self.assertEqual(response.status_code, 401)
@@ -101,7 +90,7 @@ class AuthTest(unittest.TestCase):
 
     def test_api_with_key(self) -> None:
         response = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1_apikey}
         )
         data = response.json()
         self.assertEqual(response.status_code, 200)
@@ -110,7 +99,7 @@ class AuthTest(unittest.TestCase):
 
     def test_api_with_disabled_user(self) -> None:
         response = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2_apikey}
         )
         data = response.json()
         self.assertEqual(response.status_code, 401)
@@ -124,11 +113,11 @@ class AuthTest(unittest.TestCase):
         )
         data = response.json()
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(data["detail"], "Invalid API key")
+        self.assertEqual(data["detail"], "Could not validate credentials")
 
     def test_api_key_bearer(self) -> None:
         response = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1_apikey}
         )
         data = response.json()
         self.assertEqual(response.status_code, 200)

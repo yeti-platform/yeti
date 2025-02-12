@@ -29,18 +29,21 @@ class rbacTest(unittest.TestCase):
         self.user2.link_to_acl(self.group2, roles.Role.OWNER)
         self.admin = user.UserSensitive(username="yeti", admin=True).save()
 
+        user1_apikey = self.user1.create_api_key("default")
         token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user1_apikey}
         ).json()
-
         self.user1_token = token_data["access_token"]
+
+        user2_apikey = self.user2.create_api_key("default")
         user_token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user2.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": user2_apikey}
         ).json()
         self.user2_token = user_token_data["access_token"]
 
+        admin_apikey = self.admin.create_api_key("default")
         admin_token_data = client.post(
-            "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.admin.api_key}
+            "/api/v2/auth/api-token", headers={"x-yeti-apikey": admin_apikey}
         ).json()
         self.admin_token = admin_token_data["access_token"]
 

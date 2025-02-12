@@ -1,12 +1,15 @@
-import re
+import datetime
+import json
 import secrets
 from typing import ClassVar, Literal
 
+from jose import jwt
 from passlib.context import CryptContext
-from pydantic import ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
+from core.helpers import now
 from core.schemas import graph, rbac, roles
 from core.schemas.model import YetiModel
 
@@ -16,10 +19,37 @@ RBAC_DEFAULT_ROLES = {
     "reader": roles.Role.READER,
     "writer": roles.Role.WRITER,
 }
+SECRET_KEY = yeti_config.get("auth", "secret_key")
+ALGORITHM = yeti_config.get("auth", "algorithm")
 
 
-def generate_api_key():
-    return secrets.token_hex(32)
+def create_access_token(
+    data: dict, expires_delta: datetime.timedelta | None = None
+) -> str:
+    to_encode = data.copy()
+    expire = None
+    if expires_delta:
+        expire = datetime.datetime.now(datetime.timezone.utc) + expires_delta
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+class RegisteredApiKey(BaseModel):
+    name: str
+    sub: str
+    scopes: list[str]
+    created: datetime.datetime = Field(default_factory=now)
+    exp: datetime.datetime | None = None
+    last_used: datetime.datetime | None = None
+    enabled: bool = True
+
+    @computed_field
+    @property
+    def expired(self) -> bool:
+        if self.exp is None:
+            return False
+        return self.exp > datetime.datetime.now(tz=datetime.timezone.utc)
 
 
 class User(YetiModel, database_arango.ArangoYetiConnector):
@@ -31,7 +61,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     username: str
     enabled: bool = True
     admin: bool = False
-    api_key: str = Field(default_factory=generate_api_key)
+    api_keys: dict[str, RegisteredApiKey] | None = {}
 
     global_role: int = RBAC_DEFAULT_ROLES[
         str(yeti_config.get("rbac", "default_global_role", default="writer"))
@@ -46,13 +76,46 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     def load(cls, object: dict) -> "User":
         return cls(**object)
 
-    def reset_api_key(self, api_key=None) -> None:
-        if api_key:
-            if not re.match(r"^[a-f0-9]{64}$", api_key):
-                raise ValueError("Invalid API key: must match ^[a-f0-9]{64}$")
-            self.api_key = api_key
-        else:
-            self.api_key = secrets.token_hex(32)
+    def create_api_key(
+        self,
+        key_name: str,
+        scopes: list[str] | None = None,
+        expiration_delta: datetime.timedelta | None = None,
+    ) -> str:
+        exp = None
+        if expiration_delta:
+            exp = datetime.datetime.now(datetime.timezone.utc) + expiration_delta
+        api_key = RegisteredApiKey(
+            name=key_name,
+            sub=self.username,
+            scopes=scopes or ["all"],
+            exp=exp,
+        )
+        self.api_keys[key_name] = api_key
+        self.save()
+        return create_access_token(json.loads(api_key.model_dump_json()))
+
+    def validate_api_key_payload(self, payload) -> RegisteredApiKey:
+        sub = payload.get("sub")
+        key_name = payload.get("name")
+        if key_name not in self.api_keys or sub != self.username:
+            raise ValueError("Could not validate credentials")
+
+        key = self.api_keys[key_name]
+        if not key.enabled:
+            raise ValueError("API key disabled.")
+        if key.expired:
+            raise ValueError("API key expired.")
+
+        return key
+
+    def delete_api_key(self, api_key_name) -> None:
+        api_keys = self.api_keys
+        del api_keys[api_key_name]
+        self.api_keys = None
+        self.save()
+        self.api_keys = api_keys
+        self.save()
 
     def has_permissions(self, target: str, permissions: roles.Permission) -> bool:
         return graph.RoleRelationship.has_permissions(self, target, permissions)

@@ -1,10 +1,11 @@
+import datetime
 from enum import Enum
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 from core.schemas import rbac, roles
-from core.schemas.user import User, UserSensitive
+from core.schemas.user import RegisteredApiKey, User, UserSensitive
 from core.web.apiv2.auth import GetCurrentUserWithPermissions, get_current_user
 
 
@@ -47,10 +48,41 @@ class PatchRoleRequest(BaseModel):
     role: roles.Permission
 
 
-class ResetApiKeyRequest(BaseModel):
+class NewApiKeyRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     user_id: str
+    name: str
+    scopes: list[str] = []
+    expiration: datetime.timedelta | None = None
+
+
+class NewAPIKeyResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    token: str
+    api_keys: dict[str, RegisteredApiKey]
+
+
+class DeleteApiKeyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str
+    name: str
+
+
+class DeleteApiKeyResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_keys: dict[str, RegisteredApiKey]
+
+
+class ToggleApiKeyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str
+    name: str
 
 
 class ResetPasswordRequest(BaseModel):
@@ -137,22 +169,73 @@ def update_user_role(
     return user.save()
 
 
-@router.post("/reset-api-key")
-def reset_api_key(
-    request: ResetApiKeyRequest, current_user: UserSensitive = Depends(get_current_user)
-) -> User:
-    """Resets a user's API key."""
+@router.post("/new-api-key")
+def new_api_key(
+    request: NewApiKeyRequest, current_user: UserSensitive = Depends(get_current_user)
+) -> NewAPIKeyResponse:
     if not current_user.admin and current_user.id != request.user_id:
         raise HTTPException(
-            status_code=401, detail="cannot reset API keys for other users"
+            status_code=401, detail="cannot create API keys for other users"
         )
 
     user = UserSensitive.get(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="user {user_id} not found")
 
-    user.reset_api_key()
-    return user.save()
+    token = user.create_api_key(
+        request.name, scopes=request.scopes, expiration_delta=request.expiration
+    )
+    user.save()
+    return NewAPIKeyResponse(name=request.name, token=token, api_keys=user.api_keys)
+
+
+@router.post("/toggle-api-key")
+def toggle_api_key(
+    request: ToggleApiKeyRequest,
+    current_user: UserSensitive = Depends(get_current_user),
+) -> RegisteredApiKey:
+    if not current_user.admin and current_user.id != request.user_id:
+        raise HTTPException(
+            status_code=401, detail="cannot create API keys for other users"
+        )
+
+    user = UserSensitive.get(request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="user {user_id} not found")
+
+    assert isinstance(user.api_keys, dict)
+    if request.name not in user.api_keys:
+        raise HTTPException(
+            status_code=401, detail=f"{request.name}: invalid API key name"
+        )
+
+    user.api_keys[request.name].enabled = not user.api_keys[request.name].enabled
+    user.save()
+    return user.api_keys[request.name]
+
+
+@router.post("/delete-api-key")
+def reset_api_key(
+    request: DeleteApiKeyRequest,
+    current_user: UserSensitive = Depends(get_current_user),
+) -> DeleteApiKeyResponse:
+    """Resets a user's API key."""
+    if not current_user.admin and current_user.id != request.user_id:
+        raise HTTPException(
+            status_code=401, detail="cannot delete API keys for other users"
+        )
+
+    user = UserSensitive.get(request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="user {user_id} not found")
+
+    if request.name not in user.api_keys:
+        raise HTTPException(
+            status_code=401, detail=f"{request.name}: invalid API key name"
+        )
+    user.delete_api_key(request.name)
+
+    return DeleteApiKeyResponse(api_keys=user.api_keys)
 
 
 @router.post("/reset-password")
@@ -198,10 +281,14 @@ def create(
     user = user.save()
 
     all_users = rbac.Group.find(name="All users")
+    if not all_users:
+        all_users = rbac.Group(name="All users").save()
     if not request.admin:
         user.link_to_acl(all_users, roles.Role.READER)
     else:
         admins = rbac.Group.find(name="Admins")
+        if not admins:
+            admins = rbac.Group(name="Admins").save()
         user.link_to_acl(admins, roles.Role.OWNER)
         user.link_to_acl(all_users, roles.Role.OWNER)
 
