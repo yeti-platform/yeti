@@ -44,6 +44,7 @@ class RegisteredApiKey(BaseModel):
     last_used: datetime.datetime | None = None
     enabled: bool = True
 
+    @computed_field
     @property
     def expired(self) -> bool:
         if self.exp is None:
