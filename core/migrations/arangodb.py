@@ -84,6 +84,8 @@ def migration_2():
             db_user.link_to_acl(admins, roles.Role.OWNER)
         else:
             db_user.link_to_acl(all_users, roles.Role.READER)
+        # User schema updated
+        db_user.save()
 
     for ObjectType in OBJECT_TYPES:
         total_objects = ObjectType.count()
