@@ -7,6 +7,7 @@ from plugins.feeds.public import (
     artifacts,
     attack,
     dfiq,
+    elastic,
     et_open,
     feodo_tracker_ip_blocklist,
     hybrid_analysis,
@@ -129,4 +130,9 @@ class FeedTest(unittest.TestCase):
     def test_yara_forge(self):
         defaults = yaraforge.YaraForge._defaults.copy()
         feed = yaraforge.YaraForge(**defaults)
+        feed.run()
+
+    def test_elastic(self):
+        defaults = elastic.Elastic._defaults.copy()
+        feed = elastic.Elastic(**defaults)
         feed.run()
