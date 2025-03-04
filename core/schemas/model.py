@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, computed_field
 
 from core.schemas.graph import RoleRelationship, TagRelationship
+
+if TYPE_CHECKING:
+    from core.schemas.tag import Tag
 
 
 class YetiBaseModel(BaseModel):
@@ -30,23 +35,28 @@ class YetiAclModel(YetiBaseModel):
     def acls(self):
         return self._acls
 
-    def get_acls(self) -> None:
+    def get_acls(self) -> dict[str, RoleRelationship]:
         """Returns the permissions assigned to a user.
 
         Args:
             user: The user to check permissions for.
         """
-        vertices, paths, total = self.neighbors(
-            graph="acls", direction="inbound", max_hops=2
+        acl_acl = """
+         WITH observables, entities, dfiq, indicators
+
+        FOR v, e IN 1..2 inbound @extended_id acls
+          OPTIONS { uniqueVertices: "path" }
+
+        RETURN  {name: v.username || v.name, edge: e}
+        """
+        results = self._db.aql.execute(
+            acl_acl, bind_vars={"extended_id": self.extended_id}
         )
-        for path in paths:
-            for edge in path:
-                if edge.target == self.extended_id:
-                    identity = vertices[edge.source]
-                    if identity.root_type == "rbacgroup":
-                        self._acls[identity.name] = edge
-                    if identity.root_type == "user":
-                        self._acls[identity.username] = edge
+        for r in results:
+            if r["edge"]["target"] == self.extended_id:
+                self._acls[r["name"]] = RoleRelationship(**r["edge"])
+
+        return self._acls
 
 
 class YetiModel(YetiBaseModel):
@@ -66,3 +76,34 @@ class YetiTagModel(YetiModel):
     @property
     def tags(self):
         return self._tags
+
+    def get_tags(self) -> list[tuple[TagRelationship, "Tag"]]:
+        """Returns the tags linked to this object.
+
+        Returns:
+          A list of tuples (TagRelationship, Tag) representing each tag linked
+          to this object.
+        """
+        from core.schemas.graph import TagRelationship
+        from core.schemas.tag import Tag
+
+        tag_aql = """
+            for v, e, p IN 1..1 OUTBOUND @extended_id GRAPH tags
+            OPTIONS {uniqueVertices: "path"}
+            RETURN p
+        """
+        tag_paths = self._db.aql.execute(
+            tag_aql, bind_vars={"extended_id": self.extended_id}
+        )
+        if tag_paths.empty():
+            return []
+        relationships = []
+        self._tags = {}
+        for path in tag_paths:
+            tag_data = Tag.load(path["vertices"][1])
+            edge_data = path["edges"][0]
+            edge_data["__id"] = edge_data.pop("_id")
+            tag_relationship = TagRelationship.load(edge_data)
+            relationships.append((tag_relationship, tag_data))
+            self._tags[tag_data.name] = tag_relationship
+        return relationships

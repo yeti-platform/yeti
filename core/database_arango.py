@@ -869,39 +869,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             time.sleep(ASYNC_JOB_WAIT_TIME)
         self.save()
 
-    # TODO: Consider extracting this to its own class, given it's only meant
-    # to be called by Observables.
-    def get_tags(self) -> List[Tuple["TagRelationship", "Tag"]]:
-        """Returns the tags linked to this object.
-
-        Returns:
-          A list of tuples (TagRelationship, Tag) representing each tag linked
-          to this object.
-        """
-        from core.schemas.graph import TagRelationship
-        from core.schemas.tag import Tag
-
-        tag_aql = """
-            for v, e, p IN 1..1 OUTBOUND @extended_id GRAPH tags
-            OPTIONS {uniqueVertices: "path"}
-            RETURN p
-        """
-        tag_paths = self._db.aql.execute(
-            tag_aql, bind_vars={"extended_id": self.extended_id}
-        )
-        if tag_paths.empty():
-            return []
-        relationships = []
-        self._tags = {}
-        for path in tag_paths:
-            tag_data = Tag.load(path["vertices"][1])
-            edge_data = path["edges"][0]
-            edge_data["__id"] = edge_data.pop("_id")
-            tag_relationship = TagRelationship.load(edge_data)
-            relationships.append((tag_relationship, tag_data))
-            self._tags[tag_data.name] = tag_relationship
-        return relationships
-
     # pylint: disable=too-many-arguments
     def neighbors(
         self,
