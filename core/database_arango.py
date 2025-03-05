@@ -5,11 +5,10 @@ import json
 import logging
 import sys
 import time
-import traceback
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, indicator, observable, roles, user
+    from core.schemas import dfiq, entity, indicator, observable, rbac, roles, tag, user
     from core.schemas.graph import (
         GraphFilter,
         Relationship,
@@ -17,12 +16,11 @@ if TYPE_CHECKING:
         RoleRelationship,
         TagRelationship,
     )
-    from core.schemas.tag import Tag
 
 
 import requests
 from arango import ArangoClient
-from arango.exceptions import DocumentInsertError, GraphCreateError
+from arango.exceptions import DocumentInsertError
 
 from core.config.config import yeti_config
 from core.events import message
@@ -883,7 +881,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
-        user: "user.User" = None,
+        user: "user.User | None" = None,
+        include_tags: bool = True,
     ) -> tuple[
         dict[
             str,
@@ -895,17 +894,22 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """Fetches neighbors of the YetiObject.
 
         Args:
-          link_types: The types of link.
-          target_types: The types of the target objects (as specified in the
-              'type' field).
-          direction: outbound, inbound, or any.
-          include_original: Whether the original object is to be included in the
-              result or not.
-          min_hops: The minumum number of nodes to go through (defaults to 1:
-              direct neighbors)
-          max_hops: The maximum number of nodes to go through (defaults to 1:
-              direct neighbors)
-          raw: Whether to return a raw dictionary or a Yeti object.
+            link_types: The types of link.
+            target_types: The types of the target objects (as specified in the
+                'type' field).
+            direction: outbound, inbound, or any.
+            include_original: Whether the original object is to be included in the
+                result or not.
+            min_hops: The minumum number of nodes to go through (defaults to 1:
+                direct neighbors)
+            max_hops: The maximum number of nodes to go through (defaults to 1:
+                direct neighbors)
+            offset: The number of results to skip.
+            count: The number of results to return.
+            sorting: A list of tuples containing the field to sort on and a boolean
+                    indicating if it should be sorted in ascending order.
+            user: The user requesting the data; used to take ACLs into account.
+            include_tags: Whether to include tags in the result.
 
         Returns:
           Tuple[dict, list, int]:
