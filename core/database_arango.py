@@ -1000,7 +1000,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
           {acl_query}
           {limit}
           {sorting_aql}
-          RETURN {{ vertices: v_with_tags, g: p }}
+          RETURN {{ vertices: {"v_with_tags" if include_tags else "v"}, g: p }}
         """
         neighbors = self._db.aql.execute(
             aql, bind_vars=args, count=True, full_count=True
