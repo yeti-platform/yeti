@@ -22,7 +22,9 @@ class Elastic(task.FeedTask):
         "description": "Collection of protection rules by Elastic Security: https://www.elastic.co/security/endpoint-security",
     }
 
-    _SOURCE_ZIP = "https://github.com/elastic/protections-artifacts/archive/refs/heads/main.zip"
+    _SOURCE_ZIP = (
+        "https://github.com/elastic/protections-artifacts/archive/refs/heads/main.zip"
+    )
 
     def run(self):
         response = self._make_request(self._SOURCE_ZIP, no_cache=True)
@@ -40,9 +42,7 @@ class Elastic(task.FeedTask):
                 with open(file, "r") as f:
                     rule = f.read()
 
-                indicator.Yara.import_bulk_rules(
-                    rule, tags=["Elastic"]
-                )
+                indicator.Yara.import_bulk_rules(rule, tags=["Elastic"])
 
 
 taskmanager.TaskManager.register_task(Elastic)
