@@ -938,15 +938,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if filter:
             filters = []
             for i, f in enumerate(filter):
+                if f.pathcompare.lower() not in {"any", "all", "none"}:
+                    f.pathcompare = ""
+
                 if f.operator.lower() not in {"=~", "==", "in"}:
                     f.operator = "=="
 
-                if f.pathcompare.lower() not in {"any", "all", "none"}:
-                    f.pathcompare = "any"
+                # =~ not compatible with path operators
+                if f.operator == "=~":
+                    f.pathcompare = ""
 
                 if f.operator in {"=~", "=="}:
                     filters.append(
-                        f"(p.edges[*].@filter_key{i} {f.pathcompare} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                        f"(p.edges[*].@filter_key{i} {f.pathcompare} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.pathcompare} {f.operator} @filter_value{i})"
                     )
                 if f.operator == "in":
                     filters.append(
