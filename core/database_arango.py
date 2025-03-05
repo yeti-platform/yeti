@@ -989,10 +989,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             """
         else:
             tags_query = """
-            LET vertices = (
-                FOR object in p['vertices']
-                RETURN object
-            )
+            LET vertices = p['vertices']
             """
 
         aql = f"""
