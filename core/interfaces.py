@@ -8,8 +8,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, List, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, indicator, observable, tag
-    from core.schemas.graph import GraphFilter, Relationship, TagRelationship
+    from core.schemas import entity, graph, indicator, observable, tag, user
 
 TYetiObject = TypeVar("TYetiObject")
 
@@ -85,7 +84,7 @@ class AbstractYetiConnector(ABC):
     @abstractmethod
     def link_to(
         self, target, relationship_type: str, description: str
-    ) -> "Relationship":
+    ) -> "graph.RelationshipTypes":
         """Creates a link from an existing object to a target object.
 
         Args:
@@ -103,29 +102,42 @@ class AbstractYetiConnector(ABC):
         target_types: List[str] = [],
         direction: str = "any",
         graph: str = "links",
-        filter: List["GraphFilter"] = [],
+        filter: List["graph.GraphFilter"] = [],
         include_original: bool = False,
         min_hops: int = 1,
         max_hops: int = 1,
         offset: int = 0,
         count: int = 0,
+        sorting: List[tuple[str, bool]] = [],
+        user: "user.User" = None,
+        include_tags: bool = True,
     ) -> tuple[
         dict[
-            str, "observable.Observable | entity.Entity | indicator.Indicator | tag.Tag"
+            str,
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
         ],
-        List[List["Relationship | TagRelationship"]],
+        List[List["graph.RelationshipTypes"]],
         int,
     ]:
         """Fetches neighbors of the YetiObject.
 
         Args:
-          link_type: The type of link.
+          link_types: The types of link.
+          target_types: The types of the target objects (as specified in the
+              'type' field).
           direction: outbound, inbound, or any.
           include_original: Whether the original object is to be included in the
               result or not.
-          hops: The maximum number of nodes to go through (defaults to 1:
+          min_hops: The minumum number of nodes to go through (defaults to 1:
               direct neighbors)
-          raw: Whether to return a raw dictionary or a Yeti object.
+          max_hops: The maximum number of nodes to go through (defaults to 1:
+              direct neighbors)
+
+        Returns:
+          Tuple[dict, list, int]:
+            - the neighbors (vertices),
+            - the relationships (edges),
+            - total neighbor (vertices) count
         """
         raise NotImplementedError
 
