@@ -35,28 +35,22 @@ class YetiAclModel(YetiBaseModel):
     def acls(self):
         return self._acls
 
-    def get_acls(self) -> dict[str, RoleRelationship]:
+    def get_acls(self) -> None:
         """Returns the permissions assigned to a user.
-
         Args:
             user: The user to check permissions for.
         """
-        acl_acl = """
-         WITH observables, entities, dfiq, indicators
-
-        FOR v, e IN 1..2 inbound @extended_id acls
-          OPTIONS { uniqueVertices: "path" }
-
-        RETURN  {name: v.username || v.name, edge: e}
-        """
-        results = self._db.aql.execute(
-            acl_acl, bind_vars={"extended_id": self.extended_id}
+        vertices, paths, total = self.neighbors(
+            graph="acls", direction="inbound", max_hops=2
         )
-        for r in results:
-            if r["edge"]["target"] == self.extended_id:
-                self._acls[r["name"]] = RoleRelationship(**r["edge"])
-
-        return self._acls
+        for path in paths:
+            for edge in path:
+                if edge.target == self.extended_id:
+                    identity = vertices[edge.source]
+                    if identity.root_type == "rbacgroup":
+                        self._acls[identity.name] = edge
+                    if identity.root_type == "user":
+                        self._acls[identity.username] = edge
 
 
 class YetiModel(YetiBaseModel):

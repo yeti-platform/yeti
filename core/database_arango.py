@@ -938,12 +938,15 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if filter:
             filters = []
             for i, f in enumerate(filter):
-                if f.operator not in {"=~", "=", "in"}:
-                    f.operator = "="
+                if f.operator.lower() not in {"=~", "==", "in"}:
+                    f.operator = "=="
 
-                if f.operator in {"=~", "="}:
+                if f.pathcompare.lower() not in {"any", "all", "none"}:
+                    f.pathcompare = "any"
+
+                if f.operator in {"=~", "=="}:
                     filters.append(
-                        f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                        f"(p.edges[*].@filter_key{i} {f.pathcompare} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
                     )
                 if f.operator == "in":
                     filters.append(
@@ -976,17 +979,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
             acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
             args["username"] = user.username
 
+        if include_tags:
+            tags_query = """
+            LET v_with_tags = (
+                FOR observable in p['vertices']
+                let innertags = (FOR tag, edge in 1..1 OUTBOUND observable tagged RETURN {{ [tag.name]: edge }})
+                RETURN MERGE(observable, {tags: MERGE(innertags)})
+            )
+            """
+        else:
+            tags_query = ""
+
         aql = f"""
         WITH tags, observables, entities, dfiq, indicators
 
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
           OPTIONS {{ uniqueVertices: "path" }}
           {query_filter}
-          LET v_with_tags = (
-            FOR observable in p['vertices']
-              let innertags = (FOR tag, edge in 1..1 OUTBOUND observable tagged RETURN {{ [tag.name]: edge }})
-              RETURN MERGE(observable, {{tags: MERGE(innertags)}})
-          )
+          {tags_query}
           {acl_query}
           {limit}
           {sorting_aql}
@@ -1038,7 +1048,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def _build_vertices(self, vertices, arango_vertices):
         # Import happens here to avoid circular dependency
-        from core.schemas import dfiq, entity, indicator, observable, rbac, tag, user
 
         type_mapping = {
             "tag": tag.Tag,
@@ -1059,8 +1068,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             vertex_type = vertex.get("type") or vertex.get("root_type") or "tag"
             neighbor_schema = type_mapping[vertex_type]
             vertex["__id"] = vertex.pop("_key")
-            # We want the "extended ID" here, e.g. observables/12345
-            vertices[vertex["_id"]] = neighbor_schema.load(vertex)
+            if vertex["_id"] not in vertices:
+                vertices[vertex["_id"]] = neighbor_schema.load(vertex)
 
     @classmethod
     def count(cls: Type[TYetiObject]):
