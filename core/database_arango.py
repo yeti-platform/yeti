@@ -981,14 +981,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         if include_tags:
             tags_query = """
-            LET v_with_tags = (
-                FOR observable in p['vertices']
-                let innertags = (FOR tag, edge in 1..1 OUTBOUND observable tagged RETURN {{ [tag.name]: edge }})
-                RETURN MERGE(observable, {tags: MERGE(innertags)})
+            LET vertices = (
+                FOR object in p['vertices']
+                let innertags = (FOR tag, edge in 1..1 OUTBOUND object tagged RETURN {{ [tag.name]: edge }})
+                RETURN MERGE(object, {tags: MERGE(innertags)})
             )
             """
         else:
-            tags_query = ""
+            tags_query = """
+            LET vertices = (
+                FOR object in p['vertices']
+                RETURN object
+            )
+            """
 
         aql = f"""
         WITH tags, observables, entities, dfiq, indicators
@@ -1000,7 +1005,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
           {acl_query}
           {limit}
           {sorting_aql}
-          RETURN {{ vertices: {"v_with_tags" if include_tags else "v"}, g: p }}
+          RETURN {{ vertices: vertices, g: p }}
         """
         neighbors = self._db.aql.execute(
             aql, bind_vars=args, count=True, full_count=True
@@ -1048,6 +1053,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def _build_vertices(self, vertices, arango_vertices):
         # Import happens here to avoid circular dependency
+        from core.schemas import dfiq, entity, indicator, observable, rbac, tag, user
 
         type_mapping = {
             "tag": tag.Tag,
