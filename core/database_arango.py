@@ -983,7 +983,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             tags_query = """
             LET vertices = (
                 FOR object in p['vertices']
-                let innertags = (FOR tag, edge in 1..1 OUTBOUND object tagged RETURN {{ [tag.name]: edge }})
+                let innertags = (FOR tag, edge in 1..1 OUTBOUND object tagged RETURN { [tag.name]: edge })
                 RETURN MERGE(object, {tags: MERGE(innertags)})
             )
             """
