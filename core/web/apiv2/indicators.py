@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
@@ -8,9 +10,12 @@ from core.schemas.indicator import (
     Indicator,
     IndicatorType,
     IndicatorTypes,
+    Yara,
 )
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAGS_REQUEST
+
+logger = logging.getLogger(__name__)
 
 
 # Request schemas
@@ -57,6 +62,20 @@ class IndicatorTagResponse(BaseModel):
 
     tagged: int
     tags: dict[str, dict[str, graph.TagRelationship]]
+
+
+class YaraBundleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ids: list[str] = []
+    tags: list[str] = []
+    exclude_tags: list[str] = []
+
+
+class YaraBundleResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    bundle: str
 
 
 # API endpoints
@@ -171,3 +190,34 @@ def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
         indicator_tags[db_indicator.extended_id] = db_indicator.tags
 
     return IndicatorTagResponse(tagged=len(indicators), tags=indicator_tags)
+
+
+@router.post("/yara/bundle")
+def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleResponse:
+    """Generates a YARA bundle from a list of indicators."""
+    indicators = []
+    for indicator_id in request.ids:
+        db_indicator = Yara.get(indicator_id)
+        if not db_indicator:
+            raise HTTPException(
+                status_code=404,
+                detail=f"YARA bundle request contained an unknown indicator: ID:{indicator_id}",
+            )
+        indicators.append(db_indicator)
+    import time
+
+    indicators_from_tags, _ = Indicator.filter(
+        query_args={"type": "yara"},
+        tag_filter=request.tags,
+        graph_queries=[("tags", "tagged", "outbound", "name")],
+        user=httpreq.state.user,
+    )
+
+    for indicator in indicators_from_tags:
+        if any(tag in request.exclude_tags for tag in indicator.tags):
+            continue
+        indicators.append(indicator)
+
+    bundle = Yara.generate_yara_bundle(rules=indicators)
+
+    return YaraBundleResponse(bundle=bundle)
