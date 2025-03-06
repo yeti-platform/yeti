@@ -1,4 +1,5 @@
-from typing import Any, ClassVar, Literal
+import logging
+from typing import ClassVar, Literal
 
 import plyara
 import plyara.exceptions
@@ -17,6 +18,9 @@ ALLOWED_EXTERNALS = {
     "owner": "",
     "vt": "",
 }
+
+
+logger = logging.getLogger(__name__)
 
 
 class MatchInstance(BaseModel):
@@ -122,10 +126,8 @@ class Yara(indicator.Indicator):
     dependencies: list[str] = []
     private: bool = False
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_yara(cls, data: Any):
-        rule = data.get("pattern")
+    def validate_yara(self):
+        rule = self.pattern
         if not rule:
             raise ValueError("Yara rule body is required.")
         try:
@@ -138,13 +140,16 @@ class Yara(indicator.Indicator):
             raise ValueError("No valid Yara rules found in the rule body.")
         parsed_rule = rules[0]
         rule_deps = set(plyara.utils.detect_dependencies(parsed_rule))
-        data["dependencies"] = rule_deps - ALLOWED_EXTERNALS.keys()
-        data["name"] = parsed_rule["rule_name"]
-        data["private"] = "private" in parsed_rule.get("scopes", [])
-
-        return data
+        self.dependencies = list(rule_deps - ALLOWED_EXTERNALS.keys())
+        self.name = parsed_rule["rule_name"]
+        self.private = "private" in parsed_rule.get("scopes", [])
 
     def save(self):
+        try:
+            self.validate_yara()
+        except ValueError as error:
+            raise errors.ObjectCreationError(str(error)) from error
+
         missing_deps = []
         for dep_name in self.dependencies:
             dep = Yara.find(name=dep_name)
@@ -247,15 +252,16 @@ class Yara(indicator.Indicator):
 
         concatenated_rules = ""
 
-        parsed_rule = plyara.Plyara().parse_string(self.pattern)[0]
-        dependencies = plyara.utils.detect_dependencies(parsed_rule)
+        dependencies = self.dependencies
 
         for dependency in dependencies:
+            if dependency in resolved:
+                continue
+            logger.info(f"Resolving dependency: {dependency}")
             dep_rule = Yara.find(name=dependency)
             if not dep_rule:
                 raise ValueError(f"Rule depends on unknown dependency '{dependency}'")
-            if dep_rule.name not in resolved:
-                concatenated_rules += dep_rule.rule_with_dependencies(resolved, seen)
+            concatenated_rules += dep_rule.rule_with_dependencies(resolved, seen)
 
         if self.name not in resolved:
             concatenated_rules += self.pattern + "\n\n"
@@ -263,3 +269,19 @@ class Yara(indicator.Indicator):
 
         seen.remove(self.name)
         return concatenated_rules
+
+    @classmethod
+    def generate_yara_bundle(cls, rules: list["Yara"]) -> str:
+        """Export a list of Yara rules to a single string.
+
+        Args:
+            rules: A list of Yara rules to export.
+
+        Returns:
+            A string containing the exported rules.
+        """
+        resolved: set[str] = set()
+        bulk_rules = ""
+        for rule in rules:
+            bulk_rules += rule.rule_with_dependencies(resolved)
+        return bulk_rules

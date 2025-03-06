@@ -29,6 +29,7 @@ class YaraIndicatorTest(unittest.TestCase):
             location="any",
             diamond=DiamondModel.capability,
         )
+        yara.validate_yara()
 
         self.assertEqual(yara.name, "test")
         self.assertEqual(yara.dependencies, ["dep"])
@@ -89,6 +90,47 @@ class YaraIndicatorTest(unittest.TestCase):
                 "rule dep2 { condition: true and dep1 }\n\n"
                 "rule test { condition: true and dep2 and dep1 }\n\n"
             ),
+        )
+
+    def test_bulk_dependency_export(self):
+        Yara(
+            pattern="rule dep0 { condition: true }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        Yara(
+            pattern="rule dep1 { condition: true and dep0 }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        Yara(
+            pattern="rule dep2 { condition: true and dep1 }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        yara_rule = Yara(
+            pattern="rule test { condition: true and dep2 and dep1 }",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        yara_rule2 = Yara(
+            pattern="rule test2 { condition: true and dep2 }",
+            location="any",
+            diamond=DiamondModel.capability,
+        )
+
+        export = Yara.generate_yara_bundle([yara_rule, yara_rule2])
+        self.assertEqual(
+            export,
+            "rule dep0 { condition: true }\n\n"
+            "rule dep1 { condition: true and dep0 }\n\n"
+            "rule dep2 { condition: true and dep1 }\n\n"
+            "rule test { condition: true and dep2 and dep1 }\n\n"
+            "rule test2 { condition: true and dep2 }\n\n",
         )
 
     def test_yara_dependency_creates_links(self):

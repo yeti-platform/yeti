@@ -172,10 +172,10 @@ class IndicatorTest(unittest.TestCase):
             "/api/v2/indicators/",
             json={"indicator": indicator_dict},
         )
-        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertIn(
-            "No valid Yara rules found in the rule body", data["detail"][0]["msg"]
+            "No valid Yara rules found in the rule body", data["detail"]["description"]
         )
 
     def test_bad_yara_graceful_failure(self):
