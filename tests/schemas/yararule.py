@@ -1,6 +1,6 @@
 import unittest
 
-from core import database_arango
+from core import database_arango, errors
 from core.schemas.indicator import DiamondModel
 from core.schemas.indicators.yara import Yara
 
@@ -35,7 +35,7 @@ class YaraIndicatorTest(unittest.TestCase):
         self.assertEqual(yara.dependencies, ["dep"])
 
     def test_invalid_yara_rule(self):
-        with self.assertRaises(ValueError) as error:
+        with self.assertRaises(errors.ObjectCreationError) as error:
             Yara(
                 pattern='rule test { wooo: $a = "test" fooo: $a and dep }',
                 location="any",
@@ -45,7 +45,7 @@ class YaraIndicatorTest(unittest.TestCase):
         self.assertIn("Unknown text wooo", str(error.exception))
 
     def test_fail_on_more_than_one_rule(self):
-        with self.assertRaises(ValueError) as error:
+        with self.assertRaises(errors.ObjectCreationError) as error:
             Yara(
                 pattern="rule test { condition: true } rule test2 { condition: true }",
                 location="any",
