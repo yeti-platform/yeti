@@ -14,6 +14,7 @@ class GraphFilter(BaseModel):
     key: str
     value: str
     operator: str
+    pathcompare: str = "ANY"
 
 
 # Relationship and TagRelationship do not inherit from YetiModel
@@ -119,14 +120,24 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
     @classmethod
-    def has_permissions(cls, src, target_id: str, permission: roles.Permission) -> bool:
-        vertices, paths, total = src.neighbors(
-            graph="acls", direction="outbound", max_hops=2
+    def has_permissions(
+        cls, user, target_id: str, permission: roles.Permission
+    ) -> bool:
+        acl_acl = """
+         WITH observables, entities, dfiq, indicators
+        FOR v, e IN 1..2 outbound @user_extended_id acls
+          OPTIONS { uniqueVertices: "path" }
+        FILTER e.target == @target_id
+        RETURN e
+        """
+
+        results = cls._db.aql.execute(
+            acl_acl,
+            bind_vars={"target_id": target_id, "user_extended_id": user.extended_id},
         )
-        for path in paths:
-            for edge in path:
-                if edge.role & permission == permission and edge.target == target_id:
-                    return True
+        for edge in results:
+            if edge["role"] & permission == permission and edge["target"] == target_id:
+                return True
         return False
 
 

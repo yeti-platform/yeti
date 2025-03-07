@@ -5,11 +5,10 @@ import json
 import logging
 import sys
 import time
-import traceback
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, indicator, observable, roles, user
+    from core.schemas import dfiq, entity, indicator, observable, rbac, roles, tag, user
     from core.schemas.graph import (
         GraphFilter,
         Relationship,
@@ -17,12 +16,11 @@ if TYPE_CHECKING:
         RoleRelationship,
         TagRelationship,
     )
-    from core.schemas.tag import Tag
 
 
 import requests
 from arango import ArangoClient
-from arango.exceptions import DocumentInsertError, GraphCreateError
+from arango.exceptions import DocumentInsertError
 
 from core.config.config import yeti_config
 from core.events import message
@@ -869,39 +867,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             time.sleep(ASYNC_JOB_WAIT_TIME)
         self.save()
 
-    # TODO: Consider extracting this to its own class, given it's only meant
-    # to be called by Observables.
-    def get_tags(self) -> List[Tuple["TagRelationship", "Tag"]]:
-        """Returns the tags linked to this object.
-
-        Returns:
-          A list of tuples (TagRelationship, Tag) representing each tag linked
-          to this object.
-        """
-        from core.schemas.graph import TagRelationship
-        from core.schemas.tag import Tag
-
-        tag_aql = """
-            for v, e, p IN 1..1 OUTBOUND @extended_id GRAPH tags
-            OPTIONS {uniqueVertices: "path"}
-            RETURN p
-        """
-        tag_paths = self._db.aql.execute(
-            tag_aql, bind_vars={"extended_id": self.extended_id}
-        )
-        if tag_paths.empty():
-            return []
-        relationships = []
-        self._tags = {}
-        for path in tag_paths:
-            tag_data = Tag.load(path["vertices"][1])
-            edge_data = path["edges"][0]
-            edge_data["__id"] = edge_data.pop("_id")
-            tag_relationship = TagRelationship.load(edge_data)
-            relationships.append((tag_relationship, tag_data))
-            self._tags[tag_data.name] = tag_relationship
-        return relationships
-
     # pylint: disable=too-many-arguments
     def neighbors(
         self,
@@ -916,7 +881,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
-        user: "user.User" = None,
+        user: "user.User | None" = None,
+        include_tags: bool = True,
     ) -> tuple[
         dict[
             str,
@@ -928,17 +894,22 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """Fetches neighbors of the YetiObject.
 
         Args:
-          link_types: The types of link.
-          target_types: The types of the target objects (as specified in the
-              'type' field).
-          direction: outbound, inbound, or any.
-          include_original: Whether the original object is to be included in the
-              result or not.
-          min_hops: The minumum number of nodes to go through (defaults to 1:
-              direct neighbors)
-          max_hops: The maximum number of nodes to go through (defaults to 1:
-              direct neighbors)
-          raw: Whether to return a raw dictionary or a Yeti object.
+            link_types: The types of link.
+            target_types: The types of the target objects (as specified in the
+                'type' field).
+            direction: outbound, inbound, or any.
+            include_original: Whether the original object is to be included in the
+                result or not.
+            min_hops: The minumum number of nodes to go through (defaults to 1:
+                direct neighbors)
+            max_hops: The maximum number of nodes to go through (defaults to 1:
+                direct neighbors)
+            offset: The number of results to skip.
+            count: The number of results to return.
+            sorting: A list of tuples containing the field to sort on and a boolean
+                    indicating if it should be sorted in ascending order.
+            user: The user requesting the data; used to take ACLs into account.
+            include_tags: Whether to include tags in the result.
 
         Returns:
           Tuple[dict, list, int]:
@@ -967,12 +938,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
         if filter:
             filters = []
             for i, f in enumerate(filter):
-                if f.operator not in {"=~", "=", "in"}:
-                    f.operator = "="
+                if f.pathcompare.lower() not in {"any", "all", "none"}:
+                    f.pathcompare = ""
 
-                if f.operator in {"=~", "="}:
+                if f.operator.lower() not in {"=~", "==", "in"}:
+                    f.operator = "=="
+
+                # =~ not compatible with path operators
+                if f.operator == "=~":
+                    f.pathcompare = ""
+
+                if f.operator in {"=~", "=="}:
                     filters.append(
-                        f"(p.edges[*].@filter_key{i} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.operator} @filter_value{i})"
+                        f"(p.edges[*].@filter_key{i} {f.pathcompare} {f.operator} @filter_value{i} OR p.vertices[*].@filter_key{i} {f.pathcompare} {f.operator} @filter_value{i})"
                     )
                 if f.operator == "in":
                     filters.append(
@@ -1005,21 +983,30 @@ class ArangoYetiConnector(AbstractYetiConnector):
             acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
             args["username"] = user.username
 
+        if include_tags:
+            tags_query = """
+            LET vertices = (
+                FOR object in p['vertices']
+                let innertags = (FOR tag, edge in 1..1 OUTBOUND object tagged RETURN { [tag.name]: edge })
+                RETURN MERGE(object, {tags: MERGE(innertags)})
+            )
+            """
+        else:
+            tags_query = """
+            LET vertices = p['vertices']
+            """
+
         aql = f"""
         WITH tags, observables, entities, dfiq, indicators
 
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
           OPTIONS {{ uniqueVertices: "path" }}
           {query_filter}
-          LET v_with_tags = (
-            FOR observable in p['vertices']
-              let innertags = (FOR tag, edge in 1..1 OUTBOUND observable tagged RETURN {{ [tag.name]: edge }})
-              RETURN MERGE(observable, {{tags: MERGE(innertags)}})
-          )
+          {tags_query}
           {acl_query}
           {limit}
           {sorting_aql}
-          RETURN {{ vertices: v_with_tags, g: p }}
+          RETURN {{ vertices: vertices, g: p }}
         """
         neighbors = self._db.aql.execute(
             aql, bind_vars=args, count=True, full_count=True
@@ -1088,8 +1075,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
             vertex_type = vertex.get("type") or vertex.get("root_type") or "tag"
             neighbor_schema = type_mapping[vertex_type]
             vertex["__id"] = vertex.pop("_key")
-            # We want the "extended ID" here, e.g. observables/12345
-            vertices[vertex["_id"]] = neighbor_schema.load(vertex)
+            if vertex["_id"] not in vertices:
+                vertices[vertex["_id"]] = neighbor_schema.load(vertex)
 
     @classmethod
     def count(cls: Type[TYetiObject]):
