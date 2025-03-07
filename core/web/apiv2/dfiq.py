@@ -36,7 +36,8 @@ class DFIQValidateResponse(BaseModel):
 class PatchDFIQRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    dfiq_yaml: str
+    dfiq_yaml: str | None = None
+    dfiq_object: dfiq.DFIQTypes | None = None
     dfiq_type: dfiq.DFIQType
     update_indicators: bool = False
 
@@ -279,14 +280,33 @@ def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
 @permission_on_target(roles.Permission.WRITE)
 def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQTypes:
     """Modifies an DFIQ object in the database."""
+
+    if request.dfiq_object and request.dfiq_yaml:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot provide both dfiq_object and dfiq_yaml in the request",
+        )
+
+    if not request.dfiq_object and not request.dfiq_yaml:
+        raise HTTPException(
+            status_code=400,
+            detail="Either dfiq_object or dfiq_yaml must be provided in the request",
+        )
+
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(id)  # type: ignore
     if not db_dfiq:
         raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
 
-    try:
-        update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
-    except ValueError as error:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+    if request.dfiq_yaml:
+        try:
+            update_data = dfiq.TYPE_MAPPING[db_dfiq.type].from_yaml(request.dfiq_yaml)
+        except ValueError as error:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+            )
+
+    if request.dfiq_object:
+        update_data = request.dfiq_object
 
     if db_dfiq.type != update_data.type:
         raise HTTPException(

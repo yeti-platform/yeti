@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 import sys
 import unittest
@@ -219,6 +220,99 @@ class DFIQTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["parent_ids"], [])
+
+    def test_dfiq_patch_yaml(self) -> None:
+        scenario = dfiq.DFIQScenario(
+            name="existing_scenario",
+            dfiq_id="S1003",
+            uuid="2ee16263-56f8-49a5-9b33-d1a2dd8b829c",
+            dfiq_version="1.1.0",
+            description="desc",
+            dfiq_yaml="mock",
+        ).save()
+
+        with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.patch(
+            f"/api/v2/dfiq/{scenario.id}",
+            json={"dfiq_yaml": yaml_string, "dfiq_type": scenario.type},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["dfiq_id"], "S1003")
+        self.assertEqual(data["uuid"], "2ee16263-56f8-49a5-9b33-d1a2dd8b829c")
+        # check that we have the description from the yaml
+        self.assertEqual(data["description"], "Long description 1\n")
+
+    def test_dfiq_patch_object(self):
+        question = dfiq.DFIQQuestion(
+            name="What is a question?",
+            uuid="bd46ce6e-c933-46e5-960c-36945aaef401",
+            dfiq_version="1.1.0",
+            description="desc",
+            parent_ids=[],
+            dfiq_yaml="mock",
+            approaches=[
+                dfiq.DFIQApproach(
+                    name="public_approach",
+                    description="desc",
+                    tags=["public"],
+                    steps=[
+                        dfiq.DFIQApproachStep(
+                            name="step1",
+                            description="desc",
+                            type="ForensicArtifact",
+                            stage="analysis",
+                        ),
+                        dfiq.DFIQApproachStep(
+                            name="step2",
+                            description="desc",
+                            type="opensearch-query",
+                            stage="collection",
+                        ),
+                    ],
+                ),
+                dfiq.DFIQApproach(
+                    name="internal_approach",
+                    description="desc",
+                    tags=["internal"],
+                    steps=[],
+                ),
+            ],
+        ).save()
+
+        question.description = "patched description"
+        question.approaches.append(
+            dfiq.DFIQApproach(
+                name="new_approach",
+                description="desc",
+                tags=["public"],
+                steps=[
+                    dfiq.DFIQApproachStep(
+                        name="step1",
+                        description="desc",
+                        type="opensearch-query",
+                        stage="collection",
+                        value="***",
+                    ),
+                ],
+            )
+        )
+
+        question_json = json.loads(question.model_dump_json())
+        response = client.patch(
+            f"/api/v2/dfiq/{question.id}",
+            json={"dfiq_object": question_json, "dfiq_type": question.type},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["description"], "patched description")
+        self.assertEqual(len(data["approaches"]), 3)
+        self.assertEqual(data["approaches"][2]["name"], "new_approach")
+        self.assertEqual(len(data["approaches"][2]["steps"]), 1)
+        self.assertEqual(data["approaches"][2]["steps"][0]["type"], "opensearch-query")
+        self.assertEqual(data["approaches"][2]["steps"][0]["value"], "***")
 
     def test_dfiq_patch_updates_parents(self) -> None:
         scenario1 = dfiq.DFIQScenario(
