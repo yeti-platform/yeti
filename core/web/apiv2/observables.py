@@ -5,26 +5,29 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.config.config import yeti_config
-from core.schemas import audit, graph, observable, rbac, roles
+from core.schemas import audit, graph, observable, rbac, roles, tag
 from core.schemas.observable import Observable, ObservableType, ObservableTypes
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
-from core.schemas.tag import MAX_TAG_LENGTH, MAX_TAGS_REQUEST
+
+from . import context
 
 # defaults to 10MiB if not defined
 MAX_FILE_UPLOAD = yeti_config.get("web", "max_file_upload", 10 * 1024 * 1024)
 
 
 class TagRequestMixin(BaseModel):
-    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
+    tags: conlist(str, max_length=tag.MAX_TAGS_REQUEST) = []
 
     @field_validator("tags")
     @classmethod
     def validate_tags(cls, value) -> list[str]:
-        for tag in value:
-            if not tag or not tag.strip():
+        for tag_name in value:
+            if tag_name is None or not tag_name.strip():
                 raise ValueError("Tags cannot be empty")
-            if len(tag) > MAX_TAG_LENGTH:
-                raise ValueError(f"Tag {tag} exceeds max length ({MAX_TAG_LENGTH})")
+            if len(tag_name) > tag.MAX_TAG_LENGTH:
+                raise ValueError(
+                    f"Tag {tag_name} exceeds max length ({tag.MAX_TAG_LENGTH})"
+                )
         return value
 
 
@@ -74,18 +77,6 @@ class ImportUrlRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
     url: str
-
-
-class AddContextRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    source: str
-    context: dict
-    skip_compare: set = set()
-
-
-class DeleteContextRequest(AddContextRequest):
-    pass
 
 
 class ObservableSearchRequest(BaseModel):
@@ -243,39 +234,28 @@ def details(httpreq: Request, id: str) -> ObservableTypes:
 @router.post("/{id}/context")
 @permission_on_target(roles.Permission.WRITE)
 def add_context(
-    httpreq: Request, id: str, request: AddContextRequest
+    httpreq: Request, id: str, request: context.AddContextRequest
 ) -> ObservableTypes:
     """Adds context to an observable."""
-    observable_obj = Observable.get(id)
-    if not observable_obj:
-        raise HTTPException(status_code=404, detail=f"Observable {id} not found")
+    return context.add_context(Observable, httpreq, id, request)
 
-    old_context = observable_obj.context.copy()
-    refreshed_obj = observable_obj.add_context(
-        request.source, request.context, skip_compare=request.skip_compare
-    )
-    observable_obj.context = old_context
-    audit.log_timeline(httpreq.state.username, refreshed_obj, old=observable_obj)
-    return refreshed_obj
+
+@router.post("/{id}/context/replace")
+@permission_on_target(roles.Permission.WRITE)
+def replace_context(
+    httpreq: Request, id: str, request: context.ReplaceContextRequest
+) -> ObservableTypes:
+    """Replaces context in an observable."""
+    return context.replace_context(Observable, httpreq, id, request)
 
 
 @router.post("/{id}/context/delete")
 @permission_on_target(roles.Permission.WRITE)
 def delete_context(
-    httpreq: Request, id, request: DeleteContextRequest
+    httpreq: Request, id, request: context.DeleteContextRequest
 ) -> ObservableTypes:
     """Removes context to an observable."""
-    observable_obj = Observable.get(id)
-    if not observable_obj:
-        raise HTTPException(status_code=404, detail=f"Observable {id} not found")
-
-    old_context = observable_obj.context.copy()
-    refreshed_obj = observable_obj.delete_context(
-        request.source, request.context, skip_compare=request.skip_compare
-    )
-    observable_obj.context = old_context
-    audit.log_timeline(httpreq.state.username, refreshed_obj, old=observable_obj)
-    return refreshed_obj
+    return context.delete_context(Observable, httpreq, id, request)
 
 
 @router.post("/search")
