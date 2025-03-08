@@ -15,6 +15,8 @@ from core.schemas.indicator import (
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAGS_REQUEST
 
+from . import context
+
 logger = logging.getLogger(__name__)
 
 
@@ -121,6 +123,33 @@ def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> Indicato
     audit.log_timeline(httpreq.state.username, new, old=db_indicator)
     new.get_acls()
     return new
+
+
+@router.post("/{id}/context")
+@permission_on_target(roles.Permission.WRITE)
+def add_context(
+    httpreq: Request, id: str, request: context.AddContextRequest
+) -> IndicatorTypes:
+    """Adds context to an indicator."""
+    return context.add_context(Indicator, httpreq, id, request)
+
+
+@router.post("/{id}/context/replace")
+@permission_on_target(roles.Permission.WRITE)
+def replace_context(
+    httpreq: Request, id: str, request: context.ReplaceContextRequest
+) -> IndicatorTypes:
+    """Replaces context in an indicator."""
+    return context.replace_context(Indicator, httpreq, id, request)
+
+
+@router.post("/{id}/context/delete")
+@permission_on_target(roles.Permission.WRITE)
+def delete_context(
+    httpreq: Request, id, request: context.DeleteContextRequest
+) -> IndicatorTypes:
+    """Removes context to an indicator."""
+    return context.delete_context(Indicator, httpreq, id, request)
 
 
 @router.get("/{id}")

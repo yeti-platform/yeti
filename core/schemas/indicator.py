@@ -7,7 +7,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
-from core.schemas.model import YetiAclModel, YetiTagModel
+from core.schemas.model import YetiAclModel, YetiContextModel, YetiTagModel
 
 
 def future():
@@ -35,7 +35,9 @@ class DiamondModel(Enum):
     victim = "victim"
 
 
-class Indicator(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector):
+class Indicator(
+    YetiTagModel, YetiAclModel, YetiContextModel, database_arango.ArangoYetiConnector
+):
     model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "indicators"
     _type_filter: ClassVar[str] = ""
