@@ -22,6 +22,44 @@ class YetiBaseModel(BaseModel):
         return self.__id
 
 
+class YetiContextModel(YetiBaseModel):
+    context: list[dict] = []
+
+    def add_context(self, source: str, context: dict, skip_compare: set = set()):
+        """Adds context to a Yeti object."""
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
+        for idx, db_context in enumerate(list(self.context)):
+            if db_context["source"] != source:
+                continue
+            for field in compare_fields:
+                if db_context.get(field) != context.get(field):
+                    context["source"] = source
+                    self.context[idx] = context
+                    break
+            else:
+                db_context.update(context)
+                break
+        else:
+            context["source"] = source
+            self.context.append(context)
+        return self.save()
+
+    def delete_context(self, source: str, context: dict, skip_compare: set = set()):
+        """Deletes context from an observable."""
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
+        for idx, db_context in enumerate(list(self.context)):
+            if db_context["source"] != source:
+                continue
+            for field in compare_fields:
+                if db_context.get(field) != context.get(field):
+                    break
+            else:
+                del self.context[idx]
+                break
+
+        return self.save()
+
+
 class YetiAclModel(YetiBaseModel):
     _acls: dict[str, RoleRelationship] = {}
 
