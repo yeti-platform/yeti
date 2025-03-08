@@ -5,23 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Flask",
-            "type": "python",
+            "name": "Python Debugger: FastAPI",
+            "type": "debugpy",
             "request": "launch",
-            "module": "flask",
-            "env": {
-                "FLASK_APP": "core.web.webapp",
-                "OAUTHLIB_INSECURE_TRANSPORT": "1"
-            },
+            "module": "uvicorn",
             "args": [
-                "run",
-                "--no-debugger",
-                "--no-reload",
+                "core.web.webapp:app",
+                "--reload",
                 "--host",
                 "0.0.0.0"
             ],
-            "jinja": true,
-            "justMyCode": false
+            "jinja": true
         }
     ]
 }
