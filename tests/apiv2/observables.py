@@ -489,6 +489,16 @@ class ObservableContextTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["context"], [{"key": "value", "source": "test_source"}])
 
+    def test_replace_context(self) -> None:
+        self.observable.add_context("test_source", {"key": "value"})
+        response = client.put(
+            f"/api/v2/observables/{self.observable.id}/context",
+            json={"context": [{"key": "value2", "source": "blahSource"}]},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["context"], [{"key": "value2", "source": "blahSource"}])
+
     def test_search_context(self) -> None:
         """Tests that we can filter observables based on context subfields."""
         time.sleep(1)

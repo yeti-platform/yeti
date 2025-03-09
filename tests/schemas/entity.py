@@ -81,6 +81,18 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(tool_entities[0], self.tool1)
         self.assertEqual(malware_entities[0], self.malware1)
 
+    def test_add_context(self) -> None:
+        entity_obj = ThreatActor(name="APT123").save()
+        entity_obj.add_context("test_source", {"abc": 123, "def": 456})
+        entity_obj.add_context("test_source2", {"abc": 123, "def": 456})
+
+        entity_obj = ThreatActor.get(entity_obj.id)
+        self.assertEqual(len(entity_obj.context), 2)
+        self.assertEqual(entity_obj.context[0]["source"], "test_source")
+        self.assertEqual(entity_obj.context[1]["source"], "test_source2")
+        self.assertEqual(entity_obj.context[0]["abc"], 123)
+        self.assertEqual(entity_obj.context[1]["abc"], 123)
+
     def test_filter_entities(self):
         time.sleep(0.5)  # wait for views to catch up
         entities, total = Entity.filter({"name": "APT123"})
