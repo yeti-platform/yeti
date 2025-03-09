@@ -30,14 +30,18 @@ handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
+global DEBUG
+
 
 class Consumer(ConsumerMixin):
     def __init__(self, task_class: EventTask | LogTask, stop_event, connection, queues):
+        global DEBUG
         self.task_class = task_class
         self._stop_event = stop_event
         self.connection = connection
         self.queues = queues
         self._logger = None
+        self._debug = DEBUG
         get_plugins_list(task_class)
 
     @property
@@ -47,6 +51,7 @@ class Consumer(ConsumerMixin):
     @property
     def logger(self):
         if self._logger is None:
+            global DEBUG
             name = self.task_class.__name__.lower().replace("task", "")
             self._logger = logging.getLogger(f"task.{name}")
             self._logger.propagate = False
@@ -55,6 +60,7 @@ class Consumer(ConsumerMixin):
             )
             handler = logging.StreamHandler()
             handler.setFormatter(formatter)
+            self._logger.setLevel(logging.DEBUG if self._debug else logging.INFO)
             self._logger.addHandler(handler)
         return self._logger
 
@@ -155,6 +161,8 @@ class Worker(multiprocessing.Process):
 
 
 if __name__ == "__main__":
+    global DEBUG
+
     multiprocessing.set_start_method("spawn")
     parser = argparse.ArgumentParser(
         prog="yeti-consumer", description="Consume events and logs from the event bus"
@@ -170,7 +178,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     args = parser.parse_args()
-    logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
+    DEBUG = args.debug
+
+    logger.setLevel(logging.DEBUG if DEBUG else logging.INFO)
     if not args.concurrency:
         concurrency = multiprocessing.cpu_count()
     else:
