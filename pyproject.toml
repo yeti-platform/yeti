@@ -8,8 +8,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
-uvicorn = "^0.23.2"
-fastapi = "^0.109.0"
+uvicorn = "^0.34"
+fastapi = "^0.115"
 python-arango = "^8.1.2"
 celery = "^5.3.4"
 validators = "^0.34.0"
@@ -29,7 +29,7 @@ idstools = "^0.6.5"
 aenum = "^3.1.15"
 boto3 = { version = "^1.35.22", optional = true }
 tqdm = "^4.67.1"
-plyara = "2.2.1"  # while https://github.com/plyara/plyara/issues/143 is addressed
+plyara = "^2.2"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
