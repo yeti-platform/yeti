@@ -278,7 +278,7 @@ class Yara(indicator.Indicator):
             db_rule = rule_map.get(rule["rule_name"])
             if not db_rule:
                 raise ValueError(f"Rule {rule['rule_name']} not found in database.")
-            db_rule.apply_overlays_plyara(rule, overlays)
+            db_rule.apply_overlays_plyara(overlays, parsed_rule=rule)
             final += db_rule.pattern
         return final
 
