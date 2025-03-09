@@ -230,3 +230,49 @@ class YaraIndicatorTest(unittest.TestCase):
         self.assertEqual(result.matches[0].strings[0].identifier, "$a")
         self.assertEqual(result.matches[0].strings[0].instances[0].offset, 13)
         self.assertEqual(result.matches[0].strings[0].instances[0].matched_data, b"Ba")
+
+    def test_overlay(self):
+        rule_pattern = """
+        rule test {
+            meta:
+                intact_meta = "foo"
+                override_meta = "bar"
+            strings:
+                $a = "Ba"
+            condition:
+                $a
+        }
+        """
+        rule = Yara(
+            name="test",
+            pattern=rule_pattern,
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+        rule.add_context("testOverlay", {"override_meta": "baz", "new_meta": "new"})
+
+        rule.apply_overlays(["testOverlay"])
+        # use regex to replace contiguous spaces and newlines by a single space
+        import re
+
+        new_pattern = re.sub(r"\s+", " ", rule.pattern)
+        expected_pattern = re.sub(
+            r"\s+",
+            " ",
+            """
+        rule test {
+            meta:
+                intact_meta = "foo"
+                override_meta = "baz"
+                new_meta = "new"
+            strings:
+                $a = "Ba"
+            condition:
+                $a
+        }
+        """,
+        )
+        self.assertEqual(
+            new_pattern.strip(),
+            expected_pattern.strip(),
+        )

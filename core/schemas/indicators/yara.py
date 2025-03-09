@@ -270,6 +270,66 @@ class Yara(indicator.Indicator):
         seen.remove(self.name)
         return concatenated_rules
 
+    def apply_overlays(self, overlays: set[str]):
+        """Apply an overlay to a Yara rule.
+
+        Args:
+            overlay: The overlay to apply.
+        """
+        metadata_overlay = {}
+
+        for context in self.context:
+            if context["source"] in overlays:
+                if metadata_overlay:
+                    raise ValueError(f"Multiple overlays detected: {context['source']}")
+                del context["source"]
+                metadata_overlay.update(context)
+
+        meta_marker = self.pattern.find("meta:\n")
+
+        strings_marker = self.pattern.find("strings:")
+
+        remaining = set(metadata_overlay.keys())
+        new_meta = "meta:\n"
+
+        if meta_marker != -1:
+            old_meta = self.pattern[meta_marker + 6 : strings_marker]
+            for metaline in old_meta.splitlines():
+                metaline = metaline.strip()
+                keyvalue = metaline.split("=", 1)
+                if len(keyvalue) != 2:
+                    continue
+                key, value = keyvalue
+                key = key.strip()
+                value = value.strip()
+                if key in metadata_overlay:
+                    new_value = metadata_overlay[key]
+                    if isinstance(new_value, str):
+                        new_value = f'"{new_value}"'
+                    new_meta += f"{key} = {new_value}\n"
+                    remaining.remove(key)
+                else:
+                    new_meta += f"{key} = {value}\n"
+
+        for key in remaining:
+            new_value = metadata_overlay[key]
+            if isinstance(new_value, str):
+                new_value = f'"{new_value}"'
+            new_meta += f"{key} = {new_value}\n"
+
+        new_pattern = (
+            self.pattern[:meta_marker] + new_meta + self.pattern[strings_marker:]
+        )
+        # try compiling the yara rule
+        # try:
+        #     yara.compile(source=new_pattern, externals=ALLOWED_EXTERNALS)
+        # except yara.SyntaxError as error:
+        #     raise ValueError(str(error)) from error
+
+        self.pattern = new_pattern
+
+        return self
+
     @classmethod
     def generate_yara_bundle(cls, rules: list["Yara"]) -> str:
         """Export a list of Yara rules to a single string.
