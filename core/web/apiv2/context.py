@@ -34,6 +34,12 @@ def replace_context(
             status_code=404, detail=f"{base_type.__name__} {id} not found"
         )
 
+    for item in request.context:
+        if "source" not in item:
+            raise HTTPException(
+                status_code=400, detail=f"Source is required in context {item}"
+            )
+
     old_context = obj.context.copy()
     obj.context = request.context
     refreshed_obj = obj.save()
