@@ -13,7 +13,7 @@ fastapi = "^0.109.0"
 python-arango = "^8.1.2"
 celery = "^5.3.4"
 validators = "^0.34.0"
-python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+python-jose = {extras = ["cryptography"], version = "^3.4"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = ">=0.0.6,<0.0.19"
 pandas = "^2.1.1"
