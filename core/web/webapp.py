@@ -27,7 +27,7 @@ from core.web.apiv2 import (
 
 SECRET_KEY = yeti_config.get("auth", "secret_key")
 if not SECRET_KEY:
-    SECRET_KEY = str(os.urandom(64))
+    raise RuntimeError("You must set auth.secret_key in the configuration file.")
 
 app = FastAPI()
 
