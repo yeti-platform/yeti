@@ -48,6 +48,35 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(data["name"], "ta2")
         self.assertEqual(data["type"], "threat-actor")
 
+    def test_add_context(self):
+        response = client.post(
+            f"/api/v2/entities/{self.entity1.id}/context",
+            json={"source": "testSource", "context": {"test": "test"}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["context"], [{"test": "test", "source": "testSource"}])
+
+    def test_replace_context(self):
+        self.entity1.add_context("testSource", {"test": "test"})
+        response = client.put(
+            f"/api/v2/entities/{self.entity1.id}/context",
+            json={"context": [{"test2": "test2", "source": "blahSource"}]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["context"], [{"test2": "test2", "source": "blahSource"}])
+
+    def test_delete_context(self):
+        self.entity1.add_context("testSource", {"test": "test"})
+        response = client.post(
+            f"/api/v2/entities/{self.entity1.id}/context/delete",
+            json={"source": "testSource", "context": {"test": "test"}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["context"], [])
+
     def test_get_entity(self):
         response = client.get(f"/api/v2/entities/{self.entity1.id}")
         self.assertEqual(response.status_code, 200)

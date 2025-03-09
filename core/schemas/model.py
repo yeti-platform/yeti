@@ -22,6 +22,65 @@ class YetiBaseModel(BaseModel):
         return self.__id
 
 
+class YetiContextModel(YetiBaseModel):
+    context: list[dict] = []
+
+    def add_context(
+        self,
+        source: str,
+        context: dict,
+        skip_compare: set = set(),
+        overwrite: bool = False,
+    ):
+        """Adds context to a Yeti object.
+
+        Args:
+            source: The source of the context.
+            context: The context to add.
+            skip_compare: Fields to skip when comparing context.
+            overwrite: Whether to overwrite existing context regardless of comparison.
+        """
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
+
+        found_idx = -1
+        temp_context = {key: context.get(key) for key in compare_fields}
+
+        for idx, db_context in enumerate(list(self.context)):
+            if db_context["source"] != source:
+                continue
+            if overwrite:
+                found_idx = idx
+                break
+            temp_db = {key: db_context.get(key) for key in compare_fields}
+
+            if temp_db == temp_context:
+                found_idx = idx
+                break
+
+        context["source"] = source
+        if found_idx != -1:
+            self.context[found_idx] = context
+        else:
+            self.context.append(context)
+
+        return self.save()
+
+    def delete_context(self, source: str, context: dict, skip_compare: set = set()):
+        """Deletes context from an observable."""
+        compare_fields = set(context.keys()) - skip_compare - {"source"}
+        for idx, db_context in enumerate(list(self.context)):
+            if db_context["source"] != source:
+                continue
+            for field in compare_fields:
+                if db_context.get(field) != context.get(field):
+                    break
+            else:
+                del self.context[idx]
+                break
+
+        return self.save()
+
+
 class YetiAclModel(YetiBaseModel):
     _acls: dict[str, RoleRelationship] = {}
 

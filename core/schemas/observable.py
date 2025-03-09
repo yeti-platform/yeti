@@ -6,8 +6,6 @@ import tempfile
 # Data Schema
 # Dynamically register all observable types
 from enum import Enum
-
-# from enum import Enum, EnumMeta
 from typing import IO, ClassVar, List, Literal, Tuple
 
 import requests
@@ -16,7 +14,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now, refang
-from core.schemas.model import YetiAclModel, YetiTagModel
+from core.schemas.model import YetiAclModel, YetiContextModel, YetiTagModel
 
 
 # Forward declarations
@@ -29,14 +27,15 @@ TYPE_MAPPING = {}
 FileLikeObject = str | os.PathLike | IO | tempfile.SpooledTemporaryFile
 
 
-class Observable(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector):
+class Observable(
+    YetiTagModel, YetiAclModel, YetiContextModel, database_arango.ArangoYetiConnector
+):
     model_config = ConfigDict(str_strip_whitespace=True)
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["observable"] = "observable"
 
     value: str = Field(min_length=1)
-    context: list[dict] = []
     last_analysis: dict[str, datetime.datetime] = {}
 
     created: datetime.datetime = Field(default_factory=now)
@@ -66,56 +65,6 @@ class Observable(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector
             except ValueError:
                 return False
         return valid
-
-    def add_context(
-        self,
-        source: str,
-        context: dict,
-        skip_compare: set = set(),
-        overwrite: bool = False,
-    ) -> "ObservableTypes":  # noqa: F821
-        """Adds context to an observable."""
-        compare_fields = set(context.keys()) - skip_compare - {"source"}
-
-        found_idx = -1
-        temp_context = {key: context.get(key) for key in compare_fields}
-
-        for idx, db_context in enumerate(list(self.context)):
-            if db_context["source"] != source:
-                continue
-            if overwrite:
-                found_idx = idx
-                break
-            temp_db = {key: db_context.get(key) for key in compare_fields}
-
-            if temp_db == temp_context:
-                found_idx = idx
-                break
-
-        context["source"] = source
-        if found_idx != -1:
-            self.context[found_idx] = context
-        else:
-            self.context.append(context)
-
-        return self.save()
-
-    def delete_context(
-        self, source: str, context: dict, skip_compare: set = set()
-    ) -> "ObservableTypes":  # noqa: F821
-        """Deletes context from an observable."""
-        compare_fields = set(context.keys()) - skip_compare - {"source"}
-        for idx, db_context in enumerate(list(self.context)):
-            if db_context["source"] != source:
-                continue
-            for field in compare_fields:
-                if db_context.get(field) != context.get(field):
-                    break
-            else:
-                del self.context[idx]
-                break
-
-        return self.save()
 
 
 def guess_type(value: str) -> str | None:

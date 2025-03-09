@@ -52,6 +52,20 @@ class IndicatorTest(unittest.TestCase):
         self.assertIsInstance(indicator_obj.diamond, DiamondModel)
         self.assertEqual(indicator_obj.diamond, DiamondModel.capability)
 
+    def test_add_context(self) -> None:
+        indicator_obj = indicator.save(
+            name="regex1", type="regex", pattern="asd", diamond="capability"
+        )
+        indicator_obj.add_context("test_source", {"abc": 123, "def": 456})
+        indicator_obj.add_context("test_source2", {"abc": 123, "def": 456})
+
+        indicator_obj = Regex.get(indicator_obj.id)
+        self.assertEqual(len(indicator_obj.context), 2)
+        self.assertEqual(indicator_obj.context[0]["source"], "test_source")
+        self.assertEqual(indicator_obj.context[1]["source"], "test_source2")
+        self.assertEqual(indicator_obj.context[0]["abc"], 123)
+        self.assertEqual(indicator_obj.context[1]["abc"], 123)
+
     def test_filter_entities_different_types(self) -> None:
         regex = Regex(
             name="regex1",

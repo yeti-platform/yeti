@@ -61,6 +61,35 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(data["name"], "otherRegex")
         self.assertEqual(data["type"], "regex")
 
+    def test_add_context(self):
+        response = client.post(
+            f"/api/v2/indicators/{self.indicator1.id}/context",
+            json={"source": "testSource", "context": {"test": "test"}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["context"], [{"test": "test", "source": "testSource"}])
+
+    def test_replace_context(self):
+        self.indicator1.add_context("testSource", {"test": "test"})
+        response = client.put(
+            f"/api/v2/indicators/{self.indicator1.id}/context",
+            json={"context": [{"test2": "test2", "source": "blahSource"}]},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["context"], [{"test2": "test2", "source": "blahSource"}])
+
+    def test_delete_context(self):
+        self.indicator1.add_context("testSource", {"test": "test"})
+        response = client.post(
+            f"/api/v2/indicators/{self.indicator1.id}/context/delete",
+            json={"source": "testSource", "context": {"test": "test"}},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["context"], [])
+
     def test_get_indicator(self):
         response = client.get(f"/api/v2/indicators/{self.indicator1.id}")
         data = response.json()
