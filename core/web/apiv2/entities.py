@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.schemas import audit, graph, rbac, roles, user
+from core.schemas import audit, graph, rbac, roles
 from core.schemas.entity import Entity, EntityType, EntityTypes
 from core.schemas.tag import MAX_TAGS_REQUEST
+
+from . import context
 
 
 # Request schemas
@@ -87,6 +89,33 @@ def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes
     new = updated_entity.save()
     audit.log_timeline(httpreq.state.username, new, old=db_entity)
     return new
+
+
+@router.post("/{id}/context")
+@rbac.permission_on_target(roles.Permission.WRITE)
+def add_context(
+    httpreq: Request, id: str, request: context.AddContextRequest
+) -> EntityTypes:
+    """Adds context to an Entity."""
+    return context.add_context(Entity, httpreq, id, request)
+
+
+@router.put("/{id}/context")
+@rbac.permission_on_target(roles.Permission.WRITE)
+def replace_context(
+    httpreq: Request, id: str, request: context.ReplaceContextRequest
+) -> EntityTypes:
+    """Replaces context in an Entity."""
+    return context.replace_context(Entity, httpreq, id, request)
+
+
+@router.post("/{id}/context/delete")
+@rbac.permission_on_target(roles.Permission.WRITE)
+def delete_context(
+    httpreq: Request, id, request: context.DeleteContextRequest
+) -> EntityTypes:
+    """Removes context to an Entity."""
+    return context.delete_context(Entity, httpreq, id, request)
 
 
 @router.get("/{id}")
