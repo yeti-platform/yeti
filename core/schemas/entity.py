@@ -6,7 +6,7 @@ from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
-from core.schemas.model import YetiAclModel, YetiTagModel
+from core.schemas.model import YetiAclModel, YetiContextModel, YetiTagModel
 
 
 # Forward declarations
@@ -18,7 +18,9 @@ EntityTypes = ()
 TYPE_MAPPING = {}
 
 
-class Entity(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector):
+class Entity(
+    YetiTagModel, YetiAclModel, YetiContextModel, database_arango.ArangoYetiConnector
+):
     model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = ["related_observables_count"]
     _collection_name: ClassVar[str] = "entities"
@@ -27,7 +29,6 @@ class Entity(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector):
 
     name: str = Field(min_length=1)
     description: str = ""
-    context: list[dict] = []
     created: datetime.datetime = Field(default_factory=now)
     modified: datetime.datetime = Field(default_factory=now)
 
@@ -53,27 +54,6 @@ class Entity(YetiTagModel, YetiAclModel, database_arango.ArangoYetiConnector):
     @classmethod
     def is_valid(cls, object: "Entity") -> bool:
         return False
-
-    def add_context(
-        self, source: str, context: dict, skip_compare: set = set()
-    ) -> "Entity":  # noqa: F821
-        """Adds context to an entity."""
-        compare_fields = set(context.keys()) - skip_compare - {"source"}
-        for idx, db_context in enumerate(list(self.context)):
-            if db_context["source"] != source:
-                continue
-            for field in compare_fields:
-                if db_context.get(field) != context.get(field):
-                    context["source"] = source
-                    self.context[idx] = context
-                    break
-            else:
-                db_context.update(context)
-                break
-        else:
-            context["source"] = source
-            self.context.append(context)
-        return self.save()
 
 
 def create(*, name: str, type: str, **kwargs) -> "EntityTypes":
