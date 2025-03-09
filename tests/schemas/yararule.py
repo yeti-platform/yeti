@@ -236,7 +236,9 @@ class YaraIndicatorTest(unittest.TestCase):
         rule test {
             meta:
                 intact_meta = "foo"
+                intact_int = 10
                 override_meta = "bar"
+                override_int = 20
             strings:
                 $a = "Ba"
             condition:
@@ -249,7 +251,15 @@ class YaraIndicatorTest(unittest.TestCase):
             location="any",
             diamond=DiamondModel.capability,
         ).save()
-        rule.add_context("testOverlay", {"override_meta": "baz", "new_meta": "new"})
+        rule.add_context(
+            "testOverlay",
+            {
+                "override_meta": "baz",
+                "override_int": 30,
+                "new_meta": "new",
+                "new_int": 100,
+            },
+        )
 
         rule.apply_overlays(["testOverlay"])
         # use regex to replace contiguous spaces and newlines by a single space
@@ -263,8 +273,11 @@ class YaraIndicatorTest(unittest.TestCase):
         rule test {
             meta:
                 intact_meta = "foo"
+                intact_int = 10
                 override_meta = "baz"
+                override_int = 30
                 new_meta = "new"
+                new_int = 100
             strings:
                 $a = "Ba"
             condition:
