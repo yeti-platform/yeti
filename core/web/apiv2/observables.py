@@ -240,7 +240,7 @@ def add_context(
     return context.add_context(Observable, httpreq, id, request)
 
 
-@router.post("/{id}/context/replace")
+@router.put("/{id}/context")
 @permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest

@@ -12,7 +12,6 @@ from core.schemas.indicator import (
     IndicatorTypes,
     Yara,
 )
-from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 from core.schemas.tag import MAX_TAGS_REQUEST
 
 from . import context
@@ -85,7 +84,7 @@ router = APIRouter()
 
 
 @router.post("/")
-@global_permission(roles.Permission.WRITE)
+@rbac.global_permission(roles.Permission.WRITE)
 def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
     """Creates a new indicator in the database."""
     try:
@@ -101,7 +100,7 @@ def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
 
 
 @router.patch("/{id}")
-@permission_on_target(roles.Permission.WRITE)
+@rbac.permission_on_target(roles.Permission.WRITE)
 def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> IndicatorTypes:
     """Modifies an indicator in the database."""
     db_indicator: IndicatorTypes = Indicator.get(id)
@@ -126,7 +125,7 @@ def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> Indicato
 
 
 @router.post("/{id}/context")
-@permission_on_target(roles.Permission.WRITE)
+@rbac.permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
 ) -> IndicatorTypes:
@@ -134,8 +133,8 @@ def add_context(
     return context.add_context(Indicator, httpreq, id, request)
 
 
-@router.post("/{id}/context/replace")
-@permission_on_target(roles.Permission.WRITE)
+@router.put("/{id}/context")
+@rbac.permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
 ) -> IndicatorTypes:
@@ -144,7 +143,7 @@ def replace_context(
 
 
 @router.post("/{id}/context/delete")
-@permission_on_target(roles.Permission.WRITE)
+@rbac.permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
 ) -> IndicatorTypes:
@@ -153,7 +152,7 @@ def delete_context(
 
 
 @router.get("/{id}")
-@permission_on_target(roles.Permission.READ)
+@rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> IndicatorTypes:
     """Returns details about an indicator."""
     db_indicator: IndicatorTypes = Indicator.get(id)  # type: ignore
@@ -165,7 +164,7 @@ def details(httpreq: Request, id: str) -> IndicatorTypes:
 
 
 @router.delete("/{id}")
-@permission_on_target(roles.Permission.DELETE)
+@rbac.permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     """Deletes an indicator."""
     db_indicator = Indicator.get(id)
@@ -198,7 +197,7 @@ def search(
 
 
 @router.post("/tag")
-@permission_on_ids(roles.Permission.WRITE)
+@rbac.permission_on_ids(roles.Permission.WRITE)
 def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
     """Tags entities."""
     indicators = []
