@@ -289,14 +289,12 @@ class Yara(indicator.Indicator):
 
         strings_marker = self.pattern.find("strings:")
 
-        remaining = set(metadata_overlay.keys())
         new_meta = "meta:\n"
 
         if meta_marker != -1:
             old_meta = self.pattern[meta_marker + 6 : strings_marker]
             for metaline in old_meta.splitlines():
-                metaline = metaline.strip()
-                keyvalue = metaline.split("=", 1)
+                keyvalue = metaline.strip().split("=", 1)
                 if len(keyvalue) != 2:
                     continue
                 key, value = keyvalue
@@ -307,11 +305,11 @@ class Yara(indicator.Indicator):
                     if isinstance(new_value, str):
                         new_value = f'"{new_value}"'
                     new_meta += f"{key} = {new_value}\n"
-                    remaining.remove(key)
+                    metadata_overlay.pop(key)
                 else:
                     new_meta += f"{key} = {value}\n"
 
-        for key in remaining:
+        for key in metadata_overlay:
             new_value = metadata_overlay[key]
             if isinstance(new_value, str):
                 new_value = f'"{new_value}"'
@@ -320,11 +318,11 @@ class Yara(indicator.Indicator):
         new_pattern = (
             self.pattern[:meta_marker] + new_meta + self.pattern[strings_marker:]
         )
-        # try compiling the yara rule
-        # try:
-        #     yara.compile(source=new_pattern, externals=ALLOWED_EXTERNALS)
-        # except yara.SyntaxError as error:
-        #     raise ValueError(str(error)) from error
+
+        try:
+            yara.compile(source=new_pattern, externals=ALLOWED_EXTERNALS)
+        except yara.SyntaxError as error:
+            raise ValueError(str(error)) from error
 
         self.pattern = new_pattern
 
