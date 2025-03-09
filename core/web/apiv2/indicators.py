@@ -71,7 +71,7 @@ class YaraBundleRequest(BaseModel):
     ids: list[str] = []
     tags: list[str] = []
     exclude_tags: list[str] = []
-    overlays: set[str]
+    overlays: set[str] = set()
 
 
 class YaraBundleResponse(BaseModel):
@@ -225,6 +225,7 @@ def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
 def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleResponse:
     """Generates a YARA bundle from a list of indicators."""
     yaras = []
+
     for yara_id in request.ids:
         db_yara = Yara.get(yara_id)
         if not db_yara:
@@ -248,16 +249,13 @@ def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleR
             continue
         yaras.append(yara)
 
-    if request.overlays:
-        for yara in yaras:
-            try:
-                yara.apply_overlays(request.overlays)
-            except ValueError as error:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Error applying overlays to Yara {yara.extended_id}: {error}",
-                )
-
     bundle = Yara.generate_yara_bundle(rules=yaras)
+
+    if request.overlays:
+        yara_map = {}
+        for yara in yaras:
+            yara_map[yara.name] = yara
+
+        bundle = Yara.render_with_overlays(bundle, yara_map, request.overlays)
 
     return YaraBundleResponse(bundle=bundle)

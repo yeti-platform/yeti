@@ -270,13 +270,33 @@ class Yara(indicator.Indicator):
         seen.remove(self.name)
         return concatenated_rules
 
-    def apply_overlays(self, overlays: set[str]):
+    @classmethod
+    def render_with_overlays(cls, pattern, rule_map, overlays):
+        parsed_rules = plyara.Plyara().parse_string(pattern)
+        final = ""
+        for rule in parsed_rules:
+            db_rule = rule_map.get(rule["rule_name"])
+            if not db_rule:
+                raise ValueError(f"Rule {rule['rule_name']} not found in database.")
+            db_rule.apply_overlays_plyara(rule, overlays)
+            final += db_rule.pattern
+        return final
+
+    def apply_overlays_plyara(
+        self, overlays: set[str], parsed_rule: dict | None = None
+    ):
         """Apply an overlay to a Yara rule.
 
         Args:
-            overlay: The overlay to apply.
+            overlay: The overlays to apply.
+            parsed_rule: The parsed rule to apply the overlays to. If not provided
+                the rule will be parsed from the pattern.
         """
-        metadata_overlay = {}
+        if not parsed_rule:
+            parsed_rule = plyara.Plyara().parse_string(self.pattern)[0]
+
+        metadata_overlay: dict[str, str | int] = {}
+        parsed_rule_meta = parsed_rule.get("metadata", [])
 
         for context in self.context:
             if context["source"] in overlays:
@@ -285,46 +305,16 @@ class Yara(indicator.Indicator):
                 del context["source"]
                 metadata_overlay.update(context)
 
-        meta_marker = self.pattern.find("meta:\n")
+        remaining = set(metadata_overlay.keys())
+        for item in parsed_rule_meta:
+            for key in metadata_overlay:
+                if key in item:
+                    item[key] = metadata_overlay[key]
+                    remaining.remove(key)
 
-        strings_marker = self.pattern.find("strings:")
-
-        new_meta = "meta:\n"
-
-        if meta_marker != -1:
-            old_meta = self.pattern[meta_marker + 6 : strings_marker]
-            for metaline in old_meta.splitlines():
-                keyvalue = metaline.strip().split("=", 1)
-                if len(keyvalue) != 2:
-                    continue
-                key, value = keyvalue
-                key = key.strip()
-                value = value.strip()
-                if key in metadata_overlay:
-                    new_value = metadata_overlay[key]
-                    if isinstance(new_value, str):
-                        new_value = f'"{new_value}"'
-                    new_meta += f"{key} = {new_value}\n"
-                    metadata_overlay.pop(key)
-                else:
-                    new_meta += f"{key} = {value}\n"
-
-        for key in metadata_overlay:
-            new_value = metadata_overlay[key]
-            if isinstance(new_value, str):
-                new_value = f'"{new_value}"'
-            new_meta += f"{key} = {new_value}\n"
-
-        new_pattern = (
-            self.pattern[:meta_marker] + new_meta + self.pattern[strings_marker:]
-        )
-
-        try:
-            yara.compile(source=new_pattern, externals=ALLOWED_EXTERNALS)
-        except yara.SyntaxError as error:
-            raise ValueError(str(error)) from error
-
-        self.pattern = new_pattern
+        for key in remaining:
+            parsed_rule_meta.append({key: metadata_overlay[key]})
+        self.pattern = plyara.utils.rebuild_yara_rule(parsed_rule)
 
         return self
 

@@ -244,3 +244,26 @@ class IndicatorTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(data["name"], "test")
         self.assertEqual(data["type"], "yara")
+
+    def test_yara_bundle_with_overlays(self):
+        yara = indicator.Yara(
+            name="testoverlay",
+            pattern='rule testoverlay { meta: foo = "bar" score= 0 strings: $a = "test" condition: $a }',
+            location="filesystem",
+            diamond=indicator.DiamondModel.capability,
+        ).save()
+
+        yara.add_context("testOverlay", {"foo": "baz", "score": 99})
+
+        response = client.post(
+            "/api/v2/indicators/yara/bundle",
+            json={"ids": [yara.id], "overlays": ["testOverlay"]},
+        )
+
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        data = data["bundle"]
+        self.assertEqual(
+            data,
+            'rule testoverlay\n{\n\tmeta:\n\t\tfoo = "baz"\n\t\tscore = 99\n\n\tstrings:\n\t\t$a = "test"\n\n\tcondition:\n\t\t$a\n}\n',
+        )

@@ -261,7 +261,7 @@ class YaraIndicatorTest(unittest.TestCase):
             },
         )
 
-        rule.apply_overlays(["testOverlay"])
+        rule.apply_overlays_plyara({"testOverlay"})
         # use regex to replace contiguous spaces and newlines by a single space
         import re
 
@@ -276,8 +276,8 @@ class YaraIndicatorTest(unittest.TestCase):
                 intact_int = 10
                 override_meta = "baz"
                 override_int = 30
-                new_meta = "new"
                 new_int = 100
+                new_meta = "new"
             strings:
                 $a = "Ba"
             condition:
