@@ -22,5 +22,3 @@ RUN poetry install --no-root --with plugins
 ENV PYTHONPATH /app
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
-
-CMD ["webserver"]
