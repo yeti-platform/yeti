@@ -20,6 +20,8 @@ RBAC_DEFAULT_ROLES = {
     "writer": roles.Role.WRITER,
 }
 SECRET_KEY = yeti_config.get("auth", "secret_key")
+if not SECRET_KEY:
+    raise RuntimeError("You must set auth.secret_key in the configuration file.")
 ALGORITHM = yeti_config.get("auth", "algorithm")
 
 

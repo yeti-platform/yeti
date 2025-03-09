@@ -26,6 +26,9 @@ BROWSER_TOKEN_EXPIRE_DELTA = datetime.timedelta(
     minutes=yeti_config.get("auth", "browser_token_expire_minutes", default=43200)
 )
 SECRET_KEY = yeti_config.get("auth", "secret_key")
+if not SECRET_KEY:
+    raise RuntimeError("You must set auth.secret_key in the configuration file.")
+
 ALGORITHM = yeti_config.get("auth", "algorithm")
 YETI_AUTH = yeti_config.get("auth", "enabled")
 YETI_WEBROOT = yeti_config.get("system", "webroot")
