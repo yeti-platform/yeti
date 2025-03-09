@@ -22,7 +22,7 @@ elif [[ "$1" = 'toggle-admin' ]]; then
 elif [[ "$1" = 'migrate-arangodb' ]]; then
     poetry run python yetictl/cli.py migrate-arangodb "${@:2}"
 elif [[ "$1" = 'envshell' ]]; then
-    poetry shell
+    $(poetry env activate) && exec bash
 else
     exec "$@"
 fi
