@@ -312,7 +312,7 @@ class Yara(indicator.Indicator):
                     item[key] = metadata_overlay[key]
                     remaining.remove(key)
 
-        for key in remaining:
+        for key in sorted(remaining):
             parsed_rule_meta.append({key: metadata_overlay[key]})
         self.pattern = plyara.utils.rebuild_yara_rule(parsed_rule)
 
