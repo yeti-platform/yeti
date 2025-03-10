@@ -71,6 +71,7 @@ class YaraBundleRequest(BaseModel):
     ids: list[str] = []
     tags: list[str] = []
     exclude_tags: list[str] = []
+    overlays: set[str] = set()
 
 
 class YaraBundleResponse(BaseModel):
@@ -224,29 +225,38 @@ def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
 @router.post("/yara/bundle")
 def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleResponse:
     """Generates a YARA bundle from a list of indicators."""
-    indicators = []
-    for indicator_id in request.ids:
-        db_indicator = Yara.get(indicator_id)
-        if not db_indicator:
+    yaras = []
+
+    for yara_id in request.ids:
+        db_yara = Yara.get(yara_id)
+        if not db_yara:
             raise HTTPException(
                 status_code=404,
-                detail=f"YARA bundle request contained an unknown indicator: ID:{indicator_id}",
+                detail=f"YARA bundle request contained an unknown Yara: ID:{yara_id}",
             )
-        indicators.append(db_indicator)
-    import time
+        if any(tag in request.exclude_tags for tag in db_yara.tags):
+            continue
+        yaras.append(db_yara)
 
-    indicators_from_tags, _ = Indicator.filter(
+    yara_from_tags, _ = Indicator.filter(
         query_args={"type": "yara"},
         tag_filter=request.tags,
         graph_queries=[("tags", "tagged", "outbound", "name")],
         user=httpreq.state.user,
     )
 
-    for indicator in indicators_from_tags:
-        if any(tag in request.exclude_tags for tag in indicator.tags):
+    for yara in yara_from_tags:
+        if any(tag in request.exclude_tags for tag in yara.tags):
             continue
-        indicators.append(indicator)
+        yaras.append(yara)
 
-    bundle = Yara.generate_yara_bundle(rules=indicators)
+    bundle = Yara.generate_yara_bundle(rules=yaras)
+
+    if request.overlays:
+        yara_map = {}
+        for yara in yaras:
+            yara_map[yara.name] = yara
+
+        bundle = Yara.render_with_overlays(bundle, yara_map, request.overlays)
 
     return YaraBundleResponse(bundle=bundle)
