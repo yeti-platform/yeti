@@ -112,6 +112,7 @@ def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> Indicato
         if db_indicator.pattern != request.indicator.pattern:
             return ForensicArtifact.from_yaml_string(request.indicator.pattern)[0]
 
+    db_indicator.get_tags()
     update_data = request.indicator.model_dump(exclude_unset=True)
     updated_indicator = db_indicator.model_copy(update=update_data)
     new = updated_indicator.save()
