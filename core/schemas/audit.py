@@ -72,8 +72,8 @@ def log_timeline(
         if not action:
             action = "update" if old else "create"
         if old:
-            old_dump = old.model_dump(exclude=["modified"])
-            new_dump = new.model_dump(exclude=["modified"])
+            old_dump = old.model_dump(exclude=new._TIMELINE_IGNORE_FIELDS)
+            new_dump = new.model_dump(exclude=new._TIMELINE_IGNORE_FIELDS)
             # only retain fields that are different
             for key in old_dump:
                 if old_dump[key] == new_dump[key]:
