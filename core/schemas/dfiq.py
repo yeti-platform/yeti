@@ -99,9 +99,6 @@ def read_from_data_directory(
 
     for dfiq_id, dfiq_object in dfiq_kb.items():
         dfiq_object.update_parents(soft_fail=True)
-        if dfiq_object.type == DFIQType.question:
-            added_indicators = extract_indicators(dfiq_object, user=user)
-            dfiq_addition.indicators = added_indicators
 
     return dfiq_addition
 
