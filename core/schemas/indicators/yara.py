@@ -271,6 +271,54 @@ class Yara(indicator.Indicator):
         return concatenated_rules
 
     @classmethod
+    def render_with_overlays(cls, pattern, rule_map, overlays):
+        parsed_rules = plyara.Plyara().parse_string(pattern)
+        final = ""
+        for rule in parsed_rules:
+            db_rule = rule_map.get(rule["rule_name"])
+            if not db_rule:
+                raise ValueError(f"Rule {rule['rule_name']} not found in database.")
+            db_rule.apply_overlays_plyara(overlays, parsed_rule=rule)
+            final += db_rule.pattern
+        return final
+
+    def apply_overlays_plyara(
+        self, overlays: set[str], parsed_rule: dict | None = None
+    ):
+        """Apply an overlay to a Yara rule.
+
+        Args:
+            overlay: The overlays to apply.
+            parsed_rule: The parsed rule to apply the overlays to. If not provided
+                the rule will be parsed from the pattern.
+        """
+        if not parsed_rule:
+            parsed_rule = plyara.Plyara().parse_string(self.pattern)[0]
+
+        metadata_overlay: dict[str, str | int] = {}
+        parsed_rule_meta = parsed_rule.get("metadata", [])
+
+        for context in self.context:
+            if context["source"] in overlays:
+                if metadata_overlay:
+                    raise ValueError(f"Multiple overlays detected: {context['source']}")
+                del context["source"]
+                metadata_overlay.update(context)
+
+        remaining = set(metadata_overlay.keys())
+        for item in parsed_rule_meta:
+            for key in metadata_overlay:
+                if key in item:
+                    item[key] = metadata_overlay[key]
+                    remaining.remove(key)
+
+        for key in remaining:
+            parsed_rule_meta.append({key: metadata_overlay[key]})
+        self.pattern = plyara.utils.rebuild_yara_rule(parsed_rule)
+
+        return self
+
+    @classmethod
     def generate_yara_bundle(cls, rules: list["Yara"]) -> str:
         """Export a list of Yara rules to a single string.
 
