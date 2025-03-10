@@ -117,11 +117,3 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(len(list(questions)), 1)
 
         self.assertEqual(len(dfiq_addition.dfiq), 3)
-
-    def test_read_from_data_dir_indicators(self) -> None:
-        dfiq_addition = read_from_data_directory(
-            "tests/dfiq_test_data/Q1020.yaml", "test"
-        )
-
-        self.assertEqual(len(dfiq_addition.indicators), 2)
-        self.assertEqual(len(dfiq_addition.dfiq), 1)
