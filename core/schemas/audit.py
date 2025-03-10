@@ -1,11 +1,10 @@
 import datetime
-from functools import wraps
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, computed_field
+from pydantic import ConfigDict, computed_field
 
 from core import database_arango
-from core.schemas.model import YetiModel
+from core.schemas.model import YetiBaseModel, YetiModel
 
 if TYPE_CHECKING:
     from core.schemas.dfiq import DFIQTypes
@@ -42,12 +41,12 @@ class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 
-class TimelineLog(BaseModel, database_arango.ArangoYetiConnector):
+class TimelineLog(YetiBaseModel, database_arango.ArangoYetiConnector):
     model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = []
 
     _collection_name: ClassVar[str] = "timeline"
-    _type_filter = None
+    _type_filter: ClassVar[str | None] = None
     _root_type: Literal["timeline"] = "timeline"
 
     timestamp: datetime.datetime
@@ -72,8 +71,8 @@ def log_timeline(
         if not action:
             action = "update" if old else "create"
         if old:
-            old_dump = old.model_dump(exclude=["modified"])
-            new_dump = new.model_dump(exclude=["modified"])
+            old_dump = old.model_dump(exclude=new._TIMELINE_IGNORE_FIELDS)
+            new_dump = new.model_dump(exclude=new._TIMELINE_IGNORE_FIELDS)
             # only retain fields that are different
             for key in old_dump:
                 if old_dump[key] == new_dump[key]:

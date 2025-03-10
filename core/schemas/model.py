@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import BaseModel, computed_field
 
@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 class YetiBaseModel(BaseModel):
     _exclude_overwrite: list[str] = list()
     __id: str | None = None
+
+    _TIMELINE_IGNORE_FIELDS: ClassVar[set[str]] = {"modified"}
 
     def __init__(self, **data):
         super().__init__(**data)

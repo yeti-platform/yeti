@@ -318,6 +318,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
         update=update_data.model_dump(exclude=["created"])
     )
     new = updated_dfiq.save()
+    new.get_acls()
     audit.log_timeline(httpreq.state.username, new, old=db_dfiq)
     new.update_parents()
 

@@ -158,6 +158,10 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["dfiq"] = "dfiq"
 
+    _TIMELINE_IGNORE_FIELDS: ClassVar[set[str]] = YetiModel._TIMELINE_IGNORE_FIELDS | {
+        "dfiq_yaml"
+    }
+
     name: str = Field(min_length=1)
     uuid: str | None = None
     dfiq_id: str | None = None
