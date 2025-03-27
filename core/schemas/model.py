@@ -96,13 +96,13 @@ class YetiAclModel(YetiBaseModel):
     def acls(self):
         return self._acls
 
-    def get_acls(self) -> None:
+    def get_acls(self, direct=False) -> None:
         """Returns the permissions assigned to a user.
         Args:
             user: The user to check permissions for.
         """
         vertices, paths, total = self.neighbors(
-            graph="acls", direction="inbound", max_hops=2
+            graph="acls", direction="inbound", max_hops=1 if direct else 2
         )
         for path in paths:
             source = path[-1].source  # inbound, so source is last.
