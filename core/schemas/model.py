@@ -105,9 +105,10 @@ class YetiAclModel(YetiBaseModel):
             graph="acls", direction="inbound", max_hops=2
         )
         for path in paths:
+            source = path[-1].source  # inbound, so source is last.
             for edge in path:
                 if edge.target == self.extended_id:
-                    identity = vertices[edge.source]
+                    identity = vertices[source]
                     if identity.root_type == "rbacgroup":
                         self._acls[identity.name] = edge
                     if identity.root_type == "user":

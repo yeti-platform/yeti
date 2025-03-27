@@ -11,12 +11,12 @@ class RBACTest(unittest.TestCase):
         database_arango.RBAC_ENABLED = True
 
         self.yeti_user = user.User(username="yeti", admin=True).save()
-        self.user1 = user.User(username="test1").save()
-        self.user2 = user.User(username="test2").save()
-        self.group1 = rbac.Group(name="test1").save()
-        self.group2 = rbac.Group(name="test2").save()
-        self.entity1 = entity.Malware(name="test1").save()
-        self.entity2 = entity.Malware(name="test2").save()
+        self.user1 = user.User(username="user1").save()
+        self.user2 = user.User(username="user2").save()
+        self.group1 = rbac.Group(name="group1").save()
+        self.group2 = rbac.Group(name="group2").save()
+        self.entity1 = entity.Malware(name="malware1").save()
+        self.entity2 = entity.Malware(name="malware2").save()
         self.observable1 = observable.Hostname(value="test.com").save()
         self.observable1.link_to(self.entity1, "test", description="test")
 
@@ -115,3 +115,12 @@ class RBACTest(unittest.TestCase):
         vertices, edges, total = self.observable1.neighbors(user=self.user1)
         self.assertEqual(total, 1)
         self.assertEqual(len(vertices), 1)
+
+    def test_get_acls(self):
+        """Test that get_acls() returns the correct ACLs"""
+        self.user1.link_to_acl(self.group1, roles.Role.OWNER)
+        self.group1.link_to_acl(self.entity1, roles.Role.OWNER)
+        self.entity1.get_acls()
+        self.assertEqual(len(self.entity1._acls), 2)
+        self.assertIn(self.group1.name, self.entity1._acls)
+        self.assertIn(self.user1.username, self.entity1._acls)
