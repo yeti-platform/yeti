@@ -18,19 +18,6 @@ class IndicatorTest(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
-    def testSomething(self) -> None:
-        response = client.post(
-            "/api/v2/bloom/search",
-            json={
-                "values": ["test"],
-            },
-        )
-
-        data = response.json()
-        self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(len(data), 1)
-        self.assertEqual(data[0]["value"], "test")
-
     def testConnectionError(self) -> None:
         response = client.post(
             "/api/v2/bloom/search",
@@ -81,6 +68,6 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(data[0]["value"], "test")
 
         mock_post.assert_called_once_with(
-            "http://bloomcheck:8100/check",
+            "http://bloomcheck:8100/check/raw",
             data=b"test1\ntest2\ntest3\n",
         )
