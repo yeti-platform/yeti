@@ -1,5 +1,5 @@
 import requests
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 from core.config.config import yeti_config
