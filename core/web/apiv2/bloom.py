@@ -1,5 +1,5 @@
 import requests
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel, ConfigDict
 
 from core.config.config import yeti_config
@@ -20,13 +20,25 @@ router = APIRouter()
 
 BLOOMCHECK_ENDPOINT = yeti_config.get("bloom", "bloomcheck_endpoint")
 
+def check_bloomcheck_endpoint():
+    """Ensure BLOOMCHECK_ENDPOINT is set."""
+    if not BLOOMCHECK_ENDPOINT:
+        raise HTTPException(
+            status_code=503,
+            detail="bloomcheck endpoint not set in config",
+        )
+    return BLOOMCHECK_ENDPOINT
 
 @router.post("/search")
-def search(httpreq: Request, request: BloomSearchRequest) -> list[BloomHit]:
+def search(
+    httpreq: Request,
+    request: BloomSearchRequest,
+    bloomcheck_endpoint: str = Depends(check_bloomcheck_endpoint),
+) -> list[BloomHit]:
     """Checks the bloomcheck microservice for hits."""
     try:
         response = requests.post(
-            f"{BLOOMCHECK_ENDPOINT}/check",
+            f"{bloomcheck_endpoint}/check",
             json={"values": request.values, "filters": []},
         )
     except requests.ConnectionError as e:
@@ -47,12 +59,14 @@ def search(httpreq: Request, request: BloomSearchRequest) -> list[BloomHit]:
 
 
 @router.post("/search/raw")
-async def search_raw(httpreq: Request) -> list[BloomHit]:
+async def search_raw(
+    httpreq: Request, bloomcheck_endpoint: str = Depends(check_bloomcheck_endpoint)
+) -> list[BloomHit]:
     """Checks the bloomcheck microservice for hits."""
     values = await httpreq.body()
     try:
         response = requests.post(
-            f"{BLOOMCHECK_ENDPOINT}/check/raw",
+            f"{bloomcheck_endpoint}/check/raw",
             data=values,
         )
     except requests.ConnectionError as e:
