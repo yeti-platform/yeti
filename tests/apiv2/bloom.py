@@ -1,6 +1,7 @@
 import unittest
 from unittest import mock
 
+import requests
 from fastapi.testclient import TestClient
 
 from core.schemas.user import UserSensitive
@@ -18,7 +19,10 @@ class IndicatorTest(unittest.TestCase):
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
-    def testConnectionError(self) -> None:
+    @mock.patch("core.web.apiv2.bloom.requests.post")
+    def testConnectionError(self, mock_post) -> None:
+        mock_post.side_effect = requests.ConnectionError("Connection error")
+
         response = client.post(
             "/api/v2/bloom/search",
             json={
