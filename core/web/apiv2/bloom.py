@@ -20,6 +20,7 @@ router = APIRouter()
 
 BLOOMCHECK_ENDPOINT = yeti_config.get("bloom", "bloomcheck_endpoint")
 
+
 def check_bloomcheck_endpoint():
     """Ensure BLOOMCHECK_ENDPOINT is set."""
     if not BLOOMCHECK_ENDPOINT:
@@ -28,6 +29,7 @@ def check_bloomcheck_endpoint():
             detail="bloomcheck endpoint not set in config",
         )
     return BLOOMCHECK_ENDPOINT
+
 
 @router.post("/search")
 def search(
