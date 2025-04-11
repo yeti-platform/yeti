@@ -10,6 +10,7 @@ from core.logger import logger
 from core.web.apiv2 import (
     audit,
     auth,
+    bloom,
     dfiq,
     entities,
     graph,
@@ -83,6 +84,14 @@ api_router.include_router(
     tags=["graph"],
     dependencies=[Depends(auth.get_current_active_user)],
 )
+
+api_router.include_router(
+    bloom.router,
+    prefix="/bloom",
+    tags=["bloom"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
+
 api_router.include_router(
     templates.router,
     prefix="/templates",

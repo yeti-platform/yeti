@@ -94,6 +94,8 @@ class JsonFormatter(Formatter):
 class LogFilter(logging.Filter):
     no_log_endpoints = {
         "/api/v2/system/config",
+        "/api/v2/bloom/search",
+        "/api/v2/bloom/search/raw",
     }
 
     sensitive_endpoint_prefixes = (
