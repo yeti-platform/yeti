@@ -303,7 +303,7 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
                 processed_relationships.add(edge.id)
 
     matches = []
-    for observable_string, indi in indicator.Indicator.search(request.observables):
+    for observable_string, indi in indicator.Regex.search(request.observables):
         matches.append((observable_string, indi))
 
     return AnalysisResponse(
