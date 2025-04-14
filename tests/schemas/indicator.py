@@ -114,6 +114,20 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(result.name, "regex1")
         self.assertEqual(result.matched_string, "BaaaadString")
 
+    def test_regex_only_compiled_once(self) -> None:
+        regex = Regex(
+            name="regex1",
+            pattern="Ba+dString",
+            location="any",
+            diamond=DiamondModel.capability,
+        ).save()
+
+        self.assertIsNone(regex._compiled_pattern)
+        regex.match("ThisIsAReallyBaaaadStringIsntIt")
+        self.assertIsNotNone(regex._compiled_pattern)
+        regex.match("ThisIsAReallyBaaaadStringIsntIt")
+        self.assertIsNotNone(regex._compiled_pattern)
+
     def test_regex_nomatch(self) -> None:
         regex = Regex(
             name="regex1",

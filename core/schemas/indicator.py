@@ -1,7 +1,7 @@
 import datetime
 import logging
 from enum import Enum
-from typing import Any, ClassVar, List, Literal
+from typing import Any, ClassVar, Generator, List, Literal
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -79,8 +79,10 @@ class Indicator(
         raise NotImplementedError
 
     @classmethod
-    def search(cls, observables: list[str]) -> list[tuple[str, "Indicator"]]:
-        indicators = list(Indicator.list())
+    def search(
+        cls, observables: list[str]
+    ) -> Generator[tuple[str, "Indicator"], None, None]:
+        indicators = list(cls.list())
         for observable in observables:
             for indicator in indicators:
                 try:
