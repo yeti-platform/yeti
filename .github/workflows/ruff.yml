@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
       - name: Install ruff
-        run: pip install ruff
+        run: uv tool install ruff
       - name: Run ruff lint check
         run: ruff check .
       - name: Run ruff format check

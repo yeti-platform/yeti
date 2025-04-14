@@ -10,12 +10,12 @@ RUN apt-get update && apt-get install -y \
     git
 
 # Upgrade pip
-RUN pip3 install --upgrade pip && pip3 install poetry
+RUN pip3 install --upgrade pip && pip3 install uv
 
 # Install & Configure YETI
 ADD . /app
 WORKDIR /app
-RUN poetry install --no-root --with dev,plugins
+RUN uv sync --all-extras
 
 COPY --chmod=744 ./extras/docker/docker-entrypoint.sh /docker-entrypoint.sh
 
