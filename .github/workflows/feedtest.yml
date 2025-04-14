@@ -35,20 +35,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - run:
-        sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install poetry
+        sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        cache: ruff
+        cache: uv
     - name: Install Python dependencies
-      run: ruff sync --all-extras
+      run: uv sync --all-extras
     - name: Copy dummy config file
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
       run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
     - name: Start event consumer
-      run: ruff run python -m core.events.consumers events & sleep 5
+      run: uv run python -m core.events.consumers events & sleep 5
     - name: Run test feeds
       run: |
-        ruff run python -m unittest discover -s tests/ -p 'feeds.py'
+        uv run python -m unittest discover -s tests/ -p 'feeds.py'
