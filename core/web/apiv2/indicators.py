@@ -66,6 +66,15 @@ class IndicatorTagResponse(BaseModel):
 
 
 class YaraBundleRequest(BaseModel):
+    """Request to generate a YARA bundle from a list of indicators.
+
+    Attributes:
+        ids: List of YARA IDs to include in the bundle.
+        tags: List of tags to include in the bundle.
+        exclude_tags: List of tags to exclude from the bundle.
+        overlays: Set of overlay names to apply to the bundle. Over
+    """
+
     model_config = ConfigDict(extra="forbid")
 
     ids: list[str] = []
