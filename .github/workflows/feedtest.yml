@@ -40,7 +40,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        cache: uv
     - name: Install Python dependencies
       run: uv sync --all-extras
     - name: Copy dummy config file
