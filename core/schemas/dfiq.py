@@ -184,6 +184,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
 
     def save(self, *args, **kwargs) -> "DFIQBase":
         self.modified = now()
+        self.dfiq_yaml = self.to_yaml()
         return super().save(*args, **kwargs)
 
     @classmethod
