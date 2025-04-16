@@ -31,6 +31,7 @@ aenum = "^3.1.15"
 boto3 = { version = "^1.35.22", optional = true }
 tqdm = "^4.67.1"
 plyara = "^2.2"
+minijinja = "^2.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "^2.16.1"
