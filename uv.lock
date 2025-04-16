@@ -1831,7 +1831,7 @@ dependencies = [
     { name = "yara-python" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "httpx" },
     { name = "mypy" },
@@ -1858,47 +1858,52 @@ s3 = [
 requires-dist = [
     { name = "aenum", specifier = ">=3.1.15" },
     { name = "artifacts", git = "https://github.com/forensicartifacts/artifacts.git?rev=main" },
-    { name = "artifacts", marker = "extra == 'plugins'", git = "https://github.com/forensicartifacts/artifacts.git?rev=main" },
     { name = "authlib", specifier = ">=1.2.1" },
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
-    { name = "boto3", marker = "extra == 's3'", specifier = ">=1.35.22" },
     { name = "celery", specifier = ">=5.3.4" },
-    { name = "censys", marker = "extra == 'plugins'", specifier = ">=2.2.10" },
     { name = "click", specifier = ">=8.1.7" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "google-auth", specifier = ">=2.39.0" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.23.3" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28.1" },
     { name = "idstools", specifier = ">=0.6.5" },
-    { name = "ipwhois", marker = "extra == 'plugins'", specifier = ">=1.2.0" },
     { name = "itsdangerous", specifier = ">=2.1.2" },
     { name = "jinja2", specifier = ">=3.1.2" },
-    { name = "maclookup", marker = "extra == 'plugins'", specifier = ">=1.0.3" },
     { name = "minijinja", specifier = ">=2.9.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
-    { name = "otxv2", marker = "extra == 'plugins'", specifier = ">=1.5.12" },
     { name = "pandas", specifier = ">=2.1.1" },
     { name = "parameterized", specifier = ">=0.9.0" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "plyara", specifier = ">=2.2" },
-    { name = "pygithub", marker = "extra == 'plugins'", specifier = ">=2.3.0" },
-    { name = "pylint", marker = "extra == 'dev'", specifier = ">=2.16.1" },
-    { name = "pymisp", marker = "extra == 'plugins'", specifier = ">=2.4.176" },
-    { name = "pyopenssl", marker = "extra == 'plugins'", specifier = ">=23.3.0" },
     { name = "python-arango", specifier = ">=8.1.2" },
     { name = "python-jose", extras = ["cryptography"], specifier = ">=3.4" },
     { name = "python-multipart", specifier = ">=0.0.6,<0.0.19" },
     { name = "pyyaml", specifier = ">=6.0.1" },
     { name = "redis", specifier = ">=5.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.0" },
-    { name = "shodan", marker = "extra == 'plugins'", specifier = ">=1.30.0" },
-    { name = "timesketch-api-client", marker = "extra == 'plugins'", specifier = ">=20230721" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "uvicorn", specifier = ">=0.34" },
     { name = "validators", specifier = ">=0.34.0" },
     { name = "yara-python", specifier = ">=4.5.0" },
 ]
-provides-extras = ["dev", "plugins", "s3"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "httpx", specifier = ">=0.23.3" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "mypy", specifier = ">=1.0.0" },
+    { name = "pylint", specifier = ">=2.16.1" },
+    { name = "ruff", specifier = ">=0.9.0" },
+]
+plugins = [
+    { name = "artifacts", git = "https://github.com/forensicartifacts/artifacts.git?rev=main" },
+    { name = "censys", specifier = ">=2.2.10" },
+    { name = "ipwhois", specifier = ">=1.2.0" },
+    { name = "maclookup", specifier = ">=1.0.3" },
+    { name = "otxv2", specifier = ">=1.5.12" },
+    { name = "pygithub", specifier = ">=2.3.0" },
+    { name = "pymisp", specifier = ">=2.4.176" },
+    { name = "pyopenssl", specifier = ">=23.3.0" },
+    { name = "shodan", specifier = ">=1.30.0" },
+    { name = "timesketch-api-client", specifier = ">=20230721" },
+]
+s3 = [{ name = "boto3", specifier = ">=1.35.22" }]
 
 [[package]]
 name = "zipp"
