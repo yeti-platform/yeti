@@ -313,6 +313,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(len(data["approaches"][2]["steps"]), 1)
         self.assertEqual(data["approaches"][2]["steps"][0]["type"], "opensearch-query")
         self.assertEqual(data["approaches"][2]["steps"][0]["value"], "***")
+        self.assertNotIn("mock", data["dfiq_yaml"])
 
     def test_dfiq_patch_updates_parents(self) -> None:
         scenario1 = dfiq.DFIQScenario(
