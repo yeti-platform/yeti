@@ -15,7 +15,7 @@ RUN pip3 install --upgrade pip && pip3 install uv
 # Install & Configure YETI
 ADD . /app
 WORKDIR /app
-RUN uv sync --all-extras
+RUN uv sync --all-groups
 
 COPY --chmod=744 ./extras/docker/docker-entrypoint.sh /docker-entrypoint.sh
 

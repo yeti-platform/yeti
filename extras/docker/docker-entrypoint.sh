@@ -22,7 +22,7 @@ elif [[ "$1" = 'toggle-admin' ]]; then
 elif [[ "$1" = 'migrate-arangodb' ]]; then
     uv run python yetictl/cli.py migrate-arangodb "${@:2}"
 elif [[ "$1" = 'envshell' ]]; then
-    $(uv env activate) && exec bash
+    $(uv venv activate) && exec bash
 else
     exec "$@"
 fi
