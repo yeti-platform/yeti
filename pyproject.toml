@@ -20,7 +20,6 @@ dependencies = [
     "pandas>=2.1.1",
     "redis>=5.0.0",
     "click>=8.1.7",
-    "jinja2>=3.1.2",
     "authlib>=1.2.1",
     "itsdangerous>=2.1.2",
     "pyyaml>=6.0.1",
