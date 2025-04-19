@@ -8,9 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run:
+          sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
       - uses: actions/setup-python@v4
       - name: Install ruff
-        run: pip install ruff
+        run: uv tool install ruff
       - name: Run ruff lint check
         run: ruff check .
       - name: Run ruff format check

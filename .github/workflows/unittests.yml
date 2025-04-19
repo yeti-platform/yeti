@@ -29,20 +29,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - run:
-        sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install poetry
+        sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        cache: poetry
     - name: Install Python dependencies
-      run: poetry install --no-root
+      run: uv sync --group dev
     - name: Copy dummy config file
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
       run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
     - name: Test with unittest
       run: |
-        poetry run python -m unittest discover -s tests/schemas -p '*.py'
-        poetry run python -m unittest discover -s tests/apiv2 -p '*.py'
-        poetry run python -m unittest discover -s tests/core_tests -p '*.py'
+        uv run python -m unittest discover -s tests/schemas -p '*.py'
+        uv run python -m unittest discover -s tests/apiv2 -p '*.py'
+        uv run python -m unittest discover -s tests/core_tests -p '*.py'

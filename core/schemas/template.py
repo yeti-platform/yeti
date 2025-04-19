@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Optional
 
-import jinja2
+import minijinja
 from pydantic import BaseModel, ConfigDict, computed_field
 
 from core.config.config import yeti_config
@@ -22,9 +22,8 @@ class Template(BaseModel):
     def render(self, data: list["Observable"], output_file: str | None) -> None | str:
         """Renders the template with the given data to the output file."""
 
-        environment = jinja2.Environment()
-        template = environment.from_string(self.template)
-        result = template.render(data=data)
+        environment = minijinja.Environment(templates={self.name: self.template})
+        result = environment.render_template(self.name, data=data)
         if output_file:
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
             with open(output_file, "w+") as fd:

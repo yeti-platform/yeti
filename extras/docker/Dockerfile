@@ -14,10 +14,10 @@ RUN cp yeti.conf.sample yeti.conf
 RUN cp ./extras/docker/docker-entrypoint.sh /docker-entrypoint.sh
 
 # Upgrade pip
-RUN pip3 install --upgrade pip && pip3 install poetry
+RUN pip3 install --upgrade pip && pip3 install uv
 
 # Install yeti
-RUN poetry install --no-root --with plugins
+RUN uv sync --group plugins
 
 ENV PYTHONPATH /app
 

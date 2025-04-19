@@ -8,7 +8,7 @@ try:
 except ImportError:
     boto3 = None
     logging.warning(
-        "boto3 is not imported, if you wish to use s3 file storage please install with `poetry install --extras s3`"
+        "boto3 is not imported, if you wish to use s3 file storage please install with `uv sync --group s3`"
     )
 
 
@@ -18,7 +18,7 @@ class S3Client(FileStorageClient):
     def __init__(self, path: str):
         if boto3 is None:
             logging.warning(
-                "Attempting to use `S3Client` without `boto3` installed; install with `poetry install --extras s3`"
+                "Attempting to use `S3Client` without `boto3` installed; install with `uv sync --group s3`"
             )
             raise ImportError("boto3 is not installed")
 
