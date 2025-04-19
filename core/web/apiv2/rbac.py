@@ -62,7 +62,8 @@ def get_acl_details(httpreq: Request, type: str, id: str):
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"{type} {id} not found")
 
-    return db_entity.acl
+    db_entity.get_acls(direct=True)
+    return db_entity
 
 
 @router.post("/{type}/{id}/update-members")

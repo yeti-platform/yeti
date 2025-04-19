@@ -96,6 +96,15 @@ default_acls = All users
 # database = 0
 # tls = ok
 
+[bloom]
+
+##
+## Use these settings if you want to use the bloomcheck service
+##
+
+bloomcheck_endpoint = http://bloomcheck:8100
+
+
 [events]
 # Define in MiB the maximum allocated memory for events queue
 memory_limit = 64

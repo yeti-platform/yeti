@@ -275,17 +275,26 @@ class Yara(indicator.Indicator):
         parsed_rules = plyara.Plyara().parse_string(pattern)
         final = ""
         for rule in parsed_rules:
-            db_rule = rule_map.get(rule["rule_name"])
-            if not db_rule:
-                raise ValueError(f"Rule {rule['rule_name']} not found in database.")
-            db_rule.apply_overlays_plyara(overlays, parsed_rule=rule)
-            final += db_rule.pattern
+            rule_from_map = rule_map.get(rule["rule_name"])
+            if not rule_from_map:
+                logger.warning(
+                    f"Rule {rule['rule_name']} not found in map, it might be a dependency. "
+                    "Skipping overlay application."
+                )
+                continue
+            rule_from_map.apply_overlays_plyara(overlays, parsed_rule=rule)
+            final += rule_from_map.pattern
         return final
 
     def apply_overlays_plyara(
         self, overlays: set[str], parsed_rule: dict | None = None
     ):
         """Apply an overlay to a Yara rule.
+
+        Overlays are used to modify the metadata of a Yara rule. The Yara rule's
+        context attribute will be traversed, looking for `source` matching the
+        overlay string. If found, the context key-value pairs will be used to
+        update the Yara rule's metadata section.
 
         Args:
             overlay: The overlays to apply.
@@ -312,7 +321,7 @@ class Yara(indicator.Indicator):
                     item[key] = metadata_overlay[key]
                     remaining.remove(key)
 
-        for key in remaining:
+        for key in sorted(remaining):
             parsed_rule_meta.append({key: metadata_overlay[key]})
         self.pattern = plyara.utils.rebuild_yara_rule(parsed_rule)
 

@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field, computed_field
 
 from core import database_arango
 from core.helpers import now
-from core.schemas import audit, indicator
+from core.schemas import audit, indicator, rbac
 from core.schemas.model import YetiAclModel, YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
@@ -88,6 +88,7 @@ def read_from_data_directory(
                 if not dfiq_object.uuid:
                     dfiq_object.uuid = str(uuid.uuid4())
                 dfiq_object = dfiq_object.save()
+                rbac.set_acls(dfiq_object)
                 dfiq_addition.dfiq.append(dfiq_object)
                 audit.log_timeline(user, dfiq_object, old=db_dfiq)
                 total_added += 1
@@ -183,6 +184,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
 
     def save(self, *args, **kwargs) -> "DFIQBase":
         self.modified = now()
+        self.dfiq_yaml = self.to_yaml()
         return super().save(*args, **kwargs)
 
     @classmethod
