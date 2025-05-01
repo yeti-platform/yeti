@@ -79,6 +79,12 @@ def get_worker_status() -> WorkerStatusResponse:
 def restart_worker(worker_name: str) -> WorkerRestartResponse:
     """Restarts a single or all Celery workers."""
     destination = [worker_name] if worker_name != "all" else None
+    app = Celery(
+        "tasks",
+        broker=f"redis://{yeti_config.get('redis', 'host')}/",
+        worker_pool_restarts=True,
+    )
+
     response = app.control.broadcast(
         "pool_restart",
         arguments={"reload": True},

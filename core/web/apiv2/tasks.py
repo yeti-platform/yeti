@@ -50,7 +50,7 @@ def run(task_name, params: TaskParams | None = None) -> dict[str, str]:
     if params is None:
         params = TaskParams()
 
-    app = Celery(
+    Celery(
         "tasks",
         broker=f"redis://{yeti_config.get('redis', 'host')}/",
         worker_pool_restarts=True,
