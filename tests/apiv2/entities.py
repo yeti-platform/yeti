@@ -84,6 +84,16 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(data["name"], "ta1")
         self.assertEqual(data["type"], "threat-actor")
 
+    def test_get_entity_by_name(self):
+        response = client.get(
+            "/api/v2/entities/",
+            params={"name": "ta1", "type": "threat-actor"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["name"], "ta1")
+        self.assertEqual(data["type"], "threat-actor")
+
     def test_search_entities(self):
         response = client.post(
             "/api/v2/entities/search",

@@ -218,6 +218,37 @@ def bulk_add(
     return response
 
 
+@router.get("/")
+def get(
+    httpreq: Request,
+    value: str,
+    type: ObservableType | None = None,
+) -> ObservableTypes:
+    """Gets an observable by value."""
+
+    params = {"value": value}
+    if type:
+        params["type"] = type
+
+    observable = Observable.find(**params)
+    if not observable:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Observable {value} not found (type: {type or 'any'})",
+        )
+
+    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
+        return observable
+    if not httpreq.state.user.has_permissions(
+        observable.extended_id, roles.Permission.READ
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {observable.extended_id}",
+        )
+    return observable
+
+
 @router.get("/{id}")
 @permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> ObservableTypes:

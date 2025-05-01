@@ -84,6 +84,26 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(data["type"], dfiq.DFIQType.scenario)
         self.assertEqual(data["dfiq_tags"], ["Tag1", "Tag2", "Tag3"])
 
+    def test_get_dfiq_by_name(self) -> None:
+        with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/from_yaml",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.scenario,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+
+        response = client.get("/api/v2/dfiq/", params={"name": "scenario1"})
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["id"], data["id"])
+        self.assertEqual(data["name"], "scenario1")
+
     def test_new_dfiq_facet(self) -> None:
         scenario = dfiq.DFIQScenario(
             name="mock_scenario",
