@@ -14,7 +14,6 @@ if TYPE_CHECKING:
         Relationship,
         RelationshipTypes,
         RoleRelationship,
-        TagRelationship,
     )
 
 
@@ -422,14 +421,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           The created Yeti object.
         """
-        exclude = ["tags"] + self._exclude_overwrite
+        exclude = self._exclude_overwrite
         doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
         if doc_dict.get("id") is not None:
-            exclude = ["tags", "acls"] + self._exclude_overwrite
+            exclude = ["acls"] + self._exclude_overwrite
             result = self._update(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.update
         else:
-            exclude = ["tags", "acls", "id"] + self._exclude_overwrite
+            exclude = ["acls", "id"] + self._exclude_overwrite
             result = self._insert(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.new
             if not result:
@@ -437,9 +436,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 result = self._update(self.model_dump_json(exclude=exclude))
                 event_type = message.EventType.update
         yeti_object = self.__class__(**result)
-        # TODO: Override this if we decide to implement YetiTagModel
-        if hasattr(self, "tags"):
-            yeti_object.get_tags()
         if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
@@ -521,191 +517,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         document = documents.pop()
         document["__id"] = document.pop("_key")
         return cls.load(document)
-
-    def tag(
-        self: TYetiObject,
-        tags: List[str],
-        strict: bool = False,
-        normalized: bool = True,
-        expiration: datetime.timedelta | None = None,
-    ) -> TYetiObject:
-        """Connects object to tag graph."""
-        # Import at runtime to avoid circular dependency.
-        from core.schemas import tag
-
-        if self.id is None:
-            raise RuntimeError(
-                "Cannot tag unsaved object, make sure to save() it first."
-            )
-
-        if not isinstance(tags, (list, set, tuple)):
-            raise ValueError("Tags must be of type list, set or tuple.")
-
-        tags = list({t.strip() for t in tags if t.strip()})
-        if strict:
-            self.clear_tags()
-
-        extra_tags = set()
-        for provided_tag_name in tags:
-            tag_name = tag.normalize_name(provided_tag_name)
-            if not tag_name:
-                raise RuntimeError(
-                    f"Cannot tag object with empty tag: '{provided_tag_name}' -> '{tag_name}'"
-                )
-            replacements, _ = tag.Tag.filter({"in__replaces": [tag_name]}, count=1)
-            new_tag: Optional[tag.Tag] = None
-
-            if replacements:
-                new_tag = replacements[0]
-            # Attempt to find actual tag
-            else:
-                new_tag = tag.Tag.find(name=tag_name)
-            # Create tag
-            if not new_tag:
-                new_tag = tag.Tag(name=tag_name).save()
-
-            expiration = expiration or new_tag.default_expiration
-            tag_link = self.link_to_tag(new_tag.name, expiration=expiration)
-            self._tags[new_tag.name] = tag_link
-
-            extra_tags |= set(new_tag.produces)
-
-        extra_tags -= set(tags)
-        if extra_tags:
-            self.tag(list(extra_tags))
-
-        return self
-
-    def link_to_tag(
-        self, tag_name: str, expiration: datetime.timedelta
-    ) -> "TagRelationship":
-        """Links a YetiObject to a Tag object.
-
-        Args:
-          tag_name: The name of the tag to link to.
-        """
-        # Import at runtime to avoid circular dependency.
-        from core.schemas.graph import TagRelationship
-        from core.schemas.tag import Tag
-
-        graph = self._db.graph("tags")
-
-        tags = self.get_tags()
-
-        for tag_relationship, tag in tags:
-            if tag.name != tag_name:
-                continue
-            tag_relationship.last_seen = datetime.datetime.now(datetime.timezone.utc)
-            tag_relationship.fresh = True
-            edge = json.loads(tag_relationship.model_dump_json())
-            edge["_id"] = tag_relationship.id
-            graph.update_edge(edge)
-            if self._collection_name not in ("auditlog", "timeline"):
-                try:
-                    event = message.TagEvent(
-                        type=message.EventType.update,
-                        tagged_object=self,
-                        tag_object=tag,
-                    )
-                    producer.publish_event(event)
-                except Exception:
-                    logging.exception("Error while publishing event")
-            return tag_relationship
-
-        # Relationship doesn't exist, check if tag is already in the db
-        tag_obj = Tag.find(name=tag_name)
-        if not tag_obj:
-            tag_obj = Tag(name=tag_name).save()
-        tag_obj.count += 1
-        tag_obj.save()
-
-        tag_relationship = TagRelationship(
-            source=self.extended_id,
-            target=tag_obj.extended_id,
-            last_seen=datetime.datetime.now(datetime.timezone.utc),
-            expires=datetime.datetime.now(datetime.timezone.utc) + expiration,
-            fresh=True,
-        )
-
-        job = graph.edge_collection("tagged").link(
-            self.extended_id,
-            tag_obj.extended_id,
-            data=json.loads(tag_relationship.model_dump_json()),
-            return_new=True,
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        result = job.result()["new"]
-        result["__id"] = result.pop("_key")
-        if self._collection_name not in ("auditlog", "timeline"):
-            try:
-                event = message.TagEvent(
-                    type=message.EventType.new, tagged_object=self, tag_object=tag_obj
-                )
-                producer.publish_event(event)
-            except Exception:
-                logging.exception("Error while publishing event")
-        return TagRelationship.load(result)
-
-    def expire_tag(self, tag_name: str) -> "TagRelationship":
-        """Expires a tag on an Observable.
-
-        Args:
-          tag_name: The name of the tag to expire.
-        """
-        # Avoid circular dependency
-        graph = self._db.graph("tags")
-
-        tags = self.get_tags()
-
-        for tag_relationship, tag in tags:
-            if tag.name != tag_name:
-                continue
-            tag_relationship.fresh = False
-            edge = json.loads(tag_relationship.model_dump_json())
-            edge["_id"] = tag_relationship.id
-            graph.update_edge(edge)
-            return tag_relationship
-
-        raise ValueError(
-            f"Tag '{tag_name}' not found on observable '{self.extended_id}'"
-        )
-
-    def clear_tags(self):
-        """Clears all tags on an Observable."""
-        # Avoid circular dependency
-        graph = self._db.graph("tags")
-
-        self.get_tags()
-        job = graph.edge_collection("tagged").edges(self.extended_id)
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        results = job.result()
-        for edge in results["edges"]:
-            if self._collection_name not in ("auditlog", "timeline"):
-                try:
-                    job = self._db.collection("tagged").get(edge["_id"])
-                    while job.status() != "done":
-                        time.sleep(ASYNC_JOB_WAIT_TIME)
-                    tag_relationship = job.result()
-                    tag_collection, tag_id = tag_relationship["target"].split("/")
-                    job = self._db.collection(tag_collection).get(tag_id)
-                    while job.status() != "done":
-                        time.sleep(ASYNC_JOB_WAIT_TIME)
-                    tag_obj = job.result()
-                    event = message.TagEvent(
-                        type=message.EventType.delete,
-                        tagged_object=self,
-                        tag_object=tag_obj,
-                    )
-                    producer.publish_event(event)
-                except Exception:
-                    logging.exception("Error while publishing event")
-            job = graph.edge_collection("tagged").delete(edge["_id"])
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-
-        self._tags = {}
 
     def link_to(
         self, target, relationship_type: str, description: str
@@ -1044,9 +855,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge["__id"] = edge.pop("_key")
             edge["source"] = edge.pop("_from")
             edge["target"] = edge.pop("_to")
-            if "tagged" in edge["_id"]:
-                relationships.append(graph.TagRelationship.load(edge))
-            elif "acls" in edge["_id"]:
+            if "acls" in edge["_id"]:
                 relationships.append(graph.RoleRelationship.load(edge))
             else:
                 relationships.append(graph.Relationship.load(edge))
@@ -1262,7 +1071,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         tag_filter_query = ""
         if tag_filter:
             tag_filter_query = (
-                " FILTER COUNT(INTERSECTION(ATTRIBUTES(MERGE(tags)), @tag_names)) > 0"
+                " FILTER COUNT(INTERSECTION(ATTRIBUTES(o.tags), @tag_names)) > 0"
             )
             aql_args["tag_names"] = tag_filter
 
@@ -1435,22 +1244,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
 def tagged_observables_export(cls, args):
     aql = """
-        WITH tags
-
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
-        LET tags = MERGE(
-                FOR v, e in 1..1 OUTBOUND o tagged
-                    FILTER v.name NOT IN @ignore
-                    FILTER (e.fresh OR NOT @fresh)
-                RETURN {[v.name]: MERGE(e, {id: e._id})}
+        FILTER o.tags != {}
+        LET tagnames = (
+            FOR t IN VALUES(o.tags)
+                FILTER t.name NOT IN @ignore
+                FILTER (t.fresh OR NOT @fresh)
+            RETURN t.name
         )
-        FILTER tags != {}
-        LET tagnames = ATTRIBUTES(tags)
-
+        FILTER COUNT(tagnames) > 0
         FILTER COUNT(INTERSECTION(tagnames, @include)) > 0 OR @include == []
         FILTER COUNT(INTERSECTION(tagnames, @exclude)) == 0
-        RETURN MERGE(o, {tags: tags})
+        RETURN o
         """
     documents = db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
     results = []

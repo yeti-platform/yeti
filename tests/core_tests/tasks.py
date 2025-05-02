@@ -307,9 +307,9 @@ class ExportTaskTest(unittest.TestCase):
             ignore_tags=[],
             fresh_tags=True,
         )
-        self.assertEqual(
-            set([r.value for r in results]),
-            set(["asd1.com", "asd2.com", "asd3.com", "asd4.com"]),
+        self.assertCountEqual(
+            [r.value for r in results],
+            ["asd1.com", "asd2.com", "asd3.com", "asd4.com"],
         )
 
         # We expect all hostnames that aren't tagged "c2"

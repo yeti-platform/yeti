@@ -13,9 +13,7 @@ class YetiTestCase(unittest.TestCase):
             expected_values: A list of dictionaries, each containing expected values
                 for 'value', 'type', and 'tags' attributes.
         """
-        observables = observable.Observable.filter(
-            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
-        )
+        observables = observable.Observable.filter({"value": ""})
         observable_obj, _ = observables
         observable_obj = sorted(observable_obj, key=lambda x: x.value)
         expected_values = sorted(expected_values, key=lambda x: x["value"])

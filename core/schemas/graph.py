@@ -54,39 +54,6 @@ class Relationship(BaseModel, database_arango.ArangoYetiConnector):
         return cls(**object)
 
 
-class TagRelationship(BaseModel, database_arango.ArangoYetiConnector):
-    model_config = ConfigDict(str_strip_whitespace=True)
-    _exclude_overwrite: list[str] = list()
-    _collection_name: ClassVar[str] = "tagged"
-    _root_type: Literal["tag_relationship"] = "tag_relationship"
-    _type_filter: None = None
-    __id: str | None = None
-
-    source: str
-    target: str
-    last_seen: datetime.datetime
-    expires: datetime.datetime | None = None
-    fresh: bool
-
-    def __init__(self, **data):
-        super().__init__(**data)
-        self.__id = data.get("__id", None)
-
-    @computed_field(return_type=Literal["tag_relationship"])
-    @property
-    def root_type(self):
-        return self._root_type
-
-    @computed_field(return_type=str)
-    @property
-    def id(self):
-        return self.__id
-
-    @classmethod
-    def load(cls, object: dict):
-        return cls(**object)
-
-
 class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
     model_config = ConfigDict(str_strip_whitespace=True)
     _exclude_overwrite: list[str] = list()
@@ -141,4 +108,4 @@ class RoleRelationship(BaseModel, database_arango.ArangoYetiConnector):
         return False
 
 
-RelationshipTypes = Relationship | TagRelationship | RoleRelationship
+RelationshipTypes = Relationship | RoleRelationship

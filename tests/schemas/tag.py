@@ -24,32 +24,24 @@ class TagTest(unittest.TestCase):
     def test_tags_persist(self) -> None:
         """Test that ObservableTags persist in the database."""
         self.obs1.tag(["test"])
+        self.obs1.save()
         obs = observable.find(value="test1.com")
         assert obs is not None
-        tags = obs.get_tags()
-        self.assertEqual(len(tags), 1)
-        tag_rel, tag_data = tags[0]
-        self.assertEqual(tag_data.name, "test")
-        self.assertEqual(tag_rel.fresh, True)
+        self.assertEqual(len(obs.tags), 1)
 
-    def test_tags_must_be_saved(self) -> None:
-        """Test that ObservableTags must be saved to the database."""
-        unsaved = hostname.Hostname(value="test1.com")
-        with self.assertRaises(RuntimeError) as error:
-            unsaved.tag(["tag"])
-        self.assertEqual(
-            str(error.exception),
-            "Cannot tag unsaved object, make sure to save() it first.",
-        )
+        self.assertEqual(obs.tags["test"].name, "test")
+        self.assertEqual(obs.tags["test"].fresh, True)
 
     def test_tag_updates_count(self) -> None:
         """Test that the count of a tag is updated when a tag is added
         to an observable."""
         tag = Tag(name="test").save()
+        tag = Tag(name="test2").save()
         self.assertEqual(tag.count, 0)
-        self.obs1.tag(["test"])
+        self.obs1.tag(["test", "test2"])
         fresh_tag = Tag.find(name="test")
-        assert fresh_tag is not None
+        self.assertEqual(fresh_tag.count, 1)
+        fresh_tag = Tag.find(name="test2")
         self.assertEqual(fresh_tag.count, 1)
 
     def test_tag_is_created(self) -> None:
@@ -81,29 +73,29 @@ class TagTest(unittest.TestCase):
         self.obs1.expire_tag("test")
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 1)
-        tag_relationship, _ = tags[0]
-        self.assertEqual(tag_relationship.fresh, False)
+        tag_instance = tags["test"]
+        self.assertEqual(tag_instance.fresh, False)
 
         self.obs1.tag(["test"])
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 1)
-        tag_relationship, _ = tags[0]
-        self.assertEqual(tag_relationship.fresh, True)
+        tag_instance = tags["test"]
+        self.assertEqual(tag_instance.fresh, True)
 
     def test_tag_manual_expiration_date(self) -> None:
         """Test that a tag's expiration date takes in the manualy specified value."""
-        self.obs1.tag(["test"], expiration=datetime.timedelta(minutes=1))
+        self.obs1.tag(["test"], expiration=datetime.timedelta(minutes=5))
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 1)
-        tag_relationship, _ = tags[0]
-        self.assertIsNotNone(tag_relationship.expires)
+        tag_instance = tags["test"]
+        self.assertIsNotNone(tag_instance.expires)
         self.assertGreater(
-            tag_relationship.expires,
-            tag_relationship.last_seen + datetime.timedelta(minutes=1),
+            tag_instance.expires,
+            tag_instance.last_seen + datetime.timedelta(minutes=2),
         )
         self.assertLess(
-            tag_relationship.expires,
-            tag_relationship.last_seen + datetime.timedelta(minutes=2),
+            tag_instance.expires,
+            tag_instance.last_seen + datetime.timedelta(minutes=6),
         )
 
     def test_default_tag_expiration(self) -> None:
@@ -112,7 +104,7 @@ class TagTest(unittest.TestCase):
         self.obs1.tag(["test"])
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 1)
-        tag_relationship, _ = tags[0]
+        tag_relationship = tags["test"]
         self.assertIsNotNone(tag_relationship.expires)
         self.assertGreater(
             tag_relationship.expires,
@@ -139,7 +131,7 @@ class TagTest(unittest.TestCase):
 
     def test_tag_replaces(self) -> None:
         """Test that a tag can replace another tag."""
-        tag: Optional[Tag] = Tag(name="testst").save()
+        tag = Tag(name="testst").save()
         newtag = Tag(name="test").save()
         newtag.replaces = ["testst"]
         newtag = newtag.save()
@@ -147,8 +139,7 @@ class TagTest(unittest.TestCase):
         self.obs1.tag(["testst"])
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 1)
-        tag_rel, tag_data = tags[0]
-        self.assertEqual(tag_data.name, "test")
+        self.assertEqual(tags["test"].name, "test")
 
         tag = Tag.find(name="testst")
         assert tag is not None
@@ -164,7 +155,7 @@ class TagTest(unittest.TestCase):
         self.obs1.tag(["test"])
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 2)
-        tag_names = [tag[1].name for tag in tags]
+        tag_names = [tag.name for tag in tags.values()]
         self.assertEqual(sorted(tag_names), sorted(["test", "test_extended"]))
 
         tag = Tag.find(name="test_extended")

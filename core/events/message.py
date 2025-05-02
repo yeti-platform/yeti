@@ -66,7 +66,6 @@ YetiObjectTypes = Annotated[
         Annotated["tag.Tag", PydanticTag("tag")],
         Annotated["template.Template", PydanticTag("template")],
         Annotated["graph.Relationship", PydanticTag("relationship")],
-        Annotated["graph.TagRelationship", PydanticTag("tag_relationship")],
         Annotated["rbac.Group", PydanticTag("rbacgroup")],
     ],
     Field(discriminator=Discriminator(yeti_object_discriminator)),

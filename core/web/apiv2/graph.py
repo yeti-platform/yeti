@@ -121,7 +121,7 @@ class GraphSearchResponse(BaseModel):
         | tag.Tag
         | dfiq.DFIQTypes,
     ]
-    paths: list[list[graph.Relationship | graph.TagRelationship]]
+    paths: list[list[graph.Relationship]]
     total: int
 
 
@@ -271,7 +271,6 @@ def match(httpreq: Request, request: AnalysisRequest) -> AnalysisResponse:
         operator = "value__in~"
     db_observables, _ = observable.Observable.filter(
         query_args={operator: request.observables},
-        graph_queries=[("tags", "tagged", "outbound", "name")],
         wildcard=False,
         user=httpreq.state.user,
     )

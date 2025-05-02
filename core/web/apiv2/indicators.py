@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
 from core import errors
-from core.schemas import audit, graph, rbac, roles
+from core.schemas import audit, model, rbac, roles
 from core.schemas.indicator import (
     ForensicArtifact,
     Indicator,
@@ -62,7 +62,7 @@ class IndicatorTagResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     tagged: int
-    tags: dict[str, dict[str, graph.TagRelationship]]
+    tags: dict[str, dict[str, model.YetiTagInstance]]
 
 
 class YaraBundleRequest(BaseModel):
@@ -234,7 +234,6 @@ def search(
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
-        graph_queries=[("tags", "tagged", "outbound", "name")],
         user=httpreq.state.user,
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)
@@ -256,7 +255,7 @@ def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
 
     indicator_tags = {}
     for db_indicator in indicators:
-        old_tags = [tag[1].name for tag in db_indicator.get_tags()]
+        old_tags = [tag.name for tag in db_indicator.get_tags().values()]
         db_indicator = db_indicator.tag(request.tags, strict=request.strict)
         audit.log_timeline_tags(httpreq.state.username, db_indicator, old_tags)
         indicator_tags[db_indicator.extended_id] = db_indicator.tags
@@ -283,7 +282,6 @@ def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleR
     yara_from_tags, _ = Indicator.filter(
         query_args={"type": "yara"},
         tag_filter=request.tags,
-        graph_queries=[("tags", "tagged", "outbound", "name")],
         user=httpreq.state.user,
     )
 
