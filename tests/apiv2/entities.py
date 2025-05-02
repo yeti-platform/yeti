@@ -93,6 +93,7 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "ta1")
         self.assertEqual(data["type"], "threat-actor")
+        self.assertIn("ta1", data["tags"].keys())
 
     def test_search_entities(self):
         response = client.post(

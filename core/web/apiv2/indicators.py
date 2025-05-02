@@ -180,6 +180,7 @@ def get(
             status_code=404,
             detail=f"Indicator {name} not found (type: {type or 'any'})",
         )
+    indicator.get_tags()
 
     if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
         return indicator

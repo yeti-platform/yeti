@@ -42,7 +42,8 @@ class ObservableTest(unittest.TestCase):
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
 
     def test_find_observable_by_value(self):
-        hostname.Hostname(value="tomchop.me").save()
+        obs = hostname.Hostname(value="tomchop.me").save()
+        obs.tag(["tag1"])
         response = client.get(
             "/api/v2/observables/", params={"value": "tomchop.me", "type": "hostname"}
         )
@@ -50,6 +51,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["value"], "tomchop.me")
         self.assertEqual(data["type"], "hostname")
+        self.assertIn("tag1", data["tags"].keys())
 
     def test_get_observable(self):
         obs = file.File(

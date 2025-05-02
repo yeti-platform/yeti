@@ -237,6 +237,7 @@ def get(
             detail=f"Observable {value} not found (type: {type or 'any'})",
         )
 
+    observable.get_tags()
     if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
         return observable
     if not httpreq.state.user.has_permissions(

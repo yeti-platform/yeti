@@ -136,6 +136,7 @@ def get(
             status_code=404,
             detail=f"Entity {name} not found (type: {type or 'any'})",
         )
+    entity.get_tags()
     if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
         return entity
     if not httpreq.state.user.has_permissions(
