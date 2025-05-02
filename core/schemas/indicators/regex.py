@@ -29,6 +29,8 @@ class Regex(indicator.Indicator):
             re.compile(value)
         except re.error as error:
             raise ValueError(f"Invalid regex pattern: {error}")
+        except OverflowError:
+            raise ValueError("Regex pattern is too large")
         return value
 
     def match(self, value: str) -> RegexMatch | None:

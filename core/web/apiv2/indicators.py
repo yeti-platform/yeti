@@ -162,6 +162,39 @@ def delete_context(
     return context.delete_context(Indicator, httpreq, id, request)
 
 
+@router.get("/")
+def get(
+    httpreq: Request,
+    name: str,
+    type: IndicatorType | None = None,
+) -> IndicatorTypes:
+    """Gets an indicator by name."""
+
+    params = {"name": name}
+    if type:
+        params["type"] = type
+
+    indicator = Indicator.find(**params)
+    if not indicator:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Indicator {name} not found (type: {type or 'any'})",
+        )
+    indicator.get_tags()
+
+    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
+        return indicator
+
+    if not httpreq.state.user.has_permissions(
+        indicator.extended_id, roles.Permission.READ
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {indicator.extended_id}",
+        )
+    return indicator
+
+
 @router.get("/{id}")
 @rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> IndicatorTypes:

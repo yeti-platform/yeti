@@ -97,6 +97,17 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(data["name"], "hex")
         self.assertEqual(data["type"], "regex")
 
+    def test_get_indicator_by_name(self):
+        response = client.get(
+            "/api/v2/indicators/",
+            params={"name": "hex", "type": "regex"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(data["name"], "hex")
+        self.assertEqual(data["type"], "regex")
+        self.assertIn("hextag", data["tags"].keys())
+
     def test_search_indicators(self):
         response = client.post(
             "/api/v2/indicators/search", json={"query": {"name": "he"}, "type": "regex"}

@@ -118,6 +118,37 @@ def delete_context(
     return context.delete_context(Entity, httpreq, id, request)
 
 
+@router.get("/")
+def get(
+    httpreq: Request,
+    name: str,
+    type: EntityType | None = None,
+) -> EntityTypes:
+    """Gets an entity by name."""
+
+    params = {"name": name}
+    if type:
+        params["type"] = type
+
+    entity = Entity.find(**params)
+    if not entity:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Entity {name} not found (type: {type or 'any'})",
+        )
+    entity.get_tags()
+    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
+        return entity
+    if not httpreq.state.user.has_permissions(
+        entity.extended_id, roles.Permission.READ
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {entity.extended_id}",
+        )
+    return entity
+
+
 @router.get("/{id}")
 @rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> EntityTypes:

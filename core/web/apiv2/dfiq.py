@@ -328,14 +328,46 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
     return new
 
 
+@router.get("/")
+def get(
+    httpreq: Request,
+    name: str,
+    type: dfiq.DFIQType | None = None,
+) -> dfiq.DFIQTypes:
+    """Gets an dfiq_obj by name."""
+
+    params = {"name": name}
+    if type:
+        params["type"] = type
+
+    dfiq_obj = dfiq.DFIQBase.find(**params)
+    if not dfiq_obj:
+        raise HTTPException(
+            status_code=404,
+            detail=f"DFIQ {name} not found (type: {type or 'any'})",
+        )
+
+    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
+        return dfiq_obj
+
+    if not httpreq.state.user.has_permissions(
+        dfiq_obj.extended_id, roles.Permission.READ
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {dfiq_obj.extended_id}",
+        )
+    return dfiq_obj
+
+
 @router.get("/{id}")
 @permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> dfiq.DFIQTypes:
     """Returns details about a DFIQ object."""
     db_dfiq: dfiq.DFIQTypes = dfiq.DFIQBase.get(id)  # type: ignore
-    db_dfiq.get_acls()
     if not db_dfiq:
         raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
+    db_dfiq.get_acls()
     return db_dfiq
 
 
@@ -345,7 +377,7 @@ def delete(httpreq: Request, id: str) -> None:
     """Deletes a DFIQ object."""
     db_dfiq = dfiq.DFIQBase.get(id)
     if not db_dfiq:
-        raise HTTPException(status_code=404, detail="DFIQ object {id} not found")
+        raise HTTPException(status_code=404, detail=f"DFIQ object {id} not found")
 
     all_children, _ = dfiq.DFIQBase.filter(
         query_args={"parent_ids": db_dfiq.uuid}, wildcard=False
