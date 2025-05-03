@@ -213,7 +213,9 @@ class YetiTagModel(YetiModel):
 
             extra_tags |= set(new_tag.produces)
 
-        extra_tags -= set(tags)
+        extra_tags = (
+            extra_tags - set(tags) - set(tag.name for tag in self.tags.values())
+        )
         if extra_tags:
             self.tag(list(extra_tags))
 

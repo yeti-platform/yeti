@@ -165,6 +165,18 @@ class TagTest(unittest.TestCase):
         assert tag is not None
         self.assertEqual(tag.count, 1)
 
+    def test_tag_recursion_loop(self) -> None:
+        """Test that a tag can produce multiple tags."""
+        Tag(name="test1", produces=["test2"]).save()
+        Tag(name="test2", produces=["test3"]).save()
+        Tag(name="test3", produces=["test1"]).save()
+
+        self.obs1.tag(["test1"])
+        tags = self.obs1.get_tags()
+        self.assertEqual(len(tags), 3)
+        tag_names = [tag.name for tag in tags.values()]
+        self.assertEqual(sorted(tag_names), sorted(["test1", "test2", "test3"]))
+
     def test_tag_absorb_permanent(self) -> None:
         """Test that a tag can absorb another tag."""
         tag = Tag(name="test").save()
