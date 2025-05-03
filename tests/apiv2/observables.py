@@ -464,6 +464,38 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(len(data["tags"]), 1)
         self.assertEqual(data["total"], 1)
 
+    def test_remove_tags_observables(self):
+        response = client.post(
+            "/api/v2/observables/", json={"value": "toto.com", "type": "hostname"}
+        )
+        data = response.json()
+        self.assertIsNotNone(data["id"])
+        self.assertEqual(response.status_code, 200)
+        observable_id = data["id"]
+
+        response = client.post(
+            "/api/v2/observables/tag",
+            json={"ids": [observable_id], "tags": ["tag1", "tag2"], "strict": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["tagged"], 1, data)
+        self.assertIn("tag1", data["tags"][f"observables/{observable_id}"], data)
+        self.assertIn("tag2", data["tags"][f"observables/{observable_id}"], data)
+
+        response = client.post(
+            "/api/v2/observables/tag",
+            json={"ids": [observable_id], "tags": [], "strict": True},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["tagged"], 1, data)
+
+        response = client.get(f"/api/v2/observables/{observable_id}")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["tags"], {})
+
 
 class ObservableContextTest(unittest.TestCase):
     def setUp(self) -> None:

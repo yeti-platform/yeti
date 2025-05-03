@@ -371,7 +371,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         newdoc = None
         if doc_id:
             document["_key"] = doc_id
-            job = async_col.update(document, return_new=True)
+            job = async_col.update(document, return_new=True, merge=False)
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
             newdoc = job.result()
