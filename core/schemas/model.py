@@ -185,6 +185,12 @@ class YetiTagModel(YetiModel):
                 if not new_tag:
                     new_tag = tag.Tag(name=tag_name).save()
 
+            action = (
+                message.EventType.new
+                if new_tag.name not in self.tags
+                else message.EventType.update
+            )
+
             expiration = expiration or new_tag.default_expiration
             now = datetime.datetime.now(tz=datetime.timezone.utc)
             self.tags[new_tag.name] = YetiTagInstance(
@@ -196,12 +202,6 @@ class YetiTagModel(YetiModel):
 
             new_tag.count += 1
             new_tag.save()
-
-            action = (
-                message.EventType.new
-                if new_tag.name not in self.tags
-                else message.EventType.update
-            )
 
             producer.publish_event(
                 message.TagEvent(
