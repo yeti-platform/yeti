@@ -994,11 +994,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key
             elif key in ("created", "modified", "tag.expires"):
+                # Value is a string, we're checking the first character.
                 operator = value[0]
                 if operator not in ["<", ">"]:
                     operator = "="
                 else:
-                    aql_args[f"arg{i}_value"] = value[1]
+                    aql_args[f"arg{i}_value"] = value[1:]
                 if key == "tag.expires":
                     filter_conditions.append(
                         f"VALUES(o.tags)[* RETURN DATE_TIMESTAMP(CURRENT.expires)] ANY {operator} DATE_TIMESTAMP(@arg{i}_value)"

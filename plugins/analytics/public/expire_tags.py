@@ -15,7 +15,7 @@ class ExpireTags(task.AnalyticsTask):
     def run(self):
         now = datetime.datetime.now(datetime.timezone.utc)
         observables, total = observable.Observable.filter(
-            query_args={"tag.expires": ["<", now.isoformat()]},
+            query_args={"tag.expires": f"<{now.isoformat()}"},
         )
         for obs in observables:
             obs.expire_tags()
