@@ -993,16 +993,21 @@ class ArangoYetiConnector(AbstractYetiConnector):
             elif key in {"labels", "relevant_tags"}:
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key
-            elif key in ("created", "expires"):
+            elif key in ("created", "modified", "tag.expires"):
                 operator = value[0]
                 if operator not in ["<", ">"]:
                     operator = "="
                 else:
-                    aql_args[f"arg{i}_value"] = value[1:]
-                filter_conditions.append(
-                    f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
-                )
-                sorts.append(f"o.{key}")
+                    aql_args[f"arg{i}_value"] = value[1]
+                if key == "tag.expires":
+                    filter_conditions.append(
+                        f"VALUES(o.tags)[* RETURN DATE_TIMESTAMP(CURRENT.expires)] ANY {operator} DATE_TIMESTAMP(@arg{i}_value)"
+                    )
+                else:
+                    filter_conditions.append(
+                        f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
+                    )
+                    sorts.append(f"o.{key}")
             elif key in ("name", "value"):
                 if using_view and not using_regex:
                     aql_args[f"arg{i}_value"] = f"%{value}%"

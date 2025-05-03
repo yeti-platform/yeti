@@ -1,3 +1,4 @@
+import time
 import unittest
 from typing import Any, Optional
 
@@ -13,6 +14,7 @@ class YetiTestCase(unittest.TestCase):
             expected_values: A list of dictionaries, each containing expected values
                 for 'value', 'type', and 'tags' attributes.
         """
+        time.sleep(1)
         observables = observable.Observable.filter({"value": ""})
         observable_obj, _ = observables
         observable_obj = sorted(observable_obj, key=lambda x: x.value)

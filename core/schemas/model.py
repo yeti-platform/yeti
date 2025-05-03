@@ -212,13 +212,14 @@ class YetiTagModel(YetiModel):
         self.tags[name].fresh = False
         self.save()
 
-    def expire_tags(self):
+    def expire_tags(self, now: datetime.datetime | None = None):
         """Expire all tags in an object if the expiration date is due."""
-        now = datetime.datetime.now(tz=datetime.timezone.utc)
-        for tag_instance in self.tags.values():
-            if not tag_instance.expires:
+        if not now:
+            now = datetime.datetime.now(tz=datetime.timezone.utc)
+        for name, tag in self.tags.items():
+            if tag.expires is None:
                 continue
-            tag_instance.fresh = tag_instance.expires > now
+            self.tags[name].fresh = tag.expires > now
         self.save()
 
     def get_tags(self):

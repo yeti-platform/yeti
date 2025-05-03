@@ -55,7 +55,7 @@ class CensysAnalyticsTest(YetiTestCase):
 
         mock_censys_hosts.assert_called_once()
         mock_hosts_api.search.assert_called_once_with(
-            "test_censys_query", fields=["ip"], pages=-1
+            "test_censys_query", fields=["ip"], per_page=100, pages=10
         )
 
         expected_observable_values = [
@@ -138,9 +138,7 @@ class ShodanAnalyticsTest(YetiTestCase):
 
         mock_shodan_api.search_cursor.assert_called_with("shodan_test_query")
 
-        observables = observable.Observable.filter(
-            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
-        )
+        observables = observable.Observable.filter({"value": ""})
         observable_obj, _ = observables
         observables_added = [o.value for o in observable_obj]
         self.assertEqual(len(observables_added), expected_count)
@@ -225,13 +223,13 @@ class ShodanAnalyticsTest(YetiTestCase):
     def test_expire_tags(self) -> None:
         o = observable.save(value="google.com")
         o.tag(["test_tag"], expiration=datetime.timedelta(seconds=-10))
-
+        time.sleep(1)
         defaults = expire_tags.ExpireTags._defaults.copy()
         analytics = expire_tags.ExpireTags(**defaults)
 
         self.assertTrue(o.tags["test_tag"].fresh)
         analytics.run()
-        o.get_tags()
+        o = observable.Observable.get(o.id)
         self.assertFalse(o.tags["test_tag"].fresh)
 
 
