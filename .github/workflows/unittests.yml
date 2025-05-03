@@ -40,8 +40,9 @@ jobs:
       run: cp yeti.conf.sample yeti.conf
     - name: Start redis & arangodb conainers
       run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
-    - name: Test with unittest
-      run: |
-        uv run python -m unittest discover -s tests/schemas -p '*.py'
-        uv run python -m unittest discover -s tests/apiv2 -p '*.py'
-        uv run python -m unittest discover -s tests/core_tests -p '*.py'
+    - name: Test with unittest (schemas)
+      run: uv run python -m unittest discover -s tests/schemas -p '*.py'
+    - name: Test with unittest (apiv2)
+      run: uv run python -m unittest discover -s tests/apiv2 -p '*.py'
+    - name: Test with unittest (core_tests)
+      run: uv run python -m unittest discover -s tests/core_tests -p '*.py'
