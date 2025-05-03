@@ -797,27 +797,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
             acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
             args["username"] = user.username
 
-        if include_tags:
-            tags_query = """
-            LET vertices = (
-                FOR object in p['vertices']
-                let innertags = (FOR tag, edge in 1..1 OUTBOUND object tagged RETURN { [tag.name]: edge })
-                RETURN MERGE(object, {tags: MERGE(innertags)})
-            )
-            """
-        else:
-            tags_query = """
-            LET vertices = p['vertices']
-            """
-
         aql = f"""
-        WITH tags, observables, entities, dfiq, indicators
+        WITH observables, entities, dfiq, indicators
 
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
           OPTIONS {{ uniqueVertices: "path" }}
           {query_filter}
-          {tags_query}
           {acl_query}
+          LET vertices = p['vertices']
           {limit}
           {sorting_aql}
           RETURN {{ vertices: vertices, g: p }}
