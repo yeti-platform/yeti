@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import BaseModel, computed_field
 
+from core.events import message
+from core.events.producer import producer
 from core.schemas.graph import RoleRelationship
 
 if TYPE_CHECKING:
@@ -156,6 +158,7 @@ class YetiTagModel(YetiModel):
         if not isinstance(tags, (list, set, tuple)):
             raise ValueError("Tags must be of type list, set or tuple.")
 
+        old_tags = list(self.tags.keys())
         actual_tags = []
         for tag_name in tags:
             new_tag_name = tag_name.strip()
@@ -194,11 +197,35 @@ class YetiTagModel(YetiModel):
             new_tag.count += 1
             new_tag.save()
 
+            action = (
+                message.EventType.new
+                if new_tag.name not in self.tags
+                else message.EventType.update
+            )
+
+            producer.publish_event(
+                message.TagEvent(
+                    type=action,
+                    tagged_object=self,
+                    tag_object=new_tag,
+                )
+            )
+
             extra_tags |= set(new_tag.produces)
 
         extra_tags -= set(tags)
         if extra_tags:
             self.tag(list(extra_tags))
+
+        removed_tags = set(old_tags) - set(actual_tags)
+        for tag_name in removed_tags:
+            producer.publish_event(
+                message.TagEvent(
+                    type=message.EventType.delete,
+                    tagged_object=self,
+                    tag_object=tag.Tag.find(name=tag_name),
+                )
+            )
 
         self.save()
         return self

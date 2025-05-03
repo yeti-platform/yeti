@@ -1199,21 +1199,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return
         try:
             event_type = message.EventType.delete
-            if self._collection_name == "tagged":
-                source_collection, source_id = self.source.split("/")
-                tag_collection, tag_id = self.target.split("/")
-                job = self._db.collection(source_collection).get(source_id)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                source_obj = job.result()
-                job = self._db.collection(tag_collection).get(tag_id)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                tag_obj = job.result()
-                event = message.TagEvent(
-                    type=event_type, tagged_object=source_obj, tag_object=tag_obj
-                )
-            elif self._collection_name == "links":
+            if self._collection_name == "links":
                 source_collection, source_id = self.source.split("/")
                 target_collection, target_id = self.target.split("/")
                 job = self._db.collection(source_collection).get(source_id)
