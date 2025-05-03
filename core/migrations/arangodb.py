@@ -1,3 +1,4 @@
+import collections
 import logging
 import time
 
@@ -101,9 +102,61 @@ def migration_2():
                 pbar.update(1)
 
 
+def migration_3():
+    from core.schemas import dfiq, entity, indicator, model, observable, tag
+
+    OBJECT_TYPES = {
+        "entities": entity.Entity,
+        "indicators": indicator.Indicator,
+        "observables": observable.Observable,
+    }
+
+    db = ArangoDatabase()
+    db.connect(check_db_sync=False)
+    job = db.collection("tagged").all()
+    while job.status() != "done":
+        time.sleep(ASYNC_JOB_WAIT_TIME)
+    all_legacy_tags = list(job.result())
+    legacy_types_per_source = collections.defaultdict(list)
+    resolved = {}
+    with tqdm.tqdm(total=len(all_legacy_tags), desc="Aggregating legacy tags") as pbar:
+        for tagrel in all_legacy_tags:
+            legacy_tag = resolved.get(tagrel["target"])
+            if not legacy_tag:
+                legacy_tag = tag.Tag.get(tagrel["target"].split("/")[1])
+                resolved[tagrel["target"]] = legacy_tag
+            tagrel["name"] = legacy_tag.name
+            legacy_types_per_source[tagrel["source"]].append(tagrel)
+            pbar.update(1)
+
+    logging.info(
+        f"Updating {len(all_legacy_tags)} legacy tags. This may take a while..."
+    )
+
+    with tqdm.tqdm(
+        total=len(legacy_types_per_source), desc="Updating tagged objects"
+    ) as pbar:
+        for source, tags in legacy_types_per_source.items():
+            obj_type, obj_id = source.split("/")
+            newtags = [
+                model.YetiTagInstance(
+                    name=t["name"],
+                    last_seen=t["last_seen"],
+                    expires=t["expires"],
+                    fresh=t["fresh"],
+                )
+                for t in tags
+            ]
+            obj = OBJECT_TYPES[obj_type].get(obj_id)
+            obj.tags = {t.name: t for t in newtags}
+            obj.save()
+            pbar.update(1)
+
+
 ArangoMigrationManager.register_migration(migration_0)
 ArangoMigrationManager.register_migration(migration_1)
 ArangoMigrationManager.register_migration(migration_2)
+ArangoMigrationManager.register_migration(migration_3)
 
 if __name__ == "__main__":
     migration_manager = ArangoMigrationManager()
