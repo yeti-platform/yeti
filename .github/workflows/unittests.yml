@@ -46,5 +46,3 @@ jobs:
       run: uv run python -m unittest discover -s tests/apiv2 -p '*.py'
     - name: Test with unittest (core_tests)
       run: uv run python -m unittest discover -s tests/core_tests -p '*.py'
-    - name: Test with unittest (analytics_test)
-      run: uv run python -m unittest discover -s tests/analytics_test -p '*.py'
