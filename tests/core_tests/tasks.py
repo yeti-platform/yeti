@@ -276,7 +276,10 @@ class ExportTaskTest(unittest.TestCase):
         self.assertEqual(len(observable_list), 4)
 
         self.assertEqual(observable_list[0].value, self.observable1.value)
-        self.assertEqual(set(observable_list[0].tags), set(self.observable1.tags))
+        self.assertEqual(
+            set([t.name for t in observable_list[0].tags]),
+            set([t.name for t in self.observable1.tags]),
+        )
 
         self.assertIsNotNone(task.last_run)
 

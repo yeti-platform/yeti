@@ -1225,7 +1225,7 @@ def tagged_observables_export(cls, args):
         FILTER (o.type IN @acts_on OR @acts_on == [])
         FILTER o.tags != []
         LET freshtags = (
-            FOR t IN o.tags)
+            FOR t IN o.tags
                 FILTER t.name NOT IN @ignore
                 FILTER (t.fresh OR NOT @fresh)
             RETURN t.name
