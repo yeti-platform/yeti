@@ -148,7 +148,7 @@ def migration_3():
                 for t in tags
             ]
             obj = OBJECT_TYPES[obj_type].get(obj_id)
-            obj.tags = {t.name: t for t in newtags}
+            obj.tags = newtags
             obj.save()
             pbar.update(1)
 
