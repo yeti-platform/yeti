@@ -227,10 +227,10 @@ class ShodanAnalyticsTest(YetiTestCase):
         defaults = expire_tags.ExpireTags._defaults.copy()
         analytics = expire_tags.ExpireTags(**defaults)
 
-        self.assertTrue(o.tags["test_tag"].fresh)
+        self.assertTrue(o.tags[0].fresh)
         analytics.run()
         o = observable.Observable.get(o.id)
-        self.assertFalse(o.tags["test_tag"].fresh)
+        self.assertFalse(o.tags[0].fresh)
 
 
 if __name__ == "__main__":

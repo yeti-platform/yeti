@@ -54,7 +54,6 @@ class AbstractYetiConnector(ABC):
     def filter(
         cls: Type[TYetiObject],
         query_args: dict[str, Any],
-        tag_filter: List[str] = [],
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
@@ -69,7 +68,6 @@ class AbstractYetiConnector(ABC):
         Args:
             query_args: A key:value dictionary containing keys to filter objects
                 on.
-            tag_filter: A list of tags to filter on.
             offset: Skip this many objects when querying the DB.
             count: How many objecst after `offset` to return.
             sorting: A list of (order, ascending) fields to sort by.

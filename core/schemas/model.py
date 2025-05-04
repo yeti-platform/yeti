@@ -143,7 +143,7 @@ def normalize_name(tag_name: str) -> str:
 
 
 class YetiTagModel(YetiModel):
-    tags: dict[str, YetiTagInstance] = {}
+    tags: list[YetiTagInstance] = []
 
     def tag(
         self,
@@ -158,7 +158,7 @@ class YetiTagModel(YetiModel):
         if not isinstance(tags, (list, set, tuple)):
             raise ValueError("Tags must be of type list, set or tuple.")
 
-        old_tags = list(self.tags.keys())
+        old_tags = [tag.name for tag in self.tags]
         actual_tags = []
         for tag_name in tags:
             new_tag_name = tag_name.strip()
@@ -171,51 +171,59 @@ class YetiTagModel(YetiModel):
             actual_tags.append(new_tag_name)
 
         if strict:
-            self.tags = {}
+            self.tags = []
 
         extra_tags = set()
         for tag_name in actual_tags:
             replacements, _ = tag.Tag.filter({"in__replaces": [tag_name]}, count=1)
 
             if replacements:
-                new_tag = replacements[0]
+                db_tag = replacements[0]
             # Attempt to find actual tag
             else:
-                new_tag = tag.Tag.find(name=tag_name)
-                if not new_tag:
-                    new_tag = tag.Tag(name=tag_name).save()
+                db_tag = tag.Tag.find(name=tag_name)
+                if not db_tag:
+                    db_tag = tag.Tag(name=tag_name).save()
 
             action = (
                 message.EventType.new
-                if new_tag.name not in self.tags
+                if db_tag.name not in self.tags
                 else message.EventType.update
             )
 
-            expiration = expiration or new_tag.default_expiration
+            expiration = expiration or db_tag.default_expiration
             now = datetime.datetime.now(tz=datetime.timezone.utc)
-            self.tags[new_tag.name] = YetiTagInstance(
-                name=new_tag.name,
-                last_seen=now,
-                expires=now + expiration,
-                fresh=True,
-            )
-
-            new_tag.count += 1
-            new_tag.save()
+            for i, tag_instance in enumerate(self.tags):
+                if tag_instance.name == db_tag.name:
+                    self.tags[i].last_seen = now
+                    self.tags[i].expires = now + expiration
+                    self.tags[i].fresh = True
+                    action = message.EventType.update
+                    break
+            else:
+                self.tags.append(
+                    YetiTagInstance(
+                        name=db_tag.name,
+                        last_seen=now,
+                        expires=now + expiration,
+                        fresh=True,
+                    )
+                )
+                action = message.EventType.new
+                db_tag.count += 1
+                db_tag.save()
 
             producer.publish_event(
                 message.TagEvent(
                     type=action,
                     tagged_object=self,
-                    tag_object=new_tag,
+                    tag_object=db_tag,
                 )
             )
 
-            extra_tags |= set(new_tag.produces)
+            extra_tags |= set(db_tag.produces)
 
-        extra_tags = (
-            extra_tags - set(tags) - set(tag.name for tag in self.tags.values())
-        )
+        extra_tags = extra_tags - set(tags) - set(tag.name for tag in self.tags)
         if extra_tags:
             self.tag(list(extra_tags))
 
@@ -238,23 +246,27 @@ class YetiTagModel(YetiModel):
         Args:
             name: The name of the tag to expire.
         """
-        self.tags[name].fresh = False
+        for i, tag in enumerate(self.tags):
+            if tag.name == name:
+                self.tags[i].expires = datetime.datetime.now(tz=datetime.timezone.utc)
+                self.tags[i].fresh = False
+                break
         self.save()
 
     def expire_tags(self, now: datetime.datetime | None = None):
         """Expire all tags in an object if the expiration date is due."""
         if not now:
             now = datetime.datetime.now(tz=datetime.timezone.utc)
-        for name, tag in self.tags.items():
+        for i, tag in enumerate(self.tags):
             if tag.expires is None:
                 continue
-            self.tags[name].fresh = tag.expires > now
+            self.tags[i].fresh = tag.expires > now
         self.save()
 
     def get_tags(self):
-        return self.tags
+        return {tag.name: tag for tag in self.tags}
 
     def clear_tags(self):
         """Clear all tags in an object."""
-        self.tags = {}
+        self.tags = []
         self.save()

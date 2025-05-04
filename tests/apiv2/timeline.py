@@ -171,22 +171,22 @@ class TimelineLogTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        indocator_id = data["id"]
+        indicator_id = data["id"]
 
         response = client.post(
-            "/api/v2/indicators/tag", json={"ids": [indocator_id], "tags": ["tag1"]}
+            "/api/v2/indicators/tag", json={"ids": [indicator_id], "tags": ["tag1"]}
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
 
         response = client.post(
             "/api/v2/indicators/tag",
-            json={"ids": [indocator_id], "tags": ["tag2"], "strict": True},
+            json={"ids": [indicator_id], "tags": ["tag2"], "strict": True},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
 
-        response = client.get(f"/api/v2/audit/timeline/indicators/{indocator_id}")
+        response = client.get(f"/api/v2/audit/timeline/indicators/{indicator_id}")
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data[0]), 3, data)

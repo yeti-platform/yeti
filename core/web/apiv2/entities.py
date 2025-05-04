@@ -176,12 +176,10 @@ def delete(httpreq: Request, id: str) -> None:
 def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
     query = request.query
-    tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
     entities, total = Entity.filter(
         query_args=query,
-        tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
         sorting=request.sorting,
@@ -212,6 +210,6 @@ def tag(httpreq: Request, request: EntityTagRequest) -> EntityTagResponse:
         old_tags = [tag.name for tag in db_entity.get_tags().values()]
         db_entity = db_entity.tag(request.tags, strict=request.strict)
         audit.log_timeline_tags(httpreq.state.username, db_entity, old_tags)
-        entity_tags[db_entity.extended_id] = db_entity.tags
+        entity_tags[db_entity.extended_id] = {tag.name: tag for tag in db_entity.tags}
 
     return EntityTagResponse(tagged=len(entities), tags=entity_tags)

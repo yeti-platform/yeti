@@ -51,7 +51,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["value"], "tomchop.me")
         self.assertEqual(data["type"], "hostname")
-        self.assertIn("tag1", data["tags"].keys())
+        self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
 
     def test_get_observable(self):
         obs = file.File(
@@ -77,8 +77,8 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
         self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
         self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
-        self.assertIn("tag1", data["tags"])
-        self.assertIn("tag2", data["tags"])
+        self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
+        self.assertIn("tag2", [tag["name"] for tag in data["tags"]])
 
     def test_delete_observable(self):
         obs = hostname.Hostname(value="tomchop.me").save()
@@ -127,7 +127,7 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["value"], "tomchop.com")
         self.assertEqual(data["type"], "hostname")
-        self.assertIn("tag1", data["tags"])
+        self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
 
     def test_observable_search(self):
         hostname.Hostname(value="tomchop.me").save()
@@ -201,6 +201,24 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["observables"][0]["value"], "tomchop.me")
         self.assertEqual(data["total"], 1)
 
+    def test_observable_search_tags_exist_multiple(self):
+        obs1 = hostname.Hostname(value="tomchop.me").save()
+        obs2 = hostname.Hostname(value="tomchop2.com").save()
+        obs1.tag(["tag1"])
+        obs2.tag(["tag1", "tag2"])
+        import time
+
+        time.sleep(1)
+        response = client.post(
+            "/api/v2/observables/search",
+            json={"query": {"tags": ["tag1", "tag2"]}, "page": 0, "count": 10},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["observables"]), 1, data)
+        self.assertEqual(data["total"], 1, data)
+        self.assertEqual(data["observables"][0]["value"], "tomchop2.com", data)
+
     def test_observable_search_returns_tags(self):
         response = client.post(
             "/api/v2/observables/",
@@ -216,8 +234,8 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(len(data["observables"]), 1)
         self.assertEqual(data["total"], 1)
-        self.assertIn("tag1", data["observables"][0]["tags"])
-        self.assertIn("tag2", data["observables"][0]["tags"])
+        self.assertIn("tag1", [tag["name"] for tag in data["observables"][0]["tags"]])
+        self.assertIn("tag2", [tag["name"] for tag in data["observables"][0]["tags"]])
 
     def test_create_observable(self):
         response = client.post(
@@ -229,17 +247,17 @@ class ObservableTest(unittest.TestCase):
         self.assertIsNotNone(data["id"])
         self.assertEqual(data["value"], "toto.com")
         self.assertEqual(data["type"], "hostname")
-        self.assertIn("tag1", data["tags"])
-        self.assertIn("tag2", data["tags"])
-        self.assertEqual(data["tags"]["tag1"]["fresh"], True)
-        self.assertEqual(data["tags"]["tag2"]["fresh"], True)
+        self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
+        self.assertIn("tag2", [tag["name"] for tag in data["tags"]])
+        self.assertEqual(data["tags"][0]["fresh"], True)
+        self.assertEqual(data["tags"][1]["fresh"], True)
 
         client.get(f"/api/v2/observables/{data['id']}")
         data = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["value"], "toto.com")
-        self.assertIn("tag1", data["tags"])
-        self.assertIn("tag2", data["tags"])
+        self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
+        self.assertIn("tag2", [tag["name"] for tag in data["tags"]])
 
     def test_create_observable_empty_tags(self):
         response = client.post(
@@ -320,10 +338,10 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["sha1"], "da39a3ee5e6b4b0d3255bfef95601890afd80709")
         self.assertEqual(data["md5"], "d41d8cd98f00b204e9800998ecf8427e")
         self.assertEqual(data["mime_type"], "inode/x-empty; charset=binary")
-        self.assertIn("tag1", data["tags"])
-        self.assertIn("tag2", data["tags"])
-        self.assertEqual(data["tags"]["tag1"]["fresh"], True)
-        self.assertEqual(data["tags"]["tag2"]["fresh"], True)
+        self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
+        self.assertIn("tag2", [tag["name"] for tag in data["tags"]])
+        self.assertEqual(data["tags"][0]["fresh"], True)
+        self.assertEqual(data["tags"][1]["fresh"], True)
 
     def test_bulk_add(self):
         request = {
@@ -382,10 +400,10 @@ class ObservableTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn("tag1", data["tags"])
-        self.assertIn("tag2", data["tags"])
-        self.assertEqual(data["tags"]["tag1"]["fresh"], True)
-        self.assertEqual(data["tags"]["tag2"]["fresh"], True)
+        self.assertIn("tag1", [tag["name"] for tag in data["tags"]])
+        self.assertIn("tag2", [tag["name"] for tag in data["tags"]])
+        self.assertEqual(data["tags"][0]["fresh"], True)
+        self.assertEqual(data["tags"][1]["fresh"], True)
 
     def test_import_text(self):
         with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
@@ -407,8 +425,8 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i]["value"], expected_value)
             self.assertEqual(observables[i]["type"], expected_type)
             self.assertEqual(len(observables[i]["tags"]), 2)
-            self.assertEqual(observables[i]["tags"]["tag1"]["fresh"], True)
-            self.assertEqual(observables[i]["tags"]["tag2"]["fresh"], True)
+            self.assertEqual(observables[i]["tags"][0]["fresh"], True)
+            self.assertEqual(observables[i]["tags"][1]["fresh"], True)
         self.assertEqual(unknown[0], "junk")
 
     def test_import_file(self):
@@ -431,8 +449,8 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i]["value"], expected_value)
             self.assertEqual(observables[i]["type"], expected_type)
             self.assertEqual(len(observables[i]["tags"]), 2)
-            self.assertEqual(observables[i]["tags"]["tag1"]["fresh"], True)
-            self.assertEqual(observables[i]["tags"]["tag2"]["fresh"], True)
+            self.assertEqual(observables[i]["tags"][0]["fresh"], True)
+            self.assertEqual(observables[i]["tags"][1]["fresh"], True)
         self.assertEqual(unknown[0], "junk")
 
     def test_tag_observable(self):
@@ -494,7 +512,7 @@ class ObservableTest(unittest.TestCase):
         response = client.get(f"/api/v2/observables/{observable_id}")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["tags"], {})
+        self.assertEqual(data["tags"], [])
 
 
 class ObservableContextTest(unittest.TestCase):

@@ -29,8 +29,8 @@ class TagTest(unittest.TestCase):
         assert obs is not None
         self.assertEqual(len(obs.tags), 1)
 
-        self.assertEqual(obs.tags["test"].name, "test")
-        self.assertEqual(obs.tags["test"].fresh, True)
+        self.assertEqual(obs.tags[0].name, "test")
+        self.assertEqual(obs.tags[0].fresh, True)
 
     def test_tag_updates_count(self) -> None:
         """Test that the count of a tag is updated when a tag is added
@@ -241,4 +241,4 @@ class TagTest(unittest.TestCase):
         for cmp, (tag_non_norm, tag_norm) in enumerate(cases):
             obs = observable.save(value=f"test-{cmp}.com")
             obs.tag([tag_non_norm])
-            self.assertIn(tag_norm, obs.tags)
+            self.assertIn(tag_norm, {tag.name for tag in obs.tags})

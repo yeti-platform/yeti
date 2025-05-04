@@ -506,7 +506,9 @@ class ComplexGraphTest(unittest.TestCase):
         # Observable is known, has been added.
         self.assertEqual(len(data["known"]), 1)
         self.assertEqual(data["known"][0]["value"], "test1.com")
-        self.assertEqual(sorted(data["known"][0]["tags"].keys()), ["tag1", "tag2"])
+        self.assertEqual(
+            sorted([tag["name"] for tag in data["known"][0]["tags"]]), ["tag1", "tag2"]
+        )
 
     def test_match_guessing_type(self):
         response = client.post(

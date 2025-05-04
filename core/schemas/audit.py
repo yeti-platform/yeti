@@ -91,10 +91,10 @@ def log_timeline(
 
 
 def log_timeline_tags(actor: str, obj: "AllObjectTypes", old_tags: list[str]):
-    new_tags = obj.tags
+    new_tags = {tag.name for tag in obj.tags}
     details = {
-        "removed": set(old_tags) - set(new_tags),
-        "added": set(new_tags) - set(old_tags),
+        "removed": set(old_tags) - new_tags,
+        "added": new_tags - set(old_tags),
     }
     TimelineLog(
         timestamp=datetime.datetime.now(),

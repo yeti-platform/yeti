@@ -26,7 +26,7 @@ class YetiTestCase(unittest.TestCase):
         for obs, expected_value in zip(observable_obj, expected_values):
             self.assertEqual(obs.value, expected_value["value"])
             self.assertEqual(obs.type, expected_value["type"])
-            self.assertEqual(set(obs.tags.keys()), expected_value["tags"])
+            self.assertEqual({tag.name for tag in obs.tags}, expected_value["tags"])
 
     def check_neighbors(
         self,

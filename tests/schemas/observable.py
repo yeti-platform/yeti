@@ -82,7 +82,7 @@ class ObservableTest(unittest.TestCase):
         ).save()
         result.tag(["tag1"])
         result.add_context(source="source1", context={"some": "info"})
-        self.assertEqual(list(result.tags.keys()), ["tag1"])
+        self.assertEqual([tag.name for tag in result.tags], ["tag1"])
         self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
         result = registry_key.RegistryKey(
             key="Microsoft\\Windows\\CurrentVersion\\RunOnce",
@@ -92,7 +92,7 @@ class ObservableTest(unittest.TestCase):
         ).save()
         self.assertEqual(result.key, "Microsoft\\Windows\\CurrentVersion\\RunOnce")
         self.assertEqual(result.data, b"other.exe")
-        self.assertEqual(list(result.tags.keys()), ["tag1"])
+        self.assertEqual([tag.name for tag in result.tags], ["tag1"])
         self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
 
     def test_create_generic_observable(self):
@@ -711,8 +711,8 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
             self.assertIsNotNone(observables[i].id)
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 2)
-            self.assertEqual(observables[i].tags["tag1"].fresh, True)
-            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+            self.assertEqual(observables[i].tags[0].fresh, True)
+            self.assertEqual(observables[i].tags[1].fresh, True)
         self.assertEqual(unknown[0], "junk")
 
     def test_create_observables_from_str_file_path(self) -> None:
@@ -745,8 +745,8 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
             self.assertIsNotNone(observables[i].id)
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 2)
-            self.assertEqual(observables[i].tags["tag1"].fresh, True)
-            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+            self.assertEqual(observables[i].tags[0].fresh, True)
+            self.assertEqual(observables[i].tags[1].fresh, True)
         self.assertEqual(unknown[0], "junk")
 
     def test_create_observables_from_pathlib(self) -> None:
@@ -775,8 +775,8 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
             self.assertIsNotNone(observables[i].id)
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 2)
-            self.assertEqual(observables[i].tags["tag1"].fresh, True)
-            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+            self.assertEqual(observables[i].tags[0].fresh, True)
+            self.assertEqual(observables[i].tags[1].fresh, True)
         self.assertEqual(unknown[0], "junk")
 
     def test_create_observable_from_file_object(self) -> None:
@@ -807,8 +807,8 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
             self.assertIsNotNone(observables[i].id)
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 2)
-            self.assertEqual(observables[i].tags["tag1"].fresh, True)
-            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+            self.assertEqual(observables[i].tags[0].fresh, True)
+            self.assertEqual(observables[i].tags[1].fresh, True)
         self.assertEqual(unknown[0], "junk")
 
     def test_create_observables_from_string_io(self) -> None:
@@ -839,8 +839,8 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
             self.assertIsNotNone(observables[i].id)
             self.assertEqual(observables[i].value, expected_value)
             self.assertEqual(len(observables[i].tags), 2)
-            self.assertEqual(observables[i].tags["tag1"].fresh, True)
-            self.assertEqual(observables[i].tags["tag2"].fresh, True)
+            self.assertEqual(observables[i].tags[0].fresh, True)
+            self.assertEqual(observables[i].tags[1].fresh, True)
         self.assertEqual(unknown[0], "junk")
 
     def test_refang_ipv4_observable(self) -> None:

@@ -224,12 +224,10 @@ def search(
 ) -> IndicatorSearchResponse:
     """Searches for indicators."""
     query = request.query
-    tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
     indicators, total = Indicator.filter(
         query_args=query,
-        tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
         sorting=request.sorting,
@@ -258,7 +256,9 @@ def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
         old_tags = [tag.name for tag in db_indicator.get_tags().values()]
         db_indicator = db_indicator.tag(request.tags, strict=request.strict)
         audit.log_timeline_tags(httpreq.state.username, db_indicator, old_tags)
-        indicator_tags[db_indicator.extended_id] = db_indicator.tags
+        indicator_tags[db_indicator.extended_id] = {
+            tag.name: tag for tag in db_indicator.tags
+        }
 
     return IndicatorTagResponse(tagged=len(indicators), tags=indicator_tags)
 
@@ -280,8 +280,7 @@ def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleR
         yaras.append(db_yara)
 
     yara_from_tags, _ = Indicator.filter(
-        query_args={"type": "yara"},
-        tag_filter=request.tags,
+        query_args={"type": "yara", "tags": request.tags},
         user=httpreq.state.user,
     )
 

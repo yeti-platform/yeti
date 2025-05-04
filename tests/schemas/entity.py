@@ -182,5 +182,5 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(campaign.name, "Test Campaign")
         self.assertEqual(campaign.type, "campaign")
         self.assertEqual(len(campaign.tags), 2)
-        self.assertEqual(campaign.tags["tag1"].fresh, True)
-        self.assertEqual(campaign.tags["tag2"].fresh, True)
+        self.assertEqual(campaign.tags[0].fresh, True)
+        self.assertEqual(campaign.tags[1].fresh, True)

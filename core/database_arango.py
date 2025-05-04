@@ -894,7 +894,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def filter(
         cls: Type[TYetiObject],
         query_args: dict[str, Any],
-        tag_filter: List[str] = [],
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
@@ -912,7 +911,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Args:
             query_args: A key:value dictionary containing keys to filter objects
                 on.
-            tag_filter: A list of tags to filter on.
             offset: Skip this many objects when querying the DB.
             count: How many objecst after `offset` to return.
             sorting: A list of (order, ascending) fields to sort by.
@@ -983,16 +981,21 @@ class ArangoYetiConnector(AbstractYetiConnector):
             elif key in {"labels", "relevant_tags"}:
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key
-            elif key in ("created", "modified", "tag.expires"):
+            elif key == "tags":
+                if using_view:
+                    conditions.append(f"@arg{i}_value ALL IN o.tags.name")
+                else:
+                    conditions.append(f"@arg{i}_value ALL IN o.tags[*].name")
+            elif key in ("created", "modified", "tags.expires"):
                 # Value is a string, we're checking the first character.
                 operator = value[0]
                 if operator not in ["<", ">"]:
                     operator = "="
                 else:
                     aql_args[f"arg{i}_value"] = value[1:]
-                if key == "tag.expires":
+                if key == "tags.expires":
                     filter_conditions.append(
-                        f"VALUES(o.tags)[* RETURN DATE_TIMESTAMP(CURRENT.expires)] ANY {operator} DATE_TIMESTAMP(@arg{i}_value)"
+                        f"o.tags[* RETURN DATE_TIMESTAMP(CURRENT.expires)] ANY {operator} DATE_TIMESTAMP(@arg{i}_value)"
                     )
                 else:
                     filter_conditions.append(
@@ -1064,13 +1067,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
             aql_args["username"] = user.username
 
-        tag_filter_query = ""
-        if tag_filter:
-            tag_filter_query = (
-                " FILTER COUNT(INTERSECTION(ATTRIBUTES(o.tags), @tag_names)) > 0"
-            )
-            aql_args["tag_names"] = tag_filter
-
         filter_string = ""
         if filter_conditions:
             filter_string = f"FILTER {' AND '.join(filter_conditions)}"
@@ -1095,7 +1091,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 {links_count_query}
                 {graph_query_string}
                 {acl_query}
-                {tag_filter_query}
                 {filter_string}
                 {acl_filter}
                 {aql_sort}
@@ -1228,16 +1223,16 @@ def tagged_observables_export(cls, args):
     aql = """
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
-        FILTER o.tags != {}
-        LET tagnames = (
-            FOR t IN VALUES(o.tags)
+        FILTER o.tags != []
+        LET freshtags = (
+            FOR t IN o.tags)
                 FILTER t.name NOT IN @ignore
                 FILTER (t.fresh OR NOT @fresh)
             RETURN t.name
         )
-        FILTER COUNT(tagnames) > 0
-        FILTER COUNT(INTERSECTION(tagnames, @include)) > 0 OR @include == []
-        FILTER COUNT(INTERSECTION(tagnames, @exclude)) == 0
+        FILTER COUNT(freshtags) > 0
+        FILTER COUNT(INTERSECTION(freshtags, @include)) > 0 OR @include == []
+        FILTER COUNT(INTERSECTION(freshtags, @exclude)) == 0
         RETURN o
         """
     documents = db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
