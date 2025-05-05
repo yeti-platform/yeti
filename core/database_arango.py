@@ -96,43 +96,67 @@ class ArangoDatabase:
         if check_db_sync:
             self.check_database_version()
 
-        self.create_edge_definition(
-            self.graph("threat_graph"),
-            {
-                "edge_collection": "links",
-                "from_vertex_collections": [
-                    "observables",
-                    "entities",
-                    "indicators",
-                    "dfiq",
-                ],
-                "to_vertex_collections": [
-                    "observables",
-                    "entities",
-                    "indicators",
-                    "dfiq",
-                ],
-            },
-        )
-
-        self.create_edge_definition(
-            self.graph("systemroles"),
-            {
-                "edge_collection": "acls",
-                "from_vertex_collections": ["users", "groups"],
-                "to_vertex_collections": [
-                    "groups",
-                    "observables",
-                    "entities",
-                    "indicators",
-                    "dfiq",
-                ],
-            },
-        )
-
+        self.create_collections()
+        self.create_graphs()
         self.create_indexes()
         self.create_analyzers()
         self.create_views()
+
+    def create_collections(self):
+        collections = [
+            "observables",
+            "entities",
+            "indicators",
+            "dfiq",
+            "tags",
+            "users",
+            "groups",
+            "auditlog",
+            "timeline",
+        ]
+        for collection in collections:
+            if not self.db.has_collection(collection):
+                self.db.create_collection(collection)
+
+    def create_graphs(self):
+        if not self.db.has_graph("threat_graph"):
+            self.db.create_graph(
+                "threat_graph",
+                edge_definitions=[
+                    {
+                        "edge_collection": "links",
+                        "from_vertex_collections": [
+                            "observables",
+                            "entities",
+                            "indicators",
+                            "dfiq",
+                        ],
+                        "to_vertex_collections": [
+                            "observables",
+                            "entities",
+                            "indicators",
+                            "dfiq",
+                        ],
+                    }
+                ],
+            )
+        if not self.db.has_graph("systemroles"):
+            self.db.create_graph(
+                "systemroles",
+                edge_definitions=[
+                    {
+                        "edge_collection": "acls",
+                        "from_vertex_collections": ["users", "groups"],
+                        "to_vertex_collections": [
+                            "groups",
+                            "observables",
+                            "entities",
+                            "indicators",
+                            "dfiq",
+                        ],
+                    }
+                ],
+            )
 
     def check_database_version(self, skip_if_testing: bool = True):
         if TESTING and skip_if_testing:
