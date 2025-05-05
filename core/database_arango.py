@@ -264,6 +264,7 @@ class ArangoDatabase:
         )
 
     def create_views(self):
+        link_definitions = {}
         for view_target in ("observables", "entities", "indicators", "dfiq"):
             try:
                 if TESTING:
@@ -274,19 +275,19 @@ class ArangoDatabase:
             except Exception:
                 pass
 
+            link_definitions[view_target] = {
+                "analyzers": ["identity", "norm"],
+                "includeAllFields": True,
+                "storedValues": [{"fields": ["name", "tags", "type"]}],
+                "trackListPositions": False,
+            }
+
             self.db.create_arangosearch_view(
                 name=f"{view_target}_view",
                 properties={
                     "consolidationIntervalMsec": 1 if TESTING else 1000,
                     "commitIntervalMsec": 1 if TESTING else 1000,
-                    "links": {
-                        view_target: {
-                            "analyzers": ["identity", "norm"],
-                            "includeAllFields": True,
-                            "storedValues": [{"fields": ["name", "tags", "type"]}],
-                            "trackListPositions": False,
-                        }
-                    },
+                    "links": {view_target: link_definitions[view_target]},
                     "primarySort": [
                         {"field": "created", "direction": "desc"},
                         {"field": "value", "direction": "asc"},
@@ -294,6 +295,29 @@ class ArangoDatabase:
                     ],
                 },
             )
+
+        try:
+            if TESTING:
+                self.db.delete_view("all_objects_view")
+            else:
+                self.db.view("all_objects_view")
+                return
+        except Exception:
+            pass
+
+        self.db.create_arangosearch_view(
+            name="all_objects_view",
+            properties={
+                "consolidationIntervalMsec": 1 if TESTING else 1000,
+                "commitIntervalMsec": 1 if TESTING else 1000,
+                "links": link_definitions,
+                "primarySort": [
+                    {"field": "created", "direction": "desc"},
+                    {"field": "value", "direction": "asc"},
+                    {"field": "name", "direction": "asc"},
+                ],
+            },
+        )
 
     def truncate(self, collection_name=None):
         if collection_name:
