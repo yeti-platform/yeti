@@ -97,14 +97,6 @@ class ArangoDatabase:
             self.check_database_version()
 
         self.create_edge_definition(
-            self.graph("tags"),
-            {
-                "edge_collection": "tagged",
-                "from_vertex_collections": ["observables", "entities", "indicators"],
-                "to_vertex_collections": ["tags"],
-            },
-        )
-        self.create_edge_definition(
             self.graph("threat_graph"),
             {
                 "edge_collection": "links",
@@ -172,44 +164,103 @@ class ArangoDatabase:
             )
 
     def create_indexes(self):
-        self.db.collection("observables").add_persistent_index(
-            fields=["value", "type"], unique=True, in_background=True, name="obs_index"
+        self.db.collection("observables").add_index(
+            {
+                "fields": ["value", "type"],
+                "unique": True,
+                "in_background": True,
+                "name": "obs_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("observables").add_persistent_index(
-            fields=["created"], in_background=True, name="obs_created_index"
+        self.db.collection("observables").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "obs_created_index",
+                "type": "persistent",
+            }
         )
 
-        self.db.collection("entities").add_persistent_index(
-            fields=["name", "type"], unique=True, in_background=True, name="ent_index"
+        self.db.collection("entities").add_index(
+            {
+                "fields": ["name", "type"],
+                "unique": True,
+                "in_background": True,
+                "name": "ent_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("entities").add_persistent_index(
-            fields=["created"], in_background=True, name="ent_created_index"
+        self.db.collection("entities").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "ent_created_index",
+                "type": "persistent",
+            }
         )
 
-        self.db.collection("tags").add_persistent_index(
-            fields=["name"], unique=True, in_background=True, name="tag_index"
+        self.db.collection("tags").add_index(
+            {
+                "fields": ["name"],
+                "unique": True,
+                "in_background": True,
+                "name": "tag_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("indicators").add_persistent_index(
-            fields=["name", "type"], unique=True, in_background=True, name="ind_index"
+        self.db.collection("indicators").add_index(
+            {
+                "fields": ["name", "type"],
+                "unique": True,
+                "in_background": True,
+                "name": "ind_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("indicators").add_persistent_index(
-            fields=["created"], in_background=True, name="ind_created_index"
+        self.db.collection("indicators").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "ind_created_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("dfiq").add_persistent_index(
-            fields=["uuid"],
-            unique=True,
-            sparse=True,
-            in_background=True,
-            name="dfiq_index",
+        self.db.collection("dfiq").add_index(
+            {
+                "fields": ["uuid"],
+                "unique": True,
+                "sparse": True,
+                "in_background": True,
+                "name": "dfiq_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("dfiq").add_persistent_index(
-            fields=["created"], in_background=True, name="dfiq_created_index"
+        self.db.collection("dfiq").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "dfiq_created_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("groups").add_persistent_index(
-            fields=["name"], unique=True, in_background=True, name="group_name_index"
+        self.db.collection("groups").add_index(
+            {
+                "fields": ["name"],
+                "unique": True,
+                "in_background": True,
+                "name": "group_name_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("users").add_persistent_index(
-            fields=["username"], unique=True, in_background=True, name="user_name_index"
+        self.db.collection("users").add_index(
+            {
+                "fields": ["username"],
+                "unique": True,
+                "in_background": True,
+                "name": "user_name_index",
+                "type": "persistent",
+            }
         )
 
     def create_views(self):
@@ -231,9 +282,16 @@ class ArangoDatabase:
                     "links": {
                         view_target: {
                             "analyzers": ["identity", "norm"],
-                            "fields": {},
-                            "includeAllFields": True,
-                            "storeValues": "none",
+                            "fields": {
+                                "value": {"analyzers": ["identity", "norm"]},
+                                "name": {"analyzers": ["identity", "norm"]},
+                                "tags": {
+                                    "fields": {"name": {"analyzers": ["identity"]}}
+                                },
+                                "type": {"analyzers": ["identity", "norm"]},
+                            },
+                            "includeAllFields": False,
+                            "storedValues": [{"fields": ["name", "tags", "type"]}],
                             "trackListPositions": False,
                         }
                     },
