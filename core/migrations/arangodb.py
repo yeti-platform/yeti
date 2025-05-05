@@ -133,24 +133,40 @@ def migration_3():
         f"Updating {len(all_legacy_tags)} legacy tags. This may take a while..."
     )
 
+    errors = []
     with tqdm.tqdm(
         total=len(legacy_types_per_source), desc="Updating tagged objects"
     ) as pbar:
         for source, tags in legacy_types_per_source.items():
             obj_type, obj_id = source.split("/")
-            newtags = [
-                model.YetiTagInstance(
-                    name=t["name"],
-                    last_seen=t["last_seen"],
-                    expires=t["expires"],
-                    fresh=t["fresh"],
-                )
-                for t in tags
-            ]
+
             obj = OBJECT_TYPES[obj_type].get(obj_id)
-            obj.tags = newtags
-            obj.save()
+            if not obj:
+                errors.append((source, f"Object not found: {obj_id}"))
+                continue
+            try:
+                newtags = [
+                    model.YetiTagInstance(
+                        name=t["name"],
+                        last_seen=t["last_seen"],
+                        expires=t["expires"],
+                        fresh=t["fresh"],
+                    )
+                    for t in tags
+                ]
+                obj.tags = newtags
+                obj.save()
+            except Exception as e:
+                errors.append((source, str(e)))
+                logging.error(f"Error updating {source}: {e}")
+
             pbar.update(1)
+
+    for source, error in errors:
+        logging.error(f"Error updating {source}: {error}")
+    logging.info(
+        f"Updated {len(legacy_types_per_source) - len(errors)} objects. {len(errors)} errors."
+    )
 
 
 ArangoMigrationManager.register_migration(migration_0)
