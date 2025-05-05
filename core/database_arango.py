@@ -282,15 +282,7 @@ class ArangoDatabase:
                     "links": {
                         view_target: {
                             "analyzers": ["identity", "norm"],
-                            "fields": {
-                                "value": {"analyzers": ["identity", "norm"]},
-                                "name": {"analyzers": ["identity", "norm"]},
-                                "tags": {
-                                    "fields": {"name": {"analyzers": ["identity"]}}
-                                },
-                                "type": {"analyzers": ["identity", "norm"]},
-                            },
-                            "includeAllFields": False,
+                            "includeAllFields": True,
                             "storedValues": [{"fields": ["name", "tags", "type"]}],
                             "trackListPositions": False,
                         }
