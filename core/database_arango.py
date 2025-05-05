@@ -103,22 +103,26 @@ class ArangoDatabase:
         self.create_views()
 
     def create_collections(self):
+        """Creates the collections in the database."""
         collections = [
-            "observables",
-            "entities",
-            "indicators",
-            "dfiq",
-            "tags",
-            "users",
-            "groups",
             "auditlog",
+            "dfiq",
+            "entities",
+            "groups",
+            "indicators",
+            "observables",
+            "system",
+            "tags",
+            "tasks",
             "timeline",
+            "users",
         ]
         for collection in collections:
             if not self.db.has_collection(collection):
                 self.db.create_collection(collection)
 
     def create_graphs(self):
+        """Creates the graphs in the database."""
         if not self.db.has_graph("threat_graph"):
             self.db.create_graph(
                 "threat_graph",
