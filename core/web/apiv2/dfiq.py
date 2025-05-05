@@ -314,8 +314,11 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
             detail=f"DFIQ type mismatch: {db_dfiq.type} != {update_data.type}",
         )
     db_dfiq.get_acls()
-    updated_dfiq = db_dfiq.model_copy(
-        update=update_data.model_dump(exclude=["created"])
+    # updated_dfiq = db_dfiq.model_copy(
+    #     update=update_data.model_dump(exclude=["created", "id"])
+    # )
+    updated_dfiq = db_dfiq.load(
+        {**db_dfiq.model_dump(), **update_data.model_dump(exclude=["created", "id"])}
     )
     new = updated_dfiq.save()
     new.get_acls()

@@ -980,7 +980,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 vertices[vertex["_id"]] = neighbor_schema.load(vertex)
 
     @classmethod
-    def count(cls: Type[TYetiObject]):
+    def count_all(cls: Type[TYetiObject]):
         """Counts the number of objects in the collection.
 
         Returns:

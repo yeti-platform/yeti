@@ -896,4 +896,4 @@ S30WAvQCCo2yU1orfgqr41mM70MBAgMBAAE="""
         observable.save(value="192.168.1.1")
         observable.save(value="tomchop.me")
         observable.save(value="https://www.google.com")
-        assert observable.Observable.count() == 3
+        assert observable.Observable.count_all() == 3

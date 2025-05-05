@@ -55,7 +55,7 @@ def migration_0():
 def migration_1():
     from core.schemas import observable
 
-    total_observables = observable.Observable.count()
+    total_observables = observable.Observable.count_all()
     logging.info(f"Migrating {total_observables} observables. This may take a while...")
     with tqdm.tqdm(total=total_observables, desc="Migrating observables") as pbar:
         for obs in observable.Observable.list():
@@ -89,7 +89,7 @@ def migration_2():
         db_user.save()
 
     for ObjectType in OBJECT_TYPES:
-        total_objects = ObjectType.count()
+        total_objects = ObjectType.count_all()
         logging.info(
             f"Updating ACLs for {total_objects} {ObjectType.__name__}. This may take a while..."
         )
