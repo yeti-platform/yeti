@@ -1,6 +1,7 @@
 import datetime
 import re
 import unicodedata
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, ClassVar
 
 from pydantic import BaseModel, computed_field
@@ -147,7 +148,7 @@ class YetiTagModel(YetiModel):
 
     def tag(
         self,
-        tags: list[str],
+        tags: Iterable[str],
         strict: bool = False,
         normalized: bool = True,
         expiration: datetime.timedelta | None = None,
@@ -155,8 +156,8 @@ class YetiTagModel(YetiModel):
         """Adds or updates a tag in an object."""
         from core.schemas import tag
 
-        if not isinstance(tags, (list, set, tuple)):
-            raise ValueError("Tags must be of type list, set or tuple.")
+        if isinstance(tags, str):  # common strings are also technically iterables.
+            tags = [tags]
 
         old_tags = [tag.name for tag in self.tags]
         actual_tags = []
