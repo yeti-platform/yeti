@@ -73,11 +73,11 @@ class TagTest(unittest.TestCase):
 
     def test_tag_input_type(self):
         """Test that tags input is of type list, set or tuple."""
-        with self.assertRaises(ValueError) as error:
-            self.obs1.tag("tag")
-        self.assertEqual(
-            str(error.exception), "Tags must be of type list, set or tuple."
-        )
+
+        self.obs1.tag("tag")
+        self.obs1.tag(["tag2"])
+        self.assertIn("tag", {tag.name for tag in self.obs1.tags})
+        self.assertIn("tag2", {tag.name for tag in self.obs1.tags})
 
     def test_tag_is_overwritten(self) -> None:
         """Test that a tag is overwritten when it is added to an observable."""
