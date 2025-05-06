@@ -1277,6 +1277,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def delete(self, all_versions=True):
         """Deletes an object from the database."""
+        # TODO(tomchop): Revisit inheritance model of ArangoDBConnector.
+        if hasattr(self, "clear_tags"):
+            self.clear_tags()
         col = self._db.collection(self._collection_name)
         self._delete_vertex_refs_in_graphs(self.extended_id)
         job = col.delete(self.id)

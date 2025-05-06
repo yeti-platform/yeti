@@ -44,6 +44,26 @@ class TagTest(unittest.TestCase):
         fresh_tag = Tag.find(name="test2")
         self.assertEqual(fresh_tag.count, 1)
 
+    def test_untag_updates_count(self) -> None:
+        """Test that the count of a tag is updated when a tag is removed
+        from an observable."""
+        Tag(name="test").save()
+        self.obs1.tag(["test"])
+        fresh_tag = Tag.find(name="test")
+        self.assertEqual(fresh_tag.count, 1)
+        self.obs1.tag(["other"], clear=True)
+        fresh_tag = Tag.find(name="test")
+        self.assertEqual(fresh_tag.count, 0)
+
+    def test_tag_update_delete_count(self) -> None:
+        """Test that the count of a tag is updated when a tag is deleted
+        from an observable."""
+        Tag(name="test").save()
+        self.obs1.tag(["test"])
+        self.obs1.delete()
+        fresh_tag = Tag.find(name="test")
+        self.assertEqual(fresh_tag.count, 0)
+
     def test_tag_is_created(self) -> None:
         """Test that a tag is created when it is added to an observable."""
         self.obs1.tag(["test"])

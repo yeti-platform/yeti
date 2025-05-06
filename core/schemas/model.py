@@ -126,7 +126,7 @@ class YetiModel(YetiBaseModel):
     aggregated_links: dict[str, dict[str, int]] | None = None
 
 
-class YetiTagInstance(YetiModel):
+class YetiTagInstance(YetiBaseModel):
     name: str
     last_seen: datetime.datetime
     expires: datetime.datetime | None = None
@@ -143,8 +143,11 @@ def normalize_name(tag_name: str) -> str:
     return tag_name
 
 
-class YetiTagModel(YetiModel):
+class YetiTagModel(YetiBaseModel):
     tags: list[YetiTagInstance] = []
+
+    def delete(self, all_versions: bool = False):
+        super().delete(all_versions=all_versions)
 
     def tag(
         self,
@@ -249,11 +252,15 @@ class YetiTagModel(YetiModel):
 
         removed_tags = set(old_tags) - set(actual_tags)
         for tag_name in removed_tags:
+            removed_tag = tag.Tag.find(name=tag_name)
+            removed_tag.count -= 1
+            removed_tag.save()
+
             producer.publish_event(
                 message.TagEvent(
                     type=message.EventType.delete,
                     tagged_object=self,
-                    tag_object=tag.Tag.find(name=tag_name),
+                    tag_object=removed_tag,
                 )
             )
 
@@ -288,5 +295,11 @@ class YetiTagModel(YetiModel):
 
     def clear_tags(self):
         """Clear all tags in an object."""
+        from core.schemas import tag
+
+        for obj_tag in self.tags:
+            db_tag = tag.Tag.find(name=obj_tag.name)
+            db_tag.count -= 1
+            db_tag.save()
         self.tags = []
         self.save()
