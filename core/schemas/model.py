@@ -248,21 +248,22 @@ class YetiTagModel(YetiBaseModel):
 
         extra_tags = extra_tags - set(tags) - set(tag.name for tag in self.tags)
         if extra_tags:
-            self.tag(list(extra_tags))
+            self.tag(list(extra_tags), clear=False)
 
         removed_tags = set(old_tags) - set(actual_tags)
-        for tag_name in removed_tags:
-            removed_tag = tag.Tag.find(name=tag_name)
-            removed_tag.count -= 1
-            removed_tag.save()
+        if clear:
+            for tag_name in removed_tags:
+                removed_tag = tag.Tag.find(name=tag_name)
+                removed_tag.count -= 1
+                removed_tag.save()
 
-            producer.publish_event(
-                message.TagEvent(
-                    type=message.EventType.delete,
-                    tagged_object=self,
-                    tag_object=removed_tag,
+                producer.publish_event(
+                    message.TagEvent(
+                        type=message.EventType.delete,
+                        tagged_object=self,
+                        tag_object=removed_tag,
+                    )
                 )
-            )
 
         self.save()
         return self
