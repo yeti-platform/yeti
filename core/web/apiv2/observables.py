@@ -408,7 +408,7 @@ def tag_observable(
     observable_tags = {}
     for observable_obj in observables:
         old_tags = [tag.name for tag in observable_obj.get_tags().values()]
-        observable_obj = observable_obj.tag(request.tags, strict=request.strict)
+        observable_obj = observable_obj.tag(request.tags, clear=request.strict)
         audit.log_timeline_tags(httpreq.state.username, observable_obj, old_tags)
         observable_tags[observable_obj.extended_id] = {
             tag.name: tag for tag in observable_obj.tags

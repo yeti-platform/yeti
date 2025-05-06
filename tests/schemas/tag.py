@@ -125,7 +125,7 @@ class TagTest(unittest.TestCase):
     def test_tag_strict(self) -> None:
         """Test that tags can be cleared from an observable."""
         self.obs1.tag(["test1", "test2", "test3"])
-        self.obs1.tag(["test"], strict=True)
+        self.obs1.tag(["test"], clear=True)
         tags = self.obs1.get_tags()
         self.assertEqual(len(tags), 1)
 

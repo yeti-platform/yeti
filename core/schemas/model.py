@@ -149,11 +149,30 @@ class YetiTagModel(YetiModel):
     def tag(
         self,
         tags: Iterable[str],
-        strict: bool = False,
+        clear: bool = False,
         normalized: bool = True,
         expiration: datetime.timedelta | None = None,
     ):
-        """Adds or updates a tag in an object."""
+        """Adds or updates tags on an object.
+
+        Includes options for normalization, expiration, and clearing existing tags.
+
+        Args:
+            tags: A list or iterable of tag names to be added or updated.
+                If a single string is provided, it will be converted to a list.
+            clear: If True, clears all existing tags before adding the new ones.
+                Defaults to False.
+            normalized: If True, normalizes the tag names using `normalize_name`.
+                Defaults to True.
+            expiration: Specifies the expiration time for the tags.
+                If not provided, the default expiration for each tag is used.
+
+        Raises:
+            RuntimeError: If an empty tag name is encountered after normalization.
+
+        Returns:
+            self: The updated object with the new or modified tags.
+        """
         from core.schemas import tag
 
         if isinstance(tags, str):  # common strings are also technically iterables.
@@ -171,7 +190,7 @@ class YetiTagModel(YetiModel):
                 )
             actual_tags.append(new_tag_name)
 
-        if strict:
+        if clear:
             self.tags = []
 
         extra_tags = set()
