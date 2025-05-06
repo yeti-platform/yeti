@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, conlist
 
-from core.schemas import audit, graph, rbac, roles
+from core.schemas import audit, model, rbac, roles
 from core.schemas.entity import Entity, EntityType, EntityTypes
 from core.schemas.tag import MAX_TAGS_REQUEST
 
@@ -52,7 +52,7 @@ class EntityTagResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     tagged: int
-    tags: dict[str, dict[str, graph.TagRelationship]]
+    tags: dict[str, dict[str, model.YetiTagInstance]]
 
 
 # API endpoints
@@ -176,18 +176,15 @@ def delete(httpreq: Request, id: str) -> None:
 def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
     query = request.query
-    tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
     entities, total = Entity.filter(
         query_args=query,
-        tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
         sorting=request.sorting,
         aliases=request.filter_aliases,
         links_count=True,
-        graph_queries=[("tags", "tagged", "outbound", "name")],
         user=httpreq.state.user,
     )
     response = EntitySearchResponse(entities=entities, total=total)
@@ -210,9 +207,9 @@ def tag(httpreq: Request, request: EntityTagRequest) -> EntityTagResponse:
 
     entity_tags = {}
     for db_entity in entities:
-        old_tags = [tag[1].name for tag in db_entity.get_tags()]
-        db_entity = db_entity.tag(request.tags, strict=request.strict)
+        old_tags = [tag.name for tag in db_entity.get_tags().values()]
+        db_entity = db_entity.tag(request.tags, clear=request.strict)
         audit.log_timeline_tags(httpreq.state.username, db_entity, old_tags)
-        entity_tags[db_entity.extended_id] = db_entity.tags
+        entity_tags[db_entity.extended_id] = {tag.name: tag for tag in db_entity.tags}
 
     return EntityTagResponse(tagged=len(entities), tags=entity_tags)

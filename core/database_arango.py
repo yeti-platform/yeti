@@ -14,7 +14,6 @@ if TYPE_CHECKING:
         Relationship,
         RelationshipTypes,
         RoleRelationship,
-        TagRelationship,
     )
 
 
@@ -97,51 +96,71 @@ class ArangoDatabase:
         if check_db_sync:
             self.check_database_version()
 
-        self.create_edge_definition(
-            self.graph("tags"),
-            {
-                "edge_collection": "tagged",
-                "from_vertex_collections": ["observables", "entities", "indicators"],
-                "to_vertex_collections": ["tags"],
-            },
-        )
-        self.create_edge_definition(
-            self.graph("threat_graph"),
-            {
-                "edge_collection": "links",
-                "from_vertex_collections": [
-                    "observables",
-                    "entities",
-                    "indicators",
-                    "dfiq",
-                ],
-                "to_vertex_collections": [
-                    "observables",
-                    "entities",
-                    "indicators",
-                    "dfiq",
-                ],
-            },
-        )
-
-        self.create_edge_definition(
-            self.graph("systemroles"),
-            {
-                "edge_collection": "acls",
-                "from_vertex_collections": ["users", "groups"],
-                "to_vertex_collections": [
-                    "groups",
-                    "observables",
-                    "entities",
-                    "indicators",
-                    "dfiq",
-                ],
-            },
-        )
-
+        self.create_collections()
+        self.create_graphs()
         self.create_indexes()
         self.create_analyzers()
         self.create_views()
+
+    def create_collections(self):
+        """Creates the collections in the database."""
+        collections = [
+            "auditlog",
+            "dfiq",
+            "entities",
+            "groups",
+            "indicators",
+            "observables",
+            "system",
+            "tags",
+            "tasks",
+            "timeline",
+            "users",
+        ]
+        for collection in collections:
+            if not self.db.has_collection(collection):
+                self.db.create_collection(collection)
+
+    def create_graphs(self):
+        """Creates the graphs in the database."""
+        if not self.db.has_graph("threat_graph"):
+            self.db.create_graph(
+                "threat_graph",
+                edge_definitions=[
+                    {
+                        "edge_collection": "links",
+                        "from_vertex_collections": [
+                            "observables",
+                            "entities",
+                            "indicators",
+                            "dfiq",
+                        ],
+                        "to_vertex_collections": [
+                            "observables",
+                            "entities",
+                            "indicators",
+                            "dfiq",
+                        ],
+                    }
+                ],
+            )
+        if not self.db.has_graph("systemroles"):
+            self.db.create_graph(
+                "systemroles",
+                edge_definitions=[
+                    {
+                        "edge_collection": "acls",
+                        "from_vertex_collections": ["users", "groups"],
+                        "to_vertex_collections": [
+                            "groups",
+                            "observables",
+                            "entities",
+                            "indicators",
+                            "dfiq",
+                        ],
+                    }
+                ],
+            )
 
     def check_database_version(self, skip_if_testing: bool = True):
         if TESTING and skip_if_testing:
@@ -173,47 +192,107 @@ class ArangoDatabase:
             )
 
     def create_indexes(self):
-        self.db.collection("observables").add_persistent_index(
-            fields=["value", "type"], unique=True, in_background=True, name="obs_index"
+        self.db.collection("observables").add_index(
+            {
+                "fields": ["value", "type"],
+                "unique": True,
+                "in_background": True,
+                "name": "obs_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("observables").add_persistent_index(
-            fields=["created"], in_background=True, name="obs_created_index"
+        self.db.collection("observables").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "obs_created_index",
+                "type": "persistent",
+            }
         )
 
-        self.db.collection("entities").add_persistent_index(
-            fields=["name", "type"], unique=True, in_background=True, name="ent_index"
+        self.db.collection("entities").add_index(
+            {
+                "fields": ["name", "type"],
+                "unique": True,
+                "in_background": True,
+                "name": "ent_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("entities").add_persistent_index(
-            fields=["created"], in_background=True, name="ent_created_index"
+        self.db.collection("entities").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "ent_created_index",
+                "type": "persistent",
+            }
         )
 
-        self.db.collection("tags").add_persistent_index(
-            fields=["name"], unique=True, in_background=True, name="tag_index"
+        self.db.collection("tags").add_index(
+            {
+                "fields": ["name"],
+                "unique": True,
+                "in_background": True,
+                "name": "tag_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("indicators").add_persistent_index(
-            fields=["name", "type"], unique=True, in_background=True, name="ind_index"
+        self.db.collection("indicators").add_index(
+            {
+                "fields": ["name", "type"],
+                "unique": True,
+                "in_background": True,
+                "name": "ind_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("indicators").add_persistent_index(
-            fields=["created"], in_background=True, name="ind_created_index"
+        self.db.collection("indicators").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "ind_created_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("dfiq").add_persistent_index(
-            fields=["uuid"],
-            unique=True,
-            sparse=True,
-            in_background=True,
-            name="dfiq_index",
+        self.db.collection("dfiq").add_index(
+            {
+                "fields": ["uuid"],
+                "unique": True,
+                "sparse": True,
+                "in_background": True,
+                "name": "dfiq_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("dfiq").add_persistent_index(
-            fields=["created"], in_background=True, name="dfiq_created_index"
+        self.db.collection("dfiq").add_index(
+            {
+                "fields": ["created"],
+                "in_background": True,
+                "name": "dfiq_created_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("groups").add_persistent_index(
-            fields=["name"], unique=True, in_background=True, name="group_name_index"
+        self.db.collection("groups").add_index(
+            {
+                "fields": ["name"],
+                "unique": True,
+                "in_background": True,
+                "name": "group_name_index",
+                "type": "persistent",
+            }
         )
-        self.db.collection("users").add_persistent_index(
-            fields=["username"], unique=True, in_background=True, name="user_name_index"
+        self.db.collection("users").add_index(
+            {
+                "fields": ["username"],
+                "unique": True,
+                "in_background": True,
+                "name": "user_name_index",
+                "type": "persistent",
+            }
         )
 
     def create_views(self):
+        link_definitions = {}
         for view_target in ("observables", "entities", "indicators", "dfiq"):
             try:
                 if TESTING:
@@ -224,20 +303,19 @@ class ArangoDatabase:
             except Exception:
                 pass
 
+            link_definitions[view_target] = {
+                "analyzers": ["identity", "norm"],
+                "includeAllFields": True,
+                "storedValues": [{"fields": ["name", "tags", "type"]}],
+                "trackListPositions": False,
+            }
+
             self.db.create_arangosearch_view(
                 name=f"{view_target}_view",
                 properties={
                     "consolidationIntervalMsec": 1 if TESTING else 1000,
                     "commitIntervalMsec": 1 if TESTING else 1000,
-                    "links": {
-                        view_target: {
-                            "analyzers": ["identity", "norm"],
-                            "fields": {},
-                            "includeAllFields": True,
-                            "storeValues": "none",
-                            "trackListPositions": False,
-                        }
-                    },
+                    "links": {view_target: link_definitions[view_target]},
                     "primarySort": [
                         {"field": "created", "direction": "desc"},
                         {"field": "value", "direction": "asc"},
@@ -245,6 +323,29 @@ class ArangoDatabase:
                     ],
                 },
             )
+
+        try:
+            if TESTING:
+                self.db.delete_view("all_objects_view")
+            else:
+                self.db.view("all_objects_view")
+                return
+        except Exception:
+            pass
+
+        self.db.create_arangosearch_view(
+            name="all_objects_view",
+            properties={
+                "consolidationIntervalMsec": 1 if TESTING else 1000,
+                "commitIntervalMsec": 1 if TESTING else 1000,
+                "links": link_definitions,
+                "primarySort": [
+                    {"field": "created", "direction": "desc"},
+                    {"field": "value", "direction": "asc"},
+                    {"field": "name", "direction": "asc"},
+                ],
+            },
+        )
 
     def truncate(self, collection_name=None):
         if collection_name:
@@ -372,7 +473,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
         newdoc = None
         if doc_id:
             document["_key"] = doc_id
-            job = async_col.update(document, return_new=True)
+            if self._collection_name in ("acls", "links"):
+                job = async_col.update(document, return_new=True)
+            else:
+                job = async_col.update(document, return_new=True, merge=False)
             while job.status() != "done":
                 time.sleep(ASYNC_JOB_WAIT_TIME)
             newdoc = job.result()
@@ -422,14 +526,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           The created Yeti object.
         """
-        exclude = ["tags"] + self._exclude_overwrite
+        exclude = self._exclude_overwrite
         doc_dict = self.model_dump(exclude_unset=True, exclude=exclude)
         if doc_dict.get("id") is not None:
-            exclude = ["tags", "acls"] + self._exclude_overwrite
+            exclude = ["acls"] + self._exclude_overwrite
             result = self._update(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.update
         else:
-            exclude = ["tags", "acls", "id"] + self._exclude_overwrite
+            exclude = ["acls", "id"] + self._exclude_overwrite
             result = self._insert(self.model_dump_json(exclude=exclude))
             event_type = message.EventType.new
             if not result:
@@ -437,9 +541,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 result = self._update(self.model_dump_json(exclude=exclude))
                 event_type = message.EventType.update
         yeti_object = self.__class__(**result)
-        # TODO: Override this if we decide to implement YetiTagModel
-        if hasattr(self, "tags"):
-            yeti_object.get_tags()
         if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.ObjectEvent(type=event_type, yeti_object=yeti_object)
@@ -521,191 +622,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         document = documents.pop()
         document["__id"] = document.pop("_key")
         return cls.load(document)
-
-    def tag(
-        self: TYetiObject,
-        tags: List[str],
-        strict: bool = False,
-        normalized: bool = True,
-        expiration: datetime.timedelta | None = None,
-    ) -> TYetiObject:
-        """Connects object to tag graph."""
-        # Import at runtime to avoid circular dependency.
-        from core.schemas import tag
-
-        if self.id is None:
-            raise RuntimeError(
-                "Cannot tag unsaved object, make sure to save() it first."
-            )
-
-        if not isinstance(tags, (list, set, tuple)):
-            raise ValueError("Tags must be of type list, set or tuple.")
-
-        tags = list({t.strip() for t in tags if t.strip()})
-        if strict:
-            self.clear_tags()
-
-        extra_tags = set()
-        for provided_tag_name in tags:
-            tag_name = tag.normalize_name(provided_tag_name)
-            if not tag_name:
-                raise RuntimeError(
-                    f"Cannot tag object with empty tag: '{provided_tag_name}' -> '{tag_name}'"
-                )
-            replacements, _ = tag.Tag.filter({"in__replaces": [tag_name]}, count=1)
-            new_tag: Optional[tag.Tag] = None
-
-            if replacements:
-                new_tag = replacements[0]
-            # Attempt to find actual tag
-            else:
-                new_tag = tag.Tag.find(name=tag_name)
-            # Create tag
-            if not new_tag:
-                new_tag = tag.Tag(name=tag_name).save()
-
-            expiration = expiration or new_tag.default_expiration
-            tag_link = self.link_to_tag(new_tag.name, expiration=expiration)
-            self._tags[new_tag.name] = tag_link
-
-            extra_tags |= set(new_tag.produces)
-
-        extra_tags -= set(tags)
-        if extra_tags:
-            self.tag(list(extra_tags))
-
-        return self
-
-    def link_to_tag(
-        self, tag_name: str, expiration: datetime.timedelta
-    ) -> "TagRelationship":
-        """Links a YetiObject to a Tag object.
-
-        Args:
-          tag_name: The name of the tag to link to.
-        """
-        # Import at runtime to avoid circular dependency.
-        from core.schemas.graph import TagRelationship
-        from core.schemas.tag import Tag
-
-        graph = self._db.graph("tags")
-
-        tags = self.get_tags()
-
-        for tag_relationship, tag in tags:
-            if tag.name != tag_name:
-                continue
-            tag_relationship.last_seen = datetime.datetime.now(datetime.timezone.utc)
-            tag_relationship.fresh = True
-            edge = json.loads(tag_relationship.model_dump_json())
-            edge["_id"] = tag_relationship.id
-            graph.update_edge(edge)
-            if self._collection_name not in ("auditlog", "timeline"):
-                try:
-                    event = message.TagEvent(
-                        type=message.EventType.update,
-                        tagged_object=self,
-                        tag_object=tag,
-                    )
-                    producer.publish_event(event)
-                except Exception:
-                    logging.exception("Error while publishing event")
-            return tag_relationship
-
-        # Relationship doesn't exist, check if tag is already in the db
-        tag_obj = Tag.find(name=tag_name)
-        if not tag_obj:
-            tag_obj = Tag(name=tag_name).save()
-        tag_obj.count += 1
-        tag_obj.save()
-
-        tag_relationship = TagRelationship(
-            source=self.extended_id,
-            target=tag_obj.extended_id,
-            last_seen=datetime.datetime.now(datetime.timezone.utc),
-            expires=datetime.datetime.now(datetime.timezone.utc) + expiration,
-            fresh=True,
-        )
-
-        job = graph.edge_collection("tagged").link(
-            self.extended_id,
-            tag_obj.extended_id,
-            data=json.loads(tag_relationship.model_dump_json()),
-            return_new=True,
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        result = job.result()["new"]
-        result["__id"] = result.pop("_key")
-        if self._collection_name not in ("auditlog", "timeline"):
-            try:
-                event = message.TagEvent(
-                    type=message.EventType.new, tagged_object=self, tag_object=tag_obj
-                )
-                producer.publish_event(event)
-            except Exception:
-                logging.exception("Error while publishing event")
-        return TagRelationship.load(result)
-
-    def expire_tag(self, tag_name: str) -> "TagRelationship":
-        """Expires a tag on an Observable.
-
-        Args:
-          tag_name: The name of the tag to expire.
-        """
-        # Avoid circular dependency
-        graph = self._db.graph("tags")
-
-        tags = self.get_tags()
-
-        for tag_relationship, tag in tags:
-            if tag.name != tag_name:
-                continue
-            tag_relationship.fresh = False
-            edge = json.loads(tag_relationship.model_dump_json())
-            edge["_id"] = tag_relationship.id
-            graph.update_edge(edge)
-            return tag_relationship
-
-        raise ValueError(
-            f"Tag '{tag_name}' not found on observable '{self.extended_id}'"
-        )
-
-    def clear_tags(self):
-        """Clears all tags on an Observable."""
-        # Avoid circular dependency
-        graph = self._db.graph("tags")
-
-        self.get_tags()
-        job = graph.edge_collection("tagged").edges(self.extended_id)
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        results = job.result()
-        for edge in results["edges"]:
-            if self._collection_name not in ("auditlog", "timeline"):
-                try:
-                    job = self._db.collection("tagged").get(edge["_id"])
-                    while job.status() != "done":
-                        time.sleep(ASYNC_JOB_WAIT_TIME)
-                    tag_relationship = job.result()
-                    tag_collection, tag_id = tag_relationship["target"].split("/")
-                    job = self._db.collection(tag_collection).get(tag_id)
-                    while job.status() != "done":
-                        time.sleep(ASYNC_JOB_WAIT_TIME)
-                    tag_obj = job.result()
-                    event = message.TagEvent(
-                        type=message.EventType.delete,
-                        tagged_object=self,
-                        tag_object=tag_obj,
-                    )
-                    producer.publish_event(event)
-                except Exception:
-                    logging.exception("Error while publishing event")
-            job = graph.edge_collection("tagged").delete(edge["_id"])
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-
-        self._tags = {}
 
     def link_to(
         self, target, relationship_type: str, description: str
@@ -983,27 +899,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
             acl_query = "LET acl = FIRST(FOR aclv in 1..2 inbound v acls FILTER aclv.username == @username RETURN true) or false\n\nfilter acl"
             args["username"] = user.username
 
-        if include_tags:
-            tags_query = """
-            LET vertices = (
-                FOR object in p['vertices']
-                let innertags = (FOR tag, edge in 1..1 OUTBOUND object tagged RETURN { [tag.name]: edge })
-                RETURN MERGE(object, {tags: MERGE(innertags)})
-            )
-            """
-        else:
-            tags_query = """
-            LET vertices = p['vertices']
-            """
-
         aql = f"""
-        WITH tags, observables, entities, dfiq, indicators
+        WITH observables, entities, dfiq, indicators
 
         FOR v, e, p IN @min_hops..@max_hops {direction} @extended_id @@graph
           OPTIONS {{ uniqueVertices: "path" }}
           {query_filter}
-          {tags_query}
           {acl_query}
+          LET vertices = p['vertices']
           {limit}
           {sorting_aql}
           RETURN {{ vertices: vertices, g: p }}
@@ -1044,9 +947,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             edge["__id"] = edge.pop("_key")
             edge["source"] = edge.pop("_from")
             edge["target"] = edge.pop("_to")
-            if "tagged" in edge["_id"]:
-                relationships.append(graph.TagRelationship.load(edge))
-            elif "acls" in edge["_id"]:
+            if "acls" in edge["_id"]:
                 relationships.append(graph.RoleRelationship.load(edge))
             else:
                 relationships.append(graph.Relationship.load(edge))
@@ -1095,7 +996,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def filter(
         cls: Type[TYetiObject],
         query_args: dict[str, Any],
-        tag_filter: List[str] = [],
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
@@ -1113,7 +1013,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Args:
             query_args: A key:value dictionary containing keys to filter objects
                 on.
-            tag_filter: A list of tags to filter on.
             offset: Skip this many objects when querying the DB.
             count: How many objecst after `offset` to return.
             sorting: A list of (order, ascending) fields to sort by.
@@ -1184,16 +1083,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
             elif key in {"labels", "relevant_tags"}:
                 conditions.append(f"o.@arg{i}_key IN @arg{i}_value")
                 aql_args[f"arg{i}_key"] = key
-            elif key in ("created", "expires"):
+            elif key == "tags":
+                if using_view:
+                    conditions.append(f"@arg{i}_value ALL IN o.tags.name")
+                else:
+                    conditions.append(f"@arg{i}_value ALL IN o.tags[*].name")
+            elif key in ("created", "modified", "tags.expires"):
+                # Value is a string, we're checking the first character.
                 operator = value[0]
                 if operator not in ["<", ">"]:
                     operator = "="
                 else:
                     aql_args[f"arg{i}_value"] = value[1:]
-                filter_conditions.append(
-                    f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
-                )
-                sorts.append(f"o.{key}")
+                if key == "tags.expires":
+                    filter_conditions.append(
+                        f"o.tags[* RETURN DATE_TIMESTAMP(CURRENT.expires)] ANY {operator} DATE_TIMESTAMP(@arg{i}_value)"
+                    )
+                else:
+                    filter_conditions.append(
+                        f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
+                    )
+                    sorts.append(f"o.{key}")
             elif key in ("name", "value"):
                 if using_view and not using_regex:
                     aql_args[f"arg{i}_value"] = f"%{value}%"
@@ -1259,13 +1169,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
             acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
             aql_args["username"] = user.username
 
-        tag_filter_query = ""
-        if tag_filter:
-            tag_filter_query = (
-                " FILTER COUNT(INTERSECTION(ATTRIBUTES(MERGE(tags)), @tag_names)) > 0"
-            )
-            aql_args["tag_names"] = tag_filter
-
         filter_string = ""
         if filter_conditions:
             filter_string = f"FILTER {' AND '.join(filter_conditions)}"
@@ -1290,7 +1193,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 {links_count_query}
                 {graph_query_string}
                 {acl_query}
-                {tag_filter_query}
                 {filter_string}
                 {acl_filter}
                 {aql_sort}
@@ -1375,6 +1277,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     def delete(self, all_versions=True):
         """Deletes an object from the database."""
+        # TODO(tomchop): Revisit inheritance model of ArangoDBConnector.
+        if hasattr(self, "clear_tags"):
+            self.clear_tags()
         col = self._db.collection(self._collection_name)
         self._delete_vertex_refs_in_graphs(self.extended_id)
         job = col.delete(self.id)
@@ -1384,21 +1289,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             return
         try:
             event_type = message.EventType.delete
-            if self._collection_name == "tagged":
-                source_collection, source_id = self.source.split("/")
-                tag_collection, tag_id = self.target.split("/")
-                job = self._db.collection(source_collection).get(source_id)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                source_obj = job.result()
-                job = self._db.collection(tag_collection).get(tag_id)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                tag_obj = job.result()
-                event = message.TagEvent(
-                    type=event_type, tagged_object=source_obj, tag_object=tag_obj
-                )
-            elif self._collection_name == "links":
+            if self._collection_name == "links":
                 source_collection, source_id = self.source.split("/")
                 target_collection, target_id = self.target.split("/")
                 job = self._db.collection(source_collection).get(source_id)
@@ -1435,22 +1326,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
 def tagged_observables_export(cls, args):
     aql = """
-        WITH tags
-
         FOR o in observables
         FILTER (o.type IN @acts_on OR @acts_on == [])
-        LET tags = MERGE(
-                FOR v, e in 1..1 OUTBOUND o tagged
-                    FILTER v.name NOT IN @ignore
-                    FILTER (e.fresh OR NOT @fresh)
-                RETURN {[v.name]: MERGE(e, {id: e._id})}
+        FILTER o.tags != []
+        LET freshtags = (
+            FOR t IN o.tags
+                FILTER t.name NOT IN @ignore
+                FILTER (t.fresh OR NOT @fresh)
+            RETURN t.name
         )
-        FILTER tags != {}
-        LET tagnames = ATTRIBUTES(tags)
-
-        FILTER COUNT(INTERSECTION(tagnames, @include)) > 0 OR @include == []
-        FILTER COUNT(INTERSECTION(tagnames, @exclude)) == 0
-        RETURN MERGE(o, {tags: tags})
+        FILTER COUNT(freshtags) > 0
+        FILTER COUNT(INTERSECTION(freshtags, @include)) > 0 OR @include == []
+        FILTER COUNT(INTERSECTION(freshtags, @exclude)) == 0
+        RETURN o
         """
     documents = db.aql.execute(aql, bind_vars=args, count=True, full_count=True)
     results = []

@@ -1,3 +1,4 @@
+import time
 import unittest
 from typing import Any, Optional
 
@@ -13,9 +14,9 @@ class YetiTestCase(unittest.TestCase):
             expected_values: A list of dictionaries, each containing expected values
                 for 'value', 'type', and 'tags' attributes.
         """
-        observables = observable.Observable.filter(
-            {"value": ""}, graph_queries=[("tags", "tagged", "outbound", "name")]
-        )
+        # Allow for indexes to catch up
+        time.sleep(1)
+        observables = observable.Observable.filter({"value": ""})
         observable_obj, _ = observables
         observable_obj = sorted(observable_obj, key=lambda x: x.value)
         expected_values = sorted(expected_values, key=lambda x: x["value"])
@@ -25,7 +26,7 @@ class YetiTestCase(unittest.TestCase):
         for obs, expected_value in zip(observable_obj, expected_values):
             self.assertEqual(obs.value, expected_value["value"])
             self.assertEqual(obs.type, expected_value["type"])
-            self.assertEqual(set(obs.tags.keys()), expected_value["tags"])
+            self.assertEqual({tag.name for tag in obs.tags}, expected_value["tags"])
 
     def check_neighbors(
         self,

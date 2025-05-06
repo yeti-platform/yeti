@@ -2,8 +2,7 @@ import datetime
 from datetime import timedelta
 
 from core import taskmanager
-from core.schemas import task
-from core.schemas.graph import TagRelationship
+from core.schemas import observable, task
 
 
 class ExpireTags(task.AnalyticsTask):
@@ -15,10 +14,11 @@ class ExpireTags(task.AnalyticsTask):
 
     def run(self):
         now = datetime.datetime.now(datetime.timezone.utc)
-        relationships, total = TagRelationship.filter({"expires": f"<{now}"})
-        for rel in relationships:
-            rel.fresh = False
-            rel.save()
+        observables, total = observable.Observable.filter(
+            query_args={"tags.expires": f"<{now.isoformat()}"},
+        )
+        for obs in observables:
+            obs.expire_tags()
 
 
 taskmanager.TaskManager.register_task(ExpireTags)

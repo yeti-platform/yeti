@@ -138,30 +138,6 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(total, 3)
         self.assertNotIn(self.malware1, entities)
 
-    def test_entity_with_tags(self):
-        entity_obj = ThreatActor(name="APT0").save()
-        entity_obj.tag(["tag1", "tag2"])
-        observable_obj = hostname.Hostname(value="doman.com").save()
-
-        observable_obj.tag(["tag1"])
-        vertices, paths, count = observable_obj.neighbors(
-            graph="tagged", min_hops=2, max_hops=2
-        )
-
-        new_tag = tag.Tag.find(name="tag1")
-
-        self.assertEqual(len(vertices), 2)
-        self.assertEqual(
-            vertices[entity_obj.extended_id].extended_id, entity_obj.extended_id
-        )
-        self.assertEqual(paths[0][0].source, observable_obj.extended_id)
-        self.assertEqual(paths[0][0].target, new_tag.extended_id)
-
-        self.assertEqual(paths[0][1].source, entity_obj.extended_id)
-        self.assertEqual(paths[0][1].target, new_tag.extended_id)
-
-        self.assertEqual(count, 1)
-
     def test_duplicate_name(self):
         """Tests that saving an entity with an existing name will return the existing entity."""
         ta = ThreatActor(name="APT123").save()
@@ -206,5 +182,5 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(campaign.name, "Test Campaign")
         self.assertEqual(campaign.type, "campaign")
         self.assertEqual(len(campaign.tags), 2)
-        self.assertEqual(campaign.tags["tag1"].fresh, True)
-        self.assertEqual(campaign.tags["tag2"].fresh, True)
+        self.assertEqual(campaign.tags[0].fresh, True)
+        self.assertEqual(campaign.tags[1].fresh, True)

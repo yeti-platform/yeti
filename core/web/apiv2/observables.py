@@ -5,7 +5,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
 
 from core.config.config import yeti_config
-from core.schemas import audit, graph, observable, rbac, roles, tag
+from core.schemas import audit, model, observable, rbac, roles, tag
 from core.schemas.observable import Observable, ObservableType, ObservableTypes
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 
@@ -107,7 +107,7 @@ class ObservableTagResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     tagged: int
-    tags: dict[str, dict[str, graph.TagRelationship]]
+    tags: dict[str, dict[str, model.YetiTagInstance]]
 
 
 # API endpoints
@@ -296,16 +296,13 @@ def search(
 ) -> ObservableSearchResponse:
     """Searches for observables."""
     query = request.query
-    tags = query.pop("tags", [])
     if request.type:
         query["type"] = request.type
     observables, total = Observable.filter(
         query,
-        tag_filter=tags,
         offset=request.page * request.count,
         count=request.count,
         sorting=request.sorting,
-        graph_queries=[("tags", "tagged", "outbound", "name")],
         user=httpreq.state.user,
     )
     return ObservableSearchResponse(observables=observables, total=total)
@@ -410,10 +407,12 @@ def tag_observable(
 
     observable_tags = {}
     for observable_obj in observables:
-        old_tags = [tag[1].name for tag in observable_obj.get_tags()]
-        observable_obj = observable_obj.tag(request.tags, strict=request.strict)
+        old_tags = [tag.name for tag in observable_obj.get_tags().values()]
+        observable_obj = observable_obj.tag(request.tags, clear=request.strict)
         audit.log_timeline_tags(httpreq.state.username, observable_obj, old_tags)
-        observable_tags[observable_obj.extended_id] = observable_obj.tags
+        observable_tags[observable_obj.extended_id] = {
+            tag.name: tag for tag in observable_obj.tags
+        }
 
     return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
 

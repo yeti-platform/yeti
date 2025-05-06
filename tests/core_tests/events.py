@@ -52,7 +52,7 @@ class EventsTest(unittest.TestCase):
         obs1 = observable.Hostname(value="test1.com").save()
         self.assertEqual(self.redis_client.llen("events"), 1)
         obs1.delete()
-        self.assertEqual(self.redis_client.llen("events"), 2)
+        self.assertEqual(self.redis_client.llen("events"), 3)
         redis_payload = self.redis_client.lpop("events")
         body_payload = json.loads(redis_payload).get("body")
         body = json.loads(base64.b64decode(body_payload))
@@ -83,8 +83,10 @@ class EventsTest(unittest.TestCase):
         # 1 event for the object creation,
         # 1 event for the tag creation
         # 1 event for the tag count update
-        # 1 event for the tag association
-        self.assertEqual(self.redis_client.llen("events"), 4)
+        # 1 event for the tag event
+        # 1 event for the host's tag update
+        self.assertEqual(self.redis_client.llen("events"), 5)
+        redis_payload = self.redis_client.lpop("events")
         redis_payload = self.redis_client.lpop("events")
         body_payload = json.loads(redis_payload).get("body")
         body = json.loads(base64.b64decode(body_payload))

@@ -269,7 +269,7 @@ class YetiPackageTest(unittest.TestCase):
         yeti_package.save()
         obs1 = observable.Observable.find(value="new_observable_value", type="generic")
         tags = obs1.get_tags()
-        self.assertEqual("type:new_observable_type", tags[0][1].name)
+        self.assertIn("type:new_observable_type", tags)
 
     def test_package_creation_with_tags(self) -> None:
         tags = {
@@ -287,14 +287,14 @@ class YetiPackageTest(unittest.TestCase):
         obs1 = observable.Observable.find(value="toto.com", type="hostname")
         tags = obs1.get_tags()
         self.assertEqual(len(tags), 2)
-        for tag in tags:
-            self.assertIn(tag[1].name, ["tag1", "tag3"])
+        for tag in tags.values():
+            self.assertIn(tag.name, ["tag1", "tag3"])
 
         campaign = entity.Entity.find(name="Fresh campaign", type="campaign")
         tags = campaign.get_tags()
         self.assertEqual(len(tags), 2)
-        for tag in tags:
-            self.assertIn(tag[1].name, ["tag2", "tag3"])
+        for tag in tags.values():
+            self.assertIn(tag.name, ["tag2", "tag3"])
 
     def test_package_creation_from_json_with_tags(self) -> None:
         json_string = """
@@ -321,20 +321,20 @@ class YetiPackageTest(unittest.TestCase):
         obs1 = observable.Observable.find(value="192.168.1.1", type="ipv4")
         tags = obs1.get_tags()
         self.assertEqual(len(tags), 1)
-        for tag in tags:
-            self.assertEqual(tag[1].name, "tag3")
+        for tag in tags.values():
+            self.assertEqual(tag.name, "tag3")
 
         obs2 = observable.Observable.find(value="toto.com", type="generic")
         tags = obs2.get_tags()
         self.assertEqual(len(tags), 3)
-        for tag in tags:
-            self.assertIn(tag[1].name, ["tag1", "type:new_type", "tag3"])
+        for tag in tags.values():
+            self.assertIn(tag.name, ["tag1", "type:new_type", "tag3"])
 
         campaign = entity.Entity.find(name="Fresh campaign", type="campaign")
         tags = campaign.get_tags()
         self.assertEqual(len(tags), 2)
-        for tag in tags:
-            self.assertIn(tag[1].name, ["tag2", "tag3"])
+        for tag in tags.values():
+            self.assertIn(tag.name, ["tag2", "tag3"])
 
     def test_empty_package_creation(self) -> None:
         yeti_package = package.YetiPackage(

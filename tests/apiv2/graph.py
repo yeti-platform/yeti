@@ -136,27 +136,6 @@ class SimpleGraphTest(unittest.TestCase):
             "hops, min_hops, or max_hops must be provided", data["detail"][0]["msg"]
         )
 
-    def test_get_neighbors_tag(self):
-        self.entity1.tag(["hacker1"])
-        self.observable1.tag(["hacker1"])
-
-        response = client.post(
-            "/api/v2/graph/search",
-            json={
-                "source": self.observable1.extended_id,
-                "hops": 2,
-                "graph": "tagged",
-                "direction": "any",
-                "include_original": False,
-            },
-        )
-        data = response.json()
-        self.assertEqual(response.status_code, 200, data)
-        self.assertEqual(len(data["vertices"]), 2)
-        self.assertEqual(data["total"], 1)
-
-        self.assertIn(self.entity1.extended_id, data["vertices"])
-
     def test_neighbors_go_both_ways(self):
         self.relationship = self.observable1.link_to(
             self.observable2, "resolves", "DNS resolution"
@@ -527,7 +506,9 @@ class ComplexGraphTest(unittest.TestCase):
         # Observable is known, has been added.
         self.assertEqual(len(data["known"]), 1)
         self.assertEqual(data["known"][0]["value"], "test1.com")
-        self.assertEqual(sorted(data["known"][0]["tags"].keys()), ["tag1", "tag2"])
+        self.assertEqual(
+            sorted([tag["name"] for tag in data["known"][0]["tags"]]), ["tag1", "tag2"]
+        )
 
     def test_match_guessing_type(self):
         response = client.post(

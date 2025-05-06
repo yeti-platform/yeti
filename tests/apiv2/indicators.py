@@ -106,7 +106,7 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "hex")
         self.assertEqual(data["type"], "regex")
-        self.assertIn("hextag", data["tags"].keys())
+        self.assertIn("hextag", [tag["name"] for tag in data["tags"]])
 
     def test_search_indicators(self):
         response = client.post(
@@ -120,7 +120,7 @@ class IndicatorTest(unittest.TestCase):
 
         # check tag
         self.assertEqual(len(data["indicators"][0]["tags"]), 1)
-        self.assertIn("hextag", data["indicators"][0]["tags"])
+        self.assertIn("hextag", [tag["name"] for tag in data["indicators"][0]["tags"]])
 
     def test_search_indicators_tagged(self):
         response = client.post(

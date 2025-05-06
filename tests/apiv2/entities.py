@@ -93,7 +93,7 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "ta1")
         self.assertEqual(data["type"], "threat-actor")
-        self.assertIn("ta1", data["tags"].keys())
+        self.assertIn("ta1", [tag["name"] for tag in data["tags"]])
 
     def test_search_entities(self):
         response = client.post(
@@ -108,7 +108,7 @@ class EntityTest(unittest.TestCase):
 
         # Check tags
         self.assertEqual(len(data["entities"][0]["tags"]), 1, data)
-        self.assertIn("ta1", data["entities"][0]["tags"])
+        self.assertIn("ta1", [tag["name"] for tag in data["entities"][0]["tags"]])
 
     def test_search_entities_tagged(self):
         response = client.post(
@@ -123,7 +123,7 @@ class EntityTest(unittest.TestCase):
 
         # Check tags
         self.assertEqual(len(data["entities"][0]["tags"]), 1, data)
-        self.assertIn("ta1", data["entities"][0]["tags"])
+        self.assertIn("ta1", [tag["name"] for tag in data["entities"][0]["tags"]])
 
     def test_search_entities_subfields(self):
         response = client.post(
@@ -206,7 +206,7 @@ class EntityTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["name"], "ta2")
-        self.assertIn("hacker", data["tags"], data["tags"])
+        self.assertIn("hacker", [tag["name"] for tag in data["tags"]], data["tags"])
 
     def test_tag_entity(self):
         """Tests that an entity gets tagged and tags are generated."""

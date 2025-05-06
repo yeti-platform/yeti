@@ -276,7 +276,10 @@ class ExportTaskTest(unittest.TestCase):
         self.assertEqual(len(observable_list), 4)
 
         self.assertEqual(observable_list[0].value, self.observable1.value)
-        self.assertEqual(set(observable_list[0].tags), set(self.observable1.tags))
+        self.assertEqual(
+            set([t.name for t in observable_list[0].tags]),
+            set([t.name for t in self.observable1.tags]),
+        )
 
         self.assertIsNotNone(task.last_run)
 
@@ -307,9 +310,9 @@ class ExportTaskTest(unittest.TestCase):
             ignore_tags=[],
             fresh_tags=True,
         )
-        self.assertEqual(
-            set([r.value for r in results]),
-            set(["asd1.com", "asd2.com", "asd3.com", "asd4.com"]),
+        self.assertCountEqual(
+            [r.value for r in results],
+            ["asd1.com", "asd2.com", "asd3.com", "asd4.com"],
         )
 
         # We expect all hostnames that aren't tagged "c2"

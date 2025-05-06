@@ -8,7 +8,9 @@ from core.schemas import observable, task
 
 class OpenPhish(task.FeedTask):
     # set default values for feed
-    _SOURCE: ClassVar["str"] = "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt"
+    _SOURCE: ClassVar["str"] = (
+        "https://raw.githubusercontent.com/openphish/public_feed/refs/heads/main/feed.txt"
+    )
     _defaults = {
         "frequency": timedelta(hours=1),
         "name": "OpenPhish",
