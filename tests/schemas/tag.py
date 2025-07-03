@@ -17,8 +17,9 @@ class TagTest(unittest.TestCase):
 
     def test_tag_create(self) -> None:
         """Test that a tag can be created"""
-        tag = Tag(name="test").save()
+        tag = Tag(name="test", description="test-desc").save()
         self.assertEqual(tag.name, "test")
+        self.assertEqual(tag.description, "test-desc")
         self.assertIsNotNone(tag.id)
 
     def test_tags_persist(self) -> None:
