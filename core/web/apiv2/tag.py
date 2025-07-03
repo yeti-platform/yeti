@@ -11,7 +11,7 @@ class NewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
-    description: str
+    description: str | None = None
     default_expiration: datetime.timedelta = DEFAULT_EXPIRATION
     produces: list[str] = []
     replaces: list[str] = []

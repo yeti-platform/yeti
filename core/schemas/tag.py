@@ -32,7 +32,7 @@ class Tag(YetiModel, database_arango.ArangoYetiConnector):
     _type_filter: ClassVar[str | None] = None
 
     name: str = Field(max_length=MAX_TAG_LENGTH)
-    description: str 
+    description: str | None = None
 
     count: int = 0
     created: datetime.datetime = Field(default_factory=now)
