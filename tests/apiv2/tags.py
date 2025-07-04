@@ -41,9 +41,9 @@ class tagTest(unittest.TestCase):
         response = client.put(
             f"/api/v2/tags/{self.tag.id}",
             json={
-              "name": "tag111",
-              "description": "krafta",
-              "default_expiration": "P10D"
+                "name": "tag111",
+                "description": "krafta",
+                "default_expiration": "P10D",
             },
         )
         data = response.json()
