@@ -40,12 +40,17 @@ class tagTest(unittest.TestCase):
     def test_update_tag(self):
         response = client.put(
             f"/api/v2/tags/{self.tag.id}",
-            json={"name": "tag111", "default_expiration": "P10D"},
+            json={
+                "name": "tag111",
+                "description": "krafta",
+                "default_expiration": "P10D",
+            },
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(self.tag.id, data["id"])
         self.assertEqual(data["name"], "tag111")
+        self.assertEqual(data["description"], "krafta")
         self.assertEqual(data["default_expiration"], "P10D")  # 10 daysin ISO 8601
 
     def test_tag_search(self):

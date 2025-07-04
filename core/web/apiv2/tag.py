@@ -11,6 +11,7 @@ class NewRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str
+    description: str | None = None
     default_expiration: datetime.timedelta = DEFAULT_EXPIRATION
     produces: list[str] = []
     replaces: list[str] = []
@@ -63,6 +64,7 @@ def new(request: NewRequest) -> Tag:
     """Creates a new observable in the database."""
     tag = Tag(
         name=request.name,
+        description=request.description,
         default_expiration=request.default_expiration,
         created=datetime.datetime.now(datetime.timezone.utc),
         produces=request.produces,
@@ -89,6 +91,7 @@ def update(tag_id: str, request: UpdateRequest) -> Tag:
         raise HTTPException(status_code=404, detail="Item not found")
 
     tag.name = request.name
+    tag.description = request.description
     tag.produces = request.produces
     tag.replaces = request.replaces
     tag.default_expiration = request.default_expiration
