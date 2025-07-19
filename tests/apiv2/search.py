@@ -76,7 +76,7 @@ class searchTest(unittest.TestCase):
         ]
         self.assertCountEqual(
             names_or_values,
-            ["test_malware", "test_regex", "test.tomchop.me", "test_dfiq"],
+            ["test_malware", "test_regex_global", "test.tomchop.me", "test_dfiq"],
             data,
         )
 
@@ -97,7 +97,7 @@ class searchTest(unittest.TestCase):
         self.assertCountEqual(
             names_or_values,
             [
-                "test_regex",
+                "test_regex_global",
                 "test.tomchop.me",
                 "tagged_malware",
             ],
