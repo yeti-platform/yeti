@@ -180,8 +180,7 @@ class ArangoDatabase:
         self.db.create_analyzer(
             name="norm",
             analyzer_type="norm",
-            properties={"locale": "en", "accent": False, "case": "lower"},
-            features=[],
+            properties={"locale": "en.utf-8", "accent": False, "case": "lower"},
         )
 
     def refresh_views(self):
@@ -306,7 +305,6 @@ class ArangoDatabase:
             link_definitions[view_target] = {
                 "analyzers": ["identity", "norm"],
                 "includeAllFields": True,
-                "storedValues": [{"fields": ["name", "tags", "type"]}],
                 "trackListPositions": False,
             }
 
@@ -333,6 +331,20 @@ class ArangoDatabase:
         except Exception:
             pass
 
+        for target in link_definitions:
+            del link_definitions[target]["analyzers"]
+            link_definitions[target]["analyzers"] = []
+            link_definitions[target]["includeAllFields"] = False
+            link_definitions[target]["fields"] = {
+                "tags": {"fields": {"name": {"analyzers": ["identity", "norm"]}}},
+                "dfiq_tags": {"analyzers": ["identity", "norm"]},
+                "type": {"analyzers": ["identity", "norm"]},
+                "root_type": {"analyzers": ["identity", "norm"]},
+                "value": {"analyzers": ["identity", "norm"]},
+                "name": {"analyzers": ["identity", "norm"]},
+                "created": {"analyzers": ["identity", "norm"]},
+            }
+
         self.db.create_arangosearch_view(
             name="all_objects_view",
             properties={
@@ -343,6 +355,7 @@ class ArangoDatabase:
                     {"field": "created", "direction": "desc"},
                     {"field": "value", "direction": "asc"},
                     {"field": "name", "direction": "asc"},
+                    {"field": "tags.name", "direction": "asc"},
                 ],
             },
         )
@@ -439,6 +452,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
     """Yeti connector for an ArangoDB backend."""
 
     _db = db
+    _collection_name: str | None = None
 
     def __init__(self):
         self._arango_id = None
@@ -1016,6 +1030,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             offset: Skip this many objects when querying the DB.
             count: How many objecst after `offset` to return.
             sorting: A list of (order, ascending) fields to sort by.
+            aliases: A list of (alias, type) tuples to use for filtering.
             graph_queries: A list of (name, graph, direction, field) tuples to
                 query the graph with.
             wildcard: whether all values should be interpreted as wildcard searches.
@@ -1026,11 +1041,19 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """
         cls._get_collection()
         colname = cls._collection_name
+        if colname is None:
+            colname = "all_objects_view"
         conditions = []
         filter_conditions = []  # used for clauses that are not supported by arangosearch
         sorts = []
 
         using_view = False
+        generic_query = False
+
+        if colname == "all_objects_view":
+            generic_query = True
+            using_view = True
+
         if (
             query_args
             and colname in ("observables", "entities", "indicators", "dfiq")
@@ -1085,9 +1108,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 aql_args[f"arg{i}_key"] = key
             elif key == "tags":
                 if using_view:
-                    conditions.append(f"@arg{i}_value ALL IN o.tags.name")
+                    conditions.append(
+                        f"(FOR t in @arg{i}_value RETURN LOWER(t)) ALL IN o.tags.name"
+                    )
                 else:
-                    conditions.append(f"@arg{i}_value ALL IN o.tags[*].name")
+                    conditions.append(
+                        f"(FOR t in @arg{i}_value RETURN LOWER(t)) ALL IN o.tags[*].name"
+                    )
             elif key in ("created", "modified", "tags.expires"):
                 # Value is a string, we're checking the first character.
                 operator = value[0]
@@ -1114,11 +1141,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
 
                 for alias, alias_type in aliases:
-                    if (
-                        alias_type in {"text", "option"}
-                        or alias_type == "list"
-                        and using_view
-                    ):
+                    if alias == "tags":
+                        if using_view:
+                            key_conditions.append(
+                                f"ANALYZER(LIKE(o.tags.name, LOWER(@arg{i}_value)), 'norm')"
+                            )
+                        else:
+                            key_conditions.append(
+                                f"LOWER(@arg{i}_value) IN o.tags[*].name"
+                            )
+                    if alias_type in {"text", "option", "list"} and using_view:
                         if using_view and not using_regex:
                             key_conditions.append(
                                 f"ANALYZER(LIKE(o.{alias}, LOWER(@arg{i}_value)), 'norm')"
@@ -1232,7 +1264,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
         results = []
         for doc in documents:
             doc["__id"] = doc.pop("_key")
-            results.append(cls.load(doc))
+            if not generic_query:
+                results.append(cls.load(doc))
+            else:
+                # Generic objects are not loaded, they are returned as dicts.
+                doc["id"] = doc.pop("__id")
+                del doc["_id"]
+                del doc["_rev"]
+                results.append(doc)
         total = stats.get("fullCount", len(results))
         return results, total or 0
 
@@ -1321,7 +1360,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
         Returns:
           The ArangoDB collection corresponding to the object class.
         """
-        return cls._db.collection(cls._collection_name)
+        if cls._collection_name is not None:
+            return cls._db.collection(cls._collection_name)
+        else:
+            return "all_objects_view"
 
 
 def tagged_observables_export(cls, args):
