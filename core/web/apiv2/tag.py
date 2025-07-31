@@ -127,6 +127,15 @@ def get_multiple(request: TagMultipleGetRequest) -> TagSearchResponse:
     return TagSearchResponse(tags=tags, total=total)
 
 
+@router.delete("/{tag_id}")
+def delete(tag_id: str) -> None:
+    """Deletes a Tag."""
+    tag = Tag.get(tag_id)
+    if not tag:
+        raise HTTPException(status_code=404, detail="Tag ID {tag_id} not found")
+    tag.delete()
+
+
 @router.post("/merge")
 def merge(request: MergeTagRequest) -> MergeTagResult:
     target_tag = Tag.find(name=request.merge_into)
