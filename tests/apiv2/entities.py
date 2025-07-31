@@ -112,7 +112,7 @@ class EntityTest(unittest.TestCase):
 
     def test_get_multiple_entities(self):
         response = client.post(
-            "/api/v2/entities/search/multiple",
+            "/api/v2/entities/get/multiple",
             json={"names": ["ta1", "bears", "foo"], "page": 0, "count": 10},
         )
         data = response.json()

@@ -694,7 +694,7 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200, data)
 
         response = client.post(
-            "/api/v2/dfiq/search/multiple",
+            "/api/v2/dfiq/get/multiple",
             json={"names": ["scenario1"], "page": 0, "count": 10},
         )
         data = response.json()

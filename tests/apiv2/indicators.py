@@ -124,7 +124,7 @@ class IndicatorTest(unittest.TestCase):
 
     def test_get_multiple_indicators(self):
         response = client.post(
-            "/api/v2/indicators/search/multiple",
+            "/api/v2/indicators/get/multiple",
             json={"names": ["hex", "localhost", "foo"], "page": 0, "count": 10},
         )
         self.assertEqual(response.status_code, 200)
