@@ -33,6 +33,14 @@ class TagSearchRequest(BaseModel):
     page: int
 
 
+class TagMultipleGetRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    names: list[str] = []
+    count: int
+    page: int
+
+
 class TagSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -105,6 +113,16 @@ def search(request: TagSearchRequest) -> TagSearchResponse:
     request_args = request.model_dump(exclude_unset=True)
     count = request_args.pop("count")
     page = request_args.pop("page")
+    tags, total = Tag.filter(request_args, offset=page * count, count=count)
+    return TagSearchResponse(tags=tags, total=total)
+
+
+@router.post("/get/multiple")
+def get_multiple(request: TagMultipleGetRequest) -> TagSearchResponse:
+    """Gets multiple Tags by name."""
+    request_args = {"name__in": request.names}
+    count = request.count
+    page = request.page
     tags, total = Tag.filter(request_args, offset=page * count, count=count)
     return TagSearchResponse(tags=tags, total=total)
 

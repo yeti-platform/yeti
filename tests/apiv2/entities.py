@@ -110,6 +110,17 @@ class EntityTest(unittest.TestCase):
         self.assertEqual(len(data["entities"][0]["tags"]), 1, data)
         self.assertIn("ta1", [tag["name"] for tag in data["entities"][0]["tags"]])
 
+    def test_get_multiple_entities(self):
+        response = client.post(
+            "/api/v2/entities/get/multiple",
+            json={"names": ["ta1", "bears", "foo"], "page": 0, "count": 10},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["entities"]), 2)
+        names = [e["name"] for e in data["entities"]]
+        self.assertCountEqual(names, ["ta1", "bears"])
+
     def test_search_entities_tagged(self):
         response = client.post(
             "/api/v2/entities/search",

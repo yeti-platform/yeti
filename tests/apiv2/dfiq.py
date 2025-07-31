@@ -678,3 +678,27 @@ class DFIQTest(unittest.TestCase):
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
                 self.assertIn("internal_approach", content)
+
+    def test_get_multiple(self):
+        with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
+            yaml_string = f.read()
+
+        response = client.post(
+            "/api/v2/dfiq/from_yaml",
+            json={
+                "dfiq_yaml": yaml_string,
+                "dfiq_type": dfiq.DFIQType.scenario,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+
+        response = client.post(
+            "/api/v2/dfiq/get/multiple",
+            json={"names": ["scenario1"], "page": 0, "count": 10},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["dfiq"]), 1)
+        self.assertEqual(data["total"], 1)
+        self.assertEqual(data["dfiq"][0]["name"], "scenario1")

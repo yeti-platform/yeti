@@ -33,6 +33,17 @@ class EntitySearchRequest(BaseModel):
     page: int = 0
 
 
+class EntityMultipleGetRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    names: list[str] = []
+    type: EntityType | None = None
+    sorting: list[tuple[str, bool]] = []
+    filter_aliases: list[tuple[str, str]] = []
+    count: int = 50
+    page: int = 0
+
+
 class EntitySearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -189,6 +200,26 @@ def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchRespon
     )
     response = EntitySearchResponse(entities=entities, total=total)
     return response
+
+
+@router.post("/get/multiple")
+def get_multiple(
+    httpreq: Request, request: EntityMultipleGetRequest
+) -> EntitySearchResponse:
+    """Gets multiple entities by name."""
+    query = {"name__in": request.names}
+    if request.type:
+        query["type"] = request.type
+    entities, total = Entity.filter(
+        query_args=query,
+        offset=request.page * request.count,
+        count=request.count,
+        sorting=request.sorting,
+        aliases=request.filter_aliases,
+        links_count=True,
+        user=httpreq.state.user,
+    )
+    return EntitySearchResponse(entities=entities, total=total)
 
 
 @router.post("/tag")

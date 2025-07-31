@@ -122,6 +122,17 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(len(data["indicators"][0]["tags"]), 1)
         self.assertIn("hextag", [tag["name"] for tag in data["indicators"][0]["tags"]])
 
+    def test_get_multiple_indicators(self):
+        response = client.post(
+            "/api/v2/indicators/get/multiple",
+            json={"names": ["hex", "localhost", "foo"], "page": 0, "count": 10},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["indicators"]), 2)
+        names = [indicator["name"] for indicator in data["indicators"]]
+        self.assertCountEqual(names, ["hex", "localhost"])
+
     def test_search_indicators_tagged(self):
         response = client.post(
             "/api/v2/indicators/search",
