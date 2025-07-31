@@ -117,7 +117,7 @@ def search(request: TagSearchRequest) -> TagSearchResponse:
     return TagSearchResponse(tags=tags, total=total)
 
 
-@router.post("/get/mulitple")
+@router.post("/get/multiple")
 def get_multiple(request: TagMultipleGetRequest) -> TagSearchResponse:
     """Gets multiple Tags by name."""
     request_args = {"name__in": request.names}
