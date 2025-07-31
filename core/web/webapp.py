@@ -19,6 +19,7 @@ from core.web.apiv2 import (
     indicators,
     observables,
     rbac,
+    search,
     system,
     tag,
     tasks,
@@ -39,6 +40,13 @@ api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
+
+api_router.include_router(
+    search.router,
+    prefix="/search",
+    tags=["search"],
+    dependencies=[Depends(auth.get_current_active_user)],
+)
 
 api_router.include_router(
     observables.router,
