@@ -50,7 +50,6 @@ class IndicatorMultipleGetRequest(BaseModel):
     type: IndicatorType | None = None
     sorting: list[tuple[str, bool]] = []
     filter_aliases: list[tuple[str, str]] = []
-    names: list[str] = []
     count: int = 50
     page: int = 0
 
