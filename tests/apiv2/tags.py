@@ -73,6 +73,22 @@ class tagTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(len(data), 2)
 
+    def test_tag_search_multiple(self):
+        response = client.post("/api/v2/tags/", json={"name": "tag2-test"})
+        response = client.post("/api/v2/tags/", json={"name": "tag3-test"})
+        self.assertEqual(response.status_code, 200)
+
+        response = client.post(
+            "/api/v2/tags/search/mulitple",
+            json={"names": ["tag1", "tag2-test"], "page": 0, "count": 10},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data["tags"]), 2)
+        self.assertEqual(data["total"], 2)
+        self.assertEqual(data["tags"][0]["name"], "tag1")
+        self.assertEqual(data["tags"][1]["name"], "tag2-test")
+
     def test_tag_delete(self):
         response = client.delete(f"/api/v2/tags/{self.tag.id}")
         self.assertEqual(response.status_code, 200)

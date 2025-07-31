@@ -53,6 +53,17 @@ class DFIQSearchRequest(BaseModel):
     page: int = 0
 
 
+class DFIQSearchRequestMultiple(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    names: list[str] = []
+    type: dfiq.DFIQType | None = None
+    sorting: list[tuple[str, bool]] = []
+    filter_aliases: list[tuple[str, str]] = []
+    count: int = 50
+    page: int = 0
+
+
 class DFIQSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -409,6 +420,25 @@ def delete(httpreq: Request, id: str) -> None:
 def search(httpreq: Request, request: DFIQSearchRequest) -> DFIQSearchResponse:
     """Searches for DFIQ objects."""
     query = request.query
+    if request.type:
+        query["type"] = request.type
+    dfiq_objects, total = dfiq.DFIQBase.filter(
+        query_args=query,
+        offset=request.page * request.count,
+        count=request.count,
+        sorting=request.sorting,
+        aliases=request.filter_aliases,
+        user=httpreq.state.user,
+    )
+    return DFIQSearchResponse(dfiq=dfiq_objects, total=total)
+
+
+@router.post("/search/multiple")
+def search_multiple(
+    httpreq: Request, request: DFIQSearchRequestMultiple
+) -> DFIQSearchResponse:
+    """Searches for multiple DFIQ objects."""
+    query = {"name__in": request.names}
     if request.type:
         query["type"] = request.type
     dfiq_objects, total = dfiq.DFIQBase.filter(

@@ -33,6 +33,14 @@ class TagSearchRequest(BaseModel):
     page: int
 
 
+class TagMultipleSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    names: list[str] = []
+    count: int
+    page: int
+
+
 class TagSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -109,13 +117,14 @@ def search(request: TagSearchRequest) -> TagSearchResponse:
     return TagSearchResponse(tags=tags, total=total)
 
 
-@router.delete("/{tag_id}")
-def delete(tag_id: str) -> None:
-    """Deletes a Tag."""
-    tag = Tag.get(tag_id)
-    if not tag:
-        raise HTTPException(status_code=404, detail="Tag ID {tag_id} not found")
-    tag.delete()
+@router.post("/search/mulitple")
+def search_multiple(request: TagMultipleSearchRequest) -> TagSearchResponse:
+    """Searches for multiple Tags."""
+    request_args = {"name__in": request.names}
+    count = request.count
+    page = request.page
+    tags, total = Tag.filter(request_args, offset=page * count, count=count)
+    return TagSearchResponse(tags=tags, total=total)
 
 
 @router.post("/merge")

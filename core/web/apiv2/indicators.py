@@ -43,6 +43,18 @@ class IndicatorSearchRequest(BaseModel):
     page: int = 0
 
 
+class IndicatorMultipleSearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    names: list[str] = []
+    type: IndicatorType | None = None
+    sorting: list[tuple[str, bool]] = []
+    filter_aliases: list[tuple[str, str]] = []
+    names: list[str] = []
+    count: int = 50
+    page: int = 0
+
+
 class IndicatorSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -224,6 +236,25 @@ def search(
 ) -> IndicatorSearchResponse:
     """Searches for indicators."""
     query = request.query
+    if request.type:
+        query["type"] = request.type
+    indicators, total = Indicator.filter(
+        query_args=query,
+        offset=request.page * request.count,
+        count=request.count,
+        sorting=request.sorting,
+        aliases=request.filter_aliases,
+        user=httpreq.state.user,
+    )
+    return IndicatorSearchResponse(indicators=indicators, total=total)
+
+
+@router.post("/search/multiple")
+def search_multiple(
+    httpreq: Request, request: IndicatorMultipleSearchRequest
+) -> IndicatorSearchResponse:
+    """Searches for multiple indicators."""
+    query = {"name__in": request.names}
     if request.type:
         query["type"] = request.type
     indicators, total = Indicator.filter(
