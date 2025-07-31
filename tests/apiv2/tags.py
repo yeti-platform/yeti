@@ -73,7 +73,7 @@ class tagTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(len(data), 2)
 
-    def test_tag_search_multiple(self):
+    def test_tag_get_multiple(self):
         response = client.post("/api/v2/tags/", json={"name": "tag2-test"})
         response = client.post("/api/v2/tags/", json={"name": "tag3-test"})
         self.assertEqual(response.status_code, 200)

@@ -679,7 +679,7 @@ class DFIQTest(unittest.TestCase):
                 self.assertIn("public_approach", content)
                 self.assertIn("internal_approach", content)
 
-    def test_search_multiple(self):
+    def test_get_multiple(self):
         with open("tests/dfiq_test_data/S1003.yaml", "r") as f:
             yaml_string = f.read()
 

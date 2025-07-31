@@ -33,7 +33,7 @@ class TagSearchRequest(BaseModel):
     page: int
 
 
-class TagMultipleSearchRequest(BaseModel):
+class TagMultipleGetRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     names: list[str] = []
@@ -117,9 +117,9 @@ def search(request: TagSearchRequest) -> TagSearchResponse:
     return TagSearchResponse(tags=tags, total=total)
 
 
-@router.post("/search/mulitple")
-def search_multiple(request: TagMultipleSearchRequest) -> TagSearchResponse:
-    """Searches for multiple Tags."""
+@router.post("/get/mulitple")
+def get_multiple(request: TagMultipleGetRequest) -> TagSearchResponse:
+    """Gets multiple Tags by name."""
     request_args = {"name__in": request.names}
     count = request.count
     page = request.page

@@ -53,7 +53,7 @@ class DFIQSearchRequest(BaseModel):
     page: int = 0
 
 
-class DFIQSearchRequestMultiple(BaseModel):
+class DFIQGetMultipleRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     names: list[str] = []
@@ -433,11 +433,11 @@ def search(httpreq: Request, request: DFIQSearchRequest) -> DFIQSearchResponse:
     return DFIQSearchResponse(dfiq=dfiq_objects, total=total)
 
 
-@router.post("/search/multiple")
-def search_multiple(
-    httpreq: Request, request: DFIQSearchRequestMultiple
+@router.post("/get/multiple")
+def get_multiple(
+    httpreq: Request, request: DFIQGetMultipleRequest
 ) -> DFIQSearchResponse:
-    """Searches for multiple DFIQ objects."""
+    """Gets multiple DFIQ objects by name."""
     query = {"name__in": request.names}
     if request.type:
         query["type"] = request.type

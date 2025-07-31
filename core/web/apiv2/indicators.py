@@ -43,7 +43,7 @@ class IndicatorSearchRequest(BaseModel):
     page: int = 0
 
 
-class IndicatorMultipleSearchRequest(BaseModel):
+class IndicatorMultipleGetRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     names: list[str] = []
@@ -249,11 +249,11 @@ def search(
     return IndicatorSearchResponse(indicators=indicators, total=total)
 
 
-@router.post("/search/multiple")
-def search_multiple(
-    httpreq: Request, request: IndicatorMultipleSearchRequest
+@router.post("/get/multiple")
+def get_multiple(
+    httpreq: Request, request: IndicatorMultipleGetRequest
 ) -> IndicatorSearchResponse:
-    """Searches for multiple indicators."""
+    """Gets multiple indicators by name."""
     query = {"name__in": request.names}
     if request.type:
         query["type"] = request.type
