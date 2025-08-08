@@ -4,6 +4,7 @@ import sys
 import unittest
 from unittest import mock
 
+import celery
 from fastapi.testclient import TestClient
 
 from core import database_arango, taskmanager
@@ -72,15 +73,18 @@ class TaskTest(unittest.TestCase):
         self.assertEqual(data["status"], "ok")
         mock_delay.assert_called_once_with("FakeTask", '{"params":{}}')
 
-    @mock.patch("core.taskscheduler.run_task.delay")
-    def test_run_task_with_params(self, mock_delay):
+    # @mock.patch("core.taskscheduler.run_task.delay")
+    @mock.patch("celery.signature")
+    def test_run_task_with_params(self, mock_signature):
         response = client.post(
             "/api/v2/tasks/FakeTask/run", json={"params": {"value": "test"}}
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data["status"], "ok")
-        mock_delay.assert_called_once_with("FakeTask", '{"params":{"value":"test"}}')
+        mock_signature.assert_called_once_with(
+            "run_task", '{"params":{"value":"test"}}'
+        )
 
 
 class ExportTaskTest(unittest.TestCase):

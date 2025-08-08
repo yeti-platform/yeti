@@ -58,7 +58,7 @@ def setup_periodic_tasks(sender, **kwargs):
     return
 
 
-@app.task
+@app.task(name="run_task")
 def run_task(task_name: str, params: str):
     """Runs a task.
 

@@ -22,9 +22,11 @@ class TaskManager:
             task_name = task_class.__name__
         logging.info(f"Registering task: {task_name}")
         task = task_class.find(name=task_name)
-        if not task:
+        if not task and task_class != ExportTask:
             logging.info(f"Task {task_name} not found in database, creating.")
             task_dict = task_class._defaults.copy()
+            print(task_dict)
+            print(task_class)
             task_dict["name"] = task_name
             task = task_class(**task_dict).save()
         cls._store[task_name] = task
@@ -88,7 +90,6 @@ class TaskManager:
         task.save()
 
         try:
-            logging.info(f"Running task {task_name}")
             if task_params.params:
                 logging.debug(
                     f"Running task {task_name} with params {task_params.params}"
