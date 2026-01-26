@@ -11,6 +11,7 @@ router = APIRouter()
 # Configuration
 AGENT_SERVICE_URL = "http://dev-agents-1:8888/run_stream"
 
+ASYNC_TIMEOUT = httpx.Timeout(timeout=60.0)
 
 @router.post("/stream")
 async def chat_proxy(httpreq: Request, message: dict):
@@ -39,7 +40,7 @@ async def chat_proxy(httpreq: Request, message: dict):
 
     # 3. Stream the response from the Agent Service
     async def proxy_stream():
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=ASYNC_TIMEOUT) as client:
             async with client.stream(
                 "POST", AGENT_SERVICE_URL, json=agent_payload
             ) as r:
