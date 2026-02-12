@@ -160,7 +160,7 @@ log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(username)
 
 console_handler = logging.StreamHandler()
 console_handler.addFilter(LogFilter())
-if yeti_config.get("system", "structured_log", default=False):
+if os.environ.get("K8S_RUNTIME", "false").lower() == "true":
     console_handler.setFormatter(JsonFormatter())
 else:
     console_handler.setFormatter(logging.Formatter(log_format))
