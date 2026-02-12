@@ -69,6 +69,11 @@ class JsonFormatter(Formatter):
     def format(self, record):
         json_record = {}
         json_record["message"] = record.getMessage()
+        json_record["severity"] = record.levelname
+        json_record["timestamp"] = datetime.datetime.fromtimestamp(
+            record.created, datetime.timezone.utc
+        ).isoformat()
+        json_record["logger"] = record.name
         if "username" in record.__dict__:
             json_record["username"] = record.__dict__["username"]
         if "path" in record.__dict__:
@@ -76,12 +81,18 @@ class JsonFormatter(Formatter):
         if "method" in record.__dict__:
             json_record["method"] = record.__dict__["method"]
         if "body" in record.__dict__ and record.__dict__["body"]:
-            if record.__dict__["content-type"] == "application/json":
-                json_record["body"] = json.loads(
-                    record.__dict__["body"].decode("utf-8")
-                )
-            else:
-                json_record["body"] = record.__dict__["body"].decode("utf-8")
+            try:
+                body_content = record.__dict__["body"]
+                if isinstance(body_content, bytes):
+                    body_content = body_content.decode("utf-8")
+
+                if record.__dict__.get("content-type") == "application/json":
+                    json_record["body"] = json.loads(body_content)
+                else:
+                    json_record["body"] = body_content
+            except Exception:
+                json_record["body"] = str(record.__dict__["body"])
+
         if "client" in record.__dict__:
             json_record["client"] = record.__dict__["client"]
         if "status_code" in record.__dict__:
@@ -149,7 +160,10 @@ log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s - %(username)
 
 console_handler = logging.StreamHandler()
 console_handler.addFilter(LogFilter())
-console_handler.setFormatter(logging.Formatter(log_format))
+if yeti_config.get("system", "structured_log", default=False):
+    console_handler.setFormatter(JsonFormatter())
+else:
+    console_handler.setFormatter(logging.Formatter(log_format))
 handlers.append(console_handler)
 
 audit_logfile = yeti_config.get("system", "audit_logfile")
