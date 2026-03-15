@@ -3,15 +3,48 @@ import json
 
 import httpx
 import websockets
-from fastapi import APIRouter, FastAPI, Request, WebSocket, WebSocketDisconnect
+from typing import Any, Dict, List
+from fastapi import APIRouter, FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 router = APIRouter()
 
 # Configuration
-AGENT_SERVICE_URL = "http://dev-agents-1:8888/run_stream"
+RUN_STREAM_ENDPOINT = "/run_stream"
+LIST_SESSIONS_ENDPOINT = "/sessions/{user_id}"
+
+AGENT_SERVICE_ROOT = "http://dev-agents-1:8888"
+
 
 ASYNC_TIMEOUT = httpx.Timeout(timeout=60.0)
+
+class ADKSession(BaseModel):
+    id: str
+    appName: str
+    userId: str
+    state: Dict[str, Any] = Field(default_factory=dict)
+    events: List[Dict[str, Any]] = Field(default_factory=list)
+    lastUpdateTime: float = 0.0
+
+@router.get("/sessions/{user_id}")
+async def list_sessions_proxy(user_id: str) -> List[ADKSession]:
+    """
+    Proxies the request to retrieve sessions for a given user from the Agent Service.
+    """
+    agent_url = f"{AGENT_SERVICE_ROOT}{LIST_SESSIONS_ENDPOINT.format(user_id=user_id)}"
+
+    async with httpx.AsyncClient(timeout=ASYNC_TIMEOUT) as client:
+        response = await client.get(agent_url)
+        print(response)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+
+        # Parse the JSON response from the agent service into our Pydantic model
+        # which validates it matches the expected schema
+        items = response.json()
+        print(items)
+        return [ADKSession(**item) for item in items]
 
 @router.post("/stream")
 async def chat_proxy(httpreq: Request, message: dict):
@@ -42,7 +75,7 @@ async def chat_proxy(httpreq: Request, message: dict):
     async def proxy_stream():
         async with httpx.AsyncClient(timeout=ASYNC_TIMEOUT) as client:
             async with client.stream(
-                "POST", AGENT_SERVICE_URL, json=agent_payload
+                "POST", AGENT_SERVICE_ROOT + RUN_STREAM_ENDPOINT, json=agent_payload
             ) as r:
                 async for chunk in r.aiter_bytes():
                     yield chunk
