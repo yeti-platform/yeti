@@ -120,7 +120,8 @@ consumers_concurrency = 2
 ## Endpoint for agent functionality
 ##
 
-service_root = http://agents:8888
+http_root = http://agents:8888
+websocket_root = ws://agents:8888
 
 [misp]
 

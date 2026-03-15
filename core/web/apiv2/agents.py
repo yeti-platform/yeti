@@ -15,8 +15,8 @@ from core.schemas.rbac import global_permission
 router = APIRouter()
 
 # Configuration
-AGENT_HTTP_BASE = yeti_config.get("agents", "service_root", default="http://dev-agents-1:8888")
-AGENT_WEBSOCKET_BASE = yeti_config.get("agents", "service_root", default="ws://dev-agents-1:8888")
+AGENT_HTTP_BASE = yeti_config.get("agents", "http_root")
+AGENT_WEBSOCKET_BASE = yeti_config.get("agents", "websocket_root")
 
 AGENT_STREAM_ENDPOINT = f"{AGENT_HTTP_BASE}/run_stream"
 AGENT_LIST_SESSIONS_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}"
