@@ -8,14 +8,19 @@ from fastapi import APIRouter, FastAPI, Request, WebSocket, WebSocketDisconnect,
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
+from core.config.config import yeti_config
+from core.schemas import roles
+from core.schemas.rbac import global_permission
+
 router = APIRouter()
 
 # Configuration
-RUN_STREAM_ENDPOINT = "/run_stream"
-LIST_SESSIONS_ENDPOINT = "/sessions/{user_id}"
+AGENT_HTTP_BASE = yeti_config.get("agents", "service_root", default="http://dev-agents-1:8888")
+AGENT_WEBSOCKET_BASE = yeti_config.get("agents", "service_root", default="ws://dev-agents-1:8888")
 
-AGENT_SERVICE_ROOT = "http://dev-agents-1:8888"
-
+AGENT_STREAM_ENDPOINT = f"{AGENT_HTTP_BASE}/run_stream"
+AGENT_LIST_SESSIONS_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}"
+AGENT_WEBSOCKET_ENDPOINT = f"{AGENT_WEBSOCKET_BASE}/ws/chat"
 
 ASYNC_TIMEOUT = httpx.Timeout(timeout=60.0)
 
@@ -27,13 +32,14 @@ class ADKSession(BaseModel):
     events: List[Dict[str, Any]] = Field(default_factory=list)
     lastUpdateTime: float = 0.0
 
-@router.get("/sessions/{user_id}")
-async def list_sessions_proxy(user_id: str) -> List[ADKSession]:
+@router.get("/sessions")
+@global_permission(roles.Permission.READ)
+async def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
     """
     Proxies the request to retrieve sessions for a given user from the Agent Service.
     """
-    agent_url = f"{AGENT_SERVICE_ROOT}{LIST_SESSIONS_ENDPOINT.format(user_id=user_id)}"
-
+    user_id = httpreq.state.username
+    agent_url = f"{AGENT_LIST_SESSIONS_ENDPOINT.format(user_id=user_id)}"
     async with httpx.AsyncClient(timeout=ASYNC_TIMEOUT) as client:
         response = await client.get(agent_url)
         print(response)
@@ -47,6 +53,7 @@ async def list_sessions_proxy(user_id: str) -> List[ADKSession]:
         return [ADKSession(**item) for item in items]
 
 @router.post("/stream")
+@global_permission(roles.Permission.READ)
 async def chat_proxy(httpreq: Request, message: dict):
     """
     1. Authenticates user.
@@ -75,7 +82,7 @@ async def chat_proxy(httpreq: Request, message: dict):
     async def proxy_stream():
         async with httpx.AsyncClient(timeout=ASYNC_TIMEOUT) as client:
             async with client.stream(
-                "POST", AGENT_SERVICE_ROOT + RUN_STREAM_ENDPOINT, json=agent_payload
+                "POST", AGENT_STREAM_ENDPOINT, json=agent_payload
             ) as r:
                 async for chunk in r.aiter_bytes():
                     yield chunk
@@ -83,11 +90,9 @@ async def chat_proxy(httpreq: Request, message: dict):
     return StreamingResponse(proxy_stream(), media_type="text/event-stream")
 
 
-# The internal address of your standalone Agent Service
-AGENT_SERVICE_WS_URL = "ws://dev-agents-1:8888/ws/chat"
-
 @router.websocket("/api/v2/chat_proxy")
-async def chat_proxy_endpoint(client_ws: WebSocket):
+@global_permission(roles.Permission.READ)
+async def chat_proxy_endpoint(httpreq: Request, client_ws: WebSocket):
     """
     1. Accepts connection from Vue.js
     2. Authenticates user (via Cookie or Query Param).
@@ -110,7 +115,7 @@ async def chat_proxy_endpoint(client_ws: WebSocket):
     # --- 2. The Tunnel Loop ---
     try:
         # Connect to the Agent Service as a client
-        async with websockets.connect(AGENT_SERVICE_WS_URL) as agent_ws:
+        async with websockets.connect(AGENT_WEBSOCKET_ENDPOINT) as agent_ws:
 
             # Task A: Listen to Frontend -> Inject ID -> Send to Agent
             async def forward_to_agent():

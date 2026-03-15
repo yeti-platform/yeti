@@ -89,9 +89,9 @@ def global_permission(permission: roles.Permission):
         @wraps(func)
         async def wrapper(*args, httpreq: Request, **kwargs):
             if not RBAC_ENABLED or httpreq.state.user.admin:
-                return func(*args, httpreq=httpreq, **kwargs)
+                return await func(*args, httpreq=httpreq, **kwargs)
             if httpreq.state.user.global_role & permission == permission:
-                return func(*args, httpreq=httpreq, **kwargs)
+                return await func(*args, httpreq=httpreq, **kwargs)
 
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
