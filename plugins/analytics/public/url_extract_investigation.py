@@ -71,6 +71,8 @@ class UrlExtractInvestigation(task.AnalyticsTask):
             reference=source.value,
         ).save()
 
+        report_entity.link_to(source, "related_to", "source_url")
+
         for ioc in report["iocs"]:
             obs = observable.save(value=ioc["value"])
             obs.add_context(
