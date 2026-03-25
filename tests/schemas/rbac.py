@@ -129,7 +129,7 @@ class RBACTest(unittest.TestCase):
         """Test that filter() with graph_queries takes user ACLs on linked objects into account"""
         self.user1.link_to_acl(self.entity1, roles.Role.READER)
 
-        graph_queries = [("links", "links", "outbound", "name")]
+        graph_queries = [("links", "links", "inbound", "name")]
 
         # User 1 has access to entity1, but NO access to observable1 (which is linked to entity1)
         entities, total = entity.Entity.filter(
