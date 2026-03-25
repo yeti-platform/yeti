@@ -136,7 +136,9 @@ class RBACTest(unittest.TestCase):
             {"name": "malware1"}, user=self.user1, graph_queries=graph_queries
         )
         self.assertEqual(len(entities), 1)
-        self.assertFalse(hasattr(entities[0], "links") and len(entities[0].links) > 0)
+        # Without access, the 'links' attribute should either not be present or be empty
+        if hasattr(entities[0], "links"):
+            self.assertEqual(len(entities[0].links), 0)
 
         # Grant access to observable1
         self.user1.link_to_acl(self.observable1, roles.Role.READER)
@@ -145,4 +147,8 @@ class RBACTest(unittest.TestCase):
             {"name": "malware1"}, user=self.user1, graph_queries=graph_queries
         )
         self.assertEqual(len(entities), 1)
-        self.assertTrue(hasattr(entities[0], "links") and len(entities[0].links) > 0)
+        # With access, the 'links' attribute should be present and populated
+        self.assertTrue(hasattr(entities[0], "links"))
+        self.assertIsInstance(entities[0].links, dict)
+        self.assertEqual(len(entities[0].links), 1)
+        self.assertIn("test.com", entities[0].links)
