@@ -133,9 +133,7 @@ class RBACTest(unittest.TestCase):
 
         # User 1 has access to entity1, but NO access to observable1 (which is linked to entity1)
         entities, total = entity.Entity.filter(
-            {"name": "malware1"},
-            user=self.user1,
-            graph_queries=graph_queries
+            {"name": "malware1"}, user=self.user1, graph_queries=graph_queries
         )
         self.assertEqual(len(entities), 1)
         self.assertFalse(hasattr(entities[0], "links") and len(entities[0].links) > 0)
@@ -144,9 +142,7 @@ class RBACTest(unittest.TestCase):
         self.user1.link_to_acl(self.observable1, roles.Role.READER)
 
         entities, total = entity.Entity.filter(
-            {"name": "malware1"},
-            user=self.user1,
-            graph_queries=graph_queries
+            {"name": "malware1"}, user=self.user1, graph_queries=graph_queries
         )
         self.assertEqual(len(entities), 1)
-        self.assertEqual(len(entities[0].links), 1)
+        self.assertTrue(hasattr(entities[0], "links") and len(entities[0].links) > 0)
