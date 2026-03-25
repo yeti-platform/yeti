@@ -1222,11 +1222,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
+                {filter_string}
+                {acl_query}
+                {acl_filter}
                 {links_count_query}
                 {graph_query_string}
-                {acl_query}
-                {filter_string}
-                {acl_filter}
                 {aql_sort}
                 {limit}
             """
