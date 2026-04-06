@@ -53,8 +53,6 @@ def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.text)
 
-        # Parse the JSON response from the agent service into our Pydantic model
-        # which validates it matches the expected schema
         items = response.json()
         return [ADKSession(**item) for item in items]
 
@@ -70,22 +68,12 @@ def chat_proxy(httpreq: Request, message: dict):
     """
 
     username = httpreq.state.username
-
-    # # 1. Inject Context (RAG or Database lookup)
-    # # E.g., "Alice is an admin looking at dashboard page X"
-    # system_context = (
-    #     f"User {username} is asking about page {message.get('current_page')}"
-    # )
-
-    # 2. Prepare Payload for Agent
     agent_payload = {
         "user_id": username,
         "session_id": message.get("session_id"),
         "text": message.get("text"),
-        # "context_override": system_context,  # Custom field your agent knows how to handle
     }
 
-    # 3. Stream the response from the Agent Service
     async def proxy_stream():
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             async with client.stream(
