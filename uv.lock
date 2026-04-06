@@ -1567,7 +1567,7 @@ wheels = [
 
 [[package]]
 name = "timesketch-api-client"
-version = "20250408"
+version = "20260312"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "altair" },
@@ -1579,7 +1579,7 @@ dependencies = [
     { name = "pandas" },
     { name = "requests" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/04/54/d2db3f7925f87f109f967b9a05c9d1c161e467c01980525a0ddf5b810318/timesketch_api_client-20250408.tar.gz", hash = "sha256:530c042c841817609033a29fb49d44226af96c61021f8bffebf5745e1022dc48", size = 71071, upload-time = "2025-04-09T07:56:13.568Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/9e/fed828cdfacb538da1801fa94211e6e37d247284b9bcf77981c8be762813/timesketch_api_client-20260312.tar.gz", hash = "sha256:2f9bcda80a3a6e29c1c95b7b7c16b96a92e8e22c23656b68c8e85a5b559241fe", size = 81572, upload-time = "2026-03-12T13:42:11.225Z" }
 
 [[package]]
 name = "tldextract"
@@ -1911,7 +1911,7 @@ plugins = [
     { name = "pymisp", specifier = ">=2.4.176" },
     { name = "pyopenssl", specifier = ">=23.3.0" },
     { name = "shodan", specifier = ">=1.30.0" },
-    { name = "timesketch-api-client", specifier = ">=20230721" },
+    { name = "timesketch-api-client", specifier = ">=20260312" },
 ]
 s3 = [{ name = "boto3", specifier = ">=1.35.22" }]
 
