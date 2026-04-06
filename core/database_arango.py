@@ -290,6 +290,15 @@ class ArangoDatabase:
             }
         )
 
+        self.db.collection("acls").add_index(
+            {
+                "fields": ["_to"],
+                "in_background": True,
+                "name": "acls_to_index",
+                "type": "persistent",
+            }
+        )
+
     def create_views(self):
         link_definitions = {}
         for view_target in ("observables", "entities", "indicators", "dfiq"):
