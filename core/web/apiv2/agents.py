@@ -60,12 +60,7 @@ def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
 @router.post("/stream")
 @global_permission(roles.Permission.READ)
 def chat_proxy(httpreq: Request, message: dict):
-    """
-    1. Authenticates user.
-    2. Fetches relevant context (optional).
-    3. Forwards request to Agent Service.
-    4. Streams response back to Frontend.
-    """
+    """Proxies a chat message to the Agent Service and streams the response back to the client."""
 
     username = httpreq.state.username
     agent_payload = {
