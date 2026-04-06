@@ -1,10 +1,16 @@
 import asyncio
 import json
+from typing import Any, Dict, List
 
 import httpx
 import websockets
-from typing import Any, Dict, List
-from fastapi import APIRouter, FastAPI, Request, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -88,76 +94,3 @@ async def chat_proxy(httpreq: Request, message: dict):
                     yield chunk
 
     return StreamingResponse(proxy_stream(), media_type="text/event-stream")
-
-
-@router.websocket("/api/v2/chat_proxy")
-@global_permission(roles.Permission.READ)
-async def chat_proxy_endpoint(httpreq: Request, client_ws: WebSocket):
-    """
-    1. Accepts connection from Vue.js
-    2. Authenticates user (via Cookie or Query Param).
-    3. Connects to Agent Service.
-    4. Injects User ID and forwards messages bi-directionally.
-    """
-
-    # --- 1. Handshake & Auth ---
-    # In WebSockets, headers are hard to customize on the client.
-    # We often read the token from query params: ws://.../proxy?token=xyz
-    # token = client_ws.query_params.get("token")
-    # user = validate_token(token) # Your custom auth logic
-
-    # if not user:
-    #     await client_ws.close(code=1008) # Policy Violation
-    #     return
-
-    await client_ws.accept()
-
-    # --- 2. The Tunnel Loop ---
-    try:
-        # Connect to the Agent Service as a client
-        async with websockets.connect(AGENT_WEBSOCKET_ENDPOINT) as agent_ws:
-
-            # Task A: Listen to Frontend -> Inject ID -> Send to Agent
-            async def forward_to_agent():
-                try:
-                    while True:
-                        # Wait for message from Vue
-                        data = await client_ws.receive_text()
-                        message_payload = json.loads(data)
-
-                        # SECURITY: Overwrite/Inject the verified User ID
-                        # This ensures the Agent Service trusts the ID provided by the Proxy
-                        message_payload["user_id"] = user["id"]
-
-                        # Forward to Agent Service
-                        await agent_ws.send(json.dumps(message_payload))
-                except WebSocketDisconnect:
-                    # Frontend disconnected
-                    pass
-                except Exception as e:
-                    print(f"Error forwarding to agent: {e}")
-
-            # Task B: Listen to Agent -> Forward to Frontend
-            async def forward_to_client():
-                try:
-                    async for message in agent_ws:
-                        # Forward raw message (tokens/JSON) back to Vue
-                        await client_ws.send_text(message)
-                except Exception as e:
-                    print(f"Error forwarding to client: {e}")
-
-            # --- 3. Run both directions concurrently ---
-            # If either side disconnects, the gather will eventually exit/cancel
-            await asyncio.gather(
-                forward_to_agent(),
-                forward_to_client(),
-                return_exceptions=True
-            )
-
-    except Exception as e:
-        print(f"Proxy Connection Error: {e}")
-        # Ensure client socket is closed if upstream fails
-        try:
-            await client_ws.close()
-        except:
-            pass
