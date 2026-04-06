@@ -12,12 +12,12 @@ from core.schemas.entities import investigation
 AGENT_HTTP_BASE = yeti_config.get("agents", "http_root")
 AGENT_STREAM_ENDPOINT = f"{AGENT_HTTP_BASE}/run_stream?agent_name=ioc_analyzer"
 
-FILTER_TAG = "extract_investigation"
+FILTER_TAG = "extract_iocs"
 
 
-class UrlExtractInvestigation(task.AnalyticsTask):
+class IOCExtractor(task.AnalyticsTask):
     _defaults = {
-        "name": "UrlExtractInvestigation",
+        "name": "IOCExtractor",
         "description": f"Extracts investigation details (summaries, IOCs, etc.) from URLs tagged with '{FILTER_TAG}' using LLMs",
         "frequency": timedelta(hours=1),
     }
@@ -36,7 +36,7 @@ class UrlExtractInvestigation(task.AnalyticsTask):
     ):
         payload = {
             "user_id": "analytics_task",
-            "session_id": f"extract_investigation_{url_obs.id}",
+            "session_id": f"extract_iocs_{url_obs.id}",
             "text": f"Analyze {url_obs.value} as per your instructions.",
         }
 
@@ -54,7 +54,6 @@ class UrlExtractInvestigation(task.AnalyticsTask):
             parsed_report = json.loads(last_response)
             self.process_report(parsed_report, source=url_obs)
 
-            # Tag as processed and remove the original tag
             url_obs.expire_tag(FILTER_TAG)
 
         except httpx.HTTPError:
@@ -85,4 +84,4 @@ class UrlExtractInvestigation(task.AnalyticsTask):
         )
 
 
-taskmanager.TaskManager.register_task(UrlExtractInvestigation)
+taskmanager.TaskManager.register_task(IOCExtractor)
