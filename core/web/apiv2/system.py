@@ -31,6 +31,7 @@ class SystemConfigResponse(BaseModel):
     auth: dict
     system: dict
     rbac_enabled: bool
+    agents_enabled: bool
 
 
 @router.get("/config")
@@ -43,6 +44,7 @@ def get_config() -> SystemConfigResponse:
         },
         system=yeti_config.get("system"),
         rbac_enabled=yeti_config.get("rbac", "enabled"),
+        agents_enabled=yeti_config.get("agents", "enabled"),
     )
     return config
 

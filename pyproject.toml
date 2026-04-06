@@ -33,6 +33,7 @@ dependencies = [
     "beautifulsoup4>=4.13.4",
     "artifacts",
     "google-auth>=2.39.0",
+    "websockets>=16.0",
 ]
 
 [dependency-groups]
@@ -47,7 +48,7 @@ plugins = [
     "pymisp>=2.4.176",
     "otxv2>=1.5.12",
     "shodan>=1.30.0",
-    "timesketch-api-client>=20230721",
+    "timesketch-api-client>=20260312",
     "pyopenssl>=23.3.0",
     "ipwhois>=1.2.0",
     "maclookup>=1.0.3",

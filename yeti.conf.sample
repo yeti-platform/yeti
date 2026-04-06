@@ -114,6 +114,16 @@ keep_ratio = 0.9
 # if concurrency is not defined, defaults to multiprocessing.cpu_count
 consumers_concurrency = 2
 
+[agents]
+
+##
+## Endpoint for agent functionality
+##
+
+enabled = True
+http_root = http://agents:8888
+websocket_root = ws://agents:8888
+
 [misp]
 
 ##
