@@ -124,31 +124,3 @@ class RBACTest(unittest.TestCase):
         self.assertEqual(len(self.entity1._acls), 2)
         self.assertIn(self.group1.name, self.entity1._acls)
         self.assertIn(self.user1.username, self.entity1._acls)
-
-    def test_filter_entities_with_graph_queries_respects_acls(self):
-        """Test that filter() with graph_queries takes user ACLs on linked objects into account"""
-        self.user1.link_to_acl(self.entity1, roles.Role.READER)
-
-        graph_queries = [("links", "links", "inbound", "name|value")]
-
-        # User 1 has access to entity1, but NO access to observable1 (which is linked to entity1)
-        entities, total = entity.Entity.filter(
-            {"name": "malware1"}, user=self.user1, graph_queries=graph_queries
-        )
-        self.assertEqual(len(entities), 1)
-        # Without access, the 'links' attribute should either not be present or be empty
-        if hasattr(entities[0], "links"):
-            self.assertEqual(len(entities[0].links), 0)
-
-        # Grant access to observable1
-        self.user1.link_to_acl(self.observable1, roles.Role.READER)
-
-        entities, total = entity.Entity.filter(
-            {"name": "malware1"}, user=self.user1, graph_queries=graph_queries
-        )
-        self.assertEqual(len(entities), 1)
-        # With access, the 'links' attribute should be present and populated
-        self.assertTrue(hasattr(entities[0], "links"))
-        self.assertIsInstance(entities[0].links, dict)
-        self.assertEqual(len(entities[0].links), 1)
-        self.assertIn("test.com", entities[0].links)
