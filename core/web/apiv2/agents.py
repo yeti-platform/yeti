@@ -28,7 +28,7 @@ AGENT_STREAM_ENDPOINT = f"{AGENT_HTTP_BASE}/run_stream"
 AGENT_LIST_SESSIONS_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}"
 AGENT_WEBSOCKET_ENDPOINT = f"{AGENT_WEBSOCKET_BASE}/ws/chat"
 
-ASYNC_TIMEOUT = httpx.Timeout(timeout=60.0)
+TIMEOUT = httpx.Timeout(timeout=60.0)
 
 
 class ADKSession(BaseModel):
@@ -42,28 +42,26 @@ class ADKSession(BaseModel):
 
 @router.get("/sessions")
 @global_permission(roles.Permission.READ)
-async def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
+def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
     """
     Proxies the request to retrieve sessions for a given user from the Agent Service.
     """
     user_id = httpreq.state.username
     agent_url = f"{AGENT_LIST_SESSIONS_ENDPOINT.format(user_id=user_id)}"
-    async with httpx.AsyncClient(timeout=ASYNC_TIMEOUT) as client:
-        response = await client.get(agent_url)
-        print(response)
+    with httpx.Client(timeout=TIMEOUT) as client:
+        response = client.get(agent_url)
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.text)
 
         # Parse the JSON response from the agent service into our Pydantic model
         # which validates it matches the expected schema
         items = response.json()
-        print(items)
         return [ADKSession(**item) for item in items]
 
 
 @router.post("/stream")
 @global_permission(roles.Permission.READ)
-async def chat_proxy(httpreq: Request, message: dict):
+def chat_proxy(httpreq: Request, message: dict):
     """
     1. Authenticates user.
     2. Fetches relevant context (optional).
@@ -89,7 +87,7 @@ async def chat_proxy(httpreq: Request, message: dict):
 
     # 3. Stream the response from the Agent Service
     async def proxy_stream():
-        async with httpx.AsyncClient(timeout=ASYNC_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             async with client.stream(
                 "POST", AGENT_STREAM_ENDPOINT, json=agent_payload
             ) as r:
