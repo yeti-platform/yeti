@@ -33,6 +33,7 @@ dependencies = [
     "beautifulsoup4>=4.13.4",
     "artifacts",
     "google-auth>=2.39.0",
+    "websockets>=16.0",
 ]
 
 [dependency-groups]
