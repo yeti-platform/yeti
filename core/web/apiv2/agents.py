@@ -65,7 +65,9 @@ def get_session_proxy(httpreq: Request, session_id: str) -> ADKSession:
     Proxies the request to retrieve a single session for a given user from the Agent Service.
     """
     user_id = httpreq.state.username
-    agent_url = f"{AGENT_GET_SESSION_ENDPOINT.format(user_id=user_id, session_id=session_id)}"
+    agent_url = (
+        f"{AGENT_GET_SESSION_ENDPOINT.format(user_id=user_id, session_id=session_id)}"
+    )
     with httpx.Client(timeout=TIMEOUT) as client:
         response = client.get(agent_url)
         if response.status_code != 200:
