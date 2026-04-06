@@ -26,6 +26,7 @@ AGENT_WEBSOCKET_BASE = yeti_config.get("agents", "websocket_root")
 
 AGENT_STREAM_ENDPOINT = f"{AGENT_HTTP_BASE}/run_stream"
 AGENT_LIST_SESSIONS_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}"
+AGENT_GET_SESSION_ENDPOINT = f"{AGENT_HTTP_BASE}/sessions/{{user_id}}/{{session_id}}"
 AGENT_WEBSOCKET_ENDPOINT = f"{AGENT_WEBSOCKET_BASE}/ws/chat"
 
 TIMEOUT = httpx.Timeout(timeout=60.0)
@@ -55,6 +56,22 @@ def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
 
         items = response.json()
         return [ADKSession(**item) for item in items]
+
+
+@router.get("/sessions/{session_id}")
+@global_permission(roles.Permission.READ)
+def get_session_proxy(httpreq: Request, session_id: str) -> ADKSession:
+    """
+    Proxies the request to retrieve a single session for a given user from the Agent Service.
+    """
+    user_id = httpreq.state.username
+    agent_url = f"{AGENT_GET_SESSION_ENDPOINT.format(user_id=user_id, session_id=session_id)}"
+    with httpx.Client(timeout=TIMEOUT) as client:
+        response = client.get(agent_url)
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+
+        return ADKSession(**response.json())
 
 
 @router.post("/stream")
