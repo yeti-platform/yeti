@@ -30,6 +30,7 @@ AGENT_WEBSOCKET_ENDPOINT = f"{AGENT_WEBSOCKET_BASE}/ws/chat"
 
 ASYNC_TIMEOUT = httpx.Timeout(timeout=60.0)
 
+
 class ADKSession(BaseModel):
     id: str
     appName: str
@@ -37,6 +38,7 @@ class ADKSession(BaseModel):
     state: Dict[str, Any] = Field(default_factory=dict)
     events: List[Dict[str, Any]] = Field(default_factory=list)
     lastUpdateTime: float = 0.0
+
 
 @router.get("/sessions")
 @global_permission(roles.Permission.READ)
@@ -57,6 +59,7 @@ async def list_sessions_proxy(httpreq: Request) -> List[ADKSession]:
         items = response.json()
         print(items)
         return [ADKSession(**item) for item in items]
+
 
 @router.post("/stream")
 @global_permission(roles.Permission.READ)
