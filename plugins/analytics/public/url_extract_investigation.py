@@ -1,6 +1,6 @@
+import json
 import logging
 from datetime import timedelta
-import json
 
 import httpx
 
@@ -57,10 +57,10 @@ class UrlExtractInvestigation(task.AnalyticsTask):
             # Tag as processed and remove the original tag
             url_obs.expire_tag(FILTER_TAG)
 
-        except httpx.HTTPError as e:
+        except httpx.HTTPError:
             logging.exception(f"HTTP Error processing URL {url_obs.value} with Agent")
             logging.debug(last_response)
-        except Exception as e:
+        except Exception:
             logging.exception(f"Error processing URL {url_obs.value} with Agent")
             logging.debug(last_response)
 
