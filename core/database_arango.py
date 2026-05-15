@@ -290,6 +290,15 @@ class ArangoDatabase:
             }
         )
 
+        self.db.collection("acls").add_index(
+            {
+                "fields": ["_to"],
+                "in_background": True,
+                "name": "acls_to_index",
+                "type": "persistent",
+            }
+        )
+
     def create_views(self):
         link_definitions = {}
         for view_target in ("observables", "entities", "indicators", "dfiq"):
@@ -1190,16 +1199,18 @@ class ArangoYetiConnector(AbstractYetiConnector):
             aql_args["offset"] = offset
             aql_args["count"] = count
 
+        acl_query = ""
+        neighbor_acl_filter = ""
+        if user and RBAC_ENABLED and not user.admin:
+            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
+            neighbor_acl_filter = "LET neighbor_acl = FIRST(FOR aclv IN 1..2 INBOUND v acls FILTER aclv.username == @username RETURN true) OR false\n                FILTER neighbor_acl"
+            aql_args["username"] = user.username
+
         # TODO: Interpolate this query
         graph_query_string = ""
         for name, graph, direction, field in graph_queries:
             field_aggregation = "||".join([f"v.{field}" for field in field.split("|")])
-            graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} RETURN {{ [{field_aggregation}]: e }})"
-
-        acl_query = ""
-        if user and RBAC_ENABLED and not user.admin:
-            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
-            aql_args["username"] = user.username
+            graph_query_string += f"\nLET {name} = (FOR v, e in 1..1 {direction} o {graph} \n                {neighbor_acl_filter}\n                RETURN {{ [{field_aggregation}]: e }})"
 
         filter_string = ""
         if filter_conditions:
@@ -1222,11 +1233,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
+                {filter_string}
+                {acl_query}
+                {acl_filter}
                 {links_count_query}
                 {graph_query_string}
-                {acl_query}
-                {filter_string}
-                {acl_filter}
                 {aql_sort}
                 {limit}
             """
