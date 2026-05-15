@@ -2,15 +2,20 @@ name: Lint
 
 on: [pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint using Ruff
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
       - run:
           sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
       - name: Install ruff
         run: uv tool install ruff
       - name: Run ruff lint check
