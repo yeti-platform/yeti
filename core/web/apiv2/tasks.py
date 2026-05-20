@@ -1,10 +1,11 @@
 import io
 
+from celery import Celery, signature
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict
 
-from core import taskscheduler
+from core.config.config import yeti_config
 from core.schemas.task import ExportTask, Task, TaskParams, TaskType, TaskTypes
 from core.schemas.template import Template
 
@@ -48,7 +49,14 @@ def run(task_name, params: TaskParams | None = None) -> dict[str, str]:
     """Runs a task asynchronously."""
     if params is None:
         params = TaskParams()
-    taskscheduler.run_task.delay(task_name, params.model_dump_json())
+
+    Celery(
+        "tasks",
+        broker=f"redis://{yeti_config.get('redis', 'host')}/",
+        worker_pool_restarts=True,
+    )
+    sig = signature("run_task", (task_name, params.model_dump_json()))
+    sig.apply_async()
     return {"status": "ok"}
 
 
