@@ -45,7 +45,7 @@ RBAC_ENABLED = yeti_config.get("rbac", "enabled", default=False)
 _SAFE_FIELD_RE = re.compile(r"^[a-zA-Z0-9_.]+$")
 
 
-def _validate_sort_field(field: str) -> str:
+def _validate_safe_field_name(field: str) -> str:
     """Raise ValueError if *field* contains characters that could inject AQL."""
     if not _SAFE_FIELD_RE.match(field):
         raise ValueError(
@@ -868,7 +868,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         }
         sorts = []
         for field, asc in sorting:
-            _validate_sort_field(field)
+            _validate_safe_field_name(field)
             sorts.append(f"p.edges[0].{field} {'ASC' if asc else 'DESC'}")
         sorting_aql = f"SORT {', '.join(sorts)}" if sorts else ""
 
@@ -1095,7 +1095,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             if field == "total_links" and links_count:
                 sorts.append(f"total_links {'ASC' if asc else 'DESC'}")
             else:
-                _validate_sort_field(field)
+                _validate_safe_field_name(field)
                 sorts.append(f"o.{field} {'ASC' if asc else 'DESC'}")
 
         aql_args: dict[str, str | int | list] = {}
@@ -1158,7 +1158,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
                 for alias, alias_type in aliases:
                     if alias != "tags":
-                        _validate_sort_field(alias)
+                        _validate_safe_field_name(alias)
                     if alias == "tags":
                         if using_view:
                             key_conditions.append(
