@@ -618,9 +618,7 @@ class DFIQTest(unittest.TestCase):
                     continue
                 with archive.open(name) as f:
                     yaml_data = yaml.safe_load(f.read())
-                self.assertIsNotNone(
-                    yaml_data.get("uuid"), f"{name} is missing a uuid"
-                )
+                self.assertIsNotNone(yaml_data.get("uuid"), f"{name} is missing a uuid")
                 uuid.UUID(str(yaml_data["uuid"]))  # raises ValueError if malformed
                 yaml_by_uuid[yaml_data["uuid"]] = yaml_data
 
