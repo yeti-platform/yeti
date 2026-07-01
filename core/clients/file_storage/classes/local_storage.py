@@ -18,7 +18,9 @@ class LocalStorageClient(FileStorageClient):
         base = self.path.resolve()
         target = (base / file_name).resolve()
         if target != base and base not in target.parents:
-            raise ValueError(f"Invalid file name: {file_name!r} escapes storage directory")
+            raise ValueError(
+                f"Invalid file name: {file_name!r} escapes storage directory"
+            )
         return target
 
     def file_path(self, file_name: str) -> str:

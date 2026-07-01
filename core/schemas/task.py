@@ -295,7 +295,9 @@ class ExportTask(Task):
     @property
     def file_name(self) -> str:
         """Returns the output file for the export."""
-        safe_name = re.sub(r"[^A-Za-z0-9_.\-]", "_", self.name.replace(" ", "_").lower())
+        safe_name = re.sub(
+            r"[^A-Za-z0-9_.\-]", "_", self.name.replace(" ", "_").lower()
+        )
         return pathlib.Path(safe_name).name
 
     def run(self) -> None:
