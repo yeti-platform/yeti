@@ -25,5 +25,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Python dependencies
       run: uv sync --group dev
+    - name: Install magika
+      run: uv pip install magika
     - name: Validate DFIQ archive consistency
       run: uv run python -m unittest tests.tools.validate_dfiq_archive -v

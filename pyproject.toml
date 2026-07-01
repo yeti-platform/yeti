@@ -34,7 +34,6 @@ dependencies = [
     "artifacts",
     "google-auth>=2.39.0",
     "websockets>=16.0",
-    "magika>=1.0.3",
 ]
 
 [dependency-groups]
