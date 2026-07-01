@@ -1156,6 +1156,8 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     key_conditions = [f"REGEX_TEST(o.@arg{i}_key, @arg{i}_value, true)"]
 
                 for alias, alias_type in aliases:
+                    if alias != "tags":
+                        _validate_sort_field(alias)
                     if alias == "tags":
                         if using_view:
                             key_conditions.append(
