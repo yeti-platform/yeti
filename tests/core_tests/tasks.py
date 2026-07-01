@@ -298,6 +298,18 @@ class ExportTaskTest(unittest.TestCase):
         self.assertEqual(filename, "randomexport")
         yeti_config.system.export_path = previous
 
+    def test_file_name_sanitizes_path_traversal(self):
+        """Tests that ExportTask.file_name neutralizes path traversal attempts
+        (GHSA-4q3w-w2g5-8wqq)."""
+        task = ExportTask(
+            name="../../../../../../etc/passwd",
+            acts_on=["hostname"],
+            template_name="RandomTemplate",
+        )
+        self.assertNotIn("/", task.file_name)
+        self.assertNotIn("\\", task.file_name)
+        self.assertEqual(task.file_name, ".._.._.._.._.._.._etc_passwd")
+
     def test_tag_filtering(self):
         """Tests that the tag filtering works as intended."""
         task = ExportTask.find(name="RandomExport")
