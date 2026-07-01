@@ -54,6 +54,7 @@ def _validate_sort_field(field: str) -> str:
         )
     return field
 
+
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
 
 
