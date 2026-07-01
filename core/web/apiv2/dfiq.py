@@ -1,6 +1,7 @@
 import os
 import tempfile
 from io import BytesIO
+from pathlib import Path
 from zipfile import ZipFile
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile, status
@@ -230,11 +231,25 @@ def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
             os.makedirs(f"{tempdir}/{dir_name}")
 
         for obj in public_objs:
-            with open(f"{tempdir}/public/{obj.uuid}.yaml", "w") as f:
+            base = Path(tempdir, "public").resolve()
+            target = (base / f"{obj.uuid}.yaml").resolve()
+            if not target.is_relative_to(base):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid DFIQ UUID in export path: {obj.uuid}",
+                )
+            with open(target, "w") as f:
                 f.write(obj.to_yaml())
 
         for obj in internal_objs:
-            with open(f"{tempdir}/internal/{obj.uuid}.yaml", "w") as f:
+            base = Path(tempdir, "internal").resolve()
+            target = (base / f"{obj.uuid}.yaml").resolve()
+            if not target.is_relative_to(base):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid DFIQ UUID in export path: {obj.uuid}",
+                )
+            with open(target, "w") as f:
                 f.write(obj.to_yaml())
 
         with tempfile.NamedTemporaryFile(delete=False) as archive:
