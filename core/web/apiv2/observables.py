@@ -42,13 +42,13 @@ class NewObservableRequest(TagRequestMixin):
 class NewExtendedObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminant="type")
+    observable: ObservableTypes = Field(discriminator="type")
 
 
 class PatchObservableRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminant="type")
+    observable: ObservableTypes = Field(discriminator="type")
 
 
 class NewBulkObservableAddRequest(BaseModel):
