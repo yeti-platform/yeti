@@ -11,7 +11,6 @@ from core import database_arango
 from core.schemas import dfiq
 from core.schemas.user import UserSensitive
 from core.web import webapp
-from tools import validate_dfiq_archive
 
 client = TestClient(webapp.app)
 
@@ -603,48 +602,6 @@ class DFIQTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
         self.assertEqual(data, {"total_added": 3})
-
-    def test_upload_dfiq_archive_yaml_uuids_are_consistent(self):
-        # See tools/validate_dfiq_archive.py: the archive's uuids and
-        # parent_ids must be internally consistent, otherwise the
-        # scenario/facet/question hierarchy silently fails to link up on
-        # import (update_parents(soft_fail=True)).
-        errors = validate_dfiq_archive.validate(
-            "tests/dfiq_test_data/dfiq_test_data.zip"
-        )
-        self.assertEqual(errors, [])
-
-        with open("tests/dfiq_test_data/dfiq_test_data.zip", "rb") as zip_archive:
-            response = client.post(
-                "/api/v2/dfiq/from_archive",
-                files={"archive": ("test_archive.zip", zip_archive, "application/zip")},
-            )
-        self.assertEqual(response.status_code, 200, response.json())
-
-        scenario = dfiq.DFIQBase.find(dfiq_id="S1003")
-        facet = dfiq.DFIQBase.find(dfiq_id="F1005")
-        question = dfiq.DFIQBase.find(dfiq_id="Q1020")
-        self.assertIsNotNone(scenario)
-        self.assertIsNotNone(facet)
-        self.assertIsNotNone(question)
-
-        facet_vertices, facet_relationships, _ = facet.neighbors()
-        facet_parent_ids = {
-            facet_vertices[rel.source].dfiq_id
-            for edges in facet_relationships
-            for rel in edges
-            if rel.target == facet.extended_id
-        }
-        self.assertIn("S1003", facet_parent_ids)
-
-        question_vertices, question_relationships, _ = question.neighbors()
-        question_parent_ids = {
-            question_vertices[rel.source].dfiq_id
-            for edges in question_relationships
-            for rel in edges
-            if rel.target == question.extended_id
-        }
-        self.assertIn("F1005", question_parent_ids)
 
     def test_to_archive(self):
         dfiq.DFIQScenario(

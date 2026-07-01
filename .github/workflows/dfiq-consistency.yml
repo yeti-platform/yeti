@@ -26,4 +26,4 @@ jobs:
     - name: Install Python dependencies
       run: uv sync --group dev
     - name: Validate DFIQ archive consistency
-      run: uv run python tools/validate_dfiq_archive.py tests/dfiq_test_data/dfiq_test_data.zip
+      run: uv run python -m unittest tests.tools.validate_dfiq_archive -v
