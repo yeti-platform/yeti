@@ -32,7 +32,7 @@ class DFIQTest(unittest.TestCase):
         dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=[],
@@ -108,7 +108,7 @@ class DFIQTest(unittest.TestCase):
         scenario = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -147,7 +147,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -187,7 +187,7 @@ class DFIQTest(unittest.TestCase):
         scenario = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -196,10 +196,10 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
-            parent_ids=["fake_scenario_uuid"],
+            parent_ids=["00000000-0000-4000-8000-000000000003"],
             dfiq_yaml="mock",
         ).save()
 
@@ -216,7 +216,7 @@ class DFIQTest(unittest.TestCase):
         scenario = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -225,7 +225,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -339,7 +339,7 @@ class DFIQTest(unittest.TestCase):
         scenario1 = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid1",
+            uuid="00000000-0000-4000-8000-000000000001",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -348,7 +348,7 @@ class DFIQTest(unittest.TestCase):
         scenario2 = dfiq.DFIQScenario(
             name="mock_scenario2",
             dfiq_id="S1222",
-            uuid="fake_scenario_uuid2",
+            uuid="00000000-0000-4000-8000-000000000002",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -357,7 +357,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -393,7 +393,7 @@ class DFIQTest(unittest.TestCase):
         scenario1 = dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid1",
+            uuid="00000000-0000-4000-8000-000000000001",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -402,7 +402,7 @@ class DFIQTest(unittest.TestCase):
         scenario2 = dfiq.DFIQScenario(
             name="mock_scenario2",
             dfiq_id="S1222",
-            uuid="fake_scenario_uuid2",
+            uuid="00000000-0000-4000-8000-000000000002",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
@@ -411,7 +411,7 @@ class DFIQTest(unittest.TestCase):
         facet = dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -447,7 +447,7 @@ class DFIQTest(unittest.TestCase):
     def test_dfiq_patch_question_updates_indicators(self) -> None:
         dfiq.DFIQScenario(
             name="mock_scenario",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_id="S1003",
             dfiq_version="1.1.0",
             description="desc",
@@ -456,7 +456,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQFacet(
             name="mock_facet",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             dfiq_id="F1005",
             description="desc",
@@ -606,7 +606,7 @@ class DFIQTest(unittest.TestCase):
     def test_to_archive(self):
         dfiq.DFIQScenario(
             name="public_scenario",
-            uuid="test_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000005",
             dfiq_id="S1003",
             dfiq_version="1.0.0",
             description="desc",
@@ -615,7 +615,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQScenario(
             name="private_scenario",
-            uuid="test_private_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000006",
             dfiq_id="S0003",
             dfiq_tags=["internal"],
             dfiq_version="1.0.0",
@@ -625,7 +625,7 @@ class DFIQTest(unittest.TestCase):
 
         dfiq.DFIQQuestion(
             name="semi_private_question",
-            uuid="test_question_uuid",
+            uuid="00000000-0000-4000-8000-000000000007",
             dfiq_id="Q1020",
             dfiq_version="1.0.0",
             description="desc",
@@ -655,25 +655,25 @@ class DFIQTest(unittest.TestCase):
         with ZipFile(io.BytesIO(response.content)) as archive:
             files = archive.namelist()
             self.assertEqual(len(files), 4)
-            self.assertIn("public/scenarios/test_scenario_uuid.yaml", files)
-            self.assertIn("internal/scenarios/test_private_scenario_uuid.yaml", files)
-            self.assertIn("public/questions/test_question_uuid.yaml", files)
-            self.assertIn("internal/questions/test_question_uuid.yaml", files)
+            self.assertIn("public/scenarios/00000000-0000-4000-8000-000000000005.yaml", files)
+            self.assertIn("internal/scenarios/00000000-0000-4000-8000-000000000006.yaml", files)
+            self.assertIn("public/questions/00000000-0000-4000-8000-000000000007.yaml", files)
+            self.assertIn("internal/questions/00000000-0000-4000-8000-000000000007.yaml", files)
 
-            with archive.open("public/scenarios/test_scenario_uuid.yaml") as f:
+            with archive.open("public/scenarios/00000000-0000-4000-8000-000000000005.yaml") as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("public_scenario", content)
             with archive.open(
-                "internal/scenarios/test_private_scenario_uuid.yaml"
+                "internal/scenarios/00000000-0000-4000-8000-000000000006.yaml"
             ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("private_scenario", content)
-            with archive.open("public/questions/test_question_uuid.yaml") as f:
+            with archive.open("public/questions/00000000-0000-4000-8000-000000000007.yaml") as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
                 self.assertNotIn("internal_approach", content)
-            with archive.open("internal/questions/test_question_uuid.yaml") as f:
+            with archive.open("internal/questions/00000000-0000-4000-8000-000000000007.yaml") as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
