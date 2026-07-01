@@ -8,7 +8,9 @@ otherwise silently produce an unlinked scenario/facet/question hierarchy
 instead of a loud failure.
 
 The archive must also only contain yaml files (directory entries aside) -
-no scripts, executables, or any other file type.
+no scripts, executables, or any other file type. This is checked both by
+extension and by sniffing the actual file content with Magika, so a
+disguised executable renamed to *.yaml is also rejected.
 
 Usage:
     python tools/validate_dfiq_archive.py tests/dfiq_test_data/dfiq_test_data.zip
@@ -20,6 +22,9 @@ import uuid
 from zipfile import ZipFile
 
 import yaml
+from magika import Magika
+
+_MAGIKA = Magika()
 
 
 def validate(archive_path: str) -> list[str]:
@@ -42,8 +47,19 @@ def validate(archive_path: str) -> list[str]:
             if not name.endswith(".yaml"):
                 errors.append(f"{name} is not a .yaml file")
                 continue
+
             with archive.open(name) as f:
-                yaml_data = yaml.safe_load(f.read())
+                content = f.read()
+
+            content_type = _MAGIKA.identify_bytes(content).output.label
+            if content_type not in ("yaml", "empty"):
+                errors.append(
+                    f"{name} has a .yaml extension but its content was "
+                    f"detected as {content_type!r}"
+                )
+                continue
+
+            yaml_data = yaml.safe_load(content)
 
             if yaml_data.get("uuid") is None:
                 errors.append(f"{name} is missing a uuid")

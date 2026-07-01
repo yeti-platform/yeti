@@ -34,3 +34,23 @@ class ValidateDFIQArchiveTest(unittest.TestCase):
             errors = validate_dfiq_archive.validate(archive_file.name)
 
         self.assertIn("setup.sh is not a .yaml file", errors)
+
+    def test_rejects_disguised_executable(self):
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w") as archive:
+            archive.writestr(
+                "S1003.yaml",
+                "type: scenario\nid: S1003\nuuid: "
+                "00000000-0000-4000-8000-000000000001\n",
+            )
+            # A shell script renamed to *.yaml to slip past an extension-only check.
+            archive.writestr("payload.yaml", "#!/bin/sh\nrm -rf /\n")
+
+        with tempfile.NamedTemporaryFile(suffix=".zip") as archive_file:
+            archive_file.write(buffer.getvalue())
+            archive_file.flush()
+            errors = validate_dfiq_archive.validate(archive_file.name)
+
+        self.assertTrue(
+            any("payload.yaml" in error and "detected as" in error for error in errors)
+        )
