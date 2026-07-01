@@ -7,6 +7,9 @@ DFIQ import calls update_parents(soft_fail=True), so a mismatch here would
 otherwise silently produce an unlinked scenario/facet/question hierarchy
 instead of a loud failure.
 
+The archive must also only contain yaml files (directory entries aside) -
+no scripts, executables, or any other file type.
+
 Usage:
     python tools/validate_dfiq_archive.py tests/dfiq_test_data/dfiq_test_data.zip
 """
@@ -34,7 +37,10 @@ def validate(archive_path: str) -> list[str]:
 
     with ZipFile(archive_path) as archive:
         for name in archive.namelist():
+            if name.endswith("/"):
+                continue  # directory entry
             if not name.endswith(".yaml"):
+                errors.append(f"{name} is not a .yaml file")
                 continue
             with archive.open(name) as f:
                 yaml_data = yaml.safe_load(f.read())

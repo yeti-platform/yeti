@@ -1,4 +1,7 @@
+import io
+import tempfile
 import unittest
+from zipfile import ZipFile
 
 from tools import validate_dfiq_archive
 
@@ -14,3 +17,20 @@ class ValidateDFIQArchiveTest(unittest.TestCase):
             "tests/dfiq_test_data/dfiq_test_data.zip"
         )
         self.assertEqual(errors, [])
+
+    def test_rejects_non_yaml_files(self):
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w") as archive:
+            archive.writestr(
+                "S1003.yaml",
+                "type: scenario\nid: S1003\nuuid: "
+                "00000000-0000-4000-8000-000000000001\n",
+            )
+            archive.writestr("setup.sh", "#!/bin/sh\necho pwned\n")
+
+        with tempfile.NamedTemporaryFile(suffix=".zip") as archive_file:
+            archive_file.write(buffer.getvalue())
+            archive_file.flush()
+            errors = validate_dfiq_archive.validate(archive_file.name)
+
+        self.assertIn("setup.sh is not a .yaml file", errors)
