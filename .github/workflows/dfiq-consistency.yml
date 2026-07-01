@@ -1,0 +1,49 @@
+name: DFIQ archive consistency
+
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+
+  dfiq-consistency:
+    runs-on: ubuntu-latest
+    env:
+      YETI_REDIS_HOST: localhost
+      YETI_REDIS_PORT: 6379
+      YETI_REDIS_DATABASE: 0
+      YETI_ARANGODB_HOST: localhost
+      YETI_ARANGODB_PORT: 8529
+      YETI_ARANGODB_DATABASE: yeti
+      YETI_ARANGODB_USERNAME: root
+      YETI_ARANGODB_PASSWORD: ""
+      YETI_AUTH_SECRET_KEY: SECRET
+      YETI_AUTH_ALGORITHM: HS256
+      YETI_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      YETI_AUTH_BROWSER_TOKEN_EXPIRE_MINUTES: 43200
+      YETI_AUTH_ENABLED: False
+      YETI_SYSTEM_PLUGINS_PATH: ./plugins
+      YETI_SYSTEM_AUDIT_LOGFILE: /tmp/yeti_audit.log
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.10"]
+    steps:
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      with:
+        persist-credentials: false
+    - run:
+        sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Python dependencies
+      run: uv sync --group dev
+    - name: Copy dummy config file
+      run: cp yeti.conf.sample yeti.conf
+    - name: Start redis & arangodb conainers
+      run: docker compose -f extras/docker/dev/docker-compose.yaml up -d redis arangodb
+    - name: Test DFIQ archive consistency
+      run: uv run python -m unittest tests.apiv2.dfiq.DFIQTest.test_upload_dfiq_archive_yaml_uuids_are_consistent -v
