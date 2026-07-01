@@ -655,12 +655,22 @@ class DFIQTest(unittest.TestCase):
         with ZipFile(io.BytesIO(response.content)) as archive:
             files = archive.namelist()
             self.assertEqual(len(files), 4)
-            self.assertIn("public/scenarios/00000000-0000-4000-8000-000000000005.yaml", files)
-            self.assertIn("internal/scenarios/00000000-0000-4000-8000-000000000006.yaml", files)
-            self.assertIn("public/questions/00000000-0000-4000-8000-000000000007.yaml", files)
-            self.assertIn("internal/questions/00000000-0000-4000-8000-000000000007.yaml", files)
+            self.assertIn(
+                "public/scenarios/00000000-0000-4000-8000-000000000005.yaml", files
+            )
+            self.assertIn(
+                "internal/scenarios/00000000-0000-4000-8000-000000000006.yaml", files
+            )
+            self.assertIn(
+                "public/questions/00000000-0000-4000-8000-000000000007.yaml", files
+            )
+            self.assertIn(
+                "internal/questions/00000000-0000-4000-8000-000000000007.yaml", files
+            )
 
-            with archive.open("public/scenarios/00000000-0000-4000-8000-000000000005.yaml") as f:
+            with archive.open(
+                "public/scenarios/00000000-0000-4000-8000-000000000005.yaml"
+            ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("public_scenario", content)
             with archive.open(
@@ -668,12 +678,16 @@ class DFIQTest(unittest.TestCase):
             ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("private_scenario", content)
-            with archive.open("public/questions/00000000-0000-4000-8000-000000000007.yaml") as f:
+            with archive.open(
+                "public/questions/00000000-0000-4000-8000-000000000007.yaml"
+            ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
                 self.assertNotIn("internal_approach", content)
-            with archive.open("internal/questions/00000000-0000-4000-8000-000000000007.yaml") as f:
+            with archive.open(
+                "internal/questions/00000000-0000-4000-8000-000000000007.yaml"
+            ) as f:
                 content = f.read().decode("utf-8")
                 self.assertIn("semi_private_question", content)
                 self.assertIn("public_approach", content)
