@@ -3,16 +3,15 @@ import json
 import logging
 import sys
 import unittest
-import uuid
 from zipfile import ZipFile
 
-import yaml
 from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas import dfiq
 from core.schemas.user import UserSensitive
 from core.web import webapp
+from tools import validate_dfiq_archive
 
 client = TestClient(webapp.app)
 
@@ -606,31 +605,14 @@ class DFIQTest(unittest.TestCase):
         self.assertEqual(data, {"total_added": 3})
 
     def test_upload_dfiq_archive_yaml_uuids_are_consistent(self):
-        # Every uuid used inside the archive's yaml files (both the object's
-        # own uuid and any uuid referenced as a parent_id) must be a valid
-        # UUID and must resolve to another object present in the same
-        # archive, otherwise the scenario/facet/question hierarchy silently
-        # fails to link up on import (update_parents(soft_fail=True)).
-        with ZipFile("tests/dfiq_test_data/dfiq_test_data.zip") as archive:
-            yaml_by_uuid = {}
-            for name in archive.namelist():
-                if not name.endswith(".yaml"):
-                    continue
-                with archive.open(name) as f:
-                    yaml_data = yaml.safe_load(f.read())
-                self.assertIsNotNone(yaml_data.get("uuid"), f"{name} is missing a uuid")
-                uuid.UUID(str(yaml_data["uuid"]))  # raises ValueError if malformed
-                yaml_by_uuid[yaml_data["uuid"]] = yaml_data
-
-            for yaml_data in yaml_by_uuid.values():
-                for parent_id in yaml_data.get("parent_ids") or []:
-                    if parent_id in yaml_by_uuid:
-                        continue
-                    self.assertTrue(
-                        any(d["id"] == parent_id for d in yaml_by_uuid.values()),
-                        f"parent_id {parent_id!r} referenced by "
-                        f"{yaml_data['id']} is not present in the archive",
-                    )
+        # See tools/validate_dfiq_archive.py: the archive's uuids and
+        # parent_ids must be internally consistent, otherwise the
+        # scenario/facet/question hierarchy silently fails to link up on
+        # import (update_parents(soft_fail=True)).
+        errors = validate_dfiq_archive.validate(
+            "tests/dfiq_test_data/dfiq_test_data.zip"
+        )
+        self.assertEqual(errors, [])
 
         with open("tests/dfiq_test_data/dfiq_test_data.zip", "rb") as zip_archive:
             response = client.post(
