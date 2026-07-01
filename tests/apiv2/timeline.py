@@ -316,7 +316,7 @@ class TimelineLogTest(unittest.TestCase):
         dfiq.DFIQFacet(
             name="mock_facet",
             dfiq_id="F1005",
-            uuid="fake_facet_uuid",
+            uuid="00000000-0000-4000-8000-000000000004",
             dfiq_version="1.1.0",
             description="desc",
             parent_ids=["S1003"],
@@ -417,7 +417,7 @@ class TimelineLogTest(unittest.TestCase):
         dfiq.DFIQScenario(
             name="mock_scenario",
             dfiq_id="S1003",
-            uuid="fake_scenario_uuid",
+            uuid="00000000-0000-4000-8000-000000000003",
             dfiq_version="1.1.0",
             description="desc",
             dfiq_yaml="mock",
