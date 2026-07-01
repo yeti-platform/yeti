@@ -9,7 +9,11 @@ export_path = /opt/yeti/exports
 logging = /var/log/yeti_user_activity.log
 plugins_path = ./plugins
 audit_logfile = /var/log/yeti_audit.log
-templates_dir = /opt/yeti/templates
+
+# Directory holding export templates (*.jinja2 files, see
+# extras/templates/README.md). Both the api and tasks (worker) services read
+# from this directory, so it must be mounted/shared on both.
+template_dir = /opt/yeti/templates
 
 # Public scheme + hostname + port for Yeti. Use it if you want to specify an
 # OIDC callback

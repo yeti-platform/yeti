@@ -1,0 +1,10 @@
+{#
+  Example export template: a simple CSV of observable value, type and tags.
+
+  See json_export.jinja2 in this directory for a full rundown of the
+  fields available on each `row` in `data`.
+#}
+value,type,tags
+{% for row in data -%}
+{{ row.value }},{{ row.type }},"{{ row.tags|map(attribute="name")|join(";") }}"
+{% endfor -%}
