@@ -1,5 +1,5 @@
 # Actual Yeti container
-FROM python:3.10 AS yeti
+FROM python:3.13 AS yeti
 
 # Python
 RUN apt-get update && apt-get install -y \

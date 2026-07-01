@@ -7,7 +7,7 @@ authors = [
 ]
 license = {text = "Apache 2.0"}
 readme = "README.md"
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "uvicorn>=0.34",
     "fastapi>=0.115",
@@ -34,6 +34,7 @@ dependencies = [
     "artifacts",
     "google-auth>=2.39.0",
     "websockets>=16.0",
+    "chromadb>=1.5.7",
 ]
 
 [dependency-groups]

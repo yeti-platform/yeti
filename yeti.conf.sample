@@ -124,6 +124,14 @@ enabled = True
 http_root = http://agents:8888
 websocket_root = ws://agents:8888
 
+[chromadb]
+
+##
+## ChromaDB local storage path
+##
+
+path = /data/chromadb
+
 [misp]
 
 ##
