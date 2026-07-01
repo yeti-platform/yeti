@@ -209,6 +209,12 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
         if not re.match(r"^\d+\.\d+\.\d+$", str(yaml_data.get("dfiq_version", ""))):
             raise ValueError(f"Invalid DFIQ version: {yaml_data['dfiq_version']}")
 
+        if yaml_data.get("uuid") is not None:
+            try:
+                uuid.UUID(str(yaml_data["uuid"]))
+            except ValueError:
+                raise ValueError(f"Invalid UUID: {yaml_data['uuid']!r}")
+
         return yaml_data
 
     @classmethod

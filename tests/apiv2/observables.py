@@ -343,6 +343,17 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(data["tags"][0]["fresh"], True)
         self.assertEqual(data["tags"][1]["fresh"], True)
 
+    def test_create_extended_observable_missing_type_raises_error(self):
+        response = client.post(
+            "/api/v2/observables/extended",
+            json={
+                "observable": {
+                    "value": "1.2.3.4",
+                },
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+
     def test_bulk_add(self):
         request = {
             "observables": [

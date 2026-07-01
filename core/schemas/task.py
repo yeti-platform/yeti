@@ -1,5 +1,6 @@
 import datetime
 import logging
+import pathlib
 import re
 from enum import Enum
 from io import BytesIO
@@ -294,7 +295,10 @@ class ExportTask(Task):
     @property
     def file_name(self) -> str:
         """Returns the output file for the export."""
-        return self.name.replace(" ", "_").lower()
+        safe_name = re.sub(
+            r"[^A-Za-z0-9_.\-]", "_", self.name.replace(" ", "_").lower()
+        )
+        return pathlib.Path(safe_name).name
 
     def run(self) -> None:
         """Runs the export asynchronously."""
