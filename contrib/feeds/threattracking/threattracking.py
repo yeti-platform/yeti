@@ -6,11 +6,11 @@ from datetime import timedelta
 import hammock
 import requests
 import simplejson as json
-from core.entities import Actor, Campaign, Malware
-from core.feed import Feed
 from mongoengine.errors import DoesNotExist
 
 from core.config.config import yeti_config
+from core.entities import Actor, Campaign, Malware
+from core.feed import Feed
 
 # # add configuration to yeti.conf
 # [threattracking]

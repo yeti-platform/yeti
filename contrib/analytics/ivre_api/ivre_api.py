@@ -36,7 +36,11 @@ import itertools
 import logging
 from pprint import pformat
 
+from ivre.db import db
+from ivre.utils import encode_b64
+
 from core.analytics import InlineAnalytics, OneShotAnalytics
+from core.errors import ObservableValidationError
 from core.observables import (
     AutonomousSystem,
     Certificate,
@@ -47,10 +51,6 @@ from core.observables import (
     Text,
     Url,
 )
-from ivre.db import db
-from ivre.utils import encode_b64
-
-from core.errors import ObservableValidationError
 
 LOG = logging.getLogger("Yeti-Ivre")
 
