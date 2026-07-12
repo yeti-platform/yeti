@@ -293,7 +293,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
                     rel.delete()
 
         for parent in intended_parents:
-            parent.link_to(self, self.type, f"Uses DFIQ {self.type}")
+            parent.link_to(self, self.type.value, f"Uses DFIQ {self.type.value}")
 
 
 class DFIQScenario(DFIQBase):

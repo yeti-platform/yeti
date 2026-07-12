@@ -298,6 +298,8 @@ def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleR
     """Generates a YARA bundle from a list of indicators."""
     yaras = []
 
+    seen_ids = set()
+
     for yara_id in request.ids:
         db_yara = Yara.get(yara_id)
         if not db_yara:
@@ -305,19 +307,23 @@ def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleR
                 status_code=404,
                 detail=f"YARA bundle request contained an unknown Yara: ID:{yara_id}",
             )
-        if any(tag in request.exclude_tags for tag in db_yara.tags):
+        if any(tag.name in request.exclude_tags for tag in db_yara.tags):
             continue
         yaras.append(db_yara)
+        seen_ids.add(db_yara.id)
 
-    yara_from_tags, _ = Indicator.filter(
-        query_args={"type": "yara", "tags": request.tags},
-        user=httpreq.state.user,
-    )
+    if request.tags:
+        yara_from_tags, _ = Indicator.filter(
+            query_args={"type": "yara", "tags": request.tags},
+            user=httpreq.state.user,
+        )
 
-    for yara in yara_from_tags:
-        if any(tag in request.exclude_tags for tag in yara.tags):
-            continue
-        yaras.append(yara)
+        for yara in yara_from_tags:
+            if yara.id in seen_ids:
+                continue
+            if any(tag.name in request.exclude_tags for tag in yara.tags):
+                continue
+            yaras.append(yara)
 
     bundle = Yara.generate_yara_bundle(rules=yaras)
 
