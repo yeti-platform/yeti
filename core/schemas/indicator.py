@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import datetime
 import logging
 from enum import Enum
-from typing import Any, ClassVar, Generator, List, Literal
+from typing import Any, ClassVar, Generator, List, Literal, Union
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -18,14 +20,10 @@ def future():
 
 DEFAULT_INDICATOR_VALIDITY_DAYS = 30
 
-
-# Forward declarations
-# They are then populated by the load_indicators function in __init__.py
-class IndicatorType(str, Enum): ...
-
-
-IndicatorTypes = ()
-TYPE_MAPPING = {}
+# IndicatorType, IndicatorTypes and TYPE_MAPPING are defined statically at the
+# bottom of this module (see "Static type registry"). TYPE_MAPPING must exist
+# before the functions below are *called*, which is always the case at runtime.
+TYPE_MAPPING: dict[str, type["Indicator"]] = {}
 
 
 class DiamondModel(Enum):
@@ -130,3 +128,51 @@ def save(
 
 def find(*, name: str, **kwargs) -> "IndicatorTypes":
     return Indicator.find(name=name, **kwargs)
+
+
+# ---------------------------------------------------------------------------
+# Static type registry (see observable.py for the rationale).
+# ---------------------------------------------------------------------------
+from core.schemas.indicators.forensicartifact import ForensicArtifact  # noqa: E402
+from core.schemas.indicators.query import Query  # noqa: E402
+from core.schemas.indicators.regex import Regex  # noqa: E402
+from core.schemas.indicators.sigma import Sigma  # noqa: E402
+from core.schemas.indicators.suricata import Suricata  # noqa: E402
+from core.schemas.indicators.yara import Yara  # noqa: E402
+from core.schemas.loader import load_private_types  # noqa: E402
+
+
+class IndicatorType(str, Enum):
+    forensicartifact = "forensicartifact"
+    query = "query"
+    regex = "regex"
+    sigma = "sigma"
+    suricata = "suricata"
+    yara = "yara"
+
+
+_INDICATOR_CLASSES: list[type[Indicator]] = [
+    ForensicArtifact,
+    Query,
+    Regex,
+    Sigma,
+    Suricata,
+    Yara,
+]
+
+_private_indicator_classes = load_private_types("core.schemas.indicators", Indicator)
+
+TYPE_MAPPING = {"indicator": Indicator, "indicators": Indicator}
+for _cls in (*_INDICATOR_CLASSES, *_private_indicator_classes):
+    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
+
+IndicatorTypes = Union[
+    ForensicArtifact,
+    Query,
+    Regex,
+    Sigma,
+    Suricata,
+    Yara,
+]
+if _private_indicator_classes:
+    IndicatorTypes = Union[(IndicatorTypes, *_private_indicator_classes)]

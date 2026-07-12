@@ -8,15 +8,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "aenum"
-version = "3.1.15"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d0/f8/33e75863394f42e429bb553e05fda7c59763f0fd6848de847a25b3fbccf6/aenum-3.1.15.tar.gz", hash = "sha256:8cbd76cd18c4f870ff39b24284d3ea028fbe8731a58df3aa581e434c575b9559", size = 134730, upload-time = "2023-06-27T00:19:52.546Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d0/fa/ca0c66b388624ba9dbbf35aab3a9f326bfdf5e56a7237fe8f1b600da6864/aenum-3.1.15-py3-none-any.whl", hash = "sha256:e0dfaeea4c2bd362144b87377e2c61d91958c5ed0b4daf89cb6f45ae23af6288", size = 137633, upload-time = "2023-06-27T00:19:55.112Z" },
-]
-
-[[package]]
 name = "altair"
 version = "5.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2795,7 +2786,6 @@ name = "yeti"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "aenum" },
     { name = "artifacts" },
     { name = "authlib" },
     { name = "beautifulsoup4" },
@@ -2849,7 +2839,6 @@ s3 = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aenum", specifier = ">=3.1.15" },
     { name = "artifacts", git = "https://github.com/forensicartifacts/artifacts.git?rev=main" },
     { name = "authlib", specifier = ">=1.2.1" },
     { name = "beautifulsoup4", specifier = ">=4.13.4" },
