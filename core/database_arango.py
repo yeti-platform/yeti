@@ -1244,6 +1244,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 f"{'SEARCH' if using_view else 'FILTER'} {' AND '.join(conditions)}"
             )
 
+        # ArangoSearch views are eventually consistent. In tests we can't
+        # tolerate that race, so force the view to sync pending writes before
+        # querying. This is test-only; production queries stay non-blocking.
+        aql_options = ""
+        if using_view and TESTING:
+            aql_options = "OPTIONS { waitForSync: true }"
+
         aql_sort = ""
         if sorts:
             aql_sort = f"SORT {', '.join(sorts)}"
@@ -1255,6 +1262,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
+                {aql_options}
                 {links_count_query}
                 {graph_query_string}
                 {acl_query}

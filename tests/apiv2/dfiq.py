@@ -707,6 +707,9 @@ class DFIQTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
 
+        # get/multiple queries the arangosearch dfiq_view, which is eventually
+        # consistent. Under TESTING the view query forces waitForSync, so no
+        # sleep is needed here (a 1s sleep was still racy on slower CI runners).
         response = client.post(
             "/api/v2/dfiq/get/multiple",
             json={"names": ["scenario1"], "page": 0, "count": 10},
