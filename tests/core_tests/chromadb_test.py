@@ -86,7 +86,7 @@ id: S0101
 dfiq_version: 1.0.0
 name: Ransomware Investigation
 description: Overall scenario for ransomware
-uuid: uuid-scenario
+uuid: 00000000-0000-4000-8000-000000000001
 """).save()
 
         # 2. Create a Question with parent_ids pointing to the scenario
@@ -96,7 +96,7 @@ id: Q0101
 dfiq_version: 1.0.0
 name: Initial Access Vector
 description: How did they get in exactly?
-uuid: uuid-question
+uuid: 00000000-0000-4000-8000-000000000002
 parent_ids:
   - S0101
 """).save()
