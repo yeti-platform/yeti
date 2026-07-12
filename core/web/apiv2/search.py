@@ -28,7 +28,7 @@ class SearchResponse(BaseModel):
 
 class SemanticSearchRequest(BaseModel):
     """Semantic Search Request."""
-    
+
     model_config = ConfigDict(extra="forbid")
 
     query: str
@@ -54,24 +54,19 @@ def search(httpreq: Request, request: SearchRequest) -> SearchResponse:
 def semantic_search(request: SemanticSearchRequest) -> SearchResponse:
     """Performs a semantic search on Yeti objects."""
     from core.chromadb_client import get_semantic_collection
+
     collection = get_semantic_collection()
-    
-    results = collection.query(
-        query_texts=[request.query],
-        n_results=request.count
-    )
-    
+
+    results = collection.query(query_texts=[request.query], n_results=request.count)
+
     object_metadatas = results.get("metadatas", [[{}]])[0]
-    
+
+    from core.schemas.dfiq import DFIQBase
     from core.schemas.entity import Entity
     from core.schemas.indicator import Indicator
-    from core.schemas.dfiq import DFIQBase
-    id_to_class = {
-        "entities": Entity,
-        "indicators": Indicator,
-        "dfiq": DFIQBase
-    }
-    
+
+    id_to_class = {"entities": Entity, "indicators": Indicator, "dfiq": DFIQBase}
+
     # Fetch real yeti objects from Arango
     yeti_objects = []
     for meta in object_metadatas:
@@ -82,5 +77,5 @@ def semantic_search(request: SemanticSearchRequest) -> SearchResponse:
                 obj = cls.get(meta["id"])
                 if obj:
                     yeti_objects.append(obj.model_dump())
-    
+
     return SearchResponse(results=yeti_objects, total=len(yeti_objects))

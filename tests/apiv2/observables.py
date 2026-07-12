@@ -3,6 +3,7 @@ import logging
 import sys
 import time
 import unittest
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -191,6 +192,7 @@ class ObservableTest(unittest.TestCase):
         obs2 = hostname.Hostname(value="tomchop2.com").save()
         obs1.tag(["tag1"])
         obs2.tag(["tag2"])
+        time.sleep(1)
         response = client.post(
             "/api/v2/observables/search",
             json={"query": {"tags": ["tag1"]}, "page": 0, "count": 10},
@@ -206,8 +208,6 @@ class ObservableTest(unittest.TestCase):
         obs2 = hostname.Hostname(value="tomchop2.com").save()
         obs1.tag(["tag1"])
         obs2.tag(["tag1", "tag2"])
-        import time
-
         time.sleep(1)
         response = client.post(
             "/api/v2/observables/search",
@@ -463,6 +463,43 @@ class ObservableTest(unittest.TestCase):
             self.assertEqual(observables[i]["tags"][0]["fresh"], True)
             self.assertEqual(observables[i]["tags"][1]["fresh"], True)
         self.assertEqual(unknown[0], "junk")
+
+    def test_import_url(self):
+        with open(ObservableTest.OBSERVABLE_TEST_DATA_FILE, "r") as f:
+            text = f.read()
+        mock_response = mock.Mock()
+        mock_response.text = text
+        mock_response.raise_for_status.return_value = None
+        with mock.patch(
+            "core.schemas.observable.requests.get", return_value=mock_response
+        ) as mock_get:
+            response = client.post(
+                "/api/v2/observables/import/url",
+                json={"url": "http://example.com/iocs.txt", "tags": ["tag1", "tag2"]},
+            )
+        mock_get.assert_called_once_with("http://example.com/iocs.txt")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        observables = data["added"]
+        unknown = data["failed"]
+        self.assertEqual(len(observables), 10)
+        self.assertEqual(len(unknown), 1)
+        for i, (expected_value, expected_type) in enumerate(
+            ObservableTest.OBSERVABLE_TEST_DATA_CASES
+        ):
+            self.assertIsNotNone(observables[i]["id"])
+            self.assertEqual(observables[i]["value"], expected_value)
+            self.assertEqual(observables[i]["type"], expected_type)
+            self.assertEqual(len(observables[i]["tags"]), 2)
+        self.assertEqual(unknown[0], "junk")
+
+    def test_import_url_invalid(self):
+        response = client.post(
+            "/api/v2/observables/import/url",
+            json={"url": "not-a-url"},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Invalid URL")
 
     def test_tag_observable(self):
         response = client.post(

@@ -1,6 +1,9 @@
 import os
+
 import chromadb
+
 from core.config.config import yeti_config
+
 
 def get_client() -> chromadb.ClientAPI:
     """Returns a configurable ChromaDB client."""
@@ -11,6 +14,7 @@ def get_client() -> chromadb.ClientAPI:
 
     client = chromadb.PersistentClient(path=path)
     return client
+
 
 def get_semantic_collection():
     client = get_client()

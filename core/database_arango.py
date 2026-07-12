@@ -1,6 +1,7 @@
 """Class implementing a YetiConnector interface for ArangoDB."""
 
 import datetime
+import enum
 import json
 import logging
 import re
@@ -920,6 +921,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         args["min_hops"] = min_hops
         args["max_hops"] = max_hops
+        # direction may be a str-enum member (GraphDirection), which renders
+        # as "GraphDirection.any" in f-strings on Python >= 3.11.
+        if isinstance(direction, enum.Enum):
+            direction = direction.value
         if direction not in {"any", "inbound", "outbound"}:
             direction = "any"
 
@@ -1100,6 +1105,16 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         aql_args: dict[str, str | int | list] = {}
         for i, (key, value) in enumerate(list(query_args.items())):
+            # Str-enum members (e.g. ObservableType) render as
+            # "EnumClass.member" in f-strings on Python >= 3.11; interpolate
+            # their values instead.
+            if isinstance(value, enum.Enum):
+                value = value.value
+            elif isinstance(value, list):
+                value = [
+                    item.value if isinstance(item, enum.Enum) else item
+                    for item in value
+                ]
             if key.endswith("~"):
                 using_regex = True
                 key = key[:-1]
@@ -1229,6 +1244,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 f"{'SEARCH' if using_view else 'FILTER'} {' AND '.join(conditions)}"
             )
 
+        # ArangoSearch views are eventually consistent. In tests we can't
+        # tolerate that race, so force the view to sync pending writes before
+        # querying. This is test-only; production queries stay non-blocking.
+        aql_options = ""
+        if using_view and TESTING:
+            aql_options = "OPTIONS { waitForSync: true }"
+
         aql_sort = ""
         if sorts:
             aql_sort = f"SORT {', '.join(sorts)}"
@@ -1240,6 +1262,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         aql_string = f"""
             FOR o IN @@collection
                 {aql_search}
+                {aql_options}
                 {links_count_query}
                 {graph_query_string}
                 {acl_query}

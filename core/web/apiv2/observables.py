@@ -350,11 +350,11 @@ def import_from_url(
 ) -> BulkObservableAddResponse:
     """Adds and returns observables from a given url, attempting to guess
     their types."""
-    if not validators.url(request.text):
+    if not validators.url(request.url):
         raise HTTPException(status_code=400, detail="Invalid URL")
     try:
         observables, unknown = observable.save_from_url(
-            value=request.url, tags=request.tags
+            url=request.url, tags=request.tags
         )
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
