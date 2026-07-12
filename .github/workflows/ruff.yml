@@ -16,9 +16,9 @@ jobs:
       - run:
           sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
       - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
-      - name: Install ruff
-        run: uv tool install ruff
+      - name: Install ruff (pinned via uv.lock)
+        run: uv sync --only-group dev
       - name: Run ruff lint check
-        run: ruff check .
+        run: uv run --no-sync ruff check .
       - name: Run ruff format check
-        run: ruff format . --check
+        run: uv run --no-sync ruff format . --check
