@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from typing_extensions import Self
@@ -34,11 +34,11 @@ class YetiPackage(BaseModel):
 
     timestamp: datetime = datetime.now()
     source: str = Field(min_length=3)
-    tags: Optional[Dict[str, List[str]]] = {}
-    observables: Optional[List[observable.ObservableTypes]] = []
-    entities: Optional[List[entity.EntityTypes]] = []
-    indicators: Optional[List[indicator.IndicatorTypes]] = []
-    relationships: Optional[Dict[str, List[YetiPackageRelationship]]] = {}
+    tags: Dict[str, List[str]] = {}
+    observables: List[observable.ObservableTypes] = []
+    entities: List[entity.EntityTypes] = []
+    indicators: List[indicator.IndicatorTypes] = []
+    relationships: Dict[str, List[YetiPackageRelationship]] = {}
 
     _root_type: Literal["package"] = "package"
 
