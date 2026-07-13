@@ -69,7 +69,7 @@ def create(*, name: str, type: str, **kwargs) -> "EntityTypes":
     return TYPE_MAPPING[type](name=name, **kwargs)
 
 
-def save(*, name: str, type: str, tags: List[str] = None, **kwargs):
+def save(*, name: str, type: str, tags: List[str] | None = None, **kwargs):
     indicator_obj = create(name=name, type=type, **kwargs).save()
     if tags:
         indicator_obj.tag(tags)

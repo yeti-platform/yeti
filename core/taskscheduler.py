@@ -15,7 +15,7 @@ from core.taskmanager import TaskManager
 logger = get_task_logger(__name__)
 
 
-def get_plugins_list(task_class: Task = Task) -> set[str]:
+def get_plugins_list(task_class: type[Task] = Task) -> set[str]:
     plugins_list = set()
     plugins_path = pathlib.Path(yeti_config.get("system", "plugins_path"))
     if not plugins_path.exists():
