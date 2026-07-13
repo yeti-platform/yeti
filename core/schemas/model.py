@@ -2,7 +2,7 @@ import datetime
 import re
 import unicodedata
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from pydantic import BaseModel, computed_field
 
@@ -28,6 +28,21 @@ class YetiBaseModel(BaseModel):
     @property
     def id(self):
         return self.__id
+
+    if TYPE_CHECKING:
+        # These are provided at runtime by database_arango.ArangoYetiConnector,
+        # which every persisted schema type mixes in. They are declared here
+        # (type-check time only) so type checkers can resolve the calls the
+        # model mixins below make on `self`. Non-persisted models such as
+        # YetiTagInstance never call them.
+        def save(self, *args: Any, **kwargs: Any) -> Self: ...
+
+        def delete(self, *args: Any, **kwargs: Any) -> None: ...
+
+        def neighbors(self, *args: Any, **kwargs: Any) -> Any: ...
+
+        @property
+        def extended_id(self) -> str: ...
 
 
 class YetiContextModel(YetiBaseModel):
@@ -254,6 +269,8 @@ class YetiTagModel(YetiBaseModel):
         if clear:
             for tag_name in removed_tags:
                 removed_tag = tag.Tag.find(name=tag_name)
+                if not removed_tag:
+                    continue
                 removed_tag.count -= 1
                 removed_tag.save()
 
@@ -300,6 +317,8 @@ class YetiTagModel(YetiBaseModel):
 
         for obj_tag in self.tags:
             db_tag = tag.Tag.find(name=obj_tag.name)
+            if not db_tag:
+                continue
             db_tag.count -= 1
             db_tag.save()
         self.tags = []
