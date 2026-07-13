@@ -1,0 +1,26 @@
+name: Typecheck
+
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: Type check using ty
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - run:
+          sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+      # Full sync (project + dev) so ty resolves real dependency types
+      # (pydantic/fastapi/arango). ty itself is pinned via uv.lock.
+      - name: Install dependencies
+        run: uv sync --group dev
+      # --exit-zero-on-warning: warnings (the Phase 2 ratchet rules) are visible
+      # but non-blocking; any error-level diagnostic fails the job.
+      - name: Run ty
+        run: uv run ty check --exit-zero-on-warning
