@@ -101,7 +101,7 @@ def save(
     *,
     value: str,
     type: str | None = None,
-    tags: List[str] = None,
+    tags: List[str] | None = None,
     overwrite=False,
     **kwargs,
 ) -> ObservableTypes:
@@ -129,7 +129,7 @@ def save(
     return observable_obj
 
 
-def find(value: str, type: str = None) -> ObservableTypes:
+def find(value: str, type: str | None = None) -> ObservableTypes:
     if type:
         obs = Observable.find(value=refang(value), type=type)
     else:
@@ -158,7 +158,7 @@ def create_from_text(text: str) -> Tuple[List["ObservableTypes"], List[str]]:
 
 
 def save_from_text(
-    text: str, tags: List[str] = None
+    text: str, tags: List[str] | None = None
 ) -> Tuple[List["ObservableTypes"], List[str]]:
     """
     Save a list of observables from a block of text.
@@ -208,7 +208,7 @@ def create_from_file(file: FileLikeObject) -> Tuple[List["ObservableTypes"], Lis
 
 
 def save_from_file(
-    file: FileLikeObject, tags: List[str] = None
+    file: FileLikeObject, tags: List[str] | None = None
 ) -> Tuple[List["ObservableTypes"], List[str]]:
     """
     Save a list of observables from a block of text.
@@ -238,7 +238,7 @@ def create_from_url(url: str) -> Tuple[List["ObservableTypes"], List[str]]:
 
 
 def save_from_url(
-    url: str, tags: List[str] = None
+    url: str, tags: List[str] | None = None
 ) -> Tuple[List["ObservableTypes"], List[str]]:
     """
     Save a list of observables from a URL.

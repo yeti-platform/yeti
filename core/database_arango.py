@@ -72,11 +72,11 @@ class ArangoDatabase:
 
     def connect(
         self,
-        host: str = None,
-        port: int = None,
-        username: str = None,
-        password: str = None,
-        database: str = None,
+        host: str | None = None,
+        port: int | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        database: str | None = None,
         check_db_sync: bool = False,
     ):
         host = host or yeti_config.get("arangodb", "host")
@@ -1037,7 +1037,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         graph_queries: List[tuple[str, str, str, str]] = [],
         links_count: bool = False,
         wildcard: bool = True,
-        user: "user.User" = None,
+        user: "user.User | None" = None,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 

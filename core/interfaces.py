@@ -107,7 +107,7 @@ class AbstractYetiConnector(ABC):
         offset: int = 0,
         count: int = 0,
         sorting: List[tuple[str, bool]] = [],
-        user: "user.User" = None,
+        user: "user.User | None" = None,
         include_tags: bool = True,
     ) -> tuple[
         dict[

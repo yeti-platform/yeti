@@ -115,7 +115,7 @@ def save(
     type: str,
     pattern: str,
     diamond: DiamondModel,
-    tags: List[str] = None,
+    tags: List[str] | None = None,
     **kwargs,
 ):
     indicator_obj = create(

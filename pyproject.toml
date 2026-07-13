@@ -86,7 +86,6 @@ unresolved-attribute = "warn"       # 138 — ArangoYetiConnector mixin + union 
 invalid-argument-type = "warn"      # 35
 not-subscriptable = "warn"          # 16
 unsupported-operator = "warn"       # 15 — includes real `x not in None` bugs
-invalid-parameter-default = "warn"  # 15 — `arg: list = None` defaults
 invalid-assignment = "warn"         # 14
 invalid-attribute-override = "warn"  # 12
 not-iterable = "warn"               # 11
