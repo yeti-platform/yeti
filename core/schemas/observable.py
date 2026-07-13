@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 import datetime
 import io
 import os
 import tempfile
-
-# Data Schema
-# Dynamically register all observable types
 from enum import Enum
-from typing import IO, ClassVar, List, Literal, Tuple
+from typing import IO, ClassVar, List, Literal, Tuple, Union
 
 import requests
 from bs4 import BeautifulSoup
@@ -16,14 +15,11 @@ from core import database_arango
 from core.helpers import now, refang
 from core.schemas.model import YetiAclModel, YetiContextModel, YetiTagModel
 
-
-# Forward declarations
-# They are then populated by the load_observables function in __init__.py
-class ObservableType(str, Enum): ...
-
-
-ObservableTypes = ()
-TYPE_MAPPING = {}
+# The concrete observable types, the ObservableType enum, the ObservableTypes
+# union and TYPE_MAPPING are all defined statically at the bottom of this
+# module (see "Static type registry"). TYPE_MAPPING must exist before the
+# functions below are *called*, which is always the case at runtime.
+TYPE_MAPPING: dict[str, type["Observable"]] = {}
 FileLikeObject = str | os.PathLike | IO | tempfile.SpooledTemporaryFile
 
 
@@ -257,3 +253,176 @@ def save_from_url(
             obs.tag(tags)
         saved_observables.append(obs)
     return saved_observables, unknown
+
+
+# ---------------------------------------------------------------------------
+# Static type registry
+#
+# Every observable subtype is imported and registered explicitly below. This
+# replaces the previous import-time reflection (aenum + directory globbing), so
+# ObservableType / ObservableTypes / TYPE_MAPPING are visible to static type
+# checkers and to FastAPI's OpenAPI generation.
+#
+# To add a new observable type: create the module under observables/ and add it
+# both to the imports and to _OBSERVABLE_CLASSES below. tests/schemas/registry
+# fails if a subtype is defined but not registered here.
+# ---------------------------------------------------------------------------
+from core.schemas.loader import load_private_types  # noqa: E402
+from core.schemas.observables.asn import ASN  # noqa: E402
+from core.schemas.observables.auth_secret import AuthSecret  # noqa: E402
+from core.schemas.observables.bic import BIC  # noqa: E402
+from core.schemas.observables.certificate import Certificate  # noqa: E402
+from core.schemas.observables.cidr import CIDR  # noqa: E402
+from core.schemas.observables.command_line import CommandLine  # noqa: E402
+from core.schemas.observables.container_image import (  # noqa: E402
+    ContainerImage,
+    DockerImage,
+)
+from core.schemas.observables.email import Email  # noqa: E402
+from core.schemas.observables.file import File  # noqa: E402
+from core.schemas.observables.generic import Generic  # noqa: E402
+from core.schemas.observables.hostname import Hostname  # noqa: E402
+from core.schemas.observables.iban import IBAN  # noqa: E402
+from core.schemas.observables.imphash import Imphash  # noqa: E402
+from core.schemas.observables.ipv4 import IPv4  # noqa: E402
+from core.schemas.observables.ipv6 import IPv6  # noqa: E402
+from core.schemas.observables.ja3 import JA3  # noqa: E402
+from core.schemas.observables.jarm import JARM  # noqa: E402
+from core.schemas.observables.mac_address import MacAddress  # noqa: E402
+from core.schemas.observables.md5 import MD5  # noqa: E402
+from core.schemas.observables.mutex import Mutex  # noqa: E402
+from core.schemas.observables.named_pipe import NamedPipe  # noqa: E402
+from core.schemas.observables.package import Package  # noqa: E402
+from core.schemas.observables.path import Path  # noqa: E402
+from core.schemas.observables.registry_key import RegistryKey  # noqa: E402
+from core.schemas.observables.sha1 import SHA1  # noqa: E402
+from core.schemas.observables.sha256 import SHA256  # noqa: E402
+from core.schemas.observables.ssdeep import Ssdeep  # noqa: E402
+from core.schemas.observables.tlsh import TLSH  # noqa: E402
+from core.schemas.observables.url import Url  # noqa: E402
+from core.schemas.observables.user_account import UserAccount  # noqa: E402
+from core.schemas.observables.user_agent import UserAgent  # noqa: E402
+from core.schemas.observables.wallet import Wallet  # noqa: E402
+
+
+class ObservableType(str, Enum):
+    guess = "guess"
+    asn = "asn"
+    auth_secret = "auth_secret"
+    bic = "bic"
+    certificate = "certificate"
+    cidr = "cidr"
+    command_line = "command_line"
+    container_image = "container_image"
+    docker_image = "docker_image"
+    email = "email"
+    file = "file"
+    generic = "generic"
+    hostname = "hostname"
+    iban = "iban"
+    imphash = "imphash"
+    ipv4 = "ipv4"
+    ipv6 = "ipv6"
+    ja3 = "ja3"
+    jarm = "jarm"
+    mac_address = "mac_address"
+    md5 = "md5"
+    mutex = "mutex"
+    named_pipe = "named_pipe"
+    package = "package"
+    path = "path"
+    registry_key = "registry_key"
+    sha1 = "sha1"
+    sha256 = "sha256"
+    ssdeep = "ssdeep"
+    tlsh = "tlsh"
+    url = "url"
+    user_account = "user_account"
+    user_agent = "user_agent"
+    wallet = "wallet"
+
+
+_OBSERVABLE_CLASSES: list[type[Observable]] = [
+    ASN,
+    AuthSecret,
+    BIC,
+    Certificate,
+    CIDR,
+    CommandLine,
+    ContainerImage,
+    DockerImage,
+    Email,
+    File,
+    Generic,
+    Hostname,
+    IBAN,
+    Imphash,
+    IPv4,
+    IPv6,
+    JA3,
+    JARM,
+    MacAddress,
+    MD5,
+    Mutex,
+    NamedPipe,
+    Package,
+    Path,
+    RegistryKey,
+    SHA1,
+    SHA256,
+    Ssdeep,
+    TLSH,
+    Url,
+    UserAccount,
+    UserAgent,
+    Wallet,
+]
+
+_private_observable_classes = load_private_types("core.schemas.observables", Observable)
+
+TYPE_MAPPING = {"observable": Observable, "observables": Observable}
+for _cls in (*_OBSERVABLE_CLASSES, *_private_observable_classes):
+    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
+
+# Static union for type checkers and OpenAPI. Discriminator is applied by the
+# request/response models that use this alias (as before), so the generated
+# schema is unchanged.
+ObservableTypes = Union[
+    ASN,
+    AuthSecret,
+    BIC,
+    Certificate,
+    CIDR,
+    CommandLine,
+    ContainerImage,
+    DockerImage,
+    Email,
+    File,
+    Generic,
+    Hostname,
+    IBAN,
+    Imphash,
+    IPv4,
+    IPv6,
+    JA3,
+    JARM,
+    MacAddress,
+    MD5,
+    Mutex,
+    NamedPipe,
+    Package,
+    Path,
+    RegistryKey,
+    SHA1,
+    SHA256,
+    Ssdeep,
+    TLSH,
+    Url,
+    UserAccount,
+    UserAgent,
+    Wallet,
+]
+# Deployments may drop extra subtypes into observables/private/; widen the
+# runtime union so API response models serialize them too.
+if _private_observable_classes:
+    ObservableTypes = Union[(ObservableTypes, *_private_observable_classes)]

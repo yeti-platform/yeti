@@ -20,7 +20,7 @@ from core.config.config import yeti_config
 # if TYPE_CHECKING:
 from core.events.message import EventMessage, LogMessage
 from core.schemas.model import YetiModel
-from core.schemas.observable import Observable, ObservableTypes
+from core.schemas.observable import Observable
 from core.schemas.template import Template
 
 FILE_STORAGE_CLIENT = file_storage.get_client(
@@ -288,7 +288,7 @@ class ExportTask(Task):
     exclude_tags: list[str] = []
     ignore_tags: list[str] = []
     fresh_tags: bool = True
-    acts_on: list[ObservableTypes] = []
+    acts_on: list[str] = []  # observable type names to export, e.g. ["ipv4"]
     template_name: str
     sha256: str | None = None
 
