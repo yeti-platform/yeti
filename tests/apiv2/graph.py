@@ -68,6 +68,23 @@ class SimpleGraphTest(unittest.TestCase):
         self.assertEqual(edges[0][0]["target"], self.observable2.extended_id)
         self.assertEqual(edges[0][0]["type"], "resolves")
 
+    def test_get_neighbors_unknown_graph(self):
+        # An unknown graph name (e.g. the retired "tagged" graph) has no edge
+        # collection to traverse; the API must reject it cleanly, not 500.
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable1.extended_id,
+                "hops": 1,
+                "graph": "tagged",
+                "direction": "any",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 400, data)
+        self.assertIn("Cannot traverse graph 'tagged'", data["detail"])
+
     def test_get_neighbors_bad_hops(self):
         response = client.post(
             "/api/v2/graph/search",

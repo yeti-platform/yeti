@@ -32,10 +32,9 @@ from .interfaces import AbstractYetiConnector
 CODE_DB_VERSION = 2
 AQL_QUERY_MAX_TTL = 3600 * 12
 
-LINK_TYPE_TO_GRAPH = {
-    "tagged": "tags",
-    "stix": "stix",
-}
+# Edge collections that back the defined ArangoDB graphs (see create_graphs);
+# these are the only names neighbors() can traverse with `@@graph`.
+TRAVERSABLE_GRAPHS = {"links", "acls"}
 
 TESTING = "unittest" in sys.modules.keys()
 
@@ -862,6 +861,11 @@ class ArangoYetiConnector(AbstractYetiConnector):
             - the relationships (edges),
             - total neighbor (vertices) count
         """
+        if graph not in TRAVERSABLE_GRAPHS:
+            raise ValueError(
+                f"Cannot traverse graph '{graph}': expected one of "
+                f"{sorted(TRAVERSABLE_GRAPHS)}."
+            )
         query_filter = ""
         args = {
             "extended_id": self.extended_id,
