@@ -142,20 +142,23 @@ def search(httpreq: Request, request: GraphSearchRequest) -> GraphSearchResponse
         raise HTTPException(
             status_code=404, detail=f"Source object {request.source} not found"
         )
-    vertices, paths, total = yeti_object.neighbors(
-        link_types=request.link_types,
-        target_types=request.target_types,
-        direction=request.direction,
-        filter=request.filter,
-        include_original=request.include_original,
-        graph=request.graph,
-        min_hops=request.min_hops or request.hops,
-        max_hops=request.max_hops or request.hops,
-        count=request.count,
-        offset=request.page * request.count,
-        sorting=request.sorting,
-        user=httpreq.state.user,
-    )
+    try:
+        vertices, paths, total = yeti_object.neighbors(
+            link_types=request.link_types,
+            target_types=request.target_types,
+            direction=request.direction,
+            filter=request.filter,
+            include_original=request.include_original,
+            graph=request.graph,
+            min_hops=request.min_hops or request.hops,
+            max_hops=request.max_hops or request.hops,
+            count=request.count,
+            offset=request.page * request.count,
+            sorting=request.sorting,
+            user=httpreq.state.user,
+        )
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
 
 
