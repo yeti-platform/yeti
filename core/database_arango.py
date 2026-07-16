@@ -1336,7 +1336,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         key = cls._text_indexes[0]["fields"][0]
         for document in collection.find_by_text(key, query):
             document["__id"] = document.pop("_key")
-            yeti_objects.append(cls.load(document, strict=True))
+            yeti_objects.append(cls.load(document))
         return yeti_objects
 
     def _delete_vertex_refs_in_graphs(self, vertex_id):
