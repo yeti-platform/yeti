@@ -166,7 +166,7 @@ def get(
 @rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> EntityTypes:
     """Returns details about an observable."""
-    db_entity: EntityTypes = Entity.get(id)  # type: ignore
+    db_entity: EntityTypes = Entity.get(id)
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"Entity {id} not found")
     db_entity.get_tags()
