@@ -229,6 +229,7 @@ def reset_api_key(
     if not user:
         raise HTTPException(status_code=404, detail="user {user_id} not found")
 
+    assert isinstance(user.api_keys, dict)
     if request.name not in user.api_keys:
         raise HTTPException(
             status_code=401, detail=f"{request.name}: invalid API key name"

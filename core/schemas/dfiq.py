@@ -5,7 +5,7 @@ import re
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Annotated, Any, ClassVar, Literal, Type, Union
+from typing import Annotated, Any, ClassVar, Literal, Type, Union, cast
 
 import yaml
 from packaging.version import Version
@@ -254,7 +254,8 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
     def update_parents(self, soft_fail=False) -> None:
         intended_parent_ids = None
         if hasattr(self, "parent_ids"):
-            intended_parent_ids = self.parent_ids
+            # parent_ids is declared on the concrete DFIQ subclasses, not DFIQBase.
+            intended_parent_ids = cast("list[str]", self.parent_ids)
         else:
             return
 
@@ -287,9 +288,11 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
                     continue
                 if rel.target != self.extended_id:
                     continue
-                if (
-                    vertices[rel.source].dfiq_id and vertices[rel.source].uuid
-                ) not in intended_parent_ids:
+                # neighbors() types vertices as the observable/entity/indicator
+                # union, which omits DFIQ types; here the source is always a DFIQ
+                # node, so narrow it to reach dfiq_id/uuid.
+                source = cast("DFIQBase", vertices[rel.source])
+                if (source.dfiq_id and source.uuid) not in intended_parent_ids:
                     rel.delete()
 
         for parent in intended_parents:

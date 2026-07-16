@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 from typing_extensions import Self
@@ -197,17 +197,24 @@ class YetiPackage(BaseModel):
         if not yeti_entity:
             yeti_entity = element.save()
         if hasattr(yeti_entity, "first_seen") and hasattr(yeti_entity, "last_seen"):
-            yeti_entity.first_seen = (
-                self.timestamp
-                if yeti_entity.first_seen > self.timestamp
-                else yeti_entity.first_seen
+            # Only Campaign/IntrusionSet/ThreatActor carry first_seen/last_seen;
+            # the hasattr guard above establishes that, but ty can't narrow the
+            # EntityTypes union through hasattr, so make it explicit.
+            seen_entity = cast(
+                "entity.Campaign | entity.IntrusionSet | entity.ThreatActor",
+                yeti_entity,
             )
-            yeti_entity.last_seen = (
+            seen_entity.first_seen = (
                 self.timestamp
-                if yeti_entity.last_seen < self.timestamp
-                else yeti_entity.last_seen
+                if seen_entity.first_seen > self.timestamp
+                else seen_entity.first_seen
             )
-            yeti_entity = yeti_entity.save()
+            seen_entity.last_seen = (
+                self.timestamp
+                if seen_entity.last_seen < self.timestamp
+                else seen_entity.last_seen
+            )
+            yeti_entity = seen_entity.save()
         tags = list()
         if yeti_entity.name in self.tags:
             tags.extend(self.tags[yeti_entity.name])

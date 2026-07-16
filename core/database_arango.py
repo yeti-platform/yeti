@@ -473,6 +473,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
     @property
     def extended_id(self):
+        assert self._collection_name is not None and self.id is not None
         return self._collection_name + "/" + self.id
 
     def _insert(self, document_json: str):
@@ -512,7 +513,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         else:
             if self._collection_name == "observables":
                 filters = {"value": document["value"]}
-            elif self._collection_name in ("users"):
+            elif self._collection_name == "users":
                 filters = {"username": document["username"]}
             else:
                 filters = {"name": document["name"]}

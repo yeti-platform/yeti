@@ -31,6 +31,13 @@ class UserTest(unittest.TestCase):
         self.assertNotEqual(old_api_key.created, new_api_key.created)
         self.assertEqual(old_api_key.sub, new_api_key.sub)
 
+    def test_validate_api_key_payload_with_none_api_keys(self) -> None:
+        # delete_api_key transiently persists api_keys=None; validation must
+        # degrade to "invalid credentials" rather than raising TypeError.
+        self.user1.api_keys = None
+        with self.assertRaises(ValueError):
+            self.user1.validate_api_key_payload({"sub": "tomchop", "name": "apikey"})
+
     def test_delete_api_key(self) -> None:
         user = UserSensitive.find(username="tomchop")
         self.assertEqual(len(user.api_keys), 0)
