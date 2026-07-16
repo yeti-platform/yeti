@@ -31,6 +31,13 @@ class UserTest(unittest.TestCase):
         self.assertNotEqual(old_api_key.created, new_api_key.created)
         self.assertEqual(old_api_key.sub, new_api_key.sub)
 
+    def test_create_api_key_when_api_keys_none(self) -> None:
+        # api_keys can be None (delete_api_key persists it transiently);
+        # create_api_key must initialize it rather than crashing.
+        self.user1.api_keys = None
+        self.user1.create_api_key("apikey")
+        self.assertIn("apikey", self.user1.api_keys)
+
     def test_validate_api_key_payload_with_none_api_keys(self) -> None:
         # delete_api_key transiently persists api_keys=None; validation must
         # degrade to "invalid credentials" rather than raising TypeError.

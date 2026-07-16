@@ -28,7 +28,7 @@ class Tag(YetiModel, database_arango.ArangoYetiConnector):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     _collection_name: ClassVar[str] = "tags"
-    _root_type: Literal["tags"] = "tag"
+    _root_type: Literal["tag"] = "tag"
     _type_filter: ClassVar[str | None] = None
 
     name: str = Field(max_length=MAX_TAG_LENGTH)

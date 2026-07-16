@@ -350,7 +350,7 @@ class EventTask(Task):
 
     type: Literal[TaskType.event] = TaskType.event
     acts_on: str = ""  # By default act on everything
-    _compiled_acts_on: Pattern = None
+    _compiled_acts_on: Pattern | None = None
 
     @property
     def compiled_acts_on(self):

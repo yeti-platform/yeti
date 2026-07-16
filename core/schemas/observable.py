@@ -384,7 +384,9 @@ _private_observable_classes = load_private_types("core.schemas.observables", Obs
 
 TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 for _cls in (*_OBSERVABLE_CLASSES, *_private_observable_classes):
-    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
+    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = cast(
+        "type[Observable]", _cls
+    )
 
 # Static union for type checkers and OpenAPI. Discriminator is applied by the
 # request/response models that use this alias (as before), so the generated
