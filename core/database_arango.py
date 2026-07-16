@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
 import requests
 from arango import ArangoClient
+from arango.database import StandardDatabase
 from arango.exceptions import DocumentInsertError
 
 from core.config.config import yeti_config
@@ -76,9 +77,17 @@ class ArangoDatabase:
     """
 
     def __init__(self):
-        self.db = None
+        self._db: StandardDatabase | None = None
         self.collections = dict()
         self.graphs = dict()
+
+    @property
+    def db(self) -> StandardDatabase:
+        """The connected database handle, connecting lazily on first access."""
+        if self._db is None:
+            self.connect()
+        assert self._db is not None
+        return self._db
 
     def connect(
         self,
@@ -117,7 +126,7 @@ class ArangoDatabase:
         if not yeti_db:
             sys_db.create_database(database)
 
-        self.db = client.db(database, username=username, password=password)
+        self._db = client.db(database, username=username, password=password)
         if check_db_sync:
             self.check_database_version()
 
@@ -466,9 +475,11 @@ class ArangoDatabase:
         return collection
 
     def __getattr__(self, key):
-        if self.db is None and not key.startswith("__"):
+        if key.startswith("_"):
+            raise AttributeError(key)
+        if self._db is None:
             self.connect()
-        return getattr(self.db, key)
+        return getattr(self._db, key)
 
 
 db = ArangoDatabase()
