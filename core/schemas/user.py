@@ -100,7 +100,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
     def validate_api_key_payload(self, payload) -> RegisteredApiKey:
         sub = payload.get("sub")
         key_name = payload.get("name")
-        if key_name not in self.api_keys or sub != self.username:
+        if not self.api_keys or key_name not in self.api_keys or sub != self.username:
             raise ValueError("Could not validate credentials")
 
         key = self.api_keys[key_name]
