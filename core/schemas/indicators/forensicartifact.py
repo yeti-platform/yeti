@@ -4,6 +4,7 @@ import re
 from typing import ClassVar, Literal
 
 import yaml
+import yaml.scanner
 from artifacts import definitions, reader, writer
 from artifacts import errors as artifacts_errors
 from pydantic import field_validator

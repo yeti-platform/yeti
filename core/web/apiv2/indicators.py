@@ -210,7 +210,7 @@ def get(
 @rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> IndicatorTypes:
     """Returns details about an indicator."""
-    db_indicator: IndicatorTypes = Indicator.get(id)  # type: ignore
+    db_indicator: IndicatorTypes = Indicator.get(id)
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
     db_indicator.get_tags()
