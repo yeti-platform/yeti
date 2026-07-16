@@ -93,7 +93,7 @@ invalid-return-type = "warn"        # 11
 invalid-method-override = "warn"    # 8
 call-non-callable = "warn"          # 7
 invalid-type-form = "error"         # 0 — conlist() → Annotated[list[str], Field(...)]
-unresolved-import = "warn"          # 3 — optional deps not present in lint env
+unresolved-import = "error"         # 0 — optional/C-ext deps suppressed per-line
 no-matching-overload = "error"      # 0 — cast the isinstance-narrowed path for open()
 missing-argument = "warn"           # 1
 unknown-argument = "error"          # 0 — fixed a stray strict= kwarg on cls.load
