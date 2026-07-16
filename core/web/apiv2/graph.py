@@ -1,9 +1,9 @@
 import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, ValidationInfo, conlist, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 from pydantic.functional_validators import field_validator
 
 from core.schemas import dfiq, entity, graph, indicator, observable, rbac, roles, tag
@@ -232,7 +232,7 @@ def delete(httpreq: Request, relationship_id: str) -> None:
 
 class AnalysisRequest(BaseModel):
     observables: list[str]
-    add_tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
+    add_tags: Annotated[list[str], Field(max_length=MAX_TAGS_REQUEST)] = []
     regex_match: bool = False
     add_type: observable.ObservableType | None = None
     fetch_neighbors: bool = True

@@ -1,7 +1,8 @@
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, Field, conlist
+from pydantic import BaseModel, ConfigDict, Field
 
 from core import errors
 from core.schemas import audit, model, rbac, roles
@@ -65,7 +66,7 @@ class IndicatorTagRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     ids: list[str]
-    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
+    tags: Annotated[list[str], Field(max_length=MAX_TAGS_REQUEST)] = []
     strict: bool = False
 
 

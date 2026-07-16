@@ -2,7 +2,7 @@ from typing import Annotated, Iterable, List
 
 import validators
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
-from pydantic import BaseModel, ConfigDict, Field, conlist, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from core.config.config import yeti_config
 from core.schemas import audit, model, observable, rbac, roles, tag
@@ -16,7 +16,7 @@ MAX_FILE_UPLOAD = yeti_config.get("web", "max_file_upload", 10 * 1024 * 1024)
 
 
 class TagRequestMixin(BaseModel):
-    tags: conlist(str, max_length=tag.MAX_TAGS_REQUEST) = []
+    tags: Annotated[list[str], Field(max_length=tag.MAX_TAGS_REQUEST)] = []
 
     @field_validator("tags")
     @classmethod
