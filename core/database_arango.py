@@ -7,7 +7,7 @@ import logging
 import re
 import sys
 import time
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Type, TypeVar
+from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Type, TypeVar, cast
 
 if TYPE_CHECKING:
     from core.schemas import dfiq, entity, indicator, observable, rbac, roles, tag, user
@@ -198,7 +198,8 @@ class ArangoDatabase:
         )
 
     def refresh_views(self):
-        for view in self.db.views():
+        # python-arango's Result[T] is T | AsyncJob | BatchJob; in sync mode it's the list.
+        for view in cast("list[dict[str, Any]]", self.db.views()):
             self.db.update_view(
                 name=view["name"],
                 properties={"consolidationIntervalMsec": 0, "commitIntervalMsec": 0},
@@ -379,7 +380,7 @@ class ArangoDatabase:
             collection = self.db.collection(collection_name)
             collection.truncate()
             return
-        for collection_data in self.db.collections():
+        for collection_data in cast("list[dict[str, Any]]", self.db.collections()):
             if collection_data["system"]:
                 continue
             collection = self.db.collection(collection_data["name"])
@@ -388,7 +389,7 @@ class ArangoDatabase:
     def clear(self, truncate=True):
         if not self.db:
             self.connect()
-        for collection_data in self.db.collections():
+        for collection_data in cast("list[dict[str, Any]]", self.db.collections()):
             if collection_data["system"]:
                 continue
             if truncate:

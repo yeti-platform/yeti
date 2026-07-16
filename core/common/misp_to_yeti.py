@@ -50,7 +50,7 @@ class MispToYeti:
     def obs_misp_to_yeti(self, object_misp: dict):
         objs_type = object_misp.get("type")
         links = []
-        for attr in object_misp.get("Attribute"):
+        for attr in object_misp.get("Attribute") or []:
             obs_yeti = self.attr_misp_to_yeti(attr)
             links.append(obs_yeti)
         obs_yeti = links.pop()
