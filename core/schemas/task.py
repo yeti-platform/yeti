@@ -4,7 +4,7 @@ import pathlib
 import re
 from enum import Enum
 from io import BytesIO
-from typing import TYPE_CHECKING, ClassVar, Literal, Pattern
+from typing import TYPE_CHECKING, ClassVar, Literal, Pattern, cast
 from zipfile import ZipFile
 
 import numpy as np
@@ -99,7 +99,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
         if cls == Task and object["type"] in TYPE_MAPPING:
             cls = TYPE_MAPPING[object["type"]]
         # Otherwise, use the actual cls.
-        return cls(**object)
+        return cast("TaskTypes", cls(**object))
 
 
 class FeedTask(Task):
@@ -322,7 +322,7 @@ class ExportTask(Task):
         )
 
     @property
-    def file_contents(self) -> str:
+    def file_contents(self) -> bytes:
         return FILE_STORAGE_CLIENT.get_file(self.file_name)
 
     def get_tagged_data(

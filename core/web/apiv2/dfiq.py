@@ -2,6 +2,7 @@ import os
 import tempfile
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 from zipfile import ZipFile
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile, status
@@ -175,7 +176,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     if request.update_indicators and new.type == dfiq.DFIQType.question:
         dfiq.extract_indicators(new, user=httpreq.state.user.username)
 
-    return new
+    return cast("dfiq.DFIQTypes", new)
 
 
 @router.post("/to_archive")
@@ -351,7 +352,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
     if request.update_indicators and new.type == dfiq.DFIQType.question:
         dfiq.extract_indicators(new, user=httpreq.state.user.username)
 
-    return new
+    return cast("dfiq.DFIQTypes", new)
 
 
 @router.get("/")
@@ -374,7 +375,7 @@ def get(
         )
 
     if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
-        return dfiq_obj
+        return cast("dfiq.DFIQTypes", dfiq_obj)
 
     if not httpreq.state.user.has_permissions(
         dfiq_obj.extended_id, roles.Permission.READ
@@ -383,7 +384,7 @@ def get(
             status_code=403,
             detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {dfiq_obj.extended_id}",
         )
-    return dfiq_obj
+    return cast("dfiq.DFIQTypes", dfiq_obj)
 
 
 @router.get("/{id}")

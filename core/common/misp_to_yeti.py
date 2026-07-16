@@ -26,7 +26,7 @@ class MispToYeti:
     def __init__(self, misp_event):
         self.misp_event = misp_event
 
-    def attr_misp_to_yeti(self, attribute: dict) -> observable.Observable:
+    def attr_misp_to_yeti(self, attribute: dict) -> observable.Observable | None:
         if attribute.get("type") in MISP_TYPES_TO_IMPORT:
             obs_yeti = observable.TYPE_MAPPING[
                 MISP_TYPES_TO_IMPORT[attribute.get("type")]
@@ -36,7 +36,7 @@ class MispToYeti:
 
     def add_context_by_misp(
         self, attribute_misp: dict, event: dict, obs_yeti: observable.Observable
-    ) -> dict:
+    ) -> None:
         context = {}
         event_id = attribute_misp.get("event_id")
         org = event.get("Org")

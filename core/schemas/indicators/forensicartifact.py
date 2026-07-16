@@ -1,7 +1,7 @@
 import io
 import logging
 import re
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, cast
 
 import yaml
 import yaml.scanner
@@ -63,7 +63,7 @@ class ForensicArtifact(indicator.Indicator):
             for artifact in artifacts_dict.values():
                 artifact.update_parents(artifacts_dict)
 
-        return list(artifacts_dict.values())
+        return cast("list[ForensicArtifact]", list(artifacts_dict.values()))
 
     def update_yaml(self):
         artifact_reader = reader.YamlArtifactsReader()
