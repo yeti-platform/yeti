@@ -83,7 +83,7 @@ include = ["core"]
 # these back to "error" (fixing the instances) one rule at a time. Counts are
 # from the initial rollout against ty 0.0.59.
 unresolved-attribute = "warn"       # 138 — ArangoYetiConnector mixin + union attr access
-invalid-argument-type = "warn"      # 35
+invalid-argument-type = "error"     # 0 — type[...] annotations, casts, dict-key narrowing, api_keys/None
 not-subscriptable = "error"         # 0 — api_keys/None asserts + MISP Org guard
 unsupported-operator = "error"      # 0 — fixed `in ("users")` typo + api_keys/None guards
 invalid-assignment = "error"        # 0 — field-default/enum/registry-cast/api_keys fixes

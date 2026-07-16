@@ -186,7 +186,9 @@ def new_api_key(
         request.name, scopes=request.scopes, expiration_delta=request.expiration
     )
     user.save()
-    return NewAPIKeyResponse(name=request.name, token=token, api_keys=user.api_keys)
+    return NewAPIKeyResponse(
+        name=request.name, token=token, api_keys=user.api_keys or {}
+    )
 
 
 @router.post("/toggle-api-key")

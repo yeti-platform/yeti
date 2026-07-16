@@ -28,9 +28,9 @@ class MispToYeti:
 
     def attr_misp_to_yeti(self, attribute: dict) -> observable.Observable | None:
         if attribute.get("type") in MISP_TYPES_TO_IMPORT:
-            obs_yeti = observable.TYPE_MAPPING[
-                MISP_TYPES_TO_IMPORT[attribute.get("type")]
-            ](value=attribute.get("value")).save()
+            obs_yeti = observable.TYPE_MAPPING[MISP_TYPES_TO_IMPORT[attribute["type"]]](
+                value=attribute["value"]
+            ).save()
             print(f"Attribute {attribute.get('value')} imported")
             return obs_yeti
 

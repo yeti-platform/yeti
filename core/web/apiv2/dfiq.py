@@ -174,7 +174,9 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new, user=httpreq.state.user.username)
+        dfiq.extract_indicators(
+            cast("dfiq.DFIQQuestion", new), user=httpreq.state.user.username
+        )
 
     return cast("dfiq.DFIQTypes", new)
 
@@ -342,7 +344,7 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
         )
     db_dfiq.get_acls()
     updated_dfiq = db_dfiq.model_copy(
-        update=update_data.model_dump(exclude=["created"])
+        update=update_data.model_dump(exclude={"created"})
     )
     new = updated_dfiq.save()
     new.get_acls()
@@ -350,7 +352,9 @@ def patch(httpreq: Request, request: PatchDFIQRequest, id: str) -> dfiq.DFIQType
     new.update_parents()
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(new, user=httpreq.state.user.username)
+        dfiq.extract_indicators(
+            cast("dfiq.DFIQQuestion", new), user=httpreq.state.user.username
+        )
 
     return cast("dfiq.DFIQTypes", new)
 

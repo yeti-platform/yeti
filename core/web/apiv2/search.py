@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict
 
@@ -47,7 +49,7 @@ def search(httpreq: Request, request: SearchRequest) -> SearchResponse:
         links_count=True,
         user=httpreq.state.user,
     )
-    return SearchResponse(results=results, total=total)
+    return SearchResponse(results=cast("list[dict]", results), total=total)
 
 
 @router.post("/semantic")

@@ -67,9 +67,9 @@ def log_timeline(
     action: str | None = None,
     details: dict | None = None,
 ):
+    if not action:
+        action = "update" if old else "create"
     if details is None:
-        if not action:
-            action = "update" if old else "create"
         if old:
             old_dump = old.model_dump(exclude=new._TIMELINE_IGNORE_FIELDS)
             new_dump = new.model_dump(exclude=new._TIMELINE_IGNORE_FIELDS)

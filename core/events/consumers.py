@@ -34,7 +34,13 @@ global DEBUG
 
 
 class Consumer(ConsumerMixin):
-    def __init__(self, task_class: EventTask | LogTask, stop_event, connection, queues):
+    def __init__(
+        self,
+        task_class: type[EventTask] | type[LogTask],
+        stop_event,
+        connection,
+        queues,
+    ):
         global DEBUG
         self.task_class = task_class
         self._stop_event = stop_event
