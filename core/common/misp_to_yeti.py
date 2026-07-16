@@ -39,7 +39,8 @@ class MispToYeti:
     ) -> dict:
         context = {}
         event_id = attribute_misp.get("event_id")
-        context["Org"] = event.get("Org")["name"]
+        org = event.get("Org")
+        context["Org"] = org["name"] if org else None
         context["event_id"] = event_id
         if attribute_misp.get("comment"):
             context["comment"] = attribute_misp.get("comment")

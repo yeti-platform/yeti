@@ -84,7 +84,7 @@ include = ["core"]
 # from the initial rollout against ty 0.0.59.
 unresolved-attribute = "warn"       # 138 — ArangoYetiConnector mixin + union attr access
 invalid-argument-type = "warn"      # 35
-not-subscriptable = "warn"          # 16
+not-subscriptable = "error"         # 0 — api_keys/None asserts + MISP Org guard
 unsupported-operator = "error"      # 0 — fixed `in ("users")` typo + api_keys/None guards
 invalid-assignment = "warn"         # 14
 invalid-attribute-override = "warn"  # 12
