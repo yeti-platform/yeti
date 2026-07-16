@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Literal, cast
+from typing import ClassVar, Literal
 
 import plyara
 import plyara.exceptions
@@ -147,7 +147,7 @@ class Yara(indicator.Indicator):
     def save(
         self,
         exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
-    ) -> "Yara":
+    ):
         try:
             self.validate_yara()
         except ValueError as error:
@@ -164,7 +164,7 @@ class Yara(indicator.Indicator):
                 meta={"missing_dependencies": missing_deps},
             )
 
-        self = cast("Yara", super().save(exclude_overwrite=exclude_overwrite))
+        self = super().save(exclude_overwrite=exclude_overwrite)
         nodes, relationships, _ = self.neighbors(
             link_types=["depends"], direction="outbound", max_hops=1
         )

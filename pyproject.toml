@@ -39,7 +39,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pylint>=2.16.1",
-    "ty>=0.0.59",
+    "ty>=0.0.60",
     "httpx>=0.23.3",
     "ruff>=0.15.0",
     "httpx>=0.28.1",
