@@ -491,6 +491,27 @@ class ArangoYetiConnector(AbstractYetiConnector):
     _db = db
     _collection_name: ClassVar[str | None] = None
 
+    if TYPE_CHECKING:
+        # Persisted schema types always mix this connector into a pydantic
+        # YetiModel (see core.schemas.model), so at runtime `self`/`cls` carry
+        # the model surface below. It is declared here (type-check time only) as
+        # the mirror of the TYPE_CHECKING block in YetiBaseModel, which declares
+        # the connector methods for the model side. `id` is declared as a
+        # property (not a bare annotation) so it is not mistaken for a required
+        # pydantic field. `type` is deliberately not declared here: it is a
+        # per-subclass Literal field, and a generic `str` would break the
+        # Literal-keyed lookups elsewhere.
+        _type_filter: ClassVar[str]
+        _text_indexes: ClassVar[list[dict[str, Any]]]
+        _exclude_overwrite: list[str]
+
+        @property
+        def id(self) -> str | None: ...
+
+        def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]: ...
+
+        def model_dump_json(self, *args: Any, **kwargs: Any) -> str: ...
+
     def __init__(self):
         self._arango_id = None
 
