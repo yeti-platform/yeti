@@ -316,7 +316,7 @@ class ArangoDatabase:
         )
 
     def create_views(self):
-        link_definitions = {}
+        link_definitions: dict[str, dict[str, Any]] = {}
         for view_target in ("observables", "entities", "indicators", "dfiq"):
             try:
                 if TESTING:

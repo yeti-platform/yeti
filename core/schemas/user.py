@@ -93,6 +93,8 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             scopes=scopes or ["all"],
             exp=exp,
         )
+        if self.api_keys is None:
+            self.api_keys = {}
         self.api_keys[key_name] = api_key
         self.save()
         return create_access_token(json.loads(api_key.model_dump_json()))

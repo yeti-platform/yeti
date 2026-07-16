@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import logging
 from enum import Enum
-from typing import Any, ClassVar, Generator, List, Literal, Union
+from typing import Any, ClassVar, Generator, List, Literal, Union, cast
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -164,7 +164,7 @@ _private_indicator_classes = load_private_types("core.schemas.indicators", Indic
 
 TYPE_MAPPING = {"indicator": Indicator, "indicators": Indicator}
 for _cls in (*_INDICATOR_CLASSES, *_private_indicator_classes):
-    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
+    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = cast("type[Indicator]", _cls)
 
 IndicatorTypes = Union[
     ForensicArtifact,
