@@ -1,5 +1,7 @@
+from typing import Annotated
+
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel, ConfigDict, Field, conlist
+from pydantic import BaseModel, ConfigDict, Field
 
 from core.schemas import audit, model, rbac, roles
 from core.schemas.entity import Entity, EntityType, EntityTypes
@@ -13,7 +15,7 @@ class NewEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     entity: EntityTypes = Field(discriminator="type")
-    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
+    tags: Annotated[list[str], Field(max_length=MAX_TAGS_REQUEST)] = []
 
 
 class PatchEntityRequest(BaseModel):
@@ -55,7 +57,7 @@ class EntityTagRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     ids: list[str]
-    tags: conlist(str, max_length=MAX_TAGS_REQUEST) = []
+    tags: Annotated[list[str], Field(max_length=MAX_TAGS_REQUEST)] = []
     strict: bool = False
 
 
