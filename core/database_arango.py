@@ -7,7 +7,17 @@ import logging
 import re
 import sys
 import time
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Type, TypeVar, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    cast,
+)
 
 if TYPE_CHECKING:
     from core.schemas import dfiq, entity, indicator, observable, rbac, roles, tag, user
@@ -1365,7 +1375,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         """Deletes an object from the database."""
         # TODO(tomchop): Revisit inheritance model of ArangoDBConnector.
         if hasattr(self, "clear_tags"):
-            self.clear_tags()
+            cast("Callable[[], None]", self.clear_tags)()
         col = self._db.collection(self._collection_name)
         self._delete_vertex_refs_in_graphs(self.extended_id)
         job = col.delete(self.id)
