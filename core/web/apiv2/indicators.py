@@ -1,5 +1,5 @@
 import logging
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
@@ -326,7 +326,7 @@ def get_yara_bundle(httpreq: Request, request: YaraBundleRequest) -> YaraBundleR
                 continue
             yaras.append(yara)
 
-    bundle = Yara.generate_yara_bundle(rules=yaras)
+    bundle = Yara.generate_yara_bundle(rules=cast("list[Yara]", yaras))
 
     if request.overlays:
         yara_map = {}
