@@ -3,7 +3,7 @@ import logging
 
 from dateutil import parser
 from dateutil.tz import UTC, gettz
-from tldextract import TLDExtract
+from tldextract import TLDExtract  # ty: ignore[unresolved-import]
 
 from core.config.config import yeti_config
 

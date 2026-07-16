@@ -4,7 +4,7 @@ import os
 from core.clients.file_storage.classes.interface import FileStorageClient
 
 try:
-    import boto3
+    import boto3  # ty: ignore[unresolved-import]  # optional dep (s3 group)
 except ImportError:
     boto3 = None
     logging.warning(

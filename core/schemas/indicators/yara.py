@@ -4,7 +4,7 @@ from typing import ClassVar, Literal
 import plyara
 import plyara.exceptions
 import plyara.utils
-import yara
+import yara  # ty: ignore[unresolved-import]  # yara-python is a C extension with no type stubs
 from pydantic import BaseModel, PrivateAttr, model_validator
 
 from core import errors
