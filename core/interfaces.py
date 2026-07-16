@@ -39,11 +39,11 @@ class AbstractYetiConnector(ABC):
 
     @classmethod
     @abstractmethod
-    def get(cls, key):
+    def get(cls, id):
         """Fetches a single object by primary key.
 
         Args:
-          key: A database primary key value.
+          id: A database primary key value.
 
         Returns:
           A Yeti object."""

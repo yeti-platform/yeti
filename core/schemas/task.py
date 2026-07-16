@@ -89,7 +89,7 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     def root_type(self):
         return self._root_type
 
-    def run(self, params: dict):
+    def run(self, *args, **kwargs):
         """Runs the task"""
         raise NotImplementedError("run() must be implemented in subclass")
 

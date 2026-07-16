@@ -70,9 +70,9 @@ class Consumer(ConsumerMixin):
             self._logger.addHandler(handler)
         return self._logger
 
-    def get_consumers(self, consumer, channel):
+    def get_consumers(self, Consumer, channel):
         return [
-            consumer(queues=self.queues, callbacks=[self.on_message], accept=["json"])
+            Consumer(queues=self.queues, callbacks=[self.on_message], accept=["json"])
         ]
 
 
