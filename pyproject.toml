@@ -39,7 +39,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pylint>=2.16.1",
-    "ty>=0.0.59",
+    "ty>=0.0.60",
     "httpx>=0.23.3",
     "ruff>=0.15.0",
     "httpx>=0.28.1",
@@ -90,12 +90,12 @@ invalid-assignment = "error"        # 0 — field-default/enum/registry-cast/api
 invalid-attribute-override = "error"  # 0 — base _collection_name made ClassVar
 not-iterable = "error"              # 0 — cast python-arango Result[T] + MISP get() or []
 invalid-return-type = "error"       # 0 — None-return annotations + DFIQTypes/TaskTypes casts
-invalid-method-override = "warn"    # 8
+invalid-method-override = "error"   # 0 — permissive *args/**kwargs Task.run base + LSP param-name/signature matches
 call-non-callable = "error"         # 0 — fix classmethod cls: type[...] + Callable casts
 invalid-type-form = "error"         # 0 — conlist() → Annotated[list[str], Field(...)]
 unresolved-import = "error"         # 0 — optional/C-ext deps suppressed per-line
 no-matching-overload = "error"      # 0 — cast the isinstance-narrowed path for open()
-missing-argument = "warn"           # 1
+missing-argument = "error"          # 0 — Task.run base accepts *args so no-arg dispatch typechecks
 unknown-argument = "error"          # 0 — fixed a stray strict= kwarg on cls.load
 
 # Promoted to error (instances fixed; kept enforced so they can't regress).

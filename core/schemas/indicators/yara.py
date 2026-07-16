@@ -144,7 +144,10 @@ class Yara(indicator.Indicator):
         self.name = parsed_rule["rule_name"]
         self.private = "private" in parsed_rule.get("scopes", [])
 
-    def save(self):
+    def save(
+        self,
+        exclude_overwrite: list[str] = ["created", "tags", "context", "acls"],
+    ):
         try:
             self.validate_yara()
         except ValueError as error:
@@ -161,7 +164,7 @@ class Yara(indicator.Indicator):
                 meta={"missing_dependencies": missing_deps},
             )
 
-        self = super().save()
+        self = super().save(exclude_overwrite=exclude_overwrite)
         nodes, relationships, _ = self.neighbors(
             link_types=["depends"], direction="outbound", max_hops=1
         )
