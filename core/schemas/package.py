@@ -79,7 +79,7 @@ class YetiPackage(BaseModel):
         return data
 
     @classmethod
-    def from_json(cls: Self, json_package: str) -> Self:
+    def from_json(cls: type[Self], json_package: str) -> Self:
         package = json.loads(json_package)
         instance = cls(
             timestamp=package["timestamp"],

@@ -5,7 +5,7 @@ import io
 import os
 import tempfile
 from enum import Enum
-from typing import IO, ClassVar, List, Literal, Tuple, Union, cast
+from typing import IO, Callable, ClassVar, List, Literal, Tuple, Union, cast
 
 import requests
 from bs4 import BeautifulSoup
@@ -57,7 +57,7 @@ class Observable(
         valid = True
         if hasattr(self, "validator"):
             try:
-                valid = self.validator(self.value)
+                valid = cast("Callable[[str], bool]", self.validator)(self.value)
             except ValueError:
                 return False
         return valid
@@ -73,7 +73,7 @@ def guess_type(value: str) -> str | None:
     for obs_type, obj in TYPE_MAPPING.items():
         if not hasattr(obj, "validator"):
             continue
-        if obj.validator(value):
+        if cast("Callable[[str], bool]", obj.validator)(value):
             return obs_type
     return None
 
