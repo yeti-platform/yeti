@@ -5,7 +5,7 @@ import io
 import os
 import tempfile
 from enum import Enum
-from typing import IO, ClassVar, List, Literal, Tuple, Union
+from typing import IO, ClassVar, List, Literal, Tuple, Union, cast
 
 import requests
 from bs4 import BeautifulSoup
@@ -183,7 +183,9 @@ def create_from_file(file: FileLikeObject) -> Tuple[List["ObservableTypes"], Lis
     """
     opened = False
     if isinstance(file, (str, bytes, os.PathLike)):
-        f = open(file, "r", encoding="utf-8")
+        # The isinstance guard narrows `file` to a path, but FileLikeObject's
+        # unparametrized os.PathLike doesn't match open()'s PathLike[str] overload.
+        f = open(cast("str | os.PathLike[str]", file), "r", encoding="utf-8")
         opened = True
     elif isinstance(file, (io.IOBase, tempfile.SpooledTemporaryFile)):
         f = file
