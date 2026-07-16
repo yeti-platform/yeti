@@ -113,6 +113,7 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
 
     def delete_api_key(self, api_key_name) -> None:
         api_keys = self.api_keys
+        assert api_keys is not None
         del api_keys[api_key_name]
         self.api_keys = None
         self.save()

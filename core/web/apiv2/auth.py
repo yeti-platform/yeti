@@ -310,6 +310,8 @@ def login_api(x_yeti_api_key_token: str = Security(api_key_header)) -> dict[str,
         data={"sub": user.username, "enabled": user.enabled},
         expires_delta=ACCESS_TOKEN_EXPIRE_DELTA,
     )
+    # validate_api_key_payload above guarantees the key exists in api_keys.
+    assert user.api_keys is not None
     user.api_keys[payload["name"]].last_used = datetime.datetime.now(
         tz=datetime.timezone.utc
     )
