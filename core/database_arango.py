@@ -11,6 +11,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ClassVar,
     Iterable,
     List,
     Optional,
@@ -477,7 +478,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
     """Yeti connector for an ArangoDB backend."""
 
     _db = db
-    _collection_name: str | None = None
+    _collection_name: ClassVar[str | None] = None
 
     def __init__(self):
         self._arango_id = None
