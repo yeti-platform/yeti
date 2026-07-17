@@ -117,10 +117,10 @@ unresolved-attribute = "warn"       # 32
 invalid-method-override = "warn"    # 12
 invalid-return-type = "warn"        # 7
 deprecated = "warn"                 # 5
-missing-argument = "warn"           # 4
-invalid-assignment = "warn"         # 3
-unused-ignore-comment = "warn"      # 2
-unresolved-import = "warn"          # 2 — no-stub deps (yara C-ext, …)
+# unused-ignore-comment stays warn: the only instances are the boto3/tldextract
+# import ignores in core (s3.py/utils.py) — used by the dev-only main job but
+# unused in this all-deps plugins job, so they can't be cleanly removed.
+unused-ignore-comment = "warn"      # 2 (core-only, env-dependent)
 
 [tool.uv.sources]
 artifacts = { git = "https://github.com/forensicartifacts/artifacts.git", rev = "main" }
