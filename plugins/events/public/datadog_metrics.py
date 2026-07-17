@@ -98,7 +98,7 @@ class DatadogMetrics(task.EventTask):
         "acts_on": "(new|update|delete)",
     }
 
-    _metrics_flusher: ClassVar[MetricsFlusher] = None
+    _metrics_flusher: ClassVar[MetricsFlusher | None] = None
 
     def __init__(self, **data):
         super().__init__(**data)

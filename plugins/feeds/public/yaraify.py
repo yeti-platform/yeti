@@ -4,7 +4,7 @@ from io import BytesIO
 from typing import ClassVar
 from zipfile import ZipFile
 
-import yara
+import yara  # ty: ignore[unresolved-import]  # yara-python is a C extension with no type stubs
 
 from core import taskmanager
 from core.schemas import indicator, task
