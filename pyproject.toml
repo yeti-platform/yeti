@@ -102,5 +102,30 @@ unknown-argument = "error"          # 0 — fixed a stray strict= kwarg on cls.l
 possibly-missing-submodule = "error"
 unused-type-ignore-comment = "error"
 
+# Phase 3 — plugins ratchet. plugins/ is type-checked by the separate
+# `typecheck-plugins` CI job (it installs all dependency groups and scopes
+# src.include to ["plugins"]); the main typecheck job never checks plugins, so
+# this override is inert there. These rules currently fire across plugins/ and
+# are held at warn until fixed — promote one by DELETING it from this block
+# (then it inherits the error level above). Counts are the initial rollout.
+[[tool.ty.overrides]]
+include = ["plugins"]
+
+[tool.ty.overrides.rules]
+invalid-argument-type = "warn"      # 41
+unresolved-attribute = "warn"       # 32
+invalid-method-override = "warn"    # 12
+invalid-return-type = "warn"        # 7
+deprecated = "warn"                 # 5
+missing-argument = "warn"           # 4
+invalid-assignment = "warn"         # 3
+unused-ignore-comment = "warn"      # 2
+unresolved-import = "warn"          # 2 — no-stub deps (yara C-ext, …)
+invalid-type-form = "warn"          # 2
+unsupported-operator = "warn"       # 1
+not-subscriptable = "warn"          # 1
+invalid-parameter-default = "warn"  # 1
+call-non-callable = "warn"          # 1
+
 [tool.uv.sources]
 artifacts = { git = "https://github.com/forensicartifacts/artifacts.git", rev = "main" }
