@@ -1,5 +1,6 @@
 # DEPRECATED
 import logging
+from typing import Any
 
 from dateutil import parser
 from dateutil.tz import UTC, gettz
@@ -10,7 +11,7 @@ from core.config.config import yeti_config
 tzinfos = {"CEST": gettz("Europe/Amsterdam"), "CST": gettz("Europe/Amsterdam")}
 
 
-tld_extract_dict = {"extra_suffixes": list(), "suffix_list_urls": None}
+tld_extract_dict: dict[str, Any] = {"extra_suffixes": list(), "suffix_list_urls": None}
 
 _extra_suffixes = yeti_config.get("tldextract", "extra_suffixes", None)
 if _extra_suffixes:

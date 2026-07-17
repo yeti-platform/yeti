@@ -24,3 +24,30 @@ jobs:
       # but non-blocking; any error-level diagnostic fails the job.
       - name: Run ty
         run: uv run ty check --exit-zero-on-warning
+
+  typecheck-plugins:
+    name: Type check plugins using ty
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - run:
+          sudo apt-get update && sudo apt-get install -y python3-pip && sudo pip3 install uv
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
+      # plugins/ imports optional third-party deps (pymisp, otxv2, censys, …), so
+      # this job installs every dependency group. It is kept separate from the
+      # main typecheck job above so that job stays lean (dev group only).
+      - name: Install dependencies
+        run: uv sync --all-groups
+      # Scope the check to plugins/ (core imports still resolve for type info but
+      # core is not itself re-checked here). deprecated/ dirs and the one dead-API
+      # analytic are excluded. Plugin rules are held at warn via
+      # [[tool.ty.overrides]] in pyproject.toml until the Phase 3 ratchet clears
+      # them.
+      - name: Run ty on plugins
+        run: |
+          uv run ty check \
+            -c 'src.include=["plugins"]' \
+            -c 'src.exclude=["plugins/**/deprecated/**", "plugins/analytics/public/random_analytics.py"]' \
+            --exit-zero-on-warning

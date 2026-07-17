@@ -1,12 +1,13 @@
 import logging
 import os
+from typing import Any
 
 from core.clients.file_storage.classes.interface import FileStorageClient
 
+boto3: Any = None
 try:
     import boto3  # ty: ignore[unresolved-import]  # optional dep (s3 group)
 except ImportError:
-    boto3 = None
     logging.warning(
         "boto3 is not imported, if you wish to use s3 file storage please install with `uv sync --group s3`"
     )
