@@ -60,6 +60,14 @@ class Task(YetiModel, database_arango.ArangoYetiConnector):
     _root_type: Literal["task"] = "task"
     _logger = None
 
+    if TYPE_CHECKING:
+        # Each concrete task subclass declares `type` as its own
+        # Literal[TaskType.*] field. Declared here as a property (type-check time
+        # only, so not a required field) so code holding a base Task can resolve
+        # `.type`.
+        @property
+        def type(self) -> "TaskType": ...
+
     # id: str | None = None
     name: str
     enabled: bool = False
@@ -318,7 +326,7 @@ class ExportTask(Task):
 
         FILE_STORAGE_CLIENT.put_file(
             self.file_name,
-            template.render(export_data, None).encode(),
+            (template.render(export_data, None) or "").encode(),
         )
 
     @property

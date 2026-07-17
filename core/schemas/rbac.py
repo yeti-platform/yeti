@@ -68,7 +68,9 @@ def permission_on_ids(permission: roles.Permission):
             if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
 
-            prefix = re.search(r"/api/v2/(\w+)", httpreq.scope["path"]).group(1)
+            prefix_match = re.search(r"/api/v2/(\w+)", httpreq.scope["path"])
+            assert prefix_match is not None
+            prefix = prefix_match.group(1)
             for id in ids:
                 extended_id = f"{prefix}/{id}"
                 if not httpreq.state.user.has_permissions(extended_id, permission):

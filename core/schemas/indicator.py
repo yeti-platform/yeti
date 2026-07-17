@@ -3,7 +3,16 @@ from __future__ import annotations
 import datetime
 import logging
 from enum import Enum
-from typing import Any, ClassVar, Generator, List, Literal, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Generator,
+    List,
+    Literal,
+    Union,
+    cast,
+)
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -40,6 +49,14 @@ class Indicator(
     _collection_name: ClassVar[str] = "indicators"
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["indicator"] = "indicator"
+
+    if TYPE_CHECKING:
+        # Each concrete indicator subclass declares `type` as its own
+        # Literal[IndicatorType.*] field. Declared here as a property
+        # (type-check time only, so not a required field) so code holding a base
+        # Indicator can resolve `.type`.
+        @property
+        def type(self) -> "IndicatorType": ...
 
     name: str
     description: str = ""
@@ -164,7 +181,8 @@ _private_indicator_classes = load_private_types("core.schemas.indicators", Indic
 
 TYPE_MAPPING = {"indicator": Indicator, "indicators": Indicator}
 for _cls in (*_INDICATOR_CLASSES, *_private_indicator_classes):
-    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = cast("type[Indicator]", _cls)
+    _cls = cast("type[Indicator]", _cls)
+    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
 
 IndicatorTypes = Union[
     ForensicArtifact,

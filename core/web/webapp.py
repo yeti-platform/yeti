@@ -169,7 +169,7 @@ async def log_requests(request: Request, call_next):
             "username": "anonymous",
             # When behind a proxy, we should start uvicorn with --proxy-headers
             # and use request.headers.get('x-forwarded-for') instead.
-            "client": request.client.host,
+            "client": request.client.host if request.client else None,
             "status_code": response.status_code,
             "content-type": request.headers.get("content-type", ""),
             "body": b"",

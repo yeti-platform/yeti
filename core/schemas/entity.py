@@ -137,7 +137,8 @@ _private_entity_classes = load_private_types("core.schemas.entities", Entity)
 
 TYPE_MAPPING = {"entity": Entity, "entities": Entity}
 for _cls in (*_ENTITY_CLASSES, *_private_entity_classes):
-    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = cast("type[Entity]", _cls)
+    _cls = cast("type[Entity]", _cls)
+    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
 
 EntityTypes = Union[
     AttackPattern,
