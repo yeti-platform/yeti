@@ -132,7 +132,7 @@ class CisaKEV(task.FeedTask):
         cve_id = entry["cveID"]
         reference = f"https://nvd.nist.gov/vuln/detail/{cve_id}"
         description = "#### Summary\n\n"
-        description = entry.get("shortDescription") + "\n\n"
+        description = entry.get("shortDescription", "") + "\n\n"
         description += f"* Added to KEV: {entry['dateAdded']}\n"
         description += f"* Vendor/Project: {entry.get('vendorProject', 'N/A')}\n"
         description += f"* Product: {entry.get('product', 'N/A')}\n"

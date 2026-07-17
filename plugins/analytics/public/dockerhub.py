@@ -1,6 +1,7 @@
 import datetime
 import logging
 import re
+from collections.abc import Iterator
 
 import requests
 
@@ -46,12 +47,12 @@ class DockerHubApi:
         return DockerHubApi._make_request(endpoint)
 
     @staticmethod
-    def user_images(user, page_size=50) -> iter:
+    def user_images(user, page_size=50) -> Iterator:
         endpoint = f"https://hub.docker.com/v2/repositories/{user}?page_size={page_size}&ordering=last_updated"
         yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
     @staticmethod
-    def image_tags(image, page_size=100) -> iter:
+    def image_tags(image, page_size=100) -> Iterator:
         endpoint = f"https://hub.docker.com/v2/repositories/{image}/tags/?page_size={page_size}&page=1&name&ordering"
         yield from DockerHubApi._iter_endpoint_pages(endpoint)
 
