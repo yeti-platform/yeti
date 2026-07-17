@@ -70,6 +70,10 @@ class Consumer(ConsumerMixin):
             self._logger.addHandler(handler)
         return self._logger
 
+    def on_message(self, body, received_message):
+        """Handles an incoming message. Implemented by subclasses."""
+        raise NotImplementedError
+
     def get_consumers(self, Consumer, channel):
         return [
             Consumer(queues=self.queues, callbacks=[self.on_message], accept=["json"])

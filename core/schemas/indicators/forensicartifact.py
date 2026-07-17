@@ -42,7 +42,7 @@ class ForensicArtifact(indicator.Indicator):
         artifact_reader = reader.YamlArtifactsReader()
         artifact_writer = writer.YamlArtifactsWriter()
 
-        artifacts_dict = {}
+        artifacts_dict: dict[str, "ForensicArtifact"] = {}
 
         for definition in artifact_reader.ReadFileObject(io.StringIO(yaml_string)):
             definition_dict = definition.AsDict()
@@ -56,14 +56,14 @@ class ForensicArtifact(indicator.Indicator):
             definition_dict["location"] = "host"
             definition_dict["diamond"] = indicator.DiamondModel.victim
             definition_dict["relevant_tags"] = [definition_dict["name"]]
-            forensic_indicator = cls(**definition_dict).save()
+            forensic_indicator = cast("ForensicArtifact", cls(**definition_dict).save())
             artifacts_dict[definition.name] = forensic_indicator
 
         if update_parents:
             for artifact in artifacts_dict.values():
                 artifact.update_parents(artifacts_dict)
 
-        return cast("list[ForensicArtifact]", list(artifacts_dict.values()))
+        return list(artifacts_dict.values())
 
     def update_yaml(self):
         artifact_reader = reader.YamlArtifactsReader()

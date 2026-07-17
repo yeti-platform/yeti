@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, cast
 
 import plyara
 import plyara.exceptions
@@ -164,7 +164,9 @@ class Yara(indicator.Indicator):
                 meta={"missing_dependencies": missing_deps},
             )
 
-        self = super().save(exclude_overwrite=exclude_overwrite)
+        # super().save() is typed through the connector as the base Indicator;
+        # narrow back to Yara to reach the Yara-specific `dependencies`.
+        self = cast("Yara", super().save(exclude_overwrite=exclude_overwrite))
         nodes, relationships, _ = self.neighbors(
             link_types=["depends"], direction="outbound", max_hops=1
         )

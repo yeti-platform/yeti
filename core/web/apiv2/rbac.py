@@ -1,7 +1,10 @@
+from typing import cast
+
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict
 
 from core.schemas import dfiq, entity, graph, indicator, observable, rbac, roles, user
+from core.schemas.model import YetiAclModel
 
 router = APIRouter()
 
@@ -62,7 +65,7 @@ def get_acl_details(httpreq: Request, type: str, id: str):
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"{type} {id} not found")
 
-    db_entity.get_acls(direct=True)
+    cast(YetiAclModel, db_entity).get_acls(direct=True)
     return db_entity
 
 

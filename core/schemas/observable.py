@@ -5,7 +5,17 @@ import io
 import os
 import tempfile
 from enum import Enum
-from typing import IO, Callable, ClassVar, List, Literal, Tuple, Union, cast
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Callable,
+    ClassVar,
+    List,
+    Literal,
+    Tuple,
+    Union,
+    cast,
+)
 
 import requests
 from bs4 import BeautifulSoup
@@ -30,6 +40,14 @@ class Observable(
     _collection_name: ClassVar[str] = "observables"
     _type_filter: ClassVar[str | None] = None
     _root_type: Literal["observable"] = "observable"
+
+    if TYPE_CHECKING:
+        # Each concrete observable subclass declares `type` as its own
+        # Literal[ObservableType.*] field. Declared here as a property
+        # (type-check time only, so not a required field) so code holding a base
+        # Observable can resolve `.type`.
+        @property
+        def type(self) -> "ObservableType": ...
 
     value: str = Field(min_length=1)
     last_analysis: dict[str, datetime.datetime] = {}
@@ -384,9 +402,8 @@ _private_observable_classes = load_private_types("core.schemas.observables", Obs
 
 TYPE_MAPPING = {"observable": Observable, "observables": Observable}
 for _cls in (*_OBSERVABLE_CLASSES, *_private_observable_classes):
-    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = cast(
-        "type[Observable]", _cls
-    )
+    _cls = cast("type[Observable]", _cls)
+    TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
 
 # Static union for type checkers and OpenAPI. Discriminator is applied by the
 # request/response models that use this alias (as before), so the generated

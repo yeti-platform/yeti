@@ -125,6 +125,7 @@ def migration_3():
             if not legacy_tag:
                 legacy_tag = tag.Tag.get(tagrel["target"].split("/")[1])
                 resolved[tagrel["target"]] = legacy_tag
+            assert legacy_tag is not None
             tagrel["name"] = legacy_tag.name
             legacy_types_per_source[tagrel["source"]].append(tagrel)
             pbar.update(1)

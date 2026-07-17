@@ -52,7 +52,8 @@ class MispToYeti:
         links = []
         for attr in object_misp.get("Attribute") or []:
             obs_yeti = self.attr_misp_to_yeti(attr)
-            links.append(obs_yeti)
+            if obs_yeti is not None:
+                links.append(obs_yeti)
         obs_yeti = links.pop()
         for obj_to_link in links:
             obs_yeti.link_to(obj_to_link, f"linked_by_misp_{objs_type}", "misp")

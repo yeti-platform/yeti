@@ -76,13 +76,11 @@ python-version = "3.13"
 include = ["core"]
 
 [tool.ty.rules]
-# Phase 2 ratchet. These rules currently fire across the (previously
-# un-type-checked) code, so they are downgraded to non-blocking warnings while
-# every *other* ty rule is enforced at error level. CI runs with
-# --exit-zero-on-warning: warnings are visible but green, errors fail. Flip
-# these back to "error" (fixing the instances) one rule at a time. Counts are
-# from the initial rollout against ty 0.0.59.
-unresolved-attribute = "warn"       # 138 — ArangoYetiConnector mixin + union attr access
+# Phase 2 ratchet — COMPLETE. Every ty rule is now enforced at error level; the
+# warn-level backlog has been worked down to zero one rule at a time. CI runs
+# with --exit-zero-on-warning, so any rule that regresses to a warning stays
+# visible; keep them all at "error" so regressions fail the build instead.
+unresolved-attribute = "error"      # 0 — DB-connection property, connector/DFIQ/Task/Observable/Indicator TYPE_CHECKING surfaces, arango-job helper, per-site narrowing
 invalid-argument-type = "error"     # 0 — type[...] annotations, casts, dict-key narrowing, api_keys/None
 not-subscriptable = "error"         # 0 — api_keys/None asserts + MISP Org guard
 unsupported-operator = "error"      # 0 — fixed `in ("users")` typo + api_keys/None guards

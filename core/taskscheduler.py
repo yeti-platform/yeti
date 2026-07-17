@@ -43,7 +43,7 @@ app = Celery(
 )
 
 
-@app.on_after_configure.connect
+@app.on_after_configure.connect  # ty: ignore[unresolved-attribute]
 def setup_periodic_tasks(sender, **kwargs):
     """Registers periodic tasks."""
     for task in Task.list():
