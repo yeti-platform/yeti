@@ -72,8 +72,10 @@ exclude = ["deprecated"]
 python-version = "3.13"
 
 [tool.ty.src]
-# Start with core/; widen (plugins/, yetictl/) in follow-ups.
-include = ["core"]
+# core/ and yetictl/ are fully enforced. plugins/ is deferred to a follow-up
+# (its third-party deps aren't installed by the typecheck CI job, and it needs
+# its own ratchet).
+include = ["core", "yetictl"]
 
 [tool.ty.rules]
 # Phase 2 ratchet — COMPLETE. Every ty rule is now enforced at error level; the
