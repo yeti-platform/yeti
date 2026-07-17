@@ -32,8 +32,11 @@ if TYPE_CHECKING:
 
 import requests
 from arango import ArangoClient
+from arango.cursor import Cursor
 from arango.database import StandardDatabase
 from arango.exceptions import DocumentInsertError
+from arango.job import AsyncJob
+from arango.result import Result
 
 from core.config.config import yeti_config
 from core.events import message
@@ -68,6 +71,20 @@ def _validate_safe_field_name(field: str) -> str:
 
 
 TYetiObject = TypeVar("TYetiObject", bound="ArangoYetiConnector")
+T = TypeVar("T")
+
+
+def _wait_for_async_job(job: "Result[T]") -> T:
+    """Poll a python-arango async job to completion and return its result.
+
+    python-arango types async calls as ``Result[T]`` (``T | AsyncJob[T] |
+    BatchJob[T]``); in the async-execution context used here they are always
+    ``AsyncJob[T]``, so we narrow before polling.
+    """
+    async_job = cast("AsyncJob[T]", job)
+    while async_job.status() != "done":
+        time.sleep(ASYNC_JOB_WAIT_TIME)
+    return async_job.result()
 
 
 class ArangoDatabase:
@@ -199,7 +216,7 @@ class ArangoDatabase:
     def check_database_version(self, skip_if_testing: bool = True):
         if TESTING and skip_if_testing:
             return
-        system = self.db.collection("system").all()
+        system = cast("Cursor", self.db.collection("system").all())
         if system.empty():
             raise RuntimeError("Database version not found, please run migrations.")
         entry = system.pop()
@@ -424,17 +441,12 @@ class ArangoDatabase:
             self.connect()
         if name not in self.collections:
             async_db = self.db.begin_async_execution(return_result=True)
-            job = async_db.has_collection(name)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            data = job.result()
-            if data:
+            if _wait_for_async_job(async_db.has_collection(name)):
                 self.collections[name] = async_db.collection(name)
             else:
-                job = async_db.create_collection(name)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                self.collections[name] = job.result()
+                self.collections[name] = _wait_for_async_job(
+                    async_db.create_collection(name)
+                )
         return self.collections[name]
 
     def graph(self, name):
@@ -442,18 +454,10 @@ class ArangoDatabase:
             self.connect()
         if name not in self.graphs:
             async_db = self.db.begin_async_execution(return_result=True)
-            job = async_db.has_graph(name)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            data = job.result()
-            if data:
-                graph = async_db.graph(name)
-                self.graphs[name] = graph
+            if _wait_for_async_job(async_db.has_graph(name)):
+                self.graphs[name] = async_db.graph(name)
             else:
-                job = async_db.create_graph(name)
-                while job.status() != "done":
-                    time.sleep(ASYNC_JOB_WAIT_TIME)
-                self.graphs[name] = job.result()
+                self.graphs[name] = _wait_for_async_job(async_db.create_graph(name))
         return self.graphs[name]
 
     # graph is in async context
