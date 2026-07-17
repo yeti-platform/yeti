@@ -1,6 +1,6 @@
 import logging
 import unicodedata
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import cast
 from urllib.parse import urljoin
 
@@ -106,7 +106,7 @@ class MispFeed(task.FeedTask):
         galaxies_to_context = []
 
         context = {}
-        context["date_added"] = datetime.utcnow()
+        context["date_added"] = datetime.now(timezone.utc)
         context["source"] = instance["name"]
         external_analysis = [
             attr["value"]

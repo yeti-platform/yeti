@@ -21,6 +21,8 @@ class CiscoUmbrellaTopDomains(task.FeedTask):
     def run(self):
         top_domains = yeti_config.get("umbrella", "top_domains", 10000)
         response = self._make_request(self._SOURCE, sort=False)
+        if not response:
+            return
         data = self._unzip_content(response.content)
         context = {
             "name": self.name,

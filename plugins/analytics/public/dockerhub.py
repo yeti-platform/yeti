@@ -2,12 +2,14 @@ import datetime
 import logging
 import re
 from collections.abc import Iterator
+from typing import cast
 
 import requests
 
 from core import taskmanager
 from core.schemas import observable, task
 from core.schemas.observable import Observable, ObservableType
+from core.schemas.observables.container_image import ContainerImage
 
 
 class DockerHubApi:
@@ -183,7 +185,7 @@ class DockerHubImageAnalytics(task.OneShotTask):
             observable_obj.type == "docker_image"
             or (
                 observable_obj.type == "container_image"
-                and observable_obj.registry == "docker.io"
+                and cast("ContainerImage", observable_obj).registry == "docker.io"
             )
         ):
             self.logger.info(

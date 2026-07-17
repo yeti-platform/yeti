@@ -115,7 +115,9 @@ class LoLBAS(task.FeedTask):
             "blob/", ""
         )
         try:
-            sigma_yaml = self._make_request(url).text
+            response = self._make_request(url)
+            assert response is not None
+            sigma_yaml = response.text
             sigma_data = yaml.safe_load(sigma_yaml)
         except yaml.YAMLError as e:
             logging.error("Error parsing Sigma rule at %s: %s", url, e)
