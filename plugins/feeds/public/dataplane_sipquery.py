@@ -29,7 +29,9 @@ class DataplaneSIPQuery(task.FeedTask):
         if response:
             lines = response.content.decode("utf-8").split("\n")[66:-5]
             columns = ["ASN", "ASname", "ipaddr", "lastseen", "category"]
-            df = pd.DataFrame([line.split("|") for line in lines], columns=columns)
+            df = pd.DataFrame(
+                [line.split("|") for line in lines], columns=pd.Index(columns)
+            )
             df = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
             df["lastseen"] = pd.to_datetime(df["lastseen"])
             df.ffill(inplace=True)

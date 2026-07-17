@@ -63,7 +63,7 @@ class IOCExtractor(task.AnalyticsTask):
             logging.exception(f"Error processing URL {url_obs.value} with Agent")
             logging.debug(last_response)
 
-    def process_report(self, report, source: observable.Url):
+    def process_report(self, report, source: observable.Observable):
         report_entity = investigation.Investigation(
             name=report["title"],
             description=report["summary"],

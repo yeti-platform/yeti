@@ -74,7 +74,7 @@ class LoLBAS(task.FeedTask):
                         name=indicator_name,
                         type="regex",
                         pattern=fpath_pattern,
-                        diamond="capability",
+                        diamond=indicator.DiamondModel.capability,
                     )
                 except Exception:
                     logging.exception(f"Failed to save indicator: {indicator_name}")
@@ -106,7 +106,7 @@ class LoLBAS(task.FeedTask):
                         "Error processing sigma rule for %s: %s", entry["Name"], error
                     )
 
-    def process_sigma_rule(self, tool: entity.Tool, detection: dict) -> None:
+    def process_sigma_rule(self, tool: entity.Entity, detection: dict) -> None:
         """Processes a Sigma rule as specified in the lolbas json."""
         url = detection["Sigma"]
         if not url:

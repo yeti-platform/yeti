@@ -154,7 +154,7 @@ class FeedTask(Task):
         url: str,
         method: str = "get",
         headers: dict = {},
-        auth: tuple = (),
+        auth: tuple | None = (),
         params: dict = {},
         data: dict = {},
         json_data: dict = {},

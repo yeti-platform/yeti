@@ -1,6 +1,7 @@
 import logging
 import unicodedata
 from datetime import date, datetime, timedelta
+from typing import cast
 from urllib.parse import urljoin
 
 from pymisp.api import PyMISP
@@ -45,7 +46,7 @@ class MispFeed(task.FeedTask):
             logging.error("Issue on misp client")
             return
 
-        orgs = misp_client.organisations(scope="all")
+        orgs = cast("list[dict]", misp_client.organisations(scope="all"))
         for org in orgs:
             org_id = org["Organisation"]["id"]
             org_name = org["Organisation"]["name"]
@@ -70,18 +71,21 @@ class MispFeed(task.FeedTask):
 
     def get_last_events(self, instance: dict):
         from_date = self.last_run
+        assert from_date is not None
         logging.debug(f"Getting events from {from_date} and {self.last_run}")
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
 
-    def get_event(self, instance: dict, from_date: str, to_date: str | None = None):
+    def get_event(self, instance: dict, from_date: date, to_date: date | None = None):
         misp_client = PyMISP(
             url=instance["url"], key=instance["key"], ssl=instance["verifycert"]
         )
-        from_date = from_date.strftime("%Y-%m-%d")
-        if to_date:
-            to_date = to_date.strftime("%Y-%m-%d")
-        results = misp_client.search(date_from=from_date, date_to=to_date)
+        from_date_str = from_date.strftime("%Y-%m-%d")
+        to_date_str = to_date.strftime("%Y-%m-%d") if to_date else None
+        results = cast(
+            "list[dict]",
+            misp_client.search(date_from=from_date_str, date_to=to_date_str),
+        )
         logging.debug("Found {} events".format(len(results)))
         for r in results:
             if "Event" in r:
@@ -162,7 +166,7 @@ class MispFeed(task.FeedTask):
 
             obs.add_context(instance["name"], context)
 
-    def decompose_weeks(self, start_day: datetime, last_day: datetime):
+    def decompose_weeks(self, start_day: date, last_day: date):
         # Génère la liste de tuples
         weeks = []
         current_start = start_day
