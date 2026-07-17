@@ -5,7 +5,7 @@ import re
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Annotated, Any, ClassVar, Literal, Type, Union, cast
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, Type, Union, cast
 
 import yaml
 from packaging.version import Version
@@ -160,6 +160,16 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
         "dfiq_yaml"
     }
 
+    if TYPE_CHECKING:
+        # Every concrete DFIQ subclass declares `type` as its own
+        # Literal[DFIQType.*] field. Declared here as a property (type-check
+        # time only, so it is not treated as a required field) so code holding a
+        # DFIQBase can resolve `.type`. parent_ids/approaches are deliberately
+        # NOT declared here: they only exist on some subclasses and must stay
+        # narrowed per-site.
+        @property
+        def type(self) -> DFIQType: ...
+
     name: str = Field(min_length=1)
     uuid: str | None = None
     dfiq_id: str | None = None
@@ -295,7 +305,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
                 if (source.dfiq_id and source.uuid) not in intended_parent_ids:
                     rel.delete()
 
-        for parent in intended_parents:
+        for parent in cast("list[DFIQBase]", intended_parents):
             parent.link_to(self, self.type.value, f"Uses DFIQ {self.type.value}")
 
 
