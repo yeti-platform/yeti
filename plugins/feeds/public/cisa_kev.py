@@ -160,7 +160,7 @@ class CisaKEV(task.FeedTask):
             base_score=base_score,
             severity=severity,
         ).save()
-        vulnerability.tag({entry.get("cveID"), "cisa-kev"})
+        vulnerability.tag({entry.get("cveID", ""), "cisa-kev"})
 
 
 taskmanager.TaskManager.register_task(CisaKEV)
