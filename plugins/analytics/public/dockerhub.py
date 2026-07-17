@@ -21,7 +21,7 @@ class DockerHubApi:
         return {}
 
     @staticmethod
-    def _iter_endpoint_pages(endpoint) -> dict:
+    def _iter_endpoint_pages(endpoint) -> Iterator:
         data = DockerHubApi._make_request(endpoint)
         while data:
             for result in data.get("results", []):
