@@ -2,6 +2,7 @@ import datetime
 import logging
 from datetime import timedelta, timezone
 from io import StringIO
+from typing import cast
 
 from idstools import rule
 
@@ -68,7 +69,7 @@ class ETOpen(task.FeedTask):
         ind_cve = entity.Vulnerability.find(name=cve)
         if not ind_cve:
             ind_cve = entity.Vulnerability(name=cve).save()
-        return ind_cve
+        return cast("entity.Vulnerability", ind_cve)
 
     def _extract_malware_family(self, meta: str):
         _, malware_family = meta.split(" ")
@@ -92,7 +93,7 @@ class ETOpen(task.FeedTask):
             aliases=[("text", mitre_id)],
         )
         if nb_ent != 0:
-            return ind_mitre_attack[0]
+            return cast("entity.AttackPattern", ind_mitre_attack[0])
 
     def _filter_rule(self, metadata: list[str]):
         """

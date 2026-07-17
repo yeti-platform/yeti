@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import json
 from datetime import datetime
+from typing import cast
 
 from maclookup import ApiClient
 from maclookup import exceptions as maclookup_exceptions
@@ -10,7 +11,7 @@ from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import task
 from core.schemas.entity import Company
-from core.schemas.observable import ObservableType
+from core.schemas.observable import Observable, ObservableType
 from core.schemas.observables.mac_address import MacAddress
 
 
@@ -62,7 +63,8 @@ class MacAddressIo(task.AnalyticsTask, MacAddressIoApi):
 
     acts_on: list[ObservableType] = [ObservableType.mac_address]
 
-    def each(self, mac_address: MacAddress):
+    def each(self, observable: Observable):
+        mac_address = cast("MacAddress", observable)
         lookup_results = MacAddressIoApi.get(mac_address.value)
 
         vendor = None

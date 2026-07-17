@@ -246,7 +246,7 @@ class AnalyticsTask(Task):
         observable.last_analysis[self.name] = now()
         observable.save()
 
-    def each(self, observable: Observable) -> Observable:
+    def each(self, observable: Observable, /) -> Observable:
         """Analyzes a single observable.
 
         Args:
@@ -280,7 +280,7 @@ class OneShotTask(Task):
             return
         self.each(results[0])
 
-    def each(self, observable: Observable) -> None:
+    def each(self, observable: Observable, /) -> None:
         """Analyzes a single observable.
 
         Args:

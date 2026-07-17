@@ -114,8 +114,6 @@ include = ["plugins"]
 [tool.ty.overrides.rules]
 invalid-argument-type = "warn"      # 41
 unresolved-attribute = "warn"       # 32
-invalid-method-override = "warn"    # 12
-invalid-return-type = "warn"        # 7
 deprecated = "warn"                 # 5
 # unused-ignore-comment stays warn: the only instances are the boto3/tldextract
 # import ignores in core (s3.py/utils.py) — used by the dev-only main job but

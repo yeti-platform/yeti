@@ -1,3 +1,5 @@
+from typing import cast
+
 import requests
 from OpenSSL.crypto import (
     FILETYPE_ASN1,
@@ -9,7 +11,7 @@ from OpenSSL.crypto import (
 from core import taskmanager
 from core.config.config import yeti_config
 from core.schemas import task
-from core.schemas.observable import ObservableType
+from core.schemas.observable import Observable, ObservableType
 from core.schemas.observables import certificate, ipv4
 
 
@@ -68,7 +70,8 @@ class CirclPassiveSSLSearchIP(task.AnalyticsTask, CirclPassiveSSLApi):
 
     acts_on: list[ObservableType] = [ObservableType.ipv4]
 
-    def each(self, ip: ipv4.IPv4):
+    def each(self, observable: Observable):
+        ip = cast("ipv4.IPv4", observable)
         ip_search = CirclPassiveSSLApi.search_ip(ip)
         if ip_search:
             for ip_addr, ip_details in ip_search.items():

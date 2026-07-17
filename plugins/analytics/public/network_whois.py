@@ -1,9 +1,11 @@
+from typing import cast
+
 from ipwhois import IPWhois
 
 from core import taskmanager
 from core.schemas import task
 from core.schemas.entity import Company
-from core.schemas.observable import ObservableType
+from core.schemas.observable import Observable, ObservableType
 from core.schemas.observables import email, ipv4
 
 
@@ -16,7 +18,8 @@ class NetworkWhois(task.AnalyticsTask):
 
     acts_on: list[ObservableType] = [ObservableType.ipv4]
 
-    def each(self, ip: ipv4.IPv4):
+    def each(self, observable: Observable):
+        ip = cast("ipv4.IPv4", observable)
         r = IPWhois(ip.value)
         result = r.lookup_whois()
 
