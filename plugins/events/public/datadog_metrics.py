@@ -2,7 +2,7 @@ import logging
 import threading
 import time
 from queue import Queue
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import requests
 
@@ -54,7 +54,7 @@ class MetricsFlusher(threading.Thread):
         self._logger.debug(
             f"Flushing metrics queue {metrics_queue} (size:{metrics_queue.qsize()})"
         )
-        timeseries = {}
+        timeseries: dict[str, dict[str, Any]] = {}
         for _ in range(self._flush_count):
             if not metrics_queue.empty():
                 key = hashlib.sha256()

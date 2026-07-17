@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import Any
 
 import requests
 from dateutil import parser
@@ -13,7 +14,7 @@ from core.schemas.observables import email, hostname, sha256
 
 
 def whois_links(observable_obj: Observable, whois):
-    to_extract = [
+    to_extract: list[dict[str, Any]] = [
         {
             "field": "organization",
             "type": Company,

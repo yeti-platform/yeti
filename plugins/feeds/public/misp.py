@@ -74,7 +74,7 @@ class MispFeed(task.FeedTask):
         for event in self.get_event(instance, from_date):
             self.analyze(event, instance)
 
-    def get_event(self, instance: dict, from_date: str, to_date: str = None):
+    def get_event(self, instance: dict, from_date: str, to_date: str | None = None):
         misp_client = PyMISP(
             url=instance["url"], key=instance["key"], ssl=instance["verifycert"]
         )

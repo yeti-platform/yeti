@@ -121,11 +121,6 @@ missing-argument = "warn"           # 4
 invalid-assignment = "warn"         # 3
 unused-ignore-comment = "warn"      # 2
 unresolved-import = "warn"          # 2 — no-stub deps (yara C-ext, …)
-invalid-type-form = "warn"          # 2
-unsupported-operator = "warn"       # 1
-not-subscriptable = "warn"          # 1
-invalid-parameter-default = "warn"  # 1
-call-non-callable = "warn"          # 1
 
 [tool.uv.sources]
 artifacts = { git = "https://github.com/forensicartifacts/artifacts.git", rev = "main" }
