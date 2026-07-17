@@ -131,7 +131,10 @@ def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
 def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     """Creates a new DFIQ object in the database."""
     try:
-        new = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
+        new = cast(
+            "dfiq.DFIQTypes",
+            dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml),
+        )
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
@@ -161,7 +164,7 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     if not all(intended_parents):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Missing parent(s), provided {new.parent_ids}",
+            detail=f"Missing parent(s), provided {parent_ids}",
         )
 
     new = new.save()
@@ -208,7 +211,7 @@ def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
     with tempfile.TemporaryDirectory() as tempdir:
         public_objs = []
         internal_objs = []
-        for obj in dfiq_objects:
+        for obj in cast("list[dfiq.DFIQTypes]", dfiq_objects):
             if obj.dfiq_tags and "internal" in obj.dfiq_tags:
                 internal_objs.append(obj)
             else:
@@ -419,7 +422,7 @@ def delete(httpreq: Request, id: str) -> None:
         )
         if children:
             all_children.extend(children)
-    for child in all_children:
+    for child in cast("list[dfiq.DFIQFacet | dfiq.DFIQQuestion]", all_children):
         if db_dfiq.dfiq_id in child.parent_ids:
             child.parent_ids.remove(db_dfiq.dfiq_id)
         if db_dfiq.uuid in child.parent_ids:
