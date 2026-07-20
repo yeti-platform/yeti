@@ -114,7 +114,7 @@ class YetiPackage(BaseModel):
 
         kwargs["value"] = value
         instance = cls(**kwargs)
-        self.observables.append(instance)
+        self.observables.append(cast("ObservableTypes", instance))
         self._objects[value] = instance
         return self
 
@@ -126,7 +126,7 @@ class YetiPackage(BaseModel):
         cls = entity.TYPE_MAPPING[type]
         kwargs["name"] = name
         instance = cls(**kwargs)
-        self.entities.append(instance)
+        self.entities.append(cast("entity.EntityTypes", instance))
         self._objects[name] = instance
         return self
 
@@ -138,7 +138,7 @@ class YetiPackage(BaseModel):
         cls = indicator.TYPE_MAPPING[type]
         kwargs["name"] = name
         instance = cls(**kwargs)
-        self.indicators.append(instance)
+        self.indicators.append(cast("indicator.IndicatorTypes", instance))
         self._objects[name] = instance
         return self
 

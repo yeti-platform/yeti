@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from core.config.config import yeti_config
 from core.schemas import audit, model, observable, rbac, roles, tag
-from core.schemas.observable import Observable, ObservableType, ObservableTypes
+from core.schemas.observable import Observable, ObservableType, ObservableTypesRuntime
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 
 from . import context
@@ -42,13 +42,13 @@ class NewObservableRequest(TagRequestMixin):
 class NewExtendedObservableRequest(TagRequestMixin):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminator="type")
+    observable: ObservableTypesRuntime = Field(discriminator="type")
 
 
 class PatchObservableRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observable: ObservableTypes = Field(discriminator="type")
+    observable: ObservableTypesRuntime = Field(discriminator="type")
 
 
 class NewBulkObservableAddRequest(BaseModel):
@@ -60,7 +60,7 @@ class NewBulkObservableAddRequest(BaseModel):
 class BulkObservableAddResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    added: list[ObservableTypes] = []
+    added: list[ObservableTypesRuntime] = []
     failed: list[str] = []
 
 
@@ -92,7 +92,7 @@ class ObservableSearchRequest(BaseModel):
 class ObservableSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    observables: list[ObservableTypes]
+    observables: list[ObservableTypesRuntime]
     total: int
 
 
@@ -116,7 +116,7 @@ router = APIRouter()
 
 @router.post("/")
 @global_permission(roles.Permission.WRITE)
-def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
+def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypesRuntime:
     """Creates a new observable in the database.
 
     Raises:
@@ -144,7 +144,7 @@ def new(httpreq: Request, request: NewObservableRequest) -> ObservableTypes:
 @global_permission(roles.Permission.WRITE)
 def new_extended(
     httpreq: Request, request: NewExtendedObservableRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Creates a new observable in the database with extended properties.
 
     Raises:
@@ -171,7 +171,9 @@ def new_extended(
 
 @router.patch("/{id}")
 @permission_on_target(roles.Permission.WRITE)
-def patch(httpreq: Request, request: PatchObservableRequest, id) -> ObservableTypes:
+def patch(
+    httpreq: Request, request: PatchObservableRequest, id
+) -> ObservableTypesRuntime:
     """Modifies observable in the database."""
     db_observable = Observable.get(id)
     if not db_observable:
@@ -223,7 +225,7 @@ def get(
     httpreq: Request,
     value: str,
     type: ObservableType | None = None,
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Gets an observable by value."""
 
     params = {"value": value}
@@ -252,7 +254,7 @@ def get(
 
 @router.get("/{id}")
 @permission_on_target(roles.Permission.READ)
-def details(httpreq: Request, id: str) -> ObservableTypes:
+def details(httpreq: Request, id: str) -> ObservableTypesRuntime:
     """Returns details about an observable."""
     observable_obj = Observable.get(id)
 
@@ -267,7 +269,7 @@ def details(httpreq: Request, id: str) -> ObservableTypes:
 @permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Adds context to an observable."""
     return context.add_context(Observable, httpreq, id, request)
 
@@ -276,7 +278,7 @@ def add_context(
 @permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Replaces context in an observable."""
     return context.replace_context(Observable, httpreq, id, request)
 
@@ -285,7 +287,7 @@ def replace_context(
 @permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
-) -> ObservableTypes:
+) -> ObservableTypesRuntime:
     """Removes context to an observable."""
     return context.delete_context(Observable, httpreq, id, request)
 
@@ -310,7 +312,7 @@ def search(
 
 @router.post("/add_text", deprecated=True)
 @global_permission(roles.Permission.WRITE)
-def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypes:
+def add_text(httpreq: Request, request: AddTextRequest) -> ObservableTypesRuntime:
     """Adds and returns an observable for a given string, attempting to guess
     its type."""
     try:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum
-from typing import ClassVar, List, Literal, Self, Union
+from typing import TYPE_CHECKING, ClassVar, List, Literal, Self, Union, cast
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -25,6 +25,14 @@ class Entity(
     _type_filter: ClassVar[str] = ""
     _root_type: Literal["entity"] = "entity"
 
+    if TYPE_CHECKING:
+        # Each concrete entity subclass declares `type` as its own
+        # Literal[EntityType.*] field. Declared here as a property
+        # (type-check time only, so not a required field) so code holding a
+        # base Entity can resolve `.type`.
+        @property
+        def type(self) -> "EntityType": ...
+
     name: str = Field(min_length=1)
     description: str = ""
     created: datetime.datetime = Field(default_factory=now)
@@ -43,7 +51,10 @@ class Entity(
             loader = TYPE_MAPPING[object["type"]]
         else:
             raise ValueError("Attempted to instantiate an undefined entity type.")
-        return loader(**object)
+        # loader is a TYPE_MAPPING value (type[Entity] statically); every
+        # concrete member is one of the enumerated EntityTypes (or a private/
+        # subtype covered by EntityTypesRuntime, not this static union).
+        return cast("EntityTypes", loader(**object))
 
     def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
@@ -66,7 +77,7 @@ def create(*, name: str, type: str, **kwargs) -> "EntityTypes":
     """
     if type not in TYPE_MAPPING:
         raise ValueError(f"{type} is not a valid entity type")
-    return TYPE_MAPPING[type](name=name, **kwargs)
+    return cast("EntityTypes", TYPE_MAPPING[type](name=name, **kwargs))
 
 
 def save(*, name: str, type: str, tags: List[str] | None = None, **kwargs):
@@ -76,8 +87,8 @@ def save(*, name: str, type: str, tags: List[str] | None = None, **kwargs):
     return indicator_obj
 
 
-def find(*, name: str, **kwargs) -> "EntityTypes":
-    return Entity.find(name=name, **kwargs)
+def find(*, name: str, **kwargs) -> "EntityTypes | None":
+    return cast("EntityTypes | None", Entity.find(name=name, **kwargs))
 
 
 # ---------------------------------------------------------------------------
@@ -154,5 +165,10 @@ EntityTypes = Union[
     Tool,
     Vulnerability,
 ]
+# Separate runtime-widened symbol so type checkers keep full checking on the
+# static EntityTypes above (see observable.py for the rationale). Internal code
+# annotates EntityTypes; FastAPI request/response models annotate
+# EntityTypesRuntime.
+EntityTypesRuntime = EntityTypes
 if _private_entity_classes:
-    EntityTypes = Union[(EntityTypes, *_private_entity_classes)]
+    EntityTypesRuntime = Union[(EntityTypes, *_private_entity_classes)]

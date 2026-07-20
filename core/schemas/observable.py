@@ -64,7 +64,11 @@ class Observable(
     @classmethod
     def load(cls, object: dict) -> "ObservableTypes":  # noqa: F821
         if object["type"] in TYPE_MAPPING:
-            return TYPE_MAPPING[object["type"]](**object)
+            # TYPE_MAPPING is dict[str, type[Observable]] statically, but every
+            # value is actually one of the enumerated ObservableTypes members
+            # (or a private/ subtype covered by ObservableTypesRuntime, not the
+            # static union used here for the common/internal-facing case).
+            return cast("ObservableTypes", TYPE_MAPPING[object["type"]](**object))
         raise ValueError("Attempted to instantiate an undefined observable type.")
 
     def save(self, *args, **kwargs) -> "Self":
@@ -113,7 +117,7 @@ def create(*, value: str, type: str | None = None, **kwargs) -> ObservableTypes:
             raise ValueError(f"Invalid type for observable '{value}'")
     elif type not in TYPE_MAPPING:
         raise ValueError(f"{type} is not a valid observable type")
-    return TYPE_MAPPING[type](value=value, **kwargs)
+    return cast("ObservableTypes", TYPE_MAPPING[type](value=value, **kwargs))
 
 
 def save(
@@ -148,12 +152,12 @@ def save(
     return observable_obj
 
 
-def find(value: str, type: str | None = None) -> ObservableTypes:
+def find(value: str, type: str | None = None) -> ObservableTypes | None:
     if type:
         obs = Observable.find(value=refang(value), type=type)
     else:
         obs = Observable.find(value=refang(value))
-    return obs
+    return cast("ObservableTypes | None", obs)
 
 
 def create_from_text(text: str) -> Tuple[List["ObservableTypes"], List[str]]:
@@ -443,7 +447,13 @@ ObservableTypes = Union[
     UserAgent,
     Wallet,
 ]
-# Deployments may drop extra subtypes into observables/private/; widen the
-# runtime union so API response models serialize them too.
+# Deployments may drop extra subtypes into observables/private/. The runtime
+# union below widens to include them so API request/response models serialize
+# them; it is a SEPARATE symbol from the static ObservableTypes above so type
+# checkers keep full checking on the static alias — a starred re-assignment
+# onto ObservableTypes itself would make it gradual (effectively unchecked)
+# everywhere it is used. Internal code annotates ObservableTypes; FastAPI
+# request/response models annotate ObservableTypesRuntime.
+ObservableTypesRuntime = ObservableTypes
 if _private_observable_classes:
-    ObservableTypes = Union[(ObservableTypes, *_private_observable_classes)]
+    ObservableTypesRuntime = Union[(ObservableTypes, *_private_observable_classes)]

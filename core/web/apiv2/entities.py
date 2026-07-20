@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from core.schemas import audit, model, rbac, roles
-from core.schemas.entity import Entity, EntityType, EntityTypes
+from core.schemas.entity import Entity, EntityType, EntityTypesRuntime
 from core.schemas.tag import MAX_TAGS_REQUEST
 
 from . import context
@@ -14,14 +14,14 @@ from . import context
 class NewEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entity: EntityTypes = Field(discriminator="type")
+    entity: EntityTypesRuntime = Field(discriminator="type")
     tags: Annotated[list[str], Field(max_length=MAX_TAGS_REQUEST)] = []
 
 
 class PatchEntityRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entity: EntityTypes = Field(discriminator="type")
+    entity: EntityTypesRuntime = Field(discriminator="type")
 
 
 class EntitySearchRequest(BaseModel):
@@ -49,7 +49,7 @@ class EntityMultipleGetRequest(BaseModel):
 class EntitySearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    entities: list[EntityTypes]
+    entities: list[EntityTypesRuntime]
     total: int
 
 
@@ -74,7 +74,7 @@ router = APIRouter()
 
 @router.post("/")
 @rbac.global_permission(roles.Permission.WRITE)
-def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
+def new(httpreq: Request, request: NewEntityRequest) -> EntityTypesRuntime:
     """Creates a new entity in the database."""
     new = request.entity.save()
     rbac.set_acls(new, user=httpreq.state.user)
@@ -86,9 +86,9 @@ def new(httpreq: Request, request: NewEntityRequest) -> EntityTypes:
 
 @router.patch("/{id}")
 @rbac.permission_on_target(roles.Permission.WRITE)
-def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes:
+def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypesRuntime:
     """Modifies entity in the database."""
-    db_entity: EntityTypes = Entity.get(id)
+    db_entity = Entity.get(id)
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"Entity {id} not found")
     if db_entity.type != request.entity.type:
@@ -108,7 +108,7 @@ def patch(httpreq: Request, request: PatchEntityRequest, id: str) -> EntityTypes
 @rbac.permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
-) -> EntityTypes:
+) -> EntityTypesRuntime:
     """Adds context to an Entity."""
     return context.add_context(Entity, httpreq, id, request)
 
@@ -117,7 +117,7 @@ def add_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
-) -> EntityTypes:
+) -> EntityTypesRuntime:
     """Replaces context in an Entity."""
     return context.replace_context(Entity, httpreq, id, request)
 
@@ -126,7 +126,7 @@ def replace_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
-) -> EntityTypes:
+) -> EntityTypesRuntime:
     """Removes context to an Entity."""
     return context.delete_context(Entity, httpreq, id, request)
 
@@ -136,7 +136,7 @@ def get(
     httpreq: Request,
     name: str,
     type: EntityType | None = None,
-) -> EntityTypes:
+) -> EntityTypesRuntime:
     """Gets an entity by name."""
 
     params = {"name": name}
@@ -164,9 +164,9 @@ def get(
 
 @router.get("/{id}")
 @rbac.permission_on_target(roles.Permission.READ)
-def details(httpreq: Request, id: str) -> EntityTypes:
+def details(httpreq: Request, id: str) -> EntityTypesRuntime:
     """Returns details about an observable."""
-    db_entity: EntityTypes = Entity.get(id)
+    db_entity = Entity.get(id)
     if not db_entity:
         raise HTTPException(status_code=404, detail=f"Entity {id} not found")
     db_entity.get_tags()
