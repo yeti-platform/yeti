@@ -12,7 +12,6 @@ from typing import (
     Literal,
     Self,
     Union,
-    cast,
 )
 
 from pydantic import ConfigDict, Field, computed_field
@@ -182,7 +181,6 @@ _private_indicator_classes = load_private_types("core.schemas.indicators", Indic
 
 TYPE_MAPPING = {"indicator": Indicator, "indicators": Indicator}
 for _cls in (*_INDICATOR_CLASSES, *_private_indicator_classes):
-    _cls = cast("type[Indicator]", _cls)
     TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
 
 IndicatorTypes = Union[

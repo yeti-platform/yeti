@@ -11,11 +11,14 @@ import importlib
 import inspect
 import logging
 import pkgutil
+from typing import TypeVar
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T")
 
-def load_private_types(package_name: str, base_class: type) -> list[type]:
+
+def load_private_types(package_name: str, base_class: type[T]) -> list[type[T]]:
     """Return the schema subclasses defined in `<package_name>.private`.
 
     Args:
@@ -23,7 +26,7 @@ def load_private_types(package_name: str, base_class: type) -> list[type]:
         base_class: the family base class (Observable/Entity/Indicator);
             only its subclasses that declare a `type` field are returned.
     """
-    classes: list[type] = []
+    classes: list[type[T]] = []
     try:
         private_pkg = importlib.import_module(f"{package_name}.private")
     except ModuleNotFoundError:
