@@ -10,6 +10,7 @@ from typing import (
     Generator,
     List,
     Literal,
+    Self,
     Union,
     cast,
 )
@@ -86,7 +87,7 @@ class Indicator(
             raise ValueError("Attempted to instantiate an undefined indicator type.")
         return loader(**object)
 
-    def save(self, *args, **kwargs) -> "Indicator":
+    def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
         return super().save(*args, **kwargs)
 

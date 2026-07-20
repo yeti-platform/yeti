@@ -5,7 +5,17 @@ import re
 import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, Type, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    Self,
+    Type,
+    Union,
+    cast,
+)
 
 import yaml
 from packaging.version import Version
@@ -192,7 +202,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
             return TYPE_MAPPING[object["type"]](**object)
         return cls(**object)
 
-    def save(self, *args, **kwargs) -> "DFIQBase":
+    def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
         self.dfiq_yaml = self.to_yaml()
         return super().save(*args, **kwargs)

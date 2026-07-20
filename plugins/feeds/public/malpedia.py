@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from typing import ClassVar, cast
+from typing import ClassVar
 
 from core import taskmanager
 from core.schemas import entity, task
@@ -44,7 +44,7 @@ class MalpediaMalware(task.FeedTask):
             "external_references": "\n* " + "\n* ".join(refs),
         }
         m.family = entry.get("type", "")
-        m = cast("entity.Malware", m.save())
+        m = m.save()
         m.add_context(context["source"], context)
         attributions = entry.get("attribution", [])
         for attribution in attributions:
@@ -96,7 +96,7 @@ class MalpediaActors(task.FeedTask):
         if synonyms:
             intrusion_set.aliases = synonyms
 
-        intrusion_set = cast("entity.IntrusionSet", intrusion_set.save())
+        intrusion_set = intrusion_set.save()
         intrusion_set.add_context(context["source"], context)
         tags = []
 

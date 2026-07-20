@@ -12,6 +12,7 @@ from typing import (
     ClassVar,
     List,
     Literal,
+    Self,
     Tuple,
     Union,
     cast,
@@ -66,7 +67,7 @@ class Observable(
             return TYPE_MAPPING[object["type"]](**object)
         raise ValueError("Attempted to instantiate an undefined observable type.")
 
-    def save(self, *args, **kwargs) -> "Observable":
+    def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
         return super().save(*args, **kwargs)
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum
-from typing import ClassVar, List, Literal, Union, cast
+from typing import ClassVar, List, Literal, Self, Union, cast
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -45,7 +45,7 @@ class Entity(
             raise ValueError("Attempted to instantiate an undefined entity type.")
         return loader(**object)
 
-    def save(self, *args, **kwargs) -> "Entity":
+    def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
         return super().save(*args, **kwargs)
 
