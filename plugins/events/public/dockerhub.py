@@ -1,7 +1,9 @@
+from typing import cast
+
 from core import taskmanager
-from core.events.message import EventMessage
+from core.events.message import EventMessage, ObjectEvent
 from core.schemas import task
-from core.schemas.observable import Observable
+from core.schemas.observables.container_image import ContainerImage
 from plugins.analytics.public.dockerhub import (
     DockerHubApi,
     get_image_context,
@@ -30,7 +32,9 @@ class DockerHubImageEvent(task.EventTask):
     }
 
     def run(self, message: EventMessage) -> None:
-        container_image = message.event.yeti_object
+        event = message.event
+        assert isinstance(event, ObjectEvent)
+        container_image = cast("ContainerImage", event.yeti_object)
         self.logger.info(f"Analysing container image {container_image.value}")
         if not (
             container_image.type == "docker_image"

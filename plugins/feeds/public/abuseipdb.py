@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import ClassVar
 
 from core import taskmanager
@@ -37,7 +37,7 @@ class AbuseIPDB(task.FeedTask):
 
         ip_value = line
 
-        context = {"source": self.name, "date_added": datetime.utcnow()}
+        context = {"source": self.name, "date_added": datetime.now(timezone.utc)}
         ipv4_obs = ipv4.IPv4(value=ip_value).save()
 
         logging.debug(f"Adding context to {ip_value}")

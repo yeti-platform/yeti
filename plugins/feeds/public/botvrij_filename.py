@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from core import taskmanager
 from core.schemas import task
@@ -29,7 +29,7 @@ class BotvrijFilename(task.FeedTask):
             "description": descr,
         }
 
-        obs = file.File(value=filen).save()
+        obs = cast("file.File", file.File(value=filen).save())
         obs.name = filen
         obs.add_context(self.name, context)
         obs.tag(["botvrij"])

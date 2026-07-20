@@ -112,8 +112,6 @@ unused-type-ignore-comment = "error"
 include = ["plugins"]
 
 [tool.ty.overrides.rules]
-unresolved-attribute = "warn"       # 32
-deprecated = "warn"                 # 5
 # unused-ignore-comment stays warn: the only instances are the boto3/tldextract
 # import ignores in core (s3.py/utils.py) — used by the dev-only main job but
 # unused in this all-deps plugins job, so they can't be cleanly removed.

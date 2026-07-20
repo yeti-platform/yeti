@@ -28,6 +28,8 @@ class TrancoTopDomains(task.FeedTask):
             f"Importing {top_domains} Tranco top domains (include subdomains: {include_subdomains})"
         )
         response = self._make_request(endpoint, sort=False)
+        if not response:
+            return
         context = {
             "name": self.name,
         }

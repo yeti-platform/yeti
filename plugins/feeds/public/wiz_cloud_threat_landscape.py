@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import timedelta
-from typing import ClassVar
+from typing import ClassVar, cast
 
 import requests
 
@@ -267,7 +267,10 @@ class WizCloudThreatLandscape(task.FeedTask):
             entity = AttackPattern.find(name=name)
             if not entity:
                 description = self._format_description(properties)
-                entity = AttackPattern(name=name, description=description).save()
+                entity = cast(
+                    "AttackPattern",
+                    AttackPattern(name=name, description=description).save(),
+                )
             kill_chain_phases = set(entity.kill_chain_phases)
             for mitre_technique in properties.get("mitre tactic", []):
                 m = re.search("(.*?(?=\())", mitre_technique)
