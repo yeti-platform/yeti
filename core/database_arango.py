@@ -4,6 +4,7 @@ import datetime
 import enum
 import json
 import logging
+import os
 import re
 import sys
 import time
@@ -51,7 +52,20 @@ AQL_QUERY_MAX_TTL = 3600 * 12
 # these are the only names neighbors() can traverse with `@@graph`.
 TRAVERSABLE_GRAPHS = {"links", "acls"}
 
-TESTING = "unittest" in sys.modules.keys()
+# The database the test suite connects to. Connecting here (or setting
+# YETI_TESTING) puts the connection into "testing" mode, which tunes
+# ArangoSearch view timings and forces waitForSync so tests don't race the
+# view's eventual consistency. Previously this was inferred from
+# `"unittest" in sys.modules`, which silently flipped a *production* server
+# into test mode (and onto the test DB) whenever any dependency imported
+# unittest (e.g. via unittest.mock). Test-mode is now an explicit property of
+# the connection instead.
+TEST_DATABASE = "yeti_test"
+
+
+def _testing_from_env() -> bool:
+    return os.environ.get("YETI_TESTING", "").strip().lower() in ("1", "true", "yes")
+
 
 ASYNC_JOB_WAIT_TIME = 0.01
 
@@ -97,6 +111,7 @@ class ArangoDatabase:
         self._db: StandardDatabase | None = None
         self.collections = dict()
         self.graphs = dict()
+        self.testing: bool = _testing_from_env()
 
     @property
     def db(self) -> StandardDatabase:
@@ -114,6 +129,7 @@ class ArangoDatabase:
         password: str | None = None,
         database: str | None = None,
         check_db_sync: bool = False,
+        testing: bool | None = None,
     ):
         host = host or yeti_config.get("arangodb", "host")
         port = port or yeti_config.get("arangodb", "port")
@@ -121,8 +137,14 @@ class ArangoDatabase:
         password = password or yeti_config.get("arangodb", "password")
         database = database or yeti_config.get("arangodb", "database")
 
-        if TESTING:
-            database = "yeti_test"
+        # Test-mode is explicit: passed in, set via YETI_TESTING, or implied by
+        # connecting to the dedicated test database (which every test fixture
+        # does). It is no longer inferred from whether `unittest` is imported.
+        if testing is None:
+            testing = _testing_from_env() or database == TEST_DATABASE
+        self.testing = testing
+        if testing:
+            database = TEST_DATABASE
 
         host_string = f"http://{host}:{port}"
         client = ArangoClient(hosts=host_string, request_timeout=None)
@@ -214,7 +236,7 @@ class ArangoDatabase:
             )
 
     def check_database_version(self, skip_if_testing: bool = True):
-        if TESTING and skip_if_testing:
+        if self.testing and skip_if_testing:
             return
         system = cast("Cursor", self.db.collection("system").all())
         if system.empty():
@@ -346,7 +368,7 @@ class ArangoDatabase:
         link_definitions: dict[str, dict[str, Any]] = {}
         for view_target in ("observables", "entities", "indicators", "dfiq"):
             try:
-                if TESTING:
+                if self.testing:
                     self.db.delete_view(f"{view_target}_view")
                 else:
                     self.db.view(f"{view_target}_view")
@@ -363,8 +385,8 @@ class ArangoDatabase:
             self.db.create_arangosearch_view(
                 name=f"{view_target}_view",
                 properties={
-                    "consolidationIntervalMsec": 1 if TESTING else 1000,
-                    "commitIntervalMsec": 1 if TESTING else 1000,
+                    "consolidationIntervalMsec": 1 if self.testing else 1000,
+                    "commitIntervalMsec": 1 if self.testing else 1000,
                     "links": {view_target: link_definitions[view_target]},
                     "primarySort": [
                         {"field": "created", "direction": "desc"},
@@ -375,7 +397,7 @@ class ArangoDatabase:
             )
 
         try:
-            if TESTING:
+            if self.testing:
                 self.db.delete_view("all_objects_view")
             else:
                 self.db.view("all_objects_view")
@@ -400,8 +422,8 @@ class ArangoDatabase:
         self.db.create_arangosearch_view(
             name="all_objects_view",
             properties={
-                "consolidationIntervalMsec": 1 if TESTING else 1000,
-                "commitIntervalMsec": 1 if TESTING else 1000,
+                "consolidationIntervalMsec": 1 if self.testing else 1000,
+                "commitIntervalMsec": 1 if self.testing else 1000,
                 "links": link_definitions,
                 "primarySort": [
                     {"field": "created", "direction": "desc"},
@@ -1301,7 +1323,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # tolerate that race, so force the view to sync pending writes before
         # querying. This is test-only; production queries stay non-blocking.
         aql_options = ""
-        if using_view and TESTING:
+        if using_view and cls._db.testing:
             aql_options = "OPTIONS { waitForSync: true }"
 
         aql_sort = ""
