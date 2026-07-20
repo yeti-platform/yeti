@@ -3,8 +3,8 @@ import json
 import secrets
 from typing import ClassVar, Literal
 
-from jose import jwt
-from passlib.context import CryptContext
+import bcrypt
+import jwt
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from core import database_arango
@@ -12,8 +12,6 @@ from core.config.config import yeti_config
 from core.helpers import now
 from core.schemas import graph, rbac, roles
 from core.schemas.model import YetiModel
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 RBAC_DEFAULT_ROLES = {
     "reader": roles.Role.READER,
@@ -155,7 +153,15 @@ class UserSensitive(User):
         return cls(**object)
 
     def set_password(self, plain_password: str) -> None:
-        self.password = pwd_context.hash(plain_password)
+        hashed = bcrypt.hashpw(plain_password.encode("utf-8"), bcrypt.gensalt())
+        self.password = hashed.decode("utf-8")
 
     def verify_password(self, plain_password: str) -> bool:
-        return pwd_context.verify(plain_password, self.password)
+        # Existing hashes were produced by passlib's bcrypt backend; they are
+        # standard `$2b$` bcrypt hashes that checkpw verifies unchanged. Guard
+        # the empty/never-set default so it returns False instead of raising.
+        if not self.password:
+            return False
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), self.password.encode("utf-8")
+        )

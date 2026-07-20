@@ -1,6 +1,7 @@
 import datetime
 import json
 
+import jwt
 from authlib.integrations.starlette_client import OAuth, OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
 from fastapi.responses import RedirectResponse
@@ -13,7 +14,6 @@ from fastapi.security import (
 from google.auth import exceptions as google_exceptions
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_oauth_id_token
-from jose import JWTError, jwt
 from starlette.requests import Request
 
 from core.config.config import yeti_config
@@ -90,7 +90,7 @@ def get_current_user(
         username = payload.get("sub")
         if username is None:
             raise credentials_exception
-    except JWTError:
+    except jwt.PyJWTError:
         raise credentials_exception
 
     user = UserSensitive.find(username=username)
@@ -281,9 +281,9 @@ def login_api(x_yeti_api_key_token: str = Security(api_key_header)) -> dict[str,
             x_yeti_api_key_token,
             SECRET_KEY,
             algorithms=[ALGORITHM],
-            options={"verify_exp": False, "requires_exp": False},
+            options={"verify_exp": False},
         )
-    except JWTError:
+    except jwt.PyJWTError:
         raise credentials_exception
 
     user = UserSensitive.find(username=payload.get("sub"))
