@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import timedelta
 from io import StringIO
-from typing import ClassVar, cast
+from typing import ClassVar
 
 import pandas as pd
 
@@ -41,7 +41,7 @@ class HybridAnalysis(task.FeedTask):
 
         try:
             sha256_obs = sha256.SHA256(value=item["sha256"]).save()
-            f_hyb = cast("file.File", file.File(value=f"FILE:{item['sha256']}").save())
+            f_hyb = file.File(value=f"FILE:{item['sha256']}").save()
         except Exception:
             logging.exception(f"HybridAnalysis: Failed to save file: {item['sha256']}")
             return

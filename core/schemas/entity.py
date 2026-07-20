@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum
-from typing import ClassVar, List, Literal, Union, cast
+from typing import ClassVar, List, Literal, Self, Union
 
 from pydantic import ConfigDict, Field, computed_field
 
@@ -45,7 +45,7 @@ class Entity(
             raise ValueError("Attempted to instantiate an undefined entity type.")
         return loader(**object)
 
-    def save(self, *args, **kwargs) -> "Entity":
+    def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
         return super().save(*args, **kwargs)
 
@@ -137,7 +137,6 @@ _private_entity_classes = load_private_types("core.schemas.entities", Entity)
 
 TYPE_MAPPING = {"entity": Entity, "entities": Entity}
 for _cls in (*_ENTITY_CLASSES, *_private_entity_classes):
-    _cls = cast("type[Entity]", _cls)
     TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
 
 EntityTypes = Union[

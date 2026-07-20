@@ -69,7 +69,7 @@ class ETOpen(task.FeedTask):
         ind_cve = entity.Vulnerability.find(name=cve)
         if not ind_cve:
             ind_cve = entity.Vulnerability(name=cve).save()
-        return cast("entity.Vulnerability", ind_cve)
+        return ind_cve
 
     def _extract_malware_family(self, meta: str):
         _, malware_family = meta.split(" ")

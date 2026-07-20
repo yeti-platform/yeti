@@ -10,8 +10,8 @@ from typing import (
     Generator,
     List,
     Literal,
+    Self,
     Union,
-    cast,
 )
 
 from pydantic import ConfigDict, Field, computed_field
@@ -86,7 +86,7 @@ class Indicator(
             raise ValueError("Attempted to instantiate an undefined indicator type.")
         return loader(**object)
 
-    def save(self, *args, **kwargs) -> "Indicator":
+    def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
         return super().save(*args, **kwargs)
 
@@ -181,7 +181,6 @@ _private_indicator_classes = load_private_types("core.schemas.indicators", Indic
 
 TYPE_MAPPING = {"indicator": Indicator, "indicators": Indicator}
 for _cls in (*_INDICATOR_CLASSES, *_private_indicator_classes):
-    _cls = cast("type[Indicator]", _cls)
     TYPE_MAPPING[str(_cls.model_fields["type"].default)] = _cls
 
 IndicatorTypes = Union[

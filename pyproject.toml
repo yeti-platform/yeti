@@ -100,6 +100,9 @@ unknown-argument = "error"          # 0 — fixed a stray strict= kwarg on cls.l
 # Promoted to error (instances fixed; kept enforced so they can't regress).
 possibly-missing-submodule = "error"
 unused-type-ignore-comment = "error"
+# save() now returns Self, so the per-site casts that re-narrowed its result are
+# gone; lock the rule at error so stale/needless casts can't creep back in.
+redundant-cast = "error"
 
 # Phase 3 — plugins ratchet. plugins/ is type-checked by the separate
 # `typecheck-plugins` CI job (it installs all dependency groups and scopes

@@ -177,11 +177,9 @@ def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
     if request.update_indicators and new.type == dfiq.DFIQType.question:
-        dfiq.extract_indicators(
-            cast("dfiq.DFIQQuestion", new), user=httpreq.state.user.username
-        )
+        dfiq.extract_indicators(new, user=httpreq.state.user.username)
 
-    return cast("dfiq.DFIQTypes", new)
+    return new
 
 
 @router.post("/to_archive")
