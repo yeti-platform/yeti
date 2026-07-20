@@ -25,6 +25,9 @@ jobs:
       YETI_AUTH_ENABLED: False
       YETI_SYSTEM_PLUGINS_PATH: ./plugins
       YETI_SYSTEM_AUDIT_LOGFILE: /tmp/yeti_audit.log
+      # Explicitly mark the whole unit-test job as testing so DB test-mode does
+      # not depend solely on fixtures connecting to the "yeti_test" database.
+      YETI_TESTING: "true"
     strategy:
       matrix:
         os: [ubuntu-latest]
