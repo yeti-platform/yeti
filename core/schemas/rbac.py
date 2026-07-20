@@ -37,10 +37,15 @@ class Group(YetiAclModel, database_arango.ArangoYetiConnector):
         return self._root_type
 
 
+# The permission wrappers below are deliberately sync (`def`, not `async def`).
+# FastAPI runs sync endpoints in a threadpool but async ones on the event loop;
+# the wrapped endpoints are all sync and do blocking ArangoDB I/O, so an async
+# wrapper would drag every decorated route (and its blocking calls) onto the
+# loop and serialize the whole server. Nothing in the wrappers awaits.
 def permission_on_target(permission: roles.Permission):
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, httpreq: Request, **kwargs):
+        def wrapper(*args, httpreq: Request, **kwargs):
             if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
 
@@ -63,7 +68,7 @@ def permission_on_target(permission: roles.Permission):
 def permission_on_ids(permission: roles.Permission):
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, httpreq: Request, **kwargs):
+        def wrapper(*args, httpreq: Request, **kwargs):
             ids: list[str] = kwargs["request"].ids
             if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
@@ -89,7 +94,7 @@ def permission_on_ids(permission: roles.Permission):
 def global_permission(permission: roles.Permission):
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, httpreq: Request, **kwargs):
+        def wrapper(*args, httpreq: Request, **kwargs):
             if not RBAC_ENABLED or httpreq.state.user.admin:
                 return func(*args, httpreq=httpreq, **kwargs)
             if httpreq.state.user.global_role & permission == permission:
