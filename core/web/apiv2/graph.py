@@ -6,7 +6,17 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 from pydantic.functional_validators import field_validator
 
-from core.schemas import dfiq, entity, graph, indicator, observable, rbac, roles, tag
+from core.schemas import (
+    dfiq,
+    entity,
+    graph,
+    indicator,
+    observable,
+    rbac,
+    roles,
+    tag,
+    user,
+)
 from core.schemas.graph import GraphFilter
 from core.schemas.tag import MAX_TAGS_REQUEST
 
@@ -119,9 +129,11 @@ class GraphSearchResponse(BaseModel):
         | entity.EntityTypesRuntime
         | indicator.IndicatorTypesRuntime
         | tag.Tag
-        | dfiq.DFIQTypes,
+        | dfiq.DFIQTypes
+        | user.User
+        | rbac.Group,
     ]
-    paths: list[list[graph.Relationship]]
+    paths: list[list[graph.RelationshipTypes]]
     total: int
 
 

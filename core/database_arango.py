@@ -23,6 +23,12 @@ from typing import (
 
 if TYPE_CHECKING:
     from core.schemas import dfiq, entity, indicator, observable, rbac, roles, tag, user
+
+    # `neighbors()`'s own `user` parameter shadows the module inside its body
+    # (though not in its signature annotations, which resolve against this
+    # module's globals) -- this alias lets a body-position forward-ref string
+    # (the return-value cast) still reach the schema module.
+    from core.schemas import user as user_schema
     from core.schemas.graph import (
         GraphFilter,
         Relationship,
@@ -901,7 +907,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
     ) -> tuple[
         dict[
             str,
-            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag | dfiq.DFIQTypes | user.User | rbac.Group",
         ],
         List[List["RelationshipTypes"]],
         int,
@@ -1031,15 +1037,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._build_vertices(vertices, path["vertices"])
         if not include_original:
             vertices.pop(self.extended_id, None)
-        # _build_vertices can also populate Tag/User/Group/DFIQ instances (its
-        # type_mapping isn't limited to observable/entity/indicator), which the
-        # declared return type below doesn't enumerate -- a pre-existing gap,
-        # not something this cast newly introduces. Cast to the documented
-        # contract rather than widen it here; auditing every neighbors()
-        # caller for that gap is a separate, its own follow-up.
+        # `vertices` is typed as the base ArangoYetiConnector locally (matching
+        # any connector-mixed schema), but every value _build_vertices actually
+        # constructs is one of the members below (Tag/User/Group/DFIQ included
+        # -- its type_mapping isn't limited to observable/entity/indicator).
         return (
             cast(
-                "dict[str, observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag]",
+                "dict[str, observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag | dfiq.DFIQTypes | user_schema.User | rbac.Group]",
                 vertices,
             ),
             paths,
