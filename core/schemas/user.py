@@ -140,9 +140,11 @@ class User(YetiModel, database_arango.ArangoYetiConnector):
             for edge in path:
                 assert isinstance(edge, graph.RoleRelationship)
                 group = groups[edge.target]
+                if not isinstance(group, rbac.Group):
+                    continue
                 group._acls[self.username] = edge
                 all_groups[group.name] = group
-        return list(groups.values())
+        return [g for g in groups.values() if isinstance(g, rbac.Group)]
 
 
 class UserSensitive(User):
