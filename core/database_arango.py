@@ -1031,7 +1031,20 @@ class ArangoYetiConnector(AbstractYetiConnector):
             self._build_vertices(vertices, path["vertices"])
         if not include_original:
             vertices.pop(self.extended_id, None)
-        return vertices, paths, total or 0
+        # _build_vertices can also populate Tag/User/Group/DFIQ instances (its
+        # type_mapping isn't limited to observable/entity/indicator), which the
+        # declared return type below doesn't enumerate -- a pre-existing gap,
+        # not something this cast newly introduces. Cast to the documented
+        # contract rather than widen it here; auditing every neighbors()
+        # caller for that gap is a separate, its own follow-up.
+        return (
+            cast(
+                "dict[str, observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag]",
+                vertices,
+            ),
+            paths,
+            total or 0,
+        )
 
     def _dedup_edges(self, edges):
         """Deduplicates edges with same STIX ID, keeping the most recent one.

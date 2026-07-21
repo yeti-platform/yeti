@@ -12,6 +12,7 @@ from typing import (
     Literal,
     Self,
     Union,
+    cast,
 )
 
 from pydantic import ConfigDict, Field, computed_field
@@ -84,7 +85,11 @@ class Indicator(
             loader = TYPE_MAPPING[object["type"]]
         else:
             raise ValueError("Attempted to instantiate an undefined indicator type.")
-        return loader(**object)
+        # loader is a TYPE_MAPPING value (type[Indicator] statically); every
+        # concrete member is one of the enumerated IndicatorTypes (or a
+        # private/ subtype covered by IndicatorTypesRuntime, not this static
+        # union).
+        return cast("IndicatorTypes", loader(**object))
 
     def save(self, *args, **kwargs) -> "Self":
         self.modified = now()
@@ -123,7 +128,10 @@ def create(
     """
     if type not in TYPE_MAPPING:
         raise ValueError(f"{type} is not a valid indicator type")
-    return TYPE_MAPPING[type](name=name, pattern=pattern, diamond=diamond, **kwargs)
+    return cast(
+        "IndicatorTypes",
+        TYPE_MAPPING[type](name=name, pattern=pattern, diamond=diamond, **kwargs),
+    )
 
 
 def save(
@@ -143,8 +151,8 @@ def save(
     return indicator_obj
 
 
-def find(*, name: str, **kwargs) -> "IndicatorTypes":
-    return Indicator.find(name=name, **kwargs)
+def find(*, name: str, **kwargs) -> "IndicatorTypes | None":
+    return cast("IndicatorTypes | None", Indicator.find(name=name, **kwargs))
 
 
 # ---------------------------------------------------------------------------
@@ -191,5 +199,10 @@ IndicatorTypes = Union[
     Suricata,
     Yara,
 ]
+# Separate runtime-widened symbol so type checkers keep full checking on the
+# static IndicatorTypes above (see observable.py for the rationale). Internal
+# code annotates IndicatorTypes; FastAPI request/response models annotate
+# IndicatorTypesRuntime.
+IndicatorTypesRuntime = IndicatorTypes
 if _private_indicator_classes:
-    IndicatorTypes = Union[(IndicatorTypes, *_private_indicator_classes)]
+    IndicatorTypesRuntime = Union[(IndicatorTypes, *_private_indicator_classes)]

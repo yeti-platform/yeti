@@ -115,9 +115,9 @@ class GraphSearchResponse(BaseModel):
 
     vertices: dict[
         str,
-        observable.ObservableTypes
-        | entity.EntityTypes
-        | indicator.IndicatorTypes
+        observable.ObservableTypesRuntime
+        | entity.EntityTypesRuntime
+        | indicator.IndicatorTypesRuntime
         | tag.Tag
         | dfiq.DFIQTypes,
     ]
@@ -240,10 +240,10 @@ class AnalysisRequest(BaseModel):
 
 
 class AnalysisResponse(BaseModel):
-    entities: list[tuple[graph.Relationship, entity.EntityTypes]]
-    observables: list[tuple[graph.Relationship, observable.ObservableTypes]]
-    known: list[observable.ObservableTypes]
-    matches: list[tuple[str, indicator.IndicatorTypes]]  # IndicatorMatch?
+    entities: list[tuple[graph.Relationship, entity.EntityTypesRuntime]]
+    observables: list[tuple[graph.Relationship, observable.ObservableTypesRuntime]]
+    known: list[observable.ObservableTypesRuntime]
+    matches: list[tuple[str, indicator.IndicatorTypesRuntime]]  # IndicatorMatch?
     unknown: set[str]
 
 

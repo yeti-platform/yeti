@@ -1,18 +1,10 @@
 import datetime
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import ClassVar, Literal
 
 from pydantic import ConfigDict, computed_field
 
 from core import database_arango
 from core.schemas.model import YetiBaseModel, YetiModel
-
-if TYPE_CHECKING:
-    from core.schemas.dfiq import DFIQTypes
-    from core.schemas.entity import EntityTypes
-    from core.schemas.indicator import IndicatorTypes
-    from core.schemas.observable import ObservableTypes
-
-    AllObjectTypes = EntityTypes | ObservableTypes | IndicatorTypes | DFIQTypes
 
 
 class AuditLog(YetiModel, database_arango.ArangoYetiConnector):
@@ -62,8 +54,8 @@ class TimelineLog(YetiBaseModel, database_arango.ArangoYetiConnector):
 
 def log_timeline(
     username: str,
-    new: "AllObjectTypes",
-    old: "AllObjectTypes" = None,
+    new: "YetiBaseModel",
+    old: "YetiBaseModel | None" = None,
     action: str | None = None,
     details: dict | None = None,
 ):
@@ -90,7 +82,7 @@ def log_timeline(
         ).save()
 
 
-def log_timeline_tags(actor: str, obj: "AllObjectTypes", old_tags: list[str]):
+def log_timeline_tags(actor: str, obj: "YetiBaseModel", old_tags: list[str]):
     new_tags = {tag.name for tag in getattr(obj, "tags", [])}
     details = {
         "removed": set(old_tags) - new_tags,

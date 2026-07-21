@@ -11,6 +11,7 @@ from core.schemas.indicator import (
     Indicator,
     IndicatorType,
     IndicatorTypes,
+    IndicatorTypesRuntime,
     Yara,
 )
 from core.schemas.tag import MAX_TAGS_REQUEST
@@ -24,13 +25,13 @@ logger = logging.getLogger(__name__)
 class NewIndicatorRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    indicator: IndicatorTypes = Field(discriminator="type")
+    indicator: IndicatorTypesRuntime = Field(discriminator="type")
 
 
 class PatchIndicatorRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    indicator: IndicatorTypes = Field(discriminator="type")
+    indicator: IndicatorTypesRuntime = Field(discriminator="type")
 
 
 class IndicatorSearchRequest(BaseModel):
@@ -58,7 +59,7 @@ class IndicatorMultipleGetRequest(BaseModel):
 class IndicatorSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    indicators: list[IndicatorTypes]
+    indicators: list[IndicatorTypesRuntime]
     total: int
 
 
@@ -107,7 +108,7 @@ router = APIRouter()
 
 @router.post("/")
 @rbac.global_permission(roles.Permission.WRITE)
-def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
+def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypesRuntime:
     """Creates a new indicator in the database."""
     try:
         new = request.indicator.save()
@@ -123,9 +124,11 @@ def new(httpreq: Request, request: NewIndicatorRequest) -> IndicatorTypes:
 
 @router.patch("/{id}")
 @rbac.permission_on_target(roles.Permission.WRITE)
-def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> IndicatorTypes:
+def patch(
+    httpreq: Request, request: PatchIndicatorRequest, id: str
+) -> IndicatorTypesRuntime:
     """Modifies an indicator in the database."""
-    db_indicator: IndicatorTypes = Indicator.get(id)
+    db_indicator = Indicator.get(id)
     if not db_indicator:
         raise HTTPException(status_code=404, detail=f"Indicator {id} not found")
 
@@ -151,7 +154,7 @@ def patch(httpreq: Request, request: PatchIndicatorRequest, id: str) -> Indicato
 @rbac.permission_on_target(roles.Permission.WRITE)
 def add_context(
     httpreq: Request, id: str, request: context.AddContextRequest
-) -> IndicatorTypes:
+) -> IndicatorTypesRuntime:
     """Adds context to an indicator."""
     return context.add_context(Indicator, httpreq, id, request)
 
@@ -160,7 +163,7 @@ def add_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def replace_context(
     httpreq: Request, id: str, request: context.ReplaceContextRequest
-) -> IndicatorTypes:
+) -> IndicatorTypesRuntime:
     """Replaces context in an indicator."""
     return context.replace_context(Indicator, httpreq, id, request)
 
@@ -169,7 +172,7 @@ def replace_context(
 @rbac.permission_on_target(roles.Permission.WRITE)
 def delete_context(
     httpreq: Request, id, request: context.DeleteContextRequest
-) -> IndicatorTypes:
+) -> IndicatorTypesRuntime:
     """Removes context to an indicator."""
     return context.delete_context(Indicator, httpreq, id, request)
 
@@ -179,7 +182,7 @@ def get(
     httpreq: Request,
     name: str,
     type: IndicatorType | None = None,
-) -> IndicatorTypes:
+) -> IndicatorTypesRuntime:
     """Gets an indicator by name."""
 
     params = {"name": name}
@@ -209,9 +212,9 @@ def get(
 
 @router.get("/{id}")
 @rbac.permission_on_target(roles.Permission.READ)
-def details(httpreq: Request, id: str) -> IndicatorTypes:
+def details(httpreq: Request, id: str) -> IndicatorTypesRuntime:
     """Returns details about an indicator."""
-    db_indicator: IndicatorTypes = Indicator.get(id)
+    db_indicator = Indicator.get(id)
     if not db_indicator:
         raise HTTPException(status_code=404, detail="indicator not found")
     db_indicator.get_tags()

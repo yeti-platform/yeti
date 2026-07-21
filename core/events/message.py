@@ -37,12 +37,12 @@ class EventType(str, Enum):
 
 
 ObservableObjectTypes = Annotated[
-    "observable.ObservableTypes", Field(discriminator="type")
+    "observable.ObservableTypesRuntime", Field(discriminator="type")
 ]
 TaskObjectTypes = Annotated["task.TaskTypes", Field(discriminator="type")]
-EntityObjectTypes = Annotated["entity.EntityTypes", Field(discriminator="type")]
+EntityObjectTypes = Annotated["entity.EntityTypesRuntime", Field(discriminator="type")]
 IndicatorObjectTypes = Annotated[
-    "indicator.IndicatorTypes", Field(discriminator="type")
+    "indicator.IndicatorTypesRuntime", Field(discriminator="type")
 ]
 UserTypes = Union["user.UserSensitive", "user.User"]
 
