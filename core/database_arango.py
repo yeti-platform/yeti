@@ -41,7 +41,7 @@ import requests
 from arango import ArangoClient
 from arango.cursor import Cursor
 from arango.database import StandardDatabase
-from arango.exceptions import DocumentInsertError
+from arango.exceptions import DocumentInsertError, ViewDeleteError, ViewGetError
 from arango.job import AsyncJob
 from arango.result import Result
 
@@ -379,7 +379,7 @@ class ArangoDatabase:
                 else:
                     self.db.view(f"{view_target}_view")
                     continue
-            except Exception:
+            except (ViewGetError, ViewDeleteError):
                 pass
 
             link_definitions[view_target] = {
@@ -408,7 +408,7 @@ class ArangoDatabase:
             else:
                 self.db.view("all_objects_view")
                 return
-        except Exception:
+        except (ViewGetError, ViewDeleteError):
             pass
 
         for target in link_definitions:
@@ -1428,7 +1428,13 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return yeti_objects
 
     def _delete_vertex_refs_in_graphs(self, vertex_id):
-        for graph_name in {"tags", "systemroles", "threat_graph"}:
+        # "tags" is a leftover from the pre-embedded-tags design (see the old
+        # LINK_TYPE_TO_GRAPH = {"tagged": "tags", ...} this replaced) -- tags
+        # are embedded properties now, no graph or edge collection backs a
+        # "tags" name, and create_graphs() never creates one. Asking self._db
+        # for it here used to silently auto-create an empty graph by that
+        # name on the first ever object deletion.
+        for graph_name in {"systemroles", "threat_graph"}:
             graph = self._db.graph(graph_name)
             job = graph.edge_definitions()
             while job.status() != "done":
