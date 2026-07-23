@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, List, Type, TypeVar
 
 if TYPE_CHECKING:
-    from core.schemas import entity, graph, indicator, observable, tag, user
+    from core.schemas import dfiq, entity, graph, indicator, observable, rbac, tag, user
 
 TYetiObject = TypeVar("TYetiObject")
 
@@ -112,7 +112,7 @@ class AbstractYetiConnector(ABC):
     ) -> tuple[
         dict[
             str,
-            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag",
+            "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | tag.Tag | dfiq.DFIQTypes | user.User | rbac.Group",
         ],
         List[List["graph.RelationshipTypes"]],
         int,

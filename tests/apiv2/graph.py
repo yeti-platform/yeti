@@ -6,6 +6,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from core import database_arango
+from core.schemas import rbac, roles
 from core.schemas.entity import AttackPattern, Malware, ThreatActor
 from core.schemas.graph import Relationship
 from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
@@ -84,6 +85,36 @@ class SimpleGraphTest(unittest.TestCase):
         data = response.json()
         self.assertEqual(response.status_code, 400, data)
         self.assertIn("Cannot traverse graph 'tagged'", data["detail"])
+
+    def test_get_neighbors_acls_graph(self):
+        # Traversing the "acls" graph can surface Group/RoleRelationship
+        # vertices/edges that GraphSearchResponse previously didn't declare,
+        # which raised a pydantic ValidationError (500) instead of a response.
+        group = rbac.Group(name="acls-graph-test-group").save()
+        group.link_to_acl(self.observable1, roles.Role.OWNER)
+
+        response = client.post(
+            "/api/v2/graph/search",
+            json={
+                "source": self.observable1.extended_id,
+                "hops": 1,
+                "graph": "acls",
+                "direction": "inbound",
+                "include_original": False,
+            },
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertEqual(len(data["vertices"]), 1)
+        vertex = data["vertices"][group.extended_id]
+        self.assertEqual(vertex["name"], "acls-graph-test-group")
+        self.assertEqual(vertex["root_type"], "rbacgroup")
+
+        edges = data["paths"]
+        self.assertEqual(len(edges), 1)
+        self.assertEqual(edges[0][0]["source"], group.extended_id)
+        self.assertEqual(edges[0][0]["target"], self.observable1.extended_id)
+        self.assertEqual(edges[0][0]["root_type"], "acl")
 
     def test_get_neighbors_bad_hops(self):
         response = client.post(
