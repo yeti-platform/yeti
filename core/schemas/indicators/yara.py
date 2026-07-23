@@ -171,7 +171,13 @@ class Yara(indicator.Indicator):
 
         for edge in relationships:
             for rel in edge:
-                if nodes[rel.target].name not in self.dependencies:
+                # "depends" links only ever connect Yara indicators to other
+                # Yara indicators, so the target vertex is always a Yara --
+                # but neighbors() is typed for any graph, hence the narrow.
+                target = nodes[rel.target]
+                if not isinstance(target, Yara):
+                    continue
+                if target.name not in self.dependencies:
                     rel.delete()
 
         for dependency in self.dependencies:

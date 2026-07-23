@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field, computed_field
 from core import database_arango
 from core.helpers import now
 from core.schemas import audit, indicator, rbac
+from core.schemas.graph import Relationship
 from core.schemas.model import YetiAclModel, YetiModel
 
 LATEST_SUPPORTED_DFIQ_VERSION = "1.1.0"
@@ -304,6 +305,11 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
         vertices, relationships, total = self.neighbors()
         for edge in relationships:
             for rel in edge:
+                # This walks the default "links" graph, so edges are always
+                # Relationship, never the acls graph's RoleRelationship -- but
+                # neighbors() is typed for any graph, so narrow explicitly.
+                if not isinstance(rel, Relationship):
+                    continue
                 if rel.type not in {t.value for t in DFIQType}:
                     continue
                 if rel.target != self.extended_id:

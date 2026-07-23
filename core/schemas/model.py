@@ -11,6 +11,8 @@ from core.events.producer import producer
 from core.schemas.graph import RoleRelationship
 
 if TYPE_CHECKING:
+    from core.schemas import dfiq, entity, indicator, observable, rbac, user
+    from core.schemas.graph import RelationshipTypes
     from core.schemas.tag import Tag
 
 
@@ -39,7 +41,16 @@ class YetiBaseModel(BaseModel):
 
         def delete(self, *args: Any, **kwargs: Any) -> None: ...
 
-        def neighbors(self, *args: Any, **kwargs: Any) -> Any: ...
+        def neighbors(
+            self, *args: Any, **kwargs: Any
+        ) -> tuple[
+            dict[
+                str,
+                "observable.ObservableTypes | entity.EntityTypes | indicator.IndicatorTypes | Tag | dfiq.DFIQTypes | user.User | rbac.Group",
+            ],
+            list[list["RelationshipTypes"]],
+            int,
+        ]: ...
 
         @property
         def extended_id(self) -> str: ...
@@ -122,17 +133,22 @@ class YetiAclModel(YetiBaseModel):
         Args:
             user: The user to check permissions for.
         """
+        # Avoid circular dependency (rbac/user both import from this module).
+        from core.schemas import rbac, user
+
         vertices, paths, total = self.neighbors(
             graph="acls", direction="inbound", max_hops=1 if direct else 2
         )
         for path in paths:
             source = path[-1].source  # inbound, so source is last.
             for edge in path:
+                if not isinstance(edge, RoleRelationship):
+                    continue
                 if edge.target == self.extended_id:
                     identity = vertices[source]
-                    if identity.root_type == "rbacgroup":
+                    if isinstance(identity, rbac.Group):
                         self._acls[identity.name] = edge
-                    if identity.root_type == "user":
+                    if isinstance(identity, user.User):
                         self._acls[identity.username] = edge
 
 
