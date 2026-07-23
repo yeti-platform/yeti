@@ -95,6 +95,20 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual([tag.name for tag in result.tags], ["tag1"])
         self.assertEqual(result.context[0], {"source": "source1", "some": "info"})
 
+    def test_observable_delete_no_spurious_tags_graph(self) -> None:
+        # _delete_vertex_refs_in_graphs used to include a "tags" entry left
+        # over from the pre-embedded-tags design; since create_graphs() never
+        # creates a graph by that name, and graph() auto-creates whatever it's
+        # asked for, the first ever deletion silently left a stray empty
+        # "tags" graph in the database.
+        if self.db.db.has_graph("tags"):
+            self.db.db.delete_graph("tags")
+
+        result = hostname.Hostname(value="delete-me.example.com").save()
+        result.delete()
+
+        self.assertFalse(self.db.db.has_graph("tags"))
+
     def test_create_generic_observable(self):
         result = generic.Generic(value="Some_String").save()
         self.assertIsNotNone(result.id)

@@ -41,7 +41,7 @@ import requests
 from arango import ArangoClient
 from arango.cursor import Cursor
 from arango.database import StandardDatabase
-from arango.exceptions import DocumentInsertError
+from arango.exceptions import DocumentInsertError, ViewDeleteError, ViewGetError
 from arango.job import AsyncJob
 from arango.result import Result
 
@@ -379,7 +379,7 @@ class ArangoDatabase:
                 else:
                     self.db.view(f"{view_target}_view")
                     continue
-            except Exception:
+            except (ViewGetError, ViewDeleteError):
                 pass
 
             link_definitions[view_target] = {
@@ -408,7 +408,7 @@ class ArangoDatabase:
             else:
                 self.db.view("all_objects_view")
                 return
-        except Exception:
+        except (ViewGetError, ViewDeleteError):
             pass
 
         for target in link_definitions:
@@ -1428,7 +1428,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return yeti_objects
 
     def _delete_vertex_refs_in_graphs(self, vertex_id):
-        for graph_name in {"tags", "systemroles", "threat_graph"}:
+        for graph_name in {"systemroles", "threat_graph"}:
             graph = self._db.graph(graph_name)
             job = graph.edge_definitions()
             while job.status() != "done":
