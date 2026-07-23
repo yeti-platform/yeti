@@ -1428,12 +1428,6 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return yeti_objects
 
     def _delete_vertex_refs_in_graphs(self, vertex_id):
-        # "tags" is a leftover from the pre-embedded-tags design (see the old
-        # LINK_TYPE_TO_GRAPH = {"tagged": "tags", ...} this replaced) -- tags
-        # are embedded properties now, no graph or edge collection backs a
-        # "tags" name, and create_graphs() never creates one. Asking self._db
-        # for it here used to silently auto-create an empty graph by that
-        # name on the first ever object deletion.
         for graph_name in {"systemroles", "threat_graph"}:
             graph = self._db.graph(graph_name)
             job = graph.edge_definitions()
