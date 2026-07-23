@@ -1,6 +1,7 @@
 import logging
 import sys
 import time
+import typing
 import unittest
 
 from fastapi.testclient import TestClient
@@ -8,11 +9,12 @@ from fastapi.testclient import TestClient
 from core import database_arango
 from core.schemas import rbac, roles
 from core.schemas.entity import AttackPattern, Malware, ThreatActor
-from core.schemas.graph import Relationship
+from core.schemas.graph import Relationship, RoleRelationship
 from core.schemas.indicator import DiamondModel, ForensicArtifact, Query, Regex
 from core.schemas.observables import hostname, ipv4, url
 from core.schemas.user import UserSensitive
 from core.web import webapp
+from core.web.apiv2.graph import GraphSearchResponse
 
 client = TestClient(webapp.app)
 
@@ -653,6 +655,84 @@ supported_os:
                 "/var/spool/cron/**",
             },
         )
+
+
+class GraphSearchResponseContractTest(unittest.TestCase):
+    """Guards GraphSearchResponse's declared vertex/edge types against
+    everything ArangoYetiConnector._build_vertices/_build_edges can actually
+    construct.
+
+    This is the systemic version of the bug fixed in #1323: Group/User
+    vertices (and RoleRelationship edges) were constructible by the acls-graph
+    traversal but missing from GraphSearchResponse's declared union, which
+    only surfaced as a live 500 once someone queried a graph+data combination
+    that actually produced one. Comparing the two registries structurally
+    catches the same class of gap immediately -- no DB, no seeded graph data,
+    no need to guess which graph+data combination would expose it -- and
+    fails just as fast if a future TYPE_MAPPING addition (or a new vertex kind
+    mixed into _build_vertices) isn't reflected here.
+    """
+
+    def _flatten(self, tp) -> set[type]:
+        origin = typing.get_origin(tp)
+        if origin is typing.Annotated:
+            return self._flatten(typing.get_args(tp)[0])
+        if origin is None:
+            return {tp}
+        members: set[type] = set()
+        for arg in typing.get_args(tp):
+            if arg is type(None):
+                continue
+            members |= self._flatten(arg)
+        return members
+
+    def test_vertices_union_covers_build_vertices_output(self):
+        from core.schemas import dfiq, entity, indicator, observable, rbac, tag, user
+
+        # The base classes are also registered under generic TYPE_MAPPING
+        # aliases ("observable", "entity", ...) for internal lookup fallbacks;
+        # no real persisted document ever carries that literal type value, so
+        # they're excluded here rather than added to the response union.
+        registry_aliases = {
+            observable.Observable,
+            entity.Entity,
+            indicator.Indicator,
+            dfiq.DFIQBase,
+        }
+        constructible = {tag.Tag, user.User, rbac.Group}
+        constructible |= set(observable.TYPE_MAPPING.values())
+        constructible |= set(entity.TYPE_MAPPING.values())
+        constructible |= set(indicator.TYPE_MAPPING.values())
+        constructible |= set(dfiq.TYPE_MAPPING.values())
+        constructible -= registry_aliases
+
+        value_type = typing.get_args(
+            GraphSearchResponse.model_fields["vertices"].annotation
+        )[1]
+        declared = self._flatten(value_type)
+
+        for cls in sorted(constructible, key=lambda c: c.__name__):
+            with self.subTest(cls=cls.__name__):
+                self.assertTrue(
+                    any(issubclass(cls, member) for member in declared),
+                    f"{cls.__name__} can be constructed by _build_vertices "
+                    "but is missing from GraphSearchResponse.vertices' "
+                    "declared type",
+                )
+
+    def test_paths_union_covers_build_edges_output(self):
+        inner_list = typing.get_args(
+            GraphSearchResponse.model_fields["paths"].annotation
+        )[0]
+        declared = self._flatten(typing.get_args(inner_list)[0])
+
+        for cls in (Relationship, RoleRelationship):
+            with self.subTest(cls=cls.__name__):
+                self.assertTrue(
+                    any(issubclass(cls, member) for member in declared),
+                    f"{cls.__name__} can be constructed by _build_edges but "
+                    "is missing from GraphSearchResponse.paths' declared type",
+                )
 
 
 if __name__ == "__main__":
