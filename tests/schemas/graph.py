@@ -1,3 +1,4 @@
+import concurrent.futures
 import time
 import unittest
 
@@ -35,6 +36,31 @@ class GraphTest(unittest.TestCase):
         self.observable1.delete()
         all_relationships = list(Relationship.list())
         self.assertEqual(len(all_relationships), 0)
+
+    def test_concurrent_link_to_same_pair_is_atomic(self) -> None:
+        """Concurrent link_to() calls for the same (source, target, type) must
+        collapse into one edge with an accurate count, not one edge per
+        caller with the count updates racing each other."""
+        concurrent_calls = 20
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+            list(
+                executor.map(
+                    lambda _: self.observable1.link_to(
+                        self.observable2, "resolves", "DNS resolution"
+                    ),
+                    range(concurrent_calls),
+                )
+            )
+
+        matching = [
+            r
+            for r in Relationship.list()
+            if r.source == self.observable1.extended_id
+            and r.target == self.observable2.extended_id
+            and r.type == "resolves"
+        ]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0].count, concurrent_calls)
 
     def test_observable_to_observable_link(self) -> None:
         """Tests that a link between two observables can be created."""

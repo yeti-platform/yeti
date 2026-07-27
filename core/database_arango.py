@@ -41,7 +41,12 @@ import requests
 from arango import ArangoClient
 from arango.cursor import Cursor
 from arango.database import StandardDatabase
-from arango.exceptions import DocumentInsertError, ViewDeleteError, ViewGetError
+from arango.exceptions import (
+    AQLQueryExecuteError,
+    DocumentInsertError,
+    ViewDeleteError,
+    ViewGetError,
+)
 from arango.job import AsyncJob
 from arango.result import Result
 
@@ -105,6 +110,36 @@ def _wait_for_async_job(job: "Result[T]") -> T:
     while async_job.status() != "done":
         time.sleep(ASYNC_JOB_WAIT_TIME)
     return async_job.result()
+
+
+ARANGO_CONFLICT_ERROR_CODE = 1200  # write-write conflict
+AQL_CONFLICT_MAX_RETRIES = 10
+
+
+def _execute_aql_with_conflict_retry(
+    db: "ArangoDatabase", aql: str, bind_vars: dict
+) -> "Cursor":
+    """Execute a single-document AQL UPSERT/UPDATE, retrying on conflict.
+
+    ArangoDB evaluates an UPSERT/UPDATE against one document atomically
+    server-side (no client read-modify-write gap), but rejects one side of a
+    genuinely concurrent write to the *same* document with error 1200
+    ("write-write conflict") rather than silently losing an update. Retrying
+    is correct here specifically because the query is self-contained (it
+    reads and writes the same document in one statement) -- there is no
+    earlier client-side read to go stale.
+    """
+    for attempt in range(AQL_CONFLICT_MAX_RETRIES):
+        try:
+            return cast("Cursor", db.aql.execute(aql, bind_vars=bind_vars))
+        except AQLQueryExecuteError as error:
+            if (
+                error.error_code != ARANGO_CONFLICT_ERROR_CODE
+                or attempt == AQL_CONFLICT_MAX_RETRIES - 1
+            ):
+                raise
+            time.sleep(ASYNC_JOB_WAIT_TIME * (attempt + 1))
+    raise AssertionError("unreachable")
 
 
 class ArangoDatabase:
@@ -733,6 +768,12 @@ class ArangoYetiConnector(AbstractYetiConnector):
     ) -> "Relationship":
         """Creates a link between two YetiObjects.
 
+        Idempotent and safe under concurrent calls for the same
+        (source, target, relationship_type): the existence check and the
+        insert-or-bump-count are a single atomic ArangoDB UPSERT, so two
+        concurrent callers can't both see "no edge yet" and each create one
+        (which used to produce duplicate edges with an undercounted total).
+
         Args:
           target: The YetiObject to link to.
           relationship_type: The type of link. (e.g. targets, uses, mitigates)
@@ -741,73 +782,45 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Avoid circular dependency
         from core.schemas.graph import Relationship
 
-        async_graph = self._db.graph("threat_graph")
-
-        # Check if a relationship with the same link_type already exists
-        aql = """
-        WITH observables
-
-        FOR v, e, p IN 1..1 OUTBOUND @extended_id
-        links
-          FILTER e.type == @relationship_type
-          FILTER v._id == @target_extended_id
-        RETURN e"""
-        args = {
-            "extended_id": self.extended_id,
-            "target_extended_id": target.extended_id,
-            "relationship_type": relationship_type,
-        }
-        neighbors = self._db.aql.execute(aql, bind_vars=args)
-        if not neighbors.empty():
-            neighbor = neighbors.pop()
-            neighbor["__id"] = neighbor.pop("_key")
-            relationship = Relationship.load(neighbor)
-            relationship.modified = datetime.datetime.now(datetime.timezone.utc)
-            relationship.description = description
-            relationship.count += 1
-            edge = json.loads(relationship.model_dump_json())
-            edge["_id"] = neighbor["_id"]
-            job = async_graph.update_edge(edge)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            if self._collection_name not in ("auditlog", "timeline"):
-                try:
-                    event = message.LinkEvent(
-                        type=message.EventType.update,
-                        source_object=self,
-                        target_object=target,
-                        relationship=relationship,
-                    )
-                    producer.publish_event(event)
-                except Exception:
-                    logging.exception("Error while publishing event")
-            return relationship
-
-        relationship = Relationship(
+        now = datetime.datetime.now(datetime.timezone.utc)
+        new_relationship = Relationship(
             type=relationship_type,
             source=self.extended_id,
             target=target.extended_id,
             count=1,
             description=description,
-            created=datetime.datetime.now(datetime.timezone.utc),
-            modified=datetime.datetime.now(datetime.timezone.utc),
+            created=now,
+            modified=now,
         )
-        col = async_graph.edge_collection("links")
-        job = col.link(
-            self.extended_id,
-            target.extended_id,
-            data=json.loads(relationship.model_dump_json()),
-            return_new=True,
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        result = job.result()["new"]
-        result["__id"] = result.pop("_key")
-        relationship = Relationship.load(result)
+        insert_doc = json.loads(new_relationship.model_dump_json())
+        insert_doc["_from"] = self.extended_id
+        insert_doc["_to"] = target.extended_id
+
+        aql = """
+        UPSERT { _from: @from, _to: @to, type: @type }
+        INSERT @insert_doc
+        UPDATE { count: OLD.count + 1, description: @description, modified: @modified }
+        IN links
+        RETURN { new: NEW, old: OLD }
+        """
+        args = {
+            "from": self.extended_id,
+            "to": target.extended_id,
+            "type": relationship_type,
+            "insert_doc": insert_doc,
+            "description": description,
+            "modified": insert_doc["modified"],
+        }
+        result = list(_execute_aql_with_conflict_retry(self._db, aql, args))[0]
+        is_new = result["old"] is None
+        document = result["new"]
+        document["__id"] = document.pop("_key")
+        relationship = Relationship.load(document)
+
         if self._collection_name not in ("auditlog", "timeline"):
             try:
                 event = message.LinkEvent(
-                    type=message.EventType.new,
+                    type=message.EventType.new if is_new else message.EventType.update,
                     source_object=self,
                     target_object=target,
                     relationship=relationship,
@@ -820,6 +833,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
     def link_to_acl(self, target, role: "roles.Permission") -> "RoleRelationship":
         """Creates a link between two YetiObjects.
 
+        Idempotent and safe under concurrent calls for the same
+        (source, target): the existence check and the insert-or-reassign-role
+        are a single atomic ArangoDB UPSERT (see link_to()).
+
         Args:
           target: The YetiObject to link to.
           role: The role to assign to the target.
@@ -827,50 +844,33 @@ class ArangoYetiConnector(AbstractYetiConnector):
         # Avoid circular dependency
         from core.schemas.graph import RoleRelationship
 
-        async_graph = self._db.graph("systemroles")
-
-        aql = """
-        WITH users, groups
-
-        FOR v, e, p IN 1..1 OUTBOUND @extended_id
-        acls
-          FILTER v._id == @target_extended_id
-        RETURN e"""
-        args = {
-            "extended_id": self.extended_id,
-            "target_extended_id": target.extended_id,
-        }
-        neighbors = self._db.aql.execute(aql, bind_vars=args)
-        if not neighbors.empty():
-            neighbor = neighbors.pop()
-            neighbor["__id"] = neighbor.pop("_key")
-            relationship = RoleRelationship.load(neighbor)
-            relationship.modified = datetime.datetime.now(datetime.timezone.utc)
-            relationship.role = role
-            edge = json.loads(relationship.model_dump_json())
-            edge["_id"] = neighbor["_id"]
-            job = async_graph.update_edge(edge)
-            while job.status() != "done":
-                time.sleep(ASYNC_JOB_WAIT_TIME)
-            return relationship
-
-        relationship = RoleRelationship(
+        now = datetime.datetime.now(datetime.timezone.utc)
+        new_relationship = RoleRelationship(
             role=role,
             source=self.extended_id,
             target=target.extended_id,
-            created=datetime.datetime.now(datetime.timezone.utc),
-            modified=datetime.datetime.now(datetime.timezone.utc),
+            created=now,
+            modified=now,
         )
-        col = async_graph.edge_collection("acls")
-        job = col.link(
-            self.extended_id,
-            target.extended_id,
-            data=json.loads(relationship.model_dump_json()),
-            return_new=True,
-        )
-        while job.status() != "done":
-            time.sleep(ASYNC_JOB_WAIT_TIME)
-        result = job.result()["new"]
+        insert_doc = json.loads(new_relationship.model_dump_json())
+        insert_doc["_from"] = self.extended_id
+        insert_doc["_to"] = target.extended_id
+
+        aql = """
+        UPSERT { _from: @from, _to: @to }
+        INSERT @insert_doc
+        UPDATE { role: @role, modified: @modified }
+        IN acls
+        RETURN NEW
+        """
+        args = {
+            "from": self.extended_id,
+            "to": target.extended_id,
+            "insert_doc": insert_doc,
+            "role": insert_doc["role"],
+            "modified": insert_doc["modified"],
+        }
+        result = list(_execute_aql_with_conflict_retry(self._db, aql, args))[0]
         result["__id"] = result.pop("_key")
         return RoleRelationship.load(result)
 
