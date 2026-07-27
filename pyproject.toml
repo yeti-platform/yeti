@@ -121,3 +121,10 @@ unused-ignore-comment = "warn"      # 2 (core-only, env-dependent)
 
 [tool.uv.sources]
 artifacts = { git = "https://github.com/forensicartifacts/artifacts.git", rev = "main" }
+
+[tool.pytest.ini_options]
+# Test modules don't follow the test_*.py convention. No python_classes
+# override is needed: pytest collects unittest.TestCase subclasses by
+# subclass introspection, not name-matching.
+testpaths = ["tests/schemas", "tests/apiv2", "tests/core_tests"]
+python_files = ["*.py"]
