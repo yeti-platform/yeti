@@ -116,7 +116,7 @@ ARANGO_CONFLICT_ERROR_CODE = 1200  # write-write conflict
 AQL_CONFLICT_MAX_RETRIES = 10
 
 
-def _execute_aql_with_conflict_retry(
+def execute_aql_with_conflict_retry(
     db: "ArangoDatabase", aql: str, bind_vars: dict
 ) -> "Cursor":
     """Execute a single-document AQL UPSERT/UPDATE, retrying on conflict.
@@ -811,7 +811,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "description": description,
             "modified": insert_doc["modified"],
         }
-        result = list(_execute_aql_with_conflict_retry(self._db, aql, args))[0]
+        result = list(execute_aql_with_conflict_retry(self._db, aql, args))[0]
         is_new = result["old"] is None
         document = result["new"]
         document["__id"] = document.pop("_key")
@@ -870,7 +870,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
             "role": insert_doc["role"],
             "modified": insert_doc["modified"],
         }
-        result = list(_execute_aql_with_conflict_retry(self._db, aql, args))[0]
+        result = list(execute_aql_with_conflict_retry(self._db, aql, args))[0]
         result["__id"] = result.pop("_key")
         return RoleRelationship.load(result)
 

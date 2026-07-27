@@ -264,8 +264,7 @@ class YetiTagModel(YetiBaseModel):
                     )
                 )
                 action = message.EventType.new
-                db_tag.count += 1
-                db_tag.save()
+                db_tag.increment_count(1)
 
             producer.publish_event(
                 message.TagEvent(
@@ -287,8 +286,7 @@ class YetiTagModel(YetiBaseModel):
                 removed_tag = tag.Tag.find(name=tag_name)
                 if not removed_tag:
                     continue
-                removed_tag.count -= 1
-                removed_tag.save()
+                removed_tag.increment_count(-1)
 
                 producer.publish_event(
                     message.TagEvent(
