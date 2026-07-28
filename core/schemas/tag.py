@@ -1,10 +1,13 @@
 import datetime
+import logging
 from typing import ClassVar, Literal
 
 from pydantic import ConfigDict, Field, computed_field
 
 from core import database_arango
 from core.config.config import yeti_config
+from core.events import message
+from core.events.producer import producer
 from core.helpers import now
 from core.schemas.model import YetiModel
 
@@ -48,6 +51,33 @@ class Tag(YetiModel, database_arango.ArangoYetiConnector):
     @classmethod
     def load(cls, object: dict) -> "Tag":
         return cls(**object)
+
+    def increment_count(self, delta: int) -> None:
+        """Atomically adjust this tag's persisted count by `delta` and update
+        this in-memory instance to match.
+
+        Unlike `self.count += delta; self.save()`, this is safe under
+        concurrent callers tagging/untagging with the same tag -- see
+        link_to()'s docstring in database_arango.py for why a full-document
+        read-modify-write save() isn't.
+        """
+        aql = """
+        FOR t IN tags FILTER t._key == @key
+        UPDATE t WITH { count: t.count + @delta } IN tags
+        RETURN NEW.count
+        """
+        result = list(
+            database_arango.execute_aql_with_conflict_retry(
+                self._db, aql, {"key": self.id, "delta": delta}
+            )
+        )
+        self.count = result[0]
+        try:
+            producer.publish_event(
+                message.ObjectEvent(type=message.EventType.update, yeti_object=self)
+            )
+        except Exception:
+            logging.exception("Error while publishing event")
 
     def absorb(self, other: list[str], permanent: bool) -> int:
         """Absorb other tags into this one."""
