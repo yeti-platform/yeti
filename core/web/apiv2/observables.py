@@ -9,7 +9,7 @@ from core.schemas import audit, model, observable, rbac, roles, tag
 from core.schemas.observable import Observable, ObservableType, ObservableTypesRuntime
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 
-from . import context
+from . import context, tagging
 
 # defaults to 10MiB if not defined
 MAX_FILE_UPLOAD = yeti_config.get("web", "max_file_upload", 10 * 1024 * 1024)
@@ -397,26 +397,18 @@ def tag_observable(
     httpreq: Request, request: ObservableTagRequest
 ) -> ObservableTagResponse:
     """Tags a set of observables, individually or in bulk."""
-    observables = []
-    for observable_id in request.ids:
-        observable_obj = Observable.get(observable_id)
-        if not observable_obj:
-            raise HTTPException(
-                status_code=400,
-                detail="Tagging request contained an unknown observable: ID:{observable_id}",
-            )
-        observables.append(observable_obj)
-
-    observable_tags = {}
-    for observable_obj in observables:
-        old_tags = [tag.name for tag in observable_obj.get_tags().values()]
-        observable_obj = observable_obj.tag(request.tags, clear=request.strict)
-        audit.log_timeline_tags(httpreq.state.username, observable_obj, old_tags)
-        observable_tags[observable_obj.extended_id] = {
-            tag.name: tag for tag in observable_obj.tags
-        }
-
-    return ObservableTagResponse(tagged=len(observables), tags=observable_tags)
+    tagged, tags = tagging.tag_objects(
+        Observable,
+        httpreq,
+        request.ids,
+        request.tags,
+        request.strict,
+        not_found_status_code=400,
+        not_found_detail=(
+            lambda oid: f"Tagging request contained an unknown observable: ID:{oid}"
+        ),
+    )
+    return ObservableTagResponse(tagged=tagged, tags=tags)
 
 
 @router.delete("/{id}")

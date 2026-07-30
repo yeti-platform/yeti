@@ -7,7 +7,7 @@ from core.schemas import audit, model, rbac, roles
 from core.schemas.entity import Entity, EntityType, EntityTypesRuntime
 from core.schemas.tag import MAX_TAGS_REQUEST
 
-from . import context
+from . import context, tagging
 
 
 # Request schemas
@@ -228,21 +228,15 @@ def get_multiple(
 @rbac.permission_on_ids(roles.Permission.WRITE)
 def tag(httpreq: Request, request: EntityTagRequest) -> EntityTagResponse:
     """Tags entities."""
-    entities = []
-    for entity_id in request.ids:
-        db_entity = Entity.get(entity_id)
-        if not db_entity:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Tagging request contained an unknown entity: ID:{entity_id}",
-            )
-        entities.append(db_entity)
-
-    entity_tags = {}
-    for db_entity in entities:
-        old_tags = [tag.name for tag in db_entity.get_tags().values()]
-        db_entity = db_entity.tag(request.tags, clear=request.strict)
-        audit.log_timeline_tags(httpreq.state.username, db_entity, old_tags)
-        entity_tags[db_entity.extended_id] = {tag.name: tag for tag in db_entity.tags}
-
-    return EntityTagResponse(tagged=len(entities), tags=entity_tags)
+    tagged, tags = tagging.tag_objects(
+        Entity,
+        httpreq,
+        request.ids,
+        request.tags,
+        request.strict,
+        not_found_status_code=404,
+        not_found_detail=(
+            lambda eid: f"Tagging request contained an unknown entity: ID:{eid}"
+        ),
+    )
+    return EntityTagResponse(tagged=tagged, tags=tags)
