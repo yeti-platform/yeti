@@ -115,6 +115,19 @@ class AuthTest(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(data["detail"], "Could not validate credentials")
 
+    def test_api_key_used_directly_as_bearer(self) -> None:
+        """A CLI-generated API key has no expiration. Used directly as a raw
+        Bearer token (bypassing the /api-token exchange), it must not crash
+        the server -- its JWT has no exp claim at all rather than a null
+        one, so PyJWT's expiration check is skipped instead of erroring."""
+        response = client.get(
+            "/api/v2/auth/me",
+            headers={"authorization": f"Bearer {self.user1_apikey}"},
+        )
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["username"], "tomchop")
+
     def test_api_key_bearer(self) -> None:
         response = client.post(
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": self.user1_apikey}
