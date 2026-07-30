@@ -184,6 +184,12 @@ class IndicatorTest(unittest.TestCase):
         response = client.get(f"/api/v2/indicators/{self.indicator1.id}")
         self.assertEqual(response.status_code, 404)
 
+    def test_delete_indicator_unknown_id(self):
+        response = client.delete("/api/v2/indicators/doesnotexist")
+        self.assertEqual(response.status_code, 404)
+        data = response.json()
+        self.assertIn("doesnotexist", data["detail"])
+
     def test_patch_indicator(self):
         self.indicator1.pattern = "blah"
         dump = self.indicator1.model_dump_json()

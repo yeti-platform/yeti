@@ -9,7 +9,7 @@ from core.schemas import audit, model, observable, rbac, roles, tag
 from core.schemas.observable import Observable, ObservableType, ObservableTypesRuntime
 from core.schemas.rbac import global_permission, permission_on_ids, permission_on_target
 
-from . import context, tagging
+from . import context, crud, tagging
 
 # defaults to 10MiB if not defined
 MAX_FILE_UPLOAD = yeti_config.get("web", "max_file_upload", 10 * 1024 * 1024)
@@ -256,13 +256,7 @@ def get(
 @permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> ObservableTypesRuntime:
     """Returns details about an observable."""
-    observable_obj = Observable.get(id)
-
-    if not observable_obj:
-        raise HTTPException(status_code=404, detail="Observable not found")
-    observable_obj.get_tags()
-    observable_obj.get_acls()
-    return observable_obj
+    return crud.get_details(Observable, id, "Observable not found")
 
 
 @router.post("/{id}/context")
@@ -415,8 +409,4 @@ def tag_observable(
 @permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     """Deletes an observable."""
-    observable_obj = Observable.get(id)
-    if not observable_obj:
-        raise HTTPException(status_code=404, detail="Observable not found")
-    audit.log_timeline(httpreq.state.username, observable_obj, action="delete")
-    observable_obj.delete()
+    crud.delete_object(Observable, httpreq, id, "Observable not found")

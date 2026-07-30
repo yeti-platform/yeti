@@ -7,7 +7,7 @@ from core.schemas import audit, model, rbac, roles
 from core.schemas.entity import Entity, EntityType, EntityTypesRuntime
 from core.schemas.tag import MAX_TAGS_REQUEST
 
-from . import context, tagging
+from . import context, crud, tagging
 
 
 # Request schemas
@@ -166,23 +166,14 @@ def get(
 @rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> EntityTypesRuntime:
     """Returns details about an observable."""
-    db_entity = Entity.get(id)
-    if not db_entity:
-        raise HTTPException(status_code=404, detail=f"Entity {id} not found")
-    db_entity.get_tags()
-    db_entity.get_acls()
-    return db_entity
+    return crud.get_details(Entity, id, f"Entity {id} not found")
 
 
 @router.delete("/{id}")
 @rbac.permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     """Deletes an Entity."""
-    db_entity = Entity.get(id)
-    if not db_entity:
-        raise HTTPException(status_code=404, detail=f"Entity ID {id} not found")
-    audit.log_timeline(httpreq.state.username, db_entity, action="delete")
-    db_entity.delete()
+    crud.delete_object(Entity, httpreq, id, f"Entity ID {id} not found")
 
 
 @router.post("/search")
