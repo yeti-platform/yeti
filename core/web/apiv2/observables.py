@@ -227,29 +227,15 @@ def get(
     type: ObservableType | None = None,
 ) -> ObservableTypesRuntime:
     """Gets an observable by value."""
-
     params = {"value": value}
     if type:
         params["type"] = type
-
-    observable = Observable.find(**params)
-    if not observable:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Observable {value} not found (type: {type or 'any'})",
-        )
-
-    observable.get_tags()
-    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
-        return observable
-    if not httpreq.state.user.has_permissions(
-        observable.extended_id, roles.Permission.READ
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {observable.extended_id}",
-        )
-    return observable
+    return crud.get_by_lookup(
+        Observable,
+        httpreq,
+        params,
+        f"Observable {value} not found (type: {type or 'any'})",
+    )
 
 
 @router.get("/{id}")
