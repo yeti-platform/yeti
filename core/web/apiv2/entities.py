@@ -138,28 +138,12 @@ def get(
     type: EntityType | None = None,
 ) -> EntityTypesRuntime:
     """Gets an entity by name."""
-
     params = {"name": name}
     if type:
         params["type"] = type
-
-    entity = Entity.find(**params)
-    if not entity:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Entity {name} not found (type: {type or 'any'})",
-        )
-    entity.get_tags()
-    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
-        return entity
-    if not httpreq.state.user.has_permissions(
-        entity.extended_id, roles.Permission.READ
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {entity.extended_id}",
-        )
-    return entity
+    return crud.get_by_lookup(
+        Entity, httpreq, params, f"Entity {name} not found (type: {type or 'any'})"
+    )
 
 
 @router.get("/{id}")

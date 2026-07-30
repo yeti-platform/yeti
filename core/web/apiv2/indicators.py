@@ -184,30 +184,15 @@ def get(
     type: IndicatorType | None = None,
 ) -> IndicatorTypesRuntime:
     """Gets an indicator by name."""
-
     params = {"name": name}
     if type:
         params["type"] = type
-
-    indicator = Indicator.find(**params)
-    if not indicator:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Indicator {name} not found (type: {type or 'any'})",
-        )
-    indicator.get_tags()
-
-    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
-        return indicator
-
-    if not httpreq.state.user.has_permissions(
-        indicator.extended_id, roles.Permission.READ
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail=f"Forbidden: missing privileges {roles.Permission.READ} on target {indicator.extended_id}",
-        )
-    return indicator
+    return crud.get_by_lookup(
+        Indicator,
+        httpreq,
+        params,
+        f"Indicator {name} not found (type: {type or 'any'})",
+    )
 
 
 @router.get("/{id}")

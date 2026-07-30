@@ -2,9 +2,31 @@ from typing import Type, TypeVar
 
 from fastapi import HTTPException, Request
 
-from core.schemas import audit
+from core.schemas import audit, rbac, roles
 
 T = TypeVar("T")
+
+
+def get_by_lookup(
+    base_type: Type[T], httpreq: Request, lookup: dict, not_found_detail: str
+) -> T:
+    """Finds a single object by an arbitrary lookup (e.g. value or name),
+    enforcing read permissions on the result."""
+    obj = base_type.find(**lookup)  # ty: ignore[unresolved-attribute]
+    if not obj:
+        raise HTTPException(status_code=404, detail=not_found_detail)
+    obj.get_tags()
+    if not rbac.RBAC_ENABLED or httpreq.state.user.admin:
+        return obj
+    if not httpreq.state.user.has_permissions(obj.extended_id, roles.Permission.READ):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                f"Forbidden: missing privileges {roles.Permission.READ} "
+                f"on target {obj.extended_id}"
+            ),
+        )
+    return obj
 
 
 def get_details(base_type: Type[T], id: str, not_found_detail: str) -> T:
