@@ -5,6 +5,8 @@ import logging
 import pathlib
 import pkgutil
 
+import requests
+from arango.exceptions import ArangoError
 from celery import Celery
 from celery.utils.log import get_task_logger
 
@@ -30,6 +32,22 @@ def get_plugins_list(task_class: type[Task] = Task) -> set[str]:
                 for _, obj in inspect.getmembers(module, inspect.isclass):
                     if issubclass(obj, task_class):
                         plugins_list.add(module_info.name)
+            # A plugin registers itself in the database as a side effect of
+            # being imported (see TaskManager.register_task) -- a database
+            # error here means that registration didn't happen, not that the
+            # plugin's own code is broken, so it needs a distinct, louder
+            # signal from the "this plugin's dependencies aren't installed"
+            # case below.
+            except (
+                ConnectionError,
+                requests.exceptions.ConnectionError,
+                ArangoError,
+            ) as error:
+                logging.error(
+                    f"Plugin {module_info.name} imported but failed to register "
+                    f"itself against the database -- it will not appear until "
+                    f"this process is restarted: {error}"
+                )
             except Exception as error:
                 logging.warning(f"Cannot import plugin {module_info.name}\n{error}")
     return plugins_list
