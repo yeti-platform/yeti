@@ -16,7 +16,7 @@ from core.schemas.indicator import (
 )
 from core.schemas.tag import MAX_TAGS_REQUEST
 
-from . import context, tagging
+from . import context, crud, tagging
 
 logger = logging.getLogger(__name__)
 
@@ -214,23 +214,14 @@ def get(
 @rbac.permission_on_target(roles.Permission.READ)
 def details(httpreq: Request, id: str) -> IndicatorTypesRuntime:
     """Returns details about an indicator."""
-    db_indicator = Indicator.get(id)
-    if not db_indicator:
-        raise HTTPException(status_code=404, detail="indicator not found")
-    db_indicator.get_tags()
-    db_indicator.get_acls()
-    return db_indicator
+    return crud.get_details(Indicator, id, "indicator not found")
 
 
 @router.delete("/{id}")
 @rbac.permission_on_target(roles.Permission.DELETE)
 def delete(httpreq: Request, id: str) -> None:
     """Deletes an indicator."""
-    db_indicator = Indicator.get(id)
-    if not db_indicator:
-        raise HTTPException(status_code=404, detail="Indicator ID {id} not found")
-    audit.log_timeline(httpreq.state.username, db_indicator, action="delete")
-    db_indicator.delete()
+    crud.delete_object(Indicator, httpreq, id, f"Indicator ID {id} not found")
 
 
 @router.post("/search")
