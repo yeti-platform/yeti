@@ -277,15 +277,14 @@ def search(
     httpreq: Request, request: ObservableSearchRequest
 ) -> ObservableSearchResponse:
     """Searches for observables."""
-    query = request.query
-    if request.type:
-        query["type"] = request.type
-    observables, total = Observable.filter(
-        query,
-        offset=request.page * request.count,
-        count=request.count,
-        sorting=request.sorting,
-        user=httpreq.state.user,
+    observables, total = crud.search_objects(
+        Observable,
+        httpreq,
+        request.query,
+        request.type,
+        request.sorting,
+        request.count,
+        request.page,
     )
     return ObservableSearchResponse(observables=observables, total=total)
 

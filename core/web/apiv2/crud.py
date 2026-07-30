@@ -7,6 +7,32 @@ from core.schemas import audit, rbac, roles
 T = TypeVar("T")
 
 
+def search_objects(
+    base_type: Type[T],
+    httpreq: Request,
+    query: dict,
+    type_value: str | None,
+    sorting: list[tuple[str, bool]],
+    count: int,
+    page: int,
+    aliases: list[tuple[str, str]] | None = None,
+    links_count: bool = False,
+) -> tuple[list[T], int]:
+    """Runs a filter() search (or a get/multiple-style exact-match query)
+    and returns (objects, total)."""
+    if type_value:
+        query["type"] = type_value
+    return base_type.filter(  # ty: ignore[unresolved-attribute]
+        query_args=query,
+        offset=page * count,
+        count=count,
+        sorting=sorting,
+        aliases=aliases or [],
+        links_count=links_count,
+        user=httpreq.state.user,
+    )
+
+
 def get_by_lookup(
     base_type: Type[T], httpreq: Request, lookup: dict, not_found_detail: str
 ) -> T:

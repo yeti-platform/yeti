@@ -214,16 +214,16 @@ def search(
     httpreq: Request, request: IndicatorSearchRequest
 ) -> IndicatorSearchResponse:
     """Searches for indicators."""
-    query = request.query
-    if request.type:
-        query["type"] = request.type
-    indicators, total = Indicator.filter(
-        query_args=query,
-        offset=request.page * request.count,
-        count=request.count,
-        sorting=request.sorting,
+    indicators, total = crud.search_objects(
+        Indicator,
+        httpreq,
+        request.query,
+        request.type,
+        request.sorting,
+        request.count,
+        request.page,
         aliases=request.filter_aliases,
-        user=httpreq.state.user,
+        links_count=True,
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)
 
@@ -233,16 +233,16 @@ def get_multiple(
     httpreq: Request, request: IndicatorMultipleGetRequest
 ) -> IndicatorSearchResponse:
     """Gets multiple indicators by name."""
-    query = {"name__in": request.names}
-    if request.type:
-        query["type"] = request.type
-    indicators, total = Indicator.filter(
-        query_args=query,
-        offset=request.page * request.count,
-        count=request.count,
-        sorting=request.sorting,
+    indicators, total = crud.search_objects(
+        Indicator,
+        httpreq,
+        {"name__in": request.names},
+        request.type,
+        request.sorting,
+        request.count,
+        request.page,
         aliases=request.filter_aliases,
-        user=httpreq.state.user,
+        links_count=True,
     )
     return IndicatorSearchResponse(indicators=indicators, total=total)
 
