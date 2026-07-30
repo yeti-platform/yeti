@@ -195,7 +195,12 @@ class ArangoDatabase:
             try:
                 yeti_db = sys_db.has_database(database)
                 break
-            except requests.exceptions.ConnectionError as e:
+            # python-arango's own host-resolver raises the builtin
+            # ConnectionError when it exhausts its internal retries, rather
+            # than propagating requests' ConnectionError -- catch both, since
+            # which one surfaces depends on where in the request the failure
+            # originates.
+            except (ConnectionError, requests.exceptions.ConnectionError) as e:
                 logging.error("Connection error: {0:s}".format(str(e)))
                 logging.error("Retrying in 5 seconds...")
                 time.sleep(5)
