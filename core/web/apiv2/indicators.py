@@ -16,7 +16,7 @@ from core.schemas.indicator import (
 )
 from core.schemas.tag import MAX_TAGS_REQUEST
 
-from . import context
+from . import context, tagging
 
 logger = logging.getLogger(__name__)
 
@@ -275,26 +275,18 @@ def get_multiple(
 @rbac.permission_on_ids(roles.Permission.WRITE)
 def tag(httpreq: Request, request: IndicatorTagRequest) -> IndicatorTagResponse:
     """Tags entities."""
-    indicators = []
-    for indicator_id in request.ids:
-        db_indicator = Indicator.get(indicator_id)
-        if not db_indicator:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Tagging request contained an unknown indicator: ID:{indicator_id}",
-            )
-        indicators.append(db_indicator)
-
-    indicator_tags = {}
-    for db_indicator in indicators:
-        old_tags = [tag.name for tag in db_indicator.get_tags().values()]
-        db_indicator = db_indicator.tag(request.tags, clear=request.strict)
-        audit.log_timeline_tags(httpreq.state.username, db_indicator, old_tags)
-        indicator_tags[db_indicator.extended_id] = {
-            tag.name: tag for tag in db_indicator.tags
-        }
-
-    return IndicatorTagResponse(tagged=len(indicators), tags=indicator_tags)
+    tagged, tags = tagging.tag_objects(
+        Indicator,
+        httpreq,
+        request.ids,
+        request.tags,
+        request.strict,
+        not_found_status_code=404,
+        not_found_detail=(
+            lambda iid: f"Tagging request contained an unknown indicator: ID:{iid}"
+        ),
+    )
+    return IndicatorTagResponse(tagged=tagged, tags=tags)
 
 
 @router.post("/yara/bundle")

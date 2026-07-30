@@ -530,6 +530,15 @@ class ObservableTest(unittest.TestCase):
         self.assertEqual(len(data["tags"]), 1)
         self.assertEqual(data["total"], 1)
 
+    def test_tag_observable_unknown_id(self):
+        response = client.post(
+            "/api/v2/observables/tag",
+            json={"ids": ["observables/doesnotexist"], "tags": ["tag1"]},
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn("observables/doesnotexist", data["detail"])
+
     def test_remove_tags_observables(self):
         response = client.post(
             "/api/v2/observables/", json={"value": "toto.com", "type": "hostname"}
