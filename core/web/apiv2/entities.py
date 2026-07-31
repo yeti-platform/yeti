@@ -163,20 +163,18 @@ def delete(httpreq: Request, id: str) -> None:
 @router.post("/search")
 def search(httpreq: Request, request: EntitySearchRequest) -> EntitySearchResponse:
     """Searches for observables."""
-    query = request.query
-    if request.type:
-        query["type"] = request.type
-    entities, total = Entity.filter(
-        query_args=query,
-        offset=request.page * request.count,
-        count=request.count,
-        sorting=request.sorting,
+    entities, total = crud.search_objects(
+        Entity,
+        httpreq,
+        request.query,
+        request.type,
+        request.sorting,
+        request.count,
+        request.page,
         aliases=request.filter_aliases,
         links_count=True,
-        user=httpreq.state.user,
     )
-    response = EntitySearchResponse(entities=entities, total=total)
-    return response
+    return EntitySearchResponse(entities=entities, total=total)
 
 
 @router.post("/get/multiple")
@@ -184,17 +182,16 @@ def get_multiple(
     httpreq: Request, request: EntityMultipleGetRequest
 ) -> EntitySearchResponse:
     """Gets multiple entities by name."""
-    query = {"name__in": request.names}
-    if request.type:
-        query["type"] = request.type
-    entities, total = Entity.filter(
-        query_args=query,
-        offset=request.page * request.count,
-        count=request.count,
-        sorting=request.sorting,
+    entities, total = crud.search_objects(
+        Entity,
+        httpreq,
+        {"name__in": request.names},
+        request.type,
+        request.sorting,
+        request.count,
+        request.page,
         aliases=request.filter_aliases,
         links_count=True,
-        user=httpreq.state.user,
     )
     return EntitySearchResponse(entities=entities, total=total)
 

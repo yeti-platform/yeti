@@ -3,11 +3,13 @@ import logging
 import sys
 import time
 import unittest
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
 from core import database_arango
 from core.schemas import indicator
+from core.schemas.indicator import Indicator
 from core.schemas.user import UserSensitive
 from core.web import webapp
 
@@ -122,6 +124,19 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(len(data["indicators"][0]["tags"]), 1)
         self.assertIn("hextag", [tag["name"] for tag in data["indicators"][0]["tags"]])
 
+    def test_search_indicators_requests_link_counts(self):
+        """Indicator search should request aggregated link counts from
+        filter(), matching entity's existing behavior."""
+        with mock.patch.object(
+            Indicator, "filter", return_value=([], 0)
+        ) as mock_filter:
+            response = client.post(
+                "/api/v2/indicators/search", json={"query": {"name": "he"}}
+            )
+        self.assertEqual(response.status_code, 200)
+        mock_filter.assert_called_once()
+        self.assertTrue(mock_filter.call_args.kwargs.get("links_count"))
+
     def test_get_multiple_indicators(self):
         response = client.post(
             "/api/v2/indicators/get/multiple",
@@ -132,6 +147,19 @@ class IndicatorTest(unittest.TestCase):
         self.assertEqual(len(data["indicators"]), 2)
         names = [indicator["name"] for indicator in data["indicators"]]
         self.assertCountEqual(names, ["hex", "localhost"])
+
+    def test_get_multiple_indicators_requests_link_counts(self):
+        """get/multiple should also request aggregated link counts,
+        matching entity's existing behavior."""
+        with mock.patch.object(
+            Indicator, "filter", return_value=([], 0)
+        ) as mock_filter:
+            response = client.post(
+                "/api/v2/indicators/get/multiple", json={"names": ["hex"]}
+            )
+        self.assertEqual(response.status_code, 200)
+        mock_filter.assert_called_once()
+        self.assertTrue(mock_filter.call_args.kwargs.get("links_count"))
 
     def test_search_indicators_tagged(self):
         response = client.post(
