@@ -1,9 +1,12 @@
 import json
 import logging
+import os
 import sys
+import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -26,6 +29,16 @@ TEST_TEMPLATE = """<blah>
 class TemplateTest(unittest.TestCase):
     def setUp(self) -> None:
         logging.disable(sys.maxsize)
+        self.addCleanup(logging.disable, logging.NOTSET)
+
+        self.temp_template_path = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(
+            mock.patch.dict(
+                os.environ,
+                {"YETI_SYSTEM_TEMPLATE_DIR": str(self.temp_template_path)},
+            )
+        )
+
         database_arango.db.connect(database="yeti_test")
         database_arango.db.truncate()
 
@@ -35,17 +48,10 @@ class TemplateTest(unittest.TestCase):
             "/api/v2/auth/api-token", headers={"x-yeti-apikey": apikey}
         ).json()
         client.headers = {"Authorization": "Bearer " + token_data["access_token"]}
-        temp_path = Path("/opt/yeti/templates")
-        temp_path.mkdir(parents=True, exist_ok=True)
-        self.temp_template_path = temp_path
 
         Template(name="FakeTemplate", template=TEST_TEMPLATE).save()
         for i in range(0, 100):
             Template(name=f"template_blah_{i:02}", template=f"fake_template_{i}").save()
-
-    def tearDown(self) -> None:
-        for file in Path(self.temp_template_path).rglob("*.jinja2"):
-            file.unlink()
 
     def test_search_template(self):
         response = client.post("/api/v2/templates/search", json={"name": "Fake"})
