@@ -23,3 +23,12 @@ class userTest(unittest.TestCase):
         self.assertIn("auth", data)
         self.assertIn("system", data)
         self.assertIn("rbac_enabled", data)
+
+    def test_get_types(self) -> None:
+        response = client.get("/api/v2/system/types")
+        data = response.json()
+        self.assertEqual(response.status_code, 200, data)
+        self.assertIn("observables", data)
+        self.assertIn("entities", data)
+        self.assertIn("indicators", data)
+        self.assertIn("dfiq", data)

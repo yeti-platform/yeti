@@ -5,6 +5,12 @@ from core.config.config import yeti_config
 from core.taskscheduler import app
 from core.web.apiv2.auth import get_current_active_user
 
+from core.schemas import dfiq, entity, indicator, observable
+from core.schemas.dfiq import DFIQBase
+from core.schemas.entity import Entity
+from core.schemas.indicator import Indicator
+from core.schemas.observable import Observable
+
 # API endpoints
 router = APIRouter()
 
@@ -95,3 +101,39 @@ def restart_worker(worker_name: str) -> WorkerRestartResponse:
         successes=successes,
         failures=failures,
     )
+
+@router.get("/types")
+def get_system_types() -> dict[str, list[dict]]:
+    return {
+        "observables": _get_family_types(observable.TYPE_MAPPING, Observable),
+        "entities": _get_family_types(entity.TYPE_MAPPING, Entity),
+        "indicators": _get_family_types(indicator.TYPE_MAPPING, Indicator),
+        "dfiq": _get_family_types(dfiq.TYPE_MAPPING, DFIQBase),
+    }
+
+def _get_family_types(type_mapping: dict, base_cls: type) -> list[dict]:
+    types_list = []
+    seen_classes = set()
+
+    for type_name, cls in type_mapping.items():
+        if cls is base_cls or cls in seen_classes:
+            continue
+        seen_classes.add(cls)
+
+        fields = {}
+        for field_name, field_info in cls.model_fields.items():
+            if field_name.startswith("_"):
+                continue
+            fields[field_name] = {
+                "required": field_info.is_required(),
+                "description": field_info.description or "",
+            }
+
+        label = type_name.replace("_", " ").replace("-", " ").title()
+        types_list.append({
+            "type": type_name,
+            "label": label,
+            "fields": fields,
+        })
+
+    return sorted(types_list, key=lambda x: x["label"])
