@@ -1,4 +1,6 @@
 import datetime
+import logging
+import time
 from enum import Enum
 from typing import Annotated, Any
 
@@ -6,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 from pydantic.functional_validators import field_validator
 
+from core.graph_explore import explore_graph
 from core.schemas import (
     dfiq,
     entity,
@@ -19,6 +22,8 @@ from core.schemas import (
 )
 from core.schemas.graph import GraphFilter
 from core.schemas.tag import MAX_TAGS_REQUEST
+
+logger = logging.getLogger(__name__)
 
 GRAPH_TYPE_MAPPINGS = {}  # type: dict[str, Type[entity.Entity] | Type[observable.Observable] | Type[indicator.Indicator]]
 GRAPH_TYPE_MAPPINGS.update(observable.TYPE_MAPPING)
@@ -172,6 +177,61 @@ def search(httpreq: Request, request: GraphSearchRequest) -> GraphSearchResponse
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
     return GraphSearchResponse(vertices=vertices, paths=paths, total=total)
+
+
+@router.post("/explore")
+def explore(
+    httpreq: Request, request: graph.GraphExploreRequest
+) -> graph.GraphExploreResponse:
+    """Return a bounded, read-only graph for an investigation scope."""
+    started = time.monotonic()
+    outcome = "success"
+    returned_nodes = 0
+    returned_edges = 0
+    is_truncated = False
+    try:
+        response = explore_graph(request, httpreq.state.user)
+        returned_nodes = response.budget.returned_nodes
+        returned_edges = response.budget.returned_edges
+        is_truncated = response.budget.is_truncated
+        return response
+    except LookupError:
+        outcome = "unavailable"
+        raise HTTPException(
+            status_code=404,
+            detail="One or more requested objects are unavailable",
+        ) from None
+    except TimeoutError:
+        outcome = "timeout"
+        raise HTTPException(
+            status_code=503,
+            detail="Graph exploration timed out; retry later",
+        ) from None
+    except ValueError:
+        outcome = "unsupported"
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported graph exploration criteria",
+        ) from None
+    except Exception:
+        outcome = "error"
+        logger.error("Graph exploration failed")
+        raise HTTPException(
+            status_code=500,
+            detail="Graph exploration failed",
+        ) from None
+    finally:
+        logger.info(
+            "Graph exploration completed",
+            extra={
+                "scope_kind": request.scope.kind,
+                "outcome": outcome,
+                "duration_ms": round((time.monotonic() - started) * 1000, 2),
+                "returned_nodes": returned_nodes,
+                "returned_edges": returned_edges,
+                "is_truncated": is_truncated,
+            },
+        )
 
 
 @router.post("/add")
