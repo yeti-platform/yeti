@@ -948,7 +948,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 f"Cannot traverse graph '{graph}': expected one of "
                 f"{sorted(TRAVERSABLE_GRAPHS)}."
             )
-        query_filter = ""
+        query_filters = []
         args = {
             "extended_id": self.extended_id,
             "@graph": graph,
@@ -961,10 +961,10 @@ class ArangoYetiConnector(AbstractYetiConnector):
 
         if link_types:
             args["link_types"] = link_types
-            query_filter = "FILTER e.type IN @link_types"
+            query_filters.append("FILTER e.type IN @link_types")
         if target_types:
             args["target_types"] = target_types
-            query_filter = (
+            query_filters.append(
                 "FILTER (v.type IN @target_types OR v.root_type IN @target_types)"
             )
         if filter:
@@ -997,7 +997,9 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     )
                 args[f"filter_key{i}"] = f.key
                 args[f"filter_value{i}"] = f.value
-            query_filter += f"FILTER {' OR '.join(filters)}"
+            query_filters.append(f"FILTER {' OR '.join(filters)}")
+
+        query_filter = "\n          ".join(query_filters)
 
         limit = ""
         if count != 0:
@@ -1135,6 +1137,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
         links_count: bool = False,
         wildcard: bool = True,
         user: "user.User | None" = None,
+        max_runtime: float | None = None,
     ) -> tuple[List[TYetiObject], int]:
         """Search in an ArangoDb collection.
 
@@ -1212,15 +1215,33 @@ class ArangoYetiConnector(AbstractYetiConnector):
                     item.value if isinstance(item, enum.Enum) else item
                     for item in value
                 ]
+            date_operator = None
+            for suffix, comparison in (
+                ("__gte", ">="),
+                ("__lte", "<="),
+                ("__gt", ">"),
+                ("__lt", "<"),
+            ):
+                if key.endswith(suffix) and key[: -len(suffix)] in {
+                    "created",
+                    "modified",
+                    "tags.expires",
+                }:
+                    key = key[: -len(suffix)]
+                    date_operator = comparison
+                    break
+
             if key.endswith("~"):
                 using_regex = True
                 key = key[:-1]
             else:
                 using_regex = False
-            if isinstance(value, str):
+            if isinstance(value, (str, int)):
                 aql_args[f"arg{i}_value"] = value
             elif isinstance(value, list):
-                aql_args[f"arg{i}_value"] = [v.strip() for v in value]
+                aql_args[f"arg{i}_value"] = [
+                    v.strip() if isinstance(v, str) else v for v in value
+                ]
 
             if key.startswith("in__"):
                 if using_view:
@@ -1244,19 +1265,24 @@ class ArangoYetiConnector(AbstractYetiConnector):
                         f"(FOR t in @arg{i}_value RETURN LOWER(t)) ALL IN o.tags[*].name"
                     )
             elif key in ("created", "modified", "tags.expires"):
-                # Value is a string, we're checking the first character.
-                operator = value[0]
-                if operator not in ["<", ">"]:
-                    operator = "="
-                else:
-                    aql_args[f"arg{i}_value"] = value[1:]
+                comparison = date_operator
+                if comparison is None:
+                    if not isinstance(value, str):
+                        raise ValueError("Date filters require string values")
+                    # The legacy vocabulary prefixes date values with < or >.
+                    operator = value[0]
+                    if operator not in ["<", ">"]:
+                        comparison = "=="
+                    else:
+                        comparison = f"{operator}="
+                        aql_args[f"arg{i}_value"] = value[1:]
                 if key == "tags.expires":
                     filter_conditions.append(
-                        f"o.tags[* RETURN DATE_TIMESTAMP(CURRENT.expires)] ANY {operator} DATE_TIMESTAMP(@arg{i}_value)"
+                        f"o.tags[* RETURN DATE_TIMESTAMP(CURRENT.expires)] ANY {comparison} DATE_TIMESTAMP(@arg{i}_value)"
                     )
                 else:
                     filter_conditions.append(
-                        f"DATE_TIMESTAMP(o.{key}) {operator}= DATE_TIMESTAMP(@arg{i}_value)"
+                        f"DATE_TIMESTAMP(o.{key}) {comparison} DATE_TIMESTAMP(@arg{i}_value)"
                     )
                     sorts.append(f"o.{key}")
             elif key in ("name", "value"):
@@ -1395,9 +1421,14 @@ class ArangoYetiConnector(AbstractYetiConnector):
             aql_string += "\nRETURN o"
         aql_args["@collection"] = colname
         logging.debug(f"aql_string: {aql_string}, aql_args: {aql_args}")
-        documents = cls._db.aql.execute(
-            aql_string, bind_vars=aql_args, count=True, full_count=True
-        )
+        execute_options: dict[str, Any] = {
+            "bind_vars": aql_args,
+            "count": True,
+            "full_count": True,
+        }
+        if max_runtime is not None:
+            execute_options["max_runtime"] = max_runtime
+        documents = cls._db.aql.execute(aql_string, **execute_options)
         stats = documents.statistics()
         results = []
         for doc in documents:

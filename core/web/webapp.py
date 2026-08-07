@@ -159,7 +159,8 @@ app.include_router(api_router, prefix="/api/v2")
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    req_body = await request.body()
+    suppress_body = request.url.path == "/api/v2/graph/explore"
+    req_body = b"" if suppress_body else await request.body()
     response = await call_next(request)
     try:
         extra = {
