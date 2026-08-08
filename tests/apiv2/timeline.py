@@ -330,7 +330,6 @@ class TimelineLogTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": "question",
                 "update_indicators": True,
             },
         )
@@ -430,7 +429,6 @@ class TimelineLogTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": "facet",
             },
         )
 
@@ -445,7 +443,6 @@ class TimelineLogTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": "question",
             },
         )
         data = response.json()
