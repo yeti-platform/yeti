@@ -240,7 +240,7 @@ class DFIQBase(YetiModel, YetiAclModel, database_arango.ArangoYetiConnector):
 
     @classmethod
     def from_yaml(cls, yaml_string: str) -> "DFIQBase":
-        yaml_data = yaml.safe_load(yaml_string)
+        yaml_data = cls.parse_yaml(yaml_string)
         return TYPE_MAPPING[yaml_data["type"]].from_yaml(yaml_string)
 
     def to_yaml(self, sort_keys=False) -> str:

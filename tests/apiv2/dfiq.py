@@ -46,7 +46,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
             },
         )
         data = response.json()
@@ -70,7 +69,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
             },
         )
         data = response.json()
@@ -92,7 +90,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
             },
         )
         data = response.json()
@@ -121,7 +118,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.facet,
             },
         )
         data = response.json()
@@ -161,7 +157,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
             },
         )
         data = response.json()
@@ -256,7 +251,7 @@ class DFIQTest(unittest.TestCase):
 
         response = client.patch(
             f"/api/v2/dfiq/{scenario.id}",
-            json={"dfiq_yaml": yaml_string, "dfiq_type": scenario.type},
+            json={"dfiq_yaml": yaml_string},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -323,7 +318,7 @@ class DFIQTest(unittest.TestCase):
         question_json = json.loads(question.model_dump_json())
         response = client.patch(
             f"/api/v2/dfiq/{question.id}",
-            json={"dfiq_object": question_json, "dfiq_type": question.type},
+            json={"dfiq_object": question_json},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -370,7 +365,7 @@ class DFIQTest(unittest.TestCase):
 
         response = client.patch(
             f"/api/v2/dfiq/{facet.id}",
-            json={"dfiq_yaml": facet.to_yaml(), "dfiq_type": facet.type},
+            json={"dfiq_yaml": facet.to_yaml()},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -428,7 +423,7 @@ class DFIQTest(unittest.TestCase):
 
         response = client.patch(
             f"/api/v2/dfiq/{facet.id}",
-            json={"dfiq_yaml": facet.to_yaml(), "dfiq_type": facet.type},
+            json={"dfiq_yaml": facet.to_yaml()},
         )
         data = response.json()
         self.assertEqual(response.status_code, 200, data)
@@ -490,7 +485,6 @@ class DFIQTest(unittest.TestCase):
             f"/api/v2/dfiq/{question.id}",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": question.type,
                 "update_indicators": False,
             },
         )
@@ -504,7 +498,6 @@ class DFIQTest(unittest.TestCase):
             f"/api/v2/dfiq/{question.id}",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": question.type,
                 "update_indicators": True,
             },
         )
@@ -522,7 +515,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.facet,
             },
         )
         data = response.json()
@@ -539,7 +531,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/validate",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
                 "check_id": True,
             },
         )
@@ -554,7 +545,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/validate",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.facet,
                 "check_id": True,
             },
         )
@@ -569,7 +559,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/validate",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
                 "check_id": True,
             },
         )
@@ -585,7 +574,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.question,
             },
         )
         data = response.json()
@@ -701,7 +689,6 @@ class DFIQTest(unittest.TestCase):
             "/api/v2/dfiq/from_yaml",
             json={
                 "dfiq_yaml": yaml_string,
-                "dfiq_type": dfiq.DFIQType.scenario,
             },
         )
         data = response.json()

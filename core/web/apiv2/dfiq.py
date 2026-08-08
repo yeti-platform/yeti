@@ -18,7 +18,6 @@ class NewDFIQRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     dfiq_yaml: str
-    dfiq_type: dfiq.DFIQType
     update_indicators: bool = False
 
 
@@ -40,7 +39,6 @@ class PatchDFIQRequest(BaseModel):
 
     dfiq_yaml: str | None = None
     dfiq_object: dfiq.DFIQTypes | None = None
-    dfiq_type: dfiq.DFIQType
     update_indicators: bool = False
 
 
@@ -131,10 +129,7 @@ def from_archive(httpreq: Request, archive: UploadFile) -> dict[str, int]:
 def new_from_yaml(httpreq: Request, request: NewDFIQRequest) -> dfiq.DFIQTypes:
     """Creates a new DFIQ object in the database."""
     try:
-        new = cast(
-            "dfiq.DFIQTypes",
-            dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml),
-        )
+        new = cast("dfiq.DFIQTypes", dfiq.DFIQBase.from_yaml(request.dfiq_yaml))
     except ValueError as error:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
 
@@ -276,7 +271,7 @@ def to_archive(httpreq: Request, request: DFIQSearchRequest) -> FileResponse:
 def validate_dfiq_yaml(request: DFIQValidateRequest) -> DFIQValidateResponse:
     """Validates a DFIQ YAML string."""
     try:
-        obj = dfiq.TYPE_MAPPING[request.dfiq_type].from_yaml(request.dfiq_yaml)
+        obj = dfiq.DFIQBase.from_yaml(request.dfiq_yaml)
     except ValidationError as error:
         error_objs: list[dict] = []
         for pydantic_error in error.errors():
