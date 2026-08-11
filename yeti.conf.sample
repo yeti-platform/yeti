@@ -59,7 +59,7 @@ enabled = False
 default_global_role = writer
 
 # Default sharing settings for objects that are created.
-# `all_users` will share with all users on the platform
+# `all_users` will grant read access to all users on the platform
 # (this can be revoked later on)
 # `none` will add no additional sharing by default
 default_acls = All users

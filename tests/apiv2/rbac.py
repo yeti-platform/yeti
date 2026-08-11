@@ -311,3 +311,8 @@ class rbacTest(unittest.TestCase):
         test_malware = entity.Malware.find(name="test")
         test_malware.get_acls()
         self.assertCountEqual(test_malware.acls.keys(), ["All users", "user1"])
+        # The creator gets full ownership; the default-shared group only gets
+        # read access -- default_acls is meant to grant visibility, not hand
+        # every registered user delete rights over every new object.
+        self.assertEqual(test_malware.acls["All users"].role, roles.Role.READER)
+        self.assertEqual(test_malware.acls["user1"].role, roles.Role.OWNER)

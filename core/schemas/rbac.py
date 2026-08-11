@@ -131,7 +131,7 @@ def set_acls(yeti_object: Any, user: "user.User | None" = None, set_default=True
         for identity in default_acls.split(","):
             group = Group.find(name=identity)
             if group:
-                group.link_to_acl(yeti_object, roles.Role.OWNER)
+                group.link_to_acl(yeti_object, roles.Role.READER)
                 access = True
             else:
                 logger.warning(f"Default ACL group {identity} not found.")
