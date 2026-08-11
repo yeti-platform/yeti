@@ -23,7 +23,7 @@ class GroupSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = ""
-    permissions: roles.Permission | None = None
+    permissions: roles.Role | None = None
     count: int = 50
     page: int = 0
 

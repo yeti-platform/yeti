@@ -835,7 +835,7 @@ class ArangoYetiConnector(AbstractYetiConnector):
                 logging.exception("Error while publishing event")
         return relationship
 
-    def link_to_acl(self, target, role: "roles.Permission") -> "RoleRelationship":
+    def link_to_acl(self, target, role: "roles.Role") -> "RoleRelationship":
         """Creates a link between two YetiObjects.
 
         Idempotent and safe under concurrent calls for the same

@@ -288,3 +288,37 @@ class userTest(unittest.TestCase):
         user = UserSensitive.get(self.user.id)
         self.assertIsNotNone(user)
         self.assertEqual(user.global_role, roles.Role.OWNER)
+
+    def test_patch_user_role_every_valid_value(self):
+        """Every value Role actually declares (0, 1, 3, 7) must be settable."""
+        for role in roles.Role:
+            with self.subTest(role=role):
+                response = client.patch(
+                    "/api/v2/users/role",
+                    json={"user_id": self.user.id, "role": role},
+                    headers={"Authorization": f"Bearer {self.admin_token}"},
+                )
+                data = response.json()
+                self.assertEqual(response.status_code, 200, data)
+                self.assertEqual(data["global_role"], role)
+
+                user = UserSensitive.get(self.user.id)
+                self.assertEqual(user.global_role, role)
+
+    def test_patch_user_role_rejects_non_composite_values(self):
+        """Values Permission accepts but Role doesn't (2, 4, 5, 6) -- and
+        values outside Permission's range entirely (8, -1) -- must be
+        rejected with a clean 422, not silently accepted.
+        """
+        for invalid_role in (2, 4, 5, 6, 8, -1):
+            with self.subTest(invalid_role=invalid_role):
+                response = client.patch(
+                    "/api/v2/users/role",
+                    json={"user_id": self.user.id, "role": invalid_role},
+                    headers={"Authorization": f"Bearer {self.admin_token}"},
+                )
+                self.assertEqual(response.status_code, 422, response.json())
+
+                # Rejected requests must not have side effects.
+                user = UserSensitive.get(self.user.id)
+                self.assertNotEqual(user.global_role, invalid_role)

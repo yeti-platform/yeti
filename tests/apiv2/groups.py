@@ -164,7 +164,7 @@ class rbacTest(unittest.TestCase):
                     {"id": self.user2.id, "type": "user"},
                     {"id": self.admin.id, "type": "user"},
                 ],
-                "role": 4,
+                "role": roles.Role.WRITER,
             },
             headers={"Authorization": f"Bearer {self.user1_token}"},
         )
@@ -181,3 +181,4 @@ class rbacTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         members = list(data["acls"].keys())
         self.assertCountEqual(members, ["user1", "user2", "yeti"])
+        self.assertEqual(data["acls"]["user2"]["role"], roles.Role.WRITER)
