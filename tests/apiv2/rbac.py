@@ -237,6 +237,62 @@ class rbacTest(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    def test_update_members_every_valid_role(self):
+        """Every value Role actually declares (0, 1, 3, 7) must be grantable
+        through the update-members endpoint, and the granted value must
+        round-trip correctly through the ACL response.
+        """
+        self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
+
+        for role in roles.Role:
+            with self.subTest(role=role):
+                response = client.post(
+                    f"/api/v2/rbac/entity/{self.entity1.id}/update-members",
+                    json={
+                        "ids": [{"id": self.user2.id, "type": "user"}],
+                        "role": role,
+                    },
+                    headers={"Authorization": f"Bearer {self.user1_token}"},
+                )
+                data = response.json()
+                self.assertEqual(response.status_code, 200, data)
+                self.assertEqual(data["updated"], 1)
+                self.assertEqual(data["failed"], 0)
+
+                response = client.get(
+                    f"/api/v2/rbac/entity/{self.entity1.id}",
+                    headers={"Authorization": f"Bearer {self.user1_token}"},
+                )
+                data = response.json()
+                self.assertEqual(response.status_code, 200, data)
+                self.assertEqual(data["acls"]["user2"]["role"], role)
+
+    def test_update_members_rejects_non_composite_role(self):
+        """Values Permission accepts but Role doesn't (2, 4, 5, 6) -- and
+        values outside Permission's range entirely (8, -1) -- must be
+        rejected with a clean 422, and must not create an ACL edge.
+        """
+        self.user1.link_to_acl(self.entity1, roles.Role.OWNER)
+
+        for invalid_role in (2, 4, 5, 6, 8, -1):
+            with self.subTest(invalid_role=invalid_role):
+                response = client.post(
+                    f"/api/v2/rbac/entity/{self.entity1.id}/update-members",
+                    json={
+                        "ids": [{"id": self.user2.id, "type": "user"}],
+                        "role": invalid_role,
+                    },
+                    headers={"Authorization": f"Bearer {self.user1_token}"},
+                )
+                self.assertEqual(response.status_code, 422, response.json())
+
+                response = client.get(
+                    f"/api/v2/rbac/entity/{self.entity1.id}",
+                    headers={"Authorization": f"Bearer {self.user1_token}"},
+                )
+                data = response.json()
+                self.assertNotIn("user2", data["acls"])
+
     def test_default_acls(self):
         """Test that a user can create a new entity"""
         self.user1.global_role = roles.Role.WRITER

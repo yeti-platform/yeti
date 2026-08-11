@@ -18,7 +18,7 @@ class UpdateACLRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     ids: list[RBACIdentity]
-    role: roles.Permission = roles.Role.READER
+    role: roles.Role = roles.Role.READER
 
 
 class UpdateMembersResponse(BaseModel):

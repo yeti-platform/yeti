@@ -45,7 +45,7 @@ class PatchRoleRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     user_id: str
-    role: roles.Permission
+    role: roles.Role
 
 
 class NewApiKeyRequest(BaseModel):
