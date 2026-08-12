@@ -1,5 +1,3 @@
-from typing import cast
-
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict
 
@@ -10,22 +8,26 @@ router = APIRouter()
 
 
 class SearchRequest(BaseModel):
-    """Search request message."""
+    """Global search request message."""
 
     model_config = ConfigDict(extra="forbid")
 
-    query: dict[str, str | int | list] = {}
-    sorting: list[tuple[str, bool]] = []
-    filter_aliases: list[tuple[str, str]] = []
-    count: int = 50
-    page: int = 0
+    query: str
+    count_per_type: int = 5
+
+
+class SearchResultSection(BaseModel):
+    """One type's bucket of results in a grouped search response."""
+
+    type: str
+    results: list[dict]
+    total: int = 0
 
 
 class SearchResponse(BaseModel):
-    """Search response message."""
+    """Global search response message."""
 
-    results: list[dict]
-    total: int = 0
+    sections: list[SearchResultSection]
 
 
 class SemanticSearchRequest(BaseModel):
@@ -37,23 +39,31 @@ class SemanticSearchRequest(BaseModel):
     count: int = 10
 
 
+class SemanticSearchResponse(BaseModel):
+    """Semantic Search Response."""
+
+    results: list[dict]
+    total: int = 0
+
+
 @router.post("/")
 def search(httpreq: Request, request: SearchRequest) -> SearchResponse:
-    """Gets the system config."""
-    results, total = ArangoYetiConnector.filter(
+    """Searches across all object types, bucketed by type.
+
+    Each type gets its own bounded slice of results, so a substring match
+    in one type's field (e.g. an observable hash) can't drown out matches
+    from another type (e.g. an entity name).
+    """
+    sections = ArangoYetiConnector.grouped_search(
         request.query,
-        sorting=request.sorting,
-        aliases=request.filter_aliases,
-        count=request.count,
-        offset=request.page * request.count,
-        links_count=True,
+        count_per_type=request.count_per_type,
         user=httpreq.state.user,
     )
-    return SearchResponse(results=cast("list[dict]", results), total=total)
+    return SearchResponse(sections=[SearchResultSection(**s) for s in sections])
 
 
 @router.post("/semantic")
-def semantic_search(request: SemanticSearchRequest) -> SearchResponse:
+def semantic_search(request: SemanticSearchRequest) -> SemanticSearchResponse:
     """Performs a semantic search on Yeti objects."""
     from core.chromadb_client import get_semantic_collection
 
@@ -80,4 +90,4 @@ def semantic_search(request: SemanticSearchRequest) -> SearchResponse:
                 if obj:
                     yeti_objects.append(obj.model_dump())
 
-    return SearchResponse(results=yeti_objects, total=len(yeti_objects))
+    return SemanticSearchResponse(results=yeti_objects, total=len(yeti_objects))
