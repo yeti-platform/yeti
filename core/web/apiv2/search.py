@@ -63,13 +63,29 @@ def search(httpreq: Request, request: SearchRequest) -> SearchResponse:
 
 
 @router.post("/semantic")
-def semantic_search(request: SemanticSearchRequest) -> SemanticSearchResponse:
-    """Performs a semantic search on Yeti objects."""
+def semantic_search(
+    httpreq: Request, request: SemanticSearchRequest
+) -> SemanticSearchResponse:
+    """Performs a semantic search on Yeti objects.
+
+    Results come from a nearest-neighbor lookup in ChromaDB, which knows
+    nothing about ACLs, so each candidate is checked individually against
+    the calling user's permissions before being returned.
+    """
     from core.chromadb_client import get_semantic_collection
+    from core.schemas import rbac, roles
 
     collection = get_semantic_collection()
 
-    results = collection.query(query_texts=[request.query], n_results=request.count)
+    user = httpreq.state.user
+    enforce_acls = rbac.RBAC_ENABLED and not user.admin
+
+    # ACL filtering happens after the nearest-neighbor search, so overfetch to
+    # absorb candidates the user can't see and still have a shot at `count`
+    # results -- not a guarantee: if visibility is narrow enough, fewer than
+    # `count` results can still come back even after overfetching.
+    fetch_count = request.count * 3 if enforce_acls else request.count
+    results = collection.query(query_texts=[request.query], n_results=fetch_count)
 
     object_metadatas = results.get("metadatas", [[{}]])[0]
 
@@ -82,12 +98,19 @@ def semantic_search(request: SemanticSearchRequest) -> SemanticSearchResponse:
     # Fetch real yeti objects from Arango
     yeti_objects = []
     for meta in object_metadatas:
-        if "id" in meta and "collection" in meta:
-            col = meta["collection"]
-            cls = id_to_class.get(col)
-            if cls:
-                obj = cls.get(meta["id"])
-                if obj:
-                    yeti_objects.append(obj.model_dump())
+        if len(yeti_objects) >= request.count:
+            break
+        if "id" not in meta or "collection" not in meta:
+            continue
+        cls = id_to_class.get(meta["collection"])
+        if not cls:
+            continue
+        if enforce_acls and not user.has_permissions(
+            meta.get("extended_id", ""), roles.Permission.READ
+        ):
+            continue
+        obj = cls.get(meta["id"])
+        if obj:
+            yeti_objects.append(obj.model_dump())
 
     return SemanticSearchResponse(results=yeti_objects, total=len(yeti_objects))
