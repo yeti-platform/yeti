@@ -1414,6 +1414,84 @@ class ArangoYetiConnector(AbstractYetiConnector):
         return results, total or 0
 
     @classmethod
+    def grouped_search(
+        cls,
+        term: str,
+        count_per_type: int = 5,
+        user: "user.User | None" = None,
+    ) -> List[dict]:
+        """Searches across all object types, bucketed by type.
+
+        Each type gets its own independent result slice so that a
+        substring match against one type's field (e.g. an observable hash
+        containing the search term) can never crowd out matches from
+        another type (e.g. an entity name) -- they aren't competing for
+        the same page of results.
+
+        Args:
+            term: The search term (case-insensitive substring match).
+            count_per_type: Max number of results to return per type.
+            user: A user to scope results to via RBAC ACLs.
+
+        Returns:
+            A list of {type, total, results} dicts, one per root_type, in
+            a fixed display order (entity, indicator, dfiq, observable).
+        """
+        cls._get_collection()
+
+        with_statements = []
+        acl_query = ""
+        acl_filter = ""
+        aql_args: dict[str, Any] = {
+            "term": f"%{term.lower()}%",
+            "count_per_type": count_per_type,
+            "types": ["entity", "indicator", "dfiq", "observable"],
+        }
+        if user and RBAC_ENABLED and not user.admin:
+            with_statements.append("acls")
+            acl_query = "LET acl = FIRST(FOR v, e, p in 1..2 inbound o acls FILTER v.username == @username RETURN true) or false"
+            acl_filter = "FILTER acl"
+            aql_args["username"] = user.username
+
+        prologue = f"WITH {', '.join(with_statements)}" if with_statements else ""
+        # ArangoSearch views are eventually consistent; force a sync under
+        # TESTING so tests don't need to sleep/poll (mirrors filter()).
+        aql_options = "OPTIONS { waitForSync: true }" if cls._db.testing else ""
+
+        aql_string = f"""
+            {prologue}
+            FOR type IN @types
+                LET matches = (
+                    FOR o IN all_objects_view
+                        SEARCH ANALYZER(o.root_type == type, 'identity') AND (
+                            ANALYZER(LIKE(o.name, @term), 'norm')
+                            OR ANALYZER(LIKE(o.value, @term), 'norm')
+                            OR ANALYZER(LIKE(o.tags.name, @term), 'norm')
+                            OR ANALYZER(LIKE(o.dfiq_tags, @term), 'norm')
+                        )
+                        {aql_options}
+                        {acl_query}
+                        {acl_filter}
+                        SORT o.name ASC, o.value ASC
+                        RETURN o
+                )
+                RETURN {{
+                    type: type,
+                    total: LENGTH(matches),
+                    results: SLICE(matches, 0, @count_per_type)
+                }}
+            """
+        documents = cls._db.aql.execute(aql_string, bind_vars=aql_args)
+        sections = []
+        for doc in documents:
+            for obj in doc["results"]:
+                obj["id"] = obj.pop("_key")
+                del obj["_id"]
+                del obj["_rev"]
+            sections.append(doc)
+        return sections
+
+    @classmethod
     def fulltext_filter(cls, keywords):
         """Search in an ArangoDB collection using full-text search.
 
