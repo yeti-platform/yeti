@@ -88,6 +88,11 @@ def semantic_search(
     results = collection.query(query_texts=[request.query], n_results=fetch_count)
 
     object_metadatas = results.get("metadatas", [[{}]])[0]
+    # ChromaDB returns nearest (most similar) first; distance is a cosine
+    # distance (0 = identical, larger = less similar). Surface it as a
+    # bounded-ish "higher is better" score instead, so consumers don't have
+    # to know chroma's convention or re-derive one themselves.
+    distances = results.get("distances", [[]])[0]
 
     from core.schemas.dfiq import DFIQBase
     from core.schemas.entity import Entity
@@ -97,7 +102,7 @@ def semantic_search(
 
     # Fetch real yeti objects from Arango
     yeti_objects = []
-    for meta in object_metadatas:
+    for meta, distance in zip(object_metadatas, distances):
         if len(yeti_objects) >= request.count:
             break
         if "id" not in meta or "collection" not in meta:
@@ -111,6 +116,8 @@ def semantic_search(
             continue
         obj = cls.get(meta["id"])
         if obj:
-            yeti_objects.append(obj.model_dump())
+            obj_dict = obj.model_dump()
+            obj_dict["semantic_score"] = round(1 - distance, 4)
+            yeti_objects.append(obj_dict)
 
     return SemanticSearchResponse(results=yeti_objects, total=len(yeti_objects))

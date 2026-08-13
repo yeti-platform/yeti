@@ -87,6 +87,38 @@ class ChromaDBTest(unittest.TestCase):
 
         self.assertEqual(data["total"], 1)
         self.assertEqual(data["results"][0]["name"], "Trickbot")
+        self.assertIn("semantic_score", data["results"][0])
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_semantic_score_ranks_results_most_to_least_similar(self, mock_get_client):
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(
+            name="Trickbot",
+            type="malware",
+            description="A banking trojan that steals credentials",
+        )
+        entity.save(
+            name="RandomUnrelated",
+            type="malware",
+            description="Completely unrelated fnord",
+        )
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "a banking trojan stealing credentials", "count": 2},
+        )
+        data = response.json()
+
+        scores = [r["semantic_score"] for r in data["results"]]
+        # Higher score first (most similar), and the trojan -- an
+        # near-exact match to the query -- should score above the
+        # unrelated entity.
+        self.assertEqual(scores, sorted(scores, reverse=True))
+        self.assertEqual(data["results"][0]["name"], "Trickbot")
 
     @mock.patch("core.chromadb_client.get_client")
     def test_dfiq_scenario_indexing(self, mock_get_client):
@@ -212,3 +244,27 @@ parent_ids:
         finally:
             rbac.RBAC_ENABLED = False
             database_arango.RBAC_ENABLED = False
+
+
+class ChromaDBClientTest(unittest.TestCase):
+    @mock.patch("core.chromadb_client.chromadb.PersistentClient")
+    @mock.patch("core.chromadb_client.SharedSystemClient.clear_system_cache")
+    @mock.patch("os.path.exists", return_value=True)
+    def test_get_client_clears_stale_process_cache(
+        self, mock_exists, mock_clear_cache, mock_persistent_client
+    ):
+        """get_client() must evict chromadb's process-wide cached System
+        before constructing a client. PersistentClient caches its
+        connection per Python process, so without this, a long-running
+        process (the API server) would keep serving whatever snapshot it
+        had cached at its own startup, oblivious to writes made by a
+        different process (the celery worker running the scheduled
+        indexer) -- verified manually against a live index: querying from
+        an already-running process missed a document written seconds
+        earlier by a separate process, until the cache was cleared.
+        """
+        from core.chromadb_client import get_client
+
+        get_client()
+
+        mock_clear_cache.assert_called_once()
