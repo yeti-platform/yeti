@@ -39,6 +39,8 @@ class ADKSession(BaseModel):
     state: Dict[str, Any] = Field(default_factory=dict)
     events: List[Dict[str, Any]] = Field(default_factory=list)
     lastUpdateTime: float = 0.0
+    createTime: float | None = None
+    title: str | None = None
 
 
 @router.get("/sessions")
