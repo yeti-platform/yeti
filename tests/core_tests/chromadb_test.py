@@ -12,6 +12,10 @@ from plugins.analytics.public.chromadb_indexer import ChromaDBIndexer
 client = TestClient(webapp.app)
 
 
+def sections_by_type(data: dict) -> dict[str, dict]:
+    return {section["type"]: section for section in data["sections"]}
+
+
 class ChromaDBTest(unittest.TestCase):
     def setUp(self) -> None:
         database_arango.db.connect(database="yeti_test")
@@ -60,9 +64,10 @@ class ChromaDBTest(unittest.TestCase):
             "/api/v2/search/semantic", json={"query": "russian actor", "count": 10}
         )
         data = response.json()
+        sections = sections_by_type(data)
 
-        self.assertEqual(data["total"], 1)
-        self.assertEqual(data["results"][0]["name"], "APT28")
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(sections["entity"]["results"][0]["name"], "APT28")
 
     @mock.patch("core.chromadb_client.get_client")
     def test_indexing_multiple_entities(self, mock_get_client):
@@ -84,10 +89,11 @@ class ChromaDBTest(unittest.TestCase):
             "/api/v2/search/semantic", json={"query": "banking malware", "count": 1}
         )
         data = response.json()
+        sections = sections_by_type(data)
 
-        self.assertEqual(data["total"], 1)
-        self.assertEqual(data["results"][0]["name"], "Trickbot")
-        self.assertIn("semantic_score", data["results"][0])
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(sections["entity"]["results"][0]["name"], "Trickbot")
+        self.assertIn("semantic_score", sections["entity"]["results"][0])
 
     @mock.patch("core.chromadb_client.get_client")
     def test_semantic_score_ranks_results_most_to_least_similar(self, mock_get_client):
@@ -112,13 +118,15 @@ class ChromaDBTest(unittest.TestCase):
             json={"query": "a banking trojan stealing credentials", "count": 2},
         )
         data = response.json()
+        sections = sections_by_type(data)
+        results = sections["entity"]["results"]
 
-        scores = [r["semantic_score"] for r in data["results"]]
+        scores = [r["semantic_score"] for r in results]
         # Higher score first (most similar), and the trojan -- an
         # near-exact match to the query -- should score above the
         # unrelated entity.
         self.assertEqual(scores, sorted(scores, reverse=True))
-        self.assertEqual(data["results"][0]["name"], "Trickbot")
+        self.assertEqual(results[0]["name"], "Trickbot")
 
     @mock.patch("core.chromadb_client.get_client")
     def test_dfiq_scenario_indexing(self, mock_get_client):
@@ -160,10 +168,11 @@ parent_ids:
             json={"query": "How did they get in exactly?", "count": 10},
         )
         data = response.json()
+        sections = sections_by_type(data)
 
         # We expect the scenario to be returned because it has the question as a neighbor
         # And the question too!
-        returned_names = [r["name"] for r in data["results"]]
+        returned_names = [r["name"] for r in sections["dfiq"]["results"]]
         self.assertIn("Ransomware Investigation", returned_names)
         self.assertIn("Initial Access Vector", returned_names)
 
@@ -200,7 +209,8 @@ parent_ids:
                 "/api/v2/search/semantic", json={"query": "malware", "count": 10}
             )
             data = response.json()
-            names = [r["name"] for r in data["results"]]
+            sections = sections_by_type(data)
+            names = [r["name"] for r in sections["entity"]["results"]]
 
             self.assertIn("VisibleMalware", names)
             self.assertNotIn("HiddenMalware", names)
@@ -238,12 +248,97 @@ parent_ids:
                 headers={"Authorization": "Bearer " + token_data["access_token"]},
             )
             data = response.json()
-            names = [r["name"] for r in data["results"]]
+            sections = sections_by_type(data)
+            names = [r["name"] for r in sections["entity"]["results"]]
 
             self.assertIn("UnownedMalware", names)
         finally:
             rbac.RBAC_ENABLED = False
             database_arango.RBAC_ENABLED = False
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_root_type_scopes_to_a_single_type(self, mock_get_client):
+        """A DFIQ scenario and an entity can both semantically match the
+        same query -- root_type must exclude the other type entirely, not
+        just deprioritize it.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQScenario
+
+        entity.save(
+            name="Suspicious DNS Malware",
+            type="malware",
+            description="Malware that performs suspicious DNS queries for C2",
+        )
+        DFIQScenario.from_yaml("""
+type: scenario
+id: S0102
+dfiq_version: 1.0.0
+name: Suspicious DNS Query
+description: Investigating a suspicious DNS query
+uuid: 00000000-0000-4000-8000-000000000003
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={
+                "query": "suspicious DNS query",
+                "count": 10,
+                "root_type": "dfiq",
+            },
+        )
+        data = response.json()
+
+        self.assertEqual(len(data["sections"]), 1, data)
+        self.assertEqual(data["sections"][0]["type"], "dfiq")
+        names = [r["name"] for r in data["sections"][0]["results"]]
+        self.assertIn("Suspicious DNS Query", names)
+        self.assertNotIn("Suspicious DNS Malware", names)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_unscoped_search_does_not_let_one_type_crowd_out_another(
+        self, mock_get_client
+    ):
+        """A high-volume type (many matching entities) must not push a
+        low-volume type's (one matching DFIQ scenario) results out of the
+        response -- each type is queried and bounded independently.
+        """
+        mock_get_client.return_value = self.chroma_client
+        from core.schemas.dfiq import DFIQScenario
+
+        for i in range(8):
+            entity.save(
+                name=f"DNS Malware {i}",
+                type="malware",
+                description="Malware that performs suspicious DNS queries for C2",
+            )
+        DFIQScenario.from_yaml("""
+type: scenario
+id: S0103
+dfiq_version: 1.0.0
+name: Suspicious DNS Query
+description: Investigating a suspicious DNS query
+uuid: 00000000-0000-4000-8000-000000000004
+""").save()
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "suspicious DNS query", "count": 1},
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+
+        # The single DFIQ match is present regardless of how many entity
+        # matches exist -- it isn't sharing a page with them.
+        self.assertEqual(sections["dfiq"]["total"], 1, data)
+        self.assertEqual(sections["dfiq"]["results"][0]["name"], "Suspicious DNS Query")
+        self.assertEqual(len(sections["entity"]["results"]), 1, data)
 
 
 class ChromaDBClientTest(unittest.TestCase):
