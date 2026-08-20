@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict
 
@@ -37,13 +39,18 @@ class SemanticSearchRequest(BaseModel):
 
     query: str
     count: int = 10
+    root_type: Literal["entity", "indicator", "dfiq"] | None = None
 
 
 class SemanticSearchResponse(BaseModel):
-    """Semantic Search Response."""
+    """Semantic Search Response, bucketed by type like grouped exact-match
+    search: each type gets its own independently-bounded slice of nearest
+    neighbors, so results from one type can't crowd another out of a
+    shared page. `total` here is just how many were returned for that
+    type (not a corpus-wide count) -- ANN search doesn't have a cheap way
+    to count "everything within the top-K" beyond what was fetched."""
 
-    results: list[dict]
-    total: int = 0
+    sections: list[SearchResultSection]
 
 
 @router.post("/")
@@ -62,53 +69,48 @@ def search(httpreq: Request, request: SearchRequest) -> SearchResponse:
     return SearchResponse(sections=[SearchResultSection(**s) for s in sections])
 
 
-@router.post("/semantic")
-def semantic_search(
-    httpreq: Request, request: SemanticSearchRequest
-) -> SemanticSearchResponse:
-    """Performs a semantic search on Yeti objects.
+SEMANTIC_TYPE_TO_COLLECTION = {
+    "entity": "entities",
+    "indicator": "indicators",
+    "dfiq": "dfiq",
+}
 
-    Results come from a nearest-neighbor lookup in ChromaDB, which knows
-    nothing about ACLs, so each candidate is checked individually against
-    the calling user's permissions before being returned.
+
+def _semantic_search_one_type(
+    collection, query: str, count: int, collection_name: str, cls, user, enforce_acls
+) -> SearchResultSection:
+    """Queries ChromaDB for nearest neighbors within a single type's
+    collection (via a metadata filter), so this type's results are bounded
+    independently of how many candidates other types produce -- mirrors
+    grouped_search's per-type isolation, just as a separate Chroma query
+    per type instead of one AQL query fanning out, since Chroma's ANN
+    index doesn't support per-group limits within a single query.
     """
-    from core.chromadb_client import get_semantic_collection
-    from core.schemas import rbac, roles
-
-    collection = get_semantic_collection()
-
-    user = httpreq.state.user
-    enforce_acls = rbac.RBAC_ENABLED and not user.admin
+    from core.schemas import roles
 
     # ACL filtering happens after the nearest-neighbor search, so overfetch to
     # absorb candidates the user can't see and still have a shot at `count`
     # results -- not a guarantee: if visibility is narrow enough, fewer than
     # `count` results can still come back even after overfetching.
-    fetch_count = request.count * 3 if enforce_acls else request.count
-    results = collection.query(query_texts=[request.query], n_results=fetch_count)
+    fetch_count = count * 3 if enforce_acls else count
+    results = collection.query(
+        query_texts=[query],
+        n_results=fetch_count,
+        where={"collection": collection_name},
+    )
 
-    object_metadatas = results.get("metadatas", [[{}]])[0]
+    object_metadatas = results.get("metadatas", [[]])[0]
     # ChromaDB returns nearest (most similar) first; distance is a cosine
     # distance (0 = identical, larger = less similar). Surface it as a
     # bounded-ish "higher is better" score instead, so consumers don't have
     # to know chroma's convention or re-derive one themselves.
     distances = results.get("distances", [[]])[0]
 
-    from core.schemas.dfiq import DFIQBase
-    from core.schemas.entity import Entity
-    from core.schemas.indicator import Indicator
-
-    id_to_class = {"entities": Entity, "indicators": Indicator, "dfiq": DFIQBase}
-
-    # Fetch real yeti objects from Arango
     yeti_objects = []
     for meta, distance in zip(object_metadatas, distances):
-        if len(yeti_objects) >= request.count:
+        if len(yeti_objects) >= count:
             break
-        if "id" not in meta or "collection" not in meta:
-            continue
-        cls = id_to_class.get(meta["collection"])
-        if not cls:
+        if "id" not in meta:
             continue
         if enforce_acls and not user.has_permissions(
             meta.get("extended_id", ""), roles.Permission.READ
@@ -120,4 +122,54 @@ def semantic_search(
             obj_dict["semantic_score"] = round(1 - distance, 4)
             yeti_objects.append(obj_dict)
 
-    return SemanticSearchResponse(results=yeti_objects, total=len(yeti_objects))
+    type_name = next(
+        t for t, c in SEMANTIC_TYPE_TO_COLLECTION.items() if c == collection_name
+    )
+    return SearchResultSection(
+        type=type_name, results=yeti_objects, total=len(yeti_objects)
+    )
+
+
+@router.post("/semantic")
+def semantic_search(
+    httpreq: Request, request: SemanticSearchRequest
+) -> SemanticSearchResponse:
+    """Performs a semantic search on Yeti objects, bucketed by type.
+
+    Results come from a nearest-neighbor lookup in ChromaDB, which knows
+    nothing about ACLs, so each candidate is checked individually against
+    the calling user's permissions before being returned. Pass root_type
+    to scope the search to just one type (e.g. "dfiq" for investigative
+    guidance rather than threat data); omit it to search every indexed
+    type, each independently bounded to `count`.
+    """
+    from core.chromadb_client import get_semantic_collection
+    from core.schemas import rbac, roles
+    from core.schemas.dfiq import DFIQBase
+    from core.schemas.entity import Entity
+    from core.schemas.indicator import Indicator
+
+    collection = get_semantic_collection()
+
+    user = httpreq.state.user
+    enforce_acls = rbac.RBAC_ENABLED and not user.admin
+
+    id_to_class = {"entities": Entity, "indicators": Indicator, "dfiq": DFIQBase}
+    types_to_query = (
+        [request.root_type] if request.root_type else list(SEMANTIC_TYPE_TO_COLLECTION)
+    )
+
+    sections = [
+        _semantic_search_one_type(
+            collection,
+            request.query,
+            request.count,
+            SEMANTIC_TYPE_TO_COLLECTION[type_name],
+            id_to_class[SEMANTIC_TYPE_TO_COLLECTION[type_name]],
+            user,
+            enforce_acls,
+        )
+        for type_name in types_to_query
+    ]
+
+    return SemanticSearchResponse(sections=sections)
