@@ -620,6 +620,29 @@ approaches:
         }
         self.assertEqual(remaining, {"self", "approach:0"})
 
+    @mock.patch("core.chromadb_client.get_client")
+    def test_non_positive_count_is_rejected_before_querying_chroma(
+        self, mock_get_client
+    ):
+        """count is multiplied into ChromaDB's n_results, which raises on any
+        non-positive value. Without a bound on the field that surfaces as a
+        500; the request is a client error and must be refused at the
+        boundary."""
+        mock_get_client.return_value = self.chroma_client
+
+        for count in (0, -1):
+            with self.subTest(count=count):
+                response = client.post(
+                    "/api/v2/search/semantic",
+                    json={"query": "russian actor", "count": count},
+                )
+                self.assertEqual(response.status_code, 422, response.json())
+
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": "russian actor", "count": 1}
+        )
+        self.assertEqual(response.status_code, 200, response.json())
+
 
 class SimilarityScoreTest(unittest.TestCase):
     def test_converts_squared_l2_distance_to_a_bounded_similarity(self):

@@ -165,6 +165,18 @@ class searchTest(unittest.TestCase):
         self.assertEqual(sections["entity"]["total"], 3, data)
         self.assertEqual(len(sections["entity"]["results"]), 2, data)
 
+    def test_search_rejects_non_positive_count_per_type(self) -> None:
+        """A non-positive count_per_type used to be accepted and silently
+        return no results, which reads as "nothing matched" rather than
+        "your request was wrong"."""
+        for count_per_type in (0, -1):
+            with self.subTest(count_per_type=count_per_type):
+                response = client.post(
+                    "/api/v2/search",
+                    json={"query": "test", "count_per_type": count_per_type},
+                )
+                self.assertEqual(response.status_code, 422, response.text)
+
 
 class searchRbacTest(unittest.TestCase):
     def setUp(self) -> None:

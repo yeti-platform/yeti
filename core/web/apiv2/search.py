@@ -1,7 +1,7 @@
 from typing import Literal
 
 from fastapi import APIRouter, Request
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from core.database_arango import ArangoYetiConnector
 
@@ -15,7 +15,7 @@ class SearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: str
-    count_per_type: int = 5
+    count_per_type: int = Field(default=5, ge=1)
 
 
 class SearchResultSection(BaseModel):
@@ -38,7 +38,9 @@ class SemanticSearchRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     query: str
-    count: int = 10
+    # ChromaDB rejects a non-positive n_results, so an unconstrained count
+    # turns a client mistake into a server error. Reject it at the boundary.
+    count: int = Field(default=10, ge=1)
     root_type: Literal["entity", "indicator", "dfiq"] | None = None
 
 
