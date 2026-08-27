@@ -76,6 +76,25 @@ SEMANTIC_TYPE_TO_COLLECTION = {
 }
 
 
+def _similarity_score(distance: float) -> float:
+    """Converts a ChromaDB distance into a 0-1 similarity, 1 being identical.
+
+    The collection uses ChromaDB's default `l2` space, so `distance` is a
+    *squared* euclidean distance, and the default embedding function returns
+    unit-length vectors. For unit vectors ||a-b||^2 == 2 - 2*cos(a, b), which
+    inverts to the cosine similarity below and bounds the raw distance to
+    [0, 4].
+
+    Cosine similarity is itself [-1, 1], so this clamps to [0, 1]. The
+    negative half only occurs for anti-correlated embeddings, which for text
+    means nothing more specific than "unrelated" -- the same thing 0 already
+    conveys -- so clamping loses no usable signal and gives clients a scale
+    they can threshold on directly.
+    """
+    cosine_similarity = 1 - (distance / 2)
+    return round(max(0.0, min(1.0, cosine_similarity)), 4)
+
+
 def _semantic_search_one_type(
     collection, query: str, count: int, collection_name: str, cls, user, enforce_acls
 ) -> SearchResultSection:
@@ -100,10 +119,8 @@ def _semantic_search_one_type(
     )
 
     object_metadatas = results.get("metadatas", [[]])[0]
-    # ChromaDB returns nearest (most similar) first; distance is a cosine
-    # distance (0 = identical, larger = less similar). Surface it as a
-    # bounded-ish "higher is better" score instead, so consumers don't have
-    # to know chroma's convention or re-derive one themselves.
+    # ChromaDB returns nearest (most similar) first. See _similarity_score for
+    # what the raw distance means and how it's converted.
     distances = results.get("distances", [[]])[0]
 
     yeti_objects = []
@@ -119,7 +136,7 @@ def _semantic_search_one_type(
         obj = cls.get(meta["id"])
         if obj:
             obj_dict = obj.model_dump()
-            obj_dict["semantic_score"] = round(1 - distance, 4)
+            obj_dict["semantic_score"] = _similarity_score(distance)
             yeti_objects.append(obj_dict)
 
     type_name = next(

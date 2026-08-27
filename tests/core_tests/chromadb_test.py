@@ -1,3 +1,4 @@
+import math
 import unittest
 from unittest import mock
 
@@ -426,6 +427,79 @@ uuid: 00000000-0000-4000-8000-000000000004
             indexer.run()
 
         self.assertEqual(collection.count(), 2)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_semantic_scores_stay_within_zero_and_one(self, mock_get_client):
+        """Scores are advertised as a 0-1 similarity, and clients are expected
+        to threshold on them. A weak-but-real match must land inside that
+        range rather than going negative, which is what the previous
+        distance-to-score conversion did.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        entity.save(
+            name="RandomUnrelated",
+            type="malware",
+            description="Completely unrelated fnord",
+        )
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        response = client.post(
+            "/api/v2/search/semantic",
+            json={"query": "credential stealing banking trojan", "count": 10},
+        )
+        data = response.json()
+        results = sections_by_type(data)["entity"]["results"]
+
+        self.assertEqual(len(results), 2, data)
+        for result in results:
+            self.assertGreaterEqual(result["semantic_score"], 0.0, result)
+            self.assertLessEqual(result["semantic_score"], 1.0, result)
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_index_uses_the_distance_metric_the_score_assumes(self, mock_get_client):
+        """_similarity_score converts a *squared euclidean* distance over
+        unit-length vectors. Both properties come from ChromaDB defaults we
+        never set explicitly, so pin them here: if an upgrade changes either,
+        scores would silently become wrong rather than fail.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.configuration_json["hnsw"]["space"], "l2")
+
+        embeddings = collection.get(include=["embeddings"])["embeddings"]
+        for embedding in embeddings:
+            norm = math.sqrt(sum(value * value for value in embedding))
+            self.assertAlmostEqual(norm, 1.0, places=5)
+
+
+class SimilarityScoreTest(unittest.TestCase):
+    def test_converts_squared_l2_distance_to_a_bounded_similarity(self):
+        from core.web.apiv2.search import _similarity_score
+
+        # Unit vectors: ||a-b||^2 == 2 - 2*cos(a, b), so 0 -> identical,
+        # 2 -> orthogonal, 4 -> opposite.
+        self.assertEqual(_similarity_score(0.0), 1.0)
+        self.assertEqual(_similarity_score(1.0), 0.5)
+        self.assertEqual(_similarity_score(2.0), 0.0)
+
+        # Anti-correlated embeddings clamp to 0 rather than going negative.
+        self.assertEqual(_similarity_score(3.0), 0.0)
+        self.assertEqual(_similarity_score(4.0), 0.0)
+
+    def test_is_monotonically_decreasing_in_distance(self):
+        from core.web.apiv2.search import _similarity_score
+
+        scores = [_similarity_score(d / 10) for d in range(0, 21)]
+        self.assertEqual(scores, sorted(scores, reverse=True))
 
 
 class ChromaDBClientTest(unittest.TestCase):
