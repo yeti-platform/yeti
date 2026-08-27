@@ -25,6 +25,20 @@ RUN pip3 install --upgrade pip && pip3 install uv
 # Install yeti
 RUN uv sync --group plugins
 
+# Bake in the embedding model chromadb's default embedding function uses.
+# It is otherwise fetched from the network on first use, which fails on
+# deployments without internet access. Warming it through chromadb rather than
+# downloading the archive directly verifies the SHA256 chromadb pins and keeps
+# the model in step with the resolved chromadb version. Only the extracted
+# files are looked up at runtime, so the archive is dropped: keeping it would
+# double the ~88MB cost for nothing.
+#
+# The cache path is derived from $HOME with no override, so this must be
+# written by the same user that runs Yeti.
+RUN uv run python -c \
+    "from chromadb.utils.embedding_functions import DefaultEmbeddingFunction; DefaultEmbeddingFunction()(['warmup'])" \
+    && rm -f /root/.cache/chroma/onnx_models/all-MiniLM-L6-v2/onnx.tar.gz
+
 ENV PYTHONPATH /app
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

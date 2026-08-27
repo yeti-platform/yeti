@@ -2,6 +2,7 @@ import os
 
 import chromadb
 from chromadb.api.shared_system_client import SharedSystemClient
+from chromadb.config import Settings
 
 from core.config.config import yeti_config
 
@@ -27,7 +28,12 @@ def get_client() -> chromadb.ClientAPI:
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
-    client = chromadb.PersistentClient(path=path)
+    # chromadb posts anonymized usage events to PostHog by default. Yeti is
+    # deployed on networks with no outbound internet access, where those calls
+    # only cost latency and log noise.
+    client = chromadb.PersistentClient(
+        path=path, settings=Settings(anonymized_telemetry=False)
+    )
     return client
 
 
