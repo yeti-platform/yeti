@@ -340,6 +340,93 @@ uuid: 00000000-0000-4000-8000-000000000004
         self.assertEqual(sections["dfiq"]["results"][0]["name"], "Suspicious DNS Query")
         self.assertEqual(len(sections["entity"]["results"]), 1, data)
 
+    @mock.patch("core.chromadb_client.get_client")
+    def test_deleted_objects_are_pruned_from_the_index(self, mock_get_client):
+        mock_get_client.return_value = self.chroma_client
+
+        trickbot = entity.save(
+            name="Trickbot", type="malware", description="A banking trojan"
+        )
+        entity.save(name="Emotet", type="malware", description="Botnet")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 2)
+
+        trickbot.delete()
+        indexer.run()
+
+        self.assertEqual(collection.count(), 1)
+        self.assertNotIn(trickbot.extended_id, collection.get(include=[])["ids"])
+
+        # The surviving object is still searchable.
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": "botnet", "count": 10}
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(sections["entity"]["results"][0]["name"], "Emotet")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_orphans_no_longer_consume_the_result_window(self, mock_get_client):
+        """A stale embedding used to eat a slot in the fixed-size nearest-
+        neighbour window: the endpoint drops hits it can't load, so asking
+        for N could return fewer than N even with N live matches available.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        doomed = entity.save(
+            name="Trickbot", type="malware", description="A banking trojan"
+        )
+        entity.save(name="Dridex", type="malware", description="A banking trojan")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        doomed.delete()
+        indexer.run()
+
+        # count=1 must return the one live match, not an empty section that
+        # spent its only slot on the deleted object (which ranks first for
+        # this query, being an exact description match).
+        response = client.post(
+            "/api/v2/search/semantic", json={"query": "banking trojan", "count": 1}
+        )
+        data = response.json()
+        sections = sections_by_type(data)
+        self.assertEqual(sections["entity"]["total"], 1, data)
+        self.assertEqual(sections["entity"]["results"][0]["name"], "Dridex")
+
+    @mock.patch("core.chromadb_client.get_client")
+    def test_pruning_ignores_objects_whose_document_failed_to_build(
+        self, mock_get_client
+    ):
+        """A document that fails to build must not evict its own embedding:
+        the object still exists, so the previously-indexed copy should be
+        left alone rather than treated as stale.
+        """
+        mock_get_client.return_value = self.chroma_client
+
+        entity.save(name="Trickbot", type="malware", description="A banking trojan")
+        entity.save(name="Emotet", type="malware", description="Botnet")
+
+        indexer = ChromaDBIndexer(name="ChromaDBIndexer", enabled=True)
+        indexer.run()
+
+        collection = self.chroma_client.get_collection("yeti_semantic_search")
+        self.assertEqual(collection.count(), 2)
+
+        # Nothing was deleted, but every document build now fails.
+        with mock.patch.object(
+            ChromaDBIndexer, "build_object_document", side_effect=RuntimeError("boom")
+        ):
+            indexer.run()
+
+        self.assertEqual(collection.count(), 2)
+
 
 class ChromaDBClientTest(unittest.TestCase):
     @mock.patch("core.chromadb_client.chromadb.PersistentClient")

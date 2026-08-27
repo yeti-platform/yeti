@@ -93,5 +93,37 @@ class ChromaDBIndexer(task.AnalyticsTask):
             logging.info(f"Upserting {len(ids)} documents into ChromaDB...")
             collection.upsert(documents=docs, ids=ids, metadatas=metadatas)
 
+        # Prune against every object that exists, not just the ones documented
+        # successfully above -- an object whose document failed to build still
+        # exists, and must not have its previously-indexed embedding evicted
+        # because of a transient error.
+        self.prune_deleted(collection, {obj.extended_id for obj in objects_to_index})
+
+    def prune_deleted(self, collection, live_ids: set[str]) -> int:
+        """Removes embeddings whose Yeti object no longer exists.
+
+        Indexing is upsert-only, so deleting an object in Yeti leaves its
+        embedding behind. Those orphans are invisible in results -- the
+        endpoint drops any hit it can't load from the database -- but they
+        still occupy slots in the fixed-size nearest-neighbour window, so a
+        query asking for N results can quietly come back with fewer.
+
+        Reconciling against the full live set (rather than reacting to
+        delete events) means this also repairs drift from any cause: a
+        missed event, an object removed while the indexer was down, or an
+        index restored from an older snapshot.
+
+        Returns:
+            The number of stale embeddings removed.
+        """
+        indexed_ids = set(collection.get(include=[])["ids"])
+        stale_ids = indexed_ids - live_ids
+        if not stale_ids:
+            return 0
+
+        logging.info(f"Pruning {len(stale_ids)} stale documents from ChromaDB...")
+        collection.delete(ids=list(stale_ids))
+        return len(stale_ids)
+
 
 taskmanager.TaskManager.register_task(ChromaDBIndexer)
