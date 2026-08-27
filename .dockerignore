@@ -1,0 +1,33 @@
+# Both Dockerfiles under extras/docker/ use `ADD . /app`, so anything not
+# excluded here is baked into the image.
+#
+# `.git` is the important one: actions/checkout writes credentials into
+# .git/config unless persist-credentials is disabled, and images published
+# before that was fixed (yeti <= 2.5.0) shipped a workflow token as a result.
+# The workflows set persist-credentials: false now, but there is no reason to
+# copy the repo history into the image either way.
+.git
+.github
+.gitattributes
+.gitignore
+
+# Local config and state. yeti.conf can hold real credentials; the image builds
+# its own from yeti.conf.sample, which is deliberately still included.
+yeti.conf
+celerybeat-schedule.db
+
+# Local virtualenv (~490MB, built for the host's architecture). The image runs
+# `uv sync` itself, and copying this in shadows the environment it creates.
+.venv
+activate
+
+# Caches and editor state.
+__pycache__
+*.pyc
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.vscode
+
+# Not needed at runtime.
+tests
