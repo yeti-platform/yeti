@@ -107,11 +107,13 @@ def _semantic_search_one_type(
     """
     from core.schemas import roles
 
-    # ACL filtering happens after the nearest-neighbor search, so overfetch to
-    # absorb candidates the user can't see and still have a shot at `count`
-    # results -- not a guarantee: if visibility is narrow enough, fewer than
-    # `count` results can still come back even after overfetching.
-    fetch_count = count * 3 if enforce_acls else count
+    # Two things shrink the candidate list after the nearest-neighbour search:
+    # ACL filtering, and rolling several documents belonging to one object back
+    # into a single result. Overfetch to absorb both and still have a shot at
+    # `count` results -- not a guarantee: if visibility is narrow enough, or one
+    # object dominates the window with many of its own documents, fewer than
+    # `count` can still come back.
+    fetch_count = count * 3 if enforce_acls else count * 2
     results = collection.query(
         query_texts=[query],
         n_results=fetch_count,
@@ -124,19 +126,32 @@ def _semantic_search_one_type(
     distances = results.get("distances", [[]])[0]
 
     yeti_objects = []
+    seen_objects = set()
     for meta, distance in zip(object_metadatas, distances):
         if len(yeti_objects) >= count:
             break
         if "id" not in meta:
             continue
+        # An object is indexed as several documents (its own text, plus one per
+        # DFIQ approach), any of which can match. Results are already ordered
+        # best-first, so the first document seen for an object is its best one
+        # and the rest are dropped -- the object is what's being returned, not
+        # the document that happened to match.
+        extended_id = meta.get("extended_id", "")
+        if extended_id in seen_objects:
+            continue
         if enforce_acls and not user.has_permissions(
-            meta.get("extended_id", ""), roles.Permission.READ
+            extended_id, roles.Permission.READ
         ):
             continue
         obj = cls.get(meta["id"])
         if obj:
+            seen_objects.add(extended_id)
             obj_dict = obj.model_dump()
             obj_dict["semantic_score"] = _similarity_score(distance)
+            # Which document matched: "self" for the object's own text, or
+            # "approach:N". Useful for explaining *why* something was returned.
+            obj_dict["matched_on"] = meta.get("chunk", "self")
             yeti_objects.append(obj_dict)
 
     type_name = next(

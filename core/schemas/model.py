@@ -55,6 +55,38 @@ class YetiBaseModel(BaseModel):
         @property
         def extended_id(self) -> str: ...
 
+    def semantic_documents(self) -> list[tuple[str, str]]:
+        """Returns the texts to embed for semantic search, as (suffix, text).
+
+        One object can produce several documents. That matters because an
+        embedding encodes a single meaning: concatenating everything an object
+        knows into one text yields a vector sitting at the average of those
+        topics, matching none of them well. Embedding models also truncate --
+        the default one silently cuts at roughly 110 words -- so a long
+        combined document mostly gets discarded anyway.
+
+        The suffix distinguishes an object's documents from each other; the
+        indexer combines it with the object's extended_id to form the vector's
+        id, and search groups the results back per object. Overrides should
+        keep each document focused on one thing and return "self" first.
+        """
+        parts = []
+        for label, field in (("Name", "name"), ("Value", "value")):
+            value = getattr(self, field, None)
+            if value:
+                parts.append(f"{label}: {value}")
+
+        description = getattr(self, "description", None)
+        if description:
+            parts.append(f"Description: {description}")
+
+        tags = getattr(self, "tags", None) or getattr(self, "dfiq_tags", None) or []
+        tag_names = [getattr(t, "name", None) or str(t) for t in tags]
+        if tag_names:
+            parts.append(f"Tags: {', '.join(tag_names)}")
+
+        return [("self", "\n".join(parts))]
+
 
 class YetiContextModel(YetiBaseModel):
     context: list[dict] = []
